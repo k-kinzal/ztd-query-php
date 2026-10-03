@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Statement\Type;
 
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Rendering\Output;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
+use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
 

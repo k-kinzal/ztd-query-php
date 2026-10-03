@@ -32,7 +32,8 @@ use SqlSemantics\Statement\Statement;
  * Rule: MYSQL-SELECT-001. The table reference is derived in the environment
  * of the enclosing query. The select list and the predicate see the table
  * occurrence and, beyond it, the enclosing query. An item is named by
- * MYSQL-SELECT-ITEM-NAME-001. Diagnostics: those of its parts. Terminates:
+ * MYSQL-SELECT-ITEM-NAME-001; an item whose name is not fixed has a slot
+ * without a name. Diagnostics: those of its parts. Terminates:
  * the parts are strict parts. Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
  * Status: Implemented.
  *
@@ -40,10 +41,13 @@ use SqlSemantics\Statement\Statement;
  * @example Reading the parts of a selection
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE a > 1');
  *     [count($query->statement->items), $query->statement->where !== null] // => [1, true]
- * @example Resolving a column to the declaration a context supplies
+ * @example Depending on a table the context does not declare
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
  *     $query = $semantics->analyze('SELECT a FROM t');
  *     $query->field('a')->type instanceof \SqlSemantics\Statement\Type\Dependent // => true
+ * @example Reading an item whose name is not fixed
+ *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT 1');
+ *     $query->fields()?->at(0)->slot->name // => null
  */
 final class Select implements Statement, Query, Selection
 {

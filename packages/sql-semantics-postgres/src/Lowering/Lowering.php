@@ -232,7 +232,7 @@ final class Lowering
      */
     public function statement(Node $statement): Statement
     {
-        $family = StatementRoutes::ROUTES['stmt: ' . $statement->name] ?? null;
+        $family = StatementRoutes::ROUTES["stmt: {$statement->name}"] ?? null;
         if ($family === null) {
             throw ImplementationGap::rule('statement ' . $statement->name);
         }

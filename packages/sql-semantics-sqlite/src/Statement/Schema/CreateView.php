@@ -28,7 +28,8 @@ use SqlSemantics\Statement\Statement;
  * output fields of the query, named by the column list when one is written
  * (SQLITE-QUERY-COLUMNS-001). A view has no row identifier. A column list of
  * another length than the query result is a diagnostic and leaves the
- * declaration incomplete, as does an open query shape without a column list;
+ * declaration incomplete and its columns without types, as an open query
+ * shape without a column list leaves it incomplete;
  * a name of the column list written with a collation or a sort order is a
  * diagnostic. A TEMP view belongs to the `temp` schema. The statement returns
  * no rows.
@@ -86,7 +87,7 @@ final class CreateView implements Statement
         if ($expected !== $returned) {
             $derivation->report(new ColumnCountMismatch($expected, $returned));
         }
-        $columns = (new QueryColumns())->viewColumns($fact, $derivation->facts(), $listed, $derivation->context->columnNames);
+        $columns = (new QueryColumns())->viewColumns($fact, $derivation->facts(), $listed, $derivation->context->columnNames, $expected === $returned);
         $complete = $expected === $returned && count($columns) === ($listed === null ? $returned : count($listed)) && ($listed !== null || $fact->shape->complete());
         $derivation->declare(new Table((new TableDeclaration())->name($this->name, $this->temporary), $derivation->context->profile, $columns, [], $complete));
     }

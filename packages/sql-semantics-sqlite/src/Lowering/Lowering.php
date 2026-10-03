@@ -11,12 +11,12 @@ use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\Sqlite\Lowering\Definition\DefinitionCommands;
 use SqlSemantics\Platform\Sqlite\Lowering\Expression\ExpressionRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Expression\WindowRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\ConflictRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\FlagRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\LiteralRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\NameRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\TypeNameRule;
-use SqlSemantics\Platform\Sqlite\Lowering\Expression\WindowRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Mutation\MutationRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\FromRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\QueryCommands;
@@ -147,10 +147,19 @@ final class Lowering
      * Lowers a complete input into its statements.
      *
      * @return list<Statement>
+     *
+     * @throws ImplementationGap When a production has no rule
      */
     public function statements(Node $input): array
     {
         $form = $this->productions->form($input);
+        if ($form->signature !== 'input: cmdlist') {
+            throw ImplementationGap::production($form);
+        }
+        $list = $this->productions->form($form->node(0));
+        if ($list->signature !== 'cmdlist: ecmd' && $list->signature !== 'cmdlist: cmdlist ecmd') {
+            throw ImplementationGap::production($list);
+        }
         $statements = [];
         foreach ((new Lists())->items($form->node(0)) as $command) {
             $statement = $this->terminated($command);
@@ -173,8 +182,23 @@ final class Lowering
 
         return match ($form->signature) {
             'ecmd: SEMI' => null,
-            'ecmd: cmdx SEMI' => $this->command($this->productions->form($form->node(0))->node(0)),
-            'ecmd: explain cmdx SEMI' => $this->definitionCommands->explained($form->node(0), $this->command($this->productions->form($form->node(1))->node(0))),
+            'ecmd: cmdx SEMI' => $this->command($this->unwrapped($form->node(0))),
+            'ecmd: explain cmdx SEMI' => $this->definitionCommands->explained($form->node(0), $this->command($this->unwrapped($form->node(1)))),
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
+     * Answers the command inside a `cmdx`, which the grammar wraps around every command.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function unwrapped(Node $cmdx): Node
+    {
+        $form = $this->productions->form($cmdx);
+
+        return match ($form->signature) {
+            'cmdx: cmd' => $form->node(0),
             default => throw ImplementationGap::production($form),
         };
     }

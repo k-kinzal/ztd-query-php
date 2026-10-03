@@ -80,7 +80,7 @@ final class TableCall implements Relation
         if ($this->name->schema !== null) {
             $out->name($this->name->schema, NameUse::Qualifier)->symbol('.');
         }
-        $out->name($this->name->name, NameUse::Routine)->symbol('(')->list($this->arguments)->symbol(')');
+        $out->name($this->name->name, NameUse::Routine)->glue()->symbol('(')->list($this->arguments)->symbol(')');
         if ($this->alias !== null) {
             $out->keyword('AS')->name($this->alias, NameUse::Alias);
         }

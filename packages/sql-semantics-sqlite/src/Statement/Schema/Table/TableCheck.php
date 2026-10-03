@@ -6,7 +6,9 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Table;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\ConflictResolution;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
@@ -18,7 +20,9 @@ use SqlSemantics\Statement\Snapshot;
  * table and to its row identifier and is derived at a position whose only
  * visible relation is the table being defined. The grammar accepts a conflict
  * resolution after the constraint; "the conflict resolution algorithm for
- * CHECK constraints is always ABORT" and SQLite ignores the written one.
+ * CHECK constraints is always ABORT" and SQLite ignores the written one. A
+ * bound parameter or a subquery in the condition is a diagnostic
+ * (SQLITE-DEFINITION-LIMITS-001).
  * Source: https://sqlite.org/lang_createtable.html#check_constraints.
  * Status: Implemented.
  *
@@ -45,6 +49,7 @@ final class TableCheck implements TableConstraint
     public function deriveConstraint(Derivation $derivation, ConstraintScope $scope): void
     {
         $derivation->scalar($this->expression, $scope->row);
+        (new Limits())->report($this->expression, DefinitionPosition::CheckConstraint, $derivation);
     }
 
     /**

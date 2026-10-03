@@ -20,9 +20,11 @@ use SqlSemantics\Statement\Type\Known;
  * grammar reads the sign as part of the literal.
  *
  * Rule: MYSQL-SIGNED-LITERAL-001. Facts: the type of the number, except that
- * the negation of an integer above 9223372036854775808 no longer fits BIGINT
- * and is DECIMAL; never NULL. Diagnostics: none.
- * Source: https://dev.mysql.com/doc/refman/8.4/en/number-literals.html. Status: Implemented.
+ * the negation of an integer beyond the signed 64-bit range, 9223372036854775808
+ * and above, is DECIMAL: the server negates an unsigned integer literal through
+ * a decimal value (Item_uint::neg in sql/item.cc); never NULL. Diagnostics: none.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/number-literals.html,
+ * https://github.com/mysql/mysql-server/blob/8.4/sql/item.cc. Status: Implemented.
  *
  * @visibility public
  * @example Holding a negative literal
@@ -47,7 +49,7 @@ final class SignedLiteral implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = $derivation->scalar($this->number, $environment);
-        if ($this->negative && $this->number->beyondSigned() && ltrim($this->number->text, '0') !== '9223372036854775808') {
+        if ($this->negative && $this->number->beyondSigned()) {
             return new ScalarFact(new Known(new Decimal()), $fact->nullability);
         }
 

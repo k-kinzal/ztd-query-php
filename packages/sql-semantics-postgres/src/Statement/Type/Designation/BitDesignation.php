@@ -30,8 +30,8 @@ use SqlSemantics\Statement\Type\TypeFact;
  * @visibility public
  * @example Reading the default length of a bit type
  *     $designation = new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\BitDesignation(false);
- *     $context = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->context([]);
- *     $designation->typeFact($context, false)->descriptor->name() // => 'bit(1)'
+ *     $analysis = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->context([]);
+ *     $designation->typeFact($analysis, false)->descriptor->name() // => 'bit(1)'
  */
 final class BitDesignation implements TypeDesignation
 {

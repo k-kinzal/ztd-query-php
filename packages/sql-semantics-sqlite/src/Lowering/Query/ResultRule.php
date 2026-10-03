@@ -12,7 +12,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValueRow;
-use SqlSemantics\Platform\Sqlite\Statement\Query\Values;
+use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
@@ -112,7 +112,7 @@ final class ResultRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function values(Node $values): Values
+    public function values(Node $values): ValuesClause
     {
         $productions = $this->lowering->productions;
         $lists = [];
@@ -130,6 +130,6 @@ final class ResultRule
             $rows[] = new ValueRow($this->lowering->expressions->items($list));
         }
 
-        return new Values($rows);
+        return new ValuesClause($rows);
     }
 }

@@ -15,7 +15,7 @@ final class AlterationObstacleTest extends TestCase
 {
     public function testCasesDescribeEachObstacle(): void
     {
-        self::assertSame(['PrimaryKeyColumn', 'UniqueColumn', 'StoredColumn', 'NotNullWithoutDefault', 'LastColumn'], array_column(AlterationObstacle::cases(), 'name'));
+        self::assertSame(['PrimaryKeyColumn', 'UniqueColumn', 'StoredColumn', 'NotNullWithoutDefault', 'NonConstantDefault', 'LastColumn'], array_column(AlterationObstacle::cases(), 'name'));
         self::assertSame('A UNIQUE column cannot be added.', AlterationObstacle::UniqueColumn->value);
     }
 }

@@ -34,8 +34,8 @@ use SqlSemantics\Statement\Type\TypeFact;
  *         false,
  *         new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArraySpecifier([new \SqlSemantics\Platform\PostgreSql\Statement\Type\ArrayBound()]),
  *     );
- *     $context = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->context([]);
- *     $type->typeFact($context)->descriptor->name() // => 'integer[]'
+ *     $analysis = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->context([]);
+ *     $type->typeFact($analysis)->descriptor->name() // => 'integer[]'
  */
 final class TypeName implements OptionArgument
 {

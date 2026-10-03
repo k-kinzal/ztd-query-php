@@ -17,9 +17,9 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOption;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableOptionKind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
@@ -30,13 +30,15 @@ use SqlSemantics\Statement\Statement;
  * Rule: SQLITE-CREATE-TABLE-001. The statement provides one table
  * declaration (SQLITE-TABLE-DECLARATION-001); it executes nothing and changes
  * no context, and IF NOT EXISTS does not change what it declares. The
- * expressions inside the definition are derived in the scope of
- * SQLITE-DEFINITION-SCOPE-001, whose only visible relation is the table being
- * defined. The statement node itself is that relation occurrence: it is the
- * one place where the new table is used, a column resolved inside the
- * definition refers to it, and its relation fact holds the row shape of the
- * new table, whose slots are the declared columns. Diagnostics:
- * SQLITE-TABLE-PROBLEMS-001 and those of the constraints.
+ * statement node is the one relation occurrence of the new table: its
+ * relation fact resolves to the declaration the statement provides, the
+ * same object, and holds the row shape of the new table, whose slots are the
+ * declared columns. A comma the grammar admits before the first table
+ * option is kept as written. The expressions inside the definition are derived in the
+ * scope of SQLITE-DEFINITION-SCOPE-001, whose only visible relation is that
+ * occurrence, so a column resolved inside the definition reaches the declared
+ * column. Diagnostics: SQLITE-TABLE-PROBLEMS-001 and those of the columns and
+ * constraints.
  * Source: https://sqlite.org/lang_createtable.html. Status: Implemented.
  *
  * @visibility public
@@ -44,6 +46,10 @@ use SqlSemantics\Statement\Statement;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT NOT NULL)');
  *     $table = $create->declarations()[0];
  *     [count($table->columns), $table->columns[1]->nullability, $table->implicit[0]->column === $table->columns[0]] // => [2, \SqlSemantics\Statement\Type\Nullability::NotNull, true]
+ * @example The relation fact of the statement resolves to the declaration it provides
+ *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('CREATE TABLE t (a, b CHECK (a > 0))');
+ *     $check = $create->statement->columns[1]->constraints[0];
+ *     [$create->facts->relation($create->statement)->table->table === $create->declarations()[0], $create->facts->scalar($check->expression->left)->resolution->slot->column === $create->declarations()[0]->columns[0]] // => [true, true]
  */
 final class CreateTable implements Statement, Relation
 {
@@ -71,6 +77,7 @@ final class CreateTable implements Statement, Relation
      * @param list<TableOption> $options The table options in order
      * @param bool $temporary Whether TEMP or TEMPORARY is written
      * @param bool $ifNotExists Whether IF NOT EXISTS is written
+     * @param bool $optionsComma Whether a comma is written between the closing parenthesis and the first table option; the grammar admits one and SQLite ignores it
      */
     public function __construct(
         public readonly QualifiedName $name,
@@ -79,11 +86,13 @@ final class CreateTable implements Statement, Relation
         array $options = [],
         public readonly bool $temporary = false,
         public readonly bool $ifNotExists = false,
+        public readonly bool $optionsComma = false,
     ) {
         Check::input($name->catalog === null, 'A table name has at most a schema qualifier.');
         $this->columns = Check::listOf($columns, ColumnDefinition::class, 'A table definition has at least one column.', 1);
         $this->constraints = Check::listOf($constraints, ConstraintRun::class, 'Table constraints are an ordered list of constraint runs.');
         $this->options = Check::listOf($options, TableOption::class, 'Table options are an ordered list of table options.');
+        Check::input(!$optionsComma || $this->options !== [], 'A comma before the table options needs a table option after it.');
     }
 
     /**
@@ -115,30 +124,13 @@ final class CreateTable implements Statement, Relation
     }
 
     /**
-     * Derives the declaration the definition provides in a context.
-     */
-    public function declaration(Derivation $derivation): Table
-    {
-        $rule = new TableDeclaration();
-        $domains = $rule->domains($this);
-
-        return $rule->table($this, $domains, (new PrimaryKeyRule())->key($this, $domains, $derivation->context->columnNames), $derivation->context->profile);
-    }
-
-    /**
-     * Provides the declaration, reports the problems of the definition and derives its expressions.
+     * Derives the definition: its declaration, its problems and the expressions inside it.
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $rule = new TableDeclaration();
-        $domains = $rule->domains($this);
-        $key = (new PrimaryKeyRule())->key($this, $domains, $derivation->context->columnNames);
-        $table = $rule->table($this, $domains, $key, $derivation->context->profile);
-        $derivation->declare($table);
-        (new TableProblems())->report($this, $domains, $key, $derivation);
+        $fact = $derivation->relation($this, $derivation->environment());
         $shapes = new TableShapes();
-        $shape = $derivation->target($this, new RelationFact($shapes->shape($table)))->shape;
-        $scope = $shapes->scope($derivation, $this, $this->name, $shape, $shapes->implicit($table, $shape));
+        $scope = $shapes->scope($derivation, $this, $this->name, $fact->shape, $shapes->implicitOf($fact));
         foreach ($this->columns as $column) {
             $column->deriveColumn($derivation, $scope);
         }
@@ -150,11 +142,18 @@ final class CreateTable implements Statement, Relation
     }
 
     /**
-     * Derives the row shape of the table being defined: one slot per declared column.
+     * Provides the declaration and reports the problems of the definition; the fact resolves to that declaration and holds its row shape.
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
-        return new RelationFact((new TableShapes())->shape($this->declaration($derivation)));
+        $rule = new TableDeclaration();
+        $domains = $rule->domains($this);
+        $key = (new PrimaryKeyRule())->key($this, $domains, $derivation->context->columnNames);
+        $table = $rule->table($this, $domains, $key, $derivation->context->profile);
+        $derivation->declare($table);
+        (new TableProblems())->report($this, $domains, $key, $derivation);
+
+        return new RelationFact((new TableShapes())->shape($table), new DeclaredTable($table));
     }
 
     /**
@@ -171,6 +170,10 @@ final class CreateTable implements Statement, Relation
             $out->keyword('IF', 'NOT', 'EXISTS');
         }
         (new ObjectNames())->write($out, $this->name);
-        $out->symbol('(')->list([...$this->columns, ...$this->constraints])->symbol(')')->list($this->options);
+        $out->symbol('(')->list([...$this->columns, ...$this->constraints])->symbol(')');
+        if ($this->optionsComma) {
+            $out->symbol(',');
+        }
+        $out->list($this->options);
     }
 }

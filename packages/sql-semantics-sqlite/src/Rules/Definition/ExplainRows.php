@@ -18,17 +18,21 @@ use SqlSemantics\Statement\Type\Nullability;
  * The rows an EXPLAIN report returns.
  *
  * Rule: SQLITE-EXPLAIN-ROWS-001. EXPLAIN returns one row per virtual machine
- * instruction with the columns addr, opcode, p1, p2, p3, p4, p5 and comment.
- * EXPLAIN QUERY PLAN returns one row per plan node with the columns id,
- * parent, notused and detail. The model guarantees the number, order, names
- * and storage classes of these columns for the shipped release; the manual
- * reserves the right to change the format between releases and says nothing
- * about the number or content of the rows, which are not modeled. The p4
- * operand and the comment may be NULL (the comment is NULL unless the library
- * is built with SQLITE_ENABLE_EXPLAIN_COMMENTS); every other column is never
- * NULL. Precision: every field is a known type. No diagnostic.
+ * instruction with the columns addr, opcode, p1, p2, p3, p4, p5 and comment:
+ * the address and the operand integers are never NULL, the opcode name is
+ * text, the p4 operand is text or NULL, and the comment is NULL unless the
+ * library is built with SQLITE_ENABLE_EXPLAIN_COMMENTS. EXPLAIN QUERY PLAN
+ * returns one row per plan node with the columns id, parent, notused and
+ * detail, none of them NULL. The model fixes the number, order, names and
+ * storage classes of these columns for the shipped release. The manual says
+ * the output "is intended for interactive analysis and troubleshooting only",
+ * that "the details of the output format are subject to change from one
+ * release of SQLite to the next", and nothing about the number or content of
+ * the rows, which are not modeled. Precision: every field is a known type.
+ * No diagnostic. Terminates: a fixed table.
  * Source: https://sqlite.org/lang_explain.html, https://sqlite.org/opcode.html,
- * https://sqlite.org/eqp.html. Status: Implemented.
+ * https://sqlite.org/eqp.html (and `sqlite3VdbeList()` in vdbe.c of the
+ * release). Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\Sqlite
  */

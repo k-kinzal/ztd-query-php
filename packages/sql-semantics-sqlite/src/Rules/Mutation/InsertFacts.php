@@ -59,7 +59,7 @@ final class InsertFacts
         $excluded = new VisibleRelation($into->target, $target->shape, new Name('excluded'), null, [ColumnResolver::QUALIFIED_ONLY], $target->implicit);
         foreach ($upserts as $upsert) {
             $environment = new Environment($derivation->context, $base, [$target]);
-            foreach ($upsert->target?->terms ?? [] as $term) {
+            foreach ($upsert->target === null ? [] : $upsert->target->terms as $term) {
                 $derivation->scalar($term->expression, $environment);
             }
             if ($upsert->target?->where !== null) {

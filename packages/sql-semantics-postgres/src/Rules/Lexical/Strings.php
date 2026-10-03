@@ -155,7 +155,7 @@ final class Strings
         if ($match[2] !== '') {
             return [chr((int) hexdec($match[2])), $next];
         }
-        $point = (int) hexdec(($match[4] ?? '') !== '' ? $match[4] : ($match[3] ?? ''));
+        $point = (int) hexdec(($match[4] ?? '') !== '' ? $match[4] : $match[3]);
         if ($point >= 0xD800 && $point <= 0xDBFF) {
             if (preg_match('/\G\\\\(?:u([0-9A-Fa-f]{4})|U([0-9A-Fa-f]{8}))/', $text, $pair, 0, $next) !== 1) {
                 throw new AnalysisException('invalid Unicode surrogate pair');

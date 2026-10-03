@@ -13,8 +13,10 @@ use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\ArrayBound;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\ArraySpecifier;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\ColumnDesignation;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\IntervalDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypedColumn;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Statement\Scalar;
 
@@ -24,7 +26,9 @@ use SqlSemantics\Statement\Scalar;
  * Rule: PG-TYPE-NAME-LOWER-001. Scope: `Typename`, `opt_array_bounds`,
  * `func_type`, `type_list`, `type_name_list`, `TableFuncElement`,
  * `TableFuncElementList`, `OptTableFuncElementList`, and the type of a typed
- * constant in `AexprConst`. Constructors: `TypeName`, `ArraySpecifier`,
+ * constant in `AexprConst`; the entry points for `SimpleTypename` and for
+ * an interval type written outside a type name delegate to the designation
+ * rules. Constructors: `TypeName`, `ArraySpecifier`,
  * `ArrayBound`, `TypedColumn`, `ColumnDesignation`. The grammar action
  * rejects a named argument or an ORDER BY among the modifiers of a typed
  * constant, so they are SQL outside the grammar. Termination: lists and array
@@ -63,6 +67,30 @@ final class TypeNames
             'Typename: SETOF SimpleTypename ARRAY' => new TypeName($designations->simple($form->node(1)), true, new ArraySpecifier([], true)),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Lowers `SimpleTypename`: a type without SETOF or an array part, as written after AS in a sequence option or in XMLSERIALIZE.
+     */
+    public function simple(Node $type): TypeDesignation
+    {
+        return (new Designations($this->lowering))->simple($type);
+    }
+
+    /**
+     * Lowers `ConstInterval opt_interval`: the interval type with an optional field restriction, as written in a zone value or a typed constant.
+     */
+    public function interval(Node $keyword, Node $restriction): IntervalDesignation
+    {
+        return (new Intervals($this->lowering))->interval($keyword, $restriction);
+    }
+
+    /**
+     * Lowers `ConstInterval ( Iconst )`: the interval type with a seconds precision.
+     */
+    public function preciseInterval(Node $keyword, Node $precision): IntervalDesignation
+    {
+        return (new Intervals($this->lowering))->precise($keyword, $precision);
     }
 
     /**
@@ -144,14 +172,25 @@ final class TypeNames
         $columns = [];
         $elements = $form->signature === 'OptTableFuncElementList: TableFuncElementList' ? $form->node(0) : $list;
         foreach ($this->lowering->items($elements, 'TableFuncElementList: TableFuncElement', 'TableFuncElementList: TableFuncElementList , TableFuncElement') as $element) {
-            $column = $this->lowering->productions->form($element);
-            if ($column->signature !== 'TableFuncElement: ColId Typename opt_collate_clause') {
-                throw ImplementationGap::production($column);
-            }
-            $columns[] = new TypedColumn($this->lowering->names->name($column->node(0)), $this->typeName($column->node(1)), $this->lowering->names->optionalDotted($column->node(2)));
+            $columns[] = $this->typedColumn($element);
         }
 
         return $columns;
+    }
+
+    /**
+     * Lowers `TableFuncElement`: a column name, its type and an optional collation.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function typedColumn(Node $element): TypedColumn
+    {
+        $column = $this->lowering->productions->form($element);
+        if ($column->signature !== 'TableFuncElement: ColId Typename opt_collate_clause') {
+            throw ImplementationGap::production($column);
+        }
+
+        return new TypedColumn($this->lowering->names->name($column->node(0)), $this->typeName($column->node(1)), $this->lowering->names->optionalDotted($column->node(2)));
     }
 
     /**

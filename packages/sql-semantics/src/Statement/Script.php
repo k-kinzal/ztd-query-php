@@ -13,7 +13,9 @@ use SqlSemantics\Rendering\Output;
  *
  * Every statement is derived against the same context. An earlier statement is
  * not executed for a later one: a CREATE in the script declares nothing for
- * the statements after it.
+ * the statements after it. The declarations and diagnostics of every member
+ * are those of the script; the rows of a member are not, since a script has
+ * no single row set.
  *
  * @visibility public
  * @example Keeping the statements of one input apart
@@ -42,12 +44,12 @@ final class Script implements Statement
     }
 
     /**
-     * Derives each statement against the same unchanged context.
+     * Derives each statement against the same unchanged context; the script itself returns no rows.
      */
     public function deriveStatement(Derivation $derivation): void
     {
         foreach ($this->statements as $statement) {
-            $derivation->statement($statement);
+            $derivation->member($statement);
         }
     }
 

@@ -8,6 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\NonConstantDefault;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnFlaw;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -22,8 +26,11 @@ use SqlSemantics\Statement\Snapshot;
  * text. The constraints are a list in written order; nothing limits how
  * often a kind of constraint occurs. The numbers written as type arguments
  * and the operands of the constraints are derived inside the table
- * definition.
- * Source: https://sqlite.org/syntax/column-def.html. Status: Implemented.
+ * definition. Diagnostics: a DEFAULT expression that is not constant
+ * (SQLITE-DEFINITION-LIMITS-001), and a DEFAULT on a generated column.
+ * Source: https://sqlite.org/syntax/column-def.html,
+ * https://sqlite.org/lang_createtable.html#the_default_clause,
+ * https://sqlite.org/gencol.html#limitations. Status: Implemented.
  *
  * @visibility public
  * @example Reading a column definition
@@ -93,15 +100,23 @@ final class ColumnDefinition implements Node
     }
 
     /**
-     * Derives the type arguments and the operands of the constraints inside the table definition.
+     * Derives the type arguments and the operands of the constraints inside the table definition, and reports a default SQLite rejects.
      */
     public function deriveColumn(Derivation $derivation, ConstraintScope $scope): void
     {
         foreach ($this->type->arguments ?? [] as $argument) {
             $derivation->scalar($argument->number, $scope->constant);
         }
+        $default = false;
         foreach ($this->constraints as $constraint) {
             $constraint->deriveConstraint($derivation, $scope);
+            if ($constraint instanceof DefaultExpression && (new Limits())->nonConstant($constraint->expression)) {
+                $derivation->report(new NonConstantDefault($this->name));
+            }
+            $default = $default || $constraint instanceof DefaultExpression || $constraint instanceof DefaultLiteral || $constraint instanceof DefaultWord;
+        }
+        if ($default && $this->generated() !== null) {
+            $derivation->report(new GeneratedColumnProblem(GeneratedColumnFlaw::WithDefault, $this->name));
         }
     }
 

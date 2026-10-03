@@ -15,6 +15,9 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnPrimaryKey;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Generated;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\NotNull;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\NonConstantDefault;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnFlaw;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Known;
@@ -56,6 +59,21 @@ final class ColumnDefinitionTest extends TestCase
         self::assertNotNull($type);
         self::assertEquals(new Known(Storage::Integer), $operation->facts->scalar($type->arguments[1]->number)->type);
         self::assertSame([], $operation->facts->diagnostics);
+    }
+
+    public function testDeriveColumnReportsANonConstantDefaultAndADefaultOnAGeneratedColumn(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $constant = $semantics->analyze('CREATE TABLE t (a DEFAULT (abs(?)))', []);
+        $generated = $semantics->analyze('CREATE TABLE t (a, b AS (a) DEFAULT 1, c DEFAULT word AS (a))', []);
+
+        self::assertCount(1, $constant->facts->diagnostics);
+        self::assertInstanceOf(NonConstantDefault::class, $constant->facts->diagnostics[0]);
+        self::assertSame('a', $constant->facts->diagnostics[0]->column->value);
+        self::assertCount(2, $generated->facts->diagnostics);
+        self::assertInstanceOf(GeneratedColumnProblem::class, $generated->facts->diagnostics[0]);
+        self::assertSame(GeneratedColumnFlaw::WithDefault, $generated->facts->diagnostics[0]->flaw);
+        self::assertSame('c', $generated->facts->diagnostics[1]->column?->value);
     }
 
     public function testRenderWritesTheNameTheTypeAndTheConstraintsInOrder(): void

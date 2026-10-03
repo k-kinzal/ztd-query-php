@@ -15,7 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\MutationTarget;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Platform\Sqlite\Statement\Query\Values;
+use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
@@ -130,7 +130,7 @@ final class TriggerRule
     /**
      * Lowers a `trigger_cmd_list` into the statements of the program in written order.
      *
-     * @return list<Select|Values|Compound|WithQuery|InsertRows|InsertSelect|Update|Delete>
+     * @return list<Select|ValuesClause|Compound|WithQuery|InsertRows|InsertSelect|Update|Delete>
      * @throws ImplementationGap When a production has no rule
      */
     public function program(Node $list): array
@@ -152,7 +152,7 @@ final class TriggerRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function step(Node $command): Select|Values|Compound|WithQuery|InsertRows|InsertSelect|Update|Delete
+    public function step(Node $command): Select|ValuesClause|Compound|WithQuery|InsertRows|InsertSelect|Update|Delete
     {
         $lowering = $this->lowering;
         $form = $lowering->productions->form($command);

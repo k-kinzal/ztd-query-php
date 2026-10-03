@@ -68,6 +68,7 @@ final class CreateTableRule
                 $this->constraints->options($body->node(4)),
                 $temporary,
                 $ifNotExists,
+                $this->constraints->leadingComma($body->node(4)),
             ),
             'create_table_args: AS select' => new CreateTableAs($name, $this->lowering->selects->select($body->node(1)), $temporary, $ifNotExists),
             default => throw ImplementationGap::production($body),

@@ -16,8 +16,8 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Keeping conflicting declarations
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
- *     $context = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE TABLE t (b TEXT)')]);
- *     $query = $semantics->analyze('SELECT 1 FROM t', $context);
+ *     $declarations = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE TABLE t (b TEXT)')]);
+ *     $query = $semantics->analyze('SELECT 1 FROM t', $declarations);
  *     count($query->facts->relation($query->inputRelation())->table->candidates) // => 2
  */
 final class ConflictingTables implements TableResolution, Diagnostic

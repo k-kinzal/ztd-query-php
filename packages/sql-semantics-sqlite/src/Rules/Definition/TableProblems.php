@@ -8,6 +8,8 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnFlaw;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyFlaw;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\QualifiedTemporaryName;
@@ -24,11 +26,13 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  * option; in a STRICT table a column without one of the six standard types;
  * more than one primary key; a WITHOUT ROWID table without a primary key;
  * AUTOINCREMENT on a key that is not an integer primary key, or on a WITHOUT
- * ROWID table. Problems SQLite finds only when rows are written, and limits
- * of the library build, are not modeled. Terminates: the column pairs and the
- * options are finite.
+ * ROWID table; a generated column in the primary key; a table whose columns
+ * are all generated. Problems SQLite finds only when rows are written, and
+ * limits of the library build, are not modeled. Terminates: the column pairs
+ * and the options are finite.
  * Source: https://sqlite.org/lang_createtable.html, https://sqlite.org/stricttables.html,
- * https://sqlite.org/withoutrowid.html, https://sqlite.org/autoinc.html. Status: Implemented.
+ * https://sqlite.org/withoutrowid.html, https://sqlite.org/autoinc.html,
+ * https://sqlite.org/gencol.html#limitations. Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\Sqlite
  */
@@ -63,6 +67,25 @@ final class TableProblems
             if ($present) {
                 $derivation->report(new PrimaryKeyProblem($flaw));
             }
+        }
+        $this->generated($definition, $key, $derivation);
+    }
+
+    /**
+     * Reports a generated column in the primary key and a table without a plain column.
+     */
+    public function generated(CreateTable $definition, TableKey $key, Derivation $derivation): void
+    {
+        $plain = 0;
+        foreach ($definition->columns as $position => $column) {
+            if ($column->generated() === null) {
+                $plain++;
+            } elseif ($column->primaryKey() !== null || in_array($position, $key->columns, true)) {
+                $derivation->report(new GeneratedColumnProblem(GeneratedColumnFlaw::InPrimaryKey, $column->name));
+            }
+        }
+        if ($plain === 0) {
+            $derivation->report(new GeneratedColumnProblem(GeneratedColumnFlaw::NoPlainColumn));
         }
     }
 

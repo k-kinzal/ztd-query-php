@@ -104,9 +104,15 @@ final class NameRule
      * Lowers an `idlist` into its names in written order.
      *
      * @return list<Name>
+     *
+     * @throws ImplementationGap When a production has no rule
      */
     public function list(Node $idlist): array
     {
+        $form = $this->lowering->productions->form($idlist);
+        if ($form->signature !== 'idlist: nm' && $form->signature !== 'idlist: idlist COMMA nm') {
+            throw ImplementationGap::production($form);
+        }
         $names = [];
         foreach ((new Lists())->items($idlist) as $name) {
             $names[] = $this->name($name);

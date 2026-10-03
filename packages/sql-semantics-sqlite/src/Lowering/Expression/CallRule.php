@@ -42,20 +42,24 @@ final class CallRule
     public function expression(Form $form): Scalar
     {
         $lowering = $this->lowering;
-        $name = str_starts_with($form->signature, 'expr: idj LP ') ? $lowering->names->token($form->token(0)) : null;
-        if ($name === null) {
-            throw ImplementationGap::production($form);
-        }
 
         return match ($form->signature) {
-            'expr: idj LP distinct exprlist RP' => new FunctionCall($name, $lowering->expressions->list($form->node(3)), false, $lowering->results->quantifier($form->node(2))),
-            'expr: idj LP distinct exprlist ORDER BY sortlist RP' => new FunctionCall($name, $lowering->expressions->list($form->node(3)), false, $lowering->results->quantifier($form->node(2)), $lowering->ordering->terms($form->node(6))),
-            'expr: idj LP STAR RP' => new FunctionCall($name, [], true),
-            'expr: idj LP distinct exprlist RP filter_over' => new FunctionCall($name, $lowering->expressions->list($form->node(3)), false, $lowering->results->quantifier($form->node(2)), [], ...$this->filterOver($form->node(5))),
-            'expr: idj LP distinct exprlist ORDER BY sortlist RP filter_over' => new FunctionCall($name, $lowering->expressions->list($form->node(3)), false, $lowering->results->quantifier($form->node(2)), $lowering->ordering->terms($form->node(6)), ...$this->filterOver($form->node(8))),
-            'expr: idj LP STAR RP filter_over' => new FunctionCall($name, [], true, null, [], ...$this->filterOver($form->node(4))),
+            'expr: idj LP distinct exprlist RP' => new FunctionCall($this->name($form), $lowering->expressions->list($form->node(3)), false, $lowering->results->quantifier($form->node(2))),
+            'expr: idj LP distinct exprlist ORDER BY sortlist RP' => new FunctionCall($this->name($form), $lowering->expressions->list($form->node(3)), false, $lowering->results->quantifier($form->node(2)), $lowering->ordering->terms($form->node(6))),
+            'expr: idj LP STAR RP' => new FunctionCall($this->name($form), [], true),
+            'expr: idj LP distinct exprlist RP filter_over' => new FunctionCall($this->name($form), $lowering->expressions->list($form->node(3)), false, $lowering->results->quantifier($form->node(2)), [], ...$this->filterOver($form->node(5))),
+            'expr: idj LP distinct exprlist ORDER BY sortlist RP filter_over' => new FunctionCall($this->name($form), $lowering->expressions->list($form->node(3)), false, $lowering->results->quantifier($form->node(2)), $lowering->ordering->terms($form->node(6)), ...$this->filterOver($form->node(8))),
+            'expr: idj LP STAR RP filter_over' => new FunctionCall($this->name($form), [], true, null, [], ...$this->filterOver($form->node(4))),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Lowers the function name of a call production and records it as an operand leaf.
+     */
+    public function name(Form $form): Name
+    {
+        return $this->lowering->names->token($form->token(0));
     }
 
     /**

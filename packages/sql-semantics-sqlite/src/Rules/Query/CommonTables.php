@@ -36,8 +36,8 @@ use SqlSemantics\Validation\ValueGraph;
  * renamed by the column list when one is written; a column list of another
  * length, a collation or direction in the list and a repeated table name are
  * reported. A table that refers to a table that refers back cannot be
- * ordered; SQLite rejects it, and the reference then falls through to the
- * declared relations. Terminates: each table is derived once.
+ * ordered; SQLite rejects it as a circular reference, which is reported,
+ * and the reference then falls through to the declared relations. Terminates: each table is derived once.
  * Source: https://sqlite.org/lang_with.html. Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\Sqlite
@@ -61,8 +61,9 @@ final class CommonTables
         }
         $pending = $with->tables;
         $bindings = [];
+        $circular = false;
         while ($pending !== []) {
-            $next = array_key_first($pending);
+            $next = null;
             foreach ($pending as $index => $table) {
                 $waiting = false;
                 foreach ($pending as $other => $candidate) {
@@ -72,6 +73,13 @@ final class CommonTables
                     $next = $index;
                     break;
                 }
+            }
+            if ($next === null) {
+                $next = array_key_first($pending);
+                if (!$circular) {
+                    $derivation->report(new Misuse(MisuseRule::CircularReference));
+                }
+                $circular = true;
             }
             $table = $pending[$next];
             unset($pending[$next]);

@@ -18,8 +18,8 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Keeping a declaration that an unknown earlier schema could shadow
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
- *     $context = $semantics->context([$semantics->analyze('CREATE TABLE main.t (a INTEGER)')], false);
- *     $query = $semantics->analyze('SELECT a FROM t', $context);
+ *     $declarations = $semantics->context([$semantics->analyze('CREATE TABLE main.t (a INTEGER)')], false);
+ *     $query = $semantics->analyze('SELECT a FROM t', $declarations);
  *     count($query->facts->relation($query->inputRelation())->table->candidates) // => 1
  */
 final class ConditionalTable implements TableResolution

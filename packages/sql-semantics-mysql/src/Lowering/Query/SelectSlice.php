@@ -16,24 +16,26 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
 
 /**
- * Lowers the thin query slice: SELECT of expressions from one table with a WHERE predicate, in both grammar generations.
+ * Lowers the thin query slice: SELECT of expressions from one table with a WHERE predicate, in every grammar generation.
  *
  * Slice of the query family, written with the leaf layers so that the
- * pipeline runs end to end in MySQL 5.7 and in 8.0 and later; the query
+ * pipeline runs end to end in MySQL 5.6, 5.7 and 8.0 and later; the query
  * family completes or replaces it.
  *
  * Rule: MYSQL-SELECT-SLICE-001. Scope: the alternatives of select_stmt,
  * query_expression, query_expression_body, query_primary,
  * query_specification, opt_from_clause, from_clause, from_tables,
  * table_reference_list, table_reference, table_factor, single_table (8.0
- * and later) and of select, select_init, select_part2,
+ * and later), of select, select_init, select_part2,
  * select_options_and_item_list, join_table_list, derived_table_list,
- * esc_table_ref, table_ref (5.7) that a plain selection takes, with every
- * other clause absent; select_item_list, select_item, select_alias,
- * opt_table_alias, table_alias, where_clause, opt_where_clause. Select items keep their
+ * esc_table_ref, table_ref (5.7) and of select_init2, select_into,
+ * select_from (5.6) that a plain selection takes, with every other clause
+ * absent; select_item_list, select_item, select_alias, opt_table_alias,
+ * table_alias, where_clause, opt_where_clause. Select items keep their
  * written order. Constructs: Select, SelectExpression, TableReference.
  * Terminates: the select list is flattened iteratively; every other child
- * is a strict subtree. Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
+ * is a strict subtree. Source: https://dev.mysql.com/doc/refman/8.4/en/select.html,
+ * https://dev.mysql.com/doc/refman/5.7/en/select.html.
  * Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -56,13 +58,33 @@ final class SelectSlice
     private const LEGACY_TABLE = ['table_reference_list: join_table_list', 'join_table_list: derived_table_list', 'derived_table_list: esc_table_ref', 'esc_table_ref: table_ref', 'table_ref: table_factor'];
 
     /**
+     * The unit productions from the table list of 5.6 down to its table factor.
+     */
+    private const OLDEST_TABLE = ['join_table_list: derived_table_list', 'derived_table_list: esc_table_ref', 'esc_table_ref: table_ref', 'table_ref: table_factor'];
+
+    /**
+     * The 5.6 production of the clauses that follow the select list, by whether a FROM clause is written.
+     */
+    private const OLDEST_CLAUSES = ['select_into: opt_order_clause opt_limit_clause' => false, 'select_into: select_from' => true];
+
+    /**
+     * The single table productions of every generation.
+     */
+    private const TABLES = [
+        'single_table: table_ident opt_use_partition opt_table_alias opt_key_definition' => true,
+        'single_table: table_ident opt_use_partition opt_table_alias opt_key_definition opt_tablesample_clause' => true,
+        'table_factor: table_ident opt_use_partition opt_table_alias opt_key_definition' => true,
+    ];
+
+    /**
      * The clauses a plain selection leaves absent, by the production that writes nothing.
      */
     private const ABSENT = [
         'select_options:' => true, 'opt_group_clause:' => true, 'opt_having_clause:' => true, 'opt_window_clause:' => true, 'opt_qualify_clause:' => true,
         'opt_order_clause:' => true, 'opt_limit_clause:' => true, 'opt_into:' => true, 'opt_procedure_analyse_clause:' => true,
         'opt_select_lock_type:' => true, 'opt_union_clause:' => true, 'opt_use_partition:' => true, 'opt_index_hints_list:' => true,
-        'opt_tablesample_clause:' => true,
+        'opt_tablesample_clause:' => true, 'union_clause:' => true, 'select_lock_type:' => true, 'group_clause:' => true, 'having_clause:' => true,
+        'procedure_analyse_clause:' => true,
     ];
 
     /**
@@ -104,12 +126,15 @@ final class SelectSlice
     }
 
     /**
-     * Lowers a query statement of MySQL 5.7.
+     * Lowers a query statement of MySQL 5.6 or 5.7.
      *
      * @throws ImplementationGap When a production has no rule
      */
     public function legacy(Form $form): Select
     {
+        if ($form->signature === 'select_init: SELECT_SYM select_init2') {
+            return $this->oldest($form->node(1));
+        }
         if ($form->signature !== 'select_init: SELECT_SYM select_part2 opt_union_clause') {
             throw ImplementationGap::production($form);
         }
@@ -126,6 +151,40 @@ final class SelectSlice
         $this->absent($body, [1, 4, 5, 6, 7, 8, 9, 10]);
 
         return new Select($this->legacyItems($body->node(0)), $this->from($body->node(2)), $this->where($body->node(3)));
+    }
+
+    /**
+     * Lowers a query statement of MySQL 5.6, whose clauses after the select list hang off one rule.
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function oldest(Node $init): Select
+    {
+        $form = $this->lowering->productions->form($init);
+        if ($form->signature !== 'select_init2: select_part2 union_clause') {
+            throw ImplementationGap::production($form);
+        }
+        $this->absent($form, [1]);
+        $body = $this->lowering->productions->form($form->node(0));
+        if ($body->signature !== 'select_part2: select_options select_item_list select_into select_lock_type') {
+            throw ImplementationGap::production($body);
+        }
+        $this->absent($body, [0, 3]);
+        $items = $this->items($body->node(1));
+        $clauses = $this->lowering->productions->form($body->node(2));
+        $hasFrom = self::OLDEST_CLAUSES[$clauses->signature] ?? throw ImplementationGap::production($clauses);
+        if (!$hasFrom) {
+            $this->absent($clauses, [0, 1]);
+
+            return new Select($items);
+        }
+        $from = $this->lowering->productions->form($clauses->node(0));
+        if ($from->signature !== 'select_from: FROM join_table_list where_clause group_clause having_clause opt_order_clause opt_limit_clause procedure_analyse_clause') {
+            throw ImplementationGap::production($from);
+        }
+        $this->absent($from, [3, 4, 5, 6, 7]);
+
+        return new Select($items, $this->table($this->descend($from->node(1), self::OLDEST_TABLE)), $this->where($from->node(2)));
     }
 
     /**
@@ -160,6 +219,12 @@ final class SelectSlice
         $items = [];
         foreach ((new Lists())->items($list) as $item) {
             $itemForm = $this->lowering->productions->form($item);
+            if ($itemForm->signature === 'select_item: remember_name expr remember_end select_alias') {
+                $this->lowering->options->skip($itemForm->node(0));
+                $this->lowering->options->skip($itemForm->node(2));
+                $items[] = new SelectExpression($this->lowering->expressions->expression($itemForm->node(1)), $this->alias($itemForm->node(3)));
+                continue;
+            }
             if ($itemForm->signature !== 'select_item: expr select_alias') {
                 throw ImplementationGap::production($itemForm);
             }
@@ -208,16 +273,23 @@ final class SelectSlice
         if ($form->signature === 'opt_from_clause: from_clause') {
             $form = $this->lowering->productions->form($form->node(0));
         }
-        $table = match ($form->signature) {
-            'from_clause: FROM from_tables' => $this->lowering->productions->form($this->descend($form->node(1), self::MODERN_TABLE)),
-            'from_clause: FROM table_reference_list' => $this->lowering->productions->form($this->descend($form->node(1), self::LEGACY_TABLE)),
+
+        return match ($form->signature) {
+            'from_clause: FROM from_tables' => $this->table($this->descend($form->node(1), self::MODERN_TABLE)),
+            'from_clause: FROM table_reference_list' => $this->table($this->descend($form->node(1), self::LEGACY_TABLE)),
             default => throw ImplementationGap::production($form),
         };
-        if (!in_array($table->signature, [
-            'single_table: table_ident opt_use_partition opt_table_alias opt_key_definition',
-            'single_table: table_ident opt_use_partition opt_table_alias opt_key_definition opt_tablesample_clause',
-            'table_factor: table_ident opt_use_partition opt_table_alias opt_key_definition',
-        ], true)) {
+    }
+
+    /**
+     * Lowers one named table without partition selection, index hints or sampling.
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function table(Node $factor): TableReference
+    {
+        $table = $this->lowering->productions->form($factor);
+        if (!isset(self::TABLES[$table->signature])) {
             throw ImplementationGap::production($table);
         }
         $hints = $this->lowering->productions->form($table->node(3));

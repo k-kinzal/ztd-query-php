@@ -63,17 +63,42 @@ final class Joining
                 continue;
             }
             $hidden = $right[$into[0]];
-            $right[$into[0]] = new VisibleRelation($hidden->relation, $hidden->shape, $hidden->alias, $hidden->name, [...$hidden->hidden, $into[1]], $hidden->implicit);
+            $right = $this->replaced($right, $into[0], new VisibleRelation($hidden->relation, $hidden->shape, $hidden->alias, $hidden->name, [...$hidden->hidden, $into[1]], $hidden->implicit));
             if ($outer) {
-                $kept = $left[$from[0]];
-                $slots = $kept->shape->slots;
-                $other = $hidden->shape->slots[$into[1]];
-                $slots[$from[1]] = new OutputSlot($slots[$from[1]]->name, (new Storages())->either([$slots[$from[1]]->type, $other->type]), $slots[$from[1]]->nullability->propagate($other->nullability), null, $slots[$from[1]]);
-                $left[$from[0]] = new VisibleRelation($kept->relation, new RowShape($slots, $kept->shape->missing), $kept->alias, $kept->name, $kept->hidden, $kept->implicit);
+                $left = $this->replaced($left, $from[0], $this->coalesced($left[$from[0]], $from[1], $hidden->shape->slots[$into[1]]));
             }
         }
 
         return [...($outer ? $this->extend($left) : $left), ...($step->operator->left() ? $this->extend($right) : $right)];
+    }
+
+    /**
+     * Answers the relations with the one at a position replaced.
+     *
+     * @param list<VisibleRelation> $relations
+     * @return list<VisibleRelation>
+     */
+    public function replaced(array $relations, int $position, VisibleRelation $relation): array
+    {
+        $result = [];
+        foreach ($relations as $index => $item) {
+            $result[] = $index === $position ? $relation : $item;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Answers a relation whose merged column takes the first non-NULL of its own slot and the slot merged into it.
+     */
+    public function coalesced(VisibleRelation $kept, int $position, OutputSlot $other): VisibleRelation
+    {
+        $slots = [];
+        foreach ($kept->shape->slots as $index => $slot) {
+            $slots[] = $index === $position ? new OutputSlot($slot->name, (new Storages())->either([$slot->type, $other->type]), $slot->nullability->propagate($other->nullability), null, $slot) : $slot;
+        }
+
+        return new VisibleRelation($kept->relation, new RowShape($slots, $kept->shape->missing), $kept->alias, $kept->name, $kept->hidden, $kept->implicit);
     }
 
     /**

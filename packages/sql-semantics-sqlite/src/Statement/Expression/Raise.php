@@ -60,7 +60,7 @@ final class Raise implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->keyword('RAISE')->symbol('(')->keyword($this->action->value);
+        $out->keyword('RAISE')->glue()->symbol('(')->keyword($this->action->value);
         if ($this->message !== null) {
             $out->symbol(',')->node($this->message);
         }

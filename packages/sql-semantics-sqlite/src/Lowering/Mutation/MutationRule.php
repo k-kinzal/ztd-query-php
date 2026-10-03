@@ -20,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
-use SqlSemantics\Platform\Sqlite\Statement\Query\Values;
+use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithClause;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -121,7 +121,7 @@ final class MutationRule
         $source = $this->lowering->selects->select($select);
         [$upserts, $returning] = $this->upserts->tail($upsert);
 
-        return $source instanceof Values ? new InsertRows($into, $source, $upserts, $returning) : new InsertSelect($into, $source, $upserts, $returning);
+        return $source instanceof ValuesClause ? new InsertRows($into, $source, $upserts, $returning) : new InsertSelect($into, $source, $upserts, $returning);
     }
 
     /**

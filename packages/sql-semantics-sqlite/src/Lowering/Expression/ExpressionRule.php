@@ -20,7 +20,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Raise;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\RaiseAction;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\RowValue;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\Exists;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
@@ -71,7 +71,7 @@ final class ExpressionRule
             'expr: VARIABLE' => $this->parameter($form->token(0)),
             'expr: expr COLLATE ids' => new Collate($this->expression($form->node(0)), $names->token($form->token(2))),
             'expr: CAST LP expr AS typetoken RP' => new Cast($this->expression($form->node(2)), $this->lowering->typeNames->named($form->node(4))),
-            'expr: LP nexprlist COMMA expr RP' => new RowValue([...$this->items($form->node(1)), $this->expression($form->node(3))]),
+            'expr: LP nexprlist COMMA expr RP' => new RowExpression([...$this->items($form->node(1)), $this->expression($form->node(3))]),
             'expr: LP select RP' => new ScalarSubquery($this->lowering->selects->select($form->node(1))),
             'expr: EXISTS LP select RP' => new Exists($this->lowering->selects->select($form->node(2))),
             'expr: CASE case_operand case_exprlist case_else END' => $this->conditional($form->node(1), $form->node(2), $form->node(3)),

@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Mutation;
 
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Scalar;
@@ -42,15 +43,8 @@ final class Upsert implements Node
      */
     public function __construct(public readonly ?ConflictTarget $target = null, array $assignments = [], public readonly ?Scalar $where = null)
     {
-        $list = [];
-        foreach ($assignments as $assignment) {
-            if (!$assignment instanceof Assignment && !$assignment instanceof RowAssignment) {
-                throw new InvalidConstruction('An upsert assigns columns or column rows.');
-            }
-            $list[] = $assignment;
-        }
-        Check::input(array_is_list($assignments) && ($list !== [] || $where === null), 'DO NOTHING takes no predicate.');
-        $this->assignments = $list;
+        $this->assignments = (new ClosedList())->of($assignments, [Assignment::class, RowAssignment::class], 'An upsert assigns columns or column rows.');
+        Check::input($this->assignments !== [] || $where === null, 'DO NOTHING takes no predicate.');
     }
 
     /**

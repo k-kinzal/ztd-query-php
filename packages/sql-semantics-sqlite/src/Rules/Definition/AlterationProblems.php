@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Rules\Definition;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\LiteralDefaults;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnUnique;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression;
-use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
-use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\GeneratedStorage;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationObstacle;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationRefused;
@@ -30,8 +29,13 @@ use SqlSemantics\Statement\Type\Nullability;
  * Rule: SQLITE-ALTER-PROBLEMS-001. Column names are compared without regard
  * to ASCII case. Nothing is reported about the columns while the column list
  * of the table is not completely known. A table is taken as STRICT when a
- * declared column of it is. Diagnostics: see AlterAddColumn, AlterDropColumn
- * and AlterRenameColumn. Terminates: one pass over the columns.
+ * declared column of it is. The default of an added column is read by
+ * SQLITE-LITERAL-DEFAULT-001: a NOT NULL column needs a default that is not
+ * NULL, and a default must be one SQLite can compute when the column is
+ * added; a default that is not constant at all is reported by the column
+ * definition and not again here. Diagnostics: see AlterAddColumn,
+ * AlterDropColumn and AlterRenameColumn. Terminates: one pass over the
+ * columns.
  * Source: https://sqlite.org/lang_altertable.html. Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\Sqlite
@@ -94,17 +98,24 @@ final class AlterationProblems
         if ($domain->strict && !$domain->standard) {
             $derivation->report(new StrictTypeViolation($column->name, $domain->declared));
         }
-        $default = false;
         $unique = false;
         foreach ($column->constraints as $constraint) {
             $unique = $unique || $constraint instanceof ColumnUnique;
-            $default = $default || $constraint instanceof DefaultExpression || $constraint instanceof DefaultWord || ($constraint instanceof DefaultLiteral && !$constraint->literal instanceof NullLiteral);
         }
+        $defaults = new LiteralDefaults();
+        $default = false;
+        $literal = true;
+        foreach ($defaults->defaults($column->constraints) as $clause) {
+            $default = !$defaults->null($clause);
+            $literal = !$default || $defaults->literal($clause) || ($clause instanceof DefaultExpression && (new Limits())->nonConstant($clause->expression));
+        }
+        $plain = $column->generated() === null;
         $obstacles = [
             [$column->primaryKey() !== null, AlterationObstacle::PrimaryKeyColumn],
             [$unique, AlterationObstacle::UniqueColumn],
             [$column->generated()?->storage() === GeneratedStorage::Stored, AlterationObstacle::StoredColumn],
-            [$column->notNull() && !$default && $column->generated() === null, AlterationObstacle::NotNullWithoutDefault],
+            [$plain && $column->notNull() && !$default, AlterationObstacle::NotNullWithoutDefault],
+            [$plain && !$literal, AlterationObstacle::NonConstantDefault],
         ];
         foreach ($obstacles as [$present, $obstacle]) {
             if ($present) {

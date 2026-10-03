@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema\Column;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
@@ -16,7 +18,8 @@ use SqlSemantics\Statement\Snapshot;
  * Rule: SQLITE-COLUMN-CHECK-001. The expression is evaluated for each written
  * row and may refer to any column of the table and to its row identifier, not
  * only to the column it is written after. It is derived at a position whose
- * only visible relation is the table being defined.
+ * only visible relation is the table being defined. A bound parameter or a
+ * subquery in it is a diagnostic (SQLITE-DEFINITION-LIMITS-001).
  * Source: https://sqlite.org/lang_createtable.html#check_constraints.
  * Status: Implemented.
  *
@@ -43,6 +46,7 @@ final class ColumnCheck implements ColumnConstraint
     public function deriveConstraint(Derivation $derivation, ConstraintScope $scope): void
     {
         $derivation->scalar($this->expression, $scope->row);
+        (new Limits())->report($this->expression, DefinitionPosition::CheckConstraint, $derivation);
     }
 
     /**

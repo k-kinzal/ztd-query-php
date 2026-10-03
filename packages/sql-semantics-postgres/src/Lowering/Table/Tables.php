@@ -88,6 +88,26 @@ final class Tables
     }
 
     /**
+     * Lowers `opt_unique_null_treatment`: true for NULLS DISTINCT, false for NULLS NOT DISTINCT, null when nothing is written.
+     *
+     * @throws ImplementationGap Until the family implements it
+     */
+    public function uniqueNullTreatment(Node $treatment): ?bool
+    {
+        throw ImplementationGap::production($this->lowering->productions->form($treatment));
+    }
+
+    /**
+     * Lowers `alter_column_default`: the expression of SET DEFAULT, or null for DROP DEFAULT.
+     *
+     * @throws ImplementationGap Until the family implements it
+     */
+    public function columnDefault(Node $change): ?Scalar
+    {
+        throw ImplementationGap::production($this->lowering->productions->form($change));
+    }
+
+    /**
      * Lowers `OptWhereClause`: a predicate written `WHERE ( expression )`; no clause is null.
      *
      * @throws ImplementationGap Until the family implements it

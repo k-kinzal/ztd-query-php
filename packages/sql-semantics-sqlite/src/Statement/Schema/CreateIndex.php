@@ -7,9 +7,11 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
@@ -28,10 +30,17 @@ use SqlSemantics\Statement\Statement;
  * search path. Its resolution is the relation fact of the statement node: the
  * node is the one occurrence of the indexed table, and the indexed
  * expressions and the WHERE condition of a partial index are derived at a
- * position whose only visible relation is that table (its columns and its
- * row identifier). A missing or conflicting table and a missing column are
- * diagnostics. Indexes are not part of a declaration context: the statement
- * provides no declaration, and whether the index name is free is not a fact.
+ * position whose only visible relation is that table: the condition sees
+ * its columns and its row identifier, an indexed expression sees its
+ * columns only, as SQLite does not resolve `rowid` there. A missing or
+ * conflicting table, a missing column, and a bound parameter, a subquery, a
+ * qualified column reference or a non-deterministic function in an indexed
+ * expression, or a bound parameter, a subquery or a non-deterministic
+ * function in the condition, are diagnostics (SQLITE-DEFINITION-LIMITS-001).
+ * Remaining assumption: SQLite reads a string literal written as a whole
+ * term as a column name; the model derives it as the text it is. Indexes are
+ * not part of a declaration context: the statement provides no declaration,
+ * and whether the index name is free is not a fact.
  * Source: https://sqlite.org/lang_createindex.html, https://sqlite.org/partialindex.html,
  * https://sqlite.org/expridx.html. Status: Implemented.
  *
@@ -87,11 +96,14 @@ final class CreateIndex implements Statement, Relation
         $shapes = new TableShapes();
         $fact = $derivation->relation($this, $derivation->environment());
         $scope = $shapes->scope($derivation, $this, new QualifiedName($this->table), $fact->shape, $shapes->implicitOf($fact));
+        $limits = new Limits();
         foreach ($this->terms as $term) {
-            $derivation->scalar($term->expression, $scope->row);
+            $derivation->scalar($term->expression, $scope->columns);
+            $limits->report($term->expression, DefinitionPosition::IndexExpression, $derivation);
         }
         if ($this->where !== null) {
             $derivation->scalar($this->where, $scope->row);
+            $limits->report($this->where, DefinitionPosition::PartialIndexWhere, $derivation);
         }
     }
 

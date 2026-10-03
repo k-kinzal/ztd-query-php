@@ -22,9 +22,9 @@ final class CompoundStep implements Node
 
     /**
      * @param CompoundOperator $operator The operator before the arm
-     * @param Select|Values $query The arm
+     * @param Select|ValuesClause $query The arm
      */
-    public function __construct(public readonly CompoundOperator $operator, public readonly Select|Values $query)
+    public function __construct(public readonly CompoundOperator $operator, public readonly Select|ValuesClause $query)
     {
     }
 

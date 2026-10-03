@@ -85,6 +85,21 @@ final class Derivation
     }
 
     /**
+     * Derives one member of a script.
+     *
+     * The member's declarations and diagnostics are kept; the rows it would
+     * return are not: a script of several statements returns no single row
+     * set of its own.
+     */
+    public function member(Statement $node): void
+    {
+        $output = $this->output;
+        $this->output = null;
+        $node->deriveStatement($this);
+        $this->output = $output;
+    }
+
+    /**
      * Derives a statement whose request is only inspected, such as the operand of EXPLAIN.
      *
      * Every part of the statement receives its facts, and its diagnostics are

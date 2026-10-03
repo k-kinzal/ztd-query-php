@@ -54,7 +54,7 @@ final class Queries
     }
 
     /**
-     * Lowers `sort_clause` or `opt_sort_clause`; no clause is an empty list.
+     * Lowers `sort_clause`, `opt_sort_clause` or `sortby_list`; no clause is an empty list.
      *
      * @return list<SortItem>
      *
@@ -109,11 +109,21 @@ final class Queries
     }
 
     /**
-     * Lowers `relation_expr`.
+     * Lowers `relation_expr` or `extended_relation_expr`: a table name with its ONLY or `*` inheritance marker.
      */
     public function relation(Node $relation): RelationReference
     {
         return (new SelectRule($this->lowering))->relation($relation);
+    }
+
+    /**
+     * Lowers `table_ref`: one item of a FROM list, or the source of MERGE.
+     *
+     * @throws ImplementationGap Until the family implements it
+     */
+    public function tableReference(Node $reference): Relation
+    {
+        throw ImplementationGap::production($this->lowering->productions->form($reference));
     }
 
     /**

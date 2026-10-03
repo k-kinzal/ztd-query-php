@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
@@ -35,7 +36,7 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("VALUES (1, 'a'), (2, NULL)");
  *     [count($query->statement->rows), $query->field(1)->name->value, $query->field(1)->nullability] // => [2, 'column2', \SqlSemantics\Statement\Type\Nullability::Nullable]
  */
-final class Values implements Statement, Query
+final class ValuesClause implements Statement, Query
 {
     use Snapshot;
 
@@ -57,6 +58,7 @@ final class Values implements Statement, Query
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new ProgramOnly())->outsideProgram($this, $derivation);
         $derivation->output($derivation->query($this, $derivation->environment()));
     }
 

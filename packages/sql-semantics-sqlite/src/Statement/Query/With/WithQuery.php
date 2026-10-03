@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Statement\Query\With;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Query\CommonTables;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Platform\Sqlite\Statement\Query\Values;
+use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -35,9 +36,9 @@ final class WithQuery implements Statement, Query
 
     /**
      * @param WithClause $with The WITH clause
-     * @param Select|Values|Compound $body The query the clause belongs to
+     * @param Select|ValuesClause|Compound $body The query the clause belongs to
      */
-    public function __construct(public readonly WithClause $with, public readonly Select|Values|Compound $body)
+    public function __construct(public readonly WithClause $with, public readonly Select|ValuesClause|Compound $body)
     {
     }
 
@@ -46,6 +47,7 @@ final class WithQuery implements Statement, Query
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new ProgramOnly())->outsideProgram($this, $derivation);
         $derivation->output($derivation->query($this, $derivation->environment()));
     }
 

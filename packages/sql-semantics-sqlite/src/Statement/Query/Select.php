@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Query;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Query\Ordinals;
 use SqlSemantics\Platform\Sqlite\Rules\Query\SelectFacts;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowDefinition;
@@ -84,15 +86,7 @@ final class Select implements Statement, Query, Selection
         public readonly ?Limit $limit = null,
         public readonly ?SetQuantifier $quantifier = null,
     ) {
-        $list = [];
-        foreach ($columns as $column) {
-            if (!$column instanceof ResultColumn && !$column instanceof Star && !$column instanceof TableStar) {
-                throw new InvalidConstruction('A result column is an expression, a star or a qualified star.');
-            }
-            $list[] = $column;
-        }
-        Check::input($list !== [] && array_is_list($columns), 'A selection projects at least one result column.');
-        $this->columns = $list;
+        $this->columns = (new ClosedList())->of($columns, [ResultColumn::class, Star::class, TableStar::class], 'A selection projects at least one result column: an expression, a star or a qualified star.', 1);
         $this->groupBy = Check::listOf($groupBy, Scalar::class, 'GROUP BY terms are expressions.');
         $this->windows = Check::listOf($windows, WindowDefinition::class, 'The WINDOW clause holds window definitions.');
         $this->orderBy = Check::listOf($orderBy, SortTerm::class, 'ORDER BY terms are ordering terms.');
@@ -115,6 +109,7 @@ final class Select implements Statement, Query, Selection
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new ProgramOnly())->outsideProgram($this, $derivation);
         $derivation->output($derivation->query($this, $derivation->environment()));
     }
 

@@ -45,7 +45,7 @@ final class SelectTest extends TestCase
     {
         $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
         (new Select([new ExpressionTarget(new Constant(new IntegerConstant('1')))]))->deriveStatement($derivation);
-        self::assertCount(1, $derivation->facts()->output?->projection ?? []);
+        self::assertCount(1, $derivation->facts()->output->projection ?? []);
     }
 
     public function testDeriveQueryResolvesColumnsAgainstTheInput(): void
@@ -56,9 +56,10 @@ final class SelectTest extends TestCase
         $select = new Select([new ExpressionTarget(new ColumnReference([new Name('a')])), new ExpressionTarget(new ColumnReference([new Name('t'), new Name('b')]))], new TableInput(new RelationReference(new QualifiedName(new Name('t')))));
         $derivation = new Derivation($context);
         $fields = $derivation->query($select, $derivation->environment())->fields();
-        self::assertSame($table->columns[0], $fields?->at(0)->column());
-        self::assertSame(Nullability::NotNull, $fields?->at(0)->nullability);
-        self::assertEquals(new Known(Builtin::Text), $fields?->at(1)->type);
+        self::assertNotNull($fields);
+        self::assertSame($table->columns[0], $fields->at(0)->column());
+        self::assertSame(Nullability::NotNull, $fields->at(0)->nullability);
+        self::assertEquals(new Known(Builtin::Text), $fields->at(1)->type);
     }
 
     public function testRenderWritesTheClausesInOrder(): void

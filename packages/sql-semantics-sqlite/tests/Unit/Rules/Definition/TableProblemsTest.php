@@ -13,6 +13,7 @@ use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableProblems;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyFlaw;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\QualifiedTemporaryName;
@@ -49,6 +50,17 @@ final class TableProblemsTest extends TestCase
         self::assertSame(PrimaryKeyFlaw::MissingWithoutRowid, $flaw('CREATE TABLE t (a) WITHOUT ROWID'));
         self::assertSame(PrimaryKeyFlaw::AutoincrementNotIntegerKey, $flaw('CREATE TABLE t (a INTEGER PRIMARY KEY DESC AUTOINCREMENT)'));
         self::assertSame(PrimaryKeyFlaw::AutoincrementWithoutRowid, $flaw('CREATE TABLE t (a INTEGER PRIMARY KEY AUTOINCREMENT) WITHOUT ROWID'));
+    }
+
+    public function testGeneratedReportsAKeyColumnThatIsGeneratedAndATableWithoutAPlainColumn(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $problems = static fn (string $sql): array => array_map(static fn (Diagnostic $diagnostic): array => $diagnostic instanceof GeneratedColumnProblem ? [$diagnostic->flaw->name, $diagnostic->column?->value] : [$diagnostic::class], $semantics->analyze($sql, [])->facts->diagnostics);
+
+        self::assertSame([['InPrimaryKey', 'b']], $problems('CREATE TABLE t (a, b AS (a) PRIMARY KEY)'));
+        self::assertSame([['InPrimaryKey', 'c']], $problems('CREATE TABLE t (a, b AS (a), c AS (a), PRIMARY KEY (a, "c"))'));
+        self::assertSame([['InPrimaryKey', 'a'], ['NoPlainColumn', null]], $problems('CREATE TABLE t (a AS (1) PRIMARY KEY)'));
+        self::assertSame([], $problems('CREATE TABLE t (a PRIMARY KEY, b AS (a))'));
     }
 
     public function testTemporaryReportsOnlyAQualifierOtherThanTemp(): void

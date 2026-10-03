@@ -12,6 +12,11 @@ use SqlSemantics\Diagnostic\InvalidConstruction;
  * @visibility public
  * @example Refusing to copy a semantic value
  *     clone new \SqlSemantics\Statement\Identifier\Name('id') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a dynamic property
+ *     $name = new \SqlSemantics\Statement\Identifier\Name('id');
+ *     $name->extra = 'x' // throws \SqlSemantics\Diagnostic\InvalidConstruction: dynamic properties
+ * @example Refusing serialization
+ *     serialize(new \SqlSemantics\Statement\Identifier\Name('id')) // throws \SqlSemantics\Diagnostic\InvalidConstruction: serialized
  */
 trait Snapshot
 {

@@ -28,9 +28,9 @@ use SqlSemantics\Statement\Type\Nullability;
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT (a, b) = (1, 2) FROM t');
  *     count($query->statement->columns[0]->expression->left->items) // => 2
  * @example Refusing a row of one element, which is a grouping
- *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\RowValue([new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression([new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()]) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
-final class RowValue implements Scalar
+final class RowExpression implements Scalar
 {
     use Snapshot;
 

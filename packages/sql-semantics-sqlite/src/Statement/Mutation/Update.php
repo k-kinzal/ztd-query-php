@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Statement\Mutation;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Mutation\MutationScope;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\FromScope;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
@@ -70,23 +71,8 @@ final class Update implements Statement, Selection
         public readonly ?ConflictResolution $resolution = null,
         public readonly ?WithClause $with = null,
     ) {
-        $assigned = [];
-        foreach ($assignments as $assignment) {
-            if (!$assignment instanceof Assignment && !$assignment instanceof RowAssignment) {
-                throw new InvalidConstruction('An UPDATE assigns columns or column rows.');
-            }
-            $assigned[] = $assignment;
-        }
-        $list = [];
-        foreach ($returning as $column) {
-            if (!$column instanceof ResultColumn && !$column instanceof Star && !$column instanceof TableStar) {
-                throw new InvalidConstruction('A RETURNING column is an expression, a star or a qualified star.');
-            }
-            $list[] = $column;
-        }
-        Check::input($assigned !== [] && array_is_list($assignments) && array_is_list($returning), 'An UPDATE has at least one assignment.');
-        $this->assignments = $assigned;
-        $this->returning = $list;
+        $this->assignments = (new ClosedList())->of($assignments, [Assignment::class, RowAssignment::class], 'An UPDATE has at least one assignment of a column or of a column row.', 1);
+        $this->returning = (new ClosedList())->of($returning, [ResultColumn::class, Star::class, TableStar::class], 'A RETURNING column is an expression, a star or a qualified star.');
     }
 
     /**
@@ -102,6 +88,7 @@ final class Update implements Statement, Selection
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new ProgramOnly())->outsideProgram($this, $derivation);
         $fact = $this->deriveWithin($derivation, $derivation->environment());
         if ($fact !== null) {
             $derivation->output($fact);

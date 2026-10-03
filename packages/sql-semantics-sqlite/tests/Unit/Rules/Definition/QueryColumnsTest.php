@@ -85,6 +85,18 @@ final class QueryColumnsTest extends TestCase
         self::assertSame(['INTEGER', 'VARCHAR(5)', 'INT', ''], array_map(static fn (Column $column): string => $column->type->name(), $columns));
     }
 
+    public function testViewColumnsGiveNoTypesWhenTheColumnListDoesNotFitTheQuery(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $table = $semantics->analyze('CREATE TABLE s (i INTEGER)');
+        $query = $semantics->analyze('SELECT i FROM s', [$table]);
+
+        self::assertNotNull($query->facts->output);
+        $columns = (new QueryColumns())->viewColumns($query->facts->output, $query->facts, [new Name('x'), new Name('y')], Comparison::AsciiInsensitive, false);
+        self::assertSame(['', ''], array_map(static fn (Column $column): string => $column->type->name(), $columns));
+        self::assertSame(Nullability::Nullable, $columns[0]->nullability);
+    }
+
     public function testViewColumnsTakeTheirNamesFromAColumnList(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
@@ -101,5 +113,29 @@ final class QueryColumnsTest extends TestCase
         $query = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 AS a');
 
         self::assertSame('', (new QueryColumns())->viewType(null, $query->facts)->name());
+    }
+
+    public function testViewTypeFallsBackToTheStandardNameOfTheAffinityWhenTheDeclaredTextDoesNotGiveIt(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $table = $semantics->analyze('CREATE TABLE s (n, a ANY, b BLOB, i INTEGER, t VARCHAR(5))');
+        $strict = $semantics->analyze('CREATE TABLE u (a ANY) STRICT');
+        $query = $semantics->analyze('SELECT n, s.a, b, i, t, u.a, (SELECT i FROM s), (SELECT n FROM s), CAST(n AS NUMERIC), CAST(n AS BLOB), *, 1 FROM s, u', [$table, $strict]);
+        $columns = new QueryColumns();
+        $types = array_map(static fn (object $field): string => $columns->viewType($field, $query->facts)->name(), iterator_to_array($query->fields() ?? []));
+
+        self::assertSame(['BLOB', 'ANY', 'BLOB', 'INTEGER', 'VARCHAR(5)', 'BLOB', 'INTEGER', 'BLOB', 'NUM', 'BLOB', 'BLOB', 'ANY', 'BLOB', 'INTEGER', 'VARCHAR(5)', 'BLOB', ''], array_values($types));
+        self::assertSame($table->declarations()[0]->columns[3]->type, $columns->viewType($query->field(3), $query->facts));
+    }
+
+    public function testTableColumnsRecordTheAffinityOfASubqueryAndOfAnExpandedStar(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $table = $semantics->analyze('CREATE TABLE s (i INTEGER, t TEXT)');
+        $query = $semantics->analyze('SELECT (SELECT i FROM s), (SELECT t FROM s UNION ALL SELECT i FROM s), * FROM s', [$table]);
+
+        self::assertNotNull($query->facts->output);
+        $columns = (new QueryColumns())->tableColumns($query->facts->output, $query->facts, Comparison::AsciiInsensitive);
+        self::assertSame(['INT', 'INT', 'INT', 'TEXT'], array_map(static fn (Column $column): string => $column->type->name(), $columns));
     }
 }

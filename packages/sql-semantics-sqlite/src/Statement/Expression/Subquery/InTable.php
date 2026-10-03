@@ -105,7 +105,7 @@ final class InTable implements Scalar
         }
         $out->name($this->table->name, NameUse::Relation);
         if ($this->arguments !== null) {
-            $out->symbol('(')->list($this->arguments)->symbol(')');
+            $out->glue()->symbol('(')->list($this->arguments)->symbol(')');
         }
     }
 }

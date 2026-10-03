@@ -15,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
+use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -27,6 +28,7 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
 use SqlSemantics\Statement\Shape\OutputSlot;
+use SqlSemantics\Statement\Type\Known;
 
 /**
  * Derives the output fields of a result column list.
@@ -41,7 +43,8 @@ use SqlSemantics\Statement\Shape\OutputSlot;
  * qualifier names. A relation whose columns are not all known contributes
  * its known columns and an open star that names the missing inputs. A star
  * without any input relation and a qualifier that names no input relation
- * are reported. Terminates: one pass over the list.
+ * are reported, as is a result column that is a row value, which has no
+ * single value. Terminates: one pass over the list.
  * Source: https://sqlite.org/c3ref/column_name.html,
  * https://sqlite.org/lang_select.html#generation_of_the_set_of_result_rows.
  * Status: Implemented.
@@ -62,6 +65,9 @@ final class Projection
         foreach ($columns as $column) {
             if ($column instanceof ResultColumn) {
                 $fact = $derivation->scalar($column->expression, $environment);
+                if ($fact->type instanceof Known && $fact->type->descriptor instanceof Vector) {
+                    $derivation->report(new Misuse(MisuseRule::TooManyValueColumns));
+                }
                 $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
                 $items[] = new Field(count($items), new OutputSlot($column->alias ?? $this->named($column, $fact), $fact->type, $fact->nullability, null, $origin), $column->expression, $fact->resolution);
                 continue;

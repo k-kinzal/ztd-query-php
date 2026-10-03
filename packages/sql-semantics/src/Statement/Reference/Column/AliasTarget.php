@@ -15,7 +15,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Resolving an ORDER BY name to an output alias
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 AS x ORDER BY x');
- *     $query->facts->scalar($query->statement->ordering[0]->expression)->resolution->field === $query->field('x') // => true
+ *     $query->facts->scalar($query->statement->orderBy[0]->expression)->resolution->field === $query->field('x') // => true
  */
 final class AliasTarget implements Resolution
 {

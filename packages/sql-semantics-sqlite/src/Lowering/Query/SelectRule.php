@@ -16,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\CompoundStep;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Limit;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\OutputOrdinal;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Platform\Sqlite\Statement\Query\Values;
+use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Statement\Scalar;
 
@@ -58,7 +58,7 @@ final class SelectRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function select(Node $select): Select|Values|Compound|WithQuery
+    public function select(Node $select): Select|ValuesClause|Compound|WithQuery
     {
         $form = $this->lowering->productions->form($select);
 
@@ -75,7 +75,7 @@ final class SelectRule
      *
      * @throws ImplementationGap When a production has no rule
      */
-    public function body(Node $body): Select|Values|Compound
+    public function body(Node $body): Select|ValuesClause|Compound
     {
         $form = $this->lowering->productions->form($body);
         if ($form->signature === 'selectnowith: oneselect') {
@@ -122,7 +122,7 @@ final class SelectRule
      * @param bool $ordered Whether the ORDER BY and LIMIT of a selection stay on it; false for the last arm of a compound query
      * @throws ImplementationGap When the production has no rule
      */
-    public function arm(Node $arm, bool $ordered): Select|Values
+    public function arm(Node $arm, bool $ordered): Select|ValuesClause
     {
         $form = $this->lowering->productions->form($arm);
 

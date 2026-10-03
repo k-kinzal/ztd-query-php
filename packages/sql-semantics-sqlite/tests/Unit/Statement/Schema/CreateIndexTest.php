@@ -10,7 +10,10 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateIndex;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedExpression;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
@@ -34,7 +37,7 @@ final class CreateIndexTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE t (a, b)');
-        $operation = $semantics->analyze('CREATE INDEX i ON t (b, rowid) WHERE a > 0', [$table]);
+        $operation = $semantics->analyze('CREATE INDEX i ON t (b, a COLLATE nocase) WHERE rowid > 0', [$table]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(CreateIndex::class, $statement);
@@ -45,9 +48,38 @@ final class CreateIndexTest extends TestCase
         self::assertInstanceOf(ResolvedColumn::class, $column);
         self::assertSame($table->declarations()[0]->columns[1], $column->slot->column);
         self::assertSame($statement, $column->relation);
-        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($statement->terms[1]->expression)->resolution);
+        self::assertInstanceOf(Collate::class, $statement->terms[1]->expression);
+        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($statement->terms[1]->expression->operand)->resolution);
+        self::assertInstanceOf(Binary::class, $statement->where);
+        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($statement->where->left)->resolution);
         self::assertSame([], $operation->facts->diagnostics);
         self::assertSame([], $operation->declarations());
+    }
+
+    public function testDeriveStatementSeesNoRowIdentifierInAnIndexedExpression(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $table = $semantics->analyze('CREATE TABLE t (a)');
+        $operation = $semantics->analyze('CREATE INDEX i ON t (a + rowid)', [$table]);
+
+        self::assertCount(1, $operation->facts->diagnostics);
+        self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
+    }
+
+    public function testDeriveStatementReportsWhatAnIndexExpressionAndACondionMayNotContain(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $table = $semantics->analyze('CREATE TABLE t (a)');
+        $operation = $semantics->analyze('CREATE INDEX i ON t (t.a, random()) WHERE a IN (SELECT 1) AND ? AND current_time > 0', [$table]);
+        $reported = array_map(static fn (object $diagnostic): array => $diagnostic instanceof ProhibitedExpression ? [$diagnostic->construct->name, $diagnostic->position->name] : [$diagnostic::class], $operation->facts->diagnostics);
+
+        self::assertSame([
+            ['DotOperator', 'IndexExpression'],
+            ['NonDeterministicFunction', 'IndexExpression'],
+            ['Subquery', 'PartialIndexWhere'],
+            ['Parameter', 'PartialIndexWhere'],
+            ['NonDeterministicFunction', 'PartialIndexWhere'],
+        ], $reported);
     }
 
     public function testDeriveStatementReportsAMissingTableAndAMissingColumn(): void

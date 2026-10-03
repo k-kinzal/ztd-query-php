@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Rules\Mutation;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
@@ -27,8 +28,9 @@ use SqlSemantics\Statement\Identifier\Name;
  * qualifiers NEW and OLD only, a row of the watched table with its implicit
  * columns: NEW in INSERT and UPDATE triggers, OLD in UPDATE and DELETE
  * triggers. A column of UPDATE OF that the table certainly lacks is
- * reported. In the program, a written table qualified with a schema and an
- * index choice are reported, as SQLite rejects them. Terminates: one pass
+ * reported. In the program, a written table qualified with a schema, an
+ * index choice and a bind parameter are reported, as SQLite rejects them
+ * (SQLITE-PROGRAM-ONLY-001). Terminates: one pass
  * over the program.
  * Source: https://sqlite.org/lang_createtrigger.html. Status: Implemented.
  *
@@ -51,6 +53,7 @@ final class TriggerFacts
         }
         $environment = new Environment($derivation->context, null, $rows);
         (new MutationScope())->names($trigger->columns, new VisibleRelation($trigger->table, $fact->shape, null, $trigger->table->name, [], $implicit), $derivation);
+        (new ProgramOnly())->insideProgram([...($trigger->when === null ? [] : [$trigger->when]), ...$trigger->steps], $derivation);
         if ($trigger->when !== null) {
             $derivation->scalar($trigger->when, $environment);
         }

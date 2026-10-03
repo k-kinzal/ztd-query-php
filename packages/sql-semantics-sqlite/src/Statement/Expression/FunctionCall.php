@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
 use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
@@ -97,7 +96,7 @@ final class FunctionCall implements Scalar
             $derivation->scalar($expression, $environment);
         }
         $fact = (new Functions())->result($this->name, $arguments);
-        if ($fact->type instanceof Invalid && $fact->type->cause instanceof Diagnostic) {
+        if ($fact->type instanceof Invalid) {
             $derivation->report($fact->type->cause);
         }
 
@@ -109,7 +108,7 @@ final class FunctionCall implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->name($this->name, NameUse::Routine)->symbol('(');
+        $out->name($this->name, NameUse::Routine)->glue()->symbol('(');
         if ($this->star) {
             $out->symbol('*');
         }

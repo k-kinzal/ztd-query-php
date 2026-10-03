@@ -10,6 +10,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\DerivedQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinChain;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinOn;
+use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinStep;
+use SqlSemantics\Platform\Sqlite\Statement\Relation\JoinUsing;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\NestedInput;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableCall;
 use SqlSemantics\Resolution\Environment;
@@ -68,20 +70,7 @@ final class FromScope
     public function enter(JoinChain|NestedInput $node, Derivation $derivation, Environment $outer, array $left, bool $leading): JoinedInput
     {
         if ($node instanceof NestedInput) {
-            $input = $this->open($node->relation, $derivation, $outer, [], $leading && $node->alias === null);
-            $visible = [];
-            foreach ($input->visible as $relation) {
-                if (count($input->visible) === 1 && ($node->alias !== null || !$leading)) {
-                    $visible[] = new VisibleRelation($relation->relation, $relation->shape, $node->alias, $relation->name, $relation->hidden, $relation->implicit);
-                } elseif (count($input->visible) === 1 || $leading || $node->alias !== null || !in_array(ColumnResolver::QUALIFIED_ONLY, $relation->hidden, true)) {
-                    $visible[] = $relation;
-                }
-            }
-            if ($node->alias !== null && count($input->visible) !== 1) {
-                $visible[] = new VisibleRelation($node, $input->fact->shape, $node->alias, null, [ColumnResolver::QUALIFIED_ONLY]);
-            }
-
-            return new JoinedInput($input->fact, $visible);
+            return $this->nested($node, $derivation, $outer, $leading);
         }
         $visible = $this->open($node->first, $derivation, $outer, $left, $leading && $node->constraint === null)->visible;
         foreach ($node->steps as $step) {
@@ -98,13 +87,41 @@ final class FromScope
         if ($node->constraint !== null) {
             $derivation->report(new Misuse($node->constraint instanceof JoinOn ? MisuseRule::OnWithoutJoin : MisuseRule::UsingWithoutJoin));
         }
-        foreach ([$node->constraint, ...array_map(static fn ($step) => $step->constraint, $node->steps)] as $constraint) {
+        foreach ([$node->constraint, ...array_map(static fn (JoinStep $step): JoinOn|JoinUsing|null => $step->constraint, $node->steps)] as $constraint) {
             if ($constraint instanceof JoinOn) {
                 $derivation->scalar($constraint->condition, $environment);
             }
         }
 
         return new JoinedInput(new RelationFact($this->star($visible)), $visible);
+    }
+
+    /**
+     * Derives the terms inside parentheses and answers what the parentheses make visible.
+     *
+     * Around one term the parentheses replace its correlation name with their
+     * own, unless they are plain parentheses at the very start of a FROM
+     * clause; around several terms the relations inside stay visible, and a
+     * correlation name on the parentheses names the joined row, reachable
+     * with that qualifier only.
+     */
+    public function nested(NestedInput $node, Derivation $derivation, Environment $outer, bool $leading): JoinedInput
+    {
+        $input = $this->open($node->relation, $derivation, $outer, [], $leading && $node->alias === null);
+        $single = count($input->visible) === 1;
+        $visible = [];
+        foreach ($input->visible as $relation) {
+            if ($single && ($node->alias !== null || !$leading)) {
+                $visible[] = new VisibleRelation($relation->relation, $relation->shape, $node->alias, $relation->name, $relation->hidden, $relation->implicit);
+            } elseif ($single || $leading || $node->alias !== null || !in_array(ColumnResolver::QUALIFIED_ONLY, $relation->hidden, true)) {
+                $visible[] = $relation;
+            }
+        }
+        if ($node->alias !== null && !$single) {
+            $visible[] = new VisibleRelation($node, $input->fact->shape, $node->alias, null, [ColumnResolver::QUALIFIED_ONLY]);
+        }
+
+        return new JoinedInput($input->fact, $visible);
     }
 
     /**

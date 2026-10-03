@@ -15,8 +15,8 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Keeping every candidate of an ambiguous column
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
- *     $context = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE TABLE u (a INTEGER)')]);
- *     count($semantics->analyze('SELECT a FROM t, u', $context)->field('a')->resolution->candidates) // => 2
+ *     $declarations = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)'), $semantics->analyze('CREATE TABLE u (a INTEGER)')]);
+ *     count($semantics->analyze('SELECT a FROM t, u', $declarations)->field('a')->resolution->candidates) // => 2
  */
 final class AmbiguousColumn implements Resolution, Diagnostic
 {

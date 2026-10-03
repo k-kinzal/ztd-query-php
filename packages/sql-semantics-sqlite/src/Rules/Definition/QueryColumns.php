@@ -30,10 +30,16 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  *
  * Types: for `CREATE TABLE ... AS` "the declared type of each column is
  * determined by the expression affinity of the corresponding expression":
- * TEXT, NUM, INT, REAL, or no type when the expression has none. A view
- * column that simply refers to a column has the declared type of that
- * column; a CAST gives the standard type name of its affinity (NUM for
- * NUMERIC); any other expression gives a column without declared type.
+ * TEXT, NUM, INT, REAL, or no type when the expression has none or BLOB
+ * affinity (the stored definition is written from the affinity alone). A
+ * view keeps its columns in memory: a column that simply refers to a
+ * declared column has the declared type of that column, unless the affinity
+ * SQLite derives from that text is not the affinity of the column, which
+ * happens for a column without a declared type (BLOB affinity, but an empty
+ * text derives NUMERIC) and then gives BLOB; a CAST gives the standard type
+ * name of its affinity (NUM for NUMERIC); any other expression gives a
+ * column without declared type. A view whose column list has another length
+ * than its query gets no types at all.
  *
  * NULL facts: a column of a created table has no NOT NULL constraint and can
  * hold NULL whatever the query returns; a view column has the NULL fact of
@@ -42,12 +48,15 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  * Minimum precision: the listed columns are exact. The column list is
  * incomplete (and stops at the first undetermined position) when the query
  * shape is open, when a field has no determined name, or when a unique name
- * is not determined. Remaining assumption: a field of a compound query has
- * no single expression in the model; it is read as having no affinity.
+ * is not determined. Remaining assumption: a field of a compound query takes
+ * its affinity from the leftmost arm, adjusted by the data types of the other
+ * arms; the model has no single expression for such a field and reads it as
+ * having no affinity.
  * Terminates: one pass over the fields with at most four renames each.
  * Source: https://sqlite.org/lang_createtable.html#create_table_as_select_statements,
  * https://sqlite.org/lang_createview.html, https://sqlite.org/datatype3.html#affinity_of_expressions
- * (and `sqlite3ColumnsFromExprList()` in select.c of the release). Status: Implemented.
+ * (and `sqlite3ColumnsFromExprList()`, `sqlite3SubqueryColumnTypes()` and
+ * `createTableStmt()` in select.c and build.c of the release). Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\Sqlite
  */
@@ -147,7 +156,8 @@ final class QueryColumns
         }
         $columns = [];
         foreach ($this->unique($names, $comparison) as $position => $name) {
-            $affinity = (new ExpressionAffinity())->of($fields[$position]->expression, $facts) ?? Affinity::Blob;
+            $rule = new ExpressionAffinity();
+            $affinity = $rule->affinity($rule->field($fields[$position], $facts)) ?? Affinity::Blob;
             $columns[] = new Column($name, new ColumnDomain(self::TABLE_TYPES[$affinity->name]), Nullability::Nullable);
         }
 
@@ -158,9 +168,10 @@ final class QueryColumns
      * Answers the columns of a view.
      *
      * @param list<Name>|null $listed The names of the column list of the view, when it has one
+     * @param bool $typed Whether SQLite assigns the column types; it does not when a column list has another length than the query result
      * @return list<Column>
      */
-    public function viewColumns(QueryFact $query, Facts $facts, ?array $listed, Comparison $comparison): array
+    public function viewColumns(QueryFact $query, Facts $facts, ?array $listed, Comparison $comparison, bool $typed = true): array
     {
         $fields = $this->settled($query);
         $names = $listed ?? [];
@@ -170,22 +181,31 @@ final class QueryColumns
         $columns = [];
         foreach ($this->unique($names, $comparison) as $position => $name) {
             $field = $fields[$position] ?? null;
-            $columns[] = new Column($name, $this->viewType($field, $facts), $field === null ? Nullability::Dependent : $field->nullability);
+            $columns[] = new Column($name, $typed ? $this->viewType($field, $facts) : new ColumnDomain(''), $field === null ? Nullability::Dependent : $field->nullability);
         }
 
         return $columns;
     }
 
     /**
-     * Answers the declared type of a view column; a column whose field is not determined has none.
+     * Answers the declared type of a view column.
+     *
+     * The column keeps the declared type of the declared column its field
+     * reads when the affinity of that text is the affinity of the column;
+     * otherwise, and for a CAST, it has the standard type name of the
+     * affinity (`NUM` for NUMERIC), and no type when the field has no
+     * affinity. A column without a declared type therefore gives `BLOB`,
+     * because its BLOB affinity is not what SQLite derives from an empty
+     * text. A column whose field is not determined has no type.
      */
     public function viewType(?Field $field, Facts $facts): TypeDescriptor
     {
-        $column = (new ExpressionAffinity())->column($field?->expression, $facts);
-        if ($column !== null) {
-            return $column->type;
+        $rule = new ExpressionAffinity();
+        $source = $field === null ? null : $rule->field($field, $facts);
+        $affinity = $rule->affinity($source);
+        if ($source instanceof Column && $source->type instanceof ColumnDomain && (new ColumnDomain($source->type->declared))->affinity === $affinity) {
+            return $source->type;
         }
-        $affinity = (new ExpressionAffinity())->of($field?->expression, $facts);
 
         return new ColumnDomain($affinity === null ? '' : self::VIEW_TYPES[$affinity->name]);
     }

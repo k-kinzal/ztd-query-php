@@ -7,11 +7,13 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Mutation;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Mutation\InsertFacts;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
-use SqlSemantics\Platform\Sqlite\Statement\Query\Values;
+use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -46,26 +48,18 @@ final class InsertRows implements Statement
 
     /**
      * @param InsertInto $into The head: verb, written table and column list
-     * @param Values $rows The rows
+     * @param ValuesClause $rows The rows
      * @param list<Upsert> $upserts The ON CONFLICT clauses; only the last may omit its conflict target
      * @param list<ResultColumn|Star|TableStar> $returning The RETURNING columns
      * @throws InvalidConstruction When a RETURNING column is of no result column class
      */
-    public function __construct(public readonly InsertInto $into, public readonly Values $rows, array $upserts = [], array $returning = [])
+    public function __construct(public readonly InsertInto $into, public readonly ValuesClause $rows, array $upserts = [], array $returning = [])
     {
         $this->upserts = Check::listOf($upserts, Upsert::class, 'The ON CONFLICT clauses of an INSERT are upsert clauses.');
         foreach ($this->upserts as $position => $upsert) {
             Check::input($upsert->target !== null || $position === count($this->upserts) - 1, 'Only the last ON CONFLICT clause may omit the conflict target.');
         }
-        $list = [];
-        foreach ($returning as $column) {
-            if (!$column instanceof ResultColumn && !$column instanceof Star && !$column instanceof TableStar) {
-                throw new InvalidConstruction('A RETURNING column is an expression, a star or a qualified star.');
-            }
-            $list[] = $column;
-        }
-        Check::input(array_is_list($returning), 'RETURNING columns are an ordered list.');
-        $this->returning = $list;
+        $this->returning = (new ClosedList())->of($returning, [ResultColumn::class, Star::class, TableStar::class], 'A RETURNING column is an expression, a star or a qualified star.');
     }
 
     /**
@@ -73,6 +67,7 @@ final class InsertRows implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new ProgramOnly())->outsideProgram($this, $derivation);
         $fact = $this->deriveWithin($derivation, $derivation->environment());
         if ($fact !== null) {
             $derivation->output($fact);

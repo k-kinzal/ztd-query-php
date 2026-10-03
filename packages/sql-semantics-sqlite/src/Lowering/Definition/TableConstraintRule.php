@@ -26,7 +26,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableUnique;
  * tconscomma, tcons, table_option_set, table_option. Constructors:
  * ConstraintRun, ConstraintName, TablePrimaryKey, TableUnique, TableCheck,
  * ForeignKey, TableOption. A written comma between two constraints ends a
- * run; a missing one continues it, so the place of every comma is kept.
+ * run; a missing one continues it, so the place of every comma is kept, as
+ * is a comma the grammar admits before the first table option.
  * Terminates: both lists are flattened iteratively.
  * Source: https://sqlite.org/syntax/table-constraint.html,
  * https://sqlite.org/syntax/table-options.html. Status: Implemented.
@@ -128,6 +129,22 @@ final class TableConstraintRule
         }
 
         return $options;
+    }
+
+    /**
+     * Tells whether a comma is written before the first table option, which the grammar admits after an empty option set.
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function leadingComma(Node $set): bool
+    {
+        $form = $this->lowering->productions->form($set);
+        if (!in_array($form->signature, ['table_option_set:', 'table_option_set: table_option', 'table_option_set: table_option_set COMMA table_option'], true)) {
+            throw ImplementationGap::production($form);
+        }
+        $elements = (new Lists())->elements($set);
+
+        return ($elements[0] ?? null) instanceof Token;
     }
 
     /**

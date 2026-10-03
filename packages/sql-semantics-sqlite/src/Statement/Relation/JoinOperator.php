@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Relation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
@@ -49,14 +50,8 @@ final class JoinOperator implements Node
      */
     public function __construct(public readonly bool $comma = false, array $words = [])
     {
-        $list = [];
-        foreach ($words as $word) {
-            if (!$word instanceof JoinKeyword && !$word instanceof Name) {
-                throw new InvalidConstruction('A join word is a join keyword or a name.');
-            }
-            $list[] = $word;
-        }
-        Check::input(array_is_list($words) && count($list) <= 3 && ($list === [] || (!$comma && $list[0] instanceof JoinKeyword)), 'A join operator is a comma, JOIN, or JOIN after a join keyword and up to two more words.');
+        $list = (new ClosedList())->of($words, [JoinKeyword::class, Name::class], 'A join word is a join keyword or a name.');
+        Check::input(count($list) <= 3 && ($list === [] || (!$comma && $list[0] instanceof JoinKeyword)), 'A join operator is a comma, JOIN, or JOIN after a join keyword and up to two more words.');
         $this->words = $list;
     }
 

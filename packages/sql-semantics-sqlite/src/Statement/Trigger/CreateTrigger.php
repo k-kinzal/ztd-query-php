@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
 use SqlSemantics\Platform\Sqlite\Rules\Mutation\TriggerFacts;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Delete;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertRows;
@@ -15,7 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Platform\Sqlite\Statement\Query\Values;
+use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -49,7 +50,7 @@ final class CreateTrigger implements Statement
     use Snapshot;
 
     /**
-     * @var non-empty-list<Select|Values|Compound|WithQuery|InsertRows|InsertSelect|Update|Delete> The statements of the program in written order
+     * @var non-empty-list<Select|ValuesClause|Compound|WithQuery|InsertRows|InsertSelect|Update|Delete> The statements of the program in written order
      */
     public readonly array $steps;
 
@@ -62,7 +63,7 @@ final class CreateTrigger implements Statement
      * @param QualifiedName $name The trigger name
      * @param TriggerEvent $event The change that fires the trigger
      * @param TriggerTable $table The watched table
-     * @param list<Select|Values|Compound|WithQuery|InsertRows|InsertSelect|Update|Delete> $steps The statements of the program; at least one
+     * @param list<Select|ValuesClause|Compound|WithQuery|InsertRows|InsertSelect|Update|Delete> $steps The statements of the program; at least one
      * @param TriggerTiming|null $timing The written timing
      * @param list<Name> $columns The columns of UPDATE OF
      * @param Scalar|null $when The condition of WHEN
@@ -83,18 +84,14 @@ final class CreateTrigger implements Statement
         public readonly bool $temporary = false,
         public readonly bool $ifNotExists = false,
     ) {
-        $list = [];
-        foreach ($steps as $step) {
+        $list = (new ClosedList())->of($steps, [Select::class, ValuesClause::class, Compound::class, WithQuery::class, InsertRows::class, InsertSelect::class, Update::class, Delete::class], 'A trigger program consists of at least one query, INSERT, UPDATE or DELETE statement.', 1);
+        foreach ($list as $step) {
             if ($step instanceof InsertRows || $step instanceof InsertSelect) {
                 Check::input($step->into->with === null && $step->into->target->alias === null, 'An INSERT of a trigger program has no WITH clause and no correlation name.');
             } elseif ($step instanceof Update || $step instanceof Delete) {
                 Check::input($step->with === null && $step->target->alias === null && $step->returning === [], 'An UPDATE or DELETE of a trigger program has no WITH clause, no correlation name and no RETURNING clause.');
-            } elseif (!$step instanceof Select && !$step instanceof Values && !$step instanceof Compound && !$step instanceof WithQuery) {
-                throw new InvalidConstruction('A trigger program consists of queries, INSERT, UPDATE and DELETE statements.');
             }
-            $list[] = $step;
         }
-        Check::input($list !== [] && array_is_list($steps), 'A trigger program has at least one statement.');
         $this->steps = $list;
         $this->columns = Check::listOf($columns, Name::class, 'UPDATE OF names columns.');
         Check::input($columns === [] || $event === TriggerEvent::Update, 'Only an UPDATE trigger names columns.');

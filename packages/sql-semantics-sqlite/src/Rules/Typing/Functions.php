@@ -192,7 +192,9 @@ final class Functions
         $types = [];
         $nullable = [];
         foreach ($arguments as $position => $argument) {
-            if (match ($row[2]) { '1' => $position === 0, '2' => $position > 0, 'L' => $position !== 1, default => true }) {
+            if (match ($row[2]) {
+                '1' => $position === 0, '2' => $position > 0, 'L' => $position !== 1, default => true
+            }) {
                 $types[] = $argument->type;
             }
             $nullable[] = $argument->nullability;

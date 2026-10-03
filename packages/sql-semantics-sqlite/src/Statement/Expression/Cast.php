@@ -48,7 +48,7 @@ final class Cast implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = $derivation->scalar($this->operand, $environment);
-        foreach ($this->target?->arguments ?? [] as $argument) {
+        foreach ($this->target === null ? [] : $this->target->arguments as $argument) {
             $derivation->scalar($argument->number, $environment);
         }
         if ($fact->type instanceof NullOnly) {
@@ -70,6 +70,6 @@ final class Cast implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->keyword('CAST')->symbol('(')->node($this->operand)->keyword('AS')->node($this->target)->symbol(')');
+        $out->keyword('CAST')->glue()->symbol('(')->node($this->operand)->keyword('AS')->node($this->target)->symbol(')');
     }
 }

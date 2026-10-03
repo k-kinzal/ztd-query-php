@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -35,5 +36,17 @@ final class Catalogs
     public function statement(Node $statement): Statement
     {
         throw ImplementationGap::production($this->lowering->productions->form($statement));
+    }
+
+    /**
+     * Lowers `opt_enum_val_list`: the labels of an enum type in order; no label is an empty list.
+     *
+     * @return list<StringConstant>
+     *
+     * @throws ImplementationGap Until the family implements it
+     */
+    public function enumValues(Node $labels): array
+    {
+        throw ImplementationGap::production($this->lowering->productions->form($labels));
     }
 }

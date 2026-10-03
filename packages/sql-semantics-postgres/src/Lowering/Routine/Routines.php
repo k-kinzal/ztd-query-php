@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
+use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -113,5 +114,17 @@ final class Routines
     public function objectKind(Node $kind): ObjectKind
     {
         throw ImplementationGap::production($this->lowering->productions->form($kind));
+    }
+
+    /**
+     * Lowers `operator_def_list`: the attributes written in ALTER OPERATOR ... SET and ALTER TYPE ... SET, each a definition whose argument may be the word NONE.
+     *
+     * @return list<Definition>
+     *
+     * @throws ImplementationGap Until the family implements it
+     */
+    public function operatorDefinitions(Node $list): array
+    {
+        throw ImplementationGap::production($this->lowering->productions->form($list));
     }
 }
