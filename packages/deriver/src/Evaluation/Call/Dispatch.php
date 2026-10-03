@@ -51,6 +51,30 @@ final class Dispatch
     }
 
     /**
+     * Checks whether every parent and used trait is available for method lookup.
+     * @param string $class Runtime class
+     * @param list<string> $seen Visited declarations
+     * @return bool Whether a missing method is proved absent
+     */
+    public function complete(string $class, array $seen = []): bool
+    {
+        $key = strtolower($class);
+        if (in_array($key, $seen, true)) {
+            return false;
+        }
+        $declaration = $this->program->classes()[$key] ?? null;
+        if ($declaration === null) {
+            return (new Builtins())->name($class) !== null;
+        }
+        foreach ([$declaration->parent, ...$declaration->traits] as $ancestor) {
+            if ($ancestor !== '' && !$this->complete($ancestor, [...$seen, $key])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Determines whether a source class is a subtype of a declared bound.
      * @param string $class Runtime class
      * @param string $bound Declared type

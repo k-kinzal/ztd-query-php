@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Control;
 
+use Deriver\Constraint\Constraints;
 use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\Havoc;
@@ -64,6 +65,51 @@ final class IterationStep
             return Term::constant($key, $array->secret);
         }
         return $state->memory->element($head ?? $array, $key, $head !== null && $array->isSecret());
+    }
+
+    /**
+     * Selects known suffix values at their possible iteration positions, retaining an unknown-prefix path.
+     * @param Instruction $instruction Iterator value read
+     * @param State $state Iteration path
+     * @return list<State>|null Refined suffix candidates or ordinary cursor evaluation
+     */
+    public function candidates(Instruction $instruction, State $state): ?array
+    {
+        $iterator = $state->value($instruction->operands[0] ?? '');
+        $cursor = is_string($iterator->literal) ? ($state->iterators[$iterator->literal] ?? null) : null;
+        $split = $cursor === null || $cursor->location !== null ? null : (new Arrays())->tail($cursor->array);
+        if ($split === null) {
+            return null;
+        }
+        [$prefix, $suffix] = $split;
+        $minimum = count((new Arrays())->head($prefix)->operands ?? []);
+        if ($cursor->position < $minimum) {
+            return null;
+        }
+        $results = [];
+        $remaining = $state->fork();
+        $count = new Term('intrinsic', 'count', [$prefix], ['type' => 'int']);
+        foreach (array_values($suffix->operands) as $position => $value) {
+            if ($cursor->position < $position || count($results) >= $this->context->query->budget()->partitions - 1) {
+                break;
+            }
+            if ($cursor->position - $position < $minimum) {
+                continue;
+            }
+            $test = new Term('binary', '===', [$count, Term::constant($cursor->position - $position)], ['type' => 'bool']);
+            $path = $remaining->fork();
+            if ((new Constraints($this->context))->assume($path, $test, true)) {
+                $resolved = $path->memory->dereference($value);
+                $path->registers[$instruction->result] = $cursor->array->isSecret() ? new Term($resolved->kind, $resolved->literal, $resolved->operands, $resolved->attributes, true) : $resolved;
+                $results[] = $path;
+            }
+            if (!(new Constraints($this->context))->assume($remaining, $test, false)) {
+                return $results;
+            }
+        }
+        $remaining->registers[$instruction->result] = Term::opaque('UNKNOWN_ITERABLE', dependencies: [$prefix]);
+        $results[] = $remaining;
+        return $results;
     }
 
     /**

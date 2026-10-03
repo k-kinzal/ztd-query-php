@@ -110,6 +110,9 @@ final class Arrays
      */
     public function head(Term $array): ?Term
     {
+        while ($array->kind === 'array-set' && ($array->operands[1]->kind ?? '') === 'append') {
+            $array = $array->operands[0];
+        }
         if ($array->kind !== 'array-merge') {
             return null;
         }
@@ -134,6 +137,21 @@ final class Arrays
             return null;
         }
         return [$head, $array->operands[1]];
+    }
+
+    /**
+     * Separates trailing append entries whose order is known after an unknown array.
+     * @param Term $array Constructed array
+     * @return array{Term, Term}|null Unknown prefix and closed suffix
+     */
+    public function tail(Term $array): ?array
+    {
+        $items = [];
+        while ($array->kind === 'array-set' && ($array->operands[1]->kind ?? '') === 'append') {
+            $items[] = $array->operands[2];
+            $array = $array->operands[0];
+        }
+        return $items === [] || !$this->appendable($array) ? null : [$array, Term::array(array_reverse($items))];
     }
 
     /**

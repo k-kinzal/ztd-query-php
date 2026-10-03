@@ -213,7 +213,9 @@ final class Machine
         $id = $instruction->id;
         (new Dependencies($this->context))->record($instruction, $before, $paths);
         foreach ($paths as $path) {
-            $path->evidence[] = $id;
+            if (!in_array($id, $path->evidence, true)) {
+                $path->evidence[] = $id;
+            }
             $value = $path->registers[$instruction->result] ?? null;
             if ($value?->kind === 'throwable') {
                 $path->completion = new Completion('throw', $value);

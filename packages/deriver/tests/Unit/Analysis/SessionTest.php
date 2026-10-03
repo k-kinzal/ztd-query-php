@@ -503,4 +503,14 @@ final class SessionTest extends TestCase
         self::assertSame('sql', $signature->parameters[0]->name);
     }
 
+    /**
+     * @throws JsonException If source metadata cannot be encoded
+     */
+    public function testCommentsExposeInlineStatements(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function f(){/** @var PDO $db */ global $db;}');
+        self::assertSame('/** @var PDO $db */', $session->comments('f')[0]->text);
+        self::assertSame([], $session->comments('absent'));
+    }
+
 }

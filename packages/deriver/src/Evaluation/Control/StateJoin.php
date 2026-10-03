@@ -44,7 +44,6 @@ final class StateJoin
                 $result[] = $state;
             }
         }
-        $keep = max(0, $this->context->query->budget()->partitions - 1);
         foreach ($groups as $group) {
             if (count($group) <= $this->context->query->budget()->partitions) {
                 array_push($result, ...$group);
@@ -52,6 +51,7 @@ final class StateJoin
             }
             $this->context->frontier('BUDGET_EXCEEDED', $callable->source, 'partition-limit');
             $this->context->frontier('CORRELATION_RELAXED', $callable->source, 'partition-limit');
+            $keep = ($callable->blocks[$group[0]->block]->loopHeader ?? false) ? 0 : max(0, $this->context->query->budget()->partitions - 1);
             array_push($result, ...array_slice($group, 0, $keep));
             $clusters = $this->clusters(array_slice($group, $keep));
             array_push($result, ...array_slice($clusters, 0, $this->context->query->budget()->partitions));
@@ -73,7 +73,10 @@ final class StateJoin
         $join = new PathJoin($this->context);
         $clusters = [];
         $structures = [];
-        foreach ($states as $state) {
+        foreach ($states as $position => $state) {
+            if ($this->context->resources->reason() !== null) {
+                return [...$clusters, ...array_slice($states, $position)];
+            }
             $structure = $join->structure($state);
             foreach (array_keys($structures, $structure, true) as $index) {
                 $joined = $join->join([$clusters[$index], $state], shared: true);
@@ -266,7 +269,7 @@ final class StateJoin
                 $residual->memory->cells += $state->memory->cells;
                 $residual->locals += $state->locals;
             }
-            (new Havoc())->all($residual, 'BUDGET_EXCEEDED');
+            (new Havoc())->symbols($residual, 'BUDGET_EXCEEDED');
             $value = $kind === 'throw' ? new Term('throwable', 'Throwable', attributes: ['uncertain' => true]) : Term::opaque('BUDGET_EXCEEDED');
             $residual->completion = new Completion($kind, $value);
             $residual->guard = [];

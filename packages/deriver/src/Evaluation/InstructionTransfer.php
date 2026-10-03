@@ -143,6 +143,9 @@ final class InstructionTransfer
     public function preparation(CallableGraph $callable, Instruction $instruction, State $state): ?array
     {
         $op = $instruction->operation;
+        if ($op === 'iterator-value') {
+            return (new IterationStep($this->machine->context))->candidates($instruction, $state);
+        }
         if ($op === 'external-body') {
             return (new ExternalBody($this->machine->context))->apply($callable, $instruction, $state);
         }

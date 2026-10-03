@@ -34,6 +34,7 @@ final class ResidualPaths
      */
     public function invocation(State $entry, SourceRef $source, string $operation, ?string $reason = null): array
     {
+        $this->context->available($source);
         $reason ??= $this->context->stopReason ?? 'BUDGET_EXCEEDED';
         $value = $this->context->frontier($reason, $source, $operation);
         (new Havoc())->call($entry, [], array_values($entry->locals), $reason);
@@ -50,9 +51,10 @@ final class ResidualPaths
      */
     public function seal(State $state, SourceRef $source, string $operation, ?string $reason = null): array
     {
+        $this->context->available($source);
         $reason ??= $this->context->stopReason ?? 'BUDGET_EXCEEDED';
         $value = $this->context->frontier($reason, $source, $operation);
-        (new Havoc())->all($state, $reason);
+        (new Havoc())->symbols($state, $reason);
         return $this->complete($state, $value);
     }
 

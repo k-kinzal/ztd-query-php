@@ -132,7 +132,10 @@ final class Methods
     public function magic(Instruction $instruction, string $class, bool $static): Target
     {
         $method = (new Dispatch($this->machine->context->program))->method($class, $static ? '__callStatic' : '__call');
-        return $method === null ? new Target(error: 'Error') : new Target(new CallableGraph('magic-arguments', [], [], $instruction->source));
+        if ($method === null) {
+            return (new Dispatch($this->machine->context->program))->complete($class) ? new Target(error: 'Error') : new Target();
+        }
+        return new Target(new CallableGraph('magic-arguments', [], [], $instruction->source));
     }
     /**
      * Checks whether an unknown subtype can supply additional method behavior.

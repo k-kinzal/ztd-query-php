@@ -52,11 +52,27 @@ final class Formatting
         if ($format->kind !== 'concat' || $arguments->kind !== 'array' || ($arguments->attributes['open'] ?? false) === true || !$vector && array_filter(array_keys($arguments->operands), is_string(...)) !== []) {
             return null;
         }
+        [$known, $secret] = $this->leading($format);
+        $result = $known === '' ? null : $this->render($known, $secret, array_values($arguments->operands), true, $vector);
+        return $result === null || in_array($result->kind, ['throwable', 'opaque'], true) ? null : $result;
+    }
+
+    /**
+     * Reads leading literal text through concatenation and no-op string casts.
+     * @param Term $format Partially known string format
+     * @return array{string, bool} Literal prefix and its confidentiality
+     */
+    public function leading(Term $format): array
+    {
         $known = '';
         $secret = false;
         $pending = [$format];
         while ($pending !== []) {
             $part = array_pop($pending);
+            if ($part->kind === 'cast' && $part->literal === 'string' && ($part->operands[0]->attributes['type'] ?? '') === 'string') {
+                $pending[] = $part->operands[0];
+                continue;
+            }
             if ($part->kind === 'concat') {
                 array_push($pending, ...array_reverse($part->operands));
                 continue;
@@ -67,8 +83,7 @@ final class Formatting
             $known .= $part->literal;
             $secret = $secret || $part->isSecret();
         }
-        $result = $known === '' ? null : $this->render($known, $secret, array_values($arguments->operands), true, $vector);
-        return $result === null || in_array($result->kind, ['throwable', 'opaque'], true) ? null : $result;
+        return [$known, $secret || $format->isSecret()];
     }
 
     /**

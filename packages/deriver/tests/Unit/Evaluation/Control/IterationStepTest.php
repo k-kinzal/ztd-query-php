@@ -406,4 +406,19 @@ final class IterationStepTest extends TestCase
         self::assertSame(['k' => null], $state->memory->materialize($state->memory->read($root))->native());
     }
 
+    public function testCandidatesRetainsTheUnknownPrefixBesideAKnownSuffix(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $state = new State();
+        $arrays = new \Deriver\Value\Arrays();
+        $array = $arrays->set($arrays->merge(Term::array([]), Term::parameter('x', 'array')), null, Term::constant('z'));
+        $state->registers['it'] = new Term('iterator', 'cursor');
+        $state->iterators['cursor'] = new IteratorCursor($array, position: 0);
+        $paths = (new IterationStep($context))->candidates(new Instruction('v', 'iterator-value', new SourceRef('test', 'x', 0, 1), 'out', ['it']), $state);
+        self::assertNotNull($paths);
+        self::assertCount(2, $paths);
+        self::assertSame('z', $paths[0]->value('out')->native());
+        self::assertFalse($paths[1]->value('out')->isConcrete());
+    }
+
 }
