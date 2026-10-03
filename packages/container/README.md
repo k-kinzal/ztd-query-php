@@ -15,7 +15,7 @@ Container definitions for [testcontainers-php](https://github.com/k-kinzal/testc
 | `MySql84Container` | `container-registry.oracle.com/mysql/community-server:8.4.7` |
 | `MySql90Container` | `container-registry.oracle.com/mysql/community-server:9.0.1` |
 | `MySql91Container` | `container-registry.oracle.com/mysql/community-server:9.1.0` |
-| `PostgreSql16Container` | `postgres:16.6` |
+| `PostgreSql16Container` | `postgres:16.15` |
 | `PostgreSql17Container` | `postgres:17.2` |
 
 ## Usage
