@@ -68,4 +68,14 @@ final class StringJoiningTest extends TestCase
         self::assertNotEmpty($result->normalOutcomes);
         self::assertSame([true], array_values(array_unique(array_map(static fn (\Deriver\Result\Alternative $outcome): bool => $outcome->values['return']->isSecret(), $result->normalOutcomes))));
     }
+    /**
+     * @throws JsonException If fixture metadata cannot be encoded
+     */
+    public function testSuffixKeepsTheEmptyAndNonemptyPrefixAlternatives(): void
+    {
+        $result = \Tests\Fake\Candidates::sink('function target(array $x){sink(implode(",",[...$x,"z"]));}');
+        self::assertSame('z', $result->normalOutcomes[0]->values['value']->native());
+        self::assertFalse($result->normalOutcomes[1]->values['value']->isConcrete());
+    }
+
 }

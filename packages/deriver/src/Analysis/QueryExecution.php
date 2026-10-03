@@ -41,8 +41,9 @@ final class QueryExecution
      * @param Configuration $configuration Explicit assumptions
      * @param Registry $models Model registry
      * @param ProjectSnapshot $snapshot Source/model/world manifest
+     * @param \Deriver\Evaluation\Summary\SharedSummaries $shared Session cache of closed isolated completions
      */
-    public function __construct(public readonly Program $program, public readonly Configuration $configuration, public readonly Registry $models, public readonly ProjectSnapshot $snapshot)
+    public function __construct(public readonly Program $program, public readonly Configuration $configuration, public readonly Registry $models, public readonly ProjectSnapshot $snapshot, public readonly \Deriver\Evaluation\Summary\SharedSummaries $shared = new \Deriver\Evaluation\Summary\SharedSummaries())
     {
     }
 
@@ -55,14 +56,16 @@ final class QueryExecution
     public function derive(Query $query): DerivationResult
     {
         $start = microtime(true);
-        $context = new Context($this->program, $query, $this->configuration, $this->models);
+        $context = new Context($this->program, $query, $this->configuration, $this->models, $this->shared);
         $symbol = $this->owner($query);
         $entries = $query->scope()->mode === 'symbolic' ? [new EntryPoint($symbol)] : $query->scope()->entries;
         foreach ($entries as $entry) {
             $this->entry($context, $entry, $query->scope()->mode === 'symbolic');
         }
         if ($context->normal === [] && array_filter($context->frontiers, static fn ($frontier): bool => !in_array($frontier->code, ['WIDENED', 'EXTERNAL_INPUT', 'PHP_WARNING'], true)) !== []) {
-            $context->normal[] = new Alternative(['residual' => Term::opaque('INCOMPLETE_DERIVATION')]);
+            $interrupted = $context->stopReason ?? (in_array('BUDGET_EXCEEDED', array_column($context->frontiers, 'code'), true) ? 'BUDGET_EXCEEDED' : null);
+            $candidate = $interrupted === null ? null : (new PartialObservation($this->program, $interrupted))->recover($query);
+            $context->normal[] = $candidate ?? new Alternative(['residual' => Term::opaque('INCOMPLETE_DERIVATION')]);
         }
         $assessment = (new ResultAssessment())->assess($context);
         $assumptions = array_values(array_unique($context->assumptions));
@@ -95,15 +98,18 @@ final class QueryExecution
             $arguments[] = new PassedArgument($value, is_string($name) ? $name : null);
         }
         $receiver = $body->static ? null : ($entry->receiver ?? ($body->className === '' ? null : Term::parameter('this', $body->className)));
-        $captures = [];
-        foreach ($symbolic ? $body->captures : [] as $name => $byReference) {
-            $captures[$name] = Term::parameter('capture:' . $name);
+        if (array_diff(array_keys($entry->captures), array_keys($body->captures)) !== []) {
+            throw new InvalidInputException('Entry captures must name lexical captures declared by the closure.');
+        }
+        $captures = $entry->captures;
+        foreach ($body->captures as $name => $byReference) {
+            $captures[$name] ??= Term::parameter('capture:' . $name);
         }
         $initial = $this->initialState();
         if ($entry->properties !== []) {
             (new EntryProperties($context))->apply($body, $receiver, $entry->properties, $initial);
         }
-        $states = (new ArgumentBinding($machine))->bind($body, $initial, $arguments, $receiver, $captures, symbolic: $symbolic);
+        $states = (new ArgumentBinding($machine))->bind($body, $initial, $arguments, $receiver, $captures, symbolic: $symbolic || $entry->symbolicArguments);
         foreach ($states as $state) {
             if ($state->completion->kind === 'normal') {
                 $machine->run($body, $state);
@@ -121,7 +127,7 @@ final class QueryExecution
     {
         $state = new State();
         foreach ($this->configuration->environment as $name => $value) {
-            if (str_starts_with($name, 'global:')) {
+            if (str_starts_with($name, 'global:') || str_starts_with($name, 'static:')) {
                 $state->memory->cells[$name] = $value;
             }
         }

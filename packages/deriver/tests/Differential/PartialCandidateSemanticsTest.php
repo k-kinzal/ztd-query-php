@@ -57,6 +57,8 @@ final class PartialCandidateSemanticsTest extends TestCase
         $format = '<?php function build($f){return ';
         $programs = [];
         foreach (['[]', '["a"]', '["k"=>"v",5=>"z"]', '["0"=>"zero","name"]'] as $input) {
+            $programs[] = ['<?php function build(array $x){return implode(",",[...$x,"z"]);}', $input];
+            $programs[] = ['<?php function build(array $x){foreach([...$x,"z"] as $v){return $v;}}', $input];
             $programs[] = [$spread . 'return implode(",",$cols);}', $input];
             $programs[] = [$spread . 'return [$cols[0],$cols["1"],count($cols)>=2];}', $input];
             $programs[] = [$spread . '$i=0;foreach($cols as $k=>$v){if($i++===1)return "$k=$v";}return null;}', $input];
@@ -68,6 +70,7 @@ final class PartialCandidateSemanticsTest extends TestCase
             $programs[] = ['<?php function build(array $x){try{$a=[PHP_INT_MAX=>"id",...$x];return "built";}catch(Error $e){return "failed";}}', $input];
         }
         foreach (['"a = 1"', '"a = %s"', '\'%0$s\'', '"%%"', '1', 'null'] as $input) {
+            $programs[] = [$format . 'sprintf("SELECT * FROM $f WHERE id = %d",5);}', $input];
             $programs[] = [$format . 'sprintf("SELECT %s FROM t WHERE ".$f,"id");}', $input];
             $programs[] = [$format . 'vsprintf(\'%2$s %1$s \'.$f,["a"=>"x","b"=>"y"]);}', $input];
         }

@@ -60,7 +60,7 @@ $result = $session->derive($query);
 echo $result->normalOutcomes[0]->values['return']->native(); // user:42
 ```
 
-An object that enters from outside the analysis, such as the receiver of an entry method or an object argument, keeps the declared types of its properties, but their values stay symbolic: Deriver does not guess them from assignments elsewhere. A typed property may also be uninitialized, because PHP can create an object without running its constructor, so reading one keeps a possible `Error` outcome. Supply the receiver's initial property values when you know them, for example from the declared defaults. Each entry is one candidate, and unspecified properties stay symbolic:
+An object that enters from outside the analysis, such as the receiver of an entry method or an object argument, keeps the declared types of its properties, but their values stay symbolic: Deriver does not guess them from assignments elsewhere. A typed property may also be uninitialized, because PHP can create an object without running its constructor, so reading one keeps a possible `Error` outcome. Supply the receiver's initial property values when they describe the state at the entry. A declared default is not a fact about every existing instance: a constructor or an earlier method may have replaced it. Each explicit entry describes one invocation, and unspecified properties stay symbolic:
 
 ```php
 $session = (new Analyzer())->open(new ProjectInput([
@@ -91,11 +91,21 @@ foreach ($result->normalOutcomes as $outcome) {
 }
 ```
 
+An entry with `properties: ['order' => Term::constant('name')]` asserts that value at the start of that invocation. It does not request a union of assignments found elsewhere. To analyze constructor effects, start from source that constructs the object and calls the method. For externally initialized objects, supply the relevant states or a model of their initialization. Include a symbolic entry when other initial states must remain possible.
+
 Property names are resolved from the entry method's class. A name that is not a declared instance property, a value that violates the declared type, or properties on a static method or function entry throw `InvalidInputException`.
+
+Use `symbolicArguments: true` on an `EntryPoint` to bind omitted arguments like a symbolic query, including enumeration of enum cases. Explicit positional or named arguments still take precedence. A closure entry also accepts `captures: ['table' => Term::constant('users')]`; omitted captures stay symbolic, and names not captured by the closure are rejected. Obtain its identity from `declarations()->symbols()` or a call observation's `callable`; Deriver does not execute an uncalled closure automatically.
 
 Inspect the result's assessment, unresolved dependencies, and exceptional outcomes before treating a normal value as exhaustive. A symbolic value can be complete even when its input is unknown.
 
-Analysis is bounded by a `Budget`. When more paths or outcomes than the budget allows reach one point, Deriver keeps the first ones exactly and joins the rest into one widened value instead of dropping them, and records a `BUDGET_EXCEEDED` frontier. A widened string keeps the bytes its candidates start with, so a loop that appends conditions to a known query yields its exact unrollings and `concat('SELECT ... WHERE 1', <string>)`. Recursion over symbolic inputs forks at every level and is bounded by `Budget::$symbolicRecursion`; recursion over concrete values is bounded by `Budget::$recursion`.
+Analysis is bounded by a `Budget`. When more paths or outcomes than the budget allows reach one point, Deriver keeps exact candidates where possible and joins excess states into widened values instead of dropping them, and records a `BUDGET_EXCEEDED` frontier. At an overflowing loop header, it joins compatible paths together to bound the next iteration's branching. A widened string keeps the bytes its candidates start with, so a loop that appends conditions to a known query yields its exact unrollings and `concat('SELECT ... WHERE 1', <string>)`. Recursion over symbolic inputs forks at every level and is bounded by `Budget::$symbolicRecursion`; recursion over concrete values is bounded by `Budget::$recursion`.
+
+`Budget` bounds reproducible logical work, not elapsed time. Set `resources: new \Deriver\Query\ResourceLimits(seconds: 2.0)` on `Configuration` for a cooperative time limit, independently of its logical budget. Resource checks also run during path joins and isolation proofs. Source capture precedes the query limits and is controlled by `Configuration::$sourceLimits`; a parser, custom model, or individual value operation cannot be preempted. Use a separate process if your application requires a hard deadline.
+
+If execution stops before a value or tuple observation, Deriver can recover constants and concatenation structure from the already captured expression, with opaque gaps and an interruption frontier. These are candidates with unresolved reachability. They are useful for partial reports and cannot pass `definite()`. An interrupted callee invalidates its reachable references, objects, globals and statics; unrelated caller locals retain their values.
+
+Within a session, distinct queries can reuse bounded summaries of closed, isolated source functions. Reuse requires reference-free inputs and a proof that the call tree affects only local state and contains no requested observation. Interrupted or effectful computations are excluded. Replays charge the original logical transfer cost, so warming the cache does not expand a query's budget. The cache retains at most 32 small specializations; it does not eliminate execution from application entrypoints for arbitrary call graphs.
 
 A closed assessment does not mean the result is a single fixed value. Reading an undefined variable is closed and concrete, yet it carries a `PHP_WARNING` frontier, because an error handler can turn the warning into an exception. When you need one value PHP always produces, use `definite()`. It returns the only normal outcome when every value is concrete and the result has no frontiers, exceptional outcomes or project diagnostics, and `null` otherwise:
 
@@ -124,13 +134,21 @@ $session = (new Analyzer())->open($input, new Configuration(environment: [
 ]));
 ```
 
-`callsTo()` lists call sites without running the application. A function or method name selects calls of that name, `Class::__construct` selects `new Class(...)` sites, which are reported with the `new` operation and the created class as the target, and `*` selects every call and creation whose name is written in the source.
+Static locals start from their declaration initializer for a fresh entry. They are not a union over every possible earlier invocation. To analyze a later invocation, provide an explicit `Configuration::$environment` value such as `'static:App\\counter:n' => Term::constant(4)`, using the callable's captured identity and variable name.
+
+Default request superglobals (`$_GET`, `$_POST`, `$_COOKIE`, `$_REQUEST`) contain strings, arrays, or absent values. Reading them at script scope preserves that domain. Explicit source assignments or injected environments can replace it. A generic `mixed` value may still be an object with effectful `__toString()`, so converting it can invalidate shared globals; use an input value or model when a narrower domain is known.
+
+`callsTo()` lists call sites without running the application. A function or method name selects calls of that name, `Class::__construct` selects `new Class(...)` sites, which are reported with the `new` operation and the created class as the target, and `*` also includes dynamic function and method calls such as `$f()` with an empty `target`. Dynamic class creation and anonymous classes are not listed.
 
 Deriver evaluates operators without the diagnostics that newer host PHP versions add, such as the PHP 8.4 deprecation of raising zero to a negative power.
 
 An active Xdebug lowers the host stack limit to its `xdebug.max_nesting_level`, so deep call chains are sealed earlier with a `STACK_LIMIT` frontier and results can be less precise; run analyses with `xdebug.mode=off` where possible.
 
-`$session->declarations()` reads captured signatures and class metadata without autoloading. Function, method, class, property, and constant metadata carry the raw `docComment` text (an empty string when absent), so integrations can read annotations such as `@global wpdb $wpdb` themselves. Deriver never interprets PHPDoc, and doc comments do not change analysis results.
+`$session->declarations()` reads captured signatures and class metadata without autoloading. Function, method, class, property, and constant metadata carry the raw `docComment` text (an empty string when absent), so integrations can read annotations such as `@global wpdb $wpdb` themselves. Use `$session->comments($symbol)` for raw PHPDoc attached to statements and expressions within a callable or script, including `/** @var PDO $db */ global $db;`. Each `SourceComment` contains the raw text and the commented node's source range. Deriver never interprets PHPDoc, and doc comments do not change analysis results.
+
+Missing source for an ancestor leaves method dispatch open, including `$this`, `self`, and `static` calls; it does not establish that a method is absent. Supply the ancestor declaration or a call model when its behavior is needed. Source targeting PHP 8.4 features, including property hooks, remains outside the PHP 8.3 target.
+
+Partial formatting and array operations retain the structure they can establish. For example, an unknown middle part of `sprintf("SELECT * FROM $table WHERE id = %d", 5)` retains the `SELECT * FROM ` prefix. The unknown part may itself contain format directives, so the later `id = 5` text is not guaranteed. Known leading and trailing values around array unpacking can remain candidates alongside the unknown remainder; they do not make the whole array concrete.
 
 Queries, models, and result types are described in the [API documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/deriver/).
 

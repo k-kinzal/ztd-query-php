@@ -12,6 +12,8 @@ use Deriver\Exception\InvalidInputException;
  * Memory is additional allocated PHP memory since the query starts; source capture and
  * indexing precede this limit. A zero duration disables the optional wall-clock limit.
  * Resource interruptions are explicit frontiers and are not stored in the result cache.
+ * Time and memory are checked cooperatively between evaluator operations and during joins;
+ * an individual parser, model, or value operation cannot be preempted by these limits.
  * Memory, time, and cancellation end the whole query; the stack frame limit only seals the
  * call it refuses as a residual with a STACK_LIMIT frontier, and the rest of the query continues.
  *

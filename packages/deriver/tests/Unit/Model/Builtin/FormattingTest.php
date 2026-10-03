@@ -23,6 +23,14 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class FormattingTest extends TestCase
 {
+    public function testLeadingUnwrapsOnlyStringCastsAndPreservesConfidentiality(): void
+    {
+        $inner = new Term('concat', operands: [Term::constant('SELECT '), Term::parameter('table', 'string')], attributes: ['type' => 'string']);
+        $cast = new Term('cast', 'string', [$inner], ['type' => 'string'], true);
+        self::assertSame(['SELECT ', true], (new Formatting())->leading($cast));
+        self::assertSame(['', false], (new Formatting())->leading(new Term('cast', 'string', [Term::constant(5)])));
+    }
+
     public function testApplyPreservesPositionalArgumentsAndEscapedPercents(): void
     {
         self::assertSame('id:7/%/x', (new Formatting())->apply([Term::constant('id:%2$d/%%/%1$s'), Term::fromNative(['x', 7])])->native());

@@ -100,6 +100,10 @@ final class Invocation
         $static = $instruction->operation === 'invoke-static';
         $symbol = (new Dispatch($this->machine->context->program))->method($class, $static ? '__callStatic' : '__call');
         if ($symbol === null) {
+            if (!(new Dispatch($this->machine->context->program))->complete($class)) {
+                $bound = (new MethodInvocation($this->machine))->receiver($receiver, $state, $class, $static);
+                return (new UnknownCall($this->machine->context))->apply($state, $instruction, $arguments, $bound, 'OPEN_DISPATCH');
+            }
             return $this->error($state);
         }
         foreach ($arguments as $argument) {

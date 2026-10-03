@@ -791,6 +791,28 @@
             },
             "additionalProperties": false
           }
+        },
+        "captures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "$ref": "#/$defs/valueRef"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "symbolicArguments": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false

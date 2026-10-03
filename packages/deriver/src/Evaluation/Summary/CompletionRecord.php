@@ -41,7 +41,7 @@ final class CompletionRecord
         }
         $next->memory->sequence = max($sequence, $next->memory->sequence);
         if ($this->havoc) {
-            (new Havoc())->all($next, 'BUDGET_EXCEEDED');
+            (new Havoc())->symbols($next, 'BUDGET_EXCEEDED');
         }
         $next->completion = new Completion($this->state->completion->kind, $this->state->completion->value);
         $next->guard = $this->state->guard;

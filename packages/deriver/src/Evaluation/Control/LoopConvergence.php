@@ -9,7 +9,6 @@ use Deriver\Evaluation\Context;
 use Deriver\Evaluation\Havoc;
 use Deriver\Evaluation\State;
 use Deriver\Value\Arrays;
-use Deriver\Value\Identity;
 use Deriver\Value\Lattice;
 use Deriver\Value\Term;
 
@@ -63,7 +62,7 @@ final class LoopConvergence
         }
         if ($state->visits[$header] > $this->context->query->budget()->iterations + 64) {
             $this->context->frontier('BUDGET_EXCEEDED', $callable->source, 'loop-fixed-point');
-            (new Havoc())->all($state, 'BUDGET_EXCEEDED');
+            (new Havoc())->symbols($state, 'BUDGET_EXCEEDED');
             return true;
         }
         return false;
@@ -76,7 +75,7 @@ final class LoopConvergence
      */
     public function structure(State $state): string
     {
-        $identity = new Identity();
+        $identity = $this->context->identity;
         $iterators = [];
         foreach ($state->iterators as $id => $iterator) {
             $iterators[$id] = [$identity->key($iterator->array), $iterator->location, $this->position($iterator)];

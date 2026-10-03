@@ -45,6 +45,10 @@ final class StringJoining
         if ((new TypePredicates())->apply('is_string', $separator)->literal !== true) {
             return null;
         }
+        $tail = (new Arrays())->tail($array);
+        if ($tail !== null) {
+            return $this->suffix($caller, $instruction, $state, $separator, $tail, $array->isSecret());
+        }
         $split = (new Arrays())->split($array);
         if ($split !== null) {
             return $this->partial($caller, $instruction, $state, $separator, $split, $array->isSecret());
@@ -134,4 +138,43 @@ final class StringJoining
         }
         return $results;
     }
+    /**
+     * Keeps known trailing entries after a symbolic unpack, including the empty-prefix case.
+     * @param CallableGraph $caller Model frame
+     * @param Instruction $instruction Intrinsic destination
+     * @param State $state Bound inputs
+     * @param Term $separator String separator
+     * @param array{Term, Term} $split Unknown prefix and known suffix
+     * @param bool $secret Whether the array contains confidential data
+     * @return list<State> Exact, partial, and exceptional paths
+     */
+    public function suffix(CallableGraph $caller, Instruction $instruction, State $state, Term $separator, array $split, bool $secret): array
+    {
+        [$prefix, $tail] = $split;
+        $semantics = new Operations($this->machine->context->configuration->target->floatPrecision);
+        $empty = $semantics->binary('===', $prefix, Term::array([]));
+        $results = [];
+        $missing = $state->fork();
+        if ((new Constraints($this->machine->context))->assume($missing, $empty, true)) {
+            array_push($results, ...$this->join($caller, $instruction, $missing, $separator, $tail, $secret));
+        }
+        if (!(new Constraints($this->machine->context))->assume($state, $empty, false)) {
+            return $results;
+        }
+        foreach ((new UnknownCall($this->machine->context))->apply($state, $instruction, [new PassedArgument($prefix)], null, 'UNSUPPORTED_MODEL_CASE', 'string') as $path) {
+            if ($path->completion->kind !== 'normal') {
+                $results[] = $path;
+                continue;
+            }
+            $text = $semantics->binary('.', $path->value($instruction->result), $separator);
+            foreach ($this->join($caller, $instruction, $path, $separator, $tail, $secret) as $joined) {
+                if ($joined->completion->kind === 'normal') {
+                    $joined->registers[$instruction->result] = $semantics->binary('.', $text, $joined->value($instruction->result));
+                }
+                $results[] = $joined;
+            }
+        }
+        return $results;
+    }
+
 }

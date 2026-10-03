@@ -47,6 +47,16 @@ final class Session implements AnalysisSession
      * Captured declaration and lazy graph index.
      */
     public readonly ProjectIndex $program;
+
+    /**
+     * @param string $symbol Captured declaration
+     * @return list<\Deriver\Reference\SourceComment> Source comments
+     */
+    #[Override]
+    public function comments(string $symbol): array
+    {
+        return (new \Deriver\Source\Declaration\Comments())->within($this->program, $symbol);
+    }
     /**
      * Explicit model selection.
      */
@@ -63,6 +73,14 @@ final class Session implements AnalysisSession
      * @var array<string, DerivationResult> Complete query results by semantic options.
      */
     public array $cache = [];
+    /**
+     * Closed isolated function results shared by this immutable session.
+     */
+    private \Deriver\Evaluation\Summary\SharedSummaries $shared;
+    /**
+     * @var array<string, list<Observation>> Cached source call inventories
+     */
+    private array $calls = [];
     /**
      * Captured provider contributions.
      */
@@ -81,6 +99,7 @@ final class Session implements AnalysisSession
      */
     public function __construct(ProjectInput $input, Configuration $configuration, SyntaxCache $syntax = new SyntaxCache(), GraphCache $lowered = new GraphCache())
     {
+        $this->shared = new \Deriver\Evaluation\Summary\SharedSummaries();
         $this->providerInputs = new ProviderInputs($input, $configuration);
         $input = $this->providerInputs->input;
         $configuration = $this->providerInputs->configuration;
@@ -130,7 +149,7 @@ final class Session implements AnalysisSession
         if (isset($this->cache[$key]) && $this->configuration->resources->cancellation?->isRequested() !== true) {
             return $this->cache[$key];
         }
-        $result = (new QueryExecution($this->program, $this->configuration, $this->models, $this->manifest))->derive($query);
+        $result = (new QueryExecution($this->program, $this->configuration, $this->models, $this->manifest, $this->shared))->derive($query);
         $this->results[$result->reference->id] = $result;
         foreach ($result->frontiers as $frontier) {
             if (in_array($frontier->code, ['CANCELLED', 'MEMORY_LIMIT', 'TIME_LIMIT', 'STACK_LIMIT'], true)) {
@@ -184,7 +203,7 @@ final class Session implements AnalysisSession
     #[Override]
     public function callsTo(string $symbol): array
     {
-        return (new CallObservations($this->program, $this->models))->find($symbol);
+        return $this->calls[$symbol] ??= (new CallObservations($this->program, $this->models))->find($symbol);
     }
     /**
      * Returns entries explicitly contributed by registered providers.

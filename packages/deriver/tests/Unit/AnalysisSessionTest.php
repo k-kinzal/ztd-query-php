@@ -96,4 +96,13 @@ final class AnalysisSessionTest extends TestCase
         self::assertSame('sql', $signature->parameters[0]->name);
     }
 
+    /**
+     * @throws JsonException If the captured metadata cannot be encoded
+     */
+    public function testCommentsDoNotInterpretAnnotationsAsTypes(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function f(){/** @var PDO $db */ global $db;}');
+        self::assertSame('/** @var PDO $db */', $session->comments('f')[0]->text);
+    }
+
 }

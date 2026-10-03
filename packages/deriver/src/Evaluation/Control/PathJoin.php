@@ -241,6 +241,9 @@ final class PathJoin
         $keys = $union ? array_keys(array_replace(...$maps)) : array_keys(array_intersect_key(...$maps));
         $result = [];
         foreach ($keys as $key) {
+            if ($this->context->resources->reason() !== null) {
+                return null;
+            }
             $value = $maps[0][$key] ?? new Term('uninitialized');
             foreach (array_slice($maps, 1) as $map) {
                 $next = $map[$key] ?? new Term('uninitialized');

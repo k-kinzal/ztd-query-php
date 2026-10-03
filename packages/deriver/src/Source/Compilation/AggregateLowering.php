@@ -38,6 +38,10 @@ final class AggregateLowering
             }
             return $result;
         }
+        $literal = (new LiteralArrayLowering($this->lowering))->lower($node);
+        if ($literal !== null) {
+            return $literal;
+        }
         $result = $g->emit($node, 'constant', constant: Term::array([]));
         foreach ($node->items as $item) {
             $key = $item->key === null ? '' : $this->lowering->expression($item->key);

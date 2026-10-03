@@ -21,7 +21,7 @@ final class Observation
      * @param SourceRef $source Call expression range
      * @param string $callable Owning callable
      * @param string $instruction Call instruction identity
-     * @param string $target Statically known function or method name, or the created class for `new`
+     * @param string $target Statically known function or method name, the created class for `new`, or empty for a dynamic call
      * @param array<int|string, ExpressionRef> $arguments Original argument expression references
      * @param ExpressionRef|null $returned Return expression reference; the created object for `new`
      * @param ExpressionRef|null $receiver Evaluated object or class operand for a method call; null for functions and `new`

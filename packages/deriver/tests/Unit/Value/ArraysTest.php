@@ -304,4 +304,16 @@ final class ArraysTest extends TestCase
         self::assertTrue($arrays->set(Term::array([]), new Term('parameter', 'unknown', secret:true), Term::constant(1))->isSecret());
         self::assertTrue($arrays->merge(Term::array([]), Term::fromNative([], true))->isSecret());
     }
+    public function testTailKeepsOnlyAppendSuffixesWithAvailableIndices(): void
+    {
+        $arrays = new Arrays();
+        $prefix = $arrays->merge(Term::array([]), Term::parameter('x', 'array'));
+        $array = $arrays->set($arrays->set($prefix, null, Term::constant('a')), null, Term::constant('z'));
+        $tail = $arrays->tail($array);
+        self::assertNotNull($tail);
+        self::assertSame($prefix, $tail[0]);
+        self::assertSame(['a','z'], $tail[1]->native());
+        self::assertNull($arrays->tail($arrays->set($prefix, Term::constant('key'), Term::constant('z'))));
+    }
+
 }

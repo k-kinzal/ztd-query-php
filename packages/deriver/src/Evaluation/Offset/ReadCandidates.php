@@ -9,6 +9,7 @@ use Deriver\ControlFlow\Instruction;
 use Deriver\Evaluation\Completion;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
+use Deriver\Value\Arrays;
 use Deriver\Value\Term;
 
 /**
@@ -34,29 +35,36 @@ final class ReadCandidates
     public function apply(State $state, Instruction $instruction, Term $value): array
     {
         [$array, $key] = $value->operands;
+        $head = (new Arrays())->head($array);
+        $candidates = $head ?? $array;
         $result = [];
         if (($value->attributes['mayRejectKey'] ?? false) === true) {
             $failure = $state->fork();
             $failure->completion = new Completion('throw', new Term('throwable', 'TypeError'));
             $result[] = $failure;
         }
-        if ($array->kind !== 'array' || ($array->attributes['open'] ?? false) === true || count($array->operands) >= $this->context->query->budget()->partitions) {
+        if ($key->kind === 'constant' || $candidates->kind !== 'array' || ($candidates->attributes['open'] ?? false) === true || count($candidates->operands) >= $this->context->query->budget()->partitions) {
             $state->registers[$instruction->result] = $value;
             return [$state, ...$result];
         }
         $missing = $state->fork();
         $absent = true;
-        foreach (array_keys($array->operands) as $index) {
+        foreach (array_keys($candidates->operands) as $index) {
             $test = new Term('binary', '===', [$key, Term::constant($index)], ['type' => 'bool']);
             $path = $missing->fork();
             if ((new Constraints($this->context))->assume($path, $test, true)) {
-                $path->registers[$instruction->result] = $state->memory->element($array, $index, $key->isSecret());
+                $path->registers[$instruction->result] = $state->memory->element($candidates, $index, $key->isSecret() || $array->isSecret());
                 $result[] = $path;
             }
             $absent = (new Constraints($this->context))->assume($missing, $test, false);
             if (!$absent) {
                 break;
             }
+        }
+        if ($absent && $head !== null) {
+            $missing->registers[$instruction->result] = $value;
+            $result[] = $missing;
+            return $result;
         }
         if ($absent) {
             $silent = ($value->attributes['silent'] ?? false) === true;

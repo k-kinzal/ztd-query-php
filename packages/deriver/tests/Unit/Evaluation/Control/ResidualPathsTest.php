@@ -96,4 +96,16 @@ final class ResidualPathsTest extends TestCase
         self::assertSame([], $paths[0]->constraints);
         self::assertSame([], $context->frontiers);
     }
+    public function testSealPreservesInaccessibleCallerCells(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $state = new State();
+        $caller = $state->memory->allocate(new Term('object', 'pdo', attributes: ['class' => 'PDO']));
+        $shared = $state->memory->allocate(Term::constant('shared'));
+        $state->locals['reference'] = $shared;
+        $paths = (new ResidualPaths($context))->seal($state, new SourceRef('test', 'fixture.php', 0, 1), 'partition-limit');
+        self::assertSame('PDO', $paths[0]->memory->read($caller)->attributes['class']);
+        self::assertSame('opaque', $paths[0]->memory->read($shared)->kind);
+    }
+
 }

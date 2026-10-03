@@ -28,6 +28,8 @@ final class EntryPoint
      * @param array<int|string, Term> $arguments Positional or named initial values
      * @param Term|null $receiver Initial receiver identity, if supplied
      * @param array<string, Term> $properties Initial receiver property values keyed by property name
+     * @param array<string, Term> $captures Explicit lexical captures for closure entries; omitted captures remain symbolic and undeclared names are rejected at derivation
+     * @param bool $symbolicArguments Whether omitted parameters range over all valid inputs, including enum cases
      * @throws InvalidInputException If a property key is not a PHP property name
      */
     public function __construct(
@@ -35,6 +37,8 @@ final class EntryPoint
         public readonly array $arguments = [],
         public readonly ?Term $receiver = null,
         public readonly array $properties = [],
+        public readonly array $captures = [],
+        public readonly bool $symbolicArguments = false,
     ) {
         foreach (array_keys($properties) as $name) {
             if (preg_match('/^[A-Za-z_\x80-\xff][A-Za-z0-9_\x80-\xff]*$/D', strval($name)) !== 1) {

@@ -101,8 +101,9 @@ final class Context
      * @param Query $query Normalized query
      * @param Configuration $configuration Explicit semantic assumptions
      * @param Registry $models Trusted model selection
+     * @param Summary\SharedSummaries $shared Session cache of closed isolated completions
      */
-    public function __construct(public readonly Program $program, public readonly Query $query, public readonly Configuration $configuration, public readonly Registry $models)
+    public function __construct(public readonly Program $program, public readonly Query $query, public readonly Configuration $configuration, public readonly Registry $models, public readonly Summary\SharedSummaries $shared = new Summary\SharedSummaries())
     {
         $this->summaries = new Table();
         $this->demands = new WeakMap();

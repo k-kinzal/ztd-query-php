@@ -157,4 +157,13 @@ final class DispatchTest extends TestCase
         self::assertSame('A', $dispatch->className('parent', 'B', 'C'));
         self::assertSame('C', $dispatch->className('static', 'B', 'C'));
     }
+    public function testCompleteChecksTheEntireInheritanceChain(): void
+    {
+        $dispatch = new Dispatch(\Tests\Fake\SourceFixture::index('<?php class A{} class B extends A{} class C extends Missing{} class D extends C{}'));
+        self::assertTrue($dispatch->complete('B'));
+        self::assertFalse($dispatch->complete('C'));
+        self::assertFalse($dispatch->complete('D'));
+        self::assertFalse($dispatch->complete('Missing'));
+    }
+
 }

@@ -81,6 +81,9 @@ final class CallObservations
             $index = in_array($instruction->operation, ['invoke', 'new'], true) ? 0 : 1;
             $name = $constants[$instruction->operands[$index] ?? '']->literal ?? null;
             if (!is_string($name)) {
+                if ($selector === '*' && $instruction->operation !== 'new') {
+                    $result[] = $this->observation($callable->symbol, $instruction, '', $sources);
+                }
                 continue;
             }
             $name = match ($instruction->operation) {

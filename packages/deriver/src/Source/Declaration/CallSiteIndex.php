@@ -67,6 +67,7 @@ final class CallSiteIndex
         }
         $found = false;
         if ($node instanceof Expr\FuncCall || $node instanceof Expr\MethodCall || $node instanceof Expr\NullsafeMethodCall || $node instanceof Expr\StaticCall) {
+            $found = $selector === '*';
             $name = $node->name;
             if ($name instanceof Node\Name || $name instanceof Node\Identifier) {
                 $resolved = $name->getAttribute('namespacedName');

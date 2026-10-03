@@ -145,7 +145,7 @@ final class State
     public function local(string $name): Location
     {
         if (!isset($this->locals[$name])) {
-            $initial = in_array($name, ['_GET', '_POST', '_COOKIE', '_SERVER', '_ENV', '_REQUEST', '_FILES', '_SESSION'], true) ? new Term('external', 'superglobal:' . $name, attributes: ['type' => 'array', 'stability' => 'request']) : new Term('uninitialized');
+            $initial = in_array($name, ['_GET', '_POST', '_COOKIE', '_SERVER', '_ENV', '_REQUEST', '_FILES', '_SESSION'], true) ? new Term('external', 'superglobal:' . $name, attributes: ['type' => 'array', 'stability' => 'request', 'elementType' => in_array($name, ['_GET', '_POST', '_COOKIE', '_REQUEST'], true) ? 'string|array|null' : 'mixed']) : new Term('uninitialized');
             if ($this->unknownLocals !== null) {
                 $initial = Term::opaque($this->unknownLocals);
             }

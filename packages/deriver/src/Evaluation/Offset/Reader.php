@@ -86,7 +86,7 @@ final class Reader
             return $state->memory->element($head, $normalized->literal, $key->isSecret() || $container->isSecret());
         }
         if ($container->kind !== 'array') {
-            return new Term('array-read', operands: [$container, $normalized], attributes: ['silent' => $silent]);
+            return new Term('array-read', operands: [$container, $normalized], attributes: ['silent' => $silent, 'type' => $container->attributes['elementType'] ?? 'mixed']);
         }
         $value = $state->memory->element($container, $normalized->literal, $key->isSecret());
         if ($value->kind === 'uninitialized' && !$silent) {
