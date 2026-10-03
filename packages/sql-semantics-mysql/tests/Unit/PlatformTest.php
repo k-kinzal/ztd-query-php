@@ -152,7 +152,7 @@ final class PlatformTest extends TestCase
         $parser = $platform->parser();
         $value = $platform->values($parser->version())->read($parser->parse('SELECT 42'));
         self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $value);
-        self::assertSame('SELECT 42', (new \SqlSemantics\Statement\Statement($value))->toString());
+        self::assertSame('SELECT 42', (new \SqlSemantics\Statement\Statement(new Language(Dialect::MySql), $value))->toString());
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'CREATE LOGFILE GROUP logs ADD UNDOFILE \'undo.dat\''])]

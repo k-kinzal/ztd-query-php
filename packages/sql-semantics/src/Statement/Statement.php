@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Statement;
 
 /**
- * A complete SQL command whose values are independent of parsing.
+ * A complete SQL command of one language, whose values are independent of parsing.
  *
  * Fixed syntax is defined by the concrete value classes. Arguments are named
  * fields, finite options are enums, and forwarding grammar rules are removed.
@@ -15,6 +15,13 @@ namespace SqlSemantics\Statement;
  * dependencies also carries its resolution: what it declares and what every
  * table name in it resolves to. Replacing the command discards it.
  *
+ * A statement is always valid SQL of its language: constructing one, from
+ * analysis, composition, or a rewrite, requires the SQL it writes to be read
+ * back by the language as the same command with the same comments. A value
+ * that would be written as other SQL, such as a reserved word used as a
+ * name, an operand that needs parentheses, or a form the release lacks, is
+ * rejected when the statement is built, not when the SQL is run.
+ *
  * @visibility public
  * @example Reconstructing a statement from its values
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1');
@@ -22,6 +29,9 @@ namespace SqlSemantics\Statement;
  * @example Keeping a trailing comment while replacing the command
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1 -- audited');
  *     $statement->withCommand($statement->command)->toString() // => "SELECT 1 -- audited"
+ * @example A comment that would change the SQL is rejected
+ *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1');
+ *     $statement->withComments(new \SqlSemantics\Statement\Comments([\SqlSemantics\Statement\Statement::AFTER => ['# note']])) // throws \SqlSemantics\Statement\StatementException
  */
 final class Statement
 {
@@ -38,31 +48,42 @@ final class Statement
     public const AFTER = 1;
 
     /**
-     * Supplies the complete command value and the comments written around it.
+     * Supplies the language, the complete command value, and the comments written around it.
      *
+     * @param Syntax $syntax The language the statement is written in, which verifies it
      * @param Comments $comments Comments at position BEFORE precede the command; those at AFTER follow it
      * @param Resolution|null $resolution What the statement means against its dependencies, when it was analyzed with them
+     *
+     * @throws StatementException When the statement is not valid SQL of its language
      */
-    public function __construct(public readonly Command $command, public readonly Comments $comments = new Comments(), public readonly ?Resolution $resolution = null)
-    {
-        $this->assertImmutableValueGraph($command);
+    public function __construct(
+        public readonly Syntax $syntax,
+        public readonly Command $command,
+        public readonly Comments $comments = new Comments(),
+        public readonly ?Resolution $resolution = null,
+    ) {
         $this->assert(array_diff($comments->positions(), [self::BEFORE, self::AFTER]) === [], 'Statement comments are written before or after the command.');
+        $syntax->verify($this);
     }
 
     /**
      * Returns a statement containing the replacement command and the same comments, without a resolution.
+     *
+     * @throws StatementException When the statement would not be valid SQL of its language
      */
     public function withCommand(Command $command): self
     {
-        return new self($command, $this->comments);
+        return new self($this->syntax, $command, $this->comments);
     }
 
     /**
      * Returns a statement with other comments around the same command and resolution.
+     *
+     * @throws StatementException When the statement would not be valid SQL of its language
      */
     public function withComments(Comments $comments): self
     {
-        return new self($this->command, $comments, $this->resolution);
+        return new self($this->syntax, $this->command, $comments, $this->resolution);
     }
 
     /**

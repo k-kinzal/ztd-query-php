@@ -16,17 +16,13 @@ use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\PostgreSql\PostgreSqlProvider;
-use SqlFormatter\Core\FormatOptions;
-use SqlFormatter\Core\Style;
-use SqlFormatter\Facade\Formatter;
-use SqlParser\PostgreSql\PostgreSqlParser;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect;
 
 $grammarVersion = 'pg-' . (getenv('PG_VERSION') !== false ? getenv('PG_VERSION') : '17.2');
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/pg-schema');
 $provider = new PostgreSqlProvider(Factory::create(), $grammarVersion, $coverage);
-$target = new SchemaTarget(new Semantics(Dialect::PostgreSql, $grammarVersion), new Formatter(new PostgreSqlParser($grammarVersion), new FormatOptions(Style::Compact)), $grammarVersion);
+$target = new SchemaTarget(new Semantics(Dialect::PostgreSql, $grammarVersion), $grammarVersion);
 $planner = $provider->planner();
 $constraints = GenerationPlan::constrained('CreateStmt', [
     'CreateStmt' => [ProductionPattern::containing('OptTableElementList')],

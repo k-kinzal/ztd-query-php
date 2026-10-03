@@ -2384,7 +2384,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\IsoLevelChoice_5c144ac4::UseReadUncommitted_4875265c',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\IsoLevelWithReadUncommitted_03ea958d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ',
@@ -2393,7 +2396,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\IsoLevelChoice_5c144ac4::UseReadCommitted_c09d6186',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\IsoLevelWithReadCommitted_9eeeb029',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ',
@@ -2402,7 +2408,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\IsoLevelChoice_5c144ac4::UseRepeatableRead_f5f5acc3',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\IsoLevelWithRepeatableRead_aed09e5b',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'REPEATABLE',
@@ -2411,7 +2420,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\IsoLevelChoice_5c144ac4::UseSerializable_7dc421f3',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\IsoLevelWithSerializable_2a61ecb9',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SERIALIZABLE',
@@ -2877,7 +2889,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DiscardStmtChoice_20d90c23::UseDiscardAll_98f36323',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DiscardStmtWithDiscardAll_65972793',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'DISCARD',
@@ -2886,7 +2901,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DiscardStmtChoice_20d90c23::UseDiscardTemp_39aa9482',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DiscardStmtWithDiscardTemp_a2b3d852',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'DISCARD',
@@ -2895,7 +2913,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DiscardStmtChoice_20d90c23::UseDiscardTemporary_a2c62d1b',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DiscardStmtWithDiscardTemporary_7c821ba7',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'DISCARD',
@@ -2904,7 +2925,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DiscardStmtChoice_20d90c23::UseDiscardPlans_7cd065ac',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DiscardStmtWithDiscardPlans_9346bd03',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'DISCARD',
@@ -2913,7 +2937,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\DiscardStmtChoice_20d90c23::UseDiscardSequences_f74d5000',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\DiscardStmtWithDiscardSequences_06379b7a',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'DISCARD',
@@ -5821,7 +5848,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseTemporary_cb28e366',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTempWithTemporary_66db8c82',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'TEMPORARY',
@@ -5829,7 +5859,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseTemp_b969079f',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTempWithTemp_cb2dbd16',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'TEMP',
@@ -5837,7 +5870,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseLocalTemporary_ca17e118',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTempWithLocalTemporary_f9346813',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'LOCAL',
@@ -5846,7 +5882,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseLocalTemp_512b8059',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTempWithLocalTemp_152ae662',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'LOCAL',
@@ -5855,7 +5894,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseGlobalTemporary_b3333bdf',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTempWithGlobalTemporary_0932a2c3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'GLOBAL',
@@ -5864,7 +5906,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     5 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseGlobalTemp_3a5bdb76',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTempWithGlobalTemp_1c7c52f0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'GLOBAL',
@@ -5873,7 +5918,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     6 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::UseUnlogged_2f428180',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTempWithUnlogged_421b79f4',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'UNLOGGED',
@@ -5881,7 +5929,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     7 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTempChoice_b0b20125::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTempWith_2b9fa908',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -6411,7 +6462,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptUniqueNullTreatmentChoice_0d0ecb2d::UseNullsDistinct_ce5246e0',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptUniqueNullTreatmentWithNullsPDistinct_cba151da',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NULLS_P',
@@ -6420,7 +6474,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptUniqueNullTreatmentChoice_0d0ecb2d::UseNullsNotDistinct_c96cba04',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptUniqueNullTreatmentWithNullsPNotDistinct_a265139c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NULLS_P',
@@ -6430,7 +6487,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptUniqueNullTreatmentChoice_0d0ecb2d::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptUniqueNullTreatmentWith_791c00d1',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -6440,7 +6500,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\GeneratedWhenChoice_24e63c65::UseAlways_5b07e351',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\GeneratedWhenWithAlways_18641c73',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ALWAYS',
@@ -6448,7 +6511,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\GeneratedWhenChoice_24e63c65::UseByDefault_5e7070fe',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\GeneratedWhenWithByDefault_83c1e226',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'BY',
@@ -6460,7 +6526,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttrChoice_689d0bfa::UseDeferrable_98c41ab5',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ConstraintAttrWithDeferrable_b83cdb1c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'DEFERRABLE',
@@ -6468,7 +6537,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttrChoice_689d0bfa::UseNotDeferrable_22785b31',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ConstraintAttrWithNotDeferrable_4fe5e5dc',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NOT',
@@ -6477,7 +6549,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttrChoice_689d0bfa::UseInitiallyDeferred_6e9191be',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ConstraintAttrWithInitiallyDeferred_061f30f8',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'INITIALLY',
@@ -6486,7 +6561,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttrChoice_689d0bfa::UseInitiallyImmediate_0e67cf0a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ConstraintAttrWithInitiallyImmediate_fd2b03c6',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'INITIALLY',
@@ -6882,7 +6960,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNoInheritChoice_a9bf54b3::UseNoInherit_df0c4b0a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptNoInheritWithNoInherit_aedcfff5',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NO',
@@ -6891,7 +6972,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNoInheritChoice_a9bf54b3::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptNoInheritWith_82bd86b3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -6993,7 +7077,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\KeyMatchChoice_a44ae14e::UseMatchFull_a1c2aa11',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\KeyMatchWithMatchFull_c4f0f4c3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'MATCH',
@@ -7002,7 +7089,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\KeyMatchChoice_a44ae14e::UseMatchPartial_b0d05904',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\KeyMatchWithMatchPartial_11ba3d90',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'MATCH',
@@ -7011,7 +7101,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\KeyMatchChoice_a44ae14e::UseMatchSimple_cdbeceec',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\KeyMatchWithMatchSimple_70c6220f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'MATCH',
@@ -7020,7 +7113,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\KeyMatchChoice_a44ae14e::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\KeyMatchWith_b7b77973',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -7489,7 +7585,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OnCommitOptionChoice_11bb0e86::UseOnCommitDrop_069170d2',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OnCommitOptionWithOnCommitDrop_e329d327',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ON',
@@ -7499,7 +7598,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OnCommitOptionChoice_11bb0e86::UseOnCommitDeleteRows_7340235c',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OnCommitOptionWithOnCommitDeletePRows_ef69db5d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ON',
@@ -7510,7 +7612,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OnCommitOptionChoice_11bb0e86::UseOnCommitPreserveRows_1e96391a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OnCommitOptionWithOnCommitPreserveRows_97228e1b',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ON',
@@ -7521,7 +7626,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OnCommitOptionChoice_11bb0e86::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OnCommitOptionWith_50cf818d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -7825,7 +7933,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWithDataChoice_383fd7df::UseWithData_69d57edc',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWithDataWithWithDataP_3f5c609a',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -7834,7 +7945,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWithDataChoice_383fd7df::UseWithNoData_a6c81ee5',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWithDataWithWithNoDataP_8a69ca6b',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -7844,7 +7958,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWithDataChoice_383fd7df::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWithDataWith_3414cd83',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -9823,7 +9940,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ImportQualificationTypeChoice_ce31e011::UseLimitTo_e0a14a57',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ImportQualificationTypeWithLimitTo_7a2828cc',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'LIMIT',
@@ -9832,7 +9952,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ImportQualificationTypeChoice_ce31e011::UseExcept_c7329b0e',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ImportQualificationTypeWithExcept_0aab3df3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EXCEPT',
@@ -10394,7 +10517,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TriggerActionTimeChoice_3379afcd::UseBefore_c341c7fe',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TriggerActionTimeWithBefore_9f8fdbf8',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'BEFORE',
@@ -10402,7 +10528,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TriggerActionTimeChoice_3379afcd::UseAfter_94c3f141',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TriggerActionTimeWithAfter_0a2e3394',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'AFTER',
@@ -10410,7 +10539,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\TriggerActionTimeChoice_3379afcd::UseInsteadOf_f5f6493c',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\TriggerActionTimeWithInsteadOf_27d1f76c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'INSTEAD',
@@ -10870,7 +11002,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseNotDeferrable_22785b31',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ConstraintAttributeElemWithNotDeferrable_6e6a0a49',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NOT',
@@ -10879,7 +11014,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseDeferrable_98c41ab5',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ConstraintAttributeElemWithDeferrable_ae0ea07b',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'DEFERRABLE',
@@ -10887,7 +11025,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseInitiallyImmediate_0e67cf0a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ConstraintAttributeElemWithInitiallyImmediate_13d40b87',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'INITIALLY',
@@ -10896,7 +11037,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseInitiallyDeferred_6e9191be',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ConstraintAttributeElemWithInitiallyDeferred_09ad721e',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'INITIALLY',
@@ -10905,7 +11049,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseNotValid_68501e38',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ConstraintAttributeElemWithNotValid_446f4c3c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NOT',
@@ -10914,7 +11061,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     5 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ConstraintAttributeElemChoice_cee1f633::UseNoInherit_df0c4b0a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ConstraintAttributeElemWithNoInherit_05f30717',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NO',
@@ -11078,7 +11228,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EnableTriggerChoice_7edfcc1b::UseEnable_18912667',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\EnableTriggerWithEnableP_2b52d461',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ENABLE_P',
@@ -11086,7 +11239,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EnableTriggerChoice_7edfcc1b::UseEnableReplica_398d2df6',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\EnableTriggerWithEnablePReplica_a6f469af',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ENABLE_P',
@@ -11095,7 +11251,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EnableTriggerChoice_7edfcc1b::UseEnableAlways_00792993',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\EnableTriggerWithEnablePAlways_1b367904',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ENABLE_P',
@@ -11104,7 +11263,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EnableTriggerChoice_7edfcc1b::UseDisable_0fb87bd2',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\EnableTriggerWithDisableP_56df78b8',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'DISABLE_P',
@@ -11766,7 +11928,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptIfNotExistsChoice_90bda5f0::UseIfNotExists_addd9a5c',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptIfNotExistsWithIfPNotExists_7199e41d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'IF_P',
@@ -11776,7 +11941,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptIfNotExistsChoice_90bda5f0::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptIfNotExistsWith_a0a3a58a',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -12515,7 +12683,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseTable_52ca2fea',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithTable_85e93387',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'TABLE',
@@ -12523,7 +12694,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseSequence_88b109d9',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithSequence_04415b25',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SEQUENCE',
@@ -12531,7 +12705,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseView_28baebc3',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithView_68e1c550',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'VIEW',
@@ -12539,7 +12716,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseMaterializedView_34cab606',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithMaterializedView_8bafae92',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'MATERIALIZED',
@@ -12548,7 +12728,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseIndex_ea69fe17',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithIndex_53f5feba',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'INDEX',
@@ -12556,7 +12739,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     5 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseForeignTable_d7a3be14',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithForeignTable_79e320dc',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOREIGN',
@@ -12565,7 +12751,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     6 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseCollation_bdcd3285',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithCollation_627e5e3b',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'COLLATION',
@@ -12573,7 +12762,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     7 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseConversion_b27cc9f8',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithConversionP_752f58e3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'CONVERSION_P',
@@ -12581,7 +12773,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     8 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseStatistics_3397886a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithStatistics_7d3f2803',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'STATISTICS',
@@ -12589,7 +12784,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     9 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseTextSearchParser_6233ed1b',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithTextPSearchParser_4526f800',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'TEXT_P',
@@ -12599,7 +12797,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     10 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseTextSearchDictionary_2d6ab235',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithTextPSearchDictionary_09bc4911',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'TEXT_P',
@@ -12609,7 +12810,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     11 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseTextSearchTemplate_a7fa8ac4',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithTextPSearchTemplate_eb8bc18c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'TEXT_P',
@@ -12619,7 +12823,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     12 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ObjectTypeAnyNameChoice_642ba9ee::UseTextSearchConfiguration_6937f1ce',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ObjectTypeAnyNameWithTextPSearchConfiguration_587624d6',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'TEXT_P',
@@ -12941,7 +13148,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptRestartSeqsChoice_13a0e4ad::UseContinueIdentity_54c311f3',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptRestartSeqsWithContinuePIdentityP_aaa6ca35',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'CONTINUE_P',
@@ -12950,7 +13160,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptRestartSeqsChoice_13a0e4ad::UseRestartIdentity_de8be940',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptRestartSeqsWithRestartIdentityP_7ad2f074',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'RESTART',
@@ -12959,7 +13172,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptRestartSeqsChoice_13a0e4ad::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptRestartSeqsWith_33c3810f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -14557,7 +14773,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptGrantGrantOptionChoice_8c0f9578::UseWithGrantOption_79cfb8cf',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptGrantGrantOptionWithWithGrantOption_83633c66',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -14567,7 +14786,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptGrantGrantOptionChoice_8c0f9578::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptGrantGrantOptionWith_f6106b3f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -15458,7 +15680,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptOrReplaceChoice_082b2602::UseOrReplace_85db5453',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptOrReplaceWithOrReplace_590d3da2',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'OR',
@@ -15467,7 +15692,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptOrReplaceChoice_082b2602::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptOrReplaceWith_cecea4c3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -15731,7 +15959,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ArgClassChoice_bbfc47df::UseIn_fed1d872',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ArgClassWithInP_7dff5bb2',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'IN_P',
@@ -15739,7 +15970,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ArgClassChoice_bbfc47df::UseOut_c57929ed',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ArgClassWithOutP_c2eb2e6f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'OUT_P',
@@ -15747,7 +15981,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ArgClassChoice_bbfc47df::UseInout_abf58a7f',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ArgClassWithInout_25b6efe5',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'INOUT',
@@ -15755,7 +15992,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ArgClassChoice_bbfc47df::UseInOut_54d95fb2',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ArgClassWithInPOutP_7168186b',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'IN_P',
@@ -15764,7 +16004,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ArgClassChoice_bbfc47df::UseVariadic_32c5e89d',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ArgClassWithVariadic_f30653be',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'VARIADIC',
@@ -17123,7 +17366,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\CastContextChoice_9f137eb3::UseAsImplicit_e8ee33a8',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CastContextWithAsImplicitP_fc00bde9',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'AS',
@@ -17132,7 +17378,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\CastContextChoice_9f137eb3::UseAsAssignment_77a043aa',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CastContextWithAsAssignment_5b41fddd',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'AS',
@@ -17141,7 +17390,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\CastContextChoice_9f137eb3::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\CastContextWith_2a9b0e33',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -17177,7 +17429,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptIfExistsChoice_1b8cb991::UseIfExists_82cdccc7',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptIfExistsWithIfPExists_ff2b68bc',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'IF_P',
@@ -17186,7 +17441,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptIfExistsChoice_1b8cb991::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptIfExistsWith_f445174f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -18612,7 +18870,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptSetDataChoice_517d0e1a::UseSetData_beb58ddc',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptSetDataWithSetDataP_f72a9e3a',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SET',
@@ -18621,7 +18882,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptSetDataChoice_517d0e1a::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptSetDataWith_184b906d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -21064,7 +21328,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTransactionChainChoice_5a5e0f39::UseAndChain_ca6c40ba',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTransactionChainWithAndChain_3aba14d0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'AND',
@@ -21073,7 +21340,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTransactionChainChoice_5a5e0f39::UseAndNoChain_0b393eac',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTransactionChainWithAndNoChain_e2b59737',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'AND',
@@ -21083,7 +21353,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptTransactionChainChoice_5a5e0f39::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptTransactionChainWith_a8a82e42',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -21206,7 +21479,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptCheckOptionChoice_083d96a6::UseWithCheckOption_e6c3e346',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptCheckOptionWithWithCheckOption_3fa2b34e',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -21216,7 +21492,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptCheckOptionChoice_083d96a6::UseWithCascadedCheckOption_715d83ad',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptCheckOptionWithWithCascadedCheckOption_de06aded',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -21227,7 +21506,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptCheckOptionChoice_083d96a6::UseWithLocalCheckOption_f2637ad1',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptCheckOptionWithWithLocalCheckOption_b9f83c58',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -21238,7 +21520,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptCheckOptionChoice_083d96a6::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptCheckOptionWith_7836ddfe',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -23404,7 +23689,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseAccessShare_cc70673c',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\LockTypeWithAccessShare_0901e041',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ACCESS',
@@ -23413,7 +23701,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseRowShare_17281c4d',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\LockTypeWithRowShare_4a79ac39',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ROW',
@@ -23422,7 +23713,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseRowExclusive_feeed0b9',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\LockTypeWithRowExclusive_e126284a',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ROW',
@@ -23431,7 +23725,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseShareUpdateExclusive_ce321719',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\LockTypeWithShareUpdateExclusive_7834a296',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SHARE',
@@ -23441,7 +23738,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseShare_0b060acf',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\LockTypeWithShare_ce29c3e0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SHARE',
@@ -23449,7 +23749,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     5 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseShareRowExclusive_d55194c9',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\LockTypeWithShareRowExclusive_29f0717d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SHARE',
@@ -23459,7 +23762,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     6 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseExclusive_a6632be9',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\LockTypeWithExclusive_51e0a12a',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EXCLUSIVE',
@@ -23467,7 +23773,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     7 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\LockTypeChoice_6416f568::UseAccessExclusive_1951bd42',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\LockTypeWithAccessExclusive_13b5e15e',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ACCESS',
@@ -23497,7 +23806,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNowaitOrSkipChoice_d5682479::UseNowait_3fa8f87a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptNowaitOrSkipWithNowait_742d6361',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NOWAIT',
@@ -23505,7 +23817,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNowaitOrSkipChoice_d5682479::UseSkipLocked_5ad391e2',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptNowaitOrSkipWithSkipLocked_a682b340',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SKIP',
@@ -23514,7 +23829,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptNowaitOrSkipChoice_d5682479::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptNowaitOrSkipWith_63582583',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -23797,7 +24115,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\MergeWhenTgtMatchedChoice_976115e6::UseWhenMatched_cfb2da96',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenTgtMatchedWithWhenMatched_85363edd',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WHEN',
@@ -23806,7 +24127,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\MergeWhenTgtMatchedChoice_976115e6::UseWhenNotMatchedBySource_74f6d6b7',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenTgtMatchedWithWhenNotMatchedBySource_9029ed25',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WHEN',
@@ -23821,7 +24145,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\MergeWhenTgtNotMatchedChoice_0f0adcbd::UseWhenNotMatched_2e7bb001',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenTgtNotMatchedWithWhenNotMatched_cb5ad79c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WHEN',
@@ -23831,7 +24158,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\MergeWhenTgtNotMatchedChoice_0f0adcbd::UseWhenNotMatchedByTarget_25e5b365',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\MergeWhenTgtNotMatchedWithWhenNotMatchedByTarget_74defcd9',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WHEN',
@@ -24116,14 +24446,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptHoldChoice_ac55cac7::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptHoldWith_be8608b4',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptHoldChoice_ac55cac7::UseWithHold_e4211cce',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptHoldWithWithHold_64a86b34',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -24132,7 +24468,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptHoldChoice_ac55cac7::UseWithoutHold_ced48b84',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptHoldWithWithoutHold_4755d3cd',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITHOUT',
@@ -24571,7 +24910,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptMaterializedChoice_1497b49e::UseMaterialized_c35fe965',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptMaterializedWithMaterialized_28027eb2',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'MATERIALIZED',
@@ -24579,7 +24921,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptMaterializedChoice_1497b49e::UseNotMaterialized_d36e094c',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptMaterializedWithNotMaterialized_74a135df',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NOT',
@@ -24588,7 +24933,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptMaterializedChoice_1497b49e::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptMaterializedWith_6d7acf98',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -25527,7 +25875,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\EmptyGroupingSetChoice_aa65a62c::Use_e779214a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\EmptyGroupingSetWith_a349227e',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => '(',
@@ -25709,7 +26060,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ForLockingStrengthChoice_851c5b82::UseForUpdate_fc448151',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ForLockingStrengthWithForUpdate_d1cc4a3d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOR',
@@ -25718,7 +26072,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ForLockingStrengthChoice_851c5b82::UseForNoKeyUpdate_e4938495',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ForLockingStrengthWithForNoKeyUpdate_fb4ad624',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOR',
@@ -25729,7 +26086,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ForLockingStrengthChoice_851c5b82::UseForShare_e27bfdcd',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ForLockingStrengthWithForShare_e58aea8a',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOR',
@@ -25738,7 +26098,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\ForLockingStrengthChoice_851c5b82::UseForKeyShare_a54d6181',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\ForLockingStrengthWithForKeyShare_3817294e',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOR',
@@ -31182,7 +31545,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptXmlRootStandaloneChoice_ae61114a::UseStandaloneYes_756500b8',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptXmlRootStandaloneWithStandalonePYesP_c93afe25',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => ',',
@@ -31192,7 +31558,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptXmlRootStandaloneChoice_ae61114a::UseStandaloneNo_8bb18c62',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptXmlRootStandaloneWithStandalonePNo_940b3972',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => ',',
@@ -31202,7 +31571,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptXmlRootStandaloneChoice_ae61114a::UseStandaloneNoValue_9d3ce50a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptXmlRootStandaloneWithStandalonePNoValueP_a6a72692',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => ',',
@@ -31213,7 +31585,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptXmlRootStandaloneChoice_ae61114a::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptXmlRootStandaloneWith_b91bf52c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -31312,7 +31687,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlIndentOptionChoice_1826aa4a::UseIndent_653b14cc',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\XmlIndentOptionWithIndent_e47756c1',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'INDENT',
@@ -31320,7 +31698,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlIndentOptionChoice_1826aa4a::UseNoIndent_bba261cc',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\XmlIndentOptionWithNoIndent_f82761ae',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NO',
@@ -31329,7 +31710,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlIndentOptionChoice_1826aa4a::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\XmlIndentOptionWith_d9b6c23f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -31339,7 +31723,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlWhitespaceOptionChoice_a283f890::UsePreserveWhitespace_972b353f',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\XmlWhitespaceOptionWithPreserveWhitespaceP_0b0db2e0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'PRESERVE',
@@ -31348,7 +31735,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlWhitespaceOptionChoice_a283f890::UseStripWhitespace_2d305f5f',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\XmlWhitespaceOptionWithStripPWhitespaceP_41df8ed7',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'STRIP_P',
@@ -31357,7 +31747,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlWhitespaceOptionChoice_a283f890::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\XmlWhitespaceOptionWith_8ea181a9',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -31430,7 +31823,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlPassingMechChoice_daa2bf9d::UseByRef_75d359f3',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\XmlPassingMechWithByRefP_f896ff88',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'BY',
@@ -31439,7 +31835,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\XmlPassingMechChoice_daa2bf9d::UseByValue_3a3bc76a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\XmlPassingMechWithByValueP_a422584a',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'BY',
@@ -31839,7 +32238,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWindowExclusionClauseChoice_422b3afa::UseExcludeCurrentRow_b1f83261',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWindowExclusionClauseWithExcludeCurrentPRow_88691562',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EXCLUDE',
@@ -31849,7 +32251,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWindowExclusionClauseChoice_422b3afa::UseExcludeGroup_1e1e3216',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWindowExclusionClauseWithExcludeGroupP_9d44ee2e',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EXCLUDE',
@@ -31858,7 +32263,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWindowExclusionClauseChoice_422b3afa::UseExcludeTies_a062fa84',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWindowExclusionClauseWithExcludeTies_8909b544',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EXCLUDE',
@@ -31867,7 +32275,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWindowExclusionClauseChoice_422b3afa::UseExcludeNoOthers_b122de28',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWindowExclusionClauseWithExcludeNoOthers_405b63fb',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EXCLUDE',
@@ -31877,7 +32288,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\OptWindowExclusionClauseChoice_422b3afa::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\OptWindowExclusionClauseWith_0330e1e8',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -33225,7 +33639,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonWrapperBehaviorChoice_4db543bf::UseWithoutWrapper_ee428691',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonWrapperBehaviorWithWithoutWrapper_18342135',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITHOUT',
@@ -33234,7 +33651,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonWrapperBehaviorChoice_4db543bf::UseWithoutArrayWrapper_1202ddd5',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonWrapperBehaviorWithWithoutArrayWrapper_3f0c8214',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITHOUT',
@@ -33244,7 +33664,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonWrapperBehaviorChoice_4db543bf::UseWithWrapper_c52c4995',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonWrapperBehaviorWithWithWrapper_98f8af0d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -33253,7 +33676,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonWrapperBehaviorChoice_4db543bf::UseWithArrayWrapper_9f8a18a5',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonWrapperBehaviorWithWithArrayWrapper_68a8cbc5',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -33263,7 +33689,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonWrapperBehaviorChoice_4db543bf::UseWithConditionalArrayWrapper_da8c084c',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonWrapperBehaviorWithWithConditionalArrayWrapper_20ae9b7c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -33274,7 +33703,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     5 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonWrapperBehaviorChoice_4db543bf::UseWithUnconditionalArrayWrapper_87063d6e',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonWrapperBehaviorWithWithUnconditionalArrayWrapper_380f29b0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -33285,7 +33717,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     6 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonWrapperBehaviorChoice_4db543bf::UseWithConditionalWrapper_998db96a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonWrapperBehaviorWithWithConditionalWrapper_efcbde98',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -33295,7 +33730,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     7 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonWrapperBehaviorChoice_4db543bf::UseWithUnconditionalWrapper_264e25dc',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonWrapperBehaviorWithWithUnconditionalWrapper_42e3cbbd',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -33305,7 +33743,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     8 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonWrapperBehaviorChoice_4db543bf::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonWrapperBehaviorWith_98699a8d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -33339,7 +33780,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonBehaviorTypeChoice_36514e4a::UseError_d98ee0e5',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonBehaviorTypeWithErrorP_1592de6f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ERROR_P',
@@ -33347,7 +33791,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonBehaviorTypeChoice_36514e4a::UseNull_fb329000',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonBehaviorTypeWithNullP_3322314a',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NULL_P',
@@ -33355,7 +33802,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonBehaviorTypeChoice_36514e4a::UseTrue_dfe88090',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonBehaviorTypeWithTrueP_94105458',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'TRUE_P',
@@ -33363,7 +33813,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonBehaviorTypeChoice_36514e4a::UseFalse_4e523a5a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonBehaviorTypeWithFalseP_d8ee6d95',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FALSE_P',
@@ -33371,7 +33824,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonBehaviorTypeChoice_36514e4a::UseUnknown_23759997',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonBehaviorTypeWithUnknown_aa403b72',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'UNKNOWN',
@@ -33379,7 +33835,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     5 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonBehaviorTypeChoice_36514e4a::UseEmptyArray_ee759505',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonBehaviorTypeWithEmptyPArray_066103f7',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EMPTY_P',
@@ -33388,7 +33847,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     6 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonBehaviorTypeChoice_36514e4a::UseEmptyObject_7554f063',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonBehaviorTypeWithEmptyPObjectP_80616121',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EMPTY_P',
@@ -33397,7 +33859,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     7 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonBehaviorTypeChoice_36514e4a::UseEmpty_cc1d2f83',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonBehaviorTypeWithEmptyP_a89b24b7',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EMPTY_P',
@@ -33564,7 +34029,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonQuotesClauseOptChoice_a08439ee::UseKeepQuotesOnScalarString_dcaf4d1c',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonQuotesClauseOptWithKeepQuotesOnScalarStringP_30022c0d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'KEEP',
@@ -33576,7 +34044,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonQuotesClauseOptChoice_a08439ee::UseKeepQuotes_f2e52cc1',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonQuotesClauseOptWithKeepQuotes_b9543e64',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'KEEP',
@@ -33585,7 +34056,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonQuotesClauseOptChoice_a08439ee::UseOmitQuotesOnScalarString_e94300a4',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonQuotesClauseOptWithOmitQuotesOnScalarStringP_e141db1c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'OMIT',
@@ -33597,7 +34071,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonQuotesClauseOptChoice_a08439ee::UseOmitQuotes_dd07b4e8',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonQuotesClauseOptWithOmitQuotes_4edfb0cb',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'OMIT',
@@ -33606,7 +34083,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonQuotesClauseOptChoice_a08439ee::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonQuotesClauseOptWith_249b0705',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -33644,7 +34124,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonPredicateTypeConstraintChoice_cc5959aa::UseJson_db1a21a0',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonPredicateTypeConstraintWithJson_01e6e225',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'JSON',
@@ -33652,7 +34135,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonPredicateTypeConstraintChoice_cc5959aa::UseJsonValue_266abe8a',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonPredicateTypeConstraintWithJsonValueP_b6a17986',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'JSON',
@@ -33661,7 +34147,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonPredicateTypeConstraintChoice_cc5959aa::UseJsonArray_0ddea76c',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonPredicateTypeConstraintWithJsonArray_c03e2bc0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'JSON',
@@ -33670,7 +34159,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonPredicateTypeConstraintChoice_cc5959aa::UseJsonObject_4717633b',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonPredicateTypeConstraintWithJsonObjectP_c583e198',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'JSON',
@@ -33679,7 +34171,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonPredicateTypeConstraintChoice_cc5959aa::UseJsonScalar_d5e6f909',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonPredicateTypeConstraintWithJsonScalar_c6a112a5',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'JSON',
@@ -33691,7 +34186,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonKeyUniquenessConstraintOptChoice_5ec10130::UseWithUniqueKeys_39674647',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonKeyUniquenessConstraintOptWithWithUniqueKeys_cb58dd3c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -33701,7 +34199,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonKeyUniquenessConstraintOptChoice_5ec10130::UseWithUnique_bddb0509',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonKeyUniquenessConstraintOptWithWithUnique_5c00695f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -33710,7 +34211,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonKeyUniquenessConstraintOptChoice_5ec10130::UseWithoutUniqueKeys_6e781d3e',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonKeyUniquenessConstraintOptWithWithoutUniqueKeys_8e4c38c3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITHOUT',
@@ -33720,7 +34224,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonKeyUniquenessConstraintOptChoice_5ec10130::UseWithoutUnique_b7aceef4',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonKeyUniquenessConstraintOptWithWithoutUnique_b873f8db',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITHOUT',
@@ -33729,7 +34236,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonKeyUniquenessConstraintOptChoice_5ec10130::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonKeyUniquenessConstraintOptWith_7e7d9d56',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -33798,7 +34308,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonObjectConstructorNullClauseOptChoice_5faad07a::UseNullOnNull_4df71739',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonObjectConstructorNullClauseOptWithNullPOnNullP_4ff19a16',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NULL_P',
@@ -33808,7 +34321,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonObjectConstructorNullClauseOptChoice_5faad07a::UseAbsentOnNull_5247be9f',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonObjectConstructorNullClauseOptWithAbsentOnNullP_bec5f4f2',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ABSENT',
@@ -33818,7 +34334,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonObjectConstructorNullClauseOptChoice_5faad07a::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonObjectConstructorNullClauseOptWith_eabd7ad0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
@@ -33828,7 +34347,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonArrayConstructorNullClauseOptChoice_5faad07a::UseNullOnNull_4df71739',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonArrayConstructorNullClauseOptWithNullPOnNullP_a1980286',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NULL_P',
@@ -33838,7 +34360,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonArrayConstructorNullClauseOptChoice_5faad07a::UseAbsentOnNull_5247be9f',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonArrayConstructorNullClauseOptWithAbsentOnNullP_f2796ad7',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ABSENT',
@@ -33848,7 +34373,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Choice\\JsonArrayConstructorNullClauseOptChoice_5faad07a::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\PostgreSql\\Value\\JsonArrayConstructorNullClauseOptWith_0b1110dd',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),

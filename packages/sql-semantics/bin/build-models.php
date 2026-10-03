@@ -16,7 +16,9 @@ use SqlParser\Resource\VersionRegistry;
  * Compiles SQL value classes from every shipped language release.
  *
  * A value stores only the arguments of its SQL form. Fixed SQL is compiled into
- * methods, finite choices become enums, and forwarding productions disappear.
+ * methods, finite choices of one word become enums, and forwarding productions
+ * disappear. A choice written with several words is a value class, so the
+ * comments written between its words have a value to belong to.
  * The separate construction maps are used only while lowering a parser result.
  */
 
@@ -92,7 +94,7 @@ foreach ($releases as $version => [$dialect, $formSet]) {
         $choices = [];
         foreach ($alternatives as $ordinal => $symbols) {
             $pieces = array_column($symbols, 'fixed');
-            if (!in_array(null, $pieces, true)) {
+            if (!in_array(null, $pieces, true) && count($symbols) <= 1) {
                 $choices[$ordinal] = implode(' ', array_filter($pieces, static fn (string $text): bool => $text !== ''));
             }
         }

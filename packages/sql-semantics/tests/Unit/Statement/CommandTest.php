@@ -24,7 +24,7 @@ final class CommandTest extends TestCase
     public function testWriteWithCompleteCommand(): void
     {
         $command = new Commit('COMMIT', new Transaction());
-        $statement = new Statement($command);
+        $statement = new Statement(new \SqlSemantics\Core\Language(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite), $command);
         self::assertSame('COMMIT TRANSACTION', $statement->toString());
     }
 }

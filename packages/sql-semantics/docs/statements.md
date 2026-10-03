@@ -72,11 +72,43 @@ $reference = $query->resolution->tables()[0];
 $shadowed = Traversal::rewrite($query->command, static fn (Element $value): Element => $value === $reference->value ? $builder->table('shadow_users') : $value);
 ```
 
-A replacement must be a value the position accepts: `map()` checks it against the role of the position and throws `InvalidArgumentException` otherwise. Lexical fields such as a name or a literal spelling, and comments, are not child values; the typed `with*()` methods change them.
+A replacement must be a value the position accepts: `map()` checks it against the role of the position and throws `InvalidArgumentException` otherwise. Lexical fields such as a name or a literal spelling, and comments, are not child values; the typed `with*()` methods change them. A rewritten command becomes a statement again with `withCommand()`, which requires it to be [valid SQL](#validity) of the language.
 
 ## Reconstructing SQL
 
 `Statement::toString()` writes SQL from the model. It keeps identifier spelling, quoting, literals, every SQL choice, and every comment, and puts a single space between tokens except where they must be adjacent. Layout is not kept, and the model does not hold the original SQL or the parser tree.
+
+Nothing else is lost. The SQL a statement writes has the syntax of the SQL it was analyzed from: the same rules and alternatives of the grammar, the same tokens spelled the same way, and the same comments before the same tokens. Only whitespace and the letter case of fixed words, such as keywords, may differ. `SqlSemantics\Core\Verification\Losslessness` states this: `difference($sql, $written)` answers the first difference between the syntax of two texts, or null. The round-trip fuzzing of each database package requires it for every statement sql-faker generates.
+
+```php
+use SqlSemantics\Core\Verification\Losslessness;
+
+$sql = "select  id AS name from users -- audited\n";
+(new Losslessness($semantics->language()))->difference($sql, $semantics->analyze($sql)->toString()); // null
+```
+
+## Validity
+
+A statement is always valid SQL of its language. `Statement::$syntax` is the language it is written in, the `SqlSemantics\Core\Language` of the `Semantics` that analyzed it, and building a statement, by analysis, by `new Statement($language, $command)`, or by `withCommand()` and `withComments()`, requires the SQL it writes to be read back by that language as the same command with the same comments. A statement that would be written as other SQL is not built; `SqlSemantics\Statement\StatementException` says why:
+
+| Rewrite | Why it is refused |
+|---------|-------------------|
+| A name replaced with a reserved word, such as `select` | The release does not parse the SQL |
+| `b` in `a * b` replaced with `c + d` | The SQL `a * c + d` is read with another grouping; replace it with a parenthesized expression instead |
+| A comment `# note` after a PostgreSQL statement | PostgreSQL reads `#` as an operator |
+| A MySQL 8.4 common table expression in a statement of MySQL 5.6 | The release has no such form |
+
+```php
+use SqlSemantics\Statement\StatementException;
+
+try {
+    $statement->withCommand($rewritten);
+} catch (StatementException $refused) {
+    // the rewrite would change what the server reads
+}
+```
+
+A value itself is checked when it is built: its lexical fields must be spellings of their tokens, and a replacement in `map()` must occupy the role of its position; either failure is an `InvalidArgumentException`, a defect of the code that built the value. Whether values combine into SQL the release reads as intended is a property of the whole statement, which only the statement can check. Reading back costs one parse of the statement; a statement built again around the same command and comments, as analysis does with dependencies, is not read again.
 
 ## Comments
 
@@ -101,14 +133,15 @@ use SqlSemantics\Statement\Comments;
 $select = $statement->command->withComments(new Comments([1 => ['-- reviewed']]));
 ```
 
-A statement can also be built from models directly, without parsing:
+A statement can also be built from models directly, in the language it is written in:
 
 ```php
 use SqlSemantics\Statement\Model\Sqlite\Value\CmdWithCommitEndTransOpt_ccca6149;
 use SqlSemantics\Statement\Model\Sqlite\Value\TransOptWithTransaction_ea573324;
 use SqlSemantics\Statement\Statement;
 
-$commit = new Statement(new CmdWithCommitEndTransOpt_ccca6149('COMMIT', new TransOptWithTransaction_ea573324()));
+$sqlite = new Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+$commit = new Statement($sqlite->language(), new CmdWithCommitEndTransOpt_ccca6149('COMMIT', new TransOptWithTransaction_ea573324()));
 
 $commit->toString(); // 'COMMIT TRANSACTION'
 ```

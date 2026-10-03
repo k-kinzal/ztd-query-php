@@ -35,7 +35,7 @@ Writer::render($condition); // "`select` = 'C:\path' AND NOT( a OR b )"
 | `unionAll($left, $right)` | The rows of both queries |
 | `cte($name, $query, $columns)`, `with($ctes, $query)` | Common table expressions and the query they precede |
 
-The database packages narrow the return types to their roles: a MySQL condition is an `ExprForm`, a PostgreSQL one an `AExprForm`. A query given to `unionAll`, `cte`, or `with` may be the `command` of an analyzed statement; its terminator envelope is removed, and the result is again a complete command that `new Statement($query)` writes.
+The database packages narrow the return types to their roles: a MySQL condition is an `ExprForm`, a PostgreSQL one an `AExprForm`. A query given to `unionAll`, `cte`, or `with` may be the `command` of an analyzed statement; its terminator envelope is removed, and the result is again a complete command that `new Statement($semantics->language(), $query)` makes a statement of.
 
 Together they compose the rows of a table from its declared types, without SQL text:
 

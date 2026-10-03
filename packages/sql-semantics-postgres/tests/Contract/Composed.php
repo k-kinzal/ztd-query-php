@@ -37,6 +37,6 @@ final class Composed
         $sql = Writer::render($query);
         Assert::assertSame($sql, $semantics->analyze($sql)->toString());
         Assert::assertInstanceOf(Command::class, $query);
-        Assert::assertSame($sql, (new Statement($query))->toString());
+        Assert::assertSame($sql, (new Statement($semantics->language(), $query))->toString());
     }
 }

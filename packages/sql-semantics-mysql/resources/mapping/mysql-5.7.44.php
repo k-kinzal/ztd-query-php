@@ -2022,14 +2022,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptEvStatusChoice_577d70da::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptEvStatusWith_ceaa668f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptEvStatusChoice_577d70da::UseEnable_18912667',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptEvStatusWithEnableSym_b1b59aa9',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ENABLE_SYM',
@@ -2037,7 +2043,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptEvStatusChoice_577d70da::UseDisableOnSlave_170434e8',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptEvStatusWithDisableSymOnSlave_94253a68',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'DISABLE_SYM',
@@ -2047,7 +2056,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptEvStatusChoice_577d70da::UseDisable_0fb87bd2',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptEvStatusWithDisableSym_cdbb4bd8',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'DISABLE_SYM',
@@ -2131,7 +2143,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\EvOnCompletionChoice_87a9a3d9::UseOnCompletionPreserve_ef5091c8',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\EvOnCompletionWithOnCompletionSymPreserveSym_538b713d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ON',
@@ -2141,7 +2156,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\EvOnCompletionChoice_87a9a3d9::UseOnCompletionNotPreserve_deea4e64',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\EvOnCompletionWithOnCompletionSymNotSymPreserveSym_11efb401',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ON',
@@ -2521,7 +2539,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpSuidChoice_6ca6a5d9::UseSqlSecurityDefiner_57d87183',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpSuidWithSqlSymSecuritySymDefinerSym_bb1bde40',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SQL_SYM',
@@ -2531,7 +2552,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpSuidChoice_6ca6a5d9::UseSqlSecurityInvoker_e5a5d4a3',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpSuidWithSqlSymSecuritySymInvokerSym_bc846bef',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SQL_SYM',
@@ -4023,14 +4047,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpOptFetchNoiseChoice_b9e4d57d::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpOptFetchNoiseWith_c70c28f9',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpOptFetchNoiseChoice_b9e4d57d::UseNextFrom_42eb4e0c',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpOptFetchNoiseWithNextSymFrom_6d803251',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NEXT_SYM',
@@ -4039,7 +4069,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\SpOptFetchNoiseChoice_b9e4d57d::UseFrom_f4383c66',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\SpOptFetchNoiseWithFrom_5f083211',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FROM',
@@ -5288,7 +5321,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TsAccessModeChoice_cbe239e2::UseReadOnly_9f9aad46',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TsAccessModeWithReadOnlySym_e5698389',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ_ONLY_SYM',
@@ -5296,7 +5332,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TsAccessModeChoice_cbe239e2::UseReadWrite_9aaea82b',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TsAccessModeWithReadWriteSym_95c31fcd',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ_WRITE_SYM',
@@ -5304,7 +5343,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TsAccessModeChoice_cbe239e2::UseNotAccessible_3c09698a',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TsAccessModeWithNotSymAccessibleSym_6725e01b',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NOT_SYM',
@@ -7974,14 +8016,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptGeneratedAlwaysChoice_c41a9e3f::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptGeneratedAlwaysWith_e45089f7',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptGeneratedAlwaysChoice_c41a9e3f::UseGeneratedAlways_75b9aa2e',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptGeneratedAlwaysWithGeneratedAlwaysSym_f2b8b1cb',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'GENERATED',
@@ -9862,7 +9910,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\AsciiChoice_bcce0f9e::UseAscii_481868aa',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AsciiWithAsciiSym_06b2ad5f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ASCII_SYM',
@@ -9870,7 +9921,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\AsciiChoice_bcce0f9e::UseBinaryAscii_8dcea185',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AsciiWithBinaryAsciiSym_0400d37e',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'BINARY',
@@ -9879,7 +9933,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\AsciiChoice_bcce0f9e::UseAsciiBinary_99b568cc',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AsciiWithAsciiSymBinary_363defd5',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ASCII_SYM',
@@ -9891,7 +9948,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\UnicodeChoice_12e6823c::UseUnicode_7d10420f',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\UnicodeWithUnicodeSym_04654388',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'UNICODE_SYM',
@@ -9899,7 +9959,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\UnicodeChoice_12e6823c::UseUnicodeBinary_e90354c2',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\UnicodeWithUnicodeSymBinary_74d20670',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'UNICODE_SYM',
@@ -9908,7 +9971,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\UnicodeChoice_12e6823c::UseBinaryUnicode_62131883',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\UnicodeWithBinaryUnicodeSym_80ec02bd',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'BINARY',
@@ -10320,14 +10386,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptMatchClauseChoice_46f6cce1::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptMatchClauseWith_6571e492',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptMatchClauseChoice_46f6cce1::UseMatchFull_a1c2aa11',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptMatchClauseWithMatchFull_0aafb9eb',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'MATCH',
@@ -10336,7 +10408,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptMatchClauseChoice_46f6cce1::UseMatchPartial_b0d05904',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptMatchClauseWithMatchPartial_0b3eb218',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'MATCH',
@@ -10345,7 +10420,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptMatchClauseChoice_46f6cce1::UseMatchSimple_cdbeceec',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptMatchClauseWithMatchSimpleSym_38b22820',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'MATCH',
@@ -10434,7 +10512,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeleteOptionChoice_5edeaf0e::UseRestrict_bd7a04e6',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\DeleteOptionWithRestrict_1f92e2df',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'RESTRICT',
@@ -10442,7 +10523,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeleteOptionChoice_5edeaf0e::UseCascade_86844e57',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\DeleteOptionWithCascade_7543323f',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'CASCADE',
@@ -10450,7 +10534,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeleteOptionChoice_5edeaf0e::UseSetNull_a5f7c4e6',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\DeleteOptionWithSetNullSym_6347c458',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SET',
@@ -10459,7 +10546,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeleteOptionChoice_5edeaf0e::UseNoAction_25595c7c',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\DeleteOptionWithNoSymAction_af01ec11',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NO_SYM',
@@ -10468,7 +10558,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\DeleteOptionChoice_5edeaf0e::UseSetDefault_639a6c2d',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\DeleteOptionWithSetDefault_c48a67f4',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SET',
@@ -12099,7 +12192,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\AlterOptValidationChoice_6a2a77c6::UseWithValidation_193f25f1',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AlterOptValidationWithWithValidationSym_df87c029',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -12108,7 +12204,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\AlterOptValidationChoice_6a2a77c6::UseWithoutValidation_c3ffb244',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\AlterOptValidationWithWithoutSymValidationSym_bbeb2849',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITHOUT_SYM',
@@ -12120,7 +12219,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\RemovePartitioningChoice_399c8248::UseRemovePartitioning_423cf201',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\RemovePartitioningWithRemoveSymPartitioningSym_d4fdded2',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'REMOVE_SYM',
@@ -12959,7 +13061,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\GroupReplicationChoice_20337c9e::UseStartGroupReplication_dc944310',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\GroupReplicationWithStartSymGroupReplication_b798e79e',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'START_SYM',
@@ -12968,7 +13073,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\GroupReplicationChoice_20337c9e::UseStopGroupReplication_f947aad8',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\GroupReplicationWithStopSymGroupReplication_7825fd32',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'STOP_SYM',
@@ -13113,7 +13221,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\StartTransactionOptionChoice_39ab0f54::UseWithConsistentSnapshot_4d167c75',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\StartTransactionOptionWithWithConsistentSymSnapshotSym_d3c0f0f6',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -13123,7 +13234,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\StartTransactionOptionChoice_39ab0f54::UseReadOnly_6628aa89',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\StartTransactionOptionWithReadSymOnlySym_5e1a7b67',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ_SYM',
@@ -13132,7 +13246,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\StartTransactionOptionChoice_39ab0f54::UseReadWrite_4c96461f',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\StartTransactionOptionWithReadSymWriteSym_1bdef0a1',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ_SYM',
@@ -13681,7 +13798,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseQuick_e0273b60',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\MiCheckTypeWithQuick_11cee12c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'QUICK',
@@ -13689,7 +13809,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseFast_8d5ebd1c',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\MiCheckTypeWithFastSym_72a59719',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FAST_SYM',
@@ -13697,7 +13820,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseMedium_7c48dd67',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\MiCheckTypeWithMediumSym_d4e43e1c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'MEDIUM_SYM',
@@ -13705,7 +13831,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseExtended_9632d8ea',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\MiCheckTypeWithExtendedSym_bf74e5d3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'EXTENDED_SYM',
@@ -13713,7 +13842,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseChanged_b6f00f28',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\MiCheckTypeWithChanged_63b1e6cc',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'CHANGED',
@@ -13721,7 +13853,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     5 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\MiCheckTypeChoice_147f9765::UseForUpgrade_44aef177',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\MiCheckTypeWithForSymUpgradeSym_85b5878c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOR_SYM',
@@ -14179,14 +14314,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptIgnoreLeavesChoice_fea420ae::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptIgnoreLeavesWith_9fe14cb6',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptIgnoreLeavesChoice_fea420ae::UseIgnoreLeaves_f61ccd79',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptIgnoreLeavesWithIgnoreSymLeaves_244ccc77',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'IGNORE_SYM',
@@ -14558,14 +14699,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSelectLockTypeChoice_2789156b::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptSelectLockTypeWith_ca872227',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSelectLockTypeChoice_2789156b::UseForUpdate_fc448151',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptSelectLockTypeWithForSymUpdateSym_cd1c899d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOR_SYM',
@@ -14574,7 +14721,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSelectLockTypeChoice_2789156b::UseLockInShareMode_7d703e8e',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptSelectLockTypeWithLockSymInSymShareSymModeSym_e88eef88',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'LOCK_SYM',
@@ -14705,14 +14855,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptionalBracesChoice_f4fff975::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptionalBracesWith_271bc5a5',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptionalBracesChoice_f4fff975::Use_e779214a',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptionalBracesWith_78327f67',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => '(',
@@ -17540,14 +17696,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNaturalLanguageModeChoice_6931c211::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptNaturalLanguageModeWith_1d85a825',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptNaturalLanguageModeChoice_6931c211::UseInNaturalLanguageMode_cdff8eb0',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptNaturalLanguageModeWithInSymNaturalLanguageSymModeSym_92ed49f7',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'IN_SYM',
@@ -17561,14 +17723,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptQueryExpansionChoice_59a9bd59::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptQueryExpansionWith_ddaa7521',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptQueryExpansionChoice_59a9bd59::UseWithQueryExpansion_3dd27063',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptQueryExpansionWithWithQuerySymExpansionSym_73ec3c14',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -18820,7 +18988,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\NormalJoinChoice_7974dc69::UseJoin_a9e153ee',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\NormalJoinWithJoinSym_5247bb94',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'JOIN_SYM',
@@ -18828,7 +18999,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\NormalJoinChoice_7974dc69::UseInnerJoin_98b2b2a0',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\NormalJoinWithInnerSymJoinSym_65d819df',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'INNER_SYM',
@@ -18837,7 +19011,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\NormalJoinChoice_7974dc69::UseCrossJoin_82443ed3',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\NormalJoinWithCrossJoinSym_324539a2',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'CROSS',
@@ -19022,14 +19199,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexHintClauseChoice_6b9790b3::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IndexHintClauseWith_f039834e',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexHintClauseChoice_6b9790b3::UseForJoin_eda154a2',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IndexHintClauseWithForSymJoinSym_64f0bd76',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOR_SYM',
@@ -19038,7 +19221,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexHintClauseChoice_6b9790b3::UseForOrderBy_1ac1df62',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IndexHintClauseWithForSymOrderSymBy_e826908c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOR_SYM',
@@ -19048,7 +19234,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IndexHintClauseChoice_6b9790b3::UseForGroupBy_a6916070',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IndexHintClauseWithForSymGroupSymBy_58fc290e',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOR_SYM',
@@ -20927,14 +21116,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IfExistsChoice_d99928b2::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IfExistsWith_986b5955',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IfExistsChoice_d99928b2::UseIfExists_82cdccc7',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IfExistsWithIfExists_e3807e9c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'IF',
@@ -21789,14 +21984,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWildChoice_b5c0d7fc::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptWildWith_c611eb77',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptWildChoice_b5c0d7fc::Use_01dd8e9f',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptWildWith_dbff5cda',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => '.',
@@ -21945,7 +22146,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseCpu_db9a4c7d',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ProfileDefWithCpuSym_5ed3ebd3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'CPU_SYM',
@@ -21953,7 +22157,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseMemory_a266fe9c',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ProfileDefWithMemorySym_c3cc20dc',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'MEMORY_SYM',
@@ -21961,7 +22168,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseBlockIo_173f9e4d',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ProfileDefWithBlockSymIoSym_75f0af29',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'BLOCK_SYM',
@@ -21970,7 +22180,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseContextSwitches_c2e5ed64',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ProfileDefWithContextSymSwitchesSym_6d54b243',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'CONTEXT_SYM',
@@ -21979,7 +22192,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     4 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UsePageFaults_d73b38d1',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ProfileDefWithPageSymFaultsSym_320ec66b',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'PAGE_SYM',
@@ -21988,7 +22204,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     5 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseIpc_331b8ee4',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ProfileDefWithIpcSym_38582ed3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'IPC_SYM',
@@ -21996,7 +22215,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     6 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseSwaps_9d70aa8c',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ProfileDefWithSwapsSym_f8df8170',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SWAPS_SYM',
@@ -22004,7 +22226,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     7 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseSource_56ccd012',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ProfileDefWithSourceSym_81d6e519',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SOURCE_SYM',
@@ -22012,7 +22237,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     8 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ProfileDefChoice_246a5626::UseAll_b5c7aed7',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ProfileDefWithAll_79c9d52d',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ALL',
@@ -23211,14 +23439,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFlushLockChoice_d12692ad::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptFlushLockWith_25ba2f9c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFlushLockChoice_d12692ad::UseWithReadLock_cf240c10',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptFlushLockWithWithReadSymLockSym_515a871c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -23228,7 +23462,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptFlushLockChoice_d12692ad::UseForExport_964dac9c',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptFlushLockWithForSymExportSym_17fac810',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'FOR_SYM',
@@ -29953,14 +30190,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptVarIdentTypeChoice_3c76b304::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptVarIdentTypeWith_33efc17a',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptVarIdentTypeChoice_3c76b304::UseGlobal_d19f0c78',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptVarIdentTypeWithGlobalSym_948e0ecd',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'GLOBAL_SYM',
@@ -29969,7 +30212,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptVarIdentTypeChoice_3c76b304::UseLocal_04ef36f9',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptVarIdentTypeWithLocalSym_dc5d5b4b',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'LOCAL_SYM',
@@ -29978,7 +30224,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptVarIdentTypeChoice_3c76b304::UseSession_ffe3f182',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptVarIdentTypeWithSessionSym_80a5f9ea',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SESSION_SYM',
@@ -30260,7 +30509,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TransactionAccessModeTypesChoice_c78eb422::UseReadOnly_6628aa89',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TransactionAccessModeTypesWithReadSymOnlySym_056c2ebb',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ_SYM',
@@ -30269,7 +30521,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\TransactionAccessModeTypesChoice_c78eb422::UseReadWrite_4c96461f',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\TransactionAccessModeTypesWithReadSymWriteSym_c8a681a6',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ_SYM',
@@ -30281,7 +30536,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IsolationTypesChoice_5c144ac4::UseReadUncommitted_4875265c',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IsolationTypesWithReadSymUncommittedSym_7ce48c04',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ_SYM',
@@ -30290,7 +30548,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IsolationTypesChoice_5c144ac4::UseReadCommitted_c09d6186',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IsolationTypesWithReadSymCommittedSym_3495c689',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ_SYM',
@@ -30299,7 +30560,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IsolationTypesChoice_5c144ac4::UseRepeatableRead_f5f5acc3',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IsolationTypesWithRepeatableSymReadSym_e95ab5e0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'REPEATABLE_SYM',
@@ -30308,7 +30572,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\IsolationTypesChoice_5c144ac4::UseSerializable_7dc421f3',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\IsolationTypesWithSerializableSym_c4910ed9',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SERIALIZABLE_SYM',
@@ -30471,7 +30738,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockOptionChoice_475d9195::UseRead_3f563741',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\LockOptionWithReadSym_7a00b133',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ_SYM',
@@ -30479,7 +30749,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockOptionChoice_475d9195::UseWrite_a970ec59',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\LockOptionWithWriteSym_6247c8a3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WRITE_SYM',
@@ -30487,7 +30760,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockOptionChoice_475d9195::UseLowPriorityWrite_38a02701',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\LockOptionWithLowPriorityWriteSym_015128db',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'LOW_PRIORITY',
@@ -30496,7 +30772,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\LockOptionChoice_475d9195::UseReadLocal_50ae732f',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\LockOptionWithReadSymLocalSym_20c31ddd',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'READ_SYM',
@@ -31878,14 +32157,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptGrantOptionChoice_d601384a::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptGrantOptionWith_ee8c73e4',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptGrantOptionChoice_d601384a::UseWithGrantOption_79cfb8cf',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptGrantOptionWithWithGrantOption_f6d80ff3',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -32024,14 +32309,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptChainChoice_bd59608e::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptChainWith_18e719b6',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptChainChoice_bd59608e::UseAndNoChain_0b393eac',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptChainWithAndSymNoSymChainSym_1ca987bb',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'AND_SYM',
@@ -32041,7 +32332,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptChainChoice_bd59608e::UseAndChain_ca6c40ba',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptChainWithAndSymChainSym_e4d2d5e0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'AND_SYM',
@@ -32053,14 +32347,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptReleaseChoice_2fd595ea::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptReleaseWith_0dd856ad',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptReleaseChoice_2fd595ea::UseRelease_cdb88be9',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptReleaseWithReleaseSym_02b34d47',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'RELEASE_SYM',
@@ -32068,7 +32368,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptReleaseChoice_2fd595ea::UseNoRelease_0d0165df',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptReleaseWithNoSymReleaseSym_702b7aa9',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'NO_SYM',
@@ -32781,7 +33084,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewReplaceChoice_a21ca266::UseOrReplace_85db5453',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ViewReplaceWithOrSymReplace_93cc8920',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'OR_SYM',
@@ -32793,7 +33099,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewAlgorithmChoice_7c294a36::UseAlgorithmUndefined_647e35e1',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ViewAlgorithmWithAlgorithmSymEqUndefinedSym_079228af',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ALGORITHM_SYM',
@@ -32803,7 +33112,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewAlgorithmChoice_7c294a36::UseAlgorithmMerge_5911336c',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ViewAlgorithmWithAlgorithmSymEqMergeSym_5f3cbca1',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ALGORITHM_SYM',
@@ -32813,7 +33125,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewAlgorithmChoice_7c294a36::UseAlgorithmTemptable_c36ebe23',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ViewAlgorithmWithAlgorithmSymEqTemptableSym_c10e2dbb',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ALGORITHM_SYM',
@@ -32826,14 +33141,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewSuidChoice_0ddb4b67::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ViewSuidWith_774619a7',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewSuidChoice_0ddb4b67::UseSqlSecurityDefiner_57d87183',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ViewSuidWithSqlSymSecuritySymDefinerSym_679a1bff',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SQL_SYM',
@@ -32843,7 +33164,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewSuidChoice_0ddb4b67::UseSqlSecurityInvoker_e5a5d4a3',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ViewSuidWithSqlSymSecuritySymInvokerSym_1830e196',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SQL_SYM',
@@ -33023,14 +33347,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewCheckOptionChoice_909a630e::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ViewCheckOptionWith_5e7b6148',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewCheckOptionChoice_909a630e::UseWithCheckOption_e6c3e346',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ViewCheckOptionWithWithCheckSymOption_914c49b0',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -33040,7 +33370,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewCheckOptionChoice_909a630e::UseWithCascadedCheckOption_715d83ad',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ViewCheckOptionWithWithCascadedCheckSymOption_c9862787',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -33051,7 +33384,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     3 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\ViewCheckOptionChoice_909a630e::UseWithLocalCheckOption_f2637ad1',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\ViewCheckOptionWithWithLocalSymCheckSymOption_62d2ee24',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'WITH',
@@ -33328,14 +33664,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptConvertXidChoice_b32c22a0::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptConvertXidWith_1485ce79',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptConvertXidChoice_b32c22a0::UseConvertXid_79b02145',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptConvertXidWithConvertSymXidSym_6724ec70',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'CONVERT_SYM',
@@ -33436,14 +33778,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptOnePhaseChoice_8cb47ec9::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptOnePhaseWith_d5d10acc',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptOnePhaseChoice_8cb47ec9::UseOnePhase_07d795e3',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptOnePhaseWithOneSymPhaseSym_73d83af1',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'ONE_SYM',
@@ -33455,14 +33803,20 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
   array (
     0 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSuspendChoice_d418cef2::Use_e3b0c442',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptSuspendWith_421738be',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
       ),
     ),
     1 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSuspendChoice_d418cef2::UseSuspend_3de4e07a',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptSuspendWithSuspendSym_76fc555c',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SUSPEND_SYM',
@@ -33470,7 +33824,10 @@ return new \SqlSemantics\Core\Analysis\Vocabulary(array (
     ),
     2 =>
     array (
-      'constant' => 'SqlSemantics\\Statement\\Model\\MySql\\Choice\\OptSuspendChoice_d418cef2::UseSuspendForMigrate_b99d6a9b',
+      'class' => 'SqlSemantics\\Statement\\Model\\MySql\\Value\\OptSuspendWithSuspendSymForSymMigrateSym_e3aa7e67',
+      'fields' =>
+      array (
+      ),
       'symbols' =>
       array (
         0 => 'SUSPEND_SYM',
