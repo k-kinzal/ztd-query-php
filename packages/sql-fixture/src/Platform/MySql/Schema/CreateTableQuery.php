@@ -15,14 +15,19 @@ use RuntimeException;
 final class CreateTableQuery
 {
     /**
+     * Keeps the writer of the statement the declaration is read with.
+     */
+    public function __construct(private readonly ShowCreateTable $statements = new ShowCreateTable())
+    {
+    }
+
+    /**
      * Fetch the CREATE TABLE SQL from the database.
      * @throws RuntimeException
      */
     public function fetchCreateTableSql(PDO $pdo, string $tableName): string
     {
-        $quotedName = (new IdentifierQuoter())->quoteTableName($tableName);
-
-        $stmt = $pdo->query("SHOW CREATE TABLE {$quotedName}");
+        $stmt = $pdo->query($this->statements->statement($tableName));
         if ($stmt === false) {
             throw new RuntimeException("Failed to get CREATE TABLE for: {$tableName}");
         }
