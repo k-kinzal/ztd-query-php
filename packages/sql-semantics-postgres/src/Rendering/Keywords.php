@@ -61,14 +61,14 @@ final class Keywords
     public function bare(string $word, NameUse $use): bool
     {
         $categories = $this->categories($word);
-        if ($categories === [] || in_array('unreserved_keyword', $categories, true)) {
+        if ($categories === [] || ($use !== NameUse::Identifier && in_array('unreserved_keyword', $categories, true))) {
             return true;
         }
 
         return match ($use) {
             NameUse::Column, NameUse::Relation, NameUse::Alias => in_array('col_name_keyword', $categories, true),
             NameUse::Routine => in_array('type_func_name_keyword', $categories, true),
-            NameUse::Qualifier => false,
+            NameUse::Qualifier, NameUse::Identifier => false,
             NameUse::Label => true,
         };
     }

@@ -64,8 +64,24 @@ final class Derivation
     /**
      * @param AnalysisContext $context The fixed declaration context every part is derived against
      */
-    public function __construct(public readonly AnalysisContext $context)
+    public function __construct(public AnalysisContext $context)
     {
+    }
+
+    /**
+     * Derives a nested statement that the database reads with other name-search settings.
+     *
+     * The statement sees the same declarations of the same profile; only the
+     * search settings of the given context differ, as for the elements of a
+     * schema definition, which are read with that schema searched first.
+     */
+    public function within(AnalysisContext $context, Statement $node): void
+    {
+        Check::input($context->profile->compatibleWith($this->context->profile) && $context->tables === $this->context->tables && $context->complete === $this->context->complete, 'A nested statement is derived against the same declarations.');
+        $outer = $this->context;
+        $this->context = $context;
+        $node->deriveStatement($this);
+        $this->context = $outer;
     }
 
     /**
