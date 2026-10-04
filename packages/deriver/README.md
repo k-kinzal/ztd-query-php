@@ -103,9 +103,36 @@ Analysis is bounded by a `Budget`. When more paths or outcomes than the budget a
 
 `Budget` bounds reproducible logical work, not elapsed time. Set `resources: new \Deriver\Query\ResourceLimits(seconds: 2.0)` on `Configuration` for a cooperative time limit, independently of its logical budget. Resource checks also run during path joins and isolation proofs. Source capture precedes the query limits and is controlled by `Configuration::$sourceLimits`; a parser, custom model, or individual value operation cannot be preempted. Use a separate process if your application requires a hard deadline.
 
-If execution stops before a value or tuple observation, Deriver can recover constants and concatenation structure from the already captured expression, with opaque gaps and an interruption frontier. These are candidates with unresolved reachability. They are useful for partial reports and cannot pass `definite()`. An interrupted callee invalidates its reachable references, objects, globals and statics; unrelated caller locals retain their values.
+If execution stops before a value or tuple observation, Deriver can recover constants and concatenation structure from the already captured expression, with opaque gaps and an interruption frontier. Recovery can also retain the declared type of an immutable by-value parameter or receiver. It first checks the complete bounded owner graph for writes, reference escapes, catch bindings, and dynamic symbol-table effects; parameters are not treated as immutable merely because they have a type declaration. These are candidates with unresolved reachability. They are useful for partial reports and cannot pass `definite()`. An interrupted callee invalidates its reachable references, objects, globals and statics; unrelated caller locals retain their values.
 
-Within a session, distinct queries can reuse bounded summaries of closed, isolated source functions. Reuse requires reference-free inputs and a proof that the call tree affects only local state and contains no requested observation. Interrupted or effectful computations are excluded. Replays charge the original logical transfer cost, so warming the cache does not expand a query's budget. The cache retains at most 32 small specializations; it does not eliminate execution from application entrypoints for arbitrary call graphs.
+Within a session, distinct queries can reuse bounded summaries of closed, isolated source functions. Reuse requires reference-free inputs and a proof that the call tree affects only local state and contains no requested observation. An unrelated unresolved call earlier in the query does not prevent reuse of a later closed function. Interrupted, warning-bearing, or effectful computations are excluded. Replays charge the original logical transfer cost, so warming the cache does not expand a query's budget. The cache retains at most 32 small specializations; it does not eliminate execution from application entrypoints for arbitrary call graphs.
+
+Use `deriveTogether()` when several observations belong to the same symbolic callable. It executes the shared prefix once and returns results in request order:
+
+```php
+use Deriver\Query\TupleQuery;
+
+$input = new ProjectInput([new SourceFile('queries.php', '<?php
+function report(PDO $pdo): void {
+    $pdo->query("SELECT id FROM users");
+    $pdo->query("SELECT id FROM orders");
+}')]);
+$session = (new Analyzer())->open($input);
+$queries = [];
+foreach ($session->callsTo('query') as $site) {
+    if ($site->callable === 'report' && $site->receiver !== null) {
+        $queries[] = new TupleQuery($site->beforeInvocation(), [
+            'receiver' => $site->receiver,
+            'sql' => $site->argument(0),
+        ]);
+    }
+}
+$results = $session->deriveTogether($queries)->results;
+```
+
+All queries in a batch must have the same callable owner, symbolic scope, and identical `Budget` settings. One logical budget and one `Configuration::$resources` allowance cover the entire execution. Each result reports the batch's total work and frontiers, including boundaries encountered after an earlier observation; do not sum those statistics as separate executions. An interruption recovers each still-unreached supported expression separately. Results at different points are not mutually correlated; use a tuple for values at one point. `deriveMany()` continues to run independent queries with independent budgets. Batched results have separate identities and do not fill the independent-query cache.
+
+A session holds at most 32 small recent results strongly. Results with more than 4,096 visited graph entries or one MiB of string payloads are not retained in that working set. Query lookup and explanations use weak references: retain the `DerivationResult` while using `explain($result->reference)`. Once the caller releases an older or large result, its reference may no longer be explainable and a repeated query may execute again. This bounds session ownership of result graphs; source snapshots, compiled graphs, and results retained by your application have separate lifetimes.
 
 A closed assessment does not mean the result is a single fixed value. Reading an undefined variable is closed and concrete, yet it carries a `PHP_WARNING` frontier, because an error handler can turn the warning into an exception. When you need one value PHP always produces, use `definite()`. It returns the only normal outcome when every value is concrete and the result has no frontiers, exceptional outcomes or project diagnostics, and `null` otherwise:
 
@@ -144,9 +171,11 @@ Deriver evaluates operators without the diagnostics that newer host PHP versions
 
 An active Xdebug lowers the host stack limit to its `xdebug.max_nesting_level`, so deep call chains are sealed earlier with a `STACK_LIMIT` frontier and results can be less precise; run analyses with `xdebug.mode=off` where possible.
 
-`$session->declarations()` reads captured signatures and class metadata without autoloading. Function, method, class, property, and constant metadata carry the raw `docComment` text (an empty string when absent), so integrations can read annotations such as `@global wpdb $wpdb` themselves. Use `$session->comments($symbol)` for raw PHPDoc attached to statements and expressions within a callable or script, including `/** @var PDO $db */ global $db;`. Each `SourceComment` contains the raw text and the commented node's source range. Deriver never interprets PHPDoc, and doc comments do not change analysis results.
+`$session->declarations()` reads captured signatures and class metadata without autoloading. Captured signatures expose `static` for distinguishing static and instance methods, including composed trait methods. Function, method, class, property, and constant metadata carry the raw `docComment` text (an empty string when absent), so integrations can read annotations such as `@global wpdb $wpdb` themselves. Use `$session->comments($symbol)` for raw PHPDoc attached to statements and expressions within a callable or script, including `/** @var PDO $db */ global $db;`. Nested function, closure, and class declarations are excluded from the enclosing scope's comment list. Each `SourceComment` contains the raw text and the commented node's source range. Deriver never interprets PHPDoc, and doc comments do not change analysis results.
 
 Missing source for an ancestor leaves method dispatch open, including `$this`, `self`, and `static` calls; it does not establish that a method is absent. Supply the ancestor declaration or a call model when its behavior is needed. Source targeting PHP 8.4 features, including property hooks, remains outside the PHP 8.3 target.
+
+Flat scalar literal arrays, including directly signed integer and float values, are constructed without retaining every intermediate array. Signed integer keys follow the PHP 8.3 append-index rules; float keys and expressions that may warn still use ordinary evaluation.
 
 Partial formatting and array operations retain the structure they can establish. For example, an unknown middle part of `sprintf("SELECT * FROM $table WHERE id = %d", 5)` retains the `SELECT * FROM ` prefix. The unknown part may itself contain format directives, so the later `id = 5` text is not guaranteed. Known leading and trailing values around array unpacking can remain candidates alongside the unknown remainder; they do not make the whole array concrete.
 

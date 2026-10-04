@@ -28,6 +28,10 @@ final class PartialObservation
      * @var array<string, Term> Reconstructed values, including cycle sentinels
      */
     private array $values = [];
+    /**
+     * @var array<string, Term> Proven immutable entry bindings
+     */
+    private array $inputs = [];
     private int $remaining = 256;
 
     /**
@@ -49,14 +53,18 @@ final class PartialObservation
         if ($references === []) {
             return null;
         }
-        foreach ($this->program->callable(reset($references)->callable)->blocks ?? [] as $block) {
+        $body = $this->program->callable(reset($references)->callable);
+        $complete = true;
+        foreach ($body->blocks ?? [] as $block) {
             foreach ($block->instructions as $instruction) {
                 if (count($this->definitions) >= 4096) {
+                    $complete = false;
                     break 2;
                 }
                 $this->definitions[$instruction->result] = $instruction;
             }
         }
+        $this->inputs = $complete && $body !== null ? (new StableInputs())->recover($body, $this->definitions, $this->reason) : [];
         $values = [];
         foreach ($references as $name => $reference) {
             $values[$name] = $this->value($reference->register);
@@ -87,6 +95,8 @@ final class PartialObservation
         } elseif ($instruction->operation === 'copy' || $instruction->operation === 'argument' && ($instruction->attributes['address'] ?? false) === false) {
             $index = $instruction->operation === 'argument' ? 1 : 0;
             $value = $this->value($instruction->operands[$index] ?? '', $depth - 1);
+        } elseif (in_array($instruction->operation, ['read', 'read-silent'], true)) {
+            $value = $this->read($instruction);
         } elseif ($instruction->operation === 'binary' && $instruction->name === '.') {
             $left = $this->value($instruction->operands[0], $depth - 1);
             $right = $this->value($instruction->operands[1], $depth - 1);
@@ -95,4 +105,15 @@ final class PartialObservation
         }
         return $this->values[$register] = $value;
     }
+    /**
+     * Recovers only a read of a proven immutable local binding.
+     * @param Instruction $instruction Requested read
+     * @return Term Declared input type or an untyped interruption residual
+     */
+    public function read(Instruction $instruction): Term
+    {
+        $local = $this->definitions[$instruction->operands[0] ?? ''] ?? null;
+        return $local?->operation === 'local' ? ($this->inputs[$local->name] ?? Term::opaque($this->reason)) : Term::opaque($this->reason);
+    }
+
 }

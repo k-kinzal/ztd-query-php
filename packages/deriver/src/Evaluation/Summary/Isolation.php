@@ -70,12 +70,7 @@ final class Isolation
     public function local(CallableGraph $body): bool
     {
         $key = (new CallableIdentity())->key($body->symbol);
-        $query = $this->context->query;
-        $owner = $query instanceof ValueQuery ? $query->expression->callable : (($query instanceof StateQuery || $query instanceof TupleQuery) ? $query->point->callable : null);
-        if ($owner !== null && $key === (new CallableIdentity())->key($owner)) {
-            return false;
-        }
-        if ($query instanceof ReturnQuery && $query->scope()->mode !== 'symbolic' && $key === (new CallableIdentity())->key($query->symbol)) {
+        if ($this->observed($body)) {
             return false;
         }
         if ($body->byReference || $body->className !== '' || $body->captures !== [] || str_starts_with($key, 'script:') || isset($this->context->models->models[$key])) {
@@ -94,6 +89,26 @@ final class Isolation
             }
         }
         return true;
+    }
+
+    /**
+     * Excludes every graph whose execution must produce an observation in this query or batch.
+     * @param CallableGraph $body Candidate summary graph
+     * @return bool Whether this graph must run to collect requested observations
+     */
+    public function observed(CallableGraph $body): bool
+    {
+        $key = (new CallableIdentity())->key($body->symbol);
+        foreach ($this->context->batch->queries ?? [$this->context->query] as $query) {
+            $owner = $query instanceof ValueQuery ? $query->expression->callable : (($query instanceof StateQuery || $query instanceof TupleQuery) ? $query->point->callable : null);
+            if ($owner !== null && $key === (new CallableIdentity())->key($owner)) {
+                return true;
+            }
+            if ($query instanceof ReturnQuery && ($query->scope()->mode !== 'symbolic' || $this->context->batch !== null) && $key === (new CallableIdentity())->key($query->symbol)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

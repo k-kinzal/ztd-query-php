@@ -93,6 +93,10 @@ final class State
      */
     public bool $observed = false;
     /**
+     * @var array<int, true> Batch observations already reached on this execution path
+     */
+    public array $observedQueries = [];
+    /**
      * Cause of unknown writes to this frame's symbol table, including future bindings.
      */
     public ?string $unknownLocals = null;

@@ -26,4 +26,13 @@ final class PartialObservationTest extends TestCase
         self::assertSame('TIME_LIMIT', $partial->value('absent')->literal);
         self::assertFalse($partial->value('absent')->isConcrete());
     }
+    public function testReadKeepsUnknownStorageUntyped(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $partial = new \Deriver\Analysis\PartialObservation($context->program, 'TIME_LIMIT');
+        $instruction = new \Deriver\ControlFlow\Instruction('read', 'read', new \Deriver\Reference\SourceRef('test', 'a.php', 0, 1), 'value', ['missing']);
+        self::assertSame('mixed', $partial->read($instruction)->attributes['type']);
+        self::assertSame('TIME_LIMIT', $partial->read($instruction)->literal);
+    }
+
 }

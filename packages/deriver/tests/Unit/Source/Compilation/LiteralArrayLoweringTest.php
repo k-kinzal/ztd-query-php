@@ -35,4 +35,14 @@ final class LiteralArrayLoweringTest extends TestCase
         self::assertNull($literal->literal(new \PhpParser\Node\Expr\ConstFetch(new \PhpParser\Node\Name('APP_SECRET'))));
         self::assertNull($literal->literal(new \PhpParser\Node\Expr\Variable('x')));
     }
+    public function testObserveRetainsTheSignedExpressionAndItsOperand(): void
+    {
+        $index = \Tests\Fake\SourceFixture::index('<?php');
+        $lowering = new \Deriver\Source\Compilation\Lowering($index->builder('fixture.php'), $index, 'target');
+        $literal = new \Deriver\Source\Compilation\LiteralArrayLowering($lowering);
+        $literal->observe(new \PhpParser\Node\Expr\UnaryMinus(new \PhpParser\Node\Scalar\Int_(3)));
+        $blocks = $lowering->graph->finish();
+        self::assertSame([3, -3], array_map(static fn ($instruction) => $instruction->constant?->native(), $blocks[0]->instructions));
+    }
+
 }

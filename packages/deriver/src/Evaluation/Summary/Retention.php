@@ -42,6 +42,33 @@ final class Retention
     }
 
     /**
+     * Retains the explanation closure of this computation, independently of unrelated caller frontiers.
+     * @param list<CompletionRecord> $outcomes Compact isolated completions
+     * @param array<string, \Deriver\Result\Derivation> $available Query explanation graph
+     * @return array<string, \Deriver\Result\Derivation>|null Bounded explanation closure
+     */
+    public function evidence(array $outcomes, array $available): ?array
+    {
+        $pending = [];
+        foreach ($outcomes as $outcome) {
+            array_push($pending, ...$outcome->state->evidence);
+        }
+        $result = [];
+        while ($pending !== []) {
+            $id = array_pop($pending);
+            if (isset($result[$id]) || !isset($available[$id])) {
+                continue;
+            }
+            if (count($result) >= 4096) {
+                return null;
+            }
+            $result[$id] = $available[$id];
+            array_push($pending, ...$available[$id]->parents);
+        }
+        return $result;
+    }
+
+    /**
      * Keeps completion-local storage, avoiding retention of the original caller's heap and registers.
      * @param CompletionRecord $record Isolated completion
      * @return CompletionRecord Compact, independently replayable record

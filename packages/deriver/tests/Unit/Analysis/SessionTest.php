@@ -373,7 +373,7 @@ final class SessionTest extends TestCase
         self::assertNotSame($first, $different);
         self::assertNotSame($first->reference->id, $different->reference->id);
         self::assertCount(2, $session->cache);
-        self::assertSame([$first->reference->id => $first,$different->reference->id => $different], $session->results);
+        self::assertSame([$first->reference->id => $first,$different->reference->id => $different], array_map(static fn ($reference) => $reference->get(), $session->results));
     }
     /**
      * @throws JsonException If captured metadata cannot be encoded
@@ -511,6 +511,30 @@ final class SessionTest extends TestCase
         $session = \Tests\Fake\Analysis::session('<?php function f(){/** @var PDO $db */ global $db;}');
         self::assertSame('/** @var PDO $db */', $session->comments('f')[0]->text);
         self::assertSame([], $session->comments('absent'));
+    }
+
+    /**
+     * @throws JsonException If source metadata cannot be encoded
+     */
+    public function testDeriveTogetherPreservesReturnQueriesInOutputOrder(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function target(){return 8;}');
+        $results = $session->deriveTogether([new ReturnQuery('target'), new ReturnQuery('target')])->results;
+        self::assertCount(2, $results);
+        self::assertSame(8, $results[0]->normalOutcomes[0]->values['return']->native());
+        self::assertSame($results[1]->evidence, $session->explain($results[1]->reference)->nodes);
+    }
+
+    /**
+     * @throws JsonException If source metadata cannot be encoded
+     */
+    public function testRememberKeepsInterruptedResultsExplainable(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function target(){external();return 1;}');
+        $result = $session->derive(new ReturnQuery('target', budget: new Budget(transfers: 1)));
+        self::assertContains('BUDGET_EXCEEDED', array_column($session->explain($result->reference)->frontiers, 'code'));
+        self::assertInstanceOf(Session::class, $session);
+        self::assertSame($result, $session->results[$result->reference->id]->get());
     }
 
 }

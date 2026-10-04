@@ -16,6 +16,10 @@ final class Lattice
      * @var WeakMap<Term, WeakMap<Term, bool>> Inclusion facts for immutable term pairs.
      */
     private WeakMap $pairs;
+    /**
+     * Structural identities shared by comparisons within this lattice operation.
+     */
+    private readonly Identity $identity;
 
     /**
      * @param array<string, \Deriver\Model\Domain\AbstractDomain> $domains Explicitly registered lattices
@@ -23,6 +27,7 @@ final class Lattice
     public function __construct(public readonly array $domains = [])
     {
         $this->pairs = new WeakMap();
+        $this->identity = new Identity();
     }
 
     /**
@@ -62,6 +67,9 @@ final class Lattice
      */
     public function contains(Term $upper, Term $lower): bool
     {
+        if ($upper === $lower) {
+            return true;
+        }
         /** @var WeakMap<Term, WeakMap<Term, true>> $visited */
         $visited = new WeakMap();
         /** @var list<array{Term, Term}> $pending */
@@ -131,7 +139,7 @@ final class Lattice
         if ($prefix !== null) {
             return $this->type($lower) === 'string' && (new StringPrefix())->contains($prefix, $lower);
         }
-        return (new Identity())->key($upper) === (new Identity())->key($lower);
+        return $this->identity->key($upper) === $this->identity->key($lower);
     }
 
     /**

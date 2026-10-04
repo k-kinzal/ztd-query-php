@@ -40,9 +40,14 @@ final class ObservationCollector
      * @param Instruction $instruction Executing instruction
      * @param State $state State at the observation
      * @param string $phase before, invocation, or after
+     * @param bool $stop Whether a completed non-repeating symbolic observation may stop its path
      */
-    public function instruction(CallableGraph $callable, Instruction $instruction, State $state, string $phase): void
+    public function instruction(CallableGraph $callable, Instruction $instruction, State $state, string $phase, bool $stop = true): void
     {
+        if ($this->context->batch !== null) {
+            $this->context->batch->instruction($callable, $instruction, $state, $phase);
+            return;
+        }
         $q = $this->context->query;
         $values = null;
         if ($q instanceof ValueQuery && $phase === 'after' && (new CallableIdentity())->key($q->expression->callable) === (new CallableIdentity())->key($callable->symbol) && $q->expression->register === $instruction->result) {
@@ -62,7 +67,7 @@ final class ObservationCollector
             $state->observed = true;
             $this->context->normal[] = new Alternative($values, $state->guard, $state->snapshot(), $state->evidence, (new StorageCapture())->capture($state->memory, $state->locals, $values));
             (new ObservationLimit($this->context))->enforce($instruction->source);
-            if ($this->context->query->scope()->mode === 'symbolic' && !$this->repeated($callable, $state->block)) {
+            if ($stop && $this->context->query->scope()->mode === 'symbolic' && !$this->repeated($callable, $state->block)) {
                 $state->completion = new Completion('observed');
             }
         }
@@ -106,6 +111,10 @@ final class ObservationCollector
      */
     public function completion(CallableGraph $callable, State $state): void
     {
+        if ($this->context->batch !== null) {
+            $this->context->batch->completion($callable, $state);
+            return;
+        }
         if ($state->completion->kind === 'exit') {
             return;
         }

@@ -102,6 +102,7 @@ final class StateJoin
         $residual = $states[0]->fork();
         foreach ($states as $state) {
             $residual->observed = $residual->observed && $state->observed;
+            $residual->observedQueries = array_intersect_key($residual->observedQueries, $state->observedQueries);
             $residual->memory->cells += $state->memory->cells;
             $residual->locals += $state->locals;
         }
@@ -266,6 +267,7 @@ final class StateJoin
             $residual = $group[0]->fork();
             foreach ($group as $state) {
                 $residual->observed = $residual->observed && $state->observed;
+                $residual->observedQueries = array_intersect_key($residual->observedQueries, $state->observedQueries);
                 $residual->memory->cells += $state->memory->cells;
                 $residual->locals += $state->locals;
             }

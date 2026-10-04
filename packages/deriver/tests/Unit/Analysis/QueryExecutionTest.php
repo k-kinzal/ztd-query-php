@@ -335,4 +335,30 @@ final class QueryExecutionTest extends TestCase
         self::assertSame('DB', $execution->initialState()->memory->cells['global:db']->attributes['type']);
     }
 
+    /**
+     * @throws JsonException If query metadata cannot be encoded
+     */
+    public function testResultKeepsSharedExecutionIdentitySeparateFromIndependentQueries(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $snapshot = new ProjectSnapshot('test', [], [], $context->configuration->target, false, 'none');
+        $execution = new QueryExecution($context->program, $context->configuration, $context->models, $snapshot);
+        $first = $execution->result($context, 'target', microtime(true));
+        $batch = $execution->result($context, 'target', microtime(true), ':batch:example');
+        self::assertNotSame($first->reference->id, $batch->reference->id);
+        self::assertSame('unreachable', $batch->reachability);
+    }
+
+    /**
+     * @throws JsonException If query metadata cannot be encoded
+     */
+    public function testTogetherRejectsForeignReferencesBeforeRunningAnyEntry(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $snapshot = new ProjectSnapshot('test', [], [], $context->configuration->target, false, 'none');
+        $execution = new QueryExecution($context->program, $context->configuration, $context->models, $snapshot);
+        $this->expectException(InvalidInputException::class);
+        $execution->together([new ReturnQuery('target'), new ValueQuery(new ExpressionRef(new SourceRef('foreign', 'a.php', 0, 1), 'target', 'r0'))]);
+    }
+
 }

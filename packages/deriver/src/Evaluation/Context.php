@@ -41,6 +41,10 @@ final class Context
      * Permanent resource interruption reason, when applicable; STACK_LIMIT only seals the refused call.
      */
     public ?string $stopReason = null;
+    /**
+     * Explicit observations sharing this execution and its resource budget.
+     */
+    public ?BatchObservations $batch = null;
 
     /**
      * @var array<string, true> Graphs evaluated by this query.
@@ -54,6 +58,10 @@ final class Context
      * @var WeakMap<\Deriver\ControlFlow\CallableGraph, true> Graphs supplied by built-in PHP models.
      */
     public WeakMap $nativeCalls;
+    /**
+     * @var WeakMap<Term, bool> Immutable value graphs proven free of storage identities
+     */
+    public WeakMap $plainValues;
     /**
      * @var array<string, string> Unresolved call reasons by instruction.
      */
@@ -102,13 +110,15 @@ final class Context
      * @param Configuration $configuration Explicit semantic assumptions
      * @param Registry $models Trusted model selection
      * @param Summary\SharedSummaries $shared Session cache of closed isolated completions
+     * @param Resources|null $resources Shared runtime policy for observation-only contexts
      */
-    public function __construct(public readonly Program $program, public readonly Query $query, public readonly Configuration $configuration, public readonly Registry $models, public readonly Summary\SharedSummaries $shared = new Summary\SharedSummaries())
+    public function __construct(public readonly Program $program, public readonly Query $query, public readonly Configuration $configuration, public readonly Registry $models, public readonly Summary\SharedSummaries $shared = new Summary\SharedSummaries(), ?Resources $resources = null)
     {
         $this->summaries = new Table();
         $this->demands = new WeakMap();
         $this->nativeCalls = new WeakMap();
-        $this->resources = new Resources($configuration->resources);
+        $this->plainValues = new WeakMap();
+        $this->resources = $resources ?? new Resources($configuration->resources);
         $this->identity = new Identity();
         $this->assumptions = ['target:' . $configuration->target->id(), 'scope:' . $query->scope()->mode, 'world:' . ($configuration->closedWorld ? 'closed' : 'open'), 'environment:' . $configuration->environmentVersion];
         foreach ($configuration->providers as $provider) {

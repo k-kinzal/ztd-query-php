@@ -80,7 +80,7 @@ final class LoopConvergence
         foreach ($state->iterators as $id => $iterator) {
             $iterators[$id] = [$identity->key($iterator->array), $iterator->location, $this->position($iterator)];
         }
-        return hash('sha256', serialize([$state->locals, $iterators, $state->memory->liveArrays, $state->memory->unknownShared, $state->observed]));
+        return hash('sha256', serialize([$state->locals, $iterators, $state->memory->liveArrays, $state->memory->unknownShared, $state->observed, $state->observedQueries]));
     }
 
     /**
