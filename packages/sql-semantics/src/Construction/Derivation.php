@@ -61,6 +61,8 @@ final class Derivation
 
     private ?QueryFact $output = null;
 
+    private ?Environment $base = null;
+
     /**
      * @param AnalysisContext $context The fixed declaration context every part is derived against
      */
@@ -71,17 +73,37 @@ final class Derivation
     /**
      * Derives a nested statement that the database reads with other name-search settings.
      *
-     * The statement sees the same declarations of the same profile; only the
-     * search settings of the given context differ, as for the elements of a
-     * schema definition, which are read with that schema searched first.
+     * The statement sees the declarations of the same profile under the
+     * search settings of the given context, as the elements of a schema
+     * definition are read with that schema searched first. The context may add
+     * only declarations this statement has already provided, as the elements
+     * of one schema definition see each other.
+     *
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the context holds other declarations or another profile
      */
     public function within(AnalysisContext $context, Statement $node): void
     {
-        Check::input($context->profile->compatibleWith($this->context->profile) && $context->tables === $this->context->tables && $context->complete === $this->context->complete, 'A nested statement is derived against the same declarations.');
-        $outer = $this->context;
-        $this->context = $context;
+        $this->admit($context);
+        [$outer, $base] = [$this->context, $this->base];
+        [$this->context, $this->base] = [$context, null];
         $node->deriveStatement($this);
-        $this->context = $outer;
+        [$this->context, $this->base] = [$outer, $base];
+    }
+
+    /**
+     * Refuses a nested context that differs from this one other than in search settings and own declarations.
+     *
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the context holds other declarations or another profile
+     */
+    public function admit(AnalysisContext $context): void
+    {
+        Check::input($context->profile->compatibleWith($this->context->profile) && $context->complete === $this->context->complete, 'A nested statement is derived under the same profile and completeness.');
+        foreach ($this->context->tables as $table) {
+            Check::input(in_array($table, $context->tables, true), 'A nested statement sees every declaration of the enclosing context.');
+        }
+        foreach ($context->tables as $table) {
+            Check::input(in_array($table, $this->context->tables, true) || in_array($table, $this->declarations, true), 'A nested statement sees only the declarations of the enclosing context and of the statement itself.');
+        }
     }
 
     /**
@@ -89,7 +111,7 @@ final class Derivation
      */
     public function environment(): Environment
     {
-        return new Environment($this->context);
+        return $this->base ?? new Environment($this->context);
     }
 
     /**
@@ -116,21 +138,28 @@ final class Derivation
     }
 
     /**
-     * Derives a statement whose request is only inspected, such as the operand of EXPLAIN.
+     * Derives a statement whose request is only inspected or stored, such as the operand of EXPLAIN or a routine body.
      *
      * Every part of the statement receives its facts, and its diagnostics are
      * kept, but the rows it would return and the declarations it would
-     * provide are discarded: inspecting a statement neither executes it nor
-     * declares anything.
+     * provide are discarded: inspecting or storing a statement neither
+     * executes it nor declares anything. An environment, when given, is the
+     * position the statement is read at instead of a statement root, such as
+     * the variables of a routine body or the search settings of EXPLAIN FOR
+     * DATABASE; its context follows the rule of within().
+     *
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the environment holds other declarations or another profile
      */
-    public function inspected(Statement $node): void
+    public function inspected(Statement $node, ?Environment $environment = null): void
     {
-        $output = $this->output;
-        $declarations = $this->declarations;
+        [$output, $declarations, $context, $base] = [$this->output, $this->declarations, $this->context, $this->base];
+        if ($environment !== null) {
+            $this->admit($environment->context);
+            [$this->context, $this->base] = [$environment->context, $environment];
+        }
         $this->output = null;
         $node->deriveStatement($this);
-        $this->output = $output;
-        $this->declarations = $declarations;
+        [$this->output, $this->declarations, $this->context, $this->base] = [$output, $declarations, $context, $base];
     }
 
     /**

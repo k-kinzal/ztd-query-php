@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
@@ -209,5 +210,83 @@ final class DerivationTest extends TestCase
         self::assertNotNull($facts->output);
         self::assertCount(3, $facts->diagnostics);
         self::assertSame([], $facts->declarations);
+    }
+
+    public function testWithinReadsANestedStatementUnderOtherSearchSettings(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $table = $semantics->analyze('CREATE TABLE aux.t (a INTEGER)');
+        $context = $semantics->context([$table]);
+        $select = $semantics->analyze('SELECT a FROM t', $context)->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $nested = new AnalysisContext($context->profile, [new Name('aux')], $context->tables, true, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive);
+        $derivation = new Derivation($context);
+
+        $derivation->within($nested, $select);
+
+        self::assertInstanceOf(DeclaredTable::class, $derivation->facts()->relation($select->input() ?? $select)->table);
+        self::assertSame($context, $derivation->context);
+    }
+
+    public function testWithinRefusesADeclarationTheEnclosingContextDoesNotHold(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $context = $semantics->context([]);
+        $foreign = new AnalysisContext($context->profile, $context->searchPath, $semantics->analyze('CREATE TABLE t (a INTEGER)')->declarations());
+
+        $this->expectExceptionMessage('A nested statement sees only the declarations of the enclosing context and of the statement itself.');
+
+        (new Derivation($context))->within($foreign, $semantics->analyze('SELECT 1')->statement);
+    }
+
+    public function testAdmitAcceptsTheDeclarationsTheStatementProvided(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $context = $semantics->context([]);
+        $derivation = new Derivation($context);
+        $derivation->statement($semantics->analyze('CREATE TABLE t (a INTEGER)')->statement);
+        $own = new AnalysisContext($context->profile, $context->searchPath, $derivation->facts()->declarations, true, $context->relationNames, $context->columnNames);
+
+        $derivation->admit($own);
+
+        self::assertCount(1, $derivation->facts()->declarations);
+    }
+
+    public function testAdmitRefusesAContextThatDropsAnEnclosingDeclaration(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $context = $semantics->context([$semantics->analyze('CREATE TABLE t (a INTEGER)')]);
+        $empty = new AnalysisContext($context->profile, $context->searchPath, [], true);
+
+        $this->expectExceptionMessage('A nested statement sees every declaration of the enclosing context.');
+
+        (new Derivation($context))->admit($empty);
+    }
+
+    public function testMemberKeepsDeclarationsButNotRows(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $derivation = new Derivation($semantics->context([]));
+
+        $derivation->member($semantics->analyze('SELECT 1 AS a')->statement);
+        $derivation->member($semantics->analyze('CREATE TABLE t (a INTEGER)')->statement);
+
+        self::assertNull($derivation->facts()->output);
+        self::assertCount(1, $derivation->facts()->declarations);
+    }
+
+    public function testInspectedReadsTheStatementAtTheGivenEnvironment(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $context = $semantics->context([]);
+        $select = $semantics->analyze('SELECT 1 AS a')->statement;
+        $environment = new Environment($context);
+        $derivation = new Derivation($context);
+
+        $derivation->inspected($select, $environment);
+
+        self::assertNull($derivation->facts()->output);
+        self::assertTrue($derivation->facts()->covers($select));
+        self::assertNotSame($environment, $derivation->environment());
     }
 }
