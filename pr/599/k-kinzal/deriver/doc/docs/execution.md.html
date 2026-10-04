@@ -42,7 +42,7 @@
 </div><div class="doc-block" data-diff="added"><p>This is the retained entry-execution contract. Select it explicitly; the default API uses <a href="../../../../k-kinzal/deriver/doc/README.md.html">source candidates</a>. Candidate queries never fall back to this contract.</p>
 </div><div class="doc-block" data-diff="added"><pre class="code"><code><span class="tok-var">$configuration</span> = (<span class="tok-kw">new</span> <span class="tok-id">\Deriver\Project\Configuration</span>())-&gt;<span class="tok-id">forExecution</span>();
 <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">\Deriver\Analyzer</span>())-&gt;<span class="tok-id">open</span>(<span class="tok-var">$input</span>, <span class="tok-var">$configuration</span>);</code></pre>
-</div><div class="doc-block" data-diff="added"><p>Every <code>Analyzer::open()</code> example below assumes this configuration is supplied as its second argument. In this contract, reachability, ordered side effects, exceptional completion and entry histories affect the observations. The following behavioral descriptions apply only to execution analysis.</p>
+</div><div class="doc-block" data-diff="added"><p>In this contract, reachability, ordered side effects, exceptional completion and entry histories affect the observations. The following behavioral descriptions apply only to execution analysis.</p>
 </div><div class="doc-block" data-diff="added"><h3>Usage</h3>
 </div><div class="doc-block" data-diff="added"><pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">Deriver\Analyzer</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\ProjectInput</span>;
@@ -57,7 +57,7 @@
 <span class="tok-str">    return &#039;user:&#039; . $id;</span>
 <span class="tok-str">}</span>
 <span class="tok-kw">PHP</span>),
-]));
+]), (<span class="tok-kw">new</span> <span class="tok-id">\Deriver\Project\Configuration</span>())-&gt;<span class="tok-id">forExecution</span>());
 
 <span class="tok-var">$result</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">derive</span>(<span class="tok-kw">new</span> <span class="tok-id">ReturnQuery</span>(<span class="tok-str">&#039;userKey&#039;</span>));
 <span class="tok-var">$value</span> = <span class="tok-var">$result</span>-&gt;<span class="tok-id">normalOutcomes</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">values</span>[<span class="tok-str">&#039;return&#039;</span>];
@@ -91,7 +91,7 @@
 <span class="tok-str">    }</span>
 <span class="tok-str">}</span>
 <span class="tok-kw">PHP</span>),
-]));
+]), (<span class="tok-kw">new</span> <span class="tok-id">\Deriver\Project\Configuration</span>())-&gt;<span class="tok-id">forExecution</span>());
 
 <span class="tok-var">$default</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">declarations</span>()-&gt;<span class="tok-id">class</span>(<span class="tok-str">&#039;UserRepository&#039;</span>)-&gt;<span class="tok-id">properties</span>[<span class="tok-str">&#039;order&#039;</span>]-&gt;<span class="tok-id">default</span>;
 <span class="tok-var">$result</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">derive</span>(<span class="tok-kw">new</span> <span class="tok-id">ReturnQuery</span>(<span class="tok-str">&#039;UserRepository::sql&#039;</span>, <span class="tok-id">QueryScope</span>::<span class="tok-id">fromEntrypoints</span>([
@@ -118,7 +118,7 @@
 <span class="tok-str">    $pdo-&gt;query(&quot;SELECT id FROM users&quot;);</span>
 <span class="tok-str">    $pdo-&gt;query(&quot;SELECT id FROM orders&quot;);</span>
 <span class="tok-str">}&#039;</span>)]);
-<span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Analyzer</span>())-&gt;<span class="tok-id">open</span>(<span class="tok-var">$input</span>);
+<span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Analyzer</span>())-&gt;<span class="tok-id">open</span>(<span class="tok-var">$input</span>, (<span class="tok-kw">new</span> <span class="tok-id">\Deriver\Project\Configuration</span>())-&gt;<span class="tok-id">forExecution</span>());
 <span class="tok-var">$queries</span> = [];
 <span class="tok-kw">foreach</span> (<span class="tok-var">$session</span>-&gt;<span class="tok-id">callsTo</span>(<span class="tok-str">&#039;query&#039;</span>) <span class="tok-kw">as</span> <span class="tok-var">$site</span>) {
     <span class="tok-kw">if</span> (<span class="tok-var">$site</span>-&gt;<span class="tok-id">callable</span> === <span class="tok-str">&#039;report&#039;</span> &amp;&amp; <span class="tok-var">$site</span>-&gt;<span class="tok-id">receiver</span> !== <span class="tok-id">null</span>) {
@@ -141,11 +141,11 @@
 <span class="tok-kw">use</span> <span class="tok-id">Deriver\Project\TargetProfile</span>;
 
 <span class="tok-var">$input</span> = <span class="tok-kw">new</span> <span class="tok-id">ProjectInput</span>([<span class="tok-kw">new</span> <span class="tok-id">SourceFile</span>(<span class="tok-str">&#039;app.php&#039;</span>, <span class="tok-str">&#039;&lt;?php function label(float $rate): string { return &quot;rate:&quot; . $rate; }&#039;</span>)]);
-<span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Analyzer</span>())-&gt;<span class="tok-id">open</span>(<span class="tok-var">$input</span>, <span class="tok-kw">new</span> <span class="tok-id">Configuration</span>(<span class="tok-kw">new</span> <span class="tok-id">TargetProfile</span>(<span class="tok-id">floatPrecision</span>: <span class="tok-num">14</span>)));</code></pre>
+<span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Analyzer</span>())-&gt;<span class="tok-id">open</span>(<span class="tok-var">$input</span>, <span class="tok-kw">new</span> <span class="tok-id">Configuration</span>(<span class="tok-kw">new</span> <span class="tok-id">TargetProfile</span>(<span class="tok-id">floatPrecision</span>: <span class="tok-num">14</span>), <span class="tok-id">analysisContract</span>: <span class="tok-str">&#039;execution&#039;</span>));</code></pre>
 </div><div class="doc-block" data-diff="added"><p>Frontiers that depend on a variable name it in <code>knownDependencies</code>. Reading a variable that is never assigned is <code>null</code> with a <code>PHP_WARNING</code> frontier, and reading a global through <code>global $name</code> that the configuration does not supply is an external value with an <code>EXTERNAL_INPUT</code> frontier. A global variable is named <code>global:&lt;name&gt;</code>, the key that <code>Configuration::$environment</code> accepts, and a function-local variable is named <code>variable:&lt;name&gt;</code>. To analyze code with state that the application receives from outside, such as globals set by a framework bootstrap, read these names from the frontiers and supply the values:</p>
 </div><div class="doc-block" data-diff="added"><pre class="code"><code><span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Analyzer</span>())-&gt;<span class="tok-id">open</span>(<span class="tok-var">$input</span>, <span class="tok-kw">new</span> <span class="tok-id">Configuration</span>(<span class="tok-id">environment</span>: [
     <span class="tok-str">&#039;global:table_prefix&#039;</span> =&gt; <span class="tok-id">Term</span>::<span class="tok-id">constant</span>(<span class="tok-str">&#039;wp_&#039;</span>),
-]));</code></pre>
+], <span class="tok-id">analysisContract</span>: <span class="tok-str">&#039;execution&#039;</span>));</code></pre>
 </div><div class="doc-block" data-diff="added"><p>Static locals start from their declaration initializer for a fresh entry. They are not a union over every possible earlier invocation. To analyze a later invocation, provide an explicit <code>Configuration::$environment</code> value such as <code>&#039;static:App\\counter:n&#039; =&gt; Term::constant(4)</code>, using the callable&#039;s captured identity and variable name.</p>
 </div><div class="doc-block" data-diff="added"><p>Default request superglobals (<code>$_GET</code>, <code>$_POST</code>, <code>$_COOKIE</code>, <code>$_REQUEST</code>) contain strings, arrays, or absent values. Reading them at script scope preserves that domain. Explicit source assignments or injected environments can replace it. A generic <code>mixed</code> value may still be an object with effectful <code>__toString()</code>, so converting it can invalidate shared globals; use an input value or model when a narrower domain is known.</p>
 </div><div class="doc-block" data-diff="added"><p><code>callsTo()</code> lists call sites without running the application. A function or method name selects calls of that name, <code>Class::__construct</code> selects <code>new Class(...)</code> sites, which are reported with the <code>new</code> operation and the created class as the target, and <code>*</code> also includes dynamic function and method calls such as <code>$f()</code> with an empty <code>target</code>. Dynamic class creation and anonymous classes are not listed.</p>
