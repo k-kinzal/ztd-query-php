@@ -52,6 +52,7 @@ final class CallsTest extends TestCase
     {
         $e = F::evaluator('function change(&$x){$x=8;}function target(){$x=1;change($x);return $x;}');
         self::assertSame(8, F::value($e)->native());
+        self::assertSame(['change' => 1], $e->context->bodies);
     }
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded
@@ -95,5 +96,15 @@ final class CallsTest extends TestCase
         $v = (new \Deriver\Evaluation\Candidate\Calls($e))->unknownWrite($f, $call, $a->result, 64);
         self::assertNotNull($v);
         self::assertSame(3, $v->operands[0]->literal);
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testPassedIgnoresStorageNotPassedToTheCall(): void
+    {
+        $e = F::evaluator('function target(){$safe=3;missing(1);return $safe;}');
+        $f = F::frame($e);
+        self::assertNull((new \Deriver\Evaluation\Candidate\Calls($e))->passed($f, F::instruction($f, 'invoke'), F::instruction($f, 'local')->result));
     }
 }

@@ -139,6 +139,10 @@ final class Origins
         }
         foreach ($index->writes($property) as [$graph, $write]) {
             $owner = new Frame($graph, 'property-origin:' . $graph->body->symbol);
+            if ($graph->body->symbol !== $frame->graph->body->symbol) {
+                $this->engine->context->bodyExpansions++;
+                $this->engine->context->bodies[$graph->body->symbol] = ($this->engine->context->bodies[$graph->body->symbol] ?? 0) + 1;
+            }
             $value = $this->engine->value($owner, $write->operands[1], $depth);
             $block = $graph->positions[$write->result][0];
             $values[] = [(new Guards($this->engine))->at($owner, $block, $value, $depth), []];

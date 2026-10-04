@@ -40,6 +40,8 @@ final class Properties
             $declared = $address === null ? null : $engine->context->index->declaredProperty($graph, $address);
             if ($declared?->className === $property->className && $declared->name === $property->name) {
                 $frame = (new Calls($engine))->bind($owner, $creation, $graph);
+                $engine->context->bodyExpansions++;
+                $engine->context->bodies[$graph->body->symbol] = ($engine->context->bodies[$graph->body->symbol] ?? 0) + 1;
                 return (new Calls($engine))->finalStorage($frame, $address->result, $depth);
             }
         }

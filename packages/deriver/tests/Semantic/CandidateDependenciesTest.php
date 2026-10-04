@@ -189,4 +189,17 @@ final class CandidateDependenciesTest extends TestCase
         self::assertStringContainsString(' FROM t', $encoded);
         self::assertStringContainsString('CYCLE', $encoded);
     }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testAReplacementAlsoSuppressesTheSourceReferenceWrite(): void
+    {
+        $model = new PlanModel(new ModelDescriptor('change', '1', 'change', new Signature([new Parameter('x')])), new SemanticPlan([Action::returns(Expression::literal(Term::constant(10)))]));
+        $session = CandidateContractTest::session('function change(&$x){$x=7;}function target(){$x=1;change($x);observe($x);}', new Configuration(models: [$model]));
+        $result = CandidateContractTest::argument($session);
+        self::assertSame([1], CandidateContractTest::native($result));
+        self::assertSame(0, $result->statistics->bodyExpansions);
+        self::assertSame(1, $result->statistics->modelApplications);
+    }
 }

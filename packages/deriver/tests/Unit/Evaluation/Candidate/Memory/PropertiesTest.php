@@ -19,5 +19,6 @@ final class PropertiesTest extends TestCase
     {
         $e = F::evaluator('class B{function __construct(public int $x){}}function target(){$a=new B(3);return $a->x;}');
         self::assertSame(3, F::value($e)->native());
+        self::assertSame(['B::__construct' => 1], $e->context->bodies);
     }
 }

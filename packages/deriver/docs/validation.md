@@ -19,13 +19,13 @@ The default public API is exercised by `CandidateContractTest`, `CandidateIntegr
 | G10–G12 | Shared work across observations, unresolved siblings, depth/partition isolation, changed source snapshots and model versions |
 | G13–G14 | Bounded retention, explicit release and immutable caller-owned results |
 
-Additional cases cover lexical captures, model state slots, aliases, array updates/unpacking, signature-only calls, declaration coercions and catches, conditional receiver classes, globals, finite loops and post-condition loops. The SQL corpus probe exposed a missing first `do ... while` body; regression tests now check both a mandatory first iteration and successive condition versions, including an earlier symbolic dependency.
+Additional cases cover lexical captures, model state slots, aliases, array updates/unpacking, signature-only calls, declaration coercions and catches, replacement of reference-writing source bodies, conditional receiver classes, globals, finite loops and post-condition loops. The SQL corpus probe exposed a missing first `do ... while` body; regression tests now check both a mandatory first iteration and successive condition versions, including an earlier symbolic dependency.
 
 Validation on PHP 8.5.8 with Xdebug disabled:
 
 | Check | Result |
 | --- | --- |
-| Unit, integration, semantic, model-contract and doctest suites | 5,224 tests, no failures |
+| Unit, integration, semantic, model-contract and doctest suites | 5,226 tests, no failures |
 | Differential suite against an independent PHP 8.3.33 process | 1,661 tests / 7,618 assertions, no failures or skips |
 | New candidate differential fixtures, included above | 166 closed finite programs, all agree with PHP |
 | Existing execution semantic fuzzing | 100 seeds / 300 runtime comparisons, zero mismatches |

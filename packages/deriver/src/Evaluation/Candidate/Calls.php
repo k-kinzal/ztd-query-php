@@ -183,8 +183,16 @@ final class Calls
      */
     public function effect(Frame $caller, Instruction $call, string $address, int $depth): ?Term
     {
+        $actual = $this->passed($caller, $call, $address);
+        if ($actual === null) {
+            return null;
+        }
         $target = $this->engine->context->index->target($caller->graph, $call);
-        $graph = $this->engine->context->index->graph($target);
+        $model = (new Models($this->engine))->graph($caller, $call, $target, $depth);
+        if ($model instanceof Term) {
+            return new Term('call-write', $target, [$this->engine->value($caller, $actual, $depth), $model]);
+        }
+        $graph = $model ?? $this->engine->context->index->graph($target);
         if ($graph === null) {
             return $this->unknownWrite($caller, $call, $address, $depth);
         }
@@ -205,8 +213,26 @@ final class Calls
             $bound = $this->bind($caller, $call, $graph);
             foreach ($graph->definitions as $definition) {
                 if ($definition->operation === 'local' && $definition->name === $parameter->name) {
+                    if ($model === null) {
+                        $this->engine->context->bodyExpansions++;
+                        $this->engine->context->bodies[$target] = ($this->engine->context->bodies[$target] ?? 0) + 1;
+                    }
                     return $this->finalStorage($bound, $definition->result, $depth);
                 }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Selects a passed storage address before requesting any model inputs or source effects.
+     */
+    public function passed(Frame $caller, Instruction $call, string $address): ?string
+    {
+        foreach ($call->arguments as $argument) {
+            $wrapper = $caller->graph->definitions[$argument->register] ?? null;
+            if ($wrapper?->operation === 'argument' && ($wrapper->attributes['address'] ?? false) === true && (new Storage($this->engine))->key($caller, $wrapper->operands[1]) === (new Storage($this->engine))->key($caller, $address)) {
+                return $argument->register;
             }
         }
         return null;

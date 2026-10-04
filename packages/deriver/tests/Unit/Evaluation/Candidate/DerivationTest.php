@@ -101,7 +101,7 @@ final class DerivationTest extends TestCase
         $e = CandidateFixture::evaluator('function target(){return UNKNOWN_NAME;}');
         $f = CandidateFixture::frame($e);
         $v = $e->constant($f, CandidateFixture::instruction($f, 'constant-fetch'), 20);
-        self::assertSame('UNKNOWN_NAME',$v->literal);
-        self::assertSame('MISSING_CONSTANT',$v->attributes['reason']);
+        self::assertSame('UNKNOWN_NAME', $v->literal);
+        self::assertSame('MISSING_CONSTANT', $v->attributes['reason']);
     }
 }
