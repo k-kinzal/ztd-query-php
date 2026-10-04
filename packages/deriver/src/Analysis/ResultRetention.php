@@ -19,17 +19,32 @@ final class ResultRetention
     private array $recent = [];
 
     /**
+     * Sets the maximum number of recent small results retained by the session.
+     */
+    public function __construct(public readonly int $capacity = 32)
+    {
+    }
+
+    /**
+     * Releases all strongly owned result graphs.
+     */
+    public function clear(): void
+    {
+        $this->recent = [];
+    }
+
+    /**
      * Caps both the number and structural size of retained graphs without serializing them.
      * @param DerivationResult $result New observation
      */
     public function remember(DerivationResult $result): void
     {
-        if (!$this->small($result)) {
+        if ($this->capacity === 0 || !$this->small($result)) {
             return;
         }
         unset($this->recent[$result->reference->id]);
         $this->recent[$result->reference->id] = $result;
-        if (count($this->recent) > 32) {
+        if (count($this->recent) > $this->capacity) {
             array_shift($this->recent);
         }
     }

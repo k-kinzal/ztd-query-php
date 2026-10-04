@@ -37,9 +37,10 @@ final class DeclarationContractTest extends TestCase
     {
         $session = (new Analyzer())->open(new ProjectInput([new SourceFile('app.php', '<?php function target(){$x=1;external($x);return $x;}'), new SourceFile('stubs.php', '<?php function external(int &$value): int {return 99;}', true)]));
         $result = $session->derive(new ReturnQuery('target'));
-        self::assertSame('opaque', $result->normalOutcomes[0]->values['return']->kind);
-        self::assertContains('MISSING_CALL_MODEL', array_column($result->frontiers, 'code'));
-        self::assertNotEmpty($result->exceptionalOutcomes);
+        self::assertSame('call-write', $result->normalOutcomes[0]->values['return']->kind);
+        self::assertSame(1, $result->normalOutcomes[0]->values['return']->operands[0]->native());
+        self::assertContains('MISSING_SOURCE', array_column($result->frontiers, 'code'));
+        self::assertSame('not-assessed', $result->reachability);
         self::assertSame(['stubs.php' => 'declarations'], $session->snapshot()->sourceModes);
     }
 
@@ -87,7 +88,7 @@ final class DeclarationContractTest extends TestCase
      */
     public function testExternalDefaultsAreEvaluatedPerInvocation(): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('app.php', '<?php class Token{function __construct(){throw new RuntimeException();}}function target(){try{external();}catch(RuntimeException $e){return 1;}}'), new SourceFile('stubs.php', '<?php function external($value = new Token) {}', true)]));
+        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('app.php', '<?php class Token{function __construct(){throw new RuntimeException();}}function target(){try{external();}catch(RuntimeException $e){return 1;}}'), new SourceFile('stubs.php', '<?php function external($value = new Token) {}', true)]), new Configuration(analysisContract: 'execution'));
         $result = $session->derive(new ReturnQuery('target'));
         self::assertSame(1, $result->normalOutcomes[0]->values['return']->native());
         self::assertSame([], $result->frontiers);

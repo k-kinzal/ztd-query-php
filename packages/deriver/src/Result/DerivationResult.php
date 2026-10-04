@@ -51,12 +51,15 @@ final class DerivationResult
         public readonly array $evidence,
         public readonly Statistics $statistics,
         public readonly array $projectDiagnostics = [],
+        public readonly string $contract = 'execution',
+        public readonly ?\Deriver\Value\Term $candidateGraph = null,
     ) {
         $this->schemaVersion = '1';
     }
 
     /**
-     * Selects the one outcome PHP 8.3 produces regardless of inputs, error handlers, and unexplored dependencies.
+     * Selects a single concrete outcome within this result's explicit analysis contract.
+     * In the candidate contract this does not prove runtime reachability or cover uncaptured external callers.
      * The closed assessment alone does not establish this: a closed result may still carry PHP_WARNING frontiers, exceptional outcomes, or several alternatives.
      * @return Alternative|null The only normal outcome when every observed value is concrete and the result has no frontiers, exceptional outcomes, or project diagnostics; null otherwise
      * @example An undefined variable reads null, but its warning prevents a definite value

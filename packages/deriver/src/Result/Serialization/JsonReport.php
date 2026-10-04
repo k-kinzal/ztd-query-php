@@ -39,6 +39,7 @@ final class JsonReport
         $frontiers = $this->frontiers($result->frontiers, $graph);
         $diagnostics = $this->frontiers($result->projectDiagnostics, $graph);
         $query = (new QueryEncoding())->record($result->query, $graph);
+        $candidateGraph = $result->candidateGraph === null ? null : $graph->add($result->candidateGraph);
         $document = [
             'schemaVersion' => $result->schemaVersion,
             'snapshotId' => $result->snapshotId,
@@ -55,6 +56,10 @@ final class JsonReport
             'values' => (object) $graph->records,
             'statistics' => $result->statistics,
         ];
+        if ($candidateGraph !== null) {
+            $document['contract'] = $result->contract;
+            $document['candidateGraph'] = $candidateGraph;
+        }
         return json_encode((new JsonText())->tree($document), JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
     }
 

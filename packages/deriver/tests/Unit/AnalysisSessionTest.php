@@ -117,4 +117,14 @@ final class AnalysisSessionTest extends TestCase
         self::assertSame($results[1]->evidence, $session->explain($results[1]->reference)->nodes);
     }
 
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testReleaseKeepsCallerOwnedResultsImmutable(): void
+    {
+        $s = \Tests\Semantic\CandidateContractTest::session('function target(){return 1;}');
+        $r = $s->derive(new ReturnQuery('target'));
+        $s->release();
+        self::assertSame(1, $r->normalOutcomes[0]->values['return']->native());
+    }
 }

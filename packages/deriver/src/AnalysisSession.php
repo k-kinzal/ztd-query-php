@@ -50,18 +50,24 @@ interface AnalysisSession
     public function deriveMany(array $queries): ResultSet;
 
     /**
-     * Runs one symbolic callable once for several observations with identical logical budgets.
-     * One runtime and logical budget covers the complete batch. Results share its frontiers and total statistics;
-     * alternatives at different points are independent, while each tuple retains its own correlation.
-     * Unlike deriveMany(), these results are not equivalent to separately budgeted queries and do not populate that cache.
-     * @param list<Query> $queries Symbolic queries owned by the same callable, in output order
-     * @return ResultSet Observations from the shared execution
+     * Shares candidate dependencies across separately budgeted observations, like deriveMany().
+     * Under the explicit execution contract, this instead runs one callable with a shared budget:
+     * all queries must have the same owner and budget, and results share execution statistics and frontiers.
+     * Each tuple preserves its own correlation in either contract.
+     * @param list<Query> $queries Queries in output order
+     * @return ResultSet Results under the selected analysis contract
      */
     public function deriveTogether(array $queries): ResultSet;
 
     /**
+     * Releases session-owned candidate evaluations and result retention.
+     * Results still owned by callers remain immutable and usable.
+     */
+    public function release(): void;
+
+    /**
      * Retrieves the explanation for a result from this session.
-     * Keep the DerivationResult alive while using its reference: only 32 small recent results are retained strongly;
+     * Keep the DerivationResult alive while using its reference: by default only 32 small recent results are retained strongly;
      * older or large results may be released once the caller drops them.
      * @param ResultRef $result Result reference
      * @return Explanation Derivations, assumptions, and boundaries
