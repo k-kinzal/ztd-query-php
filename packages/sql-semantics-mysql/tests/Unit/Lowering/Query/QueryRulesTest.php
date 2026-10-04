@@ -7,6 +7,7 @@ namespace Tests\Unit\Lowering\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Facade\Semantics;
@@ -15,8 +16,11 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\QueryRules;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
+use SqlSemantics\Platform\MySql\Statement\Query\Star;
 
 #[CoversClass(QueryRules::class)]
 #[Medium]
@@ -27,18 +31,117 @@ final class QueryRulesTest extends TestCase
         self::assertSame('SELECT a AS x FROM db.t AS u WHERE a = 1', (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('select a x from db.t u where a=1')->toString());
         self::assertSame('SELECT a AS x FROM db.t AS u WHERE a = 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select a x from db.t u where a=1')->toString());
         self::assertSame('SELECT a AS x FROM db.t AS u WHERE a = 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select a x from db.t u where a=1')->toString());
-        self::assertInstanceOf(Select::class, (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('SELECT 1')->statement);
     }
 
-    public function testWhereLowersThePredicateOrNothing(): void
+    public function testQueryLowersTheQueriesOfOtherStatements(): void
     {
-        $filtered = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t WHERE a = 1');
-        $plain = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM t');
+        self::assertSame('SELECT (SELECT 1), a IN (SELECT 2) FROM (SELECT 3) AS d WHERE EXISTS (SELECT 4)', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('select (select 1), a in (select 2) from (select 3) d where exists (select 4)')->toString());
+        self::assertSame('SELECT (SELECT 1) FROM t WHERE EXISTS (SELECT 2)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select (select 1) from t where exists (select 2)')->toString());
+    }
 
-        self::assertInstanceOf(Select::class, $filtered->statement);
-        self::assertInstanceOf(Select::class, $plain->statement);
-        self::assertInstanceOf(Comparison::class, $filtered->statement->where);
-        self::assertNull($plain->statement->where);
+    public function testLegacyQueryLowersCreateSelectWithItsUnion(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('5.7.44', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $tree = $platform->parser($profile)->parse('CREATE TABLE t SELECT a FROM u UNION SELECT 2');
+        $verb = $tree->children[0];
+        self::assertInstanceOf(Node::class, $verb);
+        $statement = $verb->children[0];
+        self::assertInstanceOf(Node::class, $statement);
+        $create = $statement->children[0];
+        self::assertInstanceOf(Node::class, $create);
+        $second = $create->children[5];
+        self::assertInstanceOf(Node::class, $second);
+        $third = $second->children[2];
+        self::assertInstanceOf(Node::class, $third);
+        $select = $third->children[2];
+        $union = $third->children[3];
+        self::assertInstanceOf(Node::class, $select);
+        self::assertInstanceOf(Node::class, $union);
+
+        self::assertInstanceOf(SetOperation::class, (new QueryRules($lowering))->legacyQuery($select, $union));
+        self::assertInstanceOf(Select::class, (new QueryRules($lowering))->legacyQuery($select));
+    }
+
+    public function testWhereAnswersNullForAnAbsentClause(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        self::assertNull((new QueryRules($lowering))->where(new Node('opt_where_clause', 0, [])));
+    }
+
+    public function testOrderingAnswersNothingForAnAbsentClause(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        self::assertSame([], (new QueryRules($lowering))->ordering(new Node('opt_order_clause', 0, [])));
+    }
+
+    public function testOrderItemLowersAnOrderingItemOfGroupConcat(): void
+    {
+        self::assertSame('SELECT GROUP_CONCAT(a ORDER BY a DESC) FROM t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select group_concat(a order by a desc) from t')->toString());
+    }
+
+    public function testDirectionAnswersNullForNoDirection(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        self::assertNull((new QueryRules($lowering))->direction(new Node('opt_ordering_direction', 0, [])));
+    }
+
+    public function testLimitAnswersNullForAnAbsentClause(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        self::assertNull((new QueryRules($lowering))->limit(new Node('opt_limit_clause', 0, [])));
+    }
+
+    public function testLimitValueLowersAnInteger(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $value = (new QueryRules($lowering))->limitValue(new Node('limit_option', 4, [new Token(0, 'NUM', '7', 0)]));
+
+        self::assertInstanceOf(NumberLiteral::class, $value);
+        self::assertSame('7', $value->text);
+    }
+
+    public function testTablesLowersTheReferencesOfAMultipleTableStatement(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('5.7.44', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $tree = $platform->parser($profile)->parse('SELECT 1 FROM t, u');
+        $verb = $tree->children[0];
+        self::assertInstanceOf(Node::class, $verb);
+        $statement = $verb->children[0];
+        self::assertInstanceOf(Node::class, $statement);
+        $select = $statement->children[0];
+        self::assertInstanceOf(Node::class, $select);
+        $init = $select->children[0];
+        self::assertInstanceOf(Node::class, $init);
+        $part = $init->children[1];
+        self::assertInstanceOf(Node::class, $part);
+        $from = $part->children[2];
+        self::assertInstanceOf(Node::class, $from);
+        $list = $from->children[1];
+        self::assertInstanceOf(Node::class, $list);
+
+        self::assertCount(2, (new QueryRules($lowering))->tables($list));
+    }
+
+    public function testPartitionsAnswersNothingForNoSelection(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        self::assertSame([], (new QueryRules($lowering))->partitions(new Node('opt_use_partition', 0, [])));
     }
 
     public function testAliasLowersColumnAndTableAliases(): void
@@ -46,152 +149,51 @@ final class QueryRulesTest extends TestCase
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT a AS `x y`, b 'z' FROM t AS u");
 
         self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
         self::assertSame('x y', $operation->statement->items[0]->alias?->value);
-        self::assertSame('z', $operation->statement->items[1]->alias?->value);
-        self::assertSame('u', $operation->statement->from?->alias?->value);
         self::assertSame('SELECT a AS `x y`, b AS z FROM t AS u', $operation->toString());
     }
 
-    public function testQueryReportsTheMissingRule(): void
+    public function testColumnAliasesAnswersNothingForNoList(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: query');
-
-        $rules->query(new Node('rule', 0, []));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        self::assertSame([], (new QueryRules($lowering))->columnAliases(new Node('opt_derived_column_list', 0, [])));
     }
 
-    public function testLegacyQueryReportsTheMissingRule(): void
+    public function testWithAnswersNullForNoClause(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: legacyQuery');
-
-        $rules->legacyQuery(new Node('rule', 0, []));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        self::assertNull((new QueryRules($lowering))->with(new Node('opt_with_clause', 0, [])));
     }
 
-    public function testOrderingReportsTheMissingRule(): void
+    public function testSelectItemsLowersTheStar(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $items = (new QueryRules($lowering))->selectItems(new Node('select_item_list', 2, [new Token(0, '*', '*', 0)]));
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: ordering');
-
-        $rules->ordering(new Node('rule', 0, []));
+        self::assertCount(1, $items);
+        self::assertInstanceOf(Star::class, $items[0]);
     }
 
-    public function testOrderItemReportsTheMissingRule(): void
+    public function testIndexNamesAnswersNothingForNoList(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: orderItem');
-
-        $rules->orderItem(new Node('rule', 0, []));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        self::assertSame([], (new QueryRules($lowering))->indexNames(new Node('opt_key_usage_list', 0, [])));
     }
 
-    public function testDirectionReportsTheMissingRule(): void
+    public function testIndexKeysAnswersNothingForNoList(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: direction');
-
-        $rules->direction(new Node('rule', 0, []));
-    }
-
-    public function testLimitReportsTheMissingRule(): void
-    {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: limit');
-
-        $rules->limit(new Node('rule', 0, []));
-    }
-
-    public function testLimitValueReportsTheMissingRule(): void
-    {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: limitValue');
-
-        $rules->limitValue(new Node('rule', 0, []));
-    }
-
-    public function testTablesReportsTheMissingRule(): void
-    {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: tables');
-
-        $rules->tables(new Node('rule', 0, []));
-    }
-
-    public function testPartitionsReportsTheMissingRule(): void
-    {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: partitions');
-
-        $rules->partitions(new Node('rule', 0, []));
-    }
-
-    public function testColumnAliasesReportsTheMissingRule(): void
-    {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: columnAliases');
-
-        $rules->columnAliases(new Node('rule', 0, []));
-    }
-
-    public function testWithReportsTheMissingRule(): void
-    {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: with');
-
-        $rules->with(new Node('rule', 0, []));
-    }
-
-    public function testSelectItemsReportsTheMissingRule(): void
-    {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: selectItems');
-
-        $rules->selectItems(new Node('rule', 0, []));
-    }
-
-    public function testIndexNamesReportsTheMissingRule(): void
-    {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new QueryRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL query family: indexNames');
-
-        $rules->indexNames(new Node('rule', 0, []));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        self::assertSame([], (new QueryRules($lowering))->indexKeys(new Node('opt_key_usage_list', 0, [])));
     }
 }

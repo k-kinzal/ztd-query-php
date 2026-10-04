@@ -26,13 +26,20 @@ use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
 #[Medium]
 final class TriggerTableTest extends TestCase
 {
-    public function testNameAnswersTheWatchedTableAndAliasIsAlwaysNull(): void
+    public function testNameAnswersTheWatchedTable(): void
     {
         $trigger = (new Semantics(Dialect::Sqlite))->analyze('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END');
 
         self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
         self::assertSame('t', $trigger->statement->table->name()->name->value);
         self::assertSame('main', $trigger->statement->table->name()->schema?->value);
+    }
+
+    public function testAliasIsAlwaysNull(): void
+    {
+        $trigger = (new Semantics(Dialect::Sqlite))->analyze('CREATE TRIGGER tr INSERT ON main.t BEGIN SELECT 1; END');
+
+        self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
         self::assertNull($trigger->statement->table->alias());
     }
 

@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
-use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -58,7 +58,7 @@ final class InQuery implements Scalar
         $nullability = $operand->nullability;
         $fact = $derivation->query($this->query, $environment);
         if ($fact->shape->complete()) {
-            (new RowValues())->membership($operand, count($fact->shape->slots), $derivation);
+            (new RowValueUse())->membership($operand, count($fact->shape->slots), $derivation);
         } else {
             $nullability = $nullability->propagate(Nullability::Dependent);
         }

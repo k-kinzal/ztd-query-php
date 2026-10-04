@@ -7,7 +7,6 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral;
@@ -22,20 +21,6 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class BlobLiteralTest extends TestCase
 {
-    public function testRefusesLowerCaseDigits(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new BlobLiteral('0aff');
-    }
-
-    public function testRefusesHalfAByte(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new BlobLiteral('ABC');
-    }
-
     public function testAcceptsAnEmptyBlob(): void
     {
         self::assertSame('', (new BlobLiteral(''))->hex);

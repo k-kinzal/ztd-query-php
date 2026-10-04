@@ -7,7 +7,6 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
@@ -46,27 +45,6 @@ final class BindParameterTest extends TestCase
         self::assertSame(['?', '?7', ':a', '@b', '$c'], array_map(static fn (BindParameter $parameter): string => $parameter->marker(), $parameters));
         self::assertSame(['', '7', 'a', 'b', 'c'], array_map(static fn (BindParameter $parameter): string => $parameter->label, $parameters));
         self::assertSame([ParameterPrefix::Question, ParameterPrefix::Question, ParameterPrefix::Colon, ParameterPrefix::At, ParameterPrefix::Dollar], array_map(static fn (BindParameter $parameter): ParameterPrefix => $parameter->prefix, $parameters));
-    }
-
-    public function testRefusesLettersAfterAQuestionMark(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new BindParameter(ParameterPrefix::Question, 'ab');
-    }
-
-    public function testRefusesAnEmptyNamedLabel(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new BindParameter(ParameterPrefix::Colon, '');
-    }
-
-    public function testRefusesALabelWithWhitespace(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new BindParameter(ParameterPrefix::Dollar, 'a b');
     }
 
     public function testDeriveScalarDependsOnTheBoundValue(): void

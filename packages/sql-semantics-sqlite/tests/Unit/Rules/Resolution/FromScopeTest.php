@@ -101,7 +101,8 @@ final class FromScopeTest extends TestCase
         $semantics = new Semantics(Dialect::Sqlite);
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t]));
-        $step = new JoinStep(new JoinOperator(false, [JoinKeyword::Natural, JoinKeyword::Outer]), new TableInput(new QualifiedName(new Name('t')), new Name('t2')), new JoinOn(new IntegerLiteral('1')));
+        $on = new JoinOn(new IntegerLiteral('1'));
+        $step = new JoinStep(new JoinOperator(false, [JoinKeyword::Natural, JoinKeyword::Outer]), new TableInput(new QualifiedName(new Name('t')), new Name('t2')), $on);
         $chain = new JoinChain(new TableInput(new QualifiedName(new Name('t'))), [$step], new JoinUsing([new Name('a')]));
         $joined = (new FromScope())->enter($chain, $derivation, $derivation->environment(), [], true);
         $rules = array_map(static fn (object $diagnostic): ?MisuseRule => $diagnostic instanceof Misuse ? $diagnostic->rule : null, $derivation->facts()->diagnostics);
@@ -109,7 +110,7 @@ final class FromScopeTest extends TestCase
         self::assertSame([MisuseRule::UnknownJoinType, MisuseRule::UsingWithoutJoin], $rules);
         self::assertCount(2, $joined->visible);
         self::assertCount(6, $joined->fact->shape->slots);
-        self::assertTrue($derivation->facts()->covers($step->constraint->condition));
+        self::assertTrue($derivation->facts()->covers($on->condition));
     }
 
     public function testEnterDerivesEveryOnConditionInTheScopeOfTheWholeChain(): void
@@ -175,7 +176,7 @@ final class FromScopeTest extends TestCase
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
-        $declared = new TableInput(new QualifiedName(new Name('t')));
+        $declared = new TableInput(new QualifiedName(new Name('t'), new Name('main')));
         $undeclared = new TableInput(new QualifiedName(new Name('u')));
         $left = $shapes->fact($derivation, $declared->name, $derivation->environment())->shape;
         $right = $shapes->fact($derivation, $undeclared->name, $derivation->environment())->shape;

@@ -69,6 +69,18 @@ final class ValueKinds
     public const BLOB = 0x04;
 
     /**
+     * The kinds of value the expressions whose class alone decides them produce.
+     */
+    public const FIXED = [
+        NullLiteral::class => 0,
+        TextLiteral::class => self::TEXT,
+        BlobLiteral::class => self::BLOB,
+        BindParameter::class => self::NUMBER | self::TEXT | self::BLOB,
+        FunctionCall::class => self::NUMBER | self::TEXT | self::BLOB,
+        CurrentTime::class => self::NUMBER | self::TEXT | self::BLOB,
+    ];
+
+    /**
      * Answers the kinds of value an expression can produce, or null when they are not determined.
      */
     public function of(Scalar $expression, Facts $facts): ?int
@@ -76,17 +88,11 @@ final class ValueKinds
         while ($expression instanceof Collate || $expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus)) {
             $expression = $expression->operand;
         }
-        if ($expression instanceof NullLiteral) {
-            return 0;
+        if (isset(self::FIXED[$expression::class])) {
+            return self::FIXED[$expression::class];
         }
-        if ($expression instanceof TextLiteral || ($expression instanceof Binary && $expression->operator === BinaryOperator::Concat)) {
+        if ($expression instanceof Binary && $expression->operator === BinaryOperator::Concat) {
             return self::TEXT;
-        }
-        if ($expression instanceof BlobLiteral) {
-            return self::BLOB;
-        }
-        if ($expression instanceof BindParameter || $expression instanceof FunctionCall || $expression instanceof CurrentTime) {
-            return self::NUMBER | self::TEXT | self::BLOB;
         }
         if ($expression instanceof CaseExpression) {
             return $this->results($expression, $facts);

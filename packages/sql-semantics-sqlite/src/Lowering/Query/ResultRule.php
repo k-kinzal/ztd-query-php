@@ -57,6 +57,7 @@ final class ResultRule
         }
         $columns = [];
         foreach (array_reverse($forms) as $form) {
+            $this->marker($form->node(1));
             $columns[] = match ($form->signature) {
                 'selcollist: sclp scanpt expr scanpt as' => new ResultColumn($this->lowering->expressions->expression($form->node(2)), $this->alias($form->node(4))),
                 'selcollist: sclp scanpt STAR' => new Star(),
@@ -66,6 +67,19 @@ final class ResultRule
         }
 
         return $columns;
+    }
+
+    /**
+     * Confirms that a `scanpt` is the empty marker of the grammar, which carries nothing.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function marker(Node $marker): void
+    {
+        $form = $this->lowering->productions->form($marker);
+        if ($form->signature !== 'scanpt:') {
+            throw ImplementationGap::production($form);
+        }
     }
 
     /**

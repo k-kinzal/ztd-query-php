@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
-use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -68,7 +68,7 @@ final class InList implements Scalar
             $elements[] = $derivation->scalar($item, $environment);
             $nullability = $nullability->propagate($elements[count($elements) - 1]->nullability);
         }
-        (new RowValues())->elements($operand, $elements, $derivation);
+        (new RowValueUse())->elements($operand, $elements, $derivation);
 
         return new ScalarFact(new Known(Storage::Integer), $this->items === [] ? Nullability::NotNull : $nullability);
     }

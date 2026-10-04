@@ -24,15 +24,26 @@ use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
 #[Medium]
 final class MutationTargetTest extends TestCase
 {
-    public function testNameAndAliasAnswerTheWrittenNames(): void
+    public function testNameAnswersTheWrittenTableName(): void
     {
         $query = (new Semantics(Dialect::Sqlite))->analyze('UPDATE main.t AS x INDEXED BY i SET a = 1');
 
         self::assertInstanceOf(Update::class, $query->statement);
         self::assertSame('t', $query->statement->target->name()->name->value);
         self::assertSame('main', $query->statement->target->name()->schema?->value);
-        self::assertSame('x', $query->statement->target->alias()?->value);
         self::assertSame('i', $query->statement->target->index?->index?->value);
+    }
+
+    public function testAliasAnswersTheCorrelationNameOrNull(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $aliased = $semantics->analyze('UPDATE main.t AS x SET a = 1');
+        $plain = $semantics->analyze('UPDATE t SET a = 1');
+
+        self::assertInstanceOf(Update::class, $aliased->statement);
+        self::assertInstanceOf(Update::class, $plain->statement);
+        self::assertSame('x', $aliased->statement->target->alias()?->value);
+        self::assertNull($plain->statement->target->alias());
     }
 
     public function testDeriveRelationResolvesAmongDeclaredTablesOnly(): void

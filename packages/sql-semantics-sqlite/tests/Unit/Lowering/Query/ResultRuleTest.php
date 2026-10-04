@@ -37,6 +37,18 @@ final class ResultRuleTest extends TestCase
         self::assertSame('SELECT a, *, t.*, b + 1 AS c FROM t', $operation->toString());
     }
 
+    public function testMarkerCarriesNothingIntoTheResultColumns(): void
+    {
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1, t.*, * FROM t');
+
+        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertCount(3, $operation->statement->columns);
+        self::assertInstanceOf(ResultColumn::class, $operation->statement->columns[0]);
+        self::assertInstanceOf(IntegerLiteral::class, $operation->statement->columns[0]->expression);
+        self::assertNull($operation->statement->columns[0]->alias);
+        self::assertSame('SELECT 1, t.*, * FROM t', $operation->toString());
+    }
+
     public function testAliasReadsTheAliasAfterAsABareWordAStringOrNone(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT a AS b, a c, a 'd', a \"e\", a FROM t");

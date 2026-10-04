@@ -8,31 +8,29 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Query\ItemNaming;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 
 #[CoversClass(ItemNaming::class)]
 #[Small]
 final class ItemNamingTest extends TestCase
 {
-    public function testNameAnswersTheAliasWhenOneIsWritten(): void
+    public function testNameAnswersTheAlias(): void
     {
-        $alias = new Name('total');
-
-        self::assertSame($alias, (new ItemNaming())->name(new SelectExpression(new ColumnUse(new Name('amount')), $alias)));
-        self::assertSame($alias, (new ItemNaming())->name(new SelectExpression(new NumberLiteral('1'), $alias)));
+        self::assertSame('x', (new ItemNaming())->name(new SelectExpression(new NumberLiteral('1'), new Name('x')))?->value);
     }
 
-    public function testNameAnswersTheColumnNameOfAnUnaliasedColumnReference(): void
+    public function testNameAnswersTheColumnNameAsWrittenAlsoInParentheses(): void
     {
-        $column = new Name('Amount');
-
-        self::assertSame($column, (new ItemNaming())->name(new SelectExpression(new ColumnUse($column))));
+        self::assertSame('A', (new ItemNaming())->name(new SelectExpression(new ColumnUse(new Name('A'), new QualifiedName(new Name('t')))))?->value);
+        self::assertSame('a', (new ItemNaming())->name(new SelectExpression(new Grouped(new ColumnUse(new Name('a')))))?->value);
     }
 
-    public function testNameIsNullForAnUnaliasedExpressionNamedByItsSpelling(): void
+    public function testNameAnswersNullForAnotherExpression(): void
     {
         self::assertNull((new ItemNaming())->name(new SelectExpression(new NumberLiteral('1'))));
     }

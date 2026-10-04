@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Invocation\WindowChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SortItem;
 use SqlSemantics\Rendering\Output;
@@ -20,7 +21,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Mirrors PostgreSQL's `WindowDef` node. It is written after OVER and in the
  * WINDOW clause; the holder derives it in the environment of the query level
- * it belongs to.
+ * it belongs to; a frame its own ordering cannot support is reported
+ * (PG-WINDOW-CHECKS-001).
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS,
  * https://www.postgresql.org/docs/17/sql-select.html#SQL-WINDOW.
  *
@@ -67,6 +69,7 @@ final class WindowSpecification implements Clause
             $item->deriveClause($derivation, $environment);
         }
         $this->frame?->deriveClause($derivation, $environment);
+        (new WindowChecks())->specification($derivation, $this);
     }
 
     /**

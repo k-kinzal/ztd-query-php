@@ -6,7 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -30,6 +30,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * @example Reading the type of a CASE
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT CASE a WHEN 1 THEN 'x' ELSE 2 END FROM t");
  *     [count($query->field(0)->type->alternatives), $query->field(0)->nullability] // => [2, \SqlSemantics\Statement\Type\Nullability::NotNull]
+ * @example Refusing an expression without branches
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression(null, []) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class CaseExpression implements Scalar
 {
@@ -55,7 +57,7 @@ final class CaseExpression implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $rows = new RowValues();
+        $rows = new RowValueUse();
         $base = $this->base === null ? null : $derivation->scalar($this->base, $environment);
         $types = [];
         $nullability = $this->otherwise === null ? Nullability::Nullable : Nullability::NotNull;

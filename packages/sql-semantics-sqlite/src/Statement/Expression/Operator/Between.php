@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
-use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Rendering\Output;
@@ -62,7 +62,7 @@ final class Between implements Scalar
         $operand = $derivation->scalar($this->operand, $environment);
         $low = $derivation->scalar($this->low, $environment);
         $high = $derivation->scalar($this->high, $environment);
-        (new RowValues())->uniform([$operand, $low, $high], $derivation);
+        (new RowValueUse())->uniform([$operand, $low, $high], $derivation);
 
         return new ScalarFact((new Storages())->strict(Storage::Integer, [$operand->type]), $operand->nullability->propagate($low->nullability)->propagate($high->nullability));
     }

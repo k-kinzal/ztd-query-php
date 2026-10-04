@@ -7,12 +7,10 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\Frame;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBound;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind;
@@ -39,20 +37,6 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class FunctionCallTest extends TestCase
 {
-    public function testRefusesArgumentsNextToTheStar(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new FunctionCall(new Name('count'), [new NullLiteral()], true);
-    }
-
-    public function testRefusesAQuantifierNextToTheStar(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new FunctionCall(new Name('count'), [], true, SetQuantifier::Distinct);
-    }
-
     public function testDeriveScalarReadsThePartsOfAnAggregateCall(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);

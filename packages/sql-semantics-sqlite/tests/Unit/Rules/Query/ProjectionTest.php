@@ -139,13 +139,13 @@ final class ProjectionTest extends TestCase
         $projection = new Projection();
         $columns = array_values(array_filter($select->columns, static fn (object $column): bool => $column instanceof ResultColumn));
 
-        self::assertSame('a', $projection->named($columns[0], $query->facts->scalar($columns[0]->expression))?->value);
-        self::assertSame('rowid', $projection->named($columns[1], $query->facts->scalar($columns[1]->expression))?->value);
-        self::assertSame('b', $projection->named($columns[2], $query->facts->scalar($columns[2]->expression))?->value);
-        self::assertNull($projection->named($columns[3], $query->facts->scalar($columns[3]->expression)));
-        self::assertNull($projection->named($columns[4], $query->facts->scalar($columns[4]->expression)));
-        self::assertNull($projection->named($columns[5], $query->facts->scalar($columns[5]->expression)));
-        self::assertSame('nosuch', $projection->named($columns[6], $query->facts->scalar($columns[6]->expression))?->value);
+        self::assertSame('a', $projection->named($columns[0], $query->field(0)->resolution)?->value);
+        self::assertSame('rowid', $projection->named($columns[1], $query->field(1)->resolution)?->value);
+        self::assertSame('b', $projection->named($columns[2], $query->field(2)->resolution)?->value);
+        self::assertNull($projection->named($columns[3], $query->field(3)->resolution));
+        self::assertNull($projection->named($columns[4], $query->field(4)->resolution));
+        self::assertNull($projection->named($columns[5], $query->field(5)->resolution));
+        self::assertSame('nosuch', $projection->named($columns[6], $query->field(6)->resolution)?->value);
     }
 
     public function testNamedUsesTheNameOfAnAliasTarget(): void
@@ -156,6 +156,6 @@ final class ProjectionTest extends TestCase
         self::assertInstanceOf(Select::class, $select);
         $term = $select->orderBy[0]->expression;
 
-        self::assertSame('x', (new Projection())->named(new ResultColumn($term), $query->facts->scalar($term))?->value);
+        self::assertSame('x', (new Projection())->named(new ResultColumn($term), $query->facts->scalar($term)->resolution)?->value);
     }
 }

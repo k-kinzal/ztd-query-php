@@ -7,122 +7,112 @@ namespace Tests\Unit\Lowering\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
-use SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries;
-use SqlSemantics\Platform\PostgreSql\Platform;
-use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
-use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
 
-#[CoversClass(Queries::class)]
+#[CoversClass(\SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries::class)]
 #[Small]
 final class QueriesTest extends TestCase
 {
     public function testStatementLowersASelectStatement(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT a FROM t');
-        self::assertInstanceOf(Select::class, $lowering->queries->statement($tree->find('SelectStmt')[0]));
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT a FROM t');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $lowering->queries->statement($tree->find('SelectStmt')[0]));
     }
 
-    public function testQueryLowersASelectStatementAsAQuery(): void
+    public function testQueryLowersASubquery(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT a FROM t');
-        $query = $lowering->queries->query($tree->find('select_no_parens')[0]);
-        self::assertInstanceOf(Select::class, $query);
-        self::assertCount(1, $query->targets);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT (VALUES (1))');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\ValuesList::class, $lowering->queries->query($tree->find('select_with_parens')[0]));
     }
 
-    public function testSortClauseIsEmptyWhenNoOrderByIsWritten(): void
+    public function testSortClauseKeepsIntegerConstants(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse("SELECT pg_catalog.int4(3) '1'");
-        self::assertSame([], $lowering->queries->sortClause($tree->find('opt_sort_clause')[0]));
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 ORDER BY 1');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant::class, $lowering->queries->sortClause($tree->find('sort_clause')[0])[0]->expression);
     }
 
-    public function testSortClauseIsAnImplementationGapForAWrittenOrderBy(): void
+    public function testSortDirectionReadsDesc(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 ORDER BY 1 DESC NULLS LAST');
-        $this->expectExceptionMessage('No semantic rule is implemented for: sort_clause: ORDER BY sortby_list');
-        $lowering->queries->sortClause($tree->find('sort_clause')[0]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 ORDER BY 1 DESC');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Query\SortDirection::Descending, $lowering->queries->sortDirection($tree->find('opt_asc_desc')[0]));
     }
 
-    public function testSortDirectionIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testNullsOrderReadsFirst(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 ORDER BY 1 DESC NULLS LAST');
-        $this->expectExceptionMessage('No semantic rule is implemented for: opt_asc_desc: DESC');
-        $lowering->queries->sortDirection($tree->find('opt_asc_desc')[0]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 ORDER BY 1 NULLS FIRST');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Query\NullsOrder::First, $lowering->queries->nullsOrder($tree->find('opt_nulls_order')[0]));
     }
 
-    public function testNullsOrderIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testWhereLowersThePredicate(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 ORDER BY 1 DESC NULLS LAST');
-        $this->expectExceptionMessage('No semantic rule is implemented for: opt_nulls_order: NULLS_LA LAST_P');
-        $lowering->queries->nullsOrder($tree->find('opt_nulls_order')[0]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 WHERE TRUE');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertNotNull($lowering->queries->where($tree->find('where_clause')[0]));
     }
 
-    public function testWhereLowersThePredicateOrNothing(): void
+    public function testFromLowersEveryItem(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT a FROM t WHERE a = 1');
-        self::assertInstanceOf(BinaryOperation::class, $lowering->queries->where($tree->find('where_clause')[0]));
-        self::assertNull($lowering->queries->where((new PostgreSqlParser('pg-17.2'))->parse('SELECT a FROM t')->find('where_clause')[0]));
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM a, b');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertCount(2, $lowering->queries->from($tree->find('from_clause')[0]));
     }
 
-    public function testFromLowersTheInputsOfTheClause(): void
+    public function testFromItemIsTheOnlyItem(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM a, b AS x');
-        $inputs = $lowering->queries->from($tree->find('from_clause')[0]);
-        self::assertCount(2, $inputs);
-        self::assertInstanceOf(TableInput::class, $inputs[1]);
-        self::assertSame('x', $inputs[1]->alias?->value);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM a');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput::class, $lowering->queries->fromItem($tree->find('from_clause')[0]));
     }
 
-    public function testRelationLowersAQualifiedName(): void
+    public function testRelationReadsTheStar(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM s.t');
-        $relation = $lowering->queries->relation($tree->find('relation_expr')[0]);
-        self::assertSame(['s', 't'], [$relation->name->schema?->value, $relation->name->name->value]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM t *');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertFalse($lowering->queries->relation($tree->find('relation_expr')[0])->only);
     }
 
-    public function testTableReferenceIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testTableReferenceLowersAJoin(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('MERGE INTO t USING s ON true WHEN MATCHED THEN DELETE');
-        $this->expectExceptionMessage('No semantic rule is implemented for: table_ref: relation_expr opt_alias_clause');
-        $lowering->queries->tableReference($tree->find('table_ref')[0]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM a JOIN b ON TRUE');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Relation\Join::class, $lowering->queries->tableReference($tree->find('table_ref')[0]));
     }
 
-    public function testRelationsIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testRelationsLowersTheList(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('TRUNCATE a, b');
-        $this->expectExceptionMessage('No semantic rule is implemented for: relation_expr_list: relation_expr_list , relation_expr');
-        $lowering->queries->relations($tree->find('relation_expr_list')[0]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('LOCK a, b');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertCount(2, $lowering->queries->relations($tree->find('relation_expr_list')[0]));
     }
 
-    public function testTargetsLowersTheSelectList(): void
+    public function testTargetsLowersTheList(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT a, b AS c FROM t');
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1, 2');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
         self::assertCount(2, $lowering->queries->targets($tree->find('target_list')[0]));
     }
 
-    public function testWithIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testWithIsNullWithoutClause(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('WITH w AS (SELECT 1) SELECT 1 FROM w');
-        $this->expectExceptionMessage('No semantic rule is implemented for: with_clause: WITH cte_list');
-        $lowering->queries->with($tree->find('with_clause')[0]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('INSERT INTO t VALUES (1)');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\Queries($lowering);
+        self::assertNull($lowering->queries->with($tree->find('opt_with_clause')[0]));
     }
 }

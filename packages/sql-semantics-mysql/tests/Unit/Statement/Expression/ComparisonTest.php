@@ -134,14 +134,14 @@ final class ComparisonTest extends TestCase
 
     public function testAComparisonAsRightOperandIsRejected(): void
     {
-        $this->expectExceptionMessage('A comparison as right operand of a comparison needs a grouping.');
+        $this->expectExceptionMessage('The right operand of a comparison needs a grouping to keep its place.');
 
         new Comparison(ComparisonOperator::Equal, new ColumnUse(new Name('a')), new Comparison(ComparisonOperator::Less, new NumberLiteral('1'), new NumberLiteral('2')));
     }
 
     public function testAVariableAssignmentAsLeftOperandIsRejected(): void
     {
-        $this->expectExceptionMessage('A variable assignment as left operand of a comparison needs a grouping.');
+        $this->expectExceptionMessage('The left operand of a comparison needs a grouping to keep its place.');
 
         new Comparison(ComparisonOperator::Equal, new VariableAssignment(new UserVariable(new Name('n')), new NumberLiteral('1')), new NumberLiteral('2'));
     }

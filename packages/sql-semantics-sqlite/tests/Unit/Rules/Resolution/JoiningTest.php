@@ -121,7 +121,7 @@ final class JoiningTest extends TestCase
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
-        $left = new TableInput(new QualifiedName(new Name('t')));
+        $left = new TableInput(new QualifiedName(new Name('t'), new Name('main')));
         $right = new TableInput(new QualifiedName(new Name('u')));
         $leftVisible = new VisibleRelation($left, $shapes->fact($derivation, $left->name, $derivation->environment())->shape, null, $left->name);
         $rightVisible = new VisibleRelation($right, $shapes->fact($derivation, $right->name, $derivation->environment())->shape, null, $right->name);
@@ -193,7 +193,7 @@ final class JoiningTest extends TestCase
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
-        $input = new TableInput(new QualifiedName(new Name('t')));
+        $input = new TableInput(new QualifiedName(new Name('t'), new Name('main')));
         $declared = new VisibleRelation($input, $shapes->fact($derivation, $input->name, $derivation->environment())->shape);
         $open = new VisibleRelation($input, $shapes->fact($derivation, new QualifiedName(new Name('u')), $derivation->environment())->shape);
         $unnamed = new VisibleRelation($input, new RowShape([new OutputSlot(null, new Known(Storage::Integer), Nullability::NotNull)]));

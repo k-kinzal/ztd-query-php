@@ -17,8 +17,9 @@ use SqlSemantics\Statement\Snapshot;
  * The grouping fixes the evaluation structure of its operand and is kept as
  * written; rendering never adds or removes a grouping.
  *
- * Rule: SQLITE-GROUPED-001. The facts, including the column a grouped column
- * use denotes, are those of the operand.
+ * Rule: SQLITE-GROUPED-001. The type and the NULL fact are those of the
+ * operand. The name resolution stays with the operand, the node that is the
+ * name use; rules that look through groupings read it there.
  * Source: https://sqlite.org/lang_expr.html. Status: Implemented.
  *
  * @visibility public
@@ -37,13 +38,13 @@ final class Grouped implements Scalar
     }
 
     /**
-     * Derives the operand; the grouping has the same facts.
+     * Derives the operand; the grouping has its type and NULL fact.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = $derivation->scalar($this->operand, $environment);
 
-        return new ScalarFact($fact->type, $fact->nullability, $fact->resolution);
+        return new ScalarFact($fact->type, $fact->nullability);
     }
 
     /**

@@ -7,7 +7,6 @@ namespace Tests\Unit\Statement\Expression\Window;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter;
@@ -28,27 +27,6 @@ use SqlSemantics\Statement\Operation;
 #[Medium]
 final class FrameBoundTest extends TestCase
 {
-    public function testRefusesAnOffsetOnCurrentRow(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new FrameBound(FrameBoundKind::CurrentRow, new IntegerLiteral('1'));
-    }
-
-    public function testRefusesAnOffsetOnUnboundedPreceding(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new FrameBound(FrameBoundKind::UnboundedPreceding, new IntegerLiteral('1'));
-    }
-
-    public function testRefusesPrecedingWithoutAnOffset(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new FrameBound(FrameBoundKind::Preceding);
-    }
-
     public function testReadsTheOffsetOfAnAnalyzedBoundary(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);

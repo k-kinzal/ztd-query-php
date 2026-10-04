@@ -13,8 +13,8 @@ use SqlSemantics\Platform\PostgreSql\Rules\Noise\ExpressionNoise;
 #[Small]
 final class ExpressionNoiseTest extends TestCase
 {
-    public function testPositionsIsEmptyUntilTheFamilyDeclaresNoise(): void
+    public function testPositionsListsTheOptionalAsymmetric(): void
     {
-        self::assertSame([], ExpressionNoise::positions());
+        self::assertSame(['opt_asymmetric: ASYMMETRIC' => [0]], ExpressionNoise::positions());
     }
 }

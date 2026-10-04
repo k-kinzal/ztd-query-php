@@ -7,7 +7,6 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
@@ -22,27 +21,6 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class IntegerLiteralTest extends TestCase
 {
-    public function testRefusesADigitSeparator(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new IntegerLiteral('1_000');
-    }
-
-    public function testRefusesAnEmptyDigitSequence(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new IntegerLiteral('');
-    }
-
-    public function testRefusesASign(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new IntegerLiteral('-1');
-    }
-
     public function testFitsAcceptsTheLargestSignedSixtyFourBitValue(): void
     {
         self::assertTrue((new IntegerLiteral('9223372036854775807'))->fits());

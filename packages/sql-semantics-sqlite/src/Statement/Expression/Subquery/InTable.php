@@ -8,7 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
-use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Rendering\Output;
@@ -84,7 +84,7 @@ final class InTable implements Scalar
             : new RelationFact(new RowShape([], [new UndeclaredRoutine($this->table)]));
         $derivation->target($this, $fact);
         if ($fact->shape->complete()) {
-            (new RowValues())->membership($operand, count($fact->shape->slots), $derivation);
+            (new RowValueUse())->membership($operand, count($fact->shape->slots), $derivation);
         } else {
             $nullability = $nullability->propagate(Nullability::Dependent);
         }

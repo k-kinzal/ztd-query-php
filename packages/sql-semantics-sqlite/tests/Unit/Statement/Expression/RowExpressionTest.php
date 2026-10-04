@@ -7,11 +7,9 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
@@ -26,13 +24,6 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class RowExpressionTest extends TestCase
 {
-    public function testRefusesARowOfOneElement(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new RowExpression([new NullLiteral()]);
-    }
-
     public function testDeriveScalarGivesARowOfTheWrittenWidth(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);

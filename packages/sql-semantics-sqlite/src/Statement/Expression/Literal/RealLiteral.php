@@ -30,6 +30,12 @@ use SqlSemantics\Statement\Type\Nullability;
  *     [$literal->whole, $literal->fraction, $literal->exponent, $query->toString()] // => ['1', '50', '-3', 'SELECT 1.50e-3']
  * @example Refusing a literal with neither a decimal point nor an exponent
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1', null, null) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a point without any digit
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('', '') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing non digit parts
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1a', '5') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an exponent with a letter
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1', null, 'e5') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class RealLiteral implements Scalar
 {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
@@ -60,7 +60,7 @@ final class SortScopes
             } elseif ($word !== null && $environment->aliased($word) !== []) {
                 $derivation->scalar($term, new Environment($derivation->context, $environment->outer, [], [], $environment->aliased($word)));
             } else {
-                (new RowValues())->single($derivation->scalar($term, $environment), $derivation);
+                (new RowValueUse())->single($derivation->scalar($term, $environment), $derivation);
             }
         }
     }

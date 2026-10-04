@@ -20,7 +20,8 @@ final class QueryNoiseTest extends TestCase
         self::assertSame([0], QueryNoise::positions()['select_alias: AS TEXT_STRING_sys']);
         self::assertSame([0], QueryNoise::positions()['select_alias: AS TEXT_STRING_validated']);
         self::assertSame([0], QueryNoise::positions()['table_alias: AS']);
-        self::assertCount(4, QueryNoise::positions());
+        self::assertSame([0], QueryNoise::positions()['table_alias: EQ']);
+        self::assertCount(8, QueryNoise::positions());
         self::assertArrayNotHasKey('select_alias: ident', QueryNoise::positions());
     }
 
@@ -34,6 +35,13 @@ final class QueryNoiseTest extends TestCase
 
         self::assertSame([], array_values(array_diff(array_keys(QueryNoise::positions()), $productions)));
         self::assertSame([], array_filter(QueryNoise::positions(), static fn (array $positions, string $signature): bool => max(-1, ...$positions) >= $arity[$signature], ARRAY_FILTER_USE_BOTH));
+    }
+
+    public function testPositionsDeclareTheOptionalJoinWordsAsNoise(): void
+    {
+        self::assertSame([0], QueryNoise::positions()['opt_outer: OUTER']);
+        self::assertSame([0], QueryNoise::positions()['opt_outer: OUTER_SYM']);
+        self::assertSame([0], QueryNoise::positions()['opt_inner: INNER_SYM']);
     }
 
     public function testSynonymsListsNothingForTheQueryProductions(): void

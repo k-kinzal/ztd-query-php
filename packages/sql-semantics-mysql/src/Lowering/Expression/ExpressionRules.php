@@ -8,20 +8,20 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Interval;
 use SqlSemantics\Statement\Scalar;
 
 /**
  * The entry rules of the expression family: the methods other families and the statement dispatcher call.
  *
- * Rule: MYSQL-EXPRESSION-ENTRY-001. Scope: expr, bool_pri, predicate, bit_expr, simple_expr, operators, CASE,
- * casts, intervals, row constructors and MATCH.
- * The method names, parameters and return types are fixed by the family
- * plan. A method delegates to the rule classes of this family; a method
- * the family has not implemented reports a missing rule.
+ * Rule: MYSQL-EXPRESSION-ENTRY-001. Scope: expr, bool_pri, predicate,
+ * bit_expr, simple_expr, operators, CASE, casts, intervals, row
+ * constructors, subquery expressions and MATCH. A method delegates to the
+ * rule class of the level it lowers: MYSQL-CONDITION-001,
+ * MYSQL-PREDICATE-001, MYSQL-BIT-EXPR-001, MYSQL-SIMPLE-EXPR-001,
+ * MYSQL-EXPRESSION-LIST-001 and MYSQL-INTERVAL-UNIT-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/expressions.html.
- * The methods marked as slice run the thin vertical slice written with the
- * leaf layers; the family completes or replaces them.
- * Status: Specified.
+ * Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -37,31 +37,31 @@ final class ExpressionRules
     /**
      * Lowers an expression: a node of `expr`.
      *
-     * @throws ImplementationGap When a production is outside the slice the family has yet to complete
+     * @throws ImplementationGap When a production has no rule
      */
     public function expression(Node $expression): Scalar
     {
-        return (new ComparisonSlice($this->lowering))->expression($expression);
+        return (new ConditionRule($this->lowering))->expression($expression);
     }
 
     /**
      * Lowers an arithmetic or bit expression: a node of `bit_expr`.
      *
-     * @throws ImplementationGap When a production is outside the slice the family has yet to complete
+     * @throws ImplementationGap When a production has no rule
      */
     public function bitExpression(Node $expression): Scalar
     {
-        return (new ComparisonSlice($this->lowering))->bitExpression($expression);
+        return (new BitRule($this->lowering))->bitExpression($expression);
     }
 
     /**
      * Lowers a primary expression: a node of `simple_expr`.
      *
-     * @throws ImplementationGap When a production is outside the slice the family has yet to complete
+     * @throws ImplementationGap When a production has no rule
      */
     public function simpleExpression(Node $expression): Scalar
     {
-        return (new ComparisonSlice($this->lowering))->simpleExpression($expression);
+        return (new PrimaryRule($this->lowering))->simpleExpression($expression);
     }
 
     /**
@@ -69,20 +69,30 @@ final class ExpressionRules
      * is empty.
      *
      * @return list<Scalar>
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function expressions(Node $list): array
     {
-        throw ImplementationGap::rule('MySQL expression family: expressions');
+        return (new ListRule($this->lowering))->expressions($list);
     }
 
     /**
      * Lowers an interval unit: a node of `interval` or `interval_time_stamp`.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When the production has no rule
      */
     public function intervalUnit(Node $unit): IntervalUnit
     {
-        throw ImplementationGap::rule('MySQL expression family: intervalUnit');
+        return (new IntervalRule($this->lowering))->unit($unit);
+    }
+
+    /**
+     * Lowers the interval `INTERVAL quantity unit` from the node of its quantity (`expr`) and of its unit (`interval`).
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function interval(Node $quantity, Node $unit): Interval
+    {
+        return new Interval($this->expression($quantity), $this->intervalUnit($unit));
     }
 }

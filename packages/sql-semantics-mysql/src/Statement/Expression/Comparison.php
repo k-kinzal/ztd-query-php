@@ -6,32 +6,30 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A comparison of two operands, in the order written.
  *
- * Comparisons associate to the left and bind tighter than a variable
- * assignment: a comparison as right operand, or an assignment as left
- * operand, would be read differently when written without a grouping, so
- * neither is accepted.
- *
- * Slice of the expression family: it covers the plain comparison operators
- * only and is completed or replaced by that family.
+ * Comparisons belong to the bool_pri level and associate to the left; the
+ * right operand is a predicate (MYSQL-PRECEDENCE-001). An operand that would
+ * be read differently without a grouping, such as a comparison on the right
+ * or a variable assignment on the left, is rejected (`Item_func_eq`,
+ * `Item_func_equal`, `Item_func_ne`, `Item_func_lt`, …).
  *
  * Rule: MYSQL-COMPARISON-001. Facts: a comparison yields 1, 0 or NULL, an
  * integer; it can be NULL when an operand can, except `<=>`, which never
- * is. Diagnostics: none. Terminates: the operands are strict parts.
- * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html.
+ * is. Two rows are compared element by element and must have the same
+ * width (MYSQL-OPERAND-COLUMNS-001). Terminates: the operands are strict
+ * parts. Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html,
+ * https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html.
  * Status: Implemented.
  *
  * @visibility public
@@ -50,8 +48,9 @@ final class Comparison implements Scalar
      */
     public function __construct(public readonly ComparisonOperator $operator, public readonly Scalar $left, public readonly Scalar $right)
     {
-        Check::input(!$right instanceof self, 'A comparison as right operand of a comparison needs a grouping.');
-        Check::input(!$left instanceof VariableAssignment, 'A variable assignment as left operand of a comparison needs a grouping.');
+        $precedence = new Precedence();
+        Check::input($precedence->fits($left, Precedence::BOOL_PRI, Precedence::BOOL_PRI), 'The left operand of a comparison needs a grouping to keep its place.');
+        Check::input($precedence->opening($right) >= Precedence::PREDICATE, 'The right operand of a comparison needs a grouping to keep its place.');
     }
 
     /**
@@ -61,11 +60,10 @@ final class Comparison implements Scalar
     {
         $left = $derivation->scalar($this->left, $environment);
         $right = $derivation->scalar($this->right, $environment);
+        $operands = new Operands();
+        $operands->comparable([$left, $right], $derivation);
 
-        return new ScalarFact(
-            new Known(new Integral(IntegralKind::BigInt)),
-            $this->operator === ComparisonOperator::NullSafeEqual ? Nullability::NotNull : $left->nullability->propagate($right->nullability),
-        );
+        return $operands->truth($this->operator === ComparisonOperator::NullSafeEqual ? Nullability::NotNull : $left->nullability->propagate($right->nullability));
     }
 
     /**

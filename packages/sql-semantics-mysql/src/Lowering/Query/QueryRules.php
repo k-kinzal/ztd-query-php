@@ -5,13 +5,28 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Lowering\Query\Legacy\BlockRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Legacy\SubqueryRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Legacy\UnionRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Modern\ExpressionRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Modern\PrimaryRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ClauseRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Shared\FromRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ItemRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TableRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TailRule;
+use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer;
+use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectItem;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\Star;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
+use SqlSemantics\Platform\MySql\Statement\Relation\Hint\PrimaryIndex;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Relation;
@@ -21,15 +36,15 @@ use SqlSemantics\Statement\Statement;
 /**
  * The entry rules of the query family: the methods other families and the statement dispatcher call.
  *
- * Rule: MYSQL-QUERY-ENTRY-001. Scope: SELECT, set operations, WITH, table references, joins, grouping,
- * ordering, limits, locking and INTO, in both grammar generations.
- * The method names, parameters and return types are fixed by the family
- * plan. A method delegates to the rule classes of this family; a method
- * the family has not implemented reports a missing rule.
- * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
- * The methods marked as slice run the thin vertical slice written with the
- * leaf layers; the family completes or replaces them.
- * Status: Specified.
+ * Rule: MYSQL-QUERY-ENTRY-001. Scope: SELECT, set operations, VALUES and
+ * TABLE statements, WITH, table references, joins, grouping, ordering,
+ * limits, locking and INTO, in both grammar generations: the rules of
+ * Lowering/Query/Modern (8.0 and later), Lowering/Query/Legacy (5.6 and
+ * 5.7) and Lowering/Query/Shared. A query that a subquery, a derived table
+ * or a common table expression writes in the parentheses its syntax
+ * requires is answered without those parentheses; the construct that holds
+ * it writes them. Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
+ * Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -45,11 +60,14 @@ final class QueryRules
     /**
      * Lowers a query statement: a node of `select` (5.6, 5.7) or `select_stmt` (8.0 and later).
      *
-     * @throws ImplementationGap When a production is outside the slice the family has yet to complete
+     * @throws ImplementationGap When a production has no rule
      */
     public function statement(Node $statement): Statement
     {
-        return (new SelectSlice($this->lowering))->statement($statement);
+        $query = $this->query($statement);
+        Check::invariant($query instanceof Statement, 'Every query of the query family is also a statement.');
+
+        return $query;
     }
 
     /**
@@ -57,87 +75,99 @@ final class QueryRules
      * `subquery`, `table_subquery`, `row_subquery`, `query_expression`, `query_expression_parens`,
      * `query_expression_with_opt_locking_clauses` or `view_select_aux`.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function query(Node $query): Query
     {
-        throw ImplementationGap::rule('MySQL query family: query');
+        $expressions = new ExpressionRule($this->lowering);
+
+        return match ($query->name) {
+            'select' => (new UnionRule($this->lowering))->statement($query),
+            'select_stmt' => $expressions->statement($query),
+            'subselect' => (new SubqueryRule($this->lowering))->subselect($query),
+            'subquery', 'table_subquery', 'row_subquery' => $expressions->subquery($query),
+            'query_expression' => $expressions->expression($query, new Trailer()),
+            'query_expression_parens' => $expressions->inner($query),
+            'query_expression_with_opt_locking_clauses' => $expressions->locked($query),
+            'view_select_aux' => (new UnionRule($this->lowering))->viewQuery($query),
+            default => throw ImplementationGap::production($this->lowering->form($query)),
+        };
     }
 
     /**
      * Lowers the query of CREATE TABLE ... SELECT and INSERT ... SELECT of MySQL 5.6 and 5.7: a node of
      * `create_select` and the node of `union_clause`, `opt_union_clause` or `union_opt` that follows it.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function legacyQuery(Node $select, ?Node $union = null): Query
     {
-        throw ImplementationGap::rule('MySQL query family: legacyQuery');
+        return (new UnionRule($this->lowering))->chain((new BlockRule($this->lowering))->create($select), $union);
     }
 
     /**
      * Lowers a row predicate: a node of `where_clause` or `opt_where_clause`; an absent clause is null.
      *
-     * @throws ImplementationGap When a production is outside the slice the family has yet to complete
+     * @throws ImplementationGap When a production has no rule
      */
     public function where(Node $clause): ?Scalar
     {
-        return (new SelectSlice($this->lowering))->where($clause);
+        return (new ClauseRule($this->lowering))->predicate($clause);
     }
 
     /**
      * Lowers ordering or grouping expressions: a node of `opt_order_clause`, `order_clause`, `order_list`
-     * or `group_list`; an absent clause is empty.
+     * or `group_list`; an absent clause is empty. Integers stay the expressions they are.
      *
      * @return list<OrderItem>
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function ordering(Node $clause): array
     {
-        throw ImplementationGap::rule('MySQL query family: ordering');
+        return (new ClauseRule($this->lowering))->orderItems($clause);
     }
 
     /**
      * Lowers one ordering expression: a node of `order_expr`, or a node of `order_ident` with the node of
      * `order_dir` that follows it.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function orderItem(Node $item, ?Node $direction = null): OrderItem
     {
-        throw ImplementationGap::rule('MySQL query family: orderItem');
+        return (new ClauseRule($this->lowering))->item($item, $direction);
     }
 
     /**
      * Lowers a sort direction: a node of `order_dir`, `opt_ordering_direction` or `ordering_direction`; no
      * direction is null.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function direction(Node $direction): ?Direction
     {
-        throw ImplementationGap::rule('MySQL query family: direction');
+        return (new ClauseRule($this->lowering))->direction($direction);
     }
 
     /**
      * Lowers a LIMIT clause: a node of `opt_limit_clause`, `limit_clause`, `opt_simple_limit` or
      * `opt_limit_clause_init`; an absent clause is null.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function limit(Node $clause): ?Limit
     {
-        throw ImplementationGap::rule('MySQL query family: limit');
+        return (new TailRule($this->lowering))->limit($clause);
     }
 
     /**
      * Lowers one LIMIT operand: a node of `limit_option`.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function limitValue(Node $option): Scalar
     {
-        throw ImplementationGap::rule('MySQL query family: limitValue');
+        return (new TailRule($this->lowering))->value($option);
     }
 
     /**
@@ -145,11 +175,11 @@ final class QueryRules
      * `table_reference_list`.
      *
      * @return list<Relation>
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function tables(Node $list): array
     {
-        throw ImplementationGap::rule('MySQL query family: tables');
+        return (new FromRule($this->lowering))->members($list);
     }
 
     /**
@@ -157,21 +187,21 @@ final class QueryRules
      * selection is empty.
      *
      * @return list<Name>
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function partitions(Node $selection): array
     {
-        throw ImplementationGap::rule('MySQL query family: partitions');
+        return (new TableRule($this->lowering))->partitions($selection);
     }
 
     /**
      * Lowers an optional alias: a node of `opt_table_alias` or `select_alias`.
      *
-     * @throws ImplementationGap When a production is outside the slice the family has yet to complete
+     * @throws ImplementationGap When a production has no rule
      */
     public function alias(Node $alias): ?Name
     {
-        return (new SelectSlice($this->lowering))->alias($alias);
+        return $alias->name === 'select_alias' ? (new ItemRule($this->lowering))->alias($alias) : (new TableRule($this->lowering))->alias($alias);
     }
 
     /**
@@ -179,43 +209,60 @@ final class QueryRules
      * `opt_derived_column_list`; an absent list is empty.
      *
      * @return list<Name>
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function columnAliases(Node $list): array
     {
-        throw ImplementationGap::rule('MySQL query family: columnAliases');
+        return (new TableRule($this->lowering))->columns($list);
     }
 
     /**
      * Lowers a WITH clause: a node of `opt_with_clause` or `with_clause`; an absent clause is null.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function with(Node $clause): ?WithClause
     {
-        throw ImplementationGap::rule('MySQL query family: with');
+        return (new PrimaryRule($this->lowering))->with($clause);
     }
 
     /**
      * Lowers a select list: a node of `select_item_list`.
      *
-     * @return list<SelectItem>
-     * @throws ImplementationGap Always, until the family is implemented
+     * @return list<SelectExpression|Star|TableWildcard>
+     * @throws ImplementationGap When a production has no rule
      */
     public function selectItems(Node $list): array
     {
-        throw ImplementationGap::rule('MySQL query family: selectItems');
+        return (new ItemRule($this->lowering))->items($list);
     }
 
     /**
      * Lowers the index names of an index hint or of CACHE INDEX: a node of `opt_key_usage_list`; an absent
-     * list is empty.
+     * list is empty. A list that names the primary key with PRIMARY is lowered by indexKeys().
      *
      * @return list<Name>
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When the list names PRIMARY or a production has no rule
      */
     public function indexNames(Node $list): array
     {
-        throw ImplementationGap::rule('MySQL query family: indexNames');
+        $names = [];
+        foreach ($this->indexKeys($list) as $key) {
+            $names[] = $key instanceof Name ? $key : throw ImplementationGap::rule('an index list naming PRIMARY, which indexKeys() lowers');
+        }
+
+        return $names;
+    }
+
+    /**
+     * Lowers the indexes of an index hint or of CACHE INDEX, where PRIMARY names the primary key: a node of
+     * `opt_key_usage_list` or `key_usage_list`; an absent list is empty.
+     *
+     * @return list<Name|PrimaryIndex>
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function indexKeys(Node $list): array
+    {
+        return (new TableRule($this->lowering))->indexes($list);
     }
 }

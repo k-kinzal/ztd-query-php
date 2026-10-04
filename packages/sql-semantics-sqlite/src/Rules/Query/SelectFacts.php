@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\FromScope;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\Joining;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Limit;
@@ -52,7 +52,7 @@ final class SelectFacts
         $aliases = $this->aliases($select, $items);
         $rows = new Environment($context, $outer, $visible, [], $aliases);
         $results = new Environment($context, $outer, $output, [], $aliases);
-        $single = new RowValues();
+        $single = new RowValueUse();
         if ($select->where !== null) {
             $single->single($derivation->scalar($select->where, $rows), $derivation);
         }

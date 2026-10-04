@@ -29,6 +29,8 @@ use SqlSemantics\Statement\Type\NullOnly;
  *     $trigger->statement->steps[0]->columns[0]->expression->message->value // => 'no'
  * @example Refusing a message for IGNORE
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Raise(\SqlSemantics\Platform\Sqlite\Statement\Expression\RaiseAction::Ignore, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('x')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a missing message for fail
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Raise(\SqlSemantics\Platform\Sqlite\Statement\Expression\RaiseAction::Fail) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Raise implements Scalar
 {

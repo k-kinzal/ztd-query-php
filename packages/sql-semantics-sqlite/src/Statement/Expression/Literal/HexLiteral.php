@@ -33,6 +33,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *     [$query->statement->columns[0]->expression->digits, $query->toString()] // => ['1F', 'SELECT 0x1F']
  * @example Refusing lower-case digits, which are another spelling of the same value
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral('1f') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an empty digit sequence
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral('') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class HexLiteral implements Scalar
 {

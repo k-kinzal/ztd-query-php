@@ -7,7 +7,6 @@ namespace Tests\Unit\Statement\Expression\Window;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
@@ -27,20 +26,6 @@ use SqlSemantics\Statement\Operation;
 #[Medium]
 final class FrameTest extends TestCase
 {
-    public function testRefusesAStartAtUnboundedFollowing(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new Frame(FrameUnit::Rows, new FrameBound(FrameBoundKind::UnboundedFollowing));
-    }
-
-    public function testRefusesAnEndAtUnboundedPreceding(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new Frame(FrameUnit::Rows, new FrameBound(FrameBoundKind::CurrentRow), new FrameBound(FrameBoundKind::UnboundedPreceding));
-    }
-
     public function testReadsBothEndsAndTheExclusion(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);

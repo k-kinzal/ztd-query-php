@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
-use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Operators;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -60,7 +60,7 @@ final class Binary implements Scalar
     {
         $left = $derivation->scalar($this->left, $environment);
         $right = $derivation->scalar($this->right, $environment);
-        $rows = new RowValues();
+        $rows = new RowValueUse();
         if ($this->operator->level() === Precedence::EQUALITY || $this->operator->level() === Precedence::COMPARISON) {
             $rows->uniform([$left, $right], $derivation);
         } else {

@@ -23,6 +23,8 @@ use SqlSemantics\Statement\Snapshot;
  *     $query->statement->columns[0]->expression->over->frame->end->kind // => \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::CurrentRow
  * @example Refusing a start the grammar does not admit
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\Frame(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameUnit::Rows, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBound(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::UnboundedFollowing)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an end at unbounded preceding
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\Frame(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameUnit::Rows, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBound(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::CurrentRow), new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBound(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::UnboundedPreceding)) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class Frame implements Node
 {

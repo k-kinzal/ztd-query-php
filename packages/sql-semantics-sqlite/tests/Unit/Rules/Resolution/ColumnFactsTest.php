@@ -7,13 +7,24 @@ namespace Tests\Unit\Rules\Resolution;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnFacts;
+use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
+use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
 use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
@@ -91,5 +102,42 @@ final class ColumnFactsTest extends TestCase
         $problem = (new ColumnFacts())->of($ambiguous);
         self::assertInstanceOf(Invalid::class, $problem->type);
         self::assertSame($ambiguous, $problem->type->cause);
+    }
+
+    public function testDenotedLooksThroughGroupingsToTheNameUse(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $query = $semantics->analyze('SELECT ((b)), ("a"), (zz), b COLLATE nocase, (1), ("zz"), (true) FROM t', [$t]);
+
+        self::assertInstanceOf(ResolvedColumn::class, $query->field(0)->resolution);
+        self::assertSame($t->declarations()[0]->columns[2], $query->field(0)->column());
+        self::assertSame('b', $query->field(0)->name?->value);
+        self::assertSame($t->declarations()[0]->columns[1], $query->field(1)->column());
+        self::assertInstanceOf(MissingColumn::class, $query->field(2)->resolution);
+        self::assertNull($query->field(3)->resolution);
+        self::assertNull($query->field(4)->resolution);
+        self::assertNull($query->field(5)->resolution);
+        self::assertNull($query->field(6)->resolution);
+        self::assertCount(1, $query->facts->diagnostics);
+    }
+
+    public function testDenotedAnswersTheOutcomeOfAnUngroupedNameUse(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
+        $derivation = new Derivation($semantics->context([$t]));
+        $input = new TableInput(new QualifiedName(new Name('t')));
+        $environment = new Environment($derivation->context, null, [new VisibleRelation($input, (new TableShapes())->fact($derivation, $input->name, $derivation->environment())->shape, null, $input->name)]);
+        $facts = new ColumnFacts();
+        $resolved = $facts->denoted(new Grouped(new ColumnUse(new Name('b'))), $environment);
+
+        self::assertInstanceOf(ResolvedColumn::class, $resolved);
+        self::assertSame($t->declarations()[0]->columns[2], $resolved->slot->column);
+        self::assertInstanceOf(MissingColumn::class, $facts->denoted(new ColumnUse(new Name('zz')), $environment));
+        self::assertInstanceOf(ResolvedColumn::class, $facts->denoted(new DoubleQuotedWord(new Name('a')), $environment));
+        self::assertNull($facts->denoted(new DoubleQuotedWord(new Name('zz')), $environment));
+        self::assertNull($facts->denoted(new TruthWord(true), $environment));
+        self::assertNull($facts->denoted(new IntegerLiteral('1'), $environment));
     }
 }

@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
-use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Operators;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -52,7 +52,7 @@ final class Unary implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $operand = $derivation->scalar($this->operand, $environment);
-        (new RowValues())->single($operand, $derivation);
+        (new RowValueUse())->single($operand, $derivation);
 
         return (new Operators())->unary($this->operator, $operand);
     }

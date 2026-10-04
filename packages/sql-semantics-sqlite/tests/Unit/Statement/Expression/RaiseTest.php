@@ -7,7 +7,6 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
@@ -26,20 +25,6 @@ use SqlSemantics\Statement\Type\NullOnly;
 #[Medium]
 final class RaiseTest extends TestCase
 {
-    public function testRefusesAMessageForIgnore(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new Raise(RaiseAction::Ignore, new TextLiteral('x'));
-    }
-
-    public function testRefusesAMissingMessageForFail(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new Raise(RaiseAction::Fail);
-    }
-
     public function testDeriveScalarYieldsNoValueInsideATrigger(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);

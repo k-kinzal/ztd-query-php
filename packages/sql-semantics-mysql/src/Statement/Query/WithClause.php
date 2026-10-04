@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query;
 
+use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Node;
 
 /**
@@ -14,4 +16,8 @@ use SqlSemantics\Statement\Node;
  */
 interface WithClause extends Node
 {
+    /**
+     * Derives the common table expressions and answers the environment in which the statement that holds the clause sees them.
+     */
+    public function bind(Derivation $derivation, Environment $outer): Environment;
 }

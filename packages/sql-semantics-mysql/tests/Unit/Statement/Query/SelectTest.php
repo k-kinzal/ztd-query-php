@@ -16,11 +16,15 @@ use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
+use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
+use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
@@ -236,6 +240,7 @@ final class SelectTest extends TestCase
             new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
         ]);
         $select = new Select(
+            [],
             [new SelectExpression(new ColumnUse(new Name('a')), new Name('x'))],
             new TableReference(new QualifiedName(new Name('t')), new Name('u')),
             new Comparison(ComparisonOperator::Less, new ColumnUse(new Name('a'), new QualifiedName(new Name('u'))), new NumberLiteral('3')),
@@ -247,11 +252,108 @@ final class SelectTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
     }
 
+    public function testClausesTellsWhetherAClauseFollowsTheSelectList(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $plain = $semantics->analyze('SELECT 1')->statement;
+        $limited = $semantics->analyze('SELECT 1 LIMIT 1')->statement;
+
+        self::assertInstanceOf(Select::class, $plain);
+        self::assertInstanceOf(Select::class, $limited);
+        self::assertFalse($plain->clauses());
+        self::assertTrue($limited->clauses());
+    }
+
+    public function testTrailedTellsWhetherAClauseFollowsTheBlockProper(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $plain = $semantics->analyze('SELECT a FROM t WHERE a = 1')->statement;
+        $locked = $semantics->analyze('SELECT a FROM t FOR UPDATE')->statement;
+        $into = $semantics->analyze('SELECT a INTO @x FROM t')->statement;
+
+        self::assertInstanceOf(Select::class, $plain);
+        self::assertInstanceOf(Select::class, $locked);
+        self::assertInstanceOf(Select::class, $into);
+        self::assertFalse($plain->trailed());
+        self::assertTrue($locked->trailed());
+        self::assertFalse($into->trailed());
+    }
+
+    public function testRenderIntoWritesTheIntoClauseAtItsPosition(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertSame('SELECT a INTO @x FROM t', $semantics->analyze('select a into @x from t')->toString());
+        self::assertSame('SELECT a FROM t INTO @x', $semantics->analyze('select a from t into @x')->toString());
+        self::assertSame('SELECT a FROM t FOR UPDATE INTO @x', $semantics->analyze('select a from t for update into @x')->toString());
+        self::assertSame('SELECT 1 INTO @x', $semantics->analyze('select 1 into @x')->toString());
+    }
+
+    public function testRenderWritesEveryClauseInGrammarOrder(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-9.1.0');
+        $sql = 'SELECT DISTINCT a, b AS c FROM t WHERE a > 1 GROUP BY a WITH ROLLUP HAVING a > 2 WINDOW w AS () QUALIFY a > 3 ORDER BY a DESC LIMIT 1 OFFSET 2 FOR UPDATE SKIP LOCKED';
+
+        self::assertSame($sql, $semantics->analyze($sql)->toString());
+        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE(1, 2) INTO @x LOCK IN SHARE MODE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select a from t procedure analyse(1,2) into @x lock in share mode')->toString());
+    }
+
+    public function testDeriveQueryExtendsColumnsWithNullsInAnAggregateBlock(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
+            new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
+        ]);
+        $grouped = $semantics->analyze('SELECT a FROM t GROUP BY a', [$table]);
+        $rollup = $semantics->analyze('SELECT a FROM t GROUP BY a WITH ROLLUP', [$table]);
+        $having = $semantics->analyze('SELECT a FROM t HAVING a > 1', [$table]);
+
+        self::assertSame(Nullability::NotNull, $grouped->field('a')->nullability);
+        self::assertSame(Nullability::Nullable, $rollup->field('a')->nullability);
+        self::assertSame(Nullability::NotNull, $having->field('a')->nullability);
+        self::assertSame($table->columns[0], $rollup->field('a')->column());
+    }
+
+    public function testDeriveQueryExpandsStarsOverJoins(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
+            new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull),
+            new Column(new Name('b'), new Integral(IntegralKind::Int), Nullability::NotNull),
+        ]);
+        $u = new Table(new QualifiedName(new Name('u'), new Name('(current)')), $semantics->profile(), [
+            new Column(new Name('c'), new Integral(IntegralKind::Int), Nullability::NotNull),
+            new Column(new Name('b'), new Integral(IntegralKind::Int), Nullability::NotNull),
+        ]);
+        $using = $semantics->analyze('SELECT * FROM t LEFT JOIN u USING (b)', [$t, $u]);
+        $qualified = $semantics->analyze('SELECT u.* FROM t JOIN u USING (b)', [$t, $u]);
+
+        self::assertSame(['b', 'a', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $using->fields()->items ?? []));
+        self::assertSame(Nullability::NotNull, $using->field('b')->nullability);
+        self::assertSame(Nullability::Nullable, $using->field('c')->nullability);
+        self::assertSame(['c', 'b'], array_map(static fn (Field $field): ?string => $field->name?->value, $qualified->fields()->items ?? []));
+        self::assertSame([], $using->facts->diagnostics);
+    }
+
+    public function testAnIntegerOrderingItemIsRejected(): void
+    {
+        $this->expectExceptionMessage('An integer in ORDER BY or GROUP BY is a select list position.');
+
+        new Select([], [new SelectExpression(new NumberLiteral('1'))], null, null, null, null, [], null, [new OrderItem(new NumberLiteral('1'))]);
+    }
+
+    public function testAnIntoAfterTheClausesWithoutClausesIsRejected(): void
+    {
+        $this->expectExceptionMessage('An INTO after the query clauses follows at least one of them.');
+
+        new Select([], [new SelectExpression(new NumberLiteral('1'))], null, null, null, null, [], null, [], null, null, [], new IntoVariables([new UserVariable(new Name('x'))]), IntoPosition::AfterQuery);
+    }
+
     public function testAnEmptySelectListIsRejected(): void
     {
-        $this->expectExceptionMessage('A selection projects at least one expression.');
+        $this->expectExceptionMessage('A selection projects at least one item.');
 
-        new Select([]);
+        new Select([], []);
     }
 
     public function testANodeUsedAtTwoPositionsIsRejected(): void
@@ -261,7 +363,7 @@ final class SelectTest extends TestCase
 
         $this->expectExceptionMessage('A statement node occurs at one position only.');
 
-        new Operation($semantics->context(), new Select([new SelectExpression($column)], new TableReference(new QualifiedName(new Name('t'))), $column));
+        new Operation($semantics->context(), new Select([], [new SelectExpression($column)], new TableReference(new QualifiedName(new Name('t'))), $column));
     }
 
     public function testAStringLiteralUnderAnotherEscapeRuleIsRejected(): void
@@ -270,6 +372,6 @@ final class SelectTest extends TestCase
 
         $this->expectExceptionMessage('A string literal must be spelled under the escape rule of the language profile.');
 
-        new Operation($semantics->context(), new Select([new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]));
+        new Operation($semantics->context(), new Select([], [new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]));
     }
 }

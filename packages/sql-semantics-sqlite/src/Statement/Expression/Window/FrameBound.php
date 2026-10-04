@@ -19,6 +19,10 @@ use SqlSemantics\Statement\Snapshot;
  *     $query->statement->columns[0]->expression->over->frame->start->offset->digits // => '2'
  * @example Refusing an offset on a boundary that takes none
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBound(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::CurrentRow, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an offset on unbounded preceding
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBound(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::UnboundedPreceding, new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing preceding without an offset
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBound(\SqlSemantics\Platform\Sqlite\Statement\Expression\Window\FrameBoundKind::Preceding) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class FrameBound implements Node
 {

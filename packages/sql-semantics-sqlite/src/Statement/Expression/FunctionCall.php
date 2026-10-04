@@ -41,6 +41,8 @@ use SqlSemantics\Statement\Type\Invalid;
  *     [$call->name->value, $call->quantifier, count($call->arguments), $call->filter !== null, $query->field(0)->nullability] // => ['count', \SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier::Distinct, 1, true, \SqlSemantics\Statement\Type\Nullability::NotNull]
  * @example Refusing arguments next to the star
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('count'), [new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral()], true) // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a quantifier next to the star
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall(new \SqlSemantics\Statement\Identifier\Name('count'), [], true, \SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier::Distinct) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class FunctionCall implements Scalar
 {

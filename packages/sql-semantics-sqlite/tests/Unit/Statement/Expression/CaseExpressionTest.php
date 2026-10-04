@@ -7,7 +7,6 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\CaseExpression;
@@ -29,13 +28,6 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class CaseExpressionTest extends TestCase
 {
-    public function testRefusesAnExpressionWithoutBranches(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new CaseExpression(null, []);
-    }
-
     public function testDeriveScalarChoosesAmongTheResultTypesAndIsNotNullWithElse(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);

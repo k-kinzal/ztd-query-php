@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Query;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\CommonTables;
@@ -21,10 +20,10 @@ use SqlSemantics\Statement\Statement;
 /**
  * The entry point of the query family.
  *
- * Rule: PG-QUERY-001 (slice — the query family completes or replaces the
- * bodies; the method signatures are the stable contract and a family may
- * narrow a return type). Scope today: see PG-SELECT-LOWER-001; every other
- * form is an implementation gap. Status: Specified.
+ * Rule: PG-QUERY-001. Every other family reaches the query rules through
+ * these methods: PG-SELECT-LOWER-001, PG-CLAUSE-LOWER-001,
+ * PG-LIMIT-LOWER-001, PG-WITH-LOWER-001, PG-FROM-LOWER-001 and
+ * PG-TABLE-FUNCTION-LOWER-001. Status: Implemented.
  *
  * @visibility SqlSemantics
  */
@@ -42,52 +41,47 @@ final class Queries
      */
     public function statement(Node $statement): Statement
     {
-        return (new SelectRule($this->lowering))->select($statement);
+        return (new SelectRule($this->lowering))->statement($statement);
     }
 
     /**
      * Lowers a query: `SelectStmt`, `select_no_parens`, `select_with_parens` or `select_clause`.
+     *
+     * A `select_with_parens` is lowered to the query inside its outer
+     * parentheses: the holder of a subquery writes the parentheses it requires.
      */
-    public function query(Node $query): Query
+    public function query(Node $query): Query&Statement
     {
-        return (new SelectRule($this->lowering))->select($query);
+        return (new SelectRule($this->lowering))->query($query);
     }
 
     /**
-     * Lowers `sort_clause`, `opt_sort_clause` or `sortby_list`; no clause is an empty list.
+     * Lowers `sort_clause`, `opt_sort_clause` or `sortby_list` of an aggregate, a window or WITHIN GROUP; no clause is an empty list.
+     *
+     * An integer constant stays a constant here: only the ORDER BY of a query
+     * reads it as an output position.
      *
      * @return list<SortItem>
-     *
-     * @throws ImplementationGap When the production has no rule
      */
     public function sortClause(Node $clause): array
     {
-        $form = $this->lowering->productions->form($clause);
-
-        return match ($form->signature) {
-            'opt_sort_clause:' => [],
-            default => throw ImplementationGap::production($form),
-        };
+        return (new ClauseRule($this->lowering))->sortClause($clause);
     }
 
     /**
      * Lowers `opt_asc_desc`; no direction is null.
-     *
-     * @throws ImplementationGap Until the family implements it
      */
     public function sortDirection(Node $direction): ?SortDirection
     {
-        throw ImplementationGap::production($this->lowering->productions->form($direction));
+        return (new ClauseRule($this->lowering))->sortDirection($direction);
     }
 
     /**
      * Lowers `opt_nulls_order`; no clause is null.
-     *
-     * @throws ImplementationGap Until the family implements it
      */
     public function nullsOrder(Node $order): ?NullsOrder
     {
-        throw ImplementationGap::production($this->lowering->productions->form($order));
+        return (new ClauseRule($this->lowering))->nullsOrder($order);
     }
 
     /**
@@ -95,7 +89,7 @@ final class Queries
      */
     public function where(Node $clause): ?Scalar
     {
-        return (new SelectRule($this->lowering))->where($clause);
+        return (new ClauseRule($this->lowering))->where($clause);
     }
 
     /**
@@ -105,7 +99,15 @@ final class Queries
      */
     public function from(Node $clause): array
     {
-        return (new SelectRule($this->lowering))->from($clause);
+        return (new FromRule($this->lowering))->items($clause);
+    }
+
+    /**
+     * Lowers `from_clause` or `from_list` to its one item or to the `RelationList` of its items; no clause is null.
+     */
+    public function fromItem(Node $clause): ?Relation
+    {
+        return (new FromRule($this->lowering))->item($clause);
     }
 
     /**
@@ -113,29 +115,25 @@ final class Queries
      */
     public function relation(Node $relation): RelationReference
     {
-        return (new SelectRule($this->lowering))->relation($relation);
+        return (new FromRule($this->lowering))->relation($relation);
     }
 
     /**
      * Lowers `table_ref`: one item of a FROM list, or the source of MERGE.
-     *
-     * @throws ImplementationGap Until the family implements it
      */
     public function tableReference(Node $reference): Relation
     {
-        throw ImplementationGap::production($this->lowering->productions->form($reference));
+        return (new FromRule($this->lowering))->reference($reference);
     }
 
     /**
      * Lowers `relation_expr_list`.
      *
      * @return list<RelationReference>
-     *
-     * @throws ImplementationGap Until the family implements it
      */
     public function relations(Node $list): array
     {
-        throw ImplementationGap::production($this->lowering->productions->form($list));
+        return (new FromRule($this->lowering))->relations($list);
     }
 
     /**
@@ -150,11 +148,9 @@ final class Queries
 
     /**
      * Lowers `with_clause` or `opt_with_clause`; no clause is null.
-     *
-     * @throws ImplementationGap Until the family implements it
      */
     public function with(Node $clause): ?CommonTables
     {
-        throw ImplementationGap::production($this->lowering->productions->form($clause));
+        return (new WithRule($this->lowering))->with($clause);
     }
 }

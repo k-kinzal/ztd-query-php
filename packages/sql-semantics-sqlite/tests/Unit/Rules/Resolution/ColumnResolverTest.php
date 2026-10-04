@@ -129,7 +129,7 @@ final class ColumnResolverTest extends TestCase
         $t = $semantics->analyze('CREATE TABLE t (id INTEGER PRIMARY KEY, a INTEGER NOT NULL, b TEXT)');
         $derivation = new Derivation($semantics->context([$t], false));
         $shapes = new TableShapes();
-        $declared = new TableInput(new QualifiedName(new Name('t')));
+        $declared = new TableInput(new QualifiedName(new Name('t'), new Name('main')));
         $undeclared = new TableInput(new QualifiedName(new Name('u')));
         $environment = new Environment($derivation->context, null, [
             new VisibleRelation($declared, $shapes->fact($derivation, $declared->name, $derivation->environment())->shape, null, $declared->name),
@@ -182,7 +182,7 @@ final class ColumnResolverTest extends TestCase
         $derivation = new Derivation($semantics->context([$t], false));
         $environment = $derivation->environment();
         $shapes = new TableShapes();
-        $input = new TableInput(new QualifiedName(new Name('t')));
+        $input = new TableInput(new QualifiedName(new Name('t'), new Name('main')));
         $fact = $shapes->fact($derivation, $input->name, $environment);
         $visible = new VisibleRelation($input, $fact->shape, null, $input->name, [1], $shapes->implicit($fact));
         $open = new VisibleRelation(new TableInput(new QualifiedName(new Name('u'))), $shapes->fact($derivation, new QualifiedName(new Name('u')), $environment)->shape);

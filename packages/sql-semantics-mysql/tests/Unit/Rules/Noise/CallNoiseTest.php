@@ -13,13 +13,17 @@ use SqlSemantics\Platform\MySql\Rules\Noise\CallNoise;
 #[Small]
 final class CallNoiseTest extends TestCase
 {
-    public function testPositionsListsNothingYet(): void
+    public function testPositionsListsTheEmptyParenthesesOfTheClockFunctions(): void
     {
-        self::assertSame([], CallNoise::positions());
+        self::assertSame(['func_datetime_precision: ( )' => [0, 1]], CallNoise::positions());
     }
 
-    public function testSynonymsListsNothingYet(): void
+    public function testSynonymsMapSubstringAndTheIntervalFormsOfAdddateAndSubdate(): void
     {
-        self::assertSame([], CallNoise::synonyms());
+        $synonyms = CallNoise::synonyms();
+
+        self::assertSame([3 => ',', 5 => ','], $synonyms['function_call_nonkeyword: SUBSTRING ( expr FROM expr FOR_SYM expr )']);
+        self::assertSame([0 => 'DATE_ADD_INTERVAL'], $synonyms['function_call_nonkeyword: ADDDATE_SYM ( expr , INTERVAL_SYM expr interval )']);
+        self::assertCount(4, $synonyms);
     }
 }

@@ -7,7 +7,6 @@ namespace Tests\Unit\Statement\Expression;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
@@ -29,17 +28,6 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class CollateTest extends TestCase
 {
-    public function testRefusesAnOperandThatBindsWeakerThanCollate(): void
-    {
-        $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT 1 + 2')->statement;
-
-        self::assertInstanceOf(Select::class, $statement);
-        self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
-        $this->expectException(InvalidConstruction::class);
-
-        new Collate($statement->columns[0]->expression, new Name('NOCASE'));
-    }
-
     public function testAcceptsAPrefixOperandWhichBindsTighter(): void
     {
         $statement = (new Semantics(Dialect::Sqlite))->analyze('SELECT -1')->statement;
@@ -51,7 +39,7 @@ final class CollateTest extends TestCase
         self::assertSame('nocase', $collate->collation->value);
     }
 
-    public function testDeriveScalarKeepsTheFactsAndTheColumnOfTheOperand(): void
+    public function testDeriveScalarKeepsTheTypeAndNullFactAndLeavesTheResolutionToTheOperand(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
@@ -65,9 +53,9 @@ final class CollateTest extends TestCase
         self::assertInstanceOf(ColumnUse::class, $collate->operand);
         self::assertSame('NOCASE', $collate->collation->value);
         $fact = $operation->facts->scalar($collate);
-        self::assertInstanceOf(ResolvedColumn::class, $fact->resolution);
-        self::assertSame($create->declarations()[0]->columns[0], $fact->resolution->slot->column);
-        self::assertSame($create->declarations()[0]->columns[0], $operation->field(0)->column());
+        self::assertNull($fact->resolution);
+        self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($collate->operand)->resolution);
+        self::assertNull($operation->field(0)->resolution);
         self::assertSame(Nullability::NotNull, $fact->nullability);
         self::assertSame($operation->facts->scalar($collate->operand)->type, $fact->type);
         self::assertSame([], $operation->facts->diagnostics);

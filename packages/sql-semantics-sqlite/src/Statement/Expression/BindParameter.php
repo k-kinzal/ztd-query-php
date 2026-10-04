@@ -29,6 +29,12 @@ use SqlSemantics\Statement\Type\Nullability;
  *     [$query->statement->columns[0]->expression->label, $query->field(0)->type->missing[0]->marker] // => ['2', '?2']
  * @example Refusing a label that would not be read back as one parameter
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter(\SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix::Colon, 'a b') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing letters after a question mark
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter(\SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix::Question, 'ab') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an empty named label
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter(\SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix::Colon, '') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a label with whitespace
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\BindParameter(\SqlSemantics\Platform\Sqlite\Statement\Expression\ParameterPrefix::Dollar, 'a b') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class BindParameter implements Scalar
 {

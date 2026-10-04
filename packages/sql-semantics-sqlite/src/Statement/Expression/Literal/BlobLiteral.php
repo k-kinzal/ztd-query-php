@@ -28,6 +28,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *     [$query->statement->columns[0]->expression->hex, $query->toString()] // => ['0AFF', "SELECT x'0AFF'"]
  * @example Refusing half a byte
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral('ABC') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing lower case digits
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral('0aff') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class BlobLiteral implements Scalar
 {

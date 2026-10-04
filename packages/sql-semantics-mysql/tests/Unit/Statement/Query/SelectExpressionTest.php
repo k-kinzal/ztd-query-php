@@ -22,6 +22,7 @@ final class SelectExpressionTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze('select a total from t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
         self::assertInstanceOf(ColumnUse::class, $operation->statement->items[0]->expression);
         self::assertSame('a', $operation->statement->items[0]->expression->name->value);
         self::assertSame('total', $operation->statement->items[0]->alias?->value);
@@ -33,6 +34,8 @@ final class SelectExpressionTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a, 1 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[1]);
         self::assertNull($operation->statement->items[0]->alias);
         self::assertNull($operation->statement->items[1]->alias);
         self::assertSame('SELECT a, 1 FROM t', $operation->toString());

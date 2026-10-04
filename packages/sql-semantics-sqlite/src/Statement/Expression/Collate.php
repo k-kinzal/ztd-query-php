@@ -8,7 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
-use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -20,9 +20,9 @@ use SqlSemantics\Statement\Type\Invalid;
 /**
  * An expression with an explicit collating sequence for the comparisons it takes part in.
  *
- * Rule: SQLITE-COLLATE-001. The operator changes no value: the facts,
- * including the column a collated column use denotes, are those of the
- * operand, which is a single value (SQLITE-ROW-VALUE-USE-001): a collated
+ * Rule: SQLITE-COLLATE-001. The operator changes no value: the type and
+ * the NULL fact are those of the operand, and the name resolution stays with
+ * the operand. The operand is a single value (SQLITE-ROW-VALUE-USE-001): a collated
  * row value is invalid. The operand must bind at least as tightly as COLLATE
  * (SQLITE-PRECEDENCE-001).
  * Source: https://sqlite.org/lang_expr.html#collate_operator,
@@ -55,12 +55,12 @@ final class Collate implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = $derivation->scalar($this->operand, $environment);
-        $problem = (new RowValues())->single($fact, $derivation);
+        $problem = (new RowValueUse())->single($fact, $derivation);
         if ($problem !== null) {
             return new ScalarFact(new Invalid($problem), $fact->nullability);
         }
 
-        return new ScalarFact($fact->type, $fact->nullability, $fact->resolution);
+        return new ScalarFact($fact->type, $fact->nullability);
     }
 
     /**

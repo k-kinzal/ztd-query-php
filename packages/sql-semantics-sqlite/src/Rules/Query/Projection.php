@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnFacts;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
@@ -18,10 +19,10 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
+use SqlSemantics\Statement\Reference\Column\Resolution;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Shape\Field;
@@ -67,8 +68,9 @@ final class Projection
                 if ($fact->type instanceof Known && $fact->type->descriptor instanceof Vector) {
                     $derivation->report(new Misuse(MisuseRule::TooManyValueColumns));
                 }
-                $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
-                $items[] = new Field(count($items), new OutputSlot($column->alias ?? $this->named($column, $fact), $fact->type, $fact->nullability, null, $origin), $column->expression, $fact->resolution);
+                $resolution = $column->expression instanceof Grouped ? (new ColumnFacts())->denoted($column->expression, $environment) : $fact->resolution;
+                $origin = $resolution instanceof ResolvedColumn ? $resolution->slot : null;
+                $items[] = new Field(count($items), new OutputSlot($column->alias ?? $this->named($column, $resolution), $fact->type, $fact->nullability, null, $origin), $column->expression, $resolution);
                 continue;
             }
             $selected = [];
@@ -111,7 +113,7 @@ final class Projection
     /**
      * Answers the fixed name of a result column without an alias, or null when SQLite names it after its source text.
      */
-    public function named(ResultColumn $column, ScalarFact $fact): ?Name
+    public function named(ResultColumn $column, ?Resolution $resolution): ?Name
     {
         $expression = $column->expression;
         while ($expression instanceof Grouped) {
@@ -120,11 +122,11 @@ final class Projection
         if (!$expression instanceof ColumnUse && !$expression instanceof DoubleQuotedWord && !$expression instanceof TruthWord) {
             return null;
         }
-        if ($fact->resolution instanceof ResolvedColumn) {
-            return $fact->resolution->slot->name;
+        if ($resolution instanceof ResolvedColumn) {
+            return $resolution->slot->name;
         }
         if ($expression instanceof ColumnUse) {
-            return $fact->resolution instanceof AliasTarget ? $fact->resolution->field->name : $expression->name;
+            return $resolution instanceof AliasTarget ? $resolution->field->name : $expression->name;
         }
 
         return null;

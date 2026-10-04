@@ -15,6 +15,8 @@ use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBound;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameBoundKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\FrameMode;
+use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\WindowProblem;
+use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Problem\WindowProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowFrame;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\WindowSpecification;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
@@ -38,6 +40,14 @@ final class WindowSpecificationTest extends TestCase
         $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
         $window->deriveClause($derivation, $derivation->environment());
         self::assertSame([true, true, true], [$derivation->facts()->covers($partition), $derivation->facts()->covers($key), $derivation->facts()->covers($offset)]);
+    }
+
+    public function testDeriveClauseReportsAFrameTheOrderingCannotSupport(): void
+    {
+        $window = new WindowSpecification(null, [], [], new WindowFrame(FrameMode::Groups, new FrameBound(FrameBoundKind::CurrentRow)));
+        $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
+        $window->deriveClause($derivation, $derivation->environment());
+        self::assertEquals([new WindowProblem(WindowProblemKind::GroupsWithoutOrder)], $derivation->facts()->diagnostics);
     }
 
     public function testRenderWritesTheSpecificationInParentheses(): void

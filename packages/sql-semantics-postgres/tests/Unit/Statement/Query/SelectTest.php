@@ -7,68 +7,59 @@ namespace Tests\Unit\Statement\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Platform\PostgreSql\Platform;
-use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
-use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
-use SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral;
-use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
-use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
-use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
-use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
-use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Statement\Type\Nullability;
 
-#[CoversClass(Select::class)]
+#[CoversClass(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class)]
 #[Small]
 final class SelectTest extends TestCase
 {
-    public function testInputIsTheRelationOfTheFromClause(): void
+    public function testInputIsTheFromItem(): void
     {
-        $from = new TableInput(new RelationReference(new QualifiedName(new Name('t'))));
-        self::assertSame($from, (new Select([], $from))->input());
-        self::assertNull((new Select([]))->input());
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $t = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
+        $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT 1 FROM t, u', [$t, $u]);
+        $statement = $query->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Relation\RelationList::class, $statement->input());
     }
 
-    public function testDeriveStatementRecordsTheRowsAsTheOutput(): void
+    public function testOutputNameIsTheNameOfTheFirstColumn(): void
     {
-        $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
-        (new Select([new ExpressionTarget(new Constant(new IntegerConstant('1')))]))->deriveStatement($derivation);
-        self::assertCount(1, $derivation->facts()->output->projection ?? []);
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT 1 AS a, 2');
+        $statement = $query->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $statement);
+        self::assertSame('a', $statement->outputName()?->value);
     }
 
-    public function testDeriveQueryResolvesColumnsAgainstTheInput(): void
+    public function testDeriveStatementRecordsTheRows(): void
     {
-        $profile = new LanguageProfile(GrammarRelease::PostgreSql172);
-        $table = new Table(new QualifiedName(new Name('t')), $profile, [new Column(new Name('a'), Builtin::Int4, Nullability::NotNull), new Column(new Name('b'), Builtin::Text)]);
-        $context = (new Platform())->context($profile, null, [$table], true);
-        $select = new Select([new ExpressionTarget(new ColumnReference([new Name('a')])), new ExpressionTarget(new ColumnReference([new Name('t'), new Name('b')]))], new TableInput(new RelationReference(new QualifiedName(new Name('t')))));
-        $derivation = new Derivation($context);
-        $fields = $derivation->query($select, $derivation->environment())->fields();
-        self::assertNotNull($fields);
-        self::assertSame($table->columns[0], $fields->at(0)->column());
-        self::assertSame(Nullability::NotNull, $fields->at(0)->nullability);
-        self::assertEquals(new Known(Builtin::Text), $fields->at(1)->type);
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $t = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
+        $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT a FROM t', [$t, $u]);
+        self::assertSame($t->columns[0], $query->field('a')->column());
     }
 
-    public function testRenderWritesTheClausesInOrder(): void
+    public function testDeriveQueryResolvesTheClauses(): void
     {
-        $out = new Output(new Codec(GrammarRelease::PostgreSql172));
-        (new Select([new ExpressionTarget(new Constant(new IntegerConstant('1')))], new TableInput(new RelationReference(new QualifiedName(new Name('t')))), new BooleanLiteral(true)))->render($out);
-        self::assertSame('SELECT 1 FROM t WHERE TRUE', (new Lexical())->join($out->pieces()));
-        $second = new Output(new Codec(GrammarRelease::PostgreSql172));
-        (new Select([]))->render($second);
-        self::assertSame('SELECT', (new Lexical())->join($second->pieces()));
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $t = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
+        $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT DISTINCT a AS x FROM t WHERE a > 1 GROUP BY a HAVING a > 2 WINDOW w AS () ORDER BY x LIMIT 1', [$t, $u]);
+        self::assertSame([], $query->facts->diagnostics);
+    }
+
+    public function testRenderWritesTheClausesInGrammarOrder(): void
+    {
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $t = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
+        $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT ALL a FROM t WHERE TRUE GROUP BY DISTINCT a HAVING TRUE ORDER BY a FETCH NEXT 1 ROW ONLY', [$t, $u]);
+        self::assertSame('SELECT a FROM t WHERE TRUE GROUP BY DISTINCT a HAVING TRUE ORDER BY a FETCH FIRST 1 ROWS ONLY', $query->toString());
     }
 }

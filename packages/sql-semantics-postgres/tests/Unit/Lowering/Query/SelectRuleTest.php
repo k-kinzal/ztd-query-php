@@ -7,128 +7,116 @@ namespace Tests\Unit\Lowering\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
-use SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule;
-use SqlSemantics\Platform\PostgreSql\Platform;
-use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
 
-#[CoversClass(SelectRule::class)]
+#[CoversClass(\SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule::class)]
 #[Small]
 final class SelectRuleTest extends TestCase
 {
-    public function testSelectLowersAPlainSelection(): void
+    public function testStatementKeepsTopLevelParentheses(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT a, 1 FROM t AS x WHERE a < 1');
-        $select = (new SelectRule($lowering))->select($tree->find('SelectStmt')[0]);
-        self::assertCount(2, $select->targets);
-        self::assertSame('x', $select->from?->alias?->value);
-        self::assertInstanceOf(BinaryOperation::class, $select->where);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('(SELECT 1)');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery::class, $rule->statement($tree->find('SelectStmt')[0]));
     }
 
-    public function testSelectReportsAFormOutsideTheSlice(): void
+    public function testQueryStripsOneLayerOfParentheses(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT DISTINCT a FROM t');
-        $this->expectExceptionMessage('No semantic rule is implemented for: simple_select: SELECT distinct_clause target_list');
-        (new SelectRule($lowering))->select($tree->find('SelectStmt')[0]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT ((SELECT 1))');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery::class, $rule->query($tree->find('select_with_parens')[0]));
     }
 
-    public function testSimpleReportsAClauseTheSliceRequiresToBeEmpty(): void
+    public function testWithParensAnswersTheQueryInside(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT a FROM t GROUP BY a');
-        $this->expectExceptionMessage('No semantic rule is implemented for: group_clause: GROUP_P BY set_quantifier group_by_list');
-        (new SelectRule($lowering))->simple($lowering->productions->form($tree->find('simple_select')[0]));
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT (SELECT 1)');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $rule->withParens($tree->find('select_with_parens')[0]));
     }
 
-    public function testSimpleReportsAFromClauseWithSeveralItems(): void
+    public function testNoParensHandsOptionsToTheSelection(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM a, b');
-        $this->expectExceptionMessage('a FROM clause with several items');
-        (new SelectRule($lowering))->simple($lowering->productions->form($tree->find('simple_select')[0]));
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 ORDER BY 1 LIMIT 1');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        $query = $rule->noParens($tree->find('select_no_parens')[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $query);
+        self::assertNotNull($query->options);
     }
 
-    public function testTargetsLowersLabelsWrittenWithAndWithoutAs(): void
+    public function testAttachWrapsASetOperation(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT a AS "Select", b c, d FROM t');
-        $targets = (new SelectRule($lowering))->targets($tree->find('target_list')[0]);
-        self::assertCount(3, $targets);
-        self::assertInstanceOf(ExpressionTarget::class, $targets[0]);
-        self::assertInstanceOf(ExpressionTarget::class, $targets[1]);
-        self::assertInstanceOf(ExpressionTarget::class, $targets[2]);
-        self::assertSame(['Select', 'c', null], [$targets[0]->alias?->value, $targets[1]->alias?->value, $targets[2]->alias]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 UNION SELECT 2 ORDER BY 1');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        $options = (new \SqlSemantics\Platform\PostgreSql\Lowering\Query\ClauseRule($lowering))->options($tree->find('sort_clause')[0], null, null, false);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression::class, $rule->attach(null, $tree->find('select_clause')[0], $options));
     }
 
-    public function testTargetsIsEmptyForAnEmptySelectList(): void
+    public function testClauseTellsWhetherTheOptionsWereTaken(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT FROM t');
-        self::assertSame([], (new SelectRule($lowering))->targets($tree->find('opt_target_list')[0]));
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('(SELECT 1) ORDER BY 1');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        self::assertFalse($rule->clause($tree->find('select_clause')[0], null)[1]);
     }
 
-    public function testTargetsReportsAStar(): void
+    public function testSimpleLowersASetOperation(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT * FROM t');
-        $this->expectExceptionMessage('No semantic rule is implemented for: target_el: *');
-        (new SelectRule($lowering))->targets($tree->find('target_list')[0]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 INTERSECT ALL SELECT 2');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation::class, $rule->simple($tree->find('simple_select')[0], null)[0]);
     }
 
-    public function testFromLowersOneNamedInput(): void
+    public function testSelectionLowersEveryClause(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM s.t x');
-        $inputs = (new SelectRule($lowering))->from($tree->find('from_clause')[0]);
-        self::assertCount(1, $inputs);
-        self::assertSame(['s', 't', 'x'], [$inputs[0]->name()->schema?->value, $inputs[0]->name()->name->value, $inputs[0]->alias?->value]);
-        self::assertSame([], (new SelectRule($lowering))->from((new PostgreSqlParser('pg-17.2'))->parse('SELECT 1')->find('from_clause')[0]));
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT DISTINCT ON (1) a INTO n FROM t WHERE a GROUP BY a HAVING a WINDOW w AS ()');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        $select = $rule->selection($lowering->productions->form($tree->find('simple_select')[0]), $rule->distinct($tree->find('distinct_clause')[0]), null);
+        self::assertSame(['n', 1, 1], [$select->into?->table->name->value, count($select->groupBy), count($select->windows)]);
     }
 
-    public function testFromReportsAJoin(): void
+    public function testDistinctWrapsAPosition(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM a JOIN b USING (c)');
-        $this->expectExceptionMessage('No semantic rule is implemented for: table_ref: joined_table');
-        (new SelectRule($lowering))->from($tree->find('from_clause')[0]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT DISTINCT ON (1) 2');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition::class, $rule->distinct($tree->find('distinct_clause')[0])?->on[0]);
     }
 
-    public function testRelationReportsAnInheritanceMarker(): void
+    public function testQuantifierIsNullWhenNotWritten(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM ONLY t');
-        $this->expectExceptionMessage('No semantic rule is implemented for: relation_expr: extended_relation_expr');
-        (new SelectRule($lowering))->relation($tree->find('relation_expr')[0]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 UNION SELECT 2');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        self::assertNull($rule->quantifier($tree->find('set_quantifier')[0]));
     }
 
-    public function testAliasLowersTheCorrelationNameOrNothing(): void
+    public function testIntoKeepsThePersistence(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM t AS "X"');
-        self::assertSame('X', (new SelectRule($lowering))->alias($tree->find('opt_alias_clause')[0])?->value);
-        self::assertNull((new SelectRule($lowering))->alias((new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM t')->find('opt_alias_clause')[0]));
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT 1 INTO UNLOGGED TABLE n');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\IntoPersistence::Unlogged, $rule->into($tree->find('into_clause')[0])?->persistence);
     }
 
-    public function testAliasReportsAColumnList(): void
+    public function testValuesKeepsTheRowsInOrder(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM t AS x (a)');
-        $this->expectExceptionMessage('No semantic rule is implemented for: alias_clause: AS ColId ( name_list )');
-        (new SelectRule($lowering))->alias($tree->find('opt_alias_clause')[0]);
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('VALUES (1), (2, 3), (4)');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        self::assertSame([1, 2, 1], array_map(static fn (\SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\ValuesRow $row): int => count($row->values), $rule->values($tree->find('values_clause')[0])->rows));
     }
 
-    public function testWhereLowersThePredicateOrNothing(): void
+    public function testTargetsLowersTheStar(): void
     {
-        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('SELECT 1 FROM t WHERE a > 1');
-        self::assertInstanceOf(BinaryOperation::class, (new SelectRule($lowering))->where($tree->find('where_clause')[0]));
-        self::assertNull((new SelectRule($lowering))->where((new PostgreSqlParser('pg-17.2'))->parse('SELECT 1')->find('where_clause')[0]));
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('SELECT *, 1 x');
+        $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\SelectRule($lowering);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\StarTarget::class, $rule->targets($tree->find('opt_target_list')[0])[0]);
     }
 }

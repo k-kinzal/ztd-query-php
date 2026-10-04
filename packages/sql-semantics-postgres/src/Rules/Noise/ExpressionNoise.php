@@ -23,6 +23,9 @@ final class ExpressionNoise
      */
     public static function positions(): array
     {
-        return [];
+        return [
+            // ASYMMETRIC is the default of BETWEEN. https://www.postgresql.org/docs/17/functions-comparison.html#FUNCTIONS-COMPARISON-PRED-TABLE
+            'opt_asymmetric: ASYMMETRIC' => [0],
+        ];
     }
 }

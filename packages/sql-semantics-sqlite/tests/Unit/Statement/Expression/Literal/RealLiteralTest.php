@@ -7,7 +7,6 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral;
@@ -22,34 +21,6 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class RealLiteralTest extends TestCase
 {
-    public function testRefusesALiteralWithNeitherPointNorExponent(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new RealLiteral('1', null, null);
-    }
-
-    public function testRefusesAPointWithoutAnyDigit(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new RealLiteral('', '');
-    }
-
-    public function testRefusesNonDigitParts(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new RealLiteral('1a', '5');
-    }
-
-    public function testRefusesAnExponentWithALetter(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new RealLiteral('1', null, 'e5');
-    }
-
     public function testKeepsTheExactParts(): void
     {
         $literal = new RealLiteral('', '5', '+2');

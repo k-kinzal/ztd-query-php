@@ -7,7 +7,6 @@ namespace Tests\Unit\Statement\Expression\Literal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral;
@@ -25,20 +24,6 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class HexLiteralTest extends TestCase
 {
-    public function testRefusesLowerCaseDigits(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new HexLiteral('1f');
-    }
-
-    public function testRefusesAnEmptyDigitSequence(): void
-    {
-        $this->expectException(InvalidConstruction::class);
-
-        new HexLiteral('');
-    }
-
     public function testDeriveScalarGivesInteger(): void
     {
         $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT 0x1f, 0xFFFFFFFFFFFFFFFF, 0x0000000000000000001', []);

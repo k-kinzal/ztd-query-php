@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
-use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValueUse;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Rendering\Output;
@@ -77,7 +77,7 @@ final class PatternMatch implements Scalar
         $right = $derivation->scalar($this->right, $environment);
         $nullability = $left->nullability->propagate($right->nullability);
         $types = [$left->type, $right->type];
-        $rows = new RowValues();
+        $rows = new RowValueUse();
         $rows->single($left, $derivation);
         $rows->single($right, $derivation);
         if ($this->escape !== null) {

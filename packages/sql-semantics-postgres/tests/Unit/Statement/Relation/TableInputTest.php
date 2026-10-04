@@ -7,71 +7,48 @@ namespace Tests\Unit\Statement\Relation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Contract\LanguageProfile;
-use SqlSemantics\Platform\PostgreSql\Platform;
-use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
-use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
-use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
-use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
-use SqlSemantics\Rendering\Lexical;
-use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Declaration\Column;
-use SqlSemantics\Statement\Declaration\Table;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Table\DeclaredTable;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
-use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
-use SqlSemantics\Statement\Type\Nullability;
 
-#[CoversClass(TableInput::class)]
+#[CoversClass(\SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput::class)]
 #[Small]
 final class TableInputTest extends TestCase
 {
     public function testNameIsTheRelationName(): void
     {
-        self::assertSame('t', (new TableInput(new RelationReference(new QualifiedName(new Name('t'), new Name('s')))))->name()->name->value);
+        self::assertSame('t', (new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))))->name()->name->value);
     }
 
     public function testAliasIsTheCorrelationName(): void
     {
-        self::assertSame('x', (new TableInput(new RelationReference(new QualifiedName(new Name('t'))), new Name('x')))->alias()?->value);
+        self::assertSame('x', (new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t'))), new \SqlSemantics\Statement\Identifier\Name('x')))->alias()?->value);
     }
 
-    public function testDeriveRelationHasOneSlotPerDeclaredColumn(): void
+    public function testDeriveRelationRenamesTheColumns(): void
     {
-        $profile = new LanguageProfile(GrammarRelease::PostgreSql172);
-        $table = new Table(new QualifiedName(new Name('t')), $profile, [new Column(new Name('a'), Builtin::Int4, Nullability::NotNull), new Column(new Name('b'), Builtin::Text)]);
-        $context = (new Platform())->context($profile, null, [$table], true);
-        $derivation = new Derivation($context);
-        $fact = $derivation->relation(new TableInput(new RelationReference(new QualifiedName(new Name('t')))), $derivation->environment());
-        self::assertCount(2, $fact->shape->slots);
-        self::assertSame($table->columns[1], $fact->shape->slots[1]->column);
-        self::assertInstanceOf(DeclaredTable::class, $fact->table);
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $t = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
+        $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT p FROM t AS x (p)', [$t, $u]);
+        self::assertSame($t->columns[0], $query->field('p')->column());
     }
 
-    public function testDeriveRelationIsOpenForAnUndeclaredRelation(): void
+    public function testDeriveRelationSeesACommonTable(): void
     {
-        $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], false));
-        $fact = $derivation->relation(new TableInput(new RelationReference(new QualifiedName(new Name('t')))), $derivation->environment());
-        self::assertFalse($fact->shape->complete());
-        self::assertInstanceOf(UndeclaredTable::class, $fact->table);
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $t = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
+        $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT * FROM t', [$t, $u]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $query->facts->relation($query->singleNamedInput())->table);
     }
 
-    public function testDeriveRelationReportsAMissingRelation(): void
+    public function testRenderWritesTheAliasAndTheSample(): void
     {
-        $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
-        $fact = $derivation->relation(new TableInput(new RelationReference(new QualifiedName(new Name('t')))), $derivation->environment());
-        self::assertInstanceOf(MissingTable::class, $fact->table);
-        self::assertCount(1, $derivation->facts()->diagnostics);
-    }
-
-    public function testRenderWritesTheAliasAfterAs(): void
-    {
-        $out = new Output(new Codec(GrammarRelease::PostgreSql172));
-        (new TableInput(new RelationReference(new QualifiedName(new Name('t')), true), new Name('left')))->render($out);
-        self::assertSame('ONLY t AS "left"', (new Lexical())->join($out->pieces()));
+        $profile = new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $t = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('b'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text)]);
+        $u = new \SqlSemantics\Statement\Declaration\Table(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('u')), $profile, [new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int8, \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('c'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Bool, \SqlSemantics\Statement\Type\Nullability::NotNull)]);
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT 1 FROM ONLY t x (p) TABLESAMPLE system (1)', [$t, $u]);
+        self::assertSame('SELECT 1 FROM ONLY t AS x (p) TABLESAMPLE system (1)', $query->toString());
     }
 }

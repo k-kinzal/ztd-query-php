@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Type\NullOnly;
 #[Medium]
 final class GroupedTest extends TestCase
 {
-    public function testDeriveScalarKeepsTheFactsAndTheColumnOfTheOperand(): void
+    public function testDeriveScalarKeepsTheTypeAndNullFactAndLeavesTheResolutionToTheOperand(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
@@ -39,8 +39,8 @@ final class GroupedTest extends TestCase
         self::assertInstanceOf(Grouped::class, $statement->columns[1]->expression->operand);
         $fact = $operation->facts->scalar($statement->columns[0]->expression);
         $inner = $operation->facts->scalar($statement->columns[0]->expression->operand);
-        self::assertInstanceOf(ResolvedColumn::class, $fact->resolution);
-        self::assertSame($inner->resolution, $fact->resolution);
+        self::assertInstanceOf(ResolvedColumn::class, $inner->resolution);
+        self::assertNull($fact->resolution);
         self::assertSame($inner->type, $fact->type);
         self::assertSame(Nullability::NotNull, $fact->nullability);
         self::assertSame($create->declarations()[0]->columns[0], $operation->field(0)->column());

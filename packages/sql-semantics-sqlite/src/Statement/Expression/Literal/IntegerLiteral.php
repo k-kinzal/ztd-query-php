@@ -31,6 +31,10 @@ use SqlSemantics\Statement\Type\Nullability;
  *     [$query->statement->columns[0]->expression->digits, $query->field(0)->type->descriptor] // => ['9223372036854775808', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Real]
  * @example Refusing text that is not a digit sequence
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1_000') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an empty digit sequence
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a sign
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('-1') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class IntegerLiteral implements Scalar
 {
