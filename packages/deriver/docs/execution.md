@@ -7,7 +7,7 @@ $configuration = (new \Deriver\Project\Configuration())->forExecution();
 $session = (new \Deriver\Analyzer())->open($input, $configuration);
 ```
 
-Every `Analyzer::open()` example below assumes this configuration is supplied as its second argument. In this contract, reachability, ordered side effects, exceptional completion and entry histories affect the observations. The following behavioral descriptions apply only to execution analysis.
+In this contract, reachability, ordered side effects, exceptional completion and entry histories affect the observations. The following behavioral descriptions apply only to execution analysis.
 
 ## Usage
 
@@ -25,7 +25,7 @@ function userKey(int $id): string
     return 'user:' . $id;
 }
 PHP),
-]));
+]), (new \Deriver\Project\Configuration())->forExecution());
 
 $result = $session->derive(new ReturnQuery('userKey'));
 $value = $result->normalOutcomes[0]->values['return'];
@@ -67,7 +67,7 @@ final class UserRepository
     }
 }
 PHP),
-]));
+]), (new \Deriver\Project\Configuration())->forExecution());
 
 $default = $session->declarations()->class('UserRepository')->properties['order']->default;
 $result = $session->derive(new ReturnQuery('UserRepository::sql', QueryScope::fromEntrypoints([
@@ -106,7 +106,7 @@ function report(PDO $pdo): void {
     $pdo->query("SELECT id FROM users");
     $pdo->query("SELECT id FROM orders");
 }')]);
-$session = (new Analyzer())->open($input);
+$session = (new Analyzer())->open($input, (new \Deriver\Project\Configuration())->forExecution());
 $queries = [];
 foreach ($session->callsTo('query') as $site) {
     if ($site->callable === 'report' && $site->receiver !== null) {
@@ -139,7 +139,7 @@ use Deriver\Project\Configuration;
 use Deriver\Project\TargetProfile;
 
 $input = new ProjectInput([new SourceFile('app.php', '<?php function label(float $rate): string { return "rate:" . $rate; }')]);
-$session = (new Analyzer())->open($input, new Configuration(new TargetProfile(floatPrecision: 14)));
+$session = (new Analyzer())->open($input, new Configuration(new TargetProfile(floatPrecision: 14), analysisContract: 'execution'));
 ```
 
 Frontiers that depend on a variable name it in `knownDependencies`. Reading a variable that is never assigned is `null` with a `PHP_WARNING` frontier, and reading a global through `global $name` that the configuration does not supply is an external value with an `EXTERNAL_INPUT` frontier. A global variable is named `global:<name>`, the key that `Configuration::$environment` accepts, and a function-local variable is named `variable:<name>`. To analyze code with state that the application receives from outside, such as globals set by a framework bootstrap, read these names from the frontiers and supply the values:
@@ -147,7 +147,7 @@ Frontiers that depend on a variable name it in `knownDependencies`. Reading a va
 ```php
 $session = (new Analyzer())->open($input, new Configuration(environment: [
     'global:table_prefix' => Term::constant('wp_'),
-]));
+], analysisContract: 'execution'));
 ```
 
 Static locals start from their declaration initializer for a fresh entry. They are not a union over every possible earlier invocation. To analyze a later invocation, provide an explicit `Configuration::$environment` value such as `'static:App\\counter:n' => Term::constant(4)`, using the callable's captured identity and variable name.
