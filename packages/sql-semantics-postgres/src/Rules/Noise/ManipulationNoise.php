@@ -23,6 +23,19 @@ final class ManipulationNoise
      */
     public static function positions(): array
     {
-        return [];
+        return [
+            // "The AS keyword is optional" before the alias of the target table. https://www.postgresql.org/docs/17/sql-update.html
+            'relation_expr_opt_alias: relation_expr AS ColId' => [1],
+            // NOT MATCHED BY TARGET is the same as NOT MATCHED. https://www.postgresql.org/docs/17/sql-merge.html
+            'merge_when_tgt_not_matched: WHEN NOT MATCHED BY TARGET' => [3, 4],
+            // "PREPARE: This key word is ignored." https://www.postgresql.org/docs/17/sql-deallocate.html
+            'DeallocateStmt: DEALLOCATE PREPARE name' => [1],
+            'DeallocateStmt: DEALLOCATE PREPARE ALL' => [1],
+            // FROM and IN before the cursor name are noise words of FETCH and MOVE. https://www.postgresql.org/docs/17/sql-fetch.html
+            'from_in: FROM' => [0],
+            'from_in: IN_P' => [0],
+            // [ USING ] DELIMITERS: USING is optional in the old COPY syntax. https://www.postgresql.org/docs/17/sql-copy.html#id-1.9.3.55.10
+            'opt_using: USING' => [0],
+        ];
     }
 }

@@ -7,16 +7,15 @@ namespace Tests\Unit\Statement\Table;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption;
 use SqlSemantics\Platform\MySql\Statement\Table\TableOption;
-use SqlSemantics\Statement\Node;
 
 #[CoversNothing]
 #[Small]
 final class TableOptionTest extends TestCase
 {
-    public function testATableOptionIsARenderableNode(): void
+    public function testImplementationsDeclareTheInterface(): void
     {
-        self::assertTrue(interface_exists(TableOption::class));
-        self::assertContains(Node::class, class_implements(TableOption::class));
+        self::assertContains(TableOption::class, class_implements(EngineOption::class));
     }
 }

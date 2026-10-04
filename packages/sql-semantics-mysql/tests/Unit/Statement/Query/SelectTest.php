@@ -12,10 +12,13 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
@@ -295,7 +298,7 @@ final class SelectTest extends TestCase
         $sql = 'SELECT DISTINCT a, b AS c FROM t WHERE a > 1 GROUP BY a WITH ROLLUP HAVING a > 2 WINDOW w AS () QUALIFY a > 3 ORDER BY a DESC LIMIT 1 OFFSET 2 FOR UPDATE SKIP LOCKED';
 
         self::assertSame($sql, $semantics->analyze($sql)->toString());
-        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE(1, 2) INTO @x LOCK IN SHARE MODE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select a from t procedure analyse(1,2) into @x lock in share mode')->toString());
+        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE(1, 2) INTO @x LOCK IN SHARE MODE', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select a from t procedure analyse(1,2) into @x lock in share mode')->toString());
     }
 
     public function testDeriveQueryExtendsColumnsWithNullsInAnAggregateBlock(): void
@@ -373,5 +376,37 @@ final class SelectTest extends TestCase
         $this->expectExceptionMessage('A string literal must be spelled under the escape rule of the language profile.');
 
         new Operation($semantics->context(), new Select([], [new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]));
+    }
+
+    public function testRejectsALateOrderingThatIsWrittenInPlace(): void
+    {
+        $this->expectExceptionMessage('An ORDER BY or LIMIT of the block is written in place unless locking clauses or a LIMIT of the block precede it.');
+
+        new Select([], [new SelectExpression(new NumberLiteral('1'))], null, null, null, null, [], null, [], null, null, [], null, null, new LateOrdering([], new RowLimit(new NumberLiteral('1'))));
+    }
+
+    public function testRejectsALateOrderingAfterABlockThatOrdersItsRows(): void
+    {
+        $this->expectExceptionMessage('An ORDER BY written after a block that orders or limits its rows orders the rows of the block.');
+
+        new Select([], [new SelectExpression(new NumberLiteral('1'))], null, null, null, null, [], null, [], new RowLimit(new NumberLiteral('1')), null, [], null, null, new LateOrdering([new OrderItem(new NumberLiteral('1.5'))]));
+    }
+
+    public function testDeriveStatementRefusesALateOrderingAtTheTop(): void
+    {
+        $select = new Select([], [new SelectExpression(new NumberLiteral('1'))], null, null, null, null, [], null, [], new RowLimit(new NumberLiteral('1')), null, [], null, null, new LateOrdering([], new RowLimit(new NumberLiteral('2'))));
+
+        $this->expectExceptionMessage('An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block is written in a subquery only.');
+
+        new Operation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]), $select);
+    }
+
+    public function testDeriveQueryRefusesALateOrderingBefore56(): void
+    {
+        $select = new Select([], [new SelectExpression(new NumberLiteral('1'))], null, null, null, null, [], null, [], new RowLimit(new NumberLiteral('1')), null, [], null, null, new LateOrdering([], new RowLimit(new NumberLiteral('2'))));
+
+        $this->expectExceptionMessage('An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block needs MySQL 5.6.');
+
+        new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new Select([], [new SelectExpression(new ScalarSubquery($select))]));
     }
 }

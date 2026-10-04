@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Relation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinUsing::class)]
-#[Small]
+#[Medium]
 final class JoinUsingTest extends TestCase
 {
     public function testRenderWritesTheColumnsAndTheAlias(): void

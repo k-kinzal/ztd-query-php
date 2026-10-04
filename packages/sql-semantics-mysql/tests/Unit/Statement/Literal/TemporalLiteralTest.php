@@ -77,6 +77,7 @@ final class TemporalLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Known::class, $fact->type);
@@ -88,7 +89,7 @@ final class TemporalLiteralTest extends TestCase
     public function testDeriveScalarRejectsALiteralSpelledUnderTheOtherEscapeRule(): void
     {
         $context = (new Semantics(Dialect::MySql))->context();
-        $statement = new Select([new SelectExpression(new TemporalLiteral(TemporalForm::Date, '2024-01-02', EscapeRule::Verbatim))]);
+        $statement = new Select([], [new SelectExpression(new TemporalLiteral(TemporalForm::Date, '2024-01-02', EscapeRule::Verbatim))]);
 
         $this->expectExceptionMessage('A temporal literal must be spelled under the escape rule of the language profile.');
 

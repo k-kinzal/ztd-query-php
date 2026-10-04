@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Lowering\Query\Shared;
 use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
@@ -14,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 
@@ -23,9 +25,8 @@ use SqlSemantics\Statement\Scalar;
  * A lowering-time value: the trailing clauses of the block are collected in
  * a trailer until the block is finished into a selection. An INTO written
  * after the clauses of a block that writes none of them is the INTO after
- * the select list, which is how the parser reads its text. An ORDER BY
- * written after a block that already orders or limits its rows orders the
- * result of the block (the 5.6 server adds a query level for it).
+ * the select list, which is how the parser reads its text. The ORDER BY
+ * and LIMIT a 5.6 subquery writes after a block are added by `finish()`.
  *
  * @visibility SqlSemantics\Platform\MySql\Lowering\Query
  */
@@ -68,21 +69,32 @@ final class Block
     }
 
     /**
-     * Tells whether an ORDER BY or LIMIT written after the block belongs to it.
+     * Finishes the block with the ORDER BY and LIMIT a 5.6 subquery writes after it (`opt_union_order_or_limit`).
      *
-     * It does not after a locking clause, INTO or PROCEDURE ANALYSE of the
-     * block, which the block writes after its own ORDER BY and LIMIT, and an
-     * ORDER BY does not after a block that already orders or limits its rows:
-     * then it orders the rows of the block.
+     * An ORDER BY after a block that already orders or limits its rows
+     * orders the rows of the block in a query level of its own (the 5.6
+     * `order_clause` action adds a fake query block). Otherwise the clauses
+     * are the block's own: written in place when nothing of the block
+     * stands between, and kept as a late ordering after the block's locking
+     * clauses or after its own LIMIT, which a later LIMIT replaces.
+     *
+     * @throws AnalysisException When INTO is written twice (see `select()`)
      */
-    public function accepts(Trailer $later): bool
+    public function finish(Trailer $later): Query
     {
-        if ($later->orderBy === [] && $later->limit === null) {
-            return true;
-        }
         $trailer = $this->trailer;
+        if ($later->empty()) {
+            return $this->select();
+        }
+        if ($later->orderBy !== [] && ($trailer->orderBy !== [] || $trailer->limit !== null)) {
+            return $later->wrap($this->select());
+        }
+        $plain = $later->procedure === null && $later->locking === [] && $later->into === null && $trailer->into === null && $trailer->procedure === null;
+        if ($plain && ($trailer->locking !== [] || ($trailer->limit !== null && $later->limit !== null))) {
+            return $this->select(new LateOrdering($later->orderBy, $later->limit));
+        }
 
-        return $trailer->locking === [] && $trailer->into === null && $trailer->procedure === null && ($later->orderBy === [] || ($trailer->orderBy === [] && $trailer->limit === null));
+        return $this->then($later)->select();
     }
 
     /**
@@ -96,9 +108,10 @@ final class Block
     /**
      * Finishes the block into a selection.
      *
-     * @throws AnalysisException When INTO is written twice, which the server rejects while parsing
+     * @param LateOrdering|null $late The ORDER BY and LIMIT a 5.6 subquery writes after the locking clauses or the LIMIT of the block
+     * @throws AnalysisException When INTO is written twice, which the server rejects while parsing (ER_SYNTAX_ERROR of the 5.7 `select_part2` action, ER_MULTIPLE_INTO_CLAUSES of 8.0 `PT_select_stmt::make_cmd`, right after contextualizing; the 5.6 grammar has no such form)
      */
-    public function select(): Select
+    public function select(?LateOrdering $late = null): Select
     {
         $trailer = $this->trailer;
         if ($this->into !== null && $trailer->into !== null) {
@@ -112,6 +125,6 @@ final class Block
             $position = IntoPosition::AfterItems;
         }
 
-        return new Select($this->options, $this->items, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $trailer->orderBy, $trailer->limit, $trailer->procedure, $trailer->locking, $into, $position);
+        return new Select($this->options, $this->items, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $trailer->orderBy, $trailer->limit, $trailer->procedure, $trailer->locking, $into, $position, $late);
     }
 }

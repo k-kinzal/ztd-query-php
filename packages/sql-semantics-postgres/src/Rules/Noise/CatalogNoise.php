@@ -23,6 +23,11 @@ final class CatalogNoise
      */
     public static function positions(): array
     {
-        return [];
+        return [
+            // The synopsis writes every option as `option [=] value`: the equals sign is optional. https://www.postgresql.org/docs/17/sql-createdatabase.html https://www.postgresql.org/docs/17/sql-alterdatabase.html
+            'opt_equal: =' => [0],
+            // The synopsis writes `ALTER DATABASE name [ [ WITH ] option [ ... ] ]`: WITH is optional. https://www.postgresql.org/docs/17/sql-alterdatabase.html
+            'AlterDatabaseStmt: ALTER DATABASE name WITH createdb_opt_list' => [3],
+        ];
     }
 }

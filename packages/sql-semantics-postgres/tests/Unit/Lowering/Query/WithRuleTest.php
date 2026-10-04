@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Query;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Lowering\Query\WithRule::class)]
-#[Small]
+#[Medium]
 final class WithRuleTest extends TestCase
 {
     public function testWithIsNullWithoutClause(): void
@@ -25,8 +25,8 @@ final class WithRuleTest extends TestCase
         $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
         $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('WITH x AS (SELECT 1) SELECT 2');
         $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\WithRule($lowering);
-        $this->expectExceptionMessage('PreparableStmt');
-        $rule->tables($tree->find('cte_list')[0]);
+        $tables = $rule->tables($tree->find('cte_list')[0]);
+        self::assertSame('x', $tables[0]->name->value);
     }
 
     public function testMaterializationReadsNotMaterialized(): void

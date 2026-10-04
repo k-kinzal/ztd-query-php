@@ -58,7 +58,7 @@ final class Trailer
      * Locking clauses accumulate in written order. A clause the server
      * accepts only once is refused.
      *
-     * @throws AnalysisException When ORDER BY, INTO or PROCEDURE ANALYSE is written twice, which the server rejects while parsing
+     * @throws AnalysisException When ORDER BY, INTO or PROCEDURE ANALYSE is written twice, which no grammar derives and the server rejects while parsing (ER_SYNTAX_ERROR)
      * @throws ImplementationGap When LIMIT is written twice, where the 5.6 server lets the later one replace the earlier
      */
     public function then(self $later): self
@@ -82,7 +82,7 @@ final class Trailer
     /**
      * Wraps a query that is not a single query block in the clauses: ordering and limit first, then INTO and locking.
      *
-     * @throws AnalysisException When PROCEDURE ANALYSE follows a query that is not a single query block
+     * @throws AnalysisException When PROCEDURE ANALYSE follows a query that is not a single query block (ER_WRONG_USAGE of the 5.6 `procedure_analyse_clause` action and of 5.7 `PT_procedure_analyse::contextualize`: PROCEDURE ANALYSE belongs to the outermost first query block)
      */
     public function wrap(Query $query): Query
     {

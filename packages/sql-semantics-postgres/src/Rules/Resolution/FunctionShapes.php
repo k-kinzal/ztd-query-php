@@ -39,7 +39,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * open on the routine. A call whose type depends on missing declarations
  * leaves the shape open on them. Under ROWS FROM the columns of the calls
  * follow each other and can all be NULL, because shorter results are padded
- * with NULLs. WITH ORDINALITY adds the column `ordinality` of type bigint.
+ * with NULLs. Column definitions
+ * written after the alias of ROWS FROM with several functions, or for a
+ * function that has its own, are reported (and still derived). WITH ORDINALITY adds the column `ordinality` of type bigint.
  * The column aliases then rename the columns (PG-COLUMN-ALIAS-001).
  * Source: https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-TABLEFUNCTIONS,
  * https://www.postgresql.org/docs/17/sql-select.html#SQL-FROM. Status: Implemented.
@@ -56,9 +58,16 @@ final class FunctionShapes
         $slots = [];
         $missing = [];
         $single = count($table->functions) === 1;
+        $shared = $single && $table->functions[0]->definitions === [];
+        if ($table->definitions !== [] && !$shared) {
+            $derivation->report(new QueryMisuse($single ? QueryMisuseRule::RepeatedDefinitions : QueryMisuseRule::RowsFromDefinitions));
+            foreach ($table->definitions as $definition) {
+                $definition->deriveClause($derivation, $environment);
+            }
+        }
         foreach ($table->functions as $function) {
             $fact = $derivation->scalar($function->call, $environment);
-            $definitions = $function->definitions !== [] ? $function->definitions : ($single ? $table->definitions : []);
+            $definitions = $shared ? $table->definitions : $function->definitions;
             if ($definitions !== []) {
                 array_push($slots, ...$this->defined($definitions, $fact, $derivation, $environment));
                 continue;

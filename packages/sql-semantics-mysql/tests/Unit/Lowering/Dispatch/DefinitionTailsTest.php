@@ -17,9 +17,10 @@ final class DefinitionTailsTest extends TestCase
 {
     public function testCreateHandsAViewWithAlgorithmToTheTableDefinitionFamily(): void
     {
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table definition family: createView');
+        $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('CREATE OR REPLACE ALGORITHM = MERGE VIEW v AS SELECT 1');
 
-        (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('CREATE OR REPLACE ALGORITHM = MERGE VIEW v AS SELECT 1');
+        self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\View\\', $operation->statement::class);
+        self::assertSame('CREATE OR REPLACE ALGORITHM = MERGE VIEW v AS SELECT 1', $operation->toString());
     }
 
     public function testCreateHandsADefinerTailToTheFamilyOfTheObject(): void
@@ -31,9 +32,10 @@ final class DefinitionTailsTest extends TestCase
 
     public function testTailHandsAViewToTheTableDefinitionFamily(): void
     {
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table definition family: createView');
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE VIEW v AS SELECT 1');
 
-        (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE VIEW v AS SELECT 1');
+        self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\View\\', $operation->statement::class);
+        self::assertSame('CREATE VIEW v AS SELECT 1', $operation->toString());
     }
 
     public function testTailHandsAStoredProgramToTheRoutineFamily(): void

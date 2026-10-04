@@ -12,6 +12,17 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class CommonTableExpressionTest extends TestCase
 {
+    public function testRecursiveQueryIsTheStatement(): void
+    {
+        $query = new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]);
+        self::assertSame($query, (new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Statement\Identifier\Name('x'), $query))->recursiveQuery());
+    }
+
+    public function testRecursiveColumnsAreTheWrittenColumns(): void
+    {
+        self::assertSame('a', (new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Statement\Identifier\Name('x'), new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]), [new \SqlSemantics\Statement\Identifier\Name('a')]))->recursiveColumns()[0]->value);
+    }
+
     public function testRenderWritesTheNameColumnsAndStatement(): void
     {
         $out = new \SqlSemantics\Rendering\Output(new \SqlSemantics\Platform\PostgreSql\Rendering\Codec(\SqlSemantics\Contract\GrammarRelease::PostgreSql172));

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Resolution;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\ImplicitSlot;
@@ -32,7 +34,8 @@ use SqlSemantics\Statement\Type\Known;
  * an open shape that names the missing declaration; a missing or conflicting
  * name contributes an empty shape and is a diagnostic. The column aliases
  * rename the slots (PG-COLUMN-ALIAS-001). The arguments of TABLESAMPLE see
- * the enclosing query only; sampling a common table is reported. The
+ * the enclosing query only; sampling a common table is reported, and so is reading a common table
+ * computed by a data-modifying statement without RETURNING. The
  * implicit columns of a declaration are found by name only.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-FROM,
  * https://www.postgresql.org/docs/17/ddl-schemas.html#DDL-SCHEMAS-PATH. Status: Implemented.
@@ -62,6 +65,10 @@ final class TableShapes
             $shape = new RowShape($slots, $resolution->table->complete ? [] : [new IncompleteMembers($resolution->table)]);
         } elseif ($resolution instanceof CommonTable) {
             $binding = $environment->commonTable($input->table->name->name);
+            $definition = $binding?->definition;
+            if ($definition instanceof CommonTableExpression && $definition->query instanceof Modification && !$definition->query->returnsRows()) {
+                $derivation->report(new QueryMisuse(QueryMisuseRule::WithoutReturning, $definition->name));
+            }
             $slots = [];
             foreach ($binding->shape->slots ?? [] as $slot) {
                 $slots[] = new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot);

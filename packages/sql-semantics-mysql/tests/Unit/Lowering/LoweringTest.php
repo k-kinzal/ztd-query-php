@@ -65,16 +65,18 @@ final class LoweringTest extends TestCase
 
     public function testDefinitionRoutesCreateAlterAndDrop(): void
     {
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table change family: definition');
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP TABLE t');
 
-        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP TABLE t');
+        self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation->statement::class);
+        self::assertSame('DROP TABLE t', $operation->toString());
     }
 
     public function testRoutedHandsAModernStatementToItsFamily(): void
     {
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table change family: statement');
+        $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('DROP TABLE t');
 
-        (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('DROP TABLE t');
+        self::assertStringStartsWith('SqlSemantics\\Platform\\MySql\\Statement\\Alter\\', $operation->statement::class);
+        self::assertSame('DROP TABLE t', $operation->toString());
     }
 
     public function testRoutedHandsADefinitionToItsFamilyThroughTheRoutes(): void

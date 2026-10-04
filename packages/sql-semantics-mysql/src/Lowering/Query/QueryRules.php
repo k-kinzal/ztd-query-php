@@ -23,6 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
@@ -103,6 +104,19 @@ final class QueryRules
     public function legacyQuery(Node $select, ?Node $union = null): Query
     {
         return (new UnionRule($this->lowering))->chain((new BlockRule($this->lowering))->create($select), $union);
+    }
+
+    /**
+     * Lowers the parenthesized query of CREATE TABLE ... SELECT and INSERT ... SELECT of MySQL 5.6 and 5.7: the
+     * node of `create_select` written in parentheses (`create3`, `insert_values`, `insert_query_expression`:
+     * `( create_select ) union_opt`) and the node of `union_opt` that follows the parentheses. The
+     * parentheses are kept as a parenthesized query; the holding statement writes nothing for them.
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function legacyParenthesizedQuery(Node $select, Node $union): Query
+    {
+        return (new UnionRule($this->lowering))->chain(new ParenthesizedQuery((new BlockRule($this->lowering))->create($select)->select()), $union);
     }
 
     /**

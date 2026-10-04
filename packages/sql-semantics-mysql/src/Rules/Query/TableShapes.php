@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Query;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Resolution\ImplicitSlot;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -32,7 +33,11 @@ use SqlSemantics\Statement\Type\Known;
  * contributes the slots of its definition; an undeclared or conditionally
  * resolved name contributes an open shape that names the missing
  * declaration; a missing or conflicting name contributes an empty complete
- * shape and the diagnostic. Source:
+ * shape and the diagnostic. The INVISIBLE columns of a declared table are
+ * no slots of the shape, so `*` and the TABLE statement do not select them,
+ * but a name finds them on the occurrence. Source:
+ * https://dev.mysql.com/doc/refman/8.4/en/invisible-columns.html ("not part
+ * of SELECT *", "can be referenced explicitly"),
  * https://dev.mysql.com/doc/refman/8.4/en/with.html ("a CTE name ...
  * takes precedence over a table of the same name"),
  * https://dev.mysql.com/doc/refman/8.4/en/join.html. Status: Implemented.
@@ -65,6 +70,21 @@ final class TableShapes
         }
 
         return new RelationFact(new RowShape([]), $resolution);
+    }
+
+    /**
+     * Answers the columns of a declared table that a name finds although `*` does not select them: the INVISIBLE columns.
+     *
+     * @return list<ImplicitSlot>
+     */
+    public function implicit(RelationFact $fact): array
+    {
+        $slots = [];
+        foreach ($fact->table instanceof DeclaredTable ? $fact->table->table->implicit : [] as $column) {
+            $slots[] = new ImplicitSlot($column->names, new OutputSlot($column->column->name, new Known($column->column->type), $column->column->nullability, $column->column));
+        }
+
+        return $slots;
     }
 
     /**

@@ -240,23 +240,6 @@ final class Precedence
     }
 
     /**
-     * Answers the weakest bound on the right edge of an expression.
-     *
-     * The level bounds what an operator written after the expression may do:
-     * an operator stronger than it can bind into the right edge. It is a
-     * conservative test; `fits()` and `absorbs()` decide exactly.
-     */
-    public function closing(Scalar $expression): int
-    {
-        $weakest = self::CLOSED;
-        for ($edges = $this->edges($expression); $edges !== null; $edges = $edges[3] === null ? null : $this->edges($edges[3])) {
-            $weakest = min($weakest, $edges[1]);
-        }
-
-        return $weakest;
-    }
-
-    /**
      * Answers the level at which an expression stands as an operand: its operator level, the level of its prefix keyword, or closed.
      *
      * A trailing interval `x ± INTERVAL n unit` ends with the interval unit and

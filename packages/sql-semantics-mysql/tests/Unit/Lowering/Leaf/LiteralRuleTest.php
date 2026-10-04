@@ -27,6 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 
 #[CoversClass(LiteralRule::class)]
 #[Medium]
@@ -47,11 +48,19 @@ final class LiteralRuleTest extends TestCase
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, 0x1F, b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'");
 
         self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(NumberLiteral::class, $operation->statement->items[0]->expression);
-        self::assertInstanceOf(StringLiteral::class, $operation->statement->items[3]->expression);
-        self::assertInstanceOf(RadixLiteral::class, $operation->statement->items[7]->expression);
-        self::assertInstanceOf(TemporalLiteral::class, $operation->statement->items[10]->expression);
-        self::assertSame(TemporalForm::Time, $operation->statement->items[10]->expression->form);
+        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(NumberLiteral::class, $item0->expression);
+        $item3 = $operation->statement->items[3];
+        self::assertInstanceOf(SelectExpression::class, $item3);
+        self::assertInstanceOf(StringLiteral::class, $item3->expression);
+        $item7 = $operation->statement->items[7];
+        self::assertInstanceOf(SelectExpression::class, $item7);
+        self::assertInstanceOf(RadixLiteral::class, $item7->expression);
+        $item10 = $operation->statement->items[10];
+        self::assertInstanceOf(SelectExpression::class, $item10);
+        self::assertInstanceOf(TemporalLiteral::class, $item10->expression);
+        self::assertSame(TemporalForm::Time, $item10->expression->form);
         self::assertSame("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, x'1F', b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'", $operation->toString());
     }
 
@@ -68,11 +77,15 @@ final class LiteralRuleTest extends TestCase
         self::assertTrue($negative->negative);
         self::assertSame('7', $negative->number->text);
         self::assertInstanceOf(Select::class, $introduced);
-        self::assertInstanceOf(RadixLiteral::class, $introduced->items[0]->expression);
-        self::assertSame('latin1', $introduced->items[0]->expression->introducer?->value);
-        self::assertSame(Radix::Hexadecimal, $introduced->items[0]->expression->radix);
-        self::assertInstanceOf(RadixLiteral::class, $introduced->items[1]->expression);
-        self::assertSame(Radix::Bit, $introduced->items[1]->expression->radix);
+        $item0 = $introduced->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(RadixLiteral::class, $item0->expression);
+        self::assertSame('latin1', $item0->expression->introducer?->value);
+        self::assertSame(Radix::Hexadecimal, $item0->expression->radix);
+        $item1 = $introduced->items[1];
+        self::assertInstanceOf(SelectExpression::class, $item1);
+        self::assertInstanceOf(RadixLiteral::class, $item1->expression);
+        self::assertSame(Radix::Bit, $item1->expression->radix);
     }
 
     public function testNumberLowersAnUnsignedNumber(): void
@@ -90,12 +103,18 @@ final class LiteralRuleTest extends TestCase
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT 'a' 'b' \"c\", _utf8mb4 'x' 'y', N'n' 'm'");
 
         self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(StringLiteral::class, $operation->statement->items[0]->expression);
-        self::assertSame(['a', 'b', 'c'], $operation->statement->items[0]->expression->segments);
-        self::assertInstanceOf(StringLiteral::class, $operation->statement->items[1]->expression);
-        self::assertSame('utf8mb4', $operation->statement->items[1]->expression->introducer?->value);
-        self::assertInstanceOf(StringLiteral::class, $operation->statement->items[2]->expression);
-        self::assertTrue($operation->statement->items[2]->expression->national);
+        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(StringLiteral::class, $item0->expression);
+        self::assertSame(['a', 'b', 'c'], $item0->expression->segments);
+        $item1 = $operation->statement->items[1];
+        self::assertInstanceOf(SelectExpression::class, $item1);
+        self::assertInstanceOf(StringLiteral::class, $item1->expression);
+        self::assertSame('utf8mb4', $item1->expression->introducer?->value);
+        $item2 = $operation->statement->items[2];
+        self::assertInstanceOf(SelectExpression::class, $item2);
+        self::assertInstanceOf(StringLiteral::class, $item2->expression);
+        self::assertTrue($item2->expression->national);
         self::assertSame("SELECT 'a' 'b' 'c', _utf8mb4 'x' 'y', N'n' 'm'", $operation->toString());
     }
 

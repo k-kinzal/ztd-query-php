@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Legacy;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block;
@@ -74,25 +75,31 @@ final class BlockRule
      * Lowers the 5.7 query block that writes a FROM clause.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws AnalysisException When PROCEDURE ANALYSE and INTO are both written (ER_WRONG_USAGE "PROCEDURE and INTO" of the 5.7 `select_part2` action, raised while parsing)
      */
     public function full(\SqlSemantics\Lowering\Form $form): Block
     {
         [$options, $list] = $this->head($form->node(0));
         $clauses = new ClauseRule($this->lowering);
         $tail = new TailRule($this->lowering);
+        $first = $tail->into($form->node(1));
         $last = $tail->into($form->node(9));
+        $procedure = $tail->procedure($form->node(8));
+        if ($procedure !== null && ($first !== null || $last !== null)) {
+            throw new AnalysisException('Incorrect usage of PROCEDURE and INTO: a query block with PROCEDURE ANALYSE has no INTO.');
+        }
 
         return new Block(
             $options,
             $list,
-            $tail->into($form->node(1)),
+            $first,
             (new FromRule($this->lowering))->from($form->node(2)),
             $clauses->predicate($form->node(3)),
             $clauses->grouping($form->node(4)),
             $clauses->predicate($form->node(5)),
             [],
             null,
-            new Trailer($clauses->ordering($form->node(6)), $tail->limit($form->node(7)), $tail->procedure($form->node(8)), $tail->locking($form->node(10)), $last, $last === null ? null : IntoPosition::AfterQuery),
+            new Trailer($clauses->ordering($form->node(6)), $tail->limit($form->node(7)), $procedure, $tail->locking($form->node(10)), $last, $last === null ? null : IntoPosition::AfterQuery),
         );
     }
 
@@ -119,13 +126,13 @@ final class BlockRule
      * @param list<\SqlSemantics\Platform\MySql\Statement\Query\SelectOption> $options
      * @param list<\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression|\SqlSemantics\Platform\MySql\Statement\Query\Star|\SqlSemantics\Platform\MySql\Statement\Name\TableWildcard> $items
      * @throws ImplementationGap When a production has no rule
+     * @throws AnalysisException When PROCEDURE ANALYSE follows an INTO (ER_WRONG_USAGE "PROCEDURE and INTO" of the 5.6 `procedure_analyse_clause` action, which refuses a statement whose result is already set)
      */
     public function into(Node $clauses, array $options, array $items, Trailer $lock): Block
     {
         $form = $this->lowering->form($clauses);
         $tail = new TailRule($this->lowering);
-
-        return match ($form->signature) {
+        $block = match ($form->signature) {
             'select_into: opt_order_clause opt_limit_clause' => new Block($options, $items, null, null, null, null, null, [], null, (new Trailer((new ClauseRule($this->lowering))->ordering($form->node(0)), $tail->limit($form->node(1))))->then($lock)),
             'select_into: into' => new Block($options, $items, $tail->into($form->node(0)), null, null, null, null, [], null, $lock),
             'select_into: select_from' => $this->from($form->node(0), $options, $items, null)->then($lock),
@@ -133,6 +140,11 @@ final class BlockRule
             'select_into: select_from into' => $this->from($form->node(0), $options, $items, null)->then((new Trailer([], null, null, [], $tail->into($form->node(1)), IntoPosition::AfterQuery))->then($lock)),
             default => throw ImplementationGap::production($form),
         };
+        if ($block->into !== null && $block->trailer->procedure !== null) {
+            throw new AnalysisException('Incorrect usage of PROCEDURE and INTO: PROCEDURE ANALYSE follows no INTO.');
+        }
+
+        return $block;
     }
 
     /**
@@ -235,6 +247,7 @@ final class BlockRule
      * Lowers the query block written directly after SELECT in a subquery or derived table of 5.x.
      *
      * @throws ImplementationGap When a production has no rule
+     * @throws AnalysisException When the block writes PROCEDURE ANALYSE (ER_WRONG_USAGE "PROCEDURE and subquery" of the 5.6 `procedure_analyse_clause` action and of 5.7 `PT_procedure_analyse::contextualize`, raised while parsing)
      */
     public function derived(Node $part, ?Node $expression = null): Block
     {
@@ -243,12 +256,16 @@ final class BlockRule
         if ($form->signature === 'select_init2_derived: select_part2_derived') {
             return $this->derived($form->node(0), $expression);
         }
-
-        return match ($form->signature) {
+        $block = match ($form->signature) {
             'select_part2_derived: opt_query_expression_options select_item_list opt_select_from select_lock_type' => $this->optional($form->node(2), $items->options($form->node(0)), $items->items($form->node(1)))->then(new Trailer([], null, null, (new TailRule($this->lowering))->locking($form->node(3)))),
             'select_part2_derived: opt_query_spec_options select_item_list' => $this->expression($expression ?? throw ImplementationGap::production($form), $items->options($form->node(0)), $items->items($form->node(1))),
             'select_derived2: select_options select_item_list opt_select_from' => $this->optional($form->node(2), $items->options($form->node(0)), $items->items($form->node(1))),
             default => throw ImplementationGap::production($form),
         };
+        if ($block->trailer->procedure !== null) {
+            throw new AnalysisException('Incorrect usage of PROCEDURE and subquery: PROCEDURE ANALYSE belongs to the outermost query block.');
+        }
+
+        return $block;
     }
 }

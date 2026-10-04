@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Call;
 
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvariantViolation;
+use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Type\Known;
@@ -26,7 +27,7 @@ use SqlSemantics\Statement\Type\TypeFact;
  * CEILING and FLOOR, whose DECIMAL argument gives BIGINT or DECIMAL by its
  * size; 1 and 2 the type of the first or second argument; + the aggregated
  * type of all arguments and Z of the arguments after the first
- * (MYSQL-CALL-TYPE-AGGREGATION-001); X ADDTIME and SUBTIME, which keep a
+ * (MYSQL-TYPE-AGGREGATION-001); X ADDTIME and SUBTIME, which keep a
  * DATETIME or TIME first argument and give a string otherwise; K
  * STR_TO_DATE, a DATE, TIME or DATETIME by the format; W UNIX_TIMESTAMP of a
  * value, BIGINT or DECIMAL by its fractional seconds. NULL rules: P NULL
@@ -78,6 +79,7 @@ final class ResultTyping
         }
         $types = array_map(static fn (ScalarFact $fact): TypeFact => $fact->type, $arguments);
         $aggregation = new TypeAggregation();
+        $classes = new TypeClasses();
 
         return match ($code) {
             'S' => $this->string($types),
@@ -89,8 +91,8 @@ final class ResultTyping
             '+' => $aggregation->aggregate($types),
             'Z' => $aggregation->aggregate(array_slice($types, 1)),
             'X' => $this->temporal($types[0] ?? new NullOnly()),
-            'K' => $aggregation->fact([TypeClass::Date, TypeClass::Time, TypeClass::DateTime]),
-            'W' => $aggregation->fact([TypeClass::Integer, TypeClass::Decimal]),
+            'K' => $classes->fact([TypeClass::Date, TypeClass::Time, TypeClass::DateTime]),
+            'W' => $classes->fact([TypeClass::Integer, TypeClass::Decimal]),
             default => throw new InvariantViolation('Unknown result type code: ' . $code),
         };
     }
@@ -105,7 +107,7 @@ final class ResultTyping
         $binary = false;
         $open = false;
         foreach ($types as $type) {
-            $classes = (new TypeAggregation())->classes($type);
+            $classes = (new TypeClasses())->classes($type);
             $binary = $binary || ($type instanceof Known && (in_array(TypeClass::Binary, $classes, true) || in_array(TypeClass::Spatial, $classes, true)));
             $open = $open || (!$type instanceof Known && !$type instanceof NullOnly) || ($type instanceof Known && $classes === []);
         }
@@ -113,7 +115,7 @@ final class ResultTyping
             return new Known(TypeClass::Binary->descriptor());
         }
 
-        return (new TypeAggregation())->fact($open ? [TypeClass::Character, TypeClass::Binary] : [TypeClass::Character]);
+        return (new TypeClasses())->fact($open ? [TypeClass::Character, TypeClass::Binary] : [TypeClass::Character]);
     }
 
     /**
@@ -129,7 +131,7 @@ final class ResultTyping
      */
     public function numeric(array $types, bool $integral): TypeFact
     {
-        $aggregation = new TypeAggregation();
+        $aggregation = new TypeClasses();
         $results = [null];
         foreach ($types as $type) {
             if ($type instanceof NullOnly) {
@@ -180,9 +182,9 @@ final class ResultTyping
         if ($first instanceof NullOnly) {
             return $first;
         }
-        $classes = (new TypeAggregation())->classes($first);
+        $classes = (new TypeClasses())->classes($first);
         if ($classes === []) {
-            return (new TypeAggregation())->fact([TypeClass::DateTime, TypeClass::Time, TypeClass::Character]);
+            return (new TypeClasses())->fact([TypeClass::DateTime, TypeClass::Time, TypeClass::Character]);
         }
         $results = [];
         foreach ($classes as $class) {
@@ -194,7 +196,7 @@ final class ResultTyping
             };
         }
 
-        return (new TypeAggregation())->fact($results);
+        return (new TypeClasses())->fact($results);
     }
 
     /**
@@ -210,9 +212,9 @@ final class ResultTyping
         if ($date instanceof NullOnly) {
             return $date;
         }
-        $classes = (new TypeAggregation())->classes($date);
+        $classes = (new TypeClasses())->classes($date);
         if ($classes === []) {
-            return (new TypeAggregation())->fact([TypeClass::Date, TypeClass::Time, TypeClass::DateTime, TypeClass::Character]);
+            return (new TypeClasses())->fact([TypeClass::Date, TypeClass::Time, TypeClass::DateTime, TypeClass::Character]);
         }
         $dateOnly = in_array($unit, [IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year, IntervalUnit::YearMonth], true);
         $timeOnly = in_array($unit, [IntervalUnit::Microsecond, IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::SecondMicrosecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::MinuteSecond, IntervalUnit::HourMicrosecond, IntervalUnit::HourSecond, IntervalUnit::HourMinute], true);
@@ -227,7 +229,7 @@ final class ResultTyping
             };
         }
 
-        return (new TypeAggregation())->fact($results);
+        return (new TypeClasses())->fact($results);
     }
 
     /**

@@ -88,7 +88,7 @@ final class QueryExpressionTest extends TestCase
 
     public function testAnOrderingOverASingleBlockIsRejected(): void
     {
-        $this->expectExceptionMessage('The ordering and the limit of a single query block belong to the block unless clauses of the block precede them.');
+        $this->expectExceptionMessage('The ordering and the limit of a single query block belong to the block unless an ORDER BY follows a block that orders or limits its rows.');
 
         new QueryExpression(null, new Select([], [new SelectExpression(new NumberLiteral('1'))]), [], new RowLimit(new NumberLiteral('1')));
     }

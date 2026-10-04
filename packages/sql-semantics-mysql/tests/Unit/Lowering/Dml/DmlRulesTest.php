@@ -5,71 +5,49 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Dml;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Dml\DmlRules;
-use SqlSemantics\Platform\MySql\Lowering\Lowering;
-use SqlSemantics\Platform\MySql\Platform;
 
 #[CoversClass(DmlRules::class)]
-#[Small]
+#[Medium]
 final class DmlRulesTest extends TestCase
 {
-    public function testStatementReportsTheMissingRule(): void
+    public function testStatementLowersEveryStatementRule(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new DmlRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL dml family: statement');
-
-        $rules->statement(new Node('rule', 0, []));
+        self::assertSame('INSERT INTO t VALUES (1)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('insert t values (1)')->toString());
+        self::assertSame('UPDATE t SET a = 1', (new Semantics(Dialect::MySql))->analyze('update t set a = 1')->toString());
+        self::assertSame('DELETE FROM t', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('delete from t')->toString());
+        self::assertSame('DO 1', (new Semantics(Dialect::MySql))->analyze('do 1')->toString());
+        self::assertSame('HANDLER t OPEN', (new Semantics(Dialect::MySql))->analyze('handler t open')->toString());
+        self::assertSame('CALL p', (new Semantics(Dialect::MySql))->analyze('call p')->toString());
+        self::assertSame('IMPORT TABLE FROM \'f\'', (new Semantics(Dialect::MySql))->analyze('import table from \'f\'')->toString());
+        self::assertSame('EXECUTE s', (new Semantics(Dialect::MySql))->analyze('execute s')->toString());
+        self::assertSame('LOAD DATA INFILE \'f\' INTO TABLE t', (new Semantics(Dialect::MySql))->analyze('load data infile \'f\' into table t')->toString());
     }
 
-    public function testDuplicateHandlingReportsTheMissingRule(): void
+    public function testDuplicateHandlingLowersReplaceAndIgnore(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new DmlRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL dml family: duplicateHandling');
-
-        $rules->duplicateHandling(new Node('rule', 0, []));
+        self::assertSame('LOAD DATA INFILE \'f\' IGNORE INTO TABLE t', (new Semantics(Dialect::MySql))->analyze('load data infile \'f\' ignore into table t')->toString());
+        self::assertSame('LOAD DATA INFILE \'f\' REPLACE INTO TABLE t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('load data infile \'f\' replace into table t')->toString());
     }
 
-    public function testFileFormatReportsTheMissingRule(): void
+    public function testFileFormatLowersTheOutfileFormat(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new DmlRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL dml family: fileFormat');
-
-        $rules->fileFormat(new Node('rule', 0, []), new Node('rule', 0, []), new Node('rule', 0, []));
+        self::assertSame('SELECT 1 INTO OUTFILE \'f\' COLUMNS ENCLOSED BY \'"\'', (new Semantics(Dialect::MySql))->analyze('select 1 into outfile \'f\' fields enclosed by \'"\'')->toString());
     }
 
-    public function testDeleteTargetsReportsTheMissingRule(): void
+    public function testDeleteTargetsLowersTheTableNames(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new DmlRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL dml family: deleteTargets');
-
-        $rules->deleteTargets(new Node('rule', 0, []));
+        self::assertSame('DELETE t, u FROM t, u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('delete t.*, u from t, u')->toString());
+        self::assertSame('SELECT 1 FROM t FOR UPDATE OF t', (new Semantics(Dialect::MySql))->analyze('select 1 from t for update of t')->toString());
     }
 
-    public function testRowValuesReportsTheMissingRule(): void
+    public function testRowValuesLowersValuesAndDefault(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new DmlRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL dml family: rowValues');
-
-        $rules->rowValues(new Node('rule', 0, []));
+        self::assertSame('INSERT INTO t VALUES (1, DEFAULT), ()', (new Semantics(Dialect::MySql))->analyze('insert t values (1, default), ()')->toString());
+        self::assertSame('VALUES ROW(1), ROW()', (new Semantics(Dialect::MySql))->analyze('values row(1), row()')->toString());
     }
 }

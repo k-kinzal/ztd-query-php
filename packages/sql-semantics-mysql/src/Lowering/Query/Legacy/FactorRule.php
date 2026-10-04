@@ -31,7 +31,11 @@ use SqlSemantics\Statement\Relation;
  * of that derived table. Parentheses around other references are a nested
  * join, which takes no alias, union, ORDER BY or LIMIT; a SELECT anywhere
  * else among table references is not inside parentheses. The server
- * rejects those forms with a syntax error while parsing. Constructs:
+ * rejects those forms with ER_SYNTAX_ERROR while parsing, before any name
+ * is resolved: the actions of `table_factor`, `select_derived_union` and
+ * `select_derived_init` in sql_yacc.yy of 5.6 and the `contextualize()` of
+ * `PT_table_factor_select_sym`, `PT_table_factor_parenthesis` and
+ * `PT_select_derived_union_*` in sql/parse_tree_nodes of 5.7. Constructs:
  * DerivedTable, NestedRelation, TableList, ParenthesizedQuery. Terminates:
  * the union is walked in a loop; recursion follows nested parentheses.
  * Source: https://dev.mysql.com/doc/refman/5.7/en/derived-tables.html,
@@ -60,7 +64,7 @@ final class FactorRule
      * Lowers a 5.x table factor.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws AnalysisException When a SELECT is not inside parentheses or a nested join has an alias or a union
+     * @throws AnalysisException When a SELECT is not the first reference inside parentheses ("we are not in parentheses": ER_SYNTAX_ERROR of the 5.6 `select_derived_init` action and of 5.7 `PT_table_factor_select_sym::contextualize`)
      */
     public function factor(Form $form): Relation
     {
@@ -79,7 +83,7 @@ final class FactorRule
      * Lowers a parenthesized 5.x table factor: a query when it is a derived table without alias, else the relation.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws AnalysisException When a nested join has an alias, a union, an ORDER BY or a LIMIT
+     * @throws AnalysisException When a nested join has an alias, a union, an ORDER BY or a LIMIT (ER_SYNTAX_ERROR of the 5.6 `table_factor` and `select_derived_union` actions and of 5.7 `PT_table_factor_parenthesis` and `PT_select_derived_union_*::contextualize`)
      */
     public function parens(Form $form): Query|Relation
     {
@@ -116,7 +120,7 @@ final class FactorRule
             $quantifiers[] = $quantifier;
             $operands[] = $operand;
         }
-        $query = (new Chain($operands, $quantifiers))->query();
+        $query = (new Chain($operands, $quantifiers, $this->lowering->profile->grammar))->query();
 
         return $name === null ? $query : new DerivedTable($query, $name);
     }

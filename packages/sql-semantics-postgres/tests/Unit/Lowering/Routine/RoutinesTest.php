@@ -14,80 +14,108 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Lowering\Routine\Routines;
 use SqlSemantics\Platform\PostgreSql\Platform;
+use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\ChangeOwner;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Comment;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\CopyCollation;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Drop;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\ExtensionDependency;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Rename;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\SecurityLabel;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\SetSchema;
+use SqlSemantics\Platform\PostgreSql\Statement\Operator\AlterOperator;
+use SqlSemantics\Platform\PostgreSql\Statement\Routine\AlterRoutine;
+use SqlSemantics\Platform\PostgreSql\Statement\Routine\CreateFunction;
 
 #[CoversClass(Routines::class)]
 #[Small]
 final class RoutinesTest extends TestCase
 {
-    public function testStatementIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testStatementDispatchesEveryStatementOfTheFamily(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse("COMMENT ON TABLE t IS 'x'");
-        $this->expectExceptionMessage('No semantic rule is implemented for: CommentStmt: COMMENT ON object_type_any_name any_name IS comment_text');
-        $lowering->routines->statement($tree->find('CommentStmt')[0]);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse('COMMENT ON TABLE t IS NULL; ALTER FUNCTION f() STABLE; SECURITY LABEL ON SCHEMA s IS NULL; ALTER SCHEMA s OWNER TO r; ALTER TYPE t SET SCHEMA s; ALTER INDEX i DEPENDS ON EXTENSION e; CREATE FUNCTION f() RETURNS int4 RETURN 1; DROP AGGREGATE a(*); ALTER SCHEMA s RENAME TO t; CREATE COLLATION c FROM d; ALTER OPERATOR = (int4, int4) SET (hashes)');
+        $routines = $lowering->routines;
+        self::assertSame(
+            [Comment::class, AlterRoutine::class, SecurityLabel::class, ChangeOwner::class, SetSchema::class, ExtensionDependency::class, CreateFunction::class, Drop::class, Rename::class, CopyCollation::class, AlterOperator::class],
+            [
+                $routines->statement($tree->find('CommentStmt')[0])::class,
+                $routines->statement($tree->find('AlterFunctionStmt')[0])::class,
+                $routines->statement($tree->find('SecLabelStmt')[0])::class,
+                $routines->statement($tree->find('AlterOwnerStmt')[0])::class,
+                $routines->statement($tree->find('AlterObjectSchemaStmt')[0])::class,
+                $routines->statement($tree->find('AlterObjectDependsStmt')[0])::class,
+                $routines->statement($tree->find('CreateFunctionStmt')[0])::class,
+                $routines->statement($tree->find('RemoveAggrStmt')[0])::class,
+                $routines->statement($tree->find('RenameStmt')[0])::class,
+                $routines->statement($tree->find('DefineStmt')[0])::class,
+                $routines->statement($tree->find('AlterOperatorStmt')[0])::class,
+            ],
+        );
     }
 
-    public function testFunctionSignatureIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testStatementRejectsAStatementOfAnotherFamily(): void
+    {
+        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse('CHECKPOINT');
+        $this->expectExceptionMessage('No semantic rule is implemented for: CheckPointStmt: CHECKPOINT');
+        $lowering->routines->statement($tree->find('CheckPointStmt')[0]);
+    }
+
+    public function testFunctionSignatureLowersAName(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
         $tree = (new PostgreSqlParser('pg-17.2'))->parse('DROP FUNCTION f(int), g');
-        $this->expectExceptionMessage('No semantic rule is implemented for: function_with_argtypes: func_name func_args');
-        $lowering->routines->functionSignature($tree->find('function_with_argtypes')[0]);
+        self::assertNull($lowering->routines->functionSignature($tree->find('function_with_argtypes')[1])->arguments);
     }
 
-    public function testFunctionSignaturesIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testFunctionSignaturesLowersTheList(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
         $tree = (new PostgreSqlParser('pg-17.2'))->parse('DROP FUNCTION f(int), g');
-        $this->expectExceptionMessage('No semantic rule is implemented for: function_with_argtypes_list: function_with_argtypes_list , function_with_argtypes');
-        $lowering->routines->functionSignatures($tree->find('function_with_argtypes_list')[0]);
+        self::assertCount(2, $lowering->routines->functionSignatures($tree->find('function_with_argtypes_list')[0]));
     }
 
-    public function testAggregateSignatureIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testAggregateSignatureLowersTheArguments(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
         $tree = (new PostgreSqlParser('pg-17.2'))->parse('DROP AGGREGATE a(int), b(*)');
-        $this->expectExceptionMessage('No semantic rule is implemented for: aggregate_with_argtypes: func_name aggr_args');
-        $lowering->routines->aggregateSignature($tree->find('aggregate_with_argtypes')[0]);
+        self::assertCount(1, $lowering->routines->aggregateSignature($tree->find('aggregate_with_argtypes')[0])->arguments->direct);
     }
 
-    public function testAggregateSignaturesIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testAggregateSignaturesLowersTheList(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
         $tree = (new PostgreSqlParser('pg-17.2'))->parse('DROP AGGREGATE a(int), b(*)');
-        $this->expectExceptionMessage('No semantic rule is implemented for: aggregate_with_argtypes_list: aggregate_with_argtypes_list , aggregate_with_argtypes');
-        $lowering->routines->aggregateSignatures($tree->find('aggregate_with_argtypes_list')[0]);
+        self::assertCount(2, $lowering->routines->aggregateSignatures($tree->find('aggregate_with_argtypes_list')[0]));
     }
 
-    public function testOperatorSignatureIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testOperatorSignatureLowersTheOperator(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('DROP OPERATOR +(int, int), -(int, int)');
-        $this->expectExceptionMessage('No semantic rule is implemented for: operator_with_argtypes: any_operator oper_argtypes');
-        $lowering->routines->operatorSignature($tree->find('operator_with_argtypes')[0]);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse('DROP OPERATOR s.+ (int, int)');
+        self::assertSame(['s', '+'], [$lowering->routines->operatorSignature($tree->find('operator_with_argtypes')[0])->operator->qualifiers[0]->value, $lowering->routines->operatorSignature($tree->find('operator_with_argtypes')[0])->operator->name->value]);
     }
 
-    public function testOperatorSignaturesIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testOperatorSignaturesLowersTheList(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('DROP OPERATOR +(int, int), -(int, int)');
-        $this->expectExceptionMessage('No semantic rule is implemented for: operator_with_argtypes_list: operator_with_argtypes_list , operator_with_argtypes');
-        $lowering->routines->operatorSignatures($tree->find('operator_with_argtypes_list')[0]);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse('DROP OPERATOR + (int, int), - (NONE, int)');
+        self::assertCount(2, $lowering->routines->operatorSignatures($tree->find('operator_with_argtypes_list')[0]));
     }
 
-    public function testObjectKindIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testObjectKindLowersTheKind(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse("COMMENT ON TABLE t IS 'x'");
-        $this->expectExceptionMessage('No semantic rule is implemented for: object_type_any_name: TABLE');
-        $lowering->routines->objectKind($tree->find('object_type_any_name')[0]);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse('DROP FOREIGN DATA WRAPPER w');
+        self::assertSame(ObjectKind::ForeignDataWrapper, $lowering->routines->objectKind($tree->find('drop_type_name')[0]));
     }
 
-    public function testOperatorDefinitionsIsAnImplementationGapUntilTheFamilyImplementsIt(): void
+    public function testOperatorDefinitionsLowersNoneAsAWord(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('ALTER OPERATOR + (int, int) SET (RESTRICT = NONE)');
-        $this->expectExceptionMessage('No semantic rule is implemented for: operator_def_list: operator_def_elem');
-        $lowering->routines->operatorDefinitions($tree->find('operator_def_list')[0]);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse('ALTER OPERATOR = (int, int) SET (restrict = NONE, join = eqjoinsel)');
+        $definitions = $lowering->routines->operatorDefinitions($tree->find('operator_def_list')[0]);
+        self::assertSame(['restrict', 'join'], [$definitions[0]->name->value, $definitions[1]->name->value]);
     }
 }

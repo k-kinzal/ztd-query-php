@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Query;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Rules\Query\DistinctOrdering::class)]
-#[Small]
+#[Medium]
 final class DistinctOrderingTest extends TestCase
 {
     public function testCheckReportsAnOrderThatSkipsADistinctTerm(): void

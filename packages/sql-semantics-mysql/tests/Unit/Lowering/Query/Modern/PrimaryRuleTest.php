@@ -29,11 +29,9 @@ final class PrimaryRuleTest extends TestCase
         self::assertSame('SELECT a INTO @x FROM t WHERE 1 GROUP BY a HAVING 1 WINDOW w AS ()', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('select a into @x from t where 1 group by a having 1 window w as ()')->toString());
     }
 
-    public function testValuesReportsTheRowRuleOfTheDmlFamily(): void
+    public function testValuesLowersTheRowsThroughTheDmlFamily(): void
     {
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL dml family: rowValues');
-
-        (new Semantics(Dialect::MySql))->analyze('VALUES ROW(1)');
+        self::assertSame('VALUES ROW(1), ROW(2)', (new Semantics(Dialect::MySql))->analyze('values row(1), row(2)')->toString());
     }
 
     public function testExplicitLowersTheTable(): void

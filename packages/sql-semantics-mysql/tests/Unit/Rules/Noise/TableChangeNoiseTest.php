@@ -13,12 +13,12 @@ use SqlSemantics\Platform\MySql\Rules\Noise\TableChangeNoise;
 #[Small]
 final class TableChangeNoiseTest extends TestCase
 {
-    public function testPositionsListsNothingYet(): void
+    public function testPositionsListsTheOptionalWords(): void
     {
-        self::assertSame([], TableChangeNoise::positions());
+        self::assertSame(['opt_column: COLUMN_SYM', 'opt_to: TO_SYM', 'opt_to: EQ', 'opt_to: AS', 'opt_table_sym: TABLE_SYM'], array_keys(TableChangeNoise::positions()));
     }
 
-    public function testSynonymsListsNothingYet(): void
+    public function testSynonymsListsNothing(): void
     {
         self::assertSame([], TableChangeNoise::synonyms());
     }

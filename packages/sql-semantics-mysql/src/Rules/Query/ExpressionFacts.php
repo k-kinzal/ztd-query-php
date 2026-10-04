@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -33,6 +35,18 @@ final class ExpressionFacts
     {
         $environment = $expression->with === null ? $outer : $expression->with->bind($derivation, $outer);
         $fact = $derivation->query($expression->body, $environment);
+        $this->ordering($fact, $expression->orderBy, $expression->limit, $derivation, $environment);
+
+        return $fact;
+    }
+
+    /**
+     * Derives an ORDER BY and a LIMIT that apply to the rows of a query in an environment.
+     *
+     * @param list<OrderItem> $orderBy
+     */
+    public function ordering(QueryFact $fact, array $orderBy, ?Limit $limit, Derivation $derivation, Environment $environment): void
+    {
         $named = [];
         foreach ($fact->projection as $item) {
             if ($item instanceof Field && $item->name !== null) {
@@ -40,9 +54,7 @@ final class ExpressionFacts
             }
         }
         $results = new Environment($derivation->context, $environment, [], [], $named);
-        (new SortScopes())->derive($expression->orderBy, $derivation, $results, $fact->projection, true);
-        (new TailFacts())->limit($expression->limit, $derivation, $environment);
-
-        return $fact;
+        (new SortScopes())->derive($orderBy, $derivation, $results, $fact->projection, true);
+        (new TailFacts())->limit($limit, $derivation, $environment);
     }
 }

@@ -18,6 +18,7 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
@@ -34,11 +35,17 @@ final class VariableRuleTest extends TestCase
 
         self::assertInstanceOf(Select::class, $modern->statement);
         self::assertInstanceOf(Select::class, $legacy->statement);
-        self::assertInstanceOf(UserVariable::class, $modern->statement->items[0]->expression);
-        self::assertInstanceOf(SystemVariable::class, $modern->statement->items[1]->expression);
-        self::assertSame(VariableScope::Global, $modern->statement->items[1]->expression->scope);
-        self::assertInstanceOf(SystemVariable::class, $legacy->statement->items[3]->expression);
-        self::assertSame('innodb', $legacy->statement->items[3]->expression->instance?->value);
+        $item0 = $modern->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(UserVariable::class, $item0->expression);
+        $item1 = $modern->statement->items[1];
+        self::assertInstanceOf(SelectExpression::class, $item1);
+        self::assertInstanceOf(SystemVariable::class, $item1->expression);
+        self::assertSame(VariableScope::Global, $item1->expression->scope);
+        $item3 = $legacy->statement->items[3];
+        self::assertInstanceOf(SelectExpression::class, $item3);
+        self::assertInstanceOf(SystemVariable::class, $item3->expression);
+        self::assertSame('innodb', $item3->expression->instance?->value);
         self::assertSame('SELECT @v, @@GLOBAL.x, @@x, @@innodb.y', $modern->toString());
         self::assertSame($modern->toString(), $legacy->toString());
     }
@@ -48,8 +55,10 @@ final class VariableRuleTest extends TestCase
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT @a, @`b c`, @'d', @\"e\", @localhost");
 
         self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(UserVariable::class, $operation->statement->items[1]->expression);
-        self::assertSame('b c', $operation->statement->items[1]->expression->name->value);
+        $item1 = $operation->statement->items[1];
+        self::assertInstanceOf(SelectExpression::class, $item1);
+        self::assertInstanceOf(UserVariable::class, $item1->expression);
+        self::assertSame('b c', $item1->expression->name->value);
         self::assertSame('SELECT @a, @`b c`, @d, @e, @localhost', $operation->toString());
     }
 
@@ -59,9 +68,11 @@ final class VariableRuleTest extends TestCase
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT @v := 1');
 
         self::assertInstanceOf(Select::class, $modern->statement);
-        self::assertInstanceOf(VariableAssignment::class, $modern->statement->items[0]->expression);
-        self::assertSame('v', $modern->statement->items[0]->expression->target->name->value);
-        self::assertInstanceOf(NumberLiteral::class, $modern->statement->items[0]->expression->value);
+        $item0 = $modern->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(VariableAssignment::class, $item0->expression);
+        self::assertSame('v', $item0->expression->target->name->value);
+        self::assertInstanceOf(NumberLiteral::class, $item0->expression->value);
         self::assertSame('SELECT @v := 1', $modern->toString());
         self::assertSame('SELECT @v := 1', $legacy->toString());
     }
@@ -71,11 +82,15 @@ final class VariableRuleTest extends TestCase
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@SESSION.sql_mode, @@LOCAL.innodb.x');
 
         self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SystemVariable::class, $operation->statement->items[0]->expression);
-        self::assertSame(VariableScope::Session, $operation->statement->items[0]->expression->scope);
-        self::assertInstanceOf(SystemVariable::class, $operation->statement->items[1]->expression);
-        self::assertSame(VariableScope::Session, $operation->statement->items[1]->expression->scope);
-        self::assertSame('x', $operation->statement->items[1]->expression->name->value);
+        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(SystemVariable::class, $item0->expression);
+        self::assertSame(VariableScope::Session, $item0->expression->scope);
+        $item1 = $operation->statement->items[1];
+        self::assertInstanceOf(SelectExpression::class, $item1);
+        self::assertInstanceOf(SystemVariable::class, $item1->expression);
+        self::assertSame(VariableScope::Session, $item1->expression->scope);
+        self::assertSame('x', $item1->expression->name->value);
         self::assertSame('SELECT @@SESSION.sql_mode, @@SESSION.innodb.x', $operation->toString());
     }
 

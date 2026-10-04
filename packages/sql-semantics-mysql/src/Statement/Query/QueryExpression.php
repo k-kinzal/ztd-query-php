@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\ExpressionFacts;
 use SqlSemantics\Platform\MySql\Rules\Query\SortScopes;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -20,10 +21,11 @@ use SqlSemantics\Statement\Statement;
  *
  * It exists only when it holds a WITH clause, an ordering or a limit. Over a
  * single query block the ordering and the limit belong to the block itself,
- * so a body that is a selection takes no ordering or limit here, unless the
- * block writes its own ORDER BY, LIMIT, INTO, PROCEDURE ANALYSE or locking
- * clause: the 5.6 grammar accepts an ORDER BY or LIMIT after such a block in
- * a subquery, and it then applies to the rows of the block. The body is
+ * so a body that is a selection takes no ordering or limit here, unless an
+ * ORDER BY follows a block that orders or limits its rows itself: a 5.6
+ * subquery accepts that, and the server orders the rows of the block in a
+ * query level of their own (the `order_clause` action adds a fake query
+ * block). The body is
  * not itself a query expression or a query statement, which are merged into
  * or wrapped around this one.
  *
@@ -59,8 +61,8 @@ final class QueryExpression implements Statement, Query
         $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
         (new SortScopes())->check($this->orderBy);
         Check::input($with !== null || $orderBy !== [] || $limit !== null, 'A query expression holds a WITH clause, an ordering or a limit.');
-        Check::input(!$body instanceof Select || ($orderBy === [] && $limit === null) || $body->trailed(), 'The ordering and the limit of a single query block belong to the block unless clauses of the block precede them.');
-        Check::input(!$body instanceof self && !$body instanceof QueryStatement, 'A query expression or a query statement as a body is written in parentheses.');
+        Check::input(!$body instanceof Select || ($orderBy === [] && $limit === null) || ($orderBy !== [] && ($body->orderBy !== [] || $body->limit !== null) && $body->late === null), 'The ordering and the limit of a single query block belong to the block unless an ORDER BY follows a block that orders or limits its rows.');
+        Check::input(!$body instanceof self && !$body instanceof QueryStatement && !$body instanceof OrderedSetOperation, 'A query expression, a query statement or an ordered set operation as a body is written in parentheses.');
     }
 
     /**

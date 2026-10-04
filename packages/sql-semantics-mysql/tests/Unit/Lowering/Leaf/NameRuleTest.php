@@ -19,6 +19,8 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 
 #[CoversClass(NameRule::class)]
@@ -31,8 +33,10 @@ final class NameRuleTest extends TestCase
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame('SELECT a, `b c`, `d``e`, `action`, `猫` FROM t', $operation->toString());
-        self::assertInstanceOf(ColumnUse::class, $operation->statement->items[2]->expression);
-        self::assertSame('d`e', $operation->statement->items[2]->expression->name->value);
+        $item2 = $operation->statement->items[2];
+        self::assertInstanceOf(SelectExpression::class, $item2);
+        self::assertInstanceOf(ColumnUse::class, $item2->expression);
+        self::assertSame('d`e', $item2->expression->name->value);
     }
 
     public function testIdentifierReadsAStringAtANamePosition(): void
@@ -68,11 +72,15 @@ final class NameRuleTest extends TestCase
         $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@innodb.x, @@y');
 
         self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(SystemVariable::class, $operation->statement->items[0]->expression);
-        self::assertSame('innodb', $operation->statement->items[0]->expression->instance?->value);
-        self::assertSame('x', $operation->statement->items[0]->expression->name->value);
-        self::assertInstanceOf(SystemVariable::class, $operation->statement->items[1]->expression);
-        self::assertNull($operation->statement->items[1]->expression->instance);
+        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(SystemVariable::class, $item0->expression);
+        self::assertSame('innodb', $item0->expression->instance?->value);
+        self::assertSame('x', $item0->expression->name->value);
+        $item1 = $operation->statement->items[1];
+        self::assertInstanceOf(SelectExpression::class, $item1);
+        self::assertInstanceOf(SystemVariable::class, $item1->expression);
+        self::assertNull($item1->expression->instance);
     }
 
     public function testQualifiedLowersATableNameWithItsDatabase(): void
@@ -80,8 +88,10 @@ final class NameRuleTest extends TestCase
         $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT a FROM `my db`.t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertSame('my db', $operation->statement->from?->name->schema?->value);
-        self::assertSame('t', $operation->statement->from->name->name->value);
+        $from = $operation->statement->from;
+        self::assertInstanceOf(TableReference::class, $from);
+        self::assertSame('my db', $from->name->schema?->value);
+        self::assertSame('t', $from->name->name->value);
         self::assertSame('SELECT a FROM `my db`.t', $operation->toString());
     }
 
@@ -121,12 +131,16 @@ final class NameRuleTest extends TestCase
         $legacy = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT .t.d FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(ColumnUse::class, $operation->statement->items[2]->expression);
-        self::assertSame('db', $operation->statement->items[2]->expression->qualifier?->schema?->value);
+        $item2 = $operation->statement->items[2];
+        self::assertInstanceOf(SelectExpression::class, $item2);
+        self::assertInstanceOf(ColumnUse::class, $item2->expression);
+        self::assertSame('db', $item2->expression->qualifier?->schema?->value);
         self::assertSame('SELECT a, t.b, db.t.c FROM t', $operation->toString());
         self::assertInstanceOf(Select::class, $legacy->statement);
-        self::assertInstanceOf(ColumnUse::class, $legacy->statement->items[0]->expression);
-        self::assertNull($legacy->statement->items[0]->expression->qualifier?->schema);
+        $item0 = $legacy->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(ColumnUse::class, $item0->expression);
+        self::assertNull($item0->expression->qualifier?->schema);
         self::assertSame('SELECT t.d FROM t', $legacy->toString());
     }
 

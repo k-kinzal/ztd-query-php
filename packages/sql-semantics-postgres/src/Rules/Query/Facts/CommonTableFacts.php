@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query\Facts;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\PostgreSql\Rules\Expression\Unification;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Carriers;
 use SqlSemantics\Platform\PostgreSql\Rules\Resolution\ColumnAliases;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Merge;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuse;
@@ -46,7 +48,8 @@ use SqlSemantics\Validation\ValueGraph;
  * and CYCLE its mark column (boolean, or the common type of the TO and
  * DEFAULT values, which see no column) and path column (an array of
  * records); their columns must be columns of the table, and both require a
- * recursive table. A repeated name is reported. The bindings join the
+ * recursive table. A repeated name is reported, and so is MERGE as the statement of a
+ * common table before release 17. The bindings join the
  * environment of the holder at its own query level. Terminates: each table
  * is derived once.
  * Source: https://www.postgresql.org/docs/17/queries-with.html. Status: Implemented.
@@ -78,6 +81,9 @@ final class CommonTableFacts
             $provisional = $recursive ? [new CommonBinding($table->name, $table, new RowShape([]))] : [];
             if ($recursive && !$this->recursiveForm($table)) {
                 $derivation->report(new QueryMisuse(QueryMisuseRule::RecursiveForm, $table->name));
+            }
+            if ($table->query instanceof Merge && $derivation->context->profile->grammar === GrammarRelease::PostgreSql166) {
+                $derivation->report(new QueryMisuse(QueryMisuseRule::MergeInWith));
             }
             if (!$recursive && ($table->search !== null || $table->cycle !== null)) {
                 $derivation->report(new QueryMisuse(QueryMisuseRule::SearchOrCycleNotRecursive, $table->name));

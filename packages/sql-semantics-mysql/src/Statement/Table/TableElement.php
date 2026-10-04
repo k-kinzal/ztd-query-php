@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table;
 
+use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Node;
 
 /**
@@ -15,4 +17,8 @@ use SqlSemantics\Statement\Node;
  */
 interface TableElement extends Node
 {
+    /**
+     * Derives the expressions inside the element at a position whose visible relation is the table being defined or changed.
+     */
+    public function deriveElement(Derivation $derivation, Environment $scope): void;
 }

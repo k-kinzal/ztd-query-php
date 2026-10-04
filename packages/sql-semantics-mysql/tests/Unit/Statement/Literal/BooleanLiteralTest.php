@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Rendering\Lexical;
@@ -49,6 +50,7 @@ final class BooleanLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(BooleanLiteral::class, $literal);
         $fact = $operation->facts->scalar($literal);

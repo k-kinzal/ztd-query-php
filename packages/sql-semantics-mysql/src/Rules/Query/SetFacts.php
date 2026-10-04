@@ -6,8 +6,10 @@ namespace SqlSemantics\Platform\MySql\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
+use SqlSemantics\Statement\Query;
 
 /**
  * Derives the facts of a set operation.
@@ -32,11 +34,19 @@ final class SetFacts
      */
     public function derive(SetOperation $operation, Derivation $derivation, Environment $outer): QueryFact
     {
-        $left = $derivation->query($operation->left, $outer);
+        return $this->operands($operation->left, $operation->operator, $operation->right, $derivation, $outer);
+    }
+
+    /**
+     * Derives the two operands of a set operator and answers the output.
+     */
+    public function operands(Query $leftQuery, SetOperator $operator, Query $rightQuery, Derivation $derivation, Environment $outer): QueryFact
+    {
+        $left = $derivation->query($leftQuery, $outer);
         $tables = new CommonTables();
-        $pending = $tables->pending($outer, $operation->right, $derivation);
-        $right = $derivation->query($operation->right, $pending === null ? $outer : $tables->anchored($outer, $pending, $left, $derivation));
-        $fact = new QueryFact((new ResultSlots())->combine($left, $right, $operation->operator, $derivation), $derivation->context->columnNames);
+        $pending = $tables->pending($outer, $rightQuery, $derivation);
+        $right = $derivation->query($rightQuery, $pending === null ? $outer : $tables->anchored($outer, $pending, $left, $derivation));
+        $fact = new QueryFact((new ResultSlots())->combine($left, $right, $operator, $derivation), $derivation->context->columnNames);
 
         return $pending === null ? $fact : $tables->nullable($left);
     }

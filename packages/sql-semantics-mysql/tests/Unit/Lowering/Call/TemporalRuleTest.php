@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Call;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Parser\Node;
 use SqlSemantics\Contract\ParameterStyle;
@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 
 #[CoversClass(TemporalRule::class)]
-#[Small]
+#[Medium]
 final class TemporalRuleTest extends TestCase
 {
     public function testClaimsTellsTheProductionsOfTheRule(): void

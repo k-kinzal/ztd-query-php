@@ -141,7 +141,7 @@ final class UnionRule
             }
         }
 
-        return (new Chain($operands, $quantifiers, $trailer))->query();
+        return (new Chain($operands, $quantifiers, $this->lowering->profile->grammar, $trailer))->query();
     }
 
     /**

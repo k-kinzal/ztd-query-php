@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Query\Facts;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\SelectFacts::class)]
-#[Small]
+#[Medium]
 final class SelectFactsTest extends TestCase
 {
     public function testDeriveReportsLockingWithGroupBy(): void

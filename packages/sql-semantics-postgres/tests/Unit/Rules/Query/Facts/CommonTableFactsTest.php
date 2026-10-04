@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Query\Facts;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\CommonTableFacts::class)]
-#[Small]
+#[Medium]
 final class CommonTableFactsTest extends TestCase
 {
     public function testBindMakesTheTablesVisible(): void
@@ -69,6 +69,12 @@ final class CommonTableFactsTest extends TestCase
         $derivation = new \SqlSemantics\Construction\Derivation($context);
         $fact = $derivation->query(new \SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression(new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\WithClause([new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Statement\Identifier\Name('r'), new \SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation(new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1')))]), \SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperator::Union, new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference([new \SqlSemantics\Statement\Identifier\Name('n')]))], new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('r'))))), \SqlSemantics\Platform\PostgreSql\Statement\Query\SetQuantifier::All), [new \SqlSemantics\Statement\Identifier\Name('n')], null, null, new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CycleClause([new \SqlSemantics\Statement\Identifier\Name('n')], new \SqlSemantics\Statement\Identifier\Name('m'), new \SqlSemantics\Statement\Identifier\Name('p'), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('y')), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('n'))))], true), new \SqlSemantics\Platform\PostgreSql\Statement\Query\Select([new \SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference([new \SqlSemantics\Statement\Identifier\Name('m')]))], new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('r')))))), $derivation->environment());
         self::assertSame('text', ($fact->fields()?->at(0)->type instanceof \SqlSemantics\Statement\Type\Known ? $fact->fields()->at(0)->type->descriptor->name() : null));
+    }
+
+    public function testBindReportsMergeBeforeRelease17(): void
+    {
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-16.6'))->analyze('WITH m AS (MERGE INTO t USING u ON TRUE WHEN MATCHED THEN DO NOTHING) SELECT 1');
+        self::assertSame('MERGE not supported in WITH query', $query->facts->diagnostics[0]->message());
     }
 
     public function testMemberReportsASearchColumnTheTableLacks(): void

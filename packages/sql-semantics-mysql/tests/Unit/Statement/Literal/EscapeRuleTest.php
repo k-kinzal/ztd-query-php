@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 
 #[CoversClass(EscapeRule::class)]
 #[Medium]
@@ -44,7 +45,9 @@ final class EscapeRuleTest extends TestCase
         self::assertInstanceOf(Select::class, $verbatimSelect);
         self::assertInstanceOf(Select::class, $backslashSelect);
         $verbatimItem = $verbatimSelect->items[0];
+        self::assertInstanceOf(SelectExpression::class, $verbatimItem);
         $backslashItem = $backslashSelect->items[0];
+        self::assertInstanceOf(SelectExpression::class, $backslashItem);
         $verbatimLiteral = $verbatimItem->expression;
         $backslashLiteral = $backslashItem->expression;
         self::assertInstanceOf(StringLiteral::class, $verbatimLiteral);

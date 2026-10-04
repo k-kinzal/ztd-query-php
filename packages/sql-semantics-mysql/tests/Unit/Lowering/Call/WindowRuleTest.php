@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Call;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Lowering\Leaves;
@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 
 #[CoversClass(WindowRule::class)]
-#[Small]
+#[Medium]
 final class WindowRuleTest extends TestCase
 {
     public function testFunctionLowersTheValueFunctions(): void

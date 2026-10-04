@@ -6,9 +6,11 @@ namespace SqlSemantics\Platform\MySql\Lowering\Dml;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
+use SqlSemantics\Platform\MySql\Lowering\Dml\Insert\InsertRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
 use SqlSemantics\Platform\MySql\Statement\Dml\FileFormat;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\TextFileFormat;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Statement;
@@ -38,33 +40,50 @@ final class DmlRules
     /**
      * Lowers a data manipulation statement: a node of one of the statement rules this family owns.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function statement(Node $statement): Statement
     {
-        throw ImplementationGap::rule('MySQL dml family: statement');
+        $form = $this->lowering->form($statement);
+
+        return match ($statement->name) {
+            'insert_stmt', 'replace_stmt' => (new InsertRule($this->lowering))->statement($form),
+            'insert', 'replace' => (new InsertRule($this->lowering))->legacy($form),
+            'update', 'update_stmt' => (new ChangeRule($this->lowering))->update($form),
+            'delete_stmt' => (new ChangeRule($this->lowering))->delete($form),
+            'delete' => (new ChangeRule($this->lowering))->legacyDelete($form),
+            'load', 'load_stmt' => (new LoadRule($this->lowering))->statement($form),
+            'handler', 'handler_stmt' => (new HandlerRule($this->lowering))->statement($form),
+            'do', 'do_stmt' => (new InvocationRule($this->lowering))->evaluation($form),
+            'call', 'call_stmt' => (new InvocationRule($this->lowering))->call($form),
+            'import_stmt' => (new InvocationRule($this->lowering))->import($form),
+            'prepare', 'execute', 'deallocate' => (new InvocationRule($this->lowering))->prepared($form),
+            default => throw ImplementationGap::production($form),
+        };
     }
 
     /**
      * Lowers REPLACE or IGNORE before a query that fills a table: a node of `opt_duplicate` or
      * `duplicate`; neither is null.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function duplicateHandling(Node $duplicate): ?DuplicateHandling
     {
-        throw ImplementationGap::rule('MySQL dml family: duplicateHandling');
+        return (new TargetRule($this->lowering))->duplicates($duplicate);
     }
 
     /**
      * Lowers the text file format of INTO OUTFILE: the nodes of `opt_load_data_charset`, `opt_field_term`
      * and `opt_line_term`.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function fileFormat(Node $charset, Node $fields, Node $lines): FileFormat
     {
-        throw ImplementationGap::rule('MySQL dml family: fileFormat');
+        $format = new FormatRule($this->lowering);
+
+        return new TextFileFormat($format->charset($charset), $format->fields($fields), $format->lines($lines));
     }
 
     /**
@@ -72,11 +91,11 @@ final class DmlRules
      * `table_alias_ref_list`.
      *
      * @return list<QualifiedName>
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function deleteTargets(Node $list): array
     {
-        throw ImplementationGap::rule('MySQL dml family: deleteTargets');
+        return (new TargetRule($this->lowering))->tables($list);
     }
 
     /**
@@ -84,10 +103,10 @@ final class DmlRules
      * absent list is empty.
      *
      * @return list<Scalar>
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function rowValues(Node $values): array
     {
-        throw ImplementationGap::rule('MySQL dml family: rowValues');
+        return (new ValueRule($this->lowering))->row($values);
     }
 }

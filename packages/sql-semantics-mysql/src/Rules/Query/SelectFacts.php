@@ -32,8 +32,10 @@ use SqlSemantics\Statement\Shape\RowShape;
  * (MYSQL-AGGREGATE-QUERY-001; HAVING alone filters rows like WHERE) or groups WITH ROLLUP, ROLLUP or CUBE, every
  * column of the FROM tables read by the select list, HAVING, the windows,
  * QUALIFY and ORDER BY can be NULL. LIMIT, PROCEDURE ANALYSE, INTO and the
- * locking clauses follow MYSQL-TAIL-FACTS-001. A window name defined twice
- * is reported. The output fields follow MYSQL-STAR-001. Terminates: every
+ * locking clauses follow MYSQL-TAIL-FACTS-001; a late ordering is derived
+ * like the ORDER BY and LIMIT of the block. A window name defined twice
+ * is reported, and so is a window name the block does not define
+ * (MYSQL-WINDOW-NAME-001). The output fields follow MYSQL-STAR-001. Terminates: every
  * clause is a strict part of the block. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/select.html,
  * https://dev.mysql.com/doc/refman/8.4/en/group-by-modifiers.html ("the
@@ -51,7 +53,7 @@ final class SelectFacts
         $context = $derivation->context;
         $from = $select->from === null ? new JoinedInput(new RelationFact(new RowShape([])), [], []) : (new FromScope())->open($select->from, $derivation, $outer, []);
         $visible = $from->visible;
-        $ordering = array_map(static fn (OrderItem $item): object => $item->expression, $select->orderBy);
+        $ordering = array_map(static fn (OrderItem $item): object => $item->expression, [...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)]);
         $expressions = array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items);
         $aggregate = $select->groupBy === null && (new Aggregation())->aggregates([...$expressions, ...$ordering, ...array_values(array_filter([$select->having, $select->qualify]))]);
         $output = $aggregate || $select->groupBy?->modifier !== null ? array_map(static fn ($relation) => (new Joining())->extend($relation), $visible) : $visible;
@@ -68,11 +70,13 @@ final class SelectFacts
             $derivation->scalar($select->having, $results);
         }
         $this->windows($select, $derivation, new Environment($context, $outer, $output));
+        (new WindowReferences())->check($select, $derivation);
         if ($select->qualify !== null) {
             $derivation->scalar($select->qualify, $results);
         }
-        (new SortScopes())->derive($select->orderBy, $derivation, $results, $items, true);
+        (new SortScopes())->derive([...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)], $derivation, $results, $items, true);
         (new TailFacts())->limit($select->limit, $derivation, $outer);
+        (new TailFacts())->limit($select->late?->limit, $derivation, $outer);
         foreach ($select->procedure === null ? [] : $select->procedure->arguments as $argument) {
             $derivation->scalar($argument, new Environment($context, $outer));
         }

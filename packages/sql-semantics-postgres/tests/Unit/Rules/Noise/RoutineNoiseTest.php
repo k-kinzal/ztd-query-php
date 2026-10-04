@@ -13,8 +13,10 @@ use SqlSemantics\Platform\PostgreSql\Rules\Noise\RoutineNoise;
 #[Small]
 final class RoutineNoiseTest extends TestCase
 {
-    public function testPositionsIsEmptyUntilTheFamilyDeclaresNoise(): void
+    public function testPositionsListsTheNoiseOfTheFamily(): void
     {
-        self::assertSame([], RoutineNoise::positions());
+        $positions = RoutineNoise::positions();
+        self::assertSame([[0], [0], [2]], [$positions['common_func_opt_item: EXTERNAL SECURITY DEFINER'], $positions['opt_recheck: RECHECK'], $positions['routine_body_stmt_list: routine_body_stmt_list routine_body_stmt ;']]);
+        self::assertCount(5, $positions);
     }
 }

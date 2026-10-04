@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
@@ -37,14 +38,18 @@ final class VariableAssignmentTest extends TestCase
         $operation = $semantics->analyze('SELECT @n := b, @m := a FROM t', [$table]);
 
         self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(VariableAssignment::class, $operation->statement->items[0]->expression);
-        $nullable = $operation->facts->scalar($operation->statement->items[0]->expression);
+        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(VariableAssignment::class, $item0->expression);
+        $nullable = $operation->facts->scalar($item0->expression);
         self::assertInstanceOf(Known::class, $nullable->type);
         self::assertSame('BIGINT', $nullable->type->descriptor->name());
         self::assertSame(Nullability::Nullable, $nullable->nullability);
         self::assertNull($nullable->resolution);
-        self::assertInstanceOf(VariableAssignment::class, $operation->statement->items[1]->expression);
-        $notNull = $operation->facts->scalar($operation->statement->items[1]->expression);
+        $item1 = $operation->statement->items[1];
+        self::assertInstanceOf(SelectExpression::class, $item1);
+        self::assertInstanceOf(VariableAssignment::class, $item1->expression);
+        $notNull = $operation->facts->scalar($item1->expression);
         self::assertInstanceOf(Known::class, $notNull->type);
         self::assertSame('INT', $notNull->type->descriptor->name());
         self::assertSame(Nullability::NotNull, $notNull->nullability);
@@ -57,11 +62,13 @@ final class VariableAssignmentTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @n := 5');
 
         self::assertInstanceOf(Select::class, $operation->statement);
-        self::assertInstanceOf(VariableAssignment::class, $operation->statement->items[0]->expression);
-        $target = $operation->facts->scalar($operation->statement->items[0]->expression->target);
+        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(VariableAssignment::class, $item0->expression);
+        $target = $operation->facts->scalar($item0->expression->target);
         self::assertInstanceOf(Dependent::class, $target->type);
         self::assertSame('the session state: user variable @n', $target->type->missing[0]->describe());
-        self::assertSame(Nullability::NotNull, $operation->facts->scalar($operation->statement->items[0]->expression)->nullability);
+        self::assertSame(Nullability::NotNull, $operation->facts->scalar($item0->expression)->nullability);
     }
 
     public function testDeriveScalarTakesEverythingRightOfTheOperatorAsTheValue(): void

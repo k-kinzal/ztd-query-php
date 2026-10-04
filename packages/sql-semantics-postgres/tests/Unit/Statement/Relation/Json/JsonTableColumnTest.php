@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Relation\Json;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Statement\Relation\Json\JsonTableColumn::class)]
-#[Small]
+#[Medium]
 final class JsonTableColumnTest extends TestCase
 {
     public function testColumnsImplementTheContract(): void

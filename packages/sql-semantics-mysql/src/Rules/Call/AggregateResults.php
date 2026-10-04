@@ -47,7 +47,7 @@ final class AggregateResults
             $derivation->report(new UnsupportedWindowing(WindowingLimit::DistinctAggregate));
         }
         $type = $arguments[0]->type ?? new NullOnly();
-        $aggregation = new TypeAggregation();
+        $aggregation = new TypeClasses();
 
         return match ($call->function) {
             AggregateFunction::Count => new ScalarFact(new Known(TypeClass::Integer->descriptor()), Nullability::NotNull),
@@ -66,16 +66,16 @@ final class AggregateResults
      */
     public function sum(TypeFact $argument): TypeFact
     {
-        $classes = (new TypeAggregation())->classes($argument);
+        $classes = (new TypeClasses())->classes($argument);
         if ($classes === []) {
-            return (new TypeAggregation())->fact([TypeClass::Decimal, TypeClass::Floating]);
+            return (new TypeClasses())->fact([TypeClass::Decimal, TypeClass::Floating]);
         }
         $results = [];
         foreach ($classes as $class) {
             $results[] = in_array($class, [TypeClass::Integer, TypeClass::Unsigned, TypeClass::Decimal, TypeClass::Year, TypeClass::Bit], true) ? TypeClass::Decimal : TypeClass::Floating;
         }
 
-        return (new TypeAggregation())->fact($results);
+        return (new TypeClasses())->fact($results);
     }
 
     /**
@@ -83,18 +83,18 @@ final class AggregateResults
      */
     public function bits(TypeFact $argument): TypeFact
     {
-        $classes = (new TypeAggregation())->classes($argument);
+        $classes = (new TypeClasses())->classes($argument);
         if ($argument instanceof NullOnly) {
             return new Known(TypeClass::Unsigned->descriptor());
         }
         if ($classes === []) {
-            return (new TypeAggregation())->fact([TypeClass::Unsigned, TypeClass::Binary]);
+            return (new TypeClasses())->fact([TypeClass::Unsigned, TypeClass::Binary]);
         }
         $results = [];
         foreach ($classes as $class) {
             $results[] = $class === TypeClass::Binary ? TypeClass::Binary : TypeClass::Unsigned;
         }
 
-        return (new TypeAggregation())->fact($results);
+        return (new TypeClasses())->fact($results);
     }
 }

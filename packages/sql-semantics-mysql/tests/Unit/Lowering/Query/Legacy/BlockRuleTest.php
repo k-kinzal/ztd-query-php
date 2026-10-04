@@ -29,7 +29,8 @@ final class BlockRuleTest extends TestCase
 
     public function testFullLowersTheBlockWithAFromClause(): void
     {
-        self::assertSame('SELECT a INTO @x FROM t WHERE 1 GROUP BY a HAVING 1 ORDER BY a LIMIT 1 PROCEDURE ANALYSE() FOR UPDATE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select a into @x from t where 1 group by a having 1 order by a limit 1 procedure analyse() for update')->toString());
+        self::assertSame('SELECT a INTO @x FROM t WHERE 1 GROUP BY a HAVING 1 ORDER BY a LIMIT 1 FOR UPDATE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select a into @x from t where 1 group by a having 1 order by a limit 1 for update')->toString());
+        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE() FOR UPDATE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select a from t procedure analyse() for update')->toString());
     }
 
     public function testHeadLowersTheOptionsAndItems(): void
@@ -89,5 +90,28 @@ final class BlockRuleTest extends TestCase
     {
         self::assertSame('SELECT (SELECT a FROM t LIMIT 1 FOR UPDATE) FROM u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select (select a from t limit 1 for update) from u')->toString());
         self::assertSame('SELECT (SELECT DISTINCT a FROM t) FROM u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select (select distinct a from t) from u')->toString());
+    }
+
+    public function testDerivedRejectsProcedureAnalyseInASubquery(): void
+    {
+        $this->expectExceptionMessage('Incorrect usage of PROCEDURE and subquery: PROCEDURE ANALYSE belongs to the outermost query block.');
+
+        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT (SELECT a FROM t PROCEDURE ANALYSE())');
+    }
+
+    public function testFullRejectsProcedureAnalyseWithInto(): void
+    {
+        $this->expectExceptionMessage('Incorrect usage of PROCEDURE and INTO: a query block with PROCEDURE ANALYSE has no INTO.');
+
+        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT a FROM t PROCEDURE ANALYSE() INTO @x');
+    }
+
+    public function testIntoRejectsProcedureAnalyseAfterAnIntoOf56(): void
+    {
+        self::assertSame('SELECT a FROM t PROCEDURE ANALYSE() INTO @x', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT a FROM t PROCEDURE ANALYSE() INTO @x')->toString());
+
+        $this->expectExceptionMessage('Incorrect usage of PROCEDURE and INTO: PROCEDURE ANALYSE follows no INTO.');
+
+        (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT a INTO @x FROM t PROCEDURE ANALYSE()');
     }
 }

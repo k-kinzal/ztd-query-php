@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Query\From;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
@@ -22,7 +23,8 @@ use SqlSemantics\Statement\Relation;
  *
  * Rule: MYSQL-FROM-SCOPE-001. A table reference, a derived table and a JSON
  * table are each one visible relation under their correlation name, or a
- * table reference under its table name when it has none; DUAL makes none
+ * table reference under its table name when it has none, together with the
+ * INVISIBLE columns a name finds (MYSQL-TABLE-SHAPES-001); DUAL makes none
  * visible. A non-lateral derived table sees the enclosing queries only; a
  * LATERAL derived table and the document of JSON_TABLE also see the tables
  * to their left: the earlier members of the comma list and, inside a join,
@@ -56,7 +58,7 @@ final class FromScope
         $lateral = $term instanceof JsonTable || ($term instanceof DerivedTable && $term->lateral);
         $fact = $derivation->relation($term, $lateral ? new Environment($derivation->context, $outer, $left) : $outer);
         if ($term instanceof NamedRelation) {
-            $relation = new VisibleRelation($term, $fact->shape, $term->alias(), $term->name());
+            $relation = new VisibleRelation($term, $fact->shape, $term->alias(), $term->name(), [], (new TableShapes())->implicit($fact));
         } elseif ($term instanceof DerivedTable || $term instanceof JsonTable) {
             $relation = new VisibleRelation($term, $fact->shape, $term->alias);
         } else {

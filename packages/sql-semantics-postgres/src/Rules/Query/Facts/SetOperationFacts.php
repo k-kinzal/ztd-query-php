@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Query\UnknownOutputs;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\SetOperation;
-use SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\With\RecursiveDefinition;
 use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -31,7 +31,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * untyped literals as `unknown`, PG-UNKNOWN-OUTPUT-001), and a column can be
  * NULL when it can in an operand. Operands of different widths and types
  * that cannot be matched are reported. When the set operation is the query
- * of a recursive common table that refers to itself, the second operand
+ * of a recursive common table or view (RecursiveDefinition) that refers to
+ * itself, the second operand
  * sees that table with the columns of the first operand, renamed by the
  * column list of the table, each able to be NULL because later rounds of the
  * recursion feed back their own rows. An operand whose columns are not all
@@ -95,10 +96,10 @@ final class SetOperationFacts
         $changed = false;
         foreach ($outer->commonTables as $binding) {
             $definition = $binding->definition;
-            if ($definition instanceof CommonTableExpression && (new Carriers())->core($definition->query) === $operation) {
+            if ($definition instanceof RecursiveDefinition && (new Carriers())->core($definition->recursiveQuery()) === $operation) {
                 $slots = [];
                 foreach ($anchor->fields() ?? [] as $position => $field) {
-                    $slots[] = new OutputSlot($definition->columns[$position] ?? $field->name, $field->type, Nullability::Nullable, null, $field->slot);
+                    $slots[] = new OutputSlot($definition->recursiveColumns()[$position] ?? $field->name, $field->type, Nullability::Nullable, null, $field->slot);
                 }
                 $binding = new CommonBinding($binding->name, $definition, new RowShape($slots, $anchor->shape->missing));
                 $changed = true;

@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\TailFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -60,6 +61,7 @@ final class QueryStatement implements Statement, Query
         Check::input($intoPosition !== IntoPosition::AfterItems, 'An INTO after a whole query is written after the query or after its locking clauses.');
         Check::input($intoPosition !== IntoPosition::AfterLocking || $locking !== [], 'An INTO after the locking clauses follows at least one of them.');
         Check::input(!$query instanceof self && !$query instanceof Select && !($query instanceof QueryExpression && $query->body instanceof Select), 'The INTO and locking clauses of a single query block belong to the block.');
+        Check::input(!$query instanceof OrderedSetOperation, 'A set operation ordered after its last SELECT ends its subquery.');
     }
 
     /**

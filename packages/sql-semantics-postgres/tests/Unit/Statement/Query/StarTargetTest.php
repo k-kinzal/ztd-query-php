@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Query;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Statement\Query\StarTarget::class)]
-#[Small]
+#[Medium]
 final class StarTargetTest extends TestCase
 {
     public function testProjectExpandsTheFromItems(): void

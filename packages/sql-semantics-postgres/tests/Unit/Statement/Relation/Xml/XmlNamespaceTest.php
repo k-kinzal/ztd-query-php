@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Relation\Xml;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlNamespace::class)]
-#[Small]
+#[Medium]
 final class XmlNamespaceTest extends TestCase
 {
     public function testRenderWritesThePrefixOrDefault(): void

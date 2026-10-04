@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Relation\Xml;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTableColumn::class)]
-#[Small]
+#[Medium]
 final class XmlTableColumnTest extends TestCase
 {
     public function testOrdinalityTellsTheNumberingColumn(): void

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Query;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\SelectFacts;
 use SqlSemantics\Platform\MySql\Rules\Query\SortScopes;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProcedureAnalyse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\WindowDefinition;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
@@ -36,7 +38,9 @@ use SqlSemantics\Statement\Statement;
  * statement instead. An ORDER BY or GROUP BY item that is an unsigned
  * integer is a select list position (MYSQL-ORDINAL-001) and must be given
  * as one. An INTO clause after the query clauses needs one of them, because
- * otherwise it is written as the INTO after the select list.
+ * otherwise it is written as the INTO after the select list. A block of a
+ * 5.6 subquery may write its ORDER BY and LIMIT after its locking clauses,
+ * or a LIMIT after its own LIMIT that replaces it (LateOrdering).
  *
  * Rule: MYSQL-SELECT-001. The facts are derived by MYSQL-SELECT-FACTS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html,
@@ -96,6 +100,7 @@ final class Select implements Statement, Query, Selection
      * @param list<LockingClause> $locking The locking clauses
      * @param IntoDestination|null $into The INTO destination
      * @param IntoPosition|null $intoPosition Where INTO is written; given exactly when there is a destination
+     * @param LateOrdering|null $late The ORDER BY and LIMIT a 5.6 subquery writes after the locking clauses or the LIMIT of the block
      */
     public function __construct(
         array $options,
@@ -112,6 +117,7 @@ final class Select implements Statement, Query, Selection
         array $locking = [],
         public readonly ?IntoDestination $into = null,
         public readonly ?IntoPosition $intoPosition = null,
+        public readonly ?LateOrdering $late = null,
     ) {
         $this->options = Check::listOf($options, SelectOption::class, 'The modifiers of a selection are select options.');
         $list = [];
@@ -127,6 +133,9 @@ final class Select implements Statement, Query, Selection
         Check::input(($into === null) === ($intoPosition === null), 'An INTO destination is written at exactly one position.');
         Check::input($intoPosition !== IntoPosition::AfterQuery || $this->clauses(), 'An INTO after the query clauses follows at least one of them.');
         Check::input($intoPosition !== IntoPosition::AfterLocking || $this->locking !== [], 'An INTO after the locking clauses follows at least one of them.');
+        Check::input($late === null || $late->orderBy === [] || ($this->orderBy === [] && $limit === null), 'An ORDER BY written after a block that orders or limits its rows orders the rows of the block.');
+        Check::input($late === null || $this->locking !== [] || $limit !== null, 'An ORDER BY or LIMIT of the block is written in place unless locking clauses or a LIMIT of the block precede it.');
+        Check::input($late === null || ($into === null && $procedure === null), 'A block with a late ordering has no INTO or PROCEDURE ANALYSE.');
     }
 
     /**
@@ -143,7 +152,7 @@ final class Select implements Statement, Query, Selection
      */
     public function trailed(): bool
     {
-        return $this->orderBy !== [] || $this->limit !== null || $this->procedure !== null || $this->locking !== []
+        return $this->orderBy !== [] || $this->limit !== null || $this->procedure !== null || $this->locking !== [] || $this->late !== null
             || ($this->into !== null && $this->intoPosition !== IntoPosition::AfterItems);
     }
 
@@ -160,6 +169,7 @@ final class Select implements Statement, Query, Selection
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        Check::input($this->late === null, 'An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block is written in a subquery only.');
         $derivation->output($derivation->query($this, $derivation->environment()));
     }
 
@@ -168,6 +178,8 @@ final class Select implements Statement, Query, Selection
      */
     public function deriveQuery(Derivation $derivation, Environment $outer): QueryFact
     {
+        Check::input($this->late === null || $derivation->context->profile->grammar === GrammarRelease::MySql5651, 'An ORDER BY or LIMIT after the locking clauses or the LIMIT of a block needs MySQL 5.6.');
+
         return (new SelectFacts())->derive($this, $derivation, $outer);
     }
 
@@ -207,6 +219,7 @@ final class Select implements Statement, Query, Selection
             $out->node($clause);
         }
         $this->renderInto($out, IntoPosition::AfterLocking);
+        $out->node($this->late);
     }
 
     /**

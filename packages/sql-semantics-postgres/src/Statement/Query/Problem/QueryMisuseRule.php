@@ -42,11 +42,15 @@ enum QueryMisuseRule: string
     case DuplicateCommonTable = 'WITH query name "%s" specified more than once';
     case RecursiveForm = 'recursive query "%s" does not have the form non-recursive-term UNION [ALL] recursive-term';
     case SearchOrCycleNotRecursive = 'WITH query "%s" is not recursive but has a SEARCH or CYCLE clause';
+    case MergeInWith = 'MERGE not supported in WITH query';
+    case NestedModification = 'WITH clause containing a data-modifying statement must be at the top level';
     case WithoutReturning = 'WITH query "%s" does not have a RETURNING clause';
     case UsingColumnRepeated = 'column name "%s" appears more than once in USING clause';
     case UsingColumnNotInLeft = 'column "%s" specified in USING clause does not exist in left table';
     case UsingColumnNotInRight = 'column "%s" specified in USING clause does not exist in right table';
     case RecordWithoutDefinitions = 'a column definition list is required for functions returning "record"';
+    case RowsFromDefinitions = 'ROWS FROM() with multiple functions cannot have a column definition list';
+    case RepeatedDefinitions = 'multiple column definition lists are not allowed for the same function';
     case DefinitionsForBaseType = 'a column definition list is only allowed for functions returning "record"';
     case UnrecognizedColumnOption = 'unrecognized column option "%s"';
     case RedundantNullability = 'conflicting or redundant NULL / NOT NULL declarations for column "%s"';

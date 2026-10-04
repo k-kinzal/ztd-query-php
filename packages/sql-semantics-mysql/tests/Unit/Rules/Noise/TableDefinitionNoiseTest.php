@@ -13,13 +13,14 @@ use SqlSemantics\Platform\MySql\Rules\Noise\TableDefinitionNoise;
 #[Small]
 final class TableDefinitionNoiseTest extends TestCase
 {
-    public function testPositionsListsNothingYet(): void
+    public function testPositionsListsTheOptionalWords(): void
     {
-        self::assertSame([], TableDefinitionNoise::positions());
+        self::assertSame([1], TableDefinitionNoise::positions()['column_attribute: UNIQUE_SYM KEY_SYM']);
+        self::assertSame([0, 1], TableDefinitionNoise::positions()['opt_generated_always: GENERATED ALWAYS_SYM']);
     }
 
-    public function testSynonymsListsNothingYet(): void
+    public function testSynonymsMapsTypeToUsing(): void
     {
-        self::assertSame([], TableDefinitionNoise::synonyms());
+        self::assertSame([0 => 'USING'], TableDefinitionNoise::synonyms()['index_type_clause: TYPE_SYM index_type']);
     }
 }

@@ -8,7 +8,6 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
@@ -27,7 +26,7 @@ use SqlSemantics\Statement\Statement;
  *     $table = new \SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression(new \SqlSemantics\Statement\Identifier\Name('x'), $one, [new \SqlSemantics\Statement\Identifier\Name('a')], \SqlSemantics\Platform\PostgreSql\Statement\Query\With\Materialization::Materialized);
  *     [$table->name->value, $table->columns[0]->value, $table->materialization->value] // => ['x', 'a', 'MATERIALIZED']
  */
-final class CommonTableExpression implements Node
+final class CommonTableExpression implements RecursiveDefinition
 {
     use Snapshot;
 
@@ -54,6 +53,24 @@ final class CommonTableExpression implements Node
     ) {
         Check::input($query instanceof Statement, 'A common table expression is computed by a statement.');
         $this->columns = Check::listOf($columns, Name::class, 'The columns of a common table expression are names.');
+    }
+
+    /**
+     * Answers the statement that computes the rows.
+     */
+    public function recursiveQuery(): Query
+    {
+        return $this->query;
+    }
+
+    /**
+     * Answers the column names written after the name.
+     *
+     * @return list<Name>
+     */
+    public function recursiveColumns(): array
+    {
+        return $this->columns;
     }
 
     /**

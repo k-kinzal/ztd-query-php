@@ -30,7 +30,8 @@ use SqlSemantics\Validation\ValueGraph;
  * the statement returns no rows and declares the new table instead: one
  * column per output field, of the field's type and able to be NULL, as far as
  * the types are known; a table with a field of a type that is not known is
- * declared incomplete up to that field. INTO anywhere else is reported.
+ * declared incomplete up to that field. INTO anywhere else is reported. Data-modifying common tables
+ * outside the top-level WITH clause are reported (PG-MODIFYING-CTE-001).
  * Source: https://www.postgresql.org/docs/17/sql-selectinto.html. Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\PostgreSql
@@ -43,6 +44,8 @@ final class QueryRoots
     public function derive(Query $root, Derivation $derivation): void
     {
         $fact = $derivation->query($root, $derivation->environment());
+        $modifying = new ModifyingCommonTables();
+        $modifying->check($root, $modifying->top($root), $derivation);
         $first = $this->first($root);
         foreach ((new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\PostgreSql\\Statement\\']))->objects($root) as $object) {
             if ($object instanceof Select && $object->into !== null && $object !== $first) {

@@ -13,13 +13,15 @@ use SqlSemantics\Platform\MySql\Rules\Noise\DmlNoise;
 #[Small]
 final class DmlNoiseTest extends TestCase
 {
-    public function testPositionsListsNothingYet(): void
+    public function testPositionsListsTheOptionalWords(): void
     {
-        self::assertSame([], DmlNoise::positions());
+        self::assertSame([0], DmlNoise::positions()['opt_INTO: INTO']);
+        self::assertSame([0, 2], DmlNoise::positions()['opt_paren_expr_list: ( opt_expr_list )']);
     }
 
-    public function testSynonymsListsNothingYet(): void
+    public function testSynonymsMapValueToValues(): void
     {
-        self::assertSame([], DmlNoise::synonyms());
+        self::assertSame([0 => 'VALUES'], DmlNoise::synonyms()['value_or_values: VALUE_SYM']);
+        self::assertSame([0 => 'DEALLOCATE_SYM'], DmlNoise::synonyms()['deallocate_or_drop: DROP']);
     }
 }

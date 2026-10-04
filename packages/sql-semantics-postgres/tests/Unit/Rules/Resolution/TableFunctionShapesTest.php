@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Resolution;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Rules\Resolution\TableFunctionShapes::class)]
-#[Small]
+#[Medium]
 final class TableFunctionShapesTest extends TestCase
 {
     public function testXmlReportsASecondOrdinalityColumn(): void

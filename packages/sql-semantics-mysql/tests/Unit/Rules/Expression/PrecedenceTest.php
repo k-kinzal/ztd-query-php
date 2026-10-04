@@ -10,16 +10,11 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
-use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Expression\Not;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Interval;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
-use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
 use SqlSemantics\Platform\MySql\Statement\Expression\Truth;
@@ -56,17 +51,6 @@ final class PrecedenceTest extends TestCase
         self::assertSame(Precedence::PREDICATE, $precedence->opening(new InList(new Arithmetic(ArithmeticOperator::Minus, new NumberLiteral('1'), new NumberLiteral('2')), [new NumberLiteral('3')])));
         self::assertSame(Precedence::PRIMARY, $precedence->opening(new Unary(UnaryOperator::Minus, new NumberLiteral('1'))));
         self::assertSame(Precedence::CLOSED, $precedence->opening(new NumberLiteral('1')));
-    }
-
-    public function testClosingIsTheWeakestLevelOnTheRightEdge(): void
-    {
-        $precedence = new Precedence();
-        $assignment = new VariableAssignment(new UserVariable(new Name('v')), new NumberLiteral('1'));
-
-        self::assertSame(Precedence::ASSIGNMENT, $precedence->closing(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), $assignment)));
-        self::assertSame(Precedence::NEGATION, $precedence->closing(new IntervalAddition(new Interval(new NumberLiteral('1'), IntervalUnit::Day), new NumberLiteral('2'))));
-        self::assertSame(Precedence::BOOL_PRI, $precedence->closing(new Between(new NumberLiteral('1'), new NumberLiteral('2'), new NumberLiteral('3'))));
-        self::assertSame(Precedence::COLLATION, $precedence->closing(new Collated(new NumberLiteral('1'), new Name('utf8mb4_bin'))));
     }
 
     public function testAdmitsAcceptsTheNonterminalsOfASlot(): void

@@ -8,15 +8,14 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterOption;
-use SqlSemantics\Statement\Node;
+use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\LockOption;
 
 #[CoversNothing]
 #[Small]
 final class AlterOptionTest extends TestCase
 {
-    public function testAnAlterOptionIsARenderableNode(): void
+    public function testDeriveOptionIsDeclaredByAlgorithmAndLock(): void
     {
-        self::assertTrue(interface_exists(AlterOption::class));
-        self::assertContains(Node::class, class_implements(AlterOption::class));
+        self::assertContains(AlterOption::class, class_implements(LockOption::class));
     }
 }

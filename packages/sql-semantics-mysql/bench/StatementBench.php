@@ -17,12 +17,12 @@ use SqlSemantics\Platform\MySql\Mode;
 final class StatementBench
 {
     /**
-     * Analyzes a filtered projection of qualified columns and literals on the latest release and writes it back.
+     * Analyzes a grouped join with a window, ordering and limit on the latest release and writes it back.
      */
     public function benchSelect(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $semantics->analyze("SELECT t.a, t.b AS total, 'label', 0x1F, @@session.sql_mode FROM shop.t AS t WHERE t.a = 1")->toString();
+        $semantics->analyze("SELECT t.a, COUNT(*) AS n, 'label', 0x1F, @@session.sql_mode, ROW_NUMBER() OVER w FROM shop.t AS t LEFT JOIN u USING (id) WHERE t.b > 1 GROUP BY t.a WINDOW w AS (ORDER BY t.a) ORDER BY n DESC LIMIT 10")->toString();
     }
 
     /**

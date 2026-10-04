@@ -9,14 +9,17 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
 use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
@@ -38,7 +41,9 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $first = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $first);
         $second = $select->items[1];
+        self::assertInstanceOf(SelectExpression::class, $second);
         $qualified = $operation->facts->scalar($first->expression);
         $bare = $operation->facts->scalar($second->expression);
 
@@ -63,6 +68,7 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(ResolvedColumn::class, $fact->resolution);
@@ -76,6 +82,7 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Dependent::class, $fact->type);
@@ -94,6 +101,7 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Invalid::class, $fact->type);
@@ -110,6 +118,7 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Invalid::class, $fact->type);
@@ -126,6 +135,7 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Invalid::class, $fact->type);
@@ -134,12 +144,30 @@ final class ColumnUseTest extends TestCase
         self::assertInstanceOf(AmbiguousColumn::class, $operation->facts->diagnostics[0]);
     }
 
+    public function testDeriveScalarAnswersTheFactsOfTheItemAnAliasNames(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
+        $operation = $semantics->analyze('SELECT a AS x FROM t HAVING x > 0', [$table]);
+        $select = $operation->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $having = $select->having;
+        self::assertInstanceOf(Comparison::class, $having);
+        $fact = $operation->facts->scalar($having->left);
+
+        self::assertInstanceOf(AliasTarget::class, $fact->resolution);
+        self::assertSame($operation->field('x'), $fact->resolution->field);
+        self::assertSame(Nullability::NotNull, $fact->nullability);
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
     public function testRenderWritesTheQualifiersAndTheNameAsWritten(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('select shop.T.A from shop.t');
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $use = $item->expression;
         self::assertInstanceOf(ColumnUse::class, $use);
 

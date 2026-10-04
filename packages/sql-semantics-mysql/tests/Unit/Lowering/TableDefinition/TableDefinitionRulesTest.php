@@ -5,116 +5,117 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\TableDefinition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlParser\Parser\Node;
 use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Form;
 use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\TableDefinitionRules;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption;
+use SqlSemantics\Platform\MySql\Statement\View\CreateView;
+use SqlSemantics\Platform\MySql\Statement\View\DropView;
 
 #[CoversClass(TableDefinitionRules::class)]
-#[Small]
+#[Medium]
 final class TableDefinitionRulesTest extends TestCase
 {
-    public function testStatementReportsTheMissingRule(): void
+    public function testStatementLowersCreateTable(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new TableDefinitionRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT)')->find('create_table_stmt')[0];
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table definition family: statement');
-
-        $rules->statement(new Node('rule', 0, []));
+        self::assertInstanceOf(CreateTable::class, (new TableDefinitionRules($lowering))->statement($node));
     }
 
-    public function testDefinitionReportsTheMissingRule(): void
+    public function testDefinitionLowersALegacyCreateIndex(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new TableDefinitionRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $profile = $platform->profile('5.7.44', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE INDEX i ON t (a)')->find('create')[0];
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table definition family: definition');
-
-        $rules->definition(new Form(new Node('rule', 0, []), 'rule:'));
+        self::assertInstanceOf(CreateIndex::class, (new TableDefinitionRules($lowering))->definition($lowering->form($node)));
+        self::assertInstanceOf(DropView::class, (new TableDefinitionRules($lowering))->definition($lowering->form($platform->parser($profile)->parse('DROP VIEW v')->find('drop')[0])));
     }
 
-    public function testCreateViewReportsTheMissingRule(): void
+    public function testCreateViewLowersAView(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new TableDefinitionRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE VIEW v AS SELECT 1')->find('view_tail')[0];
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table definition family: createView');
-
-        $rules->createView(new Node('rule', 0, []), null, null);
+        self::assertInstanceOf(CreateView::class, (new TableDefinitionRules($lowering))->createView($node, null, null));
     }
 
-    public function testTableElementReportsTheMissingRule(): void
+    public function testTableElementLowersAColumn(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new TableDefinitionRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT)')->find('column_def')[0];
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table definition family: tableElement');
-
-        $rules->tableElement(new Node('rule', 0, []));
+        self::assertInstanceOf(ColumnDefinition::class, (new TableDefinitionRules($lowering))->tableElement($node));
     }
 
-    public function testTableElementsReportsTheMissingRule(): void
+    public function testTableElementsLowersTheList(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new TableDefinitionRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $profile = $platform->profile('5.6.51', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT, b INT)')->find('create_field_list')[0];
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table definition family: tableElements');
-
-        $rules->tableElements(new Node('rule', 0, []));
+        self::assertCount(2, (new TableDefinitionRules($lowering))->tableElements($node));
     }
 
-    public function testColumnSpecificationReportsTheMissingRule(): void
+    public function testColumnSpecificationLowersAFieldDefWithItsReference(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new TableDefinitionRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT REFERENCES p (x))')->find('field_def')[0];
+        $references = $platform->parser($profile)->parse('CREATE TABLE t (a INT REFERENCES p (x))')->find('opt_references')[0];
+        $specification = (new TableDefinitionRules($lowering))->columnSpecification($node, $references);
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table definition family: columnSpecification');
-
-        $rules->columnSpecification(new Node('rule', 0, []));
+        self::assertInstanceOf(OrdinaryColumn::class, $specification);
+        self::assertNotNull($specification->references);
     }
 
-    public function testTableOptionsReportsTheMissingRule(): void
+    public function testTableOptionsLowersTheOptions(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new TableDefinitionRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('ALTER TABLE t ENGINE = x')->find('create_table_options_space_separated')[0];
+        $options = (new TableDefinitionRules($lowering))->tableOptions($node);
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table definition family: tableOptions');
-
-        $rules->tableOptions(new Node('rule', 0, []));
+        self::assertInstanceOf(EngineOption::class, $options[0]);
     }
 
-    public function testVisibleReportsTheMissingRule(): void
+    public function testVisibleTellsWhetherVisibleIsWritten(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new TableDefinitionRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT VISIBLE)')->find('visibility')[0];
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table definition family: visible');
-
-        $rules->visible(new Node('rule', 0, []));
+        self::assertTrue((new TableDefinitionRules($lowering))->visible($node));
     }
 
-    public function testEnforcedReportsTheMissingRule(): void
+    public function testEnforcedTellsWhetherEnforcedIsWritten(): void
     {
         $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new TableDefinitionRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT CHECK (a > 0) ENFORCED)')->find('constraint_enforcement')[0];
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table definition family: enforced');
-
-        $rules->enforced(new Node('rule', 0, []));
+        self::assertTrue((new TableDefinitionRules($lowering))->enforced($node));
     }
 }

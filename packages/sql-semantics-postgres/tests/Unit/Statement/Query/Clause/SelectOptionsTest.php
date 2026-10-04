@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Query\Clause;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions::class)]
-#[Small]
+#[Medium]
 final class SelectOptionsTest extends TestCase
 {
     public function testLocksTellsLockingAndReadOnly(): void

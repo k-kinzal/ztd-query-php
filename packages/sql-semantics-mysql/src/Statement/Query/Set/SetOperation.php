@@ -57,6 +57,7 @@ final class SetOperation implements Statement, Query
         Check::input(!$right instanceof self || $right->operator->tighter($operator), 'A set operation on the right of another is written in parentheses unless it binds more tightly.');
         Check::input(!$left instanceof self || !$operator->tighter($left->operator), 'A looser set operation on the left of INTERSECT is written in parentheses.');
         Check::input(!$left instanceof QueryStatement && !$right instanceof QueryStatement, 'A query with INTO or locking clauses is written in parentheses as a set operand.');
+        Check::input(!$left instanceof OrderedSetOperation && !$right instanceof OrderedSetOperation, 'A set operation ordered after its last SELECT ends its subquery.');
         Check::input(!$right instanceof QueryExpression && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause or with ordering of its own is written in parentheses as a set operand.');
         Check::input(!$right instanceof Select || !$right->trailed(), 'The last operand of a set operation has no ORDER BY, LIMIT, INTO or locking clause of its own unless it is written in parentheses.');
     }

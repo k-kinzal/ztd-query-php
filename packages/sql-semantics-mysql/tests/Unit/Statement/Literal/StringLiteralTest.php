@@ -47,6 +47,7 @@ final class StringLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
         $fact = $operation->facts->scalar($literal);
@@ -69,6 +70,7 @@ final class StringLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
         $fact = $operation->facts->scalar($literal);
@@ -87,6 +89,7 @@ final class StringLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
         $fact = $operation->facts->scalar($literal);
@@ -103,7 +106,7 @@ final class StringLiteralTest extends TestCase
     public function testDeriveScalarRejectsALiteralSpelledUnderTheOtherEscapeRule(): void
     {
         $context = (new Semantics(Dialect::MySql))->context();
-        $statement = new Select([new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]);
+        $statement = new Select([], [new SelectExpression(new StringLiteral(['x'], EscapeRule::Verbatim))]);
 
         $this->expectExceptionMessage('A string literal must be spelled under the escape rule of the language profile.');
 
@@ -117,6 +120,7 @@ final class StringLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
 
@@ -132,6 +136,7 @@ final class StringLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
 

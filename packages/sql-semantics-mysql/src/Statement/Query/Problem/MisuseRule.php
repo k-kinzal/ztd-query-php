@@ -25,6 +25,7 @@ enum MisuseRule: string
     case RecursiveWithoutAnchor = 'Recursive Common Table Expression should contain a UNION whose first operand does not refer to it';
     case DuplicateColumn = 'Duplicate column name';
     case DuplicateWindow = 'Window name is defined more than once';
+    case UnknownWindow = 'Window name is not defined';
     case UnknownLockedTable = 'Table in the locking clause is not in the query';
     case AmbiguousJoinColumn = 'Column in from clause is ambiguous';
 }

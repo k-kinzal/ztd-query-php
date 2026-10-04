@@ -91,7 +91,7 @@ final class SubqueryRule
             $operands[] = $operand;
         }
 
-        return (new Chain($operands, $quantifiers))->query();
+        return (new Chain($operands, $quantifiers, $this->lowering->profile->grammar))->query();
     }
 
     /**

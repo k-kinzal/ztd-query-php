@@ -17,6 +17,7 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Query\QueryRules;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
@@ -62,6 +63,34 @@ final class QueryRulesTest extends TestCase
 
         self::assertInstanceOf(SetOperation::class, (new QueryRules($lowering))->legacyQuery($select, $union));
         self::assertInstanceOf(Select::class, (new QueryRules($lowering))->legacyQuery($select));
+    }
+
+    public function testLegacyParenthesizedQueryKeepsTheParenthesesAndTheUnion(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('5.7.44', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $tree = $platform->parser($profile)->parse('INSERT INTO t (SELECT a FROM u LIMIT 1) UNION SELECT 2');
+        $verb = $tree->children[0];
+        self::assertInstanceOf(Node::class, $verb);
+        $statement = $verb->children[0];
+        self::assertInstanceOf(Node::class, $statement);
+        $insert = $statement->children[0];
+        self::assertInstanceOf(Node::class, $insert);
+        $source = $insert->children[6];
+        self::assertInstanceOf(Node::class, $source);
+        $expression = $source->children[0];
+        self::assertInstanceOf(Node::class, $expression);
+        $select = $expression->children[1];
+        $union = $expression->children[3];
+        self::assertInstanceOf(Node::class, $select);
+        self::assertInstanceOf(Node::class, $union);
+        $query = (new QueryRules($lowering))->legacyParenthesizedQuery($select, $union);
+
+        self::assertInstanceOf(SetOperation::class, $query);
+        self::assertInstanceOf(ParenthesizedQuery::class, $query->left);
+        self::assertInstanceOf(Select::class, $query->left->query);
+        self::assertNotNull($query->left->query->limit);
     }
 
     public function testWhereAnswersNullForAnAbsentClause(): void

@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Statement\Table\Element;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(\SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnDefinition::class)]
+#[Medium]
+final class ColumnDefinitionTest extends TestCase
+{
+    public function testDeriveClauseReportsTheProblemsOfTheQualifiers(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $statement = $semantics->analyze('CREATE TABLE t (a int COLLATE "C" COLLATE "POSIX" DEFERRABLE GENERATED ALWAYS AS IDENTITY GENERATED ALWAYS AS IDENTITY)', []);
+        self::assertSame([
+          0 => 'multiple COLLATE clauses not allowed',
+          1 => 'misplaced DEFERRABLE clause',
+          2 => 'multiple identity specifications for column "a"',
+        ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+    }
+
+    public function testRenderWritesTheClauseAsWritten(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $statement = $semantics->analyze('CREATE TABLE t (a text STORAGE external COMPRESSION lz4 OPTIONS (x \'y\') COLLATE "C" NOT NULL)', []);
+        self::assertSame('CREATE TABLE t (a text STORAGE external COMPRESSION lz4 OPTIONS (x \'y\') COLLATE "C" NOT NULL)', $statement->toString());
+    }
+}

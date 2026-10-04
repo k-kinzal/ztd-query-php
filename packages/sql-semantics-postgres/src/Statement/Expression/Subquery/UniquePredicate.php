@@ -27,9 +27,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * Source: https://www.postgresql.org/docs/17/features.html (feature F291), the grammar action of `a_expr: UNIQUE …`. Status: Implemented.
  *
  * @visibility public
- * @example Building the predicate over a query
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1')->statement;
- *     (new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\UniquePredicate(false, $query))->nullsDistinct // => false
+ * @example Reporting the predicate
+ *     (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT UNIQUE NULLS NOT DISTINCT (SELECT 1)')->facts->diagnostics[0]->message() // => 'UNIQUE predicate is not yet implemented.'
  */
 final class UniquePredicate implements Scalar
 {

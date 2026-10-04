@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Resolution;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Rules\Resolution\FunctionShapes::class)]
-#[Small]
+#[Medium]
 final class FunctionShapesTest extends TestCase
 {
     public function testDeriveIsOpenForAnUndeclaredFunction(): void
@@ -28,6 +28,20 @@ final class FunctionShapesTest extends TestCase
         $from = $select->from;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Relation\FunctionTable::class, $from);
         self::assertSame('f', (new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\FunctionShapes())->functionName($from->functions[0])?->value);
+    }
+
+    public function testDeriveReportsDefinitionsAfterSeveralFunctions(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT * FROM ROWS FROM (f(), g()) AS s (a int)');
+        self::assertSame('ROWS FROM() with multiple functions cannot have a column definition list', $query->facts->diagnostics[0]->message());
+    }
+
+    public function testDeriveDerivesRepeatedDefinitions(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT * FROM ROWS FROM (f() AS (x int)) AS s (a b.c ((1 IS FALSE)))');
+        self::assertSame('multiple column definition lists are not allowed for the same function', $query->facts->diagnostics[0]->message());
     }
 
     public function testDefinedHasTheDefinedTypes(): void

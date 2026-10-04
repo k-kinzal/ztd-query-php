@@ -7,13 +7,14 @@ namespace SqlSemantics\Platform\MySql\Statement\Name;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\ColumnResolver;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Resolution\ColumnLookup;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
@@ -29,13 +30,14 @@ use SqlSemantics\Statement\Type\Nullability;
  * qualifiers. Which occurrence and declaration it denotes is a fact of the
  * operation that contains it.
  *
- * Rule: MYSQL-COLUMN-USE-001. Facts: the resolution of CORE-COLUMN-LOOKUP-001
- * over the relation occurrences of the position; a resolved use has the type
- * and NULL fact of its slot; a conditional use depends on its missing inputs;
- * a missing or ambiguous use is invalid and is a diagnostic. Positions that
- * also admit select-list aliases or stored program variables hand those to
- * the lookup through their environment. Terminates: the lookup is finite.
- * Source: https://dev.mysql.com/doc/refman/8.4/en/identifier-qualifiers.html.
+ * Rule: MYSQL-COLUMN-USE-001. Facts: the resolution of MYSQL-COLUMN-LOOKUP-001
+ * over the relation occurrences of the position and, after them, the select
+ * list aliases the position may use; a use resolved to a slot or to an
+ * aliased item has the type and NULL fact of that slot or item; a
+ * conditional use depends on its missing inputs; a missing or ambiguous use
+ * is invalid and is a diagnostic. Terminates: the lookup is finite.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/identifier-qualifiers.html,
+ * https://dev.mysql.com/doc/refman/8.4/en/problems-with-alias.html.
  * Status: Implemented.
  *
  * @visibility public
@@ -62,9 +64,12 @@ final class ColumnUse implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $resolution = (new ColumnLookup())->find($environment, $this->name, $this->qualifier);
+        $resolution = (new ColumnResolver())->find($environment, $this->name, $this->qualifier);
         if ($resolution instanceof ResolvedColumn) {
             return new ScalarFact($resolution->slot->type, $resolution->slot->nullability, $resolution);
+        }
+        if ($resolution instanceof AliasTarget) {
+            return new ScalarFact($resolution->field->type, $resolution->field->nullability, $resolution);
         }
         if ($resolution instanceof ConditionalColumn) {
             return new ScalarFact(new Dependent($resolution->missing), Nullability::Dependent, $resolution);
