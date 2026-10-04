@@ -105,7 +105,7 @@ The categorization rules are visible in the script. It accepts uncompressed prof
 
 ## Available application probes
 
-The captured SQL Catalog worktree at `ef62350c2b9c0e551e35c045aa350d9287e19b07` supplied `evaluation.json` and `derivation.json`: 305 source sets and 497 selected SQL-call arguments. The candidate API produced 243 observations containing a concrete normal outcome, 240 with symbolic normal outcomes and 14 with exceptional outcomes only. None returned no outcomes, and no analyzer call threw. Each query had a 0.2-second cooperative limit. Time-boundary counts can vary by host load. Unsupported operations, missing sources/properties and recursive dependencies remain in the reports.
+The captured SQL Catalog worktree at `ef62350c2b9c0e551e35c045aa350d9287e19b07` supplied `evaluation.json` and `derivation.json`: 305 source sets and 497 selected SQL-call arguments. The candidate API produced 245 observations containing a concrete normal outcome, 238 with symbolic normal outcomes and 14 with exceptional outcomes only. None returned no outcomes, and no analyzer call threw. Each query had a 0.2-second cooperative limit. Time-boundary counts can vary by host load. Unsupported operations, missing sources/properties and recursive dependencies remain in the reports.
 
 This was a direct candidate-API probe, not the existing SQL Catalog adapter pipeline and not an equivalence assertion against every catalog golden result. Reproduce it with the captured fixture files:
 
