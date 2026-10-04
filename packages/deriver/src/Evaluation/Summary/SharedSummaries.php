@@ -48,7 +48,7 @@ final class SharedSummaries
      */
     public function remember(string $key, Context $context, Cell $cell): void
     {
-        if ($context->frontiers !== [] || $context->sealed || $cell->status !== 'stable' || $cell->entry->guard !== [] || $cell->entry->controls !== [] || count($cell->outcomes) > 32 || count($context->evidence) > 4096) {
+        if (!$cell->closed || $context->sealed || $cell->status !== 'stable' || $cell->entry->guard !== [] || $cell->entry->controls !== [] || count($cell->outcomes) > 32) {
             return;
         }
         $outcomes = [];
@@ -56,11 +56,17 @@ final class SharedSummaries
             if ($outcome->havoc || count($outcome->state->memory->cells) > 256 || !(new Retention())->small($outcome)) {
                 return;
             }
-            $outcomes[] = (new Retention())->compact($outcome);
+            $compact = (new Retention())->compact($outcome);
+            $compact->state->evidence = array_values(array_diff($compact->state->evidence, $cell->entry->evidence));
+            $outcomes[] = $compact;
+        }
+        $evidence = (new Retention())->evidence($outcomes, $context->evidence);
+        if ($evidence === null) {
+            return;
         }
         if (count($this->entries) >= 32) {
             array_shift($this->entries);
         }
-        $this->entries[$key] = ['outcomes' => $outcomes, 'cost' => $cell->cost, 'evidence' => $context->evidence, 'graphs' => $context->graphs];
+        $this->entries[$key] = ['outcomes' => $outcomes, 'cost' => $cell->cost, 'evidence' => $evidence, 'graphs' => $context->graphs];
     }
 }

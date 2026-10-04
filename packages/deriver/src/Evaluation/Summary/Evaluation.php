@@ -115,13 +115,17 @@ final class Evaluation
         $history = $table->history;
         $table->history = $cell->history;
         $start = $context->transfers;
+        $frontiers = $context->frontiers;
         $paths = $this->machine->execute($cell->body, $cell->entry->fork());
         $cell->cost = $context->transfers - $start;
         $table->history = $history;
         array_pop($table->stack);
         $before = count($cell->outcomes);
         $havoc = $context->sealed;
-        foreach ($context->frontiers as $frontier) {
+        foreach ($context->frontiers as $id => $frontier) {
+            if (($frontiers[$id] ?? null) !== $frontier) {
+                $cell->closed = false;
+            }
             $havoc = $havoc || $frontier->code === 'BUDGET_EXCEEDED';
         }
         foreach ($paths as $path) {

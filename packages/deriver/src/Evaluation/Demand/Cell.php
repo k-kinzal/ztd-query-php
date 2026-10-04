@@ -38,6 +38,10 @@ final class Cell
      * Number of abstract evaluations of this specialization.
      */
     public int $updates = 0;
+    /**
+     * Whether every evaluation of this cell completed without introducing a frontier.
+     */
+    public bool $closed = true;
 
     /**
      * @param Key $key Complete demand identity

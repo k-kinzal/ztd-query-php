@@ -174,4 +174,27 @@ final class CatalogMetadataTest extends TestCase
         }
         self::assertSame(['SELECT * FROM wp_posts', 'SELECT * FROM users'], $values);
     }
+    /**
+     * @throws JsonException If source metadata cannot be encoded
+     */
+    public function testSignaturesExposeStaticMethodsIncludingTraitAliases(): void
+    {
+        $session = Analysis::session('<?php trait T{static function build(){}} class A{use T{build as alias;}function run(){}}');
+        self::assertTrue($session->declarations()->signature('A::build')?->static);
+        self::assertTrue($session->declarations()->signature('A::alias')?->static);
+        self::assertFalse($session->declarations()->signature('A::run')?->static);
+    }
+
+    /**
+     * @throws JsonException If source metadata cannot be encoded
+     */
+    public function testCommentsBelongOnlyToTheRequestedLexicalScope(): void
+    {
+        $session = Analysis::session('<?php /** @var PDO $outer */ $outer=null; function f(){/** @var PDO $inner */ $inner=null; $c=function(){/** @var PDO $captured */ $captured=null;};} class A{function run(){/** @var PDO $method */ $method=null;}}');
+        $script = array_values(array_filter($session->declarations()->symbols(), static fn (string $symbol): bool => str_starts_with($symbol, 'script:')))[0];
+        self::assertSame(['/** @var PDO $outer */'], array_column($session->comments($script), 'text'));
+        self::assertSame(['/** @var PDO $inner */'], array_column($session->comments('f'), 'text'));
+        self::assertSame(['/** @var PDO $method */'], array_column($session->comments('A::run'), 'text'));
+    }
+
 }

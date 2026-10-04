@@ -94,7 +94,7 @@ final class InstructionTransfer
             return $this->unpack($instruction, $state);
         } elseif ($op === 'array-set') {
             $array = $state->value($instruction->operands[0]);
-            $key = $instruction->operands[1] === '' ? null : $state->value($instruction->operands[1]);
+            $key = $instruction->operands[1] === '' ? null : (new Reader($context))->key($state->value($instruction->operands[1]), $instruction);
             $item = $state->registers[$instruction->operands[2]] ?? Term::opaque('UNCOMPUTED_REGISTER');
             $value = (new Arrays())->set($array, $key, $item);
         } elseif (in_array($op, ['closure', 'callable', 'callable-method', 'instanceof'], true)) {

@@ -27,6 +27,8 @@ use Deriver\Source\Declaration\ProjectIndex;
 use Deriver\Value\Identity;
 use JsonException;
 use Override;
+use WeakMap;
+use WeakReference;
 
 /**
  * Coordinates snapshot-local query evaluation and result explanations.
@@ -66,13 +68,21 @@ final class Session implements AnalysisSession
      */
     public readonly ProjectSnapshot $manifest;
     /**
-     * @var array<string, DerivationResult> Session results.
+     * @var array<string, WeakReference<DerivationResult>> Live session results.
      */
     public array $results = [];
     /**
-     * @var array<string, DerivationResult> Complete query results by semantic options.
+     * @var array<string, WeakReference<DerivationResult>> Live complete query results by semantic options.
      */
     public array $cache = [];
+    /**
+     * @var WeakMap<DerivationResult, true> Caller-owned instances, including repeated results with the same identity
+     */
+    private readonly WeakMap $liveResults;
+    /**
+     * Bounded strong ownership of recent small results.
+     */
+    private readonly ResultRetention $retention;
     /**
      * Closed isolated function results shared by this immutable session.
      */
@@ -99,6 +109,8 @@ final class Session implements AnalysisSession
      */
     public function __construct(ProjectInput $input, Configuration $configuration, SyntaxCache $syntax = new SyntaxCache(), GraphCache $lowered = new GraphCache())
     {
+        $this->liveResults = new WeakMap();
+        $this->retention = new ResultRetention();
         $this->shared = new \Deriver\Evaluation\Summary\SharedSummaries();
         $this->providerInputs = new ProviderInputs($input, $configuration);
         $input = $this->providerInputs->input;
@@ -146,17 +158,32 @@ final class Session implements AnalysisSession
     public function derive(Query $query): DerivationResult
     {
         $key = (new QueryEncoding())->key($query);
-        if (isset($this->cache[$key]) && $this->configuration->resources->cancellation?->isRequested() !== true) {
-            return $this->cache[$key];
+        $cached = ($this->cache[$key] ?? null)?->get();
+        if ($cached !== null && $this->configuration->resources->cancellation?->isRequested() !== true) {
+            return $cached;
         }
         $result = (new QueryExecution($this->program, $this->configuration, $this->models, $this->manifest, $this->shared))->derive($query);
-        $this->results[$result->reference->id] = $result;
+        $this->remember($result);
         foreach ($result->frontiers as $frontier) {
             if (in_array($frontier->code, ['CANCELLED', 'MEMORY_LIMIT', 'TIME_LIMIT', 'STACK_LIMIT'], true)) {
                 return $result;
             }
         }
-        return $this->cache[$key] = $result;
+        $this->cache[$key] = WeakReference::create($result);
+        return $result;
+    }
+
+    /**
+     * Indexes live results without owning their graphs indefinitely.
+     * @param DerivationResult $result Completed or interrupted result
+     */
+    public function remember(DerivationResult $result): void
+    {
+        $this->liveResults[$result] = true;
+        $this->retention->remember($result);
+        $this->results = array_filter($this->results, static fn (WeakReference $reference): bool => $reference->get() !== null);
+        $this->cache = array_filter($this->cache, static fn (WeakReference $reference): bool => $reference->get() !== null);
+        $this->results[$result->reference->id] = WeakReference::create($result);
     }
 
     /**
@@ -172,6 +199,23 @@ final class Session implements AnalysisSession
     }
 
     /**
+     * Shares one symbolic execution across observations in the same callable.
+     * @param list<Query> $queries Observations with identical budgets
+     * @return ResultSet Results in request order, sharing execution costs and frontiers
+     * @throws JsonException If query metadata cannot be encoded
+     * @throws InvalidInputException If observation owners, scopes, or budgets differ
+     */
+    #[Override]
+    public function deriveTogether(array $queries): ResultSet
+    {
+        $results = (new QueryExecution($this->program, $this->configuration, $this->models, $this->manifest, $this->shared))->together($queries);
+        foreach ($results->results as $result) {
+            $this->remember($result);
+        }
+        return $results;
+    }
+
+    /**
      * Looks up a result's explanation.
      * @param ResultRef $result Session result reference
      * @return Explanation Explanation graph
@@ -180,7 +224,16 @@ final class Session implements AnalysisSession
     #[Override]
     public function explain(ResultRef $result): Explanation
     {
-        $derived = $this->results[$result->id] ?? throw new InvalidInputException('Unknown result reference for this session.');
+        $derived = ($this->results[$result->id] ?? null)?->get();
+        if ($derived === null) {
+            foreach ($this->liveResults as $live => $_) {
+                if ($live->reference->id === $result->id) {
+                    $derived = $live;
+                    break;
+                }
+            }
+        }
+        $derived ??= throw new InvalidInputException('Unknown or released result reference for this session; retain the DerivationResult while using explain().');
         return new Explanation($derived->evidence, $derived->frontiers, $derived->assumptions);
     }
 

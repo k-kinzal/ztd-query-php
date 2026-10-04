@@ -73,6 +73,7 @@ final class ArgumentBinding
         $entry->constraints = $caller->constraints;
         $entry->controls = $caller->controls;
         $entry->observed = $caller->observed;
+        $entry->observedQueries = $caller->observedQueries;
         $receiverClass = $receiver->attributes['class'] ?? null;
         $entry->lateStaticClass = is_string($receiverClass) ? $receiverClass : $caller->lateStaticClass;
         foreach ($captures as $name => $value) {

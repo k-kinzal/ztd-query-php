@@ -105,4 +105,16 @@ final class AnalysisSessionTest extends TestCase
         self::assertSame('/** @var PDO $db */', $session->comments('f')[0]->text);
     }
 
+    /**
+     * @throws JsonException If source metadata cannot be encoded
+     */
+    public function testDeriveTogetherPreservesReturnQueriesInOutputOrder(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function target(){return 8;}');
+        $results = $session->deriveTogether([new ReturnQuery('target'), new ReturnQuery('target')])->results;
+        self::assertCount(2, $results);
+        self::assertSame(8, $results[0]->normalOutcomes[0]->values['return']->native());
+        self::assertSame($results[1]->evidence, $session->explain($results[1]->reference)->nodes);
+    }
+
 }

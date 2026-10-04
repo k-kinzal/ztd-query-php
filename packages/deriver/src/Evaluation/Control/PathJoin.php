@@ -90,6 +90,7 @@ final class PathJoin
         $result->evidence = array_values(array_unique([...$result->evidence, ...$state->evidence]));
         $result->controls = array_values(array_unique([...$result->controls, ...$state->controls]));
         $result->observed = $result->observed && $state->observed;
+        $result->observedQueries = array_intersect_key($result->observedQueries, $state->observedQueries);
         foreach ($state->visits as $header => $count) {
             $result->visits[$header] = max($result->visits[$header] ?? 0, $count);
         }
@@ -148,6 +149,7 @@ final class PathJoin
         [$copy->loopEntries, $copy->approximations, $copy->loopStructures, $copy->loopGuards, $copy->stableHeader] = [[], [], [], [], null];
         [$copy->observed, $copy->unknownLocals, $copy->memory->unknownShared] = [false, null, null];
         [$copy->memory->cells, $copy->memory->versions, $copy->memory->writers, $copy->memory->sequence] = [[], [], [], 0];
+        $copy->observedQueries = [];
         $copy->completion = new Completion($state->completion->kind, null, $state->completion->target, $state->completion->depth);
         if ($completed) {
             [$copy->block, $copy->previous, $copy->locals, $copy->handlers, $copy->iterators] = [0, -1, [], [], []];
@@ -166,8 +168,15 @@ final class PathJoin
         $join = new StateJoin($this->context);
         $result = array_intersect_key(...$maps);
         foreach ($result as $key => $entry) {
-            $expected = $join->encode($entry, $this->context->identity);
+            if ($this->context->resources->reason() !== null) {
+                return null;
+            }
+            $expected = null;
             foreach ($maps as $map) {
+                if ($map[$key] === $entry) {
+                    continue;
+                }
+                $expected ??= $join->encode($entry, $this->context->identity);
                 if ($join->encode($map[$key], $this->context->identity) !== $expected) {
                     return null;
                 }
@@ -186,6 +195,9 @@ final class PathJoin
     {
         $result = array_intersect_key(...$maps);
         foreach ($result as $key => $location) {
+            if ($this->context->resources->reason() !== null) {
+                return null;
+            }
             foreach ($maps as $map) {
                 $other = $map[$key];
                 if ([$other->root, $other->path, $other->local, $other->unknown] === [$location->root, $location->path, $location->local, $location->unknown]) {
@@ -210,6 +222,9 @@ final class PathJoin
     {
         $result = array_intersect_key(...$maps);
         foreach ($result as $register => $address) {
+            if ($this->context->resources->reason() !== null) {
+                return null;
+            }
             $keys = [];
             foreach ($maps as $index => $map) {
                 if ($map[$register]->parent !== $address->parent || ($map[$register]->key === null) !== ($address->key === null)) {
@@ -272,14 +287,21 @@ final class PathJoin
         $pending = [$value];
         while ($pending !== []) {
             $current = array_pop($pending);
-            if (isset($visited[$current])) {
+            if (isset($visited[$current]) || ($this->context->plainValues[$current] ?? null) === true) {
                 continue;
             }
-            if (in_array($current->kind, self::IDENTITIES, true) || count($visited) >= $this->context->query->budget()->nodes) {
+            if (count($visited) % 256 === 0 && $this->context->resources->reason() !== null || count($visited) >= $this->context->query->budget()->nodes) {
+                return false;
+            }
+            if (($this->context->plainValues[$current] ?? null) === false || in_array($current->kind, self::IDENTITIES, true)) {
+                $this->context->plainValues[$current] = false;
                 return false;
             }
             $visited[$current] = true;
             array_push($pending, ...array_values($current->operands));
+        }
+        foreach ($visited as $checked => $_) {
+            $this->context->plainValues[$checked] = true;
         }
         return true;
     }

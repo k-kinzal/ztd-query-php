@@ -39,4 +39,19 @@ final class RetentionTest extends TestCase
         self::assertSame('local', $record->state->memory->read($record->state->local('value'))->native());
         self::assertSame(7, $record->instantiate(new State())->completion->value?->native());
     }
+    public function testEvidenceKeepsTransitiveParentsWithoutUnrelatedCallerNodes(): void
+    {
+        $at = new \Deriver\Reference\SourceRef('test', 'a.php', 0, 1);
+        $state = new State();
+        $state->evidence = ['result'];
+        $nodes = [
+            'caller' => new \Deriver\Result\Derivation('caller', 'call', $at),
+            'input' => new \Deriver\Result\Derivation('input', 'data', $at),
+            'result' => new \Deriver\Result\Derivation('result', 'data', $at, ['input']),
+        ];
+        $retained = (new Retention())->evidence([new CompletionRecord($state, 0)], $nodes);
+        self::assertNotNull($retained);
+        self::assertSame(['result', 'input'], array_keys($retained));
+    }
+
 }

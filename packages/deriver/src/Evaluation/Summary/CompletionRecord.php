@@ -46,7 +46,7 @@ final class CompletionRecord
         $next->completion = new Completion($this->state->completion->kind, $this->state->completion->value);
         $next->guard = $this->state->guard;
         $next->constraints = $this->state->constraints;
-        $next->evidence = $this->state->evidence;
+        $next->evidence = array_values(array_unique([...$entry->evidence, ...$this->state->evidence]));
         $next->controls = array_values(array_unique([...$entry->controls, ...$this->state->controls]));
         return $next;
     }

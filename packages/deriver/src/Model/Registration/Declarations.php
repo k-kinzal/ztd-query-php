@@ -52,7 +52,7 @@ final class Declarations implements DeclarationLookup
         foreach ($body->parameters as $parameter) {
             $parameters[] = new Parameter($parameter->name, $parameter->type, $parameter->byReference, $parameter->variadic, self::initializer($parameter->default));
         }
-        return new Signature($parameters, $body->returnType, $body->allowExtraArguments, $body->byReference, $body->docComment);
+        return new Signature($parameters, $body->returnType, $body->allowExtraArguments, $body->byReference, $body->docComment, $body->static);
     }
 
     /**

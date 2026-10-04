@@ -19,6 +19,7 @@ final class Signature
      * @param string $returnType returnType
      * @param bool $allowExtraArguments Whether surplus positional arguments are legal
      * @param bool $byReference Whether the callable returns a shared reference cell
+     * @param bool $static Whether the captured callable is declared static; metadata only, without overriding model dispatch
      * @param string $docComment Raw doc comment of the source declaration, or an empty string; it never affects analysis
      */
     public function __construct(
@@ -27,6 +28,7 @@ final class Signature
         public readonly bool $allowExtraArguments = true,
         public readonly bool $byReference = false,
         public readonly string $docComment = '',
+        public readonly bool $static = false,
     ) {
     }
 }

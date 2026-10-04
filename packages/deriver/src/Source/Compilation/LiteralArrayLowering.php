@@ -52,15 +52,28 @@ final class LiteralArrayLowering
         }
         foreach ($node->items as $item) {
             if ($item->key !== null) {
-                $this->lowering->graph->emit($item->key, 'constant', constant: $this->literal($item->key));
+                $this->observe($item->key);
             }
-            $this->lowering->graph->emit($item->value, 'constant', constant: $this->literal($item->value));
+            $this->observe($item->value);
         }
         return $this->lowering->graph->emit($node, 'constant', constant: new Term('array', operands: $entries, attributes: ['open' => false, 'next' => $next]));
     }
 
     /**
-     * Recognizes literals without executing host PHP or resolving application constants.
+     * Keeps both the signed expression and its numeric operand independently observable.
+     * @param Expr $node Admitted literal expression
+     */
+    public function observe(Expr $node): void
+    {
+        if ($node instanceof Expr\UnaryMinus || $node instanceof Expr\UnaryPlus) {
+            $this->lowering->graph->emit($node->expr, 'constant', constant: $this->literal($node->expr));
+        }
+        $this->lowering->graph->emit($node, 'constant', constant: $this->literal($node));
+    }
+
+    /**
+     * Recognizes literals without executing application code or resolving application constants.
+     * Numeric sign multiplication is warning-free on the required 64-bit host and target.
      * @param Expr $node Source expression
      * @return Term|null Scalar literal, or null for an evaluated expression
      */
@@ -68,6 +81,9 @@ final class LiteralArrayLowering
     {
         if ($node instanceof Scalar\String_ || $node instanceof Scalar\Int_ || $node instanceof Scalar\Float_) {
             return Term::constant($node->value);
+        }
+        if (($node instanceof Expr\UnaryMinus || $node instanceof Expr\UnaryPlus) && ($node->expr instanceof Scalar\Int_ || $node->expr instanceof Scalar\Float_)) {
+            return Term::constant($node->expr->value * ($node instanceof Expr\UnaryMinus ? -1 : 1));
         }
         if ($node instanceof Expr\ConstFetch) {
             return match (strtolower($node->name->toString())) {

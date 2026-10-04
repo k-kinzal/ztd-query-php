@@ -29,6 +29,9 @@ final class Comments
         $builder = $index->builder($source->path);
         while ($pending !== []) {
             $node = array_pop($pending);
+            if ($node !== $source->node && ($node instanceof \PhpParser\Node\FunctionLike || $node instanceof \PhpParser\Node\Stmt\ClassLike)) {
+                continue;
+            }
             $comment = $node->getDocComment();
             if ($comment !== null) {
                 $reference = $builder->source($node);

@@ -177,4 +177,15 @@ final class DiscoveryTest extends TestCase
         yield 'last node exceeds limit' => [2,3,true];
         yield 'stop before all roots' => [1,2,true];
     }
+    public function testObservationDemandsOnlyTheRequestedPureRegister(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $body = $context->program->callable('target');
+        self::assertNotNull($body);
+        $instruction = $body->blocks[0]->instructions[0];
+        $query = new ValueQuery(new ExpressionRef($instruction->source, $body->symbol, $instruction->result));
+        self::assertTrue((new Discovery($context))->observation($query, $body, $instruction));
+        self::assertFalse((new Discovery($context))->observation(new ReturnQuery('target'), $body, $instruction));
+    }
+
 }

@@ -77,7 +77,22 @@ final class Discovery
         if (!in_array($instruction->operation, ['constant', 'copy', 'phi', 'not-null', 'magic-constant'], true)) {
             return true;
         }
-        $query = $this->context->query;
+        if ($this->context->batch !== null) {
+            $demand = $this->context->batch->demands[(new CallableIdentity())->key($callable->symbol)] ?? [];
+            return isset($demand['register:' . $instruction->result]) || isset($demand['instruction:' . $instruction->id]);
+        }
+        return $this->observation($this->context->query, $callable, $instruction);
+    }
+
+    /**
+     * Selects the pure definitions explicitly requested by one observation.
+     * @param \Deriver\Query\Query $query Requested observation
+     * @param CallableGraph $callable Owning graph
+     * @param Instruction $instruction Candidate definition
+     * @return bool Whether this query demands the definition
+     */
+    public function observation(\Deriver\Query\Query $query, CallableGraph $callable, Instruction $instruction): bool
+    {
         if ($query instanceof ReturnQuery) {
             return false;
         }
