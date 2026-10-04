@@ -43,6 +43,7 @@ final class ArityMismatch implements Diagnostic
             ArityRule::RowComparison => 'Row value misused: ' . $this->expected . ' columns against ' . $this->actual . '.',
             ArityRule::RowAssignment => $this->expected . ' columns assigned ' . $this->actual . ' values.',
             ArityRule::ScalarSubquery => 'Sub-select returns ' . $this->actual . ' columns - expected ' . $this->expected . '.',
+            ArityRule::InListElement => 'IN(...) element has ' . $this->actual . ' term' . ($this->actual === 1 ? '' : 's') . ' - expected ' . $this->expected . '.',
         };
     }
 }

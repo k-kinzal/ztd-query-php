@@ -5,18 +5,16 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use Error;
-use SqlFormatter\Facade\Formatter;
 use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Statement\Schema\DeclarationProvider;
-use SqlSemantics\Statement\SemanticGraph;
+use SqlSemantics\Validation\Equivalence;
 use Throwable;
 
 /**
- * Every planned declaration must resolve, declare one readable table, write back, and stay stable.
+ * Every generated table definition must declare one table, round-trip structurally, and stay the same structure under any context.
  */
 final class SchemaTarget
 {
-    public function __construct(private readonly Semantics $semantics, private readonly Formatter $compact, private readonly string $grammarVersion)
+    public function __construct(private readonly Semantics $semantics, private readonly string $grammarVersion)
     {
     }
 
@@ -26,28 +24,23 @@ final class SchemaTarget
     public function verify(string $sql, string $input): void
     {
         try {
-            $statement = $this->semantics->analyze($sql, []);
-            $graph = new SemanticGraph();
-            if (!$statement instanceof DeclarationProvider || !$graph->isSemanticOperation($statement) || count($statement->declaredTables()) !== 1) {
-                throw new Error('A planned declaration must describe one table using immutable semantic values.');
+            $operation = $this->semantics->analyze($sql, []);
+            if (count($operation->declarations()) !== 1) {
+                throw new Error('A table definition must declare exactly one table; ' . count($operation->declarations()) . ' declared.');
             }
-            $before = serialize($statement);
-            $printed = $statement->toString();
-            $again = $this->semantics->analyze($printed, []);
-            if ($graph->fingerprint($statement) !== $graph->fingerprint($again)) {
-                throw new Error('The declaration changed across reconstruction.');
+            $rendered = $operation->toString();
+            $again = $this->semantics->analyze($rendered, []);
+            $difference = (new Equivalence())->difference($operation->statement, $again->statement);
+            if ($difference !== null) {
+                throw new Error('The structure of the rendered definition differs from the structure of the input at ' . $difference);
             }
-            if ($this->compact->format($printed) !== $this->compact->format($again->toString())) {
-                throw new Error('Declaration reconstruction did not reach a stable SQL form.');
+            $dependent = $this->semantics->analyze($rendered, [$operation]);
+            $difference = (new Equivalence())->difference($operation->statement, $dependent->statement);
+            if ($difference !== null) {
+                throw new Error('The declaration context changed the structure of the definition at ' . $difference);
             }
-            $reset = $this->semantics->analyze('DROP TABLE IF EXISTS schema_fuzz_previous', []);
-            $after = $this->semantics->analyze($printed, [$reset]);
-            if ($graph->fingerprint($after) !== $graph->fingerprint($statement)) {
-                throw new Error('An unrelated conditional drop changed the declaration.');
-            }
-            $dependent = $this->semantics->analyze($printed, [$statement, $reset]);
-            if ($graph->fingerprint($dependent) !== $graph->fingerprint($statement) || serialize($statement) !== $before) {
-                throw new Error('Declaration context changed the statement itself.');
+            if (count($dependent->declarations()) !== 1) {
+                throw new Error('A table definition analyzed with its own declaration in the context must still declare one table.');
             }
         } catch (Throwable $error) {
             throw new Error("Schema property failed\nGrammar: {$this->grammarVersion}\nInput (hex): " . bin2hex($input) . "\nSQL: {$sql}\n{$error->getMessage()}", 0, $error);

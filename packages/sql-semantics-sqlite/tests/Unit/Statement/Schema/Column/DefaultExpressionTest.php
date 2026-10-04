@@ -11,7 +11,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
-use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\NonConstantDefault;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 
 #[CoversClass(DefaultExpression::class)]
@@ -24,7 +24,7 @@ final class DefaultExpressionTest extends TestCase
 
         self::assertCount(2, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
-        self::assertInstanceOf(NonConstantDefault::class, $operation->facts->diagnostics[1]);
+        self::assertInstanceOf(DefaultNotConstant::class, $operation->facts->diagnostics[1]);
         self::assertSame('b', $operation->facts->diagnostics[1]->column->value);
     }
 

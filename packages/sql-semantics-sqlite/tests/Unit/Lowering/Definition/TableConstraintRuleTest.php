@@ -58,6 +58,18 @@ final class TableConstraintRuleTest extends TestCase
         self::assertSame([TableOptionKind::Strict, TableOptionKind::WithoutRowid], array_map(static fn (object $option): ?TableOptionKind => $option->kind(), $two->options));
     }
 
+    public function testLeadingCommaTellsACommaWrittenBeforeTheFirstOption(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $written = $semantics->analyze('CREATE TABLE t (a PRIMARY KEY), WITHOUT ROWID')->statement;
+        $plain = $semantics->analyze('CREATE TABLE t (a PRIMARY KEY) WITHOUT ROWID, STRICT')->statement;
+
+        self::assertInstanceOf(CreateTable::class, $written);
+        self::assertInstanceOf(CreateTable::class, $plain);
+        self::assertTrue($written->optionsComma);
+        self::assertFalse($plain->optionsComma);
+    }
+
     public function testOptionTellsTheWithoutFormFromTheBareForm(): void
     {
         $statement = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a) WITHOUT x, y')->statement;

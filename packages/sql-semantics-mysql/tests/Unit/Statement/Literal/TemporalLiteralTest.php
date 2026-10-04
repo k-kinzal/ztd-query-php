@@ -77,7 +77,6 @@ final class TemporalLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Known::class, $fact->type);
@@ -102,6 +101,6 @@ final class TemporalLiteralTest extends TestCase
 
         self::assertSame("SELECT DATE '2024-01-02'", $semantics->analyze("select date '2024-01-02'")->toString());
         self::assertSame("SELECT TIME 'a''b'", $semantics->analyze("SELECT TIME 'a\\'b'")->toString());
-        self::assertSame("SELECT TIMESTAMP '2024-01-02 03:04:05'", $semantics->analyze("SELECT TIMESTAMP \"2024-01-02 03:04:05\"")->toString());
+        self::assertSame("SELECT TIMESTAMP '2024-01-02 03:04:05'", $semantics->analyze('SELECT TIMESTAMP "2024-01-02 03:04:05"')->toString());
     }
 }

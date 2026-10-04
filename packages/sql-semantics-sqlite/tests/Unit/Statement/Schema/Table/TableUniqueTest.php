@@ -51,4 +51,11 @@ final class TableUniqueTest extends TestCase
         self::assertSame(ConflictResolution::Ignore, $unique->conflict);
         self::assertSame('CREATE TABLE t (a, b, UNIQUE (a ASC, b) ON CONFLICT IGNORE)', $operation->toString());
     }
+
+    public function testRefusesAStringLiteralTermThatNamesAColumn(): void
+    {
+        $this->expectExceptionMessage('A string literal written as a key term names a column: write it as a LiteralColumn.');
+
+        new TableUnique([new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('a')))]);
+    }
 }

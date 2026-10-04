@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\FromScope;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\Joining;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Limit;
@@ -29,7 +30,7 @@ use SqlSemantics\Statement\Shape\OpenStar;
  * aggregate selection without GROUP BY every input column read by the result
  * columns, HAVING and ORDER BY can be NULL (SQLITE-AGGREGATE-QUERY-001). The
  * named windows see the input columns. LIMIT and OFFSET see no column of the
- * selection. The output fields follow SQLITE-RESULT-NAME-001. Terminates:
+ * selection. WHERE and HAVING are single values (SQLITE-ROW-VALUE-USE-001). The output fields follow SQLITE-RESULT-NAME-001. Terminates:
  * every clause is a strict part of the selection.
  * Source: https://sqlite.org/lang_select.html. Status: Implemented.
  *
@@ -45,18 +46,19 @@ final class SelectFacts
         $context = $derivation->context;
         $visible = $select->from === null ? [] : (new FromScope())->open($select->from, $derivation, $outer)->visible;
         $ordering = array_map(static fn (SortTerm $term): Scalar => $term->expression, $select->orderBy);
-        $single = $select->groupBy === [] && ($select->having !== null || (new Aggregation())->aggregates([...$select->columns, ...$ordering]));
-        $output = $single ? (new Joining())->extend($visible) : $visible;
+        $aggregate = $select->groupBy === [] && ($select->having !== null || (new Aggregation())->aggregates([...$select->columns, ...$ordering]));
+        $output = $aggregate ? (new Joining())->extend($visible) : $visible;
         $items = (new Projection())->items($select->columns, $derivation, new Environment($context, $outer, $output));
         $aliases = $this->aliases($select, $items);
         $rows = new Environment($context, $outer, $visible, [], $aliases);
         $results = new Environment($context, $outer, $output, [], $aliases);
+        $single = new RowValues();
         if ($select->where !== null) {
-            $derivation->scalar($select->where, $rows);
+            $single->single($derivation->scalar($select->where, $rows), $derivation);
         }
         (new SortScopes())->derive($select->groupBy, $derivation, $rows, $items, false);
         if ($select->having !== null) {
-            $derivation->scalar($select->having, $results);
+            $single->single($derivation->scalar($select->having, $results), $derivation);
         }
         foreach ($select->windows as $window) {
             foreach ($window->window->expressions() as $expression) {

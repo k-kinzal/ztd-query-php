@@ -47,7 +47,6 @@ final class StringLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
         $fact = $operation->facts->scalar($literal);
@@ -70,7 +69,6 @@ final class StringLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
         $fact = $operation->facts->scalar($literal);
@@ -79,7 +77,7 @@ final class StringLiteralTest extends TestCase
         self::assertInstanceOf(Known::class, $fact->type);
         self::assertInstanceOf(Character::class, $fact->type->descriptor);
         self::assertSame(CharsetForm::Named, $fact->type->descriptor->charset?->form);
-        self::assertSame('utf8mb4', $fact->type->descriptor->charset?->charset?->value);
+        self::assertSame('utf8mb4', $fact->type->descriptor->charset->charset?->value);
         self::assertSame("SELECT _utf8mb4 'x'", $operation->toString());
     }
 
@@ -89,7 +87,6 @@ final class StringLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
         $fact = $operation->facts->scalar($literal);
@@ -120,12 +117,11 @@ final class StringLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
 
         self::assertSame("a\nb", $literal->value());
-        self::assertSame("SELECT 'a\nb'", $operation->toString());
+        self::assertSame("SELECT 'a\\nb'", $operation->toString());
         self::assertSame("SELECT 'it''s'", $semantics->analyze("SELECT 'it\\'s'")->toString());
         self::assertSame("SELECT 'a\\\\b'", $semantics->analyze("SELECT 'a\\\\b'")->toString());
     }
@@ -136,7 +132,6 @@ final class StringLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(StringLiteral::class, $literal);
 

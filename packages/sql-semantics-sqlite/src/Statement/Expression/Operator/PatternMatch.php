@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Rendering\Output;
@@ -27,7 +28,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * of those names: the result is INTEGER and NULL when an operand is NULL.
  * REGEXP and MATCH call the application-defined functions regexp() and
  * match(), which SQLite does not provide, so their result depends on the
- * undeclared routine. The operands must keep their place without
+ * undeclared routine. Every operand is a single value
+ * (SQLITE-ROW-VALUE-USE-001). The operands must keep their place without
  * parentheses (SQLITE-PRECEDENCE-001); the pattern before ESCAPE may not end
  * in a pattern match without ESCAPE, which would take the ESCAPE.
  * Source: https://sqlite.org/lang_expr.html#the_like_glob_regexp_match_and_extract_operators.
@@ -75,10 +77,14 @@ final class PatternMatch implements Scalar
         $right = $derivation->scalar($this->right, $environment);
         $nullability = $left->nullability->propagate($right->nullability);
         $types = [$left->type, $right->type];
+        $rows = new RowValues();
+        $rows->single($left, $derivation);
+        $rows->single($right, $derivation);
         if ($this->escape !== null) {
             $escape = $derivation->scalar($this->escape, $environment);
             $nullability = $nullability->propagate($escape->nullability);
             $types[] = $escape->type;
+            $rows->single($escape, $derivation);
         }
         if ($this->operator === PatternOperator::Regexp || $this->operator === PatternOperator::Match) {
             return new ScalarFact(new Dependent([new UndeclaredRoutine(new QualifiedName(new Name($this->operator === PatternOperator::Regexp ? 'regexp' : 'match')))]), Nullability::Dependent);

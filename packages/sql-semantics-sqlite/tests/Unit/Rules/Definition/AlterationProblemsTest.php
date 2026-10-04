@@ -13,9 +13,9 @@ use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\AlterationProblems;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AlterAddColumn;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationObstacle;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\AlterationRefused;
-use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\NonConstantDefault;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DuplicateColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\StrictTypeViolation;
@@ -92,11 +92,11 @@ final class AlterationProblemsTest extends TestCase
         self::assertSame([AlterationObstacle::NotNullWithoutDefault->name], $obstacles('ALTER TABLE t ADD b INT NOT NULL DEFAULT ((NULL))'));
         self::assertSame([AlterationObstacle::NotNullWithoutDefault->name], $obstacles('ALTER TABLE t ADD b INT DEFAULT 1 NOT NULL DEFAULT NULL'));
         self::assertSame([], $obstacles("ALTER TABLE t ADD b INT NOT NULL DEFAULT (-(-'x'))"));
-        self::assertSame([AlterationObstacle::NonConstantDefault->name], $obstacles('ALTER TABLE t ADD b INT DEFAULT CURRENT_TIMESTAMP'));
-        self::assertSame([AlterationObstacle::NonConstantDefault->name], $obstacles('ALTER TABLE t ADD b INT DEFAULT (1 + 1)'));
-        self::assertSame([AlterationObstacle::NonConstantDefault->name], $obstacles('ALTER TABLE t ADD b INT DEFAULT (abs(1))'));
+        self::assertSame([AlterationObstacle::DefaultNotConstant->name], $obstacles('ALTER TABLE t ADD b INT DEFAULT CURRENT_TIMESTAMP'));
+        self::assertSame([AlterationObstacle::DefaultNotConstant->name], $obstacles('ALTER TABLE t ADD b INT DEFAULT (1 + 1)'));
+        self::assertSame([AlterationObstacle::DefaultNotConstant->name], $obstacles('ALTER TABLE t ADD b INT DEFAULT (abs(1))'));
         self::assertSame([], $obstacles('ALTER TABLE t ADD b INT DEFAULT (1 + 1) DEFAULT 2'));
-        self::assertSame([NonConstantDefault::class], $obstacles('ALTER TABLE t ADD b INT DEFAULT (?)'));
+        self::assertSame([DefaultNotConstant::class], $obstacles('ALTER TABLE t ADD b INT DEFAULT (?)'));
         self::assertSame([GeneratedColumnProblem::class], $obstacles('ALTER TABLE t ADD b INT AS (a) DEFAULT (1 + 1)'));
     }
 

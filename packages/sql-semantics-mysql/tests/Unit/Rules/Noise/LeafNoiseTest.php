@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Noise;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\MySql\Rules\Noise\LeafNoise;
 
 #[CoversClass(LeafNoise::class)]
-#[Small]
+#[Medium]
 final class LeafNoiseTest extends TestCase
 {
     public function testPositionsDeclareTheOptionalLeafKeywordsAsNoise(): void

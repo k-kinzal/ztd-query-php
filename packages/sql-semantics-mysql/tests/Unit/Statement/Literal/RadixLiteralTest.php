@@ -13,7 +13,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
@@ -53,7 +52,6 @@ final class RadixLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(RadixLiteral::class, $literal);
         $fact = $operation->facts->scalar($literal);
@@ -66,7 +64,7 @@ final class RadixLiteralTest extends TestCase
         self::assertSame(CharacterKind::VarChar, $fact->type->descriptor->kind);
         self::assertFalse($fact->type->descriptor->national);
         self::assertSame(CharsetForm::Named, $fact->type->descriptor->charset?->form);
-        self::assertSame('latin1', $fact->type->descriptor->charset?->charset?->value);
+        self::assertSame('latin1', $fact->type->descriptor->charset->charset?->value);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
@@ -85,7 +83,6 @@ final class RadixLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(RadixLiteral::class, $literal);
 
@@ -99,7 +96,6 @@ final class RadixLiteralTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $literal = $item->expression;
         self::assertInstanceOf(RadixLiteral::class, $literal);
 

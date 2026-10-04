@@ -76,6 +76,14 @@ final class ColumnDomain implements TypeDescriptor
     }
 
     /**
+     * Tells whether the column declares a type at all: an empty declared text is a type only when SQLite derived NUMERIC affinity from a quoted empty word.
+     */
+    public function typed(): bool
+    {
+        return $this->declared !== '' || $this->affinity !== Affinity::Blob;
+    }
+
+    /**
      * Tells whether the declared type is the standard name INTEGER, the type of a column that can be the row identifier.
      */
     public function rowidCapable(): bool

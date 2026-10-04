@@ -60,11 +60,11 @@ final class ColumnNameTest extends TestCase
 
         self::assertSame('a', $full->column->value);
         self::assertSame('t', $full->table?->name->value);
-        self::assertSame('db', $full->table?->schema?->value);
+        self::assertSame('db', $full->table->schema?->value);
         self::assertSame('db.t.a', (new Lexical())->join($out->pieces()));
         self::assertSame('a b', $table->column->value);
         self::assertSame('t', $table->table?->name->value);
-        self::assertNull($table->table?->schema);
+        self::assertNull($table->table->schema);
     }
 
     public function testRejectsACatalogQualifier(): void

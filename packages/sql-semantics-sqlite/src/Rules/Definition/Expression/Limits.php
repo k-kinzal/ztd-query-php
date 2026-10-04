@@ -11,7 +11,10 @@ use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\FunctionCall;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\CurrentTime;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Raise;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\Exists;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\InTable;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedConstruct;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\ProhibitedExpression;
@@ -43,8 +46,9 @@ use SqlSemantics\Statement\Scalar;
  * function but may not contain a bound parameter, a subquery, a column
  * reference (a double-quoted word included) or RAISE.
  *
- * Each kind of construct is reported once per expression. The inside of a
- * subquery is not examined, as SQLite stops at the subquery. Terminates: the
+ * Each kind of construct is reported once per expression. A subquery is
+ * found at the expression that holds it and at the query itself; the inside
+ * of a subquery is not examined, as SQLite stops at the subquery. Terminates: the
  * expression is walked once with an explicit stack.
  * Source: https://sqlite.org/lang_createtable.html#check_constraints,
  * https://sqlite.org/lang_createtable.html#the_default_clause,
@@ -108,12 +112,12 @@ final class Limits
     /**
      * Answers the construct a node is, if it is one SQLite can reject.
      */
-    public function construct(Node $node): ?ProhibitedConstruct
+    public function classify(Node $node): ?ProhibitedConstruct
     {
         if ($node instanceof BindParameter) {
             return ProhibitedConstruct::Parameter;
         }
-        if ($node instanceof Query || $node instanceof InTable) {
+        if ($node instanceof Query || $node instanceof ScalarSubquery || $node instanceof Exists || $node instanceof InQuery || $node instanceof InTable) {
             return ProhibitedConstruct::Subquery;
         }
         if ($node instanceof ColumnUse && $node->qualifier !== null) {
@@ -129,11 +133,11 @@ final class Limits
      *
      * @return list<ProhibitedConstruct>
      */
-    public function constructs(Scalar $expression, DefinitionPosition $position): array
+    public function rejected(Scalar $expression, DefinitionPosition $position): array
     {
         $found = [];
         foreach ($this->nodes($expression) as $node) {
-            $construct = $this->construct($node);
+            $construct = $this->classify($node);
             if ($construct !== null && in_array($construct, self::REJECTED[$position->name], true) && !in_array($construct, $found, true)) {
                 $found[] = $construct;
             }
@@ -147,7 +151,7 @@ final class Limits
      */
     public function report(Scalar $expression, DefinitionPosition $position, Derivation $derivation): void
     {
-        foreach ($this->constructs($expression, $position) as $construct) {
+        foreach ($this->rejected($expression, $position) as $construct) {
             $derivation->report(new ProhibitedExpression($construct, $position));
         }
     }

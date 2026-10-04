@@ -8,10 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Operator\Binary;
 use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\PrimaryKeyProblem;
@@ -21,6 +22,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Operation;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -67,7 +69,13 @@ final class CreateTableTest extends TestCase
         self::assertSame($table, $input->table);
         self::assertSame($table->columns[1], $query->field('name')->column());
         self::assertSame($table->columns[0], $query->field(1)->column());
-        self::assertSame($table->columns[0], $query->facts->scalar($query->statement->where->left)->resolution->slot->column);
+        $select = $query->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $where = $select->where;
+        self::assertInstanceOf(Binary::class, $where);
+        $resolution = $query->facts->scalar($where->left)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+        self::assertSame($table->columns[0], $resolution->slot->column);
     }
 
     public function testDeriveStatementProvidesExactlyOneDeclaration(): void
@@ -153,12 +161,12 @@ final class CreateTableTest extends TestCase
 
         self::assertInstanceOf(CreateTable::class, $operation->statement);
         self::assertTrue($operation->statement->optionsComma);
-        self::assertSame('CREATE TABLE t (a PRIMARY KEY) , WITHOUT ROWID, WITHOUT ROWID', $operation->toString());
+        self::assertSame('CREATE TABLE t (a PRIMARY KEY), WITHOUT ROWID, WITHOUT ROWID', $operation->toString());
     }
 
-    public function testConstructRefusesACommaWithoutAnOptionAfterIt(): void
+    public function testRefusesACommaWithoutAnOptionAfterIt(): void
     {
-        $this->expectException(InvalidConstruction::class);
+        $this->expectExceptionMessage('A comma before the table options needs a table option after it.');
 
         new CreateTable(new QualifiedName(new Name('t')), [new ColumnDefinition(new Name('a'))], [], [], false, false, true);
     }

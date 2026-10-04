@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Operators;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -17,7 +18,8 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * A prefix operation over one operand.
  *
- * Rule: SQLITE-UNARY-001. The facts follow SQLITE-OPERATOR-RESULT-001. The
+ * Rule: SQLITE-UNARY-001. The facts follow SQLITE-OPERATOR-RESULT-001; the
+ * operand is a single value (SQLITE-ROW-VALUE-USE-001). The
  * operand must keep its place without parentheses (SQLITE-PRECEDENCE-001):
  * it may not start with an operator weaker than the prefix operator.
  * Source: https://sqlite.org/lang_expr.html#operators_and_parse_affecting_attributes.
@@ -49,7 +51,10 @@ final class Unary implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new Operators())->unary($this->operator, $derivation->scalar($this->operand, $environment));
+        $operand = $derivation->scalar($this->operand, $environment);
+        (new RowValues())->single($operand, $derivation);
+
+        return (new Operators())->unary($this->operator, $operand);
     }
 
     /**

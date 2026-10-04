@@ -66,4 +66,11 @@ final class TablePrimaryKeyTest extends TestCase
         self::assertSame(ConflictResolution::Replace, $key->conflict);
         self::assertSame('CREATE TABLE t (id integer, PRIMARY KEY (id DESC AUTOINCREMENT) ON CONFLICT REPLACE)', $operation->toString());
     }
+
+    public function testRefusesAStringLiteralTermThatNamesAColumn(): void
+    {
+        $this->expectExceptionMessage('A string literal written as a key term names a column: write it as a LiteralColumn.');
+
+        new TablePrimaryKey([new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Collate(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('a'), new \SqlSemantics\Statement\Identifier\Name('nocase')))]);
+    }
 }

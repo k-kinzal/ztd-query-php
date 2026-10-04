@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Rendering\Output;
@@ -20,6 +21,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Rule: SQLITE-BETWEEN-001. The test is the pair of comparisons with the
  * operand evaluated once: INTEGER, NULL when a deciding operand is NULL. The
+ * operand and the bounds are rows of one width (SQLITE-ROW-VALUE-USE-001). The
  * operand may not end in an operator weaker than the equality group and the
  * bounds may not start with an operator of that group or a weaker one
  * (SQLITE-PRECEDENCE-001).
@@ -60,6 +62,7 @@ final class Between implements Scalar
         $operand = $derivation->scalar($this->operand, $environment);
         $low = $derivation->scalar($this->low, $environment);
         $high = $derivation->scalar($this->high, $environment);
+        (new RowValues())->uniform([$operand, $low, $high], $derivation);
 
         return new ScalarFact((new Storages())->strict(Storage::Integer, [$operand->type]), $operand->nullability->propagate($low->nullability)->propagate($high->nullability));
     }

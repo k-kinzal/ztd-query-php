@@ -11,7 +11,6 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -40,8 +39,6 @@ final class ColumnUseTest extends TestCase
         self::assertInstanceOf(Select::class, $select);
         $first = $select->items[0];
         $second = $select->items[1];
-        self::assertInstanceOf(SelectExpression::class, $first);
-        self::assertInstanceOf(SelectExpression::class, $second);
         $qualified = $operation->facts->scalar($first->expression);
         $bare = $operation->facts->scalar($second->expression);
 
@@ -66,7 +63,6 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(ResolvedColumn::class, $fact->resolution);
@@ -80,7 +76,6 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Dependent::class, $fact->type);
@@ -99,7 +94,6 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Invalid::class, $fact->type);
@@ -116,7 +110,6 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Invalid::class, $fact->type);
@@ -133,7 +126,6 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Invalid::class, $fact->type);
@@ -148,13 +140,12 @@ final class ColumnUseTest extends TestCase
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
-        self::assertInstanceOf(SelectExpression::class, $item);
         $use = $item->expression;
         self::assertInstanceOf(ColumnUse::class, $use);
 
         self::assertSame('A', $use->name->value);
         self::assertSame('T', $use->qualifier?->name->value);
-        self::assertSame('shop', $use->qualifier?->schema?->value);
+        self::assertSame('shop', $use->qualifier->schema?->value);
         self::assertSame('SELECT shop.T.A FROM shop.t', $operation->toString());
         self::assertSame('SELECT `a b` FROM t', (new Semantics(Dialect::MySql))->analyze('SELECT `a b` FROM t')->toString());
     }

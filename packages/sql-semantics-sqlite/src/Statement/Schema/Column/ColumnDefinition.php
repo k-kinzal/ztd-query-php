@@ -9,7 +9,7 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ConstraintScope;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
-use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\NonConstantDefault;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnFlaw;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\GeneratedColumnProblem;
 use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
@@ -111,7 +111,7 @@ final class ColumnDefinition implements Node
         foreach ($this->constraints as $constraint) {
             $constraint->deriveConstraint($derivation, $scope);
             if ($constraint instanceof DefaultExpression && (new Limits())->nonConstant($constraint->expression)) {
-                $derivation->report(new NonConstantDefault($this->name));
+                $derivation->report(new DefaultNotConstant($this->name));
             }
             $default = $default || $constraint instanceof DefaultExpression || $constraint instanceof DefaultLiteral || $constraint instanceof DefaultWord;
         }

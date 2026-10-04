@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Rules\Typing\CallChecks;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Functions;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Window\WindowSpec;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
@@ -27,7 +28,8 @@ use SqlSemantics\Statement\Type\Invalid;
  * call. The result facts are those of SQLITE-FUNCTION-RESULT-001: a built-in
  * function has its documented result; a wrong number of arguments is
  * reported; any other name depends on the undeclared routine. The star form
- * passes no argument.
+ * passes no argument. A clause the kind of function does not take is
+ * reported by SQLITE-CALL-CLAUSE-001.
  * Source: https://sqlite.org/lang_expr.html#functions,
  * https://sqlite.org/lang_aggfunc.html, https://sqlite.org/windowfunctions.html.
  * Status: Implemented.
@@ -95,6 +97,7 @@ final class FunctionCall implements Scalar
         foreach ($this->over instanceof WindowSpec ? $this->over->expressions() : [] as $expression) {
             $derivation->scalar($expression, $environment);
         }
+        (new CallChecks())->report($this, $derivation);
         $fact = (new Functions())->result($this->name, $arguments);
         if ($fact->type instanceof Invalid) {
             $derivation->report($fact->type->cause);

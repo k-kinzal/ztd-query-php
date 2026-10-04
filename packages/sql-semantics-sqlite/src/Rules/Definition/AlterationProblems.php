@@ -115,7 +115,7 @@ final class AlterationProblems
             [$unique, AlterationObstacle::UniqueColumn],
             [$column->generated()?->storage() === GeneratedStorage::Stored, AlterationObstacle::StoredColumn],
             [$plain && $column->notNull() && !$default, AlterationObstacle::NotNullWithoutDefault],
-            [$plain && !$literal, AlterationObstacle::NonConstantDefault],
+            [$plain && !$literal, AlterationObstacle::DefaultNotConstant],
         ];
         foreach ($obstacles as [$present, $obstacle]) {
             if ($present) {

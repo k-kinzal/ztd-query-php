@@ -21,4 +21,5 @@ enum ArityRule
     case RowComparison;
     case RowAssignment;
     case ScalarSubquery;
+    case InListElement;
 }

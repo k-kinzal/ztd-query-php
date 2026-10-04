@@ -27,7 +27,8 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Table\TableUnique;
  * ConstraintRun, ConstraintName, TablePrimaryKey, TableUnique, TableCheck,
  * ForeignKey, TableOption. A written comma between two constraints ends a
  * run; a missing one continues it, so the place of every comma is kept, as
- * is a comma the grammar admits before the first table option.
+ * is a comma the grammar admits before the first table option. A string
+ * literal among the key terms is lowered by SQLITE-KEY-TERM-LOWER-001.
  * Terminates: both lists are flattened iteratively.
  * Source: https://sqlite.org/syntax/table-constraint.html,
  * https://sqlite.org/syntax/table-options.html. Status: Implemented.
@@ -94,11 +95,11 @@ final class TableConstraintRule
         return match ($form->signature) {
             'tcons: CONSTRAINT nm' => new ConstraintName($this->lowering->names->name($form->node(1))),
             'tcons: PRIMARY KEY LP sortlist autoinc RP onconf' => new TablePrimaryKey(
-                $this->lowering->ordering->terms($form->node(3)),
+                (new KeyTermRule())->keyTerms($this->lowering->ordering->terms($form->node(3))),
                 $this->lowering->conflicts->onConflict($form->node(6)),
                 $this->columns->autoincrement($form->node(4)),
             ),
-            'tcons: UNIQUE LP sortlist RP onconf' => new TableUnique($this->lowering->ordering->terms($form->node(2)), $this->lowering->conflicts->onConflict($form->node(4))),
+            'tcons: UNIQUE LP sortlist RP onconf' => new TableUnique((new KeyTermRule())->keyTerms($this->lowering->ordering->terms($form->node(2))), $this->lowering->conflicts->onConflict($form->node(4))),
             'tcons: CHECK LP expr RP onconf' => new TableCheck($this->lowering->expressions->expression($form->node(2)), $this->lowering->conflicts->onConflict($form->node(4))),
             'tcons: FOREIGN KEY LP eidlist RP REFERENCES nm eidlist_opt refargs defer_subclause_opt' => new ForeignKey(
                 $this->lowering->ordering->columns($form->node(3)),

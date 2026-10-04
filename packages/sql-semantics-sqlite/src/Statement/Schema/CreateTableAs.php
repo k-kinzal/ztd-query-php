@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
-use SqlSemantics\Platform\Sqlite\Rules\Definition\QueryColumns;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\QueryColumns;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableDeclaration;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableProblems;
 use SqlSemantics\Rendering\Output;
@@ -63,7 +63,7 @@ final class CreateTableAs implements Statement
     {
         (new TableProblems())->temporary($this->name, $this->temporary, $derivation);
         $fact = $derivation->query($this->query, $derivation->environment());
-        $columns = (new QueryColumns())->tableColumns($fact, $derivation->facts(), $derivation->context->columnNames);
+        $columns = (new QueryColumns())->tableColumns($this->query, $fact, $derivation->facts(), $derivation->context->columnNames);
         $rule = new TableDeclaration();
         $derivation->declare(new Table(
             $rule->name($this->name, $this->temporary),

@@ -1,0 +1,96 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Lowering;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+
+#[CoversClass(Lowering::class)]
+#[Medium]
+final class LoweringTest extends TestCase
+{
+    public function testStatementsAnswerTheOneStatementOfAnInput(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $parser = $platform->parser($profile);
+
+        self::assertSame([], $lowering->statements($parser->parse('')));
+        self::assertCount(1, $lowering->statements($parser->parse('SELECT 1')));
+        self::assertCount(1, $lowering->statements($parser->parse('SELECT 1;')));
+        self::assertInstanceOf(Select::class, $lowering->statements($parser->parse('SELECT 1;'))[0]);
+        self::assertCount(3, $lowering->leaves->all());
+        $recorded = new Leaves();
+        $projected = (new Lowering($platform->productions($profile), $recorded, $profile))->statements($parser->parse('SELECT a, 1 FROM t'));
+        self::assertCount(1, $projected);
+        self::assertCount(4, $recorded->all());
+    }
+
+    public function testStatementsAnswerTheOneStatementOfALegacyInput(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.6.51', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $parser = $platform->parser($profile);
+
+        self::assertSame([], $lowering->statements($parser->parse('')));
+        self::assertInstanceOf(Select::class, $lowering->statements($parser->parse('SELECT 1;'))[0]);
+        self::assertInstanceOf(Select::class, $lowering->statements($parser->parse('SELECT a FROM t WHERE a = 1'))[0]);
+    }
+
+    public function testStatementHandsARuleToTheFamilyThatOwnsIt(): void
+    {
+        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL account family: statement');
+
+        (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SET ROLE NONE');
+    }
+
+    public function testStatementHandsBeginToTheServerFamily(): void
+    {
+        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL server family: statement');
+
+        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('BEGIN');
+    }
+
+    public function testDefinitionRoutesCreateAlterAndDrop(): void
+    {
+        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table change family: definition');
+
+        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('DROP TABLE t');
+    }
+
+    public function testRoutedHandsAModernStatementToItsFamily(): void
+    {
+        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL table change family: statement');
+
+        (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('DROP TABLE t');
+    }
+
+    public function testRoutedHandsADefinitionToItsFamilyThroughTheRoutes(): void
+    {
+        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL server family: definition');
+
+        (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd'");
+    }
+
+    public function testFormAnswersTheProductionOfANode(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+
+        self::assertSame('start_entry: sql_statement', $lowering->form($platform->parser($profile)->parse('SELECT 1'))->signature);
+        self::assertSame($profile, $lowering->profile);
+    }
+}

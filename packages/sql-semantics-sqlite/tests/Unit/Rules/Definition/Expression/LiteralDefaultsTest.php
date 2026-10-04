@@ -12,10 +12,12 @@ use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\LiteralDefaults;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\RowExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
+use SqlSemantics\Statement\Scalar;
 
 #[CoversClass(LiteralDefaults::class)]
 #[Medium]
@@ -53,13 +55,11 @@ final class LiteralDefaultsTest extends TestCase
 
     public function testConstantLooksThroughParenthesesSignsAndCasts(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze("SELECT ((-(+CAST((1) AS INT)))), -(1 + 1), NOT 1, (?)");
+        $row = (new Semantics(Dialect::Sqlite))->analyze('SELECT (((-(+CAST((1) AS INT)))), -(1 + 1), NOT 1, (?))')->field(0)->expression;
         $rule = new LiteralDefaults();
 
-        self::assertTrue($rule->constant($query->field(0)->expression));
-        self::assertFalse($rule->constant($query->field(1)->expression));
-        self::assertFalse($rule->constant($query->field(2)->expression));
-        self::assertFalse($rule->constant($query->field(3)->expression));
+        self::assertInstanceOf(RowExpression::class, $row);
+        self::assertSame([true, false, false, false], array_map(static fn (Scalar $item): bool => $rule->constant($item), $row->items));
     }
 
     public function testCoreRemovesTheParentheses(): void

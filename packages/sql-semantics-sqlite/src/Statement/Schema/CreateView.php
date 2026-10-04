@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
-use SqlSemantics\Platform\Sqlite\Rules\Definition\QueryColumns;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\Query\QueryColumns;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableDeclaration;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableProblems;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\ListedColumn;
@@ -87,7 +87,7 @@ final class CreateView implements Statement
         if ($expected !== $returned) {
             $derivation->report(new ColumnCountMismatch($expected, $returned));
         }
-        $columns = (new QueryColumns())->viewColumns($fact, $derivation->facts(), $listed, $derivation->context->columnNames, $expected === $returned);
+        $columns = (new QueryColumns())->viewColumns($this->query, $fact, $derivation->facts(), $listed, $derivation->context->columnNames, $expected === $returned);
         $complete = $expected === $returned && count($columns) === ($listed === null ? $returned : count($listed)) && ($listed !== null || $fact->shape->complete());
         $derivation->declare(new Table((new TableDeclaration())->name($this->name, $this->temporary), $derivation->context->profile, $columns, [], $complete));
     }

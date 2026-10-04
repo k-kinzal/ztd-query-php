@@ -14,7 +14,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnConstraint;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\Generated;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
-use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\NonConstantDefault;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 
 #[CoversNothing]
@@ -34,6 +34,6 @@ final class ColumnConstraintTest extends TestCase
         self::assertCount(3, $operation->facts->diagnostics);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[1]);
-        self::assertInstanceOf(NonConstantDefault::class, $operation->facts->diagnostics[2]);
+        self::assertInstanceOf(DefaultNotConstant::class, $operation->facts->diagnostics[2]);
     }
 }

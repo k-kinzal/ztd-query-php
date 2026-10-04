@@ -56,7 +56,10 @@ final class ScalarSubquery implements Scalar
             return new ScalarFact(new Dependent($fact->shape->missing), Nullability::Nullable);
         }
         if (count($fields) === 0) {
-            return new ScalarFact(new Invalid(new ArityMismatch(ArityRule::ScalarSubquery, 1, 0)), Nullability::Nullable);
+            $problem = new ArityMismatch(ArityRule::ScalarSubquery, 1, 0);
+            $derivation->report($problem);
+
+            return new ScalarFact(new Invalid($problem), Nullability::Nullable);
         }
         if (count($fields) !== 1) {
             return new ScalarFact(new Known(new Vector(count($fields))), Nullability::Nullable);

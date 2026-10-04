@@ -70,6 +70,15 @@ final class ColumnDomainTest extends TestCase
         self::assertSame(Affinity::Blob, $domain->affinity);
     }
 
+    public function testTypedTellsNoDeclaredTypeFromAnEmptyOne(): void
+    {
+        self::assertFalse((new ColumnDomain(''))->typed());
+        self::assertFalse((new ColumnDomain('', true))->typed());
+        self::assertTrue((new ColumnDomain('', false, false))->typed());
+        self::assertTrue((new ColumnDomain('BLOB'))->typed());
+        self::assertTrue((new ColumnDomain('ANY', true))->typed());
+    }
+
     public function testRowidCapableHoldsOnlyForTheStandardNameInteger(): void
     {
         self::assertTrue((new ColumnDomain('Integer'))->rowidCapable());

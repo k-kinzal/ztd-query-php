@@ -109,4 +109,11 @@ final class CreateIndexTest extends TestCase
 
         self::assertSame('CREATE UNIQUE INDEX IF NOT EXISTS main.i ON t (a COLLATE nocase DESC, b + 1) WHERE a IS NOT NULL', $operation->toString());
     }
+
+    public function testRefusesAStringLiteralTermThatNamesAColumn(): void
+    {
+        $this->expectExceptionMessage('A string literal written as an index term names a column: write it as a LiteralColumn.');
+
+        new CreateIndex(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('i')), new \SqlSemantics\Statement\Identifier\Name('t'), [new \SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm(new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral('a'))]);
+    }
 }

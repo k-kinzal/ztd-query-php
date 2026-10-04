@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Rendering\Output;
@@ -33,7 +34,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * its shape follows SQLITE-TABLE-SHAPE-001, with arguments
  * SQLITE-TABLE-CALL-001. The result is INTEGER; it can be NULL when the
  * operand or a compared column can be, and depends on the missing inputs
- * when the shape of the relation is open. The operand may not end in an
+ * when the shape of the relation is open. The relation has as many columns
+ * as the operand has values (SQLITE-ROW-VALUE-USE-001). The operand may not end in an
  * operator weaker than the equality group (SQLITE-PRECEDENCE-001).
  * Source: https://sqlite.org/lang_expr.html#the_in_and_not_in_operators.
  * Status: Implemented.
@@ -71,7 +73,8 @@ final class InTable implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $nullability = $derivation->scalar($this->operand, $environment)->nullability;
+        $operand = $derivation->scalar($this->operand, $environment);
+        $nullability = $operand->nullability;
         foreach ($this->arguments ?? [] as $argument) {
             $derivation->scalar($argument, $environment);
         }
@@ -80,7 +83,9 @@ final class InTable implements Scalar
             ? (new TableShapes())->fact($derivation, $this->table, $environment)
             : new RelationFact(new RowShape([], [new UndeclaredRoutine($this->table)]));
         $derivation->target($this, $fact);
-        if (!$fact->shape->complete()) {
+        if ($fact->shape->complete()) {
+            (new RowValues())->membership($operand, count($fact->shape->slots), $derivation);
+        } else {
             $nullability = $nullability->propagate(Nullability::Dependent);
         }
         foreach ($fact->shape->slots as $slot) {

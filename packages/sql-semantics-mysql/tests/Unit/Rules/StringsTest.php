@@ -96,4 +96,12 @@ final class StringsTest extends TestCase
         self::assertSame('\\', (new Strings())->decode((new Strings())->encode('\\', true), true));
         self::assertSame('\\', (new Strings())->decode((new Strings())->encode('\\', false), false));
     }
+
+    public function testEncodeSpellsControlBytesAsEscapesWhenBackslashEscapes(): void
+    {
+        self::assertSame("'a\\0b\\nc\\rd\\Ze'", (new Strings())->encode("a\0b\nc\rd\x1Ae", true));
+        self::assertSame("'a\0b\nc\rd\x1Ae'", (new Strings())->encode("a\0b\nc\rd\x1Ae", false));
+        self::assertSame("'\tb'", (new Strings())->encode("\tb", true));
+        self::assertSame("a\0b\nc\rd\x1Ae", (new Strings())->decode((new Strings())->encode("a\0b\nc\rd\x1Ae", true), true));
+    }
 }

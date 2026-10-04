@@ -33,6 +33,11 @@ final class Strings
     private const ESCAPES = ['0' => "\0", 'b' => "\x08", 'n' => "\n", 'r' => "\r", 't' => "\t", 'Z' => "\x1A", '%' => '\\%', '_' => '\\_'];
 
     /**
+     * The bytes a backslash-escaping writer spells as an escape sequence: the backslash itself and the control bytes the manual names.
+     */
+    private const SPELLINGS = ['\\' => '\\\\', "\0" => '\\0', "\n" => '\\n', "\r" => '\\r', "\x1A" => '\\Z'];
+
+    /**
      * Decodes a quoted string token, with or without the `N` prefix, to its bytes.
      */
     public function decode(string $text, bool $backslashEscapes): string
@@ -62,7 +67,7 @@ final class Strings
      */
     public function encode(string $value, bool $backslashEscapes): string
     {
-        $body = $backslashEscapes ? str_replace('\\', '\\\\', $value) : $value;
+        $body = $backslashEscapes ? strtr($value, self::SPELLINGS) : $value;
 
         return "'" . str_replace("'", "''", $body) . "'";
     }

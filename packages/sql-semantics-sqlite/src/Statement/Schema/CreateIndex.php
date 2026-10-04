@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\KeyTerms;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
@@ -37,10 +38,11 @@ use SqlSemantics\Statement\Statement;
  * qualified column reference or a non-deterministic function in an indexed
  * expression, or a bound parameter, a subquery or a non-deterministic
  * function in the condition, are diagnostics (SQLITE-DEFINITION-LIMITS-001).
- * Remaining assumption: SQLite reads a string literal written as a whole
- * term as a column name; the model derives it as the text it is. Indexes are
- * not part of a declaration context: the statement provides no declaration,
- * and whether the index name is free is not a fact.
+ * A string literal written as a term, under parentheses and at most one
+ * COLLATE clause, is the name of an indexed column (LiteralColumn,
+ * SQLITE-LITERAL-COLUMN-001); a plain string literal term is refused at
+ * construction. Indexes are not part of a declaration context: the statement
+ * provides no declaration, and whether the index name is free is not a fact.
  * Source: https://sqlite.org/lang_createindex.html, https://sqlite.org/partialindex.html,
  * https://sqlite.org/expridx.html. Status: Implemented.
  *
@@ -78,6 +80,9 @@ final class CreateIndex implements Statement, Relation
     ) {
         Check::input($name->catalog === null, 'An index name has at most a schema qualifier.');
         $this->terms = Check::listOf($terms, SortTerm::class, 'An index has at least one term.', 1);
+        foreach ($this->terms as $term) {
+            Check::input(!(new KeyTerms())->string($term->expression, 1), 'A string literal written as an index term names a column: write it as a LiteralColumn.');
+        }
     }
 
     /**

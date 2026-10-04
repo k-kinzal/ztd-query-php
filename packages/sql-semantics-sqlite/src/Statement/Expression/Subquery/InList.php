@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Subquery;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -21,7 +22,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * Rule: SQLITE-IN-LIST-001. The result is INTEGER. It is NULL when the
  * operand is NULL or when no value matches and a value is NULL; with an
- * empty list it is never NULL. The operand may not end in an operator weaker
+ * empty list it is never NULL. Every value has the width of the operand
+ * (SQLITE-ROW-VALUE-USE-001). The operand may not end in an operator weaker
  * than the equality group (SQLITE-PRECEDENCE-001).
  * Source: https://sqlite.org/lang_expr.html#the_in_and_not_in_operators.
  * Status: Implemented.
@@ -59,10 +61,14 @@ final class InList implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $nullability = $derivation->scalar($this->operand, $environment)->nullability;
+        $operand = $derivation->scalar($this->operand, $environment);
+        $nullability = $operand->nullability;
+        $elements = [];
         foreach ($this->items as $item) {
-            $nullability = $nullability->propagate($derivation->scalar($item, $environment)->nullability);
+            $elements[] = $derivation->scalar($item, $environment);
+            $nullability = $nullability->propagate($elements[count($elements) - 1]->nullability);
         }
+        (new RowValues())->elements($operand, $elements, $derivation);
 
         return new ScalarFact(new Known(Storage::Integer), $this->items === [] ? Nullability::NotNull : $nullability);
     }

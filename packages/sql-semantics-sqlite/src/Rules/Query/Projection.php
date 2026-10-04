@@ -22,7 +22,6 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Shape\Field;
@@ -128,6 +127,6 @@ final class Projection
             return $fact->resolution instanceof AliasTarget ? $fact->resolution->field->name : $expression->name;
         }
 
-        return $expression instanceof DoubleQuotedWord && $fact->resolution instanceof ConditionalColumn ? $expression->word : null;
+        return null;
     }
 }

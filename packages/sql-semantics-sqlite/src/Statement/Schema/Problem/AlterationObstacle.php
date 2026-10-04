@@ -23,6 +23,6 @@ enum AlterationObstacle: string
     case UniqueColumn = 'A UNIQUE column cannot be added.';
     case StoredColumn = 'A STORED generated column cannot be added.';
     case NotNullWithoutDefault = 'A NOT NULL column cannot be added without a default value.';
-    case NonConstantDefault = 'A column cannot be added with a default value that is not a literal.';
+    case DefaultNotConstant = 'A column cannot be added with a default value that is not a literal.';
     case LastColumn = 'The only column of a table cannot be dropped.';
 }

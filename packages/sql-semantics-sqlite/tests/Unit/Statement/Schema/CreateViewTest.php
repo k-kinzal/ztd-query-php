@@ -28,7 +28,8 @@ final class CreateViewTest extends TestCase
         self::assertTrue($view->complete);
         self::assertSame([], $view->implicit);
         self::assertSame(['a', 'label'], array_map(static fn (object $column): string => $column->name->value, $view->columns));
-        self::assertSame($source->declarations()[0]->columns[0]->type, $view->columns[0]->type);
+        self::assertSame('INTEGER', $view->columns[0]->type->name());
+        self::assertNotSame($source->declarations()[0]->columns[0]->type, $view->columns[0]->type);
         self::assertSame(Nullability::NotNull, $view->columns[0]->nullability);
         self::assertSame(Nullability::Nullable, $view->columns[1]->nullability);
         self::assertNull($operation->shape());

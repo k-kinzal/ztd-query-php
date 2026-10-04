@@ -28,7 +28,8 @@ use SqlSemantics\Statement\Statement;
  * Constructors: CreateView, CreateIndex, Drop, AlterRenameTable,
  * AlterAddColumn, AlterDropColumn, AlterRenameColumn. UNIQUE, TEMP, IF EXISTS
  * and IF NOT EXISTS are model values; the COLUMN keyword of ALTER TABLE is
- * declared noise. Terminates: fixed number of children.
+ * declared noise. A string literal among the index terms is lowered by
+ * SQLITE-KEY-TERM-LOWER-001. Terminates: fixed number of children.
  * Source: https://sqlite.org/lang_createview.html, https://sqlite.org/lang_createindex.html,
  * https://sqlite.org/lang_droptable.html, https://sqlite.org/lang_altertable.html.
  * Status: Implemented.
@@ -118,7 +119,7 @@ final class SchemaRule
         $ifNotExists = $this->lowering->flags->ifNotExists($form->node(3));
         $name = $this->lowering->names->scoped($form->node(4), $form->node(5));
         $table = $this->lowering->names->name($form->node(7));
-        $terms = $this->lowering->ordering->terms($form->node(9));
+        $terms = (new KeyTermRule())->indexTerms($this->lowering->ordering->terms($form->node(9)));
 
         return new CreateIndex($name, $table, $terms, $this->lowering->expressions->where($form->node(11)), $unique, $ifNotExists);
     }

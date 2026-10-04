@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Rules\Resolution;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\DerivedQuery;
@@ -89,7 +90,7 @@ final class FromScope
         }
         foreach ([$node->constraint, ...array_map(static fn (JoinStep $step): JoinOn|JoinUsing|null => $step->constraint, $node->steps)] as $constraint) {
             if ($constraint instanceof JoinOn) {
-                $derivation->scalar($constraint->condition, $environment);
+                (new RowValues())->single($derivation->scalar($constraint->condition, $environment), $derivation);
             }
         }
 

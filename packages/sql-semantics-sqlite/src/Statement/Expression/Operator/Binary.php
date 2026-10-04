@@ -7,22 +7,20 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Operator;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\Precedence;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Operators;
-use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
-use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
-use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * A binary operation over two operands, in the order written.
  *
- * Rule: SQLITE-BINARY-001. The facts follow SQLITE-OPERATOR-RESULT-001. Two
- * row values of different widths cannot be compared. Both operands must keep
+ * Rule: SQLITE-BINARY-001. The facts follow SQLITE-OPERATOR-RESULT-001. A
+ * comparison takes rows of one width on both sides and every other operator
+ * takes single values (SQLITE-ROW-VALUE-USE-001). Both operands must keep
  * their place without parentheses (SQLITE-PRECEDENCE-001): the left operand
  * may not end in a weaker operator, the right operand may not start with an
  * operator that is not tighter, and the right operand of IS may not be a
@@ -62,8 +60,12 @@ final class Binary implements Scalar
     {
         $left = $derivation->scalar($this->left, $environment);
         $right = $derivation->scalar($this->right, $environment);
-        if ($left->type instanceof Known && $right->type instanceof Known && $left->type->descriptor instanceof Vector && $right->type->descriptor instanceof Vector && $left->type->descriptor->width !== $right->type->descriptor->width) {
-            $derivation->report(new ArityMismatch(ArityRule::RowComparison, $left->type->descriptor->width, $right->type->descriptor->width));
+        $rows = new RowValues();
+        if ($this->operator->level() === Precedence::EQUALITY || $this->operator->level() === Precedence::COMPARISON) {
+            $rows->uniform([$left, $right], $derivation);
+        } else {
+            $rows->single($left, $derivation);
+            $rows->single($right, $derivation);
         }
 
         return (new Operators())->binary($this->operator, $left, $right);

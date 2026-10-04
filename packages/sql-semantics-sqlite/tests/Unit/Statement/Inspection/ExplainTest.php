@@ -11,10 +11,10 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\Explain;
 use SqlSemantics\Platform\Sqlite\Statement\Inspection\ExplainMode;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefaultNotConstant;
 use SqlSemantics\Platform\Sqlite\Statement\Transaction\Begin;
 use SqlSemantics\Statement\Operation;
-use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
-use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\NonConstantDefault;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 
@@ -53,14 +53,23 @@ final class ExplainTest extends TestCase
         $create = $semantics->analyze('EXPLAIN QUERY PLAN CREATE TABLE u (a, b DEFAULT (?))');
         $view = $semantics->analyze('EXPLAIN CREATE VIEW v AS SELECT a FROM t', [$table]);
 
-        self::assertSame(['addr', 'opcode', 'p1', 'p2', 'p3', 'p4', 'p5', 'comment'], array_map(static fn (object $field): ?string => $field->name?->value, iterator_to_array($returning->fields() ?? [])));
+        $report = $returning->fields();
+        self::assertNotNull($report);
+        self::assertSame(['addr', 'opcode', 'p1', 'p2', 'p3', 'p4', 'p5', 'comment'], array_map(static fn (object $field): ?string => $field->name?->value, iterator_to_array($report)));
         self::assertInstanceOf(MissingColumn::class, $returning->facts->diagnostics[0]);
         self::assertSame([], $create->declarations());
-        self::assertSame(['id', 'parent', 'notused', 'detail'], array_map(static fn (object $field): ?string => $field->name?->value, iterator_to_array($create->fields() ?? [])));
-        self::assertInstanceOf(NonConstantDefault::class, $create->facts->diagnostics[0]);
+        $plan = $create->fields();
+        self::assertNotNull($plan);
+        self::assertSame(['id', 'parent', 'notused', 'detail'], array_map(static fn (object $field): ?string => $field->name?->value, iterator_to_array($plan)));
+        self::assertInstanceOf(DefaultNotConstant::class, $create->facts->diagnostics[0]);
         self::assertSame([], $view->declarations());
-        self::assertInstanceOf(Select::class, $view->statement->statement->query);
-        self::assertSame($table->declarations()[0]->columns[0], $view->facts->query($view->statement->statement->query)->fields()?->at(0)->column());
+        $explain = $view->statement;
+        self::assertInstanceOf(Explain::class, $explain);
+        $definition = $explain->statement;
+        self::assertInstanceOf(CreateView::class, $definition);
+        $inner = $view->facts->query($definition->query)->fields();
+        self::assertNotNull($inner);
+        self::assertSame($table->declarations()[0]->columns[0], $inner->at(0)->column());
     }
 
     public function testRenderWritesThePrefixOfEachMode(): void

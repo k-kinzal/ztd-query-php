@@ -29,11 +29,6 @@ use SqlSemantics\Statement\Identifier\Name;
 final class ResultRule
 {
     /**
-     * The empty marker productions the grammar places around expressions.
-     */
-    public const MARKERS = ['scanpt:'];
-
-    /**
      * @param Lowering $lowering The lowering this rule belongs to
      */
     public function __construct(private readonly Lowering $lowering)

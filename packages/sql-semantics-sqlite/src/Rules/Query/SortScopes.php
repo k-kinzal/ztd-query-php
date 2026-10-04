@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Collate;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
@@ -26,7 +27,7 @@ use SqlSemantics\Statement\Shape\OpenStar;
  * a result column alias denotes that result column before any input column
  * of the same name. Every other term is an expression over the input
  * columns, in which a result column alias is used when no input column has
- * the name. Terminates: one pass over the terms.
+ * the name, and is a single value (SQLITE-ROW-VALUE-USE-001). Terminates: one pass over the terms.
  * Source: https://sqlite.org/lang_select.html#the_order_by_clause. Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\Sqlite
@@ -59,7 +60,7 @@ final class SortScopes
             } elseif ($word !== null && $environment->aliased($word) !== []) {
                 $derivation->scalar($term, new Environment($derivation->context, $environment->outer, [], [], $environment->aliased($word)));
             } else {
-                $derivation->scalar($term, $environment);
+                (new RowValues())->single($derivation->scalar($term, $environment), $derivation);
             }
         }
     }

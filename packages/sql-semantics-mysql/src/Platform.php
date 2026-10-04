@@ -66,6 +66,9 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Fixes the profile of a shipped MySQL release under a session mode.
      *
+     * The release is named as the parser tags it (`mysql-8.4.7`) or by its number alone (`8.4.7`);
+     * without a release the default of the installed parser is used.
+     *
      * @throws InvalidArgumentException When the release is not shipped, the mode belongs to another database, or the installed grammar artifacts differ from the pinned ones
      */
     public function profile(?string $version, ?\SqlSemantics\Contract\Mode $mode, ParameterStyle $parameters): LanguageProfile
@@ -74,8 +77,8 @@ final class Platform implements \SqlSemantics\Contract\Platform
             throw new InvalidArgumentException('MySQL reads SQL under a MySQL session mode; ' . $mode::class . ' given.');
         }
         $registry = new VersionRegistry();
-        $default = $registry->resolve('mysql')->name;
-        $release = GrammarRelease::tryFrom($version ?? $default);
+        $name = $version ?? $registry->resolve('mysql')->name;
+        $release = GrammarRelease::tryFrom(str_starts_with($name, 'mysql-') ? $name : 'mysql-' . $name);
         if ($release === null || $release->database() !== 'mysql' || !in_array($release->value, $registry->names('mysql'), true)) {
             throw new InvalidArgumentException('No semantic profile exists for the selected grammar release.');
         }

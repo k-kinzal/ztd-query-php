@@ -70,7 +70,7 @@ final class ByteSizeTest extends TestCase
 
         self::assertNull($size->word);
         self::assertSame('400', $size->number?->text);
-        self::assertTrue($size->number?->hexadecimal);
+        self::assertTrue($size->number->hexadecimal);
         self::assertSame('0x400', (new Lexical())->join($out->pieces()));
     }
 

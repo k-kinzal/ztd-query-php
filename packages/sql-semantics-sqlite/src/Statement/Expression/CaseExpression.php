@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Expression;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Rules\Expression\RowValues;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -18,7 +19,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * A CASE expression: the result of the first branch that matches, in written order.
  *
  * Rule: SQLITE-CASE-001. With a base expression each WHEN value is compared
- * with it; without one each WHEN is a condition. The result is one of the
+ * with it and has its width; without one each WHEN is a condition, a single
+ * value (SQLITE-ROW-VALUE-USE-001), as every result is. The result is one of the
  * THEN results or the ELSE result, so its type is the choice over their
  * types. Without ELSE the result is NULL when no branch matches; otherwise it
  * can be NULL when a result can.
@@ -53,19 +55,21 @@ final class CaseExpression implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        if ($this->base !== null) {
-            $derivation->scalar($this->base, $environment);
-        }
+        $rows = new RowValues();
+        $base = $this->base === null ? null : $derivation->scalar($this->base, $environment);
         $types = [];
         $nullability = $this->otherwise === null ? Nullability::Nullable : Nullability::NotNull;
         foreach ($this->branches as $branch) {
-            $derivation->scalar($branch->when, $environment);
+            $when = $derivation->scalar($branch->when, $environment);
+            $base === null ? $rows->single($when, $derivation) : $rows->uniform([$base, $when], $derivation);
             $then = $derivation->scalar($branch->then, $environment);
+            $rows->single($then, $derivation);
             $types[] = $then->type;
             $nullability = $nullability->propagate($then->nullability);
         }
         if ($this->otherwise !== null) {
             $otherwise = $derivation->scalar($this->otherwise, $environment);
+            $rows->single($otherwise, $derivation);
             $types[] = $otherwise->type;
             $nullability = $nullability->propagate($otherwise->nullability);
         }
