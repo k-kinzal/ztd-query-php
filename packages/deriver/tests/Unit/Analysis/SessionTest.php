@@ -537,4 +537,14 @@ final class SessionTest extends TestCase
         self::assertSame($result, $session->results[$result->reference->id]->get());
     }
 
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testReleaseKeepsCallerOwnedExplanationsUsable(): void
+    {
+        $s = \Tests\Semantic\CandidateContractTest::session('function target(){return 1;}');
+        $r = $s->derive(new ReturnQuery('target'));
+        $s->release();
+        self::assertSame($r->evidence, $s->explain($r->reference)->nodes);
+    }
 }

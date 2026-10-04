@@ -91,6 +91,8 @@ final class Session implements AnalysisSession
      * @var array<string, list<Observation>> Cached source call inventories
      */
     private array $calls = [];
+    private readonly \Deriver\Evaluation\Candidate\Index $candidateIndex;
+    private readonly \Deriver\Evaluation\Candidate\Cache $candidateCache;
     /**
      * Captured provider contributions.
      */
@@ -110,7 +112,7 @@ final class Session implements AnalysisSession
     public function __construct(ProjectInput $input, Configuration $configuration, SyntaxCache $syntax = new SyntaxCache(), GraphCache $lowered = new GraphCache())
     {
         $this->liveResults = new WeakMap();
-        $this->retention = new ResultRetention();
+        $this->retention = new ResultRetention($configuration->retainedResults);
         $this->shared = new \Deriver\Evaluation\Summary\SharedSummaries();
         $this->providerInputs = new ProviderInputs($input, $configuration);
         $input = $this->providerInputs->input;
@@ -145,6 +147,8 @@ final class Session implements AnalysisSession
         $identity = [$sourceModes, $dependencies, $sources, $models, $configuration->target->id(), $configuration->closedWorld, $configuration->environmentVersion, $environment, $configuration->standardModels, 'deriver-semantics-1'];
         $id = hash('sha256', json_encode((new JsonText())->tree($identity), JSON_THROW_ON_ERROR));
         $this->program = new ProjectIndex($id, $input, $configuration->target, $syntax, $lowered, $configuration->sourceLimits);
+        $this->candidateIndex = new \Deriver\Evaluation\Candidate\Index($this->program);
+        $this->candidateCache = new \Deriver\Evaluation\Candidate\Cache($configuration->candidateCacheEntries);
         $this->manifest = new ProjectSnapshot($id, $sources, $models, $configuration->target, $configuration->closedWorld, $configuration->environmentVersion, $this->program->diagnostics(), $dependencies, $sourceModes);
     }
 
@@ -162,7 +166,9 @@ final class Session implements AnalysisSession
         if ($cached !== null && $this->configuration->resources->cancellation?->isRequested() !== true) {
             return $cached;
         }
-        $result = (new QueryExecution($this->program, $this->configuration, $this->models, $this->manifest, $this->shared))->derive($query);
+        $result = $this->configuration->analysisContract === 'execution'
+            ? (new QueryExecution($this->program, $this->configuration, $this->models, $this->manifest, $this->shared))->derive($query)
+            : (new Candidates\QueryExecution($this->candidateIndex, $this->configuration, $this->models, $this->manifest, $this->candidateCache))->derive($query);
         $this->remember($result);
         foreach ($result->frontiers as $frontier) {
             if (in_array($frontier->code, ['CANCELLED', 'MEMORY_LIMIT', 'TIME_LIMIT', 'STACK_LIMIT'], true)) {
@@ -199,20 +205,36 @@ final class Session implements AnalysisSession
     }
 
     /**
-     * Shares one symbolic execution across observations in the same callable.
-     * @param list<Query> $queries Observations with identical budgets
-     * @return ResultSet Results in request order, sharing execution costs and frontiers
+     * Shares candidate dependencies, or one callable execution under the explicit execution contract.
+     * @param list<Query> $queries Observations; execution analysis requires identical owners and budgets
+     * @return ResultSet Results in request order under the selected contract
      * @throws JsonException If query metadata cannot be encoded
      * @throws InvalidInputException If observation owners, scopes, or budgets differ
      */
     #[Override]
     public function deriveTogether(array $queries): ResultSet
     {
+        if ($this->configuration->analysisContract === 'candidates') {
+            return $this->deriveMany($queries);
+        }
         $results = (new QueryExecution($this->program, $this->configuration, $this->models, $this->manifest, $this->shared))->together($queries);
         foreach ($results->results as $result) {
             $this->remember($result);
         }
         return $results;
+    }
+
+    /**
+     * Releases session-owned results and dependency evaluations; caller-owned results remain valid.
+     */
+    #[Override]
+    public function release(): void
+    {
+        $this->candidateCache->clear();
+        $this->shared = new \Deriver\Evaluation\Summary\SharedSummaries();
+        $this->retention->clear();
+        $this->cache = [];
+        $this->results = [];
     }
 
     /**

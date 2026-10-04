@@ -122,4 +122,14 @@ final class ConfigurationTest extends TestCase
         self::assertSame([], $result->frontiers);
         self::assertSame([], $result->exceptionalOutcomes);
     }
+    public function testForExecutionPreservesAllOtherConfigurationFields(): void
+    {
+        $c = new Configuration(candidateCacheEntries:7, retainedResults:0);
+        $copy = $c->forExecution();
+        self::assertSame('execution', $copy->analysisContract);
+        self::assertSame('candidates', $c->analysisContract);
+        self::assertSame(7, $copy->candidateCacheEntries);
+        self::assertSame(0, $copy->retainedResults);
+        self::assertSame($c->target, $copy->target);
+    }
 }

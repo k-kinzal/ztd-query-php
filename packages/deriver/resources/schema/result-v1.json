@@ -235,7 +235,8 @@
     "reachability": {
       "enum": [
         "may-reach",
-        "unreachable"
+        "unreachable",
+        "not-assessed"
       ]
     },
     "assessment": {
@@ -407,9 +408,62 @@
         "peakMemoryBytes": {
           "type": "integer",
           "minimum": 0
+        },
+        "referenceExpansions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bodyExpansions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "modelApplications": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sharedNodeHits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "constructedNodes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retainedNodes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expandedBodies": {
+          "type": [
+            "array",
+            "object"
+          ],
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "expandedReferences": {
+          "type": [
+            "array",
+            "object"
+          ],
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
         }
       },
       "additionalProperties": false
+    },
+    "contract": {
+      "enum": [
+        "candidates",
+        "execution"
+      ]
+    },
+    "candidateGraph": {
+      "type": "string"
     }
   },
   "additionalProperties": false,
@@ -728,6 +782,10 @@
         "symbolicRecursion": {
           "type": "integer",
           "minimum": 1
+        },
+        "maxDepth": {
+          "type": "integer",
+          "minimum": 0
         }
       },
       "additionalProperties": false

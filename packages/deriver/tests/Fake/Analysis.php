@@ -30,7 +30,7 @@ final class Analysis
      */
     public static function session(string $source, Configuration $configuration = new Configuration()): AnalysisSession
     {
-        return (new Analyzer())->open(new ProjectInput([new SourceFile('fixture.php', $source)]), $configuration);
+        return (new Analyzer())->open(new ProjectInput([new SourceFile('fixture.php', $source)]), $configuration->forExecution());
     }
 
     /**

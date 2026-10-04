@@ -89,4 +89,18 @@ final class ResultRetentionTest extends TestCase
         self::assertNull($weak->get());
         self::assertSame($first->evidence, $session->explain($first->reference)->nodes);
     }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testClearReleasesRecentResults(): void
+    {
+        $retention = new \Deriver\Analysis\ResultRetention();
+        $result = Analysis::returns('<?php function target(){return 1;}');
+        $weak = WeakReference::create($result);
+        $retention->remember($result);
+        unset($result);
+        $retention->clear();
+        gc_collect_cycles();
+        self::assertNull($weak->get());
+    }
 }
