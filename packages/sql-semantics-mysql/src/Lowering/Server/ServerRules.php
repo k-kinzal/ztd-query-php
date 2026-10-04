@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Server;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Lowering\Server\Maintenance\MaintenanceRule;
 use SqlSemantics\Platform\MySql\Statement\Server\CheckOption;
 use SqlSemantics\Platform\MySql\Statement\Server\RepairOption;
 use SqlSemantics\Statement\Statement;
@@ -15,13 +17,14 @@ use SqlSemantics\Statement\Statement;
 /**
  * The entry rules of the server family: the methods other families and the statement dispatcher call.
  *
- * Rule: MYSQL-SERVER-ENTRY-001. Scope: transactions, locks, table maintenance, FLUSH, KILL, plugins,
- * databases, servers, tablespaces and log file groups.
- * The method names, parameters and return types are fixed by the family
- * plan. A method delegates to the rule classes of this family; a method
- * the family has not implemented reports a missing rule.
+ * Rule: MYSQL-SERVER-ENTRY-001. Scope: transactions, XA, locks, table
+ * maintenance, key caches, FLUSH, KILL, plugins and components, databases,
+ * foreign servers, spatial reference systems, tablespaces, undo tablespaces,
+ * log file groups, ALTER INSTANCE, CLONE, SHUTDOWN and RESTART. The method
+ * names, parameters and return types are fixed by the family plan; each
+ * delegates to the rule class of its area (MYSQL-SERVER-STATEMENT-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/sql-server-administration-statements.html.
- * Status: Specified.
+ * Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -37,22 +40,24 @@ final class ServerRules
     /**
      * Lowers a server administration statement: a node of one of the statement rules this family owns.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
+     * @throws AnalysisException When the server rejects the statement while it parses it
      */
     public function statement(Node $statement): Statement
     {
-        throw ImplementationGap::rule('MySQL server family: statement');
+        return (new StatementRule($this->lowering))->statement($statement);
     }
 
     /**
      * Lowers a production of `create`, `alter` or `drop` that MYSQL-DEFINITION-ROUTES-001 routes to this
      * family.
      *
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
+     * @throws AnalysisException When the server rejects the statement while it parses it
      */
     public function definition(Form $form): Statement
     {
-        throw ImplementationGap::rule('MySQL server family: definition');
+        return (new StatementRule($this->lowering))->definition($form);
     }
 
     /**
@@ -60,11 +65,11 @@ final class ServerRules
      * option is empty.
      *
      * @return list<CheckOption>
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function checkOptions(Node $options): array
     {
-        throw ImplementationGap::rule('MySQL server family: checkOptions');
+        return (new MaintenanceRule($this->lowering))->checkOptions($options);
     }
 
     /**
@@ -72,10 +77,10 @@ final class ServerRules
      * option is empty.
      *
      * @return list<RepairOption>
-     * @throws ImplementationGap Always, until the family is implemented
+     * @throws ImplementationGap When a production has no rule
      */
     public function repairOptions(Node $options): array
     {
-        throw ImplementationGap::rule('MySQL server family: repairOptions');
+        return (new MaintenanceRule($this->lowering))->repairOptions($options);
     }
 }

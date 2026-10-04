@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Lowering\Table;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Rules\Identifiers;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Policy\AlterPolicy;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Policy\CreatePolicy;
@@ -46,7 +48,12 @@ final class PolicyRule
     /**
      * Lowers `CreatePolicyStmt`.
      *
+     * The word after AS is an identifier that the grammar action of
+     * `RowSecurityDefaultPermissive` in `gram.y` compares with `permissive`
+     * and `restrictive`; any other word is a syntax error there.
+     *
      * @throws ImplementationGap When the production has no rule
+     * @throws AnalysisException When the word after AS is neither permissive nor restrictive
      */
     public function create(Node $statement): CreatePolicy
     {
@@ -55,6 +62,9 @@ final class PolicyRule
             throw ImplementationGap::production($form);
         }
         $mode = $this->lowering->productions->form($form->node(5));
+        if ($mode->signature === 'RowSecurityDefaultPermissive: AS IDENT' && !in_array((new Identifiers())->decode($mode->token(1)->text), ['permissive', 'restrictive'], true)) {
+            throw new AnalysisException('unrecognized row security option "' . (new Identifiers())->decode($mode->token(1)->text) . '"');
+        }
         $command = $this->lowering->productions->form($form->node(6));
 
         return new CreatePolicy(

@@ -52,4 +52,12 @@ final class PolicyRuleTest extends TestCase
         $value = (new \SqlSemantics\Platform\PostgreSql\Lowering\Table\PolicyRule($lowering))->expression($tree->find('RowSecurityOptionalWithCheck')[0]);
         self::assertSame('SqlSemantics\\Platform\\PostgreSql\\Statement\\Literal\\BooleanLiteral', get_debug_type($value));
     }
+
+    public function testCreateRejectsAnUnrecognizedMode(): void
+    {
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('CREATE POLICY p ON t AS "select"');
+        $this->expectExceptionMessage('unrecognized row security option "select"');
+        (new \SqlSemantics\Platform\PostgreSql\Lowering\Table\PolicyRule($lowering))->create($tree->find('CreatePolicyStmt')[0]);
+    }
 }

@@ -53,7 +53,6 @@ enum DefinitionRule: string
     case ViewColumnCount = 'CREATE VIEW specifies more column names than columns';
     case TableColumnCount = 'too many column names were specified';
     case Unimplemented = '%s is not yet implemented';
-    case RowSecurityOption = 'unrecognized row security option "%s"';
     case EventName = 'unrecognized event name "%s"';
     case FilterVariable = 'unrecognized filter variable "%s"';
     case InvalidSequenceOption = 'invalid sequence option %s';

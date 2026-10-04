@@ -13,12 +13,12 @@ use SqlSemantics\Platform\MySql\Rules\Noise\AccountNoise;
 #[Small]
 final class AccountNoiseTest extends TestCase
 {
-    public function testPositionsListsNothingYet(): void
+    public function testPositionsListsTheOptionalWords(): void
     {
-        self::assertSame([], AccountNoise::positions());
+        self::assertSame(['opt_privileges: PRIVILEGES' => [0], 'opt_and: AND_SYM' => [0], 'opt_acl_type: TABLE_SYM' => [0]], AccountNoise::positions());
     }
 
-    public function testSynonymsListsNothingYet(): void
+    public function testSynonymsListsNothing(): void
     {
         self::assertSame([], AccountNoise::synonyms());
     }

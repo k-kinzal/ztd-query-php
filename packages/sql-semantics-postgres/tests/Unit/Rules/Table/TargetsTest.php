@@ -32,7 +32,7 @@ final class TargetsTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('SELECT 1', $context);
         $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
-        self::assertSame(2, count((new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->shape($context[0])->slots));
+        self::assertSame(3, count((new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->shape($context[0])->slots));
     }
 
     public function testImplicitAnswersTheSystemColumns(): void

@@ -63,7 +63,7 @@ final class AlterSequence implements Statement, Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
-        return (new Targets())->resolve($derivation, $this->name);
+        return (new Targets())->existing($derivation, $this->name, $this->ifExists);
     }
 
     /**

@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
 use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\ArrayOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\NamedOnPath;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
+use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeDescriptor;
 
@@ -19,8 +22,11 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  * `transformColumnDefinition` does for a one-part type name without array
  * bounds: `smallserial`/`serial2` is `int2`, `serial`/`serial4` is `int4`,
  * `bigserial`/`serial8` is `int8`, and the column is NOT NULL with a
- * sequence default. An array of a serial type is an error. A type the
- * context cannot know has no descriptor, and the declaration stops there.
+ * sequence default. An array of a serial type is an error. A type name
+ * the context cannot identify, a user type or a `pg_catalog` name an
+ * undeclared type of an earlier schema may hide, declares the column with
+ * the type that name denotes on the search path (`NamedOnPath`). A type
+ * name that is an error has no descriptor, and the declaration stops there.
  * Source: https://www.postgresql.org/docs/17/datatype-numeric.html#DATATYPE-SERIAL.
  * Status: Implemented.
  *
@@ -51,7 +57,7 @@ final class ColumnTyping
     }
 
     /**
-     * Answers the declared type of a column, or null when the context cannot know it.
+     * Answers the declared type of a column, or null when the type name is an error.
      */
     public function descriptor(TypeName $type, AnalysisContext $context): ?TypeDescriptor
     {
@@ -60,7 +66,15 @@ final class ColumnTyping
             return $type->array === null ? $serial : null;
         }
         $fact = $type->typeFact($context);
+        if ($fact instanceof Known) {
+            return $fact->descriptor;
+        }
+        $name = $type->designation instanceof NamedDesignation ? $type->designation->name->qualified() : null;
+        if (!$fact instanceof Dependent || $name === null) {
+            return null;
+        }
+        $named = new NamedOnPath($name, $fact->missing);
 
-        return $fact instanceof Known ? $fact->descriptor : null;
+        return $type->array === null ? $named : new ArrayOf($named);
     }
 }

@@ -28,6 +28,11 @@ use SqlSemantics\Statement\Type\Known;
 #[Small]
 final class RoutineParametersTest extends TestCase
 {
+    public function testInfersUndeclaredIsFalse(): void
+    {
+        self::assertFalse((new RoutineParameters([]))->infersUndeclared());
+    }
+
     public function testDeriveRelationHoldsTheInputParameters(): void
     {
         $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));

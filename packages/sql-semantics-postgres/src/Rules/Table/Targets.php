@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\ImplicitSlot;
 use SqlSemantics\Resolution\VisibleRelation;
@@ -13,13 +14,14 @@ use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Missing\IncompleteMembers;
+use SqlSemantics\Statement\Reference\Missing\UndeclaredRelation;
 use SqlSemantics\Statement\Reference\Table\ConditionalTable;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * Resolves the relation a definition or command names, and builds the scope its expressions see.
@@ -30,7 +32,9 @@ use SqlSemantics\Statement\Type\Known;
  * referring to the declaration, and an open shape when its column list is
  * incomplete; an undeclared or conditionally resolved name contributes an
  * open shape that names the missing declaration; a missing or conflicting
- * name contributes an empty shape and is a diagnostic. The implicit columns
+ * name contributes an empty shape and is a diagnostic, except that a missing
+ * relation of a statement written with IF EXISTS is no error ("a notice is
+ * issued instead"). The implicit columns
  * of a declaration (the system columns) are found by name only. The scope of
  * a definition's expressions has that relation as its only visible relation,
  * named by the relation name.
@@ -59,13 +63,28 @@ final class Targets
     }
 
     /**
+     * Resolves the relation of a statement that may be written with IF EXISTS.
+     *
+     * With IF EXISTS a relation that does not exist is not an error: the
+     * server issues a notice and skips the statement. The actions then have
+     * no relation to be checked against, so the shape is open on the
+     * declaration of the named relation and nothing is reported.
+     */
+    public function existing(Derivation $derivation, QualifiedName $name, bool $ifExists): RelationFact
+    {
+        $fact = $this->resolve($derivation, $name);
+
+        return $ifExists && $fact->table instanceof MissingTable ? new RelationFact(new RowShape([], [new UndeclaredRelation($name)])) : $fact;
+    }
+
+    /**
      * Answers the row shape of a declaration.
      */
     public function shape(Table $table): RowShape
     {
         $slots = [];
         foreach ($table->columns as $column) {
-            $slots[] = new OutputSlot($column->name, new Known($column->type), $column->nullability, $column);
+            $slots[] = new OutputSlot($column->name, (new DeclaredTypes())->fact($column->type), $column->nullability, $column);
         }
 
         return new RowShape($slots, $table->complete ? [] : [new IncompleteMembers($table)]);
@@ -81,7 +100,7 @@ final class Targets
         $slots = [];
         foreach ($fact->table instanceof DeclaredTable ? $fact->table->table->implicit : [] as $implicit) {
             $column = $implicit->column;
-            $slots[] = new ImplicitSlot($implicit->names, new OutputSlot($column->name, new Known($column->type), $column->nullability, $column));
+            $slots[] = new ImplicitSlot($implicit->names, new OutputSlot($column->name, (new DeclaredTypes())->fact($column->type), $column->nullability, $column));
         }
 
         return $slots;

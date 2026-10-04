@@ -27,7 +27,7 @@ use SqlSemantics\Statement\Statement;
  * Mirrors PostgreSQL's `CreatePolicyStmt` (`policy_name`, `table`, `cmd_name`, `permissive`, `roles`, `qual`,
  * `with_check`). Rule PG-POLICY-001: the table is resolved and is the relation fact of the statement; the
  * USING and WITH CHECK expressions are conditions where the table is visible. AS takes PERMISSIVE or
- * RESTRICTIVE; another word is reported.
+ * RESTRICTIVE; the grammar rejects another word.
  * Source: https://www.postgresql.org/docs/17/sql-createpolicy.html.
  *
  * @visibility public
@@ -62,6 +62,7 @@ final class CreatePolicy implements Statement, Relation
         public readonly ?Scalar $using = null,
         public readonly ?Scalar $check = null,
     ) {
+        Check::input($mode === null || in_array($mode->value, ['permissive', 'restrictive'], true), 'A policy is permissive or restrictive.');
         $this->roles = Check::listOf($roles, RoleSpec::class, 'Policy roles are roles.');
     }
 
@@ -71,7 +72,6 @@ final class CreatePolicy implements Statement, Relation
     public function deriveStatement(Derivation $derivation): void
     {
         (new Policies())->derive($this, $this->table, $this->using, $this->check, $derivation);
-        (new Policies())->mode($this->mode, $derivation);
     }
 
     /**
@@ -90,7 +90,7 @@ final class CreatePolicy implements Statement, Relation
         $out->keyword('CREATE', 'POLICY')->name($this->name)->keyword('ON');
         (new Spelling())->qualified($out, $this->table);
         if ($this->mode !== null) {
-            $out->keyword('AS')->name($this->mode, NameUse::Label);
+            $out->keyword('AS')->name($this->mode, NameUse::Identifier);
         }
         if ($this->command !== null) {
             $out->keyword('FOR', $this->command->value);

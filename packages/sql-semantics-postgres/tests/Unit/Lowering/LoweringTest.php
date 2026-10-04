@@ -14,6 +14,7 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable;
 
 #[CoversClass(Lowering::class)]
 #[Small]
@@ -55,8 +56,7 @@ final class LoweringTest extends TestCase
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
         $tree = (new PostgreSqlParser('pg-17.2'))->parse('CREATE TABLE t (a int)');
-        $this->expectExceptionMessage('No semantic rule is implemented for: CreateStmt:');
-        $lowering->statement($tree->find('CreateStmt')[0]);
+        self::assertInstanceOf(CreateTable::class, $lowering->statement($tree->find('CreateStmt')[0]));
     }
 
     public function testStatementReportsANodeThatIsNotAStatement(): void

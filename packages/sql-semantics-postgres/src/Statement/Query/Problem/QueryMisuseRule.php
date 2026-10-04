@@ -31,6 +31,11 @@ enum QueryMisuseRule: string
     case LockingWithGroupBy = 'FOR UPDATE is not allowed with GROUP BY clause';
     case LockingWithHaving = 'FOR UPDATE is not allowed with HAVING clause';
     case LockingOnValues = 'FOR UPDATE cannot be applied to VALUES';
+    case LockingOnJoin = '%s cannot be applied to a join';
+    case LockingOnFunction = '%s cannot be applied to a function';
+    case LockingOnTableFunction = '%s cannot be applied to a table function';
+    case LockingOnCommonTable = '%s cannot be applied to a WITH query';
+    case LockingNullableSide = '%s cannot be applied to the nullable side of an outer join';
     case LockedRelationNotInFrom = 'relation "%s" in FOR UPDATE clause not found in FROM clause';
     case NonIntegerConstant = 'non-integer constant in %s';
     case LockedRelationQualified = 'SELECT FOR UPDATE/SHARE must specify unqualified relation names';

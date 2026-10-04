@@ -10,6 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Statement\Prepared\Deallocate;
 use SqlSemantics\Platform\PostgreSql\Statement\Prepared\Execute;
 use SqlSemantics\Platform\PostgreSql\Statement\Prepared\Prepare;
+use SqlSemantics\Platform\PostgreSql\Statement\Prepared\PreparedParameters;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Statement;
@@ -19,7 +20,7 @@ use SqlSemantics\Statement\Statement;
  *
  * Rule: PG-PREPARED-LOWER-001. Scope: `PrepareStmt`, `prep_type_clause`,
  * `ExecuteStmt`, `execute_param_clause`, `DeallocateStmt`. Constructors:
- * `Prepare`, `Execute`, `Deallocate`; CREATE TABLE AS EXECUTE is built by
+ * `Prepare`, `PreparedParameters`, `Execute`, `Deallocate`; CREATE TABLE AS EXECUTE is built by
  * the table family around the `Execute`. PREPARE after DEALLOCATE is a
  * noise word.
  * Source: https://www.postgresql.org/docs/17/sql-prepare.html, https://www.postgresql.org/docs/17/sql-execute.html,
@@ -50,8 +51,8 @@ final class PreparedRule
         $name = $this->lowering->names->name($form->node(1));
         $types = $this->lowering->productions->form($form->node(2));
         $types = match ($types->signature) {
-            'prep_type_clause: ( type_list )' => $this->lowering->types->typeNames($types->node(1)),
-            'prep_type_clause:' => [],
+            'prep_type_clause: ( type_list )' => new PreparedParameters($this->lowering->types->typeNames($types->node(1))),
+            'prep_type_clause:' => null,
             default => throw ImplementationGap::production($types),
         };
         $prepared = $this->lowering->manipulations->preparable($form->node(4));

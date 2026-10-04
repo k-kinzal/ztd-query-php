@@ -42,6 +42,16 @@ final class CreateSchemaTest extends TestCase
         self::assertSame('s', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA s CREATE TABLE t (a int4)')->declarations()[0]->name->schema?->value);
     }
 
+    public function testDeriveStatementReadsTheElementsWithTheNewSchemaSearchedFirst(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE TABLE s.t (x int4)', [])->declarations()[0], $semantics->analyze('CREATE TABLE public.t (y int4)', [])->declarations()[0]];
+        self::assertSame(['x', 'y'], [
+            $semantics->analyze('CREATE SCHEMA s CREATE VIEW v AS SELECT * FROM t', $context)->declarations()[0]->columns[0]->name->value,
+            $semantics->analyze('CREATE VIEW v AS SELECT * FROM t', $context)->declarations()[0]->columns[0]->name->value,
+        ]);
+    }
+
     public function testDeriveStatementDeclaresNothingForASessionOwner(): void
     {
         self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA AUTHORIZATION CURRENT_USER CREATE TABLE t (a int4)')->declarations());

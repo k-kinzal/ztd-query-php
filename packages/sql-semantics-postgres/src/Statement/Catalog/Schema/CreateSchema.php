@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Schema;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Catalog\SchemaMember;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
@@ -30,7 +31,8 @@ use SqlSemantics\Statement\Statement;
  * object qualified with another schema is a diagnostic. When the schema
  * name is not written (AUTHORIZATION CURRENT_USER and the like), it depends
  * on the session, so the elements keep their facts and diagnostics but
- * declare nothing. GRANT elements are derived as they are.
+ * declare nothing. Every element is read with the new schema searched
+ * first (PG-SCHEMA-ELEMENT-001).
  * Source: https://www.postgresql.org/docs/17/sql-createschema.html. Status: Implemented.
  *
  * @visibility public
@@ -75,19 +77,16 @@ final class CreateSchema implements Statement
         }
         $schema = $this->name ?? $this->authorization?->name;
         foreach ($this->elements as $element) {
-            if (!$element instanceof SchemaElement) {
-                $derivation->statement($element);
-                continue;
-            }
-            $written = $element->createdSchema();
             if ($schema === null) {
-                $derivation->inspected($element);
+                $element instanceof SchemaElement ? $derivation->inspected($element) : $derivation->statement($element);
                 continue;
             }
+            $written = $element instanceof SchemaElement ? $element->createdSchema() : null;
             if ($written !== null && !$derivation->context->relationNames->equal($written->value, $schema->value)) {
                 $derivation->report(new CatalogMisuse(CatalogMisuseRule::ElementSchemaMismatch, [$written->value, $schema->value]));
             }
-            $element->deriveElement($derivation, $schema);
+            $member = new SchemaMember($element, $schema);
+            $derivation->within($member->context($derivation->context), $member);
         }
     }
 

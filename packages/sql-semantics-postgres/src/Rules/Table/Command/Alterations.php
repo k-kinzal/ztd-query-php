@@ -9,6 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\ColumnTyping;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Declarations;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\KeyColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable;
@@ -23,7 +24,6 @@ use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -66,7 +66,7 @@ final class Alterations
         $type = (new ColumnTyping())->descriptor($definition->type, $derivation->context);
         $slot = new OutputSlot(
             $definition->name,
-            $type === null ? $definition->type->typeFact($derivation->context) : new Known($type),
+            $type === null ? $definition->type->typeFact($derivation->context) : (new DeclaredTypes())->fact($type),
             (new Declarations())->notNull($definition->qualifiers) ? Nullability::NotNull : Nullability::Nullable,
         );
         foreach ($scope->relations as $relation) {

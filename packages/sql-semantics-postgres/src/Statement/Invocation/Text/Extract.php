@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\NameUse;
-use SqlSemantics\Platform\PostgreSql\Rendering\Keywords;
 use SqlSemantics\Platform\PostgreSql\Rules\Invocation\CallTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
@@ -91,10 +89,8 @@ final class Extract implements Scalar, OutputNaming
             $out->keyword($this->field->value);
         } elseif ($this->field instanceof StringConstant) {
             $out->node($this->field);
-        } elseif ((new Keywords(GrammarRelease::PostgreSql166))->categories($this->field->value) === [] && (new Keywords(GrammarRelease::PostgreSql172))->categories($this->field->value) === []) {
-            $out->name($this->field, NameUse::Label);
         } else {
-            $out->spelled('"' . str_replace('"', '""', $this->field->value) . '"');
+            $out->name($this->field, NameUse::Identifier);
         }
         $out->keyword('FROM')->node($this->source)->symbol(')');
     }

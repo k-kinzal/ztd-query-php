@@ -20,11 +20,23 @@ final class RoutineNoise
     /**
      * Answers the noise positions by production signature.
      *
+     * - `sp_opt_fetch_noise: NEXT_SYM FROM` and `sp_opt_fetch_noise: FROM`:
+     *   `FETCH [[NEXT] FROM] cursor_name INTO ...`; the words are optional
+     *   and the grammar action stores nothing for them
+     *   (https://dev.mysql.com/doc/refman/8.4/en/fetch.html).
+     * - `opt_value: VALUE_SYM`: `SQLSTATE [VALUE] sqlstate_value`; the word
+     *   is optional (https://dev.mysql.com/doc/refman/8.4/en/declare-condition.html,
+     *   https://dev.mysql.com/doc/refman/8.4/en/signal.html).
+     *
      * @return array<string, list<int>>
      */
     public static function positions(): array
     {
-        return [];
+        return [
+            'sp_opt_fetch_noise: NEXT_SYM FROM' => [0, 1],
+            'sp_opt_fetch_noise: FROM' => [0],
+            'opt_value: VALUE_SYM' => [0],
+        ];
     }
 
     /**

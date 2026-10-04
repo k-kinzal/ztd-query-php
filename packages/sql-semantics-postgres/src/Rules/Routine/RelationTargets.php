@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Routine;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ImproperName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
@@ -24,7 +25,6 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * Resolves the relations and columns a generic object command names.
@@ -102,7 +102,7 @@ final class RelationTargets
         if ($resolution instanceof DeclaredTable) {
             $slots = [];
             foreach ($resolution->table->columns as $column) {
-                $slots[] = new OutputSlot($column->name, new Known($column->type), $column->nullability, $column);
+                $slots[] = new OutputSlot($column->name, (new DeclaredTypes())->fact($column->type), $column->nullability, $column);
             }
             $shape = new RowShape($slots, $resolution->table->complete ? [] : [new IncompleteMembers($resolution->table)]);
         } elseif ($resolution instanceof UndeclaredTable || $resolution instanceof ConditionalTable) {

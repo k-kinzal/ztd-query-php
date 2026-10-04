@@ -5,61 +5,33 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Server;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Server\ServerRules;
-use SqlSemantics\Platform\MySql\Platform;
 
 #[CoversClass(ServerRules::class)]
-#[Small]
+#[Medium]
 final class ServerRulesTest extends TestCase
 {
-    public function testStatementReportsTheMissingRule(): void
+    public function testStatementLowersAStatementOfTheFamily(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new ServerRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL server family: statement');
-
-        $rules->statement(new Node('rule', 0, []));
+        self::assertSame('FLUSH STATUS', (new Semantics(Dialect::MySql))->analyze('flush status')->toString());
     }
 
-    public function testDefinitionReportsTheMissingRule(): void
+    public function testDefinitionLowersARoutedDefinition(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new ServerRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL server family: definition');
-
-        $rules->definition(new Form(new Node('rule', 0, []), 'rule:'));
+        self::assertSame('CREATE DATABASE d', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('create database d')->toString());
     }
 
-    public function testCheckOptionsReportsTheMissingRule(): void
+    public function testCheckOptionsLowersTheOptionsOfCheckPartition(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new ServerRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL server family: checkOptions');
-
-        $rules->checkOptions(new Node('rule', 0, []));
+        self::assertSame('ALTER TABLE t CHECK PARTITION p QUICK FAST', (new Semantics(Dialect::MySql))->analyze('alter table t check partition p quick fast')->toString());
     }
 
-    public function testRepairOptionsReportsTheMissingRule(): void
+    public function testRepairOptionsLowersTheOptionsOfRepairPartition(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new ServerRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL server family: repairOptions');
-
-        $rules->repairOptions(new Node('rule', 0, []));
+        self::assertSame('ALTER TABLE t REPAIR PARTITION p USE_FRM', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('alter table t repair partition p use_frm')->toString());
     }
 }

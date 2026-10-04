@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Carriers;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\DistinctOrdering;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Limits;
+use SqlSemantics\Platform\PostgreSql\Rules\Query\Locking;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Ordering;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\StarExpansion;
 use SqlSemantics\Platform\PostgreSql\Rules\Resolution\FromScope;
@@ -22,6 +23,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\TableQuery;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\QueryFact;
+use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
@@ -77,7 +79,7 @@ final class SelectFacts
             $ordering->sort($select->distinct->on, $items, $derivation, $rows, OrderingClause::DistinctOn);
         }
         $layers = $this->layers($select->options, $carriers);
-        $this->options($layers, $items, $visible, $derivation, $rows, $base, $select->options);
+        $this->options($layers, $items, $visible, $derivation, $rows, $base, $select->options, $select->from);
         $order = [];
         foreach ($layers as $layer) {
             foreach ($layer->order as $item) {
@@ -105,7 +107,7 @@ final class SelectFacts
         $visible = (new FromScope())->open($query->table, $derivation, $base, [])->visible;
         $rows = new Environment($derivation->context, $base, $visible);
         $items = (new StarExpansion())->all($derivation, $rows, 0);
-        $this->options($this->layers($query->options, $carriers), $items, $visible, $derivation, $rows, $base, $query->options);
+        $this->options($this->layers($query->options, $carriers), $items, $visible, $derivation, $rows, $base, $query->options, $query->table);
 
         return new QueryFact($items, $derivation->context->columnNames);
     }
@@ -117,12 +119,13 @@ final class SelectFacts
      * @param list<Field|OpenStar> $items
      * @param list<VisibleRelation> $visible
      */
-    public function options(array $layers, array $items, array $visible, Derivation $derivation, Environment $rows, Environment $base, ?SelectOptions $own): void
+    public function options(array $layers, array $items, array $visible, Derivation $derivation, Environment $rows, Environment $base, ?SelectOptions $own, ?Relation $from = null): void
     {
         $limits = new Limits();
         foreach ($layers as $layer) {
             (new Ordering())->sort(array_map(static fn (SortItem $item): Scalar => $item->expression, $layer->order), $items, $derivation, $rows, OrderingClause::OrderBy);
             $limits->locked($layer->locking, $visible, $derivation);
+            (new Locking())->check($layer->locking, $visible, $from, $derivation, $base);
         }
         $limits->derive($own, $derivation, $base);
         $limits->ties($layers, $derivation);

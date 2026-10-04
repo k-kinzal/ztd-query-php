@@ -13,13 +13,22 @@ use SqlSemantics\Platform\MySql\Rules\Noise\ReplicationNoise;
 #[Small]
 final class ReplicationNoiseTest extends TestCase
 {
-    public function testPositionsListsNothingYet(): void
+    public function testPositionsListsTheWordsOfMultiWordKeywords(): void
     {
-        self::assertSame([], ReplicationNoise::positions());
+        self::assertSame([
+            'change_replication_source: REPLICATION SOURCE_SYM' => [0],
+            'master_or_binary_logs_and_gtids: BINARY_SYM LOGS_SYM AND_SYM GTIDS_SYM' => [1, 2, 3],
+            'ignore_server_id_list: ignore_server_id_list , ignore_server_id' => [1],
+        ], ReplicationNoise::positions());
     }
 
-    public function testSynonymsListsNothingYet(): void
+    public function testSynonymsMapTheDeprecatedSpellings(): void
     {
-        self::assertSame([], ReplicationNoise::synonyms());
+        $synonyms = ReplicationNoise::synonyms();
+
+        self::assertCount(31, $synonyms);
+        self::assertSame([0 => 'SOURCE_HOST_SYM'], $synonyms['change_replication_source_host: MASTER_HOST_SYM']);
+        self::assertSame([0 => 'GET_SOURCE_PUBLIC_KEY_SYM'], $synonyms['change_replication_source_get_source_public_key: GET_MASTER_PUBLIC_KEY_SYM']);
+        self::assertArrayNotHasKey('replica: SLAVE', $synonyms);
     }
 }

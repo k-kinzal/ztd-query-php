@@ -13,8 +13,8 @@ use SqlSemantics\Platform\PostgreSql\Rules\Noise\CatalogNoise;
 #[Small]
 final class CatalogNoiseTest extends TestCase
 {
-    public function testPositionsIsEmptyUntilTheFamilyDeclaresNoise(): void
+    public function testPositionsListsTheNoiseOfTheFamily(): void
     {
-        self::assertSame([], CatalogNoise::positions());
+        self::assertSame([0], CatalogNoise::positions()['opt_equal: =']);
     }
 }

@@ -160,7 +160,7 @@ final class Literals
     /**
      * Lowers a `PARAM` token: `$n`, or `:name` under the named parameter style.
      *
-     * @throws AnalysisException When the number is above 2147483647 in PostgreSQL 17, which its scanner rejects
+     * @throws AnalysisException When the number is above 2147483647 in PostgreSQL 17, which the `param` rule of its scanner `scan.l` rejects
      */
     public function parameter(Token $parameter): Scalar
     {

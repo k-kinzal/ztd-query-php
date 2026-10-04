@@ -19,6 +19,7 @@ final class ColumnAttributesTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('ALTER TABLE t ALTER zz SET (n_distinct = 1)', $context);
         self::assertSame([
+          0 => 'column "zz" does not exist',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 

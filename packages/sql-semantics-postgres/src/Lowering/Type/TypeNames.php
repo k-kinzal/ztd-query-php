@@ -219,7 +219,7 @@ final class TypeNames
      *
      * @return list<Scalar>
      *
-     * @throws AnalysisException When a modifier is passed by name or an ORDER BY is written
+     * @throws AnalysisException When a modifier is passed by name or an ORDER BY is written, which the action of `AexprConst: func_name ( func_arg_list opt_sort_clause ) Sconst` in `gram.y` rejects
      */
     public function modifiers(Form $constant): array
     {

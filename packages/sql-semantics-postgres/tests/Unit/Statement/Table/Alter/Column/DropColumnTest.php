@@ -19,6 +19,7 @@ final class DropColumnTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('ALTER TABLE t DROP zz, DROP IF EXISTS yy', $context);
         self::assertSame([
+          0 => 'column "zz" does not exist',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 

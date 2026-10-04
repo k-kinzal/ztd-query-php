@@ -37,7 +37,7 @@ final class Roles
     /**
      * Lowers `RoleSpec`.
      *
-     * @throws AnalysisException When the role is named none, which the server rejects while parsing
+     * @throws AnalysisException When the role is named none, which the action of `RoleSpec: NonReservedWord` in `gram.y` rejects
      * @throws ImplementationGap When the production has no rule
      */
     public function role(Node $role): RoleSpec
@@ -63,7 +63,7 @@ final class Roles
     /**
      * Lowers `RoleId`: a position that names a role and accepts no designation.
      *
-     * @throws AnalysisException When a designation is written, which the server rejects while parsing
+     * @throws AnalysisException When a designation is written, which the action of `RoleId: RoleSpec` in `gram.y` rejects
      * @throws ImplementationGap When the production has no rule
      */
     public function name(Node $role): Name

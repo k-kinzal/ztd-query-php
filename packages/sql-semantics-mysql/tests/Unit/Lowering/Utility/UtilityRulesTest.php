@@ -5,27 +5,27 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Utility;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Leaves;
-use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Utility\UtilityRules;
-use SqlSemantics\Platform\MySql\Platform;
 
 #[CoversClass(UtilityRules::class)]
-#[Small]
+#[Medium]
 final class UtilityRulesTest extends TestCase
 {
-    public function testStatementReportsTheMissingRule(): void
+    public function testStatementDispatchesEveryStatementRule(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new UtilityRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertSame('SHOW DATABASES', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('show databases')->toString());
+        self::assertSame('SHOW PLUGINS', (new Semantics(Dialect::MySql))->analyze('show plugins')->toString());
+        self::assertSame('SET @a = 1', (new Semantics(Dialect::MySql))->analyze('set @a = 1')->toString());
+        self::assertSame('HELP x', (new Semantics(Dialect::MySql))->analyze('help x')->toString());
+    }
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL utility family: statement');
-
-        $rules->statement(new Node('rule', 0, []));
+    public function testBinaryLogsWordAcceptsBothKeywords(): void
+    {
+        self::assertSame('SHOW BINARY LOGS', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('show master logs')->toString());
+        self::assertSame('SHOW BINARY LOGS', (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('show master logs')->toString());
     }
 }

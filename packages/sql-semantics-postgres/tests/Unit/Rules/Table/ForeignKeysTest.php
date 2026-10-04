@@ -25,7 +25,8 @@ final class ForeignKeysTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE TABLE n (x int REFERENCES t (zz) MATCH PARTIAL)', $context);
         self::assertSame([
-          0 => 'MATCH PARTIAL not yet implemented',
+          0 => 'column "zz" referenced in foreign key constraint does not exist',
+          1 => 'MATCH PARTIAL not yet implemented',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 

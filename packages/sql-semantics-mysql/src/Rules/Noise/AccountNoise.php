@@ -20,11 +20,26 @@ final class AccountNoise
     /**
      * Answers the noise positions by production signature.
      *
+     * - `opt_privileges: PRIVILEGES`: `ALL` and `ALL PRIVILEGES` are the same
+     *   request (https://dev.mysql.com/doc/refman/8.4/en/privileges-provided.html#priv_all:
+     *   "ALL [PRIVILEGES]").
+     * - `opt_and: AND_SYM`: the AND between REQUIRE conditions is optional and
+     *   the conditions are a set (https://dev.mysql.com/doc/refman/8.4/en/create-user.html#create-user-tls:
+     *   "tls_option [[AND] tls_option] ...").
+     * - `opt_acl_type: TABLE_SYM`: TABLE is the default object type of the ON
+     *   clause; the grammar action gives both Acl_type::TABLE
+     *   (https://dev.mysql.com/doc/refman/8.4/en/grant.html: "object_type: { TABLE | FUNCTION | PROCEDURE }",
+     *   "ON TABLE" is optional).
+     *
      * @return array<string, list<int>>
      */
     public static function positions(): array
     {
-        return [];
+        return [
+            'opt_privileges: PRIVILEGES' => [0],
+            'opt_and: AND_SYM' => [0],
+            'opt_acl_type: TABLE_SYM' => [0],
+        ];
     }
 
     /**

@@ -19,6 +19,9 @@ final class CreateForeignTableTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE FOREIGN TABLE f PARTITION OF t FOR VALUES IN (1) SERVER s', $context);
         self::assertSame([
+          0 => 'a integer NotNull',
+          1 => 'b integer Nullable',
+          2 => 'c text Nullable',
         ], array_map(static fn ($column): string => $column->name->value . ' ' . $column->type->name() . ' ' . $column->nullability->name, $statement->declarations()[0]->columns));
     }
 

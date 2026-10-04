@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Statement\Object;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\DefineChecks;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectSpelling;
@@ -99,7 +100,16 @@ final class Define implements Statement
             $out->keyword('IF', 'NOT', 'EXISTS');
         }
         $out->node($this->name)->node($this->arguments);
-        if ($this->definition !== null) {
+        if ($this->definition !== null && $this->kind === ObjectKind::Aggregate && $this->arguments === null) {
+            $out->symbol('(');
+            foreach ($this->definition as $index => $attribute) {
+                if ($index > 0) {
+                    $out->symbol(',');
+                }
+                $out->name($attribute->name, NameUse::Identifier)->symbol('=')->node($attribute->argument);
+            }
+            $out->symbol(')');
+        } elseif ($this->definition !== null) {
             $out->symbol('(')->list($this->definition)->symbol(')');
         }
     }

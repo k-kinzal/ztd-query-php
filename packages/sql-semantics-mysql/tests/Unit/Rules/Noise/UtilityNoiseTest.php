@@ -13,13 +13,15 @@ use SqlSemantics\Platform\MySql\Rules\Noise\UtilityNoise;
 #[Small]
 final class UtilityNoiseTest extends TestCase
 {
-    public function testPositionsListsNothingYet(): void
+    public function testPositionsDeclaresNoNoise(): void
     {
         self::assertSame([], UtilityNoise::positions());
     }
 
-    public function testSynonymsListsNothingYet(): void
+    public function testSynonymsMapTheSynonymKeywords(): void
     {
-        self::assertSame([], UtilityNoise::synonyms());
+        self::assertSame([0 => 'SESSION_SYM'], UtilityNoise::synonyms()['option_type: LOCAL_SYM']);
+        self::assertSame([0 => 'DESCRIBE'], UtilityNoise::synonyms()['describe_command: DESC']);
+        self::assertSame([0 => 'BINARY_SYM'], UtilityNoise::synonyms()['master_or_binary: MASTER_SYM']);
     }
 }

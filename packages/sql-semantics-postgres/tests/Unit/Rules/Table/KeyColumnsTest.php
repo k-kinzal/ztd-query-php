@@ -19,7 +19,7 @@ final class KeyColumnsTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('SELECT 1', $context);
         $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
-        self::assertSame(null, (new \SqlSemantics\Platform\PostgreSql\Rules\Table\KeyColumns())->position($derivation, (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->shape($context[0]), new \SqlSemantics\Statement\Identifier\Name('c')));
+        self::assertSame(2, (new \SqlSemantics\Platform\PostgreSql\Rules\Table\KeyColumns())->position($derivation, (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->shape($context[0]), new \SqlSemantics\Statement\Identifier\Name('c')));
     }
 
     public function testReportReportsANameAShapeLacks(): void

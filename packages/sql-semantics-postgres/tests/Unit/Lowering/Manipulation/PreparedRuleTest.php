@@ -18,7 +18,7 @@ final class PreparedRuleTest extends TestCase
         $query = $semantics->analyze('PREPARE p (int, text[]) AS SELECT 1');
         $statement = $query->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Prepared\Prepare::class, $statement);
-        self::assertCount(2, $statement->types);
+        self::assertCount(2, $statement->parameters?->types ?? []);
     }
 
     public function testExecuteLowersTheName(): void

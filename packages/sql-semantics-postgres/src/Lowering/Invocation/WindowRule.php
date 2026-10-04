@@ -75,7 +75,7 @@ final class WindowRule
     /**
      * Lowers `over_clause`: a specification, a window name, or nothing.
      *
-     * @throws AnalysisException When the frame is one the server rejects while parsing
+     * @throws AnalysisException When the frame is one the actions of `frame_extent` in `gram.y` reject
      * @throws ImplementationGap When the production has no rule
      */
     public function over(Node $clause): WindowSpecification|Name|null
@@ -147,7 +147,7 @@ final class WindowRule
     }
 
     /**
-     * Rejects the frames the grammar's action rejects, with the server's messages.
+     * Rejects the frames the actions of `frame_extent` in `gram.y` reject, with the server's messages.
      *
      * @throws AnalysisException When the frame is rejected
      */

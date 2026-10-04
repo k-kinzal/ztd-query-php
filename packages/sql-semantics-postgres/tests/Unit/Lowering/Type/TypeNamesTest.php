@@ -139,11 +139,18 @@ final class TypeNamesTest extends TestCase
         self::assertFalse($lowering->types->constantType($lowering->productions->form($constants[1]))->setOf);
     }
 
-    public function testModifiersIsAnImplementationGapUntilTheInvocationFamilyLowersArguments(): void
+    public function testModifiersLowersTheArgumentsOfATypedConstant(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
         $tree = (new PostgreSqlParser('pg-17.2'))->parse("SELECT pg_catalog.int4(3, 4) '1'");
-        $this->expectExceptionMessage('No semantic rule is implemented for: func_arg_list: func_arg_list , func_arg_expr');
+        self::assertCount(2, $lowering->types->modifiers($lowering->productions->form($tree->find('AexprConst')[0])));
+    }
+
+    public function testModifiersRejectsANamedModifier(): void
+    {
+        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse("SELECT pg_catalog.int4(a => 3) '1'");
+        $this->expectExceptionMessage('type modifier cannot have parameter name');
         $lowering->types->modifiers($lowering->productions->form($tree->find('AexprConst')[0]));
     }
 }

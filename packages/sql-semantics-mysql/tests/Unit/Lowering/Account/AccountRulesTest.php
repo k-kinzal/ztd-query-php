@@ -5,61 +5,41 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Account;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlParser\Parser\Node;
-use SqlSemantics\Contract\ParameterStyle;
-use SqlSemantics\Lowering\Form;
-use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Account\AccountRules;
-use SqlSemantics\Platform\MySql\Lowering\Lowering;
-use SqlSemantics\Platform\MySql\Platform;
 
 #[CoversClass(AccountRules::class)]
-#[Small]
+#[Medium]
 final class AccountRulesTest extends TestCase
 {
-    public function testStatementReportsTheMissingRule(): void
+    public function testStatementLowersEveryStatementRule(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new AccountRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL account family: statement');
-
-        $rules->statement(new Node('rule', 0, []));
+        self::assertSame('GRANT SELECT ON *.* TO u', (new Semantics(Dialect::MySql))->analyze('grant select on *.* to u')->toString());
+        self::assertSame('REVOKE SELECT ON *.* FROM u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('revoke select on *.* from u')->toString());
+        self::assertSame('SET ROLE r', (new Semantics(Dialect::MySql))->analyze('set role r')->toString());
+        self::assertSame('DROP RESOURCE GROUP g', (new Semantics(Dialect::MySql))->analyze('drop resource group g')->toString());
     }
 
-    public function testDefinitionReportsTheMissingRule(): void
+    public function testDefinitionLowersTheRoutedUserStatements(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new AccountRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL account family: definition');
-
-        $rules->definition(new Form(new Node('rule', 0, []), 'rule:'));
+        self::assertSame("CREATE USER u IDENTIFIED BY 'x'", (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("create user u identified by 'x'")->toString());
     }
 
-    public function testRenameUsersReportsTheMissingRule(): void
+    public function testRenameUsersLowersTheRenameList(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new AccountRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
-
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL account family: renameUsers');
-
-        $rules->renameUsers(new Node('rule', 0, []));
+        self::assertSame('RENAME USER a TO b', (new Semantics(Dialect::MySql))->analyze('rename user a to b')->toString());
     }
 
-    public function testSetPasswordReportsTheMissingRule(): void
+    public function testSetPasswordLowersTheStatement(): void
     {
-        $platform = new Platform();
-        $profile = $platform->profile(null, null, ParameterStyle::Native);
-        $rules = new AccountRules(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        self::assertSame("SET PASSWORD FOR u = 'x'", (new Semantics(Dialect::MySql))->analyze("set password for u = 'x'")->toString());
+    }
 
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL account family: setPassword');
-
-        $rules->setPassword(new Form(new Node('rule', 0, []), 'rule:'));
+    public function testPasswordLowersTheOperandOfASetListItem(): void
+    {
+        self::assertSame("SET @a = 1, PASSWORD = PASSWORD('x')", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("set @a = 1, password = password('x')")->toString());
     }
 }

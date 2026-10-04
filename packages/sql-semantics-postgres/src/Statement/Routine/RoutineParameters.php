@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Routine;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\ParameterDeclarations;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
-use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Statement\Snapshot;
@@ -29,7 +29,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @example Counting the parameters of an empty list
  *     count((new \SqlSemantics\Platform\PostgreSql\Statement\Routine\RoutineParameters([]))->parameters) // => 0
  */
-final class RoutineParameters implements Relation
+final class RoutineParameters implements ParameterDeclarations
 {
     use Snapshot;
 
@@ -44,6 +44,14 @@ final class RoutineParameters implements Relation
     public function __construct(array $parameters)
     {
         $this->parameters = Check::listOf($parameters, FunctionParameter::class, 'A parameter list holds function parameters.');
+    }
+
+    /**
+     * Answers that a parameter beyond the input parameters is an error: a routine has exactly the parameters it declares.
+     */
+    public function infersUndeclared(): bool
+    {
+        return false;
     }
 
     /**

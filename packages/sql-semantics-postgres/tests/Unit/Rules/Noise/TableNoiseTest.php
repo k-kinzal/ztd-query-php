@@ -13,8 +13,8 @@ use SqlSemantics\Platform\PostgreSql\Rules\Noise\TableNoise;
 #[Small]
 final class TableNoiseTest extends TestCase
 {
-    public function testPositionsIsEmptyUntilTheFamilyDeclaresNoise(): void
+    public function testPositionsListsTheNoiseOfTheFamily(): void
     {
-        self::assertSame([], TableNoise::positions());
+        self::assertSame([0, 1], TableNoise::positions()['OptWith: WITHOUT OIDS']);
     }
 }

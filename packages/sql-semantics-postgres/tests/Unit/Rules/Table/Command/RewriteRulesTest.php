@@ -19,6 +19,7 @@ final class RewriteRulesTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE RULE r AS ON INSERT TO t DO ALSO SELECT new.a, b', $context);
         self::assertSame([
+          0 => 'Column b does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 

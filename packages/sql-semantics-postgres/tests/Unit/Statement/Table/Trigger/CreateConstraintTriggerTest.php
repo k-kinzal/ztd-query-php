@@ -21,6 +21,7 @@ final class CreateConstraintTriggerTest extends TestCase
         self::assertSame([
           0 => 'Relation u does not exist.',
           1 => 'TRIGGER constraints cannot be marked NOT VALID',
+          2 => 'Column new.zz does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 
@@ -32,7 +33,7 @@ final class CreateConstraintTriggerTest extends TestCase
         $statement = $semantics->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FOR EACH ROW EXECUTE FUNCTION f()', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTrigger::class, $n1);
-        self::assertSame(2, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

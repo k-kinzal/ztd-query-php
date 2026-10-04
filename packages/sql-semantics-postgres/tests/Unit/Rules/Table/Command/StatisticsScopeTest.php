@@ -19,6 +19,7 @@ final class StatisticsScopeTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE STATISTICS s ON a, zz FROM t', $context);
         self::assertSame([
+          0 => 'Column zz does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 }

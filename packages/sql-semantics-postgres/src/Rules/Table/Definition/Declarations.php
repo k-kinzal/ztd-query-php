@@ -33,9 +33,11 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
  * column is NOT NULL when it is declared NOT NULL, is a serial or identity
  * column, belongs to a PRIMARY KEY, or is copied from a NOT NULL column of a
  * parent, a LIKE source or the partitioned table ("Not-null constraints are
- * always copied to the new table"); every other column can be NULL. The
- * declaration is complete only up to the first column whose type, parent,
- * LIKE source or composite type the context does not declare. The system
+ * always copied to the new table"); every other column can be NULL. A
+ * column of a type the context cannot identify is declared with the type its
+ * name denotes on the search path. The declaration is complete only up to
+ * the first column whose type name is an error or whose parent, LIKE source
+ * or composite type the context does not declare. The system
  * columns are implicit (PG-SYSTEM-COLUMNS-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html, https://www.postgresql.org/docs/17/ddl-inherit.html.
  * Termination: one pass over the parents and the elements. Status: Implemented.

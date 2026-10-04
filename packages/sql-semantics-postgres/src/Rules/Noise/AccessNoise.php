@@ -23,6 +23,16 @@ final class AccessNoise
      */
     public static function positions(): array
     {
-        return [];
+        return [
+            // "The ENCRYPTED keyword has no effect, but is accepted for backwards compatibility." https://www.postgresql.org/docs/17/sql-createrole.html
+            'AlterOptRoleElem: ENCRYPTED PASSWORD Sconst' => [0],
+            // "The PRIVILEGES key word is optional in PostgreSQL, though it is required by strict SQL." https://www.postgresql.org/docs/17/sql-grant.html
+            'privileges: ALL PRIVILEGES' => [1],
+            'privileges: ALL PRIVILEGES ( columnList )' => [1],
+            // "The key word GROUP is still accepted in the command, but it is a noise word." (grantees; roles replaced users and groups) https://www.postgresql.org/docs/17/sql-grant.html
+            'grantee: GROUP_P RoleSpec' => [0],
+            // The synopsis writes `ON { [ TABLE ] table_name [, ...] | ALL TABLES IN SCHEMA ... }`: TABLE is optional before relation names. https://www.postgresql.org/docs/17/sql-grant.html
+            'privilege_target: TABLE qualified_name_list' => [0],
+        ];
     }
 }

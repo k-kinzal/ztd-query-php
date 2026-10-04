@@ -161,7 +161,7 @@ final class Designations
     /**
      * Lowers `opt_float` into the float precision.
      *
-     * @throws AnalysisException When the precision is below 1 or above 53, which the server rejects while parsing
+     * @throws AnalysisException When the precision is below 1 or above 53, which the action of `opt_float` in `gram.y` rejects
      * @throws ImplementationGap When the production has no rule
      */
     public function precision(Node $precision): ?IntegerConstant

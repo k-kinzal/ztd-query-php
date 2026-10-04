@@ -35,4 +35,9 @@ final class DatabaseOptionTest extends TestCase
     {
         self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d WITH strategy = wal_log')->facts->diagnostics);
     }
+
+    public function testRenderKeepsAnIdentifierSpelledLikeAKeywordQuoted(): void
+    {
+        self::assertSame('CREATE DATABASE d WITH "owner" = x "template" = y OWNER = z', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE DATABASE d "owner" x "template" = y OWNER z')->toString());
+    }
 }

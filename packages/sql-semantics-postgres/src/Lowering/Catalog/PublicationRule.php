@@ -89,7 +89,7 @@ final class PublicationRule
     /**
      * Lowers one `PublicationObjSpec` after the item before it.
      *
-     * @throws AnalysisException When a table name has a subscript or more than three parts
+     * @throws AnalysisException When a table name has a subscript or more than three parts, which `makeRangeVarFromQualifiedName` called by the action of `PublicationObjSpec` in `gram.y` rejects
      * @throws ImplementationGap When the production has no rule
      */
     public function object(Form $form, ?PublicationMember $previous): PublicationMember

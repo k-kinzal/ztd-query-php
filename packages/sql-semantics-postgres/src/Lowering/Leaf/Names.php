@@ -141,7 +141,7 @@ final class Names
      *
      * @return list<Name>
      *
-     * @throws AnalysisException When the indirection holds a subscript, a slice or a star, which the server rejects in a name
+     * @throws AnalysisException When the indirection holds a subscript, a slice or a star, which `check_qualified_name` and `check_func_name` of `gram.y` reject in a name
      */
     public function fields(Node $indirection): array
     {
@@ -188,7 +188,7 @@ final class Names
     /**
      * Lowers `qualified_name`: a relation name of one to three parts.
      *
-     * @throws AnalysisException When the name has more than three parts, which the server rejects while parsing
+     * @throws AnalysisException When the name has more than three parts, which `makeRangeVarFromQualifiedName` of `gram.y` rejects
      * @throws ImplementationGap When the production has no rule
      */
     public function qualified(Node $name): QualifiedName

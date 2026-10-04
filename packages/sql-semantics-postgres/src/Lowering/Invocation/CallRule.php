@@ -73,7 +73,7 @@ final class CallRule
      * @param list<SortItem> $withinGroup The ordering written after WITHIN GROUP
      * @param Node|null $over The `over_clause` that follows
      *
-     * @throws AnalysisException When WITHIN GROUP is combined with an ordering, DISTINCT or VARIADIC, as the grammar's action rejects
+     * @throws AnalysisException When WITHIN GROUP is combined with an ordering, DISTINCT or VARIADIC, which the action of `func_expr: func_application within_group_clause filter_clause over_clause` in `gram.y` rejects
      * @throws ImplementationGap When the production has no rule
      */
     public function application(Node $application, array $withinGroup = [], ?Scalar $filter = null, ?Node $over = null): FunctionCall

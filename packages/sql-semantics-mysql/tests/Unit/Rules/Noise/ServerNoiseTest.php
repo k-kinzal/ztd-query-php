@@ -13,13 +13,14 @@ use SqlSemantics\Platform\MySql\Rules\Noise\ServerNoise;
 #[Small]
 final class ServerNoiseTest extends TestCase
 {
-    public function testPositionsListsNothingYet(): void
+    public function testPositionsListsTheOptionalWordsAndCommas(): void
     {
-        self::assertSame([], ServerNoise::positions());
+        self::assertSame([0], ServerNoise::positions()['opt_work: WORK_SYM']);
+        self::assertSame([1], ServerNoise::positions()['drop_ts_options: drop_ts_options_list , drop_ts_option']);
     }
 
-    public function testSynonymsListsNothingYet(): void
+    public function testSynonymsMapBeginToStart(): void
     {
-        self::assertSame([], ServerNoise::synonyms());
+        self::assertSame([0 => 'START_SYM'], ServerNoise::synonyms()['begin_or_start: BEGIN_SYM']);
     }
 }

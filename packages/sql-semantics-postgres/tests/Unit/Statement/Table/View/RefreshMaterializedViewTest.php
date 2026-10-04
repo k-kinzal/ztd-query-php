@@ -33,7 +33,7 @@ final class RefreshMaterializedViewTest extends TestCase
         $statement = $semantics->analyze('REFRESH MATERIALIZED VIEW t', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\View\RefreshMaterializedView::class, $n1);
-        self::assertSame(2, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

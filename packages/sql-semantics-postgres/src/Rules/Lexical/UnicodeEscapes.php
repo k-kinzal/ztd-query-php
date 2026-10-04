@@ -85,7 +85,7 @@ final class UnicodeEscapes
     }
 
     /**
-     * Reports text the server scanner rejects.
+     * Reports text the server rejects while scanning (`str_udeescape` of `parser.c`, called for each `UIDENT` and `USCONST` token).
      *
      * @throws AnalysisException When the condition holds
      */

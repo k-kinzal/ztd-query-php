@@ -60,7 +60,7 @@ final class DatabaseOption implements Clause
     public function render(Output $out): void
     {
         if ($this->name instanceof Name) {
-            $out->name($this->name, NameUse::Column);
+            $out->name($this->name, NameUse::Identifier);
         } else {
             $out->keyword(...explode(' ', $this->name->value));
         }

@@ -69,7 +69,7 @@ final class AlterTable implements Statement, Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
-        return (new Targets())->resolve($derivation, $this->relation->name);
+        return (new Targets())->existing($derivation, $this->relation->name, $this->ifExists);
     }
 
     /**

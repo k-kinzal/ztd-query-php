@@ -82,4 +82,14 @@ final class DefineTest extends TestCase
         $this->expectExceptionMessage('CREATE with a definition defines an aggregate, an operator, a type, a text search object or a collation.');
         new Define(ObjectKind::Schema, new DottedName([new Name('s')]), []);
     }
+
+    public function testRenderKeepsAnOldStyleAttributeSpelledLikeAKeywordQuoted(): void
+    {
+        self::assertSame('CREATE AGGREGATE a ("type" = x, sfunc = f, "select" = int4)', (new Semantics(Dialect::PostgreSql))->analyze('CREATE AGGREGATE a ("type" = x, sfunc = f, "select" = int4)')->toString());
+    }
+
+    public function testRenderWritesANewStyleAttributeAsALabel(): void
+    {
+        self::assertSame('CREATE AGGREGATE a (int4) (type = x, sfunc = f)', (new Semantics(Dialect::PostgreSql))->analyze('CREATE AGGREGATE a (int4) ("type" = x, sfunc = f)')->toString());
+    }
 }

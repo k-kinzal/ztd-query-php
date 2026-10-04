@@ -32,6 +32,7 @@ final class CreateIndexTest extends TestCase
         $n2 = $statement->facts->relation($n1)->table;
         self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\DeclaredTable::class, $n2);
         self::assertSame([
+          0 => 'Column zz does not exist.',
         ], $n2->table === $context[0] ? array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics) : null);
     }
 
@@ -56,7 +57,7 @@ final class CreateIndexTest extends TestCase
         $statement = $semantics->analyze('CREATE INDEX ON t (a)', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex::class, $n1);
-        self::assertSame(2, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

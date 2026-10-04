@@ -19,7 +19,8 @@ final class AlterPolicyTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('ALTER POLICY p ON t USING (zz > 0) WITH CHECK (a)', $context);
         self::assertSame([
-          0 => 'argument of POLICY must be type boolean',
+          0 => 'Column zz does not exist.',
+          1 => 'argument of POLICY must be type boolean',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 
@@ -31,7 +32,7 @@ final class AlterPolicyTest extends TestCase
         $statement = $semantics->analyze('ALTER POLICY p ON t TO bob', $context);
         $n1 = $statement->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Policy\AlterPolicy::class, $n1);
-        self::assertSame(2, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
+        self::assertSame(3, count($n1->deriveRelation(new \SqlSemantics\Construction\Derivation($statement->context), new \SqlSemantics\Resolution\Environment($statement->context))->shape->slots));
     }
 
     public function testRenderWritesTheClauseAsWritten(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Resolution;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule;
@@ -20,7 +21,6 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * Derives the row shape of one use of a named relation.
@@ -60,7 +60,7 @@ final class TableShapes
         if ($resolution instanceof DeclaredTable) {
             $slots = [];
             foreach ($resolution->table->columns as $column) {
-                $slots[] = new OutputSlot($column->name, new Known($column->type), $column->nullability, $column);
+                $slots[] = new OutputSlot($column->name, (new DeclaredTypes())->fact($column->type), $column->nullability, $column);
             }
             $shape = new RowShape($slots, $resolution->table->complete ? [] : [new IncompleteMembers($resolution->table)]);
         } elseif ($resolution instanceof CommonTable) {
@@ -90,7 +90,7 @@ final class TableShapes
     {
         $implicit = [];
         foreach ($fact->table instanceof DeclaredTable ? $fact->table->table->implicit : [] as $column) {
-            $implicit[] = new ImplicitSlot($column->names, new OutputSlot($column->column->name, new Known($column->column->type), $column->column->nullability, $column->column));
+            $implicit[] = new ImplicitSlot($column->names, new OutputSlot($column->column->name, (new DeclaredTypes())->fact($column->column->type), $column->column->nullability, $column->column));
         }
 
         return $implicit;

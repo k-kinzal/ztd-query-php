@@ -49,7 +49,7 @@ final class XmlColumnOption implements Node
     public function render(Output $out): void
     {
         if ($this->word !== null) {
-            $out->name($this->word, NameUse::Qualifier);
+            $out->name($this->word, NameUse::Identifier);
         } else {
             $out->keyword(...explode(' ', $this->kind->value));
         }

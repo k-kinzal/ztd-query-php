@@ -19,6 +19,7 @@ final class TypeChangeTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('ALTER TABLE t ALTER b TYPE text USING zz', $context);
         self::assertSame([
+          0 => 'Column zz does not exist.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 

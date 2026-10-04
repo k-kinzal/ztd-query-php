@@ -277,7 +277,7 @@ final class JsonRule
     /**
      * Lowers the encoding name of a FORMAT clause.
      *
-     * @throws AnalysisException When the encoding is not UTF8, UTF16 or UTF32, which the grammar's action rejects
+     * @throws AnalysisException When the encoding is not UTF8, UTF16 or UTF32, which the action of `json_format_clause` in `gram.y` rejects (`makeJsonEncoding` called by `json_encoding_clause_opt` in PostgreSQL 16)
      */
     public function encoding(Node $name): Name
     {

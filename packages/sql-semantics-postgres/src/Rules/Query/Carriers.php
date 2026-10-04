@@ -6,9 +6,8 @@ namespace SqlSemantics\Platform\PostgreSql\Rules\Query;
 
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\QueryExpression;
-use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Shape\RowShape;
 
@@ -19,8 +18,8 @@ use SqlSemantics\Statement\Shape\RowShape;
  * a parenthesized query to the query inside the parentheses, so that ORDER BY
  * and FOR UPDATE after `(SELECT … FROM t)` see `t`. The query expression that
  * holds such clauses passes itself to the body as a carrier in the
- * environment: a common table binding under the empty name, which no SQL name
- * can refer to. The selection or TABLE query the clauses belong to takes
+ * environment: a visible occurrence of class `Carrier` with neither alias,
+ * name nor column, which no name lookup can reach. The selection or TABLE query the clauses belong to takes
  * the carriers addressed to it and derives their clauses in its own
  * environment; every other query ignores them.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-ORDERBY. Status: Implemented.
@@ -46,7 +45,7 @@ final class Carriers
      */
     public function carry(Environment $environment, QueryExpression $carrier): Environment
     {
-        return new Environment($environment->context, $environment->outer, $environment->relations, [...$environment->commonTables, new CommonBinding(new Name(''), $carrier, new RowShape([]))], $environment->aliases);
+        return new Environment($environment->context, $environment->outer, [...$environment->relations, new VisibleRelation(new Carrier($carrier), new RowShape([]))], $environment->commonTables, $environment->aliases);
     }
 
     /**
@@ -58,17 +57,17 @@ final class Carriers
     {
         $kept = [];
         $carriers = [];
-        foreach ($environment->commonTables as $binding) {
-            if ($binding->name->value === '' && $binding->definition instanceof QueryExpression && $this->core($binding->definition) === $query) {
-                $carriers[] = $binding->definition;
+        foreach ($environment->relations as $visible) {
+            if ($visible->relation instanceof Carrier && $this->core($visible->relation->expression) === $query) {
+                $carriers[] = $visible->relation->expression;
             } else {
-                $kept[] = $binding;
+                $kept[] = $visible;
             }
         }
         if ($carriers === []) {
             return [$environment, []];
         }
 
-        return [new Environment($environment->context, $environment->outer, $environment->relations, $kept, $environment->aliases), $carriers];
+        return [new Environment($environment->context, $environment->outer, $kept, $environment->commonTables, $environment->aliases), $carriers];
     }
 }

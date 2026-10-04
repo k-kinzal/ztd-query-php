@@ -35,7 +35,7 @@ final class Strings
     /**
      * Decodes the text of a string constant token.
      *
-     * @throws AnalysisException When the server scanner rejects the constant
+     * @throws AnalysisException When the scanner `scan.l` rejects the constant (invalid encoding of an escape string, invalid Unicode escape)
      */
     public function decode(string $text): string
     {
@@ -136,7 +136,7 @@ final class Strings
      *
      * @return array{string, int} The bytes it stands for and the offset after it
      *
-     * @throws AnalysisException When the server scanner rejects the escape
+     * @throws AnalysisException When the `xeunicode` rules of the scanner `scan.l` reject the escape
      */
     public function escape(string $text, int $offset): array
     {

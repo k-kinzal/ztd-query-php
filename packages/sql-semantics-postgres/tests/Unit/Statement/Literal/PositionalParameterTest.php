@@ -13,10 +13,20 @@ use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\PositionalParameter;
+use SqlSemantics\Platform\PostgreSql\Statement\Prepared\PreparedParameters;
+use SqlSemantics\Platform\PostgreSql\Statement\Routine\FunctionParameter;
+use SqlSemantics\Platform\PostgreSql\Statement\Routine\RoutineParameters;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\KeywordDesignation;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\TypeKeyword;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Invalid;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(PositionalParameter::class)]
@@ -57,6 +67,27 @@ final class PositionalParameterTest extends TestCase
         $fact = $derivation->scalar(new PositionalParameter('0'), $derivation->environment());
         self::assertInstanceOf(Invalid::class, $fact->type);
         self::assertSame('There is no parameter $0.', $derivation->facts()->diagnostics[0]->message());
+    }
+
+    public function testDeriveScalarHasTheDeclaredTypeOfItsPosition(): void
+    {
+        $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
+        $parameters = new PreparedParameters([new TypeName(new KeywordDesignation(TypeKeyword::Integer))]);
+        $environment = new Environment($derivation->context, new Environment($derivation->context, null, [new VisibleRelation($parameters, $derivation->relation($parameters, $derivation->environment())->shape)]));
+        $fact = $derivation->scalar(new PositionalParameter('1'), $environment);
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame([Builtin::Int4, Nullability::Nullable], [$fact->type->descriptor, $fact->nullability]);
+        self::assertInstanceOf(Dependent::class, $derivation->scalar(new PositionalParameter('2'), $environment)->type);
+    }
+
+    public function testDeriveScalarReportsAParameterARoutineDoesNotDeclare(): void
+    {
+        $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
+        $parameters = new RoutineParameters([new FunctionParameter(new TypeName(new KeywordDesignation(TypeKeyword::Integer)))]);
+        $environment = new Environment($derivation->context, null, [new VisibleRelation($parameters, $derivation->relation($parameters, $derivation->environment())->shape)]);
+        self::assertInstanceOf(Known::class, $derivation->scalar(new PositionalParameter('1'), $environment)->type);
+        self::assertInstanceOf(Invalid::class, $derivation->scalar(new PositionalParameter('2'), $environment)->type);
+        self::assertSame('There is no parameter $2.', $derivation->facts()->diagnostics[0]->message());
     }
 
     public function testRenderWritesTheMarker(): void

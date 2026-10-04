@@ -19,6 +19,9 @@ final class DeclarationsTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE TABLE p1 PARTITION OF t (b NOT NULL) DEFAULT', $context);
         self::assertSame([
+          0 => 'a integer NotNull',
+          1 => 'b integer NotNull',
+          2 => 'c text Nullable',
         ], array_map(static fn ($column): string => $column->name->value . ' ' . $column->type->name() . ' ' . $column->nullability->name, $statement->declarations()[0]->columns));
     }
 
@@ -29,6 +32,10 @@ final class DeclarationsTest extends TestCase
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE TABLE n (x int, b int NOT NULL) INHERITS (t)', $context);
         self::assertSame([
+          0 => 'a integer NotNull',
+          1 => 'b integer NotNull',
+          2 => 'c text Nullable',
+          3 => 'x integer Nullable',
         ], array_map(static fn ($column): string => $column->name->value . ' ' . $column->type->name() . ' ' . $column->nullability->name, $statement->declarations()[0]->columns));
     }
 
