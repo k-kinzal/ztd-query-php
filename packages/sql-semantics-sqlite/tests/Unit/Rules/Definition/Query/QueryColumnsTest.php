@@ -95,7 +95,7 @@ final class QueryColumnsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $table = $semantics->analyze('CREATE TABLE s (i INTEGER, t TEXT)');
-        $unnamed = $semantics->analyze('SELECT i, (SELECT i FROM s), t FROM s', [$table]);
+        $unnamed = $semantics->analyze('SELECT i, i, i, i, i, i, t FROM s', [$table]);
         $undeclared = $semantics->analyze('SELECT s.i, u.x, s.t FROM s, u', [$table]);
         $columns = new QueryColumns();
 
@@ -103,8 +103,27 @@ final class QueryColumnsTest extends TestCase
         self::assertInstanceOf(Select::class, $undeclared->statement);
         self::assertNotNull($unnamed->facts->output);
         self::assertNotNull($undeclared->facts->output);
-        self::assertCount(1, $columns->tableColumns($unnamed->statement, $unnamed->facts->output, $unnamed->facts, Comparison::AsciiInsensitive));
+        self::assertSame(['i', 'i:1', 'i:2', 'i:3', 'i:4'], array_map(static fn (Column $column): string => $column->name->value, $columns->tableColumns($unnamed->statement, $unnamed->facts->output, $unnamed->facts, Comparison::AsciiInsensitive)));
         self::assertCount(1, $columns->tableColumns($undeclared->statement, $undeclared->facts->output, $undeclared->facts, Comparison::AsciiInsensitive));
+    }
+
+    public function testNamedGivesTheNamesSqliteGivesAfterResolution(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $table = $semantics->analyze('CREATE TABLE s (i INTEGER, t TEXT)');
+        $query = $semantics->analyze('SELECT I COLLATE nocase, unlikely(T), 1+1, "zz", true, s.i AS x, * FROM s', [$table]);
+        $values = $semantics->analyze('VALUES (1, i) UNION SELECT 2, 3');
+        $conditional = $semantics->analyze('SELECT s.i, "zz" FROM s, u', $semantics->context([$table], false));
+
+        self::assertInstanceOf(Select::class, $query->statement);
+        self::assertInstanceOf(Compound::class, $values->statement);
+        self::assertInstanceOf(Select::class, $conditional->statement);
+        self::assertNotNull($query->facts->output);
+        self::assertNotNull($values->facts->output);
+        self::assertNotNull($conditional->facts->output);
+        self::assertSame(['i', 't', '1+1', '"zz"', 'column5', 'x', 'i', 't'], array_map(static fn (?Name $name): ?string => $name?->value, (new QueryColumns())->named($query->statement, $query->facts->output, $query->facts)));
+        self::assertSame(['column1', 'column2'], array_map(static fn (?Name $name): ?string => $name?->value, (new QueryColumns())->named($values->statement, $values->facts->output, $values->facts)));
+        self::assertSame(['i', null], array_map(static fn (?Name $name): ?string => $name?->value, (new QueryColumns())->named($conditional->statement, $conditional->facts->output, $conditional->facts)));
     }
 
     public function testViewColumnsKeepTheDeclaredTypeAndTheNullFactOfAReferencedColumn(): void

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\ListedColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
@@ -16,6 +17,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Statement\Type\Choice;
@@ -113,8 +115,8 @@ final class CommonTables
     public function provisional(CommonTable $table): RowShape
     {
         $slots = [];
-        foreach ($table->columns as $column) {
-            $slots[] = new OutputSlot($column->name, new Choice(Storage::cases()), Nullability::Nullable);
+        foreach ((new RelationNames())->listed(array_map(static fn (ListedColumn $column): Name => $column->name, $table->columns)) as $name) {
+            $slots[] = new OutputSlot($name, new Choice(Storage::cases()), Nullability::Nullable);
         }
 
         return new RowShape($slots);
@@ -125,7 +127,8 @@ final class CommonTables
      */
     public function shape(CommonTable $table, QueryFact $fact, Derivation $derivation): RowShape
     {
-        $shape = (new RelationNames())->shape($fact);
+        $shape = (new RelationNames())->shape($fact, $table->query, $derivation);
+        $listed = (new RelationNames())->listed(array_map(static fn (ListedColumn $column): Name => $column->name, $table->columns));
         if ($table->columns === []) {
             return $shape;
         }
@@ -138,8 +141,8 @@ final class CommonTables
             $slot = $shape->slots[$position] ?? null;
             $decorated = $decorated || $column->collation !== null || $column->direction !== null;
             $slots[] = $slot === null
-                ? new OutputSlot($column->name, $shape->complete() ? new Choice(Storage::cases()) : new Dependent($shape->missing), $shape->complete() ? Nullability::Nullable : Nullability::Dependent)
-                : new OutputSlot($column->name, $slot->type, $slot->nullability, null, $slot);
+                ? new OutputSlot($listed[$position], $shape->complete() ? new Choice(Storage::cases()) : new Dependent($shape->missing), $shape->complete() ? Nullability::Nullable : Nullability::Dependent)
+                : new OutputSlot($listed[$position], $slot->type, $slot->nullability, null, $slot);
         }
         if ($decorated) {
             $derivation->report(new Misuse(MisuseRule::DecoratedColumnName));

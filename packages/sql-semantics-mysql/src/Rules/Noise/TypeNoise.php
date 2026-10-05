@@ -22,14 +22,17 @@ final class TypeNoise
      * - `real_type: DOUBLE_SYM PRECISION`, `opt_PRECISION: PRECISION`: DOUBLE
      *   PRECISION is DOUBLE
      *   (https://dev.mysql.com/doc/refman/8.4/en/numeric-type-syntax.html).
-     * - `cast_type: SIGNED_SYM INT_SYM` and the UNSIGNED forms, position 1:
-     *   `SIGNED [INTEGER]`, `UNSIGNED [INTEGER]`
-     *   (https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast).
+     *   As a cast target the model keeps the word (CastTarget), since it is
+     *   part of the text MySQL names an unaliased select list expression after.
      * - the second and third keywords of the national type spellings: with the
      *   synonym key of position 0, `NATIONAL CHAR` is NCHAR and `NATIONAL
      *   VARCHAR`, `NCHAR VARCHAR`, `NATIONAL CHAR VARYING` and `NCHAR VARYING`
      *   are NVARCHAR (https://dev.mysql.com/doc/refman/8.4/en/string-type-syntax.html,
-     *   https://dev.mysql.com/doc/refman/8.4/en/charset-national.html).
+     *   https://dev.mysql.com/doc/refman/8.4/en/charset-national.html). As a
+     *   cast target the model keeps `NATIONAL CHAR` (CastTarget).
+     *
+     * The optional INT after SIGNED and UNSIGNED of a cast target is kept by
+     * the model (CastTarget) and is no noise.
      *
      * @return array<string, list<int>>
      */
@@ -38,9 +41,6 @@ final class TypeNoise
         return [
             'real_type: DOUBLE_SYM PRECISION' => [1],
             'opt_PRECISION: PRECISION' => [0],
-            'cast_type: SIGNED_SYM INT_SYM' => [1],
-            'cast_type: UNSIGNED INT_SYM' => [1],
-            'cast_type: UNSIGNED_SYM INT_SYM' => [1],
             'nchar: NATIONAL_SYM CHAR_SYM' => [1],
             'nvarchar: NATIONAL_SYM VARCHAR' => [1],
             'nvarchar: NATIONAL_SYM VARCHAR_SYM' => [1],

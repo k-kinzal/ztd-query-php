@@ -152,7 +152,7 @@ final class CharacterTest extends TestCase
         self::assertSame([CharacterKind::Text, '100', false], [$type->kind, $type->length, $type->national]);
         self::assertSame('utf8mb4', $type->charset?->charset?->value);
         $type->render($out);
-        self::assertSame('TEXT(100) CHARSET utf8mb4', (new Lexical())->join($out->pieces()));
+        self::assertSame('TEXT(100) CHARACTER SET utf8mb4', (new Lexical())->join($out->pieces()));
     }
 
     public function testNegativeLengthIsRejected(): void

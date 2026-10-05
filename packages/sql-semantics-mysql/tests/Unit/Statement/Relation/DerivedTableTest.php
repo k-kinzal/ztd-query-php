@@ -74,8 +74,8 @@ final class DerivedTableTest extends TestCase
 
     public function testRenderWritesTheDerivedTable(): void
     {
-        self::assertSame('SELECT 1 FROM LATERAL (SELECT 1) AS d (x), ((SELECT 2)) AS e', (new Semantics(Dialect::MySql))->analyze('select 1 from lateral (select 1) d (x), ((select 2)) e')->toString());
-        self::assertSame('SELECT 1 FROM ((SELECT 2)) AS e', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from ((select 2)) e')->toString());
+        self::assertSame('SELECT 1 FROM LATERAL (SELECT 1) d (x), ((SELECT 2)) e', (new Semantics(Dialect::MySql))->analyze('select 1 from lateral (select 1) d (x), ((select 2)) e')->toString());
+        self::assertSame('SELECT 1 FROM ((SELECT 2)) e', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from ((select 2)) e')->toString());
         self::assertSame('SELECT 1 FROM (SELECT 2 UNION SELECT 3 ORDER BY 1) AS e', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select 1 from (select 2 union select 3 order by 1) as e')->toString());
     }
 }

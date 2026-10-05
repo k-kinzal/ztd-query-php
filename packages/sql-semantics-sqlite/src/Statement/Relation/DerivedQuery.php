@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Relation;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Query\RelationNames;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -36,9 +37,12 @@ final class DerivedQuery implements Relation
     /**
      * @param Query $query The query
      * @param Name|null $alias The correlation name
+     * @param bool $as Whether the keyword AS introduces the alias; SQLite names a column after the text of an expression, which includes it
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When AS is left out without an alias
      */
-    public function __construct(public readonly Query $query, public readonly ?Name $alias = null)
+    public function __construct(public readonly Query $query, public readonly ?Name $alias = null, public readonly bool $as = true)
     {
+        Check::input($as || $alias !== null, 'AS is left out only before an alias.');
     }
 
     /**
@@ -46,7 +50,7 @@ final class DerivedQuery implements Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
-        return new RelationFact((new RelationNames())->shape($derivation->query($this->query, $environment)));
+        return new RelationFact((new RelationNames())->shape($derivation->query($this->query, $environment), $this->query, $derivation));
     }
 
     /**
@@ -56,7 +60,10 @@ final class DerivedQuery implements Relation
     {
         $out->symbol('(')->node($this->query)->symbol(')');
         if ($this->alias !== null) {
-            $out->keyword('AS')->name($this->alias, NameUse::Alias);
+            if ($this->as) {
+                $out->keyword('AS');
+            }
+            $out->name($this->alias, NameUse::Alias);
         }
     }
 }

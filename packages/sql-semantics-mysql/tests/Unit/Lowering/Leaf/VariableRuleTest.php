@@ -52,14 +52,14 @@ final class VariableRuleTest extends TestCase
 
     public function testUserLowersEverySpellingOfAUserVariableName(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT @a, @`b c`, @'d', @\"e\", @localhost");
+        $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT @a AS a, @`b c` AS b, @'d' AS d, @\"e\" AS e, @localhost AS f");
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item1 = $operation->statement->items[1];
         self::assertInstanceOf(SelectExpression::class, $item1);
         self::assertInstanceOf(UserVariable::class, $item1->expression);
         self::assertSame('b c', $item1->expression->name->value);
-        self::assertSame('SELECT @a, @`b c`, @d, @e, @localhost', $operation->toString());
+        self::assertSame('SELECT @a AS a, @`b c` AS b, @d AS d, @e AS e, @localhost AS f', $operation->toString());
     }
 
     public function testAssignmentLowersAnAssignmentInsideAnExpression(): void
@@ -79,7 +79,7 @@ final class VariableRuleTest extends TestCase
 
     public function testLegacySystemLowersTheScopeAndComponentOfMySql5(): void
     {
-        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@SESSION.sql_mode, @@LOCAL.innodb.x');
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@SESSION.sql_mode AS a, @@LOCAL.innodb.x AS b');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
@@ -91,7 +91,7 @@ final class VariableRuleTest extends TestCase
         self::assertInstanceOf(SystemVariable::class, $item1->expression);
         self::assertSame(VariableScope::Session, $item1->expression->scope);
         self::assertSame('x', $item1->expression->name->value);
-        self::assertSame('SELECT @@SESSION.sql_mode, @@SESSION.innodb.x', $operation->toString());
+        self::assertSame('SELECT @@SESSION.sql_mode AS a, @@SESSION.innodb.x AS b', $operation->toString());
     }
 
     public function testSystemLowersTheSettableVariableForms(): void

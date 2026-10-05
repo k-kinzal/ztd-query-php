@@ -12,7 +12,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
-use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\UnkeptSpelling;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\RandomColumnName;
 use SqlSemantics\Platform\Sqlite\Statement\Relation\TableInput;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Resolution\Environment;
@@ -193,7 +193,7 @@ final class ColumnResolverTest extends TestCase
         $reached = $resolver->match($environment, $visible, new Name('a'), false, 0);
         $implicit = $resolver->match($environment, $visible, new Name('_rowid_'), true, 0);
         $missing = $resolver->match($environment, $open, new Name('a'), true, 0);
-        $spelling = $resolver->match($environment, $unnamed, new Name('a'), true, 0);
+        $random = $resolver->match($environment, $unnamed, new Name('a'), true, 0);
 
         self::assertInstanceOf(ResolvedColumn::class, $slot);
         self::assertSame($fact->shape->slots[2], $slot->slot);
@@ -205,8 +205,8 @@ final class ColumnResolverTest extends TestCase
         self::assertSame([], $resolver->match($environment, $visible, new Name('zz'), true, 0));
         self::assertIsArray($missing);
         self::assertInstanceOf(UndeclaredRelation::class, $missing[0]);
-        self::assertIsArray($spelling);
-        self::assertInstanceOf(UnkeptSpelling::class, $spelling[0]);
+        self::assertIsArray($random);
+        self::assertInstanceOf(RandomColumnName::class, $random[0]);
     }
 
     public function testQualifiedOnlyIsAPositionNoSlotCanHave(): void

@@ -62,7 +62,31 @@ final class ResultRuleTest extends TestCase
         $fields = $operation->fields();
         self::assertNotNull($fields);
         self::assertSame(['b', 'c', 'd', 'e', 'a'], array_map(static fn (Field $field): ?string => $field->name?->value, iterator_to_array($fields)));
-        self::assertSame('SELECT a AS b, a AS c, a AS d, a AS e, a FROM t', $operation->toString());
+        self::assertSame('SELECT a AS b, a c, a d, a e, a FROM t', $operation->toString());
+    }
+
+    public function testColumnKeepsTheLayoutOfAnUnaliasedExpressionThatIsNotCanonical(): void
+    {
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT a+1, a + 1, a+1 AS x FROM t');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $columns = $operation->statement->columns;
+
+        self::assertInstanceOf(ResultColumn::class, $columns[0]);
+        self::assertSame('a+1', $columns[0]->layout?->text());
+        self::assertInstanceOf(ResultColumn::class, $columns[1]);
+        self::assertNull($columns[1]->layout);
+        self::assertInstanceOf(ResultColumn::class, $columns[2]);
+        self::assertNull($columns[2]->layout);
+        self::assertSame('SELECT a+1, a + 1, a + 1 AS x FROM t', $operation->toString());
+    }
+
+    public function testKeywordTellsWhetherAsIntroducesTheAlias(): void
+    {
+        $operation = (new Semantics(Dialect::Sqlite))->analyze("SELECT a AS b, a c, a 'd', a FROM t AS x, t y, t");
+        self::assertInstanceOf(Select::class, $operation->statement);
+
+        self::assertSame([true, false, false, true], array_map(static fn (ResultColumn|Star|TableStar $column): bool => $column instanceof ResultColumn && $column->as, $operation->statement->columns));
+        self::assertSame('SELECT a AS b, a c, a d, a FROM t AS x, t y, t', $operation->toString());
     }
 
     public function testQuantifierLowersDistinctAllOrNone(): void

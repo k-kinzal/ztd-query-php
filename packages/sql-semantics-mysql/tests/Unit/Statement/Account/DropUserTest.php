@@ -22,6 +22,6 @@ final class DropUserTest extends TestCase
 
     public function testRenderWritesTheAccounts(): void
     {
-        self::assertSame('DROP USER a, CURRENT_USER', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('drop user a, current_user()')->toString());
+        self::assertSame('DROP USER a, CURRENT_USER()', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('drop user a, current_user()')->toString());
     }
 }

@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockedRowAction;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength;
@@ -46,5 +47,22 @@ final class LockingClauseTest extends TestCase
         $this->expectExceptionMessage('A table is qualified by at most a database.');
 
         new LockingClause(LockStrength::Update, [new QualifiedName(new Name('t'), new Name('db'), new Name('c'))]);
+    }
+
+    public function testRenderWritesTheStarOfATableWrittenWithIt(): void
+    {
+        $clause = new LockingClause(LockStrength::Share, [new QualifiedName(new Name('t')), new QualifiedName(new Name('u'))], null, [OptionalWords::Written, OptionalWords::Omitted]);
+        $out = new Output(new Codec((new Semantics(Dialect::MySql))->profile()->grammar));
+        $clause->render($out);
+
+        self::assertSame('FOR SHARE OF t.*, u', (new Lexical())->join($out->pieces()));
+        self::assertSame([OptionalWords::Omitted], (new LockingClause(LockStrength::Update, [new QualifiedName(new Name('t'))]))->wildcards);
+    }
+
+    public function testAWildcardListOfAnotherLengthIsRejected(): void
+    {
+        $this->expectExceptionMessage('A locking clause has one wildcard form per table.');
+
+        new LockingClause(LockStrength::Update, [new QualifiedName(new Name('t'))], null, [OptionalWords::Written, OptionalWords::Written]);
     }
 }

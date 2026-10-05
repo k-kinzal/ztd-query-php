@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Access\JsonExtraction;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Expression\Row;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
@@ -58,7 +59,7 @@ final class FormRule
         return match ($form->signature) {
             'simple_expr: ( expr )' => new Grouped($expressions->expression($form->node(1))),
             'simple_expr: ( expr , expr_list )' => new Row([$expressions->expression($form->node(1)), ...$expressions->expressions($form->node(3))]),
-            'simple_expr: ROW_SYM ( expr , expr_list )' => new Row([$expressions->expression($form->node(2)), ...$expressions->expressions($form->node(4))]),
+            'simple_expr: ROW_SYM ( expr , expr_list )' => new Row([$expressions->expression($form->node(2)), ...$expressions->expressions($form->node(4))], OptionalWords::Written),
             'simple_expr: ( subselect )' => new ScalarSubquery($queries->query($form->node(1))),
             'simple_expr: row_subquery' => new ScalarSubquery($queries->query($form->node(0))),
             'simple_expr: EXISTS ( subselect )' => new Exists($queries->query($form->node(2))),

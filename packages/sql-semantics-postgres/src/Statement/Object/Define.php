@@ -7,12 +7,13 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Object;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Routine\AttributeReader;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\DefineChecks;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectSpelling;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
-use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
@@ -23,9 +24,13 @@ use SqlSemantics\Statement\Statement;
  *
  * Mirrors PostgreSQL's `DefineStmt` (`kind`, `oldstyle`, `defnames`, `args`,
  * `definition`, `if_not_exists`, `replace`). The definition is the list of
- * named attributes the command passes on as written. An aggregate is written
- * with its argument list, or in the old style without one, where every
- * attribute has a value. `CREATE TYPE name` alone defines a shell type.
+ * attributes in written order, each read the way the command for the kind
+ * reads it (`DefineAggregate`, `DefineOperator`, `DefineType`,
+ * `DefineCollation` or the text search commands): the function of an
+ * operator is a routine name, its argument types are types. An aggregate is
+ * written with its argument list, or in the old style without one, where
+ * every attribute has a value and its name is an identifier.
+ * `CREATE TYPE name` alone defines a shell type.
  * Source: https://www.postgresql.org/docs/17/sql-createaggregate.html, https://www.postgresql.org/docs/17/sql-createoperator.html,
  * https://www.postgresql.org/docs/17/sql-createtype.html, https://www.postgresql.org/docs/17/sql-createtsdictionary.html,
  * https://www.postgresql.org/docs/17/sql-createcollation.html.
@@ -40,14 +45,14 @@ final class Define implements Statement
     use Snapshot;
 
     /**
-     * @var list<Definition>|null The attributes in written order; null for a shell type
+     * @var list<Attribute>|null The attributes in written order; null for a shell type
      */
     public readonly ?array $definition;
 
     /**
      * @param ObjectKind $kind AGGREGATE, OPERATOR, TYPE, one of the four text search kinds, or COLLATION
      * @param DottedName|OperatorName $name The object name; an operator for OPERATOR
-     * @param list<Definition>|null $definition The attributes, at least one; null for a shell type
+     * @param list<Attribute>|null $definition The attributes of the kind's command, at least one; null for a shell type
      * @param AggregateArguments|null $arguments The argument list of an aggregate; null for an old-style aggregate and other kinds
      * @param bool $replace Whether OR REPLACE is written; aggregates only
      * @param bool $ifNotExists Whether IF NOT EXISTS is written; collations only
@@ -63,10 +68,11 @@ final class Define implements Statement
         Check::input(in_array($kind, [ObjectKind::Aggregate, ObjectKind::Operator, ObjectKind::Type, ObjectKind::TextSearchParser, ObjectKind::TextSearchDictionary, ObjectKind::TextSearchTemplate, ObjectKind::TextSearchConfiguration, ObjectKind::Collation], true), 'CREATE with a definition defines an aggregate, an operator, a type, a text search object or a collation.');
         Check::input(($kind === ObjectKind::Operator) === ($name instanceof OperatorName) && (!$name instanceof OperatorName || !$name->explicit), 'An operator, and only an operator, is named by an operator name written without OPERATOR(...).');
         Check::input($definition !== null || $kind === ObjectKind::Type, 'Only a shell type is defined without attributes.');
-        $this->definition = $definition === null ? null : Check::listOf($definition, Definition::class, 'A definition has at least one attribute.', 1);
+        $this->definition = $definition === null ? null : Check::listOf($definition, Attribute::class, 'A definition has at least one attribute.', 1);
+        $command = (new AttributeReader())->command($kind);
         foreach ($this->definition ?? [] as $attribute) {
-            Check::input($attribute->qualifier === null, 'A definition attribute has no namespace.');
-            Check::input($kind !== ObjectKind::Aggregate || $arguments !== null || $attribute->argument !== null, 'Every attribute of an old-style aggregate has a value.');
+            Check::input($attribute->known === null ? $command::named($attribute->name->value) === null : $attribute->known instanceof $command, 'A definition attribute is recognized exactly when its command knows its name.');
+            Check::input($kind !== ObjectKind::Aggregate || $arguments !== null || $attribute->valued(), 'Every attribute of an old-style aggregate has a value.');
         }
         Check::input($arguments === null || $kind === ObjectKind::Aggregate, 'Only an aggregate has an argument list.');
         Check::input(!$replace || $kind === ObjectKind::Aggregate, 'Only an aggregate is defined with OR REPLACE.');
@@ -74,7 +80,7 @@ final class Define implements Statement
     }
 
     /**
-     * Derives the arguments and attributes and reports attributes the server requires.
+     * Derives the arguments and attributes and reports the attribute problems the command reports.
      */
     public function deriveStatement(Derivation $derivation): void
     {
@@ -106,7 +112,7 @@ final class Define implements Statement
                 if ($index > 0) {
                     $out->symbol(',');
                 }
-                $out->name($attribute->name, NameUse::Identifier)->symbol('=')->node($attribute->argument);
+                $out->name($attribute->name, NameUse::Identifier)->symbol('=')->node($attribute->value);
             }
             $out->symbol(')');
         } elseif ($this->definition !== null) {

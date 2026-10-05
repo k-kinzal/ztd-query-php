@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
@@ -44,10 +45,12 @@ final class ClockCall implements Scalar
     /**
      * @param Clock $clock The function
      * @param Numeral|null $precision The fractional seconds precision, when written
+     * @param OptionalWords $parentheses Whether the parentheses are written when they hold no precision
      */
-    public function __construct(public readonly Clock $clock, public readonly ?Numeral $precision = null)
+    public function __construct(public readonly Clock $clock, public readonly ?Numeral $precision = null, public readonly OptionalWords $parentheses = OptionalWords::Written)
     {
         Check::input($precision === null || ($clock->precise() && !$precision->hexadecimal && ctype_digit($precision->text)), 'Only a time function takes a precision, and a precision is a decimal integer.');
+        Check::input($parentheses === OptionalWords::Written || ($precision === null && $clock->bare() !== null), 'A precision is written in parentheses, and SYSDATE is only written with them.');
     }
 
     /**
@@ -68,6 +71,11 @@ final class ClockCall implements Scalar
      */
     public function render(Output $out): void
     {
+        if ($this->parentheses === OptionalWords::Omitted) {
+            $out->keyword((string) $this->clock->bare());
+
+            return;
+        }
         $out->keyword($this->clock->value)->glue()->symbol('(')->node($this->precision)->symbol(')');
     }
 }

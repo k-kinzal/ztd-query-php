@@ -56,9 +56,9 @@ final class FrameTest extends TestCase
     public function testRenderWritesEveryFormOfFrame(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = $semantics->analyze('select sum(a) over (rows between 1 preceding and current row), sum(a) over (range unbounded preceding exclude no others), sum(a) over (groups between current row and unbounded following exclude current row), sum(a) over (rows between 2 following and 3 following exclude group), sum(a) over (rows 1 preceding exclude ties) from t');
+        $operation = $semantics->analyze('select sum(a) over (rows between 1 preceding and current row) AS c1, sum(a) over (range unbounded preceding exclude no others) AS c2, sum(a) over (groups between current row and unbounded following exclude current row) AS c3, sum(a) over (rows between 2 following and 3 following exclude group) AS c4, sum(a) over (rows 1 preceding exclude ties) AS c5 from t');
 
-        self::assertSame('SELECT sum(a) OVER (ROWS BETWEEN 1 PRECEDING AND CURRENT ROW), sum(a) OVER (RANGE UNBOUNDED PRECEDING EXCLUDE NO OTHERS), sum(a) OVER (GROUPS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING EXCLUDE CURRENT ROW), sum(a) OVER (ROWS BETWEEN 2 FOLLOWING AND 3 FOLLOWING EXCLUDE GROUP), sum(a) OVER (ROWS 1 PRECEDING EXCLUDE TIES) FROM t', $operation->toString());
+        self::assertSame('SELECT sum(a) OVER (ROWS BETWEEN 1 PRECEDING AND CURRENT ROW) AS c1, sum(a) OVER (RANGE UNBOUNDED PRECEDING EXCLUDE NO OTHERS) AS c2, sum(a) OVER (GROUPS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING EXCLUDE CURRENT ROW) AS c3, sum(a) OVER (ROWS BETWEEN 2 FOLLOWING AND 3 FOLLOWING EXCLUDE GROUP) AS c4, sum(a) OVER (ROWS 1 PRECEDING EXCLUDE TIES) AS c5 FROM t', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltFrame(): void

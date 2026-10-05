@@ -12,11 +12,16 @@ use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\BinaryOperation;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
+use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\AtomicBody;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\CreateFunction;
+use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineDefinition;
+use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineLanguage;
+use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineSource;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\ReturnStatement;
@@ -87,5 +92,11 @@ final class CreateFunctionTest extends TestCase
     {
         $this->expectExceptionMessage('A procedure has no result.');
         new CreateFunction(new DottedName([new Name('p')]), new RoutineParameters([]), new TypeName(new NamedDesignation(new DottedName([new Name('int4')]))), [], null, true);
+    }
+
+    public function testRejectsADefinitionInAnotherLanguage(): void
+    {
+        $this->expectExceptionMessage('A routine definition is written in the language of the first LANGUAGE option, or in none without one.');
+        new CreateFunction(new DottedName([new Name('f')]), new RoutineParameters([]), null, [new RoutineLanguage(new Word(new Name('plpgsql'))), new RoutineDefinition(new RoutineSource(new Name('sql'), new StringConstant('x')))]);
     }
 }

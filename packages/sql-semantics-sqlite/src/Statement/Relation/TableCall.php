@@ -50,9 +50,12 @@ final class TableCall implements Relation
      * @param QualifiedName $name The function name with its optional schema
      * @param list<Scalar> $arguments The arguments in order
      * @param Name|null $alias The correlation name
+     * @param bool $as Whether the keyword AS introduces the alias; SQLite names a column after the text of an expression, which includes it
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When AS is left out without an alias
      */
-    public function __construct(public readonly QualifiedName $name, array $arguments, public readonly ?Name $alias = null)
+    public function __construct(public readonly QualifiedName $name, array $arguments, public readonly ?Name $alias = null, public readonly bool $as = true)
     {
+        Check::input($as || $alias !== null, 'AS is left out only before an alias.');
         $this->arguments = Check::listOf($arguments, Scalar::class, 'The arguments of a table-valued function are expressions.');
     }
 
@@ -82,7 +85,10 @@ final class TableCall implements Relation
         }
         $out->name($this->name->name, NameUse::Routine)->glue()->symbol('(')->list($this->arguments)->symbol(')');
         if ($this->alias !== null) {
-            $out->keyword('AS')->name($this->alias, NameUse::Alias);
+            if ($this->as) {
+                $out->keyword('AS');
+            }
+            $out->name($this->alias, NameUse::Alias);
         }
     }
 }

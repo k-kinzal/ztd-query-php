@@ -128,15 +128,15 @@ final class InTableTest extends TestCase
     public function testRenderWritesTheNegationTheSchemaAndTheArguments(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $qualified = $semantics->analyze('select a not in main.t from t');
-        $call = $semantics->analyze('SELECT 1 IN json_each(1, 2)');
+        $qualified = $semantics->analyze('select a not in main.t AS c1 from t');
+        $call = $semantics->analyze('SELECT 1 IN json_each(1, 2) AS c1');
         $test = $qualified->field(0)->expression;
 
         self::assertInstanceOf(InTable::class, $test);
         self::assertTrue($test->negated);
         self::assertSame('main', $test->table->schema?->value);
-        self::assertSame('SELECT a NOT IN main.t FROM t', $qualified->toString());
-        self::assertSame('SELECT 1 IN json_each(1, 2)', $call->toString());
+        self::assertSame('SELECT a NOT IN main.t AS c1 FROM t', $qualified->toString());
+        self::assertSame('SELECT 1 IN json_each(1, 2) AS c1', $call->toString());
     }
 
     public function testRenderWritesANewlyBuiltTest(): void

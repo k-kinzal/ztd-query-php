@@ -18,8 +18,6 @@ final class Noise
      * Answers the noise positions by production signature.
      *
      * - `ecmd`: the semicolon only separates commands (https://sqlite.org/lang.html).
-     * - `as: AS nm`: the AS keyword before an alias is optional and changes nothing
-     *   (https://sqlite.org/syntax/result-column.html).
      * - `setlist`: the assignment sign after a column or a column list is mandatory
      *   punctuation; the tokenizer reads `=` and `==` as the same token there and
      *   neither spelling changes the assignment (https://sqlite.org/lang_update.html).
@@ -32,7 +30,6 @@ final class Noise
             'ecmd: SEMI' => [0],
             'ecmd: cmdx SEMI' => [1],
             'ecmd: explain cmdx SEMI' => [2],
-            'as: AS nm' => [0],
             'setlist: setlist COMMA nm EQ expr' => [3],
             'setlist: setlist COMMA LP idlist RP EQ expr' => [5],
             'setlist: nm EQ expr' => [1],

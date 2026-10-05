@@ -19,9 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeDescriptor;
 use SqlSemantics\Statement\Type\TypeFact;
@@ -34,8 +32,9 @@ use SqlSemantics\Statement\Type\TypeFact;
  * an operand is double precision, otherwise DECIMAL when an operand is
  * exact decimal, otherwise a BIGINT that is UNSIGNED when an operand is;
  * an integer subtraction with an unsigned operand is signed under the
- * session mode NO_UNSIGNED_SUBTRACTION, which the profile does not hold, so
- * its type depends on that session state. `/` yields DOUBLE when an operand
+ * session mode NO_UNSIGNED_SUBTRACTION and unsigned otherwise; the profile
+ * does not hold the mode, so its type is the known choice of the signed and
+ * the unsigned BIGINT. `/` yields DOUBLE when an operand
  * is double precision and DECIMAL otherwise. DIV yields a BIGINT, UNSIGNED
  * when an operand is. `%` follows `+` but its integer result takes the
  * sign of the dividend. The bit operators and `~` yield BIGINT UNSIGNED;
@@ -73,10 +72,7 @@ final class NumericResult
         foreach ($alternatives->of($leftFact->type) as $leftType) {
             foreach ($alternatives->of($rightFact->type) as $rightType) {
                 $result = $this->arithmetic($operator, $context->classify($left, $leftType), $context->classify($right, $rightType));
-                if ($result === null) {
-                    return new Dependent([new SessionState('sql_mode NO_UNSIGNED_SUBTRACTION')]);
-                }
-                $results[] = $result;
+                array_push($results, ...($result === null ? [$this->integer(true), $this->integer(false)] : [$result]));
             }
         }
 

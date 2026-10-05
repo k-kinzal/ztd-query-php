@@ -7,10 +7,7 @@ namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnFacts;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\DoubleQuotedWord;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
-use SqlSemantics\Platform\Sqlite\Statement\Expression\TruthWord;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
@@ -19,10 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
-use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Reference\Column\Resolution;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Shape\Field;
@@ -33,13 +27,11 @@ use SqlSemantics\Statement\Type\Known;
 /**
  * Derives the output fields of a result column list.
  *
- * Rule: SQLITE-RESULT-NAME-001. A result column with an alias is named by
- * the alias. A result column that is a column reference, possibly in
- * parentheses, is named after the column it denotes. Every other result
- * column is named by SQLite after the source text of its expression, which
- * the model does not keep: its name is not fixed. `*` contributes every
- * column of every input relation except the columns merged away by USING and
- * NATURAL joins; `t.*` contributes every column of the relations the
+ * Rule: SQLITE-PROJECTION-001. A result column is named by
+ * SQLITE-RESULT-NAME-001 for the rows a statement returns: by its alias, by
+ * the column a column reference denotes, or by the span of its expression.
+ * `*` contributes every column of every input relation except the columns
+ * merged away by USING and NATURAL joins; `t.*` contributes every column of the relations the
  * qualifier names. A relation whose columns are not all known contributes
  * its known columns and an open star that names the missing inputs. A star
  * without any input relation and a qualifier that names no input relation
@@ -70,7 +62,7 @@ final class Projection
                 }
                 $resolution = $column->expression instanceof Grouped ? (new ColumnFacts())->denoted($column->expression, $environment) : $fact->resolution;
                 $origin = $resolution instanceof ResolvedColumn ? $resolution->slot : null;
-                $items[] = new Field(count($items), new OutputSlot($column->alias ?? $this->named($column, $resolution), $fact->type, $fact->nullability, null, $origin), $column->expression, $resolution);
+                $items[] = new Field(count($items), new OutputSlot((new ResultNames())->output($column, $resolution), $fact->type, $fact->nullability, null, $origin), $column->expression, $resolution);
                 continue;
             }
             $selected = [];
@@ -108,27 +100,5 @@ final class Projection
         }
 
         return $items;
-    }
-
-    /**
-     * Answers the fixed name of a result column without an alias, or null when SQLite names it after its source text.
-     */
-    public function named(ResultColumn $column, ?Resolution $resolution): ?Name
-    {
-        $expression = $column->expression;
-        while ($expression instanceof Grouped) {
-            $expression = $expression->operand;
-        }
-        if (!$expression instanceof ColumnUse && !$expression instanceof DoubleQuotedWord && !$expression instanceof TruthWord) {
-            return null;
-        }
-        if ($resolution instanceof ResolvedColumn) {
-            return $resolution->slot->name;
-        }
-        if ($expression instanceof ColumnUse) {
-            return $resolution instanceof AliasTarget ? $resolution->field->name : $expression->name;
-        }
-
-        return null;
     }
 }

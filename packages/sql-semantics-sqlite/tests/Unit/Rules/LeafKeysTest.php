@@ -19,7 +19,7 @@ final class LeafKeysTest extends TestCase
         $keys = new LeafKeys();
 
         self::assertNull($keys->key(new Token(1, 'SEMI', '', 8), 'ecmd: cmdx SEMI', 1));
-        self::assertNull($keys->key(new Token(1, 'AS', 'as', 8), 'as: AS nm', 0));
+        self::assertSame('AS:AS', $keys->key(new Token(1, 'AS', 'as', 8), 'as: AS nm', 0));
         self::assertNull($keys->key(new Token(1, 'EQ', '==', 8), 'setlist: nm EQ expr', 1));
     }
 
@@ -139,11 +139,34 @@ final class LeafKeysTest extends TestCase
         self::assertSame('TEMP:TEMP', $keys->literal(new Token(1, 'TEMP', 'TEMPORARY', 0)));
     }
 
-    public function testSynonymousAcceptsOnlyTheSameTerminal(): void
+    public function testSynonymousAcceptsTheSameTerminal(): void
     {
         $keys = new LeafKeys();
 
         self::assertTrue($keys->synonymous(new Token(1, 'AND', 'AND', 0), new Token(1, 'AND', 'and', 0)));
         self::assertFalse($keys->synonymous(new Token(1, 'AND', 'AND', 0), new Token(1, 'OR', 'OR', 0)));
+    }
+
+    public function testSynonymousAcceptsAnotherSpellingOfTheSameName(): void
+    {
+        $keys = new LeafKeys();
+
+        self::assertTrue($keys->synonymous(new Token(1, 'ID', 'text', 0), new Token(1, 'STRING', "'text'", 0)));
+        self::assertTrue($keys->synonymous(new Token(1, 'ID', '`CROSS`', 0), new Token(1, 'JOIN_KW', 'CROSS', 0)));
+        self::assertTrue($keys->synonymous(new Token(1, 'ID', '`INDEXED`', 0), new Token(1, 'INDEXED', 'INDEXED', 0)));
+        self::assertFalse($keys->synonymous(new Token(1, 'ID', '`CROSS`', 0), new Token(1, 'JOIN_KW', 'cross', 0)));
+        self::assertFalse($keys->synonymous(new Token(1, 'ID', 'text', 0), new Token(1, 'STRING', "'other'", 0)));
+        self::assertFalse($keys->synonymous(new Token(1, 'ID', 'a', 0), new Token(1, 'LP', '(', 0)));
+    }
+
+    public function testSynonymousAcceptsANumberWrittenWithDigitSeparators(): void
+    {
+        $keys = new LeafKeys();
+
+        self::assertTrue($keys->synonymous(new Token(1, 'INTEGER', '1000', 0), new Token(1, 'QNUMBER', '1_000', 0)));
+        self::assertTrue($keys->synonymous(new Token(1, 'FLOAT', '1000.5', 0), new Token(1, 'QNUMBER', '1_000.5', 0)));
+        self::assertTrue($keys->synonymous(new Token(1, 'INTEGER', '0xABCD', 0), new Token(1, 'QNUMBER', '0XaB_cd', 0)));
+        self::assertFalse($keys->synonymous(new Token(1, 'INTEGER', '1000', 0), new Token(1, 'QNUMBER', '1_001', 0)));
+        self::assertFalse($keys->synonymous(new Token(1, 'STRING', "'1000'", 0), new Token(1, 'QNUMBER', '1_000', 0)));
     }
 }

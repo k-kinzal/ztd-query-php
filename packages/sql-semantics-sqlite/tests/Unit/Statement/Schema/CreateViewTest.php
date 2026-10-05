@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Schema;
 
+use PDO;
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\ColumnCountMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
+use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(CreateView::class)]
@@ -71,6 +75,27 @@ final class CreateViewTest extends TestCase
         $view = (new Semantics(Dialect::Sqlite))->analyze('CREATE TEMPORARY VIEW v AS SELECT 1 AS one')->declarations()[0];
 
         self::assertSame('temp', $view->name->schema?->value);
+    }
+
+    #[TestWith(["CREATE VIEW v AS SELECT a+1, \"zz\", A COLLATE nocase, likely(b), true, 1 AS false, x'0aff' FROM t"])]
+    #[TestWith(['CREATE VIEW v AS SELECT 1 + /* c */ 1 UNION SELECT 2'])]
+    #[TestWith(['CREATE VIEW v(true, x, X) AS SELECT 1, 2, 3'])]
+    public function testDeriveStatementNamesTheColumnsAsSqliteDoes(string $sql): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $view = $semantics->analyze($sql, [$semantics->analyze('CREATE TABLE t (a INTEGER, b TEXT)')]);
+        $source = new PDO('sqlite::memory:');
+        $rendered = new PDO('sqlite::memory:');
+        $source->exec('CREATE TABLE t (a INTEGER, b TEXT); ' . $sql);
+        $rendered->exec('CREATE TABLE t (a INTEGER, b TEXT); ' . $view->toString());
+        $original = $source->query('SELECT * FROM v');
+        $rebuilt = $rendered->query('SELECT * FROM v');
+        self::assertInstanceOf(PDOStatement::class, $original);
+        self::assertInstanceOf(PDOStatement::class, $rebuilt);
+        $names = array_map(static fn (int $position): mixed => $original->getColumnMeta($position) === false ? null : $original->getColumnMeta($position)['name'], range(0, $original->columnCount() - 1));
+
+        self::assertSame($names, array_map(static fn (int $position): mixed => $rebuilt->getColumnMeta($position) === false ? null : $rebuilt->getColumnMeta($position)['name'], range(0, $rebuilt->columnCount() - 1)));
+        self::assertSame($names, array_map(static fn (Column $column): string => $column->name->value, $view->declarations()[0]->columns));
     }
 
     public function testRenderWritesTheColumnListAndTheQuery(): void

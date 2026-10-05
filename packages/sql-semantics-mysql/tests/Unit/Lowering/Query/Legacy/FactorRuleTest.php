@@ -28,8 +28,8 @@ final class FactorRuleTest extends TestCase
 
     public function testParensLowersDerivedTablesAndNestedJoins(): void
     {
-        self::assertSame('SELECT 1 FROM (SELECT 1) AS d, (t, u), ((SELECT 2)) AS e', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select 1 from (select 1) d, (t, u), ((select 2)) e')->toString());
-        self::assertSame('SELECT 1 FROM (SELECT 1 UNION SELECT 2 ORDER BY 1) AS d', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from (select 1 union select 2 order by 1) d')->toString());
+        self::assertSame('SELECT 1 FROM (SELECT 1) d, (t, u), ((SELECT 2)) e', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select 1 from (select 1) d, (t, u), ((select 2)) e')->toString());
+        self::assertSame('SELECT 1 FROM (SELECT 1 UNION SELECT 2 ORDER BY 1) d', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from (select 1 union select 2 order by 1) d')->toString());
     }
 
     public function testParensRejectsAnAliasOnANestedJoin(): void

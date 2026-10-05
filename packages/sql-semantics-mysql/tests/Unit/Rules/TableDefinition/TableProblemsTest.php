@@ -11,6 +11,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
 
@@ -39,5 +40,14 @@ final class TableProblemsTest extends TestCase
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, UNIQUE (b))');
 
         self::assertInstanceOf(UnknownKeyColumn::class, $create->facts->diagnostics[0]);
+    }
+
+    public function testNamesReportsAColumnNameThatIsNotValid(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("CREATE TABLE t AS SELECT 'a ', 1+1, 'b'", []);
+
+        self::assertCount(1, $operation->facts->diagnostics);
+        self::assertInstanceOf(IncorrectColumnName::class, $operation->facts->diagnostics[0]);
+        self::assertSame("Incorrect column name 'a '.", $operation->facts->diagnostics[0]->message());
     }
 }

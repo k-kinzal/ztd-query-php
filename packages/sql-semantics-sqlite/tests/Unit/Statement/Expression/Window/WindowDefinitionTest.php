@@ -42,9 +42,9 @@ final class WindowDefinitionTest extends TestCase
 
     public function testRenderWritesTheNameAndTheParenthesizedSpecification(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('select rank() over w from t window w as (order by a), v as (), u as (w partition by b rows unbounded preceding)');
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('select rank() over w AS c1 from t window w as (order by a), v as (), u as (w partition by b rows unbounded preceding)');
 
-        self::assertSame('SELECT rank() OVER w FROM t WINDOW w AS (ORDER BY a), v AS (), u AS (w PARTITION BY b ROWS UNBOUNDED PRECEDING)', $operation->toString());
+        self::assertSame('SELECT rank() OVER w AS c1 FROM t WINDOW w AS (ORDER BY a), v AS (), u AS (w PARTITION BY b ROWS UNBOUNDED PRECEDING)', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltDefinition(): void

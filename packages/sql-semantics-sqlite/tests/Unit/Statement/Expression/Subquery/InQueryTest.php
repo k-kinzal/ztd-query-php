@@ -97,12 +97,12 @@ final class InQueryTest extends TestCase
 
     public function testRenderWritesTheNegationAndTheQuery(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('select a not in (select a from t) from t');
+        $query = (new Semantics(Dialect::Sqlite))->analyze('select a not in (select a from t) AS c1 from t');
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InQuery::class, $test);
         self::assertTrue($test->negated);
-        self::assertSame('SELECT a NOT IN (SELECT a FROM t) FROM t', $query->toString());
+        self::assertSame('SELECT a NOT IN (SELECT a FROM t) AS c1 FROM t', $query->toString());
     }
 
     public function testRenderWritesANewlyBuiltTest(): void

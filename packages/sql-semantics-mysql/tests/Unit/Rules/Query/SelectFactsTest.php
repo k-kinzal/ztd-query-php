@@ -67,12 +67,21 @@ final class SelectFactsTest extends TestCase
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
     }
 
-    public function testAliasesAnswersTheAliasedFields(): void
+    public function testAliasesAnswersTheFieldsNamedByAnAliasOrAfterTheirText(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x, 2, 3 AS y');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x, 2, a, 1+1, 3 AS y FROM t');
         $select = $operation->statement;
 
         self::assertInstanceOf(Select::class, $select);
-        self::assertSame(['x', 'y'], array_map(static fn (Field $field): ?string => $field->name?->value, (new SelectFacts())->aliases($select, $operation->fields()->items ?? [])));
+        self::assertSame(['x', '2', '1+1', 'y'], array_map(static fn (Field $field): ?string => $field->name?->value, (new SelectFacts())->aliases($select, $operation->fields()->items ?? [], $operation->context->profile)));
+    }
+
+    public function testDeriveResolvesAnOrderingByTheTextAnItemIsNamedAfter(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1+1 FROM t ORDER BY `1+1`', []);
+        $select = $operation->statement;
+
+        self::assertInstanceOf(Select::class, $select);
+        self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($select->orderBy[0]->expression)->resolution);
     }
 }

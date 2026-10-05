@@ -13,9 +13,9 @@ use SqlSemantics\Platform\MySql\Rules\Noise\CallNoise;
 #[Small]
 final class CallNoiseTest extends TestCase
 {
-    public function testPositionsListsTheEmptyParenthesesOfTheClockFunctions(): void
+    public function testPositionsListsNoParenthesesSinceTheModelKeepsThem(): void
     {
-        self::assertSame(['func_datetime_precision: ( )' => [0, 1]], CallNoise::positions());
+        self::assertSame([], CallNoise::positions());
     }
 
     public function testSynonymsMapSubstringAndTheIntervalFormsOfAdddateAndSubdate(): void

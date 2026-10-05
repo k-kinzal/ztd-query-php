@@ -99,6 +99,7 @@ final class LockRule
             $this->lowering->names->qualified($form->node(0)),
             $this->lowering->queries->alias($form->node(1)),
             self::MODES[$mode->signature] ?? throw ImplementationGap::production($mode),
+            $this->lowering->queries->mark($form->node(1)),
         );
     }
 

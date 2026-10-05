@@ -7,7 +7,9 @@ namespace SqlSemantics\Platform\PostgreSql\Lowering\Leaf;
 use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
+use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\AlteredOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
@@ -16,6 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionAction;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Toggle;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
@@ -72,7 +75,7 @@ final class Options
     }
 
     /**
-     * Lowers `def_elem` or `reloption_elem`.
+     * Lowers `reloption_elem`, or `def_elem` through element().
      *
      * @throws ImplementationGap When the production has no rule
      */
@@ -82,10 +85,49 @@ final class Options
         $names = $this->lowering->names;
 
         return match ($form->signature) {
-            'def_elem: ColLabel', 'reloption_elem: ColLabel' => new Definition($names->name($form->node(0))),
-            'def_elem: ColLabel = def_arg', 'reloption_elem: ColLabel = def_arg' => new Definition($names->name($form->node(0)), $this->argument($form->node(2))),
+            'reloption_elem: ColLabel' => new Definition($names->name($form->node(0))),
+            'reloption_elem: ColLabel = def_arg' => new Definition($names->name($form->node(0)), $this->argument($form->node(2))),
             'reloption_elem: ColLabel . ColLabel' => new Definition($names->name($form->node(2)), null, $names->name($form->node(0))),
             'reloption_elem: ColLabel . ColLabel = def_arg' => new Definition($names->name($form->node(2)), $this->argument($form->node(4)), $names->name($form->node(0))),
+            default => new Definition(...$this->element($element)),
+        };
+    }
+
+    /**
+     * Lowers `definition` into the name and the written value of each attribute, in written order.
+     *
+     * @return list<array{Name, TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant|null}>
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function elements(Node $definition): array
+    {
+        $form = $this->lowering->productions->form($definition);
+        if ($form->signature !== 'definition: ( def_list )') {
+            throw ImplementationGap::production($form);
+        }
+        $elements = [];
+        foreach ($this->lowering->items($form->node(1), 'def_list: def_elem', 'def_list: def_list , def_elem') as $element) {
+            $elements[] = $this->element($element);
+        }
+
+        return $elements;
+    }
+
+    /**
+     * Lowers `def_elem` into its name and written value.
+     *
+     * @return array{Name, TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant|null}
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function element(Node $element): array
+    {
+        $form = $this->lowering->productions->form($element);
+
+        return match ($form->signature) {
+            'def_elem: ColLabel' => [$this->lowering->names->name($form->node(0)), null],
+            'def_elem: ColLabel = def_arg' => [$this->lowering->names->name($form->node(0)), $this->argument($form->node(2))],
             default => throw ImplementationGap::production($form),
         };
     }
@@ -95,7 +137,7 @@ final class Options
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function argument(Node $argument): OptionArgument
+    public function argument(Node $argument): TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant
     {
         $form = $this->lowering->productions->form($argument);
 

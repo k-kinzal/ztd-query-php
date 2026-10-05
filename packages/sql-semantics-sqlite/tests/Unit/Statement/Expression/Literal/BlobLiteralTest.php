@@ -44,7 +44,7 @@ final class BlobLiteralTest extends TestCase
 
     public function testRenderWritesTheDigitsInUpperCase(): void
     {
-        self::assertSame("SELECT x'0AFF', x''", (new Semantics(Dialect::Sqlite))->analyze("select X'0aFf', x''")->toString());
+        self::assertSame('SELECT x\'0AFF\' AS c1, x\'\' AS c2', (new Semantics(Dialect::Sqlite))->analyze('select X\'0aFf\' AS c1, x\'\' AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltBlob(): void

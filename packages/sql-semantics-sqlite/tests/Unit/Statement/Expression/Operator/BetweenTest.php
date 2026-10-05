@@ -76,7 +76,7 @@ final class BetweenTest extends TestCase
 
     public function testRenderWritesTheNegationAndTheBounds(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('select a not between 1 and 9 from t');
+        $query = (new Semantics(Dialect::Sqlite))->analyze('select a not between 1 and 9 AS c1 from t');
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(Between::class, $test);
@@ -85,7 +85,7 @@ final class BetweenTest extends TestCase
         self::assertSame('1', $test->low->digits);
         self::assertInstanceOf(IntegerLiteral::class, $test->high);
         self::assertSame('9', $test->high->digits);
-        self::assertSame('SELECT a NOT BETWEEN 1 AND 9 FROM t', $query->toString());
+        self::assertSame('SELECT a NOT BETWEEN 1 AND 9 AS c1 FROM t', $query->toString());
     }
 
     public function testRenderBindsLikeTheEqualityGroupAndGroupsToTheLeft(): void

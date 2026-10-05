@@ -25,9 +25,9 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading the parts of a floating point literal
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1.50E-3');
+ *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 1.50E-3 AS r');
  *     $literal = $query->statement->columns[0]->expression;
- *     [$literal->whole, $literal->fraction, $literal->exponent, $query->toString()] // => ['1', '50', '-3', 'SELECT 1.50e-3']
+ *     [$literal->whole, $literal->fraction, $literal->exponent, $query->toString()] // => ['1', '50', '-3', 'SELECT 1.50e-3 AS r']
  * @example Refusing a literal with neither a decimal point nor an exponent
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral('1', null, null) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing a point without any digit

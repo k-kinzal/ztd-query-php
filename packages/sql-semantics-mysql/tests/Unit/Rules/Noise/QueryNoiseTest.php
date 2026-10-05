@@ -14,15 +14,11 @@ use SqlSemantics\Platform\MySql\Rules\Noise\QueryNoise;
 #[Medium]
 final class QueryNoiseTest extends TestCase
 {
-    public function testPositionsDeclareTheOptionalAliasKeywordAsNoise(): void
+    public function testPositionsDeclareNoAliasKeywordAsNoise(): void
     {
-        self::assertSame([0], QueryNoise::positions()['select_alias: AS ident']);
-        self::assertSame([0], QueryNoise::positions()['select_alias: AS TEXT_STRING_sys']);
-        self::assertSame([0], QueryNoise::positions()['select_alias: AS TEXT_STRING_validated']);
-        self::assertSame([0], QueryNoise::positions()['table_alias: AS']);
-        self::assertSame([0], QueryNoise::positions()['table_alias: EQ']);
-        self::assertCount(8, QueryNoise::positions());
-        self::assertArrayNotHasKey('select_alias: ident', QueryNoise::positions());
+        self::assertArrayNotHasKey('select_alias: AS ident', QueryNoise::positions());
+        self::assertArrayNotHasKey('table_alias: AS', QueryNoise::positions());
+        self::assertArrayNotHasKey('table_alias: EQ', QueryNoise::positions());
     }
 
     public function testPositionsNameOnlyTerminalPositionsOfProductionsOfTheGrammars(): void
@@ -37,11 +33,9 @@ final class QueryNoiseTest extends TestCase
         self::assertSame([], array_filter(QueryNoise::positions(), static fn (array $positions, string $signature): bool => max(-1, ...$positions) >= $arity[$signature], ARRAY_FILTER_USE_BOTH));
     }
 
-    public function testPositionsDeclareTheOptionalJoinWordsAsNoise(): void
+    public function testPositionsDeclareNoJoinWordAsNoise(): void
     {
-        self::assertSame([0], QueryNoise::positions()['opt_outer: OUTER']);
-        self::assertSame([0], QueryNoise::positions()['opt_outer: OUTER_SYM']);
-        self::assertSame([0], QueryNoise::positions()['opt_inner: INNER_SYM']);
+        self::assertSame([], QueryNoise::positions());
     }
 
     public function testSynonymsListsNothingForTheQueryProductions(): void

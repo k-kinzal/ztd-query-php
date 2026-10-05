@@ -84,8 +84,8 @@ Mode::fromString('ANSI')->toString(); // => 'ANSI_QUOTES,PIPES_AS_CONCAT,IGNORE_
 $default = new Semantics(Dialect::MySql);
 $ansi = new Semantics(Dialect::MySql, null, Mode::fromString('ANSI_QUOTES,PIPES_AS_CONCAT'));
 
-$default->analyze('SELECT "name", a || b FROM users')->toString(); // => "SELECT 'name', a OR b FROM users"
-$ansi->analyze('SELECT "name", a || b FROM users')->toString(); // => 'SELECT `name`, a || b FROM users'
+$default->analyze('SELECT a FROM users WHERE "name" = a || b')->toString(); // => "SELECT a FROM users WHERE 'name' = a OR b"
+$ansi->analyze('SELECT a FROM users WHERE "name" = a || b')->toString(); // => 'SELECT a FROM users WHERE `name` = a || b'
 ```
 
 The mode is part of the language profile. A declaration analyzed under one mode cannot be used in a context of another mode. Rendered SQL is meant to be read under the mode it was rendered for.
@@ -146,13 +146,35 @@ $upper->facts->relation($upper->inputRelation())->table instanceof MissingTable;
 $semantics->analyze('SELECT @total')->field(0)->type->missing[0]->describe(); // => 'the session state: user variable @total'
 ```
 
+### Result column names
+
+MySQL names a select list item without alias after the text of its expression as the statement writes it, so `SELECT 1+1` and `SELECT 1 + 1` return columns named `1+1` and `1 + 1`. An item that names itself keeps its own name: a column reference its column name, a string the value of its first quoted part, `NULL` the name `NULL`, a number its text, `?` the name `?`, and in MySQL 5.6 and 5.7 `TRUE` and `FALSE` those words; parentheses and a unary plus do not change it. The server removes leading spaces and control characters from the name, and keeps at most 255 bytes of it.
+
+Such an item keeps the spelling of its expression as a layout (`SelectExpression::$layout`), and `toString()` writes the expression as it was written, comments included, so the rendered SQL returns the same column names. The optional words that change that text are part of the model: `AS` before an alias, `OUTER` and `INNER` of a join, the empty parentheses of `CURDATE()` and the other niladic functions, `ROW`, the `OF` of `MEMBER OF`, `INT` after `SIGNED`, `CHARACTER SET` for `CHARSET`, and the 5.6 and 5.7 leading dot of `.t`. Version comment markers are left out, as the server leaves them out of the name. An item built without a layout is named after, and written as, the canonical rendering of its expression. A name with characters outside ASCII, or a text longer than 255 bytes, depends on the character set conversion of the server (`NameConversion`).
+
+Derived tables, common tables, `CREATE TABLE ... SELECT` and views take these names. A view renames a generated name that is no valid column name to `Name_exp_N` and one that repeats an earlier name with the prefix `Name_exp_` (`My_exp_` in 5.6 and 5.7), as the server does; `CREATE TABLE ... SELECT` reports an invalid one (`IncorrectColumnName`). A name in `ORDER BY`, `GROUP BY` and `HAVING` finds an item by the name it was given after its text, as it finds an alias.
+
+```php
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+
+$semantics = new Semantics(Dialect::MySql);
+
+$query = $semantics->analyze('SELECT 1+1, CURRENT_DATE, a total, NOW( ) FROM users', []);
+[$query->field(0)->name?->value, $query->field(3)->name?->value, $query->toString()]; // => ['1+1', 'NOW( )', 'SELECT 1+1, CURRENT_DATE, a total, NOW( ) FROM users']
+$semantics->analyze('SELECT `1+1` FROM (SELECT 1+1) AS d', [])->field(0)->resolution instanceof ResolvedColumn; // => true
+```
+
 ## Limitations
 
 - Optimizer hints (`/*+ ... */` after `SELECT`, `INSERT`, `REPLACE`, `UPDATE` or `DELETE`) are not analyzed. The server reads them with a grammar of their own, and the parser this package uses delivers them as a comment, so from 5.7 on a statement with a hint is refused with `ImplementationGap` instead of being read without it. In MySQL 5.6 such a comment is an ordinary comment.
 - Version comments (`/*!80000 ... */`) are read as the selected release reads them: the body is part of the statement when the release is at least the written version, and a comment otherwise. Rendered SQL writes that reading without the comment markers, so it is SQL for the selected release.
 - Table and database names are compared exactly, as a server with `lower_case_table_names=0` (the default on Unix) compares them. A server running with 1 or 2 compares them without regard to letter case; that setting is not part of the analysis.
 - Column names are compared without regard to ASCII letter case. The server also folds letters outside ASCII; two column names that differ only in the case of such a letter are one name to the server and two names here.
-- An unaliased select item that is not a column reference has no fixed name, because the server names it after the text of the expression as written, which the model does not keep. Such a field has a null name, and a lookup of a column of a derived table that could only match it depends on `ItemSpelling`.
+- The name of an unaliased select item that holds characters outside ASCII, or whose text is longer than 255 bytes, depends on the conversion the server applies from `character_set_client`, or from the character set of an introducer, to the system character set. Such a field has a null name, a lookup of a column of a derived table that could only match it depends on `NameConversion`, and a name in `ORDER BY`, `GROUP BY` or `HAVING` is not taken to refer to it. A name of ASCII characters is known for every client character set that encodes ASCII as ASCII, which all of them but `swe7` do.
+- The name `NAME_CONST` gives a column is derived for a string, decimal or integer number, hexadecimal or bit value and boolean name argument; other arguments are refused with `ImplementationGap`.
+- `SHOW CREATE TABLE` returns the columns of `SHOW CREATE VIEW` for a view. A declaration of the context does not tell a table from a view, so its row shape depends on that (`TableOrView`).
 - When no current database is given, results that would show its name, such as the column name of `SHOW TABLES`, depend on it.
 
 See [Guarantees](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/docs/guarantees.md) for the limits that apply to every database.

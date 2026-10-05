@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\MultiplePrimaryKeys;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey;
@@ -29,7 +30,9 @@ use SqlSemantics\Statement\Declaration\Table;
  * attribute is still in force (ER_PRIMARY_CANT_HAVE_NULL; 5.6 makes it NOT
  * NULL silently); a key part or foreign key column that names no column of
  * the table, when its column list is complete (ER_KEY_COLUMN_DOES_NOT_EXITS);
- * a table without columns and without a query (ER_TABLE_MUST_HAVE_COLUMNS).
+ * a table without columns and without a query (ER_TABLE_MUST_HAVE_COLUMNS);
+ * a column name that is not valid, among them the name a selected column
+ * gets after its text (ER_WRONG_COLUMN_NAME, MYSQL-COLUMN-NAME-001).
  * Terminates: one pass over the elements and the key parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
  * https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html. Status: Implemented.
@@ -44,6 +47,7 @@ final class TableProblems
     public function report(CreateTable $definition, Table $table, Derivation $derivation): void
     {
         $this->duplicates($table, $derivation);
+        $this->names($table, $derivation);
         $declaration = new TableDeclaration();
         $primary = $declaration->primaryColumns($definition);
         $keys = 0;
@@ -66,6 +70,19 @@ final class TableProblems
         }
         if ($columns === 0 && $definition->query === null) {
             $derivation->report(new NoColumns());
+        }
+    }
+
+    /**
+     * Reports each column name that is not a valid column name (MYSQL-COLUMN-NAME-001).
+     */
+    public function names(Table $table, Derivation $derivation): void
+    {
+        $rule = new ColumnNameRule();
+        foreach ([...$table->columns, ...array_map(static fn ($implicit) => $implicit->column, $table->implicit)] as $column) {
+            if (!$rule->valid($column->name->value)) {
+                $derivation->report(new IncorrectColumnName($column->name));
+            }
         }
     }
 

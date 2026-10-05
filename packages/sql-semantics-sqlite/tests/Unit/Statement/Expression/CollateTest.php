@@ -65,14 +65,14 @@ final class CollateTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $operation = $semantics->analyze('SELECT -a COLLATE nocase FROM t', [$create]);
+        $operation = $semantics->analyze('SELECT -a COLLATE nocase AS c1 FROM t', [$create]);
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
         self::assertInstanceOf(ResultColumn::class, $statement->columns[0]);
         self::assertInstanceOf(Collate::class, $statement->columns[0]->expression);
         self::assertEquals(new Choice([Storage::Integer, Storage::Real]), $operation->field(0)->type);
-        self::assertSame('SELECT - a COLLATE nocase FROM t', $operation->toString());
+        self::assertSame('SELECT - a COLLATE nocase AS c1 FROM t', $operation->toString());
     }
 
     public function testDeriveScalarReportsACollatedRowValue(): void
@@ -91,9 +91,9 @@ final class CollateTest extends TestCase
 
     public function testRenderWritesTheOperandAndTheCollationName(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('select a collate nocase, (a) collate "nocase", b collate BINARY collate rtrim from t');
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('select a collate nocase AS c1, (a) collate "nocase" AS c2, b collate BINARY collate rtrim AS c3 from t');
 
-        self::assertSame('SELECT a COLLATE nocase, (a) COLLATE nocase, b COLLATE BINARY COLLATE rtrim FROM t', $operation->toString());
+        self::assertSame('SELECT a COLLATE nocase AS c1, (a) COLLATE nocase AS c2, b COLLATE BINARY COLLATE rtrim AS c3 FROM t', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltCollation(): void

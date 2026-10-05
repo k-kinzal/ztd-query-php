@@ -190,9 +190,9 @@ final class FunctionCallTest extends TestCase
 
     public function testRenderWritesEveryPartInOrder(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("select count(*), count(distinct a order by b desc) filter (where a > 0), group_concat(b, ',') over (partition by a), rank() over w, foo() from t window w as ()");
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('select count(*) AS c1, count(distinct a order by b desc) filter (where a > 0) AS c2, group_concat(b, \',\') over (partition by a) AS c3, rank() over w AS c4, foo() AS c5 from t window w as ()');
 
-        self::assertSame("SELECT count(*), count(DISTINCT a ORDER BY b DESC) FILTER (WHERE a > 0), group_concat(b, ',') OVER (PARTITION BY a), rank() OVER w, foo() FROM t WINDOW w AS ()", $operation->toString());
+        self::assertSame('SELECT count(*) AS c1, count(DISTINCT a ORDER BY b DESC) FILTER (WHERE a > 0) AS c2, group_concat(b, \',\') OVER (PARTITION BY a) AS c3, rank() OVER w AS c4, foo() AS c5 FROM t WINDOW w AS ()', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltCall(): void

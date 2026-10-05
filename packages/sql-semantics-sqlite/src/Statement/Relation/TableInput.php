@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Relation;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -37,9 +38,12 @@ final class TableInput implements NamedRelation
      * @param QualifiedName $name The relation name
      * @param Name|null $alias The correlation name
      * @param IndexChoice|null $index The demanded index
+     * @param bool $as Whether the keyword AS introduces the alias; SQLite names a column after the text of an expression, which includes it
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When AS is left out without an alias
      */
-    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, public readonly ?IndexChoice $index = null)
+    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, public readonly ?IndexChoice $index = null, public readonly bool $as = true)
     {
+        Check::input($as || $alias !== null, 'AS is left out only before an alias.');
     }
 
     /**
@@ -76,7 +80,10 @@ final class TableInput implements NamedRelation
         }
         $out->name($this->name->name, NameUse::Relation);
         if ($this->alias !== null) {
-            $out->keyword('AS')->name($this->alias, NameUse::Alias);
+            if ($this->as) {
+                $out->keyword('AS');
+            }
+            $out->name($this->alias, NameUse::Alias);
         }
         $out->node($this->index);
     }

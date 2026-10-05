@@ -94,12 +94,12 @@ final class CharsetAttributeTest extends TestCase
         self::assertInstanceOf(CharsetAttribute::class, $trailing->charset);
         self::assertInstanceOf(CharsetAttribute::class, $byte->charset);
         self::assertInstanceOf(CharsetAttribute::class, $binary->charset);
-        self::assertSame([CharsetForm::Named, 'utf8mb4', BinaryMark::Leading], [$leading->charset->form, $leading->charset->charset?->value, $leading->charset->mark]);
+        self::assertSame([CharsetForm::CharacterSet, 'utf8mb4', BinaryMark::Leading], [$leading->charset->form, $leading->charset->charset?->value, $leading->charset->mark]);
         self::assertSame([CharsetForm::Named, 'utf8mb4', BinaryMark::Trailing], [$trailing->charset->form, $trailing->charset->charset?->value, $trailing->charset->mark]);
         self::assertSame([CharsetForm::Byte, null, BinaryMark::Absent], [$byte->charset->form, $byte->charset->charset, $byte->charset->mark]);
         self::assertSame([CharsetForm::Binary, null, BinaryMark::Absent], [$binary->charset->form, $binary->charset->charset, $binary->charset->mark]);
         $out->list([$leading->charset, $trailing->charset, $byte->charset, $binary->charset]);
-        self::assertSame('BINARY CHARSET utf8mb4, CHARSET utf8mb4 BINARY, BYTE, BINARY', (new Lexical())->join($out->pieces()));
+        self::assertSame('BINARY CHARACTER SET utf8mb4, CHARSET utf8mb4 BINARY, BYTE, BINARY', (new Lexical())->join($out->pieces()));
     }
 
     public function testRenderReproducesAsciiAndUnicodeWithTheirMarkUnderTheOldestRelease(): void
@@ -144,14 +144,14 @@ final class CharsetAttributeTest extends TestCase
 
     public function testNamedFormWithoutANameIsRejected(): void
     {
-        $this->expectExceptionMessage('Exactly the named form holds a character set name.');
+        $this->expectExceptionMessage('Exactly the named forms hold a character set name.');
 
         new CharsetAttribute(CharsetForm::Named);
     }
 
     public function testNameOnAShorthandFormIsRejected(): void
     {
-        $this->expectExceptionMessage('Exactly the named form holds a character set name.');
+        $this->expectExceptionMessage('Exactly the named forms hold a character set name.');
 
         new CharsetAttribute(CharsetForm::Ascii, new Name('latin1'));
     }

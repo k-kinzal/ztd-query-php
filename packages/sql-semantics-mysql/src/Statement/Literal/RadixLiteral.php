@@ -27,7 +27,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * A hexadecimal or bit-value literal: its exact digits and its optional character set introducer.
  *
  * `X'1F'` and `0x1F` are one literal, as are `b'101'` and `0b101`; the
- * spelling is not kept. The digits are kept exactly, leading zeros included.
+ * spelling is not kept by the literal (an unaliased select list item, which
+ * MySQL names after its text, keeps it in its layout). The digits are kept
+ * exactly, leading zeros included.
  *
  * Rule: MYSQL-RADIX-LITERAL-001. Facts: by default a binary string,
  * VARBINARY; with an introducer a character string, VARCHAR, of the

@@ -6,7 +6,10 @@ namespace SqlSemantics\Platform\Sqlite\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\Sqlite\Rules\Typing\Storages;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\ColumnUse;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Grouped;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\ListedColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
@@ -19,6 +22,9 @@ use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\QueryFact;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
@@ -66,7 +72,7 @@ final class CompoundFacts
             $fact = $derivation->query($arm, $environment);
             $facts[] = $fact;
             if ($index === 0) {
-                $environment = $this->rebound($compound, $fact, $outer);
+                $environment = $this->rebound($compound, $fact, $outer, $derivation);
             }
             if ($arm instanceof Select && $index < count($arms) - 1 && ($arm->orderBy !== [] || $arm->limit !== null)) {
                 $derivation->report(new Misuse($arm->orderBy !== [] ? MisuseRule::OrderByBeforeCompound : MisuseRule::LimitBeforeCompound));
@@ -77,7 +83,7 @@ final class CompoundFacts
         }
         $items = $this->combined($facts, $derivation);
         $terms = array_map(static fn (SortTerm $term): Scalar => $term->expression, $compound->orderBy);
-        (new SortScopes())->derive($terms, $derivation, new Environment($derivation->context, $outer, $open, [], $this->aliases($facts, $items)), $items, false);
+        (new SortScopes())->derive($terms, $derivation, new Environment($derivation->context, $outer, $open, [], $this->aliases($arms, $facts, $items)), $items, false);
         (new SelectFacts())->limit($compound->limit, $derivation, $outer);
 
         return new QueryFact($items, $derivation->context->columnNames);
@@ -121,17 +127,21 @@ final class CompoundFacts
     /**
      * Answers the result column names of every arm as aliases of the output fields at the same positions.
      *
-     * @param list<QueryFact> $facts
+     * A name SQLite takes from the text of an expression is no alias an
+     * ORDER BY term can name.
+     *
+     * @param list<Query> $arms The arms in order
+     * @param list<QueryFact> $facts The output of each arm
      * @param list<Field|OpenStar> $items
      * @return list<Field>
      */
-    public function aliases(array $facts, array $items): array
+    public function aliases(array $arms, array $facts, array $items): array
     {
         $aliases = [];
-        foreach ($facts as $fact) {
+        foreach ($facts as $index => $fact) {
             foreach ($fact->fields() ?? [] as $position => $field) {
                 $output = $items[$position] ?? null;
-                if ($field->name !== null && $output instanceof Field) {
+                if ($field->name !== null && $output instanceof Field && !$this->spelled($arms[$index] ?? null, $field)) {
                     $aliases[] = new Field($position, new OutputSlot($field->name, $output->type, $output->nullability, null, $output->slot));
                 }
             }
@@ -141,17 +151,35 @@ final class CompoundFacts
     }
 
     /**
+     * Tells whether an arm names a field after the text of its expression.
+     */
+    public function spelled(?Query $arm, Field $field): bool
+    {
+        $column = $arm instanceof Select ? (new ResultNames())->column($arm, $field) : null;
+        if ($column === null || $column->alias !== null || $field->resolution instanceof ResolvedColumn) {
+            return false;
+        }
+        $expression = $column->expression;
+        while ($expression instanceof Grouped) {
+            $expression = $expression->operand;
+        }
+
+        return !$expression instanceof ColumnUse;
+    }
+
+    /**
      * Answers the environment of the arms after the first: the one given, with the common table this compound defines bound to its recursive shape.
      */
-    public function rebound(Compound $compound, QueryFact $anchor, Environment $outer): Environment
+    public function rebound(Compound $compound, QueryFact $anchor, Environment $outer, Derivation $derivation): Environment
     {
         $tables = [];
         $changed = false;
         foreach ($outer->commonTables as $binding) {
             if ($binding->definition instanceof CommonTable && $binding->definition->query === $compound) {
                 $slots = [];
-                foreach ((new RelationNames())->shape($anchor)->slots as $position => $slot) {
-                    $name = $binding->definition->columns === [] ? $slot->name : ($binding->definition->columns[$position]->name ?? null);
+                $listed = (new RelationNames())->listed(array_map(static fn (ListedColumn $column): Name => $column->name, $binding->definition->columns));
+                foreach ((new RelationNames())->shape($anchor, $compound->first, $derivation)->slots as $position => $slot) {
+                    $name = $binding->definition->columns === [] ? $slot->name : ($listed[$position] ?? null);
                     $slots[] = new OutputSlot($name, new Choice(Storage::cases()), Nullability::Nullable);
                 }
                 $binding = new CommonBinding($binding->name, $binding->definition, new RowShape($slots, $anchor->shape->missing));

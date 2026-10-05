@@ -22,8 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Statement\Fact\ScalarFact;
-use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Statement\Type\Choice;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -39,11 +38,11 @@ final class NumericResultTest extends TestCase
         self::assertEquals(new Known(new Floating(FloatingKind::Double)), (new NumericResult())->binary(ArithmeticOperator::Plus, new NumberLiteral('1'), $integer, new StringLiteral(['2']), $text, GrammarRelease::MySql847));
     }
 
-    public function testBinaryMakesAnUnsignedSubtractionDependOnTheSessionMode(): void
+    public function testBinaryMakesAnUnsignedSubtractionTheChoiceTheSessionModeDecides(): void
     {
         $unsigned = new ScalarFact(new Known(new Integral(IntegralKind::Int, null, [NumericModifier::Unsigned])), Nullability::NotNull);
 
-        self::assertEquals(new Dependent([new SessionState('sql_mode NO_UNSIGNED_SUBTRACTION')]), (new NumericResult())->binary(ArithmeticOperator::Minus, new NumberLiteral('1'), $unsigned, new NumberLiteral('2'), $unsigned, GrammarRelease::MySql847));
+        self::assertEquals(new Choice([new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned]), new Integral(IntegralKind::BigInt)]), (new NumericResult())->binary(ArithmeticOperator::Minus, new NumberLiteral('1'), $unsigned, new NumberLiteral('2'), $unsigned, GrammarRelease::MySql847));
     }
 
     public function testBinaryMakesABitOperationOfBinaryStringsABinaryStringFromMySql80(): void

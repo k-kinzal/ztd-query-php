@@ -39,8 +39,8 @@ final class CharsetAttribute implements Node
      */
     public function __construct(public readonly CharsetForm $form, public readonly ?Name $charset = null, public readonly BinaryMark $mark = BinaryMark::Absent)
     {
-        Check::input(($form === CharsetForm::Named) === ($charset !== null), 'Exactly the named form holds a character set name.');
-        Check::input($mark === BinaryMark::Absent || in_array($form, [CharsetForm::Ascii, CharsetForm::Unicode, CharsetForm::Named], true), 'BINARY accompanies ASCII, UNICODE or a named character set only.');
+        Check::input($form->named() === ($charset !== null), 'Exactly the named forms hold a character set name.');
+        Check::input($mark === BinaryMark::Absent || in_array($form, [CharsetForm::Ascii, CharsetForm::Unicode, CharsetForm::Named, CharsetForm::CharacterSet], true), 'BINARY accompanies ASCII, UNICODE or a named character set only.');
     }
 
     /**
@@ -59,7 +59,7 @@ final class CharsetAttribute implements Node
         if ($this->mark === BinaryMark::Leading) {
             $out->keyword('BINARY');
         }
-        $out->keyword($this->form->value);
+        $out->keyword(...explode(' ', $this->form->value));
         if ($this->charset !== null) {
             $out->name($this->charset, NameUse::Label);
         }

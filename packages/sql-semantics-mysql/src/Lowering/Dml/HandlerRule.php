@@ -85,7 +85,7 @@ final class HandlerRule
         switch ($form->signature) {
             case 'handler: HANDLER_SYM table_ident OPEN_SYM opt_table_alias':
             case 'handler_stmt: HANDLER_SYM table_ident OPEN_SYM opt_table_alias':
-                return new HandlerOpen($this->lowering->names->qualified($form->node(1)), $this->lowering->queries->alias($form->node(3)));
+                return new HandlerOpen($this->lowering->names->qualified($form->node(1)), $this->lowering->queries->alias($form->node(3)), $this->lowering->queries->mark($form->node(3)));
             case 'handler: HANDLER_SYM table_ident_nodb CLOSE_SYM':
                 return new HandlerClose($this->lowering->names->qualified($form->node(1))->name);
             case 'handler_stmt: HANDLER_SYM ident CLOSE_SYM':

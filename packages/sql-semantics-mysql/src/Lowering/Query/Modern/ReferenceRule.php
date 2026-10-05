@@ -58,7 +58,7 @@ final class ReferenceRule
     /**
      * The optional words inside a join operator.
      */
-    private const WORDS = ['opt_outer:' => true, 'opt_outer: OUTER_SYM' => true, 'opt_outer: OUTER' => true, 'opt_inner:' => true, 'opt_inner: INNER_SYM' => true];
+    private const WORDS = ['opt_outer:' => false, 'opt_outer: OUTER_SYM' => true, 'opt_outer: OUTER' => true, 'opt_inner:' => false, 'opt_inner: INNER_SYM' => true];
 
     /**
      * @param Lowering $lowering The lowering this rule belongs to
@@ -142,9 +142,8 @@ final class ReferenceRule
         foreach ($form->node->children as $child) {
             if ($child instanceof Node) {
                 $word = $this->lowering->form($child);
-                if (!isset(self::WORDS[$word->signature])) {
-                    throw ImplementationGap::production($word);
-                }
+                $written = self::WORDS[$word->signature] ?? throw ImplementationGap::production($word);
+                $result = $written ? $result->worded() : $result;
             }
         }
 

@@ -31,7 +31,7 @@ final class LateOrderingTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int)), new Column(new Name('b'), new Integral(IntegralKind::Int))]);
-        $operation = $semantics->analyze('select (select a from t for update order by b limit 1)', [$table]);
+        $operation = $semantics->analyze('select (select a from t for update order by b limit 1) as v', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $item = $select->items[0];
@@ -44,7 +44,7 @@ final class LateOrderingTest extends TestCase
         self::assertNotNull($late);
         $resolution = $operation->facts->scalar($late->orderBy[0]->expression)->resolution;
 
-        self::assertSame('SELECT (SELECT a FROM t FOR UPDATE ORDER BY b LIMIT 1)', $operation->toString());
+        self::assertSame('SELECT (SELECT a FROM t FOR UPDATE ORDER BY b LIMIT 1) AS v', $operation->toString());
         self::assertSame([], $block->orderBy);
         self::assertNull($block->limit);
         self::assertInstanceOf(ResolvedColumn::class, $resolution);

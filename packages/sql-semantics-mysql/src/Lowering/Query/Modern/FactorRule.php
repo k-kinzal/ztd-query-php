@@ -93,7 +93,7 @@ final class FactorRule
         $at = $lateral ? 1 : 0;
         $tables = new TableRule($this->lowering);
 
-        return new DerivedTable((new ExpressionRule($this->lowering))->subquery($form->node($at)), $tables->alias($form->node($at + 1)), $tables->columns($form->node($at + 2)), $lateral);
+        return new DerivedTable((new ExpressionRule($this->lowering))->subquery($form->node($at)), $tables->alias($form->node($at + 1)), $tables->columns($form->node($at + 2)), $lateral, $tables->mark($form->node($at + 1)));
     }
 
     /**
@@ -113,6 +113,7 @@ final class FactorRule
             $this->lowering->literals->string($form->node(4)),
             $this->lowering->calls->jsonTableColumns($form->node(5)),
             (new TableRule($this->lowering))->alias($form->node(7)),
+            (new TableRule($this->lowering))->mark($form->node(7)),
         );
     }
 }

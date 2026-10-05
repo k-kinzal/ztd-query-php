@@ -35,6 +35,6 @@ final class OnUpdateTest extends TestCase
 
     public function testRenderWritesTheAttribute(): void
     {
-        self::assertSame('CREATE TABLE t (a TIMESTAMP ON UPDATE NOW())', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)')->toString());
+        self::assertSame('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)')->toString());
     }
 }

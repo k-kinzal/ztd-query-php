@@ -29,8 +29,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Typing a date plus months
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT ADDDATE(DATE '2024-01-01', INTERVAL 1 MONTH)");
- *     [$query->field(0)->type->descriptor->name(), $query->toString()] // => ['DATE', "SELECT DATE_ADD(DATE '2024-01-01', INTERVAL 1 MONTH)"]
+ *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT ADDDATE(DATE '2024-01-01', INTERVAL 1 MONTH) AS d");
+ *     [$query->field(0)->type->descriptor->name(), $query->toString()] // => ['DATE', "SELECT DATE_ADD(DATE '2024-01-01', INTERVAL 1 MONTH) AS d"]
  */
 final class DateArithmetic implements Scalar
 {

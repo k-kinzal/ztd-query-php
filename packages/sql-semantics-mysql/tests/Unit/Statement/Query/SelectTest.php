@@ -96,7 +96,7 @@ final class SelectTest extends TestCase
 
         $fields = $operation->fields();
         self::assertNotNull($fields);
-        self::assertSame(['x', 'b', null], array_map(static fn (Field $field): ?string => $field->name?->value, $fields->items));
+        self::assertSame(['x', 'b', '1'], array_map(static fn (Field $field): ?string => $field->name?->value, $fields->items));
         self::assertSame($table->columns[0], $operation->field('x')->column());
         self::assertSame($table->columns[1], $operation->field('b')->column());
         self::assertNull($operation->field(2)->column());
@@ -110,14 +110,14 @@ final class SelectTest extends TestCase
         self::assertInstanceOf(AbsentField::class, $operation->lookupField('a'));
     }
 
-    public function testDeriveQueryLeavesTheNameOpenForAnExpressionItem(): void
+    public function testDeriveQueryNamesAnExpressionItemAfterItsText(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 + 1');
 
         $fields = $operation->fields();
         self::assertNotNull($fields);
         self::assertCount(1, $fields);
-        self::assertNull($fields->at(0)->slot->name);
+        self::assertSame('1 + 1', $fields->at(0)->slot->name?->value);
         self::assertInstanceOf(Known::class, $fields->at(0)->type);
         self::assertSame(Nullability::NotNull, $fields->at(0)->nullability);
         self::assertNull($fields->at(0)->resolution);

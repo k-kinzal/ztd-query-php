@@ -8,6 +8,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
+use SqlSemantics\Platform\PostgreSql\Statement\Option\Word;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\ConfigurationSetting;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\EstimateKind;
@@ -17,8 +18,10 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineDefinition;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineEstimate;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineLanguage;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineOption;
+use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineSource;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\SupportFunction;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\Transforms;
+use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Lowers routine options and ALTER FUNCTION, PROCEDURE and ROUTINE.
@@ -75,6 +78,9 @@ final class OptionRule
     /**
      * Lowers `opt_createfunc_opt_list`; no option is an empty list.
      *
+     * A definition (`AS`) is lowered last, with the language of the first
+     * LANGUAGE option, wherever it is written.
+     *
      * @return list<RoutineOption>
      *
      * @throws ImplementationGap When the production has no rule
@@ -88,20 +94,29 @@ final class OptionRule
         if ($form->signature !== 'opt_createfunc_opt_list: createfunc_opt_list') {
             throw ImplementationGap::production($form);
         }
+        $items = $this->lowering->items($form->node(0), 'createfunc_opt_list: createfunc_opt_item', 'createfunc_opt_list: createfunc_opt_list createfunc_opt_item');
         $options = [];
-        foreach ($this->lowering->items($form->node(0), 'createfunc_opt_list: createfunc_opt_item', 'createfunc_opt_list: createfunc_opt_list createfunc_opt_item') as $item) {
-            $options[] = $this->option($item);
+        $language = null;
+        foreach ($items as $index => $item) {
+            $definition = $this->lowering->productions->form($item)->signature === 'createfunc_opt_item: AS func_as';
+            $options[$index] = $definition ? null : $this->option($item);
+            $language ??= $options[$index] instanceof RoutineLanguage ? $options[$index]->language : null;
+        }
+        $name = $language instanceof Word ? $language->word : ($language === null ? null : new Name($language->value));
+        $read = [];
+        foreach ($items as $index => $item) {
+            $read[] = $options[$index] ?? $this->option($item, $name);
         }
 
-        return $options;
+        return $read;
     }
 
     /**
-     * Lowers `createfunc_opt_item`.
+     * Lowers `createfunc_opt_item`; a definition is written in the given language.
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function option(Node $item): RoutineOption
+    public function option(Node $item, ?Name $language = null): RoutineOption
     {
         $form = $this->lowering->productions->form($item);
         if (isset(self::ATTRIBUTES[$form->signature])) {
@@ -109,7 +124,7 @@ final class OptionRule
         }
 
         return match ($form->signature) {
-            'createfunc_opt_item: AS func_as' => $this->definition($form->node(1)),
+            'createfunc_opt_item: AS func_as' => $this->definition($form->node(1), $language),
             'createfunc_opt_item: LANGUAGE NonReservedWord_or_Sconst' => new RoutineLanguage($this->lowering->options->wordOrString($form->node(1))),
             'createfunc_opt_item: TRANSFORM transform_type_list' => new Transforms($this->transforms($form->node(1))),
             'createfunc_opt_item: common_func_opt_item' => $this->common($form->node(0)),
@@ -140,18 +155,18 @@ final class OptionRule
     }
 
     /**
-     * Lowers `func_as`.
+     * Lowers `func_as`: the definition in the routine's language, null when none is written.
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function definition(Node $definition): RoutineDefinition
+    public function definition(Node $definition, ?Name $language): RoutineDefinition
     {
         $form = $this->lowering->productions->form($definition);
         $literals = $this->lowering->literals;
 
         return match ($form->signature) {
-            'func_as: Sconst' => new RoutineDefinition($literals->string($form->node(0))),
-            'func_as: Sconst , Sconst' => new RoutineDefinition($literals->string($form->node(0)), $literals->string($form->node(2))),
+            'func_as: Sconst' => new RoutineDefinition(new RoutineSource($language, $literals->string($form->node(0)))),
+            'func_as: Sconst , Sconst' => new RoutineDefinition(new RoutineSource($language, $literals->string($form->node(0))), $literals->string($form->node(2))),
             default => throw ImplementationGap::production($form),
         };
     }

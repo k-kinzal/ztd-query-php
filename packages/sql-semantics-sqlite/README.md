@@ -128,23 +128,30 @@ $query->field(2)->type->missing[0]->describe(); // => 'the value bound to parame
 
 ### Unaliased result columns
 
-SQLite names an unaliased result column that is not a column reference after the text of its expression, as written. The model keeps the meaning of the expression, not its text, so such a field has no fixed name: its name is null, a lookup by name does not find it, and a reference to such a column of a subquery depends on `UnkeptSpelling`. Give the column an alias when its name matters.
+SQLite names an unaliased result column after the text of its expression as it was written, from its first to its last token, unless the expression is a column reference. That text is part of the meaning, so the model keeps it as the layout of the result column, renders the expression in that spelling, and derives the name from it the way SQLite does:
+
+- the rows a statement returns take the name of the column a column reference denotes, and otherwise the text;
+- a subquery in FROM and a common table name their columns before resolution: a single word, possibly qualified, in parentheses or under COLLATE, keeps the word as written, and any other expression takes the text;
+- a view and a table created from a query name their columns after resolution, looking through COLLATE, `likely()`, `unlikely()` and `likelihood()` as well;
+- in these last two cases a name TRUE or FALSE becomes `columnN`, and a repeated name gets a `:1` to `:4` suffix; a fifth repeat gets a random suffix, so its name stays open (`RandomColumnName`).
+
+The layout is kept only where it differs from the canonical spelling. Whether AS introduces an alias is kept as well, because the text of an enclosing expression includes it. A result column built with `new` and without a layout is rendered in the canonical spelling and named after that text, which is the text the database reads.
 
 ```php
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 $semantics = new Semantics(Dialect::Sqlite);
 
-$semantics->analyze('SELECT 1 + 1, 2 AS two')->field(0)->name; // => null
-$semantics->analyze('SELECT 1 + 1, 2 AS two')->field(1)->name?->value; // => 'two'
-$semantics->analyze('SELECT x FROM (SELECT 1 + 1)', [])->field('x')->resolution instanceof ConditionalColumn; // => true
+$semantics->analyze('SELECT 1+1, 2 AS two')->field(0)->name?->value; // => '1+1'
+$semantics->analyze('SELECT 1+1, 2 AS two')->toString(); // => 'SELECT 1+1, 2 AS two'
+$semantics->analyze('SELECT "1+1" FROM (SELECT 1+1)', [])->field(0)->resolution instanceof ResolvedColumn; // => true
 ```
 
 ## Limitations
 
-- An unaliased result expression that is not a column reference has no fixed name, as described above.
+- A comment written between an unaliased result expression and the next token is part of the name SQLite gives the column, but the model does not keep it, so the rendered SQL names such a column without the comment.
 - A search path must start with `main`; `temp` is always searched first.
 - The parameter style has no effect on reading, but two profiles that differ only in it are not compatible.
 - Version 1 contexts declare relations only. Application-defined functions, such as the `regexp()` that `REGEXP` calls, are missing inputs.

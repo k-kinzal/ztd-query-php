@@ -27,6 +27,7 @@ enum RoutineProblemKind: string
     case MissingBody = 'no function body specified';
     case MissingLanguage = 'no language specified';
     case InlineBodyLanguage = 'inline SQL function body only valid for language SQL';
+    case SingleDefinition = 'only one AS item needed for language "%s"';
     case ProcedureAttribute = 'invalid attribute in procedure definition';
     case MissingResultType = 'function result type must be specified';
     case OutputInTableFunction = 'OUT and INOUT arguments aren\'t allowed in TABLE functions';
@@ -41,7 +42,4 @@ enum RoutineProblemKind: string
     case OrderedSetVariadic = 'an ordered-set aggregate with a VARIADIC direct argument must have one VARIADIC aggregated argument of the same data type';
     case MissingOperatorArgument = 'missing argument';
     case PostfixOperator = 'postfix operators are not supported';
-    case MissingTransition = 'aggregate %s must be specified';
-    case MissingRightArgument = 'operator right argument type must be specified';
-    case MissingOperatorFunction = 'operator function must be specified';
 }

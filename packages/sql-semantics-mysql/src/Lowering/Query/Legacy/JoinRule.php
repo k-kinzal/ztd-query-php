@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Relation;
  * esc_table_ref, table_ref, join_table, normal_join, opt_outer (5.x). The
  * joins follow the parse, which nests conditionless joins to the left; a
  * join on the left is walked in a loop. JOIN, INNER JOIN, CROSS JOIN and
- * STRAIGHT_JOIN are kept as written; OUTER is noise. Constructs:
+ * STRAIGHT_JOIN are kept as written, and so is OUTER. Constructs:
  * JoinedTable, EscapedRelation. Terminates: the list and the left spine are
  * walked in loops; recursion follows the strictly smaller right operands.
  * Source: https://dev.mysql.com/doc/refman/5.7/en/join.html. Status: Implemented.
@@ -164,6 +164,7 @@ final class JoinRule
                 if ($outer->signature !== 'opt_outer:' && $outer->signature !== 'opt_outer: OUTER') {
                     throw ImplementationGap::production($outer);
                 }
+                $operator = $outer->signature === 'opt_outer: OUTER' ? $operator->worded() : $operator;
             }
         }
         $operand = $form->node($right)->name === 'table_factor' ? (new FromRule($this->lowering))->factor($form->node($right)) : $this->reference($form->node($right));

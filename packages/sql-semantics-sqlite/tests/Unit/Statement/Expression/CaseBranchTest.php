@@ -25,7 +25,7 @@ final class CaseBranchTest extends TestCase
 {
     public function testRenderKeepsTheConditionAndTheResultInOrder(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("select case when a > 1 then 'x' when a then 2 end from t");
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('select case when a > 1 then \'x\' when a then 2 end AS c1 from t');
         $statement = $operation->statement;
 
         self::assertInstanceOf(Select::class, $statement);
@@ -36,7 +36,7 @@ final class CaseBranchTest extends TestCase
         self::assertInstanceOf(IntegerLiteral::class, $branch->then);
         self::assertSame('a', $branch->when->name->value);
         self::assertSame('2', $branch->then->digits);
-        self::assertSame("SELECT CASE WHEN a > 1 THEN 'x' WHEN a THEN 2 END FROM t", $operation->toString());
+        self::assertSame('SELECT CASE WHEN a > 1 THEN \'x\' WHEN a THEN 2 END AS c1 FROM t', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltBranch(): void

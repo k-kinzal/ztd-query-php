@@ -61,7 +61,7 @@ final class LiteralRuleTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item10);
         self::assertInstanceOf(TemporalLiteral::class, $item10->expression);
         self::assertSame(TemporalForm::Time, $item10->expression->form);
-        self::assertSame("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, x'1F', b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'", $operation->toString());
+        self::assertSame("SELECT 1, 1.5, 1e3, 'a', NULL, TRUE, FALSE, 0x1F, b'10', DATE '2024-01-01', TIME '12:00:00.5', TIMESTAMP '2024-01-01 12:00:00'", $operation->toString());
     }
 
     public function testConstantLowersIntroducedRadixLiteralsAndSignedNumbers(): void

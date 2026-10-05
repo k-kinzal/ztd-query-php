@@ -75,7 +75,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testInnerAnswersTheQueryInsideTheOuterParentheses(): void
     {
-        self::assertSame('SELECT (SELECT 1), EXISTS ((SELECT 2)) FROM t', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('select (select 1), exists ((select 2)) from t')->toString());
+        self::assertSame('SELECT (SELECT 1) AS v, EXISTS ((SELECT 2)) AS w FROM t', (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('select (select 1) as v, exists ((select 2)) as w from t')->toString());
     }
 
     public function testLockedLowersTheLockingClausesInParentheses(): void

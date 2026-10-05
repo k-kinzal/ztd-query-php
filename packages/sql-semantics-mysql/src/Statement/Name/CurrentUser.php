@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Name;
 
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
 
@@ -23,10 +24,20 @@ final class CurrentUser implements Account
     use Snapshot;
 
     /**
-     * Writes the keyword.
+     * @param OptionalWords $parentheses Whether the optional empty parentheses are written
+     */
+    public function __construct(public readonly OptionalWords $parentheses = OptionalWords::Omitted)
+    {
+    }
+
+    /**
+     * Writes the keyword and the parentheses when they are written.
      */
     public function render(Output $out): void
     {
         $out->keyword('CURRENT_USER');
+        if ($this->parentheses === OptionalWords::Written) {
+            $out->glue()->symbol('(')->symbol(')');
+        }
     }
 }

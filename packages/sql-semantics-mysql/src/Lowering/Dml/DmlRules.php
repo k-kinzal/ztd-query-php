@@ -99,6 +99,17 @@ final class DmlRules
     }
 
     /**
+     * Tells for each table of a node of `table_alias_ref_list` whether it is written with `.*`.
+     *
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords>
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function wildcards(Node $list): array
+    {
+        return (new TargetRule($this->lowering))->wildcards($list);
+    }
+
+    /**
      * Lowers the values of one row, each an expression or DEFAULT: a node of `opt_values` or `values`; an
      * absent list is empty.
      *

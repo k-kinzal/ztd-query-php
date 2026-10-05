@@ -25,4 +25,9 @@ final class ClockTest extends TestCase
         self::assertSame(TypeClass::Time, Clock::UtcTime->result());
         self::assertSame(TypeClass::Date, Clock::CurrentDate->result());
     }
+
+    public function testBareAnswersTheKeywordWithoutParentheses(): void
+    {
+        self::assertSame(['CURRENT_TIMESTAMP', 'CURRENT_TIME', null, 'UTC_TIME', 'UTC_TIMESTAMP', 'CURRENT_DATE', 'UTC_DATE'], array_map(static fn (Clock $clock): ?string => $clock->bare(), Clock::cases()));
+    }
 }

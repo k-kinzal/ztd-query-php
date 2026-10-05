@@ -13,14 +13,9 @@ use SqlSemantics\Platform\MySql\Rules\Noise\ExpressionNoise;
 #[Small]
 final class ExpressionNoiseTest extends TestCase
 {
-    public function testPositionsListsTheOptionalWords(): void
+    public function testPositionsListsNoOptionalWordSinceTheModelKeepsThem(): void
     {
-        self::assertSame([
-            'simple_expr: ROW_SYM ( expr , expr_list )' => [0],
-            'ident_list_arg: ( ident_list )' => [0, 2],
-            'opt_natural_language_mode: IN_SYM NATURAL LANGUAGE_SYM MODE_SYM' => [0, 1, 2, 3],
-            'opt_of: OF_SYM' => [0],
-        ], ExpressionNoise::positions());
+        self::assertSame([], ExpressionNoise::positions());
     }
 
     public function testSynonymsKeyTheSynonymTerminalsAsTheWrittenOnes(): void

@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Lowering\Type;
 use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
@@ -65,14 +66,18 @@ final class CastTypeRule
     {
         $form = $this->lowering->productions->form($target);
         if ($form->signature === 'cast_type: real_type') {
-            return new CastTarget($this->lowering->types->real($form->node(0)) === FloatingKind::Real ? CastKind::Real : CastKind::Double);
+            $real = $this->lowering->types->real($form->node(0)) === FloatingKind::Real;
+
+            return new CastTarget($real ? CastKind::Real : CastKind::Double, null, null, null, $this->lowering->types->doublePrecision($form->node(0)) ? OptionalWords::Written : OptionalWords::Omitted);
         }
         [$kind, $numbers, $charset] = self::TARGETS[$form->signature] ?? throw ImplementationGap::production($form);
+        $words = str_ends_with($form->signature, ' INT_SYM') ? OptionalWords::Written : OptionalWords::Omitted;
         if ($form->signature === 'cast_type: nchar opt_field_length') {
             $this->lowering->types->strings->keyword($form->node(0));
+            $words = $this->lowering->productions->form($form->node(0))->signature === 'nchar: NATIONAL_SYM CHAR_SYM' ? OptionalWords::Written : OptionalWords::Omitted;
         }
         [$length, $scale] = $numbers === null ? [null, null] : $this->parts->numbers($form->node($numbers));
 
-        return new CastTarget($kind, $length, $scale, $charset === null ? null : $this->parts->charset($form->node($charset)));
+        return new CastTarget($kind, $length, $scale, $charset === null ? null : $this->parts->charset($form->node($charset)), $words);
     }
 }

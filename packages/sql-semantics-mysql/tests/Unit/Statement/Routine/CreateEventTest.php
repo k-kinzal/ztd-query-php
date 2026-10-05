@@ -140,7 +140,7 @@ final class CreateEventTest extends TestCase
         yield 'MySQL 9.1 one-time schedule' => [
             'mysql-9.1.0',
             "create event e on schedule at current_timestamp + interval 1 day on completion not preserve enable comment 'c' do delete from t where a = 1",
-            "CREATE EVENT e ON SCHEDULE AT NOW() + INTERVAL 1 DAY ON COMPLETION NOT PRESERVE ENABLE COMMENT 'c' DO DELETE FROM t WHERE a = 1",
+            "CREATE EVENT e ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 DAY ON COMPLETION NOT PRESERVE ENABLE COMMENT 'c' DO DELETE FROM t WHERE a = 1",
         ];
     }
 

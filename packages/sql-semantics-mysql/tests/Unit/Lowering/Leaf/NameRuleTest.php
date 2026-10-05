@@ -17,6 +17,7 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\NameRule;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
@@ -141,7 +142,7 @@ final class NameRuleTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(ColumnUse::class, $item0->expression);
         self::assertNull($item0->expression->qualifier?->schema);
-        self::assertSame('SELECT t.d FROM t', $legacy->toString());
+        self::assertSame('SELECT .t.d FROM t', $legacy->toString());
     }
 
     public function testColumnNameLowersADefinedColumnWithItsQualifiers(): void
@@ -213,5 +214,15 @@ final class NameRuleTest extends TestCase
         $this->expectExceptionMessage('No semantic rule is implemented for: table_list: *');
 
         $rule->claimed(new Form(new Node('table_list', 0, []), 'table_list: *'), ['table_list: table_ident']);
+    }
+
+    public function testDottedTellsATableNameWrittenAfterALeadingDot(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 FROM .t');
+
+        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(TableReference::class, $operation->statement->from);
+        self::assertSame(OptionalWords::Written, $operation->statement->from->dot);
+        self::assertSame('SELECT 1 FROM .t', $operation->toString());
     }
 }

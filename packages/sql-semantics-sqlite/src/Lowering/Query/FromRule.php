@@ -111,11 +111,11 @@ final class FromRule
         $names = $this->lowering->names;
 
         return match ($form->signature) {
-            'seltablist: stl_prefix nm dbnm as on_using' => new TableInput($names->scoped($form->node(1), $form->node(2)), $this->lowering->results->alias($form->node(3))),
-            'seltablist: stl_prefix nm dbnm as indexed_by on_using' => new TableInput($names->scoped($form->node(1), $form->node(2)), $this->lowering->results->alias($form->node(3)), $this->indexed($form->node(4))),
-            'seltablist: stl_prefix nm dbnm LP exprlist RP as on_using' => new TableCall($names->scoped($form->node(1), $form->node(2)), $this->lowering->expressions->list($form->node(4)), $this->lowering->results->alias($form->node(6))),
-            'seltablist: stl_prefix LP select RP as on_using' => new DerivedQuery($this->lowering->selects->select($form->node(2)), $this->lowering->results->alias($form->node(4))),
-            'seltablist: stl_prefix LP seltablist RP as on_using' => new NestedInput($this->terms($form->node(2)), $this->lowering->results->alias($form->node(4))),
+            'seltablist: stl_prefix nm dbnm as on_using' => new TableInput($names->scoped($form->node(1), $form->node(2)), $this->lowering->results->alias($form->node(3)), null, $this->lowering->results->keyword($form->node(3))),
+            'seltablist: stl_prefix nm dbnm as indexed_by on_using' => new TableInput($names->scoped($form->node(1), $form->node(2)), $this->lowering->results->alias($form->node(3)), $this->indexed($form->node(4)), $this->lowering->results->keyword($form->node(3))),
+            'seltablist: stl_prefix nm dbnm LP exprlist RP as on_using' => new TableCall($names->scoped($form->node(1), $form->node(2)), $this->lowering->expressions->list($form->node(4)), $this->lowering->results->alias($form->node(6)), $this->lowering->results->keyword($form->node(6))),
+            'seltablist: stl_prefix LP select RP as on_using' => new DerivedQuery($this->lowering->selects->select($form->node(2)), $this->lowering->results->alias($form->node(4)), $this->lowering->results->keyword($form->node(4))),
+            'seltablist: stl_prefix LP seltablist RP as on_using' => new NestedInput($this->terms($form->node(2)), $this->lowering->results->alias($form->node(4)), $this->lowering->results->keyword($form->node(4))),
             default => throw ImplementationGap::production($form),
         };
     }

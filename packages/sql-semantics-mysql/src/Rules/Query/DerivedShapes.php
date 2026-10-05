@@ -7,9 +7,9 @@ namespace SqlSemantics\Platform\MySql\Rules\Query;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\ItemSpelling;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Shape\OutputSlot;
@@ -22,9 +22,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * Derives the row shape of a derived table or a common table from its query and its column list.
  *
  * Rule: MYSQL-DERIVED-SHAPES-001. Without a column list the columns are the
- * output slots of the query, with their names; a slot the server names
- * after the source text of its expression has no fixed name, so the shape
- * depends on that text (ItemSpelling). With a column list the list names the
+ * output slots of the query, with their names (MYSQL-SELECT-ITEM-NAME-001);
+ * a slot whose name depends on a character set conversion has no fixed
+ * name, so the shape depends on that conversion (NameConversion). With a column list the list names the
  * columns in order and the query gives their types, which depend on the
  * missing inputs of the query while its columns are not all known; a list whose length
  * differs from a complete query is reported, and a column without a slot is
@@ -53,7 +53,7 @@ final class DerivedShapes
             }
             $this->unique($slots, $derivation);
 
-            return new RowShape($slots, $unnamed ? [...$shape->missing, new ItemSpelling()] : $shape->missing);
+            return new RowShape($slots, $unnamed ? [...$shape->missing, new NameConversion()] : $shape->missing);
         }
         $problem = null;
         if ($shape->complete() && count($shape->slots) !== count($columns)) {

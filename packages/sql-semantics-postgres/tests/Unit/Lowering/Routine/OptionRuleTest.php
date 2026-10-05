@@ -16,6 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Lowering\Routine\OptionRule;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineAttribute;
+use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(OptionRule::class)]
 #[Small]
@@ -50,7 +51,8 @@ final class OptionRuleTest extends TestCase
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
         $tree = (new PostgreSqlParser('pg-17.2'))->parse('CREATE FUNCTION f() RETURNS int AS $$lib$$, $$sym$$ LANGUAGE c');
-        self::assertSame('sym', (new OptionRule($lowering))->definition($tree->find('func_as')[0])->symbol?->value);
+        $definition = (new OptionRule($lowering))->definition($tree->find('func_as')[0], new Name('c'));
+        self::assertSame(['sym', 'c'], [$definition->symbol?->value, $definition->source->language?->value]);
     }
 
     public function testTransformsLowersEachType(): void

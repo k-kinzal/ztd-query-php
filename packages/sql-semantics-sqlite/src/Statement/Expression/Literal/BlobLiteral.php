@@ -24,8 +24,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading the bytes of a BLOB literal
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT x'0aff'");
- *     [$query->statement->columns[0]->expression->hex, $query->toString()] // => ['0AFF', "SELECT x'0AFF'"]
+ *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze("SELECT x'0aff' AS b");
+ *     [$query->statement->columns[0]->expression->hex, $query->toString()] // => ['0AFF', "SELECT x'0AFF' AS b"]
  * @example Refusing half a byte
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral('ABC') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing lower case digits

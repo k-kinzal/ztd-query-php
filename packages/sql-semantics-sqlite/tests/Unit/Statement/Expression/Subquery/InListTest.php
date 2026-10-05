@@ -92,13 +92,13 @@ final class InListTest extends TestCase
 
     public function testRenderWritesTheNegationAndTheValues(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('select a not in (1, 2) from t');
+        $query = (new Semantics(Dialect::Sqlite))->analyze('select a not in (1, 2) AS c1 from t');
         $test = $query->field(0)->expression;
 
         self::assertInstanceOf(InList::class, $test);
         self::assertTrue($test->negated);
         self::assertCount(2, $test->items);
-        self::assertSame('SELECT a NOT IN (1, 2) FROM t', $query->toString());
+        self::assertSame('SELECT a NOT IN (1, 2) AS c1 FROM t', $query->toString());
     }
 
     public function testRenderWritesAnEmptyList(): void

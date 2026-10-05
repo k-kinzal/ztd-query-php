@@ -79,8 +79,8 @@ final class RowExpressionTest extends TestCase
 
     public function testRenderWritesTheElementsInParentheses(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('select (a,b) = (1,2), (1, 2, 3) in (select 1, 2, 3) from t');
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('select (a,b) = (1,2) AS c1, (1, 2, 3) in (select 1, 2, 3) AS c2 from t');
 
-        self::assertSame('SELECT (a, b) = (1, 2), (1, 2, 3) IN (SELECT 1, 2, 3) FROM t', $operation->toString());
+        self::assertSame('SELECT (a, b) = (1, 2) AS c1, (1, 2, 3) IN (SELECT 1, 2, 3) AS c2 FROM t', $operation->toString());
     }
 }

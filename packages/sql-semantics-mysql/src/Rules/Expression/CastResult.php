@@ -22,8 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Spatial;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
-use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Statement\Type\Choice;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\TypeFact;
@@ -37,7 +36,8 @@ use SqlSemantics\Statement\Type\TypeFact;
  * YEAR and DECIMAL[(m[,d])] are those types; JSON is JSON; DOUBLE is DOUBLE;
  * FLOAT is FLOAT without a precision or with one of at most 24 and DOUBLE
  * otherwise; REAL is FLOAT under the session mode REAL_AS_FLOAT and DOUBLE
- * otherwise, which the profile does not hold; the spatial targets are their
+ * otherwise: the profile does not hold the mode, so the type is the known
+ * choice of FLOAT and DOUBLE; the spatial targets are their
  * geometry types. A cast to a temporal type or YEAR yields NULL for a value
  * that is not a valid date or time, so it can always be NULL; every other
  * cast is NULL only when its operand is. Terminates: no recursion.
@@ -74,7 +74,7 @@ final class CastResult
             CastKind::Year => new Known(new Temporal(TemporalKind::Year)),
             CastKind::Decimal => new Known(new Decimal($target->length, $target->scale)),
             CastKind::Json => new Known(new Elementary(ElementaryKind::Json)),
-            CastKind::Real => new Dependent([new SessionState('sql_mode REAL_AS_FLOAT')]),
+            CastKind::Real => new Choice([new Floating(FloatingKind::Float), new Floating(FloatingKind::Double)]),
             CastKind::Double => new Known(new Floating(FloatingKind::Double)),
             CastKind::Float => new Known(new Floating($target->length === null || (int) $target->length <= 24 ? FloatingKind::Float : FloatingKind::Double)),
             CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiLineString,

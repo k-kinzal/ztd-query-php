@@ -8,13 +8,14 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Query\From\JoinedInput;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\ItemSpelling;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Missing\MissingInput;
@@ -54,7 +55,8 @@ final class Projection
             if ($item instanceof SelectExpression) {
                 $fact = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
                 $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
-                $fields[] = new Field(count($fields), new OutputSlot((new ItemNaming())->name($item), $fact->type, $fact->nullability, null, $origin), $item->expression, $fact->resolution);
+                $name = (new ItemNaming($derivation->context->profile))->name($item);
+                $fields[] = new Field(count($fields), new OutputSlot($name instanceof Name ? $name : null, $fact->type, $fact->nullability, null, $origin), $item->expression, $fact->resolution);
             } elseif ($item instanceof Star) {
                 $fields = $this->star($fields, $derivation, $environment, $from);
             } else {
@@ -151,7 +153,7 @@ final class Projection
     public function open(VisibleRelation $relation): bool
     {
         foreach ($relation->shape->missing as $missing) {
-            if (!$missing instanceof ItemSpelling) {
+            if (!$missing instanceof NameConversion) {
                 return true;
             }
         }

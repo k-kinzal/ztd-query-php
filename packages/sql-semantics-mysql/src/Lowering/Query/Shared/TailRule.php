@@ -248,12 +248,14 @@ final class TailRule
             return new LockingClause(LockStrength::ShareMode);
         }
         $tables = [];
+        $wildcards = [];
         if ($form->signature === 'locking_clause: FOR_SYM lock_strength table_locking_list opt_locked_row_action') {
             $list = $this->lowering->form($form->node(2));
             if ($list->signature !== 'table_locking_list: OF_SYM table_alias_ref_list') {
                 throw ImplementationGap::production($list);
             }
             $tables = $this->lowering->dml->deleteTargets($list->node(1));
+            $wildcards = $this->lowering->dml->wildcards($list->node(1));
         } elseif ($form->signature !== 'locking_clause: FOR_SYM lock_strength opt_locked_row_action') {
             throw ImplementationGap::production($form);
         }
@@ -270,6 +272,6 @@ final class TailRule
             'lock_strength: UPDATE_SYM' => LockStrength::Update,
             'lock_strength: SHARE_SYM' => LockStrength::Share,
             default => throw ImplementationGap::production($strength),
-        }, $tables, self::ACTIONS[$action->signature]);
+        }, $tables, self::ACTIONS[$action->signature], $wildcards);
     }
 }

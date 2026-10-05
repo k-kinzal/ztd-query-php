@@ -80,7 +80,7 @@ final class RecurringScheduleTest extends TestCase
     public static function providerRenderWritesTheIntervalAndTheTimes(): iterable
     {
         yield 'MySQL 5.6 compound unit' => ['mysql-5.6.51', "create event e on schedule every '1:30' hour_minute do select 1", "CREATE EVENT e ON SCHEDULE EVERY '1:30' HOUR_MINUTE DO SELECT 1"];
-        yield 'MySQL 5.7 start only' => ['mysql-5.7.44', 'alter event e on schedule every 1 day starts current_timestamp', 'ALTER EVENT e ON SCHEDULE EVERY 1 DAY STARTS NOW()'];
+        yield 'MySQL 5.7 start only' => ['mysql-5.7.44', 'alter event e on schedule every 1 day starts current_timestamp', 'ALTER EVENT e ON SCHEDULE EVERY 1 DAY STARTS CURRENT_TIMESTAMP'];
         yield 'MySQL 8.0 both times' => [
             'mysql-8.0.44',
             'create event e on schedule every 3 week starts now() ends now() + interval 1 year do select 1',

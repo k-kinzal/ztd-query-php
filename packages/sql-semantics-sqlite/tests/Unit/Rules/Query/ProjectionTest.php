@@ -13,7 +13,6 @@ use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
 use SqlSemantics\Platform\Sqlite\Rules\Query\Projection;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
-use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
@@ -53,7 +52,7 @@ final class ProjectionTest extends TestCase
 
         $items = (new Projection())->items($select->columns, $derivation, new Environment($derivation->context, null, [$relation]));
 
-        self::assertSame(['a', 'x', null, 'rowid', 'a', 'b', 'a', 'b'], array_map(static fn (Field|OpenStar $item): ?string => $item instanceof Field ? $item->name?->value : '*', $items));
+        self::assertSame(['a', 'x', 'a + 1', 'rowid', 'a', 'b', 'a', 'b'], array_map(static fn (Field|OpenStar $item): ?string => $item instanceof Field ? $item->name?->value : '*', $items));
         self::assertSame(range(0, 7), array_map(static fn (Field|OpenStar $item): ?int => $item instanceof Field ? $item->position : null, $items));
         self::assertInstanceOf(Field::class, $items[1]);
         self::assertSame($table->columns[1], $items[1]->column());
@@ -127,35 +126,5 @@ final class ProjectionTest extends TestCase
         self::assertInstanceOf(Field::class, $items[0]);
         self::assertInstanceOf(OpenStar::class, $items[1]);
         self::assertSame([$missing], $items[1]->missing);
-    }
-
-    public function testNamedFixesTheNameOfAColumnReferenceOnly(): void
-    {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('SELECT (t.a), oid, b AS x, 1 + 1, "zz", true, nosuch FROM t', [$create]);
-        $select = $query->statement;
-        self::assertInstanceOf(Select::class, $select);
-        $projection = new Projection();
-        $columns = array_values(array_filter($select->columns, static fn (object $column): bool => $column instanceof ResultColumn));
-
-        self::assertSame('a', $projection->named($columns[0], $query->field(0)->resolution)?->value);
-        self::assertSame('rowid', $projection->named($columns[1], $query->field(1)->resolution)?->value);
-        self::assertSame('b', $projection->named($columns[2], $query->field(2)->resolution)?->value);
-        self::assertNull($projection->named($columns[3], $query->field(3)->resolution));
-        self::assertNull($projection->named($columns[4], $query->field(4)->resolution));
-        self::assertNull($projection->named($columns[5], $query->field(5)->resolution));
-        self::assertSame('nosuch', $projection->named($columns[6], $query->field(6)->resolution)?->value);
-    }
-
-    public function testNamedUsesTheNameOfAnAliasTarget(): void
-    {
-        $semantics = new Semantics(Dialect::Sqlite);
-        $query = $semantics->analyze('SELECT 1 AS x ORDER BY (x)');
-        $select = $query->statement;
-        self::assertInstanceOf(Select::class, $select);
-        $term = $select->orderBy[0]->expression;
-
-        self::assertSame('x', (new Projection())->named(new ResultColumn($term), $query->facts->scalar($term)->resolution)?->value);
     }
 }

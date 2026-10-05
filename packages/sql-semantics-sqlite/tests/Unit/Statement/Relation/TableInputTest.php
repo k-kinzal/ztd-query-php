@@ -103,6 +103,14 @@ final class TableInputTest extends TestCase
         $built = new Operation($semantics->context(), new Select([new Star()], new TableInput(new QualifiedName(new Name('t'), new Name('main')), new Name('x'), new IndexChoice())));
 
         self::assertSame('SELECT * FROM main.t AS x NOT INDEXED', $built->toString());
-        self::assertSame('SELECT * FROM t AS x INDEXED BY i', $semantics->analyze('select * from t x indexed by i')->toString());
+        self::assertSame('SELECT * FROM t x INDEXED BY i', $semantics->analyze('select * from t x indexed by i')->toString());
+        self::assertSame('SELECT * FROM t AS x INDEXED BY i', $semantics->analyze('select * from t as x indexed by i')->toString());
+    }
+
+    public function testRenderRefusesToLeaveOutAsWithoutAnAlias(): void
+    {
+        $this->expectExceptionMessage('AS is left out only before an alias.');
+
+        new TableInput(new QualifiedName(new Name('t')), null, null, false);
     }
 }

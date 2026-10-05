@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
@@ -31,9 +33,12 @@ final class CallArgument implements Node
     /**
      * @param Scalar $expression The argument expression
      * @param Name|null $alias The alias written after it
+     * @param AliasMark $mark Whether the alias is written after AS
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the mark does not fit the alias
      */
-    public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null)
+    public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null, public readonly AliasMark $mark = AliasMark::As)
     {
+        Check::input($mark !== AliasMark::Equals && ($alias !== null || $mark === AliasMark::As), 'An argument alias is written with or without AS, and an argument without alias has no alias mark.');
     }
 
     /**
@@ -43,7 +48,8 @@ final class CallArgument implements Node
     {
         $out->node($this->expression);
         if ($this->alias !== null) {
-            $out->keyword('AS')->name($this->alias, NameUse::Alias);
+            $this->mark->write($out);
+            $out->name($this->alias, NameUse::Alias);
         }
     }
 }

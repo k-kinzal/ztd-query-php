@@ -67,13 +67,13 @@ final class ExistsTest extends TestCase
     public function testRenderWritesTheKeywordAndTheParentheses(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $plain = $semantics->analyze('select exists (select 1 from t)');
-        $negated = $semantics->analyze('SELECT NOT EXISTS (SELECT 1 FROM t)');
+        $plain = $semantics->analyze('select exists (select 1 from t) AS c1');
+        $negated = $semantics->analyze('SELECT NOT EXISTS (SELECT 1 FROM t) AS c1');
 
-        self::assertSame('SELECT EXISTS (SELECT 1 FROM t)', $plain->toString());
+        self::assertSame('SELECT EXISTS (SELECT 1 FROM t) AS c1', $plain->toString());
         self::assertInstanceOf(Unary::class, $negated->field(0)->expression);
         self::assertInstanceOf(Exists::class, $negated->field(0)->expression->operand);
-        self::assertSame('SELECT NOT EXISTS (SELECT 1 FROM t)', $negated->toString());
+        self::assertSame('SELECT NOT EXISTS (SELECT 1 FROM t) AS c1', $negated->toString());
     }
 
     public function testRenderWritesANewlyBuiltTest(): void

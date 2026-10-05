@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Lowering\Query;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Construction\Layouts;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Rendering\Canonical;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\SetQuantifier;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
@@ -21,7 +23,10 @@ use SqlSemantics\Statement\Identifier\Name;
  * Rule: SQLITE-RESULT-LOWER-001. Scope: selcollist, sclp, scanpt, as,
  * distinct (of a selection), values, mvalues. Result columns and rows keep
  * their written order. `scanpt` is an empty marker of the grammar that
- * carries nothing. Terminates: both lists are walked along their spine in a
+ * carries nothing. A result column without an alias keeps the layout of its
+ * expression when it is not the canonical spelling (CORE-SPELLING-001),
+ * since SQLite names the column after it. Whether AS introduces an alias is
+ * kept, because the text of an enclosing expression includes it. Terminates: both lists are walked along their spine in a
  * loop. Source: https://sqlite.org/lang_select.html. Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\Sqlite
@@ -59,7 +64,7 @@ final class ResultRule
         foreach (array_reverse($forms) as $form) {
             $this->marker($form->node(1));
             $columns[] = match ($form->signature) {
-                'selcollist: sclp scanpt expr scanpt as' => new ResultColumn($this->lowering->expressions->expression($form->node(2)), $this->alias($form->node(4))),
+                'selcollist: sclp scanpt expr scanpt as' => $this->column($form->node(2), $form->node(4)),
                 'selcollist: sclp scanpt STAR' => new Star(),
                 'selcollist: sclp scanpt nm DOT STAR' => new TableStar($this->lowering->names->name($form->node(2))),
                 default => throw ImplementationGap::production($form),
@@ -67,6 +72,20 @@ final class ResultRule
         }
 
         return $columns;
+    }
+
+    /**
+     * Lowers one projected expression; without an alias it keeps the spelling SQLite names it after.
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function column(Node $expression, Node $as): ResultColumn
+    {
+        $lowered = $this->lowering->expressions->expression($expression);
+        $alias = $this->alias($as);
+        $layout = $alias === null ? (new Layouts())->of($expression) : null;
+
+        return new ResultColumn($lowered, $alias, $layout === null || (new Canonical())->same($layout, (new Canonical())->layout($lowered)) ? null : $layout, $this->keyword($as));
     }
 
     /**
@@ -95,6 +114,22 @@ final class ResultRule
             'as:' => null,
             'as: AS nm' => $this->lowering->names->name($form->node(1)),
             'as: ids' => $this->lowering->names->token($form->token(0)),
+            default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
+     * Tells whether an `as` introduces its alias with the keyword AS, or has no alias.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function keyword(Node $alias): bool
+    {
+        $form = $this->lowering->productions->form($alias);
+
+        return match ($form->signature) {
+            'as:', 'as: AS nm' => true,
+            'as: ids' => false,
             default => throw ImplementationGap::production($form),
         };
     }

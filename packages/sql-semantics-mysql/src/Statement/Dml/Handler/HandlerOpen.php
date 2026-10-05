@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -34,9 +35,11 @@ final class HandlerOpen implements Statement
     /**
      * @param QualifiedName $table The table with its optional database
      * @param Name|null $alias The name of the handler; the table name when absent
+     * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly QualifiedName $table, public readonly ?Name $alias = null)
+    public function __construct(public readonly QualifiedName $table, public readonly ?Name $alias = null, public readonly AliasMark $mark = AliasMark::As)
     {
+        Check::input($alias !== null || $mark === AliasMark::As, 'A table without alias has no alias mark.');
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
     }
 
@@ -59,7 +62,8 @@ final class HandlerOpen implements Statement
         }
         $out->name($this->table->name, NameUse::Relation)->keyword('OPEN');
         if ($this->alias !== null) {
-            $out->keyword('AS')->name($this->alias, NameUse::Alias);
+            $this->mark->write($out);
+            $out->name($this->alias, NameUse::Alias);
         }
     }
 }

@@ -7,7 +7,10 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rendering\LeadingDot;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\TableSample;
 use SqlSemantics\Rendering\Output;
@@ -57,9 +60,13 @@ final class TableReference implements NamedRelation
      * @param list<Name> $partitions The selected partitions
      * @param list<IndexHint> $indexHints The index hints
      * @param TableSample|null $sample The sampling clause
+     * @param AliasMark $mark What is written before the alias
+     * @param OptionalWords $dot Whether the name is written after a leading dot, `.t` (MySQL 5.6 and 5.7)
      */
-    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, array $partitions = [], array $indexHints = [], public readonly ?TableSample $sample = null)
+    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, array $partitions = [], array $indexHints = [], public readonly ?TableSample $sample = null, public readonly AliasMark $mark = AliasMark::As, public readonly OptionalWords $dot = OptionalWords::Omitted)
     {
+        Check::input($dot === OptionalWords::Omitted || $name->schema === null, 'Only a table name without database is written after a leading dot.');
+        Check::input($alias !== null || $mark === AliasMark::As, 'A relation without alias has no alias mark.');
         Check::input($name->catalog === null, 'A table is qualified by at most a database.');
         $this->partitions = Check::listOf($partitions, Name::class, 'A partition selection names partitions.');
         $this->indexHints = Check::listOf($indexHints, IndexHint::class, 'The index hints of a table are index hints.');
@@ -98,6 +105,9 @@ final class TableReference implements NamedRelation
      */
     public function render(Output $out): void
     {
+        if ($this->dot === OptionalWords::Written) {
+            (new LeadingDot())->write($out);
+        }
         if ($this->name->schema !== null) {
             $out->name($this->name->schema, NameUse::Qualifier)->symbol('.');
         }
@@ -113,7 +123,8 @@ final class TableReference implements NamedRelation
             $out->symbol(')');
         }
         if ($this->alias !== null) {
-            $out->keyword('AS')->name($this->alias, NameUse::Alias);
+            $this->mark->write($out);
+            $out->name($this->alias, NameUse::Alias);
         }
         foreach ($this->indexHints as $hint) {
             $out->node($hint);

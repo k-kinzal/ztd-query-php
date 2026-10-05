@@ -8,6 +8,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Name\Account;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Platform\MySql\Statement\Name\CurrentUser;
@@ -51,7 +52,7 @@ final class UserRule
         return $this->lowering->leaves->record(match ($form->signature) {
             'user: ident_or_text', 'user_ident_or_text: ident_or_text', 'role: role_ident_or_text' => new AccountName($names->identifier($form->node(0))),
             'user: ident_or_text @ ident_or_text', 'user_ident_or_text: ident_or_text @ ident_or_text', 'role: role_ident_or_text @ ident_or_text' => new AccountName($names->identifier($form->node(0)), $names->identifier($form->node(2))),
-            'user: CURRENT_USER optional_braces' => new CurrentUser(),
+            'user: CURRENT_USER optional_braces' => new CurrentUser($this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted),
             default => throw ImplementationGap::production($form),
         });
     }

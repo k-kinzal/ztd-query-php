@@ -19,6 +19,7 @@ use SqlSemantics\Platform\MySql\Lowering\Query\Shared\ItemRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TableRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\TailRule;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
@@ -216,6 +217,16 @@ final class QueryRules
     public function alias(Node $alias): ?Name
     {
         return $alias->name === 'select_alias' ? (new ItemRule($this->lowering))->alias($alias) : (new TableRule($this->lowering))->alias($alias);
+    }
+
+    /**
+     * Answers what is written before an optional alias: a node of `opt_table_alias` or `select_alias`.
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function mark(Node $alias): AliasMark
+    {
+        return $alias->name === 'select_alias' ? (new ItemRule($this->lowering))->mark($alias) : (new TableRule($this->lowering))->mark($alias);
     }
 
     /**

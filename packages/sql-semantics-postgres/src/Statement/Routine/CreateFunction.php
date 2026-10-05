@@ -8,6 +8,8 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\RoutineFacts;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
+use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineDefinition;
+use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineLanguage;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Option\RoutineOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
@@ -21,7 +23,9 @@ use SqlSemantics\Statement\Statement;
  * columns, or, for a function with output parameters or a procedure, not
  * written. The body is either an option (`AS 'definition'`) or an
  * SQL-standard body (`RETURN expression` or `BEGIN ATOMIC ... END`) whose
- * statements are analyzed with the parameters visible. Defining a routine
+ * statements are analyzed with the parameters visible. A definition written
+ * as a string is unanalysed text in the routine's language
+ * (PG-ROUTINE-SOURCE-001): the server parses it only when the routine runs. Defining a routine
  * declares no relation.
  * Source: https://www.postgresql.org/docs/17/sql-createfunction.html,
  * https://www.postgresql.org/docs/17/sql-createprocedure.html.
@@ -60,6 +64,13 @@ final class CreateFunction implements Statement
     ) {
         $this->options = Check::listOf($options, RoutineOption::class, 'Routine options are a list of routine options.');
         Check::input(!$procedure || $returns === null, 'A procedure has no result.');
+        $language = null;
+        foreach ($this->options as $option) {
+            $language ??= $option instanceof RoutineLanguage ? $option->name() : null;
+        }
+        foreach ($this->options as $option) {
+            Check::input(!$option instanceof RoutineDefinition || $option->source->language?->value === $language, 'A routine definition is written in the language of the first LANGUAGE option, or in none without one.');
+        }
     }
 
     /**

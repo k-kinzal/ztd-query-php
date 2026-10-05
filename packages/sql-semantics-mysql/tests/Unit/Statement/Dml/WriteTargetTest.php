@@ -59,7 +59,7 @@ final class WriteTargetTest extends TestCase
 
     public function testRenderWritesNameAliasAndPartitions(): void
     {
-        self::assertSame('DELETE FROM shop.t AS x PARTITION (p0, p1) WHERE x.a = 1', (new Semantics(Dialect::MySql))->analyze('delete from shop.t x partition (p0, p1) where x.a = 1')->toString());
+        self::assertSame('DELETE FROM shop.t x PARTITION (p0, p1) WHERE x.a = 1', (new Semantics(Dialect::MySql))->analyze('delete from shop.t x partition (p0, p1) where x.a = 1')->toString());
     }
 
     public function testRenderRejectsACatalog(): void

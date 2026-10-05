@@ -64,7 +64,7 @@ final class CallRuleTest extends TestCase
 
     public function testNameKeepsTheFunctionNameAsWritten(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT Count(*), "max"(a), [min](a) FROM t');
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT Count(*) AS c1, "max"(a) AS c2, [min](a) AS c3 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame(['Count', 'max', 'min'], array_map(static function (object $column): string {
@@ -73,7 +73,7 @@ final class CallRuleTest extends TestCase
 
             return $column->expression->name->value;
         }, $operation->statement->columns));
-        self::assertSame('SELECT Count(*), max(a), min(a) FROM t', $operation->toString());
+        self::assertSame('SELECT Count(*) AS c1, max(a) AS c2, min(a) AS c3 FROM t', $operation->toString());
     }
 
     public function testFilterOverLowersAFilterOnlyAWindowOnlyAndBoth(): void

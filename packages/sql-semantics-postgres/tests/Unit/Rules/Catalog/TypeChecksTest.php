@@ -17,16 +17,6 @@ final class TypeChecksTest extends TestCase
         self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER TYPE e ADD VALUE \'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\'')->facts->diagnostics);
     }
 
-    public function testRangeReportsAnUnknownAttribute(): void
-    {
-        self::assertSame('type attribute "foo" not recognized', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TYPE r AS RANGE (subtype = int4, foo = 1)')->facts->diagnostics[0]->message());
-    }
-
-    public function testRangeReportsARepeatedAttribute(): void
-    {
-        self::assertSame('conflicting or redundant options', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TYPE r AS RANGE (subtype = int4, subtype = int8)')->facts->diagnostics[0]->message());
-    }
-
     public function testAttributesReportsEachRepeatedNameOnce(): void
     {
         self::assertCount(1, (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TYPE pair AS (a int4, a int4, a int4)')->facts->diagnostics);

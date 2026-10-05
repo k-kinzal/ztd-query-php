@@ -16,6 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Temporal\GetFormat;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TemporalFormat;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampOperation;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Statement\Scalar;
 
@@ -27,7 +28,9 @@ use SqlSemantics\Statement\Scalar;
  * CURDATE, CURTIME, NOW, SYSDATE, UTC_DATE, UTC_TIME, UTC_TIMESTAMP,
  * DATE_ADD, DATE_SUB, ADDDATE and SUBDATE with INTERVAL, EXTRACT,
  * GET_FORMAT, TIMESTAMPADD and TIMESTAMPDIFF. Empty parentheses after a
- * clock function are optional and change nothing (CallNoise, LeafNoise);
+ * clock function are optional and change nothing; whether they are written
+ * is kept (OptionalWords), since it is part of the text MySQL names an
+ * unaliased select list expression after;
  * ADDDATE and SUBDATE with INTERVAL are DATE_ADD and DATE_SUB (CallNoise).
  * Constructs: ClockCall, DateArithmetic, Extract, GetFormat, TimestampCall.
  * Terminates: every child is a strict subtree.
@@ -98,11 +101,10 @@ final class TemporalRule
         if (isset(self::CLOCKS[$form->signature])) {
             [$clock, $precise] = self::CLOCKS[$form->signature];
             if ($precise) {
-                return new ClockCall($clock, $this->precision($form->node(1)));
+                return new ClockCall($clock, $this->precision($form->node(1)), $this->parentheses($form->node(1)));
             }
-            $this->lowering->options->present($form->node(1));
 
-            return new ClockCall($clock);
+            return new ClockCall($clock, null, $this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted);
         }
         $expressions = $this->lowering->expressions;
         if (isset(self::ARITHMETIC[$form->signature])) {
@@ -141,7 +143,23 @@ final class TemporalRule
             throw ImplementationGap::production($form);
         }
 
-        return new ClockCall(Clock::Now, $this->precision($form->node(1)));
+        return new ClockCall(Clock::Now, $this->precision($form->node(1)), $this->parentheses($form->node(1)));
+    }
+
+    /**
+     * Answers whether the parentheses of an optional fractional seconds precision are written.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function parentheses(Node $precision): OptionalWords
+    {
+        $form = $this->lowering->form($precision);
+
+        return match ($form->signature) {
+            'func_datetime_precision:' => OptionalWords::Omitted,
+            'func_datetime_precision: ( )', 'func_datetime_precision: ( NUM )' => OptionalWords::Written,
+            default => throw ImplementationGap::production($form),
+        };
     }
 
     /**

@@ -9,6 +9,7 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Rendering\Output;
@@ -50,9 +51,11 @@ final class JsonTable implements Relation
      * @param StringLiteral $path The path of the rows
      * @param list<JsonTableColumn> $columns The column definitions; at least one
      * @param Name|null $alias The correlation name
+     * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly Scalar $document, public readonly StringLiteral $path, array $columns, public readonly ?Name $alias = null)
+    public function __construct(public readonly Scalar $document, public readonly StringLiteral $path, array $columns, public readonly ?Name $alias = null, public readonly AliasMark $mark = AliasMark::As)
     {
+        Check::input($alias !== null || $mark === AliasMark::As, 'A relation without alias has no alias mark.');
         $this->columns = Check::listOf($columns, JsonTableColumn::class, 'JSON_TABLE defines at least one column.', 1);
     }
 
@@ -82,7 +85,8 @@ final class JsonTable implements Relation
         $out->keyword('JSON_TABLE')->glue()->symbol('(')->node($this->document)->symbol(',')->node($this->path)
             ->keyword('COLUMNS')->symbol('(')->list($this->columns)->symbol(')')->symbol(')');
         if ($this->alias !== null) {
-            $out->keyword('AS')->name($this->alias, NameUse::Alias);
+            $this->mark->write($out);
+            $out->name($this->alias, NameUse::Alias);
         }
     }
 }

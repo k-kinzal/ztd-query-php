@@ -34,7 +34,7 @@ final class EvaluationTest extends TestCase
     public function testRenderWritesTheItems(): void
     {
         self::assertSame('DO 1, 2', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('do 1, 2')->toString());
-        self::assertSame('DO 1 AS x', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('do 1 x')->toString());
+        self::assertSame('DO 1 x', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('do 1 x')->toString());
     }
 
     public function testRenderRejectsAnEmptyList(): void

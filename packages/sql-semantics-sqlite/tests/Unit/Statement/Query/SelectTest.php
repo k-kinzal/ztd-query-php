@@ -58,12 +58,12 @@ final class SelectTest extends TestCase
     {
         $semantics = new Semantics(Dialect::Sqlite);
         $create = $semantics->analyze('CREATE TABLE t (a INTEGER NOT NULL, b TEXT)');
-        $query = $semantics->analyze('SELECT a, b AS x, a + 1 FROM t', [$create]);
+        $query = $semantics->analyze('SELECT a, b AS x, a+1 FROM t', [$create]);
 
         self::assertCount(3, $query->fields() ?? []);
         self::assertSame('a', $query->field(0)->name?->value);
         self::assertSame('x', $query->field(1)->name?->value);
-        self::assertNull($query->field(2)->name);
+        self::assertSame('a+1', $query->field(2)->name?->value);
         self::assertSame($create->declarations()[0]->columns[0], $query->field('a')->column());
         self::assertSame(Nullability::Nullable, $query->field('x')->nullability);
         self::assertSame([], $query->facts->diagnostics);

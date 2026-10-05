@@ -22,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TemporalFormat;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampOperation;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 
 #[CoversClass(TemporalRule::class)]
@@ -48,7 +49,7 @@ final class TemporalRuleTest extends TestCase
         $calls = array_map(static fn (Node $node): \SqlSemantics\Statement\Scalar => $rule->call($lowering->form($node)), $list->find('function_call_nonkeyword'));
 
         self::assertEquals(new ClockCall(Clock::UtcTime, new Numeral('2')), $calls[0]);
-        self::assertEquals(new ClockCall(Clock::CurrentDate), $calls[1]);
+        self::assertEquals(new ClockCall(Clock::CurrentDate, null, OptionalWords::Omitted), $calls[1]);
         self::assertInstanceOf(DateArithmetic::class, $calls[2]);
         self::assertTrue($calls[2]->subtract);
         self::assertInstanceOf(Extract::class, $calls[3]);
@@ -106,6 +107,17 @@ final class TemporalRuleTest extends TestCase
         $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
         $node = $platform->parser($profile)->parse('SELECT SYSDATE()')->find('func_datetime_precision')[0];
         self::assertNull((new TemporalRule($lowering))->precision($node));
+    }
+
+    public function testParenthesesTellsWhetherTheParenthesesAreWritten(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $tree = $platform->parser($profile)->parse('SELECT CURRENT_TIMESTAMP, NOW(), NOW(3)');
+        $precisions = $tree->find('func_datetime_precision');
+
+        self::assertSame([OptionalWords::Omitted, OptionalWords::Written, OptionalWords::Written], array_map(static fn (Node $node): OptionalWords => (new TemporalRule($lowering))->parentheses($node), $precisions));
     }
 
     public function testFormatLowersTheKind(): void

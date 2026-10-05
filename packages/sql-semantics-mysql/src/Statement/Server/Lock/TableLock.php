@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Server\Lock;
 
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -33,9 +34,11 @@ final class TableLock implements Node
      * @param QualifiedName $table The table name with its optional database
      * @param Name|null $alias The alias, when written
      * @param LockMode $mode The lock
+     * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly QualifiedName $table, public readonly ?Name $alias, public readonly LockMode $mode)
+    public function __construct(public readonly QualifiedName $table, public readonly ?Name $alias, public readonly LockMode $mode, public readonly AliasMark $mark = AliasMark::As)
     {
+        Check::input($alias !== null || $mark === AliasMark::As, 'A table without alias has no alias mark.');
         Check::input($table->catalog === null, 'A table is qualified by at most a database.');
     }
 
@@ -49,7 +52,8 @@ final class TableLock implements Node
         }
         $out->name($this->table->name, NameUse::Relation);
         if ($this->alias !== null) {
-            $out->keyword('AS')->name($this->alias, NameUse::Alias);
+            $this->mark->write($out);
+            $out->name($this->alias, NameUse::Alias);
         }
         $out->keyword(...explode(' ', $this->mode->value));
     }

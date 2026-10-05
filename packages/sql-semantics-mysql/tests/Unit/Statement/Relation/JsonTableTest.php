@@ -39,7 +39,7 @@ final class JsonTableTest extends TestCase
 
     public function testRenderWritesTheTableFunction(): void
     {
-        self::assertSame("SELECT a FROM t, JSON_TABLE(t.d, '$' COLUMNS (a INT PATH '$')) AS j", (new Semantics(Dialect::MySql))->analyze("select a from t, json_table(t.d, '$' columns (a int path '$')) j")->toString());
+        self::assertSame("SELECT a FROM t, JSON_TABLE(t.d, '$' COLUMNS (a INT PATH '$')) j", (new Semantics(Dialect::MySql))->analyze("select a from t, json_table(t.d, '$' columns (a int path '$')) j")->toString());
     }
 
     public function testATableWithoutColumnsIsRejected(): void

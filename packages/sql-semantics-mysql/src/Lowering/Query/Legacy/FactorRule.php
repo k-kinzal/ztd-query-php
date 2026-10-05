@@ -122,7 +122,7 @@ final class FactorRule
         }
         $query = (new Chain($operands, $quantifiers, $this->lowering->profile->grammar))->query();
 
-        return $name === null ? $query : new DerivedTable($query, $name);
+        return $name === null ? $query : new DerivedTable($query, $name, [], false, (new TableRule($this->lowering))->mark($alias));
     }
 
     /**

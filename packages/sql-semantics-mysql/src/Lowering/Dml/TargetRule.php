@@ -8,6 +8,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 
 /**
@@ -63,6 +64,31 @@ final class TargetRule
         }
 
         return $tables;
+    }
+
+    /**
+     * Tells for each table of a node of `table_alias_ref_list` whether it is written with `.*` (`opt_wild`).
+     *
+     * @return list<OptionalWords>
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function wildcards(Node $list): array
+    {
+        $items = (new ListRule($this->lowering))->items($list, [
+            'table_alias_ref_list: table_alias_ref', 'table_alias_ref_list: table_alias_ref_list , table_alias_ref',
+            'table_alias_ref_list: table_ident_opt_wild', 'table_alias_ref_list: table_alias_ref_list , table_ident_opt_wild',
+        ]);
+        $wildcards = [];
+        foreach ($items as $item) {
+            $form = $this->lowering->form($item);
+            if ($form->signature === 'table_alias_ref: table_ident_opt_wild') {
+                $form = $this->lowering->form($form->node(0));
+            }
+            $wild = $form->node->children === [] ? null : $form->node(count($form->node->children) - 1);
+            $wildcards[] = $wild !== null && $wild->name === 'opt_wild' && $this->lowering->form($wild)->signature === 'opt_wild: . *' ? OptionalWords::Written : OptionalWords::Omitted;
+        }
+
+        return $wildcards;
     }
 
     /**

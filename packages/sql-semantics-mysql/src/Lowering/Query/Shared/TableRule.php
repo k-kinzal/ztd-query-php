@@ -8,6 +8,8 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintScope;
@@ -85,6 +87,8 @@ final class TableRule
             $this->partitions($form->node(1)),
             $this->hints($hints->node(0)),
             count($form->node->children) === 5 ? $this->sample($form->node(4)) : null,
+            $this->mark($form->node(2)),
+            $this->lowering->names->dotted($form->node(0)) ? OptionalWords::Written : OptionalWords::Omitted,
         );
     }
 
@@ -170,6 +174,30 @@ final class TableRule
             'opt_table_alias:' => null,
             'opt_table_alias: opt_as ident' => $this->lowering->names->identifier($form->node(1)),
             default => throw ImplementationGap::production($form),
+        };
+    }
+
+    /**
+     * Answers what is written before an optional table alias; no alias answers AS, the mark of a table without alias.
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function mark(Node $alias): AliasMark
+    {
+        $form = $this->lowering->form($alias);
+        if ($form->signature === 'opt_table_alias:') {
+            return AliasMark::As;
+        }
+        if ($form->signature !== 'opt_table_alias: table_alias ident' && $form->signature !== 'opt_table_alias: opt_as ident') {
+            throw ImplementationGap::production($form);
+        }
+        $keyword = $this->lowering->form($form->node(0));
+
+        return match ($keyword->signature) {
+            'table_alias:', 'opt_as:' => AliasMark::Bare,
+            'table_alias: AS', 'opt_as: AS' => AliasMark::As,
+            'table_alias: EQ' => AliasMark::Equals,
+            default => throw ImplementationGap::production($keyword),
         };
     }
 

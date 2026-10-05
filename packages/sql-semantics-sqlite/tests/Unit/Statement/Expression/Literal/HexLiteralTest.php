@@ -58,7 +58,7 @@ final class HexLiteralTest extends TestCase
 
     public function testRenderWritesThePrefixAndUpperCaseDigits(): void
     {
-        self::assertSame('SELECT 0x1F, 0xABC', (new Semantics(Dialect::Sqlite))->analyze('select 0X1f, 0xabc')->toString());
+        self::assertSame('SELECT 0x1F AS c1, 0xABC AS c2', (new Semantics(Dialect::Sqlite))->analyze('select 0X1f AS c1, 0xabc AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void

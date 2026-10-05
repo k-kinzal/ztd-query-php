@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\Sqlite\Rules\Resolution;
 
-use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\UnkeptSpelling;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\RandomColumnName;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
@@ -28,11 +28,12 @@ use SqlSemantics\Statement\Reference\Missing\MissingInput;
  * with its implicit column of that name. One answer resolves the name, more
  * than one makes it ambiguous. With no answer, an unqualified name that is a
  * result column alias of the query denotes that result column. A relation
- * whose columns are not all known (an undeclared table, or a result column
- * that SQLite names after its source text) that does not answer makes the
- * outcome conditional on what is missing. A relation whose hidden list holds
- * QUALIFIED_ONLY is reachable with a qualifier only (NEW, OLD, excluded). An
- * environment that holds nothing but common tables is no query level.
+ * whose columns are not all known (an undeclared table, or a column of a
+ * subquery whose name follows an unexpanded star or is picked at random)
+ * that does not answer makes the outcome conditional on what is missing. A
+ * relation whose hidden list holds QUALIFIED_ONLY is reachable with a
+ * qualifier only (NEW, OLD, excluded). An environment that holds nothing
+ * but common tables is no query level.
  * Terminates: the scopes form a finite chain.
  * Source: https://sqlite.org/lang_expr.html#column_names,
  * https://sqlite.org/lang_select.html. Status: Implemented.
@@ -131,6 +132,6 @@ final class ColumnResolver
             }
         }
 
-        return $unnamed ? [...$relation->shape->missing, new UnkeptSpelling()] : $relation->shape->missing;
+        return $unnamed && $relation->shape->missing === [] ? [new RandomColumnName()] : $relation->shape->missing;
     }
 }

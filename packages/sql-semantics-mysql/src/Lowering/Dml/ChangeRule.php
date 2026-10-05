@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDeleteForm;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -109,7 +110,7 @@ final class ChangeRule
         $single = self::SINGLE[$form->signature] ?? null;
         if ($single !== null) {
             [$with, $options, $table, $alias, $partitions, $where, $order, $limit] = $single;
-            $target = new WriteTarget($this->lowering->names->qualified($form->node($table)), $alias === null ? null : $queries->alias($form->node($alias)), $queries->partitions($form->node($partitions)));
+            $target = new WriteTarget($this->lowering->names->qualified($form->node($table)), $alias === null ? null : $queries->alias($form->node($alias)), $queries->partitions($form->node($partitions)), $alias === null ? AliasMark::As : $queries->mark($form->node($alias)));
 
             return new Delete($with === null ? null : $queries->with($form->node($with)), $this->options($form->node($options)), $target, $queries->where($form->node($where)), $queries->ordering($form->node($order)), $queries->limit($form->node($limit)));
         }

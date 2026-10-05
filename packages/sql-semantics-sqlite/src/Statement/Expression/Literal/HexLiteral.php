@@ -29,8 +29,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading the digits of a hexadecimal literal
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 0x1f');
- *     [$query->statement->columns[0]->expression->digits, $query->toString()] // => ['1F', 'SELECT 0x1F']
+ *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 0x1f AS h');
+ *     [$query->statement->columns[0]->expression->digits, $query->toString()] // => ['1F', 'SELECT 0x1F AS h']
  * @example Refusing lower-case digits, which are another spelling of the same value
  *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral('1f') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  * @example Refusing an empty digit sequence

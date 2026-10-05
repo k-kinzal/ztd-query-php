@@ -53,7 +53,7 @@ final class VariableAssignmentTest extends TestCase
         self::assertInstanceOf(Known::class, $notNull->type);
         self::assertSame('INT', $notNull->type->descriptor->name());
         self::assertSame(Nullability::NotNull, $notNull->nullability);
-        self::assertNull($operation->field(0)->name);
+        self::assertSame('@n := b', $operation->field(0)->name?->value);
         self::assertNull($operation->field(0)->column());
     }
 
@@ -95,7 +95,8 @@ final class VariableAssignmentTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame('SELECT @n := 5', $semantics->analyze('select @n:=5')->toString());
+        self::assertSame('SELECT @n := 5 AS v', $semantics->analyze('select @n:=5 as v')->toString());
+        self::assertSame('SELECT @n:=5', $semantics->analyze('select @n:=5')->toString());
         self::assertSame('SELECT @n := a FROM t', $semantics->analyze('SELECT @n := a FROM t')->toString());
     }
 

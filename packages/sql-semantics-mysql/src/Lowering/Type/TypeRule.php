@@ -220,6 +220,19 @@ final class TypeRule
     }
 
     /**
+     * Tells whether a REAL or DOUBLE keyword is DOUBLE written with PRECISION.
+     */
+    public function doublePrecision(Node $keyword): bool
+    {
+        $form = $this->lowering->productions->form($keyword);
+        if ($form->signature === 'real_type: DOUBLE_SYM PRECISION') {
+            return true;
+        }
+
+        return $form->signature === 'real_type: DOUBLE_SYM opt_PRECISION' && $this->lowering->productions->form($form->node(1))->signature === 'opt_PRECISION: PRECISION';
+    }
+
+    /**
      * Lowers a type written as one keyword, a temporal type or a spatial type, or answers null for another kind of type.
      *
      * @throws ImplementationGap When a part has no rule

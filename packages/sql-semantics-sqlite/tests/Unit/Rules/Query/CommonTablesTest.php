@@ -46,7 +46,7 @@ final class CommonTablesTest extends TestCase
         self::assertNotNull($c);
         self::assertSame($statement->with->tables[0], $d->definition);
         self::assertSame('y', $d->shape->slots[0]->name?->value);
-        self::assertSame(['x', null], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $c->shape->slots));
+        self::assertSame(['x', "'z'"], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $c->shape->slots));
         self::assertSame([], $environment->relations);
         self::assertSame([], $derivation->facts()->diagnostics);
     }

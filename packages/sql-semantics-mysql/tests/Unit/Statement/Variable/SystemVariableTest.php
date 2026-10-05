@@ -35,7 +35,7 @@ final class SystemVariableTest extends TestCase
         self::assertSame('the session state: system variable @@GLOBAL.sort_buffer_size', $fact->type->missing[0]->describe());
         self::assertSame(Nullability::Dependent, $fact->nullability);
         self::assertNull($fact->resolution);
-        self::assertNull($operation->field(0)->name);
+        self::assertSame('@@GLOBAL.sort_buffer_size', $operation->field(0)->name?->value);
     }
 
     public function testDeriveScalarNamesTheInstanceOfAStructuredVariable(): void
@@ -73,22 +73,22 @@ final class SystemVariableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame('SELECT @@GLOBAL.sort_buffer_size', $semantics->analyze('select @@global.sort_buffer_size')->toString());
-        self::assertSame('SELECT @@SESSION.innodb.x', $semantics->analyze('SELECT @@session.innodb.x')->toString());
+        self::assertSame('SELECT @@GLOBAL.sort_buffer_size AS v', $semantics->analyze('select @@global.sort_buffer_size as v')->toString());
+        self::assertSame('SELECT @@SESSION.innodb.x AS v', $semantics->analyze('SELECT @@session.innodb.x AS v')->toString());
         self::assertSame('SELECT @@innodb.x', $semantics->analyze('SELECT @@innodb.x')->toString());
         self::assertSame('SELECT @@autocommit', $semantics->analyze('SELECT @@autocommit')->toString());
     }
 
     public function testRenderSpellsLocalAsSession(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@LOCAL.x');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@LOCAL.x AS v');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $item0 = $operation->statement->items[0];
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         self::assertSame(VariableScope::Session, $item0->expression->scope);
-        self::assertSame('SELECT @@SESSION.x', $operation->toString());
+        self::assertSame('SELECT @@SESSION.x AS v', $operation->toString());
     }
 
     public function testRenderQuotesANameThatIsAReservedWord(): void
@@ -108,7 +108,7 @@ final class SystemVariableTest extends TestCase
 
     public function testRenderIsTheSameInEveryGrammarGeneration(): void
     {
-        self::assertSame('SELECT @@GLOBAL.x', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select @@global.x')->toString());
-        self::assertSame('SELECT @@GLOBAL.x', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select @@global.x')->toString());
+        self::assertSame('SELECT @@GLOBAL.x AS v', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select @@global.x as v')->toString());
+        self::assertSame('SELECT @@GLOBAL.x AS v', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select @@global.x as v')->toString());
     }
 }

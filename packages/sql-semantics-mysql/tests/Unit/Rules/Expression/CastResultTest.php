@@ -18,8 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Spatial;
-use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Statement\Type\Choice;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -32,7 +31,7 @@ final class CastResultTest extends TestCase
         $results = new CastResult();
 
         self::assertEquals(
-            [new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned])), new Known(new Decimal('5', '2')), new Known(new Floating(FloatingKind::Double)), new Known(new Floating(FloatingKind::Float)), new Known(new Spatial(SpatialKind::MultiPoint)), new Dependent([new SessionState('sql_mode REAL_AS_FLOAT')])],
+            [new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned])), new Known(new Decimal('5', '2')), new Known(new Floating(FloatingKind::Double)), new Known(new Floating(FloatingKind::Float)), new Known(new Spatial(SpatialKind::MultiPoint)), new Choice([new Floating(FloatingKind::Float), new Floating(FloatingKind::Double)])],
             [$results->type(new CastTarget(CastKind::Unsigned)), $results->type(new CastTarget(CastKind::Decimal, '5', '2')), $results->type(new CastTarget(CastKind::Float, '30')), $results->type(new CastTarget(CastKind::Float)), $results->type(new CastTarget(CastKind::MultiPoint)), $results->type(new CastTarget(CastKind::Real))],
         );
     }

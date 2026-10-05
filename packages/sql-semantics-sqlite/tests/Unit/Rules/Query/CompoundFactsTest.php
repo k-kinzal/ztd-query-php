@@ -15,6 +15,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Compound;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Resolution\CommonBinding;
@@ -22,6 +23,7 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
+use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Statement\Type\Choice;
 use SqlSemantics\Statement\Type\Known;
@@ -126,22 +128,38 @@ final class CompoundFactsTest extends TestCase
         $query = $semantics->analyze('SELECT 1 AS a, 2 UNION SELECT 3 AS b, 4 AS c');
         $compound = $query->statement;
         self::assertInstanceOf(Compound::class, $compound);
+        $arms = [$compound->first, $compound->steps[0]->query];
         $facts = [$query->facts->query($compound->first), $query->facts->query($compound->steps[0]->query)];
         $output = $query->facts->output;
         self::assertNotNull($output);
 
-        $aliases = (new CompoundFacts())->aliases($facts, $output->projection);
+        $aliases = (new CompoundFacts())->aliases($arms, $facts, $output->projection);
 
         self::assertSame(['a', 'b', 'c'], array_map(static fn (Field $field): ?string => $field->name?->value, $aliases));
         self::assertSame([0, 0, 1], array_map(static fn (Field $field): int => $field->position, $aliases));
         self::assertSame($query->field(1)->slot, $aliases[2]->slot->origin);
-        self::assertSame([], (new CompoundFacts())->aliases($facts, []));
+        self::assertSame([], (new CompoundFacts())->aliases($arms, $facts, []));
+    }
+
+    public function testSpelledTellsANameTakenFromTheTextOfAnExpression(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $query = $semantics->analyze('SELECT 1+1, (a), 2 AS b, * FROM (SELECT 1 AS a)');
+        $select = $query->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $facts = new CompoundFacts();
+
+        self::assertTrue($facts->spelled($select, $query->field(0)));
+        self::assertFalse($facts->spelled($select, $query->field(1)));
+        self::assertFalse($facts->spelled($select, $query->field(2)));
+        self::assertFalse($facts->spelled($select, $query->field(3)));
+        self::assertFalse($facts->spelled(null, $query->field(0)));
     }
 
     public function testReboundGivesTheRecursiveReferenceTheNamesOfTheColumnListAndAnyStorageClass(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $query = $semantics->analyze('WITH RECURSIVE c(n) AS (SELECT 1 AS x UNION ALL SELECT n + 1 FROM c) SELECT * FROM c', []);
+        $query = $semantics->analyze('WITH RECURSIVE c(n, true, N) AS (SELECT 1 AS x, 2, 3 UNION ALL SELECT n + 1, 2, 3 FROM c) SELECT * FROM c', []);
         $statement = $query->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
         $table = $statement->with->tables[0];
@@ -149,12 +167,12 @@ final class CompoundFactsTest extends TestCase
         self::assertInstanceOf(Compound::class, $compound);
         $outer = new Environment($query->context, null, [], [new CommonBinding($table->name, $table, new RowShape([]))]);
 
-        $rebound = (new CompoundFacts())->rebound($compound, $query->facts->query($compound->first), $outer);
+        $rebound = (new CompoundFacts())->rebound($compound, $query->facts->query($compound->first), $outer, new Derivation($query->context));
         $slot = $rebound->commonTables[0]->shape->slots[0];
 
         self::assertNotSame($outer, $rebound);
         self::assertSame($table, $rebound->commonTables[0]->definition);
-        self::assertSame('n', $slot->name?->value);
+        self::assertSame(['n', 'column2', 'N:1'], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $rebound->commonTables[0]->shape->slots));
         self::assertInstanceOf(Choice::class, $slot->type);
         self::assertSame(Storage::cases(), $slot->type->alternatives);
         self::assertSame(Nullability::Nullable, $slot->nullability);
@@ -163,7 +181,7 @@ final class CompoundFactsTest extends TestCase
     public function testReboundNamesTheColumnsAfterTheFirstArmWithoutAColumnList(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $query = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 AS x UNION ALL SELECT x + 1 FROM c) SELECT * FROM c', []);
+        $query = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 AS x, 1+1 UNION ALL SELECT x + 1, 2 FROM c) SELECT * FROM c', []);
         $statement = $query->statement;
         self::assertInstanceOf(WithQuery::class, $statement);
         $table = $statement->with->tables[0];
@@ -171,9 +189,10 @@ final class CompoundFactsTest extends TestCase
         self::assertInstanceOf(Compound::class, $compound);
         $outer = new Environment($query->context, null, [], [new CommonBinding($table->name, $table, new RowShape([]))]);
 
-        $rebound = (new CompoundFacts())->rebound($compound, $query->facts->query($compound->first), $outer);
+        $rebound = (new CompoundFacts())->rebound($compound, $query->facts->query($compound->first), $outer, new Derivation($query->context));
 
         self::assertSame('x', $rebound->commonTables[0]->shape->slots[0]->name?->value);
+        self::assertSame('1+1', $rebound->commonTables[0]->shape->slots[1]->name?->value);
     }
 
     public function testReboundLeavesAnEnvironmentWithoutTheTableUntouched(): void
@@ -184,6 +203,6 @@ final class CompoundFactsTest extends TestCase
         self::assertInstanceOf(Compound::class, $compound);
         $outer = new Environment($query->context);
 
-        self::assertSame($outer, (new CompoundFacts())->rebound($compound, $query->facts->query($compound->first), $outer));
+        self::assertSame($outer, (new CompoundFacts())->rebound($compound, $query->facts->query($compound->first), $outer, new Derivation($query->context)));
     }
 }

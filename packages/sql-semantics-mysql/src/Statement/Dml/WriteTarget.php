@@ -10,6 +10,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
@@ -48,9 +49,11 @@ final class WriteTarget implements NamedRelation
      * @param QualifiedName $name The table name with its optional database
      * @param Name|null $alias The correlation name; only a single-table DELETE of MySQL 8.0 and later writes one
      * @param list<Name> $partitions The selected partitions
+     * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, array $partitions = [])
+    public function __construct(public readonly QualifiedName $name, public readonly ?Name $alias = null, array $partitions = [], public readonly AliasMark $mark = AliasMark::As)
     {
+        Check::input($alias !== null || $mark === AliasMark::As, 'A table without alias has no alias mark.');
         Check::input($name->catalog === null, 'A table is qualified by at most a database.');
         $this->partitions = Check::listOf($partitions, Name::class, 'A partition selection names partitions.');
     }
@@ -94,7 +97,8 @@ final class WriteTarget implements NamedRelation
         }
         $out->name($this->name->name, NameUse::Relation);
         if ($this->alias !== null) {
-            $out->keyword('AS')->name($this->alias, NameUse::Alias);
+            $this->mark->write($out);
+            $out->name($this->alias, NameUse::Alias);
         }
         if ($this->partitions !== []) {
             $out->keyword('PARTITION')->symbol('(');

@@ -22,9 +22,9 @@ final class NoiseTest extends TestCase
         self::assertSame([2], $positions['ecmd: explain cmdx SEMI']);
     }
 
-    public function testPositionsListTheOptionalAsBeforeAnAlias(): void
+    public function testPositionsLeaveTheAsBeforeAnAliasSignificant(): void
     {
-        self::assertSame([0], Noise::positions()['as: AS nm']);
+        self::assertArrayNotHasKey('as: AS nm', Noise::positions());
         self::assertArrayNotHasKey('as: ids', Noise::positions());
     }
 
@@ -36,7 +36,7 @@ final class NoiseTest extends TestCase
         self::assertSame([5], $positions['setlist: setlist COMMA LP idlist RP EQ expr']);
         self::assertSame([1], $positions['setlist: nm EQ expr']);
         self::assertSame([3], $positions['setlist: LP idlist RP EQ expr']);
-        self::assertCount(8, $positions);
+        self::assertCount(7, $positions);
     }
 
     public function testSynonymsFoldTemporaryIntoTemp(): void

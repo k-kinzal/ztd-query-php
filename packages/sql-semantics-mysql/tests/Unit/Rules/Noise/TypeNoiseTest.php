@@ -18,9 +18,6 @@ final class TypeNoiseTest extends TestCase
     {
         self::assertSame([1], TypeNoise::positions()['real_type: DOUBLE_SYM PRECISION']);
         self::assertSame([0], TypeNoise::positions()['opt_PRECISION: PRECISION']);
-        self::assertSame([1], TypeNoise::positions()['cast_type: SIGNED_SYM INT_SYM']);
-        self::assertSame([1], TypeNoise::positions()['cast_type: UNSIGNED INT_SYM']);
-        self::assertSame([1], TypeNoise::positions()['cast_type: UNSIGNED_SYM INT_SYM']);
         self::assertSame([1], TypeNoise::positions()['nchar: NATIONAL_SYM CHAR_SYM']);
         self::assertSame([1], TypeNoise::positions()['nvarchar: NATIONAL_SYM VARCHAR']);
         self::assertSame([1], TypeNoise::positions()['nvarchar: NATIONAL_SYM VARCHAR_SYM']);
@@ -28,8 +25,8 @@ final class TypeNoiseTest extends TestCase
         self::assertSame([1], TypeNoise::positions()['nvarchar: NCHAR_SYM VARCHAR_SYM']);
         self::assertSame([1, 2], TypeNoise::positions()['nvarchar: NATIONAL_SYM CHAR_SYM VARYING']);
         self::assertSame([1], TypeNoise::positions()['nvarchar: NCHAR_SYM VARYING']);
-        self::assertCount(12, TypeNoise::positions());
-        self::assertArrayNotHasKey('cast_type: SIGNED_SYM', TypeNoise::positions());
+        self::assertCount(9, TypeNoise::positions());
+        self::assertArrayNotHasKey('cast_type: SIGNED_SYM INT_SYM', TypeNoise::positions());
     }
 
     public function testPositionsNameOnlyTerminalPositionsOfProductionsOfTheGrammars(): void

@@ -17,6 +17,6 @@ final class UserRenamingTest extends TestCase
 {
     public function testRenderWritesThePair(): void
     {
-        self::assertSame('RENAME USER CURRENT_USER TO b', (new Semantics(Dialect::MySql))->analyze('rename user current_user() to b')->toString());
+        self::assertSame('RENAME USER CURRENT_USER() TO b', (new Semantics(Dialect::MySql))->analyze('rename user current_user() to b')->toString());
     }
 }

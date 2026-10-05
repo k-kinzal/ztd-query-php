@@ -19,10 +19,12 @@ final class LeafNoise
     /**
      * Answers the noise positions by production signature.
      *
-     * - `opt_as: AS`: the keyword before a table alias and before the query of
-     *   CREATE TABLE ... SELECT is optional and changes nothing
-     *   (https://dev.mysql.com/doc/refman/8.4/en/join.html: "tbl_name [[AS] alias]";
-     *   https://dev.mysql.com/doc/refman/8.4/en/create-table-select.html: "[AS] query_expression").
+     * - `opt_as: AS`: the keyword before the query of CREATE TABLE ... SELECT
+     *   (5.6, 5.7) is optional and changes nothing
+     *   (https://dev.mysql.com/doc/refman/5.7/en/create-table-select.html: "[AS] query_expression").
+     *   Before a table alias (8.0 and later) the model keeps the keyword as
+     *   written (AliasMark), since it can be part of the text MySQL names an
+     *   unaliased select list expression after.
      * - `equal: EQ`, `equal: SET_VAR`: an option is written `name [=] value`, and
      *   in SET and UPDATE assignments `:=` and `=` are the same assignment
      *   operator; where the rule is mandatory the token cannot be left out, so
@@ -34,10 +36,6 @@ final class LeafNoise
      *   with or without the keyword
      *   (https://dev.mysql.com/doc/refman/8.4/en/create-database.html,
      *   https://dev.mysql.com/doc/refman/8.4/en/create-table.html).
-     * - `optional_braces: ( )`: CURRENT_USER, CURRENT_DATE and the other
-     *   niladic functions are written with or without empty parentheses
-     *   (https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_current-user,
-     *   https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_current-date).
      * - `opt_wild: . *`: `tbl_name.*` in a multiple-table DELETE is the table
      *   name; the suffix is accepted for compatibility with Access
      *   (https://dev.mysql.com/doc/refman/8.4/en/delete.html).
@@ -51,14 +49,19 @@ final class LeafNoise
      *   default object type of GRANT and REVOKE
      *   (https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html,
      *   https://dev.mysql.com/doc/refman/8.4/en/grant.html).
-     * - `table_ident: . ident`, `field_ident: . ident` and
-     *   `simple_ident_q: . ident . ident`, position 0: a leading dot names the
-     *   default database, as an unqualified name does
+     * - `table_ident: . ident` and `field_ident: . ident`, position 0: a
+     *   leading dot names the default database, as an unqualified name does
      *   (https://dev.mysql.com/doc/refman/5.7/en/identifier-qualifiers.html).
+     *   A table of a FROM clause and a column of an expression keep the dot
+     *   (TableReference, ColumnUse), since it is part of the text MySQL names
+     *   an unaliased select list expression after.
      * - `charset: CHAR_SYM SET` and `character_set: CHAR_SYM SET_SYM`, position
      *   1: with the synonym key of position 0, the two keywords are the one
      *   keyword CHARSET (https://dev.mysql.com/doc/refman/8.4/en/create-table.html:
-     *   "CHARSET is a synonym for CHARACTER SET").
+     *   "CHARSET is a synonym for CHARACTER SET"). The character set attribute
+     *   of a type keeps the two-word form (CharsetForm::CharacterSet), since a
+     *   cast target is part of the text MySQL names an unaliased select list
+     *   expression after.
      *
      * @return array<string, list<int>>
      */
@@ -70,14 +73,12 @@ final class LeafNoise
             'equal: SET_VAR' => [0],
             'opt_default: DEFAULT' => [0],
             'opt_default: DEFAULT_SYM' => [0],
-            'optional_braces: ( )' => [0, 1],
             'opt_wild: . *' => [0, 1],
             'opt_comma: ,' => [0],
             'opt_storage: STORAGE_SYM' => [0],
             'opt_table: TABLE_SYM' => [0],
             'table_ident: . ident' => [0],
             'field_ident: . ident' => [0],
-            'simple_ident_q: . ident . ident' => [0],
             'charset: CHAR_SYM SET' => [1],
             'character_set: CHAR_SYM SET_SYM' => [1],
         ];

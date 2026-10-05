@@ -38,6 +38,28 @@ enum Clock: string
     }
 
     /**
+     * Answers the keyword that writes the function without parentheses, or null when it is only written with them.
+     *
+     * NOW, CURTIME, CURDATE and SYSDATE are keywords only before an opening
+     * parenthesis (`SYM_FN` in sql/lex.h); without one the function is
+     * written CURRENT_TIMESTAMP, CURRENT_TIME or CURRENT_DATE, and SYSDATE
+     * cannot be.
+     *
+     * @example Reading the keyword NOW is written with without parentheses
+     *     \SqlSemantics\Platform\MySql\Statement\Call\Clock::Now->bare() // => 'CURRENT_TIMESTAMP'
+     */
+    public function bare(): ?string
+    {
+        return match ($this) {
+            self::Now => 'CURRENT_TIMESTAMP',
+            self::CurrentTime => 'CURRENT_TIME',
+            self::CurrentDate => 'CURRENT_DATE',
+            self::SystemDate => null,
+            self::UtcTime, self::UtcTimestamp, self::UtcDate => $this->value,
+        };
+    }
+
+    /**
      * Answers the class of the type the function returns.
      */
     public function result(): TypeClass

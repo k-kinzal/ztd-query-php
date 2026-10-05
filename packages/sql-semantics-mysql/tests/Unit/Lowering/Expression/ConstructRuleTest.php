@@ -19,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastAtLocal;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 
 #[CoversClass(ConstructRule::class)]
@@ -116,5 +117,19 @@ final class ConstructRuleTest extends TestCase
                 $rule->mode($parser->parse("SELECT MATCH (a) AGAINST ('x' IN BOOLEAN MODE)")->find('fulltext_options')[0]),
             ],
         );
+    }
+
+    public function testSearchKeepsTheParenthesesAndTheStatedMode(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse("SELECT MATCH a, b AGAINST ('x' IN NATURAL LANGUAGE MODE)")->find('simple_expr')[0];
+        $search = (new ConstructRule($lowering))->search($lowering->form($node));
+
+        self::assertCount(2, $search->columns);
+        self::assertSame(OptionalWords::Omitted, $search->parentheses);
+        self::assertSame(OptionalWords::Written, $search->stated);
+        self::assertSame(FullTextMode::NaturalLanguage, $search->mode);
     }
 }

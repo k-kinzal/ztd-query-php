@@ -125,7 +125,7 @@ final class ExpressionRuleTest extends TestCase
 
     public function testWordLowersAnUnqualifiedWordByHowItIsWritten(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT "w", TRUE, false, a, [true], `false` FROM t');
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT "w" AS c1, TRUE AS c2, false AS c3, a AS c4, [true] AS c5, `false` AS c6 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         $expressions = array_map(static function (object $column): object {
@@ -145,7 +145,7 @@ final class ExpressionRuleTest extends TestCase
         self::assertInstanceOf(ColumnUse::class, $expressions[4]);
         self::assertSame('true', $expressions[4]->name->value);
         self::assertInstanceOf(ColumnUse::class, $expressions[5]);
-        self::assertSame('SELECT "w", TRUE, FALSE, a, `true`, `false` FROM t', $operation->toString());
+        self::assertSame('SELECT "w" AS c1, TRUE AS c2, FALSE AS c3, a AS c4, `true` AS c5, `false` AS c6 FROM t', $operation->toString());
     }
 
     public function testColumnLowersTableAndSchemaQualifiedColumnUses(): void

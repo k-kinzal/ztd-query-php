@@ -37,6 +37,15 @@ final class RoutineChecksTest extends TestCase
         );
     }
 
+    public function testBodyReportsALinkSymbolOutsideLanguageC(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        self::assertEquals(
+            [[new RoutineProblem(RoutineProblemKind::SingleDefinition, 'sql')], []],
+            [$semantics->analyze("CREATE FUNCTION f() RETURNS int4 LANGUAGE sql AS 'a', 'b'")->facts->diagnostics, $semantics->analyze("CREATE FUNCTION f() RETURNS int4 LANGUAGE C AS 'a', 'b'")->facts->diagnostics],
+        );
+    }
+
     public function testParametersReportsParameterProblems(): void
     {
         $semantics = new Semantics(Dialect::PostgreSql);

@@ -204,9 +204,9 @@ final class BinaryTest extends TestCase
 
     public function testRenderWritesWordedOperatorsAsKeywordsAndOthersAsSymbols(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze("select a is not distinct from b, a<>1, a->>'x', a and b or 1 from t");
+        $query = (new Semantics(Dialect::Sqlite))->analyze('select a is not distinct from b AS c1, a<>1 AS c2, a->>\'x\' AS c3, a and b or 1 AS c4 from t');
 
-        self::assertSame("SELECT a IS NOT DISTINCT FROM b, a <> 1, a ->> 'x', a AND b OR 1 FROM t", $query->toString());
+        self::assertSame('SELECT a IS NOT DISTINCT FROM b AS c1, a <> 1 AS c2, a ->> \'x\' AS c3, a AND b OR 1 AS c4 FROM t', $query->toString());
     }
 
     public function testRenderKeepsTheWrittenAssociation(): void

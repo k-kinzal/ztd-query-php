@@ -61,7 +61,7 @@ final class OnceScheduleTest extends TestCase
     public static function providerRenderWritesAtAndTheTime(): iterable
     {
         yield 'MySQL 5.6 text' => ['mysql-5.6.51', "create event e on schedule at '2030-01-01 00:00:00' do select 1", "CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00' DO SELECT 1"];
-        yield 'MySQL 8.0 interval arithmetic' => ['mysql-8.0.44', 'alter event e on schedule at current_timestamp + interval 1 hour', 'ALTER EVENT e ON SCHEDULE AT NOW() + INTERVAL 1 HOUR'];
+        yield 'MySQL 8.0 interval arithmetic' => ['mysql-8.0.44', 'alter event e on schedule at current_timestamp + interval 1 hour', 'ALTER EVENT e ON SCHEDULE AT CURRENT_TIMESTAMP + INTERVAL 1 HOUR'];
         yield 'MySQL 9.1 user variable' => ['mysql-9.1.0', 'create event e on schedule at @t do select 1', 'CREATE EVENT e ON SCHEDULE AT @t DO SELECT 1'];
     }
 

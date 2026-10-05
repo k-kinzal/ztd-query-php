@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -23,7 +24,8 @@ use SqlSemantics\Statement\Snapshot;
  * SUBDATE with a number of days are typed as a date plus or minus days.
  * GROUPING() yields 1 or 0 and is never NULL. The keyword is written against
  * its parenthesis, and the niladic functions are written with empty
- * parentheses, which the grammar accepts for every one of them.
+ * parentheses, which the grammar accepts for every one of them; CURRENT_USER
+ * keeps whether its optional parentheses are written.
  * Terminates: the arguments are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/built-in-function-reference.html.
  * Status: Implemented.
@@ -47,12 +49,14 @@ final class KeywordCall implements Scalar
     /**
      * @param KeywordFunction $function The function
      * @param list<Scalar> $arguments The arguments in order
+     * @param OptionalWords $parentheses Whether the empty parentheses of CURRENT_USER are written; the other functions write their parentheses
      */
-    public function __construct(public readonly KeywordFunction $function, array $arguments)
+    public function __construct(public readonly KeywordFunction $function, array $arguments, public readonly OptionalWords $parentheses = OptionalWords::Written)
     {
         $this->arguments = Check::listOf($arguments, Scalar::class, 'Function arguments are expressions.');
         [$minimum, $maximum] = $function->arity();
         Check::input(count($arguments) >= $minimum && ($maximum === -1 || count($arguments) <= $maximum), 'The grammar does not accept this number of arguments for ' . $function->value . '.');
+        Check::input($parentheses === OptionalWords::Written || $function === KeywordFunction::CurrentUser, 'Only CURRENT_USER is written without parentheses.');
     }
 
     /**
@@ -77,6 +81,9 @@ final class KeywordCall implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->keyword($this->function->value)->glue()->symbol('(')->list($this->arguments)->symbol(')');
+        $out->keyword($this->function->value);
+        if ($this->parentheses === OptionalWords::Written) {
+            $out->glue()->symbol('(')->list($this->arguments)->symbol(')');
+        }
     }
 }

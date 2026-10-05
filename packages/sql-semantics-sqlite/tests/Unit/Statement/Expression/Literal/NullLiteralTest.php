@@ -38,7 +38,7 @@ final class NullLiteralTest extends TestCase
 
     public function testRenderWritesTheKeywordInUpperCase(): void
     {
-        self::assertSame('SELECT NULL, NULL', (new Semantics(Dialect::Sqlite))->analyze('select null, Null')->toString());
+        self::assertSame('SELECT NULL AS c1, NULL AS c2', (new Semantics(Dialect::Sqlite))->analyze('select null AS c1, Null AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void

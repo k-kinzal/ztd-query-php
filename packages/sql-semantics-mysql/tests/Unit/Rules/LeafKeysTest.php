@@ -85,7 +85,7 @@ final class LeafKeysTest extends TestCase
         $keys = new LeafKeys(new LexicalSettings(''));
 
         self::assertNull($keys->key(new Token(1, 'AS', 'AS', 0), 'opt_as: AS', 0));
-        self::assertNull($keys->key(new Token(1, 'AS', 'as', 0), 'select_alias: AS ident', 0));
+        self::assertSame('AS', $keys->key(new Token(1, 'AS', 'as', 0), 'select_alias: AS ident', 0));
         self::assertNull($keys->key(new Token(1, ';', ';', 0), 'sql_statement: simple_statement_or_begin ; opt_end_of_input', 1));
         self::assertNull($keys->key(new Token(1, 'PRECISION', 'PRECISION', 0), 'real_type: DOUBLE_SYM PRECISION', 1));
         self::assertNull($keys->key(new Token(1, 'SET', 'SET', 0), 'charset: CHAR_SYM SET', 1));
@@ -142,10 +142,9 @@ final class LeafKeysTest extends TestCase
     {
         self::assertSame([1], LeafKeys::noise()['sql_statement: simple_statement_or_begin ; opt_end_of_input']);
         self::assertSame([0], LeafKeys::noise()['opt_as: AS']);
-        self::assertSame([0, 1], LeafKeys::noise()['optional_braces: ( )']);
         self::assertSame([1], LeafKeys::noise()['real_type: DOUBLE_SYM PRECISION']);
         self::assertSame([1, 2], LeafKeys::noise()['nvarchar: NATIONAL_SYM CHAR_SYM VARYING']);
-        self::assertSame([0], LeafKeys::noise()['select_alias: AS ident']);
+        self::assertArrayNotHasKey('select_alias: AS ident', LeafKeys::noise());
         self::assertSame([], array_filter(array_keys(LeafKeys::noise()), static fn (string $signature): bool => !str_contains($signature, ': ')));
         self::assertCount(
             count(DispatchNoise::positions()) + count(LeafNoise::positions()) + count(TypeNoise::positions()) + count(ExpressionNoise::positions())
@@ -188,5 +187,24 @@ final class LeafKeysTest extends TestCase
     {
         self::assertContains('%', LeafKeys::terminalSynonyms()['MOD_SYM']);
         self::assertContains('MOD_SYM', LeafKeys::terminalSynonyms()['MOD_SYM']);
+    }
+
+    public function testSynonymousAcceptsAnotherSpellingOfARenderedName(): void
+    {
+        $keys = new LeafKeys(new LexicalSettings());
+
+        self::assertTrue($keys->synonymous(new Token(1, 'IDENT_QUOTED', '`a`', 0), new Token(1, 'IDENT', 'a', 0)));
+        self::assertTrue($keys->synonymous(new Token(1, 'IDENT_QUOTED', '`binary`', 0), new Token(1, 'BINARY', 'BINARY', 0)));
+        self::assertTrue($keys->synonymous(new Token(1, 'LEX_HOSTNAME', 'x', 0), new Token(1, 'TEXT_STRING', "'x'", 0)));
+        self::assertFalse($keys->synonymous(new Token(1, 'IDENT_QUOTED', '`a`', 0), new Token(1, 'IDENT', 'b', 0)));
+    }
+
+    public function testSpellsNameTellsTheTokensThatCanWriteAName(): void
+    {
+        $keys = new LeafKeys(new LexicalSettings());
+
+        self::assertTrue($keys->spellsName(new Token(1, 'IDENT_QUOTED', '`a b`', 0)));
+        self::assertTrue($keys->spellsName(new Token(1, 'ACTION', 'action', 0)));
+        self::assertFalse($keys->spellsName(new Token(1, 'NUM', '1', 0)));
     }
 }

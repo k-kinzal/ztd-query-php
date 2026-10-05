@@ -55,6 +55,22 @@ final class OptionsTest extends TestCase
         self::assertInstanceOf(SignedNumber::class, $lowering->options->definition($tree->find('def_elem')[0])->argument);
     }
 
+    public function testElementsLowersNamesAndWrittenValues(): void
+    {
+        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse('CREATE TYPE t (a = 1, b)');
+        $elements = $lowering->options->elements($tree->find('definition')[0]);
+        self::assertSame(['a', 'b', null], [$elements[0][0]->value, $elements[1][0]->value, $elements[1][1]]);
+    }
+
+    public function testElementLowersANameWithAValue(): void
+    {
+        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse("CREATE TYPE t (a = 'x')");
+        [$name, $value] = $lowering->options->element($tree->find('def_elem')[0]);
+        self::assertSame(['a', 'x'], [$name->value, $value instanceof StringConstant ? $value->value : null]);
+    }
+
     public function testArgumentLowersEveryValueKind(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);

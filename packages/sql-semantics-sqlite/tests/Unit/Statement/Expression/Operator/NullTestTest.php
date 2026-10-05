@@ -55,9 +55,9 @@ final class NullTestTest extends TestCase
 
     public function testRenderWritesEachForm(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('select a isnull, a notnull, a not null from t');
+        $query = (new Semantics(Dialect::Sqlite))->analyze('select a isnull AS c1, a notnull AS c2, a not null AS c3 from t');
 
-        self::assertSame('SELECT a ISNULL, a NOTNULL, a NOT NULL FROM t', $query->toString());
+        self::assertSame('SELECT a ISNULL AS c1, a NOTNULL AS c2, a NOT NULL AS c3 FROM t', $query->toString());
     }
 
     public function testRenderAppliesToAnOperandOfTheEqualityGroup(): void

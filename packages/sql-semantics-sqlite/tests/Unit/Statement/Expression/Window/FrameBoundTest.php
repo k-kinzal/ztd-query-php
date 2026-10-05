@@ -50,9 +50,9 @@ final class FrameBoundTest extends TestCase
 
     public function testRenderWritesEveryKindOfBoundary(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('select sum(a) over (rows between unbounded preceding and 1 preceding), sum(a) over (rows between current row and 1 following), sum(a) over (rows between 1 following and unbounded following) from t');
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('select sum(a) over (rows between unbounded preceding and 1 preceding) AS c1, sum(a) over (rows between current row and 1 following) AS c2, sum(a) over (rows between 1 following and unbounded following) AS c3 from t');
 
-        self::assertSame('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), sum(a) OVER (ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING), sum(a) OVER (ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING) FROM t', $operation->toString());
+        self::assertSame('SELECT sum(a) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING) AS c1, sum(a) OVER (ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING) AS c2, sum(a) OVER (ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING) AS c3 FROM t', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltBoundary(): void

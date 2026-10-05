@@ -58,7 +58,7 @@ final class OperatorRuleTest extends TestCase
 
     public function testExpressionLowersThePrefixOperators(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT NOT a, ~a, +a, -a FROM t');
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT NOT a AS c1, ~a AS c2, +a AS c3, -a AS c4 FROM t');
 
         self::assertInstanceOf(Select::class, $operation->statement);
         self::assertSame([UnaryOperator::Not, UnaryOperator::BitNot, UnaryOperator::Plus, UnaryOperator::Minus], array_map(static function (object $column): UnaryOperator {
@@ -67,7 +67,7 @@ final class OperatorRuleTest extends TestCase
 
             return $column->expression->operator;
         }, $operation->statement->columns));
-        self::assertSame('SELECT NOT a, ~ a, + a, - a FROM t', $operation->toString());
+        self::assertSame('SELECT NOT a AS c1, ~ a AS c2, + a AS c3, - a AS c4 FROM t', $operation->toString());
     }
 
     public function testExpressionKeepsTheOperandsInWrittenOrderAndTheStructureTheParserChose(): void

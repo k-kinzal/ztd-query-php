@@ -109,4 +109,15 @@ final class TypePartRuleTest extends TestCase
         self::assertSame(CharsetForm::Unicode, $unicode->form);
         self::assertSame(BinaryMark::Trailing, $unicode->mark);
     }
+
+    public function testNamedTellsHowACharacterSetIsIntroduced(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new TypePartRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $parser = $platform->parser($profile);
+
+        self::assertSame(CharsetForm::CharacterSet, $rule->named($parser->parse('SELECT CAST(a AS CHAR CHARACTER SET latin1)')->find('character_set')[0]));
+        self::assertSame(CharsetForm::Named, $rule->named($parser->parse('SELECT CAST(a AS CHAR CHARSET latin1)')->find('character_set')[0]));
+    }
 }

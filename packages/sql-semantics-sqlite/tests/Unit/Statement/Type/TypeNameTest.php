@@ -95,16 +95,16 @@ final class TypeNameTest extends TestCase
     public function testRenderWritesTheWordsAndTheArgumentsWithoutSpaces(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $spaced = $semantics->analyze('select cast(a as decimal ( + 10 , -2 )) from t');
-        $quoted = $semantics->analyze('SELECT CAST(a AS "big" int), CAST(a AS unsigned big int(3)) FROM t');
+        $spaced = $semantics->analyze('select cast(a as decimal ( + 10 , -2 )) AS c1 from t');
+        $quoted = $semantics->analyze('SELECT CAST(a AS "big" int) AS c1, CAST(a AS unsigned big int(3)) AS c2 FROM t');
         $cast = $spaced->field(0)->expression;
 
         self::assertInstanceOf(Cast::class, $cast);
         self::assertNotNull($cast->target);
         self::assertSame('decimal', $cast->target->text());
         self::assertCount(2, $cast->target->arguments);
-        self::assertSame('SELECT CAST(a AS decimal(+10,-2)) FROM t', $spaced->toString());
-        self::assertSame('SELECT CAST(a AS "big" int), CAST(a AS unsigned big int(3)) FROM t', $quoted->toString());
+        self::assertSame('SELECT CAST(a AS decimal(+10,-2)) AS c1 FROM t', $spaced->toString());
+        self::assertSame('SELECT CAST(a AS "big" int) AS c1, CAST(a AS unsigned big int(3)) AS c2 FROM t', $quoted->toString());
     }
 
     public function testRefusesANameWithoutWords(): void

@@ -18,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CastAtLocal;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -67,7 +68,7 @@ final class ConstructRule
             'simple_expr: CAST_SYM ( expr AT_SYM TIME_SYM ZONE_SYM opt_interval TEXT_STRING_literal AS DATETIME_SYM type_datetime_precision )' => $this->zone($form),
             'simple_expr: CONVERT_SYM ( expr USING charset_name )' => new CharsetConversion($expressions->expression($form->node(2)), $this->lowering->charsets->charset($form->node(4))),
             'simple_expr: BINARY simple_expr', 'simple_expr: BINARY_SYM simple_expr' => new BinaryCast($expressions->simpleExpression($form->node(1))),
-            'simple_expr: MATCH ident_list_arg AGAINST ( bit_expr fulltext_options )' => new FullTextSearch($this->columns($form->node(1)), $expressions->bitExpression($form->node(4)), $this->mode($form->node(5))),
+            'simple_expr: MATCH ident_list_arg AGAINST ( bit_expr fulltext_options )' => $this->search($form),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -134,6 +135,27 @@ final class ConstructRule
             'opt_array_cast: ARRAY_SYM', 'opt_interval: INTERVAL_SYM' => true,
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Lowers MATCH ... AGAINST, keeping whether the column list is parenthesized and whether IN NATURAL LANGUAGE MODE is written.
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function search(Form $form): FullTextSearch
+    {
+        $options = $this->lowering->form($form->node(5));
+        $stated = $options->signature === 'fulltext_options: opt_natural_language_mode opt_query_expansion'
+            && $this->lowering->form($options->node(0))->signature === 'opt_natural_language_mode: IN_SYM NATURAL LANGUAGE_SYM MODE_SYM';
+        $parenthesized = $this->lowering->form($form->node(1))->signature === 'ident_list_arg: ( ident_list )';
+
+        return new FullTextSearch(
+            $this->columns($form->node(1)),
+            $this->lowering->expressions->bitExpression($form->node(4)),
+            $this->mode($form->node(5)),
+            $parenthesized ? OptionalWords::Written : OptionalWords::Omitted,
+            $stated ? OptionalWords::Written : OptionalWords::Omitted,
+        );
     }
 
     /**

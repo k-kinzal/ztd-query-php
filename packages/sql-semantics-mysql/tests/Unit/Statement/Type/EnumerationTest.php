@@ -65,7 +65,7 @@ final class EnumerationTest extends TestCase
         self::assertSame(['a', 'b'], [$type->members[0]->value, $type->members[1]->value]);
         self::assertSame('utf8mb4', $type->charset?->charset?->value);
         $type->render($out);
-        self::assertSame("SET('a', 'b') CHARSET utf8mb4", (new Lexical())->join($out->pieces()));
+        self::assertSame("SET('a', 'b') CHARACTER SET utf8mb4", (new Lexical())->join($out->pieces()));
     }
 
     public function testRenderReproducesAnEnumWithTheBinaryAttributeUnderTheOldestRelease(): void

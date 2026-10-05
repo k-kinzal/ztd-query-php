@@ -60,9 +60,9 @@ final class CodecTest extends TestCase
     public function testNameSpellsTheNamesOfARenderedStatementSoTheyDecodeToTheSameNames(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $operation = $semantics->analyze('SELECT "select", [a b], `x``y` FROM "order"');
+        $operation = $semantics->analyze('SELECT "select" AS c1, [a b] AS c2, `x``y` AS c3 FROM "order"');
 
-        self::assertSame('SELECT "select", `a b`, `x``y` FROM `order`', $operation->toString());
-        self::assertSame('SELECT "select", `a b`, `x``y` FROM `order`', $semantics->analyze($operation->toString())->toString());
+        self::assertSame('SELECT "select" AS c1, `a b` AS c2, `x``y` AS c3 FROM `order`', $operation->toString());
+        self::assertSame('SELECT "select" AS c1, `a b` AS c2, `x``y` AS c3 FROM `order`', $semantics->analyze($operation->toString())->toString());
     }
 }

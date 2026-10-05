@@ -110,9 +110,9 @@ final class JoinedTableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame('SELECT 1 FROM t LEFT JOIN u ON t.a = u.a NATURAL RIGHT JOIN v CROSS JOIN w STRAIGHT_JOIN x INNER JOIN y USING (a, b)', $semantics->analyze('select 1 from t left outer join u on t.a = u.a natural right outer join v cross join w straight_join x inner join y using (a, b)')->toString());
-        self::assertSame('SELECT 1 FROM t NATURAL JOIN u', $semantics->analyze('select 1 from t natural inner join u')->toString());
-        self::assertSame('SELECT 1 FROM t LEFT JOIN u USING (a)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select 1 from t left outer join u using (a)')->toString());
+        self::assertSame('SELECT 1 FROM t LEFT OUTER JOIN u ON t.a = u.a NATURAL RIGHT OUTER JOIN v CROSS JOIN w STRAIGHT_JOIN x INNER JOIN y USING (a, b)', $semantics->analyze('select 1 from t left outer join u on t.a = u.a natural right outer join v cross join w straight_join x inner join y using (a, b)')->toString());
+        self::assertSame('SELECT 1 FROM t NATURAL INNER JOIN u', $semantics->analyze('select 1 from t natural inner join u')->toString());
+        self::assertSame('SELECT 1 FROM t LEFT OUTER JOIN u USING (a)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select 1 from t left outer join u using (a)')->toString());
     }
 
     public function testAConditionOnANaturalJoinIsRejected(): void

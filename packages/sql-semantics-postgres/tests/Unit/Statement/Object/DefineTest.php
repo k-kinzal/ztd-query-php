@@ -12,11 +12,19 @@ use SqlSemantics\Platform\PostgreSql\Dialect;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\BooleanArgument;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\AggregateAttribute;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\KnownAttribute;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\NameArgument;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\TypeArgument;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Define;
-use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
-use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblem;
-use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKind;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\AttributeProblem;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\AttributeProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateArguments;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Define::class)]
@@ -28,8 +36,8 @@ final class DefineTest extends TestCase
         $semantics = new Semantics(Dialect::PostgreSql);
         $aggregate = $semantics->analyze('CREATE AGGREGATE a(int4) (initcond = 0)');
         $operator = $semantics->analyze('CREATE OPERATOR === (leftarg = int4)');
-        self::assertEquals([new RoutineProblem(RoutineProblemKind::MissingTransition, 'stype'), new RoutineProblem(RoutineProblemKind::MissingTransition, 'sfunc')], $aggregate->facts->diagnostics);
-        self::assertEquals([new RoutineProblem(RoutineProblemKind::MissingRightArgument), new RoutineProblem(RoutineProblemKind::MissingOperatorFunction)], $operator->facts->diagnostics);
+        self::assertEquals([new AttributeProblem(AttributeProblemKind::MissingAggregateAttribute, ['stype']), new AttributeProblem(AttributeProblemKind::MissingAggregateAttribute, ['sfunc'])], $aggregate->facts->diagnostics);
+        self::assertEquals([new AttributeProblem(AttributeProblemKind::MissingOperatorFunction), new AttributeProblem(AttributeProblemKind::MissingRightArgument)], $operator->facts->diagnostics);
     }
 
     public function testRenderWritesEachForm(): void
@@ -50,13 +58,13 @@ final class DefineTest extends TestCase
     public function testRejectsAnOperatorNamedByADottedName(): void
     {
         $this->expectExceptionMessage('An operator, and only an operator, is named by an operator name written without OPERATOR(...).');
-        new Define(ObjectKind::Operator, new DottedName([new Name('o')]), [new Definition(new Name('function'))]);
+        new Define(ObjectKind::Operator, new DottedName([new Name('o')]), [new Attribute(new Name('colour'), null)]);
     }
 
     public function testRejectsAnOldStyleAttributeWithoutValue(): void
     {
         $this->expectExceptionMessage('Every attribute of an old-style aggregate has a value.');
-        new Define(ObjectKind::Aggregate, new DottedName([new Name('a')]), [new Definition(new Name('sfunc'))]);
+        new Define(ObjectKind::Aggregate, new DottedName([new Name('a')]), [new Attribute(new Name('hypothetical'), AggregateAttribute::Hypothetical, new BooleanArgument())]);
     }
 
     public function testRejectsArgumentsOfAnotherKind(): void
@@ -68,7 +76,7 @@ final class DefineTest extends TestCase
     public function testRejectsReplaceOfAnotherKind(): void
     {
         $this->expectExceptionMessage('Only an aggregate is defined with OR REPLACE.');
-        new Define(ObjectKind::Operator, new OperatorName(new Name('+')), [new Definition(new Name('function'))], null, true);
+        new Define(ObjectKind::Operator, new OperatorName(new Name('+')), [new Attribute(new Name('colour'), null)], null, true);
     }
 
     public function testRejectsIfNotExistsOfAnotherKind(): void
@@ -81,6 +89,27 @@ final class DefineTest extends TestCase
     {
         $this->expectExceptionMessage('CREATE with a definition defines an aggregate, an operator, a type, a text search object or a collation.');
         new Define(ObjectKind::Schema, new DottedName([new Name('s')]), []);
+    }
+
+    public function testRejectsAnAttributeOfAnotherCommand(): void
+    {
+        $this->expectExceptionMessage('A definition attribute is recognized exactly when its command knows its name.');
+        new Define(ObjectKind::Collation, new DottedName([new Name('c')]), [new Attribute(new Name('hashes'), OperatorAttribute::Hashes, new BooleanArgument())]);
+    }
+
+    public function testRejectsAnUnrecognizedAttributeTheCommandKnows(): void
+    {
+        $this->expectExceptionMessage('A definition attribute is recognized exactly when its command knows its name.');
+        new Define(ObjectKind::Operator, new OperatorName(new Name('+')), [new Attribute(new Name('hashes'), null)]);
+    }
+
+    public function testDeriveStatementReadsTheFunctionOfAnOperatorAsARoutine(): void
+    {
+        $define = (new Semantics(Dialect::PostgreSql))->analyze('CREATE OPERATOR === (leftarg = int4, rightarg = int4, function = int4eq)')->statement;
+        self::assertInstanceOf(Define::class, $define);
+        $definition = $define->definition ?? [];
+        self::assertSame([OperatorAttribute::Leftarg, OperatorAttribute::Rightarg, OperatorAttribute::Function], array_map(static fn (Attribute $attribute): ?KnownAttribute => $attribute->known, $definition));
+        self::assertEquals([new TypeArgument(new TypeName(new NamedDesignation(new DottedName([new Name('int4')])))), new NameArgument(ObjectKind::Function, new DottedName([new Name('int4eq')]))], [$definition[0]->value, $definition[2]->value]);
     }
 
     public function testRenderKeepsAnOldStyleAttributeSpelledLikeAKeywordQuoted(): void

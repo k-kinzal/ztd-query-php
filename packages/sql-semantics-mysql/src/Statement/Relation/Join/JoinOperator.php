@@ -10,7 +10,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Relation\Join;
  * JOIN, INNER JOIN and CROSS JOIN are equivalent inner joins in MySQL and
  * are kept as written; STRAIGHT_JOIN is an inner join that reads its left
  * operand first. The optional OUTER after LEFT and RIGHT and the optional
- * INNER after NATURAL do not change the meaning.
+ * INNER after NATURAL do not change the join, and are kept as written
+ * because MySQL names an unaliased select list expression, which can hold
+ * a join in a subquery, after its text.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/join.html.
  *
  * @visibility public
@@ -28,6 +30,11 @@ enum JoinOperator
     case Natural;
     case NaturalLeft;
     case NaturalRight;
+    case LeftOuter;
+    case RightOuter;
+    case NaturalInner;
+    case NaturalLeftOuter;
+    case NaturalRightOuter;
 
     /**
      * Answers the keywords the operator is written with.
@@ -48,6 +55,11 @@ enum JoinOperator
             self::Natural => ['NATURAL', 'JOIN'],
             self::NaturalLeft => ['NATURAL', 'LEFT', 'JOIN'],
             self::NaturalRight => ['NATURAL', 'RIGHT', 'JOIN'],
+            self::LeftOuter => ['LEFT', 'OUTER', 'JOIN'],
+            self::RightOuter => ['RIGHT', 'OUTER', 'JOIN'],
+            self::NaturalInner => ['NATURAL', 'INNER', 'JOIN'],
+            self::NaturalLeftOuter => ['NATURAL', 'LEFT', 'OUTER', 'JOIN'],
+            self::NaturalRightOuter => ['NATURAL', 'RIGHT', 'OUTER', 'JOIN'],
         };
     }
 
@@ -59,7 +71,7 @@ enum JoinOperator
      */
     public function natural(): bool
     {
-        return $this === self::Natural || $this === self::NaturalLeft || $this === self::NaturalRight;
+        return in_array($this, [self::Natural, self::NaturalLeft, self::NaturalRight, self::NaturalInner, self::NaturalLeftOuter, self::NaturalRightOuter], true);
     }
 
     /**
@@ -70,7 +82,7 @@ enum JoinOperator
      */
     public function keepsLeft(): bool
     {
-        return $this === self::Left || $this === self::NaturalLeft;
+        return in_array($this, [self::Left, self::NaturalLeft, self::LeftOuter, self::NaturalLeftOuter], true);
     }
 
     /**
@@ -81,7 +93,7 @@ enum JoinOperator
      */
     public function keepsRight(): bool
     {
-        return $this === self::Right || $this === self::NaturalRight;
+        return in_array($this, [self::Right, self::NaturalRight, self::RightOuter, self::NaturalRightOuter], true);
     }
 
     /**
@@ -92,6 +104,24 @@ enum JoinOperator
      */
     public function conditioned(): bool
     {
-        return $this === self::Left || $this === self::Right;
+        return in_array($this, [self::Left, self::Right, self::LeftOuter, self::RightOuter], true);
+    }
+
+    /**
+     * Answers the operator written with the optional OUTER or INNER word; an operator without such a word answers itself.
+     *
+     * @example Reading LEFT OUTER JOIN
+     *     \SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator::Left->worded() // => \SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator::LeftOuter
+     */
+    public function worded(): self
+    {
+        return match ($this) {
+            self::Left => self::LeftOuter,
+            self::Right => self::RightOuter,
+            self::Natural => self::NaturalInner,
+            self::NaturalLeft => self::NaturalLeftOuter,
+            self::NaturalRight => self::NaturalRightOuter,
+            self::Join, self::Inner, self::Cross, self::StraightJoin, self::LeftOuter, self::RightOuter, self::NaturalInner, self::NaturalLeftOuter, self::NaturalRightOuter => $this,
+        };
     }
 }

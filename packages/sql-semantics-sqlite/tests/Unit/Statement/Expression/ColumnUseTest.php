@@ -99,9 +99,9 @@ final class ColumnUseTest extends TestCase
 
     public function testRenderWritesTheQualifierPartsAndTheName(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('select a, t.b, main.t.a, [c], `d` from t');
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('select a AS c1, t.b AS c2, main.t.a AS c3, [c] AS c4, `d` AS c5 from t');
 
-        self::assertSame('SELECT a, t.b, main.t.a, c, d FROM t', $operation->toString());
+        self::assertSame('SELECT a AS c1, t.b AS c2, main.t.a AS c3, c AS c4, d AS c5 FROM t', $operation->toString());
     }
 
     public function testRenderQuotesANameThatNeedsIt(): void

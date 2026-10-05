@@ -10,6 +10,7 @@ use SqlSemantics\Lowering\Form;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Rules\Identifiers;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
@@ -175,6 +176,19 @@ final class NameRule
     }
 
     /**
+     * Tells whether a table name is written after a leading dot, `.t` (MySQL 5.6 and 5.7).
+     */
+    public function dotted(Node $name): bool
+    {
+        $form = $this->lowering->productions->form($name);
+        while (isset(self::FORWARD[$form->signature])) {
+            $form = $this->lowering->productions->form($form->node(0));
+        }
+
+        return $form->signature === 'table_ident: . ident';
+    }
+
+    /**
      * Lowers a comma-separated list of table names; an absent list is empty.
      *
      * @return list<QualifiedName>
@@ -231,7 +245,9 @@ final class NameRule
             throw ImplementationGap::production($form);
         }
 
-        return $this->lowering->leaves->record(new ColumnUse($this->identifier($form->node($positions[0])), $this->qualifier($form, $positions[1], $positions[2])));
+        $dot = $form->signature === 'simple_ident_q: . ident . ident' ? OptionalWords::Written : OptionalWords::Omitted;
+
+        return $this->lowering->leaves->record(new ColumnUse($this->identifier($form->node($positions[0])), $this->qualifier($form, $positions[1], $positions[2]), $dot));
     }
 
     /**

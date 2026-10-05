@@ -11,8 +11,8 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\Projection;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\ItemSpelling;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -96,7 +96,7 @@ final class ProjectionTest extends TestCase
 
     public function testOpenTellsRelationsWithUnknownColumns(): void
     {
-        self::assertFalse((new Projection())->open(new VisibleRelation(new Dual(), new RowShape([], [new ItemSpelling()]))));
+        self::assertFalse((new Projection())->open(new VisibleRelation(new Dual(), new RowShape([], [new NameConversion()]))));
         self::assertTrue((new Projection())->open(new VisibleRelation(new Dual(), new RowShape([], [new SessionState('x')]))));
     }
 

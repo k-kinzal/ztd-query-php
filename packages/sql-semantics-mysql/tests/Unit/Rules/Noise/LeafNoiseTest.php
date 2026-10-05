@@ -21,17 +21,17 @@ final class LeafNoiseTest extends TestCase
         self::assertSame([0], LeafNoise::positions()['equal: SET_VAR']);
         self::assertSame([0], LeafNoise::positions()['opt_default: DEFAULT']);
         self::assertSame([0], LeafNoise::positions()['opt_default: DEFAULT_SYM']);
-        self::assertSame([0, 1], LeafNoise::positions()['optional_braces: ( )']);
         self::assertSame([0, 1], LeafNoise::positions()['opt_wild: . *']);
         self::assertSame([0], LeafNoise::positions()['opt_comma: ,']);
         self::assertSame([0], LeafNoise::positions()['opt_storage: STORAGE_SYM']);
         self::assertSame([0], LeafNoise::positions()['opt_table: TABLE_SYM']);
         self::assertSame([0], LeafNoise::positions()['table_ident: . ident']);
         self::assertSame([0], LeafNoise::positions()['field_ident: . ident']);
-        self::assertSame([0], LeafNoise::positions()['simple_ident_q: . ident . ident']);
         self::assertSame([1], LeafNoise::positions()['charset: CHAR_SYM SET']);
         self::assertSame([1], LeafNoise::positions()['character_set: CHAR_SYM SET_SYM']);
-        self::assertCount(15, LeafNoise::positions());
+        self::assertCount(13, LeafNoise::positions());
+        self::assertArrayNotHasKey('optional_braces: ( )', LeafNoise::positions());
+        self::assertArrayNotHasKey('simple_ident_q: . ident . ident', LeafNoise::positions());
         self::assertArrayNotHasKey('table_ident: ident', LeafNoise::positions());
         self::assertArrayNotHasKey('charset: CHARSET', LeafNoise::positions());
     }

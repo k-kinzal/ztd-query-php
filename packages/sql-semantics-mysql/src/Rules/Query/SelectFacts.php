@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
 use SqlSemantics\Platform\MySql\Rules\Query\From\JoinedInput;
 use SqlSemantics\Platform\MySql\Rules\Query\From\Joining;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
@@ -63,7 +65,7 @@ final class SelectFacts
         $aggregate = $select->groupBy === null && (new Aggregation())->aggregates([...$expressions, ...$ordering, ...array_values(array_filter([$select->having, $select->qualify]))]);
         $output = $aggregate || $select->groupBy?->modifier !== null ? array_map(static fn ($relation) => (new Joining())->extend($relation), $visible) : $visible;
         $items = (new Projection())->items($select->items, $derivation, new Environment($context, $outer, $output), new JoinedInput($from->fact, $output, $from->star));
-        $aliases = $this->aliases($select, $items);
+        $aliases = $this->aliases($select, $items, $context->profile);
         if ($select->where !== null) {
             (new Operands())->single($derivation->scalar($select->where, new Environment($context, $outer, $visible)), $derivation);
         }
@@ -108,16 +110,21 @@ final class SelectFacts
     }
 
     /**
-     * Answers the output fields of select list items that carry an alias, in output order.
+     * Answers the output fields a name can refer to by their item name, in output order: aliased items and the items not named after a column.
+     *
+     * The server finds an item of the select list by its name, alias or
+     * name given after its text alike, unless the item is a column
+     * reference, which is found as the column it reads.
      *
      * @param list<Field|OpenStar> $items
      * @return list<Field>
      */
-    public function aliases(Select $select, array $items): array
+    public function aliases(Select $select, array $items, LanguageProfile $profile): array
     {
         $aliased = [];
+        $naming = new ItemNaming($profile);
         foreach ($select->items as $item) {
-            if ($item instanceof SelectExpression && $item->alias !== null) {
+            if ($item instanceof SelectExpression && ($item->alias !== null || !$naming->own($item->expression) instanceof ColumnUse)) {
                 $aliased[spl_object_id($item->expression)] = true;
             }
         }

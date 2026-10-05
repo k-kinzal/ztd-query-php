@@ -11,9 +11,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\DerivedShapes;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\ItemSpelling;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -36,7 +36,7 @@ final class DerivedShapesTest extends TestCase
         $listed = (new DerivedShapes())->shape($fact, [new Name('x'), new Name('y')], $derivation);
 
         self::assertCount(2, $plain->slots);
-        self::assertInstanceOf(ItemSpelling::class, $plain->missing[0]);
+        self::assertInstanceOf(NameConversion::class, $plain->missing[0]);
         self::assertSame(['x', 'y'], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $listed->slots));
         self::assertTrue($listed->complete());
         self::assertSame([], $derivation->facts()->diagnostics);

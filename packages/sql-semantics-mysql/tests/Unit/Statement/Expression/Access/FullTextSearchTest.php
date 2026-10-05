@@ -59,7 +59,7 @@ final class FullTextSearchTest extends TestCase
 
     public function testASearchStringThatTakesTheBooleanModeIsRejected(): void
     {
-        $this->expectExceptionMessage('A search string followed by IN BOOLEAN MODE needs a grouping to keep its place.');
+        $this->expectExceptionMessage('A search string followed by IN ... MODE needs a grouping to keep its place.');
 
         new FullTextSearch([new ColumnUse(new Name('a'))], new IntervalAddition(new Interval(new NumberLiteral('1'), IntervalUnit::Day), new NumberLiteral('2')), FullTextMode::Boolean);
     }

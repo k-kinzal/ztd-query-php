@@ -72,6 +72,14 @@ final class TableCallTest extends TestCase
 
         self::assertSame("SELECT * FROM main.json_each(1, 'x') AS j", $built->toString());
         self::assertSame('SELECT * FROM generate_series(1, 3)', $semantics->analyze('select * from generate_series(1,3)')->toString());
-        self::assertSame('SELECT * FROM pragma_table_info() AS p', $semantics->analyze('SELECT * FROM pragma_table_info() p')->toString());
+        self::assertSame('SELECT * FROM pragma_table_info() p', $semantics->analyze('SELECT * FROM pragma_table_info() p')->toString());
+        self::assertSame('SELECT * FROM pragma_table_info() AS p', $semantics->analyze('SELECT * FROM pragma_table_info() as p')->toString());
+    }
+
+    public function testRenderRefusesToLeaveOutAsWithoutAnAlias(): void
+    {
+        $this->expectExceptionMessage('AS is left out only before an alias.');
+
+        new TableCall(new QualifiedName(new Name('f')), [], null, false);
     }
 }

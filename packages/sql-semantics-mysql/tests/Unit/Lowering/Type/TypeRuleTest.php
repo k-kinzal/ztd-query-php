@@ -153,4 +153,15 @@ final class TypeRuleTest extends TestCase
         self::assertSame(SpatialKind::Point, $point->kind);
         self::assertNull($rule->keyword(new Form(new Node('type', 36, []), 'type: CHAR_SYM opt_charset_with_opt_binary')));
     }
+
+    public function testDoublePrecisionTellsWhetherPrecisionIsWritten(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $rule = new TypeRule(new Lowering($platform->productions($profile), new Leaves(), $profile));
+        $parser = $platform->parser($profile);
+
+        self::assertTrue($rule->doublePrecision($parser->parse('SELECT CAST(a AS DOUBLE PRECISION)')->find('real_type')[0]));
+        self::assertFalse($rule->doublePrecision($parser->parse('SELECT CAST(a AS DOUBLE)')->find('real_type')[0]));
+    }
 }

@@ -20,30 +20,17 @@ final class ExpressionNoise
     /**
      * Answers the noise positions by production signature.
      *
-     * - `simple_expr: ROW_SYM ( expr , expr_list )` position 0: "The
-     *   expressions (1,2) and ROW(1,2) are sometimes called row constructors.
-     *   The two are equivalent" (https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html).
-     * - `ident_list_arg: ( ident_list )` positions 0 and 2: the column list of
-     *   MATCH is the same with or without parentheses; the server builds the
-     *   same `Item_func_match` from both alternatives
-     *   (https://dev.mysql.com/doc/refman/8.4/en/fulltext-search.html#function_match).
-     * - `opt_natural_language_mode: IN_SYM NATURAL LANGUAGE_SYM MODE_SYM`
-     *   positions 0 to 3: a natural language search is performed "if the IN
-     *   NATURAL LANGUAGE MODE modifier is given or if no modifier is given" (https://dev.mysql.com/doc/refman/8.4/en/fulltext-natural-language.html).
-     * - `opt_of: OF_SYM` position 0: the grammar makes OF optional in
-     *   `MEMBER [OF] (json_array)`; both spellings build `Item_func_member_of`
-     *   (https://dev.mysql.com/doc/refman/8.4/en/json-search-functions.html#operator_member-of).
+     * None: the optional ROW of a row constructor, the parentheses of the
+     * column list of MATCH, IN NATURAL LANGUAGE MODE and the OF of MEMBER OF
+     * do not change the expression, but they are part of the text MySQL
+     * names an unaliased select list expression after, so the model keeps
+     * them (OptionalWords).
      *
      * @return array<string, list<int>>
      */
     public static function positions(): array
     {
-        return [
-            'simple_expr: ROW_SYM ( expr , expr_list )' => [0],
-            'ident_list_arg: ( ident_list )' => [0, 2],
-            'opt_natural_language_mode: IN_SYM NATURAL LANGUAGE_SYM MODE_SYM' => [0, 1, 2, 3],
-            'opt_of: OF_SYM' => [0],
-        ];
+        return [];
     }
 
     /**

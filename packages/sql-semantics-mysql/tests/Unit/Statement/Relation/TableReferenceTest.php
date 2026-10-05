@@ -164,7 +164,7 @@ final class TableReferenceTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
 
         self::assertSame('SELECT a FROM shop.t AS x', $semantics->analyze('select a from shop.t as x')->toString());
-        self::assertSame('SELECT a FROM t AS x', $semantics->analyze('SELECT a FROM t x')->toString());
+        self::assertSame('SELECT a FROM t x', $semantics->analyze('SELECT a FROM t x')->toString());
         self::assertSame('SELECT a FROM `order`', $semantics->analyze('SELECT a FROM `order`')->toString());
     }
 

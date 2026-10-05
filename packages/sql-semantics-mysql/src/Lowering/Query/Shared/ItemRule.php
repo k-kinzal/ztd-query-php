@@ -9,6 +9,8 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Lists;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Rules\Query\ItemNaming;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
@@ -24,7 +26,11 @@ use SqlSemantics\Statement\Identifier\Name;
  * opt_query_expression_options, query_expression_option_list,
  * select_item_list, select_item, select_alias. Options and items keep their
  * written order; a select alias written as a string names the item like an
- * identifier. Constructs: SelectOption, SelectExpression, Star, and the
+ * identifier. An item without alias that the server names after its text
+ * keeps the layout of its expression (MYSQL-ITEM-LAYOUT-001) unless the
+ * expression is written exactly as its canonical rendering, which an item
+ * without layout stands for; an item that names itself, such as a column
+ * reference or a string (MYSQL-SELECT-ITEM-NAME-001), keeps none. Constructs: SelectOption, SelectExpression, Star, and the
  * TableWildcard of the leaf rules. Terminates: lists are flattened
  * iteratively. Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
  * Status: Implemented.
@@ -152,10 +158,43 @@ final class ItemRule
         return match ($form->signature) {
             'select_item: table_wild' => $this->lowering->names->wildcard($form->node(0)),
             'select_item: remember_name table_wild remember_end' => $this->lowering->names->wildcard($form->node(1)),
-            'select_item: expr select_alias' => new SelectExpression($this->lowering->expressions->expression($form->node(0)), $this->alias($form->node(1))),
-            'select_item: remember_name expr remember_end select_alias' => new SelectExpression($this->lowering->expressions->expression($form->node(1)), $this->alias($form->node(3))),
+            'select_item: expr select_alias' => $this->expression($form->node(0), $form->node(1)),
+            'select_item: remember_name expr remember_end select_alias' => $this->expression($form->node(1), $form->node(3)),
             default => throw ImplementationGap::production($form),
         };
+    }
+
+    /**
+     * Lowers a projected expression with its alias, keeping the layout of an expression without alias that the server names after its text and that is not written as the canonical rendering (MYSQL-ITEM-LAYOUT-001).
+     *
+     * @throws ImplementationGap When a production has no rule
+     */
+    public function expression(Node $expression, Node $alias): SelectExpression
+    {
+        $name = $this->alias($alias);
+        $lowered = $this->lowering->expressions->expression($expression);
+        $naming = new ItemNaming($this->lowering->profile);
+        $layout = $name === null && $naming->own($lowered) === null ? (new ItemLayout($this->lowering->profile->grammar))->of($expression) : null;
+        if ($layout !== null && $layout->text() === $naming->canonical($lowered)) {
+            $layout = null;
+        }
+
+        return new SelectExpression($lowered, $name, $layout, $this->mark($alias));
+    }
+
+    /**
+     * Answers whether a select alias is written after AS; no alias answers AS, the mark of an item without alias.
+     *
+     * @throws ImplementationGap When the production has no rule
+     */
+    public function mark(Node $alias): AliasMark
+    {
+        $form = $this->lowering->form($alias);
+        if (!array_key_exists($form->signature, self::ALIASES)) {
+            throw ImplementationGap::production($form);
+        }
+
+        return self::ALIASES[$form->signature] === 0 ? AliasMark::Bare : AliasMark::As;
     }
 
     /**

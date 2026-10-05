@@ -43,6 +43,6 @@ final class JoinRuleTest extends TestCase
 
     public function testStepLowersEveryJoinForm(): void
     {
-        self::assertSame('SELECT 1 FROM t STRAIGHT_JOIN u ON 1 NATURAL JOIN v NATURAL LEFT JOIN w NATURAL RIGHT JOIN x RIGHT JOIN y USING (a) LEFT JOIN z ON 1 CROSS JOIN q USING (b)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from t straight_join u on 1 natural join v natural left outer join w natural right join x right join y using (a) left outer join z on 1 cross join q using (b)')->toString());
+        self::assertSame('SELECT 1 FROM t STRAIGHT_JOIN u ON 1 NATURAL JOIN v NATURAL LEFT OUTER JOIN w NATURAL RIGHT JOIN x RIGHT JOIN y USING (a) LEFT OUTER JOIN z ON 1 CROSS JOIN q USING (b)', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select 1 from t straight_join u on 1 natural join v natural left outer join w natural right join x right join y using (a) left outer join z on 1 cross join q using (b)')->toString());
     }
 }

@@ -147,17 +147,18 @@ final class TableDeclaration
     }
 
     /**
-     * Builds the declaration of a view from the output of its query and its column list.
+     * Builds the declaration of a view from the output of its query and the names of its columns.
      *
-     * @param list<Name>|null $listed The column list, when one is written
+     * @param list<Name|null> $names The name of each column: the column list when one is written, else the names the query gives
+     * @param bool $listed Whether the names are a written column list, whose length must match the query
      */
-    public function view(QualifiedName $name, QueryFact $output, ?array $listed, LanguageProfile $profile): Table
+    public function view(QualifiedName $name, QueryFact $output, array $names, bool $listed, LanguageProfile $profile): Table
     {
         $fields = $this->settled($output);
-        $complete = $output->shape->complete() && ($listed === null || count($listed) === count($fields));
+        $complete = $output->shape->complete() && (!$listed || count($names) === count($fields));
         $columns = [];
         foreach ($fields as $position => $field) {
-            $column = $this->fieldColumn($field, $listed === null ? $field->name : ($listed[$position] ?? null));
+            $column = $this->fieldColumn($field, $names[$position] ?? null);
             if ($column === null) {
                 $complete = false;
                 break;

@@ -120,8 +120,8 @@ final class CaseExpressionTest extends TestCase
 
     public function testRenderWritesEveryPartInOrder(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("select case a when 1 then 'x' when 2 then 'y' else 'z' end, case when a then 1 end from t");
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('select case a when 1 then \'x\' when 2 then \'y\' else \'z\' end AS c1, case when a then 1 end AS c2 from t');
 
-        self::assertSame("SELECT CASE a WHEN 1 THEN 'x' WHEN 2 THEN 'y' ELSE 'z' END, CASE WHEN a THEN 1 END FROM t", $operation->toString());
+        self::assertSame('SELECT CASE a WHEN 1 THEN \'x\' WHEN 2 THEN \'y\' ELSE \'z\' END AS c1, CASE WHEN a THEN 1 END AS c2 FROM t', $operation->toString());
     }
 }

@@ -17,6 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Position;
 use SqlSemantics\Platform\MySql\Statement\Call\Trim;
 use SqlSemantics\Platform\MySql\Statement\Call\TrimSide;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -199,9 +200,7 @@ final class FunctionRule
      */
     public function niladic(Form $form, KeywordFunction $function): KeywordCall
     {
-        $this->lowering->options->present($form->node(1));
-
-        return new KeywordCall($function, []);
+        return new KeywordCall($function, [], $this->lowering->options->present($form->node(1)) ? OptionalWords::Written : OptionalWords::Omitted);
     }
 
     /**
@@ -249,12 +248,12 @@ final class FunctionRule
             $this->lowering->options->skip($form->node(0));
             $this->lowering->options->skip($form->node(2));
 
-            return new CallArgument($this->expression($form, 1), $this->lowering->queries->alias($form->node(3)));
+            return new CallArgument($this->expression($form, 1), $this->lowering->queries->alias($form->node(3)), $this->lowering->queries->mark($form->node(3)));
         }
         if ($form->signature !== 'udf_expr: expr select_alias') {
             throw ImplementationGap::production($form);
         }
 
-        return new CallArgument($this->expression($form, 0), $this->lowering->queries->alias($form->node(1)));
+        return new CallArgument($this->expression($form, 0), $this->lowering->queries->alias($form->node(1)), $this->lowering->queries->mark($form->node(1)));
     }
 }

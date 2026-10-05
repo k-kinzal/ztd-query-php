@@ -24,4 +24,9 @@ final class TargetRuleTest extends TestCase
     {
         self::assertSame('LOAD DATA INFILE \'f\' REPLACE INTO TABLE t', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('load data infile \'f\' replace into table t')->toString());
     }
+
+    public function testWildcardsTellsTheTablesWrittenWithAStar(): void
+    {
+        self::assertSame('SELECT 1 FROM t, u FOR UPDATE OF t.*, u', (new Semantics(Dialect::MySql))->analyze('select 1 from t, u for update of t.*, u')->toString());
+    }
 }

@@ -57,7 +57,7 @@ final class RealLiteralTest extends TestCase
 
     public function testRenderWritesThePartsWithALowerCaseExponentMarker(): void
     {
-        self::assertSame('SELECT 1.5, .5, 5., 1e2, 1.50e-3, 1e+2', (new Semantics(Dialect::Sqlite))->analyze('select 1.5, .5, 5., 1e2, 1.50E-3, 1E+2')->toString());
+        self::assertSame('SELECT 1.5 AS c1, .5 AS c2, 5. AS c3, 1e2 AS c4, 1.50e-3 AS c5, 1e+2 AS c6', (new Semantics(Dialect::Sqlite))->analyze('select 1.5 AS c1, .5 AS c2, 5. AS c3, 1e2 AS c4, 1.50E-3 AS c5, 1E+2 AS c6')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void

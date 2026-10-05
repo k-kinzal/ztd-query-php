@@ -154,7 +154,7 @@ final class JoinChainTest extends TestCase
         $built = new Operation($semantics->context(), new Select([new Star()], new JoinChain($t, [new JoinStep(new JoinOperator(true), $u, new JoinUsing([new Name('a')]))])));
 
         self::assertSame('SELECT * FROM t, u USING (a)', $built->toString());
-        self::assertSame('SELECT * FROM t LEFT OUTER JOIN u ON t.a = u.a CROSS JOIN t AS t2', $semantics->analyze('select * from t left outer join u on t.a = u.a cross join t t2')->toString());
+        self::assertSame('SELECT * FROM t LEFT OUTER JOIN u ON t.a = u.a CROSS JOIN t t2', $semantics->analyze('select * from t left outer join u on t.a = u.a cross join t t2')->toString());
         self::assertSame('SELECT * FROM t ON 1', $semantics->analyze('SELECT * FROM t ON 1')->toString());
     }
 

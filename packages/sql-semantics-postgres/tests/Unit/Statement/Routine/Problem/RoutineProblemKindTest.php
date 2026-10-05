@@ -16,6 +16,6 @@ final class RoutineProblemKindTest extends TestCase
     public function testCasesCarryTheServerMessages(): void
     {
         self::assertSame('duplicate function body specified', RoutineProblemKind::DuplicateBody->value);
-        self::assertSame('aggregate %s must be specified', RoutineProblemKind::MissingTransition->value);
+        self::assertSame('parameter name "%s" used more than once', RoutineProblemKind::DuplicateParameter->value);
     }
 }

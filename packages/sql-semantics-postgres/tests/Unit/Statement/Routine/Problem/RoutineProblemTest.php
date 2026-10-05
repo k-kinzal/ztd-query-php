@@ -16,7 +16,7 @@ final class RoutineProblemTest extends TestCase
 {
     public function testMessageInsertsTheSubject(): void
     {
-        self::assertSame('aggregate stype must be specified', (new RoutineProblem(RoutineProblemKind::MissingTransition, 'stype'))->message());
+        self::assertSame('parameter name "a" used more than once', (new RoutineProblem(RoutineProblemKind::DuplicateParameter, 'a'))->message());
     }
 
     public function testMessageWithoutSubject(): void

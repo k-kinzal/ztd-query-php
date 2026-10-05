@@ -82,7 +82,7 @@ final class TruthWordTest extends TestCase
 
     public function testRenderWritesTheBareWordInUpperCase(): void
     {
-        self::assertSame('SELECT TRUE, FALSE', (new Semantics(Dialect::Sqlite))->analyze('select true, false')->toString());
+        self::assertSame('SELECT TRUE AS c1, FALSE AS c2', (new Semantics(Dialect::Sqlite))->analyze('select true AS c1, false AS c2')->toString());
     }
 
     public function testRenderWritesANewlyBuiltWord(): void

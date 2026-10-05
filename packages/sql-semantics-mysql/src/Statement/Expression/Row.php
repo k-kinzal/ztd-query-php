@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Comparing two rows
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT a FROM t WHERE ROW(a, b) = (1, 2)');
- *     [count($query->statement->where->left->elements), $query->toString()] // => [2, 'SELECT a FROM t WHERE (a, b) = (1, 2)']
+ *     [count($query->statement->where->left->elements), $query->toString()] // => [2, 'SELECT a FROM t WHERE ROW(a, b) = (1, 2)']
  */
 final class Row implements Scalar
 {
@@ -43,8 +43,9 @@ final class Row implements Scalar
 
     /**
      * @param list<Scalar> $elements The elements in order; at least two
+     * @param OptionalWords $keyword Whether the optional ROW keyword is written
      */
-    public function __construct(array $elements)
+    public function __construct(array $elements, public readonly OptionalWords $keyword = OptionalWords::Omitted)
     {
         $this->elements = Check::listOf($elements, Scalar::class, 'A row constructor has at least two elements.', 2);
     }
@@ -63,10 +64,13 @@ final class Row implements Scalar
     }
 
     /**
-     * Writes the elements in parentheses.
+     * Writes the ROW keyword when it is written and the elements in parentheses.
      */
     public function render(Output $out): void
     {
+        if ($this->keyword === OptionalWords::Written) {
+            $out->keyword('ROW')->glue();
+        }
         $out->symbol('(')->list($this->elements)->symbol(')');
     }
 }

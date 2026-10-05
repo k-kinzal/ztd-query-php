@@ -20,20 +20,15 @@ final class CallNoise
     /**
      * Answers the noise positions by production signature.
      *
-     * - `func_datetime_precision: ( )`: CURTIME(), NOW(), SYSDATE(),
-     *   UTC_TIME() and UTC_TIMESTAMP() without a precision are the same
-     *   functions as the forms without parentheses, as CURRENT_TIME and
-     *   CURRENT_TIMESTAMP are; the parentheses carry no operand
-     *   (https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_now:
-     *   "CURRENT_TIMESTAMP and CURRENT_TIMESTAMP() are synonyms for NOW()").
+     * None: the empty parentheses after a clock function change nothing, but
+     * they are part of the text MySQL names an unaliased select list
+     * expression after, so the model keeps them (OptionalWords).
      *
      * @return array<string, list<int>>
      */
     public static function positions(): array
     {
-        return [
-            'func_datetime_precision: ( )' => [0, 1],
-        ];
+        return [];
     }
 
     /**

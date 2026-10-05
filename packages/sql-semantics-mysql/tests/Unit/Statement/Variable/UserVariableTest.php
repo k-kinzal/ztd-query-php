@@ -34,7 +34,7 @@ final class UserVariableTest extends TestCase
         self::assertSame('the session state: user variable @total', $fact->type->missing[0]->describe());
         self::assertSame(Nullability::Dependent, $fact->nullability);
         self::assertNull($fact->resolution);
-        self::assertNull($operation->field(0)->name);
+        self::assertSame('@total', $operation->field(0)->name?->value);
     }
 
     public function testDeriveScalarKeepsTheNameAsWritten(): void
@@ -63,8 +63,9 @@ final class UserVariableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
 
-        self::assertSame('SELECT @`my var`', $semantics->analyze("SELECT @'my var'")->toString());
-        self::assertSame('SELECT @x', $semantics->analyze('SELECT @`x`')->toString());
+        self::assertSame('SELECT @`my var` AS v', $semantics->analyze("SELECT @'my var' AS v")->toString());
+        self::assertSame('SELECT @x AS v', $semantics->analyze('SELECT @`x` AS v')->toString());
+        self::assertSame("SELECT @'my var'", $semantics->analyze("SELECT @'my var'")->toString());
     }
 
     public function testRenderBuildsSqlFromAnExplicitStructure(): void

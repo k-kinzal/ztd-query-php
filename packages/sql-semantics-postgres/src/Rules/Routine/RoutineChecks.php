@@ -25,7 +25,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Routine\ResultTable;
  * parallel mode or WINDOW; PARALLEL takes `safe`, `restricted` or `unsafe`.
  * Body: a routine needs exactly one of `AS` and an SQL-standard body; a
  * routine without a body has to name its language; an SQL-standard body is
- * for language `sql` only. Parameters: VARIADIC is the last input parameter;
+ * for language `sql` only; only language `c` takes an object file and a
+ * link symbol. Parameters: VARIADIC is the last input parameter;
  * only input parameters take default values and every input parameter after
  * one with a default value takes one too; a procedure's OUT parameter may
  * not follow a parameter with a default value; two input or two output
@@ -80,6 +81,10 @@ final class RoutineChecks
         foreach ($function->options as $option) {
             $definition = $definition || $option instanceof RoutineDefinition;
             $language = $option instanceof RoutineLanguage ? $option : $language;
+            $source = $option instanceof RoutineDefinition && $option->symbol !== null ? $option->source->language : null;
+            if ($source !== null && $source->value !== 'c') {
+                $derivation->report(new RoutineProblem(RoutineProblemKind::SingleDefinition, $source->value));
+            }
         }
         $body = $function->body !== null;
         $problem = match (true) {

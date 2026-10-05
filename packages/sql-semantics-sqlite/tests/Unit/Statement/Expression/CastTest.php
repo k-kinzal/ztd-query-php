@@ -94,8 +94,8 @@ final class CastTest extends TestCase
 
     public function testRenderWritesTheConversionWithAndWithoutATypeName(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze('select cast(a as varchar(10)), cast(1 as), cast(b as "int") from t');
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('select cast(a as varchar(10)) AS c1, cast(1 as) AS c2, cast(b as "int") AS c3 from t');
 
-        self::assertSame('SELECT CAST(a AS varchar(10)), CAST(1 AS), CAST(b AS "int") FROM t', $operation->toString());
+        self::assertSame('SELECT CAST(a AS varchar(10)) AS c1, CAST(1 AS) AS c2, CAST(b AS "int") AS c3 FROM t', $operation->toString());
     }
 }

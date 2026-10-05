@@ -8,6 +8,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
@@ -111,7 +112,7 @@ final class PredicateRule
             throw ImplementationGap::production($of);
         }
 
-        return new MemberOf($operand, $this->lowering->expressions->simpleExpression($form->node(4)));
+        return new MemberOf($operand, $this->lowering->expressions->simpleExpression($form->node(4)), $of->signature === 'opt_of: OF_SYM' ? OptionalWords::Written : OptionalWords::Omitted);
     }
 
     /**

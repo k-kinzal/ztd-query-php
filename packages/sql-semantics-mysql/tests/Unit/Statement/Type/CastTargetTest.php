@@ -13,6 +13,7 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark;
@@ -102,7 +103,7 @@ final class CastTargetTest extends TestCase
         self::assertSame('DECIMAL(10, 2)', (new Lexical())->join($out->pieces()));
     }
 
-    public function testRenderDropsTheOptionalIntegerAfterSignedAndPrecisionAfterDouble(): void
+    public function testRenderKeepsTheOptionalIntegerAfterSignedAndPrecisionAfterDouble(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
@@ -118,8 +119,10 @@ final class CastTargetTest extends TestCase
         self::assertSame(CastKind::Unsigned, $unsigned->kind);
         self::assertSame(CastKind::Double, $double->kind);
         self::assertSame(CastKind::Real, $real->kind);
-        $double->render($out);
-        self::assertSame('DOUBLE', (new Lexical())->join($out->pieces()));
+        $out->list([$signed, $unsigned, $double, $real]);
+        self::assertSame('SIGNED INT, UNSIGNED INT, DOUBLE PRECISION, REAL', (new Lexical())->join($out->pieces()));
+        self::assertSame(OptionalWords::Written, $signed->words);
+        self::assertSame(OptionalWords::Omitted, $real->words);
     }
 
     public function testRenderWritesGeometrycollectionForTheShortSpelling(): void
@@ -146,11 +149,11 @@ final class CastTargetTest extends TestCase
         self::assertSame(CastKind::Char, $target->kind);
         self::assertSame('10', $target->length);
         self::assertInstanceOf(CharsetAttribute::class, $target->charset);
-        self::assertSame(CharsetForm::Named, $target->charset->form);
+        self::assertSame(CharsetForm::CharacterSet, $target->charset->form);
         self::assertSame('utf8', $target->charset->charset?->value);
         self::assertSame(BinaryMark::Trailing, $target->charset->mark);
         $target->render($out);
-        self::assertSame('CHAR(10) CHARSET utf8 BINARY', (new Lexical())->join($out->pieces()));
+        self::assertSame('CHAR(10) CHARACTER SET utf8 BINARY', (new Lexical())->join($out->pieces()));
     }
 
     public function testRenderReproducesANationalCharTargetLoweredUnderTheMiddleRelease(): void

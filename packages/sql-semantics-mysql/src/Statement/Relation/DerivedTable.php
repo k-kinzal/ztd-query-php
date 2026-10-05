@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\DerivedShapes;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Rendering\Output;
@@ -50,9 +51,11 @@ final class DerivedTable implements Relation
      * @param Name|null $alias The correlation name
      * @param list<Name> $columns The column names
      * @param bool $lateral Whether LATERAL is written
+     * @param AliasMark $mark What is written before the alias
      */
-    public function __construct(public readonly Query $query, public readonly ?Name $alias = null, array $columns = [], public readonly bool $lateral = false)
+    public function __construct(public readonly Query $query, public readonly ?Name $alias = null, array $columns = [], public readonly bool $lateral = false, public readonly AliasMark $mark = AliasMark::As)
     {
+        Check::input($alias !== null || $mark === AliasMark::As, 'A relation without alias has no alias mark.');
         $this->columns = Check::listOf($columns, Name::class, 'The column list of a derived table holds names.');
     }
 
@@ -78,7 +81,8 @@ final class DerivedTable implements Relation
         }
         $out->symbol('(')->node($this->query)->symbol(')');
         if ($this->alias !== null) {
-            $out->keyword('AS')->name($this->alias, NameUse::Alias);
+            $this->mark->write($out);
+            $out->name($this->alias, NameUse::Alias);
         }
         if ($this->columns !== []) {
             $out->symbol('(');

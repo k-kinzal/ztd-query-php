@@ -87,24 +87,24 @@ final class UnaryTest extends TestCase
 
     public function testRenderWritesNotAsAKeywordAndTheOthersAsSymbols(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('select not a, -a, +a, ~a from t');
+        $query = (new Semantics(Dialect::Sqlite))->analyze('select not a AS c1, -a AS c2, +a AS c3, ~a AS c4 from t');
 
-        self::assertSame('SELECT NOT a, - a, + a, ~ a FROM t', $query->toString());
+        self::assertSame('SELECT NOT a AS c1, - a AS c2, + a AS c3, ~ a AS c4 FROM t', $query->toString());
     }
 
     public function testRenderCoversTheTighterOperatorsThatFollowThePrefix(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
-        $negation = $semantics->analyze('SELECT NOT a = b FROM t');
-        $collated = $semantics->analyze('SELECT -a COLLATE nocase FROM t');
+        $negation = $semantics->analyze('SELECT NOT a = b AS c1 FROM t');
+        $collated = $semantics->analyze('SELECT -a COLLATE nocase AS c1 FROM t');
         $operand = $negation->field(0)->expression;
 
         self::assertInstanceOf(Unary::class, $operand);
         self::assertInstanceOf(Binary::class, $operand->operand);
-        self::assertSame('SELECT NOT a = b FROM t', $negation->toString());
+        self::assertSame('SELECT NOT a = b AS c1 FROM t', $negation->toString());
         self::assertInstanceOf(Collate::class, $collated->field(0)->expression);
         self::assertInstanceOf(Unary::class, $collated->field(0)->expression->operand);
-        self::assertSame('SELECT - a COLLATE nocase FROM t', $collated->toString());
+        self::assertSame('SELECT - a COLLATE nocase AS c1 FROM t', $collated->toString());
     }
 
     public function testRenderWritesANewlyBuiltNegationOverASum(): void

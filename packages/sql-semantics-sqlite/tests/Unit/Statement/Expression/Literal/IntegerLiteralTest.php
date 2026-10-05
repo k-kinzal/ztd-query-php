@@ -67,7 +67,7 @@ final class IntegerLiteralTest extends TestCase
 
     public function testRenderWritesTheDigitsWithoutSeparators(): void
     {
-        self::assertSame('SELECT 1000, 007, 9223372036854775808', (new Semantics(Dialect::Sqlite))->analyze('select 1_000, 007, 9223372036854775808')->toString());
+        self::assertSame('SELECT 1000 AS c1, 007 AS c2, 9223372036854775808 AS c3', (new Semantics(Dialect::Sqlite))->analyze('select 1_000 AS c1, 007 AS c2, 9223372036854775808 AS c3')->toString());
     }
 
     public function testRenderWritesANewlyBuiltLiteral(): void

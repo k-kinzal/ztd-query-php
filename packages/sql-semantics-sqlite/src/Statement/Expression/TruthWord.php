@@ -30,8 +30,8 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * @visibility public
  * @example Reading TRUE as the integer constant
- *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT true', []);
- *     [$query->statement->columns[0]->expression->value, $query->field(0)->type->descriptor, $query->toString()] // => [true, \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, 'SELECT TRUE']
+ *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT true AS t', []);
+ *     [$query->statement->columns[0]->expression->value, $query->field(0)->type->descriptor, $query->toString()] // => [true, \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Integer, 'SELECT TRUE AS t']
  */
 final class TruthWord implements Scalar
 {

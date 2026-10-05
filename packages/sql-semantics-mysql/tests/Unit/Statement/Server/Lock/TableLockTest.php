@@ -17,6 +17,6 @@ final class TableLockTest extends TestCase
 {
     public function testRenderWritesTableAliasAndLock(): void
     {
-        self::assertSame('LOCK TABLES db.t AS a LOW_PRIORITY WRITE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('lock tables db.t a low_priority write')->toString());
+        self::assertSame('LOCK TABLES db.t a LOW_PRIORITY WRITE', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('lock tables db.t a low_priority write')->toString());
     }
 }

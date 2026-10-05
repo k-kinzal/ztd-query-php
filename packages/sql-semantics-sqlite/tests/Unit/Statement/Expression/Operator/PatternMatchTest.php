@@ -87,7 +87,7 @@ final class PatternMatchTest extends TestCase
 
     public function testRenderWritesTheNegationAndTheEscape(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze("select a not like 'x!%' escape '!', a not glob 'x' from t");
+        $query = (new Semantics(Dialect::Sqlite))->analyze('select a not like \'x!%\' escape \'!\' AS c1, a not glob \'x\' AS c2 from t');
         $match = $query->field(0)->expression;
 
         self::assertInstanceOf(PatternMatch::class, $match);
@@ -95,7 +95,7 @@ final class PatternMatchTest extends TestCase
         self::assertTrue($match->negated);
         self::assertInstanceOf(TextLiteral::class, $match->escape);
         self::assertSame('!', $match->escape->value);
-        self::assertSame("SELECT a NOT LIKE 'x!%' ESCAPE '!', a NOT GLOB 'x' FROM t", $query->toString());
+        self::assertSame('SELECT a NOT LIKE \'x!%\' ESCAPE \'!\' AS c1, a NOT GLOB \'x\' AS c2 FROM t', $query->toString());
     }
 
     public function testRenderGroupsToTheLeft(): void

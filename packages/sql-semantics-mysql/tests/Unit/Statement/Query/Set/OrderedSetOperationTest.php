@@ -61,7 +61,7 @@ final class OrderedSetOperationTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
 
-        self::assertSame('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1)', $semantics->analyze('select (select 1 union select a from t for update order by 1)')->toString());
+        self::assertSame('SELECT (SELECT 1 UNION SELECT a FROM t FOR UPDATE ORDER BY 1) AS v', $semantics->analyze('select (select 1 union select a from t for update order by 1) as v')->toString());
         self::assertInstanceOf(QueryExpression::class, $semantics->analyze('SELECT 1 UNION SELECT a FROM t ORDER BY 1')->statement);
     }
 

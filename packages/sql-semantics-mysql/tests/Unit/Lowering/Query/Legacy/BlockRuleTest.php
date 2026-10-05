@@ -88,8 +88,8 @@ final class BlockRuleTest extends TestCase
 
     public function testDerivedLowersTheBlocksOfSubqueries(): void
     {
-        self::assertSame('SELECT (SELECT a FROM t LIMIT 1 FOR UPDATE) FROM u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select (select a from t limit 1 for update) from u')->toString());
-        self::assertSame('SELECT (SELECT DISTINCT a FROM t) FROM u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select (select distinct a from t) from u')->toString());
+        self::assertSame('SELECT (SELECT a FROM t LIMIT 1 FOR UPDATE) AS v FROM u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select (select a from t limit 1 for update) as v from u')->toString());
+        self::assertSame('SELECT (SELECT DISTINCT a FROM t) AS v FROM u', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select (select distinct a from t) as v from u')->toString());
     }
 
     public function testDerivedRejectsProcedureAnalyseInASubquery(): void

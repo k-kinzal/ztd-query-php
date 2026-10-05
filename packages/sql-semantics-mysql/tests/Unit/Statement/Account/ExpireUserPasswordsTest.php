@@ -22,6 +22,6 @@ final class ExpireUserPasswordsTest extends TestCase
 
     public function testRenderWritesEveryAccount(): void
     {
-        self::assertSame('ALTER USER a PASSWORD EXPIRE, CURRENT_USER PASSWORD EXPIRE', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('alter user a password expire, current_user() password expire')->toString());
+        self::assertSame('ALTER USER a PASSWORD EXPIRE, CURRENT_USER() PASSWORD EXPIRE', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('alter user a password expire, current_user() password expire')->toString());
     }
 }

@@ -41,8 +41,6 @@ enum CatalogMisuseRule: string
     case PublicationDuplicateColumn = 'duplicate column "%s" in publication column list';
     case EnumValueDrop = 'dropping an enum value is not implemented';
     case EnumLabelLength = 'invalid enum label "%s"';
-    case RangeAttribute = 'type attribute "%s" not recognized';
-    case RangeSubtype = 'type attribute "subtype" is required';
     case AttributeTwice = 'column "%s" specified more than once';
     case DomainUnique = 'unique constraints not possible for domains';
     case DomainPrimaryKey = 'primary key constraints not possible for domains';

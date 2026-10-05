@@ -54,8 +54,8 @@ final class SortTermTest extends TestCase
 
     public function testRenderWritesTheOrderingOfAnAggregateArgument(): void
     {
-        $query = (new Semantics(Dialect::Sqlite))->analyze('select group_concat(a order by b desc, a) from t');
+        $query = (new Semantics(Dialect::Sqlite))->analyze('select group_concat(a order by b desc, a) AS c1 from t');
 
-        self::assertSame('SELECT group_concat(a ORDER BY b DESC, a) FROM t', $query->toString());
+        self::assertSame('SELECT group_concat(a ORDER BY b DESC, a) AS c1 FROM t', $query->toString());
     }
 }

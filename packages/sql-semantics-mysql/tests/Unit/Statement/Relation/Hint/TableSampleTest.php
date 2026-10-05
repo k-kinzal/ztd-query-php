@@ -24,7 +24,7 @@ final class TableSampleTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-9.1.0');
 
-        self::assertSame('SELECT a FROM t AS x TABLESAMPLE SYSTEM (@p)', $semantics->analyze('select a from t x tablesample system (@p)')->toString());
+        self::assertSame('SELECT a FROM t x TABLESAMPLE SYSTEM (@p)', $semantics->analyze('select a from t x tablesample system (@p)')->toString());
         self::assertSame('SELECT a FROM t TABLESAMPLE BERNOULLI (?)', $semantics->analyze('select a from t tablesample bernoulli (?)')->toString());
     }
 

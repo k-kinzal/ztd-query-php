@@ -15,8 +15,12 @@ use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Lowering\Routine\DefineRule;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\CreateEnum;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\RangeAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Define;
+use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(DefineRule::class)]
 #[Small]
@@ -46,5 +50,20 @@ final class DefineRuleTest extends TestCase
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
         $tree = (new PostgreSqlParser('pg-17.2'))->parse('CREATE AGGREGATE a (basetype = int, sfunc = f, stype = int)');
         self::assertCount(3, (new DefineRule($lowering))->old($tree->find('old_aggr_definition')[0]));
+    }
+
+    public function testAttributesReadsTheAttributesOfTheCommand(): void
+    {
+        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse('CREATE OPERATOR === (function = f, colour = red)');
+        $attributes = (new DefineRule($lowering))->attributes(ObjectKind::Operator, $tree->find('definition')[0]);
+        self::assertSame([OperatorAttribute::Function, null], [$attributes[0]->known, $attributes[1]->known]);
+    }
+
+    public function testReadBuildsAnAttributeForEachElement(): void
+    {
+        $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
+        $attributes = (new DefineRule($lowering))->read(RangeAttribute::class, [[new Name('subtype'), new StringConstant('int4')], [new Name('foo'), null]]);
+        self::assertSame([RangeAttribute::Subtype, null], [$attributes[0]->known, $attributes[1]->known]);
     }
 }

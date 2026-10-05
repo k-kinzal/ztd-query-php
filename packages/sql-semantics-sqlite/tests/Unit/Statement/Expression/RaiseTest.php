@@ -57,9 +57,9 @@ final class RaiseTest extends TestCase
 
     public function testRenderWritesTheActionAndTheMessage(): void
     {
-        $operation = (new Semantics(Dialect::Sqlite))->analyze("create trigger r before delete on t begin select raise(ignore); select raise(rollback, 'r'), raise(abort, 'a'), raise(fail, 'f'); end");
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('create trigger r before delete on t begin select raise(ignore) AS c1; select raise(rollback, \'r\') AS c2, raise(abort, \'a\') AS c3, raise(fail, \'f\') AS c4; end');
 
-        self::assertSame("CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(IGNORE); SELECT RAISE(ROLLBACK, 'r'), RAISE(ABORT, 'a'), RAISE(FAIL, 'f'); END", $operation->toString());
+        self::assertSame('CREATE TRIGGER r BEFORE DELETE ON t BEGIN SELECT RAISE(IGNORE) AS c1; SELECT RAISE(ROLLBACK, \'r\') AS c2, RAISE(ABORT, \'a\') AS c3, RAISE(FAIL, \'f\') AS c4; END', $operation->toString());
     }
 
     public function testRenderWritesANewlyBuiltRaise(): void

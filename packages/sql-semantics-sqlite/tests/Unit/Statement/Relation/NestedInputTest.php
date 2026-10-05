@@ -81,7 +81,14 @@ final class NestedInputTest extends TestCase
         $built = new Operation($semantics->context(), new Select([new Star()], new NestedInput(new TableInput(new QualifiedName(new Name('t'))), new Name('x'))));
 
         self::assertSame('SELECT * FROM (t) AS x', $built->toString());
-        self::assertSame('SELECT * FROM (t JOIN u USING (a)) AS j, u AS u2', $semantics->analyze('select * from (t join u using (a)) j, u u2')->toString());
+        self::assertSame('SELECT * FROM (t JOIN u USING (a)) j, u u2', $semantics->analyze('select * from (t join u using (a)) j, u u2')->toString());
         self::assertSame('SELECT * FROM ((t))', $semantics->analyze('SELECT * FROM ((t))')->toString());
+    }
+
+    public function testRenderRefusesToLeaveOutAsWithoutAnAlias(): void
+    {
+        $this->expectExceptionMessage('AS is left out only before an alias.');
+
+        new NestedInput(new TableInput(new QualifiedName(new Name('t'))), null, false);
     }
 }
