@@ -36,4 +36,15 @@ final class LeafKeysTest extends TestCase
         self::assertNull($platform->leafKeys($profile)->key($tokens[2], 'as: AS nm', 0));
         self::assertSame('name:x', $platform->leafKeys($profile)->key($tokens[3], 'nm: idj', 0));
     }
+
+    public function testSynonymousAcceptsTheSameTerminalInAnotherSpelling(): void
+    {
+        $profile = (new Semantics(Dialect::Sqlite))->profile();
+        $platform = Platforms::of('sqlite');
+        $tokens = $platform->parser($profile)->tokenize('AND and OR');
+        $keys = $platform->leafKeys($profile);
+
+        self::assertTrue($keys->synonymous($tokens[0], $tokens[1]));
+        self::assertFalse($keys->synonymous($tokens[0], $tokens[2]));
+    }
 }

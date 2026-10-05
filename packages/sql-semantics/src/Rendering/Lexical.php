@@ -8,7 +8,8 @@ namespace SqlSemantics\Rendering;
  * Joins output pieces into SQL text with a fixed, minimal spacing rule.
  *
  * Pieces are separated by one space, except around punctuation that never
- * merges with a neighbour and where a node asked for glue. The rule performs
+ * merges with a neighbour, where a node asked for glue, and inside a spelled
+ * region, where the layout's trivia is written. The rule performs
  * no formatting and no normalization of the pieces themselves.
  *
  * @visibility SqlSemantics
@@ -25,7 +26,9 @@ final class Lexical
         $sql = '';
         $previous = null;
         foreach ($pieces as $piece) {
-            if ($previous !== null && !$this->tight($previous, $piece)) {
+            if ($previous !== null && $piece->gap !== null) {
+                $sql .= $piece->gap;
+            } elseif ($previous !== null && !$this->tight($previous, $piece)) {
                 $sql .= ' ';
             }
             $sql .= $piece->text;

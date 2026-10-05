@@ -96,4 +96,12 @@ final class LeafKeys implements \SqlSemantics\Contract\LeafKeys
             + QueryNoise::positions() + ManipulationNoise::positions() + TableNoise::positions() + CatalogNoise::positions()
             + RoutineNoise::positions() + AccessNoise::positions() + UtilityNoise::positions();
     }
+
+    /**
+     * Tells whether a written token is the same terminal as the rendered one.
+     */
+    public function synonymous(Token $rendered, Token $written): bool
+    {
+        return $rendered->name === $written->name;
+    }
 }

@@ -20,7 +20,7 @@ final class NameUseTest extends TestCase
 {
     public function testEveryPositionANameIsSpelledForIsACase(): void
     {
-        self::assertSame(['Column', 'Relation', 'Qualifier', 'Alias', 'Routine', 'Label'], array_map(static fn (NameUse $use): string => $use->name, NameUse::cases()));
+        self::assertSame(['Column', 'Relation', 'Qualifier', 'Alias', 'Routine', 'Label', 'Identifier'], array_map(static fn (NameUse $use): string => $use->name, NameUse::cases()));
     }
 
     public function testThePositionIsHandedToTheCodec(): void

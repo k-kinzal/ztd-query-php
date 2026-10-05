@@ -8,14 +8,15 @@ use ReflectionClass;
 use ReflectionProperty;
 use ReflectionReference;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Statement\Snapshot;
 use UnitEnum;
 
 /**
  * Audits that a value graph is deeply immutable and made of the closed value domain only.
  *
  * Every reachable object must be an enum case or an instance of a final
- * class of the admitted namespaces whose properties are all initialised
- * readonly properties. Properties hold null, booleans, integers, strings,
+ * class of the admitted namespaces that uses the Snapshot trait and whose
+ * properties are all initialised readonly properties. Properties hold null, booleans, integers, strings,
  * arrays without references, or such objects. Floats, closures, resources and
  * classes of any other origin are rejected, whatever interface they implement.
  *
@@ -100,6 +101,7 @@ final class ValueGraph
             Check::input($property->isReadOnly() && !$property->isStatic(), 'Semantic value class ' . $class . ' must have readonly properties only.');
             $properties[] = $property;
         }
+        Check::input(in_array(Snapshot::class, $reflection->getTraitNames(), true), 'Semantic value class ' . $class . ' must close cloning, dynamic properties and unserialization with the Snapshot trait.');
 
         return $this->properties[$class] = $properties;
     }

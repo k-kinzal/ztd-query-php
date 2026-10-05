@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
@@ -90,6 +91,15 @@ final class ValueGraphTest extends TestCase
         $this->expectExceptionMessage('Semantic value class ArrayIterator must be final.');
 
         $graph->members(new ArrayIterator([]));
+    }
+
+    public function testMembersRefusesAClassWithoutTheSnapshotTrait(): void
+    {
+        $graph = new ValueGraph(['SqlSemantics\\']);
+
+        $this->expectExceptionMessage('Semantic value class ' . SearchPath::class . ' must close cloning, dynamic properties and unserialization with the Snapshot trait.');
+
+        $graph->members(new SearchPath('main'));
     }
 
     public function testMembersRefusesAClassWithWritableProperties(): void

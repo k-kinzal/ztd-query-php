@@ -146,4 +146,39 @@ final class LeafKeys implements \SqlSemantics\Contract\LeafKeys
             + TableChangeNoise::synonyms() + RoutineNoise::synonyms() + AccountNoise::synonyms() + ReplicationNoise::synonyms()
             + ServerNoise::synonyms() + UtilityNoise::synonyms();
     }
+
+    /**
+     * Tells whether a written token is the same terminal as the rendered one, or a terminal a synonym table gives the same key.
+     */
+    public function synonymous(Token $rendered, Token $written): bool
+    {
+        if ($rendered->name === $written->name) {
+            return true;
+        }
+        $keys = self::terminalSynonyms();
+
+        return isset($keys[$rendered->name], $keys[$written->name]) && array_intersect($keys[$rendered->name], $keys[$written->name]) !== [];
+    }
+
+    /**
+     * Answers the synonym keys each terminal is given at some position of the synonym tables, together with its own name.
+     *
+     * @return array<string, list<string>>
+     */
+    public static function terminalSynonyms(): array
+    {
+        $keys = [];
+        foreach (self::synonyms() as $signature => $positions) {
+            $symbols = explode(' ', trim(substr($signature, (int) strpos($signature, ':') + 1)));
+            foreach ($positions as $position => $key) {
+                $terminal = $symbols[$position] ?? null;
+                if ($terminal !== null) {
+                    $keys[$terminal] = array_values(array_unique([...($keys[$terminal] ?? [$terminal]), $key]));
+                    $keys[$key] ??= [$key];
+                }
+            }
+        }
+
+        return $keys;
+    }
 }

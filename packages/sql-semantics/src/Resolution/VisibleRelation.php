@@ -19,6 +19,8 @@ use SqlSemantics\Statement\Shape\RowShape;
  */
 final class VisibleRelation
 {
+    use \SqlSemantics\Statement\Snapshot;
+
     /**
      * @param Relation $relation The occurrence
      * @param RowShape $shape The row shape visible at this position

@@ -28,7 +28,8 @@ use SqlSemantics\Statement\Statement;
  * context; every scalar, relation and query node must have received a fact.
  * (3) The structure is rendered to typed pieces and joined to text. (4) The
  * text is parsed under the same profile and lowered by the same rules, and the
- * result must correspond operand by operand to the structure. Any failure
+ * result must correspond operand by operand to the structure. Spelled regions
+ * must only re-spell the rendered tokens (CORE-SPELLING-001). Any failure
  * discards the candidate. Trusted: the parser, the lowering and derivation
  * rules, and these checks. Status: Implemented.
  *
@@ -61,6 +62,7 @@ final class Publication
         $output = new Output($platform->codec($context->profile));
         $statement->render($output);
         $sql = (new Lexical())->join($output->pieces());
+        (new Spellings($platform->parser($context->profile), $platform->leafKeys($context->profile)))->check((new Lexical())->join($output->canonical()), $sql);
         try {
             $tree = $platform->parser($context->profile)->parse($sql);
         } catch (SourceException $error) {

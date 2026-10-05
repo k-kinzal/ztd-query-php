@@ -11,10 +11,13 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\Sqlite\Rendering\Codec;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
 use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\NullLiteral;
+use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Rendering\Piece;
 use SqlSemantics\Rendering\PieceKind;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Spelling\Layout;
+use SqlSemantics\Statement\Spelling\Spelled;
 
 #[CoversClass(Output::class)]
 #[Small]
@@ -128,5 +131,43 @@ final class OutputTest extends TestCase
     public function testPiecesAreEmptyBeforeAnythingIsWritten(): void
     {
         self::assertSame([], (new Output(new Codec()))->pieces());
+    }
+
+    public function testLayoutRespellsEachRenderedPieceAndKeepsTheRenderedText(): void
+    {
+        $output = new Output(new Codec());
+        $layout = new Layout([new Spelled('', 'null')]);
+
+        $output->keyword('SELECT')->layout($layout, new NullLiteral());
+
+        self::assertSame(['SELECT', 'null'], array_map(static fn (Piece $piece): string => $piece->text, $output->pieces()));
+        self::assertSame(['SELECT', 'NULL'], array_map(static fn (Piece $piece): string => $piece->text, $output->canonical()));
+        self::assertSame('SELECT null', (new Lexical())->join($output->pieces()));
+    }
+
+    public function testLayoutWithoutALayoutRendersRegularly(): void
+    {
+        $output = new Output(new Codec());
+
+        $output->layout(null, new IntegerLiteral('7'));
+
+        self::assertSame(['7'], array_map(static fn (Piece $piece): string => $piece->text, $output->pieces()));
+        self::assertSame(['7'], array_map(static fn (Piece $piece): string => $piece->text, $output->canonical()));
+    }
+
+    public function testLayoutRefusesALayoutThatDoesNotAlignWithTheRenderedPieces(): void
+    {
+        $output = new Output(new Codec());
+
+        $this->expectExceptionMessage('The layout spells 2 tokens where the rendering writes 1.');
+
+        $output->layout(new Layout([new Spelled('', '7'), new Spelled(' ', '8')]), new IntegerLiteral('7'));
+    }
+
+    public function testCanonicalKeepsTheRenderedTextOfEveryPiece(): void
+    {
+        $output = (new Output(new Codec()))->keyword('SELECT')->layout(new Layout([new Spelled('', '7')]), new IntegerLiteral('7'));
+
+        self::assertSame(['SELECT', '7'], array_map(static fn (Piece $piece): string => $piece->text, $output->canonical()));
     }
 }

@@ -9,6 +9,7 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Spelling\Layout;
 
 /**
  * The typed, temporary output a statement structure is written to.
@@ -28,6 +29,13 @@ final class Output
     private array $pieces = [];
 
     private bool $glue = false;
+
+    private bool $spelling = false;
+
+    /**
+     * @var list<Piece>
+     */
+    private array $canonical = [];
 
     /**
      * @param Codec $codec The name codec of the language profile
@@ -132,11 +140,56 @@ final class Output
     }
 
     /**
+     * Writes a node in the spelling of a layout, or regularly when there is none.
+     *
+     * The node renders its pieces as always; each piece then takes the
+     * spelling and the preceding trivia of the layout token at its position.
+     * Inside a spelled region a nested layout has no effect, since the outer
+     * layout spells every token of the region.
+     *
+     * @return $this
+     * @throws \SqlSemantics\Diagnostic\InvariantViolation When the layout does not have one token per rendered piece
+     */
+    public function layout(?Layout $layout, Node $node): self
+    {
+        if ($layout === null || $this->spelling) {
+            $node->render($this);
+
+            return $this;
+        }
+        $start = count($this->pieces);
+        $this->spelling = true;
+        $node->render($this);
+        $this->spelling = false;
+        $count = count($this->pieces) - $start;
+        Check::invariant($count === count($layout->tokens), 'The layout spells ' . count($layout->tokens) . ' tokens where the rendering writes ' . $count . '.');
+        $spelled = [];
+        foreach (array_slice($this->pieces, $start) as $offset => $canonical) {
+            $token = $layout->tokens[$offset];
+            $spelled[] = new Piece($canonical->kind, $token->text, $canonical->glued, $offset === 0 ? null : $token->gap);
+        }
+        $this->pieces = [...array_slice($this->pieces, 0, $start), ...$spelled];
+
+        return $this;
+    }
+
+    /**
+     * Answers the pieces as the structure renders them, before any layout re-spelled them, for validation.
+     *
+     * @return list<Piece>
+     */
+    public function canonical(): array
+    {
+        return $this->canonical;
+    }
+
+    /**
      * Adds one piece, consuming a pending glue request.
      */
     public function add(PieceKind $kind, string $text): void
     {
         $this->pieces[] = new Piece($kind, $text, $this->glue);
+        $this->canonical[] = new Piece($kind, $text, $this->glue);
         $this->glue = false;
     }
 

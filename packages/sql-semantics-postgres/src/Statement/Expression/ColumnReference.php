@@ -43,6 +43,8 @@ use SqlSemantics\Statement\Scalar;
  */
 final class ColumnReference implements Scalar, OutputNaming
 {
+    use \SqlSemantics\Statement\Snapshot;
+
     /**
      * @var non-empty-list<Name> The parts of the name as written, the column last
      */

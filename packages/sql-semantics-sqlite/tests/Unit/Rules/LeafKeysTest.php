@@ -138,4 +138,12 @@ final class LeafKeysTest extends TestCase
         self::assertSame('ORDER:ORDER', $keys->literal(new Token(1, 'ORDER', 'Order', 0)));
         self::assertSame('TEMP:TEMP', $keys->literal(new Token(1, 'TEMP', 'TEMPORARY', 0)));
     }
+
+    public function testSynonymousAcceptsOnlyTheSameTerminal(): void
+    {
+        $keys = new LeafKeys();
+
+        self::assertTrue($keys->synonymous(new Token(1, 'AND', 'AND', 0), new Token(1, 'AND', 'and', 0)));
+        self::assertFalse($keys->synonymous(new Token(1, 'AND', 'AND', 0), new Token(1, 'OR', 'OR', 0)));
+    }
 }

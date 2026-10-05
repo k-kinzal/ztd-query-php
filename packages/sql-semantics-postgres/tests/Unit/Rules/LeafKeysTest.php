@@ -54,4 +54,12 @@ final class LeafKeysTest extends TestCase
         self::assertSame([1], (new LeafKeys())->noise()['target_el: a_expr AS ColLabel']);
         self::assertSame([0, 1], (new LeafKeys())->noise()['opt_set_data: SET DATA_P']);
     }
+
+    public function testSynonymousAcceptsOnlyTheSameTerminal(): void
+    {
+        $keys = new LeafKeys();
+
+        self::assertTrue($keys->synonymous(new Token(1, 'AND', 'AND', 0), new Token(1, 'AND', 'and', 0)));
+        self::assertFalse($keys->synonymous(new Token(1, 'AND', 'AND', 0), new Token(1, 'OR', 'OR', 0)));
+    }
 }
