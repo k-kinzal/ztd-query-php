@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query\Facts;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\IntoClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuse;
@@ -85,7 +85,7 @@ final class QueryRoots
     {
         $columns = [];
         $complete = true;
-        $types = new DeclaredTypes();
+        $types = new DeclaredTyping();
         foreach ($fact->projection as $item) {
             $type = $item instanceof Field ? $types->defined($item->type) : null;
             if (!$item instanceof Field || $item->name === null || $type === null) {

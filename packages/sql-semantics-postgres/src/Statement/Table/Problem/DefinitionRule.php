@@ -56,4 +56,10 @@ enum DefinitionRule: string
     case EventName = 'unrecognized event name "%s"';
     case FilterVariable = 'unrecognized filter variable "%s"';
     case InvalidSequenceOption = 'invalid sequence option %s';
+    case StatementTriggerColumns = "statement trigger's WHEN condition cannot reference column values";
+    case InsertTriggerOld = "INSERT trigger's WHEN condition cannot reference OLD values";
+    case DeleteTriggerNew = "DELETE trigger's WHEN condition cannot reference NEW values";
+    case TemporaryInPermanentSchema = 'cannot create temporary relation in non-temporary schema';
+    case UnloggedInTemporarySchema = 'only temporary relations may be created in temporary schemas';
+    case BeforeTriggerSystemColumn = "BEFORE trigger's WHEN condition cannot reference NEW system columns";
 }

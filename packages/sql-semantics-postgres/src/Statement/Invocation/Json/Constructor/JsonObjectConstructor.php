@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonNullHandling;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonPair;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonReturning;
@@ -56,6 +57,8 @@ final class JsonObjectConstructor implements Scalar, OutputNaming
     {
         $this->pairs = Check::listOf($pairs, JsonPair::class, 'JSON_OBJECT takes key and value pairs.');
         Check::input($this->pairs !== [] || ($nulls === null && $unique === null), 'JSON_OBJECT without pairs takes no NULL or uniqueness clause.');
+        $last = $this->pairs === [] ? null : $this->pairs[count($this->pairs) - 1]->value;
+        Check::input($unique === null || $nulls !== null || $last === null || $last->format !== null || !(new Precedence())->takesUniqueness($last->value), 'A last value ending in IS JSON without a uniqueness clause would take the uniqueness clause; group it.');
     }
 
     /**

@@ -132,4 +132,13 @@ final class FunctionCallTest extends TestCase
         $call->render($out);
         self::assertSame('"coalesce"(*)', (new Lexical())->join($out->pieces()));
     }
+
+    public function testRenderQuotesAnUnqualifiedCubeOrRollup(): void
+    {
+        $out = new Output(new Codec(GrammarRelease::PostgreSql172));
+        (new FunctionCall(new DottedName([new Name('cube')]), [new PositionalArgument(new Constant(new IntegerConstant('1')))]))->render($out);
+        $qualified = new Output(new Codec(GrammarRelease::PostgreSql172));
+        (new FunctionCall(new DottedName([new Name('s'), new Name('rollup')]), [new PositionalArgument(new Constant(new IntegerConstant('1')))]))->render($qualified);
+        self::assertSame(['"cube"(1)', 's.rollup(1)'], [(new Lexical())->join($out->pieces()), (new Lexical())->join($qualified->pieces())]);
+    }
 }

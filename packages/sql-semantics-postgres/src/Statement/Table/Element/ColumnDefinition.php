@@ -6,8 +6,11 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Element;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\ColumnTyping;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\IdentityColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Qualifiers;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
+use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\Identity;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\GenericOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
@@ -22,7 +25,8 @@ use SqlSemantics\Statement\Snapshot;
  * builds. The qualifiers are kept in the order written: constraints,
  * deferral attributes (which apply to the constraint before them) and a
  * collation. Their problems are reported by PG-COLUMN-QUALIFIERS-001; their
- * expressions are derived in the environment of the table.
+ * expressions are derived in the environment of the table; the type of an
+ * identity column is checked by PG-IDENTITY-TYPE-001.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
  *
  * @visibility public
@@ -72,6 +76,9 @@ final class ColumnDefinition implements Clause
     {
         $this->type->deriveClause($derivation, $environment);
         (new Qualifiers())->derive($derivation, $environment, $this->name, $this->qualifiers);
+        if (array_filter($this->qualifiers, static fn ($qualifier): bool => $qualifier instanceof Identity) !== []) {
+            (new IdentityColumns())->check($derivation, (new ColumnTyping())->descriptor($this->type, $derivation->context));
+        }
     }
 
     /**

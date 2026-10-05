@@ -10,18 +10,11 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\ColumnResolver;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
-use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Column\AliasTarget;
-use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Type\Dependent;
-use SqlSemantics\Statement\Type\Invalid;
-use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A name used as a value: a request to resolve it as a column at its position.
@@ -64,19 +57,7 @@ final class ColumnUse implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $resolution = (new ColumnResolver())->find($environment, $this->name, $this->qualifier);
-        if ($resolution instanceof ResolvedColumn) {
-            return new ScalarFact($resolution->slot->type, $resolution->slot->nullability, $resolution);
-        }
-        if ($resolution instanceof AliasTarget) {
-            return new ScalarFact($resolution->field->type, $resolution->field->nullability, $resolution);
-        }
-        if ($resolution instanceof ConditionalColumn) {
-            return new ScalarFact(new Dependent($resolution->missing), Nullability::Dependent, $resolution);
-        }
-        Check::invariant($resolution instanceof Diagnostic, 'A column lookup resolves, depends on missing inputs, or reports a problem.');
-
-        return new ScalarFact(new Invalid($resolution), Nullability::Dependent, $resolution);
+        return (new ColumnResolver())->fact($environment, $this->name, $this->qualifier);
     }
 
     /**

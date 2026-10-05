@@ -11,9 +11,9 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Column\Resolution;
-use SqlSemantics\Statement\Shape\OpenStar;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Shape\Field;
 
 /**
  * Resolves a name against the GROUP BY columns and the select list of a grouped row.
@@ -84,32 +84,44 @@ final class ResultReferences
      */
     public function selected(GroupedRow $row, Environment $scope, Name $column, ?QualifiedName $qualifier, int $depth): ?Resolution
     {
-        $names = $scope->context->columnNames;
         [$aliased, $unaliased, $other] = [null, null, null];
         foreach ($row->selected as $item) {
-            if ($item instanceof OpenStar) {
-                continue;
+            $field = $item instanceof Field ? $item : null;
+            $resolution = $field?->expression instanceof ColumnUse ? $field->resolution : null;
+            $named = $qualifier === null && $field?->name !== null && $scope->context->columnNames->equal($field->name->value, $column->value);
+            if ($field !== null && $named && !$resolution instanceof ResolvedColumn) {
+                return new AliasTarget($field);
             }
-            $resolution = $item->expression instanceof ColumnUse ? $item->resolution : null;
-            $named = $item->name !== null && $names->equal($item->name->value, $column->value);
             if (!$resolution instanceof ResolvedColumn) {
-                if ($qualifier === null && $named) {
-                    return new AliasTarget($item);
-                }
                 continue;
             }
-            if ($qualifier !== null || !$named) {
-                if ($this->named($scope, $resolution, $column) && ($qualifier === null || $this->admitted($scope, $resolution, $column, $qualifier))) {
-                    $other = $other ?? ($unaliased !== null && !$this->same($unaliased, $resolution) ? $resolution : null);
-                    $unaliased = $unaliased ?? $resolution;
+            if ($named) {
+                if ($aliased !== null && !$this->same($aliased, $resolution)) {
+                    return new AmbiguousColumn($column, [$this->deeper($aliased, $depth), $this->deeper($resolution, $depth)]);
                 }
-                continue;
+                $aliased = $resolution;
+            } elseif ($this->unaliased($scope, $resolution, $column, $qualifier)) {
+                $other = $other ?? ($unaliased !== null && !$this->same($unaliased, $resolution) ? $resolution : null);
+                $unaliased = $unaliased ?? $resolution;
             }
-            if ($aliased !== null && !$this->same($aliased, $resolution)) {
-                return new AmbiguousColumn($column, [$this->deeper($aliased, $depth), $this->deeper($resolution, $depth)]);
-            }
-            $aliased = $resolution;
         }
+
+        return $this->chosen($column, $aliased, $unaliased, $other, $depth);
+    }
+
+    /**
+     * Tells whether a column item of the select list matches a name by its column rather than by its alias.
+     */
+    public function unaliased(Environment $scope, ResolvedColumn $resolution, Name $column, ?QualifiedName $qualifier): bool
+    {
+        return $this->named($scope, $resolution, $column) && ($qualifier === null || $this->admitted($scope, $resolution, $column, $qualifier));
+    }
+
+    /**
+     * Chooses among the select list matches: the item matched by its alias, else the only column matched by its own name.
+     */
+    public function chosen(Name $column, ?ResolvedColumn $aliased, ?ResolvedColumn $unaliased, ?ResolvedColumn $other, int $depth): ?Resolution
+    {
         if ($aliased === null && $unaliased !== null && $other !== null) {
             return new AmbiguousColumn($column, [$this->deeper($unaliased, $depth), $this->deeper($other, $depth)]);
         }

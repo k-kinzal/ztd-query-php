@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\Alterations;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\IdentityColumns;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\KeyColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\GeneratedWhen;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
@@ -15,11 +17,13 @@ use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 
 /**
  * ALTER [ COLUMN ] ... ADD GENERATED ... AS IDENTITY: makes a column an identity column.
  *
- * Mirrors `AT_AddIdentity` with the sequence options.
+ * Mirrors `AT_AddIdentity` with the sequence options. The column must exist,
+ * and its declared type is checked by PG-IDENTITY-TYPE-001.
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  *
  * @visibility public
@@ -47,11 +51,18 @@ final class AddIdentity implements AlterCommand
     }
 
     /**
-     * Checks that the column exists and derives the options.
+     * Checks that the column exists and has an identity type, and derives the options.
      */
     public function deriveClause(Derivation $derivation, Environment $environment): void
     {
         (new Alterations())->column($derivation, $environment, $this->column);
+        foreach ($environment->relations as $relation) {
+            $position = $relation->shape->complete() ? (new KeyColumns())->position($derivation, $relation->shape, $this->column) : null;
+            $type = $position === null ? null : $relation->shape->slots[$position]->type;
+            if ($type instanceof Known) {
+                (new IdentityColumns())->check($derivation, $type->descriptor);
+            }
+        }
         foreach ($this->options as $option) {
             $option->deriveClause($derivation, $environment);
         }

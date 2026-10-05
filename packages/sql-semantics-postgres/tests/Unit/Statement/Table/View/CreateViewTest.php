@@ -72,4 +72,12 @@ final class CreateViewTest extends TestCase
         $statement = $semantics->analyze('CREATE OR REPLACE TEMP RECURSIVE VIEW v (n) WITH (security_barrier) AS SELECT 1 UNION ALL SELECT n + 1 FROM v WHERE n < 5 WITH CASCADED CHECK OPTION', []);
         self::assertSame('CREATE OR REPLACE TEMP RECURSIVE VIEW v (n) WITH (security_barrier) AS SELECT 1 UNION ALL SELECT n + 1 FROM v WHERE n < 5 WITH CASCADED CHECK OPTION', $statement->toString());
     }
+
+    public function testRejectsACheckOptionAfterAnOpenIsJsonTest(): void
+    {
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT a FROM t WHERE b IS JSON')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $query);
+        $this->expectExceptionMessage('A query ending in IS JSON without a uniqueness clause would take WITH CHECK OPTION; group it.');
+        new \SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('v')), $query, checkOption: \SqlSemantics\Platform\PostgreSql\Statement\Table\View\CheckOption::Local);
+    }
 }

@@ -50,7 +50,8 @@ use SqlSemantics\Statement\Scalar;
  * at L and L groups to the right. Precedence decides only between a rule
  * and a token that can continue its last operand, which every operator
  * token can; ESCAPE continues only a pattern match without one, so an
- * operand before ESCAPE keeps its place unless such a match ends it. An
+ * operand before ESCAPE keeps its place unless such a match ends it; WITH
+ * and WITHOUT continue only an IS JSON test without a uniqueness clause. An
  * expression that is not an operator
  * form is a `c_expr`: it is closed on both edges. Terminates: each walk
  * follows one edge of a finite tree.
@@ -342,6 +343,26 @@ final class Precedence
     {
         for ($node = $operand; $node !== null; $node = $this->edges($node)[2] ?? null) {
             if ($node instanceof PatternMatch && $node->escape === null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Tells whether an IS JSON test without a key uniqueness clause lies on the right edge of an operand, where it would take a following WITH or WITHOUT.
+     *
+     * The grammar gives WITH and WITHOUT a higher precedence than the empty
+     * json_key_uniqueness_constraint_opt of `a_expr IS JSON`, so the nearest
+     * open test takes a WITH UNIQUE, WITH WRAPPER, WITH CHECK OPTION or
+     * WITH DATA that follows the operand, and the last three then fail to
+     * parse.
+     */
+    public function takesUniqueness(Scalar $operand): bool
+    {
+        for ($node = $operand; $node !== null; $node = $this->edges($node)[2] ?? null) {
+            if ($node instanceof JsonTest && $node->uniqueness === null) {
                 return true;
             }
         }

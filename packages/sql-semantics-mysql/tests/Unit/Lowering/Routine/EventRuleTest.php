@@ -118,7 +118,7 @@ final class EventRuleTest extends TestCase
         self::assertInstanceOf(RecurringSchedule::class, $statement->schedule);
         self::assertSame(Completion::Preserve, $statement->completion);
         self::assertSame('e2', $statement->newName?->name->value);
-        self::assertSame('db', $statement->newName?->schema?->value);
+        self::assertSame('db', $statement->newName->schema?->value);
         self::assertSame(EventStatus::Disable, $statement->status);
         self::assertSame('x', $statement->comment?->value);
         self::assertInstanceOf(Select::class, $statement->body);

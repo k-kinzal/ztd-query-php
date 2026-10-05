@@ -6,10 +6,10 @@ namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Persistence;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
-use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -69,7 +69,7 @@ final class QueryTables
         $columns = [];
         $complete = true;
         $seen = [];
-        $types = new DeclaredTypes();
+        $types = new DeclaredTyping();
         foreach ($fact->projection as $position => $item) {
             $column = $item instanceof Field ? ($names[$position] ?? $item->name) : null;
             $type = $item instanceof Field ? $types->defined($item->type) : null;

@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Set;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Query\QueryTails;
 use SqlSemantics\Platform\MySql\Rules\Query\SetFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
@@ -47,15 +48,16 @@ final class SetOperation implements Statement, Query
     use Snapshot;
 
     /**
-     * @param Query $left The left operand
+     * @param Query|LeadingUnion $left The left operand: a query, or the operands of a 5.x union before this UNION when the last of them keeps its own clauses
      * @param SetOperator $operator The operator
      * @param SetQuantifier|null $quantifier The written DISTINCT or ALL
      * @param Query $right The right operand
      */
-    public function __construct(public readonly Query $left, public readonly SetOperator $operator, public readonly ?SetQuantifier $quantifier, public readonly Query $right)
+    public function __construct(public readonly Query|LeadingUnion $left, public readonly SetOperator $operator, public readonly ?SetQuantifier $quantifier, public readonly Query $right)
     {
         Check::input(!$right instanceof self || $right->operator->tighter($operator), 'A set operation on the right of another is written in parentheses unless it binds more tightly.');
         Check::input(!$left instanceof self || !$operator->tighter($left->operator), 'A looser set operation on the left of INTERSECT is written in parentheses.');
+        Check::input(!$left instanceof LeadingUnion || $operator === SetOperator::Union, 'A leading union continues with UNION.');
         Check::input(!$left instanceof QueryStatement && !$right instanceof QueryStatement, 'A query with INTO or locking clauses is written in parentheses as a set operand.');
         Check::input(!$left instanceof OrderedSetOperation && !$right instanceof OrderedSetOperation, 'A set operation ordered after its last SELECT ends its subquery.');
         Check::input(!$right instanceof QueryExpression && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause or with ordering of its own is written in parentheses as a set operand.');
@@ -83,10 +85,7 @@ final class SetOperation implements Statement, Query
      */
     public function render(Output $out): void
     {
-        $out->node($this->left)->keyword($this->operator->value);
-        if ($this->quantifier !== null) {
-            $out->keyword($this->quantifier->value);
-        }
-        $out->node($this->right);
+        $out->node($this->left);
+        (new QueryTails())->operation($this, $out);
     }
 }

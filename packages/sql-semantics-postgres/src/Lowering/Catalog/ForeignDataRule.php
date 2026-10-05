@@ -7,8 +7,6 @@ namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
-use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionClause;
-use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionRole;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\AlterFdw;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\AlterForeignServer;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\AlterUserMapping;
@@ -21,6 +19,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\ImportRestric
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\ImportRestrictionKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\MappingUser;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\ServerVersion;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionClause;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Language\FunctionRole;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
 use SqlSemantics\Statement\Statement;

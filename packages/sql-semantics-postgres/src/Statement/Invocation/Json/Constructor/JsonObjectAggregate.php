@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonNullHandling;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonPair;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonReturning;
@@ -56,6 +58,7 @@ final class JsonObjectAggregate implements Scalar, OutputNaming
         public readonly ?Scalar $filter = null,
         public readonly WindowSpecification|Name|null $over = null,
     ) {
+        Check::input($unique === null || $nulls !== null || $pair->value->format !== null || !(new Precedence())->takesUniqueness($pair->value->value), 'A value ending in IS JSON without a uniqueness clause would take the uniqueness clause; group it.');
     }
 
     /**

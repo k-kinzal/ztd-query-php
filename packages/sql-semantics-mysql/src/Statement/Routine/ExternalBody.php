@@ -11,7 +11,7 @@ use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * The body of a stored routine written in an external language: `AS` and the code as a string (MySQL 9.0 and later).
+ * The body of a stored routine written in an external language: `AS` and the code as a string (MySQL 8.1 and later).
  *
  * The code is opaque text to the server's SQL layer; nothing is derived
  * from it.

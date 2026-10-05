@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\View;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
+use SqlSemantics\Platform\PostgreSql\Rules\Query\Trailing;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\CreationSchemas;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\QueryTables;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
@@ -23,7 +25,9 @@ use SqlSemantics\Statement\Statement;
  *
  * Mirrors PostgreSQL's `CreateTableAsStmt` with `objtype` MATVIEW. The
  * statement provides one declaration (PG-QUERY-TABLE-001) whose columns keep
- * the NULL facts of the query, with the system columns.
+ * the NULL facts of the query, with the system columns. WITH [NO] DATA after
+ * a query that ends with an IS JSON test without a uniqueness clause is
+ * rejected: the test would take the WITH (PG-QUERY-TRAILING-001).
  * Source: https://www.postgresql.org/docs/17/sql-creatematerializedview.html.
  *
  * @visibility public
@@ -69,6 +73,7 @@ final class CreateMaterializedView implements Statement
     ) {
         $this->columns = Check::listOf($columns, Name::class, 'Column names are names.');
         $this->options = Check::listOf($options, Definition::class, 'Storage parameters are definitions.');
+        Check::input($withData === null || !(new Trailing())->takesWith($query), 'A query ending in IS JSON without a uniqueness clause would take WITH DATA; group it.');
     }
 
     /**
@@ -78,6 +83,7 @@ final class CreateMaterializedView implements Statement
     {
         $fact = $derivation->query($this->query, $derivation->environment());
         $rules = new QueryTables();
+        (new CreationSchemas())->check($derivation, $this->name, $this->unlogged ? Persistence::Unlogged : Persistence::Permanent);
         $derivation->declare($rules->table($derivation, $rules->name($this->name, Persistence::Permanent, null), $fact, $this->columns, true, false));
     }
 

@@ -30,4 +30,12 @@ final class CreateTableAsTest extends TestCase
         $statement = $semantics->analyze('CREATE TEMP TABLE IF NOT EXISTS n (x) USING heap WITH (fillfactor = 70) ON COMMIT DROP TABLESPACE s AS SELECT 1 WITH NO DATA', []);
         self::assertSame('CREATE TEMP TABLE IF NOT EXISTS n (x) USING heap WITH (fillfactor = 70) ON COMMIT DROP TABLESPACE s AS SELECT 1 WITH NO DATA', $statement->toString());
     }
+
+    public function testRejectsWithDataAfterAnOpenIsJsonTest(): void
+    {
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT a IS JSON')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $query);
+        $this->expectExceptionMessage('A query ending in IS JSON without a uniqueness clause would take WITH DATA; group it.');
+        new \SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTableAs(new \SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTarget(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('n'))), $query, withData: false);
+    }
 }

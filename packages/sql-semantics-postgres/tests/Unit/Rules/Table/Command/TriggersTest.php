@@ -12,14 +12,14 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class TriggersTest extends TestCase
 {
-    public function testDeriveSeesNoColumnInAStatementTrigger(): void
+    public function testDeriveGivesAStatementTriggerOldAndNew(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [];
         array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
         $statement = $semantics->analyze('CREATE TRIGGER g AFTER INSERT ON t FOR EACH STATEMENT WHEN (a > 0) EXECUTE FUNCTION f()', $context);
         self::assertSame([
-          0 => 'Column a does not exist.',
+          0 => 'Column a is ambiguous.',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
 

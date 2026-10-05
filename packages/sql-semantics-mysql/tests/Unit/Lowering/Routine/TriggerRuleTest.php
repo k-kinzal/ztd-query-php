@@ -108,7 +108,7 @@ final class TriggerRuleTest extends TestCase
         $statement = $create->statement;
         self::assertInstanceOf(CreateTrigger::class, $statement);
         self::assertSame($placement, $statement->order?->placement);
-        self::assertSame('other', $statement->order?->other->value);
+        self::assertSame('other', $statement->order->other->value);
         self::assertSame($expected, $create->toString());
     }
 

@@ -12,6 +12,8 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\JsonItemKind;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\JsonTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonReturning;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query\JsonArgument;
@@ -79,5 +81,11 @@ final class JsonQueryFunctionTest extends TestCase
         $out = new Output(new Codec(GrammarRelease::PostgreSql172));
         $query->render($out);
         self::assertSame('JSON_QUERY(\'{}\', \'$.a\' PASSING 1 AS x RETURNING text WITH WRAPPER KEEP QUOTES ERROR ON ERROR)', (new Lexical())->join($out->pieces()));
+    }
+
+    public function testRejectsAPathThatWouldTakeTheWrapper(): void
+    {
+        $this->expectExceptionMessage('A path ending in IS JSON without a uniqueness clause would take the wrapper clause; group it.');
+        new JsonQueryFunction(JsonFunctionKind::Query, new JsonValueExpression(new Constant(new StringConstant('{}'))), new JsonTest(new Constant(new StringConstant('$.a')), false, JsonItemKind::Json), [], null, new JsonWrapping(JsonWrapperKind::Without));
     }
 }

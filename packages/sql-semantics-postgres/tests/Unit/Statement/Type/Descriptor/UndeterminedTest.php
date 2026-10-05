@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Undetermined;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
-use SqlSemantics\Statement\Reference\Missing\UndeclaredDomain;
 use SqlSemantics\Statement\Reference\Missing\UnboundParameter;
+use SqlSemantics\Statement\Reference\Missing\UndeclaredDomain;
 
 #[CoversClass(Undetermined::class)]
 #[Small]

@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Query;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\PostgreSql\Rules\Invocation\JsonChecks;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonReturning;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression;
@@ -71,6 +72,7 @@ final class JsonQueryFunction implements Scalar, OutputNaming
         $this->passing = Check::listOf($passing, JsonArgument::class, 'PASSING holds path variables.');
         Check::input($kind === JsonFunctionKind::Query || ($wrapper === null && $quotes === null), 'Only JSON_QUERY takes a wrapper or quotes clause.');
         Check::input($kind !== JsonFunctionKind::Exists || ($returning === null && $behavior?->onEmpty === null), 'JSON_EXISTS takes no RETURNING and no ON EMPTY.');
+        Check::input($wrapper === null || $this->passing !== [] || $returning !== null || !(new Precedence())->takesUniqueness($path), 'A path ending in IS JSON without a uniqueness clause would take the wrapper clause; group it.');
     }
 
     /**

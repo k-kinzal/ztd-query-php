@@ -113,7 +113,7 @@ final class TypeLookup
         $columns = $resolution->table->matchingColumns($column->value, $context->columnNames);
         Check::input(count($columns) <= 1, 'A declared PostgreSQL relation has no two columns of one name.');
         if ($columns !== []) {
-            return (new DeclaredTypes())->fact($columns[0]->type);
+            return (new DeclaredTyping())->fact($columns[0]->type);
         }
 
         return $resolution->table->complete ? new Invalid(new MissingColumn($column, $relation)) : new Dependent([new IncompleteMembers($resolution->table)]);

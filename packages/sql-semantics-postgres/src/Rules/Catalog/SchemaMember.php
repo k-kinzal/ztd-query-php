@@ -14,8 +14,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTri
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateTrigger;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView;
 use SqlSemantics\Rendering\Output;
-use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Statement;
 
 /**

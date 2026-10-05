@@ -39,4 +39,14 @@ final class EnclosedQueryTest extends TestCase
         self::assertTrue($create->statement->enclosed);
         self::assertSame('CREATE TABLE t (PARTITION BY HASH (a) SELECT 1 AS a) UNION SELECT 2 ORDER BY 1', $create->toString());
     }
+
+    public function testWriteWritesTheOperandsOfALeadingUnion(): void
+    {
+        $create = (new Semantics(Dialect::MySql, '5.6.51'))->analyze('CREATE TABLE t (PARTITION BY HASH (a) SELECT 1 AS a) UNION SELECT 2 FROM DUAL FOR UPDATE UNION SELECT 3');
+        self::assertInstanceOf(CreateTable::class, $create->statement);
+        self::assertInstanceOf(TableQuery::class, $create->statement->query);
+
+        self::assertTrue((new EnclosedQuery())->accepts($create->statement->query->query));
+        self::assertSame('CREATE TABLE t (PARTITION BY HASH (a) SELECT 1 AS a) UNION SELECT 2 FROM DUAL FOR UPDATE UNION SELECT 3', $create->toString());
+    }
 }

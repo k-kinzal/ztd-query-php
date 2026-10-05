@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Query\Trailing;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\CreationSchemas;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\QueryTables;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Rendering\Output;
@@ -19,7 +22,9 @@ use SqlSemantics\Statement\Statement;
  * `into`, `if_not_exists`) and `skipData` (WITH [NO] DATA). The statement
  * provides one declaration (PG-QUERY-TABLE-001): a column per output column
  * of the query, renamed by the written column names, able to be NULL, with
- * the system columns.
+ * the system columns. WITH [NO] DATA after a query that ends with an IS JSON
+ * test without a uniqueness clause is rejected: the test would take the WITH
+ * (PG-QUERY-TRAILING-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtableas.html.
  *
  * @visibility public
@@ -46,6 +51,7 @@ final class CreateTableAs implements Statement
         public readonly bool $ifNotExists = false,
         public readonly ?bool $withData = null,
     ) {
+        Check::input($withData === null || !(new Trailing())->takesWith($query), 'A query ending in IS JSON without a uniqueness clause would take WITH DATA; group it.');
     }
 
     /**
@@ -55,6 +61,7 @@ final class CreateTableAs implements Statement
     {
         $fact = $derivation->query($this->query, $derivation->environment());
         $rules = new QueryTables();
+        (new CreationSchemas())->check($derivation, $this->target->name, $this->persistence);
         $derivation->declare($rules->table($derivation, $rules->name($this->target->name, $this->persistence, null), $fact, $this->target->columns, true, true));
     }
 

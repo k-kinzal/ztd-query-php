@@ -48,6 +48,9 @@ final class XaRuleTest extends TestCase
 
     public function testLimitsRejectsAFormatAboveTheSignedRange(): void
     {
+        self::assertSame("XA COMMIT 'a', 'b', 9223372036854775808", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("XA COMMIT 'a', 'b', 9223372036854775808")->toString());
+        self::assertSame("XA COMMIT 'a', 'b', x'8000000000000000'", (new Semantics(Dialect::MySql))->analyze("XA COMMIT 'a', 'b', 0x8000000000000000")->toString());
+
         $this->expectException(AnalysisException::class);
 
         (new Semantics(Dialect::MySql))->analyze("XA COMMIT 'a', 'b', 9223372036854775808");

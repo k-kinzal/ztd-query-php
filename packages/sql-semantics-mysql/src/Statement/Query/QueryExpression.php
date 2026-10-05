@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\ExpressionFacts;
+use SqlSemantics\Platform\MySql\Rules\Query\QueryTails;
 use SqlSemantics\Platform\MySql\Rules\Query\SortScopes;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Rendering\Output;
@@ -87,9 +88,6 @@ final class QueryExpression implements Statement, Query
     public function render(Output $out): void
     {
         $out->node($this->with)->node($this->body);
-        if ($this->orderBy !== []) {
-            $out->keyword('ORDER', 'BY')->list($this->orderBy);
-        }
-        $out->node($this->limit);
+        (new QueryTails())->expression($this, $out);
     }
 }

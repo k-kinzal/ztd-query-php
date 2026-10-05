@@ -9,8 +9,10 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
+use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Shape\Field;
+use SqlSemantics\Statement\Shape\OpenStar;
 use SqlSemantics\Statement\Shape\RowShape;
 
 /**
@@ -75,6 +77,34 @@ final class HavingScope
                 }
             }
             $columns[] = new Field(count($columns), $resolution->slot, null, $resolution);
+        }
+
+        return $columns;
+    }
+
+    /**
+     * Answers the GROUP BY items and the select list items that are columns no known occurrence decides.
+     *
+     * Such a column belongs to an incompletely known occurrence, so the
+     * server may find a HAVING name among the GROUP BY columns or the
+     * select list items that this analysis cannot see.
+     *
+     * @param list<ScalarFact> $items The facts of the GROUP BY items, in order
+     * @param list<Field|OpenStar> $selected The output fields of the select list, in order
+     * @return list<ConditionalColumn>
+     */
+    public function undecided(array $items, array $selected): array
+    {
+        $columns = [];
+        foreach ($items as $fact) {
+            if ($fact->resolution instanceof ConditionalColumn) {
+                $columns[] = $fact->resolution;
+            }
+        }
+        foreach ($selected as $field) {
+            if ($field instanceof Field && $field->expression instanceof ColumnUse && $field->resolution instanceof ConditionalColumn) {
+                $columns[] = $field->resolution;
+            }
         }
 
         return $columns;

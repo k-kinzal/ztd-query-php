@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules;
 
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\ResultReferences;
@@ -12,15 +13,21 @@ use SqlSemantics\Resolution\ColumnLookup;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\LookupLevel;
 use SqlSemantics\Resolution\VisibleRelation;
+use SqlSemantics\Statement\Fact\Diagnostic;
+use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
+use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Column\Resolution;
-use SqlSemantics\Statement\Shape\OpenStar;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Shape\Field;
+use SqlSemantics\Statement\Shape\OpenStar;
+use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Statement\Type\Invalid;
+use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Validation\Equivalence;
 
 /**
@@ -44,7 +51,8 @@ use SqlSemantics\Validation\Equivalence;
  * name of a nested query sees them only when the enclosing block neither
  * groups, aggregates nor is DISTINCT (Item_ref::fix_fields,
  * Item_field::fix_outer_field). A select list star over an incompletely
- * known occurrence leaves a name not found there conditional.
+ * known occurrence, and a GROUP BY or select list column of the name that
+ * belongs to such an occurrence, leave a name not found there conditional.
  * Terminates: the scopes form a finite chain. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/select.html ("For GROUP BY or
  * HAVING clauses, it searches the FROM clause before searching in the
@@ -70,7 +78,7 @@ final class ColumnResolver
                 if ($result !== null) {
                     return $open === [] ? $result : $lookup->conditional($column, $result instanceof ResolvedColumn ? [$result] : [], $open);
                 }
-                $open = [...$open, ...$this->unlisted($row, $scope)];
+                $open = [...$open, ...$this->unlisted($row, $scope, $column)];
                 if ($depth === 0 || $row->grouped) {
                     $depth++;
                     continue;
@@ -97,19 +105,80 @@ final class ColumnResolver
     }
 
     /**
-     * Answers the incompletely known occurrences of a HAVING position whose columns a star of the select list may list unseen.
+     * Answers the facts of a column name: those of the column or select list item it resolves to, else the outcome as the cause.
+     */
+    public function fact(Environment $environment, Name $column, ?QualifiedName $qualifier = null): ScalarFact
+    {
+        $resolution = $this->find($environment, $column, $qualifier);
+        if ($resolution instanceof ResolvedColumn) {
+            return new ScalarFact($resolution->slot->type, $resolution->slot->nullability, $resolution);
+        }
+        if ($resolution instanceof AliasTarget) {
+            return new ScalarFact($resolution->field->type, $resolution->field->nullability, $resolution);
+        }
+        if ($resolution instanceof ConditionalColumn) {
+            return new ScalarFact(new Dependent($resolution->missing), Nullability::Dependent, $resolution);
+        }
+        Check::invariant($resolution instanceof Diagnostic, 'A column lookup resolves, depends on missing inputs, or reports a problem.');
+
+        return new ScalarFact(new Invalid($resolution), Nullability::Dependent, $resolution);
+    }
+
+    /**
+     * Tells whether a qualifier is NEW or OLD and a trigger body makes that row visible at the position.
+     *
+     * The parser reads `NEW.x` and `OLD.x` in a trigger body as a column of
+     * the row (Item_trigger_field), whatever the position.
+     */
+    public function row(Environment $environment, QualifiedName $qualifier): bool
+    {
+        $word = $qualifier->name->value;
+        if ($qualifier->schema !== null || (strcasecmp($word, 'NEW') !== 0 && strcasecmp($word, 'OLD') !== 0)) {
+            return false;
+        }
+        for ($scope = $environment; $scope !== null; $scope = $scope->outer) {
+            foreach ($scope->relations as $relation) {
+                if ($relation->alias !== null && strcasecmp($relation->alias->value, $word) === 0) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Answers the incompletely known occurrences that may give a HAVING position a column of the name unseen.
+     *
+     * They are the occurrences a star of the select list may list, and the
+     * occurrences that may own a GROUP BY or select list column of the
+     * name that no known occurrence decides.
      *
      * @return list<VisibleRelation>
      */
-    public function unlisted(GroupedRow $row, Environment $scope): array
+    public function unlisted(GroupedRow $row, Environment $scope, Name $column): array
     {
         foreach ($row->selected as $item) {
             if ($item instanceof OpenStar) {
                 return array_values(array_filter($scope->relations, static fn (VisibleRelation $relation): bool => !$relation->shape->complete()));
             }
         }
+        $owners = [];
+        foreach ($row->undecided as $undecided) {
+            if ($scope->context->columnNames->equal($undecided->name->value, $column->value)) {
+                array_push($owners, ...$undecided->relations);
+            }
+        }
+        $open = [];
+        for ($level = $scope; $level !== null; $level = $level->outer) {
+            foreach ($level->relations as $relation) {
+                if (in_array($relation->relation, $owners, true)) {
+                    $open[] = $relation;
+                }
+            }
+        }
 
-        return [];
+        return $open;
     }
 
     /**

@@ -14,6 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateForeignTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnDefinition;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnOptions;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\PartitionOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TableForm;
@@ -58,6 +59,9 @@ final class Definitions
         $fact = $derivation->target($create, new RelationFact($targets->shape($table), new DeclaredTable($table)));
         $scope = $targets->scope($derivation, $create, $name, $fact->shape, $targets->implicit($fact));
         $this->report($create->definition, $derivation, $name);
+        if ($create instanceof CreateTable) {
+            (new CreationSchemas())->check($derivation, $create->name, $create->persistence);
+        }
         $this->elements($create->definition, $derivation, $scope);
         if ($create instanceof CreateTable) {
             $create->partitioning?->deriveClause($derivation, $scope);
@@ -112,7 +116,7 @@ final class Definitions
     }
 
     /**
-     * Reports repeated column names, system column names, several primary keys and serial arrays.
+     * Reports repeated column names (the columns a LIKE clause copies included), system column names, several primary keys and serial arrays.
      */
     public function report(TableForm $form, Derivation $derivation, QualifiedName $name): void
     {
@@ -120,6 +124,13 @@ final class Definitions
         $keys = 0;
         $system = new SystemColumns();
         foreach ($form->elements() as $element) {
+            $resolution = $element instanceof LikeClause ? $derivation->table($element->table, $derivation->environment()) : null;
+            foreach ($resolution instanceof DeclaredTable && $resolution->table->complete ? $resolution->table->columns : [] as $column) {
+                if (isset($seen[$column->name->value])) {
+                    $derivation->report(new DefinitionProblem(DefinitionRule::DuplicateColumn, $column->name));
+                }
+                $seen[$column->name->value] = true;
+            }
             if ($element instanceof ColumnDefinition || $element instanceof ColumnOptions) {
                 if (isset($seen[$element->name->value])) {
                     $derivation->report(new DefinitionProblem(DefinitionRule::DuplicateColumn, $element->name));

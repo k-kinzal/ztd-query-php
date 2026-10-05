@@ -44,6 +44,7 @@ final class Sequences
             new Column(new Name('log_cnt'), Builtin::Int8, Nullability::NotNull),
             new Column(new Name('is_called'), Builtin::Bool, Nullability::NotNull),
         ];
+        (new CreationSchemas())->check($derivation, $sequence->name, $sequence->persistence);
         $name = (new QueryTables())->name($sequence->name, $sequence->persistence, $schema);
         $derivation->declare(new Table($name, $derivation->context->profile, $columns, (new SystemColumns())->implicit()));
     }

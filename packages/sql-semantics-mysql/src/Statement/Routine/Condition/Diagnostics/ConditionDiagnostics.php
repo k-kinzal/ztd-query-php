@@ -19,7 +19,7 @@ use SqlSemantics\Statement\Snapshot;
  * @visibility public
  * @example Reading the condition number
  *     $get = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('GET DIAGNOSTICS CONDITION 2 @m = MESSAGE_TEXT');
- *     [$get->statement->information->number->value, count($get->statement->information->items)] // => ['2', 1]
+ *     [$get->statement->information->number->text, count($get->statement->information->items)] // => ['2', 1]
  */
 final class ConditionDiagnostics implements Node
 {

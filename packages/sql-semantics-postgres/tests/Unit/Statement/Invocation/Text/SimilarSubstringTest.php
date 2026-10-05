@@ -12,6 +12,8 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\PatternMatch;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\PatternOperator;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text\SimilarSubstring;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral;
@@ -45,5 +47,17 @@ final class SimilarSubstringTest extends TestCase
         $out = new Output(new Codec(GrammarRelease::PostgreSql172));
         $substring->render($out);
         self::assertSame('SUBSTRING(\'abc\' SIMILAR \'a\' ESCAPE \'#\')', (new Lexical())->join($out->pieces()));
+    }
+
+    public function testRejectsAStringThatWouldLoseItsPlaceBeforeSimilar(): void
+    {
+        $this->expectExceptionMessage('The string needs parentheses to keep its place before SIMILAR.');
+        new SimilarSubstring(new PatternMatch(new NullLiteral(), PatternOperator::Like, false, new NullLiteral()), new NullLiteral(), new NullLiteral());
+    }
+
+    public function testRejectsAPatternThatWouldTakeTheEscape(): void
+    {
+        $this->expectExceptionMessage('A pattern ending in a pattern match without ESCAPE would take the escape; group it.');
+        new SimilarSubstring(new NullLiteral(), new PatternMatch(new NullLiteral(), PatternOperator::Like, false, new NullLiteral()), new NullLiteral());
     }
 }

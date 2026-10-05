@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Catalog;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable;
@@ -51,7 +51,7 @@ final class PublishedTables
         if ($resolution instanceof DeclaredTable) {
             $slots = [];
             foreach ($resolution->table->columns as $column) {
-                $slots[] = new OutputSlot($column->name, (new DeclaredTypes())->fact($column->type), $column->nullability, $column);
+                $slots[] = new OutputSlot($column->name, (new DeclaredTyping())->fact($column->type), $column->nullability, $column);
             }
             $shape = new RowShape($slots, $resolution->table->complete ? [] : [new IncompleteMembers($resolution->table)]);
             $this->columns($table, $resolution, $derivation);

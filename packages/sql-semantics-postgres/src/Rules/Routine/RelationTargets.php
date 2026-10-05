@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Routine;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ImproperName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
@@ -102,7 +102,7 @@ final class RelationTargets
         if ($resolution instanceof DeclaredTable) {
             $slots = [];
             foreach ($resolution->table->columns as $column) {
-                $slots[] = new OutputSlot($column->name, (new DeclaredTypes())->fact($column->type), $column->nullability, $column);
+                $slots[] = new OutputSlot($column->name, (new DeclaredTyping())->fact($column->type), $column->nullability, $column);
             }
             $shape = new RowShape($slots, $resolution->table->complete ? [] : [new IncompleteMembers($resolution->table)]);
         } elseif ($resolution instanceof UndeclaredTable || $resolution instanceof ConditionalTable) {

@@ -9,6 +9,9 @@ use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Block;
 use SqlSemantics\Platform\MySql\Lowering\Query\Shared\Trailer;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
@@ -29,7 +32,10 @@ use SqlSemantics\Statement\Query;
  * earlier unparenthesized SELECT, LIMIT there in 5.7 (5.6 keeps it as the
  * block's own), an ORDER BY or LIMIT a 5.6 subquery writes after an earlier
  * SELECT other than a LIMIT after the first one, and PROCEDURE ANALYSE in a
- * union. The operands are combined left-deep. A lowering-time value.
+ * union. An earlier SELECT keeps its own locking clauses and, in 5.6, its
+ * own LIMIT; when it is not the first operand the operands up to it form a
+ * leading union (MYSQL-LEADING-UNION-001). The operands are combined
+ * left-deep. A lowering-time value.
  * Source: https://dev.mysql.com/doc/refman/5.7/en/union.html ("To apply
  * ORDER BY or LIMIT to an individual SELECT, place the clause inside the
  * parentheses"; "Only the last SELECT statement can use INTO OUTFILE"),
@@ -68,8 +74,12 @@ final class Chain
         }
         $query = null;
         foreach (array_slice($operands, 0, $last) as $index => [$operand, $clauses]) {
-            $operand = $operand instanceof Block ? $this->earlier($operand, $clauses, $index) : $clauses->wrap($operand);
-            $query = $query === null ? $operand : new SetOperation($query, SetOperator::Union, $this->quantifiers[$index - 1] ?? null, $operand);
+            $operand = $operand instanceof Block ? $this->earlier($operand, $clauses, $index) : $this->enclosed($operand, $clauses, $index);
+            $query = match (true) {
+                $query === null => $operand,
+                $operand instanceof Select && $operand->trailed() => new LeadingUnion($query, $this->quantifiers[$index - 1] ?? null, $operand),
+                default => new SetOperation($query, SetOperator::Union, $this->quantifiers[$index - 1] ?? null, $operand),
+            };
         }
         $quantifier = $this->quantifiers[$last - 1] ?? null;
         if (!$final instanceof Block) {
@@ -107,5 +117,31 @@ final class Chain
         }
 
         return $operand->finish($clauses);
+    }
+
+    /**
+     * Finishes a parenthesized operand before the last one with the ORDER BY and LIMIT a 5.x subquery writes after it.
+     *
+     * After the first operand the clauses belong to the query block in the
+     * parentheses, unless an ORDER BY follows a block that orders or limits
+     * its rows itself: the `order_clause` action (5.6) and
+     * `PT_order::contextualize` (5.7) then make a fake query block current.
+     * After a later operand the fake query block of the union is current.
+     * The next UNION refuses a current fake query block.
+     *
+     * @throws AnalysisException When the clauses made the fake query block current: ER_SYNTAX_ERROR of `add_select_to_union_list` (5.6, GLOBAL_OPTIONS_TYPE) and ER_WRONG_USAGE "UNION and ORDER BY|LIMIT" of `LEX::new_union_query` (5.7)
+     */
+    public function enclosed(Query $operand, Trailer $clauses, int $index): Query
+    {
+        $inner = $operand;
+        while ($inner instanceof ParenthesizedQuery) {
+            $inner = $inner->query;
+        }
+        $ordered = $inner instanceof Select && ($inner->orderBy !== [] || $inner->limit !== null);
+        if (($index > 0 && !$clauses->empty()) || ($clauses->orderBy !== [] && $ordered)) {
+            throw new AnalysisException('Syntax error: the ORDER BY or LIMIT after this parenthesized SELECT applies to the whole union, so no UNION follows it.');
+        }
+
+        return $clauses->wrap($operand);
     }
 }

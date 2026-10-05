@@ -108,30 +108,21 @@ final class Locking
     }
 
     /**
-     * Answers the table references of a FROM clause, each with whether it is on the nullable side of an outer join.
+     * Answers the table references of a FROM clause, each with whether it is on the nullable side of an outer join; `$nullable` tells whether the clause itself is.
      *
      * @return list<array{TableInput, bool}>
      */
-    public function tables(Relation $from): array
+    public function tables(Relation $from, bool $nullable = false): array
     {
-        $tables = [];
-        $pending = [[$from, false]];
-        while ($pending !== []) {
-            [$item, $nullable] = array_pop($pending);
-            if ($item instanceof TableInput) {
-                $tables[] = [$item, $nullable];
-            } elseif ($item instanceof ParenthesizedJoin) {
-                $pending[] = [$item->join, $nullable];
-            } elseif ($item instanceof RelationList) {
-                foreach ($item->items as $member) {
-                    $pending[] = [$member, $nullable];
-                }
-            } elseif ($item instanceof Join) {
-                $pending[] = [$item->left, $nullable || $item->kind === JoinKind::Right || $item->kind === JoinKind::Full];
-                $pending[] = [$item->right, $nullable || $item->kind === JoinKind::Left || $item->kind === JoinKind::Full];
-            }
-        }
-
-        return $tables;
+        return match (true) {
+            $from instanceof TableInput => [[$from, $nullable]],
+            $from instanceof ParenthesizedJoin => $this->tables($from->join, $nullable),
+            $from instanceof RelationList => array_merge([], ...array_map(fn (Relation $member): array => $this->tables($member, $nullable), $from->items)),
+            $from instanceof Join => [
+                ...$this->tables($from->left, $nullable || $from->kind === JoinKind::Right || $from->kind === JoinKind::Full),
+                ...$this->tables($from->right, $nullable || $from->kind === JoinKind::Left || $from->kind === JoinKind::Full),
+            ],
+            default => [],
+        };
     }
 }

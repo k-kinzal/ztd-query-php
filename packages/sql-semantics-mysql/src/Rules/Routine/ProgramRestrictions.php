@@ -14,9 +14,11 @@ use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetPersist;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\AlterRoutine;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateEvent;
@@ -32,8 +34,8 @@ use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Lock\UnlockTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable;
-use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumTable;
+use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit;
@@ -43,8 +45,8 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\DescribeTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\Help;
-use SqlSemantics\Platform\MySql\Statement\View\AlterView;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase;
+use SqlSemantics\Platform\MySql\Statement\View\AlterView;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Statement;
 
@@ -61,8 +63,9 @@ use SqlSemantics\Statement\Statement;
  * SHOW, EXPLAIN, DESCRIBE, HELP and no CHECK, ANALYZE, OPTIMIZE, REPAIR or
  * CHECKSUM TABLE (ER_SP_NO_RETSET); performs no explicit commit or rollback
  * (ER_COMMIT_NOT_ALLOWED_IN_SF_OR_TRG); and uses no PREPARE, EXECUTE or
- * DEALLOCATE PREPARE, no FLUSH and no RESET
- * (ER_STMT_NOT_ALLOWED_IN_SF_OR_TRG). Limit: the implicit commit of a data
+ * DEALLOCATE PREPARE, no FLUSH and no RESET, RESET PERSIST included, which
+ * the grammar reads as the same RESET command (rule `reset` of
+ * sql_yacc.yy) (ER_STMT_NOT_ALLOWED_IN_SF_OR_TRG). Limit: the implicit commit of a data
  * definition statement in a stored function or trigger is not reported.
  * Terminates: the INTO search descends into strict parts of a query.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/stored-program-restrictions.html,
@@ -119,7 +122,7 @@ final class ProgramRestrictions
             $statement instanceof Commit, $statement instanceof Rollback, $statement instanceof StartTransaction => new ProgramProblem(ProgramRule::CommitInFunction),
             $statement instanceof Prepare, $statement instanceof Execute, $statement instanceof Deallocate => new ProgramProblem(ProgramRule::FunctionStatement, 'Dynamic SQL'),
             $statement instanceof Flush, $statement instanceof FlushTables => new ProgramProblem(ProgramRule::FunctionStatement, 'FLUSH'),
-            $statement instanceof Reset => new ProgramProblem(ProgramRule::FunctionStatement, 'RESET'),
+            $statement instanceof Reset, $statement instanceof ResetPersist => new ProgramProblem(ProgramRule::FunctionStatement, 'RESET'),
             default => null,
         };
     }
@@ -141,14 +144,14 @@ final class ProgramRestrictions
     /**
      * Tells whether a query writes its rows INTO variables or a file instead of returning them.
      */
-    public function into(Query $query): bool
+    public function into(Query|LeadingUnion $query): bool
     {
         return match (true) {
             $query instanceof Select => $query->into !== null,
             $query instanceof QueryStatement => $query->into !== null || $this->into($query->query),
             $query instanceof QueryExpression => $this->into($query->body),
             $query instanceof ParenthesizedQuery => $this->into($query->query),
-            $query instanceof SetOperation, $query instanceof OrderedSetOperation => $this->into($query->left) || $this->into($query->right),
+            $query instanceof SetOperation, $query instanceof OrderedSetOperation, $query instanceof LeadingUnion => $this->into($query->left) || $this->into($query->right),
             default => false,
         };
     }

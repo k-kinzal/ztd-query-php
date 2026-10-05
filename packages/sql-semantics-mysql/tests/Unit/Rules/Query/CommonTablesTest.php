@@ -128,4 +128,12 @@ final class CommonTablesTest extends TestCase
         self::assertTrue((new CommonTables())->refers($query, new Name('c'), $derivation));
         self::assertFalse((new CommonTables())->refers($qualified, new Name('c'), $derivation));
     }
+
+    public function testOperandsWalksALeadingUnion(): void
+    {
+        $query = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 UNION SELECT 2 LIMIT 1 UNION SELECT 3')->statement;
+
+        self::assertInstanceOf(SetOperation::class, $query);
+        self::assertCount(3, (new CommonTables())->operands($query));
+    }
 }

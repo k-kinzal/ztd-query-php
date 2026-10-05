@@ -22,7 +22,9 @@ use SqlSemantics\Statement\Snapshot;
  * Mirrors PostgreSQL's `WindowDef` node. It is written after OVER and in the
  * WINDOW clause; the holder derives it in the environment of the query level
  * it belongs to; a frame its own ordering cannot support is reported
- * (PG-WINDOW-CHECKS-001).
+ * (PG-WINDOW-CHECKS-001). An existing window named partition, range, rows
+ * or groups is written quoted: gram.y reads that word as the keyword after
+ * the opening parenthesis (opt_existing_window_name, %prec Op).
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS,
  * https://www.postgresql.org/docs/17/sql-select.html#SQL-WINDOW.
  *
@@ -79,7 +81,7 @@ final class WindowSpecification implements Clause
     {
         $out->symbol('(');
         if ($this->existing !== null) {
-            $out->name($this->existing, NameUse::Column);
+            $out->name($this->existing, in_array($this->existing->value, ['partition', 'range', 'rows', 'groups'], true) ? NameUse::Identifier : NameUse::Column);
         }
         if ($this->partition !== []) {
             $out->keyword('PARTITION', 'BY')->list($this->partition);

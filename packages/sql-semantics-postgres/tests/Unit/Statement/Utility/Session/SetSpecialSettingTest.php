@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetSpecialSetting::class)]
 #[Medium]
-final class SetSpecialTest extends TestCase
+final class SetSpecialSettingTest extends TestCase
 {
     public function testDeriveStatementReportsSetCatalog(): void
     {

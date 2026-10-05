@@ -10,8 +10,6 @@ use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
-use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
-use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\AlterPublicationMembers;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\AlterPublicationOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\CreatePublication;
@@ -19,6 +17,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationAc
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationMember;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationSchema;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable;
+use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
+use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Statement\Statement;
 
 /**

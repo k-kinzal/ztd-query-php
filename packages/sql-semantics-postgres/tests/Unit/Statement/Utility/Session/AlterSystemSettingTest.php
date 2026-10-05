@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\AlterSystemSetting::class)]
 #[Medium]
-final class AlterSystemTest extends TestCase
+final class AlterSystemSettingTest extends TestCase
 {
     public function testDeriveStatementDerivesTheSetting(): void
     {

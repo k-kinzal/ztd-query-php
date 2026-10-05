@@ -59,4 +59,11 @@ final class WindowSpecificationTest extends TestCase
         (new WindowSpecification())->render($second);
         self::assertSame('()', (new Lexical())->join($second->pieces()));
     }
+
+    public function testRenderQuotesAnExistingWindowNamedLikeAFrameKeyword(): void
+    {
+        $out = new Output(new Codec(GrammarRelease::PostgreSql172));
+        (new WindowSpecification(new Name('rows')))->render($out);
+        self::assertSame('("rows")', (new Lexical())->join($out->pieces()));
+    }
 }

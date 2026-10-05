@@ -21,7 +21,7 @@ use SqlSemantics\Statement\Node;
 interface Schedule extends Node
 {
     /**
-     * Derives the expressions of the schedule, which see no table and no variable.
+     * Derives the expressions of the schedule in the scope of the statement: inside a stored program they see its variables.
      */
     public function deriveSchedule(Derivation $derivation, Environment $environment): void;
 }

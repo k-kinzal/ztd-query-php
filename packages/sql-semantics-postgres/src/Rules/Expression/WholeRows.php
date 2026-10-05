@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Expression;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Resolution\LateralReach;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\Composite;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\AmbiguousRelation;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ImproperName;
-use SqlSemantics\Platform\PostgreSql\Rules\Resolution\LateralReach;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\ScalarFact;

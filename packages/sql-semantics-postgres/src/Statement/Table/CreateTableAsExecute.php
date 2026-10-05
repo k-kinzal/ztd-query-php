@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\CreationSchemas;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\QueryTables;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
@@ -53,6 +54,7 @@ final class CreateTableAsExecute implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $derivation->member($this->execute);
+        (new CreationSchemas())->check($derivation, $this->target->name, $this->persistence);
         $name = (new QueryTables())->name($this->target->name, $this->persistence, null);
         $derivation->declare(new Table($name, $derivation->context->profile, [], (new SystemColumns())->implicit(), false));
     }

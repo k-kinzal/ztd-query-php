@@ -33,7 +33,9 @@ use SqlSemantics\Statement\Snapshot;
  * certainly resolves to has its documented result; every other call depends
  * on the undeclared routine. Diagnostics: a positional argument after a named
  * one, a parameter named twice, and clauses the resolved kind of function
- * does not accept. Termination: recursion on the expression tree only.
+ * does not accept. An unqualified call of cube or rollup is written with the
+ * name quoted: in GROUP BY gram.y reads `CUBE (` and `ROLLUP (` as a grouping
+ * set. Termination: recursion on the expression tree only.
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-FUNCTION-CALLS,
  * https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-AGGREGATES,
  * https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS. Status: Implemented.
@@ -130,7 +132,8 @@ final class FunctionCall implements Scalar, OutputNaming
      */
     public function render(Output $out): void
     {
-        (new Spelling())->dotted($out, $this->name->parts, NameUse::Routine);
+        $parts = $this->name->parts;
+        (new Spelling())->dotted($out, $parts, count($parts) === 1 && in_array($parts[0]->value, ['cube', 'rollup'], true) ? NameUse::Identifier : NameUse::Routine);
         $out->glue()->symbol('(');
         if ($this->star) {
             $out->symbol('*');

@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\RecursiveReference;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
@@ -154,7 +155,7 @@ final class CommonTables
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
         }
         $operands = [];
-        while ($query instanceof SetOperation) {
+        while ($query instanceof SetOperation || $query instanceof LeadingUnion) {
             array_unshift($operands, $query->right);
             $query = $query->left;
         }

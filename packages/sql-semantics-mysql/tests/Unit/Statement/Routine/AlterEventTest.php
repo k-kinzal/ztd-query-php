@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
@@ -18,6 +19,8 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Event\EventStatus;
 use SqlSemantics\Platform\MySql\Statement\Routine\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Rendering\Lexical;
+use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -102,10 +105,11 @@ final class AlterEventTest extends TestCase
     public function testRenderWritesAConstructedAlteration(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $alter = $semantics->analyze('ALTER EVENT e');
+        $out = new Output(new Codec($semantics->profile()->grammar));
+        (new AlterEvent(new QualifiedName(new Name('e')), null, null, null, EventStatus::Disable))->render($out);
 
-        self::assertSame('ALTER EVENT e DISABLE', $semantics->render(new AlterEvent(new QualifiedName(new Name('e')), null, null, null, EventStatus::Disable)));
-        self::assertSame('ALTER EVENT e', $alter->toString());
+        self::assertSame('ALTER EVENT e DISABLE', (new Lexical())->join($out->pieces()));
+        self::assertSame('ALTER EVENT e', $semantics->analyze('ALTER EVENT e')->toString());
     }
 
     public function testANewNameWithACatalogIsRejected(): void

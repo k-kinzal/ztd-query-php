@@ -15,8 +15,8 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Column\Resolution;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -107,7 +107,7 @@ final class LateralReach
      */
     public function report(Derivation $derivation, VisibleRelation $relation): ScalarFact
     {
-        $name = $relation->alias ?? $relation->name?->name ?? new Name($relation->relation instanceof DerivedTable ? 'unnamed_subquery' : 'unnamed_join');
+        $name = $relation->alias ?? $relation->name->name ?? new Name($relation->relation instanceof DerivedTable ? 'unnamed_subquery' : 'unnamed_join');
         $problem = new QueryMisuse(QueryMisuseRule::LateralJoinType, $name);
         $derivation->report($problem);
 

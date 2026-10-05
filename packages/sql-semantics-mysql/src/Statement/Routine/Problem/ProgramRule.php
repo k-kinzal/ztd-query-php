@@ -33,6 +33,8 @@ enum ProgramRule: string
     case DeclarationAfterCursorOrHandler = 'Variable or condition declaration after cursor or handler declaration';
     case CursorAfterHandler = 'Cursor declaration after handler declaration';
     case BadSqlState = "Bad SQLSTATE: '%s'";
+    case ZeroErrorCode = "Incorrect CONDITION value: '0'";
+    case DuplicateHandler = 'Duplicate handler declared in the same block';
     case SignalConditionKind = 'SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE';
     case DuplicateSignalItem = "Duplicate condition information item '%s'";
     case BadStatement = '%s is not allowed in stored procedures';

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rules\Expression;
 
-use SqlSemantics\Statement\Type\Invalid;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -18,6 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\NullOnly;

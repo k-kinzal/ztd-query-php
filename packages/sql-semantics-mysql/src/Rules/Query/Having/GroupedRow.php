@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
+use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
@@ -31,8 +32,9 @@ final class GroupedRow implements Relation
      * @param list<Field|OpenStar> $selected The output fields of the select list, in order
      * @param list<Field> $grouping The GROUP BY items that are columns, each with the resolution of its column at the HAVING position
      * @param bool $grouped Whether the query block groups, aggregates or is DISTINCT
+     * @param list<ConditionalColumn> $undecided The GROUP BY items and select list items that are columns of an incompletely known occurrence
      */
-    public function __construct(public readonly array $selected, public readonly array $grouping, public readonly bool $grouped)
+    public function __construct(public readonly array $selected, public readonly array $grouping, public readonly bool $grouped, public readonly array $undecided = [])
     {
     }
 

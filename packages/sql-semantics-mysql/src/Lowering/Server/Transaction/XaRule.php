@@ -180,7 +180,7 @@ final class XaRule
         if ($magnitudes->bytes($transaction) > 64 || ($branch !== null && $magnitudes->bytes($branch) > 64)) {
             throw new AnalysisException('Syntax error: an XA transaction identifier part holds at most 64 bytes.');
         }
-        if ($format !== null && !$magnitudes->atMost($format, '9223372036854775807')) {
+        if ($format !== null && !$magnitudes->format($format, $this->lowering->profile->grammar)) {
             throw new AnalysisException('Syntax error: an XA format identifier is at most 9223372036854775807.');
         }
     }

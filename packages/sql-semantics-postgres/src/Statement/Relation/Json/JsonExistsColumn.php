@@ -15,7 +15,9 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * name type EXISTS [PATH path] [ON ERROR]: a JSON_TABLE column that tells whether the path yields an item.
  *
- * Mirrors PostgreSQL's `JsonTableColumn` of type JTC_EXISTS.
+ * Mirrors PostgreSQL's `JsonTableColumn` of type JTC_EXISTS. A column named
+ * nested is written quoted: before a type named path gram.y reads the word as
+ * the NESTED PATH of a nested column (NESTED has a lower precedence than PATH).
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-TABLE.
  *
  * @visibility public
@@ -42,7 +44,7 @@ final class JsonExistsColumn implements JsonTableColumn
      */
     public function render(Output $out): void
     {
-        $out->name($this->name, NameUse::Column)->node($this->type)->keyword('EXISTS');
+        $out->name($this->name, $this->name->value === 'nested' ? NameUse::Identifier : NameUse::Column)->node($this->type)->keyword('EXISTS');
         if ($this->path !== null) {
             $out->keyword('PATH')->node($this->path);
         }

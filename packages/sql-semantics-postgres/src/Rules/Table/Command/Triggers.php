@@ -18,6 +18,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTri
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateEventTrigger;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateTrigger;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerArgument;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerTiming;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 
@@ -29,11 +30,13 @@ use SqlSemantics\Statement\Identifier\Name;
  * CREATE SCHEMA an unqualified table is in the schema being created. The WHEN
  * condition of a row trigger sees the columns of the table as OLD and NEW
  * ("the WHEN condition can refer to columns of the old and/or new row values
- * by writing OLD.column_name or NEW.column_name"); a statement trigger's
- * condition sees no column. ROW transition variables are reported as not
- * supported. An event trigger's event must be ddl_command_start,
- * ddl_command_end, sql_drop, table_rewrite or (PostgreSQL 17) login, and
- * its filter variable `tag`; others are reported.
+ * by writing OLD.column_name or NEW.column_name"); the server gives a
+ * statement trigger's condition the same scope and then rejects every
+ * reference to OLD or NEW (PG-TRIGGER-WHEN-001, TriggerReferences). ROW
+ * transition variables are reported as not supported. An event trigger's
+ * event must be ddl_command_start, ddl_command_end, sql_drop, table_rewrite
+ * or (PostgreSQL 17) login, and its filter variable `tag`; others are
+ * reported.
  * Source: https://www.postgresql.org/docs/17/sql-createtrigger.html,
  * https://www.postgresql.org/docs/17/event-trigger-definition.html. Status: Implemented.
  *
@@ -59,8 +62,8 @@ final class Triggers
             }
         }
         if ($trigger->when !== null) {
-            $scope = $trigger->row === true ? (new PseudoRelations())->scope($derivation, $trigger, $fact, false) : $derivation->environment();
-            (new Conditions())->derive($derivation, $trigger->when, $scope, 'WHEN');
+            (new Conditions())->derive($derivation, $trigger->when, (new PseudoRelations())->scope($derivation, $trigger, $fact, false), 'WHEN');
+            (new TriggerReferences())->check($derivation, $trigger->when, $fact, $trigger->row === true, $trigger->events, $trigger->timing === TriggerTiming::Before);
         }
     }
 
@@ -77,6 +80,7 @@ final class Triggers
         (new Attributes())->report($derivation, $trigger->attributes, 'TRIGGER', true, false, false);
         if ($trigger->when !== null) {
             (new Conditions())->derive($derivation, $trigger->when, (new PseudoRelations())->scope($derivation, $trigger, $fact, false), 'WHEN');
+            (new TriggerReferences())->check($derivation, $trigger->when, $fact, true, $trigger->events, false);
         }
     }
 

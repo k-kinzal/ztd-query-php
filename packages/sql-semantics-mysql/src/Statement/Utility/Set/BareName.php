@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\ColumnResolver;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\ProgramVariable;
@@ -31,7 +32,11 @@ use SqlSemantics\Statement\Type\Nullability;
  * known non-NULL VARCHAR; assigned to a name without a scope, which inside a
  * stored program can be a declared variable whose value is an expression,
  * it depends on the declarations of the enclosing program (ProgramVariable).
- * The qualifiers are kept and written back. Terminates: no child is derived.
+ * In a trigger body `NEW.x` and `OLD.x` are a column of the row whatever
+ * the variable (the parser makes them Item_trigger_field, which is not
+ * turned into text), so they resolve as a column name does
+ * (MYSQL-COLUMN-LOOKUP-001). The qualifiers are kept and written back.
+ * Terminates: no child is derived.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-variable.html,
  * `set_var::set_var` in sql/set_var.cc ("If the set value is a field, change
  * it to a string to allow things like SET table_type=MYISAM;").
@@ -61,6 +66,10 @@ final class BareName implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        $resolver = new ColumnResolver();
+        if ($this->qualifier !== null && $resolver->row($environment, $this->qualifier)) {
+            return $resolver->fact($environment, $this->word, $this->qualifier);
+        }
         if ($this->system) {
             return new ScalarFact(new Known(new Character(CharacterKind::VarChar)), Nullability::NotNull);
         }

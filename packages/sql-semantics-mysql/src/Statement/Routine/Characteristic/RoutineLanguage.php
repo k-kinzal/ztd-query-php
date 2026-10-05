@@ -10,7 +10,7 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * The LANGUAGE characteristic of a stored routine: SQL, or from MySQL 9.0 the name of an external language.
+ * The LANGUAGE characteristic of a stored routine: SQL, or from MySQL 8.1 the name of an external language.
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html,
  * https://dev.mysql.com/doc/refman/9.1/en/create-procedure.html.

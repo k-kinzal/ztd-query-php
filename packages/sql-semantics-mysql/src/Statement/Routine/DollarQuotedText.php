@@ -10,7 +10,7 @@ use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A dollar-quoted string: `$tag$ text $tag$` (MySQL 9.0 and later).
+ * A dollar-quoted string: `$tag$ text $tag$` (MySQL 8.1 and later).
  *
  * The text between the delimiters is taken as it is, without escapes; the
  * server treats it as the opaque code of an external language. The tag is
@@ -20,8 +20,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * @visibility public
  * @example Holding dollar-quoted code
- *     $code = new \SqlSemantics\Platform\MySql\Statement\Routine\DollarQuotedText('return 1', 'js');
- *     [$code->tag, $code->text] // => ['js', 'return 1']
+ *     $quoted = new \SqlSemantics\Platform\MySql\Statement\Routine\DollarQuotedText('return 1', 'js');
+ *     [$quoted->tag, $quoted->text] // => ['js', 'return 1']
  */
 final class DollarQuotedText implements Node
 {

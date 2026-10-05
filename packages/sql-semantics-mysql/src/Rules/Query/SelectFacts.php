@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
-use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
 use SqlSemantics\Platform\MySql\Rules\Query\From\JoinedInput;
 use SqlSemantics\Platform\MySql\Rules\Query\From\Joining;
@@ -71,7 +71,7 @@ final class SelectFacts
         $results = new Environment($context, $outer, $output, [], $aliases);
         if ($select->having !== null) {
             $scope = new HavingScope();
-            $row = new GroupedRow($items, $scope->grouping($grouping, $visible, $output), $select->groupBy !== null || $aggregate || in_array(SelectOption::Distinct, $select->options, true));
+            $row = new GroupedRow($items, $scope->grouping($grouping, $visible, $output), $select->groupBy !== null || $aggregate || in_array(SelectOption::Distinct, $select->options, true), $scope->undecided($grouping, $items));
             (new Operands())->single($derivation->scalar($select->having, $scope->enter($results, $row)), $derivation);
         }
         $this->windows($select, $derivation, new Environment($context, $outer, $output));

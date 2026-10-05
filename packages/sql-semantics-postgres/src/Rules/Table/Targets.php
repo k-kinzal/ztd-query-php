@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTyping;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\ImplicitSlot;
 use SqlSemantics\Resolution\VisibleRelation;
@@ -84,7 +84,7 @@ final class Targets
     {
         $slots = [];
         foreach ($table->columns as $column) {
-            $slots[] = new OutputSlot($column->name, (new DeclaredTypes())->fact($column->type), $column->nullability, $column);
+            $slots[] = new OutputSlot($column->name, (new DeclaredTyping())->fact($column->type), $column->nullability, $column);
         }
 
         return new RowShape($slots, $table->complete ? [] : [new IncompleteMembers($table)]);
@@ -100,7 +100,7 @@ final class Targets
         $slots = [];
         foreach ($fact->table instanceof DeclaredTable ? $fact->table->table->implicit : [] as $implicit) {
             $column = $implicit->column;
-            $slots[] = new ImplicitSlot($implicit->names, new OutputSlot($column->name, (new DeclaredTypes())->fact($column->type), $column->nullability, $column));
+            $slots[] = new ImplicitSlot($implicit->names, new OutputSlot($column->name, (new DeclaredTyping())->fact($column->type), $column->nullability, $column));
         }
 
         return $slots;

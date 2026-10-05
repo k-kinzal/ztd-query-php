@@ -19,8 +19,10 @@ use SqlSemantics\Statement\Snapshot;
  * Mirrors XID. The global transaction identifier and the branch qualifier
  * are strings of at most 64 bytes each, written as quoted strings or as
  * hexadecimal or bit literals; the format identifier is an unsigned number
- * of at most 2^63-1 and defaults to 1. A longer part is a syntax error of
- * the server and cannot be constructed (MYSQL-SERVER-MAGNITUDE-001).
+ * and defaults to 1. A longer part is a syntax error of the server and
+ * cannot be constructed; a format identifier above 2^63-1 is a syntax error
+ * from MySQL 5.7 on and is refused when a statement holding it is derived
+ * for such a release (MYSQL-SERVER-MAGNITUDE-001).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/xa-statements.html.
  *
  * @visibility public
@@ -44,7 +46,6 @@ final class Xid implements Node
         Check::input($magnitudes->bytes($transaction) <= 64, 'A global transaction identifier holds at most 64 bytes.');
         Check::input($branch === null || $magnitudes->bytes($branch) <= 64, 'A branch qualifier holds at most 64 bytes.');
         Check::input($format === null || $branch !== null, 'A format identifier follows a branch qualifier.');
-        Check::input($format === null || $magnitudes->atMost($format, '9223372036854775807'), 'A format identifier is at most 9223372036854775807.');
     }
 
     /**

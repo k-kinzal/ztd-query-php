@@ -12,6 +12,8 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\JsonItemKind;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\JsonTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonObjectConstructor;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonNullHandling;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonPair;
@@ -20,6 +22,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonUniqueKeys;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
@@ -61,5 +64,11 @@ final class JsonObjectConstructorTest extends TestCase
         $out = new Output(new Codec(GrammarRelease::PostgreSql172));
         $object->render($out);
         self::assertSame('JSON_OBJECT(\'a\' : 1 ABSENT ON NULL WITH UNIQUE KEYS RETURNING text)', (new Lexical())->join($out->pieces()));
+    }
+
+    public function testRejectsALastValueThatWouldTakeTheUniqueness(): void
+    {
+        $this->expectExceptionMessage('A last value ending in IS JSON without a uniqueness clause would take the uniqueness clause; group it.');
+        new JsonObjectConstructor([new JsonPair(new NullLiteral(), new JsonValueExpression(new JsonTest(new NullLiteral(), false, JsonItemKind::Json)))], null, new JsonUniqueKeys(false));
     }
 }

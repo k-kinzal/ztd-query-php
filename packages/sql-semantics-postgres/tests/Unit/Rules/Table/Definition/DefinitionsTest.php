@@ -64,4 +64,19 @@ final class DefinitionsTest extends TestCase
           3 => 'multiple primary keys for table "n" are not allowed',
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
+
+    public function testReportCountsTheColumnsALikeClauseCopies(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = $semantics->analyze('CREATE TABLE t (a int NOT NULL, b int)', [])->declarations();
+        $statement = $semantics->analyze('CREATE TABLE n (b text, LIKE t, c int)', $context);
+        self::assertSame(['column "b" specified more than once'], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+    }
+
+    public function testDeriveReportsATemporaryTableInAPermanentSchema(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $statement = $semantics->analyze('CREATE TEMP TABLE public.n (a int)', []);
+        self::assertSame(['cannot create temporary relation in non-temporary schema'], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
+    }
 }

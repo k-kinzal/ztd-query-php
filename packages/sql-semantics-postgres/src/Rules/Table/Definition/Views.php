@@ -42,6 +42,8 @@ final class Views
         $fact = $derivation->query($view->query, $environment);
         if ($view->persistence === Persistence::Unlogged) {
             $derivation->report(new DefinitionProblem(DefinitionRule::UnloggedView));
+        } else {
+            (new CreationSchemas())->check($derivation, $view->name, $view->persistence);
         }
         $rules = new QueryTables();
         $derivation->declare($rules->table($derivation, $rules->name($view->name, $view->persistence, $schema), $fact, $view->columns, false, false, DefinitionRule::ViewColumnCount));

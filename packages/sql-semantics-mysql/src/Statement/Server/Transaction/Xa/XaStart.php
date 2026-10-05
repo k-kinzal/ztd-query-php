@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Transaction\Xa;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Server\Magnitudes;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
@@ -35,10 +36,13 @@ final class XaStart implements Statement
     }
 
     /**
-     * Has nothing to derive: the request names no relation and no value.
+     * Refuses a format identifier the release rejects; the request names no relation and no value.
+     *
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the release does not read the format identifier
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        (new Magnitudes())->identifier($this->xid, $derivation->context->profile->grammar);
     }
 
     /**

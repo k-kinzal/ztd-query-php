@@ -16,7 +16,9 @@ use SqlSemantics\Statement\Snapshot;
  * name type [FORMAT JSON] [PATH path] [wrapper] [quotes] [behavior]: a JSON_TABLE column read from the row.
  *
  * Mirrors PostgreSQL's `JsonTableColumn` of type JTC_REGULAR, or
- * JTC_FORMATTED when a FORMAT clause is written.
+ * JTC_FORMATTED when a FORMAT clause is written. A column named nested is
+ * written quoted: before a type named path gram.y reads the word as the
+ * NESTED PATH of a nested column (NESTED has a lower precedence than PATH).
  * Source: https://www.postgresql.org/docs/17/functions-json.html#FUNCTIONS-SQLJSON-TABLE.
  *
  * @visibility public
@@ -53,7 +55,7 @@ final class JsonValueColumn implements JsonTableColumn
      */
     public function render(Output $out): void
     {
-        $out->name($this->name, NameUse::Column)->node($this->type)->node($this->format);
+        $out->name($this->name, $this->name->value === 'nested' ? NameUse::Identifier : NameUse::Column)->node($this->type)->node($this->format);
         if ($this->path !== null) {
             $out->keyword('PATH')->node($this->path);
         }

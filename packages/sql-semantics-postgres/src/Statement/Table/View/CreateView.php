@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\View;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
+use SqlSemantics\Platform\PostgreSql\Rules\Query\Trailing;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Views;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
@@ -28,7 +29,9 @@ use SqlSemantics\Statement\Statement;
  * one declaration (PG-QUERY-TABLE-001) whose columns keep the NULL facts of
  * the query. A RECURSIVE view is a view over a recursive common table of the
  * same name and column names; the query sees the view as that common table.
- * A view has no storage, so UNLOGGED is an error.
+ * A view has no storage, so UNLOGGED is an error. A check option after a
+ * query that ends with an IS JSON test without a uniqueness clause is
+ * rejected: the test would take the WITH (PG-QUERY-TRAILING-001).
  * Source: https://www.postgresql.org/docs/17/sql-createview.html.
  *
  * @visibility public
@@ -74,6 +77,7 @@ final class CreateView implements SchemaElement, RecursiveDefinition
     ) {
         $this->columns = Check::listOf($columns, Name::class, 'View column names are names.', $recursive ? 1 : 0);
         $this->options = Check::listOf($options, Definition::class, 'View options are definitions.');
+        Check::input($checkOption === null || !(new Trailing())->takesWith($query), 'A query ending in IS JSON without a uniqueness clause would take WITH CHECK OPTION; group it.');
     }
 
     /**

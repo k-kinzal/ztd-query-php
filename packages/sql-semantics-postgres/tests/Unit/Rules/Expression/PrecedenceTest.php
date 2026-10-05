@@ -16,7 +16,10 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\Negation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\PatternMatch;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\PatternOperator;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\JsonItemKind;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\JsonTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\NullTest;
+use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonUniqueKeys;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
 use SqlSemantics\Statement\Identifier\Name;
@@ -91,5 +94,12 @@ final class PrecedenceTest extends TestCase
     {
         $open = new Negation(new PatternMatch(new NullLiteral(), PatternOperator::ILike, false, new NullLiteral()));
         self::assertSame([true, false], [(new Precedence())->takesEscape($open), (new Precedence())->takesEscape(new Negation(new NullLiteral()))]);
+    }
+
+    public function testTakesUniquenessFindsAnOpenJsonTestOnTheRightEdge(): void
+    {
+        $open = new Negation(new JsonTest(new NullLiteral(), false, JsonItemKind::Json));
+        $closed = new JsonTest(new NullLiteral(), false, JsonItemKind::Json, new JsonUniqueKeys(true));
+        self::assertSame([true, false], [(new Precedence())->takesUniqueness($open), (new Precedence())->takesUniqueness($closed)]);
     }
 }

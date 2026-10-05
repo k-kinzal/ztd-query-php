@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonUniqueKeys;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
@@ -42,6 +43,7 @@ final class JsonParse implements Scalar, OutputNaming
      */
     public function __construct(public readonly JsonValueExpression $value, public readonly ?JsonUniqueKeys $unique = null)
     {
+        Check::input($unique === null || $value->format !== null || !(new Precedence())->takesUniqueness($value->value), 'A value ending in IS JSON without a uniqueness clause would take the uniqueness clause; group it.');
     }
 
     /**

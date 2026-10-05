@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation\Text;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\PostgreSql\Rules\Invocation\CallTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\OutputNaming;
 use SqlSemantics\Rendering\Output;
@@ -19,7 +21,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * The server calls `pg_catalog.substring(string, pattern, escape)`. Rule:
  * PG-SIMILAR-SUBSTRING-001. Facts: those of the call (PG-CALL-RESULT-001;
- * `text`). The result column is named `substring`.
+ * `text`). The result column is named `substring`. SIMILAR follows the
+ * string at the level of the pattern operators, and ESCAPE continues an open
+ * pattern match at the end of the pattern, so an operand that would lose its
+ * place there is rejected.
  * Source: https://www.postgresql.org/docs/17/functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP. Status: Implemented.
  *
  * @visibility public
@@ -38,6 +43,9 @@ final class SimilarSubstring implements Scalar, OutputNaming
      */
     public function __construct(public readonly Scalar $string, public readonly Scalar $pattern, public readonly Scalar $escape)
     {
+        $precedence = new Precedence();
+        Check::input($precedence->before($string, Precedence::PATTERN), 'The string needs parentheses to keep its place before SIMILAR.');
+        Check::input(!$precedence->takesEscape($pattern), 'A pattern ending in a pattern match without ESCAPE would take the escape; group it.');
     }
 
     /**

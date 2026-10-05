@@ -6,7 +6,7 @@
 [![Docs](https://img.shields.io/badge/docs-sql--semantics--mysql-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official MySQL grammars, the MySQL rules for reading declarations, and the MySQL builder that composes values under stable names. Installing it also installs the shared SQL Semantics runtime, and `Dialect::MySql` selects MySQL in the runtime's `Semantics`, and `Mode::fromString()` reads a session's `sql_mode` for it. No database connection is needed.
+SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics): the typed statement models of the official MySQL grammars, the MySQL rules for resolving names and deriving types and NULL facts, and the MySQL spelling of rendered SQL. Installing it also installs the shared SQL Semantics runtime; `Dialect::MySql` selects MySQL in the runtime's `Semantics`, and `Mode::fromString()` reads a session's `sql_mode` for it. No database connection is needed.
 
 ## Requirements
 
@@ -14,7 +14,7 @@ SQL Semantics for MySQL adds MySQL to [SQL Semantics](https://github.com/k-kinza
 
 ## Support Syntax
 
-The following grammar versions are supported. Pass the version tag as the second argument of `Semantics`; omitting it uses the default. State declarations and composition support all listed versions; common table expressions in `Builder` need MySQL 8.0 or later, as does a `select()` with a condition but no table, and `cast()` to `FLOAT` needs 8.0.17 and to `YEAR` 8.0.22.
+The following grammar versions are supported. Pass the version tag as the second argument of `Semantics`; omitting it uses the default. A statement is read with the grammar of the selected release only.
 
 | Version | Version tag | Default |
 |---------|-------------|---------|
@@ -40,27 +40,37 @@ composer require k-kinzal/sql-semantics-mysql
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 
-$statement = (new Semantics(Dialect::MySql))->analyze("INSERT INTO users (id, name) VALUES (1, 'Alice') ON DUPLICATE KEY UPDATE name = 'Alice'");
+$semantics = new Semantics(Dialect::MySql);
+$users = $semantics->analyze('CREATE TABLE users (id INT NOT NULL PRIMARY KEY, name VARCHAR(40))');
+$query = $semantics->analyze('select id, upper(name) as label from users where id > 10', [$users]);
 
-$statement->toString(); // "INSERT INTO users ( id , name ) VALUES( 1 , 'Alice' ) ON DUPLICATE KEY UPDATE name = 'Alice'"
+$query->toString();                         // "SELECT id, upper(`name`) AS label FROM users WHERE id > 10"
+$query->field('label')->type;               // Known VARCHAR
+$query->field('id')->nullability;           // Nullability::NotNull
+
+$semantics->analyze('SELECT missing FROM users', [$users])->facts->diagnostics[0]->message(); // "Column missing does not exist."
 ```
 
-Read SQL as the session reads it, and compose values spelled for that session:
+Read SQL as the session reads it:
 
 ```php
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
-use SqlSemantics\Statement\Writer;
 
-$semantics = new Semantics(Dialect::MySql, mode: Mode::fromString('ANSI_QUOTES,NO_BACKSLASH_ESCAPES'));
-$semantics->analyze('SELECT "name" FROM users')->toString(); // "name" is an identifier under ANSI_QUOTES
-
-$builder = $semantics->builder();
-Writer::render($builder->compare($builder->column('select'), '=', $builder->string('C:\path'))); // "`select` = 'C:\path'"
+$semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44', Mode::fromString('ANSI_QUOTES,NO_BACKSLASH_ESCAPES'));
+$semantics->analyze('SELECT "name" FROM users')->toString(); // "SELECT `name` FROM users": "name" is an identifier under ANSI_QUOTES
 ```
 
-See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics) for statement models, traversal, dependencies, and composition.
+See the [SQL Semantics documentation](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics) for operations, facts, declarations and contexts.
+
+## Limitations
+
+- Optimizer hints (`/*+ … */` after `SELECT`, `INSERT`, `REPLACE`, `UPDATE` or `DELETE`) are not analyzed. The server reads them with a grammar of their own, and the parser this package uses delivers them as a comment, so a statement with a hint is refused with `ImplementationGap` instead of being read without it. On MySQL 5.6 such a comment is an ordinary comment.
+- Version comments (`/*!80000 … */`) are read as the selected release reads them: the body is part of the statement when the release is at least the written version, and a comment otherwise. Rendered SQL writes that reading without the comment markers, so it is SQL for the selected release.
+- Table and database names are compared exactly, as a server with `lower_case_table_names=0` (the default on Unix) compares them. A server running with 1 or 2 compares them without regard to letter case; that setting is not part of the analysis.
+- Column names are compared without regard to ASCII letter case. The server also folds letters outside ASCII; two column names that differ only in the case of such a letter are one name to the server and two names here.
+- An unqualified table name belongs to the current database. When no current database is given, the analysis treats it as unknown: results that would show its name, such as the column name of `SHOW TABLES`, depend on it.
 
 ## License
 

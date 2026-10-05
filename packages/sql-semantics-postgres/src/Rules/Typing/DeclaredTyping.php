@@ -36,7 +36,7 @@ use SqlSemantics\Statement\Type\TypeFact;
  *
  * @visibility SqlSemantics
  */
-final class DeclaredTypes
+final class DeclaredTyping
 {
     /**
      * Answers the type fact of a value of a declared type.

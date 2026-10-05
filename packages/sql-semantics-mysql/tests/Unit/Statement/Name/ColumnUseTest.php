@@ -148,7 +148,7 @@ final class ColumnUseTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = new Table(new QualifiedName(new Name('t')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
-        $operation = $semantics->analyze('SELECT a AS x FROM t HAVING x > 0', [$table]);
+        $operation = $semantics->analyze('SELECT a + 1 AS x FROM t HAVING x > 0', [$table]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         $having = $select->having;

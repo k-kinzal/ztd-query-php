@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Routine;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
@@ -24,7 +25,9 @@ use SqlSemantics\Statement\Identifier\Name;
  * of everything after it; a name declared twice in one block is reported
  * (ER_SP_DUP_VAR) and keeps its first meaning, while a name of an outer
  * block or a parameter is hidden. A condition or cursor declared twice in
- * one block is reported (ER_SP_DUP_COND, ER_SP_DUP_CURS). Variables and
+ * one block is reported (ER_SP_DUP_COND, ER_SP_DUP_CURS), and so is a
+ * condition value a handler of the block already handles, by the same
+ * handler or an earlier one (ER_SP_DUP_HANDLER). Variables and
  * conditions are declared before cursors and handlers
  * (ER_SP_VARCOND_AFTER_CURSHNDLR), cursors before handlers
  * (ER_SP_CURSOR_AFTER_HANDLER). The query of a cursor is derived as a nested
@@ -52,6 +55,7 @@ final class BlockFacts
         $names = [];
         $conditions = [];
         $cursors = [];
+        $handled = [];
         foreach ($block->declarations as $declaration) {
             if ($declaration instanceof VariableDeclaration) {
                 $this->ordered($stage, 0, $derivation);
@@ -73,7 +77,7 @@ final class BlockFacts
             } elseif ($declaration instanceof HandlerDeclaration) {
                 $stage = 2;
                 foreach ($declaration->conditions as $condition) {
-                    (new ConditionFacts())->value($condition, $derivation, $inside);
+                    $handled = $this->handled($handled, $condition, $derivation, $inside);
                 }
                 (new BodyFacts())->statement($declaration->statement, $derivation, $inside->handler());
             }
@@ -107,6 +111,32 @@ final class BlockFacts
         if ($scope->holds($declared, $name)) {
             $derivation->report(new ProgramProblem($rule, $name->value));
         }
+    }
+
+    /**
+     * Checks a condition value of a handler and answers the values the handlers of the block handle with it.
+     *
+     * @param list<Condition> $handled The values the handlers of the block handle so far
+     *
+     * @return list<Condition>
+     */
+    public function handled(array $handled, Condition $condition, Derivation $derivation, ProgramScope $scope): array
+    {
+        $facts = new ConditionFacts();
+        $facts->value($condition, $derivation, $scope);
+        $meaning = $facts->meaning($condition, $scope);
+        if ($meaning === null) {
+            return $handled;
+        }
+        foreach ($handled as $earlier) {
+            if ($facts->same($earlier, $meaning)) {
+                $derivation->report(new ProgramProblem(ProgramRule::DuplicateHandler));
+
+                return $handled;
+            }
+        }
+
+        return [...$handled, $meaning];
     }
 
     /**

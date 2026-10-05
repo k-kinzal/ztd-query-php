@@ -61,7 +61,7 @@ final class OrderedSetOperation implements Query
     public readonly array $orderBy;
 
     /**
-     * @param Query $left The operands before the last SELECT
+     * @param Query|LeadingUnion $left The operands before the last SELECT
      * @param SetOperator $operator The operator before the last SELECT
      * @param SetQuantifier|null $quantifier The written DISTINCT or ALL
      * @param Select $right The last SELECT with its own ORDER BY, LIMIT or locking clauses
@@ -69,7 +69,7 @@ final class OrderedSetOperation implements Query
      * @param Limit|null $limit The LIMIT of the result
      */
     public function __construct(
-        public readonly Query $left,
+        public readonly Query|LeadingUnion $left,
         public readonly SetOperator $operator,
         public readonly ?SetQuantifier $quantifier,
         public readonly Select $right,
@@ -81,6 +81,7 @@ final class OrderedSetOperation implements Query
         Check::input($this->orderBy !== [] || $limit !== null, 'An ordered set operation holds an ORDER BY or a LIMIT of its result.');
         Check::input($right->trailed() && $right->late === null && $right->into === null && $right->procedure === null, 'The last SELECT of an ordered set operation writes an ORDER BY, LIMIT or locking clause of its own and nothing after them.');
         Check::input(!$left instanceof SetOperation || !$operator->tighter($left->operator), 'A looser set operation on the left of INTERSECT is written in parentheses.');
+        Check::input(!$left instanceof LeadingUnion || $operator === SetOperator::Union, 'A leading union continues with UNION.');
         Check::input(!$left instanceof self && !$left instanceof QueryStatement && !($left instanceof QueryExpression && $left->with !== null), 'A query with a WITH clause, INTO, locking clauses or an ordering of its result is written in parentheses as a set operand.');
     }
 

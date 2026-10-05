@@ -54,4 +54,16 @@ final class TargetsTest extends TestCase
         self::assertSame([
         ], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
+
+    public function testExistingOpensTheShapeOfAMissingRelationUnderIfExists(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $statement = $semantics->analyze('SELECT 1', []);
+        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
+        $name = new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('nope'));
+        $skipped = (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->existing($derivation, $name, true);
+        $missing = (new \SqlSemantics\Platform\PostgreSql\Rules\Table\Targets())->existing($derivation, $name, false);
+        self::assertSame([false, null], [$skipped->shape->complete(), $skipped->table]);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\MissingTable::class, $missing->table);
+    }
 }

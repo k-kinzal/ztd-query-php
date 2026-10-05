@@ -9,7 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\ColumnTyping;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Declarations;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\KeyColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
-use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterTable;
@@ -66,7 +66,7 @@ final class Alterations
         $type = (new ColumnTyping())->descriptor($definition->type, $derivation->context);
         $slot = new OutputSlot(
             $definition->name,
-            $type === null ? $definition->type->typeFact($derivation->context) : (new DeclaredTypes())->fact($type),
+            $type === null ? $definition->type->typeFact($derivation->context) : (new DeclaredTyping())->fact($type),
             (new Declarations())->notNull($definition->qualifiers) ? Nullability::NotNull : Nullability::Nullable,
         );
         foreach ($scope->relations as $relation) {

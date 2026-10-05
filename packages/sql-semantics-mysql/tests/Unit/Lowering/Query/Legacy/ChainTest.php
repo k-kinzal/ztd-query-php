@@ -17,9 +17,11 @@ use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockStrength;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
@@ -74,5 +76,45 @@ final class ChainTest extends TestCase
         $this->expectException(AnalysisException::class);
 
         $chain->earlier(new Block([], [new SelectExpression(new NumberLiteral('1'))]), new Trailer([new OrderItem(new NumberLiteral('1.5'))]), 0);
+    }
+
+    public function testEnclosedKeepsTheClausesAfterTheFirstParenthesizedOperand(): void
+    {
+        $chain = new Chain([[new Block([], [new SelectExpression(new NumberLiteral('1'))]), new Trailer()]], [], GrammarRelease::MySql5651);
+        $limited = $chain->enclosed(new ParenthesizedQuery(new Select([], [new SelectExpression(new NumberLiteral('1'))])), new Trailer([], new RowLimit(new NumberLiteral('1'))), 0);
+        $plain = new ParenthesizedQuery(new Select([], [new SelectExpression(new NumberLiteral('1'))]));
+
+        self::assertInstanceOf(QueryExpression::class, $limited);
+        self::assertNotNull($limited->limit);
+        self::assertSame($plain, $chain->enclosed($plain, new Trailer(), 2));
+    }
+
+    public function testEnclosedRejectsAnOrderingAfterAParenthesizedOperandThatLimitsItself(): void
+    {
+        $chain = new Chain([[new Block([], [new SelectExpression(new NumberLiteral('1'))]), new Trailer()]], [], GrammarRelease::MySql5744);
+        $limited = new Select([], [new SelectExpression(new NumberLiteral('1'))], null, null, null, null, [], null, [], new RowLimit(new NumberLiteral('1')));
+
+        $this->expectException(AnalysisException::class);
+
+        $chain->enclosed(new ParenthesizedQuery($limited), new Trailer([new OrderItem(new NumberLiteral('1.5'))]), 0);
+    }
+
+    public function testEnclosedRejectsClausesAfterALaterParenthesizedOperand(): void
+    {
+        $chain = new Chain([[new Block([], [new SelectExpression(new NumberLiteral('1'))]), new Trailer()]], [], GrammarRelease::MySql5651);
+
+        $this->expectException(AnalysisException::class);
+
+        $chain->enclosed(new ParenthesizedQuery(new Select([], [new SelectExpression(new NumberLiteral('1'))])), new Trailer([], new RowLimit(new NumberLiteral('1'))), 1);
+    }
+
+    public function testQueryKeepsTheOwnClausesOfAMiddleSelectInALeadingUnion(): void
+    {
+        $middle = (new Block([], [new SelectExpression(new NumberLiteral('2'))], null, new Dual()))->then(new Trailer([], null, null, [new LockingClause(LockStrength::Update)]));
+        $query = (new Chain([[new Block([], [new SelectExpression(new NumberLiteral('1'))]), new Trailer()], [$middle, new Trailer()], [new Block([], [new SelectExpression(new NumberLiteral('3'))]), new Trailer()]], [null, null], GrammarRelease::MySql5744))->query();
+
+        self::assertInstanceOf(SetOperation::class, $query);
+        self::assertInstanceOf(LeadingUnion::class, $query->left);
+        self::assertCount(1, $query->left->right->locking);
     }
 }

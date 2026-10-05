@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Routine\Program;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
@@ -33,7 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration;
 #[Medium]
 final class ProgramStatementTest extends TestCase
 {
-    public function testDeriveProgramIsImplementedByTheStatementsOfThePrograms(): void
+    public function testDeriveProgramIsNotImplementedByAQueryOfABody(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN SELECT 1; END')->statement;
         self::assertInstanceOf(CreateProcedure::class, $create);
@@ -42,20 +43,33 @@ final class ProgramStatementTest extends TestCase
 
         self::assertNotInstanceOf(ProgramStatement::class, $block->statements[0]);
         self::assertInstanceOf(Select::class, $block->statements[0]);
-        self::assertTrue(is_subclass_of(OpenCursor::class, ProgramStatement::class));
-        self::assertTrue(is_subclass_of(FetchCursor::class, ProgramStatement::class));
-        self::assertTrue(is_subclass_of(CloseCursor::class, ProgramStatement::class));
-        self::assertTrue(is_subclass_of(IfStatement::class, ProgramStatement::class));
-        self::assertTrue(is_subclass_of(SimpleCase::class, ProgramStatement::class));
-        self::assertTrue(is_subclass_of(SearchedCase::class, ProgramStatement::class));
-        self::assertTrue(is_subclass_of(Loop::class, ProgramStatement::class));
-        self::assertTrue(is_subclass_of(WhileLoop::class, ProgramStatement::class));
-        self::assertTrue(is_subclass_of(RepeatLoop::class, ProgramStatement::class));
-        self::assertTrue(is_subclass_of(Leave::class, ProgramStatement::class));
-        self::assertTrue(is_subclass_of(Iterate::class, ProgramStatement::class));
-        self::assertTrue(is_subclass_of(ReturnStatement::class, ProgramStatement::class));
-        self::assertFalse(is_subclass_of(ConditionalBranch::class, ProgramStatement::class));
-        self::assertFalse(is_subclass_of(VariableDeclaration::class, ProgramStatement::class));
-        self::assertFalse(is_subclass_of(ConditionDeclaration::class, ProgramStatement::class));
+    }
+
+    #[DataProvider('providerDeriveProgramIsImplementedByTheProgramStatementClasses')]
+    public function testDeriveProgramIsImplementedByTheProgramStatementClasses(string $class, bool $expected): void
+    {
+        self::assertSame($expected, is_subclass_of($class, ProgramStatement::class));
+    }
+
+    /**
+     * @return iterable<string, array{class-string, bool}>
+     */
+    public static function providerDeriveProgramIsImplementedByTheProgramStatementClasses(): iterable
+    {
+        yield 'OPEN' => [OpenCursor::class, true];
+        yield 'FETCH' => [FetchCursor::class, true];
+        yield 'CLOSE' => [CloseCursor::class, true];
+        yield 'IF' => [IfStatement::class, true];
+        yield 'a simple CASE' => [SimpleCase::class, true];
+        yield 'a searched CASE' => [SearchedCase::class, true];
+        yield 'LOOP' => [Loop::class, true];
+        yield 'WHILE' => [WhileLoop::class, true];
+        yield 'REPEAT' => [RepeatLoop::class, true];
+        yield 'LEAVE' => [Leave::class, true];
+        yield 'ITERATE' => [Iterate::class, true];
+        yield 'RETURN' => [ReturnStatement::class, true];
+        yield 'a branch' => [ConditionalBranch::class, false];
+        yield 'a variable declaration' => [VariableDeclaration::class, false];
+        yield 'a condition declaration' => [ConditionDeclaration::class, false];
     }
 }

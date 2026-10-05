@@ -12,6 +12,8 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\JsonItemKind;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Predicate\JsonTest;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\Constructor\JsonParse;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonUniqueKeys;
 use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Json\JsonValueExpression;
@@ -47,5 +49,11 @@ final class JsonParseTest extends TestCase
         $out = new Output(new Codec(GrammarRelease::PostgreSql172));
         $parse->render($out);
         self::assertSame('JSON(\'{}\' WITH UNIQUE KEYS)', (new Lexical())->join($out->pieces()));
+    }
+
+    public function testRejectsAValueThatWouldTakeTheUniqueness(): void
+    {
+        $this->expectExceptionMessage('A value ending in IS JSON without a uniqueness clause would take the uniqueness clause; group it.');
+        new JsonParse(new JsonValueExpression(new JsonTest(new NullLiteral(), false, JsonItemKind::Json)), new JsonUniqueKeys(true));
     }
 }

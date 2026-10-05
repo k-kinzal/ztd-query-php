@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Routine\Program;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Routine\Program\Block;
@@ -19,13 +20,22 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration;
 #[Small]
 final class DeclarationTest extends TestCase
 {
-    public function testImplementationsAreTheFourDeclarations(): void
+    #[DataProvider('providerImplementationsAreTheFourDeclarations')]
+    public function testImplementationsAreTheFourDeclarations(string $class, bool $expected): void
     {
-        self::assertTrue(is_subclass_of(VariableDeclaration::class, Declaration::class));
-        self::assertTrue(is_subclass_of(ConditionDeclaration::class, Declaration::class));
-        self::assertTrue(is_subclass_of(CursorDeclaration::class, Declaration::class));
-        self::assertTrue(is_subclass_of(HandlerDeclaration::class, Declaration::class));
-        self::assertFalse(is_subclass_of(OpenCursor::class, Declaration::class));
-        self::assertFalse(is_subclass_of(Block::class, Declaration::class));
+        self::assertSame($expected, is_subclass_of($class, Declaration::class));
+    }
+
+    /**
+     * @return iterable<string, array{class-string, bool}>
+     */
+    public static function providerImplementationsAreTheFourDeclarations(): iterable
+    {
+        yield 'a variable' => [VariableDeclaration::class, true];
+        yield 'a condition' => [ConditionDeclaration::class, true];
+        yield 'a cursor' => [CursorDeclaration::class, true];
+        yield 'a handler' => [HandlerDeclaration::class, true];
+        yield 'OPEN' => [OpenCursor::class, false];
+        yield 'a block' => [Block::class, false];
     }
 }
