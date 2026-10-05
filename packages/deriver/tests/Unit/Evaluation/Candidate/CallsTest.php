@@ -31,7 +31,7 @@ final class CallsTest extends TestCase
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded
      */
-    public function testUnchangedArgumentsClosesAnUnboundedRecursion(): void
+    public function testPassThroughRecursionClosesOnlyProvenUnchangedBindings(): void
     {
         $e = F::evaluator('function target($x){return target($x);}');
         $r = $e->returns(F::frame($e), 64);
@@ -48,7 +48,7 @@ final class CallsTest extends TestCase
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded
      */
-    public function testEffectUpdatesOnlyAReferenceArgument(): void
+    public function testSelectedEffectUpdatesOnlyAReferenceArgument(): void
     {
         $e = F::evaluator('function change(&$x){$x=8;}function target(){$x=1;change($x);return $x;}');
         self::assertSame(8, F::value($e)->native());
@@ -101,10 +101,30 @@ final class CallsTest extends TestCase
     /**
      * @throws JsonException If captured metadata cannot be encoded
      */
+    public function testEffectUsesTheConcreteReceiverForReferenceWrites(): void
+    {
+        $e = F::evaluator('class A{function change(&$x){$x=1;}}class B extends A{function change(&$x){$x=7;}}function apply(A $b){$x=0;$b->change($x);return $x;}function target(){return apply(new B);}');
+        self::assertSame(7, F::value($e)->native());
+        self::assertArrayNotHasKey('A::change', $e->context->bodies);
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
     public function testPassedIgnoresStorageNotPassedToTheCall(): void
     {
         $e = F::evaluator('function target(){$safe=3;missing(1);return $safe;}');
         $f = F::frame($e);
         self::assertNull((new \Deriver\Evaluation\Candidate\Calls($e))->passed($f, F::instruction($f, 'invoke'), F::instruction($f, 'local')->result));
     }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testStableEnvironmentRejectsMutableObjectInputs(): void
+    {
+        $e = F::evaluator('class Box{public $n=4;}function target(Box $box){$box->n--;return target($box);}');
+        $f = F::frame($e);
+        self::assertFalse((new \Deriver\Evaluation\Candidate\Calls($e))->stableEnvironment($f));
+    }
+
 }

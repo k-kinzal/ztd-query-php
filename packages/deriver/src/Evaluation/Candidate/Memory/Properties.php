@@ -7,6 +7,8 @@ namespace Deriver\Evaluation\Candidate\Memory;
 use Deriver\ControlFlow\PropertyDeclaration;
 use Deriver\Evaluation\Candidate\Calls;
 use Deriver\Evaluation\Candidate\Derivation;
+use Deriver\Evaluation\Candidate\Frame;
+use Deriver\Evaluation\Candidate\Invocation\Bodies;
 use Deriver\Value\Term;
 
 /**
@@ -16,34 +18,34 @@ use Deriver\Value\Term;
 final class Properties
 {
     /**
-     * Demands the final constructor definition of one declared property.
+     * Demands a constructor's property effect through the shared body selection.
      */
     public function allocated(Derivation $engine, Term $receiver, PropertyDeclaration $property, int $depth): ?Term
     {
-        if ($receiver->kind === 'throwable') {
-            return $receiver;
-        }
         $owner = $engine->context->frames[(string) ($receiver->attributes['context'] ?? '')] ?? null;
         $creation = $owner->graph->definitions[(string) ($receiver->attributes['allocation'] ?? '')] ?? null;
         if ($owner === null || $creation === null) {
             return null;
         }
-        $graph = $engine->context->index->graph($engine->context->index->target($owner->graph, $creation));
+        $body = (new Bodies($engine))->select($owner, $creation, $engine->context->index->target($owner->graph, $creation), $depth);
+        $graph = $body->implementation;
+        if ($graph instanceof Term) {
+            return $graph;
+        }
+        $initial = (new PropertyOrigins($engine))->initial($property, $depth);
         if ($graph === null) {
             return null;
         }
-        foreach ($graph->definitions as $instruction) {
-            if ($instruction->operation !== 'write') {
+        foreach ($graph->definitions as $write) {
+            $address = Mutations::root($graph, $write);
+            $declared = $address === null ? null : $engine->context->index->declaredProperty($graph, $address);
+            if (!Mutations::writes($write) || $declared?->className !== $property->className || $declared->name !== $property->name) {
                 continue;
             }
-            $address = $graph->definitions[$instruction->operands[0]] ?? null;
-            $declared = $address === null ? null : $engine->context->index->declaredProperty($graph, $address);
-            if ($declared?->className === $property->className && $declared->name === $property->name) {
-                $frame = (new Calls($engine))->bind($owner, $creation, $graph);
-                $engine->context->bodyExpansions++;
-                $engine->context->bodies[$graph->body->symbol] = ($engine->context->bodies[$graph->body->symbol] ?? 0) + 1;
-                return (new Calls($engine))->finalStorage($frame, $address->result, $depth);
-            }
+            $bound = (new Calls($engine))->bind($owner, $creation, $graph);
+            $frame = new Frame($bound->graph, $bound->identity . ':property:' . $property->name, $bound->bindings, [$property->name => $initial], $bound->calls, true, origin: $bound->origin);
+            $body->enter($engine->context);
+            return (new Calls($engine))->finalStorage($frame, $address->result, $depth);
         }
         return null;
     }

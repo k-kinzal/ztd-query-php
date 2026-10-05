@@ -68,6 +68,10 @@ final class Context
      */
     public array $frames = [];
     /**
+     * @var array<string, Invocation\Body> Selected implementations for all dependency paths
+     */
+    public array $implementations = [];
+    /**
      * @var array<string, list<Frame>> Explicit input bindings by declaration
      */
     public array $entryFrames = [];

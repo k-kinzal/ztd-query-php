@@ -68,7 +68,7 @@ final class Storage
                 }
                 $target = $this->engine->context->index->target($frame->graph, $instruction);
                 $body = $this->engine->context->index->graph($target)?->body;
-                if ($body === null || ($body->parameters[$position]->byReference ?? true)) {
+                if ($instruction->operation === 'invoke-method' || $body === null || ($body->parameters[$position]->byReference ?? true)) {
                     return true;
                 }
             }
@@ -134,7 +134,7 @@ final class Storage
         if (in_array($write->operation, ['invoke', 'invoke-method', 'invoke-static'], true)) {
             return (new Calls($this->engine))->effect($frame, $write, $address, $depth);
         }
-        if (!in_array($write->operation, ['write', 'compound', 'increment', 'unset'], true)) {
+        if (!Memory\Mutations::writes($write)) {
             return null;
         }
         $aliases = new Memory\Aliases();
@@ -154,8 +154,10 @@ final class Storage
             return Term::constant(null);
         }
         $before = $this->search($frame, $address, $block, $offset, $depth, $seen);
-        $right = $write->operation === 'increment' ? Term::constant((int) $write->attributes['delta']) : $this->engine->value($frame, $write->operands[1], $depth);
-        return $this->engine->operation('binary', $write->operation === 'increment' ? '+' : $write->name, [$before, $right]);
+        if ($write->operation === 'increment') {
+            return Memory\Mutations::increment($this->engine, $write, $before);
+        }
+        return $this->engine->operation('binary', $write->name, [$before, $this->engine->value($frame, $write->operands[1], $depth)]);
     }
 
     /**
@@ -173,7 +175,7 @@ final class Storage
         $right = $this->engine->value($frame, $write->operands[1] ?? '', $depth);
         if ($write->operation === 'compound' || $write->operation === 'increment') {
             $previous = $this->engine->element($before, $key);
-            $right = $this->engine->operation('binary', $write->operation === 'increment' ? '+' : $write->name, [$previous, $write->operation === 'increment' ? Term::constant((int) $write->attributes['delta']) : $right]);
+            $right = $write->operation === 'increment' ? Memory\Mutations::increment($this->engine, $write, $previous) : $this->engine->operation('binary', $write->name, [$previous, $right]);
         }
         if ($write->operation === 'unset' && $before->kind === 'array' && $key->kind === 'constant') {
             $entries = $before->operands;
@@ -201,6 +203,9 @@ final class Storage
         }
         $property = $this->engine->context->index->declaredProperty($frame->graph, $instruction);
         if ($property !== null) {
+            if ($instruction->operation === 'static-address') {
+                return $property->className . '::$' . $property->name;
+            }
             $receiver = $frame->graph->definitions[$instruction->operands[0]] ?? null;
             $local = $frame->graph->definitions[$receiver?->operands[0] ?? ''] ?? null;
             return $property->className . '::$' . $property->name . ':' . ($local?->operation === 'local' ? $local->name : $instruction->operands[0]);

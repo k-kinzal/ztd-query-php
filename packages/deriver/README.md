@@ -60,7 +60,7 @@ $result = $session->derive($query);
 echo $result->normalOutcomes[0]->values['return']->native(); // user:42
 ```
 
-Property candidates come from their declared initial values and corresponding assignments in the supplied source. Deriver collects these origins without requiring an execution history proving that each assignment ran:
+Property candidates come from their declared initial values and corresponding storage mutations in the supplied source. These include compound assignments, increments, decrements, and element writes; a postfix increment contributes its updated stored value, even though the increment expression returns the previous value. Deriver collects these origins without requiring an execution history proving that each assignment ran:
 
 ```php
 $session = (new Analyzer())->open(new ProjectInput([
@@ -178,7 +178,9 @@ Array construction evaluates key and value expressions without retaining every i
 
 Partial formatting and array operations retain the structure they can establish. For example, an unknown middle part of `sprintf("SELECT * FROM $table WHERE id = %d", 5)` retains the `SELECT * FROM ` prefix. The unknown part may itself contain format directives, so the later `id = 5` text is not guaranteed. Known leading and trailing values around array unpacking can remain candidates alongside the unknown remainder; they do not make the whole array concrete.
 
-An applied call model replaces source-body derivation. Its plan requests only the inputs it uses; `DemandModel` declares any inputs additionally needed to select the plan. An explicit model decline permits source expansion.
+An applied call model replaces source-body derivation for return values, reference-argument effects, constructor property initialization, property origins, and model state. A constructor replaced by an empty plan leaves the declared property initializers intact. Reading those properties later does not re-enter the replaced constructor. Its plan requests only the inputs it uses; `DemandModel` declares any inputs additionally needed to select the plan. An explicit model decline permits source expansion; an unsupported model case remains a frontier.
+
+See [candidate dependency guarantees](docs/candidate-dependencies.md) for dispatch, mutation, recursion, replacement boundaries, and their verification.
 
 For questions about ordered execution and reachability, select `Configuration::forExecution()` explicitly. Candidate queries never switch to that contract automatically.
 

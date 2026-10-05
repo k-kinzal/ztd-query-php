@@ -109,14 +109,14 @@ final class Origins
         }
         $property = $index->declaredProperty($frame->graph, $address);
         $receiver = null;
-        if ($address->operation === 'field-address' && ($frame->invocation || $property === null)) {
+        if ($address->operation === 'field-address') {
             $receiver = $this->engine->value($frame, $address->operands[0], $depth);
             if ($receiver->kind === 'throwable') {
                 return $receiver;
             }
         }
-        if ($property === null && $receiver !== null) {
-            $property = $index->property((string) ($receiver->attributes['type'] ?? ''), $name);
+        if ($receiver !== null && $property?->visibility !== 'private') {
+            $property = $index->property((string) ($receiver->attributes['type'] ?? ''), $name) ?? $property;
         }
         if ($property === null) {
             return $this->engine->context->reference($frame, 'property:' . $name, $address->source, reason: 'UNRESOLVED_PROPERTY');
@@ -127,27 +127,6 @@ final class Origins
                 return $allocated;
             }
         }
-        $identity = $property->className . '::$' . $property->name;
-        $key = $frame->identity . ':property:' . $identity;
-        if (isset($this->engine->context->active[$key])) {
-            return $this->engine->context->reference($frame, $identity, $address->source, $property->type, 'CYCLE', 'recursive');
-        }
-        $this->engine->context->active[$key] = true;
-        $values = [];
-        if ($property->default !== null) {
-            $values[] = [$this->engine->returns(new Frame(new Graph($property->default), 'default:' . $identity), $depth), []];
-        }
-        foreach ($index->writes($property) as [$graph, $write]) {
-            $owner = new Frame($graph, 'property-origin:' . $graph->body->symbol);
-            if ($graph->body->symbol !== $frame->graph->body->symbol) {
-                $this->engine->context->bodyExpansions++;
-                $this->engine->context->bodies[$graph->body->symbol] = ($this->engine->context->bodies[$graph->body->symbol] ?? 0) + 1;
-            }
-            $value = $this->engine->value($owner, $write->operands[1], $depth);
-            $block = $graph->positions[$write->result][0];
-            $values[] = [(new Guards($this->engine))->at($owner, $block, $value, $depth), []];
-        }
-        unset($this->engine->context->active[$key]);
-        return $values === [] ? $this->engine->context->reference($frame, $identity, $address->source, $property->type, 'UNINITIALIZED_PROPERTY') : (new Choices())->make($values);
+        return (new Memory\PropertyOrigins($this->engine))->value($frame, $address, $property, $depth);
     }
 }
