@@ -9,9 +9,9 @@ use Deriver\Evaluation\Candidate\Calls;
 use Deriver\Evaluation\Candidate\Choices;
 use Deriver\Evaluation\Candidate\Derivation;
 use Deriver\Evaluation\Candidate\Frame;
-use Deriver\Evaluation\Candidate\Graph;
 use Deriver\Evaluation\Candidate\Guards;
-use Deriver\Evaluation\Candidate\Models;
+use Deriver\Evaluation\Candidate\Invocation\Bodies;
+use Deriver\Evaluation\Candidate\Invocation\Dispatch;
 use Deriver\Value\Identity;
 use Deriver\Value\Term;
 
@@ -83,19 +83,39 @@ final class Slots
      */
     public function effect(Frame $frame, Instruction $call, string $slot, int $depth): ?Term
     {
-        $target = $this->engine->context->index->target($frame->graph, $call);
-        $model = (new Models($this->engine))->graph($frame, $call, $target, $depth);
-        if (!$model instanceof Graph) {
-            return $model;
-        }
-        foreach ($model->definitions as $write) {
-            $address = $model->definitions[$write->operands[0] ?? ''] ?? null;
-            if ($write->operation === 'write' && $address?->operation === 'model-state-address' && $address->name === $slot) {
-                $bound = (new Calls($this->engine))->bind($frame, $call, $model);
-                return (new Calls($this->engine))->finalStorage($bound, $address->result, $depth - 1);
+        $changed = false;
+        $result = (new Dispatch($this->engine))->apply($frame, $call, $depth, function (string $target, ?Term $receiver) use ($frame, $call, $slot, $depth, &$changed): Term {
+            $body = (new Bodies($this->engine))->select($frame, $call, $target, $depth);
+            $graph = $body->implementation;
+            if ($graph instanceof Term) {
+                $changed = true;
+                return $graph;
             }
+            if ($graph === null) {
+                return new Term('unchanged-state', operands: $receiver === null ? [] : [$receiver]);
+            }
+            foreach ($graph->definitions as $write) {
+                $address = $graph->definitions[$write->operands[0] ?? ''] ?? null;
+                if (Mutations::writes($write) && $address?->operation === 'model-state-address' && $address->name === $slot) {
+                    $changed = true;
+                    $bound = (new Calls($this->engine))->bind($frame, $call, $graph, $receiver);
+                    $body->enter($this->engine->context);
+                    return (new Calls($this->engine))->finalStorage($bound, $address->result, $depth - 1);
+                }
+            }
+            return new Term('unchanged-state', operands: $receiver === null ? [] : [$receiver]);
+        });
+        if (!$changed) {
+            return null;
         }
-        return null;
+        return (new Choices())->apply('state-effect', [$result], function (array $values) use ($frame, $call, $slot, $depth): Term {
+            $value = $values[0];
+            if ($value->kind !== 'unchanged-state') {
+                return $value;
+            }
+            [$block, $offset] = $frame->graph->positions[$call->result];
+            return $this->before($frame, $value->operands[0], $slot, $block, $offset, $depth);
+        }, $this->engine->context->budget->partitions);
     }
 
     /**

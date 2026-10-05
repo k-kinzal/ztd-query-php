@@ -68,6 +68,9 @@ final class Derivation
         if ($op === 'copy' || $op === 'write') {
             return $this->value($frame, $instruction->operands[$op === 'write' ? 1 : 0], $depth);
         }
+        if ($op === 'compound' || $op === 'increment') {
+            return Memory\Mutations::value($this, $frame, $instruction, $depth);
+        }
         if ($op === 'read' || $op === 'read-silent') {
             return (new Storage($this))->read($frame, $instruction, $instruction->operands[0], $depth);
         }

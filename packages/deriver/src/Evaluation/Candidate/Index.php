@@ -76,7 +76,7 @@ final class Index
     }
 
     /**
-     * Resolves a statically identifiable call target through declarations.
+     * Discovers a declaration target; receiver values must still select instance dispatch.
      */
     public function target(Graph $graph, Instruction $instruction): string
     {
@@ -218,8 +218,8 @@ final class Index
                     continue;
                 }
                 foreach ($graph->definitions as $write) {
-                    $address = $graph->definitions[$write->operands[0] ?? ''] ?? null;
-                    if ($write->operation !== 'write' || $address === null) {
+                    $address = Memory\Mutations::root($graph, $write);
+                    if (!Memory\Mutations::writes($write) || $address === null) {
                         continue;
                     }
                     $slot = $this->declaredProperty($graph, $address);
