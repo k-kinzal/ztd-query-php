@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
@@ -58,7 +59,7 @@ final class NameAssignment implements SetItem
     public function deriveItem(Derivation $derivation): void
     {
         if ($this->value instanceof Scalar) {
-            $derivation->scalar($this->value, $derivation->environment());
+            (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
     }
 

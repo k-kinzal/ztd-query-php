@@ -57,6 +57,13 @@ use SqlSemantics\Statement\Scalar;
  * each walk follows one edge of a finite tree.
  * The scale was checked against the parser of every release with
  * `SELECT <expression>` probes of each pair of forms.
+ * Shared rule: this class is the one precedence model of the package. A
+ * structure class of any family whose grammar slot takes an expression of
+ * a level (the substring of POSITION before IN, the document of JSON_VALUE,
+ * the row number of NTH_VALUE) checks its operand in its constructor with
+ * admits() for the slot level and, when an operator keyword follows the
+ * slot, absorbs() for that keyword's level, using the level constants
+ * declared here; no family keeps its own table of levels.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/operator-precedence.html,
  * https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html#sqlmode_high_not_precedence.
  * Status: Implemented.

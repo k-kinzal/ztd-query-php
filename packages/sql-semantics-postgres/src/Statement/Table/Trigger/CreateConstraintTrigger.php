@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\Triggers;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\ConstraintAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\SchemaElement;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ParentTable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -20,7 +21,6 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
-use SqlSemantics\Statement\Statement;
 
 /**
  * A request to create a constraint trigger: an AFTER ROW trigger whose firing can be deferred.
@@ -35,7 +35,7 @@ use SqlSemantics\Statement\Statement;
  *     $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FROM u DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION f()');
  *     $statement->toString() // => 'CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FROM u DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION f()'
  */
-final class CreateConstraintTrigger implements Statement, Relation
+final class CreateConstraintTrigger implements SchemaElement, Relation
 {
     use Snapshot;
 
@@ -82,11 +82,27 @@ final class CreateConstraintTrigger implements Statement, Relation
     }
 
     /**
+     * Answers the schema written on the table, or null when it is unqualified.
+     */
+    public function createdSchema(): ?Name
+    {
+        return $this->table->schema;
+    }
+
+    /**
      * Resolves the tables, derives the condition and checks the attributes.
      */
     public function deriveStatement(Derivation $derivation): void
     {
         (new Triggers())->deriveConstraint($this, $derivation);
+    }
+
+    /**
+     * Derives the statement inside CREATE SCHEMA: an unqualified table is in that schema.
+     */
+    public function deriveElement(Derivation $derivation, Name $schema): void
+    {
+        (new Triggers())->deriveConstraint($this, $derivation, $schema);
     }
 
     /**

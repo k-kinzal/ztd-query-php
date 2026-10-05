@@ -34,6 +34,6 @@ final class PublicationListTest extends TestCase
 
     public function testRuleOfAnIntroducedItemIsNull(): void
     {
-        self::assertNull((new \SqlSemantics\Platform\PostgreSql\Rules\Catalog\PublicationList())->rule(null, new \SqlSemantics\Platform\PostgreSql\Statement\Publication\PublicationSchema(null), null));
+        self::assertNull((new \SqlSemantics\Platform\PostgreSql\Rules\Catalog\PublicationList())->rule(null, new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationSchema(null), null));
     }
 }

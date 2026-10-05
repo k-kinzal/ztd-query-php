@@ -27,6 +27,13 @@ final class UserAssignmentTest extends TestCase
         self::assertSame(Nullability::NotNull, $set->facts->scalar($item->value)->nullability);
     }
 
+    public function testDeriveItemReportsARowAsTheValue(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SET @a = (1, 2)');
+
+        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+    }
+
     public function testRenderWritesAnEqualsSign(): void
     {
         self::assertSame("SET @`a b` = 'x'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("set @'a b' := 'x'")->toString());

@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules;
 
+use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
+use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
+use SqlSemantics\Platform\MySql\Rules\Query\Having\ResultReferences;
 use SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias;
 use SqlSemantics\Resolution\ColumnLookup;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\LookupLevel;
+use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Column\Resolution;
+use SqlSemantics\Statement\Shape\OpenStar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Validation\Equivalence;
 
@@ -31,6 +37,14 @@ use SqlSemantics\Validation\Equivalence;
  * different items are ambiguous (ER_NON_UNIQ_ERROR). While an incompletely
  * known occurrence could still own the name, the alias is not chosen and the
  * outcome is conditional. Only a name found neither way continues outwards.
+ * At a HAVING position (MYSQL-HAVING-SCOPE-001) the GROUP BY columns and
+ * the select list are searched first (MYSQL-HAVING-REFERENCE-001); a name
+ * written there outside set functions never sees the columns of the FROM
+ * clause of its own query (ER_BAD_FIELD_ERROR "in 'having clause'"), and a
+ * name of a nested query sees them only when the enclosing block neither
+ * groups, aggregates nor is DISTINCT (Item_ref::fix_fields,
+ * Item_field::fix_outer_field). A select list star over an incompletely
+ * known occurrence leaves a name not found there conditional.
  * Terminates: the scopes form a finite chain. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/select.html ("For GROUP BY or
  * HAVING clauses, it searches the FROM clause before searching in the
@@ -50,6 +64,18 @@ final class ColumnResolver
         $open = [];
         $depth = 0;
         for ($scope = $environment; $scope !== null; $scope = $scope->outer) {
+            $row = (new HavingScope())->row($scope);
+            if ($row !== null) {
+                $result = (new ResultReferences())->find($row, $scope, $column, $qualifier, $depth);
+                if ($result !== null) {
+                    return $open === [] ? $result : $lookup->conditional($column, $result instanceof ResolvedColumn ? [$result] : [], $open);
+                }
+                $open = [...$open, ...$this->unlisted($row, $scope)];
+                if ($depth === 0 || $row->grouped) {
+                    $depth++;
+                    continue;
+                }
+            }
             $level = new LookupLevel($scope, $column, $qualifier, $depth);
             $found = $level->found();
             $open = [...$open, ...$level->open()];
@@ -68,6 +94,22 @@ final class ColumnResolver
         }
 
         return $open === [] ? new MissingColumn($column, $qualifier) : $lookup->conditional($column, [], $open);
+    }
+
+    /**
+     * Answers the incompletely known occurrences of a HAVING position whose columns a star of the select list may list unseen.
+     *
+     * @return list<VisibleRelation>
+     */
+    public function unlisted(GroupedRow $row, Environment $scope): array
+    {
+        foreach ($row->selected as $item) {
+            if ($item instanceof OpenStar) {
+                return array_values(array_filter($scope->relations, static fn (VisibleRelation $relation): bool => !$relation->shape->complete()));
+            }
+        }
+
+        return [];
     }
 
     /**

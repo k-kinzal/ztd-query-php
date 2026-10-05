@@ -73,7 +73,7 @@ final class CreateTrigger implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        (new ProgramFacts())->trigger($this->table, $this->event, $this->body, $derivation);
+        (new ProgramFacts())->trigger($this->table, $this->time, $this->event, $this->body, $derivation);
     }
 
     /**

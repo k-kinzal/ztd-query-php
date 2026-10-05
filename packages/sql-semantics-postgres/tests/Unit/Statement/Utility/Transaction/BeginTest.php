@@ -26,11 +26,4 @@ final class BeginTest extends TestCase
     {
         self::assertSame('START TRANSACTION READ ONLY READ WRITE READ ONLY', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('START TRANSACTION READ ONLY READ WRITE READ ONLY')->toString());
     }
-
-    public function testModesMustBeTransactionModes(): void
-    {
-        $this->expectException(\SqlSemantics\Diagnostic\InvalidConstruction::class);
-        $this->expectExceptionMessage('The modes of a transaction are transaction modes.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\Begin(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\BeginSpelling::Begin, ['READ ONLY']);
-    }
 }

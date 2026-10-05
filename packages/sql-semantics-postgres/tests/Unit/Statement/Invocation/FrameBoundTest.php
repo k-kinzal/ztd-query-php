@@ -46,4 +46,10 @@ final class FrameBoundTest extends TestCase
         $this->expectExceptionMessage('A frame bound has an offset exactly when it is an offset bound.');
         new FrameBound(FrameBoundKind::OffsetPreceding);
     }
+
+    public function testRenderQuotesABareUnboundedColumn(): void
+    {
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT count(*) OVER (ORDER BY 1 ROWS "unbounded" PRECEDING) FROM (SELECT 1 AS unbounded) AS s', []);
+        self::assertSame('SELECT count(*) OVER (ORDER BY 1 ROWS "unbounded" PRECEDING) FROM (SELECT 1 AS unbounded) AS s', $query->toString());
+    }
 }

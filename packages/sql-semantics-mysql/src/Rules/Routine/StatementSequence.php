@@ -29,17 +29,12 @@ final class StatementSequence
      * Narrows a constructor argument to a list of program statements and SQL statements.
      *
      * @param array<array-key, object|array<array-key, object|scalar|null>|scalar|null> $statements
-     * @return list<ProgramStatement|Statement>
+     * @return ($minimum is positive-int ? non-empty-list<ProgramStatement|Statement> : list<ProgramStatement|Statement>)
      * @throws InvalidConstruction When a member is no statement, or the list is shorter than the minimum
      */
     public function members(array $statements, int $minimum = 0): array
     {
-        $list = [];
-        foreach (Check::listOf($statements, Node::class, 'A statement list holds statements.', $minimum) as $statement) {
-            $list[] = $this->member($statement);
-        }
-
-        return $list;
+        return array_map($this->member(...), Check::listOf($statements, Node::class, 'A statement list holds statements.', $minimum));
     }
 
     /**

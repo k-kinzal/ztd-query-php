@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN END; END');
  *     $create->statement->body->declarations[0]->conditions[0]->class // => \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass::SqlException
  */
-final class GeneralCondition implements ConditionValue
+final class GeneralCondition implements Condition
 {
     use Snapshot;
 

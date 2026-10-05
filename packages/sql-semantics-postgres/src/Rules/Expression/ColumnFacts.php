@@ -9,6 +9,8 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\AmbiguousOutputName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ImproperName;
+use SqlSemantics\Platform\PostgreSql\Rules\Resolution\LateralReach;
+use SqlSemantics\Platform\PostgreSql\Rules\Resolution\Visibility;
 use SqlSemantics\Resolution\ColumnLookup;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\Diagnostic;
@@ -30,7 +32,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * output columns by name refers to the one output column of that name, and
  * two such columns are ambiguous. Otherwise the last part is a column and
  * the parts before it are the relation, schema and catalog qualifiers,
- * resolved by CORE-COLUMN-LOOKUP-001. A one-part name that no column
+ * resolved by CORE-COLUMN-LOOKUP-001; a reference that reaches a relation a
+ * lateral item must not reference is reported (PG-LATERAL-JOIN-001). A one-part name that no column
  * answers to is the whole row of a visible relation of that name
  * (PG-WHOLE-ROW-001). More than four parts are an improper name.
  * Termination: one lookup through finite levels.
@@ -59,7 +62,12 @@ final class ColumnFacts
             return $this->alias($derivation, $environment, $parts[0]);
         }
         $qualifier = $count === 1 ? null : (new DottedName(array_slice($parts, 0, -1)))->qualified();
-        $resolution = (new ColumnLookup())->find($environment, $parts[$count - 1], $qualifier);
+        $resolution = (new ColumnLookup())->find($qualifier === null ? (new Visibility())->unqualified($environment) : $environment, $parts[$count - 1], $qualifier);
+        $reach = new LateralReach();
+        $barred = $reach->reached($environment, $resolution, $qualifier);
+        if ($barred !== null) {
+            return $reach->report($derivation, $barred);
+        }
         if ($resolution instanceof ResolvedColumn) {
             return new ScalarFact($resolution->slot->type, $resolution->slot->nullability, $resolution);
         }

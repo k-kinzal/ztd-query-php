@@ -52,6 +52,20 @@ final class CreateSchemaTest extends TestCase
         ]);
     }
 
+    public function testDeriveStatementLetsAnElementSeeTheRelationsOfEarlierSteps(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA s CREATE VIEW v AS SELECT a FROM x CREATE TABLE x (a int4)', []);
+        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame(['x', 'v'], array_map(static fn (\SqlSemantics\Statement\Declaration\Table $table): string => $table->name->name->value, $operation->declarations()));
+        self::assertTrue($operation->declarations()[1]->complete);
+    }
+
+    public function testDeriveStatementRunsViewsInTheOrderWritten(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA s CREATE VIEW v AS SELECT a FROM w CREATE VIEW w AS SELECT 1 AS a', []);
+        self::assertSame('Relation w does not exist.', $operation->facts->diagnostics[0]->message());
+    }
+
     public function testDeriveStatementDeclaresNothingForASessionOwner(): void
     {
         self::assertSame([], (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE SCHEMA AUTHORIZATION CURRENT_USER CREATE TABLE t (a int4)')->declarations());

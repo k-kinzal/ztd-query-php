@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Snapshot;
  *     $text = new \SqlSemantics\Platform\MySql\Statement\Literal\Text('00000');
  *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState($text))->valid() // => false
  */
-final class SqlState implements ConditionValue
+final class SqlState implements Condition
 {
     use Snapshot;
 

@@ -118,6 +118,6 @@ final class KeyPartRule
      */
     public function length(Node $part): Numeral
     {
-        return $this->lowering->leaves->record(new Numeral($this->lowering->productions->form($part)->token(2)->text));
+        return $this->lowering->numbers->token($this->lowering->productions->form($part)->token(2));
     }
 }

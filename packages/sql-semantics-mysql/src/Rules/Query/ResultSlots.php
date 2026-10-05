@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
@@ -105,7 +106,7 @@ final class ResultSlots
                 $derivation->report(new CountMismatch(CountedList::ValueRows, $width, count($row->values)));
             }
             foreach ($row->values as $position => $value) {
-                $columns[$position][] = $derivation->scalar($value, new Environment($derivation->context, $outer));
+                $columns[$position][] = (new Operands())->single($derivation->scalar($value, new Environment($derivation->context, $outer)), $derivation);
             }
         }
         $fields = [];

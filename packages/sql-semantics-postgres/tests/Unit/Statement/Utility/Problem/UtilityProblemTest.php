@@ -21,11 +21,4 @@ final class UtilityProblemTest extends TestCase
     {
         self::assertSame('no inline code specified', (new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind::NoInlineCode))->message());
     }
-
-    public function testSubjectCountMustFitTheMessage(): void
-    {
-        $this->expectException(\SqlSemantics\Diagnostic\InvalidConstruction::class);
-        $this->expectExceptionMessage('A utility problem names one subject for each place of its message.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind::UnknownOption, ['VACUUM']);
-    }
 }

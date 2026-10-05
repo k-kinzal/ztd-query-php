@@ -31,10 +31,21 @@ final class QueryRootsTest extends TestCase
         self::assertSame('n', (new \SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\QueryRoots())->first($operation)?->into?->table->name->value);
     }
 
-    public function testTableIsIncompleteAfterAnUnknownType(): void
+    public function testTableDeclaresAColumnOfADependentTypeWithTheMissingInputs(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $query = $semantics->analyze('SELECT x INTO n FROM v');
+        self::assertTrue($query->declarations()[0]->complete);
+        $type = $query->declarations()[0]->columns[0]->type;
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Undetermined::class, $type);
+        self::assertSame('the declaration of relation v', $type->missing[0]->describe());
+    }
+
+    public function testTableIsIncompleteAtAnOpenRow(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT 1 AS a, * INTO n FROM v');
         self::assertFalse($query->declarations()[0]->complete);
+        self::assertCount(1, $query->declarations()[0]->columns);
     }
 }

@@ -32,7 +32,8 @@ use SqlSemantics\Statement\Statement;
  * name is not written (AUTHORIZATION CURRENT_USER and the like), it depends
  * on the session, so the elements keep their facts and diagnostics but
  * declare nothing. Every element is read with the new schema searched
- * first (PG-SCHEMA-ELEMENT-001).
+ * first and sees the relations of the elements the server runs before it
+ * (PG-SCHEMA-ELEMENT-001).
  * Source: https://www.postgresql.org/docs/17/sql-createschema.html. Status: Implemented.
  *
  * @visibility public
@@ -76,6 +77,7 @@ final class CreateSchema implements Statement
             $derivation->report(new CatalogMisuse(CatalogMisuseRule::ReservedSchemaName, [$this->name->value]));
         }
         $schema = $this->name ?? $this->authorization?->name;
+        $members = [];
         foreach ($this->elements as $element) {
             if ($schema === null) {
                 $element instanceof SchemaElement ? $derivation->inspected($element) : $derivation->statement($element);
@@ -85,8 +87,11 @@ final class CreateSchema implements Statement
             if ($written !== null && !$derivation->context->relationNames->equal($written->value, $schema->value)) {
                 $derivation->report(new CatalogMisuse(CatalogMisuseRule::ElementSchemaMismatch, [$written->value, $schema->value]));
             }
-            $member = new SchemaMember($element, $schema);
-            $derivation->within($member->context($derivation->context), $member);
+            $members[] = new SchemaMember($element, $schema);
+        }
+        usort($members, static fn (SchemaMember $one, SchemaMember $other): int => $one->step() <=> $other->step());
+        foreach ($members as $member) {
+            $derivation->within($member->context($derivation->context, $derivation->facts()->declarations), $member);
         }
     }
 

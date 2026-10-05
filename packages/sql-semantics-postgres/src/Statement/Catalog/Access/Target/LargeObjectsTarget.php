@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
@@ -14,7 +15,8 @@ use SqlSemantics\Statement\Snapshot;
  * Large objects named by their identifiers as the objects of a GRANT or REVOKE.
  *
  * The grammar accepts any signed number; the server reads each as an
- * object identifier when the statement runs.
+ * object identifier when the statement runs, and the statement reports a
+ * number that is no object identifier (PG-LARGE-OBJECT-OID-001).
  * Source: https://www.postgresql.org/docs/17/sql-grant.html.
  *
  * @visibility public
@@ -48,10 +50,11 @@ final class LargeObjectsTarget implements PrivilegeTarget
     }
 
     /**
-     * Derives nothing: an identifier is a constant.
+     * Reports the numbers the server cannot read as object identifiers.
      */
     public function deriveTarget(Derivation $derivation, array $privileges): void
     {
+        (new ObjectIdentifiers())->check($derivation, $this->identifiers);
     }
 
     /**

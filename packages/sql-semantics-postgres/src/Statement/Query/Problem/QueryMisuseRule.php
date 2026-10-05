@@ -66,4 +66,5 @@ enum QueryMisuseRule: string
     case SearchColumnMissing = 'search column "%s" not in WITH query column list';
     case CycleColumnMissing = 'cycle column "%s" not in WITH query column list';
     case TablesampleOnCommonTable = 'TABLESAMPLE clause can only be applied to tables and materialized views';
+    case LateralJoinType = 'invalid reference to FROM-clause entry for table "%s"';
 }

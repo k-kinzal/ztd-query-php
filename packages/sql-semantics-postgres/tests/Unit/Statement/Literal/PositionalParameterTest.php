@@ -13,7 +13,7 @@ use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\PositionalParameter;
-use SqlSemantics\Platform\PostgreSql\Statement\Prepared\PreparedParameters;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\PreparedParameters;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\FunctionParameter;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\RoutineParameters;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;

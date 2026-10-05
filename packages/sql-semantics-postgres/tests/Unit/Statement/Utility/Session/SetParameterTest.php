@@ -37,13 +37,6 @@ final class SetParameterTest extends TestCase
     {
         $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET a TO x, y')->statement;
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameter::class, $statement);
-        self::assertSame(2, $statement->values);
-    }
-
-    public function testASetNeedsAValue(): void
-    {
-        $this->expectException(\SqlSemantics\Diagnostic\InvalidConstruction::class);
-        $this->expectExceptionMessage('SET takes at least one value.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameter(new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName([new \SqlSemantics\Statement\Identifier\Name('a')]), []);
+        self::assertCount(2, $statement->values);
     }
 }

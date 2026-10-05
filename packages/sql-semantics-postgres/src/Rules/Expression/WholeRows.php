@@ -9,6 +9,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\Composite;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Problem\AmbiguousRelation;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ImproperName;
+use SqlSemantics\Platform\PostgreSql\Rules\Resolution\LateralReach;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -27,7 +28,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * at the position and then at the enclosing query levels, nearest first: an
  * alias by its name alone, an unaliased relation by its name and, when
  * written, its schema. The nearest level with a match decides; two matches
- * there are ambiguous. Facts: the row type of the relation, whose fields are
+ * there are ambiguous; a relation a lateral item must not reference is
+ * reported (PG-LATERAL-JOIN-001). Facts: the row type of the relation, whose fields are
  * its columns, or a dependence on the missing inputs of an open shape; a
  * row of an outer join's NULL side is NULL, so the value can be NULL.
  * Termination: the chain of levels and each relation list are finite.
@@ -78,6 +80,10 @@ final class WholeRows
             return new ScalarFact(new Invalid($problem), Nullability::Dependent);
         }
         $relation = $found[0];
+        $reach = new LateralReach();
+        if ($reach->barred($relation)) {
+            return $reach->report($derivation, $relation);
+        }
         if (!$relation->shape->complete()) {
             return new ScalarFact(new Dependent($relation->shape->missing), Nullability::Dependent);
         }

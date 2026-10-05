@@ -221,7 +221,7 @@ final class ResourceGroupRule
      */
     public function number(Form $form, int $position): Numeral
     {
-        return $this->lowering->leaves->record(new Numeral($form->token($position)->text));
+        return $this->lowering->numbers->token($form->token($position));
     }
 
     /**

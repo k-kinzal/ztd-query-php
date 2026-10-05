@@ -17,7 +17,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Holding an error code
  *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1051')))->code->text // => '1051'
  */
-final class ErrorCode implements ConditionValue
+final class ErrorCode implements Condition
 {
     use Snapshot;
 

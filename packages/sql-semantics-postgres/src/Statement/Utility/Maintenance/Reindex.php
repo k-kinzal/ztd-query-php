@@ -10,6 +10,9 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
+use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionArguments;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -25,7 +28,8 @@ use SqlSemantics\Statement\Statement;
  * a schema by its name, and SYSTEM or DATABASE by the name of the current
  * database or by nothing. Facts: the table of REINDEX TABLE is resolved; an
  * index, a schema and a database are not part of a declaration context.
- * Diagnostic: an option REINDEX does not know.
+ * Diagnostics: an option REINDEX does not know; a value the option cannot
+ * take; SYSTEM rebuilt concurrently, by the word or by the option.
  * Source: https://www.postgresql.org/docs/17/sql-reindex.html. Status: Implemented.
  *
  * @visibility public
@@ -70,6 +74,9 @@ final class Reindex implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         (new OptionRules())->derive($derivation, 'REINDEX', $this->options);
+        if ($this->target === ReindexTarget::System && ($this->concurrently || (new OptionArguments())->enabled($this->options, 'concurrently', false))) {
+            $derivation->report(new UtilityProblem(UtilityProblemKind::SystemConcurrently));
+        }
         if ($this->target === ReindexTarget::Table && $this->object instanceof QualifiedName) {
             $derivation->target($this, (new Targets())->resolve($derivation, $this->object));
         }

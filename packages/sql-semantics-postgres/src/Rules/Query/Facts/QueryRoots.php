@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query\Facts;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\IntoClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuse;
@@ -17,7 +18,6 @@ use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Validation\ValueGraph;
 
@@ -28,9 +28,10 @@ use SqlSemantics\Validation\ValueGraph;
  * first selection of the statement (the one reached through parentheses,
  * WITH clauses and the first operands of set operations) has an INTO clause,
  * the statement returns no rows and declares the new table instead: one
- * column per output field, of the field's type and able to be NULL, as far as
- * the types are known; a table with a field of a type that is not known is
- * declared incomplete up to that field. INTO anywhere else is reported. Data-modifying common tables
+ * column per output field, of the type the field gives a defined column
+ * (PG-DECLARED-TYPE-001) and able to be NULL; a table with an output whose
+ * name or position is not known (an open row) or whose type is invalid is
+ * declared incomplete up to that output. INTO anywhere else is reported. Data-modifying common tables
  * outside the top-level WITH clause are reported (PG-MODIFYING-CTE-001).
  * Source: https://www.postgresql.org/docs/17/sql-selectinto.html. Status: Implemented.
  *
@@ -84,12 +85,14 @@ final class QueryRoots
     {
         $columns = [];
         $complete = true;
+        $types = new DeclaredTypes();
         foreach ($fact->projection as $item) {
-            if (!$item instanceof Field || $item->name === null || !$item->type instanceof Known) {
+            $type = $item instanceof Field ? $types->defined($item->type) : null;
+            if (!$item instanceof Field || $item->name === null || $type === null) {
                 $complete = false;
                 break;
             }
-            $columns[] = new Column($item->name, $item->type->descriptor, Nullability::Nullable);
+            $columns[] = new Column($item->name, $type, Nullability::Nullable);
         }
 
         return new Table($into->table, $derivation->context->profile, $columns, [], $complete);

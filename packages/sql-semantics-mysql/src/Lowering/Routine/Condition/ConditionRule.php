@@ -10,7 +10,7 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Sequence;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionClass;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
-use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionValue;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\GeneralCondition;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
@@ -65,7 +65,7 @@ final class ConditionRule
     /**
      * Lowers the conditions of a handler: a node of `sp_hcond_list`.
      *
-     * @return list<ConditionValue>
+     * @return list<Condition>
      * @throws ImplementationGap When a production has no rule
      */
     public function handled(Node $list): array

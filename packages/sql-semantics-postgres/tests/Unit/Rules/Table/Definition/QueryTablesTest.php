@@ -35,4 +35,20 @@ final class QueryTablesTest extends TestCase
           ],
         ], [array_map(static fn ($column): string => $column->name->value . ' ' . $column->type->name() . ' ' . $column->nullability->name, $statement->declarations()[0]->columns), array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics)]);
     }
+
+    public function testTableDeclaresEveryNamedColumnOfADependentType(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE x AS SELECT f(1) AS a, NULL AS b, 2 AS c', []);
+        $table = $operation->declarations()[0];
+        self::assertTrue($table->complete);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Undetermined::class, $table->columns[0]->type);
+        self::assertSame([\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Text, \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4], [$table->columns[1]->type, $table->columns[2]->type]);
+    }
+
+    public function testTableIsIncompleteAtAnOpenRow(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE VIEW w AS SELECT 1 AS k, * FROM zz');
+        self::assertFalse($operation->declarations()[0]->complete);
+        self::assertCount(1, $operation->declarations()[0]->columns);
+    }
 }

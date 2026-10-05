@@ -16,6 +16,7 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
@@ -128,7 +129,7 @@ final class PlatformTest extends TestCase
         $implicit = $platform->context($profile, null, [], false);
         $explicit = $platform->context($profile, ['shop'], [], true);
 
-        self::assertSame(Platform::CURRENT_DATABASE, $implicit->searchPath[0]->value);
+        self::assertSame(SessionDatabase::UNNAMED, $implicit->searchPath[0]->value);
         self::assertFalse($implicit->complete);
         self::assertSame('shop', $explicit->searchPath[0]->value);
         self::assertSame('shop', $explicit->declarationSchema->value);

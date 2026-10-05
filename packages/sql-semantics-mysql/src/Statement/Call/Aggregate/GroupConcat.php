@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Aggregate;
 
+use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
@@ -86,6 +87,7 @@ final class GroupConcat implements SetFunction
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        $environment = $this->aggregates() ? (new HavingScope())->leave($environment) : $environment;
         $facts = [];
         foreach ($this->arguments as $argument) {
             $facts[] = (new Arguments())->one($argument, $derivation, $environment);

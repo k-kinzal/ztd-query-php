@@ -27,7 +27,7 @@ final class UtilityProblem implements Diagnostic
 
     /**
      * @param UtilityProblemKind $kind The broken rule
-     * @param list<string> $subjects The texts the message names, one for each `%s` of the rule
+     * @param array<array-key, mixed> $subjects The texts the message names, one for each `%s` of the rule
      */
     public function __construct(public readonly UtilityProblemKind $kind, array $subjects = [])
     {

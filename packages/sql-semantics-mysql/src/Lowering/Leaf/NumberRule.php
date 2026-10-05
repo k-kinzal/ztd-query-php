@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering\Leaf;
 
+use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
@@ -16,7 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
  *
  * Rule: MYSQL-NUMERAL-001. Scope: ulong_num, real_ulong_num, ulonglong_num,
  * real_ulonglong_num, dec_num, dec_num_error, size_number,
- * option_autoextend_size, ternary_option. A number keeps its exact text; a
+ * option_autoextend_size, ternary_option, and the bare NUM tokens of other
+ * families' productions. A number keeps its exact text; a
  * hexadecimal literal keeps its digits. The rules real_ulong_num and
  * real_ulonglong_num accept a decimal or floating number through
  * dec_num_error, which the server rejects when it parses; the number is
@@ -69,6 +72,20 @@ final class NumberRule
         $text = $form->token(0)->text;
 
         return $this->lowering->leaves->record(new Numeral($hexadecimal ? (new RadixSpelling())->digits($text) : $text, $hexadecimal));
+    }
+
+    /**
+     * Lowers a bare NUM token that a production of another family holds, such as the count of `IGNORE 2 LINES`.
+     *
+     * Productions such as `opt_ignore_lines`, `func_datetime_precision` or
+     * `vcpu_num_or_range` take the NUM token itself instead of a number
+     * nonterminal; the token is a decimal integer and keeps its exact text.
+     */
+    public function token(Token $token): Numeral
+    {
+        Check::invariant($token->is('NUM'), 'A bare number is a NUM token.');
+
+        return $this->lowering->leaves->record(new Numeral($token->text));
     }
 
     /**

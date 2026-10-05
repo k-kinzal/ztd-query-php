@@ -22,8 +22,12 @@ use SqlSemantics\Rendering\Output;
  * word ANALYZE is the keyword. Checking: each command knows the option names
  * its manual page lists for the release (EXPLAIN gains SERIALIZE and MEMORY
  * in 17); the server compares the names exactly, after the lexer folded
- * unquoted words to lower case, and rejects any other name. Termination: one
- * pass over a finite list.
+ * unquoted words to lower case, and rejects any other name. A known option
+ * whose value the server reads as a Boolean must have a Boolean value by
+ * PG-UTILITY-OPTION-VALUE-001, and one it reads as text must have a value;
+ * the options whose values follow rules of their own (FORMAT and SERIALIZE
+ * of EXPLAIN, PARALLEL and INDEX_CLEANUP of VACUUM) are checked by the
+ * command. Termination: one pass over a finite list.
  * Source: https://www.postgresql.org/docs/17/sql-explain.html, https://www.postgresql.org/docs/16/sql-explain.html,
  * https://www.postgresql.org/docs/17/sql-vacuum.html, https://www.postgresql.org/docs/17/sql-analyze.html,
  * https://www.postgresql.org/docs/17/sql-cluster.html, https://www.postgresql.org/docs/17/sql-reindex.html.
@@ -43,6 +47,22 @@ final class OptionRules
         'CLUSTER' => ['verbose'],
         'REINDEX' => ['concurrently', 'tablespace', 'verbose'],
     ];
+
+    /**
+     * The options of each command whose value is read as a Boolean.
+     */
+    private const BOOLEAN = [
+        'EXPLAIN' => ['analyze', 'verbose', 'costs', 'settings', 'generic_plan', 'buffers', 'wal', 'timing', 'summary', 'memory'],
+        'VACUUM' => ['full', 'freeze', 'verbose', 'analyze', 'disable_page_skipping', 'skip_locked', 'process_main', 'process_toast', 'truncate', 'skip_database_stats', 'only_database_stats'],
+        'ANALYZE' => ['verbose', 'skip_locked'],
+        'CLUSTER' => ['verbose'],
+        'REINDEX' => ['concurrently', 'verbose'],
+    ];
+
+    /**
+     * The options of each command whose value is read as text and must be written.
+     */
+    private const TEXT = ['EXPLAIN' => ['format'], 'VACUUM' => ['buffer_usage_limit'], 'ANALYZE' => ['buffer_usage_limit'], 'REINDEX' => ['tablespace']];
 
     /**
      * The option names a command gains in release 17.
@@ -123,7 +143,7 @@ final class OptionRules
     }
 
     /**
-     * Derives the option values and reports each option the command does not know.
+     * Derives the option values and reports each option the command does not know and each value it cannot read.
      *
      * @param list<UtilityOption> $options
      */
@@ -132,8 +152,13 @@ final class OptionRules
         $known = $this->known($command, $derivation->context->profile->grammar);
         foreach ($options as $option) {
             $option->deriveClause($derivation, $derivation->environment());
-            if (!in_array($option->option(), $known, true)) {
-                $derivation->report(new UtilityProblem(UtilityProblemKind::UnknownOption, [$command, $option->option()]));
+            $name = $option->option();
+            if (!in_array($name, $known, true)) {
+                $derivation->report(new UtilityProblem(UtilityProblemKind::UnknownOption, [$command, $name]));
+            } elseif (in_array($name, self::BOOLEAN[$command] ?? [], true) && (new OptionArguments())->boolean($option) === null) {
+                $derivation->report(new UtilityProblem(UtilityProblemKind::NotBoolean, [$name]));
+            } elseif (in_array($name, self::TEXT[$command] ?? [], true) && $option->argument === null) {
+                $derivation->report(new UtilityProblem(UtilityProblemKind::MissingArgument, [$name]));
             }
         }
     }

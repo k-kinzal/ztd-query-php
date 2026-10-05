@@ -67,10 +67,10 @@ final class Triggers
     /**
      * Derives a constraint trigger.
      */
-    public function deriveConstraint(CreateConstraintTrigger $trigger, Derivation $derivation): void
+    public function deriveConstraint(CreateConstraintTrigger $trigger, Derivation $derivation, ?Name $schema = null): void
     {
         $targets = new Targets();
-        $fact = $derivation->target($trigger, $targets->resolve($derivation, $trigger->table));
+        $fact = $derivation->target($trigger, $targets->resolve($derivation, (new Indexes())->located($trigger->table, $schema)));
         if ($trigger->referenced !== null) {
             $derivation->target($trigger->referenced, $targets->resolve($derivation, $trigger->referenced->name));
         }

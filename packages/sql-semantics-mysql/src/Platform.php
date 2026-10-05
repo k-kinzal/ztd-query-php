@@ -21,6 +21,7 @@ use SqlSemantics\Lowering\Productions;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Rules\LeafKeys;
+use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 
@@ -53,11 +54,6 @@ use SqlSemantics\Statement\Identifier\Name;
  */
 final class Platform implements \SqlSemantics\Contract\Platform
 {
-    /**
-     * The database an unqualified name belongs to when the caller names no current database.
-     */
-    public const CURRENT_DATABASE = '(current)';
-
     /**
      * @var array<string, SqlParser>
      */
@@ -145,7 +141,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
             throw new InvalidArgumentException('MySQL searches an unqualified table name in the current database only.');
         }
 
-        return new AnalysisContext($profile, [new Name($searchPath[0] ?? self::CURRENT_DATABASE)], $tables, $complete, Comparison::Sensitive, Comparison::AsciiInsensitive);
+        return new AnalysisContext($profile, [new Name($searchPath[0] ?? SessionDatabase::UNNAMED)], $tables, $complete, Comparison::Sensitive, Comparison::AsciiInsensitive);
     }
 
     /**

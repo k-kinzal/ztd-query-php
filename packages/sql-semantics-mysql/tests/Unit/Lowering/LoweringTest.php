@@ -13,7 +13,11 @@ use SqlSemantics\Lowering\Leaves;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Statement\Account\SetRole;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
+use SqlSemantics\Platform\MySql\Statement\Server\Storage\CreateTablespace;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
 
 #[CoversClass(Lowering::class)]
 #[Medium]
@@ -51,16 +55,18 @@ final class LoweringTest extends TestCase
 
     public function testStatementHandsARuleToTheFamilyThatOwnsIt(): void
     {
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL account family: statement');
+        $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SET ROLE NONE');
 
-        (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SET ROLE NONE');
+        self::assertInstanceOf(SetRole::class, $operation->statement);
+        self::assertSame('SET ROLE NONE', $operation->toString());
     }
 
     public function testStatementHandsBeginToTheServerFamily(): void
     {
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL server family: statement');
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('BEGIN');
 
-        (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('BEGIN');
+        self::assertInstanceOf(Begin::class, $operation->statement);
+        self::assertSame('BEGIN', $operation->toString());
     }
 
     public function testDefinitionRoutesCreateAlterAndDrop(): void
@@ -81,9 +87,11 @@ final class LoweringTest extends TestCase
 
     public function testRoutedHandsADefinitionToItsFamilyThroughTheRoutes(): void
     {
-        $this->expectExceptionMessage('No semantic rule is implemented for: MySQL server family: definition');
+        $semantics = new Semantics(Dialect::MySql, 'mysql-8.4.7');
 
-        (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd'");
+        self::assertInstanceOf(CreateTablespace::class, $semantics->analyze("CREATE TABLESPACE ts ADD DATAFILE 'ts.ibd'")->statement);
+        self::assertInstanceOf(CreateDatabase::class, $semantics->analyze('CREATE DATABASE d')->statement);
+        self::assertInstanceOf(CreateDatabase::class, (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('CREATE DATABASE d')->statement);
     }
 
     public function testFormAnswersTheProductionOfANode(): void

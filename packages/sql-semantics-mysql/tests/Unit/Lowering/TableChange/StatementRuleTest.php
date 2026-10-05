@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\TableChange\StatementRule;
+use SqlSemantics\Platform\MySql\Statement\Account\RenameUser;
 
 #[CoversClass(StatementRule::class)]
 #[Medium]
@@ -32,9 +33,10 @@ final class StatementRuleTest extends TestCase
 
     public function testRenameUsersHandsTheListToTheAccountFamily(): void
     {
-        $this->expectExceptionMessage('MySQL account family: renameUsers');
+        $operation = (new Semantics(Dialect::MySql))->analyze('rename user a to b, c to d');
 
-        (new Semantics(Dialect::MySql))->analyze('RENAME USER a TO b');
+        self::assertInstanceOf(RenameUser::class, $operation->statement);
+        self::assertSame('RENAME USER a TO b, c TO d', $operation->toString());
     }
 
     public function testTruncateLowersTheTable(): void

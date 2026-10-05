@@ -16,6 +16,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\DistinctClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\IntoClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\WindowDefinition;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSet;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -56,7 +57,7 @@ final class Select implements Statement, Query, Selection, OutputNaming
     public readonly array $targets;
 
     /**
-     * @var list<Scalar|GroupingSet> The GROUP BY items in written order
+     * @var list<Scalar|GroupingRow|GroupingSet> The GROUP BY items in written order
      */
     public readonly array $groupBy;
 
@@ -69,7 +70,7 @@ final class Select implements Statement, Query, Selection, OutputNaming
      * @param list<Target> $targets The select-list items in output order
      * @param Relation|null $from The FROM item, or the list of FROM items
      * @param Scalar|null $where The row predicate
-     * @param list<Scalar|GroupingSet> $groupBy The GROUP BY items
+     * @param list<Scalar|GroupingRow|GroupingSet> $groupBy The GROUP BY items
      * @param Scalar|null $having The group predicate
      * @param list<WindowDefinition> $windows The named windows
      * @param DistinctClause|null $distinct The DISTINCT clause
@@ -90,9 +91,9 @@ final class Select implements Statement, Query, Selection, OutputNaming
         public readonly ?SelectOptions $options = null,
     ) {
         $this->targets = Check::listOf($targets, Target::class, 'A select list holds select-list items.');
-        $this->groupBy = (new ClosedList())->of($groupBy, [Scalar::class, GroupingSet::class], 'A GROUP BY item is an expression or a grouping set.');
+        $this->groupBy = (new ClosedList())->of($groupBy, [Scalar::class, GroupingRow::class, GroupingSet::class], 'A GROUP BY item is an expression, a grouping row or a grouping set.');
         foreach ($this->groupBy as $item) {
-            Check::input($item instanceof GroupingSet || (new Positions())->value($item) === null, 'An integer constant in GROUP BY is an output position.');
+            Check::input(!$item instanceof Scalar || (new Positions())->value($item) === null, 'An integer constant in GROUP BY is an output position.');
         }
         $this->windows = Check::listOf($windows, WindowDefinition::class, 'The WINDOW clause holds window definitions.');
         Check::input($distinct === null || $this->targets !== [], 'DISTINCT requires a select list.');

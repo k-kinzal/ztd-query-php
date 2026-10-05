@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
@@ -13,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
@@ -57,8 +59,9 @@ final class SortScopes
      * @param list<OrderItem> $items
      * @param list<Field|OpenStar> $projection The output of the query, in order
      * @param bool $aliasFirst Whether a bare name looks at the aliases first, as in ORDER BY
+     * @return list<ScalarFact> The facts of the items, in order
      */
-    public function derive(array $items, Derivation $derivation, Environment $environment, array $projection, bool $aliasFirst): void
+    public function derive(array $items, Derivation $derivation, Environment $environment, array $projection, bool $aliasFirst): array
     {
         $known = [];
         foreach ($projection as $field) {
@@ -68,16 +71,19 @@ final class SortScopes
             $known[] = $field;
         }
         $open = count($known) < count($projection);
+        $facts = [];
         foreach ($items as $item) {
             $word = $aliasFirst ? $this->word($item->expression) : null;
             if ($item->expression instanceof OutputOrdinal) {
-                $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, $open ? $environment->relations : [], [], $known));
+                $facts[] = $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, $open ? $environment->relations : [], [], $known));
             } elseif ($word !== null && $environment->aliased($word) !== []) {
-                $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, [], [], $environment->aliased($word)));
+                $facts[] = $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, [], [], $environment->aliased($word)));
             } else {
-                $derivation->scalar($item->expression, $environment);
+                $facts[] = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
             }
         }
+
+        return $facts;
     }
 
     /**

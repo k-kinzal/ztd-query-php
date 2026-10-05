@@ -195,7 +195,7 @@ final class LoadRule
         if ($count === null || $count->signature === 'opt_source_count:') {
             return new LoadInput($local, $source, $file, null, $order);
         }
-        $number = $this->lowering->leaves->record(new Numeral($count->token(1)->text));
+        $number = $this->lowering->numbers->token($count->token(1));
         if ($count->signature === 'opt_source_count: COUNT_SYM NUM') {
             return new LoadInput($local, $source, $file, $number, $order);
         }
@@ -245,7 +245,7 @@ final class LoadRule
         }
         $this->flag($form->node(2));
 
-        return $this->lowering->leaves->record(new Numeral($form->token(1)->text));
+        return $this->lowering->numbers->token($form->token(1));
     }
 
     /**
@@ -326,7 +326,7 @@ final class LoadRule
             $form = $this->lowering->form($parts['opt_load_parallel']);
             $parallel = match ($form->signature) {
                 'opt_load_parallel:' => null,
-                'opt_load_parallel: PARALLEL_SYM EQ NUM' => $this->lowering->leaves->record(new Numeral($form->token(2)->text)),
+                'opt_load_parallel: PARALLEL_SYM EQ NUM' => $this->lowering->numbers->token($form->token(2)),
                 default => throw ImplementationGap::production($form),
             };
         }

@@ -44,4 +44,22 @@ final class VisibilityTest extends TestCase
         $relation = new \SqlSemantics\Resolution\VisibleRelation(new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))), new \SqlSemantics\Statement\Shape\RowShape([new \SqlSemantics\Statement\Shape\OutputSlot(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4), \SqlSemantics\Statement\Type\Nullability::NotNull), new \SqlSemantics\Statement\Shape\OutputSlot(new \SqlSemantics\Statement\Identifier\Name('b'), new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4), \SqlSemantics\Statement\Type\Nullability::NotNull)]), null, null, [0]);
         self::assertCount(1, (new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\Visibility())->unhidden($relation));
     }
+
+    public function testUnqualifiedDropsTheSystemColumnsOfQualifiedOnlyRelations(): void
+    {
+        $visibility = new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\Visibility();
+        $relation = new \SqlSemantics\Resolution\VisibleRelation(new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))), new \SqlSemantics\Statement\Shape\RowShape([new \SqlSemantics\Statement\Shape\OutputSlot(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4), \SqlSemantics\Statement\Type\Nullability::NotNull)]), null, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [], [new \SqlSemantics\Resolution\ImplicitSlot([new \SqlSemantics\Statement\Identifier\Name('ctid')], new \SqlSemantics\Statement\Shape\OutputSlot(new \SqlSemantics\Statement\Identifier\Name('ctid'), new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Tid), \SqlSemantics\Statement\Type\Nullability::NotNull))]);
+        $context = (new \SqlSemantics\Platform\PostgreSql\Platform())->context(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172), null, [], true);
+        $outer = new \SqlSemantics\Resolution\Environment($context, null, [$relation]);
+        $environment = new \SqlSemantics\Resolution\Environment($context, $outer, [$visibility->qualifiedOnly($relation)]);
+        $unqualified = $visibility->unqualified($environment);
+        self::assertSame([], $unqualified->relations[0]->implicit);
+        self::assertSame($outer, $unqualified->outer);
+    }
+
+    public function testUnqualifiedKeepsAnEnvironmentWithoutQualifiedOnlyRelations(): void
+    {
+        $environment = new \SqlSemantics\Resolution\Environment((new \SqlSemantics\Platform\PostgreSql\Platform())->context(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172), null, [], true), null, [new \SqlSemantics\Resolution\VisibleRelation(new \SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput(new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))), new \SqlSemantics\Statement\Shape\RowShape([new \SqlSemantics\Statement\Shape\OutputSlot(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4), \SqlSemantics\Statement\Type\Nullability::NotNull)]), null, new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')), [], [new \SqlSemantics\Resolution\ImplicitSlot([new \SqlSemantics\Statement\Identifier\Name('ctid')], new \SqlSemantics\Statement\Shape\OutputSlot(new \SqlSemantics\Statement\Identifier\Name('ctid'), new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Tid), \SqlSemantics\Statement\Type\Nullability::NotNull))])]);
+        self::assertSame($environment, (new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\Visibility())->unqualified($environment));
+    }
 }

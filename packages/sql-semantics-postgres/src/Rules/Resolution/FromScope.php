@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\FunctionTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Join;
+use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\JoinOn;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Json\JsonTable;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\ParenthesizedJoin;
@@ -30,7 +31,8 @@ use SqlSemantics\Statement\Relation;
  * subquery without alias can only be read through `*` and unqualified names.
  * A function call, XMLTABLE, JSON_TABLE and a LATERAL subquery see the FROM
  * items before them (at the top level and on the left of the joins they are
- * on the right of); any other item sees only the enclosing query. A join
+ * on the right of; the left side of a RIGHT or FULL join is visible but must
+ * not be referenced, PG-LATERAL-JOIN-001); any other item sees only the enclosing query. A join
  * follows PG-JOIN-001; its ON condition sees its two sides and the enclosing
  * query only. A join in parentheses with an alias hides the items inside and
  * is one relation under the alias; without an alias the parentheses change
@@ -107,7 +109,8 @@ final class FromScope
             return new JoinedInput(new RelationFact($shape), [new VisibleRelation($node, $shape, $node->alias)]);
         }
         $first = $this->open($node->left, $derivation, $outer, $left);
-        $second = $this->open($node->right, $derivation, $outer, [...$left, ...$first->visible]);
+        $reach = $node->kind === JoinKind::Right || $node->kind === JoinKind::Full ? (new LateralReach())->bar($first->visible) : $first->visible;
+        $second = $this->open($node->right, $derivation, $outer, [...$left, ...$reach]);
         if ($node->condition instanceof JoinOn) {
             $derivation->scalar($node->condition->condition, new Environment($derivation->context, $outer, [...$first->visible, ...$second->visible]));
         }

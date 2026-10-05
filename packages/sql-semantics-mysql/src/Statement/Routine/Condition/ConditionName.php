@@ -18,7 +18,7 @@ use SqlSemantics\Statement\Snapshot;
  * @example Holding a condition name
  *     (new \SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName(new \SqlSemantics\Statement\Identifier\Name('gone')))->name->value // => 'gone'
  */
-final class ConditionName implements ConditionValue
+final class ConditionName implements Condition
 {
     use Snapshot;
 

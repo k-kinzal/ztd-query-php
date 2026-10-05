@@ -89,4 +89,26 @@ final class OrderingTest extends TestCase
     {
         self::assertSame('a', (new \SqlSemantics\Platform\PostgreSql\Rules\Query\Ordering())->bare(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference([new \SqlSemantics\Statement\Identifier\Name('a')])))?->value);
     }
+
+    public function testGroupReadsTheMembersOfAGroupingRowAsGroupingTerms(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $query = $semantics->analyze('SELECT 1 AS x, 2 AS y GROUP BY ROLLUP ((x, 2))', []);
+        $select = $query->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Select::class, $select);
+        $set = $select->groupBy[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSet::class, $set);
+        $row = $set->members[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow::class, $row);
+        $name = $row->members[0];
+        self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $name);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\AliasTarget::class, $query->facts->scalar($name)->resolution);
+        self::assertSame([], $query->facts->diagnostics);
+    }
+
+    public function testGroupReportsAPositionOutOfRangeInsideARow(): void
+    {
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1 AS x GROUP BY (x, 3)', []);
+        self::assertSame('GROUP BY position 3 is not in select list', $query->facts->diagnostics[0]->message());
+    }
 }

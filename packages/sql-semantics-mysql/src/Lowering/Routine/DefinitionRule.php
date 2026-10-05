@@ -55,15 +55,15 @@ final class DefinitionRule
     ];
 
     /**
-     * The productions of loadable function definitions.
+     * The productions of loadable function definitions, and whether each defines an aggregate function.
      */
     private const LOADABLE = [
         'udf_tail: AGGREGATE_SYM remember_name FUNCTION_SYM ident RETURNS_SYM udf_type SONAME_SYM TEXT_STRING_sys' => true,
-        'udf_tail: remember_name FUNCTION_SYM ident RETURNS_SYM udf_type SONAME_SYM TEXT_STRING_sys' => true,
+        'udf_tail: remember_name FUNCTION_SYM ident RETURNS_SYM udf_type SONAME_SYM TEXT_STRING_sys' => false,
         'udf_tail: AGGREGATE_SYM FUNCTION_SYM ident RETURNS_SYM udf_type SONAME_SYM TEXT_STRING_sys' => true,
-        'udf_tail: FUNCTION_SYM ident RETURNS_SYM udf_type SONAME_SYM TEXT_STRING_sys' => true,
+        'udf_tail: FUNCTION_SYM ident RETURNS_SYM udf_type SONAME_SYM TEXT_STRING_sys' => false,
         'udf_tail: AGGREGATE_SYM FUNCTION_SYM opt_if_not_exists ident RETURNS_SYM udf_type SONAME_SYM TEXT_STRING_sys' => true,
-        'udf_tail: FUNCTION_SYM opt_if_not_exists ident RETURNS_SYM udf_type SONAME_SYM TEXT_STRING_sys' => true,
+        'udf_tail: FUNCTION_SYM opt_if_not_exists ident RETURNS_SYM udf_type SONAME_SYM TEXT_STRING_sys' => false,
     ];
 
     /**
@@ -139,9 +139,7 @@ final class DefinitionRule
     public function loadable(Node $tail): CreateLoadableFunction
     {
         $form = $this->lowering->form($tail);
-        if (!isset(self::LOADABLE[$form->signature])) {
-            throw ImplementationGap::production($form);
-        }
+        $aggregate = self::LOADABLE[$form->signature] ?? throw ImplementationGap::production($form);
         $count = count($form->node->children);
         $exists = false;
         foreach ($form->node->children as $child) {
@@ -158,7 +156,7 @@ final class DefinitionRule
             $this->lowering->names->identifier($form->node($count - 5)),
             self::RESULTS[$result->signature] ?? throw ImplementationGap::production($result),
             $this->lowering->literals->text($form->node($count - 1)),
-            str_starts_with($form->signature, 'udf_tail: AGGREGATE_SYM '),
+            $aggregate,
             $exists,
         );
     }

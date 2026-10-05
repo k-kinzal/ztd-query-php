@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Resolution\Visibility;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSet;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\OrderingClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuse;
@@ -66,7 +68,7 @@ final class Ordering
     /**
      * Derives the GROUP BY items of a selection, the members of grouping sets included.
      *
-     * @param list<Scalar|GroupingSet> $items
+     * @param list<Scalar|GroupingRow|GroupingSet> $items
      * @param list<Field|OpenStar> $projection
      */
     public function group(array $items, array $projection, Derivation $derivation, Environment $rows): void
@@ -74,13 +76,13 @@ final class Ordering
         $pending = array_reverse($items);
         while ($pending !== []) {
             $item = array_pop($pending);
-            if ($item instanceof GroupingSet) {
+            if ($item instanceof GroupingSet || $item instanceof GroupingRow) {
                 array_push($pending, ...array_reverse($item->members));
                 continue;
             }
             $name = $this->bare($item);
             $local = new Environment($derivation->context, null, $rows->relations);
-            $matches = $name === null || !(new ColumnLookup())->find($local, $name) instanceof MissingColumn ? [] : $this->named($projection, $name, $derivation);
+            $matches = $name === null || !(new ColumnLookup())->find((new Visibility())->unqualified($local), $name) instanceof MissingColumn ? [] : $this->named($projection, $name, $derivation);
             if ($matches !== []) {
                 $derivation->scalar($item, new Environment($derivation->context, null, [], [], $matches));
                 continue;

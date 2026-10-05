@@ -46,7 +46,7 @@ final class ForeignDataRuleTest extends TestCase
         $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
         $tree = (new \SqlParser\PostgreSql\PostgreSqlParser('pg-17.2'))->parse('DROP USER MAPPING FOR USER SERVER s');
         $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Catalog\ForeignDataRule($lowering);
-        self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\ForeignData\MappingUser::User, $rule->user($tree->find('auth_ident')[0]));
+        self::assertSame(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\ForeignData\MappingUser::User, $rule->user($tree->find('auth_ident')[0]));
     }
 
     public function testRestrictionOfNone(): void

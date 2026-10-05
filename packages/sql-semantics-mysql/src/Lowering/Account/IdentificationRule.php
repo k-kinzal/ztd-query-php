@@ -173,6 +173,6 @@ final class IdentificationRule
             throw ImplementationGap::production($form);
         }
 
-        return $this->lowering->leaves->record(new Numeral($form->token(0)->text));
+        return $this->lowering->numbers->token($form->token(0));
     }
 }

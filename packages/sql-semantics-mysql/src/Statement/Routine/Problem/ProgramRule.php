@@ -35,4 +35,14 @@ enum ProgramRule: string
     case BadSqlState = "Bad SQLSTATE: '%s'";
     case SignalConditionKind = 'SIGNAL/RESIGNAL can only use a CONDITION defined with SQLSTATE';
     case DuplicateSignalItem = "Duplicate condition information item '%s'";
+    case BadStatement = '%s is not allowed in stored procedures';
+    case RecursiveCreate = "Can't create a %s from within another stored routine";
+    case NestedAlterOrDrop = "Can't drop or alter a %s from within another stored routine";
+    case EventRecursion = 'Recursion of EVENT DDL statements is forbidden when body is present';
+    case ResultSet = 'Not allowed to return a result set from a %s';
+    case CommitInFunction = 'Explicit or implicit commit is not allowed in stored function or trigger.';
+    case FunctionStatement = '%s is not allowed in stored function or trigger';
+    case OldRowUpdate = 'Updating of OLD row is not allowed in trigger';
+    case AfterRowUpdate = 'Updating of NEW row is not allowed in after trigger';
+    case NoNewRow = 'There is no NEW row in on DELETE trigger';
 }

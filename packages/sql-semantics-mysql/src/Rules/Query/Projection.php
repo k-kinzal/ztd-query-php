@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Query\From\JoinedInput;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
@@ -51,7 +52,7 @@ final class Projection
         $fields = [];
         foreach ($items as $item) {
             if ($item instanceof SelectExpression) {
-                $fact = $derivation->scalar($item->expression, $environment);
+                $fact = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
                 $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
                 $fields[] = new Field(count($fields), new OutputSlot((new ItemNaming())->name($item), $fact->type, $fact->nullability, null, $origin), $item->expression, $fact->resolution);
             } elseif ($item instanceof Star) {

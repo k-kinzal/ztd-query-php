@@ -45,6 +45,20 @@ final class SelectFactsTest extends TestCase
         self::assertSame($t->columns[0], $operation->field('x')->column());
     }
 
+    public function testDeriveReportsARowWhereTheServerTakesOneValue(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $messages = array_map(static fn ($diagnostic): string => $diagnostic->message(), [
+            ...$semantics->analyze('SELECT (1, 2)')->facts->diagnostics,
+            ...$semantics->analyze('SELECT 1 FROM DUAL WHERE (1, 2)')->facts->diagnostics,
+            ...$semantics->analyze('SELECT 1 HAVING (SELECT 1, 2)')->facts->diagnostics,
+            ...$semantics->analyze('SELECT 1 ORDER BY (1, 2)')->facts->diagnostics,
+            ...$semantics->analyze('SELECT 1 GROUP BY ROW(1, 2, 3)')->facts->diagnostics,
+        ]);
+
+        self::assertSame(['Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 2.', 'Operand should contain 1 column(s), not 3.'], $messages);
+    }
+
     public function testWindowsReportsANameDefinedTwice(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t WINDOW w AS (), w AS ()');

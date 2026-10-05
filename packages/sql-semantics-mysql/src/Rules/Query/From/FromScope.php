@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query\From;
 
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
@@ -97,7 +98,7 @@ final class FromScope
             $first = $this->open($term->left, $derivation, $outer, $left);
             $second = $this->open($term->right, $derivation, $outer, [...$left, ...$first->visible]);
             if ($term->on !== null) {
-                $derivation->scalar($term->on, new Environment($derivation->context, $outer, [...$first->visible, ...$second->visible]));
+                (new Operands())->single($derivation->scalar($term->on, new Environment($derivation->context, $outer, [...$first->visible, ...$second->visible])), $derivation);
             }
 
             return (new Joining())->join($derivation, $first, $second, $term);

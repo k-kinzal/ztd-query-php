@@ -65,14 +65,15 @@ final class UtilityOption implements Clause
     }
 
     /**
-     * Writes the name and the value; the word `format` is quoted so that it is not read as the keyword.
+     * Writes the name and the value; the word `format` before the word `json` is quoted so that it is not read as the keyword.
      */
     public function render(Output $out): void
     {
         if ($this->name instanceof OptionKeyword) {
             $out->keyword($this->name->value);
         } else {
-            $out->name($this->name, $this->name->value === 'format' ? NameUse::Identifier : NameUse::Routine);
+            $keyword = $this->name->value === 'format' && $this->argument instanceof Word && $this->argument->word->value === 'json';
+            $out->name($this->name, $keyword ? NameUse::Identifier : NameUse::Routine);
         }
         if ($this->argument instanceof Toggle) {
             $out->keyword($this->argument->value);

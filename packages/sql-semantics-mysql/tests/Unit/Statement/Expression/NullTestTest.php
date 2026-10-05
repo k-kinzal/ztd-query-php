@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Expression;
 
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +31,13 @@ final class NullTestTest extends TestCase
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
 
         self::assertSame(Nullability::NotNull, $derivation->scalar(new NullTest(new NullLiteral()), $derivation->environment())->nullability);
+    }
+
+    public function testDeriveScalarReportsARowOperand(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) IS NULL');
+
+        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testRenderChainsTestsToTheLeft(): void

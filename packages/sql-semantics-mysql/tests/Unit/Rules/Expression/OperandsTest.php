@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rules\Expression;
 
+use SqlSemantics\Statement\Type\Invalid;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -43,6 +44,19 @@ final class OperandsTest extends TestCase
         (new Operands())->single(new ScalarFact(new Known(new Tuple(3)), Nullability::NotNull), $derivation);
 
         self::assertSame('Operand should contain 1 column(s), not 3.', $derivation->facts()->diagnostics[0]->message());
+    }
+
+    public function testSingleAnswersAValueWithoutTypeForARowAndTheFactOtherwise(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+        $one = new ScalarFact(new Known(new Integral(IntegralKind::Int)), Nullability::Nullable);
+        $row = (new Operands())->single(new ScalarFact(new Known(new Tuple(2)), Nullability::Nullable), $derivation);
+
+        self::assertSame($one, (new Operands())->single($one, $derivation));
+        self::assertInstanceOf(Invalid::class, $row->type);
+        self::assertSame($derivation->facts()->diagnostics[0], $row->type->cause);
+        self::assertSame(Nullability::Nullable, $row->nullability);
     }
 
     public function testComparableReportsTheFirstDifferentWidth(): void

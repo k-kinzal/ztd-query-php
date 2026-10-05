@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
@@ -53,7 +54,7 @@ final class WriteScope
             return $derivation->scalar($value, new Environment($derivation->context, $environment, [], [], [$column]));
         }
 
-        return $derivation->scalar($value, $environment);
+        return (new Operands())->single($derivation->scalar($value, $environment), $derivation);
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Variable;
 
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -47,7 +48,7 @@ final class VariableAssignment implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $derivation->scalar($this->target, $environment);
-        $fact = $derivation->scalar($this->value, $environment);
+        $fact = (new Operands())->single($derivation->scalar($this->value, $environment), $derivation);
 
         return new ScalarFact($fact->type, $fact->nullability);
     }

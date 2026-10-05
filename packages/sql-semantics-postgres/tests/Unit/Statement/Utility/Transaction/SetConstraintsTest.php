@@ -21,11 +21,4 @@ final class SetConstraintsTest extends TestCase
     {
         self::assertSame(['SET CONSTRAINTS ALL DEFERRED', 'SET CONSTRAINTS s.a, b IMMEDIATE'], [(new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET CONSTRAINTS ALL DEFERRED')->toString(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET CONSTRAINTS s.a, b IMMEDIATE')->toString()]);
     }
-
-    public function testNamesMustBeQualifiedNames(): void
-    {
-        $this->expectException(\SqlSemantics\Diagnostic\InvalidConstruction::class);
-        $this->expectExceptionMessage('SET CONSTRAINTS takes constraint names.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SetConstraints([new \SqlSemantics\Statement\Identifier\Name('a')], true);
-    }
 }

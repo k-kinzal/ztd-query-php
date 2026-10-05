@@ -29,10 +29,10 @@ final class GetDiagnostics implements Statement, ProgramStatement
     use Snapshot;
 
     /**
-     * @param ConditionInformation|StatementInformation $information The information read
+     * @param ConditionDiagnostics|StatementDiagnostics $information The information read
      * @param DiagnosticsArea|null $area The area keyword, when written
      */
-    public function __construct(public readonly ConditionInformation|StatementInformation $information, public readonly ?DiagnosticsArea $area = null)
+    public function __construct(public readonly ConditionDiagnostics|StatementDiagnostics $information, public readonly ?DiagnosticsArea $area = null)
     {
     }
 
@@ -49,7 +49,7 @@ final class GetDiagnostics implements Statement, ProgramStatement
      */
     public function deriveProgram(Derivation $derivation, ProgramScope $scope): void
     {
-        if ($this->information instanceof ConditionInformation) {
+        if ($this->information instanceof ConditionDiagnostics) {
             $derivation->scalar($this->information->number, $scope->environment);
         }
         (new ConditionFacts())->targets($this->information->items, $derivation, $scope);

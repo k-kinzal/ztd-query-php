@@ -6,7 +6,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Routine;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionName;
-use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionValue;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\InformationItem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ErrorCode;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SignalItem;
@@ -40,7 +40,7 @@ final class ConditionFacts
     /**
      * Checks a condition value: the form of an SQLSTATE value, the declaration of a condition name.
      */
-    public function value(ConditionValue $value, Derivation $derivation, ProgramScope $scope): void
+    public function value(Condition $value, Derivation $derivation, ProgramScope $scope): void
     {
         if ($value instanceof SqlState && !$value->valid()) {
             $derivation->report(new ProgramProblem(ProgramRule::BadSqlState, $value->state->value));

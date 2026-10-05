@@ -36,4 +36,9 @@ final class RoleAttributeTest extends TestCase
     {
         self::assertSame('CREATE ROLE r "user" superuser', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE ROLE r "user" SUPERUSER')->toString());
     }
+
+    public function testRenderQuotesAnUnreservedKeyword(): void
+    {
+        self::assertSame('ALTER ROLE r "inherit"', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('ALTER ROLE r "inherit"')->toString());
+    }
 }

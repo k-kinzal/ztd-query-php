@@ -11,7 +11,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem;
  * Source: https://www.postgresql.org/docs/17/sql-createrole.html, https://www.postgresql.org/docs/17/sql-alterrole.html,
  * https://www.postgresql.org/docs/17/sql-droprole.html, https://www.postgresql.org/docs/17/sql-grant.html,
  * https://www.postgresql.org/docs/17/sql-revoke.html, https://www.postgresql.org/docs/17/ddl-priv.html,
- * https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html.
+ * https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html, https://www.postgresql.org/docs/17/datatype-oid.html.
  *
  * @visibility public
  * @example Reading which rule a command breaks
@@ -34,4 +34,6 @@ enum AccessProblemRule: string
     case RoleColumns = 'column names cannot be included in GRANT/REVOKE ROLE';
     case DefaultColumns = 'default privileges cannot be set for columns';
     case DefaultSchemasInSchema = 'cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS';
+    case InvalidObjectIdentifier = 'invalid input syntax for type oid: "%s"';
+    case ObjectIdentifierRange = 'value "%s" is out of range for type oid';
 }

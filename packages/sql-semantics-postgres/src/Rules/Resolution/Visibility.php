@@ -18,7 +18,10 @@ use SqlSemantics\Statement\Shape\RowShape;
  * column names and not to `*`: PostgreSQL treats the tables inside a join
  * that has no alias this way, and the alias of USING columns. Such a relation
  * also lists every slot position as hidden, so that the core column lookup
- * skips it for unqualified names. A qualifier reaches a relation by its
+ * skips it for unqualified names; its system columns are not found by an
+ * unqualified name either (`colNameToVar` skips a namespace item whose
+ * columns are not visible, and a join has no system columns), so an
+ * unqualified name is looked up in a view of the positions without them. A qualifier reaches a relation by its
  * alias, or, without one, by its name and the schema written; `*` reaches
  * every other relation and skips its hidden slots.
  * Source: https://www.postgresql.org/docs/17/queries-table-expressions.html#QUERIES-FROM.
@@ -43,6 +46,32 @@ final class Visibility
         }
 
         return new VisibleRelation($relation->relation, $relation->shape, $relation->alias, $relation->name, [self::QUALIFIED_ONLY, ...array_keys($relation->shape->slots)], $relation->implicit);
+    }
+
+    /**
+     * Answers the positions an unqualified column name searches: the same, without the system columns of relations reachable with a qualifier only.
+     */
+    public function unqualified(Environment $environment): Environment
+    {
+        $chain = [];
+        for ($scope = $environment; $scope !== null; $scope = $scope->outer) {
+            $chain[] = $scope;
+        }
+        $rebuilt = null;
+        $changed = false;
+        foreach (array_reverse($chain) as $scope) {
+            $relations = [];
+            foreach ($scope->relations as $relation) {
+                if ($relation->implicit !== [] && $this->restricted($relation)) {
+                    $relation = new VisibleRelation($relation->relation, $relation->shape, $relation->alias, $relation->name, $relation->hidden);
+                    $changed = true;
+                }
+                $relations[] = $relation;
+            }
+            $rebuilt = $changed ? new Environment($scope->context, $rebuilt, $relations, $scope->commonTables, $scope->aliases) : $scope;
+        }
+
+        return $rebuilt ?? $environment;
     }
 
     /**

@@ -8,8 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\MaintenanceFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
-use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem;
-use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind;
+use SqlSemantics\Platform\PostgreSql\Rules\Utility\VacuumChecks;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
@@ -22,8 +21,9 @@ use SqlSemantics\Statement\Statement;
  * table stands for every table of the database. The older syntax writes
  * FULL, FREEZE, VERBOSE and ANALYZE as words in that order. Facts: each
  * table is resolved, and a listed column is looked up in a declared table.
- * Diagnostics: an option VACUUM does not know; a column list without the
- * ANALYZE option; a column the declared table does not have.
+ * Diagnostics: an option VACUUM does not know; a value the option cannot
+ * take; the combinations of options PG-VACUUM-OPTIONS-001 lists, among them
+ * a column list without ANALYZE; a column the declared table does not have.
  * Source: https://www.postgresql.org/docs/17/sql-vacuum.html. Status: Implemented.
  *
  * @visibility public
@@ -67,12 +67,9 @@ final class Vacuum implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $rules = new OptionRules();
-        $rules->derive($derivation, 'VACUUM', $this->options);
+        (new OptionRules())->derive($derivation, 'VACUUM', $this->options);
         $columns = (new MaintenanceFacts())->targets($derivation, $this->targets);
-        if ($columns && $rules->find($this->options, 'analyze') === null) {
-            $derivation->report(new UtilityProblem(UtilityProblemKind::ColumnsWithoutAnalyze));
-        }
+        (new VacuumChecks())->check($derivation, $this->options, $this->targets !== [], $columns);
     }
 
     /**

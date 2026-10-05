@@ -48,6 +48,13 @@ final class WriteScopeTest extends TestCase
         self::assertSame(Nullability::NotNull, $operation->facts->scalar($operation->statement->assignments[0]->value)->nullability);
     }
 
+    public function testValueReportsARowAsTheWrittenValue(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('UPDATE t SET a = (1, 2)');
+
+        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+    }
+
     public function testAssignAnswersTheAssignedColumns(): void
     {
         $semantics = new Semantics(Dialect::MySql);

@@ -7,15 +7,15 @@ namespace SqlSemantics\Platform\PostgreSql\Lowering\Catalog;
 use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\PublicationAction;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\Subscription\AlterSubscriptionConnection;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\Subscription\AlterSubscriptionOptions;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\Subscription\AlterSubscriptionPublications;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\Subscription\CreateSubscription;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\Subscription\DropSubscription;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\Subscription\EnableSubscription;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\Subscription\RefreshSubscription;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\Subscription\SubscriptionOptionAction;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationAction;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\AlterSubscriptionConnection;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\AlterSubscriptionOptions;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\AlterSubscriptionPublications;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\CreateSubscription;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\DropSubscription;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\EnableSubscription;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\RefreshSubscription;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\Subscription\SubscriptionOptionAction;
 use SqlSemantics\Statement\Statement;
 
 /**

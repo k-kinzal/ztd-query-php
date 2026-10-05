@@ -30,6 +30,23 @@ final class SchemaMemberTest extends TestCase
         self::assertSame('public', $context->declarationSchema->value);
     }
 
+    public function testContextAddsTheRelationsTheStatementProvided(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $create = $semantics->analyze('CREATE TABLE t (a int4)', []);
+        $context = (new SchemaMember($create->statement, new Name('s')))->context($semantics->context([]), $create->declarations());
+        self::assertSame($create->declarations(), $context->tables);
+    }
+
+    public function testStepRunsSequencesBeforeTablesAndGrantsLast(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $sequence = new SchemaMember($semantics->analyze('CREATE SEQUENCE q', [])->statement, new Name('s'));
+        $table = new SchemaMember($semantics->analyze('CREATE TABLE t (a int4)', [])->statement, new Name('s'));
+        $grant = new SchemaMember($semantics->analyze('GRANT SELECT ON t TO joe', [])->statement, new Name('s'));
+        self::assertSame([0, 1, 5], [$sequence->step(), $table->step(), $grant->step()]);
+    }
+
     public function testDeriveStatementDeclaresACreatedObjectInTheSchema(): void
     {
         $semantics = new Semantics(Dialect::PostgreSql);

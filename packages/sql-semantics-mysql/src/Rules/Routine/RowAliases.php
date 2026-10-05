@@ -64,7 +64,7 @@ final class RowAliases
         for ($mask = 0; $mask < 2 ** strlen($word); $mask++) {
             $spelling = '';
             for ($index = 0; $index < strlen($word); $index++) {
-                $spelling .= ($mask >> $index) & 1 ? strtolower($word[$index]) : $word[$index];
+                $spelling .= (($mask >> $index) & 1) === 1 ? strtolower($word[$index]) : $word[$index];
             }
             foreach ($spellings as $known) {
                 if ($context->relationNames->equal($known, $spelling)) {

@@ -266,7 +266,7 @@ final class MaintenanceRule
      */
     public function buckets(Form $form): Numeral
     {
-        return $this->lowering->leaves->record(new Numeral($form->token(1)->text));
+        return $this->lowering->numbers->token($form->token(1));
     }
 
     /**

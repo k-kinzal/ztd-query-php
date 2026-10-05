@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
@@ -43,7 +44,7 @@ final class UserAssignment implements SetItem
     public function deriveItem(Derivation $derivation): void
     {
         $derivation->scalar($this->variable, $derivation->environment());
-        $derivation->scalar($this->value, $derivation->environment());
+        (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
     }
 
     /**

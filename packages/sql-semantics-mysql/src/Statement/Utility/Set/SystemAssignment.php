@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
@@ -49,7 +50,7 @@ final class SystemAssignment implements SetItem
     {
         $derivation->scalar($this->variable, $derivation->environment());
         if ($this->value instanceof Scalar) {
-            $derivation->scalar($this->value, $derivation->environment());
+            (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
     }
 

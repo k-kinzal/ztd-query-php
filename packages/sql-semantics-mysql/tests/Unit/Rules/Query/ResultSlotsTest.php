@@ -51,6 +51,13 @@ final class ResultSlotsTest extends TestCase
         self::assertSame(Nullability::NotNull, (new ResultSlots())->nullability(SetOperator::Except, Nullability::NotNull, Nullability::Nullable));
     }
 
+    public function testValuesReportsARowAsAValue(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('VALUES ROW((1, 2))');
+
+        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+    }
+
     public function testValuesNamesTheColumnsByPosition(): void
     {
         $semantics = new Semantics(Dialect::MySql);

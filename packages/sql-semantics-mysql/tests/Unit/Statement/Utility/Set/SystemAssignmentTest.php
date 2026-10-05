@@ -31,6 +31,13 @@ final class SystemAssignmentTest extends TestCase
         self::assertInstanceOf(Known::class, $set->facts->scalar($item->value)->type);
     }
 
+    public function testDeriveItemReportsARowAsTheValue(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SET @@SESSION.x = (1, 2)');
+
+        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+    }
+
     public function testRenderWritesTheKeywordValue(): void
     {
         self::assertSame('SET @@SESSION.x = ON', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set @@local.x = on')->toString());

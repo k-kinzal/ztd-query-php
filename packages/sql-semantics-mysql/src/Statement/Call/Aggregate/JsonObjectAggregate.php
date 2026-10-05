@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Aggregate;
 
+use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
@@ -67,6 +68,7 @@ final class JsonObjectAggregate implements SetFunction
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        $environment = $this->aggregates() ? (new HavingScope())->leave($environment) : $environment;
         (new Arguments())->one($this->key, $derivation, $environment);
         (new Arguments())->one($this->value, $derivation, $environment);
         (new Windows())->derive($this->over, $derivation, $environment);

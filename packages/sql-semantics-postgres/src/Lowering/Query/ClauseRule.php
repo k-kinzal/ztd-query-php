@@ -8,9 +8,13 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Positions;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowConstructor;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowSpelling;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\SelectOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\WindowDefinition;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSet;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingSetKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\NullsOrder;
@@ -76,6 +80,36 @@ final class ClauseRule
         $result = [];
         foreach ($terms as $term) {
             $result[] = (new Positions())->value($term) === null ? $term : new OutputPosition($term, $clause);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Reads expressions in a grouping position: a row written without ROW, in any parentheses, is a list of grouping terms, and an integer constant is an output position.
+     *
+     * @param list<Scalar> $terms
+     * @return list<Scalar|GroupingRow>
+     */
+    public function groupingTerms(array $terms): array
+    {
+        $result = [];
+        foreach ($terms as $term) {
+            $layers = 0;
+            $inner = $term;
+            while ($inner instanceof Grouped) {
+                $inner = $inner->operand;
+                $layers++;
+            }
+            if (!$inner instanceof RowConstructor || $inner->spelling !== RowSpelling::Implicit) {
+                $result[] = $this->positioned([$term], OrderingClause::GroupBy)[0];
+                continue;
+            }
+            $row = new GroupingRow($this->groupingTerms($inner->fields));
+            for (; $layers > 0; $layers--) {
+                $row = new GroupingRow([$row]);
+            }
+            $result[] = $row;
         }
 
         return $result;
@@ -180,7 +214,7 @@ final class ClauseRule
     /**
      * Lowers `group_clause`: the quantifier and the items; no clause has neither.
      *
-     * @return array{SetQuantifier|null, list<Scalar|GroupingSet>}
+     * @return array{SetQuantifier|null, list<Scalar|GroupingRow|GroupingSet>}
      *
      * @throws ImplementationGap When the production has no rule
      */
@@ -198,7 +232,7 @@ final class ClauseRule
     /**
      * Lowers `group_by_list`.
      *
-     * @return list<Scalar|GroupingSet>
+     * @return list<Scalar|GroupingRow|GroupingSet>
      *
      * @throws ImplementationGap When an item has no rule
      */
@@ -208,7 +242,7 @@ final class ClauseRule
         foreach ($this->lowering->items($list, 'group_by_list: group_by_item', 'group_by_list: group_by_list , group_by_item') as $item) {
             $form = $this->lowering->productions->form($item);
             $items[] = match ($form->signature) {
-                'group_by_item: a_expr' => $this->positioned([$this->lowering->expressions->expression($form->node(0))], OrderingClause::GroupBy)[0],
+                'group_by_item: a_expr' => $this->groupingTerms([$this->lowering->expressions->expression($form->node(0))])[0],
                 'group_by_item: empty_grouping_set', 'group_by_item: cube_clause', 'group_by_item: rollup_clause', 'group_by_item: grouping_sets_clause' => $this->groupingSet($form->node(0)),
                 default => throw ImplementationGap::production($form),
             };
@@ -228,8 +262,8 @@ final class ClauseRule
 
         return match ($form->signature) {
             'empty_grouping_set: ( )' => new GroupingSet(GroupingSetKind::Empty),
-            'rollup_clause: ROLLUP ( expr_list )' => new GroupingSet(GroupingSetKind::Rollup, $this->positioned($this->lowering->expressions->expressions($form->node(2)), OrderingClause::GroupBy)),
-            'cube_clause: CUBE ( expr_list )' => new GroupingSet(GroupingSetKind::Cube, $this->positioned($this->lowering->expressions->expressions($form->node(2)), OrderingClause::GroupBy)),
+            'rollup_clause: ROLLUP ( expr_list )' => new GroupingSet(GroupingSetKind::Rollup, $this->groupingTerms($this->lowering->expressions->expressions($form->node(2)))),
+            'cube_clause: CUBE ( expr_list )' => new GroupingSet(GroupingSetKind::Cube, $this->groupingTerms($this->lowering->expressions->expressions($form->node(2)))),
             'grouping_sets_clause: GROUPING SETS ( group_by_list )' => new GroupingSet(GroupingSetKind::Sets, $this->groupItems($form->node(3))),
             default => throw ImplementationGap::production($form),
         };

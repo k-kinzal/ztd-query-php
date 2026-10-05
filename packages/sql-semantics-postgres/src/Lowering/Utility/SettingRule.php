@@ -11,7 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
-use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\AlterSystem;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\AlterSystemSetting;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\Discard;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\DiscardTarget;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterName;
@@ -19,7 +19,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\ParameterSource;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\Reset;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameter;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetParameterFrom;
-use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetSpecial;
+use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetSpecialSetting;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetTimeZone;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\Show;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SpecialParameter;
@@ -40,8 +40,8 @@ use SqlSemantics\Statement\Statement;
  * `FunctionSetResetClause`, `VariableShowStmt`, `AlterSystemStmt`,
  * `ConstraintsSetStmt`, `constraints_set_list`, `constraints_set_mode`,
  * `DiscardStmt`. Constructors: `SetParameter`, `SetParameterFrom`,
- * `SetTimeZone`, `SetSpecial`, `SetTransaction`, `Reset`, `Show`,
- * `AlterSystem`, `SetConstraints`, `Discard`. `TO` and `=`, and SESSION
+ * `SetTimeZone`, `SetSpecialSetting`, `SetTransaction`, `Reset`, `Show`,
+ * `AlterSystemSetting`, `SetConstraints`, `Discard`. `TO` and `=`, and SESSION
  * after SET, are noise (UtilityNoise). Termination: one pass; lists are
  * flattened iteratively.
  * Source: https://www.postgresql.org/docs/17/sql-set.html, https://www.postgresql.org/docs/17/sql-reset.html,
@@ -100,8 +100,8 @@ final class SettingRule
             'VariableSetStmt: SET SESSION set_rest' => $this->set($form->node(2), false),
             'VariableResetStmt: RESET reset_rest' => $this->reset($form->node(1)),
             'VariableShowStmt: SHOW var_name' => new Show($this->parameter($form->node(1))),
-            'AlterSystemStmt: ALTER SYSTEM_P SET generic_set' => new AlterSystem($this->generic($form->node(3), false)),
-            'AlterSystemStmt: ALTER SYSTEM_P RESET generic_reset' => new AlterSystem($this->reset($form->node(3))),
+            'AlterSystemStmt: ALTER SYSTEM_P SET generic_set' => new AlterSystemSetting($this->generic($form->node(3), false)),
+            'AlterSystemStmt: ALTER SYSTEM_P RESET generic_reset' => new AlterSystemSetting($this->reset($form->node(3))),
             'ConstraintsSetStmt: SET CONSTRAINTS constraints_set_list constraints_set_mode' => new SetConstraints($this->constraints($form->node(2)), $this->deferred($form->node(3))),
             default => match (true) {
                 isset(self::SPECIAL[$form->signature]) => new Show(self::SPECIAL[$form->signature]),
@@ -161,14 +161,14 @@ final class SettingRule
             'set_rest_more: generic_set' => $this->generic($form->node(0), $local),
             'set_rest_more: var_name FROM CURRENT_P' => new SetParameterFrom($this->parameter($form->node(0)), ParameterSource::Current, $local),
             'set_rest_more: TIME ZONE zone_value' => new SetTimeZone($this->zone($form->node(2)), $local),
-            'set_rest_more: CATALOG_P Sconst' => new SetSpecial(SpecialSetting::Catalog, $literals->string($form->node(1)), false, $local),
-            'set_rest_more: SCHEMA Sconst' => new SetSpecial(SpecialSetting::Schema, $literals->string($form->node(1)), false, $local),
+            'set_rest_more: CATALOG_P Sconst' => new SetSpecialSetting(SpecialSetting::Catalog, $literals->string($form->node(1)), false, $local),
+            'set_rest_more: SCHEMA Sconst' => new SetSpecialSetting(SpecialSetting::Schema, $literals->string($form->node(1)), false, $local),
             'set_rest_more: NAMES opt_encoding' => $this->names($form->node(1), $local),
-            'set_rest_more: ROLE NonReservedWord_or_Sconst' => new SetSpecial(SpecialSetting::Role, $options->wordOrString($form->node(1)), false, $local),
-            'set_rest_more: SESSION AUTHORIZATION NonReservedWord_or_Sconst' => new SetSpecial(SpecialSetting::SessionAuthorization, $options->wordOrString($form->node(2)), false, $local),
-            'set_rest_more: SESSION AUTHORIZATION DEFAULT' => new SetSpecial(SpecialSetting::SessionAuthorization, null, true, $local),
-            'set_rest_more: XML_P OPTION document_or_content' => new SetSpecial(SpecialSetting::XmlOption, $this->lowering->flags->xmlOption($form->node(2)), false, $local),
-            'set_rest_more: TRANSACTION SNAPSHOT Sconst' => new SetSpecial(SpecialSetting::TransactionSnapshot, $literals->string($form->node(2)), false, $local),
+            'set_rest_more: ROLE NonReservedWord_or_Sconst' => new SetSpecialSetting(SpecialSetting::Role, $options->wordOrString($form->node(1)), false, $local),
+            'set_rest_more: SESSION AUTHORIZATION NonReservedWord_or_Sconst' => new SetSpecialSetting(SpecialSetting::SessionAuthorization, $options->wordOrString($form->node(2)), false, $local),
+            'set_rest_more: SESSION AUTHORIZATION DEFAULT' => new SetSpecialSetting(SpecialSetting::SessionAuthorization, null, true, $local),
+            'set_rest_more: XML_P OPTION document_or_content' => new SetSpecialSetting(SpecialSetting::XmlOption, $this->lowering->flags->xmlOption($form->node(2)), false, $local),
+            'set_rest_more: TRANSACTION SNAPSHOT Sconst' => new SetSpecialSetting(SpecialSetting::TransactionSnapshot, $literals->string($form->node(2)), false, $local),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -225,14 +225,14 @@ final class SettingRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function names(Node $encoding, bool $local): SetSpecial
+    public function names(Node $encoding, bool $local): SetSpecialSetting
     {
         $form = $this->lowering->productions->form($encoding);
 
         return match ($form->signature) {
-            'opt_encoding: Sconst' => new SetSpecial(SpecialSetting::Names, $this->lowering->literals->string($form->node(0)), false, $local),
-            'opt_encoding: DEFAULT' => new SetSpecial(SpecialSetting::Names, null, true, $local),
-            'opt_encoding:' => new SetSpecial(SpecialSetting::Names, null, false, $local),
+            'opt_encoding: Sconst' => new SetSpecialSetting(SpecialSetting::Names, $this->lowering->literals->string($form->node(0)), false, $local),
+            'opt_encoding: DEFAULT' => new SetSpecialSetting(SpecialSetting::Names, null, true, $local),
+            'opt_encoding:' => new SetSpecialSetting(SpecialSetting::Names, null, false, $local),
             default => throw ImplementationGap::production($form),
         };
     }

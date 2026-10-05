@@ -8,7 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\PublicationTable;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\RelationFact;

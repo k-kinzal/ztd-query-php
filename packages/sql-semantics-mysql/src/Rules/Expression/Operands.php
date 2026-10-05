@@ -24,7 +24,11 @@ use SqlSemantics\Statement\Type\Nullability;
  * operator that takes single values reports a row operand; a comparison,
  * an IN test and BETWEEN report operands of different widths. The truth
  * value of a comparison, a logical operator or a predicate is an integer
- * (`Item_bool_func`, a BIGINT of display width 1). Terminates: no recursion.
+ * (`Item_bool_func`, a BIGINT of display width 1). Shared rule: every
+ * family that derives an operand position taking one value (the arguments
+ * of built-in functions, assigned values) checks the operand's fact with
+ * single(), and every family that compares rows uses comparable(), so the
+ * diagnostic ER_OPERAND_COLUMNS has one source. Terminates: no recursion.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html,
  * https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html.
  * Status: Implemented.
@@ -46,16 +50,22 @@ final class Operands
     }
 
     /**
-     * Reports a row at a position that takes a single value, and answers the fact unchanged.
+     * Reports a row at a position that takes a single value; answers the fact, or for a row a value without type that names the report.
+     *
+     * The value the position passes on (the result of `@v := (1, 2)`) is
+     * not a row any more, so an enclosing position does not report the same
+     * operand again.
      */
     public function single(ScalarFact $fact, Derivation $derivation): ScalarFact
     {
         $width = $this->width($fact);
-        if ($width !== null && $width !== 1) {
-            $derivation->report(new OperandColumns(1, $width));
+        if ($width === null || $width === 1) {
+            return $fact;
         }
+        $problem = new OperandColumns(1, $width);
+        $derivation->report($problem);
 
-        return $fact;
+        return new ScalarFact(new Invalid($problem), $fact->nullability);
     }
 
     /**

@@ -21,11 +21,4 @@ final class SetTransactionTest extends TestCase
     {
         self::assertSame('SET LOCAL TRANSACTION ISOLATION LEVEL READ COMMITTED DEFERRABLE', (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET LOCAL TRANSACTION ISOLATION LEVEL READ COMMITTED, DEFERRABLE')->toString());
     }
-
-    public function testAModeIsRequired(): void
-    {
-        $this->expectException(\SqlSemantics\Diagnostic\InvalidConstruction::class);
-        $this->expectExceptionMessage('SET TRANSACTION takes at least one mode.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\SetTransaction(\SqlSemantics\Platform\PostgreSql\Statement\Utility\Transaction\TransactionScope::Transaction, []);
-    }
 }

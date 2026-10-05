@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramStatement;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerEvent;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
+use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -30,12 +31,12 @@ use SqlSemantics\Statement\Statement;
  * reported (ER_SP_DUP_PARAM) and keeps its first meaning. A stored function
  * whose SQL body holds no RETURN is reported (ER_SP_NORETURN). A trigger
  * body is derived in a scope where NEW and OLD denote the row of the
- * trigger table (MYSQL-TRIGGER-ROWS-001). The expressions of an event
- * schedule see no table and no variable; the event body is derived in an
- * empty scope. None of the statements declares anything or returns rows.
- * The statements a stored function or trigger may not contain
- * (https://dev.mysql.com/doc/refman/8.4/en/stored-program-restrictions.html)
- * are not checked. Terminates: bodies are strict parts.
+ * trigger table (MYSQL-TRIGGER-ROWS-001) and SET assigns to the NEW row
+ * by MYSQL-TRIGGER-ASSIGNMENT-001. The expressions of an event schedule see
+ * no table and no variable; the event body is derived in an empty scope.
+ * None of the statements declares anything or returns rows. The statements
+ * a stored program may not contain are reported by
+ * MYSQL-PROGRAM-RESTRICTIONS-001. Terminates: bodies are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-procedure.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-trigger.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-event.html.
@@ -84,11 +85,11 @@ final class ProgramFacts
     /**
      * Derives the table and the body of a trigger.
      */
-    public function trigger(TriggerTable $table, TriggerEvent $event, ProgramStatement|Statement $body, Derivation $derivation): void
+    public function trigger(TriggerTable $table, TriggerTime $time, TriggerEvent $event, ProgramStatement|Statement $body, Derivation $derivation): void
     {
         $fact = $derivation->relation($table, $derivation->environment());
         $environment = new Environment($derivation->context, null, (new RowAliases())->visible($table, $fact, $event, $derivation->context));
-        (new BodyFacts())->statement($body, $derivation, new ProgramScope($environment, ProgramKind::Trigger));
+        (new BodyFacts())->statement($body, $derivation, new ProgramScope($environment, ProgramKind::Trigger, time: $time, event: $event));
     }
 
     /**

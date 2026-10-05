@@ -8,10 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Problem\CatalogMisuseRule;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\PublicationAction;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\PublicationMember;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\PublicationSchema;
-use SqlSemantics\Platform\PostgreSql\Statement\Publication\PublicationTable;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationAction;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationMember;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationSchema;
+use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Publication\PublicationTable;
 use SqlSemantics\Resolution\Environment;
 
 /**

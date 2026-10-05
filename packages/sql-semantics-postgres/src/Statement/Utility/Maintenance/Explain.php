@@ -22,8 +22,9 @@ use SqlSemantics\Statement\Statement;
  * declarations are not those of EXPLAIN. EXPLAIN returns one column named
  * `QUERY PLAN`, never NULL, whose type follows the last FORMAT option: `xml`
  * for XML, `json` for JSON, `text` otherwise. Diagnostics: an option EXPLAIN
- * does not know in the release; a FORMAT value that is none of TEXT, XML,
- * JSON, YAML. Termination: the statement is derived once.
+ * does not know in the release; a value the option cannot take; WAL,
+ * TIMING or SERIALIZE without ANALYZE; ANALYZE with GENERIC_PLAN. Termination:
+ * the statement is derived once.
  * Source: https://www.postgresql.org/docs/17/sql-explain.html. Status: Implemented.
  *
  * @visibility public
@@ -62,8 +63,10 @@ final class Explain implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         (new OptionRules())->derive($derivation, 'EXPLAIN', $this->options);
+        $facts = new ExplainFacts();
+        $facts->checks($derivation, $this->options);
         $derivation->inspected($this->statement);
-        $derivation->output((new ExplainFacts())->rows($derivation, $this->options));
+        $derivation->output($facts->rows($derivation, $this->options));
     }
 
     /**

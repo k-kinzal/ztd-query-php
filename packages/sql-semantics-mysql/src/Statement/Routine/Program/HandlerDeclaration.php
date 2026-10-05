@@ -7,7 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Routine\Program;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Routine\StatementSequence;
-use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionValue;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Condition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
@@ -29,7 +29,7 @@ final class HandlerDeclaration implements Declaration
     use Snapshot;
 
     /**
-     * @var non-empty-list<ConditionValue> The conditions in written order
+     * @var non-empty-list<Condition> The conditions in written order
      */
     public readonly array $conditions;
 
@@ -40,13 +40,13 @@ final class HandlerDeclaration implements Declaration
 
     /**
      * @param HandlerAction $action What happens after the handler ran
-     * @param list<ConditionValue> $conditions The conditions handled; at least one
+     * @param list<Condition> $conditions The conditions handled; at least one
      * @param Node $statement The statement the handler runs: a program statement or an SQL statement
      * @throws InvalidConstruction When there is no condition or the statement is of another class
      */
     public function __construct(public readonly HandlerAction $action, array $conditions, Node $statement)
     {
-        $this->conditions = Check::listOf($conditions, ConditionValue::class, 'A handler names at least one condition.', 1);
+        $this->conditions = Check::listOf($conditions, Condition::class, 'A handler names at least one condition.', 1);
         $this->statement = (new StatementSequence())->member($statement);
     }
 

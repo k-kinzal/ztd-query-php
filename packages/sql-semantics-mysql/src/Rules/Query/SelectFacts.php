@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
 use SqlSemantics\Platform\MySql\Rules\Query\From\JoinedInput;
 use SqlSemantics\Platform\MySql\Rules\Query\From\Joining;
+use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
+use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\RelationFact;
@@ -26,8 +30,9 @@ use SqlSemantics\Statement\Shape\RowShape;
  * Rule: MYSQL-SELECT-FACTS-001. The FROM clause is derived in the enclosing
  * environment (MYSQL-FROM-SCOPE-001). The select list sees the FROM tables
  * and, beyond them, the enclosing queries; it does not see its own aliases.
- * WHERE sees the FROM tables. GROUP BY, HAVING, QUALIFY and ORDER BY also see
- * the aliases of the select list (MYSQL-SORT-SCOPE-001). The named windows
+ * WHERE sees the FROM tables. GROUP BY, QUALIFY and ORDER BY also see
+ * the aliases of the select list (MYSQL-SORT-SCOPE-001); HAVING sees the
+ * GROUP BY columns and the select list first (MYSQL-HAVING-SCOPE-001). The named windows
  * see the FROM tables. In a block that aggregates without GROUP BY
  * (MYSQL-AGGREGATE-QUERY-001; HAVING alone filters rows like WHERE) or groups WITH ROLLUP, ROLLUP or CUBE, every
  * column of the FROM tables read by the select list, HAVING, the windows,
@@ -60,14 +65,14 @@ final class SelectFacts
         $items = (new Projection())->items($select->items, $derivation, new Environment($context, $outer, $output), new JoinedInput($from->fact, $output, $from->star));
         $aliases = $this->aliases($select, $items);
         if ($select->where !== null) {
-            $derivation->scalar($select->where, new Environment($context, $outer, $visible));
+            (new Operands())->single($derivation->scalar($select->where, new Environment($context, $outer, $visible)), $derivation);
         }
-        if ($select->groupBy !== null) {
-            (new SortScopes())->derive($select->groupBy->items, $derivation, new Environment($context, $outer, $visible, [], $aliases), $items, false);
-        }
+        $grouping = $select->groupBy === null ? [] : (new SortScopes())->derive($select->groupBy->items, $derivation, new Environment($context, $outer, $visible, [], $aliases), $items, false);
         $results = new Environment($context, $outer, $output, [], $aliases);
         if ($select->having !== null) {
-            $derivation->scalar($select->having, $results);
+            $scope = new HavingScope();
+            $row = new GroupedRow($items, $scope->grouping($grouping, $visible, $output), $select->groupBy !== null || $aggregate || in_array(SelectOption::Distinct, $select->options, true));
+            (new Operands())->single($derivation->scalar($select->having, $scope->enter($results, $row)), $derivation);
         }
         $this->windows($select, $derivation, new Environment($context, $outer, $output));
         (new WindowReferences())->check($select, $derivation);

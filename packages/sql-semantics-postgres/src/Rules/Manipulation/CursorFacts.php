@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Platform\PostgreSql\Statement\Cursor\CursorOption;
-use SqlSemantics\Platform\PostgreSql\Statement\Cursor\DeclareCursor;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\DeclareCursor;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule;

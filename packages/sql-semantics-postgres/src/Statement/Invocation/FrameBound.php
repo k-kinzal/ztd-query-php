@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Statement\Invocation;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\ColumnReference;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Scalar;
@@ -15,6 +17,9 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * One bound of a window frame.
  *
+ * An offset that is the bare column `unbounded` is written quoted: the
+ * grammar reads an unquoted `unbounded` before PRECEDING or FOLLOWING as the
+ * keyword of an unbounded frame (`%nonassoc UNBOUNDED` in gram.y).
  * Source: https://www.postgresql.org/docs/17/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS.
  *
  * @visibility public
@@ -55,6 +60,12 @@ final class FrameBound implements Clause
      */
     public function render(Output $out): void
     {
-        $out->node($this->offset)->keyword(...explode(' ', $this->kind->value));
+        $offset = $this->offset;
+        if ($offset instanceof ColumnReference && count($offset->parts) === 1 && $offset->parts[0]->value === 'unbounded') {
+            $out->name($offset->parts[0], NameUse::Identifier);
+        } else {
+            $out->node($offset);
+        }
+        $out->keyword(...explode(' ', $this->kind->value));
     }
 }

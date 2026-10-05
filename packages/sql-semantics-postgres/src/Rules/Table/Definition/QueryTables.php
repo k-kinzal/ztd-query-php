@@ -9,14 +9,13 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Persistence;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
-use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTypes;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -28,8 +27,10 @@ use SqlSemantics\Statement\Type\Nullability;
  * untyped string constant) is `text`. The columns of a table made by CREATE
  * TABLE AS have no constraints and can be NULL; the columns of a view or a
  * materialized view hold exactly the rows of the query and keep its NULL
- * facts. The declaration is complete only up to the first column whose name
- * or type the context cannot know. A temporary relation with an unqualified
+ * facts. A column whose type depends on declarations the context does not
+ * hold is declared with the type those inputs settle (PG-DECLARED-TYPE-001);
+ * the declaration is complete only up to the first output whose name or
+ * position the context cannot know (an open row) or whose type is invalid. A temporary relation with an unqualified
  * name belongs to `pg_temp`. Tables and materialized views have the system
  * columns; views do not. Two columns of one name are an error.
  * Source: https://www.postgresql.org/docs/17/sql-createtableas.html,
@@ -68,9 +69,11 @@ final class QueryTables
         $columns = [];
         $complete = true;
         $seen = [];
+        $types = new DeclaredTypes();
         foreach ($fact->projection as $position => $item) {
             $column = $item instanceof Field ? ($names[$position] ?? $item->name) : null;
-            if (!$item instanceof Field || $column === null || !$item->type instanceof Known) {
+            $type = $item instanceof Field ? $types->defined($item->type) : null;
+            if (!$item instanceof Field || $column === null || $type === null) {
                 $complete = false;
                 break;
             }
@@ -78,7 +81,6 @@ final class QueryTables
                 $derivation->report(new DefinitionProblem(DefinitionRule::DuplicateColumn, $column));
             }
             $seen[$column->value] = true;
-            $type = $item->type->descriptor === Builtin::Unknown ? Builtin::Text : $item->type->descriptor;
             $columns[] = new Column($column, $type, $nullable ? Nullability::Nullable : $item->nullability);
         }
         if ($fact->shape->complete() && count($names) > count($fact->projection)) {

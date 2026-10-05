@@ -100,4 +100,24 @@ final class ClauseRuleTest extends TestCase
         $rule = new \SqlSemantics\Platform\PostgreSql\Lowering\Query\ClauseRule($lowering);
         self::assertCount(2, $rule->windows($tree->find('window_clause')[0]));
     }
+
+    public function testGroupingTermsFlattensAnImplicitRowInParentheses(): void
+    {
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $one = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'));
+        $two = new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('2'));
+        $row = new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowConstructor([$one, $two], \SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowSpelling::Implicit));
+        $term = (new \SqlSemantics\Platform\PostgreSql\Lowering\Query\ClauseRule($lowering))->groupingTerms([$row])[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow::class, $term);
+        $inner = $term->members[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Grouping\GroupingRow::class, $inner);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\OutputPosition::class, $inner->members[1]);
+    }
+
+    public function testGroupingTermsKeepsAnExplicitRow(): void
+    {
+        $lowering = new \SqlSemantics\Platform\PostgreSql\Lowering\Lowering((new \SqlSemantics\Platform\PostgreSql\Platform())->productions(new \SqlSemantics\Contract\LanguageProfile(\SqlSemantics\Contract\GrammarRelease::PostgreSql172)), new \SqlSemantics\Lowering\Leaves(), \SqlSemantics\Contract\GrammarRelease::PostgreSql172);
+        $row = new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowConstructor([new \SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('1'))]);
+        self::assertSame([$row], (new \SqlSemantics\Platform\PostgreSql\Lowering\Query\ClauseRule($lowering))->groupingTerms([$row]));
+    }
 }

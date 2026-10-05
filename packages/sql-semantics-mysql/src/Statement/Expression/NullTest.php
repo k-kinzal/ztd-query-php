@@ -50,7 +50,7 @@ final class NullTest implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $derivation->scalar($this->operand, $environment);
+        (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
 
         return (new Operands())->truth(Nullability::NotNull);
     }

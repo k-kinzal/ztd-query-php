@@ -17,7 +17,7 @@ final class PreparedRuleTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('PREPARE p (int, text[]) AS SELECT 1');
         $statement = $query->statement;
-        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Prepared\Prepare::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Prepare::class, $statement);
         self::assertCount(2, $statement->parameters?->types ?? []);
     }
 
@@ -26,7 +26,7 @@ final class PreparedRuleTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('EXECUTE p');
         $statement = $query->statement;
-        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Prepared\Execute::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Execute::class, $statement);
         self::assertSame(['p', []], [$statement->name->value, $statement->parameters]);
     }
 
@@ -35,7 +35,7 @@ final class PreparedRuleTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('EXECUTE p (1, 2, 3)');
         $statement = $query->statement;
-        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Prepared\Execute::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Execute::class, $statement);
         self::assertCount(3, $statement->parameters);
     }
 
@@ -44,7 +44,7 @@ final class PreparedRuleTest extends TestCase
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
         $query = $semantics->analyze('DEALLOCATE ALL');
         $statement = $query->statement;
-        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Prepared\Deallocate::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Prepared\Deallocate::class, $statement);
         self::assertNull($statement->name);
     }
 }

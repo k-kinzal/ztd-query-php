@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Utility;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
@@ -45,11 +46,6 @@ use SqlSemantics\Statement\Statement;
  */
 final class ShowFacts
 {
-    /**
-     * The name the platform gives the current database when the caller names none.
-     */
-    private const UNNAMED = '(current)';
-
     /**
      * Derives a SHOW that is the relation its filter sees, and records its rows as the output.
      */
@@ -124,9 +120,7 @@ final class ShowFacts
         if ($written !== null) {
             return $written->value;
         }
-        $current = $derivation->context->searchPath[0]->value;
-
-        return $current === self::UNNAMED ? null : $current;
+        return (new SessionDatabase())->named($derivation->context)?->value;
     }
 
     /**

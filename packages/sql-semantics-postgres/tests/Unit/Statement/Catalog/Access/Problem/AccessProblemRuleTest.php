@@ -15,6 +15,6 @@ final class AccessProblemRuleTest extends TestCase
     public function testCasesSpellTheMessagesOfTheServer(): void
     {
         self::assertSame('role "public" does not exist', \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblemRule::PublicRole->value);
-        self::assertCount(14, \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblemRule::cases());
+        self::assertCount(16, \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblemRule::cases());
     }
 }

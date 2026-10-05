@@ -10,11 +10,11 @@ use SqlSemantics\Lowering\Form;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\Routine\Sequence;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\ConditionItemName;
-use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\ConditionInformation;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\ConditionDiagnostics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\DiagnosticsArea;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\InformationItem;
-use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementInformation;
+use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementDiagnostics;
 use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\StatementItemName;
 
 /**
@@ -25,7 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\Statemen
  * statement_information_item, statement_information_item_name,
  * simple_target_specification, condition_number, condition_information,
  * condition_information_item, condition_information_item_name. Constructs:
- * GetDiagnostics, StatementInformation, ConditionInformation,
+ * GetDiagnostics, StatementDiagnostics, ConditionDiagnostics,
  * InformationItem. Terminates: the lists are flattened iteratively.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/get-diagnostics.html.
  * Status: Implemented.
@@ -90,7 +90,7 @@ final class DiagnosticsRule
         }
         $information = $this->lowering->form($form->node(3));
         if ($information->signature === 'diagnostics_information: statement_information') {
-            return new GetDiagnostics(new StatementInformation($this->items($information->node(0))), self::AREAS[$area->signature]);
+            return new GetDiagnostics(new StatementDiagnostics($this->items($information->node(0))), self::AREAS[$area->signature]);
         }
         if ($information->signature !== 'diagnostics_information: CONDITION_SYM condition_number condition_information') {
             throw ImplementationGap::production($information);
@@ -100,7 +100,7 @@ final class DiagnosticsRule
             throw ImplementationGap::production($number);
         }
 
-        return new GetDiagnostics(new ConditionInformation((new SignalRule($this->lowering))->operand($number->node(0)), $this->items($information->node(2))), self::AREAS[$area->signature]);
+        return new GetDiagnostics(new ConditionDiagnostics((new SignalRule($this->lowering))->operand($number->node(0)), $this->items($information->node(2))), self::AREAS[$area->signature]);
     }
 
     /**

@@ -12,6 +12,26 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class CreateConstraintTriggerTest extends TestCase
 {
+    public function testCreatedSchemaIsTheSchemaOfTheTable(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON s.t FOR EACH ROW EXECUTE FUNCTION f()', []);
+        $n1 = $statement->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTrigger::class, $n1);
+        self::assertSame('s', $n1->createdSchema()?->value);
+    }
+
+    public function testDeriveElementLocatesTheTableInTheSchema(): void
+    {
+        $statement = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE CONSTRAINT TRIGGER g AFTER INSERT ON t FOR EACH ROW EXECUTE FUNCTION f()');
+        $n1 = $statement->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTrigger::class, $n1);
+        $derivation = new \SqlSemantics\Construction\Derivation($statement->context);
+        $n1->deriveElement($derivation, new \SqlSemantics\Statement\Identifier\Name('s'));
+        $n2 = $derivation->facts()->relation($n1)->table;
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Table\UndeclaredTable::class, $n2);
+        self::assertSame('s', $n2->missing->name->schema?->value);
+    }
+
     public function testDeriveStatementResolvesTheTablesAndTheCondition(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);

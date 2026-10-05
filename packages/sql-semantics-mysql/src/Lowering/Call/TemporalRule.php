@@ -155,7 +155,7 @@ final class TemporalRule
 
         return match ($form->signature) {
             'func_datetime_precision:', 'func_datetime_precision: ( )' => null,
-            'func_datetime_precision: ( NUM )' => $this->lowering->leaves->record(new Numeral($form->token(1)->text)),
+            'func_datetime_precision: ( NUM )' => $this->lowering->numbers->token($form->token(1)),
             default => throw ImplementationGap::production($form),
         };
     }

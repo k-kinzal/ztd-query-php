@@ -46,6 +46,28 @@ final class NumberRuleTest extends TestCase
         $rule->numeral(new Node('size_number', 1, [new Node('IDENT_sys', 0, [new Token(0, 'IDENT', '4M', 0)])]));
     }
 
+    public function testTokenKeepsTheTextOfABareNumberAndRecordsIt(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $leaves = new Leaves();
+        $number = (new NumberRule(new Lowering($platform->productions($profile), $leaves, $profile)))->token(new Token(0, 'NUM', '007', 0));
+
+        self::assertSame('007', $number->text);
+        self::assertFalse($number->hexadecimal);
+        self::assertSame([$number], $leaves->all());
+    }
+
+    public function testTokenRefusesATokenThatIsNotANumber(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+
+        $this->expectExceptionMessage('A bare number is a NUM token.');
+
+        (new NumberRule(new Lowering($platform->productions($profile), new Leaves(), $profile)))->token(new Token(0, 'IDENT', 'x', 0));
+    }
+
     public function testSizeLowersANumberOrAWordWithAUnit(): void
     {
         $platform = new Platform();

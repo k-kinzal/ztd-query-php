@@ -282,7 +282,7 @@ final class ClauseRule
 
         return match ($form->signature) {
             'opt_profile_args:', 'opt_for_query:' => null,
-            'opt_profile_args: FOR_SYM QUERY_SYM NUM', 'opt_for_query: FOR_SYM QUERY_SYM NUM' => $this->lowering->leaves->record(new Numeral($form->token(2)->text)),
+            'opt_profile_args: FOR_SYM QUERY_SYM NUM', 'opt_for_query: FOR_SYM QUERY_SYM NUM' => $this->lowering->numbers->token($form->token(2)),
             default => throw ImplementationGap::production($form),
         };
     }

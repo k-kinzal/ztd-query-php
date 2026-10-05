@@ -9,9 +9,9 @@ use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Utility\ExplainFacts;
-use SqlSemantics\Platform\MySql\Rules\Utility\Inspection;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
@@ -63,12 +63,8 @@ final class Explain implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        if ($this->database === null) {
-            $derivation->inspected($this->statement);
-        } else {
-            $context = $derivation->context;
-            $derivation->within(new AnalysisContext($context->profile, [$this->database], $context->tables, $context->complete, $context->relationNames, $context->columnNames, $context->declarationSchema), new Inspection($this->statement));
-        }
+        $context = $derivation->context;
+        $derivation->inspected($this->statement, $this->database === null ? null : new Environment(new AnalysisContext($context->profile, [$this->database], $context->tables, $context->complete, $context->relationNames, $context->columnNames, $context->declarationSchema)));
         (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into);
     }
 

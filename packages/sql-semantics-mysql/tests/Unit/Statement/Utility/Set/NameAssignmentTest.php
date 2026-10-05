@@ -31,6 +31,13 @@ final class NameAssignmentTest extends TestCase
         self::assertInstanceOf(Known::class, $set->facts->scalar($set->statement->items[1]->value)->type);
     }
 
+    public function testDeriveItemReportsARowAsTheValue(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SET SESSION x = (1, 2)');
+
+        self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+    }
+
     public function testRenderWritesTheScopeAndTheQualifier(): void
     {
         self::assertSame('SET GLOBAL k.key_buffer_size = 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set global k.key_buffer_size = 1')->toString());

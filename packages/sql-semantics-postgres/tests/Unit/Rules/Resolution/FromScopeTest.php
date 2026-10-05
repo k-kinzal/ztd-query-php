@@ -38,4 +38,16 @@ final class FromScopeTest extends TestCase
         $query = $semantics->analyze('SELECT 1 FROM t, u JOIN (SELECT 1 AS z) AS w ON t.a = w.z', [$t, $u]);
         self::assertCount(1, $query->facts->diagnostics);
     }
+
+    public function testEnterBarsTheLeftSideOfARightJoinForLateralItems(): void
+    {
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT * FROM (SELECT 1 AS a) AS t RIGHT JOIN generate_series(1, t.a) AS g ON true', []);
+        self::assertSame('invalid reference to FROM-clause entry for table "t"', $query->facts->diagnostics[0]->message());
+    }
+
+    public function testEnterKeepsEarlierCommaItemsReachableFromARightJoin(): void
+    {
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT * FROM (SELECT 1 AS a) AS t, (SELECT 2 AS b) AS u RIGHT JOIN LATERAL (SELECT t.a AS x) AS s ON true', []);
+        self::assertSame([], $query->facts->diagnostics);
+    }
 }

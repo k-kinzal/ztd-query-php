@@ -13,12 +13,16 @@ use SqlSemantics\Platform\MySql\Rules\Noise\RoutineNoise;
 #[Small]
 final class RoutineNoiseTest extends TestCase
 {
-    public function testPositionsListsNothingYet(): void
+    public function testPositionsListsTheFetchWordsAndTheSqlstateValueWord(): void
     {
-        self::assertSame([], RoutineNoise::positions());
+        self::assertSame([
+            'sp_opt_fetch_noise: NEXT_SYM FROM' => [0, 1],
+            'sp_opt_fetch_noise: FROM' => [0],
+            'opt_value: VALUE_SYM' => [0],
+        ], RoutineNoise::positions());
     }
 
-    public function testSynonymsListsNothingYet(): void
+    public function testSynonymsListsNothing(): void
     {
         self::assertSame([], RoutineNoise::synonyms());
     }

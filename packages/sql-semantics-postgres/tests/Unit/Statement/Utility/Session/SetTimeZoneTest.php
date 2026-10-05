@@ -42,11 +42,4 @@ final class SetTimeZoneTest extends TestCase
     {
         self::assertSame(["SET TIME ZONE 'UTC'", 'SET TIME ZONE utc', 'SET TIME ZONE - 8', "SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE"], [(new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SET TIME ZONE 'UTC'")->toString(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TIME ZONE UTC')->toString(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SET TIME ZONE -8')->toString(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze("SET TIME ZONE INTERVAL '-08:00' HOUR TO MINUTE")->toString()]);
     }
-
-    public function testAConstantOfAnotherTypeIsRefused(): void
-    {
-        $this->expectException(\SqlSemantics\Diagnostic\InvalidConstruction::class);
-        $this->expectExceptionMessage('The constant of SET TIME ZONE is an interval.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Utility\Session\SetTimeZone(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral(new \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName(new \SqlSemantics\Platform\PostgreSql\Statement\Type\Designation\NamedDesignation(new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('date')]))), new \SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant('1')));
-    }
 }

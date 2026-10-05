@@ -7,12 +7,12 @@ namespace SqlSemantics\Platform\PostgreSql\Lowering\Manipulation;
 use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
-use SqlSemantics\Platform\PostgreSql\Statement\Cursor\Close;
-use SqlSemantics\Platform\PostgreSql\Statement\Cursor\CursorOption;
-use SqlSemantics\Platform\PostgreSql\Statement\Cursor\DeclareCursor;
-use SqlSemantics\Platform\PostgreSql\Statement\Cursor\Fetch;
-use SqlSemantics\Platform\PostgreSql\Statement\Cursor\FetchMovement;
-use SqlSemantics\Platform\PostgreSql\Statement\Cursor\Holdability;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Close;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\CursorOption;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\DeclareCursor;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Fetch;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\FetchMovement;
+use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Cursor\Holdability;
 
 /**
  * Lowers DECLARE, FETCH, MOVE and CLOSE.

@@ -27,7 +27,7 @@ final class ShowTest extends TestCase
     public function testDeriveStatementLeavesTheRowOfANamedParameterOpen(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SHOW a.b');
-        self::assertFalse($operation->shape()->complete());
+        self::assertFalse($operation->shape()?->complete());
         self::assertSame('the session state: the registered name of the configuration parameter a.b', $operation->shape()->missing[0]->describe());
     }
 
