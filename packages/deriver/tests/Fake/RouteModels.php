@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\AnalysisSession;
 use Deriver\Model\ModelDescriptor;
 use Deriver\Model\Plan\Action;
 use Deriver\Model\Plan\Expression;
@@ -15,6 +14,7 @@ use Deriver\Query\QueryScope;
 use Deriver\Query\ValueQuery;
 use Deriver\Result\Alternative;
 use Deriver\Value\Term;
+use JsonException;
 use RuntimeException;
 
 /**
@@ -41,12 +41,13 @@ final class RouteModels
 
     /**
      * Derives the SQL argument and the receiver of the first query() call.
-     * @param AnalysisSession $session Analysis session
+     * @param \Deriver\Analysis\ExecutionSession $session Analysis session
      * @param QueryScope $scope Entrypoint scope
      * @return array{list<Alternative>, list<Alternative>} SQL and receiver observations
      * @throws RuntimeException If the fixture has no method call to query()
+     * @throws JsonException If captured metadata cannot be encoded
      */
-    public static function observe(AnalysisSession $session, QueryScope $scope): array
+    public static function observe(\Deriver\Analysis\ExecutionSession $session, QueryScope $scope): array
     {
         $call = $session->callsTo('query')[0] ?? null;
         if ($call?->receiver === null) {

@@ -55,9 +55,8 @@ final class InitializerSemanticsTest extends TestCase
         self::assertSame($expected, RuntimeOracle::evaluate($runtimeSource)->native());
         $session = (new Analyzer())->open(new ProjectInput([new SourceFile('library.php', $library),new SourceFile('app.php', $application)]));
         $result = $session->derive(new ReturnQuery('target'));
-        self::assertSame([], $result->frontiers);
-        self::assertSame([], $result->exceptionalOutcomes);
-        self::assertCount(1, $result->normalOutcomes);
-        self::assertSame($expected, $result->normalOutcomes[0]->values['return']->native());
+        self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
+        self::assertCount(1, $result->candidates);
+        self::assertSame($expected, $result->candidates[0]->term->native());
     }
 }

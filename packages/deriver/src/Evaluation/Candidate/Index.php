@@ -25,9 +25,9 @@ final class Index
      */
     private array $callers = [];
     /**
-     * @var array<string, list<array{Graph, Instruction}>>|null
+     * @var array<string, list<array{Graph, Instruction}>>
      */
-    private ?array $writes = null;
+    private array $writes = [];
 
     /**
      * Captures the dependencies used by this component.
@@ -65,9 +65,13 @@ final class Index
         $selector = str_contains($symbol, '::') && !str_ends_with(strtolower($symbol), '::__construct') ? explode('::', $symbol)[1] : $symbol;
         foreach ($this->program->callOwners($selector) as $owner) {
             $graph = $this->graph($owner);
-            foreach ($graph->definitions ?? [] as $instruction) {
-                $target = $graph === null ? '' : $this->target($graph, $instruction);
-                if ($target !== '' && (new CallableIdentity())->key($target) === $key) {
+            if ($graph === null) {
+                continue;
+            }
+            foreach ($graph->definitions as $instruction) {
+                $target = $this->target($graph, $instruction);
+                $dynamicMethod = $instruction->operation === 'invoke-method' && str_contains($symbol, '::') && ($this->literal($graph, $instruction->operands[1]) === '' || strcasecmp($this->literal($graph, $instruction->operands[1]), $selector) === 0);
+                if ($target !== '' && (new CallableIdentity())->key($target) === $key || $dynamicMethod) {
                     $found[] = [$graph, $instruction];
                 }
             }
@@ -104,16 +108,17 @@ final class Index
     public function literal(Graph $graph, string $register): string
     {
         $instruction = $graph->definitions[$register] ?? null;
-        return $instruction?->operation === 'constant' && is_string($instruction->constant?->literal) ? $instruction->constant->literal : '';
+        return $instruction?->operation === 'constant' && $instruction->constant?->kind === 'constant' && is_string($instruction->constant->literal) ? $instruction->constant->literal : '';
     }
 
     /**
      * Resolves lexical class keywords against captured inheritance.
      */
-    public function className(string $class, string $scope): string
+    public function className(string $class, string $scope, string $calledClass = ''): string
     {
         return match (strtolower($class)) {
-            'self', 'static' => $scope,
+            'self' => $scope,
+            'static' => $calledClass !== '' ? $calledClass : $scope,
             'parent' => $this->program->classes()[strtolower($scope)]->parent ?? '',
             default => $class,
         };
@@ -210,9 +215,10 @@ final class Index
      */
     public function writes(PropertyDeclaration $property): array
     {
-        if ($this->writes === null) {
-            $this->writes = [];
-            foreach ($this->program->symbols() as $symbol) {
+        $key = $property->className . '::$' . $property->name;
+        if (!isset($this->writes[$key])) {
+            $this->writes[$key] = [];
+            foreach ($this->program->propertyOwners($property->name) as $symbol) {
                 $graph = $this->graph($symbol);
                 if ($graph === null) {
                     continue;
@@ -223,7 +229,7 @@ final class Index
                         continue;
                     }
                     $slot = $this->declaredProperty($graph, $address);
-                    if ($slot !== null) {
+                    if ($slot !== null && $slot->className === $property->className && $slot->name === $property->name) {
                         $this->writes[$slot->className . '::$' . $slot->name][] = [$graph, $write];
                     }
                 }

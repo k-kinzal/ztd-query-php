@@ -56,6 +56,9 @@ final class FunctionModel implements CallModel
         if ($this->name === 'sort') {
             return ModelDecision::handled(new SemanticPlan([new Action('write-parameter', [new Expression('intrinsic', 'sort-values', $operands)], 'array'), Action::returns(Expression::literal(Term::constant(true)))], writes: ['parameter:array']));
         }
+        if ($this->name === 'usort') {
+            return ModelDecision::handled(new SemanticPlan([new Action('write-parameter', [new Expression('intrinsic', 'callback-sort', $operands)], 'array'), Action::returns(Expression::literal(Term::constant(true)))], writes: ['parameter:array']));
+        }
         if (in_array($this->name, ['array_shift', 'array_pop', 'array_push', 'array_unshift'], true)) {
             return ModelDecision::handled(new SemanticPlan($this->mutation($operands), writes: ['parameter:array']));
         }

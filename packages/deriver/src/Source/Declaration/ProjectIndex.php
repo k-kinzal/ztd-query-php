@@ -49,6 +49,10 @@ final class ProjectIndex implements Program
      */
     public array $declarations = [];
     /**
+     * @var array<string, list<string>> Alternative conditional declarations
+     */
+    public array $conditionalDeclarations = [];
+    /**
      * @var array<string, ClassDeclaration> Static class index.
      */
     public array $classIndex = [];
@@ -148,6 +152,12 @@ final class ProjectIndex implements Program
         $key = (new CallableIdentity())->key($source->symbol);
         if (isset($this->declarations[$key])) {
             if ($this->files[$source->path]->declarationsOnly && !$this->files[$this->declarations[$key]->path]->declarationsOnly) {
+                return;
+            }
+            if ($source->node->getAttribute('deriverConditional') === true || $this->declarations[$key]->node->getAttribute('deriverConditional') === true) {
+                $variant = $source->symbol . '@declaration:' . $source->path . ':' . $source->node->getStartFilePos();
+                $this->conditionalDeclarations[$key][] = $variant;
+                $this->declarations[(new CallableIdentity())->key($variant)] = new CallableSource($variant, $source->node, $source->path, $source->className, $source->strict, $source->cacheSalt);
                 return;
             }
             $this->issues[] = new Frontier('INVALID_PROGRAM', $this->builder($source->path)->source($source->node), 'duplicate:' . $source->symbol);
@@ -274,5 +284,23 @@ final class ProjectIndex implements Program
     public function callOwners(string $symbol): array
     {
         return (new CallSiteIndex($this))->owners($symbol);
+    }
+
+    /**
+     * Finds possible property writers without compiling unrelated callables.
+     * @return list<string> Source owner identities
+     */
+    public function propertyOwners(string $name): array
+    {
+        return (new PropertyWriteIndex($this))->owners($name);
+    }
+
+    /**
+     * Retains conditional implementations without registering or executing them.
+     * @return list<string> Additional source declaration identities
+     */
+    public function variants(string $symbol): array
+    {
+        return $this->conditionalDeclarations[(new CallableIdentity())->key($symbol)] ?? [];
     }
 }

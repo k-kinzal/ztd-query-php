@@ -60,7 +60,7 @@ final class ObservationProviderTest extends TestCase
     public function testQueriesRetainsTheSessionEntryScope(): void
     {
         $session = \Tests\Fake\Analysis::session('<?php function entry(){return 1;}', new Configuration(providers: [new \Tests\Fake\MiniContainer()]));
-        $query = (new \Tests\Fake\MiniContainer())->queries($session)['entry-return'];
+        $query = (new \Tests\Fake\MiniContainer())->queries($session->snapshotSession)['entry-return'];
         self::assertSame($session->entrypoints(), $query->scope()->entries);
     }
 }

@@ -95,14 +95,14 @@ final class QueryExecution
     /**
      * Observes one symbolic callable once under a shared resource and logical budget.
      * @param list<Query> $queries Observations in requested output order
-     * @return \Deriver\Result\ResultSet Independent observations from the shared execution
+     * @return \Deriver\Result\ExecutionResultSet Independent observations from the shared execution
      * @throws InvalidInputException If owners, scopes, or budgets differ
      * @throws JsonException If query metadata cannot be encoded
      */
-    public function together(array $queries): \Deriver\Result\ResultSet
+    public function together(array $queries): \Deriver\Result\ExecutionResultSet
     {
         if ($queries === []) {
-            return new \Deriver\Result\ResultSet([]);
+            return new \Deriver\Result\ExecutionResultSet([]);
         }
         $symbol = $this->owner($queries[0]);
         $keys = [];
@@ -123,7 +123,7 @@ final class QueryExecution
             $results[] = $this->result($batch->synchronize($index), $symbol, $start, $identity);
         }
         $context->batch = null;
-        return new \Deriver\Result\ResultSet($results);
+        return new \Deriver\Result\ExecutionResultSet($results);
     }
 
     /**

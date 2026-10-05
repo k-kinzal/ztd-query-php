@@ -14,7 +14,7 @@ use WeakMap;
 final class Cache
 {
     /**
-     * @var array<string, Term>
+     * @var array<string, Evidence\Expansion>
      */
     private array $values = [];
 
@@ -30,7 +30,7 @@ final class Cache
      */
     public function get(string $key): ?Term
     {
-        return $this->values[$key] ?? null;
+        return ($this->values[$key] ?? null)?->value;
     }
 
     /**
@@ -42,7 +42,7 @@ final class Cache
             return;
         }
         unset($this->values[$key]);
-        $this->values[$key] = $value;
+        $this->values[$key] = new Evidence\Expansion($value);
         if (count($this->values) > $this->capacity) {
             array_shift($this->values);
         }

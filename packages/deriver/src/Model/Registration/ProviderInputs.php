@@ -77,6 +77,6 @@ final class ProviderInputs
             }
         }
         $this->input = new ProjectInput($files);
-        $this->configuration = new Configuration($configuration->target, $configuration->models, $configuration->closedWorld, $environment, $configuration->environmentVersion, $configuration->standardModels, $configuration->intrinsics, $domains, array_values($providers), $configuration->resources, $configuration->dependencyVersions, $configuration->stateSlots, $configuration->sourceLimits, $configuration->analysisContract, $configuration->candidateCacheEntries, $configuration->retainedResults);
+        $this->configuration = new Configuration($configuration->target, $configuration->models, $configuration->closedWorld, $environment, $configuration->environmentVersion, $configuration->standardModels, $configuration->intrinsics, $domains, array_values($providers), $configuration->resources, $configuration->dependencyVersions, $configuration->stateSlots, $configuration->sourceLimits, $configuration->candidateCacheEntries, $configuration->retainedResults, $configuration->expansionRules);
     }
 }

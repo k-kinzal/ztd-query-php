@@ -29,14 +29,18 @@ final class Definitions
      */
     public function value(Frame $frame, string $address, int $header, int $depth): Term
     {
+        if ((new Invariant())->check($this->engine, $frame, $address, $header)) {
+            return $this->version($frame->iteration($header, 0), $address, $header, 0, $depth);
+        }
         if (isset($frame->iterations[$header])) {
             return $this->version($frame, $address, $header, $frame->iterations[$header], $depth);
         }
         $condition = $frame->graph->body->blocks[$header]->terminator->operand;
-        for ($iteration = 0; $iteration < $this->engine->context->budget->iterations; $iteration++) {
+        $iteration = 0;
+        for (; $iteration < $this->engine->context->budget->iterations; $iteration++) {
             $version = $frame->iteration($header, $iteration);
             $test = $this->engine->value($version, $condition, $depth);
-            $truths = array_map(static fn (array $alternative): ?bool => (new Operations())->truth($alternative[0]), (new Choices())->alternatives($test));
+            $truths = array_map(static fn (array $alternative): ?bool => (new Operations())->truth($alternative[0]), iterator_to_array((new Choices())->alternatives($test), false));
             if ($truths !== [] && array_unique($truths, SORT_REGULAR) === [false]) {
                 return $this->version($version, $address, $header, $iteration, $depth);
             }
@@ -45,8 +49,10 @@ final class Definitions
             }
         }
         $initial = $this->version($frame->iteration($header, 0), $address, $header, 0, $depth);
-        $reference = $this->engine->context->reference($frame, (new Storage($this->engine))->key($frame, $address), $frame->graph->body->source, reason: 'CYCLE', kind: 'recursive');
-        return new Term('recurrence', operands: [$initial, $reference], attributes: ['reason' => 'CYCLE', 'header' => $header]);
+        $reason = $this->engine->context->stopReason ?? ($iteration >= $this->engine->context->budget->iterations ? 'ITERATION_LIMIT' : 'UNKNOWN_ITERATION_COUNT');
+        $reference = $this->engine->context->reference($frame, (new Storage($this->engine))->key($frame, $address), $frame->graph->body->source, reason: $reason, kind: 'recursive');
+        $update = $this->version($frame->iteration($header, 1), $address, $header, 1, $depth);
+        return new Term('recurrence', operands: [$initial, $update, $reference], attributes: ['reason' => $reason, 'header' => $header]);
     }
 
     /**

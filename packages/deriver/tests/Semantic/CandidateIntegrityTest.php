@@ -70,7 +70,7 @@ final class CandidateIntegrityTest extends TestCase
     {
         $session = CandidateContractTest::session('function recursive($flag){if($flag){return "head".recursive($flag);}return "tail";}');
         $result = $session->derive(new ReturnQuery('recursive'));
-        self::assertContains('CYCLE', array_column($result->frontiers, 'code'));
+        self::assertContains('CYCLE', array_column(CandidateContractTest::frontiers($result), 'code'));
         self::assertContains('tail', array_map(static fn ($value) => $value->isConcrete() ? $value->native() : null, CandidateContractTest::values($result, 'return')));
         self::assertNotContains('head', array_map(static fn ($value) => $value->isConcrete() ? $value->native() : null, CandidateContractTest::values($result, 'return')));
     }
@@ -141,7 +141,7 @@ final class CandidateIntegrityTest extends TestCase
         $sites = $session->callsTo('observe');
         $first = $session->derive(new ValueQuery($sites[0]->argument(0)));
         $second = $session->derive(new ValueQuery($sites[1]->argument(0)));
-        self::assertNotEmpty($first->frontiers);
+        self::assertNotEmpty(CandidateContractTest::frontiers($first));
         self::assertSame([8], CandidateContractTest::native($second));
         self::assertGreaterThan(0, $second->statistics->sharedNodeHits);
         self::assertSame(0, $second->statistics->bodyExpansions);
@@ -156,7 +156,7 @@ final class CandidateIntegrityTest extends TestCase
         $session = CandidateContractTest::session('function target(){$name="users";$table=$name;$sql="SELECT ".$table;observe($sql);}');
         $shallow = CandidateContractTest::argument($session, new Budget(maxDepth: 1));
         $deep = CandidateContractTest::argument($session);
-        self::assertContains('DEPTH_LIMIT', array_column($shallow->frontiers, 'code'));
+        self::assertContains('DEPTH_LIMIT', array_column(CandidateContractTest::frontiers($shallow), 'code'));
         self::assertSame(['SELECT users'], CandidateContractTest::native($deep));
     }
 
@@ -209,9 +209,9 @@ final class CandidateIntegrityTest extends TestCase
         $site = $session->callsTo('query')[0];
         self::assertNotNull($site->receiver);
         $result = $session->derive(new TupleQuery($site->beforeInvocation(), ['receiver' => $site->receiver, 'sql' => $site->argument(0)]));
-        $values = $result->normalOutcomes[0]->values;
+        $values = $result->candidates[0]->term->operands;
         self::assertSame('PDO', $values['receiver']->attributes['type']);
         self::assertSame('SELECT ', $values['sql']->operands[0]->literal);
-        self::assertContains('TIME_LIMIT', array_column($result->frontiers, 'code'));
+        self::assertContains('TIME_LIMIT', array_column(CandidateContractTest::frontiers($result), 'code'));
     }
 }

@@ -45,4 +45,26 @@ final class ContextTest extends TestCase
         self::assertCount(1, $e->context->evidence);
         self::assertSame('binary', array_values($e->context->evidence)[0]->operation);
     }
+    /**
+     * @throws JsonException If captured fixture metadata cannot be encoded
+     */
+    public function testWorkStopsAtTheTransferBudget(): void
+    {
+        $engine = CandidateFixture::evaluator(budget:new \Deriver\Query\Budget(transfers:1));
+        self::assertNull($engine->context->work());
+        self::assertSame('BUDGET_EXCEEDED', $engine->context->work());
+    }
+
+    /**
+     * @throws JsonException If captured fixture metadata cannot be encoded
+     */
+    public function testAcceptEvidenceCountsSharedNodesOnce(): void
+    {
+        $engine = CandidateFixture::evaluator();
+        $node = new \Deriver\Result\Evidence\Node('operation', attributes:['operation' => 'literal']);
+        $engine->context->acceptEvidence(new \Deriver\Value\Term('constant', 1, evidence:$node));
+        $engine->context->acceptEvidence(new \Deriver\Value\Term('constant', 1, evidence:$node));
+        self::assertCount(1, $engine->context->proofNodes);
+    }
+
 }

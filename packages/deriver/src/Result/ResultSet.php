@@ -14,7 +14,7 @@ namespace Deriver\Result;
 final class ResultSet
 {
     /**
-     * @param list<DerivationResult> $results results
+     * @param list<Candidates\CandidateCollection> $results results
      */
     public function __construct(
         public readonly array $results,

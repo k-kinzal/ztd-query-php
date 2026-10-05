@@ -31,4 +31,12 @@ final class ModelsTest extends TestCase
         $e = F::evaluator('function helper($a,$b){return $b;}function target(){return helper(b:7,a:9);}');
         self::assertSame(7, F::value($e)->native());
     }
+    /**
+     * @throws JsonException If captured fixture metadata cannot be encoded
+     */
+    public function testDemandUsesActualBindingsBeforeSelectingAPlan(): void
+    {
+        self::assertSame(3, \Tests\Fake\CandidateApi::returns('function target(){return count([1,2,3]);}')->candidates[0]->result);
+    }
+
 }

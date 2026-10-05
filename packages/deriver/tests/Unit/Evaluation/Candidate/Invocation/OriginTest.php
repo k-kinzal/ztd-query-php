@@ -21,7 +21,7 @@ final class OriginTest extends TestCase
         $engine = F::evaluator('function change($value){missing();}function target(){change(7);}');
         [$frame, $call] = (new Origin())->call(F::frame($engine, 'change')->graph);
         $value = $engine->value($frame, $call->arguments[0]->register, 64);
-        self::assertSame(7, (new \Deriver\Evaluation\Candidate\Choices())->alternatives($value)[0][0]->native());
+        self::assertSame(7, iterator_to_array((new \Deriver\Evaluation\Candidate\Choices())->alternatives($value), false)[0][0]->native());
         self::assertSame([], $engine->context->bodies);
     }
 }

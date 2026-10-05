@@ -59,12 +59,47 @@ Early cycle detection requires proof of unchanged pass-through bindings: the sam
 
 A selected model supplies the implementation used for returns, reference effects, constructor property initialization, property origins and model-state writes. Inspecting an effect cannot reopen the replaced source body. Model selection precedes inspection of the implementation's writes, so an empty plan suppresses source writes as well as source return expressions.
 
-Property origins with known calls select models in those callers' argument contexts. Without known calls, inputs remain symbolic. An explicit model decline permits source behavior; an unsupported decision leaves an `UNSUPPORTED_MODEL_CASE` frontier. Check `statistics->expandedBodies` to verify that a replaced source symbol was never expanded.
+Property origins with known calls select models in those callers' argument contexts. Without known calls, inputs remain symbolic. An explicit model decline permits source behavior; an unsupported decision leaves an `UNSUPPORTED_MODEL_CASE` residual. Check `statistics->expandedBodies` to verify that a replaced source symbol was never expanded.
 
 ## What verification establishes
 
-The differential suite generates combinations of declared receiver type, alias and method spelling; mutation form and storage entry; and recursive argument spelling, argument naming and recursion length. Generated fixtures run in an independent PHP 8.3 process. Closed dependencies must agree exactly with PHP and have no frontiers or exceptional outcomes. Property-origin tests additionally require the runtime mutation result to appear among the source candidates, which can include earlier writes.
+The differential suite generates combinations of declared receiver type, alias and method spelling; mutation form and storage entry; and recursive argument spelling, argument naming and recursion length. Generated fixtures run in an independent PHP 8.3 process. Closed dependencies must agree exactly with PHP and contain no residual values. Property-origin tests additionally require the runtime mutation result to appear among the source candidates, which can include earlier writes.
 
 Separate contract tests check forbidden source expansion, unnecessary argument evaluation, receiver correlations, and the distinction between cycle and budget frontiers. The generated matrix runs in the existing differential CI job. Adding a syntax variant to a matrix dimension applies the existing cross-feature checks to that variant.
 
-These checks cover the generated combinations, not every legal PHP program. Missing source, unresolved inputs, recursive property histories and analysis limits can still leave residual expressions. Inspect frontiers and exceptional outcomes before treating a result as exhaustive. Candidate coverage does not prove runtime reachability or arbitrary external object histories.
+These checks cover the generated combinations, not every legal PHP program. Missing source, unresolved inputs, recursive property histories and analysis limits can still leave residual expressions. Inspect partial candidates and their evidence before treating a result as exhaustive. Candidate coverage does not prove runtime reachability or arbitrary external object histories.
+
+
+## Origins and operations
+
+Each row describes a dependency rule used by the same backward expansion. Rules can be combined; they do not select separate whole-program execution modes.
+
+| Selected source form | Dependencies opened | Information retained when unresolved |
+| --- | --- | --- |
+| Literal, constant, exact expression range | The selected definition and its source location | Constant name or original expression |
+| Local variable or alias | Reaching writes to the selected storage at the observation point | Storage identity and missing or overlapping writes |
+| Formal parameter | Actual arguments at captured callers, with named/unpacked/default binding | Unbound formal and caller context; an uncalled formal does not acquire its default |
+| Assignment, compound assignment, increment | Prior storage when needed and the assigned operands | Known operands and the update operation; expression and stored results remain distinct |
+| Unary, binary and cast expression | Required operands, after replacement-rule selection | Operator and known operand values |
+| Conditional, short-circuit expression | Value-selecting condition and alternatives | Shared selector identity and compatible alternatives |
+| Array construction, unpack, indexed read/write | Ordered entries, keys and the selected nested storage | Known entries, unresolved keys/unpacks and enumeration remainder |
+| Function, method, callable or callback | Selected implementation, actual/formal binding and demanded outputs | Call expression, receiver, lexical/called class and missing implementation |
+| Closure capture | Creation-time value or the captured storage at invocation | Capture mode and unknown reference history |
+| Property, constructor, alias or clone | Allocation identity, initializer and relevant writes before observation | Receiver and storage history; a clone retains its copy source |
+| Global or static local | Captured script definitions, relevant calls and supplied initial storage | Missing external input or unknown invocation history |
+| Class/interface constant, enum | Captured declaration and lexical/called class | Constant or enum identity and missing declaration |
+| Loop-dependent value | Initial definition and relevant updates; finite known iterations | Initial value, recurrence and stopping reason; invariant values bypass irrelevant updates |
+| Return, explicit throw, catch, finally | Value supply and completion dependencies at the original evaluation point | Non-value dependency or unknown completion; throw-only bodies do not supply null |
+| Function/expression override | Only the inputs demanded by the selected versioned rule | Rule identity, requested inputs and any residual returned by the rule |
+
+The [semantic fixtures](../tests/Semantic/CandidateExpansionTest.php), [dependency combinations](../tests/Differential/DependencyCompositionTest.php), [runtime comparisons](../tests/Differential/CandidateContractTest.php) and [evidence tests](../tests/Integration/CandidateEvidenceTest.php) check these rules at different boundaries. They establish the covered forms and combinations, not complete coverage of the PHP grammar. Conditional declarations with unresolved receiver or storage histories can still leave partial values.
+
+## Expansion and evidence
+
+References expand into definitions and their operands. PHP syntax handlers provide local rules for this same mechanism: adding an operator does not introduce a new execution strategy. Calls bind actuals to formals before opening a body; callbacks use the same binding and dispatch rules. Explicit expression/function replacements are selected before demanding operands.
+
+A candidate's evidence is a content-addressed DAG. Conjunction nodes retain dependencies used together; choice nodes retain alternative derivations. Context projection preserves caller and binding relationships separately from the computed value, including when a dependency is reused from cache. Equal values may have multiple evidence alternatives. Exported evidence is owned by the result and survives session release.
+
+Unknown input, unknown receiver dispatch, an unavailable invocation history, and a resource stop have distinct residual reasons. A partial expression keeps known prefixes, fields and operands. A throw-only definition has no ordinary PHP value: it produces a `never` partial rather than a fabricated `null` value. Candidate sets describe source origins under captured assumptions; they do not assert that every origin is reachable in one execution.
+
+Contract tests cover arbitrary expression targets, formal versus actual arguments, lazy replacements, nested callers, equal-value origins, source coordinates, cache/release stability and replay mutations. Semantic fixtures cover PHP forms separately from those API guarantees. The bounded benchmark records capture, cold, warm and batch measurements against a pinned baseline; measurements of generated fixtures do not establish performance for every application.

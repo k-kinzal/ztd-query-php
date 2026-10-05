@@ -261,10 +261,10 @@ final class CallableCompilerTest extends TestCase
     {
         $session = (new Analyzer())->open(new ProjectInput([new SourceFile('library.php', $library),new SourceFile('app.php', $application)]));
         $result = $session->derive(new ReturnQuery('target'));
-        self::assertSame([], $result->frontiers);
-        self::assertSame([], $result->exceptionalOutcomes);
-        self::assertCount(1, $result->normalOutcomes);
-        self::assertSame(json_decode($expectedJson, true, 512, JSON_THROW_ON_ERROR), $result->normalOutcomes[0]->values['return']->native());
+        self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($result));
+        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
+        self::assertCount(1, $result->candidates);
+        self::assertSame(json_decode($expectedJson, true, 512, JSON_THROW_ON_ERROR), $result->candidates[0]->term->native());
     }
 
     /**

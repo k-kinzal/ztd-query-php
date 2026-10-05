@@ -151,10 +151,10 @@ final class DeclarationScannerTest extends TestCase
         self::assertSame([], $result->frontiers);
         self::assertSame([], $result->exceptionalOutcomes);
     }
-    public function testScanDoesNotIndexConditionallyDeclaredFunctionsAsUnconditional(): void
+    public function testScanIndexesConditionalDeclarationsAsCandidateOrigins(): void
     {
         $index = SourceFixture::index('<?php if ($flag) { function conditional(){} } function always(){}');
-        self::assertSame(['always', 'script:fixture.php'], $index->symbols());
+        self::assertSame(['always', 'conditional', 'script:fixture.php'], $index->symbols());
     }
     public function testClassDeclarationRetainsInheritanceAndInterfaces(): void
     {
@@ -291,7 +291,7 @@ final class DeclarationScannerTest extends TestCase
     {
         $index = SourceFixture::index('<?php function Outer(){function Nested(){} class Local{}} if($flag){class Conditional{}} $a=new class{function Run(){}};');
         self::assertSame(['Outer','script:fixture.php'], $index->symbols());
-        self::assertSame([], $index->classIndex);
+        self::assertSame(['conditional'], array_keys($index->classIndex));
         self::assertSame([], $index->constantSources);
     }
 
@@ -435,6 +435,13 @@ final class DeclarationScannerTest extends TestCase
         $node = new Stmt\Class_('C');
         self::assertTrue((new DeclarationScanner($index))->existingClass($node, 'fixture.php', 'C'));
         self::assertSame('INVALID_PROGRAM', $index->diagnostics()[0]->code);
+    }
+
+    public function testConditionalMethodsRetainsBothImplementations(): void
+    {
+        $index = SourceFixture::index('<?php if($x){class A{function f(){return 1;}}}else{class A{function f(){return 2;}}}');
+        self::assertCount(1, $index->variants('A::f'));
+        self::assertSame([], $index->diagnostics());
     }
 
 }

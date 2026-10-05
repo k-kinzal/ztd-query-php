@@ -16,6 +16,7 @@ use Deriver\Model\DemandModel;
 use Deriver\Model\Registration\Declarations;
 use Deriver\Reference\SourceRef;
 use Deriver\Value\Term;
+use Throwable;
 
 /**
  * Selects a replacement before demanding any source body or irrelevant input.
@@ -45,16 +46,14 @@ final class Models
         $descriptor = $model->descriptor();
         $description = new CallDescription($target, $descriptor->signature, $context->configuration->target, dependencyVersions: $context->configuration->dependencyVersions, source: $call->source, declarations: new Declarations($context->index->program));
         if ($model instanceof DemandModel) {
-            $arguments = $description->arguments->arguments;
-            foreach ($model->demand($description) as $name) {
-                $position = array_search($name, array_column($descriptor->signature->parameters, 'name'), true);
-                $actual = $this->actual($call, $name, $position === false ? -1 : $position);
-                $value = $actual === null ? ($arguments[$name]->value ?? Term::parameter($name)) : $this->engine->value($caller, $actual, $depth);
-                $arguments[$name] = new BoundArgument($name, $value, supplied: $actual !== null);
-            }
-            $description = new CallDescription($target, $descriptor->signature, $context->configuration->target, arguments: new ArgumentBindings($arguments, true), dependencyVersions: $context->configuration->dependencyVersions, source: $call->source, declarations: $description->declarations);
+            $description = $this->demand($model, $descriptor, $description, $caller, $call, $depth);
         }
-        $decision = $model->describe($description);
+
+        try {
+            $decision = $model->describe($description);
+        } catch (Throwable $error) {
+            throw new \Deriver\Exception\ModelContractException($descriptor->id . ': ' . $error->getMessage(), previous: $error);
+        }
         if ($decision->kind === 'declined') {
             return null;
         }
@@ -68,7 +67,33 @@ final class Models
         }
         $source = new SourceRef($call->source->snapshotId, 'model:' . $descriptor->id . '@' . $descriptor->version, 0, 0);
         $declaration = $descriptor->useSourceSignature ? $context->index->program->callable($target) : null;
-        return new Graph((new PlanCompiler($source))->compile($descriptor, $decision->plan, $declaration));
+        return new Graph((new PlanCompiler($source))->compile($descriptor, $decision->plan, $declaration), new \Deriver\Result\Evidence\Node('model-application', Evidence\Provenance::inputs(array_map(static fn (BoundArgument $argument): Term => $argument->value, $description->arguments->arguments)), $call->source, ['id' => $descriptor->id, 'version' => $descriptor->version, 'operation' => $call->operation, 'name' => $target]));
+    }
+
+    /**
+     * Requests only parameters used to select a trusted model plan.
+     * @throws \Deriver\Exception\ModelContractException If the model violates its demand contract
+     */
+    public function demand(DemandModel $model, \Deriver\Model\ModelDescriptor $descriptor, CallDescription $description, Frame $caller, Instruction $call, int $depth): CallDescription
+    {
+        $context = $this->engine->context;
+        $arguments = $description->arguments->arguments;
+        try {
+            $demanded = $model->demand($description);
+        } catch (Throwable $error) {
+            throw new \Deriver\Exception\ModelContractException($descriptor->id . ': ' . $error->getMessage(), previous: $error);
+        }
+        $actuals = $demanded === [] ? [] : (new Invocation\Arguments($this->engine))->actuals($caller, $call, $depth);
+        foreach ($demanded as $name) {
+            $position = array_search($name, array_column($descriptor->signature->parameters, 'name'), true);
+            if ($position === false) {
+                throw new \Deriver\Exception\ModelContractException($descriptor->id . ': demand names an absent parameter ' . $name);
+            }
+            $actual = $actuals[$name] ?? $actuals[$position] ?? $actuals['*'] ?? null;
+            $value = $actual instanceof Binding ? $actual->value($this->engine, 'mixed', $depth) : ($actual ?? $descriptor->signature->parameters[$position]->default ?? Term::parameter($name));
+            $arguments[$name] = new BoundArgument($name, $value, supplied: $actual !== null);
+        }
+        return new CallDescription($description->symbol, $descriptor->signature, $context->configuration->target, arguments: new ArgumentBindings($arguments, true), dependencyVersions: $context->configuration->dependencyVersions, source: $call->source, declarations: $description->declarations);
     }
 
     /**

@@ -42,19 +42,22 @@ final class ExceptionLowering
         $g->regions[$region] = new ExceptionRegion($catches, $finally, $after);
         $g->emit($node, 'enter-try', attributes: ['region' => $region]);
         $depth = $g->handlerDepth++;
-        $this->scoped("region:$region:try", 'try', $depth, $node->stmts);
+        $protectedBlocks = $this->scoped("region:$region:try", 'try', $depth, $node->stmts);
         $g->end($g->terminators[$g->current] ?? new Terminator('leave-try'));
+        $catchBlocks = [];
         foreach ($node->catches as $index => $catch) {
             $g->current = $catches[$index]->block;
-            $this->scoped("region:$region:catch:$index", 'catch', $depth, $catch->stmts);
+            array_push($catchBlocks, ...$this->scoped("region:$region:catch:$index", 'catch', $depth, $catch->stmts));
             $g->end($g->terminators[$g->current] ?? new Terminator('leave-try'));
         }
+        $finallyBlocks = [];
         if ($node->finally !== null && $finally !== null) {
             $g->current = $finally;
-            $this->scoped("region:$region:finally", 'finally', $depth, $node->finally->stmts);
+            $finallyBlocks = $this->scoped("region:$region:finally", 'finally', $depth, $node->finally->stmts);
             $g->end($g->terminators[$g->current] ?? new Terminator('resume'));
         }
         $g->handlerDepth--;
+        $g->regions[$region] = new ExceptionRegion($catches, $finally, $after, $protectedBlocks, $catchBlocks, $finallyBlocks);
         $g->current = $after;
     }
 
@@ -64,12 +67,16 @@ final class ExceptionLowering
      * @param string $kind Exception region part
      * @param int $depth Handler depth outside the region
      * @param array<Stmt> $statements Body statements
+     * @return list<int> Blocks created within this exception scope
      */
-    public function scoped(string $key, string $kind, int $depth, array $statements): void
+    public function scoped(string $key, string $kind, int $depth, array $statements): array
     {
         $g = $this->lowering->graph;
+        $start = $g->current;
+        $before = count($g->instructions);
         $g->scopes[] = ['key' => $key, 'kind' => $kind, 'iterator' => '', 'depth' => $depth];
         $this->lowering->statements($statements);
         array_pop($g->scopes);
+        return [$start, ...array_slice(array_keys($g->instructions), $before)];
     }
 }

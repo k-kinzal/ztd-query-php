@@ -39,6 +39,7 @@ final class Term
         public readonly array $operands = [],
         public readonly array $attributes = [],
         public readonly bool $secret = false,
+        public readonly ?\Deriver\Result\Evidence\Node $evidence = null,
     ) {
     }
 
@@ -119,7 +120,9 @@ final class Term
      */
     public function isConcrete(): bool
     {
-        /** @var list<array{self, bool}> $pending */
+        /**
+         * @var list<array{self, bool}> $pending
+         */
         $pending = [[$this, false]];
         while ($pending !== []) {
             [$term, $ready] = array_pop($pending);
@@ -156,7 +159,9 @@ final class Term
             throw new InvalidInputException('A symbolic or partial term has no single concrete value.');
         }
         $values = new WeakMap();
-        /** @var list<array{self, bool}> $pending */
+        /**
+         * @var list<array{self, bool}> $pending
+         */
         $pending = [[$this, false]];
         while ($pending !== []) {
             [$term, $ready] = array_pop($pending);
@@ -187,7 +192,9 @@ final class Term
      */
     public function isSecret(): bool
     {
-        /** @var list<array{self, bool}> $pending */
+        /**
+         * @var list<array{self, bool}> $pending
+         */
         $pending = [[$this, false]];
         while ($pending !== []) {
             [$term, $ready] = array_pop($pending);

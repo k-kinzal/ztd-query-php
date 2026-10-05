@@ -33,7 +33,10 @@ final class StatementLowering
     {
         $l = $this->lowering;
         if ($node instanceof Stmt\Expression) {
-            $l->expression($node->expr);
+            $value = $l->expression($node->expr);
+            if ($node->expr instanceof \PhpParser\Node\Expr\Throw_) {
+                $l->graph->end(new Terminator('return', $value));
+            }
         } elseif ($node instanceof Stmt\Return_) {
             $value = $node->expr === null ? '' : ($l->returnsByReference ? $l->graph->emit($node, 'reference', [$l->location($node->expr)]) : $l->expression($node->expr));
             $l->graph->end(new Terminator('return', $value));

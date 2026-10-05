@@ -19,8 +19,8 @@ final class QueryExecutionTest extends TestCase
     public function testDeriveUsesTheCandidateContractByDefault(): void
     {
         $r = C::argument(C::session('function target(){observe(1);}'));
-        self::assertSame('candidates', $r->contract);
-        self::assertSame('not-assessed', $r->reachability);
+        self::assertSame(1, $r->count());
+        self::assertSame('analyzed', $r->candidates[0]->type);
     }
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded
@@ -32,7 +32,7 @@ final class QueryExecutionTest extends TestCase
         $scope = \Deriver\Query\QueryScope::fromEntrypoints([new \Deriver\Project\EntryPoint('target', [Term::constant(3)])]);
         $r = $s->derive(new \Deriver\Query\ValueQuery($site->argument(0), scope:$scope));
         self::assertSame([3], C::native($r));
-        self::assertNotEmpty(C::argument($s)->frontiers);
+        self::assertNotEmpty(C::frontiers(C::argument($s)));
     }
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded
@@ -51,6 +51,15 @@ final class QueryExecutionTest extends TestCase
         $s = C::session('function target(){observe(1,2);}');
         $site = $s->callsTo('observe')[0];
         $r = $s->derive(new \Deriver\Query\TupleQuery($site->beforeInvocation(), ['left' => $site->argument(0),'right' => $site->argument(1)]));
-        self::assertSame(['left','right'], array_keys($r->normalOutcomes[0]->values));
+        self::assertSame(['left','right'], array_keys($r->candidates[0]->term->operands));
     }
+    /**
+     * @throws JsonException If captured fixture metadata cannot be encoded
+     */
+    public function testReturnsRetainsConditionalImplementations(): void
+    {
+        $result = \Tests\Fake\CandidateApi::returns('if($flag){function target(){return 1;}}else{function target(){return 2;}}');
+        self::assertSame([1,2], array_column($result->candidates, 'result'));
+    }
+
 }

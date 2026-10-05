@@ -31,15 +31,18 @@ final class Calls
     /**
      * Expands a selected target after dispatch, applying replacement semantics first.
      */
-    public function expand(Frame $frame, Instruction $instruction, string $target, ?Term $callable, int $depth, ?Term $receiver = null): Term
+    public function expand(Frame $frame, Instruction $instruction, string $target, ?Term $callable, int $depth, ?Term $receiver = null, bool $variants = true): Term
     {
         $context = $this->engine->context;
         $reason = $context->boundary($depth);
         if ($reason !== null) {
-            return $context->reference($frame, 'call:' . $target, $instruction->source, reason: $reason, kind: 'deferred');
+            return (new Enumeration\Suspension())->expression($context, $frame, $instruction, $reason);
         }
         $context->referenceExpansions++;
         $body = (new Invocation\Bodies($this->engine))->select($frame, $instruction, $target, $depth - 1);
+        if ($variants && !$body->replacement && $context->index->program->variants($target) !== []) {
+            return (new Choices())->make(array_map(fn (string $variant): array => [$this->expand($frame, $instruction, $variant, $callable, $depth, $receiver, false), ['declaration:' . $target => $variant]], [$target, ...$context->index->program->variants($target)]));
+        }
         $graph = $body->implementation;
         if ($graph instanceof Term) {
             return $graph;
@@ -51,25 +54,47 @@ final class Calls
             }
         }
         if ($instruction->operation === 'new') {
-            $class = $context->index->className($context->index->literal($frame->graph, $instruction->operands[0]), $frame->graph->body->className);
+            $class = $context->index->className($context->index->literal($frame->graph, $instruction->operands[0]), $frame->graph->body->className, $frame->calledClass);
             return new Term('object', $frame->identity . ':' . $instruction->id, attributes: ['type' => $class, 'class' => $class, 'allocation' => $instruction->result, 'context' => $frame->identity]);
         }
-        if ($graph !== null && !(new \Deriver\Evaluation\Call\Member\Access($context->index->program))->allows($graph->body, $frame->graph->body->className)) {
+        return $this->invoke($frame, $instruction, $target, $callable, $depth, $receiver, $body);
+    }
+
+    /**
+     * Opens the selected implementation with its receiver and recursive bindings.
+     */
+    public function invoke(Frame $frame, Instruction $instruction, string $target, ?Term $callable, int $depth, ?Term $receiver, Invocation\Body $body): Term
+    {
+        $context = $this->engine->context;
+        $graph = $body->implementation;
+        if (!$graph instanceof Graph) {
+            return $graph ?? $this->missing($frame, $instruction, $target, $receiver, $depth);
+        }
+        if (!(new \Deriver\Evaluation\Call\Member\Access($context->index->program))->allows($graph->body, $frame->graph->body->className)) {
             return new Term('throwable', 'Error', attributes: ['source' => $instruction->source->path, 'start' => $instruction->source->start]);
         }
-        if ($graph === null || $graph->body->external) {
-            $arguments = array_map(fn ($argument): Term => $this->engine->value($frame, $argument->register, $depth - 1), $instruction->arguments);
-            return new Term('call', $target, $arguments, ['source' => $instruction->source->path, 'start' => $instruction->source->start, 'reason' => 'MISSING_SOURCE']);
+        if ($graph->body->external || $graph->body->abstract) {
+            return $this->missing($frame, $instruction, $target, $receiver, $depth);
         }
         if (($frame->calls[$instruction->id] ?? 0) >= $context->budget->recursion || ($frame->calls[$instruction->id] ?? 0) > 0 && $target === $frame->graph->body->symbol && $this->passThroughRecursion($frame, $instruction)) {
-            return $context->reference($frame, 'call:' . $target, $instruction->source, $graph->body->returnType, ($frame->calls[$instruction->id] ?? 0) >= $context->budget->recursion ? 'RECURSION_LIMIT' : 'CYCLE', 'recursive');
+            return (new Enumeration\Suspension())->expression($context, $frame, $instruction, ($frame->calls[$instruction->id] ?? 0) >= $context->budget->recursion ? 'RECURSION_LIMIT' : 'CYCLE');
         }
         $body->enter($context);
-        $bound = $this->bind($frame, $instruction, $graph, $receiver);
+        $bound = $this->bind($frame, $instruction, $graph, $receiver, $depth - 1);
         if ($callable?->kind === 'closure') {
             $bound = $this->captures($bound, $callable);
         }
-        return $this->engine->returns($bound, $depth - 1);
+        return Evidence\Provenance::wrap($this->engine->returns($bound, $depth - 1), 'call', $instruction->source, ['caller' => $frame->graph->body->symbol, 'callee' => $graph->body->symbol, 'call_site' => $instruction->source->id(), 'parent_context' => $frame->identity, 'context' => $bound->identity, 'called_class' => $bound->calledClass, 'lexical_class' => $graph->body->className, 'receiver' => $receiver === null ? '' : (new \Deriver\Value\Identity())->key($receiver), 'implementation' => $graph->body->source->id()]);
+    }
+
+    /**
+     * Retains demanded inputs when the selected implementation has no captured body.
+     */
+    public function missing(Frame $frame, Instruction $instruction, string $target, ?Term $receiver, int $depth): Term
+    {
+        $arguments = array_map(fn ($argument): Term => $this->engine->value($frame, $argument->register, $depth - 1), $instruction->arguments);
+        $arguments = $receiver === null ? $arguments : [$receiver, ...$arguments];
+        return (new Language\Expressions($this->engine))->enumCases($target) ?? new Term('call', $target, $arguments, ['source' => $instruction->source->path, 'start' => $instruction->source->start, 'reason' => 'MISSING_SOURCE']);
     }
 
     /**
@@ -77,7 +102,7 @@ final class Calls
      */
     public function signature(Frame $caller, Instruction $call, Graph $graph, int $depth): ?Term
     {
-        $bound = $this->bind($caller, $call, $graph);
+        $bound = $this->bind($caller, $call, $graph, depth: $depth);
         foreach ($graph->body->parameters as $parameter) {
             if (!isset($bound->bindings[$parameter->name]) && $parameter->default === null && !$parameter->variadic) {
                 return new Term('throwable', 'ArgumentCountError');
@@ -105,15 +130,17 @@ final class Calls
         }
         $position = $owner->graph->positions[(string) $closure->attributes['creation']];
         $bindings = $bound->bindings;
-        foreach ($bound->graph->body->captures as $name => $_) {
+        foreach ($bound->graph->body->captures as $name => $byReference) {
             foreach ($owner->graph->definitions as $definition) {
                 if ($definition->operation === 'local' && $definition->name === $name) {
-                    $bindings[$name] = new Binding($owner, $definition->result, position: $position);
+                    $observation = $byReference && $bound->origin?->frame->identity === $owner->identity ? $owner->graph->positions[$bound->origin->register] : $position;
+                    $captured = new Binding($owner, $definition->result, position: $observation);
+                    $bindings[$name] = $byReference && $bound->origin?->frame->identity !== $owner->identity ? new Term('capture-reference', $name, [$captured->value($this->engine, 'mixed', $this->engine->context->budget->maxDepth)], ['reason' => 'UNKNOWN_CAPTURE_HISTORY']) : $captured;
                     break;
                 }
             }
         }
-        return new Frame($bound->graph, $bound->identity, $bindings, $bound->properties, $bound->calls, true, origin: $bound->origin);
+        return new Frame($bound->graph, $bound->identity, $bindings, $bound->properties, $bound->calls, true, origin: $bound->origin, calledClass: $owner->calledClass);
     }
 
     /**
@@ -156,28 +183,21 @@ final class Calls
     /**
      * Maps actual arguments to lazy formal bindings.
      */
-    public function bind(Frame $caller, Instruction $call, Graph $graph, ?Term $receiver = null): Frame
+    public function bind(Frame $caller, Instruction $call, Graph $graph, ?Term $receiver = null, ?int $depth = null): Frame
     {
-        $bindings = [];
-        foreach ($graph->body->parameters as $position => $parameter) {
-            $actual = (new Models($this->engine))->actual($call, $parameter->name, $position);
-            if ($parameter->variadic) {
-                $registers = array_map(static fn ($argument): string => $argument->register, array_slice($call->arguments, $position));
-                $bindings[$parameter->name] = new Binding($caller, '', $registers);
-            } elseif ($actual !== null) {
-                $bindings[$parameter->name] = new Binding($caller, $actual);
-            }
-        }
-        if ($call->operation === 'invoke-method') {
+        $bindings = (new Invocation\Arguments($this->engine))->bind($caller, $call, $graph->body->parameters, $depth ?? $this->engine->context->budget->maxDepth);
+        if ($call->operation === 'invoke-method' || $receiver !== null) {
             $bindings['this'] = $receiver ?? new Binding($caller, $call->operands[0]);
         } elseif ($call->operation === 'new') {
-            $class = $this->engine->context->index->className($this->engine->context->index->literal($caller->graph, $call->operands[0]), $caller->graph->body->className);
+            $class = $this->engine->context->index->className($this->engine->context->index->literal($caller->graph, $call->operands[0]), $caller->graph->body->className, $caller->calledClass);
             $bindings['this'] = new Term('object', $caller->identity . ':' . $call->id, attributes: ['type' => $class, 'class' => $class, 'allocation' => $call->result, 'context' => $caller->identity]);
         }
         $calls = $caller->calls;
         $calls[$call->id] = ($calls[$call->id] ?? 0) + 1;
         $identity = 'call:' . hash('sha256', $caller->identity . ':' . $call->id . ':' . $graph->body->symbol . ':' . $graph->body->source->path . ':' . ($receiver === null ? '' : (new \Deriver\Value\Identity())->key($receiver)));
-        return new Frame($graph, $identity, $bindings, calls: $calls, invocation: true, origin: new Binding($caller, $call->result));
+        $raw = $this->engine->context->index->literal($caller->graph, $call->operands[0] ?? '');
+        $calledClass = (string) ($receiver?->attributes['type'] ?? (in_array(strtolower($raw), ['self', 'parent', 'static'], true) ? $caller->calledClass : $raw));
+        return new Frame($graph, $identity, $bindings, calls: $calls, invocation: true, origin: new Binding($caller, $call->result), calledClass: $calledClass);
     }
 
     /**
@@ -187,7 +207,7 @@ final class Calls
     {
         $actual = $this->passed($caller, $call, $address);
         if ($actual === null) {
-            return null;
+            return (new Memory\PropertyEffects())->effect($this->engine, $caller, $call, $address, $depth) ?? (new Memory\Globals())->effect($this->engine, $caller, $call, $address, $depth);
         }
         return (new Invocation\Dispatch($this->engine))->apply($caller, $call, $depth, fn (string $target, ?Term $receiver): Term => $this->selectedEffect($caller, $call, $address, $actual, $target, $receiver, $depth) ?? $this->engine->value($caller, $actual, $depth));
     }
@@ -271,6 +291,6 @@ final class Calls
             $value = (new Storage($this->engine))->search($frame, $address, $block, count($frame->graph->body->blocks[$block]->instructions), $depth);
             $values[] = [(new Guards($this->engine))->at($frame, $block, $value, $depth), []];
         }
-        return (new Choices())->make($values);
+        return Evidence\Provenance::model((new Choices())->make($values), $frame->graph->modelEvidence);
     }
 }

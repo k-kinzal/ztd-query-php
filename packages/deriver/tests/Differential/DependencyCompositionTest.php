@@ -31,8 +31,7 @@ final class DependencyCompositionTest extends TestCase
     {
         $expected = RuntimeOracle::evaluate('<?php '.$source)->native();
         $result = CandidateContractTest::session($source)->derive(new ReturnQuery('target', budget: new Budget(maxDepth: 256)));
-        self::assertSame([], $result->frontiers);
-        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertSame([], CandidateContractTest::frontiers($result));
         self::assertSame([$expected], CandidateContractTest::native($result, 'return'));
     }
 
@@ -45,8 +44,7 @@ final class DependencyCompositionTest extends TestCase
         $expected = RuntimeOracle::evaluate('<?php '.$source)->native();
         $origin = str_contains($source, 'function change()');
         $result = CandidateContractTest::session($source)->derive(new ReturnQuery($origin ? 'Box::get' : 'target'));
-        self::assertSame([], $result->frontiers);
-        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertSame([], CandidateContractTest::frontiers($result));
         $values = CandidateContractTest::native($result, 'return');
         if ($origin) {
             self::assertContains($expected, $values);

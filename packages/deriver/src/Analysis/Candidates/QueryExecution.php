@@ -21,7 +21,7 @@ use Deriver\Query\ReturnQuery;
 use Deriver\Query\StateQuery;
 use Deriver\Query\TupleQuery;
 use Deriver\Query\ValueQuery;
-use Deriver\Result\DerivationResult;
+use Deriver\Result\Candidates\CandidateCollection;
 use Deriver\Value\Term;
 use JsonException;
 
@@ -42,7 +42,7 @@ final class QueryExecution
      * Derives only the selected observation and its dependencies.
      * @throws JsonException If result metadata cannot be encoded
      */
-    public function derive(Query $query): DerivationResult
+    public function derive(Query $query): CandidateCollection
     {
         $start = microtime(true);
         $symbol = (new QueryValidation($this->index->program, $this->snapshot->id))->owner($query);
@@ -99,8 +99,13 @@ final class QueryExecution
     public function observe(Derivation $engine, Frame $frame, Query $query): Term
     {
         $depth = $query->budget()->maxDepth;
+        if ($query instanceof \Deriver\Query\ParameterQuery) {
+            $parameter = array_values(array_filter($frame->graph->body->parameters, static fn ($parameter): bool => $parameter->name === $query->parameter))[0];
+            $local = new \Deriver\ControlFlow\Instruction('parameter:' . $query->parameter, 'local', $parameter->source ?? $frame->graph->body->source, name: $query->parameter);
+            return $this->tuple(['value' => (new \Deriver\Evaluation\Candidate\Origins($engine))->parameter($frame, $local, $depth)], $engine);
+        }
         if ($query instanceof ReturnQuery) {
-            return $this->tuple(['return' => $engine->returns($frame, $depth)], $engine);
+            return $this->returns($engine, $frame, $depth);
         }
         if ($query instanceof ValueQuery) {
             $value = $engine->value($frame, $query->expression->register, $depth);
@@ -137,6 +142,21 @@ final class QueryExecution
             }
         }
         return $this->tuple(['value' => new Term('reference', 'observation', attributes: ['reason' => 'UNRESOLVED_OBSERVATION'])], $engine);
+    }
+
+    /**
+     * Combines conditional declarations using the same return expansion.
+     */
+    public function returns(Derivation $engine, Frame $frame, int $depth): Term
+    {
+        $values = [[$engine->returns($frame, $depth), []]];
+        foreach ($this->index->program->variants($frame->graph->body->symbol) as $variant) {
+            $graph = $this->index->graph($variant);
+            if ($graph !== null) {
+                $values[] = [$engine->returns(new Frame($graph, 'source:' . $variant, $frame->bindings, $frame->properties, $frame->calls, $frame->invocation, calledClass: $frame->calledClass), $depth), []];
+            }
+        }
+        return $this->tuple(['return' => (new Choices())->make($values)], $engine);
     }
 
     /**

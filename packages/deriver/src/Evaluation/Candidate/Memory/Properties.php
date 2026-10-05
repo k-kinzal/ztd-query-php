@@ -22,6 +22,14 @@ final class Properties
      */
     public function allocated(Derivation $engine, Term $receiver, PropertyDeclaration $property, int $depth): ?Term
     {
+        if (isset($receiver->attributes['copy_context'])) {
+            $owner = $engine->context->frames[(string) $receiver->attributes['copy_context']] ?? null;
+            $position = $owner?->graph->positions[(string) $receiver->attributes['copy_at']] ?? null;
+            if ($owner !== null && $position !== null) {
+                [$observation, $address] = (new PropertyEffects())->address($owner, $receiver->operands[0], $property->name);
+                return (new \Deriver\Evaluation\Candidate\Storage($engine))->search($observation, $address, $position[0], $position[1], $depth);
+            }
+        }
         $owner = $engine->context->frames[(string) ($receiver->attributes['context'] ?? '')] ?? null;
         $creation = $owner->graph->definitions[(string) ($receiver->attributes['allocation'] ?? '')] ?? null;
         if ($owner === null || $creation === null) {
@@ -34,19 +42,12 @@ final class Properties
         }
         $initial = (new PropertyOrigins($engine))->initial($property, $depth);
         if ($graph === null) {
-            return null;
+            return $initial;
         }
-        foreach ($graph->definitions as $write) {
-            $address = Mutations::root($graph, $write);
-            $declared = $address === null ? null : $engine->context->index->declaredProperty($graph, $address);
-            if (!Mutations::writes($write) || $declared?->className !== $property->className || $declared->name !== $property->name) {
-                continue;
-            }
-            $bound = (new Calls($engine))->bind($owner, $creation, $graph);
-            $frame = new Frame($bound->graph, $bound->identity . ':property:' . $property->name, $bound->bindings, [$property->name => $initial], $bound->calls, true, origin: $bound->origin);
-            $body->enter($engine->context);
-            return (new Calls($engine))->finalStorage($frame, $address->result, $depth);
-        }
-        return null;
+        $bound = (new Calls($engine))->bind($owner, $creation, $graph, $receiver, $depth);
+        $frame = new Frame($bound->graph, $bound->identity . ':property:' . $property->name, $bound->bindings, [$property->name => $initial], $bound->calls, true, origin: $bound->origin, calledClass: $bound->calledClass);
+        [$observation, $address] = (new PropertyEffects())->address($frame, $receiver, $property->name);
+        $body->enter($engine->context);
+        return (new Calls($engine))->finalStorage($observation, $address, $depth);
     }
 }

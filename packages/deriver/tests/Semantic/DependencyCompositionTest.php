@@ -32,7 +32,7 @@ final class DependencyCompositionTest extends TestCase
         $result = CandidateContractTest::argument($session);
         self::assertSame(['SELECT * FROM users'], CandidateContractTest::native($result));
         self::assertArrayNotHasKey('BaseRepo::table', $result->statistics->expandedBodies);
-        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 
     /**
@@ -44,8 +44,8 @@ final class DependencyCompositionTest extends TestCase
         $session = CandidateContractTest::session('class Repository{public $value='.$initial.';function change(){$this->value='.$initial.';'.$mutation.'}function get(){return $this->value;}}');
         $result = $session->derive(new ReturnQuery('Repository::get'));
         self::assertContains($expected, CandidateContractTest::native($result, 'return'));
-        self::assertSame([], $result->frontiers);
-        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertSame([], CandidateContractTest::frontiers($result));
+        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 
     /**
@@ -67,8 +67,8 @@ final class DependencyCompositionTest extends TestCase
         $session = CandidateContractTest::session('function countDown($n){if($n===0){return 0;}$n=$n-1;return 1+countDown($n);}function target(){observe(countDown(4));}');
         $result = CandidateContractTest::argument($session, new Budget(maxDepth: 256));
         self::assertSame([4], CandidateContractTest::native($result));
-        self::assertSame([], $result->frontiers);
-        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertSame([], CandidateContractTest::frontiers($result));
+        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 
     /**
@@ -84,7 +84,7 @@ final class DependencyCompositionTest extends TestCase
         $values = CandidateContractTest::native($result, 'return');
         self::assertNotContains($symbol === 'Box::__construct' ? 'source_only' : 'method_only', $values);
         self::assertContains('ledger', $values);
-        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
     }
 
     /**
@@ -107,7 +107,7 @@ final class DependencyCompositionTest extends TestCase
         $source = 'class Box{public $value="initial";function '.$method.'($mode){$this->value="source_only";}function get(){return $this->value;}}function target(){'.$call.';}';
         $session = CandidateContractTest::session($source, new Configuration(models: [new \Tests\Fake\PropertyDecisionModel($symbol)]));
         $result = $session->derive(new ReturnQuery('Box::get'));
-        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertSame([], array_filter($result->candidates, static fn ($candidate): bool => $candidate->type_name === 'never'));
         if ($mode === 'source') {
             self::assertContains('source_only', CandidateContractTest::native($result, 'return'));
             self::assertArrayHasKey($symbol, $result->statistics->expandedBodies);
@@ -115,9 +115,9 @@ final class DependencyCompositionTest extends TestCase
             self::assertArrayNotHasKey($symbol, $result->statistics->expandedBodies);
             if ($mode === 'replace') {
                 self::assertSame(['initial'], CandidateContractTest::native($result, 'return'));
-                self::assertSame([], $result->frontiers);
+                self::assertSame([], CandidateContractTest::frontiers($result));
             } else {
-                self::assertContains('UNSUPPORTED_MODEL_CASE', array_column($result->frontiers, 'code'));
+                self::assertContains('UNSUPPORTED_MODEL_CASE', array_column(CandidateContractTest::frontiers($result), 'code'));
             }
         }
     }
@@ -141,8 +141,8 @@ final class DependencyCompositionTest extends TestCase
     {
         $session = CandidateContractTest::session('function down($n){if($n===0){return 0;}$n-=1;return 1+down($n);}function target(){observe(down(4));}');
         $result = CandidateContractTest::argument($session, new Budget(recursion: 1, maxDepth: 256));
-        self::assertContains('RECURSION_LIMIT', array_column($result->frontiers, 'code'));
-        self::assertNotContains('CYCLE', array_column($result->frontiers, 'code'));
+        self::assertContains('RECURSION_LIMIT', array_column(CandidateContractTest::frontiers($result), 'code'));
+        self::assertNotContains('CYCLE', array_column(CandidateContractTest::frontiers($result), 'code'));
     }
 
     /**
@@ -155,7 +155,7 @@ final class DependencyCompositionTest extends TestCase
         $result = $session->derive(new ReturnQuery('Box::get'));
         self::assertSame(['initial'], CandidateContractTest::native($result, 'return'));
         self::assertSame([], $result->statistics->expandedBodies);
-        self::assertSame([], $result->frontiers);
+        self::assertSame([], CandidateContractTest::frontiers($result));
     }
 
 }

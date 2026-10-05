@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Deriver\Evaluation\Candidate;
 
-use Deriver\Value\Identity;
 use Deriver\Value\Term;
+use Generator;
 
 /**
  * Keeps branch and call-site correlations inside shared expression choices.
@@ -14,7 +14,7 @@ use Deriver\Value\Term;
 final class Choices
 {
     /**
-     * @param list<array{Term, array<string, bool>}> $alternatives
+     * @param list<array{Term, array<string, bool|string>}> $alternatives
      */
     public function make(array $alternatives): Term
     {
@@ -23,53 +23,32 @@ final class Choices
         }
         $items = [];
         foreach ($alternatives as [$value, $guard]) {
-            foreach ($this->alternatives($value) as [$child, $conditions]) {
-                $merged = $this->merge($guard, $conditions);
-                if ($merged !== null) {
-                    ksort($merged);
-                    $key = (new Identity())->key($child) . serialize($merged);
-                    $attributes = [];
-                    foreach ($merged as $condition => $truth) {
-                        $attributes['guard:' . $condition] = $truth;
-                    }
-                    $items[$key] = new Term('alternative', operands: [$child], attributes: $attributes);
-                }
+            $attributes = [];
+            foreach ($guard as $condition => $selection) {
+                $attributes['guard:' . $condition] = $selection;
             }
-        }
-        $items = array_values($items);
-        if (count($items) === 1 && $items[0]->attributes === []) {
-            return $items[0]->operands[0];
+            $items[] = new Term('alternative', operands: [$value], attributes: $attributes);
         }
         return new Term('choice', operands: $items);
     }
 
     /**
 
-     * @return list<array{Term, array<string, bool>}>
+     * @return Generator<int, array{Term, array<string, bool|string>}, void, void>
 
      */
-    public function alternatives(Term $value): array
+    public function alternatives(Term $value): Generator
     {
-        if ($value->kind !== 'choice') {
-            return [[$value, []]];
+        $cursor = new Enumeration\Cursor($value);
+        while (($next = $cursor->next()) !== null) {
+            yield $next;
         }
-        $alternatives = [];
-        foreach ($value->operands as $item) {
-            $guard = [];
-            foreach ($item->attributes as $key => $condition) {
-                if (str_starts_with($key, 'guard:') && is_bool($condition)) {
-                    $guard[substr($key, 6)] = $condition;
-                }
-            }
-            $alternatives[] = [$item->operands[0], $guard];
-        }
-        return $alternatives;
     }
 
     /**
-     * @param array<string, bool> $left
-     * @param array<string, bool> $right
-     * @return array<string, bool>|null
+     * @param array<string, bool|string> $left
+     * @param array<string, bool|string> $right
+     * @return array<string, bool|string>|null
      */
     public function merge(array $left, array $right): ?array
     {
@@ -104,6 +83,6 @@ final class Choices
             }
             $rows = $next;
         }
-        return $this->make(array_map(static fn (array $row): array => [$evaluate($row[0]), $row[1]], $rows));
+        return $this->make(array_map(static fn (array $row): array => [Evidence\Provenance::operation($evaluate($row[0]), $row[0], $operation), $row[1]], $rows));
     }
 }

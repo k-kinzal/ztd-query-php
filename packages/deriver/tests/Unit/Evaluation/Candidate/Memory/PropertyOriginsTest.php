@@ -37,8 +37,9 @@ final class PropertyOriginsTest extends TestCase
         self::assertNotNull($property);
         $origins = new PropertyOrigins($engine);
         $result = $origins->value($frame, F::instruction($frame, 'field-address'), $property, 64);
-        $values = array_map(static fn (array $choice) => $choice[0]->native(), (new Choices())->alternatives($result));
-        self::assertSame(['ledger', 'ledger_archive'], $values);
+        $values = array_map(static fn (array $choice) => $choice[0]->native(), iterator_to_array((new Choices())->alternatives($result), false));
+        self::assertSame(['ledger', 'ledger', 'ledger_archive'], $values);
+        self::assertCount(3, $values);
         self::assertCount(2, $origins->writes($frame, F::frame($engine, 'Box::archive')->graph, $property, 64));
     }
     /**

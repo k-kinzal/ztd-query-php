@@ -17,7 +17,7 @@ use JsonException;
  * Encodes every semantic query option, including scope and structural budgets.
  * @phpstan-import-type ScalarRecord from ValueGraph
  * @phpstan-type EntryRecord array{symbol: string, arguments: list<array{name: ScalarRecord, value: string}>, receiver: string|null, properties: list<array{name: string, value: string}>, captures: list<array{name: string, value: string}>, symbolicArguments: bool}
- * @phpstan-type QueryRecord array{kind: string, symbol?: string, expression?: \Deriver\Reference\ExpressionRef, point?: \Deriver\Reference\PointRef, variable?: string, projection?: \Deriver\Value\Projection, values?: object, scope: array{mode: string, entries: list<EntryRecord>}, budget: \Deriver\Query\Budget}
+ * @phpstan-type QueryRecord array{kind: string, symbol?: string, parameter?: string, expression?: \Deriver\Reference\ExpressionRef, point?: \Deriver\Reference\PointRef, variable?: string, projection?: \Deriver\Value\Projection, values?: object, scope: array{mode: string, entries: list<EntryRecord>}, budget: \Deriver\Query\Budget}
  * @visibility root
  */
 final class QueryEncoding
@@ -32,6 +32,7 @@ final class QueryEncoding
     public function record(Query $query, ValueGraph $graph): array
     {
         $record = match (true) {
+            $query instanceof \Deriver\Query\ParameterQuery => ['kind' => 'parameter', 'symbol' => $query->symbol, 'parameter' => $query->parameter],
             $query instanceof ReturnQuery => ['kind' => 'return', 'symbol' => $query->symbol],
             $query instanceof ValueQuery => ['kind' => 'value', 'expression' => $query->expression, 'projection' => $query->projection],
             $query instanceof StateQuery => ['kind' => 'state', 'point' => $query->point, 'variable' => $query->variable, 'projection' => $query->projection],

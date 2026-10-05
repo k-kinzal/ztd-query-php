@@ -12,14 +12,14 @@ use Deriver\Model\Binding\LocationRef;
  * @visibility public
  * @example Returning a bound input
  *     \Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::parameter('id'))->operation // => 'return'
- * @example Running a route handler registered with a framework that has no captured source
+ * @example Deriving a route handler argument with captured framework metadata
  *     $plan = new \Deriver\Model\Plan\SemanticPlan([\Deriver\Model\Plan\Action::callback('response', \Deriver\Model\Plan\Expression::parameter('callback')), \Deriver\Model\Plan\Action::returns(\Deriver\Model\Plan\Expression::receiver())]);
  *     $descriptor = new \Deriver\Model\ModelDescriptor('slim.get', '1', 'Slim\App::get', new \Deriver\Model\Signature\Signature([new \Deriver\Model\Signature\Parameter('pattern'), new \Deriver\Model\Signature\Parameter('callback')]));
  *     $route = new class ($descriptor, $plan) implements \Deriver\Model\CallModel { public function __construct(private \Deriver\Model\ModelDescriptor $descriptor, private \Deriver\Model\Plan\SemanticPlan $plan) {} public function descriptor(): \Deriver\Model\ModelDescriptor { return $this->descriptor; } public function describe(\Deriver\Model\CallDescription $call): \Deriver\Model\ModelDecision { return \Deriver\Model\ModelDecision::handled($this->plan); } };
  *     $source = '<?php function routes(Slim\App $app, string $table) { $app->get("/", function () use ($table) { query("SELECT * FROM $table"); }); } function query($sql) {}';
  *     $session = (new \Deriver\Analyzer())->open(new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('app.php', $source)]), new \Deriver\Project\Configuration(models: [$route]));
  *     $scope = \Deriver\Query\QueryScope::fromEntrypoints([new \Deriver\Project\EntryPoint('routes', [\Deriver\Value\Term::parameter('app', 'Slim\App'), \Deriver\Value\Term::constant('users')])]);
- *     $session->derive(new \Deriver\Query\ValueQuery($session->callsTo('query')[0]->argument(0), scope: $scope))->normalOutcomes[0]->values['value']->native() // => 'SELECT * FROM users'
+ *     $session->derive(new \Deriver\Query\ValueQuery($session->callsTo('query')[0]->argument(0), scope: $scope))->candidates[0]->result // => 'SELECT * FROM users'
  */
 final class Action
 {

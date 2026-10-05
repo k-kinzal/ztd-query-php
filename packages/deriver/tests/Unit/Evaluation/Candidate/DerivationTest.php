@@ -55,7 +55,7 @@ final class DerivationTest extends TestCase
         $e = CandidateFixture::evaluator('function target(){return true ? 3 : external();}');
         $f = CandidateFixture::frame($e);
         $v = $e->phi($f, CandidateFixture::instruction($f, 'phi'), 20);
-        self::assertSame(3, (new Choices())->alternatives($v)[0][0]->native());
+        self::assertSame(3, iterator_to_array((new Choices())->alternatives($v), false)[0][0]->native());
         self::assertSame(0, $e->context->bodyExpansions);
     }
     /**
@@ -104,4 +104,25 @@ final class DerivationTest extends TestCase
         self::assertSame('UNKNOWN_NAME', $v->literal);
         self::assertSame('MISSING_CONSTANT', $v->attributes['reason']);
     }
+    /**
+     * @throws JsonException If captured fixture metadata cannot be encoded
+     */
+    public function testExpressionUsesTheSameCallbackAndCastRules(): void
+    {
+        self::assertSame('v3', \Tests\Fake\CandidateApi::returns('function target(){return "v".call_user_func(fn($x)=>$x+1,2);}')->candidates[0]->result);
+    }
+
+    /**
+     * @throws JsonException If captured fixture metadata cannot be encoded
+     */
+    public function testBoundedKeepsTheSameEvidenceWhenReused(): void
+    {
+        $session = \Tests\Fake\CandidateApi::session('function target(){return external(1);}');
+        $query = new \Deriver\Query\ReturnQuery('target');
+        $first = $session->derive($query);
+        $session->release();
+        $second = $session->derive($query);
+        self::assertSame($first->toJson(), $second->toJson());
+    }
+
 }

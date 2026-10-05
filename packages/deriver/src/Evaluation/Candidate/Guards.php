@@ -31,17 +31,16 @@ final class Guards
             return $value;
         }
         $seen[$block] = true;
-        $parents = (new Recurrence\Definitions($this->engine))->parents($frame, $block);
-        if ($parents === []) {
-            return $value;
+        $frame->graph->controls ??= (new Control\Dependencies())->build($frame->graph, $this->engine->context);
+        if ($frame->graph->controls === null) {
+            return new Term('controlled-value', operands: [$value, $this->engine->context->reference($frame, 'control:' . $block, $frame->graph->body->source, reason: $this->engine->context->stopReason ?? 'BUDGET_EXCEEDED')], attributes: ['reason' => $this->engine->context->stopReason]);
         }
-        $alternatives = [];
-        foreach ($parents as $parent) {
-            $source = (new Recurrence\Definitions($this->engine))->predecessor($frame, $parent, $block);
-            $candidate = $this->edge($source, $parent, $block, $value, $depth);
-            $alternatives[] = [$this->at($source, $parent, $candidate, $depth, $seen), []];
+        foreach ($frame->graph->controls[$block] ?? [] as [$parent, $child]) {
+            $source = (new Recurrence\Definitions($this->engine))->predecessor($frame, $parent, $child);
+            $value = $this->edge($source, $parent, $child, $value, $depth);
+            $value = $this->at($source, $parent, $value, $depth, $seen);
         }
-        return (new Choices())->make($alternatives);
+        return $value;
     }
 
     /**
@@ -62,7 +61,9 @@ final class Guards
                 continue;
             }
             $guard[$frame->identity . ':condition:' . $end->operand] = $expected;
-            $alternatives[] = [$value, $guard];
+            $selected = Evidence\Provenance::operation($value, [$test], 'selection');
+            $selected = Evidence\Provenance::wrap($selected, 'choice', $frame->graph->definitions[$end->operand]->source ?? $frame->graph->body->source, ['selector' => $frame->identity . ':condition:' . $end->operand, 'branch' => $expected]);
+            $alternatives[] = [$selected, $guard];
         }
         return (new Choices())->make($alternatives);
     }

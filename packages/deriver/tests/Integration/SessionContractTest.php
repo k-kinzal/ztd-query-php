@@ -93,14 +93,10 @@ final class SessionContractTest extends TestCase
     /**
      * @throws JsonException If captured metadata cannot be encoded
      */
-    public function testUnrelatedSyntaxErrorsDoNotInvalidateKnownReturns(): void
+    public function testMalformedSourceIsAnInputError(): void
     {
-        $session = (new Analyzer())->open(new ProjectInput([new SourceFile('good.php', '<?php function target(){return 42;}'), new SourceFile('bad.php', '<?php function broken(')]));
-        $result = $session->derive(new ReturnQuery('target'));
-        self::assertSame(42, $result->normalOutcomes[0]->values['return']->native());
-        self::assertCount(1, $result->projectDiagnostics);
-        self::assertSame([], $result->frontiers);
-        self::assertSame('closed', $result->assessment->closure);
+        $this->expectException(InvalidInputException::class);
+        (new Analyzer())->open(new ProjectInput([new SourceFile('good.php', '<?php function target(){return 42;}'), new SourceFile('bad.php', '<?php function broken(')]));
     }
 
     /**
@@ -116,7 +112,7 @@ final class SessionContractTest extends TestCase
         $two = $second->derive(new ReturnQuery('target'));
         self::assertSame($first->snapshot()->id, $second->snapshot()->id);
         self::assertSame($one->reference->id, $two->reference->id);
-        self::assertEquals($one->normalOutcomes, $two->normalOutcomes);
+        self::assertEquals($one->candidates, $two->candidates);
     }
 
     /**

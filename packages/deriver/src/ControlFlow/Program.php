@@ -54,4 +54,14 @@ interface Program
      * @return list<string> Deterministic owners
      */
     public function callOwners(string $symbol): array;
+    /**
+     * @return list<string> Owners whose source may write the named property
+     */
+    public function propertyOwners(string $name): array;
+
+    /**
+     * Returns additional conditional implementations of a declaration.
+     * @return list<string> Stable declaration identities
+     */
+    public function variants(string $symbol): array;
 }

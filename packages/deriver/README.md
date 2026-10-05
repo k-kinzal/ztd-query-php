@@ -6,21 +6,18 @@
 [![Docs](https://img.shields.io/badge/docs-deriver-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/deriver/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-Deriver derives PHP value candidates and their dependencies from source code without executing application files or their autoloaders. Queries select return values, expressions, or storage observations. Deriver follows their definitions, callers, and property writes backwards, retaining branch conditions and unresolved inputs in the resulting expressions. Missing inputs and analysis limits leave partial candidates with the remaining dependencies identified.
+Deriver returns the candidate values of a selected PHP expression or definition without running application files or their autoloaders. It opens references backwards into their definitions and inputs, retaining alternatives as a shared dependency graph. Expansion stops when a candidate is concrete, a dependency cannot be opened, or a configured limit is reached. An unresolved dependency leaves a partial expression with its known operands intact.
 
 ## Requirements
 
-- PHP 8.1+ with the JSON and Tokenizer extensions
-- A 64-bit PHP runtime
-- Source targeting PHP 8.3 semantics; the host PHP version does not change the analysis target
-
-## Installation
+- PHP 8.1+ with JSON and Tokenizer, on a 64-bit runtime
+- Captured source targeting PHP 8.3 semantics; the host version does not select the target
 
 ```bash
 composer require k-kinzal/deriver
 ```
 
-## Usage
+## Deriving candidates
 
 ```php
 use Deriver\Analyzer;
@@ -28,163 +25,110 @@ use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\ReturnQuery;
 
-$session = (new Analyzer())->open(new ProjectInput([
-    new SourceFile('app.php', <<<'PHP'
+$input = new ProjectInput([new SourceFile('app.php', <<<'PHP'
 <?php
-function userKey(int $id): string
-{
-    return 'user:' . $id;
+function query($table) {
+    if ($table === null) {
+        $table = 'default_table';
+    }
+    return 'SELECT * FROM ' . $table;
 }
-PHP),
-]));
+PHP)]);
+$session = (new Analyzer())->open($input);
+$candidates = $session->derive(new ReturnQuery('query'));
 
-$result = $session->derive(new ReturnQuery('userKey'));
-$value = $result->normalOutcomes[0]->values['return'];
-
-// $value retains concatenation with the symbolic parameter id.
-echo $result->toJson();
+foreach ($candidates as $candidate) {
+    // type is 'analyzed' or 'partials'; type_name is the inferred PHP type.
+    // result is a native value when concrete, otherwise a Term.
+    // term provides a uniform value representation; evidence retains the derivation.
+    var_dump($candidate->type, $candidate->result);
+}
+echo $candidates->toJson();
 ```
 
-Parameters take their candidates from callers in the supplied source. A parameter with no known caller stays symbolic, as in this example. Supply an entrypoint to bind a specific input:
+This query retains both `SELECT * FROM default_table` and a concatenation with the unresolved formal parameter `table`. A formal parameter with no captured caller is unresolved, even when its declaration has a default. At an actual call that omits the argument, the default applies.
+
+Every candidate has its own nonempty `evidence` list. Equal values share one candidate record, while their different derivations remain separate evidence alternatives. Concrete values alone do not prove that a runtime execution reaches them: Deriver collects the origins in the captured source and supplied models.
+
+## Selecting a target
+
+- `ReturnQuery('name')` selects a function or method's return value.
+- `ParameterQuery('name', 'parameter')` selects a formal parameter.
+- `ValueQuery($reference)` selects an expression. Obtain the reference with `$session->expression($path, $start, $end)`, using exact, zero-based byte offsets with an exclusive end.
+- `callsTo('query')` returns call observations; `$site->argument(0)` selects an argument and `$site->beforeInvocation()` identifies its observation point.
+- `TupleQuery` selects related values at one observation point, preserving their common choices.
+- `StateQuery` selects storage at a specified point.
+
+```php
+use Deriver\Query\TupleQuery;
+
+$queries = [];
+foreach ($session->callsTo('query') as $site) {
+    $queries[] = new TupleQuery($site->beforeInvocation(), [
+        'table' => $site->argument(0),
+    ]);
+}
+$results = $session->deriveTogether($queries)->results;
+```
+
+`deriveMany()` and `deriveTogether()` return results in request order and share dependency evaluations. Separate queries do not imply correlation; use a tuple for that purpose. Malformed source and invalid target ranges raise `InvalidInputException`.
+
+To bind a specific input, supply an entrypoint:
 
 ```php
 use Deriver\Project\EntryPoint;
 use Deriver\Query\QueryScope;
 use Deriver\Value\Term;
 
-$query = new ReturnQuery('userKey', QueryScope::fromEntrypoints([
-    new EntryPoint('userKey', [Term::constant(42)]),
-]));
-$result = $session->derive($query);
-
-echo $result->normalOutcomes[0]->values['return']->native(); // user:42
+$candidates = $session->derive(new ReturnQuery('query', QueryScope::fromEntrypoints([
+    new EntryPoint('query', [Term::constant('users')]),
+])));
+echo $candidates->candidates[0]->result; // SELECT * FROM users
 ```
 
-Property candidates come from their declared initial values and corresponding storage mutations in the supplied source. These include compound assignments, increments, decrements, and element writes; a postfix increment contributes its updated stored value, even though the increment expression returns the previous value. Deriver collects these origins without requiring an execution history proving that each assignment ran:
+## Replacing functions and expressions
+
+Rules select an implementation before expanding its inputs. A constant replacement for `count` therefore does not derive the expression passed to it:
 
 ```php
-$session = (new Analyzer())->open(new ProjectInput([
-    new SourceFile('app.php', <<<'PHP'
-<?php
-final class UserRepository
-{
-    private string $order = 'name';
-
-    public function __construct(private PDO $pdo) {}
-
-    public function orderByEmail(): void
-    {
-        $this->order = 'email';
-    }
-
-    public function sql(): string
-    {
-        return 'SELECT id FROM users ORDER BY ' . $this->order;
-    }
-}
-PHP),
-]));
-
-$result = $session->derive(new ReturnQuery('UserRepository::sql'));
-
-foreach ($result->normalOutcomes as $outcome) {
-    echo $outcome->values['return']->native(), "\n"; // ... ORDER BY name, then ... ORDER BY email
-}
-```
-
-An entry with `properties: ['order' => Term::constant('name')]` supplies that property value explicitly. The default candidate set covers origins in the supplied source and models; it does not add arbitrary external object states. An actual dependency on unavailable source or external input remains a reference in the result.
-
-Use `symbolicArguments: true` on an `EntryPoint` to leave unspecified arguments open to source-origin lookup. Explicit positional or named arguments take precedence. A closure entry also accepts `captures: ['table' => Term::constant('users')]`; other captures are derived from the captured source where possible. Obtain its identity from `declarations()->symbols()` or a call observation's `callable`.
-
-Inspect the result's assessment, unresolved dependencies, and exceptional outcomes before treating a normal value as exhaustive. A symbolic value can be complete even when its input is unknown.
-
-Analysis is bounded by a `Budget`. `maxDepth` counts reference-to-origin steps independently along each dependency branch; zero retains the observed reference. `partitions` bounds eager candidate combinations, while `recursion` and `iterations` bound recursive and loop-carried dependencies. Reaching a limit retains known operands and the remaining references with their stopping reasons.
-
-`Budget` bounds logical work, not elapsed time. Set `resources: new \Deriver\Query\ResourceLimits(seconds: 2.0)` on `Configuration` for a cooperative time limit, independently of its logical budget. Source capture precedes the query limits and is controlled by `Configuration::$sourceLimits`; a parser, custom model, or individual value operation cannot be preempted. Use a separate process if your application requires a hard deadline.
-
-The result's `candidateGraph` retains the dependency expression, including choices beyond the enumeration limit. `normalOutcomes` contains the enumerated concrete or symbolic candidates, and `frontiers` identifies unresolved references and expansion boundaries. Candidates do not require a proof of reachability: results report `reachability = not-assessed` and coverage `source-candidates`.
-
-Within a session, queries share dependency evaluations with matching source, input context, and expansion bounds. `Configuration::$candidateCacheEntries` limits retained evaluations to 2,048 by default. Interrupted dependencies are not reused as completed answers.
-
-Use `deriveTogether()` to derive several observations with shared dependencies. It returns results in request order:
-
-```php
-use Deriver\Query\TupleQuery;
-
-$input = new ProjectInput([new SourceFile('queries.php', '<?php
-function report(PDO $pdo): void {
-    $pdo->query("SELECT id FROM users");
-    $pdo->query("SELECT id FROM orders");
-}')]);
-$session = (new Analyzer())->open($input);
-$queries = [];
-foreach ($session->callsTo('query') as $site) {
-    if ($site->callable === 'report' && $site->receiver !== null) {
-        $queries[] = new TupleQuery($site->beforeInvocation(), [
-            'receiver' => $site->receiver,
-            'sql' => $site->argument(0),
-        ]);
-    }
-}
-$results = $session->deriveTogether($queries)->results;
-```
-
-Each query has its own budget and statistics, as with `deriveMany()`. Results at different points are not mutually correlated; use a tuple for related values at one point.
-
-A session holds at most 32 small recent results strongly by default, configurable through `Configuration::$retainedResults`. Results with more than 4,096 visited graph entries or one MiB of string payloads are not retained in that working set. Query lookup and explanations use weak references: retain the `DerivationResult` while using `explain($result->reference)`. Call `release()` to clear session-owned evaluations and recent results; caller-owned results remain valid. Source snapshots and compiled graphs have the session's lifetime.
-
-A closed assessment can contain several candidates or symbolic inputs. Use `isConcrete()` before converting a value with `native()`. `definite()` returns the only normal outcome when every value is concrete and the result has no frontiers, exceptional outcomes or project diagnostics, and `null` otherwise. This describes the captured candidate set, not runtime reachability:
-
-```php
-$outcome = $result->definite();
-if ($outcome !== null) {
-    echo $outcome->values['return']->native(); // user:42
-}
-```
-
-Converting a float to a string depends on the `precision` directive of the runtime, so `'v' . 0.25` stays unresolved with a `FLOAT_STRING_CONFIGURATION` frontier. Pass the directive your application runs with to resolve these conversions. The value is part of the snapshot identity, and a call to `ini_set()` in the analyzed code remains an unresolved dependency:
-
-```php
+use Deriver\Model\Expansion\Rule;
 use Deriver\Project\Configuration;
-use Deriver\Project\TargetProfile;
 
-$input = new ProjectInput([new SourceFile('app.php', '<?php function label(float $rate): string { return "rate:" . $rate; }')]);
-$session = (new Analyzer())->open($input, new Configuration(new TargetProfile(floatPrecision: 14)));
+$configuration = new Configuration(expansionRules: [
+    Rule::constantFunction('count-one', '1', 'count', Term::constant(1)),
+]);
+$session = (new Analyzer())->open($input, $configuration);
 ```
 
-Unresolved variable references retain their name, scope, source position, type, and reason. A global read through `global $name` uses an `EXTERNAL_INPUT` reference when no value is supplied. Provide externally initialized values through `Configuration::$environment` under `global:<name>`:
+A `Rule` callback receives a `Request` and can demand only the operands it needs through `input($key)`. Return `null` to decline and continue normal expansion; return a residual `Term` to record an unsupported selected case. `constantExpression()` replaces a syntax operation such as `binary` with operator `+`. Rules can also select an exact source path and byte range. Priorities resolve competing matches; duplicate identities or selectors at equal priority are rejected. Change a rule's version when its semantics change: identity and version are part of the snapshot manifest and replay contract.
 
-```php
-$session = (new Analyzer())->open($input, new Configuration(environment: [
-    'global:table_prefix' => Term::constant('wp_'),
-]));
-```
+For signatures, reference effects, constructor initialization or model state, the existing `CallModel`/`DemandModel` plan API remains available. A selected plan replaces the source implementation for all its outputs. Model callbacks are trusted host code; their exceptions become `ModelContractException`.
 
-Static locals start from their declaration initializer for a fresh entry. They are not a union over every possible earlier invocation. To analyze a later invocation, provide an explicit `Configuration::$environment` value such as `'static:App\\counter:n' => Term::constant(4)`, using the callable's captured identity and variable name.
+## Bounds and partial results
 
-Request superglobals (`$_GET`, `$_POST`, `$_COOKIE`, `$_REQUEST`) remain external array references unless source assignments or supplied environment values resolve them.
+`Budget` controls reference depth, recursion, loop expansion, work, value nodes, evidence nodes and candidate enumeration. `maxCandidates` includes the final partial record retaining any unenumerated alternatives. Choices remain nested in the shared graph; independent branches do not require materializing their full Cartesian product. Reaching a limit preserves a residual with its stopping reason and the known expression structure.
 
-`callsTo()` lists call sites without running the application. A function or method name selects calls of that name, `Class::__construct` selects `new Class(...)` sites, which are reported with the `new` operation and the created class as the target, and `*` also includes dynamic function and method calls such as `$f()` with an empty `target`. Dynamic class creation and anonymous classes are not listed.
+Set `Configuration(resources: new ResourceLimits(seconds: 2.0))` for a cooperative time limit. Source capture is separately bounded by `sourceLimits`. Parsing, trusted callbacks and individual PHP operations cannot be preempted; use a separate process for a hard deadline. Resource-interrupted results are not cached as completed dependencies.
 
-Deriver evaluates operators without the diagnostics that newer host PHP versions add, such as the PHP 8.4 deprecation of raising zero to a negative power.
+Global inputs can be supplied through `Configuration::$environment`, for example `'global:table_prefix' => Term::constant('wp_')`. Static locals with no known invocation history remain partial; an explicit `'static:App\\counter:n'` environment value or a known call sequence supplies that history. Target constants and conversion settings come from `TargetProfile` and the environment, never implicitly from the analyzing process. Float-to-string conversion needs an explicit `TargetProfile(floatPrecision: 14)`.
 
-An active Xdebug lowers the host stack limit to its `xdebug.max_nesting_level`, so deep call chains are sealed earlier with a `STACK_LIMIT` frontier and results can be less precise; run analyses with `xdebug.mode=off` where possible.
+Within a session, matching dependency expansions share a bounded cache. `release()` clears session-owned results and evaluations. Caller-owned candidates and their evidence remain usable and serializable after release. `explain($result->reference)` requires retaining the result object. The declaration index and compiled graphs have the session's lifetime.
 
-`$session->declarations()` reads captured signatures and class metadata without autoloading. Captured signatures expose `static` for distinguishing static and instance methods, including composed trait methods. Function, method, class, property, and constant metadata carry the raw `docComment` text (an empty string when absent), so integrations can read annotations such as `@global wpdb $wpdb` themselves. Use `$session->comments($symbol)` for raw PHPDoc attached to statements and expressions within a callable or script, including `/** @var PDO $db */ global $db;`. Nested function, closure, and class declarations are excluded from the enclosing scope's comment list. Each `SourceComment` contains the raw text and the commented node's source range. Deriver never interprets PHPDoc, and doc comments do not change analysis results.
+## Evidence and revalidation
 
-Missing source for an ancestor leaves method dispatch open, including `$this`, `self`, and `static` calls; it does not establish that a method is absent. Supply the ancestor declaration or a call model when its behavior is needed. Source targeting PHP 8.4 features, including property hooks, remains outside the PHP 8.3 target.
+Normal JSON is an array of candidate records with exactly `type`, `type_name`, `result`, and `evidence`. Partial expressions and non-JSON-native PHP values use a lossless value graph. The [candidate schema](resources/schema/candidates-v2.json) documents the format. Secret values remain redacted unless `toJson(includeSecrets: true)` is requested explicitly.
 
-Array construction evaluates key and value expressions without retaining every intermediate array. Signed integer keys follow the PHP 8.3 append-index rules. Unknown entries retain their known neighbors.
+Each evidence alternative owns a derivation root, a context root, all referenced DAG nodes, and a snapshot manifest. Nodes describe definitions, argument binding, operations, choices, calls, models and expansion stops. Source locations retain the file hash, byte range and line/byte-column coordinates. `$candidates->forCaller('callerName')` projects the set by caller context without choosing one value.
 
-Partial formatting and array operations retain the structure they can establish. For example, an unknown middle part of `sprintf("SELECT * FROM $table WHERE id = %d", 5)` retains the `SELECT * FROM ` prefix. The unknown part may itself contain format directives, so the later `id = 5` text is not guaranteed. Known leading and trailing values around array unpacking can remain candidates alongside the unknown remainder; they do not make the whole array concrete.
+`Deriver\Analysis\Candidates\Replay::verify($json, $input, $configuration, $query)` rederives the candidate set from captured bytes and compares the complete export. It detects changed candidates, omitted derivations and changed source or model manifests. It is deterministic revalidation by this analyzer, not an independent proof of PHP semantics. Keep the source bytes, query, target profile and versioned rule implementations with an exported result.
 
-An applied call model replaces source-body derivation for return values, reference-argument effects, constructor property initialization, property origins, and model state. A constructor replaced by an empty plan leaves the declared property initializers intact. Reading those properties later does not re-enter the replaced constructor. Its plan requests only the inputs it uses; `DemandModel` declares any inputs additionally needed to select the plan. An explicit model decline permits source expansion; an unsupported model case remains a frontier.
+See [candidate dependency guarantees](docs/candidate-dependencies.md) for correlation, storage, partial expressions and the scope of verification.
 
-See [candidate dependency guarantees](docs/candidate-dependencies.md) for dispatch, mutation, recursion, replacement boundaries, and their verification.
+## Migration from execution-shaped results
 
-For questions about ordered execution and reachability, select `Configuration::forExecution()` explicitly. Candidate queries never switch to that contract automatically.
+`Analyzer::open()->derive()` now returns `CandidateCollection`. Iterate its candidates or read `candidates`; replace `normalOutcomes[*]->values['return']` with each candidate's `result` or `term`. Inspect each candidate's evidence instead of a global `frontiers` or `candidateGraph` field. Normal JSON no longer includes execution states, normal/exceptional outcomes or an assessment wrapper.
 
-Queries, models, and result types are described in the [API documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/deriver/).
+Applications intentionally using ordered execution analysis can construct `Deriver\Analysis\ExecutionSession($input, $configuration)` explicitly. That API retains `DerivationResult` and `ExecutionResultSet`; `Configuration::forExecution()` and the `analysisContract` option have been removed. The candidate engine never switches to execution analysis automatically.
 
 ## License
 

@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use Deriver\AnalysisSession;
-use Deriver\Analyzer;
+use Deriver\Analysis\ExecutionSession;
 use Deriver\Project\Configuration;
 use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
@@ -25,12 +24,12 @@ final class Analysis
      * Opens one immutable in-memory fixture.
      * @param string $source PHP source, including its opening tag
      * @param Configuration $configuration Explicit semantic assumptions
-     * @return AnalysisSession Open session
+     * @return ExecutionSession Open session
      * @throws JsonException If captured metadata cannot be encoded
      */
-    public static function session(string $source, Configuration $configuration = new Configuration()): AnalysisSession
+    public static function session(string $source, Configuration $configuration = new Configuration()): ExecutionSession
     {
-        return (new Analyzer())->open(new ProjectInput([new SourceFile('fixture.php', $source)]), $configuration->forExecution());
+        return new ExecutionSession(new ProjectInput([new SourceFile('fixture.php', $source)]), $configuration);
     }
 
     /**

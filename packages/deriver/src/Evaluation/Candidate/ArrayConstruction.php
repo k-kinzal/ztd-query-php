@@ -26,16 +26,11 @@ final class ArrayConstruction
      */
     public function value(Frame $frame, Instruction $instruction, int $depth): Term
     {
-        $writes = [];
-        $current = $instruction;
-        while (in_array($current->operation, ['array-set', 'array-unpack'], true)) {
-            $writes[] = $current;
-            $previous = $frame->graph->definitions[$current->operands[0]] ?? null;
-            if ($previous === null) {
-                break;
-            }
-            $current = $previous;
+        $writes = $this->chain($frame, $instruction);
+        if ($writes instanceof Term) {
+            return $writes;
         }
+        $current = array_pop($writes);
         $base = $this->engine->value($frame, $current->result, $depth);
         $entries = $base->kind === 'array' ? $base->operands : [];
         $next = $base->kind === 'array' ? (new \Deriver\Value\Arrays())->next($base) : 0;
@@ -43,6 +38,9 @@ final class ArrayConstruction
         $secret = $base->isSecret();
         $residual = $base->kind === 'array' ? null : $base;
         foreach (array_reverse($writes) as $write) {
+            if (($reason = $this->engine->context->work()) !== null) {
+                return new Term('array-continuation', operands: [$residual ?? Term::array($entries), $this->engine->context->reference($frame, $write->result, $write->source, reason: $reason)], attributes: ['type' => 'array', 'reason' => $reason]);
+            }
             $key = $write->operands[1] === '' ? new Term('append') : $this->engine->value($frame, $write->operands[1], $depth);
             $value = $this->engine->value($frame, $write->operands[2], $depth);
             $secret = $secret || $key->isSecret() || $value->isSecret();
@@ -56,7 +54,44 @@ final class ArrayConstruction
                 $this->append($entries, $next, $integer, $residual, $key, $value);
             }
         }
-        return $residual ?? new Term('array', operands: $entries, attributes: ['open' => false, 'next' => $next], secret: $secret);
+        return $residual ?? $this->choices(new Term('array', operands: $entries, attributes: ['open' => false, 'next' => $next], secret: $secret));
+    }
+
+    /**
+     * Opens only choosing entries, retaining shared fixed entries without repeated copying.
+     */
+    public function choices(Term $array): Term
+    {
+        $selected = array_filter($array->operands, static fn (Term $value): bool => $value->kind === 'choice');
+        if ($selected === []) {
+            return $array;
+        }
+        $keys = array_keys($selected);
+        $result = (new Choices())->apply('array', array_values($selected), static fn (array $values): Term => new Term('array', operands: array_replace($array->operands, array_combine($keys, $values)), attributes: $array->attributes, secret: $array->isSecret()), $this->engine->context->budget->partitions);
+        return $result->kind === 'operation' ? new Term('array', operands: $array->operands, attributes: [...$array->attributes, 'reason' => 'ENUMERATION_LIMIT'], secret: $array->isSecret()) : $result;
+    }
+
+    /**
+     * Collects the ordered aggregate spine once, leaving the base as its last item.
+     * @return non-empty-list<Instruction>|Term Construction spine or interrupted expression
+     */
+    public function chain(Frame $frame, Instruction $instruction): array|Term
+    {
+        $writes = [];
+        $current = $instruction;
+        while (in_array($current->operation, ['array-set', 'array-unpack'], true)) {
+            if (($reason = $this->engine->context->work()) !== null) {
+                return (new Enumeration\Suspension())->expression($this->engine->context, $frame, $instruction, $reason);
+            }
+            $writes[] = $current;
+            $previous = $frame->graph->definitions[$current->operands[0]] ?? null;
+            if ($previous === null) {
+                break;
+            }
+            $current = $previous;
+        }
+        $writes[] = $current;
+        return $writes;
     }
 
     /**

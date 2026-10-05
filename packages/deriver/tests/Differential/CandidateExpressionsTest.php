@@ -29,8 +29,7 @@ final class CandidateExpressionsTest extends TestCase
         $expected = RuntimeOracle::evaluate('<?php ' . $source)->native();
         $session = CandidateContractTest::session($source);
         $result = $session->derive(new ReturnQuery('target'));
-        self::assertSame([], $result->frontiers);
-        self::assertSame([], $result->exceptionalOutcomes);
+        self::assertSame([], CandidateContractTest::frontiers($result));
         self::assertSame([$expected], CandidateContractTest::native($result, 'return'));
     }
 

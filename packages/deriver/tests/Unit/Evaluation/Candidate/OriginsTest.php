@@ -50,4 +50,14 @@ final class OriginsTest extends TestCase
         self::assertSame('int', $v->attributes['type']);
         self::assertSame('EXTERNAL_INPUT', $v->attributes['reason']);
     }
+    /**
+     * @throws JsonException If captured fixture metadata cannot be encoded
+     */
+    public function testBindingEvidenceRetainsActualAndFormalRelation(): void
+    {
+        $result = \Tests\Fake\CandidateApi::returns('function target($x){return $x;}function caller(){return target(9);}');
+        self::assertSame(9, $result->forCaller('caller')->candidates[0]->result);
+        self::assertContains('argument-binding', array_column($result->candidates[0]->evidence[0]->nodes(), 'kind'));
+    }
+
 }
