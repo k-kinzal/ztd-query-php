@@ -50,7 +50,7 @@ final class ProvenanceTest extends TestCase
         $value = Subject::model(Term::constant(7), $model);
         self::assertNotNull($value->evidence);
         self::assertSame('one', $value->evidence->attributes['id']);
-        self::assertArrayHasKey('output',$value->evidence->inputs);
+        self::assertArrayHasKey('output', $value->evidence->inputs);
     }
 
 }
