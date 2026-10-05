@@ -9,9 +9,12 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\ImplicitColumn;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
@@ -58,5 +61,14 @@ final class TableTest extends TestCase
 
         self::assertTrue($table->complete);
         self::assertSame([], $table->implicit);
+    }
+
+    public function testKindIsABaseTableUnlessStated(): void
+    {
+        $profile = (new Semantics(Dialect::Sqlite))->profile();
+        $name = new QualifiedName(new Name('v'));
+
+        self::assertSame(RelationKind::BaseTable, (new Table($name, $profile, []))->kind);
+        self::assertSame(RelationKind::View, (new Table($name, $profile, [], [], true, RelationKind::View))->kind);
     }
 }

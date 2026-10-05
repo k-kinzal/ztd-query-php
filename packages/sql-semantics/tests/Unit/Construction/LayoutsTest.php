@@ -33,4 +33,11 @@ final class LayoutsTest extends TestCase
 
         (new Layouts())->of(new Node('as', 2, []));
     }
+
+    public function testOfKeepsTheGivenTrail(): void
+    {
+        $expression = (new SqliteParser())->parse('SELECT 1 /* c */, 2')->find('expr')[0];
+
+        self::assertSame(' /* c */', (new Layouts())->of($expression, ' /* c */')->trail);
+    }
 }

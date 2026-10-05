@@ -10,8 +10,10 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Shape\AbsentField;
 use SqlSemantics\Statement\Shape\AmbiguousFields;
+use SqlSemantics\Statement\Shape\DependentField;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\Fields;
 use SqlSemantics\Statement\Shape\OutputSlot;
@@ -97,5 +99,18 @@ final class FieldsTest extends TestCase
         $this->expectExceptionMessage('Each field holds its own output position.');
 
         new Fields([new Field(1, new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull))], Comparison::Sensitive);
+    }
+
+    public function testLookupIsDependentWhileAFieldNameDependsOnMissingInputs(): void
+    {
+        $missing = new SessionState('the client character set');
+        $known = new Field(0, new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull));
+        $unnamed = new Field(1, new OutputSlot(null, new Known(Storage::Text), Nullability::Nullable, null, null, [$missing]));
+
+        $lookup = (new Fields([$known, $unnamed], Comparison::AsciiInsensitive))->lookup('a');
+
+        self::assertInstanceOf(DependentField::class, $lookup);
+        self::assertSame([$known], $lookup->candidates);
+        self::assertSame([$missing], $lookup->missing);
     }
 }

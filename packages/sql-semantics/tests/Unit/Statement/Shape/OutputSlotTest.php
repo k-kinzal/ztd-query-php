@@ -12,6 +12,7 @@ use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -52,5 +53,21 @@ final class OutputSlotTest extends TestCase
         self::assertSame($t->columns[0], $slot->declaration());
         self::assertSame(Nullability::NotNull, $t->columns[0]->nullability);
         self::assertNotNull($slot->origin);
+    }
+
+    public function testUnnamedKeepsTheInputsAnUnknownNameDependsOn(): void
+    {
+        $missing = new SessionState('the client character set');
+
+        $slot = new OutputSlot(null, new Known(Storage::Text), Nullability::Nullable, null, null, [$missing]);
+
+        self::assertSame([$missing], $slot->unnamed);
+    }
+
+    public function testUnnamedRefusesInputsForAPositionThatHasAName(): void
+    {
+        $this->expectExceptionMessage('Only a position without a name depends on inputs for its name.');
+
+        new OutputSlot(new Name('a'), new Known(Storage::Text), Nullability::Nullable, null, null, [new SessionState('the client character set')]);
     }
 }

@@ -31,10 +31,10 @@ final class LeafKeysTest extends TestCase
     {
         $profile = (new Semantics(Dialect::Sqlite))->profile();
         $platform = Platforms::of('sqlite');
-        $tokens = $platform->parser($profile)->tokenize('SELECT 1 AS x');
+        $tokens = $platform->parser($profile)->tokenize('SELECT 1;');
 
-        self::assertNull($platform->leafKeys($profile)->key($tokens[2], 'as: AS nm', 0));
-        self::assertSame('name:x', $platform->leafKeys($profile)->key($tokens[3], 'nm: idj', 0));
+        self::assertNull($platform->leafKeys($profile)->key($tokens[2], 'ecmd: cmdx SEMI', 1));
+        self::assertSame('number:1', $platform->leafKeys($profile)->key($tokens[1], 'term: INTEGER', 0));
     }
 
     public function testSynonymousAcceptsTheSameTerminalInAnotherSpelling(): void

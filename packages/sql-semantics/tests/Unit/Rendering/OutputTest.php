@@ -170,4 +170,23 @@ final class OutputTest extends TestCase
 
         self::assertSame(['SELECT', '7'], array_map(static fn (Piece $piece): string => $piece->text, $output->canonical()));
     }
+
+    public function testLayoutWritesItsTrailBeforeTheNextPiece(): void
+    {
+        $output = new Output(new Codec());
+
+        $output->layout(new Layout([new Spelled('', '7')], ' /* c */'), new IntegerLiteral('7'))->symbol(',');
+
+        self::assertSame('7 /* c */,', (new Lexical())->join($output->pieces()));
+        self::assertSame('', $output->trailing());
+    }
+
+    public function testTrailingAnswersATrailNothingFollowed(): void
+    {
+        $output = new Output(new Codec());
+
+        $output->layout(new Layout([new Spelled('', '7')], ' -- c'), new IntegerLiteral('7'));
+
+        self::assertSame(' -- c', $output->trailing());
+    }
 }

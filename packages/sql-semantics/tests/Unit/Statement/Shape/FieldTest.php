@@ -44,7 +44,7 @@ final class FieldTest extends TestCase
 
         self::assertNull($field->column());
         self::assertNull($field->resolution);
-        self::assertNull($field->name);
+        self::assertSame('a + 1', $field->name?->value);
         self::assertNotNull($field->expression);
     }
 

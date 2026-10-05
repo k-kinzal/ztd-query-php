@@ -24,7 +24,7 @@ final class TokenCorrespondenceTest extends TestCase
 
         $keys = (new TokenCorrespondence())->keys($tree, $platform->productions($profile), $platform->leafKeys($profile));
 
-        self::assertSame(['SELECT:SELECT', 'name:A', 'COMMA:,', 'string:x', 'name:y', 'FROM:FROM', 'name:t'], $keys);
+        self::assertSame(['SELECT:SELECT', 'name:A', 'COMMA:,', 'string:x', 'AS:AS', 'name:y', 'FROM:FROM', 'name:t'], $keys);
     }
 
     public function testKeysIgnoreKeywordCaseWhitespaceAndQuoteStyle(): void

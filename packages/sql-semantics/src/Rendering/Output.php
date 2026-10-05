@@ -32,6 +32,8 @@ final class Output
 
     private bool $spelling = false;
 
+    private ?string $trail = null;
+
     /**
      * @var list<Piece>
      */
@@ -143,7 +145,8 @@ final class Output
      * Writes a node in the spelling of a layout, or regularly when there is none.
      *
      * The node renders its pieces as always; each piece then takes the
-     * spelling and the preceding trivia of the layout token at its position.
+     * spelling and the preceding trivia of the layout token at its position,
+     * and the next piece written takes the trailing trivia of the layout.
      * Inside a spelled region a nested layout has no effect, since the outer
      * layout spells every token of the region.
      *
@@ -166,11 +169,20 @@ final class Output
         $spelled = [];
         foreach (array_slice($this->pieces, $start) as $offset => $canonical) {
             $token = $layout->tokens[$offset];
-            $spelled[] = new Piece($canonical->kind, $token->text, $canonical->glued, $offset === 0 ? null : $token->gap);
+            $spelled[] = new Piece($canonical->kind, $token->text, $canonical->glued, $offset === 0 ? $canonical->gap : $token->gap);
         }
         $this->pieces = [...array_slice($this->pieces, 0, $start), ...$spelled];
+        $this->trail = $layout->trail === '' ? null : $layout->trail;
 
         return $this;
+    }
+
+    /**
+     * Answers the trivia a layout wrote after the last piece, when nothing followed it.
+     */
+    public function trailing(): string
+    {
+        return $this->trail ?? '';
     }
 
     /**
@@ -188,9 +200,10 @@ final class Output
      */
     public function add(PieceKind $kind, string $text): void
     {
-        $this->pieces[] = new Piece($kind, $text, $this->glue);
+        $this->pieces[] = new Piece($kind, $text, $this->glue, $this->trail);
         $this->canonical[] = new Piece($kind, $text, $this->glue);
         $this->glue = false;
+        $this->trail = null;
     }
 
     /**

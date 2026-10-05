@@ -19,9 +19,12 @@ final class Layouts
     /**
      * Answers the layout of the tokens a node covers: their spellings and the trivia between them.
      *
+     * @param Node $node The region
+     * @param string $trail The trivia written after the region: the leading trivia of the next token, or the trailing trivia at the end of the input
+     *
      * @throws \SqlSemantics\Diagnostic\InvariantViolation When the node covers no token
      */
-    public function of(Node $node): Layout
+    public function of(Node $node, string $trail = ''): Layout
     {
         $spelled = [];
         foreach ($node->tokens() as $token) {
@@ -31,6 +34,6 @@ final class Layouts
         }
         Check::invariant($spelled !== [], 'A spelled region covers at least one token.');
 
-        return new Layout($spelled);
+        return new Layout($spelled, $trail);
     }
 }

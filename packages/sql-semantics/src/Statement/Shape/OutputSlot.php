@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Statement\Shape;
 
+use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Reference\Missing\MissingInput;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\TypeFact;
@@ -28,11 +30,17 @@ final class OutputSlot
     use Snapshot;
 
     /**
+     * @var list<MissingInput> The inputs whose absence leaves the name of an unnamed position undecided
+     */
+    public readonly array $unnamed;
+
+    /**
      * @param Name|null $name The output name, or null when the position has none
      * @param TypeFact $type What is known about the type at this position
      * @param Nullability $nullability Whether the position can be NULL
      * @param Column|null $column The declared column when the position is that column itself
      * @param OutputSlot|null $origin The input slot this position re-exposes, for example through a join
+     * @param list<MissingInput> $unnamed The inputs whose absence leaves the name of an unnamed position undecided; empty when it has no name at all
      */
     public function __construct(
         public readonly ?Name $name,
@@ -40,7 +48,10 @@ final class OutputSlot
         public readonly Nullability $nullability,
         public readonly ?Column $column = null,
         public readonly ?OutputSlot $origin = null,
+        array $unnamed = [],
     ) {
+        $this->unnamed = Check::listOf($unnamed, MissingInput::class, 'An unnamed position names the inputs its name depends on.');
+        Check::input($this->unnamed === [] || $name === null, 'Only a position without a name depends on inputs for its name.');
     }
 
     /**

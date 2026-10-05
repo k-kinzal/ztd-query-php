@@ -27,4 +27,12 @@ final class LayoutTest extends TestCase
 
         new Layout([]);
     }
+
+    public function testTrailKeepsTheTriviaAfterTheLastTokenOutsideTheText(): void
+    {
+        $layout = new Layout([new Spelled('', '1')], ' /* c */ ');
+
+        self::assertSame(' /* c */ ', $layout->trail);
+        self::assertSame('1', $layout->text());
+    }
 }

@@ -76,14 +76,22 @@ final class Fields implements Countable, IteratorAggregate
 
     /**
      * Finds the fields a name denotes, distinguishing one, none and several.
+     *
+     * When a field's name depends on missing inputs, no lookup is decided: the
+     * known matches are candidates of a dependent lookup.
      */
-    public function lookup(string $name): UniqueField|AbsentField|AmbiguousFields
+    public function lookup(string $name): UniqueField|AbsentField|AmbiguousFields|DependentField
     {
         $matches = [];
+        $missing = [];
         foreach ($this->items as $field) {
             if ($field->name !== null && $this->names->equal($field->name->value, $name)) {
                 $matches[] = $field;
             }
+            array_push($missing, ...$field->slot->unnamed);
+        }
+        if ($missing !== []) {
+            return new DependentField($name, $matches, $missing);
         }
         if ($matches === []) {
             return new AbsentField($name);
