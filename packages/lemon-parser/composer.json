@@ -20,7 +20,7 @@
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^10.5",
+        "phpunit/phpunit": "^13.0",
         "squizlabs/php_codesniffer": "^4.0.4"
     },
     "repositories": [
