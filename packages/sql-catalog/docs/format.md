@@ -125,4 +125,21 @@ A statement with the same `id` and a different `site.line` is unchanged; only th
 
 Every page has a search box that finds statements by SQL, table, function or file. SQL is formatted with [sql-formatter](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-formatter) when a MySQL, PostgreSQL or SQLite grammar accepts it, and shown as written otherwise. In the HTML, a gap shows the PHP variable it comes from, such as `{$sql}`, when that is known.
 
+Reports bundle the unmodified CSS and JavaScript from [DocUI v1.2.1](https://github.com/k-kinzal/document-design/releases/tag/v1.2.1)
+as `assets/document-design-v1.2.1.css` and `assets/document-design-v1.2.1.js`.
+`assets/document-design-LICENSE.txt` records the release commit, fixed acquisition
+URLs, SHA-256 checksums and upstream MIT license. Generation and viewing use
+these local files; neither downloads a stylesheet, script or font.
+
+Keep the whole output directory when copying or archiving a report. New output
+uses v1.2.1; the package retains its v1.0.0 resources, and writing into an existing
+output directory leaves older versioned assets and other unreferenced files in
+place. Use a separate directory for each report to preserve its pages and search
+index as well as its design assets.
+
+Without JavaScript, the SQL, source, listings and navigation remain readable;
+search, filters, sorting and theme controls require JavaScript. Printing uses a
+light theme, wraps long SQL, expands disclosures and includes rows hidden by
+screen filters. The browser's print dialog chooses the paper size.
+
 The report embeds the source code around each database call and the full text of each analyzed file. Share it only where you would share the source.

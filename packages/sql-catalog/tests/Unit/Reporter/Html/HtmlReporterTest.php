@@ -119,8 +119,8 @@ final class HtmlReporterTest extends TestCase
         self::assertSame(
             [
                 'assets/document-design-LICENSE.txt',
-                'assets/document-design-v1.0.0.css',
-                'assets/document-design-v1.0.0.js',
+                'assets/document-design-v1.2.1.css',
+                'assets/document-design-v1.2.1.js',
                 'assets/report.js',
                 'assets/search-index.js',
                 'classes/app-r.html',

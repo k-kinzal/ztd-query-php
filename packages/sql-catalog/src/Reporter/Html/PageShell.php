@@ -23,7 +23,7 @@ final class PageShell
     /**
      * The release of document-design the pages are written for, and never a later one.
      */
-    public const DESIGN_VERSION = 'v1.0.0';
+    public const DESIGN_VERSION = 'v1.2.1';
 
     /**
      * The name the document-design stylesheet is written under.
