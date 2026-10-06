@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NativeSpatialCatalog — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.NativeSpatialCatalog.html">
+<meta name="description" content="The native spatial functions of MySQL, with the names 5.6 and 5.7 accept without the ST_ prefix.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="NativeSpatialCatalog — ZTD Query PHP">
+<meta property="og:description" content="The native spatial functions of MySQL, with the names 5.6 and 5.7 accept without the ST_ prefix.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.NativeSpatialCatalog.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}}catch(e){}</script>
+</head>
+<body data-root="../../../../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../../../../k-kinzal/sql-semantics-mysql/index.html">k-kinzal/sql-semantics-mysql</a></div><nav class="sidebar-section"><div class="sidebar-title">On this page</div><ul class="sidebar-list"><li><a href="#constants">Constants</a></li><li><a href="#test-cases">Test cases</a></li><li><a href="#relations">Relations</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li><a href="../../../../../../../k-kinzal/sql-semantics-mysql/all-items.html">All items</a></li><li><a href="../../../../../../../k-kinzal/sql-semantics-mysql/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title"><a href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/index.html">In SqlSemantics\Platform\MySql\Rules\Call</a></div><div class="sidebar-title">Classes</div><ul class="sidebar-list"><li><a class="k-class" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.AggregateResults.html">AggregateResults</a></li><li><a class="k-class" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.Arguments.html">Arguments</a></li><li><a class="k-class" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.NativeCatalog.html">NativeCatalog</a></li><li><a class="k-class" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.NativeFunctions.html">NativeFunctions</a></li><li><a class="k-class" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.NativeInternalCatalog.html">NativeInternalCatalog</a></li><li class="is-active"><a class="k-class" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.NativeSpatialCatalog.html">NativeSpatialCatalog</a></li><li><a class="k-class" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.ResultTyping.html">ResultTyping</a></li><li><a class="k-class" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.RoutineCalls.html">RoutineCalls</a></li><li><a class="k-class" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.TypeClasses.html">TypeClasses</a></li><li><a class="k-class" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.WindowResults.html">WindowResults</a></li><li><a class="k-class" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.Windows.html">Windows</a></li></ul><div class="sidebar-title">Enums</div><ul class="sidebar-list"><li><a class="k-enum" href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/enum.TypeClass.html">TypeClass</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../../../../k-kinzal/sql-semantics-mysql/index.html">k-kinzal/sql-semantics-mysql</a><span class="breadcrumb-sep">::</span><a href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/index.html">SqlSemantics\Platform\MySql\Rules\Call</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">NativeSpatialCatalog</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<div class="symbol-head"><h1><span class="chip chip-kind k-class">class</span>NativeSpatialCatalog</h1><div class="symbol-meta"><a class="source-link" href="../../../../../../../src/packages/sql-semantics-mysql/src/Rules/Call/NativeSpatialCatalog.php.html#L22">packages/sql-semantics-mysql/src/Rules/Call/NativeSpatialCatalog.php:22</a></div></div>
+<pre class="signature"><code><span class="t-key">final</span> <span class="t-key">class</span> <span class="signature-name">NativeSpatialCatalog</span></code></pre>
+<div class="notice tone-warn"><strong>Restricted visibility</strong>: declared "@visibility SqlSemantics\Platform\MySql". Code outside that scope must not name this declaration.</div>
+<p class="lede">The native spatial functions of MySQL, with the names 5.6 and 5.7 accept without the ST_ prefix.</p>
+<div class="prose"><p>Part of MYSQL-NATIVE-FUNCTIONS-001. Every spatial name of the <code>func_array</code> of <code>sql/item_create.cc</code> in each release. Each row of a name is a release mask (bit 0 for 5.6.51 to bit 8 for 9.1.0; bit 9 marks a function the server reserves for its own views), the minimum and maximum number of arguments (-1 for any number) and the result code of MYSQL-CALL-RESULT-001. A function whose result or argument count changed between releases has one row per range of releases. Source: https://github.com/mysql/mysql-server/blob/8.4/sql/item_create.cc, https://dev.mysql.com/doc/refman/8.4/en/built-in-function-reference.html. Status: Implemented.</p>
+</div>
+<section><h2 id="constants">Constants<a class="anchor" href="#constants">§</a></h2><div class="member" id="constant.ROWS"><div class="member-head"><pre class="member-sig"><code><span class="t-key">public</span> <span class="t-key">const</span> <span class="signature-name">ROWS</span> = <span class="t-lit">[&#039;AREA&#039; =&gt; [[3, 1, 1, &#039;DY&#039;]], &#039;ASBINARY&#039; =&gt; [[1, 1, 1, &#039;BY&#039;], [2, 1, 2, &#039;BY&#039;]],…</span></code></pre><div class="member-meta"><a class="source-link" href="../../../../../../../src/packages/sql-semantics-mysql/src/Rules/Call/NativeSpatialCatalog.php.html#L27">source</a><a class="anchor" href="#constant.ROWS">§</a></div></div><div class="member-body"><p class="lede">The rows by upper-case function name.</p>
+</div></div>
+</section>
+<section><h2 id="test-cases">Test cases <span class="count">1</span><a class="anchor" href="#test-cases">§</a></h2><p class="section-note">Test cases that cover or call this symbol, from the coverage report and from the analyzed test sources.</p><details class="usage-details test-cases" open><summary>Dedicated tests <span class="count">1</span></summary><ul class="usage-list"><li><a href="../../../../../../../src/packages/sql-semantics-mysql/tests/Unit/Rules/Call/NativeSpatialCatalogTest.php.html#L18" title="Tests\Unit\Rules\Call\NativeSpatialCatalogTest"><code>NativeSpatialCatalogTest::testRowsHoldAReleaseMaskArgumentCountsAndAResultCode</code></a> <span class="usage-kind">calls</span></li></ul>
+</details>
+</section>
+<section class="relations"><h2 id="relations">Relations<a class="anchor" href="#relations">§</a></h2>
+<details class="usage-details"><summary>Constant reads <span class="count">1</span></summary><ul class="usage-list"><li><span class="usage-kind">class-const</span> <a href="../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Rules/Call/class.NativeFunctions.html" title="SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions">SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions::rows()</a> <a class="usage-loc" href="../../../../../../../src/packages/sql-semantics-mysql/src/Rules/Call/NativeFunctions.php.html#L77">packages/sql-semantics-mysql/src/Rules/Call/NativeFunctions.php:77</a></li></ul></details>
+</section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../../../assets/app.js" defer></script>
+</body>
+</html>

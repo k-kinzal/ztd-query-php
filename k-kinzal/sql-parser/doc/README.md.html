@@ -37,16 +37,17 @@
 <main class="content" id="content">
 <div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>SQL Parser</h1><div class="symbol-meta"><span class="source-link">README.md</span></div></div>
 <section class="readme prose"><h2>SQL Parser</h2>
-<p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-parser/"><span class="md-target" title="https://img.shields.io/badge/docs-sql--parser-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
+<p><a href="https://packagist.org/packages/k-kinzal/sql-parser"><span class="md-target" title="https://img.shields.io/packagist/dt/k-kinzal/sql-parser.svg?label=Packagist">Packagist Downloads</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a> <a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-parser/"><span class="md-target" title="https://img.shields.io/badge/docs-sql--parser-0969da?logo=php&amp;logoColor=white">Docs</span></a> <a href="https://deepwiki.com/k-kinzal/ztd-query-php"><span class="md-target" title="https://deepwiki.com/badge.svg">Ask DeepWiki</span></a></p>
 <p>SQL Parser is a set of LALR(1) parsers for MySQL, PostgreSQL, and SQLite written in PHP. Each parser is generated from the official grammar of a server version (<code>sql_yacc.yy</code> for MySQL, <code>gram.y</code> for PostgreSQL, and <code>parse.y</code> for SQLite), and its lexer is a port of the server&#039;s own scanner, so text is tokenized and parsed the way the server does it. The syntax tree names the nonterminals of the upstream grammar, and parsing is lossless: a tree writes back the text it was parsed from, byte for byte, including comments and whitespace.</p>
 <h3>Requirements</h3>
-<ul><li>PHP 8.1+ with the zlib extension</li></ul>
+<ul><li>PHP 8.1+</li></ul>
+<p>No PHP extension is required. The shipped parse tables are stored uncompressed; see <a href="../../../k-kinzal/sql-parser/doc/docs/table-storage.md.html">Parse-table storage</a>.</p>
 <h3>Support Syntax</h3>
 <p>The following grammar versions are bundled. Pass the version tag to the parser; omitting it uses the default for that database.</p>
 <h4>MySQL</h4>
 <div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>5.6.51</td><td><code>mysql-5.6.51</code></td><td></td></tr><tr><td>5.7.44</td><td><code>mysql-5.7.44</code></td><td></td></tr><tr><td>8.0.44</td><td><code>mysql-8.0.44</code></td><td></td></tr><tr><td>8.1.0</td><td><code>mysql-8.1.0</code></td><td></td></tr><tr><td>8.2.0</td><td><code>mysql-8.2.0</code></td><td></td></tr><tr><td>8.3.0</td><td><code>mysql-8.3.0</code></td><td></td></tr><tr><td>8.4.7</td><td><code>mysql-8.4.7</code></td><td>Yes</td></tr><tr><td>9.0.1</td><td><code>mysql-9.0.1</code></td><td></td></tr><tr><td>9.1.0</td><td><code>mysql-9.1.0</code></td><td></td></tr></tbody></table></div>
 <h4>PostgreSQL</h4>
-<div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>17.2</td><td><code>pg-17.2</code></td><td>Yes</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>16.6</td><td><code>pg-16.6</code></td><td></td></tr><tr><td>17.2</td><td><code>pg-17.2</code></td><td>Yes</td></tr></tbody></table></div>
 <h4>SQLite</h4>
 <div class="table-wrap"><table><thead><tr><th>Version</th><th>Version tag</th><th>Default</th></tr></thead><tbody><tr><td>3.47.2</td><td><code>sqlite-3.47.2</code></td><td>Yes</td></tr></tbody></table></div>
 <h3>Installation</h3>
@@ -62,6 +63,18 @@
 <span class="tok-var">$tree</span>-&gt;<span class="tok-id">find</span>(<span class="tok-str">&#039;where_clause&#039;</span>)[<span class="tok-num">0</span>]-&gt;<span class="tok-id">text</span>(<span class="tok-var">$sql</span>);      <span class="tok-com">// &#039;WHERE u.id = ?&#039;</span>
 <span class="tok-var">$tree</span>-&gt;<span class="tok-id">find</span>(<span class="tok-str">&#039;table_reference&#039;</span>)[<span class="tok-num">0</span>]-&gt;<span class="tok-id">text</span>(<span class="tok-var">$sql</span>);   <span class="tok-com">// &#039;users u&#039;</span>
 <span class="tok-var">$tree</span>-&gt;<span class="tok-id">toString</span>();                               <span class="tok-com">// the statement again, byte for byte</span></code></pre>
+<p>A MySQL parser reads text under a <code>sql_mode</code>, since <code>ANSI_QUOTES</code>, <code>PIPES_AS_CONCAT</code>, <code>HIGH_NOT_PRECEDENCE</code>, <code>NO_BACKSLASH_ESCAPES</code> and <code>IGNORE_SPACE</code> change how text is tokenized. Pass the value a session reports:</p>
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlParser\MySql\MySqlParser</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlParser\MySql\SqlMode</span>;
+
+<span class="tok-var">$parser</span> = <span class="tok-kw">new</span> <span class="tok-id">MySqlParser</span>(<span class="tok-str">&#039;mysql-8.4.7&#039;</span>, <span class="tok-id">SqlMode</span>::<span class="tok-id">fromString</span>(<span class="tok-str">&#039;ANSI_QUOTES,NO_BACKSLASH_ESCAPES&#039;</span>));
+<span class="tok-var">$parser</span>-&gt;<span class="tok-id">tokenize</span>(<span class="tok-str">&#039;SELECT &quot;x&quot;&#039;</span>)[<span class="tok-num">1</span>]-&gt;<span class="tok-id">name</span>;        <span class="tok-com">// &#039;IDENT_QUOTED&#039;</span></code></pre>
+<p>A named placeholder such as <code>:id</code> is not in the languages of MySQL and PostgreSQL, which read only their own markers. Their parsers read <code>:name</code> as a parameter under <code>ParameterSyntax::Named</code>, as a dialect extension; SQLite reads it natively.</p>
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">SqlParser\Lexer\ParameterSyntax</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlParser\PostgreSql\PostgreSqlParser</span>;
+
+<span class="tok-var">$parser</span> = <span class="tok-kw">new</span> <span class="tok-id">PostgreSqlParser</span>(<span class="tok-id">parameters</span>: <span class="tok-id">ParameterSyntax</span>::<span class="tok-id">Named</span>);
+<span class="tok-var">$parser</span>-&gt;<span class="tok-id">parse</span>(<span class="tok-str">&#039;SELECT id FROM users WHERE id = :id&#039;</span>);</code></pre>
 <h3>License</h3>
 <p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
 </section>

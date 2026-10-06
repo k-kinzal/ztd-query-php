@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ResetTarget — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/interface.ResetTarget.html">
+<meta name="description" content="One item of the list of RESET: the replica, the binary logs or (5.x) the query cache.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="ResetTarget — ZTD Query PHP">
+<meta property="og:description" content="One item of the list of RESET: the replica, the binary logs or (5.x) the query cache.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/interface.ResetTarget.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}}catch(e){}</script>
+</head>
+<body data-root="../../../../../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../../../../../k-kinzal/sql-semantics-mysql/index.html">k-kinzal/sql-semantics-mysql</a></div><nav class="sidebar-section"><div class="sidebar-title">On this page</div><ul class="sidebar-list"><li><a href="#methods">Methods</a></li><li><a href="#test-cases">Test cases</a></li><li><a href="#relations">Relations</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li><a href="../../../../../../../../k-kinzal/sql-semantics-mysql/all-items.html">All items</a></li><li><a href="../../../../../../../../k-kinzal/sql-semantics-mysql/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title"><a href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/index.html">In SqlSemantics\Platform\MySql\Statement\Replication\Reset</a></div><div class="sidebar-title">Interfaces</div><ul class="sidebar-list"><li class="is-active"><a class="k-interface" href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/interface.ResetTarget.html">ResetTarget</a></li></ul><div class="sidebar-title">Classes</div><ul class="sidebar-list"><li><a class="k-class" href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/class.Reset.html">Reset</a></li><li><a class="k-class" href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/class.ResetBinaryLogs.html">ResetBinaryLogs</a></li><li><a class="k-class" href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/class.ResetPersist.html">ResetPersist</a></li><li><a class="k-class" href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/class.ResetQueryCache.html">ResetQueryCache</a></li><li><a class="k-class" href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/class.ResetReplica.html">ResetReplica</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../../../../../k-kinzal/sql-semantics-mysql/index.html">k-kinzal/sql-semantics-mysql</a><span class="breadcrumb-sep">::</span><a href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/index.html">SqlSemantics\Platform\MySql\Statement\Replication\Reset</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">ResetTarget</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<div class="symbol-head"><h1><span class="chip chip-kind k-interface">interface</span>ResetTarget</h1><div class="symbol-meta"><a class="source-link" href="../../../../../../../../src/packages/sql-semantics-mysql/src/Statement/Replication/Reset/ResetTarget.php.html#L16">packages/sql-semantics-mysql/src/Statement/Replication/Reset/ResetTarget.php:16</a></div></div>
+<pre class="signature"><code><span class="t-key">interface</span> <span class="signature-name">ResetTarget</span>
+    <span class="t-key">extends</span> <a class="t-name k-interface" href="../../../../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/interface.Node.html" title="SqlSemantics\Statement\Node">Node</a></code></pre>
+<p class="lede">One item of the list of RESET: the replica, the binary logs or (5.x) the query cache.</p>
+<div class="prose"><p>The RESET statement that holds an item derives it. Source: https://dev.mysql.com/doc/refman/8.4/en/reset.html.</p>
+</div>
+<section><h2 id="methods">Methods<a class="anchor" href="#methods">§</a></h2><div class="member" id="method.deriveTarget"><div class="member-head"><pre class="member-sig"><code><span class="t-key">public</span> <span class="t-key">function</span> <span class="signature-name">deriveTarget</span>(<a class="t-name k-class" href="../../../../../../../../k-kinzal/sql-semantics/SqlSemantics/Construction/class.Derivation.html" title="SqlSemantics\Construction\Derivation">Derivation</a> <span class="t-var">$derivation</span>): <span class="t-key">void</span></code></pre><div class="member-meta"><a class="source-link" href="../../../../../../../../src/packages/sql-semantics-mysql/src/Statement/Replication/Reset/ResetTarget.php.html#L21">source</a><a class="anchor" href="#method.deriveTarget">§</a></div></div><div class="member-body"><p class="lede">Checks the release and reports a value the server refuses.</p>
+<div class="member-block"><h4>Parameters</h4><div class="table-wrap"><table class="param-table"><tr><td><code class="t-var">$derivation</code></td><td><code><a class="t-name k-class" href="../../../../../../../../k-kinzal/sql-semantics/SqlSemantics/Construction/class.Derivation.html" title="SqlSemantics\Construction\Derivation">Derivation</a></code></td><td></td></tr></table></div></div>
+</div></div>
+</section>
+<section><h2 id="test-cases">Test cases <span class="count">1</span><a class="anchor" href="#test-cases">§</a></h2><p class="section-note">Test cases that cover or call this symbol, from the coverage report and from the analyzed test sources.</p><details class="usage-details test-cases" open><summary>Dedicated tests <span class="count">1</span></summary><ul class="usage-list"><li><a href="../../../../../../../../src/packages/sql-semantics-mysql/tests/Unit/Statement/Replication/Reset/ResetTargetTest.php.html#L21" title="Tests\Unit\Statement\Replication\Reset\ResetTargetTest"><code>ResetTargetTest::testDeriveTargetIsDeclaredByEveryItem</code></a> <span class="usage-kind">calls</span></li></ul>
+</details>
+</section>
+<section class="relations"><h2 id="relations">Relations<a class="anchor" href="#relations">§</a></h2>
+<details class="usage-details" open><summary>Implemented by <span class="count">3</span></summary><ul class="usage-list"><li><a class="k-class" href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/class.ResetBinaryLogs.html" title="SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs">ResetBinaryLogs</a> <a class="usage-loc" href="../../../../../../../../src/packages/sql-semantics-mysql/src/Statement/Replication/Reset/ResetBinaryLogs.php.html#L36">packages/sql-semantics-mysql/src/Statement/Replication/Reset/ResetBinaryLogs.php:36</a></li><li><a class="k-class" href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/class.ResetQueryCache.html" title="SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache">ResetQueryCache</a> <a class="usage-loc" href="../../../../../../../../src/packages/sql-semantics-mysql/src/Statement/Replication/Reset/ResetQueryCache.php.html#L23">packages/sql-semantics-mysql/src/Statement/Replication/Reset/ResetQueryCache.php:23</a></li><li><a class="k-class" href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/class.ResetReplica.html" title="SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica">ResetReplica</a> <a class="usage-loc" href="../../../../../../../../src/packages/sql-semantics-mysql/src/Statement/Replication/Reset/ResetReplica.php.html#L32">packages/sql-semantics-mysql/src/Statement/Replication/Reset/ResetReplica.php:32</a></li></ul></details>
+<details class="usage-details"><summary>Constant reads <span class="count">1</span></summary><ul class="usage-list"><li><span class="usage-kind">class-const</span> <a href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Statement/Replication/Reset/class.Reset.html" title="SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset">SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset::__construct()</a> <a class="usage-loc" href="../../../../../../../../src/packages/sql-semantics-mysql/src/Statement/Replication/Reset/Reset.php.html#L41">packages/sql-semantics-mysql/src/Statement/Replication/Reset/Reset.php:41</a></li></ul></details>
+<details class="usage-details"><summary>Type declarations <span class="count">1</span></summary><ul class="usage-list"><li><span class="usage-kind">type</span> <a href="../../../../../../../../k-kinzal/sql-semantics-mysql/SqlSemantics/Platform/MySql/Lowering/Replication/class.ResetRule.html" title="SqlSemantics\Platform\MySql\Lowering\Replication\ResetRule">SqlSemantics\Platform\MySql\Lowering\Replication\ResetRule</a> <a class="usage-loc" href="../../../../../../../../src/packages/sql-semantics-mysql/src/Lowering/Replication/ResetRule.php.html#L100">packages/sql-semantics-mysql/src/Lowering/Replication/ResetRule.php:100</a></li></ul></details>
+</section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../../../../assets/app.js" defer></script>
+</body>
+</html>

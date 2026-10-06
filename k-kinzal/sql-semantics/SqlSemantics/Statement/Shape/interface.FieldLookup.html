@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FieldLookup — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/interface.FieldLookup.html">
+<meta name="description" content="The result of looking an output field up by name: unique, absent, ambiguous, or dependent on missing declarations.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="FieldLookup — ZTD Query PHP">
+<meta property="og:description" content="The result of looking an output field up by name: unique, absent, ambiguous, or dependent on missing declarations.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/interface.FieldLookup.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}}catch(e){}</script>
+</head>
+<body data-root="../../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></div><nav class="sidebar-section"><div class="sidebar-title">On this page</div><ul class="sidebar-list"><li><a href="#test-cases">Test cases</a></li><li><a href="#relations">Relations</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li><a href="../../../../../k-kinzal/sql-semantics/all-items.html">All items</a></li><li><a href="../../../../../k-kinzal/sql-semantics/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title"><a href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/index.html">In SqlSemantics\Statement\Shape</a></div><div class="sidebar-title">Interfaces</div><ul class="sidebar-list"><li class="is-active"><a class="k-interface" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/interface.FieldLookup.html">FieldLookup</a></li></ul><div class="sidebar-title">Classes</div><ul class="sidebar-list"><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.AbsentField.html">AbsentField</a></li><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.AmbiguousFields.html">AmbiguousFields</a></li><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.DependentField.html">DependentField</a></li><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.Field.html">Field</a></li><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.Fields.html">Fields</a></li><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.OpenStar.html">OpenStar</a></li><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.OutputSlot.html">OutputSlot</a></li><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.RowShape.html">RowShape</a></li><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.UniqueField.html">UniqueField</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a><span class="breadcrumb-sep">::</span><a href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/index.html">SqlSemantics\Statement\Shape</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">FieldLookup</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<div class="symbol-head"><h1><span class="chip chip-kind k-interface">interface</span>FieldLookup</h1><div class="symbol-meta"><a class="source-link" href="../../../../../src/packages/sql-semantics/src/Statement/Shape/FieldLookup.php.html#L15">packages/sql-semantics/src/Statement/Shape/FieldLookup.php:15</a></div></div>
+<pre class="signature"><code><span class="t-key">interface</span> <span class="signature-name">FieldLookup</span></code></pre>
+<div class="notice tone-ok"><strong>Public API</strong>: explicitly declared with <code>@visibility public</code>.</div>
+<p class="lede">The result of looking an output field up by name: unique, absent, ambiguous, or dependent on missing declarations.</p>
+<figure class="example code-block"><figcaption class="code-head"><span class="example-title">Looking up a name no field has</span><span class="chip chip-sm chip-doctest" title="Runs as the doctest FieldLookup example #1: Looking up a name no field has">doctest</span><button class="btn copy-btn" type="button" data-copy="vendor/bin/phpunit --filter &#039;/FieldLookup example \#1\: Looking up a name no field has/&#039;" title="Copy the command that runs this example on its own">run</button><button class="btn copy-btn" type="button" title="Copy example">copy</button></figcaption><pre class="code doctest"><code><span class="tok-var">$operation</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Facade\Semantics</span>(<span class="tok-id">\SqlSemantics\Platform\Sqlite\Dialect</span>::<span class="tok-id">Sqlite</span>))-&gt;<span class="tok-id">analyze</span>(<span class="tok-str">&#039;SELECT 1 AS a&#039;</span>);
+    <span class="tok-var">$operation</span>-&gt;<span class="tok-id">lookupField</span>(<span class="tok-str">&#039;b&#039;</span>) <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Statement\Shape\AbsentField</span> <span class="doct doct-return">// =&gt; true</span></code></pre></figure>
+<section><h2 id="test-cases">Test cases <span class="count">1</span><a class="anchor" href="#test-cases">§</a></h2><p class="section-note">Test cases that cover or call this symbol, from the coverage report and from the analyzed test sources.</p><details class="usage-details test-cases" open><summary>Dedicated tests <span class="count">1</span></summary><ul class="usage-list"><li><a href="../../../../../src/packages/sql-semantics/tests/Unit/Statement/Shape/FieldLookupTest.php.html#L18" title="Tests\Unit\Statement\Shape\FieldLookupTest"><code>FieldLookupTest</code></a> <span class="usage-kind">calls</span></li></ul>
+</details>
+</section>
+<section class="relations"><h2 id="relations">Relations<a class="anchor" href="#relations">§</a></h2>
+<details class="usage-details" open><summary>Implemented by <span class="count">4</span></summary><ul class="usage-list"><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.AbsentField.html" title="SqlSemantics\Statement\Shape\AbsentField">AbsentField</a> <a class="usage-loc" href="../../../../../src/packages/sql-semantics/src/Statement/Shape/AbsentField.php.html#L17">packages/sql-semantics/src/Statement/Shape/AbsentField.php:17</a></li><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.AmbiguousFields.html" title="SqlSemantics\Statement\Shape\AmbiguousFields">AmbiguousFields</a> <a class="usage-loc" href="../../../../../src/packages/sql-semantics/src/Statement/Shape/AmbiguousFields.php.html#L18">packages/sql-semantics/src/Statement/Shape/AmbiguousFields.php:18</a></li><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.DependentField.html" title="SqlSemantics\Statement\Shape\DependentField">DependentField</a> <a class="usage-loc" href="../../../../../src/packages/sql-semantics/src/Statement/Shape/DependentField.php.html#L22">packages/sql-semantics/src/Statement/Shape/DependentField.php:22</a></li><li><a class="k-class" href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Shape/class.UniqueField.html" title="SqlSemantics\Statement\Shape\UniqueField">UniqueField</a> <a class="usage-loc" href="../../../../../src/packages/sql-semantics/src/Statement/Shape/UniqueField.php.html#L17">packages/sql-semantics/src/Statement/Shape/UniqueField.php:17</a></li></ul></details>
+<details class="usage-details"><summary>Type declarations <span class="count">2</span></summary><ul class="usage-list"><li><span class="usage-kind">type</span> <a href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/Fact/class.QueryFact.html" title="SqlSemantics\Statement\Fact\QueryFact">SqlSemantics\Statement\Fact\QueryFact</a> <a class="usage-loc" href="../../../../../src/packages/sql-semantics/src/Statement/Fact/QueryFact.php.html#L89">packages/sql-semantics/src/Statement/Fact/QueryFact.php:89</a></li><li><span class="usage-kind">type</span> <a href="../../../../../k-kinzal/sql-semantics/SqlSemantics/Statement/class.Operation.html" title="SqlSemantics\Statement\Operation">SqlSemantics\Statement\Operation</a> <a class="usage-loc" href="../../../../../src/packages/sql-semantics/src/Statement/Operation.php.html#L139">packages/sql-semantics/src/Statement/Operation.php:139</a></li></ul></details>
+</section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../assets/app.js" defer></script>
+</body>
+</html>
