@@ -4,63 +4,46 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql\Schema;
 
-use PhpMyAdmin\SqlParser\Components\CreateDefinition;
-use PhpMyAdmin\SqlParser\Components\DataType;
-use PhpMyAdmin\SqlParser\Components\OptionsArray;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as WrittenColumn;
+use SqlSemantics\Statement\Declaration\Column;
+use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * Reads a column declaration into a schema value.
+ * Reads a column definition into a schema column.
+ *
+ * The statement supplies the written type, attributes and default; the
+ * analysis supplies whether the column admits NULL and whether it is generated.
  *
  * @visibility root
  */
 final class ColumnParser
 {
     /**
+     * Returns the schema column for a written column and its declaration.
+     *
      * @param list<string> $primaryKeyColumns
      */
-    public function parseColumnDefinition(
-        CreateDefinition $field,
-        string $columnName,
-        array $primaryKeyColumns,
-    ): ?ColumnDefinition {
-        $type = $field->type;
-        if (!$type instanceof DataType || $type->name === null) {
-            return null;
-        }
-
-        $typeName = strtoupper($type->name);
-        $options = $field->options;
-
-        $nullable = !($options instanceof OptionsArray && ($options->has('NOT NULL') !== false || $options->has('PRIMARY KEY') !== false))
-            && !in_array($columnName, $primaryKeyColumns, true);
-        $unsigned = ($options instanceof OptionsArray && $options->has('UNSIGNED') !== false)
-            || $type->options->has('UNSIGNED') !== false;
-        $autoIncrement = $options instanceof OptionsArray && $options->has('AUTO_INCREMENT') !== false;
-        $generated = $options instanceof OptionsArray && ($options->has('GENERATED') !== false || $options->has('AS') !== false);
-
-        $shape = (new TypeParameters())->parse($type);
-        $parameters = $type->parameters;
-
-        $default = (new DefaultExpression())->extractDefault($options);
-
-        $enumValues = null;
-        if ($typeName === 'ENUM' || $typeName === 'SET') {
-            $enumValues = (new TypeParameters())->extractEnumValues($parameters);
-        }
+    public function parse(WrittenColumn $written, Column $declared, array $primaryKeyColumns): ColumnDefinition
+    {
+        $name = $written->name->column->value;
+        $type = $written->specification->dataType();
+        $shape = (new TypeParameters())->shape($type);
+        $attributes = (new ColumnAttributes())->read($written->specification->columnAttributes());
+        $autoIncrement = $attributes->autoIncrement || $shape->autoIncrement;
 
         return new ColumnDefinition(
-            name: $columnName,
-            type: $typeName,
+            name: $name,
+            type: $shape->type,
             length: $shape->length,
             precision: $shape->precision,
             scale: $shape->scale,
-            nullable: $nullable,
-            unsigned: $unsigned,
-            default: $default,
+            nullable: $declared->nullability !== Nullability::NotNull && !$autoIncrement && !in_array($name, $primaryKeyColumns, true),
+            unsigned: (new TypeParameters())->unsigned($type),
+            default: $attributes->default === null ? null : (new DefaultExpression())->evaluate($attributes->default, (new TypeParameters())->numeric($type)),
             autoIncrement: $autoIncrement,
-            generated: $generated,
-            enumValues: $enumValues,
+            generated: $declared->generated,
+            enumValues: (new TypeParameters())->members($type),
         );
     }
 }

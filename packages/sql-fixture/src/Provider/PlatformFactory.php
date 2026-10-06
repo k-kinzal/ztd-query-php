@@ -59,12 +59,12 @@ final class PlatformFactory
      */
     public static function createSchemaParser(string $driver, ?string $version = null): SchemaParserInterface
     {
-        self::resolveVersion($driver, $version);
+        $tag = self::resolveVersion($driver, $version)->tag;
 
         return match ($driver) {
-            self::DRIVER_MYSQL => new MySqlSchemaParser(),
-            self::DRIVER_SQLITE => new SqliteSchemaParser(),
-            self::DRIVER_PGSQL => new PostgreSqlSchemaParser(),
+            self::DRIVER_MYSQL => new MySqlSchemaParser($tag),
+            self::DRIVER_SQLITE => new SqliteSchemaParser($tag),
+            self::DRIVER_PGSQL => new PostgreSqlSchemaParser($tag),
             default => throw new UnsupportedDriverException($driver),
         };
     }
@@ -94,12 +94,12 @@ final class PlatformFactory
      */
     public static function createSchemaFetcher(string $driver, ?string $version = null): SchemaFetcherInterface
     {
-        self::resolveVersion($driver, $version);
+        $tag = self::resolveVersion($driver, $version)->tag;
 
         return match ($driver) {
-            self::DRIVER_MYSQL => new MySqlSchemaFetcher(),
-            self::DRIVER_SQLITE => new SqliteSchemaFetcher(),
-            self::DRIVER_PGSQL => new PostgreSqlSchemaFetcher(),
+            self::DRIVER_MYSQL => new MySqlSchemaFetcher(version: $tag),
+            self::DRIVER_SQLITE => new SqliteSchemaFetcher(new SqliteSchemaParser($tag)),
+            self::DRIVER_PGSQL => new PostgreSqlSchemaFetcher($tag),
             default => throw new UnsupportedDriverException($driver),
         };
     }

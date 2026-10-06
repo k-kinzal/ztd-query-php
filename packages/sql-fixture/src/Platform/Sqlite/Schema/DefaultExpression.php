@@ -4,44 +4,57 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\Sqlite\Schema;
 
+use SqlFixture\Analysis\NumericLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\BlobLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\RealLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\TextLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
+use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
+
 /**
- * Interprets a SQL default expression.
+ * Evaluates a DEFAULT clause into the PHP value it stores.
+ *
+ * A literal and a word have a value, and a bare TRUE or FALSE is a boolean;
+ * a quoted word keeps its text. An expression in parentheses and
+ * CURRENT_TIMESTAMP and its siblings are computed when a row is inserted and
+ * have none.
  *
  * @visibility root
  */
 final class DefaultExpression
 {
     /**
-     * Interprets a DEFAULT clause while preserving SQL expressions.
+     * Returns the value of a default literal or word.
      */
-    public function extractDefault(string $rest): int|float|bool|string|null
+    public function evaluate(DefaultLiteral|DefaultWord $default): int|float|bool|string|null
     {
-        if (preg_match('/\bDEFAULT\s+(.+?)(?:\s+(?:NOT\s+NULL|NULL|PRIMARY|UNIQUE|CHECK|REFERENCES|COLLATE|GENERATED|AS\s*\()|$)/is', $rest, $matches) !== 1) {
-            return null;
+        if ($default instanceof DefaultWord) {
+            return $default->truth() ?? $default->word->name->value;
         }
+        $literal = $default->literal;
+        $sign = $default->sign === NumberSign::Minus ? '-' : '';
 
-        $value = trim($matches[1]);
+        return match (true) {
+            $literal instanceof TextLiteral => $literal->value,
+            $literal instanceof BlobLiteral => (string) hex2bin($literal->hex),
+            $literal instanceof IntegerLiteral => (new NumericLiteral())->decode($sign . $literal->digits),
+            $literal instanceof HexLiteral => $default->sign === NumberSign::Minus ? -$this->hexadecimal($literal->digits) : $this->hexadecimal($literal->digits),
+            $literal instanceof RealLiteral => (new NumericLiteral())->decode($sign . $literal->whole . ($literal->fraction === null ? '' : '.' . $literal->fraction) . ($literal->exponent === null ? '' : 'e' . $literal->exponent)),
+            default => null,
+        };
+    }
 
-        if (preg_match("/^['\"](.*)['\"]\s*$/s", $value, $stringMatches) === 1) {
-            return $stringMatches[1];
-        }
-
-        if (strtoupper($value) === 'NULL') {
-            return null;
-        }
-
-        if (strtoupper($value) === 'TRUE' || $value === '1') {
-            return true;
-        }
-        if (strtoupper($value) === 'FALSE' || $value === '0') {
-            return false;
-        }
-
-        if (is_numeric($value)) {
-            if (str_contains($value, '.')) {
-                return (float) $value;
-            }
-            return (int) $value;
+    /**
+     * Returns the integer hexadecimal digits denote, read as SQLite reads them: as a 64-bit two's-complement integer.
+     */
+    public function hexadecimal(string $digits): int
+    {
+        $value = 0;
+        foreach (str_split($digits) as $digit) {
+            $value = ($value << 4) | (int) hexdec($digit);
         }
 
         return $value;

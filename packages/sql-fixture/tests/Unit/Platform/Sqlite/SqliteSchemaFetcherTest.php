@@ -9,31 +9,31 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(SqliteSchemaFetcher::class)]
+#[UsesClass(\SqlFixture\Analysis\CreateTableOperation::class)]
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[CoversClass(\SqlFixture\Platform\Sqlite\Schema\CreateTableQuery::class)]
-#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\PragmaColumn::class)]
-#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\PragmaSchema::class)]
 #[UsesClass(\SqlFixture\Schema\SchemaFetcherInterface::class)]
 #[UsesClass(\SqlFixture\Schema\SchemaParseException::class)]
 #[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
 #[UsesClass(\SqlFixture\Platform\Sqlite\Schema\ColumnParser::class)]
 #[UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefaultExpression::class)]
-#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefinitionList::class)]
-#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TableSyntax::class)]
 #[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TypeDeclaration::class)]
-#[UsesClass(\SqlFixture\Schema\DefinitionSegments::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\ColumnConstraints::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TableDefinition::class)]
+#[UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 final class SqliteSchemaFetcherTest extends TestCase
 {
     #[Test]
@@ -147,6 +147,16 @@ final class SqliteSchemaFetcherTest extends TestCase
         $fetcher = new SqliteSchemaFetcher();
         $schema = $fetcher->fetchSchema($pdo, 'test');
 
-        self::assertSame('CURRENT_TIMESTAMP', $schema->columns['created_at']->default);
+        self::assertNull($schema->columns['created_at']->default);
+    }
+
+    #[Test]
+    public function testFetchSchemaRejectsAnUnknownTable(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Table not found: missing');
+        (new SqliteSchemaFetcher())->fetchSchema($pdo, 'missing');
     }
 }

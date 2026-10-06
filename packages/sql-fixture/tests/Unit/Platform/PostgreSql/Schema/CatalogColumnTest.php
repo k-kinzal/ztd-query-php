@@ -7,89 +7,65 @@ namespace Tests\Unit\Platform\PostgreSql\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\PostgreSql\Schema\CatalogColumn as Subject;
+use SqlFixture\Platform\PostgreSql\Schema\CatalogExpression;
 
 #[CoversClass(Subject::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\TypeDeclaration::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(CatalogExpression::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\DefaultExpression::class)]
 final class CatalogColumnTest extends TestCase
 {
-    public function testMapDataTypeFormatsNumericAndLengthParameters(): void
+    public function testResolveTypeUppercasesAndExpandsArraysAndUserTypes(): void
     {
-        $column = ['data_type' => 'numeric', 'character_maximum_length' => null, 'numeric_precision' => '8', 'numeric_scale' => '2', 'udt_name' => 'numeric'];
-        self::assertSame('NUMERIC(8, 2)', (new Subject())->mapDataType($column));
-        $column['data_type'] = 'character varying';
-        $column['character_maximum_length'] = '40';
-        self::assertSame('VARCHAR(40)', (new Subject())->mapDataType($column));
+        self::assertSame('CHARACTER VARYING', (new Subject())->resolveType(['data_type' => 'character varying', 'udt_name' => 'varchar']));
+        self::assertSame('INTEGER_ARRAY', (new Subject())->resolveType(['data_type' => 'ARRAY', 'udt_name' => '_int4']));
+        self::assertSame('TEXT_ARRAY', (new Subject())->resolveType(['data_type' => 'ARRAY', 'udt_name' => '_text']));
+        self::assertSame('MOOD', (new Subject())->resolveType(['data_type' => 'USER-DEFINED', 'udt_name' => 'mood']));
     }
 
-    public function testResolveTypeNormalizesArrayElements(): void
+    public function testParseReadsDimensionsNullabilityAndLiteralDefaults(): void
     {
-        $column = ['data_type' => 'ARRAY', 'character_maximum_length' => null, 'numeric_precision' => null, 'numeric_scale' => null, 'udt_name' => '_int4'];
-        self::assertSame('INTEGER_ARRAY', (new Subject())->resolveType($column));
+        $row = ['column_name' => 'name', 'data_type' => 'character varying', 'character_maximum_length' => '30', 'numeric_precision' => null, 'numeric_scale' => null, 'is_nullable' => 'YES', 'column_default' => "'ready'::character varying", 'udt_name' => 'varchar', 'is_identity' => 'NO', 'is_generated' => 'NEVER'];
+        $column = (new Subject())->parse($row, new CatalogExpression(\Tests\Statement\PostgreSqlStatements::semantics()), false);
+
+        self::assertSame('name', $column->name);
+        self::assertSame('CHARACTER VARYING', $column->type);
+        self::assertSame(30, $column->length);
+        self::assertNull($column->precision);
+        self::assertNull($column->scale);
+        self::assertTrue($column->nullable);
+        self::assertFalse($column->unsigned);
+        self::assertSame('ready', $column->default);
+        self::assertFalse($column->autoIncrement);
+        self::assertFalse($column->generated);
+        self::assertNull($column->enumValues);
     }
 
-    public function testParseDefaultRemovesCastsAndRecognizesSequences(): void
+    public function testParseMarksSequenceDefaultsAsAutoIncrementWithoutADefault(): void
     {
-        $parser = new Subject();
-        self::assertSame('open', $parser->parseDefault("'open'::text"));
-        self::assertNull($parser->parseDefault("nextval('users_id_seq'::regclass)"));
-        self::assertSame(12.5, $parser->parseDefault('12.5'));
-        self::assertTrue($parser->parseDefault('true'));
-    }
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerCatalogTypes')]
-    public function testMapDataTypeRetainsTheCatalogDeclaration(string $type, ?string $length, ?string $precision, ?string $scale, string $udt, string $ddl, string $resolved): void
-    {
-        $row = ['data_type' => $type, 'character_maximum_length' => $length, 'numeric_precision' => $precision, 'numeric_scale' => $scale, 'udt_name' => $udt];
-        $column = new Subject();
-        self::assertSame($ddl, $column->mapDataType($row));
-        self::assertSame($resolved, $column->resolveType($row));
+        $row = ['column_name' => 'id', 'data_type' => 'integer', 'character_maximum_length' => null, 'numeric_precision' => '32', 'numeric_scale' => '0', 'is_nullable' => 'NO', 'column_default' => "nextval('users_id_seq'::regclass)", 'udt_name' => 'int4', 'is_identity' => 'NO', 'is_generated' => 'NEVER'];
+        $column = (new Subject())->parse($row, new CatalogExpression(\Tests\Statement\PostgreSqlStatements::semantics()), true);
+
+        self::assertTrue($column->autoIncrement);
+        self::assertNull($column->default);
+        self::assertFalse($column->nullable);
+        self::assertSame(32, $column->precision);
+        self::assertSame(0, $column->scale);
     }
 
-    /**
-     * @return list<array{string, ?string, ?string, ?string, string, string, string}>
-     */
-    public static function providerCatalogTypes(): array
+    public function testParseMarksIdentityGeneratedAndPrimaryKeyColumns(): void
     {
-        return [
-            ['character varying', '40', null, null, 'varchar', 'VARCHAR(40)', 'CHARACTER VARYING'],
-            ['character varying', null, null, null, 'varchar', 'CHARACTER VARYING', 'CHARACTER VARYING'],
-            ['character', '3', null, null, 'bpchar', 'CHAR(3)', 'CHARACTER'],
-            ['character', null, null, null, 'bpchar', 'CHARACTER', 'CHARACTER'],
-            ['numeric', null, null, null, 'numeric', 'NUMERIC', 'NUMERIC'],
-            ['numeric', null, '8', null, 'numeric', 'NUMERIC(8)', 'NUMERIC'],
-            ['numeric', null, '8', '0', 'numeric', 'NUMERIC(8)', 'NUMERIC'],
-            ['numeric', null, '8', '2', 'numeric', 'NUMERIC(8, 2)', 'NUMERIC'],
-            ['array', null, null, null, '_int4', 'INTEGER[]', 'INTEGER_ARRAY'],
-            ['array', null, null, null, '_text', 'TEXT[]', 'TEXT_ARRAY'],
-            ['user-defined', null, null, null, 'mood', 'MOOD', 'MOOD'],
-            ['integer', null, '32', '0', 'int4', 'INTEGER', 'INTEGER'],
-        ];
-    }
+        $identity = ['column_name' => 'id', 'data_type' => 'bigint', 'character_maximum_length' => null, 'numeric_precision' => null, 'numeric_scale' => null, 'is_nullable' => 'NO', 'column_default' => null, 'udt_name' => 'int8', 'is_identity' => 'YES', 'is_generated' => 'NEVER'];
+        $generated = ['column_name' => 'g', 'data_type' => 'integer', 'character_maximum_length' => null, 'numeric_precision' => null, 'numeric_scale' => null, 'is_nullable' => 'YES', 'column_default' => null, 'udt_name' => 'int4', 'is_identity' => 'NO', 'is_generated' => 'ALWAYS'];
+        $expressions = new CatalogExpression(\Tests\Statement\PostgreSqlStatements::semantics());
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerCatalogDefaults')]
-    public function testParseDefaultInterpretsCatalogLiterals(?string $input, int|float|bool|string|null $expected): void
-    {
-        self::assertSame($expected, (new Subject())->parseDefault($input));
-    }
-
-    /**
-     * @return list<array{?string, int|float|bool|string|null}>
-     */
-    public static function providerCatalogDefaults(): array
-    {
-        return [
-            [null, null],
-            ['null', null],
-            ['null::', null],
-            ["nextval('orders_id_seq'::regclass)", null],
-            ["'line\nvalue'::text", "line\nvalue"],
-            ["'ready'", 'ready'],
-            ["'line\nvalue'", "line\nvalue"],
-            ['FALSE', false],
-            ['TRUE', true],
-            ['0', 0],
-            ['-12', -12],
-            ['-0.25', -0.25],
-            ['CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP'],
-        ];
+        self::assertTrue((new Subject())->parse($identity, $expressions, false)->autoIncrement);
+        self::assertNull((new Subject())->parse($identity, $expressions, false)->default);
+        self::assertTrue((new Subject())->parse($generated, $expressions, false)->generated);
+        self::assertFalse((new Subject())->parse($generated, $expressions, false)->autoIncrement);
+        self::assertFalse((new Subject())->parse($generated, $expressions, true)->nullable);
     }
 
     public function testElementTypeNamesTheDeclaredType(): void
@@ -97,6 +73,12 @@ final class CatalogColumnTest extends TestCase
         $column = new Subject();
         self::assertSame('INTEGER', $column->elementType('_int4'));
         self::assertSame('BIGINT', $column->elementType('_int8'));
+        self::assertSame('SMALLINT', $column->elementType('_int2'));
+        self::assertSame('REAL', $column->elementType('_float4'));
+        self::assertSame('DOUBLE PRECISION', $column->elementType('_float8'));
+        self::assertSame('BOOLEAN', $column->elementType('_bool'));
+        self::assertSame('VARCHAR', $column->elementType('_varchar'));
+        self::assertSame('CHAR', $column->elementType('_bpchar'));
         self::assertSame('TEXT', $column->elementType('_text'));
         self::assertSame('UUID', $column->elementType('_uuid'));
     }

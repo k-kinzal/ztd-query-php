@@ -13,6 +13,7 @@ use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(Subject::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(FixtureGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\HydrationException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\HydratorInterface::class)]
@@ -32,7 +33,6 @@ use SqlFixture\Schema\TableSchema;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Exception\InvalidOverrideException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Value\ColumnGenerator::class)]
@@ -45,7 +45,6 @@ use SqlFixture\Schema\TableSchema;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Value\TextGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Exception\ClassNotFoundException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Exception\MissingConstructorArgumentException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Exception\UnknownOverrideColumnException::class)]
@@ -58,6 +57,8 @@ use SqlFixture\Schema\TableSchema;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnAttributes::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 final class RowGenerationTest extends TestCase
 {
     public function testGenerateAppliesExplicitValuesAndOmitsGeneratedColumns(): void

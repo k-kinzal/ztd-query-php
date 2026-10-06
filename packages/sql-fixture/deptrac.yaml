@@ -48,20 +48,25 @@ deptrac:
       collectors:
         - type: classLike
           value: '^Faker\\.*'
-    - name: SqlParser
+    - name: Analysis
       collectors:
         - type: classLike
-          value: '^PhpMyAdmin\\SqlParser\\.*'
+          value: '^SqlFixture\\Analysis\\.*'
+    - name: SqlSemantics
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\.*'
   ruleset:
     Schema: []
     TypeMapping: [Schema, Faker]
     Hydration: []
     Plan: []
     Generation: [Schema, Plan, TypeMapping, Hydration, Faker]
-    MySql: [Schema, TypeMapping, Faker, SqlParser]
-    PostgreSql: [Schema, TypeMapping, Faker]
-    Sqlite: [Schema, TypeMapping, Faker]
+    Analysis: [Schema, SqlSemantics]
+    MySql: [Schema, Analysis, TypeMapping, Faker, SqlSemantics]
+    PostgreSql: [Schema, Analysis, TypeMapping, Faker, SqlSemantics]
+    Sqlite: [Schema, Analysis, TypeMapping, Faker, SqlSemantics]
     Provider: [Schema, TypeMapping, Hydration, Plan, Generation, MySql, PostgreSql, Sqlite, Faker, Version]
     Version: []
     Faker: []
-    SqlParser: []
+    SqlSemantics: []

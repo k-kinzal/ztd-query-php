@@ -54,11 +54,9 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 #[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class)]
 #[UsesClass(\SqlFixture\Fixture\Exception\MissingRelationValueException::class)]
 #[UsesClass(\SqlFixture\Fixture\Exception\UnknownPlanColumnException::class)]
@@ -78,6 +76,8 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 #[UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
 #[UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnAttributes::class)]
+#[UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 final class PlanSchemaValidatorTest extends TestCase
 {
     #[Test]
