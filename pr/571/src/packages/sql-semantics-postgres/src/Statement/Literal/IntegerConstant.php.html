@@ -45,46 +45,50 @@
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Diagnostic\Check</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a></span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * The value of a numeric constant written as an integer, of any size.</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * Decimal, hexadecimal, octal and binary digits and underscores between</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * digits are spellings of the same integer; the value is kept as canonical</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * decimal digits and written back that way.</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS-NUMERIC.</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * @example Reading a hexadecimal integer</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))-&gt;analyze(&#039;SELECT 0x1_F&#039;);</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> *     $query-&gt;statement-&gt;targets[0]-&gt;expression-&gt;value-&gt;digits // =&gt; &#039;31&#039;</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * @example Rejecting digits that are not canonical</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant(&#039;007&#039;) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">IntegerConstant</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>{</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param string $digits The decimal digits without leading zeros</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$digits</span>)</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    {</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-id">preg_match</span>(<span class="tok-str">&#039;/\A(?:0|[1-9][0-9]*)\z/&#039;</span>, <span class="tok-var">$digits</span>) === <span class="tok-num">1</span>, <span class="tok-str">&#039;An integer constant is canonical decimal digits.&#039;</span>);</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    }</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * Writes the decimal digits.</span></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    {</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">spelled</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">digits</span>);</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    }</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>}</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a></span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Rendering\Output</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Node</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Snapshot</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * The value of a numeric constant written as an integer that fits 32 bits.</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * The scanner reads such a constant as an `ICONST` holding the integer, so</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * decimal, hexadecimal, octal and binary digits and underscores between</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * digits are spellings of the same value; it is kept as canonical decimal</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * digits and written back that way. A larger integer is an `FCONST` the</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * server keeps as written, a `NumericConstant` (PG-LEX-NUMBER-001).</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS-NUMERIC.</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * @visibility public</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * @example Reading a hexadecimal integer</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))-&gt;analyze(&#039;SELECT 0x1_F&#039;);</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> *     $query-&gt;statement-&gt;targets[0]-&gt;expression-&gt;value-&gt;digits // =&gt; &#039;31&#039;</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * @example Rejecting digits that are not canonical</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant(&#039;007&#039;) // throws \SqlSemantics\Diagnostic\InvalidConstruction</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">IntegerConstant</span> <span class="tok-kw">implements</span> <span class="tok-id">Node</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>{</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">use</span> <span class="tok-id">Snapshot</span>;</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     * @param string $digits The decimal digits without leading zeros, at most 2147483647</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$digits</span>)</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    {</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>(<span class="tok-id">preg_match</span>(<span class="tok-str">&#039;/\A(?:0|[1-9][0-9]*)\z/&#039;</span>, <span class="tok-var">$digits</span>) === <span class="tok-num">1</span>, <span class="tok-str">&#039;An integer constant is canonical decimal digits.&#039;</span>);</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-id">Check</span>::<span class="tok-id">input</span>((<span class="tok-kw">new</span> <span class="tok-id">Numerals</span>())-&gt;<span class="tok-id">within</span>(<span class="tok-var">$digits</span>, <span class="tok-str">&#039;2147483647&#039;</span>), <span class="tok-str">&#039;An integer constant fits 32 bits; a larger integer is a numeric constant.&#039;</span>);</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    }</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     * Writes the decimal digits.</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">render</span>(<span class="tok-id">Output</span> <span class="tok-var">$out</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    {</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-var">$out</span>-&gt;<span class="tok-id">spelled</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">digits</span>);</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    }</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>}</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

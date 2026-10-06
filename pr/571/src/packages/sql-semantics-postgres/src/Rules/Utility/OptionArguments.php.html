@@ -72,71 +72,63 @@
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">OptionArguments</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>{</span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     * The largest value of a 32-bit integer, as decimal digits.</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     * Answers the Boolean value of an option, or null when its value is not Boolean.</span></span>
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">private</span> <span class="tok-kw">const</span> <span class="tok-id">INT32_MAX</span> = <span class="tok-str">&#039;2147483647&#039;</span>;</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * Answers the Boolean value of an option, or null when its value is not Boolean.</span></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">boolean</span>(<span class="tok-id">UtilityOption</span> <span class="tok-var">$option</span>): ?<span class="tok-id">bool</span></span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    {</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-var">$argument</span> = <span class="tok-var">$option</span>-&gt;<span class="tok-id">argument</span>;</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-kw">if</span> (<span class="tok-var">$argument</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>            <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        }</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-kw">if</span> (<span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">SignedNumber</span>) {</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>            <span class="tok-var">$integer</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">integer</span>(<span class="tok-var">$option</span>);</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a></span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>            <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$integer</span>) {</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>                <span class="tok-num">0</span> =&gt; <span class="tok-id">false</span>,</span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>                <span class="tok-num">1</span> =&gt; <span class="tok-id">true</span>,</span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>                <span class="tok-kw">default</span> =&gt; <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>            };</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        }</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-var">$text</span> = <span class="tok-kw">match</span> (<span class="tok-id">true</span>) {</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            <span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Toggle</span> =&gt; <span class="tok-var">$argument</span>-&gt;<span class="tok-id">text</span>(),</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>            <span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Word</span> =&gt; <span class="tok-var">$argument</span>-&gt;<span class="tok-id">word</span>-&gt;<span class="tok-id">value</span>,</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">StringConstant</span> =&gt; <span class="tok-var">$argument</span>-&gt;<span class="tok-id">value</span>,</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        };</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a></span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-id">strtolower</span>(<span class="tok-var">$text</span>)) {</span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>            <span class="tok-str">&#039;true&#039;</span>, <span class="tok-str">&#039;on&#039;</span> =&gt; <span class="tok-id">true</span>,</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>            <span class="tok-str">&#039;false&#039;</span>, <span class="tok-str">&#039;off&#039;</span> =&gt; <span class="tok-id">false</span>,</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        };</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    }</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a></span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a><span class="tok-com">     * Answers the integer value of an option, or null when it has no value or the value is not an integer that fits in 32 bits.</span></span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">integer</span>(<span class="tok-id">UtilityOption</span> <span class="tok-var">$option</span>): ?<span class="tok-id">int</span></span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    {</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-var">$argument</span> = <span class="tok-var">$option</span>-&gt;<span class="tok-id">argument</span>;</span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">SignedNumber</span> || !<span class="tok-var">$argument</span>-&gt;<span class="tok-id">magnitude</span> <span class="tok-kw">instanceof</span> <span class="tok-id">IntegerConstant</span>) {</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>        }</span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>        <span class="tok-var">$digits</span> = <span class="tok-var">$argument</span>-&gt;<span class="tok-id">magnitude</span>-&gt;<span class="tok-id">digits</span>;</span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>        <span class="tok-kw">if</span> (<span class="tok-id">strlen</span>(<span class="tok-var">$digits</span>) &gt; <span class="tok-id">strlen</span>(<span class="tok-id">self</span>::<span class="tok-id">INT32_MAX</span>) || (<span class="tok-id">strlen</span>(<span class="tok-var">$digits</span>) === <span class="tok-id">strlen</span>(<span class="tok-id">self</span>::<span class="tok-id">INT32_MAX</span>) &amp;&amp; <span class="tok-id">strcmp</span>(<span class="tok-var">$digits</span>, <span class="tok-id">self</span>::<span class="tok-id">INT32_MAX</span>) &gt; <span class="tok-num">0</span>)) {</span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>        }</span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a></span>
-<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>        <span class="tok-kw">return</span> <span class="tok-var">$argument</span>-&gt;<span class="tok-id">negative</span> ? -(int) <span class="tok-var">$digits</span> : (int) <span class="tok-var">$digits</span>;</span>
-<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    }</span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a></span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a><span class="tok-com">     * Answers the Boolean value of the last option of a name, or a default when none is written or its value is not Boolean.</span></span>
-<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a><span class="tok-com">     * @param list&lt;UtilityOption&gt; $options</span></span>
-<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">enabled</span>(<span class="tok-kw">array</span> <span class="tok-var">$options</span>, <span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-id">bool</span> <span class="tok-var">$default</span>): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>    {</span>
-<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>        <span class="tok-var">$option</span> = (<span class="tok-kw">new</span> <span class="tok-id">OptionRules</span>())-&gt;<span class="tok-id">find</span>(<span class="tok-var">$options</span>, <span class="tok-var">$name</span>);</span>
-<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a></span>
-<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>        <span class="tok-kw">return</span> <span class="tok-var">$option</span> === <span class="tok-id">null</span> ? <span class="tok-var">$default</span> : (<span class="tok-var">$this</span>-&gt;<span class="tok-id">boolean</span>(<span class="tok-var">$option</span>) ?? <span class="tok-var">$default</span>);</span>
-<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>    }</span>
-<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>}</span>
-<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">boolean</span>(<span class="tok-id">UtilityOption</span> <span class="tok-var">$option</span>): ?<span class="tok-id">bool</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    {</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-var">$argument</span> = <span class="tok-var">$option</span>-&gt;<span class="tok-id">argument</span>;</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-kw">if</span> (<span class="tok-var">$argument</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>            <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        }</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-kw">if</span> (<span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">SignedNumber</span>) {</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>            <span class="tok-var">$integer</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">integer</span>(<span class="tok-var">$option</span>);</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>            <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$integer</span>) {</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>                <span class="tok-num">0</span> =&gt; <span class="tok-id">false</span>,</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>                <span class="tok-num">1</span> =&gt; <span class="tok-id">true</span>,</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>                <span class="tok-kw">default</span> =&gt; <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>            };</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>        }</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>        <span class="tok-var">$text</span> = <span class="tok-kw">match</span> (<span class="tok-id">true</span>) {</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>            <span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Toggle</span> =&gt; <span class="tok-var">$argument</span>-&gt;<span class="tok-id">text</span>(),</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>            <span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Word</span> =&gt; <span class="tok-var">$argument</span>-&gt;<span class="tok-id">word</span>-&gt;<span class="tok-id">value</span>,</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>            <span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">StringConstant</span> =&gt; <span class="tok-var">$argument</span>-&gt;<span class="tok-id">value</span>,</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        };</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a></span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-id">strtolower</span>(<span class="tok-var">$text</span>)) {</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>            <span class="tok-str">&#039;true&#039;</span>, <span class="tok-str">&#039;on&#039;</span> =&gt; <span class="tok-id">true</span>,</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-str">&#039;false&#039;</span>, <span class="tok-str">&#039;off&#039;</span> =&gt; <span class="tok-id">false</span>,</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        };</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    }</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a></span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a><span class="tok-com">     * Answers the integer value of an option, or null when it has no value or the value is not an integer that fits in 32 bits.</span></span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">integer</span>(<span class="tok-id">UtilityOption</span> <span class="tok-var">$option</span>): ?<span class="tok-id">int</span></span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    {</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-var">$argument</span> = <span class="tok-var">$option</span>-&gt;<span class="tok-id">argument</span>;</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">SignedNumber</span> || !<span class="tok-var">$argument</span>-&gt;<span class="tok-id">magnitude</span> <span class="tok-kw">instanceof</span> <span class="tok-id">IntegerConstant</span>) {</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        }</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        <span class="tok-var">$digits</span> = <span class="tok-var">$argument</span>-&gt;<span class="tok-id">magnitude</span>-&gt;<span class="tok-id">digits</span>;</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-kw">return</span> <span class="tok-var">$argument</span>-&gt;<span class="tok-id">negative</span> ? -(int) <span class="tok-var">$digits</span> : (int) <span class="tok-var">$digits</span>;</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    }</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-com">     * Answers the Boolean value of the last option of a name, or a default when none is written or its value is not Boolean.</span></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a><span class="tok-com">     * @param list&lt;UtilityOption&gt; $options</span></span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">enabled</span>(<span class="tok-kw">array</span> <span class="tok-var">$options</span>, <span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-id">bool</span> <span class="tok-var">$default</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    {</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>        <span class="tok-var">$option</span> = (<span class="tok-kw">new</span> <span class="tok-id">OptionRules</span>())-&gt;<span class="tok-id">find</span>(<span class="tok-var">$options</span>, <span class="tok-var">$name</span>);</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a></span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>        <span class="tok-kw">return</span> <span class="tok-var">$option</span> === <span class="tok-id">null</span> ? <span class="tok-var">$default</span> : (<span class="tok-var">$this</span>-&gt;<span class="tok-id">boolean</span>(<span class="tok-var">$option</span>) ?? <span class="tok-var">$default</span>);</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>    }</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>}</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

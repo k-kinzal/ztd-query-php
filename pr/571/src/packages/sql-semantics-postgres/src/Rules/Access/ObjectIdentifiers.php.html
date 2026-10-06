@@ -45,89 +45,93 @@
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Access</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Construction\Derivation</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblem</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblemRule</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * Checks the numbers of GRANT and REVOKE ON LARGE OBJECT as object identifiers.</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * Rule: PG-LARGE-OBJECT-OID-001. The server reads each number with</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * `oidparse()`: an integer constant within the int4 range is taken as it</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * is (a negative one wraps around), any other number keeps its spelling and</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * is read as an unsigned 32-bit integer with `uint32in_subr()`, which</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * rejects a fraction or an exponent (&quot;invalid input syntax for type oid&quot;)</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * and a value beyond 4294967295 (&quot;value … is out of range for type oid&quot;);</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * of the negative numbers outside int4 only -2147483648 passes, because</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * only it matches after sign extension. The check judges the exact value:</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * the server reads a constant beyond int4 from its spelling, so a radix</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * prefix other than `0x` or digit separators in such a constant, which</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * `strtoul()` does not read, are judged by their value. Whether a large</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * object exists is not a declaration a context holds and is not reported.</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * Termination: one pass over a finite list.</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> * Source: https://www.postgresql.org/docs/17/sql-grant.html, https://www.postgresql.org/docs/17/datatype-oid.html.</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * Status: Implemented.</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> * @visibility SqlSemantics\Platform\PostgreSql</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ObjectIdentifiers</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>{</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * The largest integer the lexer keeps as an integer constant.</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">private</span> <span class="tok-kw">const</span> <span class="tok-id">INT4_MAX</span> = <span class="tok-num">2147483647</span>;</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     * The largest object identifier.</span></span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">private</span> <span class="tok-kw">const</span> <span class="tok-id">OID_MAX</span> = <span class="tok-num">4294967295</span>;</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a></span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com">     * Reports every number that is no object identifier.</span></span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a><span class="tok-com">     * @param list&lt;SignedNumber&gt; $identifiers</span></span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">check</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-kw">array</span> <span class="tok-var">$identifiers</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    {</span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$identifiers</span> <span class="tok-kw">as</span> <span class="tok-var">$identifier</span>) {</span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>            <span class="tok-var">$problem</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">problem</span>(<span class="tok-var">$identifier</span>);</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>            <span class="tok-kw">if</span> (<span class="tok-var">$problem</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>                <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">report</span>(<span class="tok-var">$problem</span>);</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>            }</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        }</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>    }</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a></span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a><span class="tok-com">     * Answers the problem of a number read as an object identifier, or null when the server accepts it.</span></span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">problem</span>(<span class="tok-id">SignedNumber</span> <span class="tok-var">$identifier</span>): ?<span class="tok-id">AccessProblem</span></span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>    {</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-var">$sign</span> = <span class="tok-var">$identifier</span>-&gt;<span class="tok-id">negative</span> ? <span class="tok-str">&#039;-&#039;</span> : <span class="tok-str">&#039;&#039;</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblem</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblemRule</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * Checks the numbers of GRANT and REVOKE ON LARGE OBJECT as object identifiers.</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Rule: PG-LARGE-OBJECT-OID-001. The server reads each number with</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * `oidparse()`: an integer constant, which fits int4, is taken as it is (a</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * negative one wraps around); a numeric constant keeps its written text, and</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * the text with its sign is read as an unsigned 32-bit integer by</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * `uint32in_subr()`, which calls `strtoul()` with base 0. That reads decimal</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * digits, hexadecimal digits after `0x` and octal digits after a leading</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * zero; any other text, such as a fraction, an exponent, digit separators or</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * the `0o` and `0b` prefixes, is &quot;invalid input syntax for type oid&quot;, and a</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> * value beyond 4294967295 is &quot;value … is out of range for type oid&quot;; of the</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com"> * negative values outside int4 only -2147483648 passes, because only it</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com"> * matches after sign extension. Whether a large object exists is not a</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com"> * declaration a context holds and is not reported.</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com"> * Termination: one pass over a finite list.</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com"> * Source: https://www.postgresql.org/docs/17/sql-grant.html, https://www.postgresql.org/docs/17/datatype-oid.html.</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com"> * Status: Implemented.</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com"> * @visibility SqlSemantics\Platform\PostgreSql</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ObjectIdentifiers</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>{</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * The largest object identifier.</span></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">private</span> <span class="tok-kw">const</span> <span class="tok-id">OID_MAX</span> = <span class="tok-str">&#039;4294967295&#039;</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     * The largest magnitude of a negative object identifier.</span></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    <span class="tok-kw">private</span> <span class="tok-kw">const</span> <span class="tok-id">NEGATIVE_MAX</span> = <span class="tok-str">&#039;2147483648&#039;</span>;</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-com">     * Reports every number that is no object identifier.</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     * @param list&lt;SignedNumber&gt; $identifiers</span></span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">check</span>(<span class="tok-id">Derivation</span> <span class="tok-var">$derivation</span>, <span class="tok-kw">array</span> <span class="tok-var">$identifiers</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    {</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$identifiers</span> <span class="tok-kw">as</span> <span class="tok-var">$identifier</span>) {</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>            <span class="tok-var">$problem</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">problem</span>(<span class="tok-var">$identifier</span>);</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>            <span class="tok-kw">if</span> (<span class="tok-var">$problem</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>                <span class="tok-var">$derivation</span>-&gt;<span class="tok-id">report</span>(<span class="tok-var">$problem</span>);</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            }</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        }</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    }</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a></span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a><span class="tok-com">     * Answers the problem of a number read as an object identifier, or null when the server accepts it.</span></span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">problem</span>(<span class="tok-id">SignedNumber</span> <span class="tok-var">$identifier</span>): ?<span class="tok-id">AccessProblem</span></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    {</span>
 <span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-var">$magnitude</span> = <span class="tok-var">$identifier</span>-&gt;<span class="tok-id">magnitude</span>;</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        <span class="tok-kw">if</span> (<span class="tok-var">$magnitude</span> <span class="tok-kw">instanceof</span> <span class="tok-id">NumericConstant</span>) {</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">AccessProblem</span>(<span class="tok-id">AccessProblemRule</span>::<span class="tok-id">InvalidObjectIdentifier</span>, [<span class="tok-var">$sign</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">spelling</span>(<span class="tok-var">$magnitude</span>)]);</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        <span class="tok-kw">if</span> (<span class="tok-var">$magnitude</span> <span class="tok-kw">instanceof</span> <span class="tok-id">IntegerConstant</span>) {</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        }</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        <span class="tok-var">$value</span> = <span class="tok-id">strlen</span>(<span class="tok-var">$magnitude</span>-&gt;<span class="tok-id">digits</span>) &gt; <span class="tok-num">10</span> ? <span class="tok-id">null</span> : (int) <span class="tok-var">$magnitude</span>-&gt;<span class="tok-id">digits</span>;</span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        <span class="tok-var">$accepted</span> = <span class="tok-var">$value</span> !== <span class="tok-id">null</span> &amp;&amp; (<span class="tok-var">$value</span> &lt;= <span class="tok-id">self</span>::<span class="tok-id">INT4_MAX</span> || (<span class="tok-var">$identifier</span>-&gt;<span class="tok-id">negative</span> ? <span class="tok-var">$value</span> === <span class="tok-id">self</span>::<span class="tok-id">INT4_MAX</span> + <span class="tok-num">1</span> : <span class="tok-var">$value</span> &lt;= <span class="tok-id">self</span>::<span class="tok-id">OID_MAX</span>));</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a></span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        <span class="tok-kw">return</span> <span class="tok-var">$accepted</span> ? <span class="tok-id">null</span> : <span class="tok-kw">new</span> <span class="tok-id">AccessProblem</span>(<span class="tok-id">AccessProblemRule</span>::<span class="tok-id">ObjectIdentifierRange</span>, [<span class="tok-var">$sign</span> . <span class="tok-var">$magnitude</span>-&gt;<span class="tok-id">digits</span>]);</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>    }</span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a></span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a><span class="tok-com">     * Spells a numeric constant as the server echoes it: the fraction after a point, the exponent after `e`.</span></span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">spelling</span>(<span class="tok-id">NumericConstant</span> <span class="tok-var">$constant</span>): <span class="tok-id">string</span></span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    {</span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>        <span class="tok-var">$exponent</span> = <span class="tok-var">$constant</span>-&gt;<span class="tok-id">exponent</span> === <span class="tok-id">null</span> ? <span class="tok-str">&#039;&#039;</span> : <span class="tok-str">&#039;e&#039;</span> . <span class="tok-var">$constant</span>-&gt;<span class="tok-id">exponent</span>;</span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>        <span class="tok-kw">if</span> (<span class="tok-var">$constant</span>-&gt;<span class="tok-id">fraction</span> === <span class="tok-str">&#039;&#039;</span> &amp;&amp; <span class="tok-var">$exponent</span> !== <span class="tok-str">&#039;&#039;</span>) {</span>
-<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>            <span class="tok-kw">return</span> <span class="tok-var">$constant</span>-&gt;<span class="tok-id">integer</span> . <span class="tok-var">$exponent</span>;</span>
-<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>        }</span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a></span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>        <span class="tok-kw">return</span> <span class="tok-var">$constant</span>-&gt;<span class="tok-id">integer</span> . <span class="tok-str">&#039;.&#039;</span> . <span class="tok-var">$constant</span>-&gt;<span class="tok-id">fraction</span> . <span class="tok-var">$exponent</span>;</span>
-<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    }</span>
-<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>}</span>
-<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        <span class="tok-var">$value</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">unsigned</span>(<span class="tok-var">$magnitude</span>-&gt;<span class="tok-id">text</span>);</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        <span class="tok-kw">if</span> (<span class="tok-var">$value</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>            <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">AccessProblem</span>(<span class="tok-id">AccessProblemRule</span>::<span class="tok-id">InvalidObjectIdentifier</span>, [<span class="tok-var">$identifier</span>-&gt;<span class="tok-id">text</span>()]);</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        }</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">Numerals</span>())-&gt;<span class="tok-id">within</span>(<span class="tok-var">$value</span>, <span class="tok-var">$identifier</span>-&gt;<span class="tok-id">negative</span> ? <span class="tok-id">self</span>::<span class="tok-id">NEGATIVE_MAX</span> : <span class="tok-id">self</span>::<span class="tok-id">OID_MAX</span>) ? <span class="tok-id">null</span> : <span class="tok-kw">new</span> <span class="tok-id">AccessProblem</span>(<span class="tok-id">AccessProblemRule</span>::<span class="tok-id">ObjectIdentifierRange</span>, [<span class="tok-var">$identifier</span>-&gt;<span class="tok-id">text</span>()]);</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    }</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-com">     * Answers the canonical decimal digits `strtoul()` with base 0 reads from a whole text, or null when it does not read the whole text.</span></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">unsigned</span>(<span class="tok-id">string</span> <span class="tok-var">$text</span>): ?<span class="tok-id">string</span></span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    {</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>        <span class="tok-var">$numerals</span> = <span class="tok-kw">new</span> <span class="tok-id">Numerals</span>();</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a></span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-id">true</span>) {</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>            <span class="tok-id">preg_match</span>(<span class="tok-str">&#039;/\A0[xX][0-9A-Fa-f]+\z/&#039;</span>, <span class="tok-var">$text</span>) === <span class="tok-num">1</span> =&gt; <span class="tok-var">$numerals</span>-&gt;<span class="tok-id">decimal</span>(<span class="tok-var">$text</span>),</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>            <span class="tok-id">preg_match</span>(<span class="tok-str">&#039;/\A0[0-7]+\z/&#039;</span>, <span class="tok-var">$text</span>) === <span class="tok-num">1</span> =&gt; <span class="tok-var">$numerals</span>-&gt;<span class="tok-id">decimal</span>(<span class="tok-str">&#039;0o&#039;</span> . <span class="tok-id">substr</span>(<span class="tok-var">$text</span>, <span class="tok-num">1</span>)),</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>            <span class="tok-id">preg_match</span>(<span class="tok-str">&#039;/\A[0-9]+\z/&#039;</span>, <span class="tok-var">$text</span>) === <span class="tok-num">1</span> &amp;&amp; <span class="tok-var">$text</span>[<span class="tok-num">0</span>] !== <span class="tok-str">&#039;0&#039;</span> =&gt; <span class="tok-var">$numerals</span>-&gt;<span class="tok-id">canonical</span>(<span class="tok-var">$text</span>),</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        };</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>    }</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>}</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
