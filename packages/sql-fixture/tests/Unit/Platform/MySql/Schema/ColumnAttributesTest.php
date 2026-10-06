@@ -7,62 +7,60 @@ namespace Tests\Unit\Platform\MySql\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\MySql\Schema\ColumnAttributes as Subject;
-use SqlParser\MySql\MySqlParser;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use Tests\Statement\MySqlStatements;
 
 #[CoversClass(Subject::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NodeReader::class)]
 final class ColumnAttributesTest extends TestCase
 {
-    public function testReadDefaultsToANullableColumn(): void
+    public function testReadDefaultsToAPlainColumn(): void
     {
-        $tree = (new MySqlParser())->parse('CREATE TABLE t (id INT)');
-        $attributes = (new Subject())->read($tree->find('field_def')[0]);
+        $attributes = (new Subject())->read(MySqlStatements::columns('id INT')[0]->specification->columnAttributes());
 
-        self::assertTrue($attributes->nullable);
         self::assertFalse($attributes->autoIncrement);
         self::assertFalse($attributes->primaryKey);
         self::assertNull($attributes->default);
     }
 
-    public function testReadRecognizesNotNullDefaultAndAutoIncrement(): void
+    public function testReadRecognizesDefaultAndAutoIncrement(): void
     {
-        $sql = 'CREATE TABLE t (id INT NOT NULL DEFAULT 1 AUTO_INCREMENT UNIQUE KEY COMMENT \'x\')';
-        $tree = (new MySqlParser())->parse($sql);
-        $attributes = (new Subject())->read($tree->find('field_def')[0]);
+        $attributes = (new Subject())->read(MySqlStatements::columns("id INT NOT NULL DEFAULT 1 AUTO_INCREMENT UNIQUE KEY COMMENT 'x'")[0]->specification->columnAttributes());
 
-        self::assertFalse($attributes->nullable);
         self::assertTrue($attributes->autoIncrement);
         self::assertFalse($attributes->primaryKey);
-        self::assertNotNull($attributes->default);
-        self::assertSame('DEFAULT 1', $attributes->default->text($sql));
+        self::assertInstanceOf(NumberLiteral::class, $attributes->default);
     }
 
     public function testReadTreatsPrimaryKeyAndBareKeyAsPrimary(): void
     {
-        $tree = (new MySqlParser())->parse('CREATE TABLE t (a INT PRIMARY KEY, b INT KEY, c INT UNIQUE KEY)');
-        $fields = $tree->find('field_def');
+        $columns = MySqlStatements::columns('a INT PRIMARY KEY, b INT UNIQUE KEY');
+        $bare = (MySqlStatements::semantics())->analyze('CREATE TABLE t (b INT KEY)')->statement;
+        self::assertInstanceOf(CreateTable::class, $bare);
+        $key = $bare->elements[0];
+        self::assertInstanceOf(ColumnDefinition::class, $key);
 
-        self::assertTrue((new Subject())->read($fields[0])->primaryKey);
-        self::assertTrue((new Subject())->read($fields[1])->primaryKey);
-        self::assertFalse((new Subject())->read($fields[2])->primaryKey);
-    }
-
-    public function testReadLetsAnExplicitNullFollowNotNull(): void
-    {
-        $tree = (new MySqlParser())->parse('CREATE TABLE t (a INT NOT NULL NULL, b INT NOT SECONDARY)');
-        $fields = $tree->find('field_def');
-
-        self::assertTrue((new Subject())->read($fields[0])->nullable);
-        self::assertTrue((new Subject())->read($fields[1])->nullable);
+        self::assertTrue((new Subject())->read($columns[0]->specification->columnAttributes())->primaryKey);
+        self::assertFalse((new Subject())->read($columns[1]->specification->columnAttributes())->primaryKey);
+        self::assertTrue((new Subject())->read($key->specification->columnAttributes())->primaryKey);
     }
 
     public function testReadTreatsSerialDefaultValueAsAutoIncrement(): void
     {
-        $tree = (new MySqlParser())->parse('CREATE TABLE t (a INT SERIAL DEFAULT VALUE)');
-        $attributes = (new Subject())->read($tree->find('field_def')[0]);
+        $attributes = (new Subject())->read(MySqlStatements::columns('a INT SERIAL DEFAULT VALUE')[0]->specification->columnAttributes());
 
         self::assertTrue($attributes->autoIncrement);
-        self::assertFalse($attributes->nullable);
         self::assertNull($attributes->default);
+    }
+
+    public function testReadLetsTheLastDefaultDecide(): void
+    {
+        $columns = MySqlStatements::columns("a INT DEFAULT 1 DEFAULT 2, b VARCHAR(3) DEFAULT 'x' DEFAULT ('y')");
+
+        $first = (new Subject())->read($columns[0]->specification->columnAttributes())->default;
+        self::assertInstanceOf(NumberLiteral::class, $first);
+        self::assertSame('2', $first->text);
+        self::assertNull((new Subject())->read($columns[1]->specification->columnAttributes())->default);
     }
 }

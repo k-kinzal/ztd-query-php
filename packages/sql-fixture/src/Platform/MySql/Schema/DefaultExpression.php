@@ -4,77 +4,40 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql\Schema;
 
-use SqlFixture\Syntax\NodeReader;
-use SqlFixture\Syntax\NumericLiteral;
-use SqlFixture\Syntax\SqlText;
-use SqlParser\Parser\Node;
+use SqlFixture\Analysis\NumericLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
+use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
+use SqlSemantics\Statement\Scalar;
 
 /**
- * Interprets the DEFAULT attribute of a column, keeping expressions as SQL text.
+ * Evaluates the literal of a DEFAULT clause into the PHP value it denotes.
  *
  * @visibility root
  */
 final class DefaultExpression
 {
     /**
-     * Returns the literal value a DEFAULT attribute declares, or the text of its expression.
+     * Returns the value of the literal; a hexadecimal or bit literal is a number for a numeric column and bytes otherwise.
      */
-    public function extractDefault(Node $attribute): int|float|bool|string|null
+    public function evaluate(Scalar $literal, bool $numeric): int|float|bool|string|null
     {
-        $literal = (new NodeReader())->child($attribute, 'now_or_signed_literal');
-        if ($literal === null) {
-            return (new SqlText())->ofTokens(array_slice($attribute->tokens(), 1));
-        }
-        $sign = '';
-        $strings = $this->strings($literal);
-        if ($strings !== null) {
-            return $strings;
-        }
-        foreach ($literal->tokens() as $token) {
-            if ($token->text === '-' || $token->text === '+') {
-                $sign = $token->text;
-                continue;
-            }
-            if ($token->is('NUM') || $token->is('LONG_NUM') || $token->is('ULONGLONG_NUM') || $token->is('DECIMAL_NUM') || $token->is('FLOAT_NUM')) {
-                return (new NumericLiteral())->decode($sign . $token->text);
-            }
-            if ($token->is('TRUE_SYM')) {
-                return true;
-            }
-            if ($token->is('FALSE_SYM')) {
-                return false;
-            }
-            if ($token->is('NULL_SYM')) {
-                return null;
-            }
-            if (!$token->is('UNDERSCORE_CHARSET')) {
-                break;
-            }
-        }
-
-        return (new SqlText())->ofNode($literal);
-    }
-
-    /**
-     * Answers the text a string literal spells, strings written next to one another joined, or null for another literal.
-     *
-     * A date or a byte string is written as a literal of its own kind rather
-     * than as the text one, and is left to be read as the SQL it was written
-     * as.
-     */
-    public function strings(Node $literal): ?string
-    {
-        $written = $literal->find('text_literal')[0] ?? null;
-        if ($written === null) {
-            return null;
-        }
-        $text = '';
-        foreach ($written->tokens() as $token) {
-            if ($token->is('TEXT_STRING') || $token->is('NCHAR_STRING')) {
-                $text .= (new StringLiteral())->decode($token);
-            }
-        }
-
-        return $text;
+        return match (true) {
+            $literal instanceof StringLiteral => $literal->value(),
+            $literal instanceof NumberLiteral => (new NumericLiteral())->decode($literal->text),
+            $literal instanceof SignedLiteral => (new NumericLiteral())->decode(($literal->negative ? '-' : '') . $literal->number->text),
+            $literal instanceof BooleanLiteral => $literal->value,
+            $literal instanceof TemporalLiteral => $literal->text,
+            $literal instanceof RadixLiteral && $numeric => (new NumericLiteral())->decode(($literal->radix === Radix::Hexadecimal ? '0x' : '0b') . $literal->digits),
+            $literal instanceof RadixLiteral => (new TypeParameters())->member(new Text($literal->digits, radix: $literal->radix)),
+            $literal instanceof NullLiteral => null,
+            default => null,
+        };
     }
 }

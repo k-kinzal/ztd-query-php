@@ -77,12 +77,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
 #[UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnAttributes::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableStatement::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\Identifier::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\StringLiteral::class)]
-#[UsesClass(\SqlFixture\Syntax\NodeReader::class)]
-#[UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
-#[UsesClass(\SqlFixture\Syntax\QuotedText::class)]
+#[UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 final class PlanSchemaValidatorTest extends TestCase
 {
     #[Test]

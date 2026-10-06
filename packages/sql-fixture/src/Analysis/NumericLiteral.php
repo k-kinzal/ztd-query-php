@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\Syntax;
+namespace SqlFixture\Analysis;
 
 /**
  * Converts the text of a numeric token into the PHP number it denotes.
@@ -15,7 +15,7 @@ namespace SqlFixture\Syntax;
 final class NumericLiteral
 {
     /**
-     * Returns an integer for whole numbers that fit the platform, and a float otherwise.
+     * Returns an integer for whole numbers that fit the platform, and a float otherwise, also for a radix number beyond it.
      */
     public function decode(string $text): int|float
     {
@@ -26,13 +26,13 @@ final class NumericLiteral
             $digits = substr($digits, 1);
         }
         $radix = match (strtolower(substr($digits, 0, 2))) {
-            '0x' => 16,
-            '0o' => 8,
-            '0b' => 2,
+            '0x' => hexdec(substr($digits, 2)),
+            '0o' => octdec(substr($digits, 2)),
+            '0b' => bindec(substr($digits, 2)),
             default => null,
         };
         if ($radix !== null) {
-            return $sign * intval(substr($digits, 2), $radix);
+            return $sign * $radix;
         }
         $integer = filter_var($digits, FILTER_VALIDATE_INT);
         if ($integer !== false) {
@@ -40,7 +40,7 @@ final class NumericLiteral
         }
         $whole = $this->whole($digits);
 
-        return $whole ?? $sign * (float) $digits;
+        return $whole === null ? $sign * (float) $digits : $sign * $whole;
     }
 
     /**

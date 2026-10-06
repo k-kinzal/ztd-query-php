@@ -14,6 +14,7 @@ use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(SqliteSchemaParser::class)]
+#[UsesClass(\SqlFixture\Analysis\CreateTableOperation::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(SchemaParseException::class)]
@@ -26,13 +27,8 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 #[UsesClass(\SqlFixture\Platform\Sqlite\Schema\ColumnConstraints::class)]
-#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\CreateTableStatement::class)]
-#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\Identifier::class)]
 #[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TableDefinition::class)]
-#[UsesClass(\SqlFixture\Syntax\NodeReader::class)]
-#[UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
-#[UsesClass(\SqlFixture\Syntax\QuotedText::class)]
-#[UsesClass(\SqlFixture\Syntax\SqlText::class)]
+#[UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 final class SqliteSchemaParserTest extends TestCase
 {
     #[Test]
@@ -279,7 +275,7 @@ final class SqliteSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (created_at TEXT DEFAULT CURRENT_TIMESTAMP)';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
-        self::assertSame('CURRENT_TIMESTAMP', $schema->columns['created_at']->default);
+        self::assertNull($schema->columns['created_at']->default);
     }
 
     #[Test]
@@ -343,7 +339,7 @@ final class SqliteSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (d TEXT DEFAULT CURRENT_DATE)';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
-        self::assertSame('CURRENT_DATE', $schema->columns['d']->default);
+        self::assertNull($schema->columns['d']->default);
     }
 
     #[Test]
@@ -352,7 +348,7 @@ final class SqliteSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (t TEXT DEFAULT CURRENT_TIME)';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
-        self::assertSame('CURRENT_TIME', $schema->columns['t']->default);
+        self::assertNull($schema->columns['t']->default);
     }
 
     #[Test]
@@ -361,7 +357,7 @@ final class SqliteSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (val INTEGER DEFAULT (1+2))';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
-        self::assertSame('(1+2)', $schema->columns['val']->default);
+        self::assertNull($schema->columns['val']->default);
     }
 
     #[Test]
@@ -675,10 +671,10 @@ final class SqliteSchemaParserTest extends TestCase
         self::assertSame('hello', $schema->columns['col_str']->default);
         self::assertSame(42, $schema->columns['col_int']->default);
         self::assertSame(9.99, $schema->columns['col_float']->default);
-        self::assertSame('current_timestamp', $schema->columns['col_ts']->default);
-        self::assertSame('current_date', $schema->columns['col_date']->default);
-        self::assertSame('current_time', $schema->columns['col_time']->default);
-        self::assertSame('(1+2)', $schema->columns['col_expr']->default);
+        self::assertNull($schema->columns['col_ts']->default);
+        self::assertNull($schema->columns['col_date']->default);
+        self::assertNull($schema->columns['col_time']->default);
+        self::assertNull($schema->columns['col_expr']->default);
     }
 
     #[Test]
@@ -836,7 +832,7 @@ final class SqliteSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (val INTEGER DEFAULT (10 * 2))';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
-        self::assertSame('(10 * 2)', $schema->columns['val']->default);
+        self::assertNull($schema->columns['val']->default);
     }
 
     #[Test]
@@ -854,7 +850,7 @@ final class SqliteSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (ts TEXT DEFAULT CURRENT_TIMESTAMP)';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
-        self::assertSame('CURRENT_TIMESTAMP', $schema->columns['ts']->default);
+        self::assertNull($schema->columns['ts']->default);
     }
 
     #[Test]
@@ -914,7 +910,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function testParseIntegerPrimaryKeyWithTextPrimaryKeyElseBranch(): void
+    public function testParseRejectsATableWithTwoPrimaryKeys(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -924,10 +920,9 @@ final class SqliteSchemaParserTest extends TestCase
             )
             SQL;
 
-        $schema = (new SqliteSchemaParser())->parse($sql);
-
-        self::assertTrue($schema->columns['id']->autoIncrement);
-        self::assertFalse($schema->columns['code']->autoIncrement);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
+        $this->expectExceptionMessage('more than one primary key');
+        (new SqliteSchemaParser())->parse($sql);
     }
 
     #[Test]

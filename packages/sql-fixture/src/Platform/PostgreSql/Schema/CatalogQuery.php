@@ -48,13 +48,15 @@ final class CatalogQuery
         $pkStmt = $pdo->prepare(
             'SELECT a.attname '
             . 'FROM pg_index i '
+            . 'JOIN pg_class c ON c.oid = i.indrelid '
+            . 'JOIN pg_namespace n ON n.oid = c.relnamespace '
             . 'JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) '
-            . 'WHERE i.indrelid = :table_oid::regclass AND i.indisprimary'
+            . 'WHERE n.nspname = :schema AND c.relname = :table AND i.indisprimary '
+            . 'ORDER BY array_position(i.indkey::int2[], a.attnum)'
         );
 
         try {
-            $identifiers = new Identifier();
-            $pkStmt->execute(['table_oid' => $identifiers->quote($schema) . '.' . $identifiers->quote($table)]);
+            $pkStmt->execute(['schema' => $schema, 'table' => $table]);
             /**
              * @var list<array{attname: string}> $pkRows
              */

@@ -5,38 +5,32 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\MySql\Schema;
 
 use SqlFixture\Schema\ColumnDefinition;
-use SqlFixture\Syntax\NodeReader;
-use SqlParser\Parser\Node;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as WrittenColumn;
+use SqlSemantics\Statement\Declaration\Column;
+use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * Reads a column_def node into a schema column.
+ * Reads a column definition into a schema column.
+ *
+ * The statement supplies the written type, attributes and default; the
+ * analysis supplies whether the column admits NULL and whether it is generated.
  *
  * @visibility root
  */
 final class ColumnParser
 {
     /**
-     * Returns the column the node declares, or null when it names no typed column.
+     * Returns the schema column for a written column and its declaration.
      *
      * @param list<string> $primaryKeyColumns
      */
-    public function parseColumnDefinition(Node $columnDef, array $primaryKeyColumns): ?ColumnDefinition
+    public function parse(WrittenColumn $written, Column $declared, array $primaryKeyColumns): ColumnDefinition
     {
-        $reader = new NodeReader();
-        $ident = $reader->child($columnDef, 'ident');
-        $fieldDef = $reader->child($columnDef, 'field_def');
-        $type = $fieldDef === null ? null : $reader->child($fieldDef, 'type');
-        $name = $ident === null ? null : (new Identifier())->decode($ident);
-        if ($name === null || $name === '' || $fieldDef === null || $type === null) {
-            return null;
-        }
-
-        $attributes = (new ColumnAttributes())->read($fieldDef);
-        $shape = (new TypeParameters())->parse($type);
+        $name = $written->name->column->value;
+        $type = $written->specification->dataType();
+        $shape = (new TypeParameters())->shape($type);
+        $attributes = (new ColumnAttributes())->read($written->specification->columnAttributes());
         $autoIncrement = $attributes->autoIncrement || $shape->autoIncrement;
-        $nullable = $attributes->nullable && !$shape->autoIncrement && !in_array($name, $primaryKeyColumns, true);
-        $default = $attributes->default === null ? null : (new DefaultExpression())->extractDefault($attributes->default);
-        $enumValues = in_array($shape->type, ['ENUM', 'SET'], true) ? (new TypeParameters())->extractEnumValues($type) : null;
 
         return new ColumnDefinition(
             name: $name,
@@ -44,12 +38,12 @@ final class ColumnParser
             length: $shape->length,
             precision: $shape->precision,
             scale: $shape->scale,
-            nullable: $nullable,
-            unsigned: $reader->containsToken($type, 'UNSIGNED_SYM') || $shape->autoIncrement,
-            default: $default,
+            nullable: $declared->nullability !== Nullability::NotNull && !$autoIncrement && !in_array($name, $primaryKeyColumns, true),
+            unsigned: (new TypeParameters())->unsigned($type),
+            default: $attributes->default === null ? null : (new DefaultExpression())->evaluate($attributes->default, (new TypeParameters())->numeric($type)),
             autoIncrement: $autoIncrement,
-            generated: $reader->token($fieldDef, 'AS') !== null,
-            enumValues: $enumValues,
+            generated: $declared->generated,
+            enumValues: (new TypeParameters())->members($type),
         );
     }
 }

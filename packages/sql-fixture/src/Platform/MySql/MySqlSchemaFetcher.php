@@ -7,7 +7,6 @@ namespace SqlFixture\Platform\MySql;
 use PDO;
 use SqlFixture\Schema\SchemaFetcherInterface;
 use SqlFixture\Schema\TableSchema;
-use SqlParser\MySql\MySqlParser;
 
 /**
  * Fetches table schemas from MySQL databases using SHOW CREATE TABLE.
@@ -23,12 +22,14 @@ final class MySqlSchemaFetcher implements SchemaFetcherInterface
     private Schema\CreateTableQuery $query;
 
     /**
-     * Shares one grammar between the statement that is issued and the declaration it answers.
+     * Reads the issued statement and the declaration it answers with the grammar of one release.
+     *
+     * @param string|null $version The version tag of the release; null selects the default
      */
-    public function __construct(?MySqlSchemaParser $parser = null, MySqlParser $grammar = new MySqlParser())
+    public function __construct(?MySqlSchemaParser $parser = null, ?string $version = null)
     {
-        $this->parser = $parser ?? new MySqlSchemaParser($grammar);
-        $this->query = new Schema\CreateTableQuery(new Schema\ShowCreateTable($grammar));
+        $this->parser = $parser ?? new MySqlSchemaParser($version);
+        $this->query = new Schema\CreateTableQuery(new Schema\ShowCreateTable($version));
     }
 
     /**

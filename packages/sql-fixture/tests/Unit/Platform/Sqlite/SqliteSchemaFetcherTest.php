@@ -16,6 +16,7 @@ use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(SqliteSchemaFetcher::class)]
+#[UsesClass(\SqlFixture\Analysis\CreateTableOperation::class)]
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
@@ -31,13 +32,8 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 #[UsesClass(\SqlFixture\Platform\Sqlite\Schema\ColumnConstraints::class)]
-#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\CreateTableStatement::class)]
-#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\Identifier::class)]
 #[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TableDefinition::class)]
-#[UsesClass(\SqlFixture\Syntax\NodeReader::class)]
-#[UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
-#[UsesClass(\SqlFixture\Syntax\QuotedText::class)]
-#[UsesClass(\SqlFixture\Syntax\SqlText::class)]
+#[UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 final class SqliteSchemaFetcherTest extends TestCase
 {
     #[Test]
@@ -151,7 +147,7 @@ final class SqliteSchemaFetcherTest extends TestCase
         $fetcher = new SqliteSchemaFetcher();
         $schema = $fetcher->fetchSchema($pdo, 'test');
 
-        self::assertSame('CURRENT_TIMESTAMP', $schema->columns['created_at']->default);
+        self::assertNull($schema->columns['created_at']->default);
     }
 
     #[Test]

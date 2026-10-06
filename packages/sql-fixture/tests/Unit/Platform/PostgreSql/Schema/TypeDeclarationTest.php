@@ -6,29 +6,30 @@ namespace Tests\Unit\Platform\PostgreSql\Schema;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Analysis\CreateTableOperation;
+use SqlFixture\Platform\PostgreSql\Schema\CatalogColumn;
+use SqlFixture\Platform\PostgreSql\Schema\TableDefinition;
 use SqlFixture\Platform\PostgreSql\Schema\TypeDeclaration as Subject;
-use SqlParser\PostgreSql\PostgreSqlParser;
+use SqlFixture\Schema\TypeShape;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnDefinition as WrittenColumn;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\ArrayOf;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Parameterized;
+use Tests\Statement\PostgreSqlStatements;
 
 #[CoversClass(Subject::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\TypeShape::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NodeReader::class)]
+#[UsesClass(CreateTableOperation::class)]
+#[UsesClass(CatalogColumn::class)]
+#[UsesClass(TableDefinition::class)]
+#[UsesClass(TypeShape::class)]
 final class TypeDeclarationTest extends TestCase
 {
-    public function testIsDecimalTypeRecognizesAliases(): void
-    {
-        self::assertTrue((new Subject())->isDecimalType('DEC'));
-        self::assertTrue((new Subject())->isDecimalType('NUMERIC'));
-        self::assertTrue((new Subject())->isDecimalType('DECIMAL'));
-        self::assertFalse((new Subject())->isDecimalType('INTEGER'));
-    }
-
     #[DataProvider('providerTypeNames')]
-    public function testTypeNameReadsMultiWordAndQualifiedTypes(string $declaration, string $expected): void
+    public function testShapeNamesTheTypeAfterItsCatalogEntry(string $declaration, string $expected): void
     {
-        $tree = (new PostgreSqlParser())->parse("CREATE TABLE t (c {$declaration})");
-
-        self::assertSame($expected, (new Subject())->typeName($tree->find('Typename')[0]));
+        self::assertSame($expected, PostgreSqlStatements::shapes("c {$declaration}")[0]->type);
     }
 
     /**
@@ -38,35 +39,92 @@ final class TypeDeclarationTest extends TestCase
     {
         return [
             ['integer', 'INTEGER'],
+            ['INT', 'INTEGER'],
+            ['int4', 'INTEGER'],
+            ['pg_catalog.int4', 'INTEGER'],
+            ['SMALLINT', 'SMALLINT'],
+            ['BIGINT', 'BIGINT'],
             ['DOUBLE PRECISION', 'DOUBLE PRECISION'],
-            ['TIMESTAMP(3) WITH TIME ZONE', 'TIMESTAMP WITH TIME ZONE'],
-            ['TIME WITHOUT TIME ZONE', 'TIME WITHOUT TIME ZONE'],
-            ['CHARACTER VARYING(100)', 'CHARACTER VARYING'],
+            ['FLOAT', 'DOUBLE PRECISION'],
+            ['REAL', 'REAL'],
+            ['TIMESTAMP(3) WITH TIME ZONE', 'TIMESTAMPTZ'],
+            ['TIMESTAMP', 'TIMESTAMP'],
+            ['TIME WITH TIME ZONE', 'TIMETZ'],
+            ['CHARACTER VARYING(100)', 'VARCHAR'],
+            ['CHAR(2)', 'CHAR'],
             ['NUMERIC(10, 2)', 'NUMERIC'],
-            ['BIT VARYING(3)', 'BIT VARYING'],
-            ['pg_catalog.int4', 'INT4'],
-            ['TEXT[]', 'TEXT'],
+            ['DEC(5)', 'NUMERIC'],
+            ['BIT VARYING(3)', 'VARBIT'],
+            ['BOOLEAN', 'BOOLEAN'],
+            ['TEXT[]', 'TEXT_ARRAY'],
+            ['INT ARRAY', 'INTEGER_ARRAY'],
             ['timestamptz', 'TIMESTAMPTZ'],
+            ['UUID', 'UUID'],
+            ['JSONB', 'JSONB'],
             ['INTERVAL', 'INTERVAL'],
+            ['INTERVAL(3)', 'INTERVAL'],
+            ['INTERVAL DAY TO SECOND(2)', 'INTERVAL'],
+            ['"_status"', '_STATUS'],
+            ['my_enum', 'MY_ENUM'],
+            ['app.my_enum', 'MY_ENUM'],
+            ['app.my_enum[]', 'MY_ENUM_ARRAY'],
         ];
     }
 
-    public function testParseReadsDimensionsArraysAndSerialTypes(): void
+    public function testShapeReadsModifiersArraysAndSerialTypes(): void
     {
-        $sql = 'CREATE TABLE t (a VARCHAR(100), b NUMERIC(10, 2), c DEC(5), d TEXT[], e INTEGER[3][], f INT ARRAY, g SERIAL, h BIGSERIAL, i SMALLSERIAL, j SERIAL4, k SERIAL8, l SERIAL2, m TIMESTAMP(3), n INT)';
-        $shapes = array_map(static fn ($type): \SqlFixture\Schema\TypeShape => (new Subject())->parse($type), (new PostgreSqlParser())->parse($sql)->find('Typename'));
+        $shapes = PostgreSqlStatements::shapes('a VARCHAR(100), b NUMERIC(10, 2), c DEC(5), d TEXT[], e INTEGER[3][], g SERIAL, h BIGSERIAL, i SMALLSERIAL, j SERIAL4, k SERIAL8, l SERIAL2, m TIMESTAMP(3), n INT, o BINARY(16), p "serial", q "SERIAL", r INTERVAL(3), s VARCHAR(10)[], t NUMERIC(8, 2)[]');
 
         self::assertSame(['VARCHAR', 100, null, null], [$shapes[0]->type, $shapes[0]->length, $shapes[0]->precision, $shapes[0]->scale]);
         self::assertSame(['NUMERIC', null, 10, 2], [$shapes[1]->type, $shapes[1]->length, $shapes[1]->precision, $shapes[1]->scale]);
-        self::assertSame(['DEC', 5, 0], [$shapes[2]->type, $shapes[2]->precision, $shapes[2]->scale]);
+        self::assertSame([5, 0], [$shapes[2]->precision, $shapes[2]->scale]);
         self::assertSame('TEXT_ARRAY', $shapes[3]->type);
         self::assertSame(['INTEGER_ARRAY', null], [$shapes[4]->type, $shapes[4]->length]);
-        self::assertSame('INT_ARRAY', $shapes[5]->type);
-        self::assertSame(['INTEGER', true], [$shapes[6]->type, $shapes[6]->autoIncrement]);
-        self::assertSame(['BIGINT', true], [$shapes[7]->type, $shapes[7]->autoIncrement]);
-        self::assertSame(['SMALLINT', true], [$shapes[8]->type, $shapes[8]->autoIncrement]);
-        self::assertSame(['INTEGER', 'BIGINT', 'SMALLINT'], [$shapes[9]->type, $shapes[10]->type, $shapes[11]->type]);
-        self::assertSame(['TIMESTAMP', 3], [$shapes[12]->type, $shapes[12]->length]);
-        self::assertSame(['INT', null, false], [$shapes[13]->type, $shapes[13]->length, $shapes[13]->autoIncrement]);
+        self::assertSame(['INTEGER', true], [$shapes[5]->type, $shapes[5]->autoIncrement]);
+        self::assertSame(['BIGINT', true], [$shapes[6]->type, $shapes[6]->autoIncrement]);
+        self::assertSame(['SMALLINT', true], [$shapes[7]->type, $shapes[7]->autoIncrement]);
+        self::assertSame(['INTEGER', 'BIGINT', 'SMALLINT'], [$shapes[8]->type, $shapes[9]->type, $shapes[10]->type]);
+        self::assertSame(['TIMESTAMP', 3], [$shapes[11]->type, $shapes[11]->length]);
+        self::assertSame(['INTEGER', null, false], [$shapes[12]->type, $shapes[12]->length, $shapes[12]->autoIncrement]);
+        self::assertSame(['BINARY', 16], [$shapes[13]->type, $shapes[13]->length]);
+        self::assertSame(['INTEGER', true], [$shapes[14]->type, $shapes[14]->autoIncrement]);
+        self::assertSame(['SERIAL', false], [$shapes[15]->type, $shapes[15]->autoIncrement]);
+        self::assertSame(['INTERVAL', 3], [$shapes[16]->type, $shapes[16]->length]);
+        self::assertSame(['VARCHAR_ARRAY', 10], [$shapes[17]->type, $shapes[17]->length]);
+        self::assertSame(['NUMERIC_ARRAY', 8, 2], [$shapes[18]->type, $shapes[18]->precision, $shapes[18]->scale]);
+    }
+
+    public function testNameNamesEveryDescriptorKind(): void
+    {
+        self::assertSame('INTEGER', (new Subject())->name(Builtin::Int4));
+        self::assertSame('VARCHAR', (new Subject())->name(new Parameterized(Builtin::Varchar, 3)));
+        self::assertSame('TEXT_ARRAY', (new Subject())->name(new ArrayOf(Builtin::Text)));
+    }
+
+    public function testWrittenModifiersReadsOnlyIntegerModifiersOfANamedType(): void
+    {
+        [, $statement] = PostgreSqlStatements::analyzed("CREATE TABLE t (a BINARY(16), b VARCHAR(3), c my_type('x'), d my_type)");
+        $types = array_values(array_map(static fn (WrittenColumn $column) => $column->type, array_filter((new TableDefinition())->elements($statement), static fn (object $element): bool => $element instanceof WrittenColumn)));
+
+        self::assertSame([16], (new Subject())->writtenModifiers($types[0]));
+        self::assertSame([], (new Subject())->writtenModifiers($types[1]));
+        self::assertSame([], (new Subject())->writtenModifiers($types[2]));
+        self::assertSame([], (new Subject())->writtenModifiers($types[3]));
+    }
+
+    public function testSerialRecognizesOnlyAnUnqualifiedUnquotedSerialType(): void
+    {
+        [, $statement] = PostgreSqlStatements::analyzed('CREATE TABLE t (a serial, b BIGSERIAL, c "serial", d public.serial, e INT, f SERIAL[])');
+        $serial = array_values(array_map(static fn (WrittenColumn $column): bool => (new Subject())->serial($column->type), array_filter((new TableDefinition())->elements($statement), static fn (object $element): bool => $element instanceof WrittenColumn)));
+
+        self::assertSame([true, true, true, false, false, false], $serial);
+    }
+
+    public function testCatalogTypeNamesBuiltInTypesAndKeepsOtherNames(): void
+    {
+        self::assertSame('INTEGER', (new Subject())->catalogType('int4'));
+        self::assertSame('CHAR', (new Subject())->catalogType('bpchar'));
+        self::assertSame('_STATUS', (new Subject())->catalogType('_status'));
+        self::assertSame('INT4', (new Subject())->catalogType('INT4'));
     }
 }

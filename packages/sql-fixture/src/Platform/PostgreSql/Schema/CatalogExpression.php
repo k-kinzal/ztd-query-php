@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\PostgreSql\Schema;
 
-use SqlFixture\Syntax\NodeReader;
-use SqlParser\Lexer\SourceException;
-use SqlParser\Parser\Node;
-use SqlParser\PostgreSql\PostgreSqlParser;
+use SqlSemantics\Diagnostic\AnalysisException;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\ExpressionTarget;
+use SqlSemantics\Platform\PostgreSql\Statement\Query\Select;
+use SqlSemantics\Statement\Scalar;
 
 /**
  * Interprets the default expression text PostgreSQL's catalog reports for a column.
  *
- * The catalog hands back the expression as SQL text, so it is parsed as the
+ * The catalog hands back the expression as SQL text, so it is analyzed as the
  * single target of a SELECT and interpreted like a DEFAULT clause.
  *
  * @visibility root
@@ -20,47 +21,45 @@ use SqlParser\PostgreSql\PostgreSqlParser;
 final class CatalogExpression
 {
     /**
-     * Keeps the grammar used to parse each catalog expression.
+     * Reads expressions with the grammar of the analysis.
      */
-    public function __construct(private readonly PostgreSqlParser $parser)
+    public function __construct(private readonly Semantics $semantics)
     {
     }
 
     /**
-     * Returns the literal value the expression denotes, or its text for anything else.
+     * Returns the value of a constant expression, and null for one the server computes or that cannot be read.
      */
     public function evaluate(string $expression): int|float|bool|string|null
     {
-        $node = $this->expression('SELECT ' . $expression);
+        $scalar = $this->expression($expression);
 
-        return $node === null ? $expression : (new DefaultExpression())->evaluate($node);
+        return $scalar === null ? null : (new DefaultExpression())->evaluate($scalar);
     }
 
     /**
-     * Reports whether the expression draws its value from a sequence.
+     * Tells whether the expression draws the next value of a sequence.
      */
     public function isSequence(string $expression): bool
     {
-        $node = $this->expression('SELECT ' . $expression);
+        $scalar = $this->expression($expression);
 
-        return $node !== null && (new DefaultExpression())->isSequenceCall($node);
+        return $scalar !== null && (new DefaultExpression())->isSequenceCall($scalar);
     }
 
     /**
-     * Returns the a_expr node of a single-target SELECT, or null when the text is not one expression.
+     * Returns the expression the text spells, or null when it does not spell exactly one.
      */
-    public function expression(string $sql): ?Node
+    public function expression(string $expression): ?Scalar
     {
         try {
-            $tree = $this->parser->parse($sql);
-        } catch (SourceException) {
+            $operations = $this->semantics->analyzeAll('SELECT ' . $expression);
+        } catch (AnalysisException) {
             return null;
         }
-        $targets = $tree->find('target_el');
-        if (count($targets) !== 1) {
-            return null;
-        }
+        $select = count($operations) === 1 ? $operations[0]->statement : null;
+        $target = $select instanceof Select && count($select->targets) === 1 && $select->from === null ? $select->targets[0] : null;
 
-        return (new NodeReader())->child($targets[0], 'a_expr');
+        return $target instanceof ExpressionTarget ? $target->expression : null;
     }
 }

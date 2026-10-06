@@ -28,7 +28,11 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^10.5",
-        "squizlabs/php_codesniffer": "^4.0.4"
+        "squizlabs/php_codesniffer": "^4.0.4",
+        "k-kinzal/sql-semantics": "dev-main",
+        "k-kinzal/sql-semantics-mysql": "dev-main",
+        "k-kinzal/sql-semantics-postgres": "dev-main",
+        "k-kinzal/sql-semantics-sqlite": "dev-main"
     },
     "suggest": {
         "k-kinzal/ztd-query-mysql": "Required for MySQL support (PDO driver: mysql)",
@@ -50,6 +54,42 @@
             "name": "php-ai-toolkit",
             "type": "vcs",
             "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-mysql",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-mysql": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-postgres",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-postgres": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-sqlite",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-sqlite": "dev-main"
+                }
+            }
         },
         {
             "type": "path",

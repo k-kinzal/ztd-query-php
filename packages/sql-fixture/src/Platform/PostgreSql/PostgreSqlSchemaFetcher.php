@@ -7,26 +7,29 @@ namespace SqlFixture\Platform\PostgreSql;
 use PDO;
 use SqlFixture\Schema\SchemaFetcherInterface;
 use SqlFixture\Schema\TableSchema;
-use SqlParser\PostgreSql\PostgreSqlParser;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\PostgreSql\Dialect;
 
 /**
  * Fetches table schemas from PostgreSQL databases.
  *
  * PostgreSQL has no SHOW CREATE TABLE, so the schema is built from the
  * information_schema and pg_catalog rows, and each column default the
- * catalog reports is parsed with the PostgreSQL grammar.
+ * catalog reports is analyzed as a PostgreSQL expression.
  */
 final class PostgreSqlSchemaFetcher implements SchemaFetcherInterface
 {
     private Schema\CatalogSchema $catalog;
 
     /**
-     * Loads the grammar the table name and the catalog default expressions are read with.
+     * Reads table names and column defaults with the grammar of one release.
+     *
+     * @param string|null $version The version tag of the release; null selects the default
      */
-    public function __construct(?PostgreSqlParser $parser = null)
+    public function __construct(?string $version = null)
     {
-        $grammar = $parser ?? new PostgreSqlParser();
-        $this->catalog = new Schema\CatalogSchema(new Schema\CatalogExpression($grammar), new Schema\QualifiedName($grammar));
+        $semantics = new Semantics(Dialect::PostgreSql, $version);
+        $this->catalog = new Schema\CatalogSchema(new Schema\CatalogExpression($semantics), new Schema\QualifiedName($semantics));
     }
 
     /**

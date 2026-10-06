@@ -6,25 +6,22 @@ namespace Tests\Unit\Platform\PostgreSql\Schema;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Analysis\NumericLiteral;
 use SqlFixture\Platform\PostgreSql\Schema\DefaultExpression as Subject;
-use SqlParser\Parser\Node;
-use SqlParser\PostgreSql\PostgreSqlParser;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Operator\UnaryOperation;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
+use Tests\Statement\PostgreSqlStatements;
 
 #[CoversClass(Subject::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\QuotedText::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\StringLiteral::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\SqlText::class)]
+#[UsesClass(NumericLiteral::class)]
 final class DefaultExpressionTest extends TestCase
 {
     #[DataProvider('providerDefaults')]
-    public function testEvaluateInterpretsConstantsAndKeepsExpressions(string $declaration, int|float|bool|string|null $expected): void
+    public function testEvaluateReadsConstantsAndLeavesComputedExpressions(string $expression, int|float|bool|string|null $expected): void
     {
-        $sql = "CREATE TABLE t (c {$declaration})";
-        $tree = (new PostgreSqlParser())->parse($sql);
-
-        self::assertSame($expected, (new Subject())->evaluate($tree->find('b_expr')[0]));
+        self::assertSame($expected, (new Subject())->evaluate(PostgreSqlStatements::expression($expression)));
     }
 
     /**
@@ -33,66 +30,122 @@ final class DefaultExpressionTest extends TestCase
     public static function providerDefaults(): array
     {
         return [
-            ['INT DEFAULT 42', 42],
-            ['INT DEFAULT -42', -42],
-            ['INT DEFAULT +7', 7],
-            ['NUMERIC DEFAULT 9.99', 9.99],
-            ['NUMERIC DEFAULT -9.99', -9.99],
-            ["TEXT DEFAULT 'ready'", 'ready'],
-            ["TEXT DEFAULT 'it''s'", "it's"],
-            ["TEXT DEFAULT E'a\\nb'", "a\nb"],
-            ['TEXT DEFAULT $$dollar$$', 'dollar'],
-            ['BOOLEAN DEFAULT TRUE', true],
-            ['BOOLEAN DEFAULT false', false],
-            ['TEXT DEFAULT NULL', null],
-            ["JSONB DEFAULT '{}'::jsonb", '{}'],
-            ["TEXT DEFAULT 'a'::character varying", 'a'],
-            ['NUMERIC DEFAULT 1::numeric(10, 2)', 1],
-            ['TEXT DEFAULT NULL::text', null],
-            ["VARCHAR(20) DEFAULT 'none'::character varying", 'none'],
-            ['TEXT DEFAULT NULL::character varying', null],
-            ["TEXT DEFAULT 'a'::text::varchar", "'a'::text::varchar"],
-            ['TIMESTAMP DEFAULT now()', 'now()'],
-            ['TIMESTAMP DEFAULT CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP'],
-            ['UUID DEFAULT gen_random_uuid()', 'gen_random_uuid()'],
-            ['INT DEFAULT (1 + 2)', '(1 + 2)'],
-            ['INT DEFAULT 1 + 2', '1 + 2'],
-            ["INT DEFAULT nextval('seq')", "nextval('seq')"],
-            ["BYTEA DEFAULT X'00'", "X'00'"],
+            ['42', 42],
+            ['-42', -42],
+            ['+7', 7],
+            ['- 7', -7],
+            ['9.99', 9.99],
+            ['-9.99', -9.99],
+            ['1_000', 1000],
+            ['0x1F', 31],
+            ["'hello'", 'hello'],
+            ["'it''s'", "it's"],
+            ["E'a\\tb'", "a\tb"],
+            ['$$dollar$$', 'dollar'],
+            ["'a'\n'b'", 'ab'],
+            ['TRUE', true],
+            ['false', false],
+            ['NULL', null],
+            ["'a'::text", 'a'],
+            ['1::numeric(10, 2)', null],
+            ['1.5::numeric', 1.5],
+            ['1.5::int', null],
+            ['1::double precision', 1],
+            ['1.5::real', 1.5],
+            ["'abcdef'::varchar(3)", null],
+            ["CAST('abcdef' AS varchar(3))", null],
+            ["'a'::char", null],
+            ["'x'::character varying", 'x'],
+            ["'active'::status", 'active'],
+            ["'{}'::json", '{}'],
+            ['true::boolean', true],
+            ["'{1}'::int[]", null],
+            ["'5'::integer", null],
+            ['1::int::bigint', 1],
+            ['NULL::character varying', null],
+            ["'2020-01-01'::date", '2020-01-01'],
+            ["-'5'", null],
+            ['now()', null],
+            ['CURRENT_TIMESTAMP', null],
+            ['gen_random_uuid()', null],
+            ['(1 + 2)', null],
+            ["'a' || 'b'", null],
+            ["B'101'", null],
         ];
     }
 
-    public function testEvaluateReturnsTheTextOfAnEmptyNode(): void
+    public function testSignedAnswersOnlyASignedNumber(): void
     {
-        self::assertSame('', (new Subject())->evaluate(new Node('a_expr', 0, [])));
+        $negated = PostgreSqlStatements::expression('-5');
+        $factorial = PostgreSqlStatements::expression("@ 'x'::int");
+        self::assertInstanceOf(UnaryOperation::class, $negated);
+        self::assertInstanceOf(UnaryOperation::class, $factorial);
+
+        self::assertSame(-5, (new Subject())->signed($negated));
+        self::assertNull((new Subject())->signed($factorial));
     }
 
-    public function testIsCastAcceptsExactlyOneTypeCastAfterTheConstant(): void
+    public function testConstantReadsEachConstantKind(): void
     {
-        $sql = "CREATE TABLE t (c TEXT DEFAULT 'a'::text, d TEXT DEFAULT 'a' || 'b', e INT DEFAULT 1::int::bigint)";
-        $expressions = (new PostgreSqlParser())->parse($sql)->find('b_expr');
-        $cast = $expressions[0];
-        $concat = $expressions[2];
-        $doubleCast = $expressions[5];
+        $string = PostgreSqlStatements::expression("'s'");
+        $bits = PostgreSqlStatements::expression("B'1'");
+        self::assertInstanceOf(Constant::class, $string);
+        self::assertInstanceOf(Constant::class, $bits);
 
-        self::assertSame("'a'::text", $cast->text($sql));
-        self::assertSame("'a' || 'b'", $concat->text($sql));
-        self::assertSame('1::int::bigint', $doubleCast->text($sql));
-        self::assertTrue((new Subject())->isCast($cast, array_slice($cast->tokens(), 1)));
-        self::assertFalse((new Subject())->isCast($concat, array_slice($concat->tokens(), 1)));
-        self::assertFalse((new Subject())->isCast($cast, []));
-        self::assertFalse((new Subject())->isCast($doubleCast, array_slice($doubleCast->tokens(), 1)));
+        self::assertSame('s', (new Subject())->constant($string));
+        self::assertNull((new Subject())->constant($bits));
     }
 
     public function testIsSequenceCallRecognizesNextvalCaseInsensitively(): void
     {
-        $sql = "CREATE TABLE t (a INT DEFAULT nextval('s'), b INT DEFAULT NEXTVAL('s'::regclass), c INT DEFAULT now(), d INT DEFAULT 1)";
-        $expressions = (new PostgreSqlParser())->parse($sql)->find('b_expr');
-        $calls = array_values(array_filter($expressions, static fn (Node $node): bool => $node->name === 'b_expr' && str_contains($node->text($sql), '(') && !str_starts_with($node->text($sql), "'")));
+        self::assertTrue((new Subject())->isSequenceCall(PostgreSqlStatements::expression("nextval('s'::regclass)")));
+        self::assertTrue((new Subject())->isSequenceCall(PostgreSqlStatements::expression("NEXTVAL('s')")));
+        self::assertTrue((new Subject())->isSequenceCall(PostgreSqlStatements::expression("pg_catalog.nextval('s')")));
+        self::assertFalse((new Subject())->isSequenceCall(PostgreSqlStatements::expression("\"NEXTVAL\"('s')")));
+        self::assertFalse((new Subject())->isSequenceCall(PostgreSqlStatements::expression('now()')));
+        self::assertFalse((new Subject())->isSequenceCall(PostgreSqlStatements::expression("'nextval'")));
+    }
 
-        self::assertTrue((new Subject())->isSequenceCall($calls[0]));
-        self::assertTrue((new Subject())->isSequenceCall($calls[1]));
-        self::assertFalse((new Subject())->isSequenceCall($calls[2]));
-        self::assertFalse((new Subject())->isSequenceCall(new Node('a_expr', 0, [])));
+    public function testCastKeepsAValueOnlyWhenTheTargetTypeKeepsIt(): void
+    {
+        $kept = PostgreSqlStatements::expression("'2020-01-01'::timestamp");
+        $truncated = PostgreSqlStatements::expression("'2020-01-01 10:00:00.5'::timestamp(0)");
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Expression\Cast::class, $kept);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Expression\Cast::class, $truncated);
+
+        self::assertSame('2020-01-01', (new Subject())->cast($kept));
+        self::assertNull((new Subject())->cast($truncated));
+    }
+
+    public function testKeepsTextOnlyForTypesWithoutAModifierThatCutsIt(): void
+    {
+        $targets = ["'a'::text", "'a'::varchar", "'a'::varchar(3)", "'a'::char", "'a'::timestamp", "'a'::timestamp(0)", "'{}'::json", "'1'::int", "'a'::my_type(2)"];
+        $kept = array_map(static function (string $expression): bool {
+            $cast = PostgreSqlStatements::expression($expression);
+            self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Expression\Cast::class, $cast);
+
+            return (new Subject())->keepsText($cast->type->designation);
+        }, $targets);
+
+        self::assertSame([true, true, false, false, true, false, true, false, false], $kept);
+    }
+
+    public function testKeepsNumberKeepsIntegersInIntegerTypesAndAnyNumberInUnconstrainedOnes(): void
+    {
+        $designation = static function (string $expression): \SqlSemantics\Platform\PostgreSql\Statement\Type\TypeDesignation {
+            $cast = PostgreSqlStatements::expression($expression);
+            self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Expression\Cast::class, $cast);
+
+            return $cast->type->designation;
+        };
+
+        self::assertTrue((new Subject())->keepsNumber($designation('1::int'), 1));
+        self::assertFalse((new Subject())->keepsNumber($designation('1::int'), 1.5));
+        self::assertTrue((new Subject())->keepsNumber($designation('1::real'), 1.5));
+        self::assertTrue((new Subject())->keepsNumber($designation('1::numeric'), 1.5));
+        self::assertFalse((new Subject())->keepsNumber($designation('1::numeric(3, 1)'), 1.5));
+        self::assertTrue((new Subject())->keepsNumber($designation('1::float'), 1.5));
+        self::assertFalse((new Subject())->keepsNumber($designation('1::float(3)'), 1.5));
+        self::assertFalse((new Subject())->keepsNumber($designation('1::bool'), 1));
     }
 }

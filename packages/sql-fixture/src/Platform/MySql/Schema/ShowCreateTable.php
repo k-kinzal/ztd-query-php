@@ -4,73 +4,64 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql\Schema;
 
-use SqlFixture\Schema\Exception\UnreadableTableNameException;
-use SqlParser\Lexer\SourceException;
-use SqlParser\MySql\MySqlParser;
+use SqlSemantics\Diagnostic\AnalysisException;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateTable as ShowStatement;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Operation;
 
 /**
- * Writes the statement that reads the declaration of one table.
+ * Builds the SHOW CREATE TABLE statement for a table name.
  *
- * The name is written into the statement and the statement is read back with
- * the grammar of the server, and it is issued only when the grammar read the
- * whole of it as one table's declaration and nothing else: no second
- * statement, no comment and no spacing of its own. A name that is not read
- * that way, a reserved word or a name written with a space in it, is written
- * as one quoted identifier and read back again.
+ * A name that reads as one table reference, such as `db.users` or a quoted
+ * name, is kept as written. Any other text is taken as the name of one table,
+ * and the statement is built from that name, so it is quoted as needed and
+ * can never add a second statement.
  *
  * @visibility root
  */
 final class ShowCreateTable
 {
+    private Semantics $semantics;
+
     /**
-     * Keeps the grammar the written statement is read back with.
+     * Loads the grammar of the release once for every name the builder will read.
      */
-    public function __construct(private readonly MySqlParser $parser = new MySqlParser())
+    public function __construct(?string $version = null)
     {
+        $this->semantics = new Semantics(Dialect::MySql, $version);
     }
 
     /**
-     * Answers the statement that reads the declaration of the named table.
-     * @throws UnreadableTableNameException
+     * Returns the statement that reads the definition of the named table.
      */
     public function statement(string $tableName): string
     {
-        $statement = $this->readable('SHOW CREATE TABLE ' . $tableName)
-            ?? $this->readable('SHOW CREATE TABLE ' . $this->quoted($tableName));
-        if ($statement === null) {
-            throw new UnreadableTableNameException($tableName);
-        }
-
-        return $statement;
+        return ($this->written($tableName) ?? $this->built($tableName))->toString();
     }
 
     /**
-     * Answers the statement as the grammar reads it back, or null when it is anything but one table's declaration.
+     * Returns the statement for a name that reads as one table reference, or null when it does not.
      */
-    public function readable(string $statement): ?string
+    public function written(string $tableName): ?Operation
     {
         try {
-            $tree = $this->parser->parse($statement);
-        } catch (SourceException) {
+            $operations = $this->semantics->analyzeAll('SHOW CREATE TABLE ' . $tableName);
+        } catch (AnalysisException) {
             return null;
-        }
-        $idents = $tree->find('table_ident');
-        if (count($idents) !== 1) {
-            return null;
-        }
-        $written = 'SHOW CREATE TABLE ';
-        foreach ($idents[0]->tokens() as $token) {
-            $written .= $token->text;
         }
 
-        return $tree->toString() === $written ? $written : null;
+        return count($operations) === 1 && $operations[0]->statement instanceof ShowStatement ? $operations[0] : null;
     }
 
     /**
-     * Writes a name as one identifier, doubling the quote the way the server reads it.
+     * Returns the statement for a table whose whole name is the given text.
      */
-    public function quoted(string $tableName): string
+    public function built(string $tableName): Operation
     {
-        return '`' . str_replace('`', '``', $tableName) . '`';
+        return new Operation($this->semantics->context([]), new ShowStatement(new InspectedTable(new QualifiedName(new Name($tableName)))));
     }
 }

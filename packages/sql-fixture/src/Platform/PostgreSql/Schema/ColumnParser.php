@@ -5,35 +5,32 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\PostgreSql\Schema;
 
 use SqlFixture\Schema\ColumnDefinition;
-use SqlFixture\Syntax\NodeReader;
-use SqlParser\Parser\Node;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnDefinition as WrittenColumn;
+use SqlSemantics\Statement\Declaration\Column;
+use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * Reads a columnDef node into a schema column.
+ * Reads a column definition into a schema column.
+ *
+ * The analysis supplies the resolved type, whether the column admits NULL
+ * and whether it is generated; the statement supplies its constraints and
+ * default.
  *
  * @visibility root
  */
 final class ColumnParser
 {
     /**
-     * Returns the column the node declares, or null when it names no typed column.
+     * Returns the schema column for a written column and its declaration.
      *
-     * @param list<string> $tablePrimaryKeys
+     * @param list<string> $primaryKeyColumns
      */
-    public function parseColumnDefinition(Node $columnDef, array $tablePrimaryKeys): ?ColumnDefinition
+    public function parse(WrittenColumn $written, Column $declared, array $primaryKeyColumns): ColumnDefinition
     {
-        $reader = new NodeReader();
-        $nameToken = $reader->firstToken($columnDef);
-        $typename = $reader->child($columnDef, 'Typename');
-        if ($nameToken === null || $typename === null) {
-            return null;
-        }
-        $name = (new Identifier())->decode($nameToken);
-        $constraints = (new ColumnConstraints())->read($columnDef);
-        $shape = (new TypeDeclaration())->parse($typename);
+        $name = $declared->name->value;
+        $shape = (new TypeDeclaration())->shape($declared->type, $written->type);
+        $constraints = (new ColumnConstraints())->read($written->qualifiers);
         $autoIncrement = $shape->autoIncrement || $constraints->identity;
-        $primaryKey = $constraints->primaryKey || in_array($name, $tablePrimaryKeys, true);
-        $default = $constraints->default === null ? null : (new DefaultExpression())->evaluate($constraints->default);
 
         return new ColumnDefinition(
             name: $name,
@@ -41,12 +38,11 @@ final class ColumnParser
             length: $shape->length,
             precision: $shape->precision,
             scale: $shape->scale,
-            nullable: $constraints->nullable && !$primaryKey && !$autoIncrement,
+            nullable: $declared->nullability !== Nullability::NotNull && !$autoIncrement && !in_array($name, $primaryKeyColumns, true),
             unsigned: false,
-            default: $default,
+            default: $constraints->default === null ? null : (new DefaultExpression())->evaluate($constraints->default),
             autoIncrement: $autoIncrement,
-            generated: $constraints->generated,
-            enumValues: null,
+            generated: $declared->generated,
         );
     }
 }

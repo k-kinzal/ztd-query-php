@@ -12,7 +12,7 @@ SQL Fixture is a [FakerPHP](https://fakerphp.org/) provider that generates fixtu
 
 - PHP 8.1+
 - [fakerphp/faker](https://github.com/FakerPHP/Faker) ^1.23
-- [k-kinzal/sql-parser](../sql-parser/), which reads CREATE TABLE statements with the grammar of each database
+- [k-kinzal/sql-semantics](../sql-semantics/) with [sql-semantics-mysql](../sql-semantics-mysql/), [sql-semantics-postgres](../sql-semantics-postgres/), and [sql-semantics-sqlite](../sql-semantics-sqlite/), which read CREATE TABLE statements with the grammar and rules of each release
 
 ## Support Syntax
 
@@ -86,6 +86,17 @@ use SqlFixture\Provider\DatabaseFixtureProvider;
 $provider = new DatabaseFixtureProvider($faker, $pdo);
 $provider->getVersion(); // For example: 'mysql-8.0.44' for a MySQL 8.0 server
 ```
+
+### How a statement is read
+
+A CREATE TABLE statement is analyzed as the selected release analyzes it, so the schema matches the table the server would create:
+
+- A statement the release refuses is rejected with `InvalidSqlException`, for example a duplicate column, two primary keys, a key on a column the table lacks, or syntax the release does not have. A foreign key may name a table the input does not declare.
+- Names are compared and folded as the server does: an unquoted PostgreSQL name is folded to lower case, and a MySQL key names its column without regard to case.
+- Types are named as the server names them. MySQL `INTEGER` is `INT` and `NUMERIC`, `DEC`, and `FIXED` are `DECIMAL`. PostgreSQL types are named after their catalog entries: `INT` is `INTEGER`, `DECIMAL` is `NUMERIC`, `TIMESTAMP WITH TIME ZONE` is `TIMESTAMPTZ`, and `CHARACTER VARYING` is `VARCHAR`. A SQLite type keeps its declared words, without a trailing `GENERATED ALWAYS`.
+- A column admits NULL as the server decides: `NOT NULL` followed by `NULL` admits it in MySQL and not in SQLite, and PostgreSQL refuses the pair.
+- A default written as a literal has its value, such as `'it''s'`, `-9.99`, `TRUE`, `X'41'`, or `'{}'::jsonb`. A default the server computes when a row is inserted, such as `CURRENT_TIMESTAMP`, `now()`, or `(1 + 2)`, has none (`null`).
+- The input must create exactly one table with a column list. `CREATE TABLE ... LIKE`, `CREATE TABLE ... AS SELECT`, and a table without columns are rejected with `MissingColumnDefinitionsException`.
 
 ## License
 

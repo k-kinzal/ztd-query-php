@@ -5,77 +5,89 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\MySql\Schema;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\Analysis\CreateTableOperation;
+use SqlFixture\Analysis\NumericLiteral;
+use SqlFixture\Platform\MySql\Schema\ColumnAttributes;
+use SqlFixture\Platform\MySql\Schema\ColumnParser;
+use SqlFixture\Platform\MySql\Schema\DefaultExpression;
 use SqlFixture\Platform\MySql\Schema\TableDefinition as Subject;
-use SqlParser\MySql\MySqlParser;
-use SqlParser\Parser\Node;
+use SqlFixture\Platform\MySql\Schema\TypeParameters;
+use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\TypeShape;
+use Tests\Statement\MySqlStatements;
 
 #[CoversClass(Subject::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\ColumnDefinition::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\TypeShape::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NodeReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\QuotedText::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnAttributes::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\Identifier::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\StringLiteral::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\UnanalyzedColumnException::class)]
+#[UsesClass(CreateTableOperation::class)]
+#[UsesClass(ColumnDefinition::class)]
+#[UsesClass(TypeShape::class)]
+#[UsesClass(NumericLiteral::class)]
+#[UsesClass(ColumnAttributes::class)]
+#[UsesClass(ColumnParser::class)]
+#[UsesClass(DefaultExpression::class)]
+#[UsesClass(TypeParameters::class)]
 final class TableDefinitionTest extends TestCase
 {
-    public function testExtractTableNameDropsTheDatabaseQualifierAndQuotes(): void
+    public function testColumnsKeepsDeclarationOrderAndSkipsConstraints(): void
     {
-        $sql = 'CREATE TABLE `shop`.`order items` (id INT)';
-        $statement = (new MySqlParser())->parse($sql)->find('create_table_stmt')[0];
-
-        self::assertSame('order items', (new Subject())->extractTableName($statement, $sql));
-    }
-
-    public function testExtractTableNameRejectsAStatementWithoutAName(): void
-    {
-        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
-        $this->expectExceptionMessage('Table name not found');
-        (new Subject())->extractTableName(new Node('create_table_stmt', 0, []), 'CREATE TABLE');
-    }
-
-    public function testExtractColumnsKeepsDeclarationOrderAndSkipsConstraints(): void
-    {
-        $sql = 'CREATE TABLE t (id INT, PRIMARY KEY (id), name VARCHAR(10) NOT NULL, KEY k (name))';
-        $statement = (new MySqlParser())->parse($sql)->find('create_table_stmt')[0];
-        $columns = (new Subject())->extractColumns($statement, 't');
+        [$operation, $statement] = MySqlStatements::analyzed('CREATE TABLE t (id INT, PRIMARY KEY (id), name VARCHAR(10) NOT NULL, KEY k (name))');
+        $columns = (new Subject())->columns($statement, (new CreateTableOperation())->columns($operation), ['id']);
 
         self::assertSame(['id', 'name'], array_keys($columns));
         self::assertFalse($columns['id']->nullable);
+        self::assertFalse($columns['name']->nullable);
         self::assertSame(10, $columns['name']->length);
     }
 
-    public function testExtractColumnsRejectsATableWithoutColumns(): void
+    public function testColumnsRejectsAColumnTheAnalysisDoesNotDeclare(): void
     {
-        $sql = 'CREATE TABLE t LIKE o';
-        $statement = (new MySqlParser())->parse($sql)->find('create_table_stmt')[0];
+        [, $statement] = MySqlStatements::analyzed('CREATE TABLE t (id INT, name TEXT)');
+        [$other] = MySqlStatements::analyzed('CREATE TABLE t (id INT)');
 
-        $this->expectException(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class);
-        (new Subject())->extractColumns($statement, 't');
+
+        $this->expectException(\SqlFixture\Schema\Exception\UnanalyzedColumnException::class);
+        $this->expectExceptionMessage('Column could not be analyzed: name');
+        (new Subject())->columns($statement, (new CreateTableOperation())->columns($other), []);
     }
 
-    public function testExtractPrimaryKeysCombinesColumnAndTableLevelKeysWithoutDuplicates(): void
+    public function testColumnsIsEmptyWithoutAColumnList(): void
     {
-        $sql = 'CREATE TABLE t (a INT PRIMARY KEY, b INT KEY, `c` INT, d INT, PRIMARY KEY (a, `c`(10), d DESC), UNIQUE KEY u (d), FOREIGN KEY (b) REFERENCES o (id))';
-        $statement = (new MySqlParser())->parse($sql)->find('create_table_stmt')[0];
+        [$operation, $statement] = MySqlStatements::analyzed('CREATE TABLE t AS SELECT 1 AS a');
 
-        self::assertSame(['a', 'b', 'c', 'd'], (new Subject())->extractPrimaryKeys($statement));
+        self::assertSame([], (new Subject())->columns($statement, (new CreateTableOperation())->columns($operation), []));
     }
 
-    public function testExtractPrimaryKeysSkipsExpressionKeyParts(): void
+    public function testPrimaryKeysCombinesColumnAndTableLevelKeysWithoutDuplicates(): void
     {
-        $sql = 'CREATE TABLE t (a INT, b INT, PRIMARY KEY ((a + b), b))';
-        $statement = (new MySqlParser())->parse($sql)->find('create_table_stmt')[0];
+        [$operation, $statement] = MySqlStatements::analyzed('CREATE TABLE t (a INT, b INT KEY, `c` INT, d INT, UNIQUE KEY u (d), FOREIGN KEY (b) REFERENCES o (id))');
+        [$tableOperation, $table] = MySqlStatements::analyzed('CREATE TABLE t (a INT, `c` INT, d INT, PRIMARY KEY (a, `c`(10), d DESC), UNIQUE KEY u (d))');
 
-        self::assertSame(['b'], (new Subject())->extractPrimaryKeys($statement));
-        self::assertSame([], (new Subject())->extractPrimaryKeys(new Node('create_table_stmt', 0, [])));
+        self::assertSame(['b'], (new Subject())->primaryKeys($operation, $statement));
+        self::assertSame(['a', 'c', 'd'], (new Subject())->primaryKeys($tableOperation, $table));
+    }
+
+    public function testPrimaryKeysSkipsExpressionKeyParts(): void
+    {
+        [$operation, $statement] = MySqlStatements::analyzed('CREATE TABLE t (a INT, b INT, PRIMARY KEY ((a + b), b))');
+        [$noneOperation, $none] = MySqlStatements::analyzed('CREATE TABLE t (a INT)');
+
+        self::assertSame(['b'], (new Subject())->primaryKeys($operation, $statement));
+        self::assertSame([], (new Subject())->primaryKeys($noneOperation, $none));
+    }
+
+    public function testPrimaryKeysNamesAKeyColumnAsItIsDeclared(): void
+    {
+        [$operation, $statement] = MySqlStatements::analyzed('CREATE TABLE t (id INT, Name TEXT, PRIMARY KEY (ID, name(3)))');
+
+        self::assertSame(['id', 'Name'], (new Subject())->primaryKeys($operation, $statement));
+    }
+
+    public function testPrimaryKeysNamesARepeatedKeyColumnOnce(): void
+    {
+        [$operation, $statement] = MySqlStatements::analyzed('CREATE TABLE t (a INT, b INT, PRIMARY KEY (a, b, a))');
+
+        self::assertSame(['a', 'b'], (new Subject())->primaryKeys($operation, $statement));
     }
 }

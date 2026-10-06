@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Syntax;
+namespace Tests\Unit\Analysis;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use SqlFixture\Syntax\NumericLiteral as Subject;
+use SqlFixture\Analysis\NumericLiteral as Subject;
 
 #[CoversClass(Subject::class)]
 final class NumericLiteralTest extends TestCase
@@ -39,6 +39,10 @@ final class NumericLiteralTest extends TestCase
             ['0b1010', 10],
             ['0o17', 15],
             ['-0x10', -16],
+            ['-0002', -2],
+            ['+0002', 2],
+            ['0xFFFFFFFFFFFFFFFF', 18446744073709551615.0],
+            ['0b' . str_repeat('1', 64), 18446744073709551615.0],
             ['0123', 123],
             ['000', 0],
         ];

@@ -4,91 +4,62 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql\Schema;
 
+use SqlFixture\Analysis\CreateTableOperation;
 use SqlFixture\Schema\ColumnDefinition;
-use SqlFixture\Schema\Exception\InvalidSqlException;
-use SqlFixture\Schema\Exception\MissingColumnDefinitionsException;
-use SqlFixture\Syntax\NodeReader;
-use SqlParser\Parser\Node;
+use SqlFixture\Schema\Exception\UnanalyzedColumnException;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as WrittenColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
+use SqlSemantics\Statement\Declaration\Column;
+use SqlSemantics\Statement\Operation;
 
 /**
- * Reads the table name, columns and primary key from a create_table_stmt node.
+ * Reads the columns and primary key of a CREATE TABLE statement.
  *
  * @visibility root
  */
 final class TableDefinition
 {
     /**
-     * Reads the declared table identifier without its database qualifier.
-     * @throws InvalidSqlException
-     */
-    public function extractTableName(Node $statement, string $sql): string
-    {
-        $tableIdent = (new NodeReader())->child($statement, 'table_ident');
-        $idents = $tableIdent === null ? [] : $tableIdent->find('ident');
-        $last = end($idents);
-        $name = $last === false ? null : (new Identifier())->decode($last);
-        if ($name === null || $name === '') {
-            throw new InvalidSqlException($sql, 'Table name not found');
-        }
-
-        return $name;
-    }
-
-    /**
+     * Returns the written columns, keyed by name, as the analysis declares them.
+     *
+     * @param array<string, Column> $declared
+     * @param list<string> $primaryKeys
      * @return array<string, ColumnDefinition>
-     * @throws MissingColumnDefinitionsException
+     * @throws UnanalyzedColumnException When the analysis declares no column for a written one
      */
-    public function extractColumns(Node $statement, string $tableName): array
+    public function columns(CreateTable $statement, array $declared, array $primaryKeys): array
     {
         $columns = [];
-        $primaryKeys = $this->extractPrimaryKeys($statement);
-        foreach ((new CreateTableStatement())->elements($statement) as $element) {
-            $columnDef = (new NodeReader())->child($element, 'column_def');
-            if ($columnDef === null) {
+        foreach ($statement->elements as $element) {
+            if (!$element instanceof WrittenColumn) {
                 continue;
             }
-            $column = (new ColumnParser())->parseColumnDefinition($columnDef, $primaryKeys);
-            if ($column !== null) {
-                $columns[$column->name] = $column;
-            }
-        }
-        if ($columns === []) {
-            throw new MissingColumnDefinitionsException($tableName);
+            $column = $declared[$element->name->column->value] ?? throw new UnanalyzedColumnException($element->name->column->value);
+            $columns[$column->name->value] = (new ColumnParser())->parse($element, $column, $primaryKeys);
         }
 
         return $columns;
     }
 
     /**
-     * Collects the primary key columns declared on columns and as a table constraint.
+     * Collects the primary key columns declared on a column or as a table constraint, each once.
      *
      * @return list<string>
      */
-    public function extractPrimaryKeys(Node $statement): array
+    public function primaryKeys(Operation $operation, CreateTable $statement): array
     {
-        $reader = new NodeReader();
         $primaryKeys = [];
-        foreach ((new CreateTableStatement())->elements($statement) as $element) {
-            $columnDef = $reader->child($element, 'column_def');
-            if ($columnDef !== null) {
-                $ident = $reader->child($columnDef, 'ident');
-                $fieldDef = $reader->child($columnDef, 'field_def');
-                $name = $ident === null ? null : (new Identifier())->decode($ident);
-                if ($name !== null && $name !== '' && $fieldDef !== null && (new ColumnAttributes())->read($fieldDef)->primaryKey) {
-                    $primaryKeys[] = $name;
-                }
-                continue;
-            }
-            $constraint = $reader->child($element, 'table_constraint_def');
-            $keyType = $constraint === null ? null : $reader->child($constraint, 'constraint_key_type');
-            if ($constraint === null || $keyType === null || $reader->token($keyType, 'PRIMARY_SYM') === null) {
-                continue;
-            }
-            foreach ($constraint->find('key_part') as $part) {
-                $ident = $reader->child($part, 'ident');
-                $name = $ident === null ? null : (new Identifier())->decode($ident);
-                if ($name !== null && $name !== '') {
-                    $primaryKeys[] = $name;
+        foreach ($statement->elements as $element) {
+            if ($element instanceof WrittenColumn && (new ColumnAttributes())->read($element->specification->columnAttributes())->primaryKey) {
+                $primaryKeys[] = $element->name->column->value;
+            } elseif ($element instanceof IndexDefinition && $element->kind === IndexKind::Primary) {
+                foreach ($element->parts as $part) {
+                    if ($part instanceof ColumnPart) {
+                        $primaryKeys[] = (new CreateTableOperation())->columnName($operation, $part->column->value);
+                    }
                 }
             }
         }

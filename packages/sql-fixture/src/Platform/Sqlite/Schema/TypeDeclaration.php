@@ -4,46 +4,52 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\Sqlite\Schema;
 
+use SqlFixture\Analysis\NumericLiteral;
 use SqlFixture\Schema\TypeShape;
-use SqlFixture\Syntax\NodeReader;
-use SqlParser\Parser\Node;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\HexLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Lexical\Word;
+use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
+use SqlSemantics\Platform\Sqlite\Statement\Type\NumberSign;
+use SqlSemantics\Platform\Sqlite\Statement\Type\SignedNumber;
+use SqlSemantics\Platform\Sqlite\Statement\Type\TypeName;
 
 /**
- * Reads the declared type name and its dimensions from a typetoken node.
+ * Reads the declared type of a column and the numbers written after it.
+ *
+ * The analysis decides the declared type as SQLite records it, which drops a
+ * trailing GENERATED ALWAYS. A column without a type has the BLOB affinity and
+ * is named BLOB.
  *
  * @visibility root
  */
 final class TypeDeclaration
 {
     /**
-     * Returns the declared type words, or BLOB when the column declares no type.
+     * Returns the upper-case type name and the sizes written in its parentheses.
      */
-    public function typeName(Node $typetoken): string
+    public function shape(ColumnDomain $declared, ?TypeName $written): TypeShape
     {
-        $reader = new NodeReader();
-        $typename = $reader->child($typetoken, 'typename');
-        $words = $typename === null ? [] : array_map('strtoupper', $reader->wordsOutsideParentheses($typename));
-        if (count($words) >= 2 && $words[count($words) - 2] === 'GENERATED' && $words[count($words) - 1] === 'ALWAYS') {
-            array_splice($words, -2);
-        }
+        $arguments = $written === null ? [] : $written->arguments;
+        $name = $written === null || $arguments === []
+            ? strtoupper($declared->declared)
+            : strtoupper(implode(' ', array_map(static fn (Word $word): string => $word->name->value, $written->words)));
 
-        return $words === [] ? 'BLOB' : implode(' ', $words);
+        return TypeShape::fromNumbers($name === '' ? 'BLOB' : $name, array_map(fn (SignedNumber $number): int => $this->number($number), $arguments));
     }
 
     /**
-     * Interprets the declared type parameters before column constraints are applied.
+     * Returns the whole part of the number a type argument is written with, with its sign.
      */
-    public function parse(Node $typetoken): TypeShape
+    public function number(SignedNumber $number): int
     {
-        $name = $this->typeName($typetoken);
-        $numbers = [];
-        foreach ($typetoken->find('signed') as $signed) {
-            foreach ($signed->tokens() as $token) {
-                if ($token->is('INTEGER') || $token->is('FLOAT')) {
-                    $numbers[] = (int) $token->text;
-                }
-            }
-        }
-        return TypeShape::fromNumbers($name, $numbers);
+        $literal = $number->number;
+        $value = match (true) {
+            $literal instanceof IntegerLiteral => (int) (new NumericLiteral())->decode($literal->digits),
+            $literal instanceof HexLiteral => (int) (new NumericLiteral())->decode('0x' . $literal->digits),
+            default => (int) (new NumericLiteral())->decode(($literal->whole === '' ? '0' : $literal->whole) . ($literal->fraction === null ? '' : '.' . $literal->fraction) . ($literal->exponent === null ? '' : 'e' . $literal->exponent)),
+        };
+
+        return $number->sign === NumberSign::Minus ? -$value : $value;
     }
 }

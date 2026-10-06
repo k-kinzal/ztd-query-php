@@ -42,19 +42,7 @@ final class CatalogColumn
      */
     public function elementType(string $udtName): string
     {
-        $element = strtolower(ltrim($udtName, '_'));
-
-        return match ($element) {
-            'int2' => 'SMALLINT',
-            'int4' => 'INTEGER',
-            'int8' => 'BIGINT',
-            'float4' => 'REAL',
-            'float8' => 'DOUBLE PRECISION',
-            'bool' => 'BOOLEAN',
-            'varchar' => 'VARCHAR',
-            'bpchar' => 'CHAR',
-            default => strtoupper($element),
-        };
+        return (new TypeDeclaration())->catalogType(strtolower(ltrim($udtName, '_')));
     }
 
     /**

@@ -14,6 +14,8 @@ use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(PostgreSqlSchemaParser::class)]
+#[UsesClass(\SqlFixture\Analysis\CreateTableOperation::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogColumn::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(SchemaParseException::class)]
@@ -27,14 +29,8 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 #[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogExpression::class)]
 #[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\ColumnConstraints::class)]
-#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CreateTableStatement::class)]
-#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\Identifier::class)]
-#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\StringLiteral::class)]
 #[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\TableDefinition::class)]
-#[UsesClass(\SqlFixture\Syntax\NodeReader::class)]
-#[UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
-#[UsesClass(\SqlFixture\Syntax\QuotedText::class)]
-#[UsesClass(\SqlFixture\Syntax\SqlText::class)]
+#[UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 final class PostgreSqlSchemaParserTest extends TestCase
 {
     #[Test]
@@ -212,7 +208,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (id UUID DEFAULT gen_random_uuid())';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('gen_random_uuid()', $schema->columns['id']->default);
+        self::assertNull($schema->columns['id']->default);
     }
 
     #[Test]
@@ -345,7 +341,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (created_at TIMESTAMP WITH TIME ZONE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('TIMESTAMP WITH TIME ZONE', $schema->columns['created_at']->type);
+        self::assertSame('TIMESTAMPTZ', $schema->columns['created_at']->type);
     }
 
     #[Test]
@@ -354,7 +350,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (created_at TIMESTAMP WITHOUT TIME ZONE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('TIMESTAMP WITHOUT TIME ZONE', $schema->columns['created_at']->type);
+        self::assertSame('TIMESTAMP', $schema->columns['created_at']->type);
     }
 
     #[Test]
@@ -363,7 +359,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (t TIME WITH TIME ZONE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('TIME WITH TIME ZONE', $schema->columns['t']->type);
+        self::assertSame('TIMETZ', $schema->columns['t']->type);
     }
 
     #[Test]
@@ -381,7 +377,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (name CHARACTER VARYING(100))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('CHARACTER VARYING', $schema->columns['name']->type);
+        self::assertSame('VARCHAR', $schema->columns['name']->type);
         self::assertSame(100, $schema->columns['name']->length);
     }
 
@@ -502,7 +498,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('CURRENT_TIMESTAMP', $schema->columns['created_at']->default);
+        self::assertNull($schema->columns['created_at']->default);
     }
 
     #[Test]
@@ -559,7 +555,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (created_at TIMESTAMP DEFAULT NOW())';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('NOW()', $schema->columns['created_at']->default);
+        self::assertNull($schema->columns['created_at']->default);
     }
 
     #[Test]
@@ -620,7 +616,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (val INTEGER DEFAULT (1+2))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('(1+2)', $schema->columns['val']->default);
+        self::assertNull($schema->columns['val']->default);
     }
 
     #[Test]
@@ -629,7 +625,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (val DECIMAL(8))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('DECIMAL', $schema->columns['val']->type);
+        self::assertSame('NUMERIC', $schema->columns['val']->type);
         self::assertSame(8, $schema->columns['val']->precision);
         self::assertSame(0, $schema->columns['val']->scale);
     }
@@ -640,7 +636,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (t TIME WITHOUT TIME ZONE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('TIME WITHOUT TIME ZONE', $schema->columns['t']->type);
+        self::assertSame('TIME', $schema->columns['t']->type);
     }
 
     #[Test]
@@ -680,11 +676,11 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function testParseDefaultStringDoubleQuotes(): void
+    public function testParseRejectsADefaultThatNamesAColumn(): void
     {
-        $sql = 'CREATE TABLE test (name TEXT DEFAULT "hello")';
-        $schema = (new PostgreSqlSchemaParser())->parse($sql);
-        self::assertSame('"hello"', $schema->columns['name']->default);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
+        $this->expectExceptionMessage('Column hello does not exist');
+        (new PostgreSqlSchemaParser())->parse('CREATE TABLE test (name TEXT DEFAULT "hello")');
     }
 
     #[Test]
@@ -707,7 +703,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     {
         $sql = 'CREATE TABLE test (t TIME DEFAULT LOCALTIME)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
-        self::assertSame('LOCALTIME', $schema->columns['t']->default);
+        self::assertNull($schema->columns['t']->default);
     }
 
     #[Test]
@@ -715,7 +711,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     {
         $sql = 'CREATE TABLE test (ts TIMESTAMP DEFAULT LOCALTIMESTAMP)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
-        self::assertSame('LOCALTIMESTAMP', $schema->columns['ts']->default);
+        self::assertNull($schema->columns['ts']->default);
     }
 
     #[Test]
@@ -723,7 +719,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     {
         $sql = 'CREATE TABLE test (d DATE DEFAULT CURRENT_DATE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
-        self::assertSame('CURRENT_DATE', $schema->columns['d']->default);
+        self::assertNull($schema->columns['d']->default);
     }
 
     #[Test]
@@ -731,7 +727,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     {
         $sql = 'CREATE TABLE test (t TIME DEFAULT CURRENT_TIME)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
-        self::assertSame('CURRENT_TIME', $schema->columns['t']->default);
+        self::assertNull($schema->columns['t']->default);
     }
 
     #[Test]
@@ -867,11 +863,11 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertSame('DOUBLE PRECISION', $schema->columns['col_dp']->type);
-        self::assertSame('TIMESTAMP WITH TIME ZONE', $schema->columns['col_tstz']->type);
-        self::assertSame('TIMESTAMP WITHOUT TIME ZONE', $schema->columns['col_ts']->type);
-        self::assertSame('TIME WITH TIME ZONE', $schema->columns['col_ttz']->type);
-        self::assertSame('TIME WITHOUT TIME ZONE', $schema->columns['col_t']->type);
-        self::assertSame('CHARACTER VARYING', $schema->columns['col_cv']->type);
+        self::assertSame('TIMESTAMPTZ', $schema->columns['col_tstz']->type);
+        self::assertSame('TIMESTAMP', $schema->columns['col_ts']->type);
+        self::assertSame('TIMETZ', $schema->columns['col_ttz']->type);
+        self::assertSame('TIME', $schema->columns['col_t']->type);
+        self::assertSame('VARCHAR', $schema->columns['col_cv']->type);
         self::assertSame(100, $schema->columns['col_cv']->length);
     }
 
@@ -881,7 +877,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'create table test (val decimal(10, 2))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('DECIMAL', $schema->columns['val']->type);
+        self::assertSame('NUMERIC', $schema->columns['val']->type);
         self::assertSame(10, $schema->columns['val']->precision);
         self::assertSame(2, $schema->columns['val']->scale);
     }
@@ -945,15 +941,15 @@ final class PostgreSqlSchemaParserTest extends TestCase
         self::assertSame('hello', $schema->columns['col_str']->default);
         self::assertSame(42, $schema->columns['col_int']->default);
         self::assertSame(9.99, $schema->columns['col_float']->default);
-        self::assertSame('gen_random_uuid()', $schema->columns['col_func']->default);
+        self::assertNull($schema->columns['col_func']->default);
         self::assertSame('{}', $schema->columns['col_cast']->default);
-        self::assertSame('(1+2)', $schema->columns['col_expr']->default);
-        self::assertSame('current_timestamp', $schema->columns['col_ts']->default);
-        self::assertSame('now()', $schema->columns['col_now']->default);
-        self::assertSame('current_date', $schema->columns['col_date']->default);
-        self::assertSame('current_time', $schema->columns['col_time']->default);
-        self::assertSame('localtime', $schema->columns['col_lt']->default);
-        self::assertSame('localtimestamp', $schema->columns['col_lts']->default);
+        self::assertNull($schema->columns['col_expr']->default);
+        self::assertNull($schema->columns['col_ts']->default);
+        self::assertNull($schema->columns['col_now']->default);
+        self::assertNull($schema->columns['col_date']->default);
+        self::assertNull($schema->columns['col_time']->default);
+        self::assertNull($schema->columns['col_lt']->default);
+        self::assertNull($schema->columns['col_lts']->default);
     }
 
     #[Test]
@@ -1075,7 +1071,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (val INTEGER DEFAULT (10 * 2))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('(10 * 2)', $schema->columns['val']->default);
+        self::assertNull($schema->columns['val']->default);
     }
 
     #[Test]
@@ -1102,7 +1098,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (id UUID DEFAULT uuid_generate_v4())';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('uuid_generate_v4()', $schema->columns['id']->default);
+        self::assertNull($schema->columns['id']->default);
     }
 
     #[Test]
@@ -1151,7 +1147,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (val decimal(5))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
-        self::assertSame('DECIMAL', $schema->columns['val']->type);
+        self::assertSame('NUMERIC', $schema->columns['val']->type);
         self::assertSame(5, $schema->columns['val']->precision);
         self::assertSame(0, $schema->columns['val']->scale);
     }
@@ -1185,12 +1181,10 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function testParseDefaultStringWithDoubleQuotes(): void
+    public function testParseRejectsADoubleQuotedDefaultAsAColumnReference(): void
     {
-        $sql = 'CREATE TABLE test (name TEXT DEFAULT "value_here")';
-        $schema = (new PostgreSqlSchemaParser())->parse($sql);
-
-        self::assertSame('"value_here"', $schema->columns['name']->default);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
+        (new PostgreSqlSchemaParser())->parse('CREATE TABLE test (name TEXT DEFAULT "value_here")');
     }
 
     #[Test]

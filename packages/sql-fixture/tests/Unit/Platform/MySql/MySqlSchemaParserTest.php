@@ -14,6 +14,7 @@ use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(MySqlSchemaParser::class)]
+#[UsesClass(\SqlFixture\Analysis\CreateTableOperation::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(SchemaParseException::class)]
@@ -27,13 +28,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnAttributes::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableStatement::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\Identifier::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\StringLiteral::class)]
-#[UsesClass(\SqlFixture\Syntax\NodeReader::class)]
-#[UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
-#[UsesClass(\SqlFixture\Syntax\QuotedText::class)]
-#[UsesClass(\SqlFixture\Syntax\SqlText::class)]
+#[UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 final class MySqlSchemaParserTest extends TestCase
 {
     #[Test]
@@ -77,7 +72,7 @@ final class MySqlSchemaParserTest extends TestCase
         self::assertSame('SMALLINT', $schema->columns['col_smallint']->type);
         self::assertSame('MEDIUMINT', $schema->columns['col_mediumint']->type);
         self::assertSame('INT', $schema->columns['col_int']->type);
-        self::assertSame('INTEGER', $schema->columns['col_integer']->type);
+        self::assertSame('INT', $schema->columns['col_integer']->type);
         self::assertSame('BIGINT', $schema->columns['col_bigint']->type);
         self::assertSame('FLOAT', $schema->columns['col_float']->type);
         self::assertSame('DOUBLE', $schema->columns['col_double']->type);
@@ -85,7 +80,7 @@ final class MySqlSchemaParserTest extends TestCase
         self::assertSame('DECIMAL', $schema->columns['col_decimal']->type);
         self::assertSame(10, $schema->columns['col_decimal']->precision);
         self::assertSame(2, $schema->columns['col_decimal']->scale);
-        self::assertSame('NUMERIC', $schema->columns['col_numeric']->type);
+        self::assertSame('DECIMAL', $schema->columns['col_numeric']->type);
         self::assertSame(8, $schema->columns['col_numeric']->precision);
         self::assertSame(3, $schema->columns['col_numeric']->scale);
         self::assertSame('BIT', $schema->columns['col_bit']->type);
@@ -326,12 +321,12 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function testParseDefaultNonStringValue(): void
+    public function testParseDefaultComputedByTheServerHasNoValue(): void
     {
-        $sql = 'CREATE TABLE test (val VARCHAR(255) DEFAULT CURRENT_TIMESTAMP)';
+        $sql = 'CREATE TABLE test (val DATETIME DEFAULT CURRENT_TIMESTAMP)';
         $schema = (new MySqlSchemaParser())->parse($sql);
 
-        self::assertSame('CURRENT_TIMESTAMP', $schema->columns['val']->default);
+        self::assertNull($schema->columns['val']->default);
     }
 
     #[Test]
@@ -362,15 +357,15 @@ final class MySqlSchemaParserTest extends TestCase
         self::assertSame(10, $schema->columns['col_decimal']->precision);
         self::assertSame(2, $schema->columns['col_decimal']->scale);
 
-        self::assertSame('NUMERIC', $schema->columns['col_numeric']->type);
+        self::assertSame('DECIMAL', $schema->columns['col_numeric']->type);
         self::assertSame(8, $schema->columns['col_numeric']->precision);
         self::assertSame(3, $schema->columns['col_numeric']->scale);
 
-        self::assertSame('DEC', $schema->columns['col_dec']->type);
+        self::assertSame('DECIMAL', $schema->columns['col_dec']->type);
         self::assertSame(5, $schema->columns['col_dec']->precision);
         self::assertSame(1, $schema->columns['col_dec']->scale);
 
-        self::assertSame('FIXED', $schema->columns['col_fixed']->type);
+        self::assertSame('DECIMAL', $schema->columns['col_fixed']->type);
         self::assertSame(6, $schema->columns['col_fixed']->precision);
         self::assertSame(2, $schema->columns['col_fixed']->scale);
     }
@@ -467,7 +462,7 @@ final class MySqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (val NUMERIC(7))';
         $schema = (new MySqlSchemaParser())->parse($sql);
 
-        self::assertSame('NUMERIC', $schema->columns['val']->type);
+        self::assertSame('DECIMAL', $schema->columns['val']->type);
         self::assertSame(7, $schema->columns['val']->precision);
         self::assertSame(0, $schema->columns['val']->scale);
     }
@@ -478,7 +473,7 @@ final class MySqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (val FIXED(4))';
         $schema = (new MySqlSchemaParser())->parse($sql);
 
-        self::assertSame('FIXED', $schema->columns['val']->type);
+        self::assertSame('DECIMAL', $schema->columns['val']->type);
         self::assertSame(4, $schema->columns['val']->precision);
         self::assertSame(0, $schema->columns['val']->scale);
     }
@@ -489,7 +484,7 @@ final class MySqlSchemaParserTest extends TestCase
         $sql = 'CREATE TABLE test (val DEC(3))';
         $schema = (new MySqlSchemaParser())->parse($sql);
 
-        self::assertSame('DEC', $schema->columns['val']->type);
+        self::assertSame('DECIMAL', $schema->columns['val']->type);
         self::assertSame(3, $schema->columns['val']->precision);
         self::assertSame(0, $schema->columns['val']->scale);
     }

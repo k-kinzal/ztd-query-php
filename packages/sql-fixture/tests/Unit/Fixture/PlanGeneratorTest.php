@@ -140,12 +140,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Fixture\Generation\RelationValueException::class)]
 #[UsesClass(\SqlFixture\Fixture\Generation\RecursiveRelationException::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnAttributes::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableStatement::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\Identifier::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\StringLiteral::class)]
-#[UsesClass(\SqlFixture\Syntax\NodeReader::class)]
-#[UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
-#[UsesClass(\SqlFixture\Syntax\QuotedText::class)]
+#[UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 #[UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
 final class PlanGeneratorTest extends TestCase
 {

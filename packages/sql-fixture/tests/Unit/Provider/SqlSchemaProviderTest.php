@@ -10,6 +10,10 @@ use PHPUnit\Framework\TestCase;
 use SqlFixture\Provider\SqlSchemaProvider as Subject;
 
 #[CoversClass(Subject::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Analysis\CreateTableOperation::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Version\Releases::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Version\ServerVersion::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Provider\FixtureGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Provider\FixtureProvider::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\FixtureSet::class)]
@@ -141,22 +145,12 @@ use SqlFixture\Provider\SqlSchemaProvider as Subject;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Generation\RecursiveRelationException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Generation\RelationValueException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnAttributes::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\Identifier::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\StringLiteral::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogExpression::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\ColumnConstraints::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CreateTableStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\Identifier::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\StringLiteral::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\TableDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\ColumnConstraints::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\CreateTableStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\Identifier::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\TableDefinition::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NodeReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\QuotedText::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 final class SqlSchemaProviderTest extends TestCase
 {
     public function testCachesSchemasThroughThePublicProviderContract(): void

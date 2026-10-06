@@ -11,21 +11,16 @@ use RuntimeException;
 use SqlFixture\Platform\PostgreSql\Schema\CatalogExpression;
 use SqlFixture\Platform\PostgreSql\Schema\CatalogSchema as Subject;
 use SqlFixture\Platform\PostgreSql\Schema\QualifiedName;
-use SqlParser\PostgreSql\PostgreSqlParser;
 
 #[CoversClass(Subject::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\ColumnDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\TableSchema::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NodeReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\QuotedText::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogColumn::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(CatalogExpression::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\DefaultExpression::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\StringLiteral::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\Identifier::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(QualifiedName::class)]
 final class CatalogSchemaTest extends TestCase
 {
@@ -42,8 +37,8 @@ final class CatalogSchemaTest extends TestCase
         self::assertNotFalse($statement);
         $namespace = $statement->fetchColumn();
         self::assertIsString($namespace);
-        $grammar = new PostgreSqlParser();
-        $schema = (new Subject(new CatalogExpression($grammar), new QualifiedName($grammar)))->fetchSchema($pdo, $namespace . '.users');
+        $semantics = \Tests\Statement\PostgreSqlStatements::semantics();
+        $schema = (new Subject(new CatalogExpression($semantics), new QualifiedName($semantics)))->fetchSchema($pdo, $namespace . '.users');
         self::assertSame('users', $schema->tableName);
         self::assertSame(['id'], $schema->primaryKeys);
         self::assertFalse($schema->columns['id']->nullable);
@@ -64,8 +59,8 @@ final class CatalogSchemaTest extends TestCase
         self::assertNotFalse($statement);
         $namespace = $statement->fetchColumn();
         self::assertIsString($namespace);
-        $grammar = new PostgreSqlParser();
-        $schema = (new Subject(new CatalogExpression($grammar), new QualifiedName($grammar)))->fetchSchema($pdo, $namespace . '.prices');
+        $semantics = \Tests\Statement\PostgreSqlStatements::semantics();
+        $schema = (new Subject(new CatalogExpression($semantics), new QualifiedName($semantics)))->fetchSchema($pdo, $namespace . '.prices');
         self::assertSame('prices', $schema->tableName);
         self::assertSame([], $schema->primaryKeys);
         self::assertTrue($schema->columns['id']->autoIncrement);
@@ -93,10 +88,10 @@ final class CatalogSchemaTest extends TestCase
             (string) getenv('SQL_FIXTURE_PGSQL_PASSWORD'),
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false],
         );
-        $grammar = new PostgreSqlParser();
+        $semantics = \Tests\Statement\PostgreSqlStatements::semantics();
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Table not found: missing_table');
-        (new Subject(new CatalogExpression($grammar), new QualifiedName($grammar)))->fetchSchema($pdo, 'missing_table');
+        (new Subject(new CatalogExpression($semantics), new QualifiedName($semantics)))->fetchSchema($pdo, 'missing_table');
     }
 }

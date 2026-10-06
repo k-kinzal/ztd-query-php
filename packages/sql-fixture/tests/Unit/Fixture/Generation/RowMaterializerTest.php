@@ -17,6 +17,7 @@ use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(Subject::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\RowGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(FixtureGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\FixtureSet::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(GenerationRun::class)]
@@ -113,12 +114,7 @@ use SqlFixture\Schema\TableSchema;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Generation\RelationValueException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Generation\RecursiveRelationException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnAttributes::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\Identifier::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\StringLiteral::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NodeReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\QuotedText::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Analysis\NumericLiteral::class)]
 final class RowMaterializerTest extends TestCase
 {
     public function testMaterializeLinksEveryChildToTheGeneratedParent(): void

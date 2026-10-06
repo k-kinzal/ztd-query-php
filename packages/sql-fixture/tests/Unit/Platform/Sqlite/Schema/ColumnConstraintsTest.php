@@ -7,58 +7,39 @@ namespace Tests\Unit\Platform\Sqlite\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\Sqlite\Schema\ColumnConstraints as Subject;
-use SqlFixture\Platform\Sqlite\Schema\CreateTableStatement;
-use SqlParser\Sqlite\SqliteParser;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
+use Tests\Statement\SqliteStatements;
 
 #[CoversClass(Subject::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NodeReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(CreateTableStatement::class)]
 final class ColumnConstraintsTest extends TestCase
 {
-    public function testReadDefaultsToANullableColumn(): void
+    public function testReadDefaultsToAPlainColumn(): void
     {
-        $tree = (new SqliteParser())->parse('CREATE TABLE t (id INTEGER)');
-        $constraints = (new Subject())->read($tree->find('carglist')[0]);
+        $constraints = (new Subject())->read(SqliteStatements::columns('a INT NOT NULL')[0]->constraints);
 
-        self::assertTrue($constraints->nullable);
         self::assertFalse($constraints->primaryKey);
         self::assertFalse($constraints->autoIncrement);
-        self::assertFalse($constraints->generated);
         self::assertNull($constraints->default);
     }
 
-    public function testReadRecognizesNotNullDefaultAndPrimaryKeyWithAutoincrement(): void
+    public function testReadRecognizesPrimaryKeyAutoincrementAndDefault(): void
     {
-        $sql = "CREATE TABLE t (id INTEGER CONSTRAINT nn NOT NULL DEFAULT 'x' PRIMARY KEY AUTOINCREMENT UNIQUE COLLATE NOCASE)";
-        $tree = (new SqliteParser())->parse($sql);
-        $constraints = (new Subject())->read($tree->find('carglist')[0]);
+        $constraints = array_map(static fn ($column): array => $column->constraints, SqliteStatements::columns("id INTEGER NOT NULL DEFAULT 'x' PRIMARY KEY AUTOINCREMENT, k INT PRIMARY KEY, w TEXT DEFAULT ready"));
 
-        self::assertFalse($constraints->nullable);
-        self::assertTrue($constraints->primaryKey);
-        self::assertTrue($constraints->autoIncrement);
-        self::assertFalse($constraints->generated);
-        self::assertNotNull($constraints->default);
-        self::assertSame("DEFAULT 'x'", $constraints->default->text($sql));
+        $id = (new Subject())->read($constraints[0]);
+        self::assertTrue($id->primaryKey);
+        self::assertTrue($id->autoIncrement);
+        self::assertInstanceOf(DefaultLiteral::class, $id->default);
+        self::assertSame([true, false], [(new Subject())->read($constraints[1])->primaryKey, (new Subject())->read($constraints[1])->autoIncrement]);
+        self::assertInstanceOf(DefaultWord::class, (new Subject())->read($constraints[2])->default);
     }
 
-    public function testReadKeepsPrimaryKeyWithoutAutoincrement(): void
+    public function testReadLetsTheLastDefaultDecide(): void
     {
-        $tree = (new SqliteParser())->parse('CREATE TABLE t (id INTEGER PRIMARY KEY, b INT NOT NULL NULL, c INT NOT NULL)');
-        $columns = (new CreateTableStatement())->columns($tree->find('cmd')[0]);
+        $constraints = array_map(static fn ($column): array => $column->constraints, SqliteStatements::columns("a INT DEFAULT 1 DEFAULT (1 + 1), b TEXT DEFAULT (1) DEFAULT 'x'"));
 
-        self::assertTrue((new Subject())->read($columns[0][1])->primaryKey);
-        self::assertFalse((new Subject())->read($columns[0][1])->autoIncrement);
-        self::assertTrue((new Subject())->read($columns[1][1])->nullable);
-        self::assertFalse((new Subject())->read($columns[2][1])->nullable);
-    }
-
-    public function testReadMarksGeneratedColumns(): void
-    {
-        $tree = (new SqliteParser())->parse('CREATE TABLE t (a INT, b INT AS (a + 1), c TEXT GENERATED ALWAYS AS (a) STORED)');
-        $columns = (new CreateTableStatement())->columns($tree->find('cmd')[0]);
-
-        self::assertFalse((new Subject())->read($columns[0][1])->generated);
-        self::assertTrue((new Subject())->read($columns[1][1])->generated);
-        self::assertTrue((new Subject())->read($columns[2][1])->generated);
+        self::assertNull((new Subject())->read($constraints[0])->default);
+        self::assertInstanceOf(DefaultLiteral::class, (new Subject())->read($constraints[1])->default);
     }
 }

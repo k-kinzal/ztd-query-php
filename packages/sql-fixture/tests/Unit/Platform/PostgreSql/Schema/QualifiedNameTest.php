@@ -8,11 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\PostgreSql\Schema\QualifiedName as Subject;
-use SqlParser\PostgreSql\PostgreSqlParser;
 
 #[CoversClass(Subject::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\Identifier::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\QuotedText::class)]
 final class QualifiedNameTest extends TestCase
 {
     /**
@@ -21,7 +18,7 @@ final class QualifiedNameTest extends TestCase
     #[DataProvider('providerTableNames')]
     public function testSplitReadsTheSchemaAndTheTableTheCatalogStores(string $tableName, array $expected): void
     {
-        self::assertSame($expected, (new Subject(new PostgreSqlParser()))->split($tableName));
+        self::assertSame($expected, (new Subject(\Tests\Statement\PostgreSqlStatements::semantics()))->split($tableName));
     }
 
     /**
@@ -46,13 +43,14 @@ final class QualifiedNameTest extends TestCase
         ];
     }
 
-    public function testPartsAnswersNothingForTextThatIsNotOneTableName(): void
+    public function testReadAnswersNothingForTextThatIsNotOneTableName(): void
     {
-        $names = new Subject(new PostgreSqlParser());
+        $names = new Subject(\Tests\Statement\PostgreSqlStatements::semantics());
 
-        self::assertSame(['public', 'users'], $names->parts('public.users'));
-        self::assertNull($names->parts('users; DROP TABLE other'));
-        self::assertNull($names->parts('order'));
-        self::assertNull($names->parts(''));
+        self::assertSame('users', $names->read('public.users')?->name->value);
+        self::assertNull($names->read('users; DROP TABLE other'));
+        self::assertNull($names->read('users, other'));
+        self::assertNull($names->read('order'));
+        self::assertNull($names->read(''));
     }
 }

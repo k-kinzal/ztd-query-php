@@ -75,7 +75,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/bison-parser",
-                "reference": "51e3142333aa6d8207e8706aaa0e8eecc010bba1"
+                "reference": "370abc2592b55c7b6bf2651a3d4eab734aad737f"
             },
             "require": {
                 "php": "^8.1"
@@ -197,7 +197,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/deriver",
-                "reference": "544dcb5fae4f0176a22fed22c0a14d90538d0ba9"
+                "reference": "7f1996db641c1df9c279c7e8eea75f684d52383f"
             },
             "require": {
                 "ext-json": "*",
@@ -302,17 +302,13 @@
                     "phpunit --testsuite differential"
                 ],
                 "bench": [
-                    "@php bench/run.php"
+                    "@php bench/Bench.php"
                 ],
                 "fuzz": [
                     "@fuzz:smoke"
                 ],
                 "fuzz:smoke": [
-                    "@fuzz:seed",
                     "@php fuzz/run.php 100"
-                ],
-                "fuzz:seed": [
-                    "@php fuzz/seed.php"
                 ],
                 "fuzz:semantic": [
                     "@php fuzz/semantic.php 100"
@@ -336,7 +332,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/lemon-parser",
-                "reference": "23d7c721e5b33fad2d72ea35fd26729485ac8780"
+                "reference": "530cb17ea4101e446e25c61bf94c647a8979661d"
             },
             "require": {
                 "php": "^8.1"
@@ -458,7 +454,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-catalog",
-                "reference": "74a3d1454de890bc0272a013a4214fd788bd9b86"
+                "reference": "6e891f494b18502e28d268f913342f03d4562ff0"
             },
             "require": {
                 "ext-json": "*",
@@ -477,6 +473,10 @@
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-faker": "dev-main",
                 "k-kinzal/sql-fixture": "dev-main",
+                "k-kinzal/sql-semantics": "dev-main",
+                "k-kinzal/sql-semantics-mysql": "dev-main",
+                "k-kinzal/sql-semantics-postgres": "dev-main",
+                "k-kinzal/sql-semantics-sqlite": "dev-main",
                 "nikic/php-fuzzer": "^0.0.11",
                 "opis/json-schema": "^2.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
@@ -598,7 +598,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-faker",
-                "reference": "3c6552ac262216b381a4d5aa74f085f618e11f2b"
+                "reference": "f019bd8c81d5a0b9386c6e917f4355aae140de79"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -759,11 +759,15 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "cc5facea5a257c306792e4e1d57080dc73dc472c"
+                "reference": "ca89f1b5d28f3dcd5a5c61204b313287d6b061a1"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
                 "k-kinzal/sql-parser": "dev-main",
+                "k-kinzal/sql-semantics": "dev-main",
+                "k-kinzal/sql-semantics-mysql": "dev-main",
+                "k-kinzal/sql-semantics-postgres": "dev-main",
+                "k-kinzal/sql-semantics-sqlite": "dev-main",
                 "php": "^8.1"
             },
             "require-dev": {
@@ -903,7 +907,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-formatter",
-                "reference": "86f7288d635f710c2d31729da1a5b0ddcf64cc08"
+                "reference": "6512a953104da008dadd1a649f2cfb8e01f5f05b"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1127,15 +1131,15 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-parser",
-                "reference": "9453d939255f858ca262ec577c168bebd748aa96"
+                "reference": "603fa297e913f2162a18b3b7aaf3209dd63c9af1"
             },
             "require": {
-                "ext-zlib": "*",
                 "php": "^8.1"
             },
             "require-dev": {
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
+                "ext-zlib": "*",
                 "fakerphp/faker": "^1.23",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/bison-parser": "dev-main",
@@ -1151,6 +1155,7 @@
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
             "suggest": {
+                "ext-zlib": "Read legacy deflated custom parse-table caches; shipped tables do not require it",
                 "k-kinzal/bison-parser": "To rebuild the MySQL and PostgreSQL parse tables with bin/build-mysql.php and bin/build-pg.php",
                 "k-kinzal/lemon-parser": "To rebuild the SQLite parse tables with bin/build-sqlite.php"
             },
@@ -1288,7 +1293,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics",
-                "reference": "d671be18d0e7c2977a35508e5e629211fb303089"
+                "reference": "f7510e28d89e8b697b3844a849e99c83427854a1"
             },
             "require": {
                 "composer-runtime-api": "^2.2",
@@ -1312,9 +1317,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/build-models.php"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1415,7 +1417,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics-mysql",
-                "reference": "07f45cc67dbc0250d442acf031b6537c74fa7cc4"
+                "reference": "ba2c50290df29a5df4c2c4ae45d368d4fdbcab20"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1442,8 +1444,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "SqlSemantics\\Platform\\MySql\\": "src/",
-                    "SqlSemantics\\Statement\\Model\\MySql\\": "resources/models/"
+                    "SqlSemantics\\Platform\\MySql\\": "src/"
                 }
             },
             "autoload-dev": {
@@ -1465,12 +1466,6 @@
                 ],
                 "bench:quick": [
                     "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "build:models": [
-                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=mysql --output=resources"
-                ],
-                "build:models:check": [
-                    "@build:models --check"
                 ],
                 "compat": [
                     "phpcs"
@@ -1518,6 +1513,9 @@
                     "@fuzz:roundtrip --max-runs=100",
                     "@fuzz:schema --max-runs=100"
                 ],
+                "ledger": [
+                    "@php vendor/k-kinzal/sql-semantics/bin/production-ledger.php ."
+                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -1564,7 +1562,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics-postgres",
-                "reference": "1bfb85a891ca2cc56ceab5ed702281312d6be7e7"
+                "reference": "d5392e79f6ee4fc0042705f602cd0ced1bf78166"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1591,8 +1589,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "SqlSemantics\\Platform\\PostgreSql\\": "src/",
-                    "SqlSemantics\\Statement\\Model\\PostgreSql\\": "resources/models/"
+                    "SqlSemantics\\Platform\\PostgreSql\\": "src/"
                 }
             },
             "autoload-dev": {
@@ -1614,12 +1611,6 @@
                 ],
                 "bench:quick": [
                     "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "build:models": [
-                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=postgresql --output=resources"
-                ],
-                "build:models:check": [
-                    "@build:models --check"
                 ],
                 "compat": [
                     "phpcs"
@@ -1667,6 +1658,9 @@
                     "@fuzz:roundtrip --max-runs=100",
                     "@fuzz:schema --max-runs=100"
                 ],
+                "ledger": [
+                    "@php vendor/k-kinzal/sql-semantics/bin/production-ledger.php ."
+                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -1713,7 +1707,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics-sqlite",
-                "reference": "8ebb5e125ddab0bc83996f98f2ab135c6f082f6c"
+                "reference": "de4cebe0c04767bc345a9db47cfdafcebcacaa91"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -1740,8 +1734,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "SqlSemantics\\Platform\\Sqlite\\": "src/",
-                    "SqlSemantics\\Statement\\Model\\Sqlite\\": "resources/models/"
+                    "SqlSemantics\\Platform\\Sqlite\\": "src/"
                 }
             },
             "autoload-dev": {
@@ -1763,12 +1756,6 @@
                 ],
                 "bench:quick": [
                     "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "build:models": [
-                    "@php -d memory_limit=1G vendor/bin/build-models.php --dialect=sqlite --output=resources"
-                ],
-                "build:models:check": [
-                    "@build:models --check"
                 ],
                 "compat": [
                     "phpcs"
@@ -1816,6 +1803,9 @@
                     "@fuzz:roundtrip --max-runs=100",
                     "@fuzz:schema --max-runs=100"
                 ],
+                "ledger": [
+                    "@php vendor/k-kinzal/sql-semantics/bin/production-ledger.php ."
+                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -1862,7 +1852,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-core",
-                "reference": "9ee3ddc16fb730793a35b81f0a5597adb693e6f2"
+                "reference": "fc03560545164ab07fa3fb69b550d7d0cf504fce"
             },
             "require": {
                 "php": "^8.1"
@@ -1995,7 +1985,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysql",
-                "reference": "b0b06022e9eed6d55210bd00c22c97f17b6d7ae9"
+                "reference": "469875dc1e39301df92c3818d7c748ba6300b50a"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -2140,7 +2130,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysqli-adapter",
-                "reference": "829c946ab05b8a3bea750181449ccb614952eafe"
+                "reference": "ffc67f01414a1d8c80fef1c5086369e6c67ae40f"
             },
             "require": {
                 "ext-mysqli": "*",
@@ -2156,6 +2146,10 @@
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-fixture": "dev-main",
                 "k-kinzal/sql-parser": "dev-main",
+                "k-kinzal/sql-semantics": "dev-main",
+                "k-kinzal/sql-semantics-mysql": "dev-main",
+                "k-kinzal/sql-semantics-postgres": "dev-main",
+                "k-kinzal/sql-semantics-sqlite": "dev-main",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -2267,7 +2261,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-pdo-adapter",
-                "reference": "3c7edf54d1d8a1d324d001fc028bd0edd1cf7576"
+                "reference": "c84f1e402c27b2f35ed9778d6853a2a7b3eac406"
             },
             "require": {
                 "ext-pdo": "*",
@@ -2282,6 +2276,10 @@
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-fixture": "dev-main",
                 "k-kinzal/sql-parser": "dev-main",
+                "k-kinzal/sql-semantics": "dev-main",
+                "k-kinzal/sql-semantics-mysql": "dev-main",
+                "k-kinzal/sql-semantics-postgres": "dev-main",
+                "k-kinzal/sql-semantics-sqlite": "dev-main",
                 "k-kinzal/ztd-query-mysql": "dev-main",
                 "k-kinzal/ztd-query-postgres": "dev-main",
                 "k-kinzal/ztd-query-sqlite": "dev-main",
@@ -2401,7 +2399,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-postgres",
-                "reference": "3eea40e442fe3e292cf3ee9f01461c92da243e6f"
+                "reference": "d8fbc318a120876933cdbff796f321148e5b7ee6"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -2545,7 +2543,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-sqlite",
-                "reference": "49dd6b5708ed72130e2f08b9c9f7dd20d48db57f"
+                "reference": "7df41c29b3a92d7c3d610298da049a5ebf0f8747"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -3514,7 +3512,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/requirements",
-                "reference": "3a439b87d2ffee3daa88a7ccdb0f7300dd1c40c2"
+                "reference": "4e9639cda0111b7b01af8dc4bee5717e90adb560"
             },
             "require": {
                 "ext-dom": "*",

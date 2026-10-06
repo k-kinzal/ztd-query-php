@@ -4,59 +4,53 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\Sqlite\Schema;
 
-use SqlFixture\Syntax\NodeReader;
-use SqlParser\Lexer\Token;
-use SqlParser\Parser\Node;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnConstraint;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnPrimaryKey;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultExpression as DefaultClause;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultLiteral;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\DefaultWord;
 
 /**
- * The column constraints declared after a type, read from the syntax tree.
+ * The column constraints that decide how fixture values are generated.
+ *
+ * Nullability and generation are not read here: the analysis of the
+ * statement decides them.
  *
  * @visibility root
  */
 final class ColumnConstraints
 {
     /**
-     * Records the constraints a column declares, defaulting to a plain nullable column.
+     * Records the constraints a column declares, defaulting to a plain column without a default.
      */
     public function __construct(
-        public readonly bool $nullable = true,
         public readonly bool $primaryKey = false,
         public readonly bool $autoIncrement = false,
-        public readonly bool $generated = false,
-        public readonly ?Node $default = null,
+        public readonly DefaultLiteral|DefaultWord|null $default = null,
     ) {
     }
 
     /**
-     * Reads every ccons under a column's constraint list.
+     * Reads the constraints written after a column's type; the last DEFAULT clause decides the default.
+     *
+     * @param list<ColumnConstraint> $constraints
      */
-    public function read(Node $carglist): self
+    public function read(array $constraints): self
     {
-        $reader = new NodeReader();
-        $nullable = true;
         $primaryKey = false;
         $autoIncrement = false;
-        $generated = false;
         $default = null;
-        foreach ($carglist->find('ccons') as $constraint) {
-            $first = $constraint->children[0] ?? null;
-            if (!$first instanceof Token) {
-                continue;
-            }
-            if ($first->is('NOT') && $reader->token($constraint, 'NULL') !== null) {
-                $nullable = false;
-            } elseif ($first->is('NULL')) {
-                $nullable = true;
-            } elseif ($first->is('DEFAULT')) {
-                $default = $constraint;
-            } elseif ($first->is('PRIMARY')) {
+        foreach ($constraints as $constraint) {
+            if ($constraint instanceof ColumnPrimaryKey) {
                 $primaryKey = true;
-                $autoIncrement = $reader->containsToken($constraint, 'AUTOINCR');
-            } elseif ($first->is('GENERATED') || $first->is('AS')) {
-                $generated = true;
+                $autoIncrement = $autoIncrement || $constraint->autoincrement;
+            } elseif ($constraint instanceof DefaultLiteral || $constraint instanceof DefaultWord) {
+                $default = $constraint;
+            } elseif ($constraint instanceof DefaultClause) {
+                $default = null;
             }
         }
 
-        return new self($nullable, $primaryKey, $autoIncrement, $generated, $default);
+        return new self($primaryKey, $autoIncrement, $default);
     }
 }

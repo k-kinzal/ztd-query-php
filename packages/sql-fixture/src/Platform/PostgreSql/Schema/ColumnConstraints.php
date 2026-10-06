@@ -4,60 +4,48 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\PostgreSql\Schema;
 
-use SqlFixture\Syntax\NodeReader;
-use SqlParser\Lexer\Token;
-use SqlParser\Parser\Node;
+use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\ColumnPrimaryKey;
+use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\DefaultExpression as DefaultClause;
+use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\Identity;
+use SqlSemantics\Statement\Scalar;
 
 /**
- * The column constraints declared after a type, read from the syntax tree.
+ * The column constraints that decide how fixture values are generated.
+ *
+ * Nullability is not read here: the analysis of the statement decides it.
  *
  * @visibility root
  */
 final class ColumnConstraints
 {
     /**
-     * Records the constraints a column declares, defaulting to a plain nullable column.
+     * Records the constraints a column declares, defaulting to a plain column without a default.
      */
     public function __construct(
-        public readonly bool $nullable = true,
         public readonly bool $primaryKey = false,
         public readonly bool $identity = false,
-        public readonly bool $generated = false,
-        public readonly ?Node $default = null,
+        public readonly ?Scalar $default = null,
     ) {
     }
 
     /**
-     * Reads every ColConstraintElem under a column definition.
+     * Reads the constraints written after a column's type.
+     *
+     * @param list<object> $qualifiers
      */
-    public function read(Node $columnDef): self
+    public function read(array $qualifiers): self
     {
-        $reader = new NodeReader();
-        $nullable = true;
         $primaryKey = false;
         $identity = false;
-        $generated = false;
         $default = null;
-        foreach ($columnDef->find('ColConstraintElem') as $constraint) {
-            $first = $constraint->children[0] ?? null;
-            if (!$first instanceof Token) {
-                continue;
-            }
-            if ($first->is('NOT')) {
-                $nullable = false;
-            } elseif ($first->is('NULL_P')) {
-                $nullable = true;
-            } elseif ($first->is('DEFAULT')) {
-                $default = $reader->child($constraint, 'b_expr');
-            } elseif ($first->is('PRIMARY')) {
-                $primaryKey = true;
-            } elseif ($first->is('GENERATED') && $reader->token($constraint, 'IDENTITY_P') !== null) {
-                $identity = true;
-            } elseif ($first->is('GENERATED')) {
-                $generated = true;
+        foreach ($qualifiers as $qualifier) {
+            $primaryKey = $primaryKey || $qualifier instanceof ColumnPrimaryKey;
+            $identity = $identity || $qualifier instanceof Identity;
+            if ($qualifier instanceof DefaultClause) {
+                $default = $qualifier->value;
             }
         }
 
-        return new self($nullable, $primaryKey, $identity, $generated, $default);
+        return new self($primaryKey, $identity, $default);
     }
 }

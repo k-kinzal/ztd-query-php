@@ -10,7 +10,11 @@
     "require": {
         "php": "^8.1",
         "fakerphp/faker": "^1.23",
-        "k-kinzal/sql-parser": "dev-main"
+        "k-kinzal/sql-parser": "dev-main",
+        "k-kinzal/sql-semantics": "dev-main",
+        "k-kinzal/sql-semantics-mysql": "dev-main",
+        "k-kinzal/sql-semantics-postgres": "dev-main",
+        "k-kinzal/sql-semantics-sqlite": "dev-main"
     },
     "require-dev": {
         "brianium/paratest": "^7.3",
@@ -35,6 +39,42 @@
             "options": {
                 "versions": {
                     "k-kinzal/sql-parser": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-mysql",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-mysql": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-postgres",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-postgres": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-sqlite",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-sqlite": "dev-main"
                 }
             }
         },

@@ -4,48 +4,56 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql;
 
+use SqlFixture\Analysis\CreateTableOperation;
 use SqlFixture\Schema\Exception\InvalidSqlException;
+use SqlFixture\Schema\Exception\MissingColumnDefinitionsException;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\TableSchema;
-use SqlParser\Lexer\SourceException;
-use SqlParser\MySql\MySqlParser;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 
 /**
  * Reads MySQL CREATE TABLE statements into table schemas.
  *
- * The statement is parsed with the grammar of a MySQL 8 release, so the
- * schema is read from the syntax tree rather than from the statement text.
+ * The statement is analyzed with the grammar and rules of the selected MySQL
+ * release, so the schema is read from its typed model rather than from the
+ * statement text, and a statement the server would refuse is rejected.
  */
 final class MySqlSchemaParser implements SchemaParserInterface
 {
-    private MySqlParser $parser;
+    private Semantics $semantics;
 
     /**
-     * Loads the grammar tables once for every statement the parser will read.
+     * Loads the grammar of the release once for every statement the parser will read.
+     *
+     * @param string|null $version The version tag of the release; null selects the default
      */
-    public function __construct(?MySqlParser $parser = null)
+    public function __construct(?string $version = null)
     {
-        $this->parser = $parser ?? new MySqlParser();
+        $this->semantics = new Semantics(Dialect::MySql, $version);
     }
 
     /**
      * Parses the supplied declaration into its normalized representation.
      * @throws InvalidSqlException
      * @throws \SqlFixture\Schema\Exception\ExpectedCreateTableException
-     * @throws \SqlFixture\Schema\Exception\MissingColumnDefinitionsException
+     * @throws MissingColumnDefinitionsException
      */
     public function parse(string $createTableSql): TableSchema
     {
-        try {
-            $tree = $this->parser->parse($createTableSql);
-        } catch (SourceException $exception) {
-            throw new InvalidSqlException($createTableSql, $exception->getMessage(), $exception);
+        $operation = (new CreateTableOperation())->locate($this->semantics, $createTableSql);
+        $statement = $operation->statement;
+        $tableName = (new CreateTableOperation())->tableName($operation);
+        if (!$statement instanceof CreateTable) {
+            throw new MissingColumnDefinitionsException($tableName);
         }
 
-        $statement = (new Schema\CreateTableStatement())->locate($tree, $createTableSql);
-        $tableName = (new Schema\TableDefinition())->extractTableName($statement, $createTableSql);
-        $columns = (new Schema\TableDefinition())->extractColumns($statement, $tableName);
-        $primaryKeys = (new Schema\TableDefinition())->extractPrimaryKeys($statement);
+        $primaryKeys = (new Schema\TableDefinition())->primaryKeys($operation, $statement);
+        $columns = (new Schema\TableDefinition())->columns($statement, (new CreateTableOperation())->columns($operation), $primaryKeys);
+        if ($columns === []) {
+            throw new MissingColumnDefinitionsException($tableName);
+        }
 
         return new TableSchema($tableName, $columns, $primaryKeys);
     }

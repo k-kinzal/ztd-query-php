@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\Sqlite;
 
+use SqlFixture\Analysis\CreateTableOperation;
 use SqlFixture\Schema\Exception\InvalidSqlException;
+use SqlFixture\Schema\Exception\MissingColumnDefinitionsException;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\TableSchema;
-use SqlParser\Lexer\SourceException;
-use SqlParser\Sqlite\SqliteParser;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateTable;
 
 /**
  * Reads SQLite CREATE TABLE statements into table schemas.
  *
- * The statement is parsed with the SQLite grammar, so the declared type
- * names that drive type affinity, the column constraints and the table
- * constraints are read from the syntax tree rather than from the text.
+ * The statement is analyzed with the grammar and rules of the selected SQLite
+ * release, so the declared type names that drive type affinity, the column
+ * constraints and the table constraints are read from its typed model rather
+ * than from the text, and a statement SQLite would refuse is rejected.
  *
  * @visibility public
  * @example Read column dimensions and a composite primary key
@@ -25,34 +29,38 @@ use SqlParser\Sqlite\SqliteParser;
  */
 final class SqliteSchemaParser implements SchemaParserInterface
 {
-    private SqliteParser $parser;
+    private Semantics $semantics;
 
     /**
-     * Loads the grammar tables once for every statement the parser will read.
+     * Loads the grammar of the release once for every statement the parser will read.
+     *
+     * @param string|null $version The version tag of the release; null selects the default
      */
-    public function __construct(?SqliteParser $parser = null)
+    public function __construct(?string $version = null)
     {
-        $this->parser = $parser ?? new SqliteParser();
+        $this->semantics = new Semantics(Dialect::Sqlite, $version);
     }
 
     /**
      * Parses the supplied declaration into its normalized representation.
      * @throws InvalidSqlException
      * @throws \SqlFixture\Schema\Exception\ExpectedCreateTableException
-     * @throws \SqlFixture\Schema\Exception\MissingColumnDefinitionsException
+     * @throws MissingColumnDefinitionsException
      */
     public function parse(string $createTableSql): TableSchema
     {
-        try {
-            $tree = $this->parser->parse($createTableSql);
-        } catch (SourceException $exception) {
-            throw new InvalidSqlException($createTableSql, $exception->getMessage(), $exception);
+        $operation = (new CreateTableOperation())->locate($this->semantics, $createTableSql);
+        $statement = $operation->statement;
+        $tableName = (new CreateTableOperation())->tableName($operation);
+        if (!$statement instanceof CreateTable) {
+            throw new MissingColumnDefinitionsException($tableName);
         }
 
-        $statement = (new Schema\CreateTableStatement())->locate($tree, $createTableSql);
-        $tableName = (new Schema\TableDefinition())->extractTableName($statement, $createTableSql);
-        $columns = (new Schema\TableDefinition())->extractColumns($statement, $tableName);
-        $primaryKeys = (new Schema\TableDefinition())->extractPrimaryKeys($statement);
+        $primaryKeys = (new Schema\TableDefinition())->primaryKeys($operation, $statement);
+        $columns = (new Schema\TableDefinition())->columns($statement, (new CreateTableOperation())->columns($operation), $primaryKeys);
+        if ($columns === []) {
+            throw new MissingColumnDefinitionsException($tableName);
+        }
 
         return new TableSchema($tableName, $columns, $primaryKeys);
     }

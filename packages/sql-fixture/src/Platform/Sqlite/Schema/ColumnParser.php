@@ -5,35 +5,34 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\Sqlite\Schema;
 
 use SqlFixture\Schema\ColumnDefinition;
-use SqlFixture\Syntax\NodeReader;
-use SqlParser\Parser\Node;
+use SqlFixture\Schema\TypeShape;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition as WrittenColumn;
+use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
+use SqlSemantics\Statement\Declaration\Column;
+use SqlSemantics\Statement\Type\Nullability;
 
 /**
- * Reads a columnname node and its constraint list into a schema column.
+ * Reads a column definition into a schema column.
+ *
+ * The analysis supplies the declared type, whether the column admits NULL
+ * and whether it is generated; the statement supplies the written type
+ * arguments, the primary key and the default.
  *
  * @visibility root
  */
 final class ColumnParser
 {
     /**
-     * Returns the column the nodes declare, or null when the name is missing.
+     * Returns the schema column for a written column and its declaration.
      *
-     * @param list<string> $tablePrimaryKeys
+     * @param list<string> $primaryKeyColumns
      */
-    public function parseColumnDefinition(Node $columnname, Node $carglist, array $tablePrimaryKeys): ?ColumnDefinition
+    public function parse(WrittenColumn $written, Column $declared, array $primaryKeyColumns): ColumnDefinition
     {
-        $reader = new NodeReader();
-        $nameNode = $reader->child($columnname, 'nm');
-        $nameToken = $nameNode === null ? null : $reader->firstToken($nameNode);
-        $typetoken = $reader->child($columnname, 'typetoken');
-        if ($nameToken === null || $typetoken === null) {
-            return null;
-        }
-        $name = (new Identifier())->decode($nameToken);
-        $constraints = (new ColumnConstraints())->read($carglist);
-        $shape = (new TypeDeclaration())->parse($typetoken);
-        $primaryKey = $constraints->primaryKey || in_array($name, $tablePrimaryKeys, true);
-        $default = $constraints->default === null ? null : (new DefaultExpression())->extractDefault($constraints->default);
+        $name = $declared->name->value;
+        $domain = $declared->type;
+        $shape = $domain instanceof ColumnDomain ? (new TypeDeclaration())->shape($domain, $written->type) : new TypeShape('BLOB');
+        $constraints = (new ColumnConstraints())->read($written->constraints);
 
         return new ColumnDefinition(
             name: $name,
@@ -41,12 +40,11 @@ final class ColumnParser
             length: $shape->length,
             precision: $shape->precision,
             scale: $shape->scale,
-            nullable: $constraints->nullable && !$primaryKey,
+            nullable: $declared->nullability !== Nullability::NotNull && !in_array($name, $primaryKeyColumns, true),
             unsigned: false,
-            default: $default,
+            default: $constraints->default === null ? null : (new DefaultExpression())->evaluate($constraints->default),
             autoIncrement: $constraints->autoIncrement,
-            generated: $constraints->generated,
-            enumValues: null,
+            generated: $declared->generated,
         );
     }
 }
