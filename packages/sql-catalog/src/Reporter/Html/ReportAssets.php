@@ -26,6 +26,10 @@ final class ReportAssets
 {
     /**
      * The files the report carries, as the name each is written under and the resource it is read from.
+     *
+     * New reports carry only PageShell's current release. Older versioned
+     * resources remain available through read(), and ArtifactWriter leaves
+     * older assets in an existing output directory untouched.
      */
     public const FILES = [
         PageShell::DESIGN_STYLE => 'document-design-' . PageShell::DESIGN_VERSION . '.css',
