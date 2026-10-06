@@ -15,12 +15,12 @@ A well-formed model is not "a statement that succeeds on the server". A SELECT o
 | G1 | SQL accepted by the grammar of the selected release is structured into a concrete semantic model. | Lowering rules that dispatch on the exact productions of the shipped grammars; a production without a rule fails with `ImplementationGap`, never with a generic node or a skipped clause. |
 | G2 | The model does not drop the operations, operands or relations of the input. | Leaf embedding and token correspondence between the input and the published model (see [Rendering](rendering.md#checks-before-publication)). |
 | G3 | Resolutions, types and NULL facts follow the documented rules of the database for the given context, and missing information is stated, not guessed. | Derivation rules per construct, the closed fact types, and fact completeness: every expression, relation and query receives exactly one fact. |
-| G4 | Published values are deeply immutable, and their internal references are consistent. | Final classes with readonly properties, constructor validation, the value audit of every published graph, and the refusal of cloning, dynamic properties and serialization. |
-| G5 | The SQL rendered for an operation requests what the model describes. | Rendering by typed pieces only, then parsing the text with the same release and comparing the result with the model operand by operand. |
+| G4 | Published values are deeply immutable, and their internal references are consistent. | Final classes with readonly properties, constructor validation, the value audit of every published graph, and the refusal of cloning, dynamic properties and serialization by the `Snapshot` trait, which the value audit requires of every class it admits. |
+| G5 | The SQL rendered for an operation requests what the model describes. | Rendering by typed pieces only; layouts that may only re-spell the rendered tokens; then parsing the text with the same release and comparing the result with the model operand by operand. |
 | G6 | `new Operation(...)` publishes only a well-formed new root. | The same checks as `analyze()` except those against an input text. A construction has no relation to any earlier operation. |
 | G7 | References reach the declaration objects of the context, and missing information is distinguished from missing implementation. | Resolutions hold the supplied objects; `Dependent` facts name the missing input; an unwritten rule is an `ImplementationGap`. |
 
-What is preserved: the requested operation, the position and names of inputs and outputs, duplicates, bindings, the relation to declarations, the meaning of types, NULL, comparison and conversion, the evaluation structure the language defines (for example a CASE, or the difference between a scalar subquery and EXISTS), and the requests of DML, DDL and transaction statements.
+What is preserved: the requested operation, the position and names of inputs and outputs (in SQLite and MySQL also the written text that unaliased result columns are named after, see [Spelled regions](rendering.md#spelled-regions)), duplicates, bindings, the relation to declarations, the meaning of types, NULL, comparison and conversion, the evaluation structure the language defines (for example a CASE, or the difference between a scalar subquery and EXISTS), and the requests of DML, DDL and transaction statements.
 
 What is not promised: whitespace, comments, keyword case and other spellings listed in [Rendering](rendering.md#what-the-rendered-sql-does-not-preserve); row order the language leaves open; the wording of server error messages; execution plans.
 
@@ -47,7 +47,7 @@ The checks reduce what must be trusted, but they do not remove it. Trusted are:
 - the PHP runtime;
 - [SQL Parser](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-parser/README.md) and its grammar and keyword artifacts, which each profile pins by SHA-256 digest; a profile refuses artifacts with another digest;
 - the lowering and derivation rules and the primitives they rely on, as written from the database manuals;
-- the checks themselves: value audit, fact completeness, structure equivalence, leaf embedding and token correspondence, and the noise tables they use.
+- the checks themselves: value audit, fact completeness, spellings, structure equivalence, leaf embedding and token correspondence, and the noise tables they use.
 
 Ordinary misuse of the API, such as a value of a foreign class or a node at two positions, is detected and refused. Deliberately breaking private boundaries, for example with Reflection, is outside the boundary: the package does not sandbox itself against such code.
 
@@ -83,6 +83,7 @@ What they do not establish: that a fact agrees with the server for every input, 
 - Not every error the server would report is a diagnostic: an operation without diagnostics may still fail on the server.
 - `ResourceLimitExceeded` is reserved. No work limit is configured in this release; very large or deeply nested inputs are bounded only by PHP memory and time.
 - A context built with the public `AnalysisContext` constructor takes its search path and name comparison from its arguments, not from the rules of the database; `Semantics::context()` applies those rules.
+- A declaration holds a relation kind and columns, but no view query, generation expression, index, constraint or trigger. Checks that depend on them are not made; each database package lists the ones that matter.
 
 ### MySQL
 
@@ -90,7 +91,8 @@ What they do not establish: that a fact agrees with the server for every input, 
 - Version comments (`/*!80000 ... */`) are read as the selected release reads them, and the rendered SQL writes that reading without the comment markers.
 - Table and database names are compared exactly, as with `lower_case_table_names=0`; column names are compared without regard to ASCII case only.
 - Without a search path, the current database is unnamed, and facts that would show its name depend on it as session state.
-- An unaliased select item that is not a column reference has no fixed name, because the server names it after the source text, which the model does not keep.
+- The name of an unaliased select item whose text depends on `character_set_client` or on a character set conversion of the server is undecided: the field has no name and its slot lists the input (`OutputSlot::$unnamed`).
+- Writes into views that cannot be updated, and foreign keys that reference a view, are not reported.
 
 See the [MySQL package](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-mysql/README.md#limitations).
 
@@ -98,13 +100,15 @@ See the [MySQL package](https://github.com/k-kinzal/ztd-query-php/blob/main/pack
 
 - In an open or partial context, a type name written as an identifier, such as `text` or `date`, is `Dependent`, because a relation of `pg_temp` could define a row type with that name and would be found first. Type names the grammar reads as keywords, such as `integer`, are not affected. A column of such a type in a CREATE TABLE analyzed in an open context gets a `NamedOnPath` type. Use a complete context, or `[]`, when the built-in types are meant.
 - The profile fixes `standard_conforming_strings = on` and a UTF-8 server encoding.
-- Some server checks are not modeled, for example the NOT NULL requirement of ALTER COLUMN ADD IDENTITY.
+- A declaration does not tell a partitioned table from a plain one, so checks that depend on partitioning are not reported.
+- The server stops at the first error, while the analysis reports every diagnostic it finds.
 
 See the [PostgreSQL package](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-postgres/README.md#limitations).
 
 ### SQLite
 
-- An unaliased result expression that is not a column reference has no fixed name, because SQLite names it after the source text, which the model does not keep (`UnkeptSpelling`).
+- INSERT, UPDATE and DELETE on a view are not reported, because whether SQLite accepts them depends on `INSTEAD OF` triggers, which contexts do not hold.
+- A virtual table is declared as a base table, so what SQLite refuses only for virtual tables is not reported.
 - A search path must start with `main`; `temp` is always searched first.
 
 See the [SQLite package](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-sqlite/README.md#limitations).

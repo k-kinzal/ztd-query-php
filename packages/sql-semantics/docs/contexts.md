@@ -41,11 +41,11 @@ count($context->tables); // => 1
 
 ## Declarations
 
-A context declares relations: tables and views with their columns. There are two ways to obtain declarations.
+A context declares relations, such as tables and views, with their columns. There are two ways to obtain declarations.
 
 **From CREATE statements.** An operation provides the declarations its statement creates, for example those of CREATE TABLE, CREATE TABLE AS, CREATE VIEW or CREATE VIRTUAL TABLE; `declarations()` lists them. Passing the operation in a context list contributes those declarations. Analyzing the CREATE statement in a context matters where the declaration depends on other declarations, as for a view over a table or a column of a user type. The declarations of the database packages also carry columns the database adds implicitly, such as the SQLite `rowid`.
 
-**From your own catalog.** `Table`, `Column` and `ImplicitColumn` (namespace `SqlSemantics\Statement\Declaration`) have public constructors. A `Column` needs a type descriptor of the database package, for example SQLite's `ColumnDomain`, and a NULL fact (nullable by default). A table you construct has exactly the columns you give it; implicit columns such as `rowid` exist only if you list them.
+**From your own catalog.** `Table`, `Column` and `ImplicitColumn` (namespace `SqlSemantics\Statement\Declaration`) have public constructors. A `Column` needs a type descriptor of the database package, for example SQLite's `ColumnDomain`, a NULL fact (nullable by default) and whether it is generated (not by default). A `Table` takes its relation kind (a base table by default). A table you construct has exactly the columns you give it; implicit columns such as `rowid` exist only if you list them.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -95,6 +95,39 @@ $semantics->analyze('SELECT id FROM events', [$events])->field('id')->resolution
 $semantics->analyze('SELECT kind FROM events', [$events])->field('kind')->resolution instanceof ConditionalColumn; // => true
 $semantics->analyze('SELECT * FROM events', [$events])->shape()->missing[0]->describe(); // => 'the complete column list of relation events'
 ```
+
+### Relation kinds
+
+A `Table` states its `kind`, a `RelationKind`: `BaseTable`, `View`, `MaterializedView`, `ForeignTable` or `Sequence`. A CREATE statement declares the kind it creates; SQLite and MySQL have base tables and views, and PostgreSQL has all five kinds. Some statements behave differently for each kind, and the database refuses some of them for a kind, as DROP TABLE refuses a view. Where a relation name resolves to exactly one declaration, such a refusal is a diagnostic; for a name the context does not declare, nothing is reported about its kind. Each database package lists the statements it checks.
+
+### Generated columns
+
+A `Column` states whether it is `generated`: its value is computed from other columns of its row, and the statement cannot write it. CREATE TABLE declares the generated columns its definition has, and each database package reports the writes into them that its database refuses, such as an UPDATE that assigns one. Reading a generated column is like reading any other column.
+
+```php
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Platform\Sqlite\Statement\Type\ColumnDomain;
+use SqlSemantics\Statement\Declaration\Column;
+use SqlSemantics\Statement\Declaration\RelationKind;
+use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
+
+$semantics = new Semantics(Dialect::Sqlite);
+$view = new Table(new QualifiedName(new Name('active_users')), $semantics->profile(), [new Column(new Name('id'), new ColumnDomain('INTEGER'))], kind: RelationKind::View);
+$orders = new Table(new QualifiedName(new Name('orders')), $semantics->profile(), [
+    new Column(new Name('price'), new ColumnDomain('INTEGER')),
+    new Column(new Name('total'), new ColumnDomain('INTEGER'), generated: true),
+]);
+
+$semantics->analyze('DROP TABLE active_users', [$view])->facts->diagnostics[0]->message(); // => 'Relation active_users is a view: DROP TABLE removes only a table.'
+$semantics->analyze('UPDATE orders SET total = 2', [$orders])->facts->diagnostics[0]->message(); // => 'cannot UPDATE generated column "total"'
+$semantics->analyze('SELECT total FROM orders', [$orders])->field('total')->column()->generated; // => true
+$semantics->analyze('CREATE TABLE t (a INTEGER, b AS (a + 1))')->declarations()[0]->columns[1]->generated; // => true
+```
+
+A declaration keeps neither the query of a view nor the expression of a generated column. Checks that need them are not made; the database packages list them among their limitations.
 
 ## Identity and conflicts
 

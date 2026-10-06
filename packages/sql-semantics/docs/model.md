@@ -1,6 +1,6 @@
 # Model
 
-`Semantics::analyze()` returns an `SqlSemantics\Statement\Operation`. This page describes what an operation holds and how to read it. Every value described here is immutable: it has only readonly properties, and cloning, dynamic properties and serialization are refused.
+`Semantics::analyze()` returns an `SqlSemantics\Statement\Operation`. This page describes what an operation holds and how to read it. Every value described here is immutable: it has only readonly properties, and cloning, dynamic properties and serialization are refused by the `SqlSemantics\Statement\Snapshot` trait, which the [value audit](rendering.md#checks-before-publication) requires of every published class.
 
 ## Operations
 
@@ -23,7 +23,7 @@ The constructor `new Operation($context, $statement)` is the only way to obtain 
 
 An operation separates two kinds of information.
 
-The **structure** describes what the SQL requests: the operation, its operands and its input relations, as concrete classes of the database package (for example `SqlSemantics\Platform\Sqlite\Statement\Query\Select`, `...\Mutation\InsertRows`, `...\Schema\CreateTable`). It holds decoded names (`Name`, `QualifiedName`), exact literal values (digits as strings, decoded text, hexadecimal digits; never a PHP float), enum cases for closed choices, and lists in written order. It holds no parser node, no token, no source text, and no binding: which declaration a name denotes is not part of the structure. A structure value may occur at one position of a statement only.
+The **structure** describes what the SQL requests: the operation, its operands and its input relations, as concrete classes of the database package (for example `SqlSemantics\Platform\Sqlite\Statement\Query\Select`, `...\Mutation\InsertRows`, `...\Schema\CreateTable`). It holds decoded names (`Name`, `QualifiedName`), exact literal values (digits as strings, decoded text, hexadecimal digits; never a PHP float), enum cases for closed choices, and lists in written order. It holds no parser node, no token and no binding: which declaration a name denotes is not part of the structure. It holds no source text either, except the checked spelling of a result column that the database names after its text (a `Layout`, see [Rendering](rendering.md#spelled-regions)). A structure value may occur at one position of a statement only.
 
 The **facts** are everything that depends on the context: name resolutions, row shapes, output fields, types, NULL facts and diagnostics. They are kept in `$operation->facts`, keyed by the identity of the structure node they are about.
 
@@ -74,7 +74,7 @@ A `Field` has:
 | Property or method | Content |
 |--------------------|---------|
 | `position` | The zero-based output position. |
-| `name` | The output `Name`, or null when the position has no fixed name. |
+| `name` | The output `Name`, or null when the position has no name or its name depends on missing inputs (see `slot->unnamed`). |
 | `type`, `nullability` | The type fact and the NULL fact of the position. |
 | `expression` | The expression that computes the field; null when no single expression does, as for a set operation. |
 | `resolution` | The resolution, when the expression is a direct name use. |
@@ -88,7 +88,26 @@ A `Field` has:
 | `UniqueField` | Exactly one field has the name: `->field`. |
 | `AbsentField` | The shape is complete and no field has the name. |
 | `AmbiguousFields` | Several fields have the name: `->fields`, in output order. |
-| `DependentField` | The shape is open, so further fields may have the name: `->candidates` (the known fields with the name) and `->missing`. |
+| `DependentField` | The shape is open, or the name of a field depends on missing inputs, so further fields may have the name: `->candidates` (the known fields with the name) and `->missing`. |
+
+A field whose name is undecided could have any name, so while one field of the result is in that state, every lookup by name is a `DependentField`, and `field($name)` throws:
+
+```php
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Statement\Shape\DependentField;
+
+$semantics = new Semantics(Dialect::Sqlite);
+$query = $semantics->analyze('SELECT "a", 1 AS b FROM t');
+
+$query->field(0)->name; // => null
+$query->field(0)->slot->unnamed[0]->describe(); // => 'the declaration of relation t'
+$query->lookupField('b') instanceof DependentField; // => true
+$query->lookupField('b')->candidates[0] === $query->field(1); // => true
+$query->field('b'); // throws InvalidConstruction
+```
+
+In SQLite, a double-quoted word is a column when a column has that name and a string otherwise, and the two are named differently; here `t` is not declared, so the name is undecided. MySQL leaves a name undecided where it depends on session state or a character set conversion, as described in its package.
 
 Names are compared as the database compares output names: without regard to ASCII case for MySQL and SQLite, exactly for PostgreSQL (whose unquoted names are already folded to lower case). A field and its expression are reading results. They are not inputs for another query, and an expression of one operation can be resolved differently at another position.
 
@@ -96,7 +115,7 @@ Names are compared as the database compares output names: without regard to ASCI
 
 A `RowShape` lists the `OutputSlot`s of a query or a relation occurrence in order. `shape()` answers the shape of the returned rows; `$facts->relation($occurrence)->shape` answers the shape an input contributes.
 
-An `OutputSlot` is an output position, not a declaration. A slot of a named table refers to the declared column (`column`); a slot that a join or a query re-exposes refers to the slot it comes from (`origin`) and carries its own type and NULL fact. `declaration()` follows `origin` back to the declared column. An outer join therefore makes the re-exposed slot nullable without changing the declaration:
+An `OutputSlot` is an output position, not a declaration. A slot of a named table refers to the declared column (`column`); a slot that a join or a query re-exposes refers to the slot it comes from (`origin`) and carries its own type and NULL fact. `declaration()` follows `origin` back to the declared column. A slot without a `name` lists in `unnamed` the missing inputs its name depends on; the list is empty when the position has no name at all. When no slot of a relation has a column name that is looked up and one of its slots is unnamed in this way, the name resolves to a `ConditionalColumn`, not to a `MissingColumn`. An outer join therefore makes the re-exposed slot nullable without changing the declaration:
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -220,7 +239,7 @@ $semantics->analyze('SELECT NULL')->field(0)->nullability; // => Nullability::Nu
 
 ## Diagnostics
 
-A semantic problem of grammatical SQL, such as a missing table, a missing or ambiguous column, or a wrong number of values, is a value implementing `SqlSemantics\Statement\Fact\Diagnostic`. Such SQL is still structured and rendered; the database would reject it, or warn, when it runs. `$facts->diagnostics` lists them in derivation order. `message()` describes the problem for a person; the concrete class is the machine-readable kind. Some resolutions are diagnostics themselves (`MissingColumn`, `AmbiguousColumn`, `MissingTable`, `ConflictingTables`); the database packages define the others, mostly in `Problem` namespaces.
+A semantic problem of grammatical SQL, such as a missing table, a missing or ambiguous column, a wrong number of values, a statement on a relation of the wrong [kind](contexts.md#relation-kinds), or a write into a [generated column](contexts.md#generated-columns), is a value implementing `SqlSemantics\Statement\Fact\Diagnostic`. Such SQL is still structured and rendered; the database would reject it, or warn, when it runs. `$facts->diagnostics` lists them in derivation order. `message()` describes the problem for a person; the concrete class is the machine-readable kind. Some resolutions are diagnostics themselves (`MissingColumn`, `AmbiguousColumn`, `MissingTable`, `ConflictingTables`); the database packages define the others, mostly in `Problem` namespaces.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -250,7 +269,7 @@ A `MissingInput` names information that a fact depends on and that the context d
 | `UnboundParameter` | The value bound to a statement parameter, which also fixes its type. |
 | `SessionState` | Connection state, such as a user variable or the current database. |
 
-They are in `SqlSemantics\Statement\Reference\Missing`. Database packages add their own, for example SQLite's `UnkeptSpelling` and MySQL's `ItemSpelling` for the source text these databases name an unaliased result expression after, which the model does not keep.
+They are in `SqlSemantics\Statement\Reference\Missing`. Database packages add their own, for example SQLite's `RandomColumnName`, the random suffix SQLite gives a column of a subquery whose name repeats five earlier names, and MySQL's `NameConversion`, the character set conversion the server applies to some strings when it names a column after them.
 
 ```php
 use SqlSemantics\Facade\Semantics;

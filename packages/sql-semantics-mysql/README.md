@@ -65,8 +65,8 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 
 (new Semantics(Dialect::MySql, '8.0.44'))->profile()->grammar->value; // => 'mysql-8.0.44'
-(new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT /*!80000 1 + */ 2')->toString(); // => 'SELECT 1 + 2'
-(new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT /*!80000 1 + */ 2')->toString(); // => 'SELECT 2'
+(new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT /*!80000 1 + */ 2 AS n')->toString(); // => 'SELECT 1 + 2 AS n'
+(new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT /*!80000 1 + */ 2 AS n')->toString(); // => 'SELECT 2 AS n'
 ```
 
 ### Session modes

@@ -118,7 +118,7 @@ $query->field('email')->resolution instanceof ResolvedColumn; // => true
 $query->field(0)->name?->value; // => 'id'
 ```
 
-`field()` is a convenience for a name that denotes exactly one field, and throws otherwise. `lookupField()` tells the cases apart: one field, no field, several fields with the name, or a lookup that missing declarations leave undecided.
+`field()` is a convenience for a name that denotes exactly one field, and throws otherwise. `lookupField()` tells the cases apart: one field, no field, several fields with the name, or a lookup that missing inputs leave undecided, such as missing declarations.
 
 ```php
 use SqlSemantics\Facade\Semantics;
@@ -299,7 +299,7 @@ The package also does not execute SQL, connect to a database, infer session sett
 | Declarations, signatures, parameter values or session state the context does not hold | `Dependent` facts that name the missing input |
 | A rule the library has not implemented | `ImplementationGap`, a defect of the library |
 | A constructor input outside its documented domain, a node shared between two positions, or a context of another profile | `InvalidConstruction` |
-| A failed correspondence or integrity check | `InvariantViolation`, a defect of the library; no operation is returned |
+| A failed correspondence or integrity check | `InvariantViolation`, a defect of the library, or a constructed [layout](docs/rendering.md#spelled-regions) that does not fit its expression; no operation is returned |
 | A configured work limit | `ResourceLimitExceeded` (reserved: no limit is configured in this release) |
 
 All exceptions are in `SqlSemantics\Diagnostic`. `Semantics` refuses a release, mode or search path that does not belong to the database with an exception from its constructor. An `ImplementationGap` or an `InvariantViolation` is a bug; please report it with the SQL and the release.
@@ -307,8 +307,8 @@ All exceptions are in `SqlSemantics\Diagnostic`. `Semantics` refuses a release, 
 ## Documentation
 
 - [Model](docs/model.md) - Operations, statement structure and facts, fields and lookups, shapes and open stars, resolutions, types and nullability, diagnostics, and missing inputs
-- [Contexts](docs/contexts.md) - Analysis contexts: declarations, identity and conflicts, completeness, search paths, and name comparison
-- [Rendering](docs/rendering.md) - How SQL is rendered from the model, the checks before publication, and what the rendered SQL does not preserve
+- [Contexts](docs/contexts.md) - Analysis contexts: declarations, relation kinds and generated columns, identity and conflicts, completeness, search paths, and name comparison
+- [Rendering](docs/rendering.md) - How SQL is rendered from the model, the checks before publication, what the rendered SQL does not preserve, and the spelling layouts of result columns
 - [Guarantees](docs/guarantees.md) - What the package guarantees, the trust boundary, rule records, what tests and fuzzing establish, and known limitations
 
 ## License

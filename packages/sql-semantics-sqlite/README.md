@@ -74,7 +74,7 @@ $semantics->analyze('SELECT 1.5')->field(0)->type->descriptor; // => Storage::Re
 
 - Relation, schema and column names, and output field names, are compared without regard to ASCII letter case.
 - A name written bare, in brackets or in backticks is a column use. A word in double quotes is a different request: SQLite reads it as an identifier when a column has that name and as a string otherwise, and the model keeps that difference. The bare words `TRUE` and `FALSE` are boolean words unless a column has that name.
-- Rendered SQL writes a name bare when it is made of ASCII letters, digits and underscores, is no keyword and is not `TRUE` or `FALSE`, and in backticks otherwise. Backticks never fall back to a string.
+- Rendered SQL writes a name bare when it is made of ASCII letters, digits and underscores, is no keyword and is not `TRUE` or `FALSE`, and in backticks otherwise. Backticks never fall back to a string. The expression of an unaliased result column keeps its written spelling instead; see [Unaliased result columns](#unaliased-result-columns).
 - A table created by CREATE TABLE has the implicit columns SQLite gives it, such as `rowid`, `oid` and `_rowid_` (unless it is declared WITHOUT ROWID). A declaration you construct yourself has only the columns you give it.
 
 ```php
@@ -89,7 +89,7 @@ $semantics->analyze('SELECT NAME FROM USERS', [$users])->field(0)->column() === 
 $semantics->analyze('SELECT "name" FROM users', [$users])->field(0)->type->descriptor->name(); // => 'TEXT'
 $semantics->analyze('SELECT "nickname" FROM users', [$users])->field(0)->type->descriptor; // => Storage::Text
 $semantics->analyze('SELECT rowid FROM users', [$users])->field(0)->column() === $users->declarations()[0]->columns[0]; // => true
-$semantics->analyze('SELECT [order], `group` FROM t')->toString(); // => 'SELECT `order`, `group` FROM t'
+$semantics->analyze('SELECT a AS [order] FROM `group`')->toString(); // => 'SELECT a AS `order` FROM `group`'
 ```
 
 In the example, `id` is an `INTEGER PRIMARY KEY`, so `rowid` is another name for it. `"nickname"` names no column, so it is the string `'nickname'`.
@@ -190,6 +190,7 @@ $semantics->analyze('INSERT INTO t VALUES (1)', [$table])->facts->diagnostics; /
 
 - INSERT, UPDATE and DELETE on a view succeed exactly when an `INSTEAD OF` trigger handles them. Contexts do not hold triggers, so such a write is not reported.
 - SQLite checks the `DO UPDATE` of an upsert only where a uniqueness check of the `INSERT` reaches it. Contexts do not hold unique indexes, so a `DO UPDATE` whose reach depends on them, such as one without a conflict target on a table that has a rowid when the row does not supply the rowid, is not checked for writes of generated columns.
+- The names in a `DO UPDATE` clause are resolved even where SQLite never compiles the clause, so such a clause can carry a `MissingColumn` diagnostic for a statement SQLite runs, as `INSERT INTO u (a) VALUES (1) ON CONFLICT (id) DO UPDATE SET zz = 1` on a table without `zz` whose `id` is its `INTEGER PRIMARY KEY`.
 - Whether a relation is a virtual table is not part of a declaration, so what SQLite refuses only for virtual tables, such as indexing one, is not reported.
 - A search path must start with `main`; `temp` is always searched first.
 - The parameter style has no effect on reading, but two profiles that differ only in it are not compatible.
