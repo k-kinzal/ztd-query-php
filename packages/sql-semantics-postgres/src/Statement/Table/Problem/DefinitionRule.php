@@ -42,6 +42,7 @@ enum DefinitionRule: string
     case CannotNoInherit = '%s constraints cannot be marked NO INHERIT';
     case MultipleCollations = 'multiple COLLATE clauses not allowed';
     case IdentityType = 'identity column type must be smallint, integer, or bigint';
+    case IdentityNullable = 'column "%s" of relation "%s" must be declared NOT NULL before identity can be added';
     case MatchPartial = 'MATCH PARTIAL not yet implemented';
     case SetColumnsOnUpdate = 'a column list with %s is only supported for ON DELETE actions';
     case NotBoolean = 'argument of %s must be type boolean';

@@ -27,6 +27,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Reference\Missing\MissingInput;
+use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -44,15 +46,26 @@ use SqlSemantics\Statement\Scalar;
  * text of its layout (MYSQL-ITEM-LAYOUT-001), or, for an item without one,
  * the canonical rendering of its expression, which is the text the server
  * then receives; an item has a layout only when it is named after a text
- * other than the canonical rendering.
+ * other than the canonical rendering. The text ends where the last token
+ * of the expression ends (`get_cpp_tok_end()` in 5.6 and 5.7, the end of
+ * the expression's `cpp` location in 8.0 and later), so whitespace and
+ * comments after the expression are never part of the name and an item
+ * layout has no trailing trivia (`1+1` followed by a comment is named
+ * `1+1` in every release, verified on live servers).
  * The server removes the leading characters that are not graphic from the
- * text (`Name_string::copy`), converts it from the character set it is read
- * in to the system character set, and keeps at most 255 bytes, 256 when the
- * text is already in the system character set. A text of ASCII characters
- * is therefore its own name when it is short enough, assuming an
- * ASCII-compatible `character_set_client`; a text with other characters,
- * or a longer text read in `character_set_client`, depends on the
- * conversion (NameConversion). Source: sql/parse_tree_items.cc
+ * text (`Name_string::copy`; for binary every byte outside ASCII is not
+ * graphic), converts it from the character set it is read in to the system
+ * character set (utf8mb3), and keeps at most 255 bytes, 256 when the text is
+ * already in that character set (utf8mb3 and national strings, cut at a
+ * byte). A text of ASCII characters is therefore its own name when it is
+ * short enough, assuming an ASCII-compatible `character_set_client`; a text
+ * read in `character_set_client` with other characters, or longer than 255
+ * bytes, depends on the session state `character_set_client`. Binary text
+ * keeps its bytes; utf8mb4 text keeps whole characters up to 255 bytes,
+ * each character outside utf8mb3 written `?`. The name of text with other
+ * characters in another introduced character set, and of any text in
+ * ucs2, utf16, utf16le or utf32, depends on the server's conversion
+ * (NameConversion). Verified on live servers of each release. Source: sql/parse_tree_items.cc
  * (`PTI_expr_with_alias::itemize`), sql/sql_yacc.yy (`select_item`), sql/item.cc
  * and sql/item.h (the constructors that set `item_name`) of each release,
  * https://dev.mysql.com/doc/refman/8.4/en/select.html,
@@ -69,6 +82,11 @@ final class ItemNaming
     private const LIMITS = ['convert' => 255, 'same' => 256];
 
     /**
+     * The character sets whose characters are not single ASCII bytes.
+     */
+    private const WIDE = ['ucs2', 'utf16', 'utf16le', 'utf32'];
+
+    /**
      * @param LanguageProfile $profile The profile whose release and codec the name follows
      */
     public function __construct(private readonly LanguageProfile $profile)
@@ -76,7 +94,7 @@ final class ItemNaming
     }
 
     /**
-     * Answers the output name of an item, or the conversion its name depends on.
+     * Answers the output name of an item, or the input its name depends on.
      *
      * An item keeps a layout only where the server names it after its text
      * and the text is not the canonical rendering, as lowering builds it;
@@ -85,7 +103,7 @@ final class ItemNaming
      * @throws ImplementationGap When NAME_CONST names the column after a value this rule does not spell
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When an item that names itself has a layout, or a layout spells the canonical rendering
      */
-    public function name(SelectExpression $item): Name|NameConversion
+    public function name(SelectExpression $item): Name|MissingInput
     {
         if ($item->alias !== null) {
             return $item->alias;
@@ -186,20 +204,51 @@ final class ItemNaming
     }
 
     /**
-     * Answers the name the server stores for a text read in a character set: client for `character_set_client`, national for a national string the lexer converted from it.
+     * Answers the name the server stores for a text read in a character set, or the input it depends on.
+     *
+     * The character set is client for `character_set_client`, national for
+     * a national string, else the introduced character set in lower case.
      */
-    public function stored(string $text, string $charset): Name|NameConversion
+    public function stored(string $text, string $charset): Name|MissingInput
     {
-        $text = ltrim($text, "\x00..\x20\x7F");
+        if (in_array($charset, self::WIDE, true)) {
+            return new NameConversion($charset);
+        }
+        $text = ltrim($text, $charset === 'binary' ? "\x00..\x20\x7F..\xFF" : "\x00..\x20\x7F");
+        $ascii = preg_match('/[\x80-\xFF]/', $text) !== 1;
+        if ($charset === 'client' && (!$ascii || strlen($text) > self::LIMITS['convert'])) {
+            return new SessionState('character_set_client');
+        }
+        if ($charset === 'utf8mb4' && !$ascii) {
+            return $this->narrowed($text);
+        }
+        if (!$ascii && !in_array($charset, ['binary', 'utf8mb3', 'utf8', 'national'], true)) {
+            return new NameConversion($charset);
+        }
         $same = in_array($charset, ['utf8mb3', 'utf8', 'national'], true);
-        if (preg_match('/[\x80-\xFF]/', $text) === 1 && !in_array($charset, ['binary', 'utf8mb3', 'utf8'], true)) {
-            return new NameConversion();
-        }
-        if ($charset === 'client' && strlen($text) > self::LIMITS['convert']) {
-            return new NameConversion();
-        }
 
         return new Name(substr($text, 0, self::LIMITS[$same ? 'same' : 'convert']));
+    }
+
+    /**
+     * Answers the name of a utf8mb4 text: each character outside utf8mb3 becomes `?`, and whole characters are kept up to 255 bytes.
+     */
+    public function narrowed(string $text): Name|NameConversion
+    {
+        $characters = mb_check_encoding($text, 'UTF-8') ? mb_str_split($text, 1, 'UTF-8') : null;
+        if ($characters === null) {
+            return new NameConversion('utf8mb4');
+        }
+        $name = '';
+        foreach ($characters as $character) {
+            $character = strlen($character) === 4 ? '?' : $character;
+            if (strlen($name) + strlen($character) > self::LIMITS['convert']) {
+                break;
+            }
+            $name .= $character;
+        }
+
+        return new Name($name);
     }
 
     /**

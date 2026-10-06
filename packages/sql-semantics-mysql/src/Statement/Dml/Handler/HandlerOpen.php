@@ -8,8 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
@@ -20,7 +22,8 @@ use SqlSemantics\Statement\Statement;
  *
  * Rule: MYSQL-HANDLER-OPEN-001. The table name resolves like a table
  * reference (MYSQL-TABLE-SHAPES-001) and is recorded as a table use of the
- * statement. The statement returns no rows. Terminates: no child. Source:
+ * statement; a declared view is refused (MYSQL-RELATION-KIND-001). The
+ * statement returns no rows. Terminates: no child. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/handler.html. Status: Implemented.
  *
  * @visibility public
@@ -48,7 +51,8 @@ final class HandlerOpen implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $derivation->target($this, (new TableShapes())->named($this->table, $derivation, $derivation->environment()));
+        $fact = $derivation->target($this, (new TableShapes())->named($this->table, $derivation, $derivation->environment()));
+        (new RelationKinds())->require($derivation, $this->table, $fact->table, RelationKind::BaseTable);
     }
 
     /**

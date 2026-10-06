@@ -6,9 +6,12 @@ namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Command;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Conditions;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RoleSpec;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
@@ -17,7 +20,8 @@ use SqlSemantics\Statement\Scalar;
  * Derives and writes row security policies.
  *
  * Rule: PG-POLICY-001. The table is resolved (PG-TABLE-TARGET-001) and is
- * the relation fact of the statement. The USING and WITH CHECK expressions
+ * the relation fact of the statement; a relation declared as another kind
+ * than a table is reported (`"%s" is not a table`, PG-RELATION-KIND-001). The USING and WITH CHECK expressions
  * are conditions (PG-TABLE-CONDITION-001) where the table is the only visible
  * relation ("expressions ... can refer to columns of the table"). Source: https://www.postgresql.org/docs/17/sql-createpolicy.html.
  * Status: Implemented.
@@ -33,6 +37,8 @@ final class Policies
     {
         $targets = new Targets();
         $fact = $derivation->target($policy, $targets->resolve($derivation, $table));
+        $kinds = new RelationKinds();
+        $kinds->require($derivation, $kinds->of($fact), $table->name, [RelationKind::BaseTable], KindRule::NotTable);
         $scope = $targets->scope($derivation, $policy, $table, $fact->shape, $targets->implicit($fact));
         foreach ([$using, $check] as $condition) {
             if ($condition !== null) {

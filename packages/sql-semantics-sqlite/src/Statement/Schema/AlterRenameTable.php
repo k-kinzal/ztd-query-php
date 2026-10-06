@@ -8,7 +8,9 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -19,8 +21,8 @@ use SqlSemantics\Statement\Statement;
  * A request to rename a table.
  *
  * Rule: SQLITE-ALTER-RENAME-TABLE-001. The resolution of the table is the
- * relation fact of the statement node; a missing or conflicting table is a
- * diagnostic. The new name is unqualified: the table stays in its schema.
+ * relation fact of the statement node; a missing or conflicting table and a
+ * view (SQLITE-RELATION-KIND-001) are diagnostics. The new name is unqualified: the table stays in its schema.
  * The statement changes no declaration and provides none.
  * Source: https://sqlite.org/lang_altertable.html#alter_table_rename.
  * Status: Implemented.
@@ -48,7 +50,7 @@ final class AlterRenameTable implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $derivation->target($this, (new TableShapes())->target($derivation, $this->table));
+        (new RelationKinds())->refuse($derivation->target($this, (new TableShapes())->target($derivation, $this->table)), KindRefusal::RenameTable, $derivation);
     }
 
     /**

@@ -28,6 +28,10 @@ enum AttributeProblemKind
     case UnrecognizedParserParameter;
     case UnrecognizedTemplateParameter;
     case UnrecognizedConfigurationParameter;
+    case UnrecognizedChangedOperatorAttribute;
+    case UnrecognizedChangedTypeAttribute;
+    case UnchangeableOperatorAttribute;
+    case UnchangeableTypeAttribute;
     case MissingParameter;
     case NotAName;
     case NotATypeName;
@@ -77,6 +81,10 @@ enum AttributeProblemKind
         'UnrecognizedParserParameter' => 'text search parser parameter "%s" not recognized',
         'UnrecognizedTemplateParameter' => 'text search template parameter "%s" not recognized',
         'UnrecognizedConfigurationParameter' => 'text search configuration parameter "%s" not recognized',
+        'UnrecognizedChangedOperatorAttribute' => 'operator attribute "%s" not recognized',
+        'UnrecognizedChangedTypeAttribute' => 'type attribute "%s" not recognized',
+        'UnchangeableOperatorAttribute' => 'operator attribute "%s" cannot be changed',
+        'UnchangeableTypeAttribute' => 'type attribute "%s" cannot be changed',
         'MissingParameter' => '%s requires a parameter',
         'NotAName' => 'argument of %s must be a name',
         'NotATypeName' => 'argument of %s must be a type name',

@@ -13,6 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceOption;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence\SequenceReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Statement\Declaration\Column;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Nullability;
@@ -46,7 +47,7 @@ final class Sequences
         ];
         (new CreationSchemas())->check($derivation, $sequence->name, $sequence->persistence);
         $name = (new QueryTables())->name($sequence->name, $sequence->persistence, $schema);
-        $derivation->declare(new Table($name, $derivation->context->profile, $columns, (new SystemColumns())->implicit()));
+        $derivation->declare(new Table($name, $derivation->context->profile, $columns, (new SystemColumns())->implicit(), true, RelationKind::Sequence));
     }
 
     /**

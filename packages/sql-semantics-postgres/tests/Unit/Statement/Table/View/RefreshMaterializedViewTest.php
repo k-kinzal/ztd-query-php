@@ -42,4 +42,13 @@ final class RefreshMaterializedViewTest extends TestCase
         $statement = $semantics->analyze('REFRESH MATERIALIZED VIEW CONCURRENTLY s.m WITH NO DATA', []);
         self::assertSame('REFRESH MATERIALIZED VIEW CONCURRENTLY s.m WITH NO DATA', $statement->toString());
     }
+
+    public function testDeriveStatementReportsAnotherKind(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
+        self::assertSame(['"t" is not a materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('REFRESH MATERIALIZED VIEW t', $context)->facts->diagnostics));
+        self::assertSame(['"v" is not a table or materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('REFRESH MATERIALIZED VIEW v', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('REFRESH MATERIALIZED VIEW m', $context)->facts->diagnostics));
+    }
 }

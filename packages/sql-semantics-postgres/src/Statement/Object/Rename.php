@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectForms;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectSpelling;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\RelationTargets;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Reference\RelationTarget;
@@ -76,6 +77,7 @@ final class Rename implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         [$fact] = (new ObjectFacts())->derive($this->kind, [$this->object], $this->ifExists, $derivation);
+        (new RelationKinds())->renamed($derivation, $this->kind, $this->object, true, $this->member !== null && $this->member->part !== RenamedPart::Attribute);
         if ($fact !== null && $this->member?->part === RenamedPart::Column && $this->object instanceof RelationTarget) {
             $targets = new RelationTargets();
             $targets->member($fact, $this->member->name, $this->object->relation->name, $derivation);

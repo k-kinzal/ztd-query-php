@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView;
+use SqlSemantics\Statement\Declaration\RelationKind;
 
 #[CoversClass(CreateView::class)]
 #[Medium]
@@ -38,5 +39,16 @@ final class CreateViewTest extends TestCase
     public function testRenderWritesTheStatement(): void
     {
         self::assertSame('CREATE OR REPLACE VIEW v AS SELECT 1 AS a WITH CHECK OPTION', (new Semantics(Dialect::MySql))->analyze('CREATE OR REPLACE VIEW v AS SELECT 1 AS a WITH CHECK OPTION')->toString());
+    }
+
+    public function testDeriveStatementReplacesOnlyAView(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+
+        self::assertSame(['t is not VIEW.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE OR REPLACE VIEW t AS SELECT 1', [$table, $view])->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE OR REPLACE VIEW v AS SELECT 1', [$table, $view])->facts->diagnostics));
+        self::assertSame(RelationKind::View, $view->declarations()[0]->kind);
     }
 }

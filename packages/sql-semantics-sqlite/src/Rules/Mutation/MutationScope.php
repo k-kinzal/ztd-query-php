@@ -22,6 +22,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Type\Vector;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\QueryFact;
+use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Type\Known;
@@ -47,14 +48,14 @@ final class MutationScope
     /**
      * Binds the common tables and derives the written table.
      *
-     * @return array{Environment, VisibleRelation} The environment the queries of the statement are nested in, and the written table as a visible relation
+     * @return array{Environment, VisibleRelation, RelationFact} The environment the queries of the statement are nested in, the written table as a visible relation, and its facts
      */
     public function open(MutationTarget $target, ?WithClause $with, Derivation $derivation, Environment $outer): array
     {
         $base = $with === null ? $outer : (new CommonTables())->bind($with, $derivation, $outer);
         $fact = $derivation->relation($target, $base);
 
-        return [$base, new VisibleRelation($target, $fact->shape, $target->alias, $target->name, [], (new TableShapes())->implicit($fact))];
+        return [$base, new VisibleRelation($target, $fact->shape, $target->alias, $target->name, [], (new TableShapes())->implicit($fact)), $fact];
     }
 
     /**

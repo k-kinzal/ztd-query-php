@@ -99,4 +99,14 @@ final class LockingTest extends TestCase
         self::assertSame([['a', false], ['b', true], ['c', true], ['d', false]], array_map(static fn (array $pair): array => [$pair[0]->name()->name->value, $pair[1]], $pairs));
         self::assertContainsOnlyInstancesOf(TableInput::class, array_column($pairs, 0));
     }
+
+    public function testKindsReportsTheRowMarksOfASequenceAndALockedMaterializedView(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE SEQUENCE s'), $semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS b')];
+        self::assertSame(['cannot lock rows in sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('SELECT * FROM t, s, m FOR UPDATE OF t', $context)->facts->diagnostics));
+        self::assertSame(['cannot lock rows in materialized view "m"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('SELECT * FROM t, m FOR SHARE', $context)->facts->diagnostics));
+        self::assertSame(['cannot lock rows in sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('UPDATE t SET a = 1 FROM s', $context)->facts->diagnostics));
+        self::assertSame([], $semantics->analyze('SELECT * FROM t, m, s', $context)->facts->diagnostics);
+    }
 }

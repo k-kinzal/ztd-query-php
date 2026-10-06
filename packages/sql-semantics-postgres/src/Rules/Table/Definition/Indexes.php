@@ -6,10 +6,13 @@ namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Conditions;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Index\CreateIndex;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 
@@ -18,7 +21,8 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  *
  * Rule: PG-INDEX-001. The indexed table is resolved by PG-TABLE-TARGET-001;
  * inside CREATE SCHEMA an unqualified table is looked up in the schema being
- * created. The resolution is recorded as the relation fact of the statement.
+ * created. The resolution is recorded as the relation fact of the statement;
+ * only a table or a materialized view can be indexed (PG-RELATION-KIND-001).
  * The keys and included columns are derived where the table is the only
  * visible relation; the predicate of a partial index is a condition
  * (PG-TABLE-CONDITION-001). Source:
@@ -38,6 +42,8 @@ final class Indexes
         $targets = new Targets();
         $name = $this->located($index->table->name, $schema);
         $fact = $derivation->target($index, $targets->resolve($derivation, $name));
+        $kinds = new RelationKinds();
+        $kinds->require($derivation, $kinds->of($fact), $name->name, [RelationKind::BaseTable, RelationKind::MaterializedView], KindRule::IndexRelation);
         $scope = $targets->scope($derivation, $index, $name, $fact->shape, $targets->implicit($fact));
         foreach ([...$index->elements, ...$index->included] as $element) {
             $element->deriveClause($derivation, $scope);

@@ -50,4 +50,11 @@ final class ReindexTest extends TestCase
             [$semantics->analyze('REINDEX INDEX CONCURRENTLY s.i')->toString(), $semantics->analyze('REINDEX (VERBOSE, TABLESPACE x) SCHEMA "S"')->toString(), $semantics->analyze('REINDEX DATABASE')->toString(), $semantics->analyze('REINDEX SYSTEM d')->toString()],
         );
     }
+
+    public function testDeriveStatementReportsASequence(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE SEQUENCE s')];
+        self::assertSame(['"s" is not a table or materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('REINDEX TABLE s', $context)->facts->diagnostics));
+    }
 }

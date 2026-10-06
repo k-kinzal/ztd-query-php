@@ -11,8 +11,10 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Attribute;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\AlterOperator;
-use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Problem\RoutineProblemKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorArity;
@@ -43,9 +45,19 @@ final class AlterOperatorTest extends TestCase
         new AlterOperator(new OperatorSignature(new OperatorName(new Name('=')), OperatorArity::Binary, [new TypeName(new NamedDesignation(new DottedName([new Name('int4')]))), new TypeName(new NamedDesignation(new DottedName([new Name('int4')])))]), []);
     }
 
-    public function testRejectsANamespacedAttribute(): void
+    public function testRejectsAnAttributeOfAnotherCommand(): void
     {
-        $this->expectExceptionMessage('An operator attribute has no namespace.');
-        new AlterOperator(new OperatorSignature(new OperatorName(new Name('=')), OperatorArity::Binary, [new TypeName(new NamedDesignation(new DottedName([new Name('int4')]))), new TypeName(new NamedDesignation(new DottedName([new Name('int4')])))]), [new Definition(new Name('a'), null, new Name('toast'))]);
+        $this->expectExceptionMessage('ALTER OPERATOR reads the attributes it can change.');
+        new AlterOperator(new OperatorSignature(new OperatorName(new Name('=')), OperatorArity::Binary, [new TypeName(new NamedDesignation(new DottedName([new Name('int4')]))), new TypeName(new NamedDesignation(new DottedName([new Name('int4')])))]), [new AttributeChange(new Attribute(new Name('sort1'), OperatorAttribute::Sort1))]);
+    }
+
+    public function testDeriveStatementReportsTheAttributesTheCommandRefuses(): void
+    {
+        $operation = (new Semantics(Dialect::PostgreSql, 'pg-16.6'))->analyze('ALTER OPERATOR = (int4, int4) SET (commutator = =, leftarg = int4, sort1 = <)');
+        self::assertSame([
+            'operator attribute "commutator" cannot be changed',
+            'operator attribute "leftarg" cannot be changed',
+            'operator attribute "sort1" not recognized',
+        ], array_map(static fn ($problem): string => $problem->message(), $operation->facts->diagnostics));
     }
 }

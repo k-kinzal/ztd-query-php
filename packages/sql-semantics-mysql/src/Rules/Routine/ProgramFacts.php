@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Routine;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\InvalidConstruction;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Routine\Event\Schedule;
 use SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody;
 use SqlSemantics\Platform\MySql\Statement\Routine\ParameterList;
@@ -18,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable;
 use SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTime;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Statement;
@@ -32,7 +34,8 @@ use SqlSemantics\Statement\Statement;
  * whose SQL body holds no RETURN is reported (ER_SP_NORETURN). A trigger
  * body is derived in a scope where NEW and OLD denote the row of the
  * trigger table (MYSQL-TRIGGER-ROWS-001) and SET assigns to the NEW row
- * by MYSQL-TRIGGER-ASSIGNMENT-001. The expressions of an event schedule see
+ * by MYSQL-TRIGGER-ASSIGNMENT-001; a trigger on a declared view is refused
+ * (MYSQL-RELATION-KIND-001). The expressions of an event schedule see
  * no table and no variable; the event body is derived in an empty scope.
  * None of the statements declares anything or returns rows. The statements
  * a stored program may not contain are reported by
@@ -88,6 +91,7 @@ final class ProgramFacts
     public function trigger(TriggerTable $table, TriggerTime $time, TriggerEvent $event, ProgramStatement|Statement $body, Derivation $derivation): void
     {
         $fact = $derivation->relation($table, $derivation->environment());
+        (new RelationKinds())->require($derivation, $table->name, $fact->table, RelationKind::BaseTable);
         $environment = new Environment($derivation->context, null, (new RowAliases())->visible($table, $fact, $event, $derivation->context));
         (new BodyFacts())->statement($body, $derivation, new ProgramScope($environment, ProgramKind::Trigger, time: $time, event: $event));
     }

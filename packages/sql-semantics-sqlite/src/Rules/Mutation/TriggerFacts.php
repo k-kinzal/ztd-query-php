@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Rules\Mutation;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\TableShapes;
@@ -14,8 +15,10 @@ use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertSelect;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Update;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent;
+use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTiming;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
@@ -28,7 +31,9 @@ use SqlSemantics\Statement\Identifier\Name;
  * qualifiers NEW and OLD only, a row of the watched table with its implicit
  * columns: NEW in INSERT and UPDATE triggers, OLD in UPDATE and DELETE
  * triggers. A column of UPDATE OF that the table certainly lacks is
- * reported. In the program, a written table qualified with a schema, an
+ * reported. A BEFORE or AFTER trigger, BEFORE being the default, on a view
+ * and an INSTEAD OF trigger on a table are reported
+ * (SQLITE-RELATION-KIND-001). In the program, a written table qualified with a schema, an
  * index choice and a bind parameter are reported, as SQLite rejects them
  * (SQLITE-PROGRAM-ONLY-001). Terminates: one pass
  * over the program.
@@ -44,6 +49,11 @@ final class TriggerFacts
     public function derive(CreateTrigger $trigger, Derivation $derivation): void
     {
         $fact = $derivation->relation($trigger->table, $derivation->environment());
+        (new RelationKinds())->refuse($fact, match ($trigger->timing) {
+            TriggerTiming::InsteadOf => KindRefusal::InsteadOfTrigger,
+            TriggerTiming::After => KindRefusal::AfterTrigger,
+            TriggerTiming::Before, null => KindRefusal::BeforeTrigger,
+        }, $derivation);
         $implicit = (new TableShapes())->implicit($fact);
         $rows = [];
         foreach (['new' => $trigger->event !== TriggerEvent::Delete, 'old' => $trigger->event !== TriggerEvent::Insert] as $qualifier => $available) {

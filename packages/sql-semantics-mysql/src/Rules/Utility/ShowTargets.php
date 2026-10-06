@@ -38,9 +38,9 @@ use SqlSemantics\Statement\Type\Known;
 final class ShowTargets
 {
     /**
-     * Resolves the inspected table and records its fact.
+     * Resolves the inspected table, records its fact and answers it.
      */
-    public function derive(Derivation $derivation, InspectedTable $table, ?Name $database = null): void
+    public function derive(Derivation $derivation, InspectedTable $table, ?Name $database = null): RelationFact
     {
         $name = $database === null ? $table->name : new QualifiedName($table->name->name, $database);
         $resolution = $derivation->table($name, $derivation->environment());
@@ -49,11 +49,11 @@ final class ShowTargets
             foreach ($resolution->table->columns as $column) {
                 $slots[] = new OutputSlot($column->name, new Known($column->type), $column->nullability, $column);
             }
-            $derivation->target($table, new RelationFact(new RowShape($slots, $resolution->table->complete ? [] : [new IncompleteMembers($resolution->table)]), $resolution));
 
-            return;
+            return $derivation->target($table, new RelationFact(new RowShape($slots, $resolution->table->complete ? [] : [new IncompleteMembers($resolution->table)]), $resolution));
         }
         $missing = $resolution instanceof UndeclaredTable || $resolution instanceof ConditionalTable ? [$resolution->missing] : [];
-        $derivation->target($table, new RelationFact(new RowShape([], $missing), $resolution));
+
+        return $derivation->target($table, new RelationFact(new RowShape([], $missing), $resolution));
     }
 }

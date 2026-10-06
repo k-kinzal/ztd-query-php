@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Access;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Typing\DeclaredTyping;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Privilege\Privilege;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Statement\Fact\RelationFact;
@@ -17,7 +18,6 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Reference\Table\UndeclaredTable;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
-use SqlSemantics\Statement\Type\Known;
 
 /**
  * Resolves a relation named by GRANT or REVOKE and checks the column privileges on it.
@@ -55,7 +55,7 @@ final class GrantedRelations
         if ($resolution instanceof DeclaredTable) {
             $slots = [];
             foreach ($resolution->table->columns as $column) {
-                $slots[] = new OutputSlot($column->name, new Known($column->type), $column->nullability, $column);
+                $slots[] = new OutputSlot($column->name, (new DeclaredTyping())->fact($column->type), $column->nullability, $column);
             }
             $shape = new RowShape($slots, $resolution->table->complete ? [] : [new IncompleteMembers($resolution->table)]);
             $this->columns($derivation, $relation, $resolution, $privileges);

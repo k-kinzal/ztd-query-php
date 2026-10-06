@@ -63,4 +63,12 @@ final class TriggersTest extends TestCase
         $statement = $semantics->analyze('CREATE TRIGGER g AFTER INSERT ON t FOR EACH ROW WHEN (new.a > 0) EXECUTE FUNCTION f(1)', []);
         self::assertSame('CREATE TRIGGER g AFTER INSERT ON t FOR EACH ROW WHEN (new.a > 0) EXECUTE FUNCTION f(1)', $statement->toString());
     }
+
+    public function testTruncatesTellsWhetherATriggerFiresOnTruncate(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['"v" is a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE TRIGGER g AFTER INSERT OR TRUNCATE ON v EXECUTE FUNCTION f()', $context)->facts->diagnostics));
+        self::assertSame([], $semantics->analyze('CREATE TRIGGER g AFTER INSERT ON v EXECUTE FUNCTION f()', $context)->facts->diagnostics);
+    }
 }

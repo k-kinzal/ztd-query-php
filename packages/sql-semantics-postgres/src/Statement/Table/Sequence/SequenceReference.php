@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Sequence;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -36,10 +39,19 @@ final class SequenceReference implements SequenceOption
     }
 
     /**
-     * Derives nothing: the name is looked up by the server.
+     * Reports an OWNED BY column whose relation is declared as a kind that cannot own a sequence.
+     *
+     * The server looks the names up itself; only a table, a foreign table or
+     * a view can own a sequence (process_owned_by, PG-RELATION-KIND-001).
      */
     public function deriveClause(Derivation $derivation, Environment $environment): void
     {
+        $parts = $this->name->parts;
+        $table = $this->owned && count($parts) > 1 ? (new DottedName(array_slice($parts, 0, -1)))->qualified() : null;
+        if ($table !== null) {
+            $kinds = new RelationKinds();
+            $kinds->require($derivation, $kinds->declared($derivation, $table, $environment), $table->name, [RelationKind::BaseTable, RelationKind::ForeignTable, RelationKind::View], KindRule::SequenceOwner);
+        }
     }
 
     /**

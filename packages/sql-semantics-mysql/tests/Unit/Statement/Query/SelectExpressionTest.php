@@ -136,6 +136,20 @@ final class SelectExpressionTest extends TestCase
         new SelectExpression(new NumberLiteral('1'), new Name('x'), new Layout([new Spelled('', '1')]));
     }
 
+    public function testALayoutWithTrailingTriviaIsRejected(): void
+    {
+        $this->expectExceptionMessage('MySQL names a select item without the trivia after its expression, so its layout has no trailing trivia.');
+
+        new SelectExpression(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('1')), null, new Layout([new Spelled('', '1'), new Spelled('', '+'), new Spelled('', '1')], ' /* c */'));
+    }
+
+    public function testDeriveNamesAnItemWithoutTheTriviaAfterIt(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 1+1 /* c */, 2 -- d\n, 1 /*e*/ + 1 /*f*/ FROM dual");
+
+        self::assertSame(['1+1', '2', '1 /*e*/ + 1'], [$operation->field(0)->name?->value, $operation->field(1)->name?->value, $operation->field(2)->name?->value]);
+    }
+
     public function testAnEqualsSignBeforeASelectAliasIsRejected(): void
     {
         $this->expectExceptionMessage('A select alias is written with or without AS, and an item without alias has no alias mark.');

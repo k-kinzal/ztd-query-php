@@ -70,6 +70,7 @@ final class QueryCommandsTest extends TestCase
         $query = $commands[1]->children[0];
         self::assertInstanceOf(Node::class, $definition);
         self::assertInstanceOf(Node::class, $query);
+        $lowering->trivia->index($commands[1]);
         self::assertNull($lowering->queryCommands->command($lowering->productions->form($lowering->unwrapped($definition))));
         self::assertInstanceOf(Select::class, $lowering->queryCommands->command($lowering->productions->form($lowering->unwrapped($query))));
     }

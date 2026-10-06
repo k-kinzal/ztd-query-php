@@ -35,4 +35,12 @@ final class IndexesTest extends TestCase
         $statement = $semantics->analyze('CREATE INDEX i ON t USING gist (a) WITH (fillfactor = 70) TABLESPACE s WHERE a > 0', []);
         self::assertSame('CREATE INDEX i ON t USING gist (a) WITH (fillfactor = 70) TABLESPACE s WHERE a > 0', $statement->toString());
     }
+
+    public function testDeriveReportsAView(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
+        self::assertSame(['cannot create index on relation "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE INDEX i ON v (a)', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE INDEX i ON m (a)', $context)->facts->diagnostics));
+    }
 }

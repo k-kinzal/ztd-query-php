@@ -16,6 +16,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Schema\CreateView;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\ColumnCountMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
 use SqlSemantics\Statement\Declaration\Column;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(CreateView::class)]
@@ -30,6 +31,8 @@ final class CreateViewTest extends TestCase
         $view = $operation->declarations()[0];
 
         self::assertTrue($view->complete);
+        self::assertSame(RelationKind::View, $view->kind);
+        self::assertSame(RelationKind::BaseTable, $source->declarations()[0]->kind);
         self::assertSame([], $view->implicit);
         self::assertSame(['a', 'label'], array_map(static fn (object $column): string => $column->name->value, $view->columns));
         self::assertSame('INTEGER', $view->columns[0]->type->name());
@@ -79,6 +82,7 @@ final class CreateViewTest extends TestCase
 
     #[TestWith(["CREATE VIEW v AS SELECT a+1, \"zz\", A COLLATE nocase, likely(b), true, 1 AS false, x'0aff' FROM t"])]
     #[TestWith(['CREATE VIEW v AS SELECT 1 + /* c */ 1 UNION SELECT 2'])]
+    #[TestWith(["CREATE VIEW v AS SELECT a+1 /* c */ , b -- d\n FROM t"])]
     #[TestWith(['CREATE VIEW v(true, x, X) AS SELECT 1, 2, 3'])]
     public function testDeriveStatementNamesTheColumnsAsSqliteDoes(string $sql): void
     {

@@ -108,6 +108,7 @@ final class LoweringTest extends TestCase
         $second = $commands[1]->children[0];
         self::assertInstanceOf(Node::class, $first);
         self::assertInstanceOf(Node::class, $second);
+        $lowering->trivia->index($commands[0]);
         self::assertInstanceOf(Select::class, $lowering->command($lowering->unwrapped($first)));
         self::assertInstanceOf(CreateTable::class, $lowering->command($lowering->unwrapped($second)));
     }

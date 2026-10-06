@@ -65,6 +65,7 @@ final class CreateTableAsTest extends TestCase
 
     #[TestWith(["CREATE TABLE v AS SELECT a+1, \"zz\", A COLLATE nocase, likely(b), true, 1 AS false, x'0aff' FROM t"])]
     #[TestWith(['CREATE TABLE v AS SELECT 1 + /* c */ 1 UNION SELECT 2'])]
+    #[TestWith(["CREATE TABLE v AS SELECT a+1 /* c */ , b -- d\n FROM t"])]
     #[TestWith(['CREATE TABLE v AS SELECT * FROM (SELECT a, a, A FROM t)'])]
     public function testDeriveStatementNamesTheColumnsAsSqliteDoes(string $sql): void
     {

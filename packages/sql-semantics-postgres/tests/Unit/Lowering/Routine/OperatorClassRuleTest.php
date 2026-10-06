@@ -70,13 +70,15 @@ final class OperatorClassRuleTest extends TestCase
         self::assertSame([MemberKind::Operator, MemberKind::Function], [$removals[0]->kind, $removals[1]->kind]);
     }
 
-    public function testDefinitionsLowersAnAttributeWithoutValue(): void
+    public function testChangesLowersAnAttributeWithoutValueAndNone(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('ALTER OPERATOR = (int, int) SET (hashes, restrict = NONE)');
-        $definitions = (new OperatorClassRule($lowering))->definitions($tree->find('operator_def_list')[0]);
-        self::assertNull($definitions[0]->argument);
-        self::assertInstanceOf(KeywordWord::class, $definitions[1]->argument);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse('ALTER OPERATOR = (int, int) SET (hashes, restrict = NONE, join = eqjoinsel)');
+        $changes = (new OperatorClassRule($lowering))->changes($tree->find('operator_def_list')[0], \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorChangeAttribute::class);
+        self::assertSame([false, true, false], [$changes[0]->none, $changes[1]->none, $changes[2]->none]);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\BooleanArgument::class, $changes[0]->attribute->value);
+        self::assertNull($changes[1]->attribute->value);
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\NameArgument::class, $changes[2]->attribute->value);
     }
 
     public function testArgumentLowersAReservedKeyword(): void

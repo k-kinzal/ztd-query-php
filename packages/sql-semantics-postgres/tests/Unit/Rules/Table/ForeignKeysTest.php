@@ -36,4 +36,11 @@ final class ForeignKeysTest extends TestCase
         $statement = $semantics->analyze('CREATE TABLE n (x int REFERENCES t (a) MATCH FULL ON UPDATE SET DEFAULT ON DELETE NO ACTION)', []);
         self::assertSame('CREATE TABLE n (x INT REFERENCES t (a) MATCH FULL ON UPDATE SET DEFAULT ON DELETE NO ACTION)', $statement->toString());
     }
+
+    public function testDeriveReportsAReferencedView(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['referenced relation "v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE TABLE c (a int REFERENCES v (zz))', $context)->facts->diagnostics));
+    }
 }

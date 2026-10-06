@@ -24,6 +24,7 @@ use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\Resolution;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Reference\Missing\MissingInput;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 
@@ -31,8 +32,9 @@ use SqlSemantics\Statement\Shape\Field;
  * Names a result column the way SQLite does.
  *
  * Rule: SQLITE-RESULT-NAME-001. An alias always names its column. Without
- * one, SQLite keeps the span of the expression, the text from its first to
- * its last token with the comments and whitespace between them, and names the
+ * one, SQLite keeps the span of the expression, the text from its first
+ * token to the start of the token that follows it, without the whitespace at
+ * its end, so with the comments between its tokens and after it, and names the
  * column in one of three ways (release 3.47.2, `select.c`):
  * (1) the rows a statement returns, of a SELECT or of RETURNING
  * (`sqlite3GenerateColumnNames()`, short_column_names on): an expression that
@@ -64,11 +66,11 @@ final class ResultNames
     public const LIKELIHOOD = ['likely' => 1, 'unlikely' => 1, 'likelihood' => 2];
 
     /**
-     * Answers the span of a result column: its expression as written, from the first to the last token.
+     * Answers the span of a result column: its expression as written, from the first token to the start of the next, without the whitespace at the end.
      */
     public function span(ResultColumn $column): Name
     {
-        return new Name(($column->layout ?? (new Canonical())->layout($column->expression))->text());
+        return new Name((new Canonical())->span($column->layout ?? (new Canonical())->layout($column->expression)));
     }
 
     /**
@@ -90,6 +92,30 @@ final class ResultNames
         }
 
         return $this->resolved($column, $expression, $resolution);
+    }
+
+    /**
+     * Answers the missing inputs that leave the name of a result column in the rows a statement returns undecided; empty when the name is decided or depends on nothing missing.
+     *
+     * A word that may be a column of an undeclared table or a literal is
+     * named either after the column or after its span; a column reference
+     * takes over an undecided name of the column it resolves to.
+     *
+     * @param Resolution|null $resolution The resolution of the expression, looked through parentheses
+     * @return list<MissingInput>
+     */
+    public function unnamed(ResultColumn $column, ?Resolution $resolution): array
+    {
+        if ($this->output($column, $resolution) !== null) {
+            return [];
+        }
+
+        return match (true) {
+            $resolution instanceof ConditionalColumn => $resolution->missing,
+            $resolution instanceof ResolvedColumn => $resolution->slot->unnamed,
+            $resolution instanceof AliasTarget => $resolution->field->slot->unnamed,
+            default => [],
+        };
     }
 
     /**

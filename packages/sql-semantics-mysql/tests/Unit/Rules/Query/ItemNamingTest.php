@@ -25,6 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Spelling\Layout;
 use SqlSemantics\Statement\Spelling\Spelled;
 
@@ -47,7 +48,8 @@ final class ItemNamingTest extends TestCase
     {
         $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
 
-        self::assertInstanceOf(NameConversion::class, $naming->name(new SelectExpression(new StringLiteral(['é']))));
+        self::assertEquals(new SessionState('character_set_client'), $naming->name(new SelectExpression(new StringLiteral(['é']))));
+        self::assertEquals(new NameConversion('latin2'), $naming->name(new SelectExpression(new StringLiteral(['é'], introducer: new Name('latin2')))));
     }
 
     public function testNameRefusesALayoutOfAnItemThatNamesItself(): void
@@ -126,9 +128,23 @@ final class ItemNamingTest extends TestCase
         self::assertEquals(new Name('lead'), $naming->stored("  \tlead", 'client'));
         self::assertEquals(new Name(str_repeat('a', 256)), $naming->stored(str_repeat('a', 300), 'utf8mb3'));
         self::assertEquals(new Name(str_repeat('a', 255)), $naming->stored(str_repeat('a', 300), 'latin1'));
-        self::assertInstanceOf(NameConversion::class, $naming->stored(str_repeat('a', 300), 'client'));
-        self::assertInstanceOf(NameConversion::class, $naming->stored('é', 'national'));
-        self::assertEquals(new Name('é'), $naming->stored('é', 'binary'));
+        self::assertEquals(new SessionState('character_set_client'), $naming->stored(str_repeat('a', 300), 'client'));
+        self::assertEquals(new SessionState('character_set_client'), $naming->stored('é', 'client'));
+        self::assertEquals(new Name('é'), $naming->stored('é', 'national'));
+        self::assertEquals(new Name(''), $naming->stored('é', 'binary'));
+        self::assertEquals(new Name('aé'), $naming->stored('aé', 'binary'));
+        self::assertEquals(new NameConversion('utf16'), $naming->stored('ab', 'utf16'));
+        self::assertEquals(new NameConversion('latin1'), $naming->stored('é', 'latin1'));
+        self::assertEquals(new Name('é?'), $naming->stored('é😀', 'utf8mb4'));
+    }
+
+    public function testNarrowedKeepsWholeCharactersOfUtf8mb3(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertEquals(new Name(str_repeat('é', 127)), $naming->narrowed(str_repeat('é', 140)));
+        self::assertEquals(new Name('a?'), $naming->narrowed('a😀'));
+        self::assertEquals(new NameConversion('utf8mb4'), $naming->narrowed("\xC3"));
     }
 
     public function testLegacyTellsTheReleasesThatNameBooleansInUpperCase(): void

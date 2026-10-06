@@ -16,7 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\View\DropView;
 #[Medium]
 final class DropViewTest extends TestCase
 {
-    public function testDeriveStatementDerivesNothing(): void
+    public function testDeriveStatementKeepsTheWrittenBehavior(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('DROP VIEW v CASCADE');
         $statement = $create->statement;
@@ -29,5 +29,17 @@ final class DropViewTest extends TestCase
     public function testRenderWritesTheStatement(): void
     {
         self::assertSame('DROP VIEW IF EXISTS v, db.w RESTRICT', (new Semantics(Dialect::MySql))->analyze('DROP VIEW IF EXISTS v, db.w RESTRICT')->toString());
+    }
+
+    public function testDeriveStatementReportsTheNamesTheServerRefuses(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+
+        self::assertSame(['t is not VIEW.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP VIEW v, t', [$table, $view])->facts->diagnostics));
+        self::assertSame(['Relation w does not exist.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP VIEW w', [$table, $view])->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP VIEW IF EXISTS w, t', [$table, $view])->facts->diagnostics));
+        self::assertSame(['t is not VIEW.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('DROP VIEW IF EXISTS t', [(new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('CREATE TABLE t (a INT)')])->facts->diagnostics));
     }
 }

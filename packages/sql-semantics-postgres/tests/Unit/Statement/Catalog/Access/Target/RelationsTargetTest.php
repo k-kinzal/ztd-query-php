@@ -69,4 +69,12 @@ final class RelationsTargetTest extends TestCase
         $this->expectExceptionMessage('Qualified names are relations or sequences.');
         new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\RelationsTarget(\SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target\PrivilegeObjectKind::Schema, [new \SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference(new \SqlSemantics\Statement\Identifier\QualifiedName(new \SqlSemantics\Statement\Identifier\Name('t')))]);
     }
+
+    public function testDeriveTargetReportsANonSequence(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE SEQUENCE s')];
+        self::assertSame(['"t" is not a sequence'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('GRANT USAGE ON SEQUENCE t TO r', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('GRANT USAGE ON SEQUENCE s, serial_seq TO r', $context)->facts->diagnostics));
+    }
 }

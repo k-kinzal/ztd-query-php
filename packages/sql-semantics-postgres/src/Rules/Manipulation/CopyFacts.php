@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Rules\Query\Facts\QueryRoots;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyDirection;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyQuery;
@@ -15,14 +16,19 @@ use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Modification;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 
 /**
  * Derives the facts of COPY.
  *
- * Rule: PG-COPY-001. The table follows PG-TARGET-TABLE-001. A column of
+ * Rule: PG-COPY-001. The table follows PG-TARGET-TABLE-001; COPY TO reads
+ * only a table and COPY FROM writes neither a materialized view nor a
+ * sequence (PG-RELATION-KIND-001; `cannot copy from view "v"`). A column of
  * the column list must be a column of the table and may be listed once;
  * without a list every column is copied. The WHERE condition sees the
  * table and is allowed with COPY FROM only. The query of COPY TO is derived
@@ -42,7 +48,9 @@ final class CopyFacts
     public function table(CopyTable $copy, Derivation $derivation): void
     {
         $environment = $derivation->environment();
-        $table = (new Targets())->visible($copy->table, $derivation->relation($copy->table, $environment));
+        $fact = $derivation->relation($copy->table, $environment);
+        $table = (new Targets())->visible($copy->table, $fact);
+        $this->kind($copy, (new RelationKinds())->of($fact), $derivation);
         $copied = $this->columns($copy->columns, $table, $derivation);
         if ($copy->where !== null) {
             if ($copy->direction === CopyDirection::To) {
@@ -55,6 +63,32 @@ final class CopyFacts
         $placement = new Placement();
         $placement->values($copy, [], [], $derivation);
         $placement->into($copy, $derivation);
+    }
+
+    /**
+     * Reports a relation of a kind COPY cannot read from or write into.
+     *
+     * COPY TO reads only tables: a view, a materialized view, a foreign table
+     * or a sequence is refused. COPY FROM refuses a materialized view and a
+     * sequence; a view needs an INSTEAD OF INSERT trigger and a foreign table
+     * a wrapper that inserts, which the context does not tell.
+     */
+    public function kind(CopyTable $copy, ?RelationKind $kind, Derivation $derivation): void
+    {
+        $rule = $copy->direction === CopyDirection::To ? match ($kind) {
+            RelationKind::View => KindRule::CopyFromView,
+            RelationKind::MaterializedView => KindRule::CopyFromMaterializedView,
+            RelationKind::ForeignTable => KindRule::CopyFromForeignTable,
+            RelationKind::Sequence => KindRule::CopyFromSequence,
+            RelationKind::BaseTable, null => null,
+        } : match ($kind) {
+            RelationKind::MaterializedView => KindRule::CopyToMaterializedView,
+            RelationKind::Sequence => KindRule::CopyToSequence,
+            RelationKind::BaseTable, RelationKind::View, RelationKind::ForeignTable, null => null,
+        };
+        if ($rule !== null) {
+            $derivation->report(new KindProblem($rule, $copy->table->table->name->name));
+        }
     }
 
     /**

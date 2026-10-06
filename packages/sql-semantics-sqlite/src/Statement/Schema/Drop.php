@@ -7,7 +7,9 @@ namespace SqlSemantics\Platform\Sqlite\Statement\Schema;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -23,9 +25,9 @@ use SqlSemantics\Statement\Statement;
  * provides no declaration. For a table or a view the name is resolved and the
  * resolution is the relation fact of the statement node; a name a complete
  * context does not declare is a diagnostic, unless IF EXISTS is written, in
- * which case it is the resolution AbsentRelation. A declaration context does
- * not say whether a relation is a table or a view, so `DROP VIEW` of a table
- * is not reported. Indexes and triggers are not part of a declaration
+ * which case it is the resolution AbsentRelation. `DROP TABLE` of a declared
+ * view and `DROP VIEW` of a declared table are diagnostics, with or without
+ * IF EXISTS (SQLITE-RELATION-KIND-001). Indexes and triggers are not part of a declaration
  * context; their names are kept unresolved.
  * Source: https://sqlite.org/lang_droptable.html, https://sqlite.org/lang_dropview.html,
  * https://sqlite.org/lang_dropindex.html, https://sqlite.org/lang_droptrigger.html.
@@ -61,6 +63,7 @@ final class Drop implements Statement
             return;
         }
         $fact = (new TableShapes())->target($derivation, $this->name);
+        (new RelationKinds())->refuse($fact, $this->object === SchemaObjectKind::View ? KindRefusal::DropView : KindRefusal::DropTable, $derivation);
         if ($this->ifExists && $fact->table instanceof MissingTable) {
             $fact = new RelationFact(new RowShape([]), new AbsentRelation($this->name));
         }

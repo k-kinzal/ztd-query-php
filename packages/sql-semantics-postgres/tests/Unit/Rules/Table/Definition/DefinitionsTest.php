@@ -79,4 +79,13 @@ final class DefinitionsTest extends TestCase
         $statement = $semantics->analyze('CREATE TEMP TABLE public.n (a int)', []);
         self::assertSame(['cannot create temporary relation in non-temporary schema'], array_map(static fn ($problem): string => $problem->message(), $statement->facts->diagnostics));
     }
+
+    public function testKindDeclaresAForeignTableAsOne(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        self::assertSame(
+            [\SqlSemantics\Statement\Declaration\RelationKind::ForeignTable, \SqlSemantics\Statement\Declaration\RelationKind::BaseTable],
+            [$semantics->analyze('CREATE FOREIGN TABLE f (a int) SERVER x')->declarations()[0]->kind, $semantics->analyze('CREATE TABLE t (a int)')->declarations()[0]->kind],
+        );
+    }
 }

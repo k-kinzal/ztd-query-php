@@ -8,8 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\AlterationProblems;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Column\ColumnDefinition;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
@@ -28,7 +30,8 @@ use SqlSemantics\Statement\Statement;
  * shape is the columns of the existing table followed by the new column,
  * which has the declared type SQLite records and is never NULL only when it
  * is declared NOT NULL. Diagnostics, besides those of the table resolution
- * and of the expressions: a column name the completely known table already
+ * and of the expressions: a view (SQLITE-RELATION-KIND-001), which SQLite
+ * refuses before it reads the new column; otherwise a column name the completely known table already
  * has; a PRIMARY KEY or UNIQUE column; a STORED generated column; a NOT NULL
  * column without a default value other than NULL; in a STRICT table a type
  * that is not one of the six standard names. The optional COLUMN keyword is
@@ -63,7 +66,9 @@ final class AlterAddColumn implements Statement, Relation
     {
         $shapes = new TableShapes();
         $existing = $shapes->target($derivation, $this->table);
-        (new AlterationProblems())->added($existing, $this->column, $derivation);
+        if (!(new RelationKinds())->refuse($existing, KindRefusal::AddColumn, $derivation)) {
+            (new AlterationProblems())->added($existing, $this->column, $derivation);
+        }
         $fact = $derivation->relation($this, $derivation->environment());
         $this->column->deriveColumn($derivation, $shapes->scope($derivation, $this, $this->table, $fact->shape, $shapes->implicitOf($fact)));
     }

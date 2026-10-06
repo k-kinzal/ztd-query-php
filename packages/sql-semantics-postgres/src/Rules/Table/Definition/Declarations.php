@@ -17,6 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\PartitionOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TableForm;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
@@ -38,7 +39,8 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
  * name denotes on the search path. The declaration is complete only up to
  * the first column whose type name is an error or whose parent, LIKE source
  * or composite type the context does not declare. The system
- * columns are implicit (PG-SYSTEM-COLUMNS-001).
+ * columns are implicit (PG-SYSTEM-COLUMNS-001). A foreign table is declared as one, every other
+ * definition as a base table (PG-RELATION-KIND-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html, https://www.postgresql.org/docs/17/ddl-inherit.html.
  * Termination: one pass over the parents and the elements. Status: Implemented.
  *
@@ -49,7 +51,7 @@ final class Declarations
     /**
      * Builds the declaration of a table definition under its name.
      */
-    public function table(TableForm $form, Derivation $derivation, QualifiedName $name): Table
+    public function table(TableForm $form, Derivation $derivation, QualifiedName $name, RelationKind $kind = RelationKind::BaseTable): Table
     {
         $set = new ColumnSet();
         if ($form instanceof ListedColumns) {
@@ -63,7 +65,7 @@ final class Declarations
             $this->constrain($element, $set);
         }
 
-        return new Table($name, $derivation->context->profile, $set->columns(), (new SystemColumns())->implicit(), !$set->closed());
+        return new Table($name, $derivation->context->profile, $set->columns(), (new SystemColumns())->implicit(), !$set->closed(), $kind);
     }
 
     /**

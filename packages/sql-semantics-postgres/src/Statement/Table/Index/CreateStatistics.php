@@ -8,9 +8,13 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\KeyTerms;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\StatisticsScope;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
+use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Snapshot;
@@ -21,7 +25,8 @@ use SqlSemantics\Statement\Statement;
  *
  * Mirrors PostgreSQL's `CreateStatsStmt` (`defnames`, `stat_types`, `exprs`, `relations`, `if_not_exists`).
  * The FROM items are derived as in a query (the server accepts one table); the columns and expressions are
- * derived where they are visible.
+ * derived where they are visible. A single table declared as a view or a sequence is reported
+ * (PG-RELATION-KIND-001).
  * Source: https://www.postgresql.org/docs/17/sql-createstatistics.html.
  *
  * @visibility public
@@ -74,6 +79,12 @@ final class CreateStatistics implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $scope = (new StatisticsScope())->derive($this->from, $derivation);
+        $kinds = new RelationKinds();
+        foreach (count($this->from) === 1 ? $this->from : [] as $item) {
+            if ($item instanceof TableInput) {
+                $kinds->require($derivation, $kinds->declared($derivation, $item->name()), $item->name()->name, [RelationKind::BaseTable, RelationKind::MaterializedView, RelationKind::ForeignTable], KindRule::StatisticsRelation);
+            }
+        }
         foreach ($this->keys as $key) {
             $derivation->scalar($key, $scope);
         }

@@ -62,7 +62,8 @@ final class Projection
                 }
                 $resolution = $column->expression instanceof Grouped ? (new ColumnFacts())->denoted($column->expression, $environment) : $fact->resolution;
                 $origin = $resolution instanceof ResolvedColumn ? $resolution->slot : null;
-                $items[] = new Field(count($items), new OutputSlot((new ResultNames())->output($column, $resolution), $fact->type, $fact->nullability, null, $origin), $column->expression, $resolution);
+                $names = new ResultNames();
+                $items[] = new Field(count($items), new OutputSlot($names->output($column, $resolution), $fact->type, $fact->nullability, null, $origin, $names->unnamed($column, $resolution)), $column->expression, $resolution);
                 continue;
             }
             $selected = [];
@@ -92,7 +93,7 @@ final class Projection
     {
         foreach ($relation->shape->slots as $position => $slot) {
             if (!$merged || !in_array($position, $relation->hidden, true)) {
-                $items[] = new Field(count($items), new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot), null, new ResolvedColumn($relation->relation, $slot));
+                $items[] = new Field(count($items), new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed), null, new ResolvedColumn($relation->relation, $slot));
             }
         }
         if (!$relation->shape->complete()) {

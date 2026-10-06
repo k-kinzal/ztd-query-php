@@ -47,6 +47,7 @@ final class SelectExpression implements SelectItem
     public function __construct(public readonly Scalar $expression, public readonly ?Name $alias = null, public readonly ?Layout $layout = null, public readonly AliasMark $mark = AliasMark::As)
     {
         Check::input($alias === null || $layout === null, 'An aliased select item is named by its alias and keeps no layout.');
+        Check::input($layout === null || $layout->trail === '', 'MySQL names a select item without the trivia after its expression, so its layout has no trailing trivia.');
         Check::input($mark !== AliasMark::Equals && ($alias !== null || $mark === AliasMark::As), 'A select alias is written with or without AS, and an item without alias has no alias mark.');
     }
 

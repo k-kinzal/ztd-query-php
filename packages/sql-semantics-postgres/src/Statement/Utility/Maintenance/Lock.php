@@ -6,9 +6,12 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
@@ -18,7 +21,8 @@ use SqlSemantics\Statement\Statement;
  * Rule: PG-LOCK-001. Mirrors PostgreSQL's `LockStmt` (relations, mode,
  * nowait). Without a mode the strongest one, ACCESS EXCLUSIVE, is taken;
  * a written mode is kept as written. The word TABLE has no effect and is not
- * kept. Facts: each table is resolved.
+ * kept. Facts: each table is resolved; only tables and views can be locked
+ * (RangeVarCallbackForLockTable; PG-RELATION-KIND-001).
  * Source: https://www.postgresql.org/docs/17/sql-lock.html. Status: Implemented.
  *
  * @visibility public
@@ -60,8 +64,10 @@ final class Lock implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $kinds = new RelationKinds();
         foreach ($this->tables as $table) {
-            $derivation->target($table, (new Targets())->resolve($derivation, $table->name));
+            $kind = $kinds->of($derivation->target($table, (new Targets())->resolve($derivation, $table->name)));
+            $kinds->require($derivation, $kind, $table->name->name, [RelationKind::BaseTable, RelationKind::View], KindRule::LockRelation);
         }
     }
 

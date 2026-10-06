@@ -54,7 +54,7 @@ final class TableShapes
         if ($resolution instanceof CommonTable) {
             $slots = [];
             foreach ($environment->commonTable($name->name)?->shape->slots ?? [] as $slot) {
-                $slots[] = new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot);
+                $slots[] = new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed);
             }
 
             return new RelationFact(new RowShape($slots, $environment->commonTable($name->name)?->shape->missing ?? []), $resolution);

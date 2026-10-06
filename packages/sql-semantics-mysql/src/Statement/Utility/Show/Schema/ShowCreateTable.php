@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
+use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowTargets;
 use SqlSemantics\Platform\MySql\Statement\Utility\Problem\TableOrView;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
@@ -18,10 +21,11 @@ use SqlSemantics\Statement\Statement;
  *
  * Rule: MYSQL-SHOW-CREATE-TABLE-001. The table resolves by MYSQL-SHOW-TARGET-001. For a base table
  * the server returns `Table` and `Create Table`; the statement also
- * accepts a view and then returns the four columns of SHOW CREATE VIEW. A
- * declaration of the context does not tell a table from a view, so the
- * shape is open and depends on that fact (TableOrView). Terminates: no
- * nested part.
+ * accepts a view and then returns the four columns of SHOW CREATE VIEW
+ * (MYSQL-SHOW-ROWS-001). A declared table answers the columns of its kind
+ * (MYSQL-RELATION-KIND-001); for any other name the shape is open and
+ * depends on whether the name is a table or a view (TableOrView).
+ * Terminates: no nested part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-table.html.
  * Status: Implemented.
  *
@@ -29,6 +33,10 @@ use SqlSemantics\Statement\Statement;
  * @example Reading the statement
  *     $show = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SHOW CREATE TABLE shop.t');
  *     [$show->shape()?->missing[0]->describe(), $show->toString()] // => ['whether shop.t is a base table or a view', 'SHOW CREATE TABLE shop.t']
+ * @example Reading the columns for a declared view
+ *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+ *     $view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a');
+ *     $semantics->analyze('SHOW CREATE TABLE v', [$view])->field(1)->name?->value // => 'Create View'
  */
 final class ShowCreateTable implements Statement
 {
@@ -46,8 +54,14 @@ final class ShowCreateTable implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        (new ShowTargets())->derive($derivation, $this->table);
-        $derivation->output((new ShowFacts())->query((new ShowFacts())->open(new TableOrView($this->table->name))->shape, $derivation->context->columnNames));
+        $facts = new ShowFacts();
+        $kind = (new RelationKinds())->kind((new ShowTargets())->derive($derivation, $this->table)->table);
+        if ($kind === null) {
+            $derivation->output($facts->query($facts->open(new TableOrView($this->table->name))->shape, $derivation->context->columnNames));
+
+            return;
+        }
+        $facts->rows($derivation, $kind === RelationKind::View ? Report::CreateView : Report::CreateTable);
     }
 
     /**

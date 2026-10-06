@@ -86,4 +86,13 @@ final class RenameTest extends TestCase
         $this->expectExceptionMessage('A role is renamed with ROLE, USER or GROUP; nothing else is.');
         new Rename(ObjectKind::Schema, new UnqualifiedName(new Name('s')), new Name('t'), null, false, null, RoleWord::Group);
     }
+
+    public function testDeriveStatementReportsAnotherKind(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE SEQUENCE s')];
+        self::assertSame(['"t" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER VIEW t RENAME TO w', $context)->facts->diagnostics));
+        self::assertSame(['cannot rename columns of relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE s RENAME CONSTRAINT c TO d', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER VIEW t RENAME COLUMN a TO b', $context)->facts->diagnostics));
+    }
 }

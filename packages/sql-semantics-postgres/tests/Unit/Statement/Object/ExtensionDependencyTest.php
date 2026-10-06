@@ -35,4 +35,11 @@ final class ExtensionDependencyTest extends TestCase
         $this->expectExceptionMessage('DEPENDS ON EXTENSION names the object as the grammar names objects of its kind.');
         new ExtensionDependency(ObjectKind::Schema, new UnqualifiedName(new Name('s')), new Name('e'));
     }
+
+    public function testDeriveStatementReportsAnotherKind(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['"v" is not an index'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER INDEX v DEPENDS ON EXTENSION e', $context)->facts->diagnostics));
+    }
 }

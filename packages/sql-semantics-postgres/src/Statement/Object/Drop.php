@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectForms;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectSpelling;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Object\Problem\ObjectProblem;
@@ -72,6 +73,7 @@ final class Drop implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         (new ObjectFacts())->derive($this->kind, $this->objects, $this->ifExists, $derivation);
+        (new RelationKinds())->named($derivation, $this->kind, $this->objects);
         if ($this->concurrently && count($this->objects) > 1) {
             $derivation->report(new ObjectProblem(ObjectProblemKind::ConcurrentMultiple));
         }

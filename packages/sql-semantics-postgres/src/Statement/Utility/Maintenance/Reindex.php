@@ -8,12 +8,15 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionArguments;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Utility\Problem\UtilityProblemKind;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
@@ -27,7 +30,9 @@ use SqlSemantics\Statement\Statement;
  * the option of that name. An index or a table is named by a relation name,
  * a schema by its name, and SYSTEM or DATABASE by the name of the current
  * database or by nothing. Facts: the table of REINDEX TABLE is resolved; an
- * index, a schema and a database are not part of a declaration context.
+ * index, a schema and a database are not part of a declaration context; a
+ * table declared as another kind than a table or a materialized view is
+ * reported (PG-RELATION-KIND-001).
  * Diagnostics: an option REINDEX does not know; a value the option cannot
  * take; SYSTEM rebuilt concurrently, by the word or by the option.
  * Source: https://www.postgresql.org/docs/17/sql-reindex.html. Status: Implemented.
@@ -78,7 +83,9 @@ final class Reindex implements Statement
             $derivation->report(new UtilityProblem(UtilityProblemKind::SystemConcurrently));
         }
         if ($this->target === ReindexTarget::Table && $this->object instanceof QualifiedName) {
-            $derivation->target($this, (new Targets())->resolve($derivation, $this->object));
+            $kinds = new RelationKinds();
+            $kind = $kinds->of($derivation->target($this, (new Targets())->resolve($derivation, $this->object)));
+            $kinds->require($derivation, $kind, $this->object->name, [RelationKind::BaseTable, RelationKind::MaterializedView], KindRule::NotTableOrMaterializedView);
         }
     }
 

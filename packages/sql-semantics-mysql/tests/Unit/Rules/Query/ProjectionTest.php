@@ -96,7 +96,9 @@ final class ProjectionTest extends TestCase
 
     public function testOpenTellsRelationsWithUnknownColumns(): void
     {
-        self::assertFalse((new Projection())->open(new VisibleRelation(new Dual(), new RowShape([], [new NameConversion()]))));
+        $unnamed = new OutputSlot(null, new Known(new Integral(IntegralKind::Int)), Nullability::NotNull, null, null, [new NameConversion('latin2')]);
+        self::assertFalse((new Projection())->open(new VisibleRelation(new Dual(), new RowShape([$unnamed], [new NameConversion('latin2')]))));
+        self::assertTrue((new Projection())->open(new VisibleRelation(new Dual(), new RowShape([], [new NameConversion('latin2')]))));
         self::assertTrue((new Projection())->open(new VisibleRelation(new Dual(), new RowShape([], [new SessionState('x')]))));
     }
 

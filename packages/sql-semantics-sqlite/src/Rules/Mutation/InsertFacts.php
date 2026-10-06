@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite\Rules\Mutation;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\ColumnResolver;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\InsertInto;
 use SqlSemantics\Platform\Sqlite\Statement\Mutation\Upsert;
@@ -13,6 +14,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\ArityRule;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Star;
 use SqlSemantics\Platform\Sqlite\Statement\Query\TableStar;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -28,7 +30,8 @@ use SqlSemantics\Statement\Query;
  * column of the table when no list is written; another count is reported
  * when both counts are known. In an ON CONFLICT clause the conflict target
  * sees the written table; DO UPDATE sees the written table and, under the
- * qualifier `excluded`, the row that could not be inserted. RETURNING
+ * qualifier `excluded`, the row that could not be inserted. An ON CONFLICT
+ * clause on a view is reported (SQLITE-RELATION-KIND-001). RETURNING
  * follows SQLITE-MUTATION-SCOPE-001.
  * Source: https://sqlite.org/lang_insert.html, https://sqlite.org/lang_upsert.html.
  * Status: Implemented.
@@ -47,7 +50,10 @@ final class InsertFacts
     public function derive(InsertInto $into, ?Query $source, array $upserts, array $returning, Derivation $derivation, Environment $outer): ?QueryFact
     {
         $scope = new MutationScope();
-        [$base, $target] = $scope->open($into->target, $into->with, $derivation, $outer);
+        [$base, $target, $written] = $scope->open($into->target, $into->with, $derivation, $outer);
+        if ($upserts !== []) {
+            (new RelationKinds())->refuse($written, KindRefusal::Upsert, $derivation);
+        }
         $scope->names($into->columns, $target, $derivation);
         if ($source !== null) {
             $rows = $derivation->query($source, $base);

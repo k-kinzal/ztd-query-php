@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Rules\Resolution\Visibility;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Clause\LockingClause;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Query\Problem\QueryMisuseRule;
@@ -17,8 +18,11 @@ use SqlSemantics\Platform\PostgreSql\Statement\Relation\ParenthesizedJoin;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\RelationList;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\Xml\XmlTable;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindProblem;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
@@ -35,6 +39,10 @@ use SqlSemantics\Statement\Relation;
  * the nullable side of an outer join (the right side of LEFT, the left side
  * of RIGHT, both sides of FULL) cannot be locked. Reference to a WITH query
  * is told from a table by resolving its name where the selection stands.
+ * Every table of the FROM clause of a query with a locking clause gets a row
+ * mark: a declared sequence is reported (`cannot lock rows in sequence`), and
+ * so is a declared materialized view a clause locks (PG-RELATION-KIND-001,
+ * CheckValidRowMarkRel in `execMain.c`).
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-FOR-UPDATE-SHARE,
  * `transformLockingClause` in `src/backend/parser/analyze.c` and
  * `make_outerjoininfo` in `src/backend/optimizer/plan/initsplan.c` of PostgreSQL 17.
@@ -55,6 +63,7 @@ final class Locking
     public function check(array $clauses, array $visible, ?Relation $from, Derivation $derivation, Environment $base): void
     {
         $tables = $from === null ? [] : $this->tables($from);
+        $locked = [];
         foreach ($clauses as $clause) {
             $subject = new Name('FOR ' . $clause->strength->value);
             $targets = [];
@@ -72,6 +81,34 @@ final class Locking
                     $derivation->report(new QueryMisuse(QueryMisuseRule::LockingNullableSide, $subject));
                     break;
                 }
+            }
+            array_push($locked, ...($clause->relations === [] ? array_column($tables, 0) : $targets));
+        }
+        if ($clauses !== []) {
+            $this->kinds(array_column($tables, 0), $locked, $derivation, $base);
+        }
+    }
+
+    /**
+     * Reports the tables of a query with row marks whose declared kind cannot be marked.
+     *
+     * Every table of the FROM clause of a query that locks rows, or of the
+     * FROM or USING clause of UPDATE, DELETE and MERGE, gets a row mark, even
+     * one no clause locks; a sequence cannot have one. A materialized view
+     * can be referenced but not locked.
+     *
+     * @param list<TableInput> $tables The tables of the FROM clause
+     * @param list<TableInput> $locked The tables the locking clauses lock
+     */
+    public function kinds(array $tables, array $locked, Derivation $derivation, Environment $base): void
+    {
+        $kinds = new RelationKinds();
+        foreach ($tables as $table) {
+            $kind = $kinds->declared($derivation, $table->name(), $base);
+            if ($kind === RelationKind::Sequence) {
+                $derivation->report(new KindProblem(KindRule::LockSequenceRows, $table->name()->name));
+            } elseif ($kind === RelationKind::MaterializedView && in_array($table, $locked, true)) {
+                $derivation->report(new KindProblem(KindRule::LockMaterializedViewRows, $table->name()->name));
             }
         }
     }

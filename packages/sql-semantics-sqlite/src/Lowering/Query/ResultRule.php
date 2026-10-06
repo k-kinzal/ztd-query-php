@@ -25,7 +25,8 @@ use SqlSemantics\Statement\Identifier\Name;
  * their written order. `scanpt` is an empty marker of the grammar that
  * carries nothing. A result column without an alias keeps the layout of its
  * expression when it is not the canonical spelling (CORE-SPELLING-001),
- * since SQLite names the column after it. Whether AS introduces an alias is
+ * since SQLite names the column after it; the layout includes a comment
+ * written after the expression, which SQLite's name includes. Whether AS introduces an alias is
  * kept, because the text of an enclosing expression includes it. Terminates: both lists are walked along their spine in a
  * loop. Source: https://sqlite.org/lang_select.html. Status: Implemented.
  *
@@ -83,7 +84,7 @@ final class ResultRule
     {
         $lowered = $this->lowering->expressions->expression($expression);
         $alias = $this->alias($as);
-        $layout = $alias === null ? (new Layouts())->of($expression) : null;
+        $layout = $alias === null ? (new Layouts())->of($expression, (new Canonical())->trail($this->lowering->trivia->after($expression))) : null;
 
         return new ResultColumn($lowered, $alias, $layout === null || (new Canonical())->same($layout, (new Canonical())->layout($lowered)) ? null : $layout, $this->keyword($as));
     }

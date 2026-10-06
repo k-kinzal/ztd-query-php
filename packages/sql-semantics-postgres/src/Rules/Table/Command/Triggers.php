@@ -10,6 +10,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Attributes;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Conditions;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\Indexes;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\PseudoRelations;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
@@ -18,6 +19,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateConstraintTri
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateEventTrigger;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\CreateTrigger;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerArgument;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerEvent;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerEventKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Trigger\TriggerTiming;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -27,7 +30,11 @@ use SqlSemantics\Statement\Identifier\Name;
  *
  * Rule: PG-TRIGGER-001. The table of a trigger is resolved
  * (PG-TABLE-TARGET-001) and is the relation fact of the statement; inside
- * CREATE SCHEMA an unqualified table is in the schema being created. The WHEN
+ * CREATE SCHEMA an unqualified table is in the schema being created. The
+ * declared kind of the table limits its triggers (PG-RELATION-KIND-001): no
+ * INSTEAD OF trigger on a table or a foreign table, no row BEFORE or AFTER
+ * and no TRUNCATE trigger on a view, no constraint trigger on a foreign
+ * table, no trigger at all on a materialized view or a sequence. The WHEN
  * condition of a row trigger sees the columns of the table as OLD and NEW
  * ("the WHEN condition can refer to columns of the old and/or new row values
  * by writing OLD.column_name or NEW.column_name"); the server gives a
@@ -56,6 +63,8 @@ final class Triggers
     {
         $name = (new Indexes())->located($trigger->table, $schema);
         $fact = $derivation->target($trigger, (new Targets())->resolve($derivation, $name));
+        $kinds = new RelationKinds();
+        $kinds->triggered($derivation, $kinds->of($fact), $name->name, $trigger->timing, $trigger->row === true, $this->truncates($trigger->events), false, $trigger->transitions !== []);
         foreach ($trigger->transitions as $transition) {
             if (!$transition->table) {
                 $derivation->report(new DefinitionProblem(DefinitionRule::Unimplemented, new Name('ROW variable naming in the REFERENCING clause')));
@@ -74,6 +83,8 @@ final class Triggers
     {
         $targets = new Targets();
         $fact = $derivation->target($trigger, $targets->resolve($derivation, (new Indexes())->located($trigger->table, $schema)));
+        $kinds = new RelationKinds();
+        $kinds->triggered($derivation, $kinds->of($fact), $trigger->table->name, TriggerTiming::After, true, $this->truncates($trigger->events), true);
         if ($trigger->referenced !== null) {
             $derivation->target($trigger->referenced, $targets->resolve($derivation, $trigger->referenced->name));
         }
@@ -82,6 +93,22 @@ final class Triggers
             (new Conditions())->derive($derivation, $trigger->when, (new PseudoRelations())->scope($derivation, $trigger, $fact, false), 'WHEN');
             (new TriggerReferences())->check($derivation, $trigger->when, $fact, true, $trigger->events, false);
         }
+    }
+
+    /**
+     * Tells whether a trigger fires on TRUNCATE.
+     *
+     * @param list<TriggerEvent> $events
+     */
+    public function truncates(array $events): bool
+    {
+        foreach ($events as $event) {
+            if ($event->kind === TriggerEventKind::Truncate) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

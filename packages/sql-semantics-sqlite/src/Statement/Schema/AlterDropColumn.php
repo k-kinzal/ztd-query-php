@@ -9,7 +9,9 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\AlterationProblems;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -53,7 +55,9 @@ final class AlterDropColumn implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $fact = $derivation->target($this, (new TableShapes())->target($derivation, $this->table));
-        (new AlterationProblems())->dropped($fact, $this->column, $derivation);
+        if (!(new RelationKinds())->refuse($fact, KindRefusal::DropColumn, $derivation)) {
+            (new AlterationProblems())->dropped($fact, $this->column, $derivation);
+        }
     }
 
     /**

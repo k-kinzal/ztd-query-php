@@ -128,30 +128,52 @@ $query->field(2)->type->missing[0]->describe(); // => 'the value bound to parame
 
 ### Unaliased result columns
 
-SQLite names an unaliased result column after the text of its expression as it was written, from its first to its last token, unless the expression is a column reference. That text is part of the meaning, so the model keeps it as the layout of the result column, renders the expression in that spelling, and derives the name from it the way SQLite does:
+SQLite names an unaliased result column after the text of its expression as it was written, from its first token to the start of the next token, without the whitespace at the end, unless the expression is a column reference. A comment written after the expression is therefore part of the name. That text is part of the meaning, so the model keeps it as the layout of the result column, renders the expression in that spelling, and derives the name from it the way SQLite does:
 
 - the rows a statement returns take the name of the column a column reference denotes, and otherwise the text;
 - a subquery in FROM and a common table name their columns before resolution: a single word, possibly qualified, in parentheses or under COLLATE, keeps the word as written, and any other expression takes the text;
 - a view and a table created from a query name their columns after resolution, looking through COLLATE, `likely()`, `unlikely()` and `likelihood()` as well;
-- in these last two cases a name TRUE or FALSE becomes `columnN`, and a repeated name gets a `:1` to `:4` suffix; a fifth repeat gets a random suffix, so its name stays open (`RandomColumnName`).
+- in these last two cases a name TRUE or FALSE becomes `columnN`, and a repeated name gets a `:1` to `:4` suffix; a fifth repeat gets a random suffix, so its name stays open (`RandomColumnName`);
+- a name that depends on a missing declaration, such as a double-quoted word that is a column of an undeclared table or else a string, is left open, and the output slot names the missing inputs (`OutputSlot::$unnamed`), so looking a name up in such a result is a `DependentField`. Behind a star of an undeclared table, the names of a subquery or common table are open in the same way.
 
-The layout is kept only where it differs from the canonical spelling. Whether AS introduces an alias is kept as well, because the text of an enclosing expression includes it. A result column built with `new` and without a layout is rendered in the canonical spelling and named after that text, which is the text the database reads.
+The layout is kept only where it differs from the canonical spelling, and it keeps the trivia after the expression only when that holds a comment. Whether AS introduces an alias is kept as well, because the text of an enclosing expression includes it. A result column built with `new` and without a layout is rendered in the canonical spelling and named after that text, which is the text the database reads.
 
 ```php
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Shape\DependentField;
 
 $semantics = new Semantics(Dialect::Sqlite);
 
 $semantics->analyze('SELECT 1+1, 2 AS two')->field(0)->name?->value; // => '1+1'
 $semantics->analyze('SELECT 1+1, 2 AS two')->toString(); // => 'SELECT 1+1, 2 AS two'
+$semantics->analyze('SELECT 1+1 /* sum */, 2')->field(0)->name?->value; // => '1+1 /* sum */'
+$semantics->analyze('SELECT 1+1 -- sum')->toString(); // => 'SELECT 1+1 -- sum'
+$semantics->analyze('SELECT "a" FROM t')->fields()?->lookup('a') instanceof DependentField; // => true
 $semantics->analyze('SELECT "1+1" FROM (SELECT 1+1)', [])->field(0)->resolution instanceof ResolvedColumn; // => true
+```
+
+### Views
+
+`CREATE VIEW` declares a view (`RelationKind::View`); every other declaration is a table. Where a name resolves to one declaration, a request SQLite carries out only for the other kind is a `WrongRelationKind` diagnostic: `DROP TABLE`, every `ALTER TABLE` form, `CREATE INDEX`, a `BEFORE` or `AFTER` trigger and an upsert on a view, and `DROP VIEW` and an `INSTEAD OF` trigger on a table. A view has no `rowid`.
+
+```php
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\Sqlite\Dialect;
+use SqlSemantics\Statement\Declaration\RelationKind;
+
+$semantics = new Semantics(Dialect::Sqlite);
+$view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS one');
+
+$view->declarations()[0]->kind; // => RelationKind::View
+$semantics->analyze('DROP TABLE v', [$view])->facts->diagnostics[0]->message(); // => 'Relation v is a view: DROP TABLE removes only a table.'
 ```
 
 ## Limitations
 
-- A comment written between an unaliased result expression and the next token is part of the name SQLite gives the column, but the model does not keep it, so the rendered SQL names such a column without the comment.
+- INSERT, UPDATE and DELETE on a view succeed exactly when an `INSTEAD OF` trigger handles them. Contexts do not hold triggers, so such a write is not reported.
+- Whether a relation is a virtual table is not part of a declaration, so what SQLite refuses only for virtual tables, such as indexing one, is not reported.
 - A search path must start with `main`; `temp` is always searched first.
 - The parameter style has no effect on reading, but two profiles that differ only in it are not compatible.
 - Version 1 contexts declare relations only. Application-defined functions, such as the `regexp()` that `REGEXP` calls, are missing inputs.

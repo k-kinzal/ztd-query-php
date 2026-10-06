@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\View;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\ViewFacts;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
@@ -15,7 +17,8 @@ use SqlSemantics\Statement\Statement;
  * A request to change the definition of an existing view.
  *
  * Rule: MYSQL-ALTER-VIEW-001. The view name is a table use: the statement
- * node records its resolution as a target. The new query is derived and
+ * node records its resolution as a target; a declared base table is refused
+ * (MYSQL-RELATION-KIND-001). The new query is derived and
  * checked as for CREATE VIEW (MYSQL-VIEW-FACTS-001), but an ALTER provides no
  * declaration: it requests a change and does not change a context.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-view.html. Status: Implemented.
@@ -41,7 +44,8 @@ final class AlterView implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $derivation->target($this, (new TableTargets())->existing($derivation, $this->definition->name));
+        $fact = $derivation->target($this, (new TableTargets())->existing($derivation, $this->definition->name));
+        (new RelationKinds())->require($derivation, $this->definition->name, $fact->table, RelationKind::View);
         (new ViewFacts())->derive($this->definition, $derivation);
     }
 

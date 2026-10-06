@@ -16,7 +16,7 @@ final class ColumnForeignOptionsTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        array_push($context, ...$semantics->analyze('CREATE FOREIGN TABLE t (a int NOT NULL, b int, c text) SERVER x')->declarations());
         $statement = $semantics->analyze('ALTER FOREIGN TABLE t ALTER zz OPTIONS (ADD x \'y\')', $context);
         self::assertSame([
           0 => 'column "zz" does not exist',

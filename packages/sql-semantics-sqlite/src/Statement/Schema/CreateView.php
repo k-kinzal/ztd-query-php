@@ -14,6 +14,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\ListedColumn;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\ColumnCountMismatch;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Problem\DecoratedColumnName;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Query;
@@ -24,7 +25,7 @@ use SqlSemantics\Statement\Statement;
  * A request to create a view: a named query.
  *
  * Rule: SQLITE-CREATE-VIEW-001. The query is derived as a root query. The
- * statement provides one relation declaration whose columns come from the
+ * statement provides one view declaration whose columns come from the
  * output fields of the query, named by the column list when one is written
  * (SQLITE-QUERY-COLUMNS-001). A view has no row identifier. A column list of
  * another length than the query result is a diagnostic and leaves the
@@ -89,7 +90,7 @@ final class CreateView implements Statement
         }
         $columns = (new QueryColumns())->viewColumns($this->query, $fact, $derivation->facts(), $listed, $derivation->context->columnNames, $expected === $returned);
         $complete = $expected === $returned && count($columns) === ($listed === null ? $returned : count($listed)) && ($listed !== null || $fact->shape->complete());
-        $derivation->declare(new Table((new TableDeclaration())->name($this->name, $this->temporary), $derivation->context->profile, $columns, [], $complete));
+        $derivation->declare(new Table((new TableDeclaration())->name($this->name, $this->temporary), $derivation->context->profile, $columns, [], $complete, RelationKind::View));
     }
 
     /**

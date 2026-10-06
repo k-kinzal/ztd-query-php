@@ -8,9 +8,12 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Rules\Utility\OptionRules;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
@@ -24,7 +27,8 @@ use SqlSemantics\Statement\Statement;
  * processed again. The syntax of releases before 8.3, `CLUSTER index ON
  * table`, makes the same request as `CLUSTER table USING index` and is kept
  * as written. Facts: the table is resolved; the index is not part of a
- * declaration context. Diagnostic: an option CLUSTER does not know.
+ * declaration context. A relation declared as another kind than a table or
+ * a materialized view is reported (PG-RELATION-KIND-001). Diagnostic: an option CLUSTER does not know.
  * Source: https://www.postgresql.org/docs/17/sql-cluster.html. Status: Implemented.
  *
  * @visibility public
@@ -70,7 +74,9 @@ final class Cluster implements Statement
     {
         (new OptionRules())->derive($derivation, 'CLUSTER', $this->options);
         if ($this->table !== null) {
-            $derivation->target($this, (new Targets())->resolve($derivation, $this->table));
+            $kinds = new RelationKinds();
+            $kind = $kinds->of($derivation->target($this, (new Targets())->resolve($derivation, $this->table)));
+            $kinds->require($derivation, $kind, $this->table->name, [RelationKind::BaseTable, RelationKind::MaterializedView], KindRule::NotTableOrMaterializedView);
         }
     }
 

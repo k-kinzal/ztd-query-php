@@ -208,4 +208,13 @@ final class ProgramFactsTest extends TestCase
         yield 'an alteration of the body' => ['ALTER EVENT e DO SELECT zz', ['Column zz does not exist.']];
         yield 'an alteration of both' => ['ALTER EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT a FROM t', []];
     }
+
+    public function testTriggerRefusesAView(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TRIGGER tr BEFORE INSERT ON v FOR EACH ROW SET @x = 1', [$table, $view])->facts->diagnostics));
+    }
 }

@@ -51,4 +51,13 @@ final class CopyFactsTest extends TestCase
         $query = $semantics->analyze('COPY t FROM PROGRAM STDIN', [$t, $u]);
         self::assertSame(['STDIN/STDOUT not allowed with PROGRAM'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
     }
+
+    public function testKindReportsARelationCopyCannotRead(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE SEQUENCE s')];
+        self::assertSame(['cannot copy from view "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY v TO STDOUT', $context)->facts->diagnostics));
+        self::assertSame(['cannot copy to sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY s FROM STDIN', $context)->facts->diagnostics));
+        self::assertSame([], $semantics->analyze('COPY v FROM STDIN', $context)->facts->diagnostics);
+    }
 }

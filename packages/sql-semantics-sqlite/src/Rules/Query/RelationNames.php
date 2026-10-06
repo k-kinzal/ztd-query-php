@@ -34,8 +34,9 @@ use SqlSemantics\Statement\Shape\RowShape;
  * replaced by `:1`, `:2`, `:3` and `:4` in turn; after the fourth attempt
  * SQLite picks the digits at random, so such a name is not fixed (a random
  * name is taken not to repeat a later one). After a star that missing
- * declarations prevent from expanding, the positions and the earlier names
- * are unknown, so no later name is fixed. Every column refers to the result
+ * declarations prevent from expanding, or after a name that depends on
+ * missing inputs, the positions or the earlier names are unknown, so no later
+ * name is fixed: each depends on those inputs (OutputSlot::$unnamed). Every column refers to the result
  * column it comes from. Terminates: one pass over the fields with at most
  * four renames each.
  * Source: https://sqlite.org/lang_select.html#the_from_clause,
@@ -59,19 +60,26 @@ final class RelationNames
         $sources = $arm === null || $arm === $query ? null : $derivation->facts()->query($arm)->fields();
         $slots = [];
         $seen = [];
-        $open = false;
+        $pending = [];
         foreach ($fact->projection as $item) {
             if (!$item instanceof Field) {
-                $open = true;
+                foreach ($item->missing as $input) {
+                    $pending[spl_object_id($input)] = $input;
+                }
                 continue;
             }
             $position = count($slots);
             $source = $sources === null ? $item : $sources->at($position);
-            $name = $open || $arm === null ? null : $this->unique($names->truth($this->named($source, $arm, $position), $position), $seen);
+            $written = $pending !== [] || $arm === null ? null : $names->truth($this->named($source, $arm, $position), $position);
+            $name = $this->unique($written, $seen);
+            $unnamed = $pending !== [] ? array_values($pending) : ($written === null ? $source->slot->unnamed : []);
             if ($name !== null) {
                 $seen[Comparison::AsciiInsensitive->fold($name->value)] = true;
             }
-            $slots[] = new OutputSlot($name, $item->type, $item->nullability, null, $item->slot);
+            foreach ($unnamed as $input) {
+                $pending[spl_object_id($input)] = $input;
+            }
+            $slots[] = new OutputSlot($name, $item->type, $item->nullability, null, $item->slot, $unnamed);
         }
 
         return new RowShape($slots, $fact->shape->missing);

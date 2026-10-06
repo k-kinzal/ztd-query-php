@@ -30,4 +30,11 @@ final class PoliciesTest extends TestCase
         $statement = $semantics->analyze('CREATE POLICY p ON t TO bob USING (true) WITH CHECK (false)', []);
         self::assertSame('CREATE POLICY p ON t TO bob USING (TRUE) WITH CHECK (FALSE)', $statement->toString());
     }
+
+    public function testDeriveReportsAView(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE POLICY p ON v', $context)->facts->diagnostics));
+    }
 }

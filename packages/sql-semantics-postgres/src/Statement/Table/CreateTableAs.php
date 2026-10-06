@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\CreationSchemas;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\QueryTables;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
@@ -62,7 +63,7 @@ final class CreateTableAs implements Statement
         $fact = $derivation->query($this->query, $derivation->environment());
         $rules = new QueryTables();
         (new CreationSchemas())->check($derivation, $this->target->name, $this->persistence);
-        $derivation->declare($rules->table($derivation, $rules->name($this->target->name, $this->persistence, null), $fact, $this->target->columns, true, true));
+        $derivation->declare($rules->table($derivation, $rules->name($this->target->name, $this->persistence, null), $fact, $this->target->columns, RelationKind::BaseTable));
     }
 
     /**

@@ -95,7 +95,7 @@ final class Joining
     {
         $slots = [];
         foreach ($kept->shape->slots as $index => $slot) {
-            $slots[] = $index === $position ? new OutputSlot($slot->name, (new Storages())->either([$slot->type, $other->type]), $slot->nullability->propagate($other->nullability), null, $slot) : $slot;
+            $slots[] = $index === $position ? new OutputSlot($slot->name, (new Storages())->either([$slot->type, $other->type]), $slot->nullability->propagate($other->nullability), null, $slot, $slot->unnamed) : $slot;
         }
 
         return new VisibleRelation($kept->relation, new RowShape($slots, $kept->shape->missing), $kept->alias, $kept->name, $kept->hidden, $kept->implicit);
@@ -156,7 +156,7 @@ final class Joining
         foreach ($relations as $relation) {
             $slots = [];
             foreach ($relation->shape->slots as $slot) {
-                $slots[] = $slot->nullability === Nullability::Nullable ? $slot : new OutputSlot($slot->name, $slot->type, Nullability::Nullable, null, $slot);
+                $slots[] = $slot->nullability === Nullability::Nullable ? $slot : new OutputSlot($slot->name, $slot->type, Nullability::Nullable, null, $slot, $slot->unnamed);
             }
             $implicit = [];
             foreach ($relation->implicit as $slot) {

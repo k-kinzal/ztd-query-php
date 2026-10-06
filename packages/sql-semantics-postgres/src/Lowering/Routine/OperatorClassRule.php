@@ -8,7 +8,14 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Leaf\Keywords;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Rules\Routine\AttributeReader;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName;
+use SqlSemantics\Platform\PostgreSql\Statement\Name\OperatorName;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\OperatorChangeAttribute;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\KnownAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\AlterOperator;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\CreateOperatorClass;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\CreateOperatorFamily;
@@ -21,9 +28,8 @@ use SqlSemantics\Platform\PostgreSql\Statement\Operator\OperatorFamilyAddition;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\OperatorFamilyRemoval;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\OperatorMember;
 use SqlSemantics\Platform\PostgreSql\Statement\Operator\StorageMember;
-use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\KeywordWord;
-use SqlSemantics\Platform\PostgreSql\Statement\Option\OptionArgument;
+use SqlSemantics\Platform\PostgreSql\Statement\Type\TypeName;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Statement;
 
@@ -37,7 +43,7 @@ use SqlSemantics\Statement\Statement;
  * `operator_def_list`, `operator_def_elem`, `operator_def_arg`.
  * Constructors: `CreateOperatorClass`, `CreateOperatorFamily`,
  * `OperatorFamilyAddition`, `OperatorFamilyRemoval`, `AlterOperator`, the
- * class items, `MemberRemoval` and `Definition`. RECHECK is obsolete and
+ * class items, `MemberRemoval` and `AttributeChange`. RECHECK is obsolete and
  * ignored by the server; it is a noise word. Termination: lists are
  * flattened iteratively. Source: https://www.postgresql.org/docs/17/sql-createopclass.html,
  * https://www.postgresql.org/docs/17/sql-alteropfamily.html, https://www.postgresql.org/docs/17/sql-alteroperator.html.
@@ -76,7 +82,7 @@ final class OperatorClassRule
             'CreateOpFamilyStmt: CREATE OPERATOR FAMILY any_name USING name' => new CreateOperatorFamily($names->dotted($form->node(3)), $names->name($form->node(5))),
             'AlterOpFamilyStmt: ALTER OPERATOR FAMILY any_name USING name ADD_P opclass_item_list' => new OperatorFamilyAddition($names->dotted($form->node(3)), $names->name($form->node(5)), $this->items($form->node(7))),
             'AlterOpFamilyStmt: ALTER OPERATOR FAMILY any_name USING name DROP opclass_drop_list' => new OperatorFamilyRemoval($names->dotted($form->node(3)), $names->name($form->node(5)), $this->removals($form->node(7))),
-            'AlterOperatorStmt: ALTER OPERATOR operator_with_argtypes SET ( operator_def_list )' => new AlterOperator((new SignatureRule($this->lowering))->operator($form->node(2)), $this->definitions($form->node(5))),
+            'AlterOperatorStmt: ALTER OPERATOR operator_with_argtypes SET ( operator_def_list )' => new AlterOperator((new SignatureRule($this->lowering))->operator($form->node(2)), $this->changes($form->node(5), OperatorChangeAttribute::class)),
             default => throw ImplementationGap::production($form),
         };
     }
@@ -178,27 +184,30 @@ final class OperatorClassRule
     }
 
     /**
-     * Lowers `operator_def_list`.
+     * Lowers `operator_def_list` into the attributes of the command whose attribute set is given; NONE and a name alone give no value.
      *
-     * @return list<Definition>
+     * @param class-string<KnownAttribute> $command
+     *
+     * @return list<AttributeChange>
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function definitions(Node $list): array
+    public function changes(Node $list, string $command): array
     {
-        $definitions = [];
+        $reader = new AttributeReader();
+        $changes = [];
         foreach ($this->lowering->items($list, 'operator_def_list: operator_def_elem', 'operator_def_list: operator_def_list , operator_def_elem') as $element) {
             $form = $this->lowering->productions->form($element);
             $name = $this->lowering->names->name($form->node(0));
-            $definitions[] = match ($form->signature) {
-                'operator_def_elem: ColLabel = NONE' => new Definition($name, new KeywordWord(new Name('none'))),
-                'operator_def_elem: ColLabel = operator_def_arg' => new Definition($name, $this->argument($form->node(2))),
-                'operator_def_elem: ColLabel' => new Definition($name),
+            $changes[] = match ($form->signature) {
+                'operator_def_elem: ColLabel = NONE' => new AttributeChange($reader->attribute($command, $name, null), true),
+                'operator_def_elem: ColLabel = operator_def_arg' => new AttributeChange($reader->attribute($command, $name, $this->argument($form->node(2)))),
+                'operator_def_elem: ColLabel' => new AttributeChange($reader->attribute($command, $name, null)),
                 default => throw ImplementationGap::production($form),
             };
         }
 
-        return $definitions;
+        return $changes;
     }
 
     /**
@@ -206,7 +215,7 @@ final class OperatorClassRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function argument(Node $argument): OptionArgument
+    public function argument(Node $argument): TypeName|KeywordWord|OperatorName|SignedNumber|StringConstant
     {
         $form = $this->lowering->productions->form($argument);
 

@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\View\CreateView;
 use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Shape\RowShape;
 
@@ -46,6 +47,6 @@ final class Views
             (new CreationSchemas())->check($derivation, $view->name, $view->persistence);
         }
         $rules = new QueryTables();
-        $derivation->declare($rules->table($derivation, $rules->name($view->name, $view->persistence, $schema), $fact, $view->columns, false, false, DefinitionRule::ViewColumnCount));
+        $derivation->declare($rules->table($derivation, $rules->name($view->name, $view->persistence, $schema), $fact, $view->columns, RelationKind::View, DefinitionRule::ViewColumnCount));
     }
 }

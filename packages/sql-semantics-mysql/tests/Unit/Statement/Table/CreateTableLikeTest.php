@@ -39,4 +39,13 @@ final class CreateTableLikeTest extends TestCase
     {
         self::assertSame('CREATE TABLE IF NOT EXISTS c LIKE db.s', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE IF NOT EXISTS c (LIKE db.s)')->toString());
     }
+
+    public function testDeriveStatementRefusesAViewSource(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE TABLE c LIKE v', [$table, $view])->facts->diagnostics));
+    }
 }

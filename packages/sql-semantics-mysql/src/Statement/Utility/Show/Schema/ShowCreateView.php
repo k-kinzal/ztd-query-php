@@ -5,19 +5,22 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Rules\Utility\Report;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowFacts;
 use SqlSemantics\Platform\MySql\Rules\Utility\ShowTargets;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
 /**
  * SHOW CREATE VIEW: the statement that creates a view.
  *
- * Rule: MYSQL-SHOW-CREATE-VIEW-001. The view resolves by MYSQL-SHOW-TARGET-001. The columns are
- * those of the layout of MYSQL-SHOW-ROWS-001. Terminates: a fixed layout.
+ * Rule: MYSQL-SHOW-CREATE-VIEW-001. The view resolves by MYSQL-SHOW-TARGET-001; a declared base
+ * table is refused (MYSQL-RELATION-KIND-001). The columns are those of the
+ * layout of MYSQL-SHOW-ROWS-001. Terminates: a fixed layout.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-view.html.
  * Status: Implemented.
  *
@@ -42,7 +45,7 @@ final class ShowCreateView implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        (new ShowTargets())->derive($derivation, $this->view);
+        (new RelationKinds())->require($derivation, $this->view->name, (new ShowTargets())->derive($derivation, $this->view)->table, RelationKind::View);
         (new ShowFacts())->rows($derivation, Report::CreateView);
     }
 

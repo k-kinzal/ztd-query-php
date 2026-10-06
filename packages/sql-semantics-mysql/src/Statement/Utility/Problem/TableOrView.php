@@ -11,8 +11,8 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * Whether a name denotes a base table or a view, which decides the columns SHOW CREATE TABLE returns.
  *
- * A declaration of a context describes the columns of a relation but not
- * whether the database stores it as a table or a view.
+ * A declaration states whether a relation is a base table or a view; for a
+ * name the context does not declare, the columns depend on that fact.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-table.html.
  *
  * @visibility public

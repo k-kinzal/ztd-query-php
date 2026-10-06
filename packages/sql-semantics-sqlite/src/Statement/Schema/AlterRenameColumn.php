@@ -9,7 +9,9 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\AlterationProblems;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -52,7 +54,9 @@ final class AlterRenameColumn implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $fact = $derivation->target($this, (new TableShapes())->target($derivation, $this->table));
-        (new AlterationProblems())->renamed($fact, $this->column, $this->newName, $derivation);
+        if (!(new RelationKinds())->refuse($fact, KindRefusal::RenameColumn, $derivation)) {
+            (new AlterationProblems())->renamed($fact, $this->column, $this->newName, $derivation);
+        }
     }
 
     /**

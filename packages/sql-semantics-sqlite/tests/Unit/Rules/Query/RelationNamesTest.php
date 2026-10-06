@@ -14,6 +14,7 @@ use SqlSemantics\Platform\Sqlite\Rules\Query\RelationNames;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ValuesClause;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Reference\Missing\MissingInput;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
 
@@ -53,8 +54,21 @@ final class RelationNamesTest extends TestCase
         $shape = (new RelationNames())->shape($query->facts->output ?? self::fail('The query has an output.'), $query->statement, new Derivation($semantics->context()));
 
         self::assertSame(['a', null], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $shape->slots));
+        self::assertSame([[], ['the declaration of relation t']], array_map(static fn (OutputSlot $slot): array => array_map(static fn (MissingInput $input): string => $input->describe(), $slot->unnamed), $shape->slots));
         self::assertFalse($shape->complete());
         self::assertSame('the declaration of relation t', $shape->missing[0]->describe());
+    }
+
+    public function testShapeKeepsAnUndecidedNameAndTheNamesAfterItDependent(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $query = $semantics->analyze('SELECT *, 2 AS two FROM (SELECT *, 1 AS one FROM u)');
+        self::assertInstanceOf(Select::class, $query->statement);
+        $shape = (new RelationNames())->shape($query->facts->output ?? self::fail('The query has an output.'), $query->statement, new Derivation($semantics->context()));
+
+        self::assertSame([null, null], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $shape->slots));
+        self::assertSame('the declaration of relation u', $shape->slots[0]->unnamed[0]->describe());
+        self::assertNotSame([], $shape->slots[1]->unnamed);
     }
 
     public function testShapeNamesTheColumnsAfterTheLeftmostArm(): void

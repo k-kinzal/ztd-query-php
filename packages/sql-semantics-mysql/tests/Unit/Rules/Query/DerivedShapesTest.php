@@ -31,12 +31,13 @@ final class DerivedShapesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $derivation = new Derivation($semantics->context());
-        $fact = new QueryFact([new Field(0, new OutputSlot(new Name('a'), new Known(new Integral(IntegralKind::Int)), Nullability::NotNull)), new Field(1, new OutputSlot(null, new Known(new Integral(IntegralKind::Int)), Nullability::NotNull))], $semantics->context()->columnNames);
+        $fact = new QueryFact([new Field(0, new OutputSlot(new Name('a'), new Known(new Integral(IntegralKind::Int)), Nullability::NotNull)), new Field(1, new OutputSlot(null, new Known(new Integral(IntegralKind::Int)), Nullability::NotNull, null, null, [new NameConversion('latin2')]))], $semantics->context()->columnNames);
         $plain = (new DerivedShapes())->shape($fact, [], $derivation);
         $listed = (new DerivedShapes())->shape($fact, [new Name('x'), new Name('y')], $derivation);
 
         self::assertCount(2, $plain->slots);
-        self::assertInstanceOf(NameConversion::class, $plain->missing[0]);
+        self::assertEquals([new NameConversion('latin2')], $plain->missing);
+        self::assertEquals([new NameConversion('latin2')], $plain->slots[1]->unnamed);
         self::assertSame(['x', 'y'], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $listed->slots));
         self::assertTrue($listed->complete());
         self::assertSame([], $derivation->facts()->diagnostics);

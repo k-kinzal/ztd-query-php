@@ -34,4 +34,14 @@ final class DropTableTest extends TestCase
     {
         self::assertSame('DROP TEMPORARY TABLE IF EXISTS t RESTRICT', (new Semantics(Dialect::MySql))->analyze('drop temporary tables if exists t restrict')->toString());
     }
+
+    public function testDeriveStatementRefusesAViewWithoutIfExists(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+
+        self::assertSame(['v is a view: DROP TABLE reports it as an unknown table.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP TABLE v', [$table, $view])->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('DROP TABLE IF EXISTS v', [$table, $view])->facts->diagnostics));
+    }
 }

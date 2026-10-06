@@ -26,4 +26,14 @@ final class ShowCreateViewTest extends TestCase
     {
         self::assertSame('SHOW CREATE VIEW db.v', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SHOW CREATE VIEW db.v')->toString());
     }
+
+    public function testDeriveStatementRefusesABaseTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+
+        self::assertSame(['t is not VIEW.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('SHOW CREATE VIEW t', [$table, $view])->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('SHOW CREATE VIEW v', [$table, $view])->facts->diagnostics));
+    }
 }

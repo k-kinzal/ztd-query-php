@@ -29,4 +29,11 @@ final class TruncateTableTest extends TestCase
         $statement = $semantics->analyze('TRUNCATE TABLE ONLY t, s.u CONTINUE IDENTITY RESTRICT', []);
         self::assertSame('TRUNCATE ONLY t, s.u CONTINUE IDENTITY RESTRICT', $statement->toString());
     }
+
+    public function testDeriveStatementReportsANonTable(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE FOREIGN TABLE f (a int) SERVER x')];
+        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('TRUNCATE v, f', $context)->facts->diagnostics));
+    }
 }

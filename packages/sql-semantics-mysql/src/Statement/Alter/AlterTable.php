@@ -9,12 +9,14 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableChange\ColumnChanges;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Alter\Modifier\AlterModifier;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\StandaloneCommand;
 use SqlSemantics\Platform\MySql\Statement\Alter\Partition\TrailingCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Relation;
@@ -30,7 +32,7 @@ use SqlSemantics\Statement\Statement;
  * (a partition or tablespace operation) is the last one and only modifiers
  * precede it; `PARTITION BY` and `REMOVE PARTITIONING` are the last one and
  * follow the others without a comma. The table resolves by
- * MYSQL-CHANGE-TARGET-001. The statement node is the relation occurrence the
+ * MYSQL-CHANGE-TARGET-001; a declared view is refused (MYSQL-RELATION-KIND-001). The statement node is the relation occurrence the
  * expressions of the actions see: its relation fact holds the resolution of
  * the table and the row shape of the visible columns the table has after
  * the column actions; its invisible columns are found by name only
@@ -84,6 +86,7 @@ final class AlterTable implements Statement, Relation
     public function deriveStatement(Derivation $derivation): void
     {
         $original = (new Targets())->target($derivation, $this->table);
+        (new RelationKinds())->require($derivation, $this->table, $original->table, RelationKind::BaseTable);
         $changes = new ColumnChanges();
         $fact = $derivation->target($this, new RelationFact($changes->apply($original, $this->commands, $derivation, true), $original->table));
         $scope = new Environment($derivation->context, null, [new VisibleRelation($this, $fact->shape, null, $this->table, [], $changes->implicit())]);

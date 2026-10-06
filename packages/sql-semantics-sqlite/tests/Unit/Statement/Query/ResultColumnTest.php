@@ -89,6 +89,14 @@ final class ResultColumnTest extends TestCase
     #[TestWith(['SELECT * FROM (SELECT (SELECT 1 FROM t x), a  +  1 FROM t UNION SELECT 2, 3), (VALUES ("zz", 1))'])]
     #[TestWith(['SELECT * FROM (SELECT a, a, a AS "a:1", true, 1 AS false FROM t)'])]
     #[TestWith(["INSERT INTO t VALUES (2, 'y') RETURNING a+1, b  COLLATE nocase, rowid"])]
+    #[TestWith(['SELECT 1+1 /*c*/ ,2'])]
+    #[TestWith(["SELECT a+1 -- c\n , b /* d */ FROM t"])]
+    #[TestWith(['SELECT 1+1 -- c'])]
+    #[TestWith(["SELECT 1+1 /* c */ \n\t"])]
+    #[TestWith(['SELECT * FROM (SELECT a+1 /* x */ , b /* y */ FROM t)'])]
+    #[TestWith(['WITH w AS (SELECT a /* x */, a+1 /* y */ FROM t) SELECT * FROM w'])]
+    #[TestWith(['SELECT (SELECT 1+1 /* x */ ) /* y */ UNION SELECT 2'])]
+    #[TestWith(["INSERT INTO t VALUES (2, 'y') RETURNING a+1 /* c */ , b -- d"])]
     public function testRenderKeepsTheNamesAndTheResultsSqliteGives(string $sql): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
@@ -113,6 +121,29 @@ final class ResultColumnTest extends TestCase
         $this->expectExceptionMessage('The layout of a result column spells one token per token its expression renders.');
 
         new ResultColumn(new IntegerLiteral('1'), null, new Layout([new Spelled('', '1'), new Spelled('', '+')]));
+    }
+
+    public function testRenderKeepsTheCommentAfterTheExpression(): void
+    {
+        $query = (new Semantics(Dialect::Sqlite))->analyze("SELECT 1+1 /*c*/ ,2, 3 -- d\n");
+        self::assertInstanceOf(Select::class, $query->statement);
+        $columns = $query->statement->columns;
+
+        self::assertInstanceOf(ResultColumn::class, $columns[0]);
+        self::assertSame(' /*c*/ ', $columns[0]->layout?->trail);
+        self::assertInstanceOf(ResultColumn::class, $columns[1]);
+        self::assertNull($columns[1]->layout);
+        self::assertInstanceOf(ResultColumn::class, $columns[2]);
+        self::assertSame(" -- d\n", $columns[2]->layout?->trail);
+        self::assertSame(['1+1 /*c*/', '2', '3 -- d'], array_map(static fn (Field $field): ?string => $field->name?->value, $query->fields()->items ?? []));
+        self::assertSame("SELECT 1+1 /*c*/ , 2, 3 -- d\n", $query->toString());
+    }
+
+    public function testRenderRefusesWhitespaceAloneAfterTheExpression(): void
+    {
+        $this->expectExceptionMessage('The layout of a result column keeps the trivia after its expression only when it holds a comment.');
+
+        new ResultColumn(new IntegerLiteral('1'), null, new Layout([new Spelled('', '1')], ' '));
     }
 
     public function testRenderRefusesTheCanonicalSpellingAsALayout(): void

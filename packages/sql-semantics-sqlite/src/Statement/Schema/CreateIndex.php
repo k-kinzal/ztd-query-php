@@ -10,9 +10,11 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\Expression\Limits;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\KeyTerms;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\ObjectNames;
+use SqlSemantics\Platform\Sqlite\Rules\Definition\RelationKinds;
 use SqlSemantics\Platform\Sqlite\Rules\Definition\TableShapes;
 use SqlSemantics\Platform\Sqlite\Statement\Query\Ordering\SortTerm;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Limit\DefinitionPosition;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
@@ -100,6 +102,7 @@ final class CreateIndex implements Statement, Relation
     {
         $shapes = new TableShapes();
         $fact = $derivation->relation($this, $derivation->environment());
+        (new RelationKinds())->refuse($fact, KindRefusal::CreateIndex, $derivation);
         $scope = $shapes->scope($derivation, $this, new QualifiedName($this->table), $fact->shape, $shapes->implicitOf($fact));
         $limits = new Limits();
         foreach ($this->terms as $term) {

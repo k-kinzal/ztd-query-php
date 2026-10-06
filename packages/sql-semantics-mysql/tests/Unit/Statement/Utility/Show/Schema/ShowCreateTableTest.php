@@ -28,4 +28,14 @@ final class ShowCreateTableTest extends TestCase
     {
         self::assertSame('SHOW CREATE TABLE t', (new Semantics(Dialect::MySql))->analyze('SHOW CREATE TABLE t')->toString());
     }
+
+    public function testDeriveStatementAnswersTheColumnsOfTheDeclaredKind(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+
+        self::assertSame(['Table', 'Create Table'], array_map(static fn ($slot): ?string => $slot->name?->value, $semantics->analyze('SHOW CREATE TABLE t', [$table, $view])->shape()->slots ?? []));
+        self::assertSame(['View', 'Create View', 'character_set_client', 'collation_connection'], array_map(static fn ($slot): ?string => $slot->name?->value, $semantics->analyze('SHOW CREATE TABLE v', [$table, $view])->shape()->slots ?? []));
+    }
 }

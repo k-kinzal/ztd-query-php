@@ -65,4 +65,19 @@ final class ModificationScopeTest extends TestCase
         self::assertNotNull($fields);
         self::assertSame([['b', 'text', 'Nullable'], ['c', 'boolean', 'NotNull']], array_map(static fn (\SqlSemantics\Statement\Shape\Field $field): array => [$field->name?->value, $field->type instanceof \SqlSemantics\Statement\Type\Known ? $field->type->descriptor->name() : null, $field->nullability->name], iterator_to_array($fields)));
     }
+
+    public function testOpenReportsATargetThatCannotChange(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE SEQUENCE s')];
+        self::assertSame(['cannot change sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('INSERT INTO s VALUES (1, 0, false)', $context)->facts->diagnostics));
+        self::assertSame(['cannot execute MERGE on relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('MERGE INTO s USING (SELECT 1 AS b) x ON true WHEN MATCHED THEN DELETE', $context)->facts->diagnostics));
+    }
+
+    public function testInputsReportsASequenceInFrom(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE SEQUENCE s')];
+        self::assertSame(['cannot lock rows in sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('DELETE FROM t USING s', $context)->facts->diagnostics));
+    }
 }

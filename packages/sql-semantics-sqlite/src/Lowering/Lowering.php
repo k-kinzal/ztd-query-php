@@ -16,6 +16,7 @@ use SqlSemantics\Platform\Sqlite\Lowering\Leaf\ConflictRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\FlagRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\LiteralRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\NameRule;
+use SqlSemantics\Platform\Sqlite\Lowering\Leaf\TriviaRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Leaf\TypeNameRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Mutation\MutationRule;
 use SqlSemantics\Platform\Sqlite\Lowering\Query\FromRule;
@@ -48,6 +49,11 @@ final class Lowering
      * @var FlagRule The yes-or-no keyword groups: temporary(temp), ifNotExists(ifnotexists)
      */
     public readonly FlagRule $flags;
+
+    /**
+     * @var TriviaRule The trivia after a region: index(command), after(node)
+     */
+    public readonly TriviaRule $trivia;
 
     /**
      * @var LiteralRule The literal rules: term(term), number(Token)
@@ -127,6 +133,7 @@ final class Lowering
     {
         $this->names = new NameRule($this);
         $this->flags = new FlagRule($this);
+        $this->trivia = new TriviaRule();
         $this->literals = new LiteralRule($this);
         $this->typeNames = new TypeNameRule($this);
         $this->conflicts = new ConflictRule($this);
@@ -179,6 +186,7 @@ final class Lowering
     public function terminated(Node $command): ?Statement
     {
         $form = $this->productions->form($command);
+        $this->trivia->index($command);
 
         return match ($form->signature) {
             'ecmd: SEMI' => null,

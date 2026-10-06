@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Table;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
@@ -17,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -30,7 +32,8 @@ use SqlSemantics\Statement\Statement;
  *
  * Rule: MYSQL-CREATE-INDEX-001. The statement node is the one occurrence of
  * the indexed table: its relation fact is the resolution of the table name
- * (MYSQL-DEFINITION-SCOPE-001), and the functional key parts are derived at
+ * (MYSQL-DEFINITION-SCOPE-001), which is no declared view
+ * (MYSQL-RELATION-KIND-001), and the functional key parts are derived at
  * a position whose only visible relation is that table. A key column the
  * declared table lacks is a diagnostic (ER_KEY_COLUMN_DOES_NOT_EXITS). The
  * ALGORITHM and LOCK clauses come from the table change family. Indexes are
@@ -96,6 +99,7 @@ final class CreateIndex implements Statement, Relation
     {
         $targets = new TableTargets();
         $fact = $derivation->relation($this, $derivation->environment());
+        (new RelationKinds())->require($derivation, $this->table, $fact->table, RelationKind::BaseTable);
         $declared = $fact->table instanceof DeclaredTable ? $fact->table->table : null;
         $scope = $targets->scope($derivation, $this, new QualifiedName($this->table->name), $fact->shape, $declared === null ? [] : $targets->implicit($declared));
         foreach ($this->parts as $part) {

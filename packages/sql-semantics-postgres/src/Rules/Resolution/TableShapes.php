@@ -13,6 +13,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\PostgreSql\Statement\Relation\TableInput;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\ImplicitSlot;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Reference\Missing\IncompleteMembers;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
@@ -34,7 +35,9 @@ use SqlSemantics\Statement\Shape\RowShape;
  * an open shape that names the missing declaration; a missing or conflicting
  * name contributes an empty shape and is a diagnostic. The column aliases
  * rename the slots (PG-COLUMN-ALIAS-001). The arguments of TABLESAMPLE see
- * the enclosing query only; sampling a common table is reported, and so is reading a common table
+ * the enclosing query only; sampling anything but a table or a materialized
+ * view (a common table, or a relation declared as a view, a foreign table or
+ * a sequence, PG-RELATION-KIND-001) is reported, and so is reading a common table
  * computed by a data-modifying statement without RETURNING. The
  * implicit columns of a declaration are found by name only.
  * Source: https://www.postgresql.org/docs/17/sql-select.html#SQL-FROM,
@@ -52,8 +55,9 @@ final class TableShapes
         $resolution = $derivation->table($input->table->name, $environment);
         if ($input->sample !== null) {
             $input->sample->deriveClause($derivation, $environment);
-            if ($resolution instanceof CommonTable) {
-                $derivation->report(new QueryMisuse(QueryMisuseRule::TablesampleOnCommonTable));
+            $kind = $resolution instanceof DeclaredTable ? $resolution->table->kind : null;
+            if ($resolution instanceof CommonTable || ($kind !== null && $kind !== RelationKind::BaseTable && $kind !== RelationKind::MaterializedView)) {
+                $derivation->report(new QueryMisuse(QueryMisuseRule::TablesampleTarget));
             }
         }
         $shape = new RowShape([]);

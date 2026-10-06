@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Table\Definition;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\ColumnPrimaryKey;
@@ -20,7 +21,9 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\PartitionOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TableForm;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -34,12 +37,14 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
  * `pg_temp`, and inside CREATE SCHEMA an unqualified table belongs to the
  * schema being created. The statement provides the declaration of
  * PG-TABLE-DECLARATION-001 and records it as its own relation fact. The
- * parents of INHERITS and PARTITION OF are resolved (PG-TABLE-TARGET-001).
+ * parents of INHERITS and PARTITION OF are resolved (PG-TABLE-TARGET-001); a
+ * parent of INHERITS must be a table or a foreign table (PG-RELATION-KIND-001).
  * Every expression of the definition (constraints, generated columns,
  * partition keys) is derived where the new table is the only visible
  * relation, its system columns included; defaults and partition bound values
  * see no column. Problems: a column name written twice, a column named like
- * a system column, more than one primary key, an array of a serial type.
+ * a system column, more than one primary key, an array of a serial type, a
+ * primary key, unique, exclusion or foreign key constraint of a foreign table.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html. Termination:
  * one pass over the elements. Status: Implemented.
  *
@@ -53,7 +58,7 @@ final class Definitions
     public function derive(CreateTable|CreateForeignTable $create, Derivation $derivation, ?Name $schema): void
     {
         $name = $this->name($create, $schema);
-        $table = (new Declarations())->table($create->definition, $derivation, $name);
+        $table = (new Declarations())->table($create->definition, $derivation, $name, $this->kind($create));
         $derivation->declare($table);
         $targets = new Targets();
         $fact = $derivation->target($create, new RelationFact($targets->shape($table), new DeclaredTable($table)));
@@ -61,6 +66,8 @@ final class Definitions
         $this->report($create->definition, $derivation, $name);
         if ($create instanceof CreateTable) {
             (new CreationSchemas())->check($derivation, $create->name, $create->persistence);
+        } else {
+            (new RelationKinds())->foreign($derivation, $create->definition->elements());
         }
         $this->elements($create->definition, $derivation, $scope);
         if ($create instanceof CreateTable) {
@@ -76,9 +83,17 @@ final class Definitions
      */
     public function fact(CreateTable|CreateForeignTable $create, Derivation $derivation, ?Name $schema): RelationFact
     {
-        $table = (new Declarations())->table($create->definition, $derivation, $this->name($create, $schema));
+        $table = (new Declarations())->table($create->definition, $derivation, $this->name($create, $schema), $this->kind($create));
 
         return new RelationFact((new Targets())->shape($table), new DeclaredTable($table));
+    }
+
+    /**
+     * Answers the kind of relation the definition declares.
+     */
+    public function kind(CreateTable|CreateForeignTable $create): RelationKind
+    {
+        return $create instanceof CreateForeignTable ? RelationKind::ForeignTable : RelationKind::BaseTable;
     }
 
     /**
@@ -103,8 +118,10 @@ final class Definitions
     public function elements(TableForm $form, Derivation $derivation, Environment $scope): void
     {
         $targets = new Targets();
+        $kinds = new RelationKinds();
         foreach ($form instanceof ListedColumns ? $form->parents : [] as $parent) {
-            $derivation->target($parent, $targets->resolve($derivation, $parent->name));
+            $kind = $kinds->of($derivation->target($parent, $targets->resolve($derivation, $parent->name)));
+            $kinds->require($derivation, $kind, $parent->name->name, [RelationKind::BaseTable, RelationKind::ForeignTable], KindRule::InheritedRelation);
         }
         if ($form instanceof PartitionOf) {
             $derivation->target($form->parent, $targets->resolve($derivation, $form->parent->name));

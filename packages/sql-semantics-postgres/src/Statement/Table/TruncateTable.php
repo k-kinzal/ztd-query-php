@@ -6,10 +6,13 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\DropBehavior;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
 
@@ -17,7 +20,8 @@ use SqlSemantics\Statement\Statement;
  * A request to empty tables.
  *
  * Mirrors PostgreSQL's `TruncateStmt` (`relations`, `restart_seqs`, `behavior`). Each table is resolved (PG-
- * TABLE-TARGET-001) and is the relation fact of its reference. The optional TABLE word is not kept; CONTINUE
+ * TABLE-TARGET-001) and is the relation fact of its reference; a view, a materialized view or a sequence is
+ * not a table (truncate_check_rel; PG-RELATION-KIND-001), and a foreign table depends on its wrapper. The optional TABLE word is not kept; CONTINUE
  * IDENTITY is the default and is kept when written.
  * Source: https://www.postgresql.org/docs/17/sql-truncate.html.
  *
@@ -53,8 +57,10 @@ final class TruncateTable implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        $kinds = new RelationKinds();
         foreach ($this->tables as $table) {
-            $derivation->target($table, (new Targets())->resolve($derivation, $table->name));
+            $kind = $kinds->of($derivation->target($table, (new Targets())->resolve($derivation, $table->name)));
+            $kinds->require($derivation, $kind, $table->name->name, [RelationKind::BaseTable, RelationKind::ForeignTable], KindRule::NotTable);
         }
     }
 

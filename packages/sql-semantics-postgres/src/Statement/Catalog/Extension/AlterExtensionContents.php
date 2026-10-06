@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Catalog\ClauseFacts;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop;
@@ -65,6 +66,7 @@ final class AlterExtensionContents implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         (new ClauseFacts())->derive($derivation, [$this->object]);
+        (new RelationKinds())->named($derivation, $this->kind, [$this->object]);
     }
 
     /**

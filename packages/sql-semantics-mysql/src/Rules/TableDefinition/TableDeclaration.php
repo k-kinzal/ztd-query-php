@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\ImplicitColumn;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Comparison;
@@ -39,9 +40,10 @@ use SqlSemantics\Statement\Type\Known;
  * stops, and the declaration is incomplete, at the first field that has no
  * determined name or type or that an unexpanded star leaves open.
  *
- * CREATE VIEW: one column per output field, named by the column list when
- * one is written, with the type and NULL fact of the field; incomplete under
- * the same conditions and when the column list has another length.
+ * CREATE VIEW: a view (RelationKind::View) with one column per output field,
+ * named by the column list when one is written, with the type and NULL fact
+ * of the field; incomplete under the same conditions and when the column
+ * list has another length. Every other declaration is a base table.
  *
  * CREATE TABLE ... LIKE: the columns of the source table, as new
  * declarations with the same names, types and NULL facts; an undeclared
@@ -166,7 +168,7 @@ final class TableDeclaration
             $columns[] = $column;
         }
 
-        return new Table($name, $profile, $columns, [], $complete);
+        return new Table($name, $profile, $columns, [], $complete, RelationKind::View);
     }
 
     /**

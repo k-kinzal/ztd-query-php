@@ -12,7 +12,9 @@ use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferenceEve
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Reference\ReferentialAction;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
@@ -22,7 +24,9 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
  * Derives and writes the referenced side of a foreign key.
  *
  * Rule: PG-FOREIGN-KEY-001. The referenced table is resolved by
- * PG-TABLE-TARGET-001 and recorded as the relation facts of the constraint.
+ * PG-TABLE-TARGET-001 and recorded as the relation facts of the constraint;
+ * a relation declared as another kind than a table is reported
+ * (PG-RELATION-KIND-001: `referenced relation "%s" is not a table`).
  * When its column list is complete, a referenced column it lacks is reported
  * ("column referenced in foreign key constraint does not exist"). At most one
  * ON UPDATE and one ON DELETE clause are written, in either order. MATCH
@@ -59,6 +63,10 @@ final class ForeignKeys
     public function derive(Derivation $derivation, Node $constraint, QualifiedName $table, array $columns, ?KeyMatch $match, array $actions): void
     {
         $fact = $derivation->target($constraint, (new Targets())->resolve($derivation, $table));
+        $kinds = new RelationKinds();
+        if ($kinds->require($derivation, $kinds->of($fact), $table->name, [RelationKind::BaseTable], KindRule::ReferencedRelation)) {
+            return;
+        }
         if ($fact->table instanceof DeclaredTable) {
             (new KeyColumns())->report($derivation, $columns, $fact->shape, DefinitionRule::MissingReferencedColumn);
         }

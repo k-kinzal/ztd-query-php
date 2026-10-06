@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Manipulation;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Query\Locking;
 use SqlSemantics\Platform\PostgreSql\Rules\Resolution\FromScope;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuse;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem\ManipulationMisuseRule;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\TargetTable;
@@ -41,10 +43,12 @@ final class ModificationScope
      *
      * @return array{Environment, VisibleRelation} The environment of the common tables, and the target as a visible relation
      */
-    public function open(?CommonTables $with, TargetTable $target, Derivation $derivation, Environment $outer): array
+    public function open(?CommonTables $with, TargetTable $target, Derivation $derivation, Environment $outer, bool $merge = false): array
     {
         $base = $with === null ? $outer : $with->deriveCommonTables($derivation, $outer);
         $fact = $derivation->relation($target, $base);
+        $kinds = new RelationKinds();
+        $kinds->modified($derivation, $kinds->of($fact), $target->table->name->name, $merge);
 
         return [$base, (new Targets())->visible($target, $fact)];
     }
@@ -61,6 +65,8 @@ final class ModificationScope
         }
         $visible = (new FromScope())->open($items, $derivation, $base, [])->visible;
         $this->conflicts($target, $visible, $derivation);
+        $locking = new Locking();
+        $locking->kinds(array_column($locking->tables($items), 0), [], $derivation, $base);
 
         return $visible;
     }

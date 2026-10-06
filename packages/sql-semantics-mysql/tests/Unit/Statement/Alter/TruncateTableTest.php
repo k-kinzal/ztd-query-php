@@ -29,4 +29,13 @@ final class TruncateTableTest extends TestCase
     {
         self::assertSame('TRUNCATE TABLE db.t', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('truncate db.t')->toString());
     }
+
+    public function testDeriveStatementRefusesAView(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+
+        self::assertSame(['v is a view: TRUNCATE TABLE reports that the table doesn\'t exist.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('TRUNCATE TABLE v', [$table, $view])->facts->diagnostics));
+    }
 }

@@ -44,4 +44,13 @@ final class AlterTableTest extends TestCase
         self::assertSame('ALTER IGNORE TABLE db.t ADD COLUMN a INT, LOCK = DEFAULT PARTITION BY KEY (a)', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('alter ignore table db.t add a int, lock default partition by key (a)')->toString());
         self::assertSame('ALTER TABLE t ALGORITHM = COPY, COALESCE PARTITION 2', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ALGORITHM COPY, COALESCE PARTITION 2')->toString());
     }
+
+    public function testDeriveStatementRefusesAView(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE v ADD COLUMN b INT', [$table, $view])->facts->diagnostics));
+    }
 }

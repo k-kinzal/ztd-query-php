@@ -27,6 +27,9 @@ use SqlSemantics\Platform\Sqlite\Statement\Query\With\WithQuery;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
+use SqlSemantics\Statement\Reference\Missing\MissingInput;
+use SqlSemantics\Statement\Shape\DependentField;
+use SqlSemantics\Statement\Shape\UniqueField;
 use SqlSemantics\Statement\Spelling\Layout;
 use SqlSemantics\Statement\Spelling\Spelled;
 
@@ -66,6 +69,22 @@ final class ResultNamesTest extends TestCase
         self::assertSame('nosuch', $query->field(1)->name?->value);
         self::assertNull($query->field(2)->name);
         self::assertSame('"zz"', (new ResultNames())->resolved($column, new DoubleQuotedWord(new Name('zz')), null)?->value);
+    }
+
+    public function testUnnamedAnswersTheInputsAnUndecidedNameDependsOn(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $query = $semantics->analyze('SELECT "zz", nosuch, 1+1 FROM t');
+        self::assertInstanceOf(Select::class, $query->statement);
+        $columns = $query->statement->columns;
+        self::assertInstanceOf(ResultColumn::class, $columns[0]);
+        self::assertInstanceOf(ResultColumn::class, $columns[2]);
+
+        self::assertSame(['the declaration of relation t'], array_map(static fn (MissingInput $input): string => $input->describe(), (new ResultNames())->unnamed($columns[0], $query->field(0)->resolution)));
+        self::assertSame([], (new ResultNames())->unnamed($columns[2], null));
+        self::assertSame([], $query->field(1)->slot->unnamed);
+        self::assertInstanceOf(DependentField::class, $query->fields()?->lookup('zz'));
+        self::assertInstanceOf(UniqueField::class, $semantics->analyze('SELECT "zz", 1+1 FROM t', [])->fields()?->lookup('"zz"'));
     }
 
     public function testWrittenAnswersTheOneWordAnExpressionConsistsOf(): void

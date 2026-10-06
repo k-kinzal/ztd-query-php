@@ -11,6 +11,8 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\AbsentRelation;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\Drop;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\KindRefusal;
+use SqlSemantics\Platform\Sqlite\Statement\Schema\Refusal\WrongRelationKind;
 use SqlSemantics\Platform\Sqlite\Statement\Schema\SchemaObjectKind;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
@@ -42,6 +44,20 @@ final class DropTest extends TestCase
         self::assertInstanceOf(MissingTable::class, $strict->facts->diagnostics[0]);
         self::assertSame([], $tolerant->facts->diagnostics);
         self::assertInstanceOf(AbsentRelation::class, $tolerant->facts->relation($tolerant->statement)->table);
+    }
+
+    public function testDeriveStatementReportsTheDropOfARelationOfTheOtherKind(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $declarations = [$semantics->analyze('CREATE TABLE t (a)'), $semantics->analyze('CREATE VIEW v AS SELECT 1')];
+        $table = $semantics->analyze('DROP TABLE IF EXISTS v', $declarations);
+        $view = $semantics->analyze('DROP VIEW t', $declarations);
+
+        self::assertInstanceOf(WrongRelationKind::class, $table->facts->diagnostics[0]);
+        self::assertSame(KindRefusal::DropTable, $table->facts->diagnostics[0]->refusal);
+        self::assertInstanceOf(WrongRelationKind::class, $view->facts->diagnostics[0]);
+        self::assertSame(KindRefusal::DropView, $view->facts->diagnostics[0]->refusal);
+        self::assertSame([], $semantics->analyze('DROP VIEW v', $declarations)->facts->diagnostics);
     }
 
     public function testDeriveStatementKeepsAnUndeclaredTableUndeclared(): void

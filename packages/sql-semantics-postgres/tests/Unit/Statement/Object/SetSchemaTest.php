@@ -44,4 +44,12 @@ final class SetSchemaTest extends TestCase
         $this->expectExceptionMessage('SET SCHEMA accepts IF EXISTS for relations only.');
         new SetSchema(ObjectKind::Extension, new UnqualifiedName(new Name('e')), new Name('t'), true);
     }
+
+    public function testDeriveStatementReportsAnotherKind(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE TABLE t (a int)')];
+        self::assertSame(['"t" is not a foreign table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER FOREIGN TABLE t SET SCHEMA x', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER TABLE t SET SCHEMA x', $context)->facts->diagnostics));
+    }
 }

@@ -10,7 +10,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\From\JoinedInput;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
 use SqlSemantics\Resolution\Environment;
@@ -32,8 +31,10 @@ use SqlSemantics\Statement\Shape\OutputSlot;
  * selects (MYSQL-JOIN-COLUMNS-001: merged columns once); `t.*` contributes
  * every column of the tables the qualifier names, merged ones included. A
  * relation whose columns are not all known contributes its known columns
- * and an open star that names the missing inputs; columns that are only
- * unnamed are still all known. A star without any table and a qualifier
+ * and an open star that names the missing inputs; columns whose names
+ * depend on missing inputs (MYSQL-DERIVED-SHAPES-001) are still all known.
+ * An item whose name depends on missing inputs is a field without a name
+ * that names those inputs (OutputSlot::$unnamed). A star without any table and a qualifier
  * that names no table are reported. Terminates: one pass over the list.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html,
  * https://dev.mysql.com/doc/refman/8.4/en/join.html. Status: Implemented.
@@ -56,7 +57,8 @@ final class Projection
                 $fact = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
                 $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
                 $name = (new ItemNaming($derivation->context->profile))->name($item);
-                $fields[] = new Field(count($fields), new OutputSlot($name instanceof Name ? $name : null, $fact->type, $fact->nullability, null, $origin), $item->expression, $fact->resolution);
+                $slot = $name instanceof Name ? new OutputSlot($name, $fact->type, $fact->nullability, null, $origin) : new OutputSlot(null, $fact->type, $fact->nullability, null, $origin, [$name]);
+                $fields[] = new Field(count($fields), $slot, $item->expression, $fact->resolution);
             } elseif ($item instanceof Star) {
                 $fields = $this->star($fields, $derivation, $environment, $from);
             } else {
@@ -144,16 +146,22 @@ final class Projection
      */
     public function field(int $position, VisibleRelation $relation, OutputSlot $slot): Field
     {
-        return new Field($position, new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot), null, new ResolvedColumn($relation->relation, $slot));
+        return new Field($position, new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed), null, new ResolvedColumn($relation->relation, $slot));
     }
 
     /**
-     * Tells whether a relation has columns that are not known, not merely unnamed.
+     * Tells whether a relation has columns that are not known, not merely columns whose names depend on inputs.
      */
     public function open(VisibleRelation $relation): bool
     {
+        $unnamed = [];
+        foreach ($relation->shape->slots as $slot) {
+            foreach ($slot->unnamed as $input) {
+                $unnamed[] = $input->describe();
+            }
+        }
         foreach ($relation->shape->missing as $missing) {
-            if (!$missing instanceof NameConversion) {
+            if (!in_array($missing->describe(), $unnamed, true)) {
                 return true;
             }
         }

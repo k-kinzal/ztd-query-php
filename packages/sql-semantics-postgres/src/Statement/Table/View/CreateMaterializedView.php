@@ -14,6 +14,7 @@ use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Persistence;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Query;
@@ -84,7 +85,7 @@ final class CreateMaterializedView implements Statement
         $fact = $derivation->query($this->query, $derivation->environment());
         $rules = new QueryTables();
         (new CreationSchemas())->check($derivation, $this->name, $this->unlogged ? Persistence::Unlogged : Persistence::Permanent);
-        $derivation->declare($rules->table($derivation, $rules->name($this->name, Persistence::Permanent, null), $fact, $this->columns, true, false));
+        $derivation->declare($rules->table($derivation, $rules->name($this->name, Persistence::Permanent, null), $fact, $this->columns, RelationKind::MaterializedView));
     }
 
     /**

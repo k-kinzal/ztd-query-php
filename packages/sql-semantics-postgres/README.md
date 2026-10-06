@@ -157,12 +157,33 @@ $semantics->analyze('CREATE TABLE t (name text)')->declarations()[0]->columns[0]
 
 A user-defined type is always `Dependent` on its definition, because version 1 contexts cannot declare types.
 
+### Relation kinds
+
+Every declaration states the kind of relation it declares: CREATE TABLE (with AS, PARTITION OF and SELECT INTO) declares a base table, CREATE VIEW and CREATE RECURSIVE VIEW a view, CREATE MATERIALIZED VIEW a materialized view, CREATE FOREIGN TABLE a foreign table, and CREATE SEQUENCE a sequence. A statement that names a declared relation of a kind it does not accept reports the server's error: DROP, COMMENT or ALTER written with another kind, ALTER TABLE actions the kind does not support, REFRESH MATERIALIZED VIEW of anything but a materialized view, INSERT, UPDATE, DELETE and MERGE into a sequence or a materialized view, TRUNCATE, LOCK, COPY, CLUSTER, REINDEX, CREATE INDEX, CREATE STATISTICS, CREATE TRIGGER, CREATE RULE and CREATE POLICY on unsupported kinds, TABLESAMPLE of a view, a foreign table or a sequence, and row locks on a sequence or a materialized view.
+
+```php
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\PostgreSql\Dialect;
+use SqlSemantics\Statement\Declaration\RelationKind;
+
+$semantics = new Semantics(Dialect::PostgreSql);
+$view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a', []);
+$sequence = $semantics->analyze('CREATE SEQUENCE s', []);
+
+$view->declarations()[0]->kind; // => RelationKind::View
+$semantics->analyze('DROP TABLE v', [$view])->facts->diagnostics[0]->message(); // => '"v" is not a table'
+$semantics->analyze('SELECT * FROM s FOR UPDATE', [$sequence])->facts->diagnostics[0]->message(); // => 'cannot lock rows in sequence "s"'
+```
+
 ## Limitations
 
 - Type names depend on the declarations of earlier searched schemas in open and partial contexts, as described above.
 - The profile fixes `standard_conforming_strings = on` and a UTF-8 server encoding; SQL written for other settings is read as if these settings were in effect.
 - Version 1 contexts declare relations only. Functions, operators, types and other catalog objects that are not built in are missing inputs.
-- Some checks the server makes are not modeled as diagnostics, for example that ALTER COLUMN ... ADD GENERATED AS IDENTITY requires a NOT NULL column, or that a BEFORE trigger's WHEN condition does not read generated columns of NEW.
+- Some checks the server makes are not modeled as diagnostics, for example that a BEFORE trigger's WHEN condition does not read generated columns of NEW: declarations do not say which columns are generated.
+- A declaration does not tell a partitioned table from a plain one, so checks that depend on partitioning (ATTACH PARTITION, PARTITION OF, partitioned-table restrictions) are not reported. Whether a view or a foreign table accepts INSERT, UPDATE, DELETE, COPY FROM or TRUNCATE depends on its definition, its triggers or its foreign-data wrapper, and is not reported either.
+- Sequences that serial and identity columns create are not declarations, so commands on sequences are checked only against sequences created with CREATE SEQUENCE. Row locks that FOR UPDATE pushes into a subquery or a view are not checked.
+- The server stops at the first error; the analysis reports every diagnostic it finds, so a statement can carry problems the server would never reach.
 - Version tags must be written in full (`pg-16.6`).
 
 See [Guarantees](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/docs/guarantees.md) for the limits that apply to every database.

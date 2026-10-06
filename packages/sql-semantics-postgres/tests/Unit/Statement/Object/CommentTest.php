@@ -66,4 +66,12 @@ final class CommentTest extends TestCase
         $this->expectExceptionMessage('COMMENT names the object as the grammar names objects of its kind.');
         new Comment(ObjectKind::Table, new UnqualifiedName(new Name('t')), null);
     }
+
+    public function testDeriveStatementReportsAnotherKind(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COMMENT ON TABLE v IS \'x\'', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COMMENT ON VIEW v IS \'x\'', $context)->facts->diagnostics));
+    }
 }

@@ -11,6 +11,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Table\Persistence;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
 use SqlSemantics\Statement\Declaration\Column;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
@@ -32,7 +33,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * the declaration is complete only up to the first output whose name or
  * position the context cannot know (an open row) or whose type is invalid. A temporary relation with an unqualified
  * name belongs to `pg_temp`. Tables and materialized views have the system
- * columns; views do not. Two columns of one name are an error.
+ * columns; views do not. The declaration states the kind of the relation (PG-RELATION-KIND-001). Two
+ * columns of one name are an error.
  * Source: https://www.postgresql.org/docs/17/sql-createtableas.html,
  * https://www.postgresql.org/docs/17/sql-createview.html,
  * https://www.postgresql.org/docs/17/sql-creatematerializedview.html.
@@ -61,11 +63,11 @@ final class QueryTables
      * Builds the declaration of the relation a query defines and reports the problems of its column names.
      *
      * @param list<Name> $names The written column names
-     * @param bool $system Whether the relation has the system columns
-     * @param bool $nullable Whether every column can be NULL, as in a table; a view keeps the NULL facts of the query
+     * @param RelationKind $kind A base table, whose columns can all be NULL, a view, which has no system columns, or a materialized view
      */
-    public function table(Derivation $derivation, QualifiedName $name, QueryFact $fact, array $names, bool $system, bool $nullable, DefinitionRule $tooMany = DefinitionRule::TableColumnCount): Table
+    public function table(Derivation $derivation, QualifiedName $name, QueryFact $fact, array $names, RelationKind $kind, DefinitionRule $tooMany = DefinitionRule::TableColumnCount): Table
     {
+        $nullable = $kind === RelationKind::BaseTable;
         $columns = [];
         $complete = true;
         $seen = [];
@@ -87,6 +89,6 @@ final class QueryTables
             $derivation->report(new DefinitionProblem($tooMany));
         }
 
-        return new Table($name, $derivation->context->profile, $columns, $system ? (new SystemColumns())->implicit() : [], $complete);
+        return new Table($name, $derivation->context->profile, $columns, $kind === RelationKind::View ? [] : (new SystemColumns())->implicit(), $complete, $kind);
     }
 }

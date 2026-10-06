@@ -29,4 +29,12 @@ final class CreateStatisticsTest extends TestCase
         $statement = $semantics->analyze('CREATE STATISTICS IF NOT EXISTS x.s (ndistinct, mcv) ON a, (a + b), lower(c) FROM t', []);
         self::assertSame('CREATE STATISTICS IF NOT EXISTS x.s (ndistinct, mcv) ON a, (a + b), lower(c) FROM t', $statement->toString());
     }
+
+    public function testDeriveStatementReportsAView(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
+        self::assertSame(['cannot define statistics for relation "v"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE STATISTICS st ON a, (a + 1) FROM v', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CREATE STATISTICS st ON a, (a + 1) FROM m', $context)->facts->diagnostics));
+    }
 }

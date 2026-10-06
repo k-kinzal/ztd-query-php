@@ -8,6 +8,8 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
@@ -18,7 +20,8 @@ use SqlSemantics\Statement\Statement;
  *
  * Mirrors PT_truncate_table_stmt. Rule: MYSQL-TRUNCATE-001. The name
  * resolves by MYSQL-CHANGE-TARGET-001 and its resolution is the relation fact
- * of the statement node. The statement changes no declaration and provides
+ * of the statement node; a declared view is refused
+ * (MYSQL-RELATION-KIND-001). The statement changes no declaration and provides
  * none. The word TABLE is optional and always written.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html.
  * Status: Implemented.
@@ -45,7 +48,8 @@ final class TruncateTable implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $derivation->target($this, (new Targets())->target($derivation, $this->table));
+        $fact = $derivation->target($this, (new Targets())->target($derivation, $this->table));
+        (new RelationKinds())->refuseView($derivation, $this->table, $fact->table, KindRefusal::NoSuchTable);
     }
 
     /**

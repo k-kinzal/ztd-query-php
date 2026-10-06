@@ -7,9 +7,11 @@ namespace SqlSemantics\Platform\MySql\Statement\Table;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableDeclaration;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Snapshot;
@@ -19,7 +21,8 @@ use SqlSemantics\Statement\Statement;
  * A request to create an empty table with the definition of another table: CREATE TABLE ... LIKE.
  *
  * Rule: MYSQL-CREATE-TABLE-LIKE-001. The source table is a table use: the
- * statement node records its resolution as a target. The statement provides
+ * statement node records its resolution as a target; a declared view is
+ * refused (MYSQL-RELATION-KIND-001). The statement provides
  * one declaration with new columns of the same names, types and NULL facts
  * as the source (MYSQL-TABLE-DECLARATION-001); an undeclared or missing
  * source leaves it empty and incomplete. `LIKE t` and `(LIKE t)` are the same
@@ -59,6 +62,7 @@ final class CreateTableLike implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $fact = $derivation->target($this, (new TableTargets())->existing($derivation, $this->source));
+        (new RelationKinds())->require($derivation, $this->source, $fact->table, RelationKind::BaseTable);
         $derivation->declare((new TableDeclaration())->like($this->name, $fact->table instanceof DeclaredTable ? $fact->table->table : null, $derivation->context->profile));
     }
 

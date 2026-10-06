@@ -111,11 +111,11 @@ final class RoutinesTest extends TestCase
         self::assertSame(ObjectKind::ForeignDataWrapper, $lowering->routines->objectKind($tree->find('drop_type_name')[0]));
     }
 
-    public function testOperatorDefinitionsLowersNoneAsAWord(): void
+    public function testAttributeChangesReadsTheAttributesOfTheCommand(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $tree = (new PostgreSqlParser('pg-17.2'))->parse('ALTER OPERATOR = (int, int) SET (restrict = NONE, join = eqjoinsel)');
-        $definitions = $lowering->routines->operatorDefinitions($tree->find('operator_def_list')[0]);
-        self::assertSame(['restrict', 'join'], [$definitions[0]->name->value, $definitions[1]->name->value]);
+        $tree = (new PostgreSqlParser('pg-17.2'))->parse('ALTER TYPE t SET (storage = plain, analyse = f)');
+        $changes = $lowering->routines->attributeChanges($tree->find('operator_def_list')[0], \SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChangeAttribute::class);
+        self::assertSame([\SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChangeAttribute::Storage, null], [$changes[0]->attribute->known, $changes[1]->attribute->known]);
     }
 }

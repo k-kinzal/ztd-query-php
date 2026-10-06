@@ -81,4 +81,12 @@ final class DropTest extends TestCase
         $this->expectExceptionMessage('Only DROP INDEX is written CONCURRENTLY.');
         new Drop(ObjectKind::Schema, [new UnqualifiedName(new Name('s'))], false, null, true);
     }
+
+    public function testDeriveStatementReportsAnotherKind(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE TABLE t (a int)'), $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['"v" is not a table'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('DROP TABLE IF EXISTS v, t', $context)->facts->diagnostics));
+        self::assertSame(['"t" is not a sequence'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('DROP SEQUENCE t', $context)->facts->diagnostics));
+    }
 }

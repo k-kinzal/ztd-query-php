@@ -7,7 +7,9 @@ namespace SqlSemantics\Platform\MySql\Statement\Alter;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\TableChange\Targets;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\RelationKinds;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Statement;
@@ -19,7 +21,8 @@ use SqlSemantics\Statement\Statement;
  * resolves by MYSQL-CHANGE-TARGET-001 and its resolution is the relation fact
  * of its TargetTable; under IF EXISTS a name a complete context does not
  * declare resolves to AbsentTable. A table named twice is the diagnostic
- * RepeatedTable. TEMPORARY restricts the request to temporary tables, which a
+ * RepeatedTable. A declared view is not a table DROP TABLE finds: without
+ * IF EXISTS it is refused (MYSQL-RELATION-KIND-001). TEMPORARY restricts the request to temporary tables, which a
  * declaration context does not distinguish. RESTRICT and CASCADE have no
  * effect and are kept as written. The statement removes no declaration and
  * provides none. TABLE and TABLES are synonyms.
@@ -60,7 +63,10 @@ final class DropTable implements Statement
     {
         $targets = new Targets();
         foreach ($this->tables as $index => $table) {
-            $derivation->target($table, $targets->optional($derivation, $table->name, $this->ifExists));
+            $fact = $derivation->target($table, $targets->optional($derivation, $table->name, $this->ifExists));
+            if (!$this->ifExists) {
+                (new RelationKinds())->refuseView($derivation, $table->name, $fact->table, KindRefusal::UnknownTable);
+            }
             foreach (array_slice($this->tables, 0, $index) as $earlier) {
                 if ($targets->same($derivation->context, $earlier->name, $table->name)) {
                     $derivation->report(new RepeatedTable($table->name));

@@ -51,4 +51,15 @@ final class QueryTablesTest extends TestCase
         self::assertFalse($operation->declarations()[0]->complete);
         self::assertCount(1, $operation->declarations()[0]->columns);
     }
+
+    public function testTableDeclaresTheKind(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')->declarations()[0];
+        $table = $semantics->analyze('CREATE TABLE c AS SELECT 1 AS a')->declarations()[0];
+        self::assertSame(
+            [\SqlSemantics\Statement\Declaration\RelationKind::View, [], \SqlSemantics\Statement\Declaration\RelationKind::BaseTable, \SqlSemantics\Statement\Type\Nullability::Nullable],
+            [$view->kind, $view->implicit, $table->kind, $table->columns[0]->nullability],
+        );
+    }
 }

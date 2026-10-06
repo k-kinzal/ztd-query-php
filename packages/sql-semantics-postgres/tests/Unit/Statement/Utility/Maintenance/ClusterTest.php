@@ -44,4 +44,11 @@ final class ClusterTest extends TestCase
             ],
         );
     }
+
+    public function testDeriveStatementReportsAView(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a')];
+        self::assertSame(['"v" is not a table or materialized view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('CLUSTER v', $context)->facts->diagnostics));
+    }
 }

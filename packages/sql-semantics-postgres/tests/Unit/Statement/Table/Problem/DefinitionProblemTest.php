@@ -20,4 +20,10 @@ final class DefinitionProblemTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem::class, $n1);
         self::assertSame('column "a" specified more than once', $n1->message());
     }
+
+    public function testMessageNamesTheSubjectAndItsRelation(): void
+    {
+        $problem = new \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem(\SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule::IdentityNullable, new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Identifier\Name('t'));
+        self::assertSame('column "a" of relation "t" must be declared NOT NULL before identity can be added', $problem->message());
+    }
 }

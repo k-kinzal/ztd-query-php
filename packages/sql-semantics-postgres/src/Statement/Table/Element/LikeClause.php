@@ -7,10 +7,13 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Element;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rendering\Spelling;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Targets;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
 
@@ -19,7 +22,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Mirrors PostgreSQL's `TableLikeClause` with its options in the order
  * written. The source table is resolved (PG-TABLE-TARGET-001) and is the
- * relation fact of this clause; the new table declares the source's columns,
+ * relation fact of this clause, and a sequence is no valid source
+ * (PG-RELATION-KIND-001); the new table declares the source's columns,
  * types and NOT NULL facts when the source is declared, and is incomplete
  * from this position on otherwise (PG-TABLE-DECLARATION-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html.
@@ -54,7 +58,9 @@ final class LikeClause implements Clause
      */
     public function deriveClause(Derivation $derivation, Environment $environment): void
     {
-        $derivation->target($this, (new Targets())->resolve($derivation, $this->table));
+        $kinds = new RelationKinds();
+        $kind = $kinds->of($derivation->target($this, (new Targets())->resolve($derivation, $this->table)));
+        $kinds->require($derivation, $kind, $this->table->name, [RelationKind::BaseTable, RelationKind::View, RelationKind::MaterializedView, RelationKind::ForeignTable], KindRule::LikeSource);
     }
 
     /**

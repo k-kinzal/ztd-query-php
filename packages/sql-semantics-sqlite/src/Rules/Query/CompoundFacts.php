@@ -118,7 +118,7 @@ final class CompoundFacts
                 $types[] = $fields === null ? new Dependent($fact->shape->missing) : $fields->at($position)->type;
                 $nullability = $nullability->propagate($fields === null ? Nullability::Dependent : $fields->at($position)->nullability);
             }
-            $items[] = new Field($position, new OutputSlot($field->name, (new Storages())->either($types), $nullability, null, $field->slot));
+            $items[] = new Field($position, new OutputSlot($field->name, (new Storages())->either($types), $nullability, null, $field->slot, $field->slot->unnamed));
         }
 
         return $items;
@@ -180,7 +180,7 @@ final class CompoundFacts
                 $listed = (new RelationNames())->listed(array_map(static fn (ListedColumn $column): Name => $column->name, $binding->definition->columns));
                 foreach ((new RelationNames())->shape($anchor, $compound->first, $derivation)->slots as $position => $slot) {
                     $name = $binding->definition->columns === [] ? $slot->name : ($listed[$position] ?? null);
-                    $slots[] = new OutputSlot($name, new Choice(Storage::cases()), Nullability::Nullable);
+                    $slots[] = new OutputSlot($name, new Choice(Storage::cases()), Nullability::Nullable, null, null, $binding->definition->columns === [] ? $slot->unnamed : []);
                 }
                 $binding = new CommonBinding($binding->name, $binding->definition, new RowShape($slots, $anchor->shape->missing));
                 $changed = true;

@@ -37,4 +37,11 @@ final class LockTest extends TestCase
     {
         self::assertSame('LOCK ONLY a, b IN SHARE UPDATE EXCLUSIVE MODE NOWAIT', (new Semantics(Dialect::PostgreSql))->analyze('LOCK TABLE ONLY a, b IN SHARE UPDATE EXCLUSIVE MODE NOWAIT')->toString());
     }
+
+    public function testDeriveStatementReportsARelationThatCannotBeLocked(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE SEQUENCE s')];
+        self::assertSame(['cannot lock relation "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('LOCK v, s', $context)->facts->diagnostics));
+    }
 }

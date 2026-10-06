@@ -46,7 +46,7 @@ final class MergeFacts
     public function derive(Merge $merge, Derivation $derivation, Environment $outer): QueryFact
     {
         $scope = new ModificationScope();
-        [$base, $target] = $scope->open($merge->with, $merge->target, $derivation, $outer);
+        [$base, $target] = $scope->open($merge->with, $merge->target, $derivation, $outer, true);
         $source = $scope->inputs($merge->source, $target, $derivation, $base);
         $derivation->scalar($merge->condition, new Environment($derivation->context, $base, [$target, ...$source]));
         $defaults = [];

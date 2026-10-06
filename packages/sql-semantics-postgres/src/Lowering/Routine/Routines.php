@@ -8,7 +8,8 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
-use SqlSemantics\Platform\PostgreSql\Statement\Option\Definition;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\AttributeChange;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\KnownAttribute;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\AggregateSignature;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\OperatorSignature;
 use SqlSemantics\Platform\PostgreSql\Statement\Routine\Signature\RoutineSignature;
@@ -120,12 +121,14 @@ final class Routines
     }
 
     /**
-     * Lowers `operator_def_list`: the attributes written in ALTER OPERATOR ... SET and ALTER TYPE ... SET, each a definition whose argument may be the word NONE.
+     * Lowers `operator_def_list`: the attributes written in ALTER OPERATOR ... SET and ALTER TYPE ... SET, read as the command whose attribute set is given reads them.
      *
-     * @return list<Definition>
+     * @param class-string<KnownAttribute> $command
+     *
+     * @return list<AttributeChange>
      */
-    public function operatorDefinitions(Node $list): array
+    public function attributeChanges(Node $list, string $command): array
     {
-        return (new OperatorClassRule($this->lowering))->definitions($list);
+        return (new OperatorClassRule($this->lowering))->changes($list, $command);
     }
 }

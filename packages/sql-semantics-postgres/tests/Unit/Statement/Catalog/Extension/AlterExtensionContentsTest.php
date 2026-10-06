@@ -32,4 +32,11 @@ final class AlterExtensionContentsTest extends TestCase
         $this->expectExceptionMessage('ALTER EXTENSION cannot address an object of this kind.');
         new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Extension\AlterExtensionContents(new \SqlSemantics\Statement\Identifier\Name('e'), \SqlSemantics\Platform\PostgreSql\Statement\Option\AddOrDrop::Add, \SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind::Trigger, new \SqlSemantics\Platform\PostgreSql\Statement\Name\DottedName([new \SqlSemantics\Statement\Identifier\Name('t')]));
     }
+
+    public function testDeriveStatementReportsAnotherKind(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
+        self::assertSame(['"m" is not a view'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('ALTER EXTENSION e ADD VIEW m', $context)->facts->diagnostics));
+    }
 }

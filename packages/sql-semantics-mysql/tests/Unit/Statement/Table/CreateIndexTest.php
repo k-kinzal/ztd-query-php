@@ -52,4 +52,13 @@ final class CreateIndexTest extends TestCase
     {
         self::assertSame('CREATE UNIQUE INDEX i USING BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE', (new Semantics(Dialect::MySql))->analyze('CREATE UNIQUE INDEX i TYPE BTREE ON db.t (a(2) DESC) COMMENT \'x\' INVISIBLE')->toString());
     }
+
+    public function testDeriveStatementRefusesAView(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT a FROM t', [$table]);
+
+        self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('CREATE INDEX i ON v (a)', [$table, $view])->facts->diagnostics));
+    }
 }

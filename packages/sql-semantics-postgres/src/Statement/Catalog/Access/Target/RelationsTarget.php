@@ -7,8 +7,11 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Target;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Access\GrantedRelations;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\RelationReference;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\KindRule;
 use SqlSemantics\Rendering\Output;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -16,8 +19,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * The word TABLE before relations is optional and always written back.
  * Each relation is resolved against the context and its column privileges
- * are checked (PG-GRANT-RELATION-001); a sequence is not a declaration a
- * context holds and is not resolved.
+ * are checked (PG-GRANT-RELATION-001). A sequence is not resolved, since the
+ * server also creates sequences no statement declares (serial and identity
+ * columns); a name that resolves to a declaration of another kind is
+ * reported (`"t" is not a sequence`, PG-RELATION-KIND-001).
  * Source: https://www.postgresql.org/docs/17/sql-grant.html.
  *
  * @visibility public
@@ -65,6 +70,11 @@ final class RelationsTarget implements PrivilegeTarget
         if ($this->object === PrivilegeObjectKind::Relation) {
             foreach ($this->relations as $relation) {
                 (new GrantedRelations())->derive($derivation, $relation, $privileges);
+            }
+        } else {
+            $kinds = new RelationKinds();
+            foreach ($this->relations as $relation) {
+                $kinds->require($derivation, $kinds->declared($derivation, $relation->name), $relation->name->name, [RelationKind::Sequence], KindRule::NotSequence);
             }
         }
     }

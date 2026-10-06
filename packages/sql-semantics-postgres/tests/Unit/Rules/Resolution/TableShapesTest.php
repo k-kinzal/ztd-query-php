@@ -31,4 +31,12 @@ final class TableShapesTest extends TestCase
     {
         self::assertSame([], (new \SqlSemantics\Platform\PostgreSql\Rules\Resolution\TableShapes())->implicit(new \SqlSemantics\Statement\Fact\RelationFact(new \SqlSemantics\Statement\Shape\RowShape([]))));
     }
+
+    public function testInputReportsSamplingAView(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [$semantics->analyze('CREATE VIEW v AS SELECT 1 AS a'), $semantics->analyze('CREATE MATERIALIZED VIEW m AS SELECT 1 AS a')];
+        self::assertSame(['TABLESAMPLE clause can only be applied to tables and materialized views'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('SELECT * FROM v TABLESAMPLE system (1)', $context)->facts->diagnostics));
+        self::assertSame([], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('SELECT * FROM m TABLESAMPLE system (1)', $context)->facts->diagnostics));
+    }
 }

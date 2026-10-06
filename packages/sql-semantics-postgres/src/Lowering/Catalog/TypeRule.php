@@ -17,6 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\DropEnumLabel;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\EnumPosition;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\RenameEnumLabel;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Type\RetypeAttribute;
+use SqlSemantics\Platform\PostgreSql\Statement\Object\Attribute\Known\TypeChangeAttribute;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -60,7 +61,7 @@ final class TypeRule
             'AlterEnumStmt: ALTER TYPE_P any_name RENAME VALUE_P Sconst TO Sconst' => new RenameEnumLabel($name, $strings->string($form->node(5)), $strings->string($form->node(7))),
             'AlterEnumStmt: ALTER TYPE_P any_name DROP VALUE_P Sconst' => new DropEnumLabel($name, $strings->string($form->node(5))),
             'AlterCompositeTypeStmt: ALTER TYPE_P any_name alter_type_cmds' => new AlterComposite($name, $this->changes($form->node(3))),
-            'AlterTypeStmt: ALTER TYPE_P any_name SET ( operator_def_list )' => new AlterTypeOptions($name, $this->lowering->routines->operatorDefinitions($form->node(5))),
+            'AlterTypeStmt: ALTER TYPE_P any_name SET ( operator_def_list )' => new AlterTypeOptions($name, $this->lowering->routines->attributeChanges($form->node(5), TypeChangeAttribute::class)),
             default => throw ImplementationGap::production($form),
         };
     }

@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableDeclaration;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\View\CreateView;
+use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -69,6 +70,8 @@ final class TableDeclarationTest extends TestCase
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v (x) AS SELECT 1 AS a');
 
         self::assertSame('x', $create->declarations()[0]->columns[0]->name->value);
+        self::assertSame(RelationKind::View, $create->declarations()[0]->kind);
+        self::assertSame(RelationKind::BaseTable, (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t AS SELECT 1 AS a')->declarations()[0]->kind);
     }
 
     public function testLikeLeavesAnUndeclaredSourceIncomplete(): void

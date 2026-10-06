@@ -10,6 +10,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectFacts;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectForms;
 use SqlSemantics\Platform\PostgreSql\Rules\Routine\ObjectSpelling;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\RelationKinds;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Name\ObjectReference;
 use SqlSemantics\Rendering\Output;
@@ -52,6 +53,7 @@ final class SetSchema implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         (new ObjectFacts())->derive($this->kind, [$this->object], $this->ifExists, $derivation);
+        (new RelationKinds())->renamed($derivation, $this->kind, $this->object, false, false);
     }
 
     /**

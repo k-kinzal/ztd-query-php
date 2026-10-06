@@ -50,5 +50,23 @@ final class CanonicalTest extends TestCase
         self::assertFalse($canonical->same($one, new Layout([new Spelled('', '1'), new Spelled('', '+'), new Spelled(' ', '1')])));
         self::assertFalse($canonical->same($one, new Layout([new Spelled('', '1'), new Spelled(' ', '-'), new Spelled(' ', '1')])));
         self::assertFalse($canonical->same($one, new Layout([new Spelled('', '1')])));
+        self::assertFalse($canonical->same($one, new Layout([new Spelled('', '1'), new Spelled(' ', '+'), new Spelled(' ', '1')], ' /* c */')));
+    }
+
+    public function testTrailKeepsTheTriviaOnlyWhenItHoldsAComment(): void
+    {
+        $canonical = new Canonical();
+
+        self::assertSame('', $canonical->trail(" \n\t\f\r"));
+        self::assertSame(" /* c */\n ", $canonical->trail(" /* c */\n "));
+        self::assertSame(' -- c', $canonical->trail(' -- c'));
+    }
+
+    public function testSpanEndsBeforeTheWhitespaceAfterTheLastComment(): void
+    {
+        $canonical = new Canonical();
+
+        self::assertSame('1 + /* a */ 1 -- b', $canonical->span(new Layout([new Spelled('', '1'), new Spelled(' ', '+'), new Spelled(' /* a */ ', '1')], " -- b\n")));
+        self::assertSame('1', $canonical->span(new Layout([new Spelled('', '1')])));
     }
 }
