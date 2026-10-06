@@ -38,7 +38,7 @@ final class WordScanner
                 return $dollar;
             }
         }
-        if (!Scan::isIdentifierByte($character) || ctype_digit($character)) {
+        if (!Scan::isIdentifierByte($character) || \SqlParser\Lexer\Ascii::digit($character)) {
             return null;
         }
 

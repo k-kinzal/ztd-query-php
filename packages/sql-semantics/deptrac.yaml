@@ -3,24 +3,34 @@ deptrac:
   analyser:
     types: [class, use]
   layers:
-    - name: Statements
+    - name: Diagnostic
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\Statement\\.*'
-    - name: Core
+          value: '^SqlSemantics\\Diagnostic\\.*'
+    - name: Lowering
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\Core\\.*'
+          value: '^SqlSemantics\\Lowering\\.*'
+    - name: Model
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\(Statement|Contract|Construction|Resolution|Rendering)\\.*'
+    - name: Validation
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Validation\\.*'
     - name: Facade
       collectors:
         - type: classLike
           value: '^SqlSemantics\\Facade\\.*'
-    - name: ParserCore
+    - name: Parser
       collectors:
         - type: classLike
-          value: '^SqlParser\\(Parser|Lexer)\\.*'
+          value: '^SqlParser\\(Parser|Lexer|Resource)\\.*'
   ruleset:
-    Statements: []
-    Core: [ParserCore, Statements]
-    Facade: [Core, Statements]
-    ParserCore: []
+    Diagnostic: [Lowering]
+    Lowering: [Diagnostic, Parser]
+    Model: [Diagnostic, Lowering, Parser, Validation]
+    Validation: [Diagnostic, Lowering, Model, Parser]
+    Facade: [Diagnostic, Lowering, Model, Validation, Parser]
+    Parser: []

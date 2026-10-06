@@ -35,6 +35,6 @@ final class Charsets
      */
     public static function has(string $name): bool
     {
-        return in_array(strtolower($name), self::NAMES, true);
+        return in_array(\SqlParser\Lexer\Ascii::lower($name), self::NAMES, true);
     }
 }

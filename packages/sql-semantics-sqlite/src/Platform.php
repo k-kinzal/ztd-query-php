@@ -5,136 +5,127 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite;
 
 use InvalidArgumentException;
+use SqlParser\Parser\Node;
 use SqlParser\Parser\SqlParser;
+use SqlParser\Resource\VersionRegistry;
 use SqlParser\Sqlite\SqliteParser;
-use SqlSemantics\Core\Analysis\TriviaReader;
-use SqlSemantics\Core\Builder as Composer;
-use SqlSemantics\Core\Language;
-use SqlSemantics\Core\Mode as SessionMode;
-use SqlSemantics\Core\Parameters;
-use SqlSemantics\Core\Platform as Contract;
-use SqlSemantics\Core\Policy;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Contract\LexicalSettings;
+use SqlSemantics\Contract\Mode;
+use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Lowering\Productions;
+use SqlSemantics\Platform\Sqlite\Lowering\Lowering;
+use SqlSemantics\Platform\Sqlite\Rendering\Codec;
+use SqlSemantics\Platform\Sqlite\Rules\LeafKeys;
+use SqlSemantics\Statement\Identifier\Comparison;
+use SqlSemantics\Statement\Identifier\Name;
 
 /**
- * Assembles Sqlite semantic behavior from independent core contracts.
+ * Wires the SQLite grammar releases, lowering rules and spelling rules into the analysis.
  *
  * @visibility SqlSemantics
  */
-final class Platform implements Contract
+final class Platform implements \SqlSemantics\Contract\Platform
 {
     /**
-     * Configures the selected grammar release and parameter syntax; this database has no session mode.
-     *
-     * @throws InvalidArgumentException When a mode is given
+     * @var array<string, SqlParser>
      */
-    public function parser(?string $version = null, ?SessionMode $mode = null, Parameters $parameters = Parameters::Native): SqlParser
+    private array $parsers = [];
+
+    /**
+     * Fixes the profile of a shipped SQLite release; SQLite reads SQL under no session mode.
+     *
+     * @throws InvalidArgumentException When the release is not shipped, a mode is given, or the installed grammar artifacts differ from the pinned ones
+     */
+    public function profile(?string $version, ?Mode $mode, ParameterStyle $parameters): LanguageProfile
     {
         if ($mode !== null) {
-            throw new InvalidArgumentException('This database reads SQL under no session mode; ' . $mode::class . ' given.');
+            throw new InvalidArgumentException('SQLite reads SQL under no session mode; ' . $mode::class . ' given.');
+        }
+        $release = GrammarRelease::tryFrom((new SqliteParser($version))->version());
+        if ($release === null || $release->database() !== 'sqlite') {
+            throw new InvalidArgumentException('No semantic profile exists for the selected grammar release.');
+        }
+        $artifact = (new VersionRegistry())->resolve('sqlite', $release->value);
+        if (hash_file('sha256', $artifact->tablePath) !== $release->grammarDigest() || hash_file('sha256', $artifact->keywordPath) !== $release->keywordDigest()) {
+            throw new InvalidArgumentException('The installed grammar artifacts do not match the fixed semantic profile.');
         }
 
-        return new SqliteParser($version);
+        return new LanguageProfile($release, new LexicalSettings(), $parameters);
     }
 
     /**
-     * Composes this database's values for a language.
+     * Answers the parser of a profile, created once per profile.
      */
-    public function builder(Language $language): Composer
+    public function parser(LanguageProfile $profile): SqlParser
     {
-        return new Builder($language);
+        $key = $profile->grammar->value;
+
+        return $this->parsers[$key] ??= new SqliteParser($profile->grammar->value);
     }
 
     /**
-     * Loads this package's statement construction map for the resolved release.
+     * Answers the productions of the release.
      */
-    public function values(string $version): \SqlSemantics\Core\Analysis\ValueReader
+    public function productions(LanguageProfile $profile): Productions
     {
-        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php', new TriviaReader());
+        return Productions::load(dirname(__DIR__) . '/resources/productions/' . $profile->grammar->value . '.php');
     }
 
     /**
-     * Supplies the default declaration namespace.
+     * Lowers a parse tree into its statements.
      */
-    public function defaultSchema(): string
+    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves): array
     {
-        return 'main';
+        return (new Lowering($this->productions($profile), $leaves))->statements($tree);
     }
 
     /**
-     * @return array{string, string}
+     * Answers the name codec.
      */
-    public function statementNames(): array
+    public function codec(LanguageProfile $profile): Codec
     {
-        return ['input', 'cmd'];
+        return new Codec();
     }
 
     /**
-     * Maps the supported grammar productions onto semantic roles.
+     * Answers the token comparison keys.
      */
-    public function syntax(): Policy\SyntaxRules
+    public function leafKeys(LanguageProfile $profile): LeafKeys
     {
-        return new Policy\SyntaxRules([
-            'autoIncrement' => ['autoinc'],
-            'generationStorage' => ['generated'],
-            'generationClause' => [],
-            'columnName' => ['nm'],
-            'declaredType' => ['typetoken'],
-            'expression' => ['expr'],
-            'tableElements' => ['columnlist'],
-            'createTable' => ['create_table'],
-            'createHeader' => ['create_table'],
-            'tableName' => ['nm'],
-            'tableConstraint' => ['tcons'],
-        ]);
+        return new LeafKeys();
     }
 
     /**
-     * Names the positions where the grammar writes table names, and the forms that declare, drop, or merely name tables.
+     * Creates a context: SQLite searches temp, then main, then the attached schemas, and compares names without regard to ASCII case.
+     *
+     * @throws InvalidArgumentException When the path does not start with main
      */
-    public function relations(): Policy\RelationRules
+    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext
     {
-        return new Policy\RelationRules(
-            nameSymbols: ['fullname', 'xfullname', 'add_column_fullname'],
-            declarations: [['rule' => 'create_table', 'pair' => ['nm', 'dbnm'], 'conditional' => 'ifnotexists']],
-            drops: [['rule' => 'cmd', 'requires' => ['DROP', 'TABLE', 'fullname'], 'names' => 'fullname', 'conditional' => 'ifexists']],
-            commonTableExpressions: [['rule' => 'wqitem', 'name' => 'withnm']],
-            ignored: [
-                ['rule' => 'cmd', 'requires' => ['createkw', 'VIEW'], 'pair' => ['nm', 'dbnm']],
-                ['rule' => 'cmd', 'requires' => ['createkw', 'INDEX'], 'pair' => ['nm', 'dbnm']],
-                ['rule' => 'cmd', 'requires' => ['DROP', 'VIEW'], 'name' => 'fullname'],
-                ['rule' => 'cmd', 'requires' => ['DROP', 'TRIGGER'], 'name' => 'fullname'],
-                ['rule' => 'cmd', 'requires' => ['DROP', 'INDEX'], 'name' => 'fullname'],
-            ],
-            pairs: [
-                ['rule' => 'seltablist', 'requires' => ['nm', 'dbnm'], 'pair' => ['nm', 'dbnm']],
-                ['rule' => 'cmd', 'requires' => ['createkw', 'INDEX', 'ON'], 'pair' => ['nm']],
-            ],
-            parts: ['xfullname' => ['nm DOT nm AS nm' => [0, 1], 'nm AS nm' => [0]]],
-        );
+        $schemas = $searchPath ?? ['main'];
+        if (strcasecmp($schemas[0], 'temp') === 0) {
+            array_shift($schemas);
+        }
+        if ($schemas === [] || strcasecmp($schemas[0], 'main') !== 0) {
+            throw new InvalidArgumentException('SQLite searches temp, main, then the attached schemas.');
+        }
+        $path = [new Name('temp')];
+        foreach ($schemas as $schema) {
+            $path[] = new Name($schema);
+        }
+
+        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::AsciiInsensitive, Comparison::AsciiInsensitive, $path[1]);
     }
 
     /**
-     * Supplies names semantics.
+     * Answers the namespace of the SQLite statement values.
      */
-    public function names(): Policy\NameRules
+    public function statementNamespace(): string
     {
-        return new NameRules();
+        return 'SqlSemantics\\Platform\\Sqlite\\Statement\\';
     }
-
-    /**
-     * Supplies types semantics.
-     */
-    public function types(): Policy\TypeRules
-    {
-        return new TypeRules();
-    }
-
-    /**
-     * Supplies schema semantics.
-     */
-    public function schema(): Policy\SchemaRules
-    {
-        return new SchemaRules();
-    }
-
 }

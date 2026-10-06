@@ -3,7 +3,7 @@
  *
  * The theme, the navigation on a phone, sorting a table, copying a statement,
  * the search box and its results all come from the bundled document-design
- * v1.0.0 script. What is here is the catalog's own: how a search over
+ * v1.2.1 script. What is here is the catalog's own: how a search over
  * statements is ranked and where each hit leads from the page it is read on,
  * how a listing is narrowed by facts a page arrives with in its query string,
  * and how a table of tables, classes or files is narrowed by name.

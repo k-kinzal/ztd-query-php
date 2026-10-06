@@ -5,22 +5,22 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\Sqlite;
 
 /**
- * Selects the Sqlite implementation installed with this package.
+ * Selects SQLite for semantic analysis.
  *
  * @visibility public
- * @example Reconstruct SQL using this database package
+ * @example Analyzing SQLite SQL
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
- *     $semantics->analyze('DROP TABLE example')->toString() // => 'DROP TABLE example'
+ *     $semantics->analyze('SELECT 42')->toString() // => 'SELECT 42'
  */
-enum Dialect: string implements \SqlSemantics\Core\Dialect
+enum Dialect: string implements \SqlSemantics\Contract\Dialect
 {
     case Sqlite = 'sqlite';
 
     /**
-     * Supplies this database's parser, models, and semantic policies.
+     * Names the database family as the grammar releases do.
      */
-    public function platform(): \SqlSemantics\Core\Platform
+    public function database(): string
     {
-        return new Platform();
+        return $this->value;
     }
 }

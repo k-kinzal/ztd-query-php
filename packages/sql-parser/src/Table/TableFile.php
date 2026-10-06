@@ -7,7 +7,7 @@ namespace SqlParser\Table;
 use RuntimeException;
 
 /**
- * Stores parse tables as deflated files and loads them once per process.
+ * Stores parse tables as native PHP codec bytes and reuses identical file contents.
  *
  * @visibility root
  */
@@ -35,8 +35,8 @@ final class TableFile
      */
     public function save(ParseTable $table, string $path): void
     {
-        $bytes = gzdeflate($this->codec->encode($table), 9);
-        if ($bytes === false || file_put_contents($path, $bytes) === false) {
+        $bytes = $this->codec->encode($table);
+        if (file_put_contents($path, $bytes) === false) {
             throw new RuntimeException("Cannot write parse table to {$path}");
         }
     }
@@ -44,31 +44,36 @@ final class TableFile
     /**
      * Reads a table from a file, reusing it when the same file was read before.
      *
+     * The file is read on every call and recognized by a fast non-cryptographic digest of its
+     * contents, which only has to tell file contents apart within one process.
+     *
      * @param string $path File written by save()
      *
      * @return ParseTable The table
      *
-     * @throws RuntimeException When the file is missing, not deflated, or not an encoded table
+     * @throws RuntimeException When the file is missing or is not a readable encoded table
      */
     public function load(string $path): ParseTable
     {
-        if (isset(self::$loaded[$path])) {
-            return self::$loaded[$path];
-        }
         $compressed = is_file($path) ? file_get_contents($path) : false;
         if ($compressed === false) {
             throw new RuntimeException("Parse table not found: {$path}");
         }
-        $bytes = $this->inflate($compressed);
+        $key = $path . ':' . hash('xxh128', $compressed);
+        if (isset(self::$loaded[$key])) {
+            return self::$loaded[$key];
+        }
+        $bytes = str_starts_with($compressed, TableCodec::MAGIC) ? $compressed : $this->inflate($compressed);
         if ($bytes === null) {
-            throw new RuntimeException("Parse table is not a deflated file: {$path}");
+            throw new RuntimeException("Parse table is not a readable encoded table: {$path}");
         }
 
-        return self::$loaded[$path] = $this->codec->decode($bytes);
+        return self::$loaded[$key] = $this->codec->decode($bytes);
     }
 
     /**
-     * Inflates deflated bytes, quietly answering null when they are not deflated.
+     * Reads legacy compressed caches when the optional zlib extension is available.
+     * New and shipped artifacts use uncompressed codec bytes and never call this method.
      *
      * @param string $compressed Bytes read from the file
      *
@@ -76,6 +81,9 @@ final class TableFile
      */
     public function inflate(string $compressed): ?string
     {
+        if (!function_exists('gzinflate')) {
+            return null;
+        }
         set_error_handler(static fn (): bool => true);
         try {
             $bytes = gzinflate($compressed);

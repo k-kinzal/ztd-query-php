@@ -117,8 +117,6 @@ jobs:
               throw new RuntimeException('Runtime installation must not require build or fuzz dependencies.');
           }
           PHP
-      - name: Verify the exported generator command
-        run: php vendor/bin/build-models.php --help
 
   lint:
     name: Lint (${{ matrix.package }})
@@ -151,9 +149,9 @@ jobs:
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
-      - name: Verify generated statement models
+      - name: Check that every grammar production has a lowering rule
         if: matrix.package != 'sql-semantics'
-        run: composer build:models:check
+        run: composer ledger
       - name: Check PSR-4 paths and ambiguous classes
         run: composer autoload:check
       - name: Check the formatting

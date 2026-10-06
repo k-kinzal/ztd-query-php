@@ -4,142 +4,123 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
-use SqlParser\Lexer\Token;
-use SqlSemantics\Core\Language;
-use SqlSemantics\Core\Parameters;
-use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Platform\Sqlite\Dialect;
-use SqlSemantics\Statement\Declaration\Nullability;
-use SqlSemantics\Statement\Declaration\TypeDescriptor;
-use Tests\Contract\Resolved;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Contract\Platforms;
+use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Platform\Sqlite\Platform;
+use SqlSemantics\Platform\Sqlite\Statement\Query\Select;
+use SqlSemantics\Statement\Identifier\Comparison;
+use SqlSemantics\Statement\Identifier\Name;
 
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\SemanticException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ColumnDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableDefinition::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\ConstraintKind::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TableConstraint::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Nullability::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(TypeDescriptor::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Builtin::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeName::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\TypeDeclaration::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Numbers::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Statement\Declaration\Invariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\TypeReader::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TypeReader::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\DialectParser::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\TokenGroups::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Tree::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\ColumnReader::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\SchemaReader::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\ConstraintReader::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Ast\Identifiers::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Core\Policy\SyntaxRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\Platform::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\TypeRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\NameRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Platform\Sqlite\SchemaRules::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(Language::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Composition\Composition::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Composition\Operands::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\LeafReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\Vocabulary::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Platform\Sqlite\Builder::class)]
-#[\PHPUnit\Framework\Attributes\Medium]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\ValueReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Statement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Writer::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Statement\Element::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(Semantics::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\Analysis\Analyzer::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Core\AnalysisException::class)]
+#[CoversClass(Platform::class)]
+#[Medium]
 final class PlatformTest extends TestCase
 {
-    public function testParserPreservesTheSelectedVersion(): void
+    public function testProfileFixesTheDefaultReleaseWithoutASessionMode(): void
     {
-        $parser = Dialect::Sqlite->platform()->parser();
-        self::assertNotSame('', $parser->version());
-        self::assertSame('SELECT 1', $parser->parse('SELECT 1')->toString());
+        $profile = (new Platform())->profile(null, null, ParameterStyle::Native);
+
+        self::assertSame(GrammarRelease::Sqlite3472, $profile->grammar);
+        self::assertSame(ParameterStyle::Native, $profile->parameters);
     }
 
-    public function testDefaultSchemaUsesTheLanguageNamespace(): void
+    public function testProfileAcceptsTheShippedReleaseByNameAndKeepsTheParameterStyle(): void
     {
-        self::assertSame('main', Dialect::Sqlite->platform()->defaultSchema());
+        $profile = (new Platform())->profile('sqlite-3.47.2', null, ParameterStyle::Named);
+
+        self::assertSame(GrammarRelease::Sqlite3472, $profile->grammar);
+        self::assertSame(ParameterStyle::Named, $profile->parameters);
+        self::assertTrue($profile->compatibleWith((new Platform())->profile(null, null, ParameterStyle::Named)));
     }
 
-    public function testStatementNamesIdentifyTheParserRoot(): void
+    public function testParserParsesSqliteAndIsCreatedOncePerProfile(): void
     {
-        self::assertSame(Dialect::Sqlite->platform()->statementNames()[0], Dialect::Sqlite->platform()->parser()->parse('SELECT 1')->name);
+        $platform = new Platform();
+        $profile = $platform->profile(null, null, ParameterStyle::Native);
+        $parser = $platform->parser($profile);
+
+        self::assertSame($parser, $platform->parser($profile));
+        self::assertSame('input', $parser->parse('SELECT 1')->name);
     }
 
-
-    public function testNamesDecodeQuotedIdentifiers(): void
+    public function testProductionsAnswerTheSignaturesOfTheRelease(): void
     {
-        self::assertSame('Mixed', Dialect::Sqlite->platform()->names()->name(new Token(1, 'ID', '"Mixed"', 0)));
+        $platform = new Platform();
+        $profile = $platform->profile(null, null, ParameterStyle::Native);
+        $productions = $platform->productions($profile);
+        $tree = $platform->parser($profile)->parse('SELECT 1');
+
+        self::assertSame('input: cmdlist', $productions->signature($tree));
+        self::assertContains('where_opt: WHERE expr', $productions->all());
+        self::assertSame($productions, $platform->productions($profile));
     }
 
-
-    public function testSchemaKeepsDeclarations(): void
+    public function testLowerAnswersTheStatementsOfATreeInOrder(): void
     {
-        $schema = Resolved::of((new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)', []));
-        self::assertCount(2, $schema->declarations[0]->columns);
+        $platform = new Platform();
+        $profile = $platform->profile(null, null, ParameterStyle::Native);
+        $leaves = new Leaves();
+        $statements = $platform->lower($platform->parser($profile)->parse('SELECT a; SELECT b'), $profile, $leaves);
+
+        self::assertCount(2, $statements);
+        self::assertInstanceOf(Select::class, $statements[0]);
+        self::assertInstanceOf(Select::class, $statements[1]);
+        self::assertSame(['a', 'b'], array_map(static fn (object $leaf): string => $leaf instanceof Name ? $leaf->value : '', $leaves->all()));
     }
 
-    public function testSyntaxRecognizesTheCreateTableDeclaration(): void
+    public function testCodecSpellsNamesAsSqliteIdentifiers(): void
     {
-        $tree = Dialect::Sqlite->platform()->parser()->parse('CREATE TABLE t (id INTEGER)');
-        self::assertNotEmpty(\SqlSemantics\Core\Ast\Tree::outer($tree, Dialect::Sqlite->platform()->syntax()->nodes('createTable')));
+        $platform = new Platform();
+        $codec = $platform->codec($platform->profile(null, null, ParameterStyle::Native));
+
+        self::assertSame('`select`', $codec->name(new Name('select'), \SqlSemantics\Contract\NameUse::Column));
     }
 
-    public function testTypesReadDeclaredTypes(): void
+    public function testLeafKeysKeysSqliteTokens(): void
     {
-        self::assertTrue(Dialect::Sqlite->platform()->types()->supports(\SqlSemantics\Statement\Declaration\Builtin::Integer));
+        $platform = new Platform();
+        $keys = $platform->leafKeys($platform->profile(null, null, ParameterStyle::Native));
+
+        self::assertSame('string:x', $keys->key(new \SqlParser\Lexer\Token(1, 'STRING', "'x'", 0), 'term: STRING', 0));
     }
 
-    public function testParserReadsNamedPlaceholdersOnRequest(): void
+    public function testContextSearchesTempThenMainByDefaultAndComparesNamesWithoutAsciiCase(): void
     {
-        self::assertSame('VARIABLE', Dialect::Sqlite->platform()->parser(null, null, Parameters::Named)->tokenize('SELECT :id')[1]->name);
+        $platform = new Platform();
+        $context = $platform->context($platform->profile(null, null, ParameterStyle::Native), null, [], true);
+
+        self::assertSame(['temp', 'main'], array_map(static fn (Name $schema): string => $schema->value, $context->searchPath));
+        self::assertSame('main', $context->declarationSchema->value);
+        self::assertTrue($context->complete);
+        self::assertSame(Comparison::AsciiInsensitive, $context->relationNames);
+        self::assertSame(Comparison::AsciiInsensitive, $context->columnNames);
+        self::assertSame([], $context->tables);
     }
 
-
-    public function testRelationsNameTheTablePositionsOfTheGrammar(): void
+    public function testContextKeepsTheAttachedSchemasAfterMainAndDropsAWrittenTemp(): void
     {
-        $rules = Dialect::Sqlite->platform()->relations();
-        self::assertNotEmpty($rules->nameSymbols);
-        self::assertNotEmpty($rules->declarations);
-        self::assertNotEmpty($rules->drops);
-        self::assertNotEmpty($rules->commonTableExpressions);
+        $platform = new Platform();
+        $profile = $platform->profile(null, null, ParameterStyle::Native);
+        $explicit = $platform->context($profile, ['TEMP', 'main', 'aux'], [], false);
+        $plain = $platform->context($profile, ['main', 'aux'], [], false);
+
+        self::assertSame(['temp', 'main', 'aux'], array_map(static fn (Name $schema): string => $schema->value, $explicit->searchPath));
+        self::assertSame(['temp', 'main', 'aux'], array_map(static fn (Name $schema): string => $schema->value, $plain->searchPath));
+        self::assertFalse($plain->complete);
     }
 
-    public function testBuilderComposesThisDatabasesValues(): void
+    public function testStatementNamespaceNamesTheSqliteStatementValues(): void
     {
-        $builder = Dialect::Sqlite->platform()->builder(new Language(Dialect::Sqlite));
-        self::assertInstanceOf(\SqlSemantics\Platform\Sqlite\Builder::class, $builder);
-        self::assertSame('a = 1', \SqlSemantics\Statement\Writer::render($builder->compare($builder->column('a'), '=', $builder->integer(1))));
+        self::assertSame('SqlSemantics\\Platform\\Sqlite\\Statement\\', (new Platform())->statementNamespace());
+        self::assertSame(Select::class, (new Platform())->statementNamespace() . 'Query\\Select');
     }
 
-    public function testValuesReconstructsUsingTheParserRelease(): void
+    public function testStatementNamespaceBelongsToThePlatformTheFacadeSelects(): void
     {
-        $platform = Dialect::Sqlite->platform();
-        $parser = $platform->parser();
-        $value = $platform->values($parser->version())->read($parser->parse('SELECT 42'));
-        self::assertInstanceOf(\SqlSemantics\Statement\Command::class, $value);
-        self::assertSame('SELECT 42', (new \SqlSemantics\Statement\Statement($value))->toString());
+        self::assertInstanceOf(Platform::class, Platforms::of('sqlite'));
     }
-
-    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'CREATE VIRTUAL TABLE docs USING fts5(title, body)'])]
-    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'CREATE TRIGGER tr AFTER INSERT ON t BEGIN UPDATE u SET n = n + 1 WHERE id = new.id; DELETE FROM log; END'])]
-    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'INSERT INTO t (id) VALUES (1) ON CONFLICT(id) DO UPDATE SET id = excluded.id RETURNING id'])]
-    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'SELECT CASE WHEN n IS NULL THEN 0 ELSE n END, ROW_NUMBER() OVER (ORDER BY n) FROM t LEFT JOIN u USING (id)'])]
-    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'ALTER TABLE t ADD name TEXT REFERENCES other(id) ON UPDATE CASCADE'])]
-    public function testAnalyzeRoundTripsCompleteStatements(Dialect $dialect, string $sql): void
-    {
-        $statement = (new Semantics($dialect))->analyze($sql);
-        $formatter = new \SqlFormatter\Facade\Formatter($dialect->platform()->parser(), new \SqlFormatter\Core\FormatOptions(\SqlFormatter\Core\Style::Compact));
-        self::assertSame($formatter->format($sql), $formatter->format($statement->toString()));
-    }
-
 }

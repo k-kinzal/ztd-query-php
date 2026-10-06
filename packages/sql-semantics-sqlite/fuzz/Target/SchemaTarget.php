@@ -5,18 +5,16 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use Error;
-use SqlFormatter\Facade\Formatter;
 use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Statement\ReferenceKind;
-use SqlSemantics\Statement\Writer;
+use SqlSemantics\Validation\Equivalence;
 use Throwable;
 
 /**
- * Every planned declaration must resolve, declare one readable table, write back, and stay stable.
+ * Every generated table definition must declare one table, round-trip structurally, declare the same table from its rendering, and stay the same structure under any context.
  */
 final class SchemaTarget
 {
-    public function __construct(private readonly Semantics $semantics, private readonly Formatter $compact, private readonly string $grammarVersion)
+    public function __construct(private readonly Semantics $semantics, private readonly string $grammarVersion)
     {
     }
 
@@ -26,35 +24,37 @@ final class SchemaTarget
     public function verify(string $sql, string $input): void
     {
         try {
-            $statement = $this->semantics->analyze($sql, []);
-            $resolution = $statement->resolution ?? throw new Error('A statement analyzed with dependencies must be resolved.');
-            if (count($resolution->declarations) !== 1 || count($resolution->references) !== 1 || $resolution->references[0]->kind !== ReferenceKind::Declaration) {
-                throw new Error('A planned declaration must declare one table and name nothing else.');
+            $operation = $this->semantics->analyze($sql, []);
+            if (count($operation->declarations()) !== 1) {
+                throw new Error('A table definition must declare exactly one table; ' . count($operation->declarations()) . ' declared.');
             }
-            $before = serialize($resolution->declarations);
-            $printed = Writer::render($resolution->declarations[0]->source);
-            if ($this->compact->format($sql) !== $this->compact->format($printed)) {
-                throw new Error('The declaration lost its structure.');
+            $rendered = $operation->toString();
+            $again = $this->semantics->analyze($rendered, []);
+            $difference = (new Equivalence())->difference($operation->statement, $again->statement);
+            if ($difference !== null) {
+                throw new Error('The structure of the rendered definition differs from the structure of the input at ' . $difference);
             }
-            $again = $this->semantics->analyze($printed, [])->resolution;
-            if ($again === null || serialize($again->declarations) !== $before || serialize($resolution->declarations) !== $before) {
-                throw new Error('The declaration is not stable across reconstruction.');
+            if ($again->toString() !== $rendered) {
+                throw new Error('The rendering is not stable: ' . $again->toString());
             }
-            if (str_contains($before, 'SqlParser\\')) {
-                throw new Error('The declaration retained a parser object.');
+            if (count($again->declarations()) !== 1) {
+                throw new Error('The rendered definition must declare exactly one table; ' . count($again->declarations()) . ' declared.');
             }
-            $reset = $this->semantics->analyze('DROP TABLE IF EXISTS schema_fuzz_previous', []);
-            $after = $this->semantics->analyze($printed, [$reset])->resolution;
-            if ($after === null || serialize($after->declarations) !== $before) {
-                throw new Error('An unrelated conditional drop changed the declaration.');
+            $difference = (new Equivalence())->difference($operation->declarations()[0], $again->declarations()[0]);
+            if ($difference !== null) {
+                throw new Error('The table declared by the rendered definition differs from the table declared by the input at ' . $difference);
             }
-            $dependent = $this->semantics->analyze($printed, [$statement, $reset]);
-            if ($dependent->resolution?->references[0]->kind !== ReferenceKind::Declaration && !$dependent->resolution?->references[0]->conditional) {
-                throw new Error('A repeated declaration must be rejected or read as conditional.');
+            $dependent = $this->semantics->analyze($rendered, [$operation]);
+            $difference = (new Equivalence())->difference($operation->statement, $dependent->statement);
+            if ($difference !== null) {
+                throw new Error('The declaration context changed the structure of the definition at ' . $difference);
             }
-        } catch (\SqlSemantics\Core\SemanticException $error) {
-            if ($error->reason !== 'duplicate-table') {
-                throw new Error("Schema property failed\nGrammar: {$this->grammarVersion}\nInput (hex): " . bin2hex($input) . "\nSQL: {$sql}\n{$error->getMessage()}", 0, $error);
+            if (count($dependent->declarations()) !== 1) {
+                throw new Error('A table definition analyzed with its own declaration in the context must still declare one table.');
+            }
+            $difference = (new Equivalence())->difference($operation->declarations()[0], $dependent->declarations()[0]);
+            if ($difference !== null) {
+                throw new Error('The declaration context changed the declared table at ' . $difference);
             }
         } catch (Throwable $error) {
             throw new Error("Schema property failed\nGrammar: {$this->grammarVersion}\nInput (hex): " . bin2hex($input) . "\nSQL: {$sql}\n{$error->getMessage()}", 0, $error);

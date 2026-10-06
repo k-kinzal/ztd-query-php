@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\Sqlite\Statement\Expression\Literal;
+
+use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\Sqlite\Statement\Type\Storage;
+use SqlSemantics\Rendering\Output;
+use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Statement\Fact\ScalarFact;
+use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\Nullability;
+
+/**
+ * A decimal integer literal, kept as its exact digits.
+ *
+ * Digit separators are not part of the value and are not kept.
+ *
+ * Rule: SQLITE-INTEGER-LITERAL-001. A literal that fits a signed 64-bit
+ * integer has storage class INTEGER; a larger one is read as REAL.
+ * Source: https://sqlite.org/lang_expr.html#literal_values_constants_.
+ * Status: Implemented.
+ *
+ * @visibility public
+ * @example Keeping the exact digits of a literal
+ *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->analyze('SELECT 9223372036854775808');
+ *     [$query->statement->columns[0]->expression->digits, $query->field(0)->type->descriptor] // => ['9223372036854775808', \SqlSemantics\Platform\Sqlite\Statement\Type\Storage::Real]
+ * @example Refusing text that is not a digit sequence
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('1_000') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing an empty digit sequence
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ * @example Refusing a sign
+ *     new \SqlSemantics\Platform\Sqlite\Statement\Expression\Literal\IntegerLiteral('-1') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ */
+final class IntegerLiteral implements Scalar
+{
+    use Snapshot;
+
+    /**
+     * @param string $digits The decimal digits without sign or separators
+     */
+    public function __construct(public readonly string $digits)
+    {
+        Check::input(preg_match('/\A[0-9]+\z/', $digits) === 1, 'An integer literal is a sequence of decimal digits.');
+    }
+
+    /**
+     * Tells whether the value fits a signed 64-bit integer.
+     */
+    public function fits(): bool
+    {
+        $significant = ltrim($this->digits, '0');
+
+        return strlen($significant) < 19 || (strlen($significant) === 19 && strcmp($significant, '9223372036854775807') <= 0);
+    }
+
+    /**
+     * Derives the storage class from the magnitude.
+     */
+    public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
+    {
+        return new ScalarFact(new Known($this->fits() ? Storage::Integer : Storage::Real), Nullability::NotNull);
+    }
+
+    /**
+     * Writes the digits.
+     */
+    public function render(Output $out): void
+    {
+        $out->spelled($this->digits);
+    }
+}

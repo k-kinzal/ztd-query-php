@@ -48,7 +48,7 @@ final class QuotedScanner
         $prefix = $cursor->match("[eE]'|[bB]'|[xX]'|[uU]&'|[uU]&\"");
         if ($prefix !== null) {
             $cursor->seek($cursor->offset() - 1);
-            $letter = strtoupper($prefix[0]);
+            $letter = \SqlParser\Lexer\Ascii::upper($prefix[0]);
             if (str_ends_with($prefix, '"')) {
                 return $this->identifier($scan, 'UIDENT', $start);
             }

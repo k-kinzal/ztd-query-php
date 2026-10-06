@@ -1,36 +1,36 @@
 deptrac:
-  paths: [./src, ./resources/models]
+  paths: [./src]
   analyser:
     types: [class, use]
   layers:
-    - name: Statements
-      collectors:
-        - type: classLike
-          value: '^SqlSemantics\\Statement\\.*'
     - name: Core
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\Core\\.*'
-    - name: Facade
+          value: '^SqlSemantics\\(Diagnostic|Contract|Statement|Construction|Resolution|Rendering|Lowering|Validation|Facade)\\.*'
+    - name: Parser
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\Facade\\.*'
-    - name: ParserCore
+          value: '^SqlParser\\.*'
+    - name: Model
       collectors:
         - type: classLike
-          value: '^SqlParser\\(Parser|Lexer)\\.*'
-    - name: Platform
+          value: '^SqlSemantics\\Platform\\MySql\\Statement\\.*'
+    - name: Rules
       collectors:
         - type: classLike
-          value: '^SqlSemantics\\Platform\\MySql\\.*'
-    - name: ParserPlatform
+          value: '^SqlSemantics\\Platform\\MySql\\(Rules|Rendering|Profile)\\.*'
+    - name: PlatformLowering
       collectors:
         - type: classLike
-          value: '^SqlParser\\MySql\\.*'
+          value: '^SqlSemantics\\Platform\\MySql\\Lowering\\.*'
+    - name: Wiring
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\Platform\\MySql\\[A-Za-z]+$'
   ruleset:
-    Statements: []
-    Core: [ParserCore, Statements]
-    Facade: [Core, Statements]
-    ParserCore: []
-    Platform: [Core, Statements, ParserCore, ParserPlatform]
-    ParserPlatform: []
+    Core: [Parser]
+    Parser: []
+    Model: [Core, Rules]
+    Rules: [Core, Model, Parser]
+    PlatformLowering: [Core, Model, Rules, Parser]
+    Wiring: [Core, Model, Rules, PlatformLowering, Parser]

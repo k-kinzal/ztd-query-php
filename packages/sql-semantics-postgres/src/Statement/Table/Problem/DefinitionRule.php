@@ -1,0 +1,78 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Problem;
+
+/**
+ * The rules of PostgreSQL a grammatical definition can break, in the words of the server.
+ *
+ * A `%s` in a message stands for the name the problem is about.
+ * Source: https://www.postgresql.org/docs/17/sql-createtable.html and the
+ * reference pages of the other commands.
+ *
+ * @visibility public
+ * @example Reading which rule a definition breaks
+ *     $create = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('CREATE TABLE t (a int, a text)');
+ *     $create->facts->diagnostics[0]->rule // => \SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule::DuplicateColumn
+ */
+enum DefinitionRule: string
+{
+    case DuplicateColumn = 'column "%s" specified more than once';
+    case SystemColumnName = 'column name "%s" conflicts with a system column name';
+    case MissingColumn = 'column "%s" does not exist';
+    case MissingKeyColumn = 'column "%s" named in key does not exist';
+    case MissingReferencedColumn = 'column "%s" referenced in foreign key constraint does not exist';
+    case MultiplePrimaryKeys = 'multiple primary keys for table "%s" are not allowed';
+    case ConflictingNullability = 'conflicting NULL/NOT NULL declarations for column "%s"';
+    case MultipleDefaults = 'multiple default values specified for column "%s"';
+    case MultipleIdentities = 'multiple identity specifications for column "%s"';
+    case MultipleGenerations = 'multiple generation clauses specified for column "%s"';
+    case DefaultAndIdentity = 'both default and identity specified for column "%s"';
+    case DefaultAndGeneration = 'both default and generation expression specified for column "%s"';
+    case IdentityAndGeneration = 'both identity and generation expression specified for column "%s"';
+    case GeneratedByDefault = 'for a generated column, GENERATED ALWAYS must be specified';
+    case MisplacedAttribute = 'misplaced %s clause';
+    case MultipleDeferrability = 'multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed';
+    case MultipleTiming = 'multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed';
+    case DeferredNotDeferrable = 'constraint declared INITIALLY DEFERRED must be DEFERRABLE';
+    case ConflictingAttributes = 'conflicting constraint properties';
+    case CannotDefer = '%s constraints cannot be marked DEFERRABLE';
+    case CannotNotValid = '%s constraints cannot be marked NOT VALID';
+    case CannotNoInherit = '%s constraints cannot be marked NO INHERIT';
+    case MultipleCollations = 'multiple COLLATE clauses not allowed';
+    case IdentityType = 'identity column type must be smallint, integer, or bigint';
+    case IdentityNullable = 'column "%s" of relation "%s" must be declared NOT NULL before identity can be added';
+    case MatchPartial = 'MATCH PARTIAL not yet implemented';
+    case SetColumnsOnUpdate = 'a column list with %s is only supported for ON DELETE actions';
+    case NotBoolean = 'argument of %s must be type boolean';
+    case SerialArray = 'array of serial is not implemented';
+    case PartitionStrategy = 'unrecognized partitioning strategy "%s"';
+    case HashBoundOption = 'unrecognized hash partition bound specification "%s"';
+    case ColumnReferenceInBound = 'cannot use column reference in partition bound expression';
+    case UnloggedView = 'views cannot be unlogged because they do not have storage';
+    case ViewColumnCount = 'CREATE VIEW specifies more column names than columns';
+    case TableColumnCount = 'too many column names were specified';
+    case Unimplemented = '%s is not yet implemented';
+    case EventName = 'unrecognized event name "%s"';
+    case FilterVariable = 'unrecognized filter variable "%s"';
+    case InvalidSequenceOption = 'invalid sequence option %s';
+    case StatementTriggerColumns = "statement trigger's WHEN condition cannot reference column values";
+    case InsertTriggerOld = "INSERT trigger's WHEN condition cannot reference OLD values";
+    case DeleteTriggerNew = "DELETE trigger's WHEN condition cannot reference NEW values";
+    case TemporaryInPermanentSchema = 'cannot create temporary relation in non-temporary schema';
+    case UnloggedInTemporarySchema = 'only temporary relations may be created in temporary schemas';
+    case BeforeTriggerSystemColumn = "BEFORE trigger's WHEN condition cannot reference NEW system columns";
+    case BeforeTriggerGeneratedColumn = "BEFORE trigger's WHEN condition cannot reference NEW generated columns";
+    case GeneratedInGeneration = 'cannot use generated column "%s" in column generation expression';
+    case GeneratedPartitionKey = 'cannot use generated column in partition key';
+    case GeneratedKeyAction = 'invalid %s action for foreign key constraint containing generated column';
+    case InheritedGenerationConflict = 'inherited column "%s" has a generation conflict';
+    case GeneratedInheritsDefault = 'column "%s" inherits from generated column but specifies default';
+    case GeneratedInheritsIdentity = 'column "%s" inherits from generated column but specifies identity';
+    case ChildGeneration = 'child column "%s" specifies generation expression';
+    case GeneratedColumnDefault = 'column "%s" of relation "%s" is a generated column';
+    case NotStoredGenerated = 'column "%s" of relation "%s" is not a stored generated column';
+    case NotGenerated = 'column "%s" of relation "%s" is not a generated column';
+    case GeneratedTypeUsing = 'cannot specify USING when altering type of generated column';
+}

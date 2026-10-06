@@ -76,11 +76,11 @@ final class PageShellTest extends TestCase
 
         self::assertStringStartsWith('<!DOCTYPE html>' . "\n" . '<html lang="en" data-dd-theme-key="sql-catalog-theme">', $page);
         self::assertStringContainsString('<title>users</title>', $page);
-        self::assertStringContainsString('<link rel="stylesheet" href="../assets/document-design-v1.0.0.css">', $page);
+        self::assertStringContainsString('<link rel="stylesheet" href="../assets/document-design-v1.2.1.css">', $page);
         self::assertStringContainsString('<body data-root="../">', $page);
         self::assertStringContainsString('<div class="doc">' . "\n" . '<nav class="sidebar" id="navigation" aria-label="Report navigation">', $page);
         self::assertStringContainsString('<main class="content" id="content">' . "\n" . '<p>body</p></main>', $page);
-        self::assertStringContainsString('<script src="../assets/search-index.js" defer></script>' . "\n" . '<script src="../assets/report.js" defer></script>' . "\n" . '<script src="../assets/document-design-v1.0.0.js" defer></script>', $page);
+        self::assertStringContainsString('<script src="../assets/search-index.js" defer></script>' . "\n" . '<script src="../assets/report.js" defer></script>' . "\n" . '<script src="../assets/document-design-v1.2.1.js" defer></script>', $page);
         self::assertStringContainsString('<ul class="sidebar-list sidebar-context" data-dd-toc><li><a href="#reads" title="Reads">Reads</a></li></ul>', $page);
     }
 
@@ -159,7 +159,7 @@ final class PageShellTest extends TestCase
         self::assertStringContainsString('<title>A &amp; B</title>', $head);
         self::assertSame(1, substr_count($head, 'rel="stylesheet"'));
         self::assertStringNotContainsString('<style', $head);
-        self::assertStringContainsString('<link rel="stylesheet" href="../assets/document-design-v1.0.0.css">', $head);
+        self::assertStringContainsString('<link rel="stylesheet" href="../assets/document-design-v1.2.1.css">', $head);
         self::assertStringEndsWith((new PageShell())->bootstrap() . "\n" . '</head>' . "\n", $head);
     }
 
@@ -232,7 +232,7 @@ final class PageShellTest extends TestCase
                 . ', initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>posts</title>
-<link rel="stylesheet" href="../assets/document-design-v1.0.0'
+<link rel="stylesheet" href="../assets/document-design-v1.2.1'
                 . '.css">
 <script>try{var t=localStorage.getItem("sql-catalog-theme");if(t){document.documentElement.'
                 . 'dataset.ddTheme=t}}catch(e){}</script>
@@ -282,7 +282,7 @@ final class PageShellTest extends TestCase
 <script src="../assets/search-index.js" defer></script>
 <script src="../assets/report.js" defer></script>
 <script src="../assets/documen'
-                . 't-design-v1.0.0.js" defer></script>
+                . 't-design-v1.2.1.js" defer></script>
 </body>
 </html>
 ',
