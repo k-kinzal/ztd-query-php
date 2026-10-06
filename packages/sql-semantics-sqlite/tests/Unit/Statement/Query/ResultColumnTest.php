@@ -84,7 +84,7 @@ final class ResultColumnTest extends TestCase
     #[TestWith(['SELECT "1+1" FROM (SELECT 1+1)'])]
     #[TestWith(["SELECT 1 + /* c */ 1, a  COLLATE  nocase, 'x', -a, a NOTNULL, a not null, b IS NOT NULL FROM t"])]
     #[TestWith(['SELECT * FROM (SELECT A, a+1, true, "zz", (a), t.b, a COLLATE nocase FROM t)'])]
-    #[TestWith(["SELECT * FROM (SELECT 1_000, 0X1f, 1.50E-3, x'0aff', 'text'.a, CROSS.b FROM t AS 'text', t AS CROSS)"])]
+    #[TestWith(["SELECT * FROM (SELECT 1000, 0X1f, 1.50E-3, x'0aff', 'text'.a, CROSS.b FROM t AS 'text', t AS CROSS)"])]
     #[TestWith(['WITH w AS (SELECT a COLLATE nocase, likely(b), cast(a as text), max(a) OVER () FROM t) SELECT * FROM w'])]
     #[TestWith(['SELECT * FROM (SELECT (SELECT 1 FROM t x), a  +  1 FROM t UNION SELECT 2, 3), (VALUES ("zz", 1))'])]
     #[TestWith(['SELECT * FROM (SELECT a, a, a AS "a:1", true, 1 AS false FROM t)'])]
@@ -172,5 +172,13 @@ final class ResultColumnTest extends TestCase
         $this->expectExceptionMessage('The rendered SQL does not correspond to the statement');
 
         new Operation((new Semantics(Dialect::Sqlite))->context(), new Select([new ResultColumn(new IntegerLiteral('1'), null, new Layout([new Spelled('', '2')]))]));
+    }
+
+    public function testRenderKeepsDigitSeparatorsThatNameAColumn(): void
+    {
+        $operation = (new Semantics(Dialect::Sqlite))->analyze('SELECT * FROM (SELECT 1_000)');
+
+        self::assertSame('1_000', $operation->fields()?->at(0)->name?->value);
+        self::assertSame('SELECT * FROM (SELECT 1_000)', $operation->toString());
     }
 }
