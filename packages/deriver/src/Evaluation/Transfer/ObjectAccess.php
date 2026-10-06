@@ -11,6 +11,7 @@ use Deriver\Evaluation\Call\TypeBinding;
 use Deriver\Evaluation\Context;
 use Deriver\Evaluation\State;
 use Deriver\Memory\Location;
+use Deriver\Model\Builtin\TypePredicates;
 use Deriver\Value\Term;
 
 /**
@@ -83,9 +84,30 @@ final class ObjectAccess
             $state->memory->propertyTypes[$root][$slot] = (new TypeBinding($this->context))->scope($property->type, $property->className, $state->lateStaticClass);
         }
         $record = $state->memory->cells[$root];
-        if (!isset($record->operands[$slot]) && $receiver->kind === 'parameter') {
-            $state->memory->write(new Location($root, [$slot]), new Term('external', $root . ':' . $slot, attributes: ['type' => $property->type ?? 'mixed', 'stability' => 'state', 'maybeUninitialized' => true]));
+        if ($record->kind === 'array' && ($record->attributes['open'] ?? false) === true && !isset($record->operands[$slot]) && $this->symbolic($state, $receiver)) {
+            $type = $state->memory->propertyTypes[$root][$slot] ?? $property->type ?? 'mixed';
+            $state->memory->write(new Location($root, [$slot]), new Term('external', $root . ':' . $slot, attributes: ['type' => $type, 'stability' => 'state', 'maybeUninitialized' => true]));
         }
+    }
+
+    /**
+     * Recognizes an object supplied from outside the analysis whose identity stays stable along the path.
+     * @param State $state Current path
+     * @param Term $receiver Evaluated receiver
+     * @return bool Whether unread fields hold the object's initial, declared-type state
+     */
+    public function symbolic(State $state, Term $receiver): bool
+    {
+        if (!is_string($receiver->literal)) {
+            return false;
+        }
+        return match ($receiver->kind) {
+            'parameter' => true,
+            'external' => (new TypePredicates())->bound('is_object', $receiver) !== false,
+            'opaque' => isset($receiver->attributes['stability']),
+            'object' => !isset($state->memory->classes[$receiver->literal]) && ($receiver->attributes['uncertain'] ?? false) !== true,
+            default => false,
+        };
     }
 
     /**

@@ -6,6 +6,7 @@ namespace Deriver\Source\Compilation;
 
 use Deriver\ControlFlow\Terminator;
 use Deriver\Source\Compilation\Control\ExceptionLowering;
+use Deriver\Source\Compilation\Control\GotoLowering;
 use Deriver\Source\Compilation\Control\LoopLowering;
 use Deriver\Source\Compilation\Control\StaticLowering;
 use Deriver\Source\Compilation\Control\SwitchLowering;
@@ -46,6 +47,10 @@ final class StatementLowering
             (new SwitchLowering($l))->lower($node);
         } elseif ($node instanceof Stmt\Break_ || $node instanceof Stmt\Continue_) {
             (new LoopLowering($l))->completion($node);
+        } elseif ($node instanceof Stmt\Label) {
+            (new GotoLowering($l))->label($node);
+        } elseif ($node instanceof Stmt\Goto_) {
+            (new GotoLowering($l))->jump($node);
         } else {
             $this->other($node);
         }

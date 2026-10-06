@@ -47,6 +47,14 @@ final class CatalogFeedbackTest extends TestCase
     public static function programs(): array
     {
         return [
+            ['<?php function target(){return [-5=>-1, +2, -3, -1=>4, 5];}'],
+            ['<?php function target(){return [-1=>0,1,2,3];}'],
+            ['<?php function target(){return ["-1"=>0,1,2,3];}'],
+            ['<?php function target(){return [-1=>1,"-1"=>2,+1=>3,"+1"=>4,5];}'],
+            ['<?php function target(){return [-0.0,+0.0,-1.5,+1.5,-9223372036854775808,-9223372036854775809];}'],
+            ['<?php function target(){return [-1.5=>1,2];}'],
+            ['<?php function target(){return [9223372036854775807=>1,2];}'],
+            ['<?php function target(){return [-(-2),+(+3),-true,+"4"];}'],
             ['<?php function target(){$x=1;return $x+++$x;}'],
             ['<?php class Text{function __toString(){throw new Exception;} } function target(){try{exit(new Text);}catch(Exception $e){return "caught";}}'],
             ['<?php function nextValue(){static $n=0;return ++$n;} function target(){return [nextValue(),nextValue()];}'],

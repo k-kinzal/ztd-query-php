@@ -169,4 +169,31 @@ final class FunctionModelTest extends TestCase
         self::assertSame(['parameter:array'], $decision->plan->writes);
         self::assertSame('write-parameter', $decision->plan->actions[0]->operation);
     }
+
+    public function testMutationBranchesRemovalsOnEmptinessAndAppendsOnTheirFailure(): void
+    {
+        $shift = (new FunctionModel('array_shift', []))->mutation([]);
+        self::assertSame('choice', $shift[0]->operation);
+        self::assertSame('array', $shift[0]->operands[0]->name);
+        self::assertSame(['write-parameter', 'write-parameter', 'return'], array_column($shift[0]->yes, 'operation'));
+        self::assertSame(['return'], array_column($shift[0]->no, 'operation'));
+        $push = (new FunctionModel('array_push', []))->mutation([]);
+        self::assertSame(['write-parameter', 'choice'], array_column($push, 'operation'));
+        self::assertSame(['write-parameter', 'throw'], array_column($push[1]->no, 'operation'));
+        self::assertSame(['write-parameter', 'write-parameter', 'return'], array_column((new FunctionModel('array_unshift', []))->mutation([]), 'operation'));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testDescribeWritesTheMutatedArrayThroughTheReference(): void
+    {
+        $result = \Tests\Fake\Analysis::returns('<?php function target(){$a=[5=>"a","k"=>"b"];$first=array_shift($a);$n=array_push($a,"c");return [$first,$n,$a];}');
+        self::assertSame(['a', 2, ['k' => 'b', 0 => 'c']], $result->normalOutcomes[0]->values['return']->native());
+        self::assertSame([], $result->frontiers);
+        self::assertSame([], $result->exceptionalOutcomes);
+        $model = (new Library())->model('array_pop');
+        self::assertNotNull($model);
+        self::assertSame(['parameter:array'], $model->describe(new CallDescription('array_pop', $model->descriptor()->signature, new TargetProfile()))->plan?->writes);
+    }
 }

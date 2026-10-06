@@ -16,6 +16,10 @@ final class Lattice
      * @var WeakMap<Term, WeakMap<Term, bool>> Inclusion facts for immutable term pairs.
      */
     private WeakMap $pairs;
+    /**
+     * Structural identities shared by comparisons within this lattice operation.
+     */
+    private readonly Identity $identity;
 
     /**
      * @param array<string, \Deriver\Model\Domain\AbstractDomain> $domains Explicitly registered lattices
@@ -23,6 +27,7 @@ final class Lattice
     public function __construct(public readonly array $domains = [])
     {
         $this->pairs = new WeakMap();
+        $this->identity = new Identity();
     }
 
     /**
@@ -62,6 +67,9 @@ final class Lattice
      */
     public function contains(Term $upper, Term $lower): bool
     {
+        if ($upper === $lower) {
+            return true;
+        }
         /** @var WeakMap<Term, WeakMap<Term, true>> $visited */
         $visited = new WeakMap();
         /** @var list<array{Term, Term}> $pending */
@@ -127,7 +135,11 @@ final class Lattice
         if ($upper->kind === 'array' && $lower->kind === 'array') {
             return $this->shape($upper, $lower);
         }
-        return (new Identity())->key($upper) === (new Identity())->key($lower);
+        $prefix = (new StringPrefix())->bound($upper);
+        if ($prefix !== null) {
+            return $this->type($lower) === 'string' && (new StringPrefix())->contains($prefix, $lower);
+        }
+        return $this->identity->key($upper) === $this->identity->key($lower);
     }
 
     /**
@@ -148,7 +160,7 @@ final class Lattice
     }
 
     /**
-     * Widens both inputs to a finite type fact that contains them.
+     * Widens both inputs to a finite type fact that contains them, keeping the bytes two strings share at the start.
      * @param Term $previous Previous loop approximation
      * @param Term $next Newly propagated value
      * @return Term Inclusive widened value
@@ -163,6 +175,12 @@ final class Lattice
         }
         $a = $this->type($previous);
         $b = $this->type($next);
+        if ($a === 'string' && $b === 'string') {
+            $prefixed = (new StringPrefix())->widen($previous, $next);
+            if ($prefixed !== null) {
+                return $prefixed;
+            }
+        }
         $types = array_values(array_unique([...explode('|', $a), ...explode('|', $b)]));
         sort($types);
         $type = in_array('mixed', $types, true) ? 'mixed' : implode('|', $types);

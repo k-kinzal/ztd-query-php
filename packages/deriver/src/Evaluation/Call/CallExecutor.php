@@ -125,6 +125,7 @@ final class CallExecutor
                 $next = $state->fork();
                 $next->memory = $exit->memory;
                 $next->observed = $exit->observed;
+                $next->observedQueries = $exit->observedQueries;
                 $next->evidence = array_values(array_unique([...$state->evidence, ...$exit->evidence]));
                 $next->controls = array_values(array_unique([...$state->controls, ...$exit->controls]));
                 $next->guard = $exit->guard;

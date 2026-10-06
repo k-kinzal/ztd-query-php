@@ -40,7 +40,7 @@ final class ParameterBinding
      */
     public function bind(CallableGraph $callable, Parameter $parameter, ?PassedArgument $actual, State $state, bool $symbolic, bool $strict = false): array
     {
-        if ($symbolic) {
+        if ($symbolic && ($actual === null || $parameter->variadic && $actual->elements === [])) {
             $type = (new TypeBinding($this->machine->context))->declared($parameter->type, $callable, $state);
             $cases = (new SymbolicEnums($this->machine))->bind($callable, $parameter, $state, $type);
             if ($cases !== null) {

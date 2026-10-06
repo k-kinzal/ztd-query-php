@@ -123,6 +123,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Value\Increment::class)]
 #[UsesClass(\Deriver\Value\Lattice::class)]
 #[UsesClass(\Deriver\Value\Operations::class)]
+#[UsesClass(\Deriver\Value\Arrays::class)]
+#[UsesClass(\Deriver\Value\StringPrefix::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class LoopConvergenceTest extends TestCase
@@ -144,5 +146,34 @@ final class LoopConvergenceTest extends TestCase
         $state->iterators['i'] = new IteratorCursor(\Tests\Fake\ValueDocument::shared(30, Term::constant(1)));
         $solver = new LoopConvergence(\Tests\Fake\SolverFixture::context());
         self::assertSame($solver->structure($state), $solver->structure($state->fork()));
+    }
+
+    public function testPositionDistinguishesOnlyKnownEntries(): void
+    {
+        $solver = new LoopConvergence(\Tests\Fake\SolverFixture::context());
+        $closed = Term::array([Term::constant('a'), Term::constant('b')]);
+        self::assertSame(5, $solver->position(new IteratorCursor($closed, position: 5)));
+        $unknown = Term::parameter('rows', 'array');
+        self::assertSame(0, $solver->position(new IteratorCursor($unknown, position: 0)));
+        self::assertSame(0, $solver->position(new IteratorCursor($unknown, position: 7)));
+        $merge = new Term('array-merge', operands: [$closed, $unknown], attributes: ['type' => 'array']);
+        self::assertSame(1, $solver->position(new IteratorCursor($merge, position: 1)));
+        self::assertSame(3, $solver->position(new IteratorCursor($merge, position: 9)));
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testLoopsOverUnknownIterablesReachAFixedPointWithTheirInitialPrefix(): void
+    {
+        $result = \Tests\Fake\Analysis::returns('<?php function target(array $xs){$s="SELECT * FROM t WHERE 1";foreach($xs as $x){$s.=" AND c = ?";}return $s;}');
+        self::assertSame('closed', $result->assessment->closure);
+        self::assertSame(['WIDENED'], array_column($result->frontiers, 'code'));
+        $values = array_map(static fn ($outcome): Term => $outcome->values['return'], $result->normalOutcomes);
+        self::assertSame('SELECT * FROM t WHERE 1', $values[0]->native());
+        self::assertSame('SELECT * FROM t WHERE 1' . str_repeat(' AND c = ?', 15), $values[15]->native());
+        $widened = array_values(array_filter($values, static fn (Term $value): bool => !$value->isConcrete()));
+        self::assertNotEmpty($widened);
+        self::assertSame([['SELECT * FROM t WHERE 1', 'WIDENED']], array_values(array_unique(array_map(static fn (Term $value): array => [$value->operands[0]->literal, $value->operands[1]->literal], $widened), SORT_REGULAR)));
     }
 }

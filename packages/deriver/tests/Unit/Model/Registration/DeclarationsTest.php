@@ -45,6 +45,17 @@ final class DeclarationsTest extends TestCase
         self::assertSame('users', $class->properties['a']->default?->native());
         self::assertSame('opaque', $class->properties['b']->default?->kind);
     }
+    /**
+     * @throws JsonException If fixture values cannot be encoded
+     */
+    public function testSignatureAndClassProjectRawDocComments(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php /** f */ function target(){} /** c */ class User{/** p */ public $a; /** k */ const K=1;}');
+        self::assertSame('/** f */', $session->declarations()->signature('target')?->docComment);
+        $class = $session->declarations()->class('user');
+        self::assertNotNull($class);
+        self::assertSame(['/** c */', ['K' => '/** k */'], '/** p */'], [$class->docComment, $class->constantDocComments, $class->properties['a']->docComment]);
+    }
     public function testInitializerDistinguishesAbsentGraphs(): void
     {
         self::assertNull(\Deriver\Model\Registration\Declarations::initializer(null));

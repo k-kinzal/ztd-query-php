@@ -41,7 +41,7 @@ final class SnapshotRebase
         foreach ($body->blocks as $id => $block) {
             $blocks[$id] = new BasicBlock($block->id, array_map($this->instruction(...), $block->instructions), $block->terminator, $block->loopHeader);
         }
-        return new CallableGraph($body->symbol, $parameters, $blocks, $this->source($body->source), $body->returnType, $body->byReference, $body->strict, $body->className, $body->captures, $body->regions, $body->allowExtraArguments, $body->visibility, $body->static, $body->abstract, $body->external);
+        return new CallableGraph($body->symbol, $parameters, $blocks, $this->source($body->source), $body->returnType, $body->byReference, $body->strict, $body->className, $body->captures, $body->regions, $body->allowExtraArguments, $body->visibility, $body->static, $body->abstract, $body->external, $body->docComment);
     }
 
     /**

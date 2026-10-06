@@ -133,24 +133,25 @@ final class BudgetTest extends TestCase
         self::assertSame(16, $budget->iterations);
         self::assertSame(64, $budget->recursion);
         self::assertSame(20000, $budget->nodes);
+        self::assertSame(4, $budget->symbolicRecursion);
     }
 
     public function testEveryDimensionAcceptsTheMinimumPositiveBudget(): void
     {
-        $budget = new Budget(1, 1, 1, 1, 1);
-        self::assertSame([1,1,1,1,1], [$budget->transfers,$budget->partitions,$budget->iterations,$budget->recursion,$budget->nodes]);
+        $budget = new Budget(1, 1, 1, 1, 1, 1);
+        self::assertSame([1,1,1,1,1,1], [$budget->transfers,$budget->partitions,$budget->iterations,$budget->recursion,$budget->nodes,$budget->symbolicRecursion]);
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidBudgets')]
-    public function testEveryDimensionRejectsNonpositiveBudgets(int $transfers, int $partitions, int $iterations, int $recursion, int $nodes): void
+    public function testEveryDimensionRejectsNonpositiveBudgets(int $transfers, int $partitions, int $iterations, int $recursion, int $nodes, int $symbolicRecursion = 1): void
     {
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage('Every logical budget must be positive.');
-        new Budget($transfers, $partitions, $iterations, $recursion, $nodes);
+        new Budget($transfers, $partitions, $iterations, $recursion, $nodes, $symbolicRecursion);
     }
 
     /**
-     * @return iterable<string,array{int,int,int,int,int}>
+     * @return iterable<string,array{0:int,1:int,2:int,3:int,4:int,5?:int}>
      */
     public static function providerInvalidBudgets(): iterable
     {
@@ -164,5 +165,7 @@ final class BudgetTest extends TestCase
         yield 'negative iterations' => [1,1,-1,1,1];
         yield 'negative recursion' => [1,1,1,-1,1];
         yield 'negative nodes' => [1,1,1,1,-1];
+        yield 'zero symbolic recursion' => [1,1,1,1,1,0];
+        yield 'negative symbolic recursion' => [1,1,1,1,1,-1];
     }
 }

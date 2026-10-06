@@ -155,6 +155,28 @@ final class StateTest extends TestCase
         self::assertSame(1, $state->snapshot()['y']->native());
         self::assertSame(2, $state->snapshot()['x']->native());
     }
+    public function testUnknownAliasMakesWritesThroughTheLocalInvalidateTheStorage(): void
+    {
+        $state = new State();
+        $array = $state->local('a');
+        $state->memory->write($array, Term::fromNative([1, 2]));
+        $state->unknownAlias($state->local('v'), new \Deriver\Memory\Location($array->root, unknown: true));
+        self::assertTrue($state->local('v')->unknown);
+        self::assertSame([1, 2], $state->snapshot()['a']->native());
+        $state->memory->write($state->local('v'), Term::constant(9));
+        self::assertSame('opaque', $state->memory->read($state->local('a'))->kind);
+    }
+    public function testAliasToAnUnknownSlotNeverAliasesTheWholeStorage(): void
+    {
+        $state = new State();
+        $state->memory->write($state->local('a'), Term::fromNative([1, 2]));
+        $state->alias($state->local('v'), new \Deriver\Memory\Location($state->local('a')->root, unknown: true));
+        $state->memory->write($state->local('v'), Term::constant(9));
+        self::assertNotSame(9, $state->memory->read($state->local('a'))->literal);
+        self::assertSame('opaque', $state->memory->read($state->local('a'))->kind);
+        $state->alias(new \Deriver\Memory\Location($state->local('b')->root, ['k']), new \Deriver\Memory\Location($state->local('a')->root, unknown: true));
+        self::assertSame('UNKNOWN_REFERENCE', $state->memory->read(new \Deriver\Memory\Location($state->local('b')->root, ['k']))->literal);
+    }
     public function testValueKeepsUncomputedDistinctFromAnEvaluatedNull(): void
     {
         $state = new State();

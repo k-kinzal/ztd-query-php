@@ -94,7 +94,7 @@ final class InstructionTransfer
             return $this->unpack($instruction, $state);
         } elseif ($op === 'array-set') {
             $array = $state->value($instruction->operands[0]);
-            $key = $instruction->operands[1] === '' ? null : $state->value($instruction->operands[1]);
+            $key = $instruction->operands[1] === '' ? null : (new Reader($context))->key($state->value($instruction->operands[1]), $instruction);
             $item = $state->registers[$instruction->operands[2]] ?? Term::opaque('UNCOMPUTED_REGISTER');
             $value = (new Arrays())->set($array, $key, $item);
         } elseif (in_array($op, ['closure', 'callable', 'callable-method', 'instanceof'], true)) {
@@ -118,7 +118,7 @@ final class InstructionTransfer
         $item = $state->value($instruction->operands[2]);
         if ((new TypePredicates())->apply('is_array', $item)->literal === true) {
             $state->registers[$instruction->result] = (new Arrays())->merge($array, $item);
-            if ($state->registers[$instruction->result]->kind === 'array-merge') {
+            if ($state->registers[$instruction->result]->kind === 'array-merge' && !(new Arrays())->appendable($array)) {
                 $this->machine->context->frontier('WIDENED', $instruction->source, 'symbolic-unpack-append', [$array, $item]);
                 $exception = $state->fork();
                 $exception->completion = new Completion('throw', new Term('throwable', 'Error'));
@@ -143,6 +143,9 @@ final class InstructionTransfer
     public function preparation(CallableGraph $callable, Instruction $instruction, State $state): ?array
     {
         $op = $instruction->operation;
+        if ($op === 'iterator-value') {
+            return (new IterationStep($this->machine->context))->candidates($instruction, $state);
+        }
         if ($op === 'external-body') {
             return (new ExternalBody($this->machine->context))->apply($callable, $instruction, $state);
         }

@@ -56,6 +56,9 @@ final class FunctionModel implements CallModel
         if ($this->name === 'sort') {
             return ModelDecision::handled(new SemanticPlan([new Action('write-parameter', [new Expression('intrinsic', 'sort-values', $operands)], 'array'), Action::returns(Expression::literal(Term::constant(true)))], writes: ['parameter:array']));
         }
+        if (in_array($this->name, ['array_shift', 'array_pop', 'array_push', 'array_unshift'], true)) {
+            return ModelDecision::handled(new SemanticPlan($this->mutation($operands), writes: ['parameter:array']));
+        }
         if ($this->name === 'str_replace') {
             $pair = Expression::parameter('@replacement');
             return ModelDecision::handled(new SemanticPlan([
@@ -65,5 +68,25 @@ final class FunctionModel implements CallModel
             ], writes: ['parameter:count']));
         }
         return ModelDecision::handled(new SemanticPlan([Action::returns(new Expression('intrinsic', $this->name, $operands))], writes: $this->name === 'is_callable' ? ['parameter:callable_name'] : []));
+    }
+
+    /**
+     * Writes the array updated by a by-reference array mutation, then returns or throws.
+     * @param list<Expression> $operands Bound array and values
+     * @return list<Action> Removals branch on emptiness, appends on whether every value fits, and prepends always complete
+     */
+    public function mutation(array $operands): array
+    {
+        $record = Expression::parameter('@mutation');
+        $part = static fn (string $key): Expression => new Expression('array-read', operands: [$record, Expression::literal(Term::constant($key))]);
+        $complete = [new Action('write-parameter', [$part('array')], 'array'), Action::returns($part('result'))];
+        if ($this->name === 'array_push') {
+            $complete = [Action::choice($part('appended'), $complete, [new Action('write-parameter', [$part('partial')], 'array'), Action::throws(Expression::literal(new Term('throwable', 'Error')))])];
+        }
+        $actions = [new Action('write-parameter', [new Expression('intrinsic', $this->name, $operands)], '@mutation'), ...$complete];
+        if ($this->name === 'array_shift' || $this->name === 'array_pop') {
+            return [Action::choice(Expression::parameter('array'), $actions, [Action::returns(Expression::literal(Term::constant(null)))])];
+        }
+        return $actions;
     }
 }

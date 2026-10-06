@@ -193,11 +193,60 @@ final class ObjectAccessTest extends TestCase
     public function testPrepareCapturesAnExternalReceiverFieldAndItsType(): void
     {
         $state = new State();
-        $state->memory->cells['object:input'] = Term::array([]);
+        $state->memory->cells['object:input'] = Term::array([], true);
         $property = new PropertyDeclaration('x', 'A', 'int');
         (new ObjectAccess(\Tests\Fake\SolverFixture::context()))->prepare($state, 'object:input', 'x', Term::parameter('input', 'A'), $property);
         self::assertSame('int', $state->memory->propertyTypes['object:input']['x']);
         self::assertSame('external', $state->memory->cells['object:input']->operands['x']->kind);
+        self::assertSame('int', $state->memory->cells['object:input']->operands['x']->attributes['type']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerRecords')]
+    public function testPrepareSeedsOnlyUnreadFieldsOfOpenRecords(Term $record, ?string $expected): void
+    {
+        $state = new State();
+        $state->memory->cells['object:input'] = $record;
+        (new ObjectAccess(\Tests\Fake\SolverFixture::context()))->prepare($state, 'object:input', 'x', Term::parameter('input', 'A'), new PropertyDeclaration('x', 'A', 'int'));
+        $value = $state->memory->cells['object:input']->operands['x'] ?? null;
+        self::assertSame($expected, $value === null ? null : $value->kind . ':' . ($value->attributes['type'] ?? ''));
+    }
+
+    /**
+     * @return iterable<string, array{Term, string|null}>
+     */
+    public static function providerRecords(): iterable
+    {
+        yield 'open record' => [Term::array([], true), 'external:int'];
+        yield 'closed record' => [Term::array([]), null];
+        yield 'invalidated record' => [Term::opaque('OPEN_DISPATCH'), null];
+        yield 'already read field' => [Term::array(['x' => Term::constant(1)], true), 'constant:'];
+    }
+
+    /**
+     * @param array<string, string> $allocated Object identities created by the analyzed code
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReceivers')]
+    public function testSymbolicRecognizesOnlyStableExternalIdentities(Term $receiver, array $allocated, bool $expected): void
+    {
+        $state = new State();
+        $state->memory->classes = $allocated;
+        self::assertSame($expected, (new ObjectAccess(\Tests\Fake\SolverFixture::context()))->symbolic($state, $receiver));
+    }
+
+    /**
+     * @return iterable<string, array{Term, array<string, string>, bool}>
+     */
+    public static function providerReceivers(): iterable
+    {
+        $object = new Term('object', 'input', attributes: ['class' => 'A']);
+        yield 'symbolic parameter' => [Term::parameter('input', 'A'), [], true];
+        yield 'dispatched symbolic object' => [$object, [], true];
+        yield 'stable property read' => [new Term('opaque', 'input', attributes: ['type' => 'A', 'stability' => 'state']), [], true];
+        yield 'external input' => [new Term('external', 'input', attributes: ['type' => 'A']), [], true];
+        yield 'allocated object' => [$object, ['input' => 'A'], false];
+        yield 'uncertain caught throwable' => [new Term('object', 'input', attributes: ['type' => 'Throwable', 'uncertain' => true]), [], false];
+        yield 'residual without identity' => [Term::opaque('input', 'A'), [], false];
+        yield 'anonymous value' => [new Term('binary', null, attributes: ['type' => 'A']), [], false];
     }
 
     /**
@@ -238,5 +287,24 @@ final class ObjectAccessTest extends TestCase
         yield 'enum singleton identity is not a class name' => [new Term('enum', 'E::A', attributes:['class' => 'E']),false,'E'];
         yield 'declared subtype bound' => [Term::parameter('x', 'Box'),false,'Box'];
         yield 'invalid class metadata' => [new Term('object', 'identity', attributes:['class' => 1]),false,''];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerExternalReceivers')]
+    public function testPrepareCapturesFieldsOnlyOfReceiversThatMayBeObjects(Term $receiver, bool $captured): void
+    {
+        $state = new State();
+        $state->memory->cells['object:input'] = Term::array([], true);
+        (new ObjectAccess(\Tests\Fake\SolverFixture::context()))->prepare($state, 'object:input', 'x', $receiver, null);
+        self::assertSame($captured, isset($state->memory->cells['object:input']->operands['x']));
+    }
+
+    /**
+     * @return iterable<string,array{Term,bool}>
+     */
+    public static function providerExternalReceivers(): iterable
+    {
+        yield 'global' => [new Term('external', 'global:wpdb', attributes: ['type' => 'mixed']), true];
+        yield 'scalar' => [new Term('external', 'env:X', attributes: ['type' => 'string|false']), false];
+        yield 'constant' => [Term::constant(1), false];
     }
 }

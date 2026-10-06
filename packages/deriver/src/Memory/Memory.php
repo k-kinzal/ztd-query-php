@@ -199,6 +199,7 @@ final class Memory
 
     /**
      * Materializes a reference cell only when an address escapes by reference.
+     * A global variable's slot then holds only a pointer to the shared cell, so unsetting the name leaves other references intact.
      * @param Location $location Escaping address
      * @return string Shared cell identity
      */
@@ -213,6 +214,11 @@ final class Memory
             while (($this->cells[$root] ?? null)?->kind === 'cell' && is_string($this->cells[$root]->literal) && !isset($seen[$root])) {
                 $seen[$root] = true;
                 $root = $this->cells[$root]->literal;
+            }
+            if (!$location->unknown && str_starts_with($root, 'global:')) {
+                $cell = $this->allocate($this->cells[$root] ?? Term::constant(null));
+                $this->cells[$root] = new Term('cell', $cell->root);
+                return $cell->root;
             }
             return $root;
         }

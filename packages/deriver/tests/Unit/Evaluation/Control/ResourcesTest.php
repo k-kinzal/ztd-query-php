@@ -152,7 +152,36 @@ final class ResourcesTest extends TestCase
         $resources = new Resources(new ResourceLimits(stackFrames:64));
         self::assertNull(\Tests\Fake\HostStackFixture::descend($resources, 80, false));
         self::assertSame('STACK_LIMIT', \Tests\Fake\HostStackFixture::descend($resources, 80, true));
-        self::assertSame('STACK_LIMIT', $resources->reason());
+    }
+
+    public function testReasonRefusesOnlyTheDeepCallAndAdmitsLaterShallowCalls(): void
+    {
+        $resources = new Resources(new ResourceLimits(stackFrames:64));
+        self::assertSame('STACK_LIMIT', \Tests\Fake\HostStackFixture::descend($resources, 80, true));
+        self::assertSame([null, null], [$resources->reason(), $resources->reason(call:true)]);
+    }
+
+    public function testReasonCountsOnlyFramesAddedAfterTheQueryStarts(): void
+    {
+        $resources = \Tests\Fake\HostStackFixture::open(new ResourceLimits(stackFrames:64), 80);
+        self::assertNull(\Tests\Fake\HostStackFixture::descend($resources, 40, true));
+    }
+
+    public function testReasonKeepsPermanentInterruptionsAfterAStackRefusal(): void
+    {
+        $token = new CancellationToken();
+        $resources = new Resources(new ResourceLimits(stackFrames:64, cancellation:$token));
+        self::assertSame('STACK_LIMIT', \Tests\Fake\HostStackFixture::descend($resources, 80, true));
+        $token->cancel();
+        self::assertSame(['CANCELLED', 'CANCELLED'], [$resources->reason(), $resources->reason(call:true)]);
+    }
+
+    public function testPermanentIgnoresTheHostStack(): void
+    {
+        $resources = new Resources(new ResourceLimits(stackFrames:64));
+        self::assertNull(\Tests\Fake\HostStackFixture::descend($resources, 80, false));
+        self::assertNull($resources->permanent(0));
+        self::assertSame('MEMORY_LIMIT', $resources->permanent(PHP_INT_MAX));
     }
 
     public function testReasonReleasesTerminationMemoryWhenCancelled(): void

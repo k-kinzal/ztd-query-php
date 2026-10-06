@@ -140,6 +140,17 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(Projection::class)]
 #[UsesClass(Term::class)]
+#[UsesClass(\Deriver\Evaluation\Call\SymbolicEnums::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Preparation\EntryProperties::class)]
+#[UsesClass(\Deriver\ControlFlow\PropertyDeclaration::class)]
+#[UsesClass(\Deriver\Evaluation\Call\Creation\Builtins::class)]
+#[UsesClass(\Deriver\Evaluation\Control\ExceptionMatch::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\ObjectAccess::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\PropertyAccessCheck::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\PropertyLookup::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\PropertySlot::class)]
+#[UsesClass(\Deriver\Evaluation\Transfer\PropertyTransfer::class)]
+#[UsesClass(\Deriver\Source\Compilation\EffectInspection::class)]
 #[Small]
 final class QueryExecutionTest extends TestCase
 {
@@ -269,6 +280,20 @@ final class QueryExecutionTest extends TestCase
         self::assertSame([], $static->frontiers);
         self::assertFalse($static->normalOutcomes[0]->values['return']->native());
     }
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testEntryInstallsSuppliedReceiverPropertiesOnlyForInstanceEntries(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php final class B{private string $order="name";function sql(){return "ORDER BY ".$this->order;}static function make(){return 1;}}');
+        $scope = QueryScope::fromEntrypoints([new EntryPoint('B::sql', properties:['order' => Term::constant('email')]), new EntryPoint('B::sql')]);
+        $result = $session->derive(new ReturnQuery('B::sql', $scope));
+        self::assertSame('ORDER BY email', $result->normalOutcomes[0]->values['return']->native());
+        self::assertFalse($result->normalOutcomes[1]->values['return']->isConcrete());
+        $this->expectException(InvalidInputException::class);
+        $session->derive(new ReturnQuery('B::make', QueryScope::fromEntrypoints([new EntryPoint('B::make', properties:['order' => Term::constant('email')])])));
+    }
+
     #[\PHPUnit\Framework\Attributes\DataProvider('providerUnregisteredSlotQuery')]
     public function testOwnerRejectsUnregisteredStateSlotsBeforeReferenceLookup(Query $query): void
     {
@@ -308,6 +333,32 @@ final class QueryExecutionTest extends TestCase
         $snapshot = new ProjectSnapshot('test', [], [], $configuration->target, false, 'none');
         $execution = new QueryExecution($context->program, $configuration, $context->models, $snapshot);
         self::assertSame('DB', $execution->initialState()->memory->cells['global:db']->attributes['type']);
+    }
+
+    /**
+     * @throws JsonException If query metadata cannot be encoded
+     */
+    public function testResultKeepsSharedExecutionIdentitySeparateFromIndependentQueries(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $snapshot = new ProjectSnapshot('test', [], [], $context->configuration->target, false, 'none');
+        $execution = new QueryExecution($context->program, $context->configuration, $context->models, $snapshot);
+        $first = $execution->result($context, 'target', microtime(true));
+        $batch = $execution->result($context, 'target', microtime(true), ':batch:example');
+        self::assertNotSame($first->reference->id, $batch->reference->id);
+        self::assertSame('unreachable', $batch->reachability);
+    }
+
+    /**
+     * @throws JsonException If query metadata cannot be encoded
+     */
+    public function testTogetherRejectsForeignReferencesBeforeRunningAnyEntry(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context();
+        $snapshot = new ProjectSnapshot('test', [], [], $context->configuration->target, false, 'none');
+        $execution = new QueryExecution($context->program, $context->configuration, $context->models, $snapshot);
+        $this->expectException(InvalidInputException::class);
+        $execution->together([new ReturnQuery('target'), new ValueQuery(new ExpressionRef(new SourceRef('foreign', 'a.php', 0, 1), 'target', 'r0'))]);
     }
 
 }

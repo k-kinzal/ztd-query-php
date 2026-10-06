@@ -15,6 +15,7 @@ use Deriver\Result\Alternative;
 use Deriver\Result\Derivation;
 use Deriver\Result\Exceptional;
 use Deriver\Result\Frontier;
+use Deriver\Value\Identity;
 use Deriver\Value\Term;
 use WeakMap;
 
@@ -33,9 +34,17 @@ final class Context
      */
     public readonly Resources $resources;
     /**
-     * Permanent resource interruption reason, when applicable.
+     * Structural term keys memoized across this query's states, which share term subgraphs.
+     */
+    public readonly Identity $identity;
+    /**
+     * Permanent resource interruption reason, when applicable; STACK_LIMIT only seals the refused call.
      */
     public ?string $stopReason = null;
+    /**
+     * Explicit observations sharing this execution and its resource budget.
+     */
+    public ?BatchObservations $batch = null;
 
     /**
      * @var array<string, true> Graphs evaluated by this query.
@@ -49,6 +58,10 @@ final class Context
      * @var WeakMap<\Deriver\ControlFlow\CallableGraph, true> Graphs supplied by built-in PHP models.
      */
     public WeakMap $nativeCalls;
+    /**
+     * @var WeakMap<Term, bool> Immutable value graphs proven free of storage identities
+     */
+    public WeakMap $plainValues;
     /**
      * @var array<string, string> Unresolved call reasons by instruction.
      */
@@ -96,13 +109,17 @@ final class Context
      * @param Query $query Normalized query
      * @param Configuration $configuration Explicit semantic assumptions
      * @param Registry $models Trusted model selection
+     * @param Summary\SharedSummaries $shared Session cache of closed isolated completions
+     * @param Resources|null $resources Shared runtime policy for observation-only contexts
      */
-    public function __construct(public readonly Program $program, public readonly Query $query, public readonly Configuration $configuration, public readonly Registry $models)
+    public function __construct(public readonly Program $program, public readonly Query $query, public readonly Configuration $configuration, public readonly Registry $models, public readonly Summary\SharedSummaries $shared = new Summary\SharedSummaries(), ?Resources $resources = null)
     {
         $this->summaries = new Table();
         $this->demands = new WeakMap();
         $this->nativeCalls = new WeakMap();
-        $this->resources = new Resources($configuration->resources);
+        $this->plainValues = new WeakMap();
+        $this->resources = $resources ?? new Resources($configuration->resources);
+        $this->identity = new Identity();
         $this->assumptions = ['target:' . $configuration->target->id(), 'scope:' . $query->scope()->mode, 'world:' . ($configuration->closedWorld ? 'closed' : 'open'), 'environment:' . $configuration->environmentVersion];
         foreach ($configuration->providers as $provider) {
             [$id, $version] = [$provider->id(), $provider->version()];
@@ -117,13 +134,15 @@ final class Context
      * @param string $operation Affected operation
      * @param list<Term> $dependencies Known dependencies
      * @param string $type Justified residual type bound
+     * @param list<string> $knownDependencies Named inputs, such as `global:name` environment keys, that would resolve the frontier
      * @return Term Residual expression
      */
-    public function frontier(string $code, SourceRef $source, string $operation, array $dependencies = [], string $type = 'mixed'): Term
+    public function frontier(string $code, SourceRef $source, string $operation, array $dependencies = [], string $type = 'mixed', array $knownDependencies = []): Term
     {
         $id = $source->id() . ':' . $code . ':' . $operation;
         $value = Term::opaque($code, $type, $dependencies);
-        $this->frontiers[$id] = new Frontier($code, $source, $operation, ['value', 'state'], residual: $value, missingCapability: $operation);
+        $names = array_values(array_unique([...$this->frontiers[$id]->knownDependencies ?? [], ...$knownDependencies]));
+        $this->frontiers[$id] = new Frontier($code, $source, $operation, ['value', 'state'], $names, $value, $operation);
         return $value;
     }
 
@@ -150,7 +169,7 @@ final class Context
      * @param SourceRef $source Next semantic operation
      * @param int $additionalBytes Anticipated allocation before executing the operation
      * @param bool $call Whether a new callable will add host stack frames
-     * @return bool Whether runtime resources permit more work
+     * @return bool Whether runtime resources permit more work; false for a call refused by STACK_LIMIT leaves later work admitted
      */
     public function available(SourceRef $source, int $additionalBytes = 0, bool $call = false): bool
     {
@@ -159,8 +178,10 @@ final class Context
         }
         $reason = $this->resources->reason($additionalBytes, $call);
         if ($reason !== null) {
-            $this->stopReason = $reason;
-            $this->sealed = true;
+            if ($reason !== 'STACK_LIMIT') {
+                $this->stopReason = $reason;
+                $this->sealed = true;
+            }
             $this->frontier($reason, $source, 'runtime-resources');
             return false;
         }

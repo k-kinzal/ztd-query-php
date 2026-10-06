@@ -29,6 +29,13 @@ interface AnalysisSession
     public function declarations(): Model\Metadata\DeclarationLookup;
 
     /**
+     * Reads raw PHPDoc attached to nodes inside a captured callable or script.
+     * @param string $symbol Callable or script identity
+     * @return list<Reference\SourceComment> Comments with source ranges, without type interpretation
+     */
+    public function comments(string $symbol): array;
+
+    /**
      * Derives a value, state, return, or correlated tuple.
      * @param Query $query Immutable query
      * @return DerivationResult Values and quality assessment
@@ -43,7 +50,25 @@ interface AnalysisSession
     public function deriveMany(array $queries): ResultSet;
 
     /**
+     * Shares candidate dependencies across separately budgeted observations, like deriveMany().
+     * Under the explicit execution contract, this instead runs one callable with a shared budget:
+     * all queries must have the same owner and budget, and results share execution statistics and frontiers.
+     * Each tuple preserves its own correlation in either contract.
+     * @param list<Query> $queries Queries in output order
+     * @return ResultSet Results under the selected analysis contract
+     */
+    public function deriveTogether(array $queries): ResultSet;
+
+    /**
+     * Releases session-owned candidate evaluations and result retention.
+     * Results still owned by callers remain immutable and usable.
+     */
+    public function release(): void;
+
+    /**
      * Retrieves the explanation for a result from this session.
+     * Keep the DerivationResult alive while using its reference: by default only 32 small recent results are retained strongly;
+     * older or large results may be released once the caller drops them.
      * @param ResultRef $result Result reference
      * @return Explanation Derivations, assumptions, and boundaries
      */
@@ -57,7 +82,12 @@ interface AnalysisSession
 
     /**
      * Finds source call observations without running the application.
-     * @param string $symbol Function or method name
+     * A function name selects function calls, and a method name selects method and static calls of that name on any receiver.
+     * `Class::__construct` selects `new Class(...)` sites, reported with the `new` operation and the created class as the target;
+     * `self` and `parent` resolve to their lexical class, and late-bound `new static` keeps `static` as its target.
+     * `*` also selects dynamic function and method calls such as `$f()` and `$object->$method()`;
+     * their target is the empty string. Dynamic `new $class` and anonymous classes are not reported.
+     * @param string $symbol Function or method name, `Class::__construct`, or `*`
      * @return list<Observation> Source-ordered call observations
      */
     public function callsTo(string $symbol): array;

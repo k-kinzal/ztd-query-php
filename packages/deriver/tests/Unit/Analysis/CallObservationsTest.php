@@ -155,4 +155,35 @@ final class CallObservationsTest extends TestCase
         self::assertSame('object', $call->receiver?->register);
     }
 
+    public function testWithinSelectsCreationsByConstructorAndResolvesLexicalClasses(): void
+    {
+        $context = \Tests\Fake\SolverFixture::context('<?php class A {function __construct($x){}} class B extends A {function target($c){new self(1);new parent(2);new static(3);new A(4);new $c(5);}}');
+        $body = $context->program->callable('B::target');
+        self::assertNotNull($body);
+        $observations = new CallObservations($context->program);
+        $resolution = new \Deriver\Evaluation\Call\CallResolution($context);
+        self::assertSame(['B', 'A', 'static', 'A'], array_map(static fn (\Deriver\Reference\Observation $call): string => $call->target, $observations->within($body, '*', $resolution)));
+        self::assertSame(['A', 'A'], array_map(static fn (\Deriver\Reference\Observation $call): string => $call->target, $observations->within($body, 'a::__construct', $resolution)));
+        self::assertSame([], $observations->within($body, 'A', $resolution));
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerCreatedClasses')]
+    public function testClassNameResolvesOnlyLiteralSelfAndParent(string $name, bool $literal, string $expected): void
+    {
+        $context = \Tests\Fake\SolverFixture::context('<?php class A {} class B extends A {} class C {}');
+        $instruction = new \Deriver\ControlFlow\Instruction('i', 'new', new \Deriver\Reference\SourceRef('s', 'test.php', 0, 1), 'created', ['class'], attributes: ['scope' => 'B', 'literal-class' => $literal]);
+        self::assertSame($expected, (new CallObservations($context->program))->className($name, $instruction));
+    }
+
+    /**
+     * @return iterable<string,array{string,bool,string}>
+     */
+    public static function providerCreatedClasses(): iterable
+    {
+        yield 'self' => ['self', true, 'B'];
+        yield 'parent' => ['PARENT', true, 'A'];
+        yield 'static' => ['static', true, 'static'];
+        yield 'qualified' => ['\\N\\C', true, 'N\\C'];
+        yield 'dynamic string' => ['self', false, 'self'];
+    }
 }

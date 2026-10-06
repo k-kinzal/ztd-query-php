@@ -126,6 +126,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\Deriver\Value\Operations::class)]
 #[UsesClass(\Deriver\Value\Projection::class)]
 #[UsesClass(\Deriver\Value\SecretFingerprint::class)]
+#[UsesClass(\Deriver\Value\StringPrefix::class)]
 #[UsesClass(Term::class)]
 #[Small]
 final class LatticeTest extends TestCase
@@ -275,6 +276,22 @@ final class LatticeTest extends TestCase
             'previous secret' => [Term::constant(1, true),Term::constant(2),'int|float',true],
             'next secret' => [Term::constant(1),Term::constant(2, true),'int|float',true],
         ];
+    }
+
+    public function testWidenKeepsTheSharedPrefixOfStrings(): void
+    {
+        $lattice = new Lattice();
+        $widened = $lattice->widen(Term::constant('SELECT * FROM t WHERE 1'), Term::constant('SELECT * FROM t WHERE 1 AND c = ?'));
+        self::assertSame('concat', $widened->kind);
+        self::assertSame('SELECT * FROM t WHERE 1', $widened->operands[0]->native());
+        self::assertSame('string', $lattice->type($widened));
+        self::assertTrue($lattice->contains($widened, Term::constant('SELECT * FROM t WHERE 1')));
+        self::assertTrue($lattice->contains($widened, Term::constant('SELECT * FROM t WHERE 1 AND c = ? AND c = ?')));
+        self::assertFalse($lattice->contains($widened, Term::constant('SELECT 1')));
+        self::assertFalse($lattice->contains($widened, Term::parameter('x', 'string')));
+        $next = new Term('concat', operands: [$widened, Term::constant(' AND d')], attributes: ['type' => 'string']);
+        self::assertSame($widened, $lattice->widen($widened, $next));
+        self::assertSame('WIDENED', $lattice->widen($widened, Term::constant('DELETE'))->literal);
     }
 
     public function testWidenPreservesAnExistingUpperBoundIdentity(): void

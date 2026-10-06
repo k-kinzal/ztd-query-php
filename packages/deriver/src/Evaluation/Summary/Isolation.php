@@ -7,6 +7,10 @@ namespace Deriver\Evaluation\Summary;
 use Deriver\ControlFlow\CallableGraph;
 use Deriver\ControlFlow\CallableIdentity;
 use Deriver\Evaluation\Context;
+use Deriver\Query\ReturnQuery;
+use Deriver\Query\StateQuery;
+use Deriver\Query\TupleQuery;
+use Deriver\Query\ValueQuery;
 use Deriver\Value\Term;
 use WeakMap;
 
@@ -66,6 +70,9 @@ final class Isolation
     public function local(CallableGraph $body): bool
     {
         $key = (new CallableIdentity())->key($body->symbol);
+        if ($this->observed($body)) {
+            return false;
+        }
         if ($body->byReference || $body->className !== '' || $body->captures !== [] || str_starts_with($key, 'script:') || isset($this->context->models->models[$key])) {
             return false;
         }
@@ -82,6 +89,26 @@ final class Isolation
             }
         }
         return true;
+    }
+
+    /**
+     * Excludes every graph whose execution must produce an observation in this query or batch.
+     * @param CallableGraph $body Candidate summary graph
+     * @return bool Whether this graph must run to collect requested observations
+     */
+    public function observed(CallableGraph $body): bool
+    {
+        $key = (new CallableIdentity())->key($body->symbol);
+        foreach ($this->context->batch->queries ?? [$this->context->query] as $query) {
+            $owner = $query instanceof ValueQuery ? $query->expression->callable : (($query instanceof StateQuery || $query instanceof TupleQuery) ? $query->point->callable : null);
+            if ($owner !== null && $key === (new CallableIdentity())->key($owner)) {
+                return true;
+            }
+            if ($query instanceof ReturnQuery && ($query->scope()->mode !== 'symbolic' || $this->context->batch !== null) && $key === (new CallableIdentity())->key($query->symbol)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -122,7 +149,7 @@ final class Isolation
         }
         foreach ($body->blocks as $block) {
             foreach ($block->instructions as $instruction) {
-                if (++$work > $this->context->query->budget()->nodes) {
+                if (++$work > $this->context->query->budget()->nodes || $work % 256 === 0 && !$this->context->available($instruction->source)) {
                     return null;
                 }
                 if ($instruction->operation === 'constant' && is_string($instruction->constant?->literal)) {

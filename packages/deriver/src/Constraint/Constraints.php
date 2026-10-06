@@ -40,7 +40,7 @@ final class Constraints
         if ($predicate->kind === 'unary' && $predicate->literal === '!' && isset($predicate->operands[0])) {
             return $this->assume($state, $predicate->operands[0], !$truth);
         }
-        $key = (new Identity())->key($predicate);
+        $key = ($this->context->identity ?? new Identity())->key($predicate);
         if (isset($state->guard[$key]) && $state->guard[$key] !== $truth) {
             return false;
         }
@@ -108,7 +108,7 @@ final class Constraints
         if (!is_int($right->literal) && !is_float($right->literal)) {
             return true;
         }
-        $key = (new Identity())->key($left);
+        $key = ($this->context->identity ?? new Identity())->key($left);
         $bounds = $state->constraints[$key] ?? ['min' => null, 'max' => null, 'equal' => null, 'excluded' => []];
         $number = $right->literal;
         if (!$this->ordered($bounds, $number, $operator)) {

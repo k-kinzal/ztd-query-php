@@ -11,7 +11,6 @@ use Deriver\Evaluation\Demand\Cell;
 use Deriver\Evaluation\Demand\Components;
 use Deriver\Evaluation\Machine;
 use Deriver\Evaluation\State;
-use Deriver\Query\ReturnQuery;
 
 /**
  * Solves reusable isolated call demands with monotone cyclic approximations.
@@ -44,6 +43,13 @@ final class Evaluation
             $context->frontier('CORRELATION_RELAXED', $body->source, 'specialization-limit');
             return (new ResidualPaths($context))->seal($entry, $body->source, 'specialization-limit');
         }
+        $sharedKey = $key->id() . ':' . hash('sha256', serialize($context->query->budget()));
+        if ($table->stack === [] && $entry->guard === [] && $entry->controls === []) {
+            $shared = $context->shared->replay($sharedKey, $context, $entry);
+            if ($shared !== null) {
+                return $shared;
+            }
+        }
         $cell = $table->register($key, $body, $entry);
         if ($cell->status === 'running' || ($table->solving && $cell->status === 'pending')) {
             return $this->replay($cell, $entry);
@@ -60,6 +66,7 @@ final class Evaluation
         if ($table->stack === [] && !$table->solving) {
             $this->close();
         }
+        $context->shared->remember($sharedKey, $context, $cell);
         return $this->replay($cell, $entry);
     }
 
@@ -72,10 +79,10 @@ final class Evaluation
     public function eligible(CallableGraph $body, State $entry): bool
     {
         $context = $this->machine->context;
-        if (!$context->query instanceof ReturnQuery || $context->query->scope()->mode !== 'symbolic') {
+        $proof = new Isolation($context);
+        if (!$proof->local($body)) {
             return false;
         }
-        $proof = new Isolation($context);
         $key = (new CallableIdentity())->key($body->symbol);
         $context->summaries->isolated[$key] ??= $proof->callable($body);
         if (!$context->summaries->isolated[$key]) {
@@ -108,13 +115,17 @@ final class Evaluation
         $history = $table->history;
         $table->history = $cell->history;
         $start = $context->transfers;
+        $frontiers = $context->frontiers;
         $paths = $this->machine->execute($cell->body, $cell->entry->fork());
         $cell->cost = $context->transfers - $start;
         $table->history = $history;
         array_pop($table->stack);
         $before = count($cell->outcomes);
         $havoc = $context->sealed;
-        foreach ($context->frontiers as $frontier) {
+        foreach ($context->frontiers as $id => $frontier) {
+            if (($frontiers[$id] ?? null) !== $frontier) {
+                $cell->closed = false;
+            }
             $havoc = $havoc || $frontier->code === 'BUDGET_EXCEEDED';
         }
         foreach ($paths as $path) {

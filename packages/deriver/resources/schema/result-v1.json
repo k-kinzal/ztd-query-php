@@ -235,7 +235,8 @@
     "reachability": {
       "enum": [
         "may-reach",
-        "unreachable"
+        "unreachable",
+        "not-assessed"
       ]
     },
     "assessment": {
@@ -407,9 +408,62 @@
         "peakMemoryBytes": {
           "type": "integer",
           "minimum": 0
+        },
+        "referenceExpansions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bodyExpansions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "modelApplications": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sharedNodeHits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "constructedNodes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retainedNodes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expandedBodies": {
+          "type": [
+            "array",
+            "object"
+          ],
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "expandedReferences": {
+          "type": [
+            "array",
+            "object"
+          ],
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
         }
       },
       "additionalProperties": false
+    },
+    "contract": {
+      "enum": [
+        "candidates",
+        "execution"
+      ]
+    },
+    "candidateGraph": {
+      "type": "string"
     }
   },
   "additionalProperties": false,
@@ -701,7 +755,8 @@
         "partitions",
         "iterations",
         "recursion",
-        "nodes"
+        "nodes",
+        "symbolicRecursion"
       ],
       "properties": {
         "transfers": {
@@ -723,6 +778,14 @@
         "nodes": {
           "type": "integer",
           "minimum": 1
+        },
+        "symbolicRecursion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxDepth": {
+          "type": "integer",
+          "minimum": 0
         }
       },
       "additionalProperties": false
@@ -732,7 +795,8 @@
       "required": [
         "symbol",
         "arguments",
-        "receiver"
+        "receiver",
+        "properties"
       ],
       "properties": {
         "symbol": {
@@ -766,6 +830,47 @@
               "type": "null"
             }
           ]
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "$ref": "#/$defs/valueRef"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "captures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "$ref": "#/$defs/valueRef"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "symbolicArguments": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false

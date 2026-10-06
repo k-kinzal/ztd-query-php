@@ -61,6 +61,12 @@ final class SnapshotRebaseTest extends TestCase
         self::assertSame('new', $rebased->parameters[0]->default?->source->snapshotId);
         self::assertSame('test', $body->source->snapshotId);
     }
+    public function testCallableKeepsTheRawDocComment(): void
+    {
+        $body = \Tests\Fake\SourceFixture::index('<?php /** @return int */ function target(){return 1;}')->callable('target');
+        self::assertInstanceOf(CallableGraph::class, $body);
+        self::assertSame('/** @return int */', (new SnapshotRebase('new'))->callable($body)->docComment);
+    }
     public function testInstructionPreservesOrderedOperandsAndItsDefinitionIdentity(): void
     {
         $source = new SourceRef('old', 'a.php', 5, 8, 2, 3);

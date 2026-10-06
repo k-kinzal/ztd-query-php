@@ -148,11 +148,14 @@ final class Havoc
     {
         $state->unknownLocals = $reason;
         $references = [];
+        $values = [];
         foreach ($state->locals as $name => $location) {
             if ($name !== 'this') {
                 $references[] = $location;
+            } else {
+                $values[] = $state->memory->read($location);
             }
         }
-        $this->call($state, [], $references, $reason);
+        $this->call($state, $values, $references, $reason);
     }
 }

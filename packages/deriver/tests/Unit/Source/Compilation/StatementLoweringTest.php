@@ -19,6 +19,7 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\SourceFixture;
 
 #[CoversClass(StatementLowering::class)]
+#[UsesClass(\Deriver\Source\Compilation\Control\GotoLowering::class)]
 #[UsesClass(\Deriver\Analysis\QueryExecution::class)]
 #[UsesClass(\Deriver\Analysis\QueryValidation::class)]
 #[UsesClass(\Deriver\Analysis\ResultAssessment::class)]
@@ -262,14 +263,25 @@ final class StatementLoweringTest extends TestCase
     public function testOtherMarksUnsupportedStatementsAtTheirOwnSourceRange(): void
     {
         $lowering = SourceFixture::lowering();
-        $node = new Stmt\Goto_(new \PhpParser\Node\Identifier('label'), ['startFilePos' => 6,'endFilePos' => 10]);
+        $node = new Stmt\InlineHTML('html', ['startFilePos' => 6,'endFilePos' => 10]);
         (new StatementLowering($lowering))->other($node);
         self::assertCount(1, $lowering->graph->instructions[0]);
         $instruction = $lowering->graph->instructions[0][0];
         self::assertSame('unsupported', $instruction->operation);
-        self::assertSame('Stmt_Goto', $instruction->name);
+        self::assertSame('Stmt_InlineHTML', $instruction->name);
         self::assertSame(6, $instruction->source->start);
         self::assertSame(11, $instruction->source->end);
+    }
+
+    public function testLowerStartsALabelBlockAndDefersTheGotoTarget(): void
+    {
+        $lowering = SourceFixture::lowering();
+        (new StatementLowering($lowering))->lower(new Stmt\Label('again'));
+        (new StatementLowering($lowering))->lower(new Stmt\Goto_('again'));
+        self::assertSame([], $lowering->graph->instructions[1]);
+        self::assertSame([0 => 'jump', 1 => 'residual'], array_map(static fn ($terminator) => $terminator->kind, $lowering->graph->terminators));
+        self::assertSame(1, $lowering->graph->labels['again']['block'] ?? null);
+        self::assertSame(1, $lowering->graph->gotos[0]['block']);
     }
 
     public function testLowerBareReturnsCompleteWithoutAnImplicitValueInstruction(): void

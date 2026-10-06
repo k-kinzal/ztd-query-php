@@ -41,12 +41,12 @@ final class CompletionRecord
         }
         $next->memory->sequence = max($sequence, $next->memory->sequence);
         if ($this->havoc) {
-            (new Havoc())->all($next, 'BUDGET_EXCEEDED');
+            (new Havoc())->symbols($next, 'BUDGET_EXCEEDED');
         }
         $next->completion = new Completion($this->state->completion->kind, $this->state->completion->value);
         $next->guard = $this->state->guard;
         $next->constraints = $this->state->constraints;
-        $next->evidence = $this->state->evidence;
+        $next->evidence = array_values(array_unique([...$entry->evidence, ...$this->state->evidence]));
         $next->controls = array_values(array_unique([...$entry->controls, ...$this->state->controls]));
         return $next;
     }

@@ -93,6 +93,10 @@ final class State
      */
     public bool $observed = false;
     /**
+     * @var array<int, true> Batch observations already reached on this execution path
+     */
+    public array $observedQueries = [];
+    /**
      * Cause of unknown writes to this frame's symbol table, including future bindings.
      */
     public ?string $unknownLocals = null;
@@ -145,7 +149,7 @@ final class State
     public function local(string $name): Location
     {
         if (!isset($this->locals[$name])) {
-            $initial = in_array($name, ['_GET', '_POST', '_COOKIE', '_SERVER', '_ENV', '_REQUEST', '_FILES', '_SESSION'], true) ? new Term('external', 'superglobal:' . $name, attributes: ['type' => 'array', 'stability' => 'request']) : new Term('uninitialized');
+            $initial = in_array($name, ['_GET', '_POST', '_COOKIE', '_SERVER', '_ENV', '_REQUEST', '_FILES', '_SESSION'], true) ? new Term('external', 'superglobal:' . $name, attributes: ['type' => 'array', 'stability' => 'request', 'elementType' => in_array($name, ['_GET', '_POST', '_COOKIE', '_REQUEST'], true) ? 'string|array|null' : 'mixed']) : new Term('uninitialized');
             if ($this->unknownLocals !== null) {
                 $initial = Term::opaque($this->unknownLocals);
             }
@@ -162,6 +166,10 @@ final class State
      */
     public function alias(Location $destination, Location $source): void
     {
+        if ($source->unknown) {
+            $this->unknownAlias($destination, $source);
+            return;
+        }
         $cell = $this->memory->reference($source);
         if ($destination->local !== '' && $destination->path === []) {
             if (str_starts_with($destination->root, 'global:') && $destination->root !== $cell) {
@@ -171,6 +179,21 @@ final class State
             return;
         }
         $this->memory->writePath($destination->root, $destination->path, new Term('cell', $cell), true);
+    }
+
+    /**
+     * Binds a reference to an unknown slot of known storage so that writes through either side invalidate that storage.
+     * @param Location $destination Left address
+     * @param Location $source Unknown slot, whose root is the storage it may belong to
+     */
+    public function unknownAlias(Location $destination, Location $source): void
+    {
+        if ($destination->local !== '' && $destination->path === [] && !str_starts_with($destination->root, 'global:')) {
+            $this->locals[$destination->local] = new Location($source->root, $source->path, $destination->local, true);
+            return;
+        }
+        $this->memory->write($source, Term::opaque('UNKNOWN_REFERENCE'));
+        $this->memory->write($destination, Term::opaque('UNKNOWN_REFERENCE'));
     }
 
     /**

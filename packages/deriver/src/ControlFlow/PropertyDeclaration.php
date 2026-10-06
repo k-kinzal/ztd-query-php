@@ -19,6 +19,7 @@ final class PropertyDeclaration
      * @param bool $static static
      * @param CallableGraph|null $default default
      * @param bool $readonly Whether reassignment is forbidden
+     * @param string $docComment Raw declaration doc comment, or an empty string
      */
     public function __construct(
         public readonly string $name,
@@ -28,6 +29,7 @@ final class PropertyDeclaration
         public readonly bool $static = false,
         public readonly ?CallableGraph $default = null,
         public readonly bool $readonly = false,
+        public readonly string $docComment = '',
     ) {
     }
 }

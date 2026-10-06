@@ -40,6 +40,7 @@ final class LoopLowering
         $exit = $g->block();
         $g->jump($node instanceof Stmt\Do_ ? $body : $header);
         $g->loops[] = ['break' => $exit, 'continue' => $update, 'depth' => $g->handlerDepth];
+        $g->scopes[] = ['key' => 'loop:' . $exit, 'kind' => 'loop', 'iterator' => $iterator, 'depth' => $g->handlerDepth];
         $g->current = $header;
         $condition = $this->condition($node, $iterator);
         $g->end(new Terminator('branch', $condition, [$body, $exit]));
@@ -57,6 +58,7 @@ final class LoopLowering
         }
         $g->jump($header);
         array_pop($g->loops);
+        array_pop($g->scopes);
         $g->current = $exit;
         if ($node instanceof Stmt\Foreach_) {
             $g->emit($node, 'iterator-release', [$iterator]);

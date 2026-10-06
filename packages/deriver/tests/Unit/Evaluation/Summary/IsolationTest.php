@@ -291,4 +291,16 @@ final class IsolationTest extends TestCase
         $body = new CallableGraph('target', [], [], new SourceRef('test', 'a.php', 0, 1));
         self::assertFalse((new Isolation($context))->callable($body));
     }
+    public function testObservedExcludesBatchReturnOwnersFromSummaryReplay(): void
+    {
+        $context = SolverFixture::context();
+        $body = $context->program->callable('target');
+        self::assertNotNull($body);
+        $proof = new Isolation($context);
+        self::assertFalse($proof->observed($body));
+        $context->batch = new \Deriver\Evaluation\BatchObservations([$context->query], $context);
+        self::assertTrue($proof->observed($body));
+        $context->batch = null;
+    }
+
 }

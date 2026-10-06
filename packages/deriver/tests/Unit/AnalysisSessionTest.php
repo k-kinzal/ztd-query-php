@@ -96,4 +96,35 @@ final class AnalysisSessionTest extends TestCase
         self::assertSame('sql', $signature->parameters[0]->name);
     }
 
+    /**
+     * @throws JsonException If the captured metadata cannot be encoded
+     */
+    public function testCommentsDoNotInterpretAnnotationsAsTypes(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function f(){/** @var PDO $db */ global $db;}');
+        self::assertSame('/** @var PDO $db */', $session->comments('f')[0]->text);
+    }
+
+    /**
+     * @throws JsonException If source metadata cannot be encoded
+     */
+    public function testDeriveTogetherPreservesReturnQueriesInOutputOrder(): void
+    {
+        $session = \Tests\Fake\Analysis::session('<?php function target(){return 8;}');
+        $results = $session->deriveTogether([new ReturnQuery('target'), new ReturnQuery('target')])->results;
+        self::assertCount(2, $results);
+        self::assertSame(8, $results[0]->normalOutcomes[0]->values['return']->native());
+        self::assertSame($results[1]->evidence, $session->explain($results[1]->reference)->nodes);
+    }
+
+    /**
+     * @throws JsonException If captured metadata cannot be encoded
+     */
+    public function testReleaseKeepsCallerOwnedResultsImmutable(): void
+    {
+        $s = \Tests\Semantic\CandidateContractTest::session('function target(){return 1;}');
+        $r = $s->derive(new ReturnQuery('target'));
+        $s->release();
+        self::assertSame(1, $r->normalOutcomes[0]->values['return']->native());
+    }
 }
