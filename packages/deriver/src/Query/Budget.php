@@ -34,8 +34,10 @@ final class Budget
         public readonly int $nodes = 20000,
         public readonly int $symbolicRecursion = 4,
         public readonly int $maxDepth = 64,
+        public readonly int $maxCandidates = 32,
+        public readonly int $maxEvidenceNodes = 50000,
     ) {
-        if (min($transfers, $partitions, $iterations, $recursion, $nodes, $symbolicRecursion) < 1 || $maxDepth < 0) {
+        if (min($transfers, $partitions, $iterations, $recursion, $nodes, $symbolicRecursion, $maxCandidates, $maxEvidenceNodes) < 1 || $maxDepth < 0) {
             throw new InvalidInputException('Every logical budget must be positive.');
         }
     }

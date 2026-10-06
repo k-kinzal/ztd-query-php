@@ -19,7 +19,7 @@ final class GuardsTest extends TestCase
     {
         $e = F::evaluator('function target($x){if($x){return 1;}return 2;}');
         $r = $e->returns(F::frame($e), 64);
-        self::assertCount(2, (new \Deriver\Evaluation\Candidate\Choices())->alternatives($r));
+        self::assertCount(2, iterator_to_array((new \Deriver\Evaluation\Candidate\Choices())->alternatives($r), false));
     }
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded

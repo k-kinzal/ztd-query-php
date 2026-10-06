@@ -31,6 +31,7 @@ final class Frame
          */
         public readonly ?string $baseIdentity = null,
         public readonly ?Binding $origin = null,
+        public readonly string $calledClass = '',
     ) {
     }
 
@@ -45,6 +46,6 @@ final class Frame
         $versions[$header] = $iteration;
         ksort($versions);
         $base = $this->baseIdentity ?? $this->identity;
-        return new self($this->graph, $base . ':loops:' . serialize($versions), $this->bindings, $this->properties, $this->calls, $this->invocation, $versions, $base, $this->origin);
+        return new self($this->graph, $base . ':loops:' . serialize($versions), $this->bindings, $this->properties, $this->calls, $this->invocation, $versions, $base, $this->origin, $this->calledClass);
     }
 }

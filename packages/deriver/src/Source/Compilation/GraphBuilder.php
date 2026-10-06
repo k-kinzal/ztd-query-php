@@ -122,7 +122,8 @@ final class GraphBuilder
     public function source(Node $node): SourceRef
     {
         $start = max(0, $node->getStartFilePos());
-        return new SourceRef($this->snapshot, $this->path, $start, max($start, $node->getEndFilePos() + 1), max(1, $node->getStartLine()), $this->lines->column($start));
+        $end = max($start, $node->getEndFilePos() + 1);
+        return new SourceRef($this->snapshot, $this->path, $start, $end, max(1, $node->getStartLine()), $this->lines->column($start), $this->lines->line($end), $this->lines->column($end));
     }
 
     /**

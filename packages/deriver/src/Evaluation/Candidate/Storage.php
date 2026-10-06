@@ -54,7 +54,7 @@ final class Storage
     {
         foreach ($frame->graph->definitions as $instruction) {
             $address = $frame->graph->definitions[$instruction->operands[0] ?? ''] ?? null;
-            if ($instruction->operation === 'alias' || in_array($instruction->operation, ['write', 'increment', 'compound', 'unset', 'global', 'static-local'], true) && ($address?->operation === 'element-address' || $address?->operation === 'local' && $address->name === $name)) {
+            if ($instruction->operation === 'alias' || in_array($instruction->operation, ['write', 'increment', 'compound', 'unset', 'global', 'static-local'], true) && (in_array($address?->operation, ['element-address', 'dynamic-local'], true) || $address?->operation === 'local' && $address->name === $name)) {
                 return true;
             }
             foreach ($instruction->arguments as $position => $argument) {
@@ -83,17 +83,40 @@ final class Storage
      */
     public function search(Frame $frame, string $address, int $block, int $offset, int $depth, array $seen = []): Term
     {
+        $definition = $frame->graph->definitions[$address] ?? null;
+        if ($definition?->operation === 'element-address') {
+            return $this->engine->operation('array-read', '', [$this->search($frame, $definition->operands[0], $block, $offset, $depth, $seen), $this->engine->value($frame, $definition->operands[1], $depth)]);
+        }
         $key = $frame->identity . ':' . $this->key($frame, $address) . ':' . $block . ':' . $offset;
+        $cacheKey = $key . ':' . $depth;
+        if (isset($this->engine->context->storage[$cacheKey])) {
+            $this->engine->context->sharedNodeHits++;
+            return $this->engine->context->storage[$cacheKey];
+        }
         if (isset($seen[$key])) {
             return $this->engine->context->reference($frame, $this->key($frame, $address), $frame->graph->body->source, reason: 'CYCLE', kind: 'recursive');
         }
         $seen[$key] = true;
+        $value = $this->reaching($frame, $address, $block, $offset, $depth, $seen);
+        return $this->engine->context->storage[$cacheKey] = $value;
+    }
+
+    /**
+
+     * @param array<string, true> $seen
+
+     */
+    public function reaching(Frame $frame, string $address, int $block, int $offset, int $depth, array $seen): Term
+    {
         $instructions = $frame->graph->body->blocks[$block]->instructions;
         for ($index = $offset - 1; $index >= 0; $index--) {
             $write = $instructions[$index];
+            if (($reason = $this->engine->context->work()) !== null) {
+                return $this->engine->context->reference($frame, $this->key($frame, $address), $write->source, reason: $reason, kind: 'deferred');
+            }
             $value = $this->write($frame, $address, $write, $block, $index, $depth, $seen);
             if ($value !== null) {
-                return ($frame->graph->positions[$address][0] ?? null) === $block ? $value : (new Guards($this->engine))->at($frame, $block, $value, $depth);
+                return $value;
             }
         }
         $parents = (new Recurrence\Definitions($this->engine))->parents($frame, $block);
@@ -107,10 +130,13 @@ final class Storage
         foreach ($parents as $parent) {
             $source = (new Recurrence\Definitions($this->engine))->predecessor($frame, $parent, $block);
             $value = $this->search($source, $address, $parent, count($frame->graph->body->blocks[$parent]->instructions), $depth, $seen);
-            $value = (new Guards($this->engine))->edge($source, $parent, $block, $value, $depth);
-            $alternatives[] = [$value, []];
+            $alternatives[] = [$value, $source, $parent];
         }
-        return (new Choices())->make($alternatives);
+        $first = $alternatives[0][0];
+        if (count(array_filter($alternatives, static fn (array $row): bool => $row[0] !== $first)) === 0) {
+            return $first;
+        }
+        return (new Choices())->make(array_map(fn (array $row): array => [(new Guards($this->engine))->at($row[1], $row[2], (new Guards($this->engine))->edge($row[1], $row[2], $block, $row[0], $depth), $depth), []], $alternatives));
     }
 
     /**
@@ -122,9 +148,7 @@ final class Storage
     {
         $target = $write->operands[0] ?? '';
         if (in_array($write->operation, ['global', 'static-local'], true) && $this->key($frame, $target) === $this->key($frame, $address)) {
-            $name = $frame->graph->definitions[$target]->name;
-            $identity = $write->operation === 'global' ? 'global:' . $name : 'static:' . $frame->graph->body->symbol . ':' . $name;
-            return $this->engine->context->configuration->environment[$identity] ?? ($write->operation === 'global' ? $this->engine->context->reference($frame, $identity, $write->source) : $this->engine->value($frame, $write->operands[1], $depth));
+            return $this->declaration($frame, $write, $target, $depth);
         }
         if ($write->operation === 'alias') {
             if ($this->key($frame, $target) === $this->key($frame, $address)) {
@@ -140,15 +164,15 @@ final class Storage
         $aliases = new Memory\Aliases();
         $targetKey = $aliases->key($this, $frame, $target, $block, $offset);
         $wantedKey = $aliases->key($this, $frame, $address, $block, $offset);
-        if (str_starts_with($targetKey, 'unresolved-alias:') || str_starts_with($wantedKey, 'unresolved-alias:')) {
+        if (str_starts_with($targetKey, 'dynamic:') || str_starts_with($targetKey, 'unresolved-alias:') || str_starts_with($wantedKey, 'unresolved-alias:')) {
             return new Term('write', $targetKey, [$this->search($frame, $address, $block, $offset, $depth, $seen), $this->engine->value($frame, $write->operands[1] ?? '', $depth)], ['reason' => 'UNRESOLVED_ALIAS', 'source' => $write->source->path, 'start' => $write->source->start]);
         }
         if ($targetKey !== $wantedKey) {
-            return $this->elementWrite($frame, $address, $write, $block, $offset, $depth, $seen);
+            return $this->elementWrite($frame, $address, $write, $block, $offset, $depth, $seen, isset($frame->graph->definitions[$targetKey]) ? $targetKey : null);
         }
         $this->engine->context->record($frame, $write);
         if ($write->operation === 'write') {
-            return $this->engine->value($frame, $write->operands[1], $depth);
+            return Evidence\Provenance::wrap($this->engine->value($frame, $write->operands[1], $depth), 'storage-write', $write->source, ['owner' => $frame->graph->body->symbol, 'storage' => $wantedKey, 'version' => $write->result, 'context' => $frame->identity]);
         }
         if ($write->operation === 'unset') {
             return Term::constant(null);
@@ -161,28 +185,44 @@ final class Storage
     }
 
     /**
+     * Resolves a declared global or function-static storage origin.
+     */
+    public function declaration(Frame $frame, Instruction $write, string $target, int $depth): Term
+    {
+        $name = $frame->graph->definitions[$target]->name;
+        $identity = $write->operation === 'global' ? 'global:' . $name : 'static:' . $frame->graph->body->symbol . ':' . $name;
+        $binding = $frame->bindings[$identity] ?? null;
+        if ($binding instanceof Binding) {
+            return $binding->value($this->engine, 'mixed', $depth);
+        }
+        return $this->engine->context->configuration->environment[$identity] ?? ($write->operation === 'global' ? (new Memory\Globals())->origin($this->engine, $frame, $write, $name, $depth) : $this->engine->value($frame, $write->operands[1], $depth));
+    }
+
+    /**
      * Retains a demanded array update while leaving unrelated writes unexpanded.
      * @param array<string, true> $seen Visited definitions
      */
-    public function elementWrite(Frame $frame, string $address, Instruction $write, int $block, int $offset, int $depth, array $seen): ?Term
+    public function elementWrite(Frame $frame, string $address, Instruction $write, int $block, int $offset, int $depth, array $seen, ?string $aliasedAddress = null): ?Term
     {
-        $target = $frame->graph->definitions[$write->operands[0]] ?? null;
-        if ($target?->operation !== 'element-address' || $this->key($frame, $target->operands[0]) !== $this->key($frame, $address)) {
+        $target = $frame->graph->definitions[$aliasedAddress ?? $write->operands[0]] ?? null;
+        if ($target?->operation !== 'element-address') {
+            return null;
+        }
+        $path = [];
+        $root = $target;
+        while ($root->operation === 'element-address') {
+            array_unshift($path, $root->operands[1]);
+            $root = $frame->graph->definitions[$root->operands[0]];
+        }
+        if ($this->key($frame, $root->result) !== $this->key($frame, $address)) {
             return null;
         }
         $before = $this->search($frame, $address, $block, $offset, $depth, $seen);
-        $key = $target->operands[1] === '' ? new Term('append') : $this->engine->value($frame, $target->operands[1], $depth);
-        $right = $this->engine->value($frame, $write->operands[1] ?? '', $depth);
-        if ($write->operation === 'compound' || $write->operation === 'increment') {
-            $previous = $this->engine->element($before, $key);
-            $right = $write->operation === 'increment' ? Memory\Mutations::increment($this->engine, $write, $previous) : $this->engine->operation('binary', $write->name, [$previous, $right]);
+        if ($path === []) {
+            return null;
         }
-        if ($write->operation === 'unset' && $before->kind === 'array' && $key->kind === 'constant') {
-            $entries = $before->operands;
-            unset($entries[(string) $key->literal]);
-            return new Term('array', operands: $entries, attributes: $before->attributes);
-        }
-        return $this->engine->operation('array-set', '', [$before, $key, $right]);
+        $keys = array_map(fn (string $register): Term => $register === '' ? new Term('append') : $this->engine->value($frame, $register, $depth), $path);
+        return (new Memory\Elements($this->engine))->mutate($before, $keys, $write, $this->engine->value($frame, $write->operands[1] ?? '', $depth));
     }
 
     /**
@@ -197,9 +237,20 @@ final class Storage
         if ($instruction->operation === 'local') {
             return 'local:' . $instruction->name;
         }
+        if ($instruction->operation === 'dynamic-local') {
+            $name = $this->engine->value($frame, $instruction->operands[0], $this->engine->context->budget->maxDepth);
+            return $name->kind === 'constant' && is_string($name->literal) ? 'local:' . $name->literal : 'dynamic:' . $instruction->result;
+        }
         if ($instruction->operation === 'model-state-address') {
             $receiver = $frame->graph->definitions[$instruction->operands[0]] ?? null;
             return 'state:' . $instruction->name . ':' . ($receiver?->operation === 'read' ? $this->key($frame, $receiver->operands[0]) : $instruction->operands[0]);
+        }
+        if ($instruction->operation === 'field-address') {
+            $receiver = $this->engine->value($frame, $instruction->operands[0], $this->engine->context->budget->maxDepth);
+            $name = $this->engine->context->index->literal($frame->graph, $instruction->operands[1]);
+            if ($receiver->kind === 'object' && $name !== '') {
+                return 'object:' . $receiver->literal . ':$' . $name;
+            }
         }
         $property = $this->engine->context->index->declaredProperty($frame->graph, $instruction);
         if ($property !== null) {
@@ -244,7 +295,20 @@ final class Storage
             return (new Memory\Slots($this->engine))->read($frame, $definition, $depth);
         }
         if ($definition?->operation === 'local') {
+            foreach ($frame->graph->definitions as $instruction) {
+                if ($instruction->operation === 'static-initialized' && $frame->graph->definitions[$instruction->operands[0]]->name === $definition->name) {
+                    return (new Memory\Statics())->incoming($this->engine, $frame, $definition, $depth);
+                }
+            }
             return (new Origins($this->engine))->parameter($frame, $definition, $depth);
+        }
+        if ($definition?->operation === 'dynamic-local') {
+            $key = $this->key($frame, $address);
+            foreach ($frame->graph->definitions as $local) {
+                if ($local->operation === 'local' && 'local:' . $local->name === $key) {
+                    return (new Origins($this->engine))->parameter($frame, $local, $depth);
+                }
+            }
         }
         if ($definition !== null && in_array($definition->operation, ['field-address', 'static-address'], true)) {
             return (new Origins($this->engine))->property($frame, $definition, $depth);

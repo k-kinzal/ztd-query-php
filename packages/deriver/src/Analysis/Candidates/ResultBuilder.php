@@ -4,23 +4,15 @@ declare(strict_types=1);
 
 namespace Deriver\Analysis\Candidates;
 
-use Deriver\Evaluation\Candidate\Choices;
 use Deriver\Evaluation\Candidate\Context;
 use Deriver\Project\ProjectSnapshot;
 use Deriver\Query\Query;
 use Deriver\Reference\ResultRef;
-use Deriver\Reference\SourceRef;
-use Deriver\Result\Alternative;
-use Deriver\Result\Assessment;
-use Deriver\Result\DerivationResult;
-use Deriver\Result\Exceptional;
-use Deriver\Result\Frontier;
 use Deriver\Result\Serialization\QueryEncoding;
 use Deriver\Result\Statistics;
 use Deriver\Value\Identity;
 use Deriver\Value\Term;
 use JsonException;
-use WeakMap;
 
 /**
  * Reports candidate multiplicity, residual dependencies, and stopped expansion separately.
@@ -32,63 +24,58 @@ final class ResultBuilder
      * Adapts the candidate graph while retaining all residual dependencies.
      * @throws JsonException If result metadata cannot be encoded
      */
-    public function build(Query $query, Term $graph, Context $context, ProjectSnapshot $snapshot, float $start): DerivationResult
+    public function build(Query $query, Term $graph, Context $context, ProjectSnapshot $snapshot, float $start): \Deriver\Result\Candidates\CandidateCollection
     {
-        $normal = [];
-        $exceptional = [];
-        $concrete = true;
-        $alternatives = (new Choices())->alternatives($graph);
-        foreach ($alternatives as [$tuple, $guard]) {
-            $values = [];
-            foreach ($tuple->kind === 'tuple' ? $tuple->operands : ['candidates' => $tuple] as $name => $value) {
-                $values[(string) $name] = $value;
+        $grouped = [];
+        $contexts = new \Deriver\Evaluation\Candidate\Evidence\Contexts();
+        $cursor = new \Deriver\Evaluation\Candidate\Enumeration\Cursor($graph);
+        while (($row = $cursor->next()) !== null) {
+            [$tuple, $guard] = $row;
+            if (count($grouped) === $query->budget()->maxCandidates - 1 && $cursor->hasRemaining()) {
+                $remainder = $cursor->remainder($row);
+                $tuple = new Term('unexpanded-choice', operands: [$remainder], attributes: ['reason' => 'CANDIDATE_LIMIT'], evidence: (new \Deriver\Evaluation\Candidate\Evidence\Forest())->root($remainder));
             }
-            $errors = array_filter($values, static fn (Term $value): bool => $value->kind === 'throwable');
-            if ($errors !== []) {
-                $exceptional[] = new Exceptional(reset($errors), $guard);
-                continue;
+            $value = $tuple->kind === 'tuple' ? (count($tuple->operands) === 1 ? array_values($tuple->operands)[0] : Term::array($tuple->operands)) : $tuple;
+            if ($tuple->evidence !== null) {
+                $value = \Deriver\Evaluation\Candidate\Evidence\Provenance::attach($value, $tuple->evidence);
             }
-            foreach ($values as $value) {
-                $concrete = $concrete && $value->isConcrete();
+            if ($value->kind === 'throwable') {
+                $value = new Term('no-value', $value->literal, [$value], ['type' => 'never', 'reason' => 'NO_VALUE_DEFINITION'], evidence: $value->evidence);
             }
-            $identity = count($alternatives) === 1 ? 'single' : (new Identity())->key($tuple);
-            $previous = $normal[$identity] ?? null;
-            $common = $previous === null ? $guard : array_intersect_assoc($previous->guard, $guard);
-            $normal[$identity] = new Alternative($values, $common);
+            $root = $this->observation($query, $value, $context, $snapshot);
+            $evidence = new \Deriver\Result\Evidence\Alternative($root, $contexts->project($root), $snapshot);
+            $key = (new Identity())->key($value);
+            $grouped[$key] ??= [$value, []];
+            $grouped[$key][1][] = $evidence;
+            if ($tuple->kind === 'unexpanded-choice') {
+                break;
+            }
         }
-        $frontiers = $this->frontiers($graph, $snapshot);
-        $stopped = array_intersect(array_column($frontiers, 'code'), ['DEPTH_LIMIT', 'BUDGET_EXCEEDED', 'MEMORY_LIMIT', 'TIME_LIMIT', 'CANCELLED', 'STACK_LIMIT', 'ENUMERATION_LIMIT', 'CYCLE']) !== [];
-        $assessment = new Assessment($stopped ? 'open' : 'closed', 'exact-symbolic', 'preserved', 'source-candidates', $concrete ? 'finite-exhaustive' : 'not-enumerated');
+        $candidates = array_map(static fn (array $item): \Deriver\Result\Candidates\Candidate => new \Deriver\Result\Candidates\Candidate($item[0], $item[1]), array_values($grouped));
         $key = hash('sha256', $snapshot->id . ':candidates:' . (new QueryEncoding())->key($query));
         $statistics = new Statistics($context->constructedNodes, $context->bodyExpansions, $context->sharedNodeHits, microtime(true) - $start, memory_get_peak_usage(true), $context->referenceExpansions, $context->bodyExpansions, $context->modelApplications, $context->sharedNodeHits, $context->constructedNodes, $context->cache->count(), $context->bodies, $context->references);
-        return new DerivationResult(new ResultRef($key), $snapshot->id, $query, array_values($normal), $exceptional, 'not-assessed', $assessment, $frontiers, ['candidate-scope:captured-sources-and-models', 'reachability:not-required'], $context->evidence, $statistics, $context->index->program->diagnostics(), 'candidates', $graph);
+        return new \Deriver\Result\Candidates\CandidateCollection($candidates, new ResultRef($key), $statistics, $context->stopReason !== null);
     }
 
     /**
-
-     * @return list<Frontier>
-
+     * Identifies the public target independently of the value reached by expansion.
+     * @throws JsonException If query metadata cannot be encoded
      */
-    public function frontiers(Term $graph, ProjectSnapshot $snapshot): array
+    public function observation(Query $query, Term $value, Context $context, ProjectSnapshot $snapshot): \Deriver\Result\Evidence\Node
     {
-        $pending = [$graph];
-        $seen = new WeakMap();
-        $frontiers = [];
-        while ($pending !== []) {
-            $node = array_pop($pending);
-            if (isset($seen[$node])) {
-                continue;
-            }
-            $seen[$node] = true;
-            array_push($pending, ...array_values($node->operands));
-            $reason = $node->attributes['reason'] ?? null;
-            if (!is_string($reason)) {
-                continue;
-            }
-            $source = new SourceRef($snapshot->id, (string) ($node->attributes['source'] ?? ''), (int) ($node->attributes['start'] ?? 0), (int) ($node->attributes['end'] ?? $node->attributes['start'] ?? 0));
-            $identity = (string) ($node->attributes['identity'] ?? (new Identity())->key($node));
-            $frontiers[$identity] = new Frontier($reason, $source, (string) $node->literal, ['value'], [$identity], $node, $reason);
-        }
-        return array_values($frontiers);
+        $owner = (new \Deriver\Analysis\QueryValidation($context->index->program, $snapshot->id))->owner($query);
+        $source = match (true) {
+            $query instanceof \Deriver\Query\ValueQuery => $query->expression->source,
+            $query instanceof \Deriver\Query\StateQuery, $query instanceof \Deriver\Query\TupleQuery => $query->point->source,
+            default => $context->index->graph($owner)?->body->source,
+        };
+        $target = match (true) {
+            $query instanceof \Deriver\Query\ValueQuery => $query->expression->register,
+            $query instanceof \Deriver\Query\ParameterQuery => $query->parameter,
+            $query instanceof \Deriver\Query\StateQuery => $query->variable,
+            default => $owner,
+        };
+        return new \Deriver\Result\Evidence\Node('observation', ['value' => (new \Deriver\Evaluation\Candidate\Evidence\Forest())->root($value)], $source, ['query' => (new QueryEncoding())->key($query), 'owner' => $owner, 'target' => $target, 'role' => $query::class]);
     }
+
 }

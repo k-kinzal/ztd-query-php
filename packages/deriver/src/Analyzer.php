@@ -18,7 +18,7 @@ use JsonException;
  * @example Deriving a function return without running its source
  *     $input = new \Deriver\Project\ProjectInput([new \Deriver\Project\SourceFile('a.php', '<?php function answer() { return 42; }')]);
  *     $result = (new \Deriver\Analyzer())->open($input)->derive(new \Deriver\Query\ReturnQuery('answer'));
- *     $result->normalOutcomes[0]->values['return']->native() // => 42
+ *     $result->candidates[0]->result // => 42
  */
 final class Analyzer
 {

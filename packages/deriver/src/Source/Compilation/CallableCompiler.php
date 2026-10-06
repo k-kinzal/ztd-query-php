@@ -93,7 +93,7 @@ final class CallableCompiler
                 continue;
             }
             $default = $parameter->default === null ? null : $this->expression($parameter->default, $source->path, $source->symbol . ':default:' . $parameter->var->name, $source->className, $source->strict);
-            $parameters[] = new Parameter($parameter->var->name, $this->type($parameter->type), $parameter->byRef, $parameter->variadic, $default, $parameter->flags);
+            $parameters[] = new Parameter($parameter->var->name, $this->type($parameter->type), $parameter->byRef, $parameter->variadic, $default, $parameter->flags, $this->index->builder($source->path)->source($parameter));
         }
         return $parameters;
     }

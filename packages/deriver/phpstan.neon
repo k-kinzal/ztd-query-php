@@ -5,6 +5,10 @@ includes:
 
 parameters:
     toolkit:
+        # Trusted extension callbacks are the boundary: failures become ModelContractException.
+        broadCatchAllowedPaths:
+            - src/Evaluation/Candidate/Invocation/Rules.php
+            - src/Evaluation/Candidate/Models.php
         visibilityExemptNamespacePrefixes:
             - 'Tests'
     phpVersion: 80100

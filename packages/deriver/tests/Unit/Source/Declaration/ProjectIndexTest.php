@@ -322,4 +322,18 @@ final class ProjectIndexTest extends TestCase
         self::assertSame('fixture.php', $builder->path);
         self::assertSame("<?php\nfunction target(){}", $builder->contents);
     }
+    public function testPropertyOwnersDoesNotLowerUnrelatedBodies(): void
+    {
+        $index = \Tests\Fake\SourceFixture::index('<?php class A{public $x;function set(){ $this->x=1; }} function unrelated(){return 2;}');
+        self::assertSame(['A::set'], $index->propertyOwners('x'));
+        self::assertSame(0, $index->graphCount());
+    }
+
+    public function testVariantsRetainsBothConditionalDeclarations(): void
+    {
+        $index = \Tests\Fake\SourceFixture::index('<?php if($x){function f(){return 1;}}else{function f(){return 2;}}');
+        self::assertCount(1, $index->variants('f'));
+        self::assertSame([], $index->diagnostics());
+    }
+
 }

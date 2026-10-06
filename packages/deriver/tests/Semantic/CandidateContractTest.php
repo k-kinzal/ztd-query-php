@@ -24,7 +24,7 @@ use Deriver\Query\QueryScope;
 use Deriver\Query\ReturnQuery;
 use Deriver\Query\TupleQuery;
 use Deriver\Query\ValueQuery;
-use Deriver\Result\DerivationResult;
+use Deriver\Result\Candidates\CandidateCollection;
 use Deriver\Value\Term;
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -54,9 +54,9 @@ final class CandidateContractTest extends TestCase
      * @return list<Term>
 
      */
-    public static function values(DerivationResult $result, string $slot = 'value'): array
+    public static function values(CandidateCollection $result, string $slot = 'value'): array
     {
-        return array_map(static fn ($candidate): Term => $candidate->values[$slot], $result->normalOutcomes);
+        return array_map(static fn ($candidate): Term => $candidate->term, $result->candidates);
     }
 
     /**
@@ -64,7 +64,7 @@ final class CandidateContractTest extends TestCase
      * @return list<mixed>
 
      */
-    public static function native(DerivationResult $result, string $slot = 'value'): array
+    public static function native(CandidateCollection $result, string $slot = 'value'): array
     {
         return array_map(static fn (Term $value) => $value->native(), self::values($result, $slot));
     }
@@ -72,9 +72,21 @@ final class CandidateContractTest extends TestCase
     /**
      * Selects a fixture observation through the public API.
      */
-    public static function argument(AnalysisSession $session, ?Budget $budget = null): DerivationResult
+    public static function argument(AnalysisSession $session, ?Budget $budget = null): CandidateCollection
     {
         return $session->derive(new ValueQuery($session->callsTo('observe')[0]->argument(0), budget: $budget ?? new Budget()));
+    }
+
+    /**
+     * @return list<\Deriver\Result\Frontier> Test-only traversal of candidate residuals.
+     */
+    public static function frontiers(CandidateCollection $result): array
+    {
+        $frontiers = [];
+        foreach ($result as $candidate) {
+            array_push($frontiers, ...(new \Tests\Fake\CandidateFrontiers())->frontiers($candidate->term, $candidate->evidence[0]->snapshot));
+        }
+        return $frontiers;
     }
 
     /**
@@ -99,11 +111,11 @@ final class CandidateContractTest extends TestCase
     public function testC02KeepsAnIdentifiableParameterAndItsExpression(): void
     {
         $result = self::argument(self::session('function sql($table){$sql="SELECT * FROM ".$table;observe($sql);}'));
-        self::assertCount(1, $result->normalOutcomes);
+        self::assertCount(1, $result->candidates);
         $value = self::values($result)[0];
         self::assertSame('concat', $value->kind);
         self::assertSame('SELECT * FROM ', $value->operands[0]->literal);
-        $reference = $result->frontiers[0]->residual;
+        $reference = CandidateContractTest::frontiers($result)[0]->residual;
         self::assertNotNull($reference);
         self::assertSame('$table', $reference->literal);
         self::assertSame('sql', $reference->attributes['scope']);
@@ -217,10 +229,10 @@ final class CandidateContractTest extends TestCase
         $session = self::session('function target($name){$table=$name;$sql="SELECT * FROM ".$table;observe($sql);}');
         foreach ([0 => '$sql', 1 => '$table', 2 => '$name'] as $depth => $name) {
             $result = self::argument($session, new Budget(maxDepth: $depth));
-            $residual = $result->frontiers[0]->residual;
+            $residual = CandidateContractTest::frontiers($result)[0]->residual;
             self::assertNotNull($residual);
             self::assertSame($name, $residual->literal);
-            self::assertSame('DEPTH_LIMIT', $result->frontiers[0]->code);
+            self::assertSame('DEPTH_LIMIT', CandidateContractTest::frontiers($result)[0]->code);
             self::assertSame($depth === 0 ? 'deferred' : 'concat', self::values($result)[0]->kind);
         }
         $constant = self::argument(self::session('function target(){observe(12);}'), new Budget(maxDepth: 0));
@@ -237,7 +249,7 @@ final class CandidateContractTest extends TestCase
         $site = $session->callsTo('query')[0];
         self::assertNotNull($site->receiver);
         $result = $session->derive(new TupleQuery($site->beforeInvocation(), ['receiver' => $site->receiver, 'sql' => $site->argument(0)], budget: new Budget(maxDepth: 1)));
-        $values = $result->normalOutcomes[0]->values;
+        $values = $result->candidates[0]->term->operands;
         self::assertSame('PDO', $values['receiver']->attributes['type']);
         self::assertSame('concat', $values['sql']->kind);
         self::assertSame('SELECT n = ', $values['sql']->operands[0]->literal);
@@ -264,7 +276,7 @@ final class CandidateContractTest extends TestCase
         foreach (['0', '-1', '"-1"', '-(1+0)'] as $key) {
             $source = 'function target(){return [' . $key . '=>0,' . implode(',', range(1, 8191)) . '];}';
             $result = self::session($source)->derive(new ReturnQuery('target'));
-            self::assertSame([], $result->frontiers, $key);
+            self::assertSame([], CandidateContractTest::frontiers($result), $key);
             self::assertSame([$key === '0' ? range(0, 8191) : array_combine(range(-1, 8190), range(0, 8191))], self::native($result, 'return'), $key);
             self::assertLessThan(20000, $result->statistics->constructedNodes);
         }

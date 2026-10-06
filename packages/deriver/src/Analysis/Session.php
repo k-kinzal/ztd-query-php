@@ -16,7 +16,7 @@ use Deriver\Project\ProjectSnapshot;
 use Deriver\Query\Query;
 use Deriver\Reference\Observation;
 use Deriver\Reference\ResultRef;
-use Deriver\Result\DerivationResult;
+use Deriver\Result\Candidates\CandidateCollection;
 use Deriver\Result\Explanation;
 use Deriver\Result\ResultSet;
 use Deriver\Result\Serialization\JsonText;
@@ -36,6 +36,14 @@ use WeakReference;
  */
 final class Session implements AnalysisSession
 {
+    /**
+     * Selects an expression by its exact byte range and syntactic role.
+     * @throws InvalidInputException If the range does not select one captured expression
+     */
+    public function expression(string $path, int $start, int $end, string $role = 'value'): \Deriver\Reference\ExpressionRef
+    {
+        return (new Candidates\Targets())->expression($this->program, $path, $start, $end, $role);
+    }
     /**
      * @return \Deriver\Model\Metadata\DeclarationLookup Captured declaration facts
      */
@@ -68,15 +76,15 @@ final class Session implements AnalysisSession
      */
     public readonly ProjectSnapshot $manifest;
     /**
-     * @var array<string, WeakReference<DerivationResult>> Live session results.
+     * @var array<string, WeakReference<CandidateCollection>> Live session results.
      */
     public array $results = [];
     /**
-     * @var array<string, WeakReference<DerivationResult>> Live complete query results by semantic options.
+     * @var array<string, WeakReference<CandidateCollection>> Live complete query results by semantic options.
      */
     public array $cache = [];
     /**
-     * @var WeakMap<DerivationResult, true> Caller-owned instances, including repeated results with the same identity
+     * @var WeakMap<CandidateCollection, true> Caller-owned instances, including repeated results with the same identity
      */
     private readonly WeakMap $liveResults;
     /**
@@ -86,7 +94,6 @@ final class Session implements AnalysisSession
     /**
      * Closed isolated function results shared by this immutable session.
      */
-    private \Deriver\Evaluation\Summary\SharedSummaries $shared;
     /**
      * @var array<string, list<Observation>> Cached source call inventories
      */
@@ -107,13 +114,13 @@ final class Session implements AnalysisSession
      * @param Configuration $configuration Explicit assumptions
      * @param SyntaxCache $syntax Reusable captured source parsing
      * @param GraphCache $lowered Reusable source graph templates
+     * @throws InvalidInputException If captured PHP is malformed
      * @throws JsonException If data cannot be represented in JSON
      */
-    public function __construct(ProjectInput $input, Configuration $configuration, SyntaxCache $syntax = new SyntaxCache(), GraphCache $lowered = new GraphCache())
+    public function __construct(ProjectInput $input, Configuration $configuration, SyntaxCache $syntax = new SyntaxCache(), GraphCache $lowered = new GraphCache(), bool $validateSource = true)
     {
         $this->liveResults = new WeakMap();
         $this->retention = new ResultRetention($configuration->retainedResults);
-        $this->shared = new \Deriver\Evaluation\Summary\SharedSummaries();
         $this->providerInputs = new ProviderInputs($input, $configuration);
         $input = $this->providerInputs->input;
         $configuration = $this->providerInputs->configuration;
@@ -136,6 +143,9 @@ final class Session implements AnalysisSession
             $models['model:' . $descriptor->id] = hash('sha256', serialize([$descriptor->version, $descriptor->symbol, $descriptor->priority, $descriptor->replaces, $descriptor->replaceSource, $descriptor->useSourceSignature, (new SignatureIdentity())->key($descriptor->signature)]));
         }
         $models = [...$models, ...$this->models->extensions->manifest, ...$this->models->state->manifest, ...$this->providerInputs->manifest];
+        foreach ($configuration->expansionRules as $rule) {
+            $models['expansion:' . $rule->id] = hash('sha256', serialize([$rule->version, $rule->operation, $rule->name, $rule->priority, $rule->path, $rule->start, $rule->end]));
+        }
         ksort($models);
         $environment = [];
         foreach ($configuration->environment as $key => $value) {
@@ -144,46 +154,57 @@ final class Session implements AnalysisSession
         ksort($environment);
         $dependencies = $configuration->dependencyVersions;
         ksort($dependencies);
-        $identity = [$sourceModes, $dependencies, $sources, $models, $configuration->target->id(), $configuration->closedWorld, $configuration->environmentVersion, $environment, $configuration->standardModels, 'deriver-semantics-1'];
+        $identity = [$sourceModes, $dependencies, $sources, $models, $configuration->target->id(), $configuration->closedWorld, $configuration->environmentVersion, $environment, $configuration->standardModels, 'deriver-semantics-2'];
         $id = hash('sha256', json_encode((new JsonText())->tree($identity), JSON_THROW_ON_ERROR));
         $this->program = new ProjectIndex($id, $input, $configuration->target, $syntax, $lowered, $configuration->sourceLimits);
+        if ($validateSource) {
+            $this->validateSource();
+        }
         $this->candidateIndex = new \Deriver\Evaluation\Candidate\Index($this->program);
         $this->candidateCache = new \Deriver\Evaluation\Candidate\Cache($configuration->candidateCacheEntries);
         $this->manifest = new ProjectSnapshot($id, $sources, $models, $configuration->target, $configuration->closedWorld, $configuration->environmentVersion, $this->program->diagnostics(), $dependencies, $sourceModes);
     }
 
     /**
+     * Rejects malformed source at capture rather than manufacturing candidate values.
+     * @throws InvalidInputException If captured PHP cannot be parsed
+     */
+    public function validateSource(): void
+    {
+        foreach ($this->program->diagnostics() as $diagnostic) {
+            if ($diagnostic->code === 'INCOMPLETE_SOURCE') {
+                throw new InvalidInputException('Malformed captured PHP in ' . $diagnostic->at->path . ': ' . $diagnostic->operation);
+            }
+        }
+    }
+
+    /**
      * Derives one normalized request from the immutable snapshot.
      * @param Query $query Requested observation
-     * @return DerivationResult Derived result
+     * @return CandidateCollection Derived result
      * @throws JsonException If captured metadata cannot be encoded
      */
     #[Override]
-    public function derive(Query $query): DerivationResult
+    public function derive(Query $query): CandidateCollection
     {
         $key = (new QueryEncoding())->key($query);
         $cached = ($this->cache[$key] ?? null)?->get();
         if ($cached !== null && $this->configuration->resources->cancellation?->isRequested() !== true) {
             return $cached;
         }
-        $result = $this->configuration->analysisContract === 'execution'
-            ? (new QueryExecution($this->program, $this->configuration, $this->models, $this->manifest, $this->shared))->derive($query)
-            : (new Candidates\QueryExecution($this->candidateIndex, $this->configuration, $this->models, $this->manifest, $this->candidateCache))->derive($query);
+        $result = (new Candidates\QueryExecution($this->candidateIndex, $this->configuration, $this->models, $this->manifest, $this->candidateCache))->derive($query);
         $this->remember($result);
-        foreach ($result->frontiers as $frontier) {
-            if (in_array($frontier->code, ['CANCELLED', 'MEMORY_LIMIT', 'TIME_LIMIT', 'STACK_LIMIT'], true)) {
-                return $result;
-            }
+        if (!$result->interrupted) {
+            $this->cache[$key] = WeakReference::create($result);
         }
-        $this->cache[$key] = WeakReference::create($result);
         return $result;
     }
 
     /**
      * Indexes live results without owning their graphs indefinitely.
-     * @param DerivationResult $result Completed or interrupted result
+     * @param CandidateCollection $result Completed or interrupted result
      */
-    public function remember(DerivationResult $result): void
+    public function remember(CandidateCollection $result): void
     {
         $this->liveResults[$result] = true;
         $this->retention->remember($result);
@@ -201,27 +222,19 @@ final class Session implements AnalysisSession
     #[Override]
     public function deriveMany(array $queries): ResultSet
     {
-        return new ResultSet(array_map(fn (Query $query): DerivationResult => $this->derive($query), $queries));
+        return new ResultSet(array_map(fn (Query $query): CandidateCollection => $this->derive($query), $queries));
     }
 
     /**
-     * Shares candidate dependencies, or one callable execution under the explicit execution contract.
-     * @param list<Query> $queries Observations; execution analysis requires identical owners and budgets
-     * @return ResultSet Results in request order under the selected contract
+     * Shares candidate dependencies across independent observations.
+     * @param list<Query> $queries Observations with their own bounds
+     * @return ResultSet Candidate sets in request order
      * @throws JsonException If query metadata cannot be encoded
-     * @throws InvalidInputException If observation owners, scopes, or budgets differ
      */
     #[Override]
     public function deriveTogether(array $queries): ResultSet
     {
-        if ($this->configuration->analysisContract === 'candidates') {
-            return $this->deriveMany($queries);
-        }
-        $results = (new QueryExecution($this->program, $this->configuration, $this->models, $this->manifest, $this->shared))->together($queries);
-        foreach ($results->results as $result) {
-            $this->remember($result);
-        }
-        return $results;
+        return $this->deriveMany($queries);
     }
 
     /**
@@ -231,7 +244,6 @@ final class Session implements AnalysisSession
     public function release(): void
     {
         $this->candidateCache->clear();
-        $this->shared = new \Deriver\Evaluation\Summary\SharedSummaries();
         $this->retention->clear();
         $this->cache = [];
         $this->results = [];
@@ -240,11 +252,11 @@ final class Session implements AnalysisSession
     /**
      * Looks up a result's explanation.
      * @param ResultRef $result Session result reference
-     * @return Explanation Explanation graph
+     * @return list<\Deriver\Result\Evidence\Alternative> Candidate derivations
      * @throws InvalidInputException If the result is absent from this session
      */
     #[Override]
-    public function explain(ResultRef $result): Explanation
+    public function explain(ResultRef $result): array
     {
         $derived = ($this->results[$result->id] ?? null)?->get();
         if ($derived === null) {
@@ -255,8 +267,8 @@ final class Session implements AnalysisSession
                 }
             }
         }
-        $derived ??= throw new InvalidInputException('Unknown or released result reference for this session; retain the DerivationResult while using explain().');
-        return new Explanation($derived->evidence, $derived->frontiers, $derived->assumptions);
+        $derived ??= throw new InvalidInputException('Unknown or released result reference for this session; retain the CandidateCollection while using explain().');
+        return array_merge(...array_map(static fn ($candidate): array => $candidate->evidence, $derived->candidates));
     }
 
     /**

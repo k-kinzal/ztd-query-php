@@ -189,9 +189,9 @@ final class GraphCacheTest extends TestCase
         $trait = new SourceFile('trait.php', '<?php trait T{function f(){return 2;}}');
         $first = $analyzer->open(new ProjectInput([$trait,new SourceFile('consumer.php', '<?php class B{use T;}function target(){try{return (new B)->f();}catch(Error $e){return "private";}}')]));
         $secondInput = new ProjectInput([$trait,new SourceFile('consumer.php', '<?php class B{use T{f as private;}}function target(){try{return (new B)->f();}catch(Error $e){return "private";}}')]);
-        self::assertSame(2, $first->derive(new ReturnQuery('target'))->normalOutcomes[0]->values['return']->native());
-        self::assertSame('private', $analyzer->open($secondInput)->derive(new ReturnQuery('target'))->normalOutcomes[0]->values['return']->native());
-        self::assertSame(2, $first->derive(new ReturnQuery('target'))->normalOutcomes[0]->values['return']->native());
+        self::assertSame(2, $first->derive(new ReturnQuery('target'))->candidates[0]->term->native());
+        self::assertSame('private', $analyzer->open($secondInput)->derive(new ReturnQuery('target'))->candidates[0]->term->native());
+        self::assertSame(2, $first->derive(new ReturnQuery('target'))->candidates[0]->term->native());
     }
     public function testReadEvictsByAggregateRetentionCost(): void
     {

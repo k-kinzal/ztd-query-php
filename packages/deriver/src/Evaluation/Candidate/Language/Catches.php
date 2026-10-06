@@ -58,19 +58,12 @@ final class Catches
      */
     public function regions(Frame $frame, int $block, array $seen = []): array
     {
-        if (isset($seen[$block])) {
-            return [];
-        }
-        $seen[$block] = true;
         $regions = [];
-        foreach (array_reverse($frame->graph->body->blocks[$block]->instructions) as $instruction) {
-            if ($instruction->operation === 'enter-try') {
-                $regions[] = (int) $instruction->attributes['region'];
+        foreach (array_reverse($frame->graph->body->regions, true) as $id => $region) {
+            if (in_array($block, $region->protectedBlocks, true)) {
+                $regions[] = $id;
             }
         }
-        foreach ($frame->graph->predecessors[$block] ?? [] as $parent) {
-            array_push($regions, ...$this->regions($frame, $parent, $seen));
-        }
-        return array_values(array_unique($regions));
+        return $regions;
     }
 }

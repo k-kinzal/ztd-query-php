@@ -33,7 +33,6 @@ final class ResultRetentionTest extends TestCase
         }, range(1, 64));
         gc_collect_cycles();
         self::assertNull($weak->get());
-        self::assertInstanceOf(\Deriver\Analysis\Session::class, $session);
         self::assertCount(32, $session->results);
         self::assertCount(32, $session->cache);
         $this->expectException(InvalidInputException::class);

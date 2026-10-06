@@ -36,6 +36,14 @@ final class LineMap
      */
     public function column(int $offset): int
     {
+        return $offset - $this->starts[$this->line($offset) - 1] + 1;
+    }
+
+    /**
+     * Finds the one-based source line from a byte offset.
+     */
+    public function line(int $offset): int
+    {
         $low = 0;
         $high = count($this->starts) - 1;
         while ($low < $high) {
@@ -46,6 +54,6 @@ final class LineMap
                 $high = $middle - 1;
             }
         }
-        return $offset - $this->starts[$low] + 1;
+        return $low + 1;
     }
 }

@@ -152,9 +152,9 @@ final class AnalyzerTest extends TestCase
         $before = $first->derive(new ReturnQuery('target'));
         $second = $analyzer->open(new ProjectInput([$source,new SourceFile('added.php', '<?php function missing(){return 7;}')]));
         $after = $second->derive(new ReturnQuery('target'));
-        self::assertNotEmpty($before->frontiers);
-        self::assertSame(7, $after->normalOutcomes[0]->values['return']->native());
-        self::assertSame([], $after->frontiers);
+        self::assertNotEmpty(\Tests\Semantic\CandidateContractTest::frontiers($before));
+        self::assertSame(7, $after->candidates[0]->term->native());
+        self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($after));
         self::assertNotSame($first->snapshot()->id, $second->snapshot()->id);
         self::assertSame($before, $first->derive(new ReturnQuery('target')));
     }
@@ -169,7 +169,7 @@ final class AnalyzerTest extends TestCase
         $first->derive(new ReturnQuery('target'));
         $second = $analyzer->open(new ProjectInput([$source,new SourceFile('added.php', '<?php function unrelated(){}')]));
         $result = $second->derive(new ReturnQuery('target'));
-        self::assertSame(7, $result->normalOutcomes[0]->values['return']->native());
-        self::assertSame([$second->snapshot()->id], array_values(array_unique(array_map(static fn (Derivation $node): string => $node->source->snapshotId, $result->evidence))));
+        self::assertSame(7, $result->candidates[0]->term->native());
+        self::assertSame([$second->snapshot()->id], array_values(array_unique(array_map(static fn ($node): ?string => $node->source?->snapshotId, array_filter($result->candidates[0]->evidence[0]->nodes(), static fn ($node): bool => $node->source !== null)))));
     }
 }

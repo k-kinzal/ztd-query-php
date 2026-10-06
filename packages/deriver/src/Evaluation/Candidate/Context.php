@@ -64,6 +64,14 @@ final class Context
      */
     public array $values = [];
     /**
+     * @var array<string, Term> Shared reaching-definition queries within this context
+     */
+    public array $storage = [];
+    /**
+     * @var array<string, array<string, string>>
+     */
+    public array $aliases = [];
+    /**
      * @var array<string, Frame>
      */
     public array $frames = [];
@@ -83,6 +91,50 @@ final class Context
      * Query-local dependency expansion accounting.
      */
     public ?string $stopReason = null;
+    /**
+     * Definition and traversal steps charged to the query work limit.
+     */
+    public int $workUnits = 0;
+    /**
+     * @var array<string, true> Shared evidence identities already charged to this query
+     */
+    public array $proofNodes = [];
+
+    /**
+     * Charges each retained proof node once and stops before accepting an incomplete proof.
+     */
+    public function acceptEvidence(Term $value): bool
+    {
+        $pending = [$value->evidence ?? (new Evidence\Forest())->root($value)];
+        while ($pending !== []) {
+            $node = array_pop($pending);
+            if (isset($this->proofNodes[$node->id])) {
+                continue;
+            }
+            if (count($this->proofNodes) >= $this->budget->maxEvidenceNodes) {
+                $this->stopReason = 'EVIDENCE_LIMIT';
+                return false;
+            }
+            $this->proofNodes[$node->id] = true;
+            array_push($pending, ...array_values($node->inputs));
+        }
+        return true;
+    }
+
+    /**
+
+     * Checks cooperative limits inside index scans as well as reference expansion.
+
+     */
+    public function work(): ?string
+    {
+        $this->workUnits++;
+        $this->stopReason ??= $this->resources->reason();
+        if ($this->workUnits > $this->budget->transfers || $this->constructedNodes >= $this->budget->nodes) {
+            $this->stopReason ??= 'BUDGET_EXCEEDED';
+        }
+        return $this->stopReason;
+    }
 
     /**
      * Captures the dependencies used by this component.
@@ -116,12 +168,13 @@ final class Context
      */
     public function reference(Frame $frame, string $name, SourceRef $source, string $type = 'mixed', string $reason = 'EXTERNAL_INPUT', string $kind = 'reference'): Term
     {
-        return new Term($kind, $name, attributes: [
+        $value = new Term($kind, $name, attributes: [
             'identity' => $frame->identity . ':' . $name . ':' . $source->start,
             'scope' => $frame->graph->body->symbol, 'context' => $frame->identity,
             'source' => $source->path, 'start' => $source->start, 'end' => $source->end,
             'type' => $type, 'reason' => $reason,
         ]);
+        return Evidence\Provenance::wrap($value, 'unexpanded', $source, ['symbol' => $name, 'owner' => $frame->graph->body->symbol, 'context' => $frame->identity, 'reason' => $reason]);
     }
 
     /**
@@ -129,8 +182,8 @@ final class Context
      */
     public function record(Frame $frame, Instruction $instruction): void
     {
-        $key = $frame->identity . ':' . $instruction->id;
+        $key = $frame->identity . ':' . $instruction->result;
         $this->evidence[$key] = new Derivation($key, 'dependency', $instruction->source, array_map(static fn (string $register): string => $frame->identity . ':' . $register, $instruction->operands), $instruction->operation);
-        $this->constructedNodes++;
+        $this->constructedNodes = count($this->evidence);
     }
 }

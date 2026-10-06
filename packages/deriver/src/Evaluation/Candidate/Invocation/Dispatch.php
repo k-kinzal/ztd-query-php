@@ -31,6 +31,17 @@ final class Dispatch
     {
         $index = $this->engine->context->index;
         $target = $index->target($frame->graph, $call);
+        if (in_array($call->operation, ['invoke-static', 'new'], true)) {
+            $raw = $index->literal($frame->graph, $call->operands[0]);
+            $class = $index->className($raw, $frame->graph->body->className, $frame->calledClass);
+            $name = $call->operation === 'new' ? '__construct' : $index->literal($frame->graph, $call->operands[1]);
+            $target = $index->method($class, $name);
+            $receiver = $frame->bindings['this'] ?? null;
+            if ($receiver instanceof \Deriver\Evaluation\Candidate\Binding) {
+                $receiver = $receiver->value($this->engine, 'mixed', $depth);
+            }
+            return $dependency($target, $call->operation === 'invoke-static' && in_array(strtolower($raw), ['parent', 'self', 'static'], true) ? $receiver : null, null);
+        }
         if ($call->operation === 'invoke-method') {
             $receiver = $this->engine->value($frame, $call->operands[0], $depth);
             $name = $this->engine->value($frame, $call->operands[1], $depth);
@@ -47,10 +58,20 @@ final class Dispatch
                 return $dependency($selected, $object, null);
             }, $this->engine->context->budget->partitions);
         }
-        if ($call->operation === 'invoke' && $target === '') {
+        if ($call->operation === 'invoke' && ($target === '' || str_contains($target, '::'))) {
             $callable = $this->engine->value($frame, $call->operands[0], $depth);
-            return (new Choices())->apply('function-target', [$callable], static function (array $values) use ($dependency): Term {
+            return (new Choices())->apply('function-target', [$callable], function (array $values) use ($frame, $dependency): Term {
                 $value = $values[0];
+                if ($value->kind === 'array' && count($value->operands) === 2) {
+                    [$receiver, $method] = array_values($value->operands);
+                    if ($method->kind === 'constant' && is_string($method->literal)) {
+                        $class = $receiver->kind === 'constant' && is_string($receiver->literal) ? $receiver->literal : (string) ($receiver->attributes['type'] ?? '');
+                        return $dependency($class === '' ? '' : $this->target($frame, $class, $method->literal), $receiver->kind === 'object' ? $receiver : null, $value);
+                    }
+                }
+                if ($value->kind === 'object') {
+                    return $dependency($this->target($frame, (string) ($value->attributes['type'] ?? ''), '__invoke'), $value, $value);
+                }
                 return $dependency(in_array($value->kind, ['constant', 'closure'], true) && is_string($value->literal) ? $value->literal : '', null, $value);
             }, $this->engine->context->budget->partitions);
         }

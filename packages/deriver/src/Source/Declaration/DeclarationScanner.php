@@ -51,9 +51,17 @@ final class DeclarationScanner
      * @param string $path Source path
      * @param bool $strict Scalar coercion mode
      */
-    public function scan(array $nodes, string $path, bool $strict): void
+    public function scan(array $nodes, string $path, bool $strict, bool $conditional = false): void
     {
         foreach ($nodes as $node) {
+            if ($node instanceof Stmt\If_) {
+                $this->scan($node->stmts, $path, $strict, true);
+                foreach ($node->elseifs as $branch) {
+                    $this->scan($branch->stmts, $path, $strict, true);
+                }
+                $this->scan($node->else->stmts ?? [], $path, $strict, true);
+            }
+            $node->setAttribute('deriverConditional', $conditional);
             if ($node instanceof Stmt\Namespace_) {
                 $this->scan($node->stmts, $path, $strict);
             } elseif ($node instanceof Stmt\Function_) {
@@ -83,6 +91,7 @@ final class DeclarationScanner
     {
         $name = $node->namespacedName?->toString() ?? $node->name?->toString() ?? '';
         if ($this->existingClass($node, $path, $name)) {
+            $this->conditionalMethods($node, $path, $strict, $name);
             return;
         }
         $this->index->classSources[strtolower($name)] = new CallableSource($name, $node, $path, $name, $strict);
@@ -92,6 +101,7 @@ final class DeclarationScanner
         $traits = [];
         foreach ($node->stmts as $statement) {
             if ($statement instanceof Stmt\ClassMethod) {
+                $statement->setAttribute('deriverConditional', $node->getAttribute('deriverConditional'));
                 $symbol = $name . '::' . $statement->name->toString();
                 $methods[strtolower($statement->name->toString())] = $symbol;
                 $this->index->register(new CallableSource($symbol, $statement, $path, $name, $strict));
@@ -111,6 +121,19 @@ final class DeclarationScanner
     }
 
     /**
+     * Captures each conditional implementation under a distinct declaration identity.
+     */
+    public function conditionalMethods(Stmt\ClassLike $node, string $path, bool $strict, string $name): void
+    {
+        if ($node->getAttribute('deriverConditional') === true) {
+            foreach ($node->getMethods() as $method) {
+                $method->setAttribute('deriverConditional', true);
+                $this->index->register(new CallableSource($name . '::' . $method->name->toString(), $method, $path, $name, $strict));
+            }
+        }
+    }
+
+    /**
      * Gives captured source classes precedence over signature-only stubs.
      * @param Stmt\ClassLike $node Candidate declaration
      * @param string $path Source path
@@ -121,6 +144,9 @@ final class DeclarationScanner
     {
         if (isset($this->index->classSources[strtolower($name)])) {
             $previous = $this->index->classSources[strtolower($name)];
+            if ($node->getAttribute('deriverConditional') === true || $previous->node->getAttribute('deriverConditional') === true) {
+                return true;
+            }
             if (!$this->index->files[$path]->declarationsOnly || $this->index->files[$previous->path]->declarationsOnly) {
                 $this->index->issues[] = new \Deriver\Result\Frontier('INVALID_PROGRAM', $this->index->builder($path)->source($node), 'duplicate:' . $name);
             }

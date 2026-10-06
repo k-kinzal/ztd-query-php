@@ -38,14 +38,12 @@ final class CallableIdentityTest extends TestCase
         $session = (new Analyzer())->open(new ProjectInput([new SourceFile('A.php', '<?php return 1;'),new SourceFile('a.php', '<?php return 2;')]));
         $upper = $session->derive(new ReturnQuery('script:A.php'));
         $lower = $session->derive(new ReturnQuery('script:a.php'));
-        self::assertSame([], $upper->projectDiagnostics);
-        self::assertSame([], $lower->projectDiagnostics);
-        self::assertSame([], $upper->frontiers);
-        self::assertSame([], $lower->frontiers);
-        self::assertCount(1, $upper->normalOutcomes);
-        self::assertCount(1, $lower->normalOutcomes);
-        self::assertSame(1, $upper->normalOutcomes[0]->values['return']->native());
-        self::assertSame(2, $lower->normalOutcomes[0]->values['return']->native());
+        self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($upper));
+        self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($lower));
+        self::assertCount(1, $upper->candidates);
+        self::assertCount(1, $lower->candidates);
+        self::assertSame(1, $upper->candidates[0]->term->native());
+        self::assertSame(2, $lower->candidates[0]->term->native());
     }
 
     /**
@@ -61,12 +59,10 @@ final class CallableIdentityTest extends TestCase
         $analyzer = new Analyzer();
         $first = $analyzer->open($input)->derive(new ReturnQuery('target'));
         $second = $analyzer->open($input)->derive(new ReturnQuery('target'));
-        self::assertSame([], $first->projectDiagnostics);
-        self::assertSame([], $second->projectDiagnostics);
-        self::assertSame([], $first->frontiers);
-        self::assertSame([], $second->frontiers);
-        self::assertSame([1,2], $first->normalOutcomes[0]->values['return']->native());
-        self::assertSame([1,2], $second->normalOutcomes[0]->values['return']->native());
+        self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($first));
+        self::assertSame([], \Tests\Semantic\CandidateContractTest::frontiers($second));
+        self::assertSame([1,2], $first->candidates[0]->term->native());
+        self::assertSame([1,2], $second->candidates[0]->term->native());
     }
 
     /**
@@ -97,8 +93,8 @@ final class CallableIdentityTest extends TestCase
         self::assertSame('a.php', $calls[1]->source->path);
         $upper = $session->derive(new ValueQuery($calls[0]->argument(0)));
         $lower = $session->derive(new ValueQuery($calls[1]->argument(0)));
-        self::assertSame(1, $upper->normalOutcomes[0]->values['value']->native());
-        self::assertSame(2, $lower->normalOutcomes[0]->values['value']->native());
+        self::assertSame(1, $upper->candidates[0]->term->native());
+        self::assertSame(2, $lower->candidates[0]->term->native());
     }
 
     /**

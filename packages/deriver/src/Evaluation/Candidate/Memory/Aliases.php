@@ -19,6 +19,9 @@ final class Aliases
     public function key(Storage $storage, Frame $frame, string $address, int $block, int $offset): string
     {
         $name = $storage->key($frame, $address);
+        if (!$frame->graph->hasAliases) {
+            return $name;
+        }
         return $this->map($storage, $frame, $block, $offset)[$name] ?? $name;
     }
 
@@ -29,6 +32,10 @@ final class Aliases
      */
     public function map(Storage $storage, Frame $frame, int $block, int $offset, array $seen = []): array
     {
+        $key = $frame->identity . ':' . $block . ':' . $offset;
+        if (isset($storage->engine->context->aliases[$key])) {
+            return $storage->engine->context->aliases[$key];
+        }
         if (isset($seen[$block])) {
             return [];
         }
@@ -48,7 +55,7 @@ final class Aliases
                 $result[$name] = $name . ':unset:' . $instruction->id;
             }
         }
-        return $result;
+        return $storage->engine->context->aliases[$key] = $result;
     }
 
     /**

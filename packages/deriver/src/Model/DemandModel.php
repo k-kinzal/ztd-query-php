@@ -25,6 +25,7 @@ interface DemandModel extends CallModel
     /**
      * @param CallDescription $call Declaration metadata and formal argument handles
      * @return list<string> Signature parameter names needed by describe()
+     * @throws \Deriver\Exception\ModelContractException If the model cannot select its required inputs
      */
     public function demand(CallDescription $call): array;
 }

@@ -37,6 +37,14 @@ final class QueryValidation
      */
     public function owner(Query $query): string
     {
+        if ($query instanceof \Deriver\Query\ParameterQuery) {
+            foreach ($this->program->callable($query->symbol)->parameters ?? [] as $parameter) {
+                if ($parameter->name === $query->parameter) {
+                    return $query->symbol;
+                }
+            }
+            throw new InvalidInputException('The target is not a captured formal parameter.');
+        }
         if ($query instanceof ReturnQuery) {
             if ($query->symbol === '') {
                 throw new InvalidInputException('Return queries require a callable symbol.');

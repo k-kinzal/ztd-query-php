@@ -35,7 +35,8 @@ final class CallsTest extends TestCase
     {
         $e = F::evaluator('function target($x){return target($x);}');
         $r = $e->returns(F::frame($e), 64);
-        self::assertSame('recursive', $r->kind);
+        self::assertSame('operation', $r->kind);
+        self::assertNotEmpty($r->operands);
     }
     /**
      * @throws JsonException If captured fixture metadata cannot be encoded
@@ -125,6 +126,25 @@ final class CallsTest extends TestCase
         $e = F::evaluator('class Box{public $n=4;}function target(Box $box){$box->n--;return target($box);}');
         $f = F::frame($e);
         self::assertFalse((new \Deriver\Evaluation\Candidate\Calls($e))->stableEnvironment($f));
+    }
+
+    /**
+     * @throws JsonException If captured fixture metadata cannot be encoded
+     */
+    public function testInvokePreservesCallDependencies(): void
+    {
+        $result = \Tests\Fake\CandidateApi::returns('function f($x){return $x+1;}function target(){return f(4);}');
+        self::assertSame(5, $result->candidates[0]->result);
+    }
+
+    /**
+     * @throws JsonException If captured fixture metadata cannot be encoded
+     */
+    public function testMissingPreservesCallDependencies(): void
+    {
+        $result = \Tests\Fake\CandidateApi::returns('function target(){return external(1);}');
+        self::assertSame('partials', $result->candidates[0]->type);
+        self::assertStringContainsString('MISSING_SOURCE', $result->toJson());
     }
 
 }

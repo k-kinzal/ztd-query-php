@@ -1,0 +1,1043 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://k-kinzal.github.io/ztd-query-php/deriver/candidates-v2.json",
+  "title": "Deriver candidate collection",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "type",
+      "type_name",
+      "result",
+      "evidence"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "type": {
+        "enum": [
+          "analyzed",
+          "partials"
+        ]
+      },
+      "type_name": {
+        "type": "string",
+        "minLength": 1
+      },
+      "result": {
+        "anyOf": [
+          {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          {
+            "$ref": "#/$defs/valueGraph"
+          }
+        ]
+      },
+      "evidence": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "$ref": "#/$defs/evidence"
+        }
+      }
+    },
+    "allOf": [
+      {
+        "if": {
+          "properties": {
+            "type": {
+              "const": "partials"
+            }
+          }
+        },
+        "then": {
+          "properties": {
+            "result": {
+              "$ref": "#/$defs/valueGraph"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": [
+        "kind",
+        "inputs",
+        "source",
+        "attributes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "observation",
+            "source-definition",
+            "reference-expansion",
+            "argument-binding",
+            "call",
+            "operation",
+            "choice",
+            "model-application",
+            "external-input",
+            "unexpanded",
+            "storage-write",
+            "context-any",
+            "context-entry",
+            "context-call",
+            "context-and",
+            "context-or",
+            "capture"
+          ]
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "role",
+              "node"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "role": {
+                "type": "string"
+              },
+              "node": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/source"
+            }
+          ]
+        },
+        "attributes": {
+          "type": "object"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "observation"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "query",
+                  "owner",
+                  "target",
+                  "role"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "source-definition"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "owner",
+                  "definition",
+                  "operation"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "owner": {
+                    "type": "string"
+                  },
+                  "definition": {
+                    "type": "string"
+                  },
+                  "operation": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "reference-expansion"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "owner",
+                  "definition",
+                  "operation",
+                  "context"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "owner": {
+                    "type": "string"
+                  },
+                  "definition": {
+                    "type": "string"
+                  },
+                  "operation": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "argument-binding"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "parameter",
+                  "caller",
+                  "callee",
+                  "call_site",
+                  "context",
+                  "parent_context"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "parameter": {
+                    "type": "string"
+                  },
+                  "caller": {
+                    "type": "string"
+                  },
+                  "callee": {
+                    "type": "string"
+                  },
+                  "call_site": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "parent_context": {
+                    "type": "string"
+                  },
+                  "called_class": {
+                    "type": "string"
+                  },
+                  "lexical_class": {
+                    "type": "string"
+                  },
+                  "formal": {
+                    "type": "string"
+                  },
+                  "actual": {
+                    "type": "string"
+                  },
+                  "mapping": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "call"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "caller",
+                  "callee",
+                  "call_site",
+                  "context",
+                  "parent_context",
+                  "called_class",
+                  "lexical_class"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "caller": {
+                    "type": "string"
+                  },
+                  "callee": {
+                    "type": "string"
+                  },
+                  "call_site": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "parent_context": {
+                    "type": "string"
+                  },
+                  "called_class": {
+                    "type": "string"
+                  },
+                  "lexical_class": {
+                    "type": "string"
+                  },
+                  "receiver": {
+                    "type": "string"
+                  },
+                  "implementation": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "operation"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "operation"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "operation": {
+                    "type": "string"
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "definition": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "choice"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "selector"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "selector": {
+                    "type": "string"
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "boolean"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "model-application"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "id",
+                  "version",
+                  "operation",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  },
+                  "operation": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "external-input"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "input",
+                  "context",
+                  "version"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "input": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "unexpanded"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "symbol",
+                  "owner",
+                  "context",
+                  "reason"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "symbol": {
+                    "type": "string"
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "storage-write"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "owner",
+                  "storage",
+                  "version",
+                  "context"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "owner": {
+                    "type": "string"
+                  },
+                  "storage": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "context-any"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [],
+                "additionalProperties": false,
+                "properties": {}
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "context-entry"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [],
+                "additionalProperties": false,
+                "properties": {}
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "context-call"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "caller",
+                  "callee",
+                  "call_site",
+                  "context",
+                  "parent_context"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "caller": {
+                    "type": "string"
+                  },
+                  "callee": {
+                    "type": "string"
+                  },
+                  "call_site": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "parent_context": {
+                    "type": "string"
+                  },
+                  "parameter": {
+                    "type": "string"
+                  },
+                  "called_class": {
+                    "type": "string"
+                  },
+                  "lexical_class": {
+                    "type": "string"
+                  },
+                  "formal": {
+                    "type": "string"
+                  },
+                  "actual": {
+                    "type": "string"
+                  },
+                  "mapping": {
+                    "type": "string"
+                  },
+                  "receiver": {
+                    "type": "string"
+                  },
+                  "implementation": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "context-and"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [],
+                "additionalProperties": false,
+                "properties": {}
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "context-or"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [],
+                "additionalProperties": false,
+                "properties": {}
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "capture"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "attributes": {
+                "required": [
+                  "name",
+                  "owner",
+                  "context",
+                  "mode",
+                  "version"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "owner": {
+                    "type": "string"
+                  },
+                  "context": {
+                    "type": "string"
+                  },
+                  "mode": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "root",
+        "context_root",
+        "nodes",
+        "snapshot"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "string"
+        },
+        "context_root": {
+          "type": "string"
+        },
+        "nodes": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "snapshot": {
+          "type": "object",
+          "required": [
+            "id",
+            "sources",
+            "models",
+            "target"
+          ]
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "snapshotId",
+        "path",
+        "start",
+        "end",
+        "line",
+        "column",
+        "endLine",
+        "endColumn",
+        "file_hash"
+      ],
+      "properties": {
+        "snapshotId": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "endLine": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "endColumn": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "file_hash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "scalar": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "const": "bytes"
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "const": "int64"
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^(?:0|-?[1-9][0-9]{0,18})$"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "const": "float64"
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{16}$"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "const": "bool"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "type",
+            "value"
+          ],
+          "properties": {
+            "type": {
+              "const": "null"
+            },
+            "value": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "key": {
+      "oneOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/scalar"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "bytes"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/scalar"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "int64"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "valueRef": {
+      "type": "string",
+      "pattern": "^v[0-9]+$"
+    },
+    "valueNodes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "kind",
+          "literal",
+          "operands",
+          "attributes",
+          "redacted",
+          "secret"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "literal": {
+            "$ref": "#/$defs/scalar"
+          },
+          "operands": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "value"
+              ],
+              "properties": {
+                "key": {
+                  "$ref": "#/$defs/key"
+                },
+                "value": {
+                  "$ref": "#/$defs/valueRef"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "value"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "value": {
+                  "$ref": "#/$defs/scalar"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "redacted": {
+            "type": "boolean"
+          },
+          "secret": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "propertyNames": {
+        "pattern": "^v[0-9]+$"
+      }
+    },
+    "valueGraph": {
+      "type": "object",
+      "required": [
+        "kind",
+        "root",
+        "nodes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "root": {
+          "$ref": "#/$defs/valueRef"
+        },
+        "nodes": {
+          "$ref": "#/$defs/valueNodes"
+        }
+      }
+    }
+  }
+}

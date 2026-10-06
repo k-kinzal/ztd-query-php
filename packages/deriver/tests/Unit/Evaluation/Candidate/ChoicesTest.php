@@ -21,7 +21,7 @@ final class ChoicesTest extends TestCase
     {
         $choices = new Choices();
         $value = $choices->make([[Term::constant(1),['branch' => true]],[Term::constant(2),['branch' => false]]]);
-        self::assertSame(['branch' => false], $choices->alternatives($value)[1][1]);
+        self::assertSame(['branch' => false], iterator_to_array($choices->alternatives($value), false)[1][1]);
     }
     public function testMergeRejectsContradictoryBranches(): void
     {

@@ -32,7 +32,8 @@ final class Bodies
         if (isset($context->implementations[$key])) {
             return $context->implementations[$key];
         }
-        $model = (new Models($this->engine))->graph($caller, $call, $target, $depth);
+        $model = $call->operation === 'invoke' ? (new Rules($this->engine))->apply($caller, $call, $depth, $target) : null;
+        $model ??= (new Models($this->engine))->graph($caller, $call, $target, $depth);
         return $context->implementations[$key] = new Body($model ?? $context->index->graph($target), $model !== null);
     }
 }

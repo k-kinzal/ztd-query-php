@@ -31,6 +31,8 @@ final class SourceRef
         public readonly int $end,
         public readonly int $line = 1,
         public readonly int $column = 1,
+        public readonly ?int $endLine = null,
+        public readonly ?int $endColumn = null,
     ) {
         if ($start < 0 || $end < $start || $line < 1 || $column < 1) {
             throw new InvalidInputException('Source ranges must be half-open and coordinates positive.');

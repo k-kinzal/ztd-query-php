@@ -35,7 +35,7 @@ final class SnapshotRebase
         }
         $parameters = [];
         foreach ($body->parameters as $parameter) {
-            $parameters[] = new Parameter($parameter->name, $parameter->type, $parameter->byReference, $parameter->variadic, $parameter->default === null ? null : $this->callable($parameter->default), $parameter->promotion);
+            $parameters[] = new Parameter($parameter->name, $parameter->type, $parameter->byReference, $parameter->variadic, $parameter->default === null ? null : $this->callable($parameter->default), $parameter->promotion, $parameter->source === null ? null : $this->source($parameter->source));
         }
         $blocks = [];
         foreach ($body->blocks as $id => $block) {
@@ -61,6 +61,6 @@ final class SnapshotRebase
      */
     public function source(SourceRef $source): SourceRef
     {
-        return new SourceRef($this->snapshot, $source->path, $source->start, $source->end, $source->line, $source->column);
+        return new SourceRef($this->snapshot, $source->path, $source->start, $source->end, $source->line, $source->column, $source->endLine, $source->endColumn);
     }
 }

@@ -10,7 +10,7 @@ use Deriver\Project\ProjectInput;
 use Deriver\Project\SourceFile;
 use Deriver\Query\Budget;
 use Deriver\Query\ReturnQuery;
-use Deriver\Result\DerivationResult;
+use Deriver\Result\Candidates\CandidateCollection;
 
 if (($argv[1] ?? '') !== '--worker') {
     $measurements = [];
@@ -38,24 +38,14 @@ if (($argv[1] ?? '') !== '--worker') {
 }
 
 /** @return array<string, mixed> Comparable result quality and logical resource measures. */
-function quality(DerivationResult $result): array
+function quality(CandidateCollection $result): array
 {
-    $frontiers = [];
-    foreach ($result->frontiers as $frontier) {
-        $frontiers[$frontier->code] = ($frontiers[$frontier->code] ?? 0) + 1;
-    }
-    ksort($frontiers);
     return [
-        'closure' => $result->assessment->closure,
-        'precision' => $result->assessment->precision,
-        'correlation' => $result->assessment->correlation,
-        'coverage' => $result->assessment->coverage,
-        'graphs' => $result->statistics->graphs,
-        'transfers' => $result->statistics->transfers,
-        'summaryCacheHits' => $result->statistics->cacheHits,
-        'frontiers' => $frontiers,
-        'normalOutcomes' => count($result->normalOutcomes),
-        'exceptionalOutcomes' => count($result->exceptionalOutcomes),
+        'candidates' => count($result),
+        'analyzed' => count(array_filter($result->candidates, static fn ($candidate): bool => $candidate->type === 'analyzed')),
+        'partials' => count(array_filter($result->candidates, static fn ($candidate): bool => $candidate->type === 'partials')),
+        'interrupted' => $result->interrupted,
+        'statistics' => $result->statistics,
     ];
 }
 
@@ -74,7 +64,7 @@ $query = new ReturnQuery('fixture0');
 $start = hrtime(true);
 $cold = $session->derive($query);
 $coldQuery = (hrtime(true) - $start) / 1e9;
-if ($cold->normalOutcomes[0]->values['return']->native() !== 1) {
+if ($cold->candidates[0]->result !== 1) {
     throw new RuntimeException('The benchmark produced an incorrect definite value.');
 }
 $queries = [];
@@ -84,7 +74,7 @@ for ($i = 2; $i < 34; $i++) {
     $start = hrtime(true);
     $result = $session->derive($queries[array_key_last($queries)]);
     $times[] = (hrtime(true) - $start) / 1e9;
-    if ($result->normalOutcomes[0]->values['return']->native() !== $i) {
+    if ($result->candidates[0]->result !== $i) {
         throw new RuntimeException('A benchmark query produced an incorrect definite value.');
     }
 }
@@ -127,7 +117,7 @@ foreach ($scenarios as $name => $program) {
     $start = hrtime(true);
     $result = (new Analyzer())->open(new ProjectInput([new SourceFile($name . '.php', $program)]), new Configuration(closedWorld: true))->derive(new ReturnQuery('target', budget: new Budget(iterations: 256)));
     $expected = ['deep-helpers' => 2, 'repeated-helper' => 400, 'mutable-builder' => [['one', 'two'], ['three']]];
-    if (isset($expected[$name]) && $result->normalOutcomes[0]->values['return']->native() !== $expected[$name]) {
+    if (isset($expected[$name]) && $result->candidates[0]->type === 'analyzed' && $result->candidates[0]->result !== $expected[$name]) {
         throw new RuntimeException('A benchmark scenario produced an incorrect definite value: ' . $name);
     }
     $scenarioResults[$name] = ['seconds' => (hrtime(true) - $start) / 1e9, ...quality($result)];

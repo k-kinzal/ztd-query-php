@@ -125,6 +125,16 @@ final class AnalysisSessionTest extends TestCase
         $s = \Tests\Semantic\CandidateContractTest::session('function target(){return 1;}');
         $r = $s->derive(new ReturnQuery('target'));
         $s->release();
-        self::assertSame(1, $r->normalOutcomes[0]->values['return']->native());
+        self::assertSame(1, $r->candidates[0]->term->native());
     }
+    /**
+     * @throws JsonException If captured fixture metadata cannot be encoded
+     */
+    public function testExpressionSelectsAnExactSourceRange(): void
+    {
+        $session = \Tests\Fake\CandidateApi::session('function target(){return 42;}');
+        $expression = $session->expression('candidate.php', 31, 33);
+        self::assertSame(42, $session->derive(new \Deriver\Query\ValueQuery($expression))->candidates[0]->result);
+    }
+
 }

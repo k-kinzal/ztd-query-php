@@ -31,7 +31,7 @@ final class DeriveTarget
         try {
             $session = (new Analyzer())->open(new ProjectInput([new SourceFile('fuzz.php', $source)]));
         } catch (InvalidInputException $failure) {
-            if (str_starts_with($failure->getMessage(), 'SOURCE_LIMIT:')) {
+            if (str_starts_with($failure->getMessage(), 'SOURCE_LIMIT:') || str_starts_with($failure->getMessage(), 'Malformed captured PHP in ')) {
                 return;
             }
             throw $failure;

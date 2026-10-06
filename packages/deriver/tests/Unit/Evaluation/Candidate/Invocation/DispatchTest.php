@@ -19,7 +19,7 @@ final class DispatchTest extends TestCase
     public function testApplyPreservesReceiverChoicesThroughInheritedMethods(): void
     {
         $engine = F::evaluator('class A{public $name="a";function get(){return $this->name;}}class B extends A{public $name="b";}function target($flag){$repo=$flag?new A:new B;return $repo->get();}');
-        $values = array_map(static fn (array $choice) => $choice[0]->native(), (new Choices())->alternatives($engine->returns(F::frame($engine), 64)));
+        $values = array_map(static fn (array $choice) => $choice[0]->native(), iterator_to_array((new Choices())->alternatives($engine->returns(F::frame($engine), 64)), false));
         sort($values);
         self::assertSame(['a', 'b'], $values);
     }

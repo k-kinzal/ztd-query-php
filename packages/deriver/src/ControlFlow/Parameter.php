@@ -26,6 +26,7 @@ final class Parameter
         public readonly bool $variadic = false,
         public readonly ?CallableGraph $default = null,
         public readonly int $promotion = 0,
+        public readonly ?\Deriver\Reference\SourceRef $source = null,
     ) {
     }
 }

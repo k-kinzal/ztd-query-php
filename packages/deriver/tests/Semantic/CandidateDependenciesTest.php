@@ -130,7 +130,7 @@ final class CandidateDependenciesTest extends TestCase
     {
         $session = CandidateContractTest::session('function target($a,$b){$x=$a?1:2;$y=$b?10:20;observe($x+$y);}');
         $limited = CandidateContractTest::argument($session, new Budget(partitions: 1));
-        self::assertContains('ENUMERATION_LIMIT', array_column($limited->frontiers, 'code'));
+        self::assertContains('ENUMERATION_LIMIT', array_column(CandidateContractTest::frontiers($limited), 'code'));
         $values = CandidateContractTest::native(CandidateContractTest::argument($session));
         sort($values);
         self::assertSame([11,12,21,22], $values);
@@ -183,11 +183,11 @@ final class CandidateDependenciesTest extends TestCase
     {
         $s = CandidateContractTest::session('function target($columns){$sql="SELECT ";foreach($columns as $column){$sql.=$column;}do{$sql.=" FROM t";}while(false);observe($sql);}');
         $result = CandidateContractTest::argument($s);
-        self::assertNotEmpty($result->normalOutcomes);
-        $encoded = serialize($result->candidateGraph);
+        self::assertNotEmpty($result->candidates);
+        $encoded = serialize(array_map(static fn ($candidate) => $candidate->term, $result->candidates));
         self::assertStringContainsString('SELECT ', $encoded);
         self::assertStringContainsString(' FROM t', $encoded);
-        self::assertStringContainsString('CYCLE', $encoded);
+        self::assertStringContainsString('UNKNOWN_ITERATION_COUNT', $encoded);
     }
 
     /**

@@ -8,7 +8,7 @@ use Deriver\Project\ProjectSnapshot;
 use Deriver\Query\Query;
 use Deriver\Reference\Observation;
 use Deriver\Reference\ResultRef;
-use Deriver\Result\DerivationResult;
+use Deriver\Result\Candidates\CandidateCollection;
 use Deriver\Result\Explanation;
 use Deriver\Result\ResultSet;
 
@@ -22,6 +22,14 @@ use Deriver\Result\ResultSet;
  */
 interface AnalysisSession
 {
+    /**
+     * Selects an expression by a half-open byte range and syntactic operation.
+     */
+    /**
+     * Selects an expression by its exact byte range and syntactic role.
+     * @throws Exception\InvalidInputException If the range does not select one captured expression
+     */
+    public function expression(string $path, int $start, int $end, string $role = 'value'): Reference\ExpressionRef;
     /**
      * Provides declaration and signature facts for selecting entries and building models.
      * @return Model\Metadata\DeclarationLookup Captured read-only metadata
@@ -38,9 +46,9 @@ interface AnalysisSession
     /**
      * Derives a value, state, return, or correlated tuple.
      * @param Query $query Immutable query
-     * @return DerivationResult Values and quality assessment
+     * @return CandidateCollection Values and quality assessment
      */
-    public function derive(Query $query): DerivationResult;
+    public function derive(Query $query): CandidateCollection;
 
     /**
      * Shares the snapshot across independent requests.
@@ -67,12 +75,12 @@ interface AnalysisSession
 
     /**
      * Retrieves the explanation for a result from this session.
-     * Keep the DerivationResult alive while using its reference: by default only 32 small recent results are retained strongly;
+     * Keep the CandidateCollection alive while using its reference: by default only 32 small recent results are retained strongly;
      * older or large results may be released once the caller drops them.
      * @param ResultRef $result Result reference
-     * @return Explanation Derivations, assumptions, and boundaries
+     * @return list<Result\Evidence\Alternative> Candidate derivations
      */
-    public function explain(ResultRef $result): Explanation;
+    public function explain(ResultRef $result): array;
 
     /**
      * Returns the immutable source and configuration manifest.

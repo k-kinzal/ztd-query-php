@@ -25,4 +25,12 @@ final class LineMapTest extends TestCase
         self::assertSame(3, $map->column(7));
         self::assertSame(1, $map->column(9));
     }
+    public function testLineUsesByteOffsetsAtTheBoundary(): void
+    {
+        $map = new LineMap("a\r\nb\n");
+        self::assertSame(1, $map->line(2));
+        self::assertSame(2, $map->line(3));
+        self::assertSame(3, $map->line(5));
+    }
+
 }
