@@ -27,12 +27,4 @@ interface LeafKeys
      */
     public function key(Token $token, string $signature, int $position): ?string;
 
-    /**
-     * Tells whether a written token is an equivalent spelling of the token the rendering produced.
-     *
-     * Both tokens were read in isolation. They are equivalent when they are
-     * the same terminal, or terminals the database reads as one and the same
-     * request, such as the synonyms of a noise table.
-     */
-    public function synonymous(Token $rendered, Token $written): bool;
 }
