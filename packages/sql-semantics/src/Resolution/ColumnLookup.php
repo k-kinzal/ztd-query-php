@@ -66,7 +66,7 @@ final class ColumnLookup
         $missing = [];
         foreach ($open as $relation) {
             $relations[] = $relation->relation;
-            array_push($missing, ...$relation->shape->missing);
+            array_push($missing, ...LookupLevel::undecided($relation));
         }
 
         return new ConditionalColumn($column, $candidates, $relations, $missing);

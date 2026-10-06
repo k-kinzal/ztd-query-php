@@ -19,6 +19,7 @@ use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Reference\Missing\UndeclaredRelation;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
@@ -112,5 +113,25 @@ final class LookupLevelTest extends TestCase
         self::assertSame([$open], $level->open());
         self::assertCount(1, $level->found());
         self::assertSame([], (new LookupLevel($scope, new Name('a'), new QualifiedName(new Name('u')), 0))->open());
+    }
+
+    public function testOpenListsAnOccurrenceWithASlotWhoseNameIsUndecided(): void
+    {
+        $context = new AnalysisContext(new LanguageProfile(GrammarRelease::Sqlite3472), [new Name('main')]);
+        $missing = new SessionState('the client character set');
+        $relation = new VisibleRelation(new TableInput(new QualifiedName(new Name('d'))), new RowShape([new OutputSlot(null, new Known(Storage::Text), Nullability::NotNull, null, null, [$missing])]));
+
+        $level = new LookupLevel(new Environment($context, null, [$relation]), new Name('x'), null, 0);
+
+        self::assertSame([$relation], $level->open());
+    }
+
+    public function testUndecidedCollectsTheMissingInputsOfTheShapeAndOfUnnamedSlots(): void
+    {
+        $shapeMissing = new UndeclaredRelation(new QualifiedName(new Name('t')));
+        $nameMissing = new SessionState('the client character set');
+        $relation = new VisibleRelation(new TableInput(new QualifiedName(new Name('t'))), new RowShape([new OutputSlot(null, new Known(Storage::Text), Nullability::NotNull, null, null, [$nameMissing])], [$shapeMissing]));
+
+        self::assertSame([$shapeMissing, $nameMissing], LookupLevel::undecided($relation));
     }
 }

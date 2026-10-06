@@ -28,11 +28,13 @@ final class Column
      * @param Name $name The column name
      * @param TypeDescriptor $type The declared type
      * @param Nullability $nullability Whether the column can hold NULL
+     * @param bool $generated Whether the column is computed from other columns of its row and cannot be written
      */
     public function __construct(
         public readonly Name $name,
         public readonly TypeDescriptor $type,
         public readonly Nullability $nullability = Nullability::Nullable,
+        public readonly bool $generated = false,
     ) {
     }
 }

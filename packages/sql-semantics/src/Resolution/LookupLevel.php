@@ -14,7 +14,9 @@ use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
  * Rule: CORE-COLUMN-LOOKUP-001 (per-position part). A qualifier admits an
  * occurrence by its alias, or, without an alias, by its relation name and the
  * schema the qualifier writes. Within an admitted occurrence the declared
- * slots are searched before the implicit ones.
+ * slots are searched before the implicit ones. An occurrence whose shape is
+ * open, or which has a slot whose name depends on missing inputs, can still
+ * own a name it does not visibly have.
  *
  * @visibility SqlSemantics
  */
@@ -58,11 +60,26 @@ final class LookupLevel
                     }
                 }
             }
-            if ($matches === [] && !$relation->shape->complete()) {
+            if ($matches === [] && self::undecided($relation) !== []) {
                 $this->open[] = $relation;
             }
             array_push($this->found, ...$matches);
         }
+    }
+
+    /**
+     * Answers the inputs that leave the names of an occurrence undecided: those of an open shape and of each unnamed slot.
+     *
+     * @return list<\SqlSemantics\Statement\Reference\Missing\MissingInput>
+     */
+    public static function undecided(VisibleRelation $relation): array
+    {
+        $missing = $relation->shape->missing;
+        foreach ($relation->shape->slots as $slot) {
+            array_push($missing, ...$slot->unnamed);
+        }
+
+        return $missing;
     }
 
     /**

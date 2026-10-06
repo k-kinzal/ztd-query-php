@@ -25,6 +25,12 @@ final class ColumnTest extends TestCase
         self::assertSame('a', $column->name->value);
         self::assertSame('INTEGER', $column->type->name());
         self::assertSame(Nullability::Nullable, $column->nullability);
+        self::assertFalse($column->generated);
+    }
+
+    public function testAGeneratedColumnSaysSo(): void
+    {
+        self::assertTrue((new Column(new Name('a'), Storage::Integer, Nullability::Nullable, true))->generated);
     }
 
     public function testAResolvedReferenceReachesTheDeclarationObjectItself(): void
