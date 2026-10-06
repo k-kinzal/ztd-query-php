@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query\From;
 
+use SqlSemantics\Resolution\LookupLevel;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Shape\OutputSlot;
@@ -59,12 +60,12 @@ final class JoinedInput
     }
 
     /**
-     * Tells whether every visible relation has a complete shape.
+     * Tells whether the names of every visible relation are decided: its shape is complete and no column name depends on missing inputs.
      */
     public function complete(): bool
     {
         foreach ($this->visible as $relation) {
-            if (!$relation->shape->complete()) {
+            if (LookupLevel::undecided($relation) !== []) {
                 return false;
             }
         }

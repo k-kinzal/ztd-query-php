@@ -35,6 +35,13 @@ final class TableDeclarationTest extends TestCase
         self::assertSame(Nullability::NotNull, (new TableDeclaration())->column($column)->nullability);
     }
 
+    public function testColumnDeclaresGeneratedColumnsGenerated(): void
+    {
+        $columns = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, g INT AS (a + 1), s INT GENERATED ALWAYS AS (a) STORED)')->declarations()[0]->columns;
+
+        self::assertSame([false, true, true], [$columns[0]->generated, $columns[1]->generated, $columns[2]->generated]);
+    }
+
     public function testPrimaryColumnsNamesTheTableLevelKeyColumns(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT, PRIMARY KEY (b, a))');
@@ -50,6 +57,14 @@ final class TableDeclarationTest extends TestCase
         $columns = $create->declarations()[0]->columns;
 
         self::assertSame(['a', 'b', 'c'], [$columns[0]->name->value, $columns[1]->name->value, $columns[2]->name->value]);
+    }
+
+    public function testRenamedNamesADefinedColumnAfterTheSelectedField(): void
+    {
+        $columns = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (A INT NOT NULL, B INT) SELECT 1 AS a')->declarations()[0]->columns;
+
+        self::assertSame(['B', 'a'], [$columns[0]->name->value, $columns[1]->name->value]);
+        self::assertSame(Nullability::NotNull, $columns[1]->nullability);
     }
 
     public function testSplitKeepsInvisibleColumnsImplicit(): void
@@ -80,6 +95,25 @@ final class TableDeclarationTest extends TestCase
 
         self::assertFalse((new TableDeclaration())->like(new QualifiedName(new Name('c')), null, $create->profile())->complete);
         self::assertCount(1, (new TableDeclaration())->like(new QualifiedName(new Name('c')), $create->declarations()[0], $create->profile())->columns);
+    }
+
+    public function testLikeKeepsGeneratedColumns(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $source = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1), h INT AS (a) INVISIBLE)')->declarations();
+        $copy = $semantics->analyze('CREATE TABLE c LIKE t', $source)->declarations()[0];
+
+        self::assertSame([false, true, true], [$copy->columns[0]->generated, $copy->columns[1]->generated, $copy->implicit[0]->column->generated]);
+    }
+
+    public function testTableDeclaresSelectedColumnsNotGenerated(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $source = $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a + 1))')->declarations();
+        $columns = $semantics->analyze('CREATE TABLE c SELECT * FROM t', $source)->declarations()[0]->columns;
+        $view = $semantics->analyze('CREATE VIEW v AS SELECT * FROM t', $source)->declarations()[0]->columns;
+
+        self::assertSame([false, false, false, false], [$columns[0]->generated, $columns[1]->generated, $view[0]->generated, $view[1]->generated]);
     }
 
     public function testSettledStopsAtAnOpenStar(): void

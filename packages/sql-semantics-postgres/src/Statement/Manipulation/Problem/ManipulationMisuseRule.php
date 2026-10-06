@@ -10,7 +10,8 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Problem;
  * A `%s` in a message stands for a subject of the problem, in order.
  * Source: https://www.postgresql.org/docs/17/sql-insert.html, https://www.postgresql.org/docs/17/sql-update.html,
  * https://www.postgresql.org/docs/17/sql-merge.html, https://www.postgresql.org/docs/17/sql-copy.html,
- * https://www.postgresql.org/docs/17/sql-declare.html.
+ * https://www.postgresql.org/docs/17/sql-declare.html,
+ * https://www.postgresql.org/docs/17/ddl-generated-columns.html.
  *
  * @visibility public
  * @example Reading which rule a statement breaks
@@ -41,6 +42,9 @@ enum ManipulationMisuseRule: string
     case CopyUnknownOption = 'option "%s" not recognized';
     case CopyRedundantOption = 'conflicting or redundant options';
     case CopyColumnNotCopied = '%s column "%s" not referenced by COPY';
+    case CopyGeneratedColumn = 'column "%s" is a generated column';
+    case GeneratedInsert = 'cannot insert a non-DEFAULT value into column "%s"';
+    case GeneratedUpdate = 'column "%s" can only be updated to DEFAULT';
     case CursorScrollConflict = 'cannot specify both SCROLL and NO SCROLL';
     case CursorSensitivityConflict = 'cannot specify both INSENSITIVE and ASENSITIVE';
     case CursorModifyingWith = 'DECLARE CURSOR must not contain data-modifying statements in WITH';

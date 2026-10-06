@@ -130,7 +130,11 @@ final class CreateTable implements Statement, Relation
         $output = $this->query === null ? null : $derivation->query($this->query->query, $derivation->environment());
         $table = (new TableDeclaration())->table($this, $output, $derivation);
         $derivation->declare($table);
-        (new TableProblems())->report($this, $table, $derivation);
+        $problems = new TableProblems();
+        $problems->report($this, $table, $derivation);
+        if ($output !== null) {
+            $problems->selected($this, $output, $derivation);
+        }
 
         return new RelationFact((new TableTargets())->shape($table), new DeclaredTable($table));
     }

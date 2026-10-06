@@ -16,7 +16,7 @@ final class SetExpressionTest extends TestCase
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
         $context = [];
-        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int, c text)')->declarations());
+        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int NOT NULL, b int GENERATED ALWAYS AS (a) STORED, c text)')->declarations());
         $statement = $semantics->analyze('ALTER TABLE t ALTER b SET EXPRESSION AS (a + zz)', $context);
         self::assertSame([
           0 => 'Column zz does not exist.',

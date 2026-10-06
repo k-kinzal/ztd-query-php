@@ -28,7 +28,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * source. A WHEN MATCHED clause sees both; a WHEN NOT MATCHED BY SOURCE
  * clause sees the target only; a WHEN NOT MATCHED [BY TARGET] clause sees
  * the source only. UPDATE SET follows PG-ASSIGNMENT-001; INSERT follows the
- * column and value rules of PG-INSERT-001 for one VALUES row. A WHEN clause
+ * column and value rules of PG-INSERT-001 for one VALUES row; both write a
+ * generated column with DEFAULT only (PG-GENERATED-WRITE-001). A WHEN clause
  * after a clause of the same kind without condition can never apply and is
  * reported. RETURNING (PostgreSQL 17) sees the target and the source;
  * with a WHEN NOT MATCHED BY SOURCE clause the source columns can be NULL.
@@ -98,11 +99,13 @@ final class MergeFacts
         $defaults = [];
         foreach ($action->values as $position => $value) {
             $assignments->value($slots[$position] ?? null, $value, $derivation->scalar($value, $environment)->type, $derivation);
-            if ($value instanceof DefaultRequest) {
-                $defaults[] = $value;
+            $default = $assignments->requested($value);
+            if ($default !== null) {
+                $defaults[] = $default;
             }
         }
         $facts->arity($action->columns, $target, count($action->values), $derivation);
+        (new GeneratedWrites())->inserted($target, $action->columns, [$action->values], count($action->values), $derivation, $environment);
 
         return $defaults;
     }

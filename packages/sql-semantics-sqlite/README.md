@@ -170,9 +170,26 @@ $view->declarations()[0]->kind; // => RelationKind::View
 $semantics->analyze('DROP TABLE v', [$view])->facts->diagnostics[0]->message(); // => 'Relation v is a view: DROP TABLE removes only a table.'
 ```
 
+### Generated columns
+
+A column defined with `GENERATED ALWAYS AS (...)` or `AS (...)`, `VIRTUAL` or `STORED`, is declared generated (`Column::$generated`). It reads like any other column, but SQLite computes its value, so writing it is a `GeneratedColumnWrite` diagnostic with the message SQLite gives: naming it in the column list of an `INSERT`, and assigning it in `UPDATE ... SET` or in the `DO UPDATE SET` of an upsert. An `INSERT` without a column list supplies one value per column that is not generated. In a trigger program these writes are reported by `CREATE TRIGGER`, although SQLite rejects them only when the trigger runs.
+
+```php
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\Sqlite\Dialect;
+
+$semantics = new Semantics(Dialect::Sqlite);
+$table = $semantics->analyze('CREATE TABLE t (a INTEGER, b AS (a + 1))');
+
+$table->declarations()[0]->columns[1]->generated; // => true
+$semantics->analyze('UPDATE t SET b = 1', [$table])->facts->diagnostics[0]->message(); // => 'cannot UPDATE generated column "b"'
+$semantics->analyze('INSERT INTO t VALUES (1)', [$table])->facts->diagnostics; // => []
+```
+
 ## Limitations
 
 - INSERT, UPDATE and DELETE on a view succeed exactly when an `INSTEAD OF` trigger handles them. Contexts do not hold triggers, so such a write is not reported.
+- SQLite checks the `DO UPDATE` of an upsert only where a uniqueness check of the `INSERT` reaches it. Contexts do not hold unique indexes, so a `DO UPDATE` whose reach depends on them, such as one without a conflict target on a table that has a rowid when the row does not supply the rowid, is not checked for writes of generated columns.
 - Whether a relation is a virtual table is not part of a declaration, so what SQLite refuses only for virtual tables, such as indexing one, is not reported.
 - A search path must start with `main`; `temp` is always searched first.
 - The parameter style has no effect on reading, but two profiles that differ only in it are not compatible.

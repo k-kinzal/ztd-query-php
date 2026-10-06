@@ -11,8 +11,10 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
+use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\Resolution;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Reference\Missing\MissingInput;
 use SqlSemantics\Statement\Shape\Field;
 
 /**
@@ -31,7 +33,9 @@ use SqlSemantics\Statement\Shape\Field;
  * not a column and is named so, else the column items named so (two
  * different ones are ambiguous), else the column items whose column has
  * the name under another alias (likewise); a qualified name matches only
- * column items of an occurrence it admits. A column item resolves to its
+ * column items of an occurrence it admits. An item that is not a column
+ * and whose name depends on missing inputs (OutputSlot::$unnamed) may be
+ * the item named so: the outcome is conditional. A column item resolves to its
  * column, another item to the item (an alias target). Names of columns are
  * compared by the context's column comparison. Terminates: one pass over
  * each list.
@@ -85,12 +89,13 @@ final class ResultReferences
     public function selected(GroupedRow $row, Environment $scope, Name $column, ?QualifiedName $qualifier, int $depth): ?Resolution
     {
         [$aliased, $unaliased, $other] = [null, null, null];
+        $unnamed = $this->unnamed($row, $scope, $column, $qualifier);
         foreach ($row->selected as $item) {
             $field = $item instanceof Field ? $item : null;
             $resolution = $field?->expression instanceof ColumnUse ? $field->resolution : null;
             $named = $qualifier === null && $field?->name !== null && $scope->context->columnNames->equal($field->name->value, $column->value);
             if ($field !== null && $named && !$resolution instanceof ResolvedColumn) {
-                return new AliasTarget($field);
+                return $this->undecided($column, new AliasTarget($field), $unnamed);
             }
             if (!$resolution instanceof ResolvedColumn) {
                 continue;
@@ -106,7 +111,42 @@ final class ResultReferences
             }
         }
 
-        return $this->chosen($column, $aliased, $unaliased, $other, $depth);
+        return $this->undecided($column, $this->chosen($column, $aliased, $unaliased, $other, $depth), $unnamed);
+    }
+
+    /**
+     * Answers a select list match, or the conditional outcome while items whose names depend on missing inputs could be the match instead.
+     *
+     * @param list<MissingInput> $unnamed The inputs the names of those items depend on
+     */
+    public function undecided(Name $column, ?Resolution $match, array $unnamed): ?Resolution
+    {
+        if ($unnamed === []) {
+            return $match;
+        }
+
+        return new ConditionalColumn($column, $match instanceof ResolvedColumn ? [$match] : [], [], $unnamed);
+    }
+
+    /**
+     * Answers the inputs the names of the items that are not columns depend on, up to the first such item an unqualified name names.
+     *
+     * @return list<MissingInput>
+     */
+    public function unnamed(GroupedRow $row, Environment $scope, Name $column, ?QualifiedName $qualifier): array
+    {
+        $missing = [];
+        foreach ($qualifier === null ? $row->selected : [] as $item) {
+            if (!$item instanceof Field || ($item->expression instanceof ColumnUse && $item->resolution instanceof ResolvedColumn)) {
+                continue;
+            }
+            if ($item->name !== null && $scope->context->columnNames->equal($item->name->value, $column->value)) {
+                break;
+            }
+            array_push($missing, ...$item->slot->unnamed);
+        }
+
+        return $missing;
     }
 
     /**

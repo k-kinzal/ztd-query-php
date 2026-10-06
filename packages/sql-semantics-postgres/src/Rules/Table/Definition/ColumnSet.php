@@ -14,16 +14,17 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  *
  * Rule: PG-TABLE-DECLARATION-001 (work area). Columns keep the order they are
  * added in; an inherited column of a name already present is merged into it
- * (the column is NOT NULL when either is); a column added under a name
- * already present is not added again. Once closed, the set takes no more
- * columns: the declaration is complete only up to that point. Status: Implemented.
+ * (the column is NOT NULL when either is, and generated when either is); a
+ * column added under a name already present is not added again. Once
+ * closed, the set takes no more columns: the declaration is complete only up
+ * to that point. Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\PostgreSql\Rules\Table
  */
 final class ColumnSet
 {
     /**
-     * @var array<string, array{Name, TypeDescriptor, bool}>
+     * @var array<string, array{Name, TypeDescriptor, bool, bool}>
      */
     private array $entries = [];
 
@@ -31,13 +32,15 @@ final class ColumnSet
 
     /**
      * Adds a column unless the set is closed or holds one of that name; answers whether it was added.
+     *
+     * @param bool $generated Whether the column is a generated column
      */
-    public function add(Name $name, TypeDescriptor $type, bool $notNull): bool
+    public function add(Name $name, TypeDescriptor $type, bool $notNull, bool $generated = false): bool
     {
         if ($this->closed || isset($this->entries[$name->value])) {
             return false;
         }
-        $this->entries[$name->value] = [$name, $type, $notNull];
+        $this->entries[$name->value] = [$name, $type, $notNull, $generated];
 
         return true;
     }
@@ -48,8 +51,14 @@ final class ColumnSet
     public function inherit(Column $column): void
     {
         $notNull = $column->nullability === Nullability::NotNull;
-        if (!$this->add($column->name, $column->type, $notNull) && !$this->closed && $notNull) {
+        if ($this->add($column->name, $column->type, $notNull, $column->generated) || $this->closed) {
+            return;
+        }
+        if ($notNull) {
             $this->require($column->name);
+        }
+        if ($column->generated) {
+            $this->entries[$column->name->value][3] = true;
         }
     }
 
@@ -87,8 +96,8 @@ final class ColumnSet
     public function columns(): array
     {
         $columns = [];
-        foreach ($this->entries as [$name, $type, $notNull]) {
-            $columns[] = new Column($name, $type, $notNull ? Nullability::NotNull : Nullability::Nullable);
+        foreach ($this->entries as [$name, $type, $notNull, $generated]) {
+            $columns[] = new Column($name, $type, $notNull ? Nullability::NotNull : Nullability::Nullable, $generated);
         }
 
         return $columns;

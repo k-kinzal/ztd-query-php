@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\Sqlite\Rules\ClosedList;
 use SqlSemantics\Platform\Sqlite\Rules\Expression\ProgramOnly;
+use SqlSemantics\Platform\Sqlite\Rules\Mutation\GeneratedWrites;
 use SqlSemantics\Platform\Sqlite\Rules\Mutation\MutationScope;
 use SqlSemantics\Platform\Sqlite\Rules\Resolution\FromScope;
 use SqlSemantics\Platform\Sqlite\Statement\Query\ResultColumn;
@@ -28,7 +29,8 @@ use SqlSemantics\Statement\Statement;
  *
  * Rule: SQLITE-UPDATE-001. The assigned values and the predicate see the
  * written table and the relations of the FROM clause, which are derived by
- * SQLITE-FROM-SCOPE-001; the rest follows SQLITE-MUTATION-SCOPE-001.
+ * SQLITE-FROM-SCOPE-001; an assigned generated column is reported
+ * (SQLITE-GENERATED-WRITE-001); the rest follows SQLITE-MUTATION-SCOPE-001.
  * Source: https://sqlite.org/lang_update.html. Status: Implemented.
  *
  * @visibility public
@@ -105,6 +107,7 @@ final class Update implements Statement, Selection
         $inputs = $this->from === null ? [] : (new FromScope())->open($this->from, $derivation, $base, [$target], false)->visible;
         $environment = new Environment($derivation->context, $base, [$target, ...$inputs]);
         $scope->assign($this->assignments, $target, $derivation, $environment);
+        (new GeneratedWrites())->assigned($this->assignments, $target, $derivation);
         if ($this->where !== null) {
             $derivation->scalar($this->where, $environment);
         }

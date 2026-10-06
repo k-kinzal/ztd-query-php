@@ -12,7 +12,6 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\Projection;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -92,14 +91,6 @@ final class ProjectionTest extends TestCase
 
         self::assertSame(3, $field->position);
         self::assertSame($slot, $field->slot->origin);
-    }
-
-    public function testOpenTellsRelationsWithUnknownColumns(): void
-    {
-        $unnamed = new OutputSlot(null, new Known(new Integral(IntegralKind::Int)), Nullability::NotNull, null, null, [new NameConversion('latin2')]);
-        self::assertFalse((new Projection())->open(new VisibleRelation(new Dual(), new RowShape([$unnamed], [new NameConversion('latin2')]))));
-        self::assertTrue((new Projection())->open(new VisibleRelation(new Dual(), new RowShape([], [new NameConversion('latin2')]))));
-        self::assertTrue((new Projection())->open(new VisibleRelation(new Dual(), new RowShape([], [new SessionState('x')]))));
     }
 
     public function testAdmitsMatchesTheCorrelationOrTableName(): void

@@ -22,6 +22,7 @@ use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
+use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -66,5 +67,13 @@ final class ResultSlotsTest extends TestCase
 
         self::assertSame(['column_0', 'column_1'], array_map(static fn (Field $field): ?string => $field->name?->value, $fact->fields()->items ?? []));
         self::assertSame(Nullability::Nullable, $fact->fields()?->at(1)->nullability);
+    }
+
+    public function testCombineKeepsTheInputsAnUnnamedLeftColumnDependsOn(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT x FROM (SELECT 'é' UNION SELECT 1) AS d");
+
+        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(Dependent::class, $operation->field(0)->type);
     }
 }

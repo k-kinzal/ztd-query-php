@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rules\Mutation;
 
+use PDO;
+use PDOException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Facade\Semantics;
@@ -55,6 +58,26 @@ final class InsertFactsTest extends TestCase
         self::assertInstanceOf(ArityMismatch::class, $diagnostics[1]);
         self::assertSame([1, 2], [$diagnostics[1]->expected, $diagnostics[1]->actual]);
         self::assertTrue($derivation->facts()->covers($rows->rows));
+    }
+
+    #[TestWith(['INSERT INTO t VALUES (1, 2)', 2, 'table t has 1 columns but 2 values were supplied'])]
+    #[TestWith(['INSERT INTO t SELECT * FROM t', 3, 'table t has 1 columns but 3 values were supplied'])]
+    public function testDeriveCountsTheColumnsThatAreNotGeneratedWhenNoListIsWritten(string $sql, int $actual, string $message): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $t = $semantics->analyze('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
+        $operation = $semantics->analyze($sql, [$t]);
+        $database = new PDO('sqlite::memory:');
+        $database->exec('CREATE TABLE t (a, b AS (a + 1), c GENERATED ALWAYS AS (a * 2) STORED)');
+
+        self::assertSame([], $semantics->analyze('INSERT INTO t VALUES (1)', [$t])->facts->diagnostics);
+        self::assertCount(1, $operation->facts->diagnostics);
+        self::assertInstanceOf(ArityMismatch::class, $operation->facts->diagnostics[0]);
+        self::assertSame([ArityRule::InsertedValues, 1, $actual], [$operation->facts->diagnostics[0]->rule, $operation->facts->diagnostics[0]->expected, $operation->facts->diagnostics[0]->actual]);
+        self::assertNotFalse($database->exec('INSERT INTO t VALUES (1)'));
+        $this->expectException(PDOException::class);
+        $this->expectExceptionMessage($message);
+        $database->exec($sql);
     }
 
     public function testDeriveSkipsTheCountWhenEitherSideIsOpen(): void

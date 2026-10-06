@@ -35,6 +35,16 @@ final class TableProblemsTest extends TestCase
         self::assertInstanceOf(DuplicateColumn::class, $create->facts->diagnostics[0]);
     }
 
+    public function testSelectedReportsAGeneratedColumnTheQueryFills(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $filled = $semantics->analyze('CREATE TABLE t (a INT, G INT AS (a)) SELECT 1 AS a, 2 AS g');
+        $kept = $semantics->analyze('CREATE TABLE t (g INT AS (1), a INT) SELECT 1 AS a, 3 AS b');
+
+        self::assertSame(["The value specified for generated column 'g' in table 't' is not allowed."], array_map(static fn ($diagnostic): string => $diagnostic->message(), $filled->facts->diagnostics));
+        self::assertSame([], $kept->facts->diagnostics);
+    }
+
     public function testKeyColumnsReportsAMissingKeyColumn(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, UNIQUE (b))');

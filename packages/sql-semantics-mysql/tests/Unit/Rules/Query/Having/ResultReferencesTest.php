@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\ResultReferences;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
+use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Resolution\Environment;
@@ -20,7 +21,9 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
+use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Reference\Missing\SessionState;
 
 #[CoversClass(ResultReferences::class)]
 #[Medium]
@@ -170,5 +173,52 @@ final class ResultReferencesTest extends TestCase
         $deeper = (new ResultReferences())->chosen(new Name('a'), $first, null, null, 1);
         self::assertInstanceOf(ResolvedColumn::class, $deeper);
         self::assertSame($first->depth + 1, $deeper->depth);
+    }
+
+    public function testSelectedIsConditionalWhileAnItemWithoutADecidedNameCouldHaveTheName(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT, q INT)')->declarations();
+        $operation = $semantics->analyze("SELECT 'é', a AS q, 1 AS r FROM t HAVING q > 0 AND r > 0", $table);
+        $select = $operation->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $having = $select->having;
+        self::assertInstanceOf(Logical::class, $having);
+        self::assertInstanceOf(Comparison::class, $having->left);
+        self::assertInstanceOf(Comparison::class, $having->right);
+        $q = $operation->facts->scalar($having->left->left)->resolution;
+        $r = $operation->facts->scalar($having->right->left)->resolution;
+
+        self::assertInstanceOf(ConditionalColumn::class, $q);
+        self::assertCount(1, $q->candidates);
+        self::assertInstanceOf(ConditionalColumn::class, $r);
+        self::assertSame([], $r->candidates);
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
+    public function testUnnamedStopsAtTheItemTheNameNames(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $operation = $semantics->analyze("SELECT 'é', 1 AS r, 'ü' FROM DUAL HAVING r > 0");
+        $output = $operation->facts->output;
+        self::assertNotNull($output);
+        $row = new GroupedRow($output->projection, [], false);
+        $scope = new Environment($operation->context);
+
+        self::assertCount(1, (new ResultReferences())->unnamed($row, $scope, new Name('r'), null));
+        self::assertCount(2, (new ResultReferences())->unnamed($row, $scope, new Name('s'), null));
+        self::assertSame([], (new ResultReferences())->unnamed($row, $scope, new Name('s'), new QualifiedName(new Name('t'))));
+    }
+
+    public function testUndecidedKeepsAResolvedMatchAsCandidate(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $operation = $semantics->analyze('SELECT 1 AS r FROM DUAL');
+        $alias = new AliasTarget($operation->field(0));
+        $missing = [new SessionState('character_set_client')];
+
+        self::assertSame($alias, (new ResultReferences())->undecided(new Name('r'), $alias, []));
+        self::assertInstanceOf(ConditionalColumn::class, (new ResultReferences())->undecided(new Name('r'), $alias, $missing));
+        self::assertNull((new ResultReferences())->undecided(new Name('r'), null, []));
     }
 }

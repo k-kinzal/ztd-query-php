@@ -35,6 +35,17 @@ final class InsertFactsTest extends TestCase
         self::assertSame(["Column count doesn't match value count at row 2"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
+    public function testRowsChecksAnEmptyRowAgainstTheOtherRows(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE t (a INT, b INT)')->declarations();
+        $messages = static fn (string $sql): array => array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $tables)->facts->diagnostics);
+
+        self::assertSame(["Column count doesn't match value count at row 2"], $messages('INSERT INTO t VALUES (1, 2), ()'));
+        self::assertSame(["Column count doesn't match value count at row 2"], $messages('INSERT INTO t VALUES (), (1, 2)'));
+        self::assertSame([], $messages('INSERT INTO t VALUES (), ()'));
+    }
+
     public function testSetDerivesTheAssignments(): void
     {
         $semantics = new Semantics(Dialect::MySql);

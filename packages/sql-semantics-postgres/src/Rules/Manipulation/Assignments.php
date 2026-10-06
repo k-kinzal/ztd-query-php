@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\Composite;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Constructor\RowConstructor;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\DefaultRequest;
+use SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Step\AllFields;
 use SqlSemantics\Platform\PostgreSql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Assignment\Assignment;
@@ -35,9 +36,11 @@ use SqlSemantics\Statement\Type\TypeFact;
  * subscripts of the steps see the environment of the values. A value is
  * derived in the environment of the clause and must convert to the column
  * type (PG-ASSIGNMENT-CAST-001) when the whole column is written; DEFAULT
- * takes the column default. A multiple-column item takes its values from a
- * row constructor, whose fields may be DEFAULT, or from a scalar subquery,
- * with as many values as columns; any other source is reported.
+ * takes the column default, also in parentheses, which the grammar drops. A
+ * multiple-column item takes its values from a row constructor, whose fields
+ * may be DEFAULT, or from a scalar subquery, with as many values as columns;
+ * any other source is reported. A generated column takes DEFAULT only
+ * (PG-GENERATED-WRITE-001).
  * Termination: one pass over the items.
  * Source: https://www.postgresql.org/docs/17/sql-insert.html, https://www.postgresql.org/docs/17/sql-update.html. Status: Implemented.
  *
@@ -87,10 +90,9 @@ final class Assignments
     public function slot(ColumnTarget $column, VisibleRelation $target, Derivation $derivation): ?OutputSlot
     {
         $names = $derivation->context->columnNames;
-        foreach ($target->shape->slots as $slot) {
-            if ($slot->name !== null && $names->equal($slot->name->value, $column->column->value)) {
-                return $slot;
-            }
+        $slot = $this->find($column, $target, $derivation);
+        if ($slot !== null) {
+            return $slot;
         }
         foreach ($target->implicit as $implicit) {
             foreach ($implicit->names as $name) {
@@ -106,6 +108,43 @@ final class Assignments
         }
 
         return null;
+    }
+
+    /**
+     * Finds the slot of the target a column name writes, or null when the target shows no such column.
+     */
+    public function find(ColumnTarget $column, VisibleRelation $target, Derivation $derivation): ?OutputSlot
+    {
+        $names = $derivation->context->columnNames;
+        foreach ($target->shape->slots as $slot) {
+            if ($slot->name !== null && $names->equal($slot->name->value, $column->column->value)) {
+                return $slot;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Answers an expression without the parentheses around it.
+     */
+    public function bare(Scalar $value): Scalar
+    {
+        while ($value instanceof Grouped) {
+            $value = $value->operand;
+        }
+
+        return $value;
+    }
+
+    /**
+     * Answers the DEFAULT a value is, in parentheses or not, or null when it is another value.
+     */
+    public function requested(?Scalar $value): ?DefaultRequest
+    {
+        $value = $value === null ? null : $this->bare($value);
+
+        return $value instanceof DefaultRequest ? $value : null;
     }
 
     /**
@@ -130,6 +169,7 @@ final class Assignments
             $this->row($assignment, array_slice($slots, $position, count($assignment->columns)), $derivation, $environment);
             $position += count($assignment->columns);
         }
+        (new GeneratedWrites())->updated($target, $assignments, $derivation, $environment);
     }
 
     /**
@@ -140,16 +180,17 @@ final class Assignments
     public function row(RowAssignment $assignment, array $slots, Derivation $derivation, Environment $environment): void
     {
         $fact = $derivation->scalar($assignment->source, $environment);
-        if (!$assignment->source instanceof RowConstructor && !$assignment->source instanceof ScalarSubquery) {
+        $source = $this->bare($assignment->source);
+        if (!$source instanceof RowConstructor && !$source instanceof ScalarSubquery) {
             $derivation->report(new ManipulationMisuse(ManipulationMisuseRule::MultipleAssignmentSource));
 
             return;
         }
-        $types = $this->types($assignment->source, $fact->type);
+        $types = $this->types($source, $fact->type);
         if ($types === null) {
             return;
         }
-        $ambiguous = $assignment->source instanceof ScalarSubquery && count($slots) === 1;
+        $ambiguous = $source instanceof ScalarSubquery && count($slots) === 1;
         if ($ambiguous && count($types) !== 1) {
             return;
         }
@@ -186,7 +227,7 @@ final class Assignments
         $types = [];
         foreach ($type->descriptor->fields as $position => $slot) {
             $field = $source instanceof RowConstructor ? $source->fields[$position] ?? null : null;
-            $unchecked = $field instanceof DefaultRequest || ($field !== null && $slot->type instanceof Known && $slot->type->descriptor === Builtin::Text);
+            $unchecked = $this->requested($field) !== null || ($field !== null && $slot->type instanceof Known && $slot->type->descriptor === Builtin::Text);
             $types[] = $unchecked ? null : $slot->type;
         }
 
@@ -198,13 +239,13 @@ final class Assignments
      */
     public function value(?OutputSlot $slot, ?Scalar $value, TypeFact $type, Derivation $derivation): void
     {
-        if ($slot !== null && !$value instanceof DefaultRequest) {
+        if ($slot !== null && $this->requested($value) === null) {
             (new AssignmentCasts())->check($slot, $type, $derivation);
         }
     }
 
     /**
-     * Answers the DEFAULT values a SET list may hold: the values of the items, and the fields of the row constructors of multiple-column items.
+     * Answers the DEFAULT values a SET list may hold: the values of the items, and the fields of the row constructors of multiple-column items, in parentheses or not.
      *
      * @param list<Assignment|RowAssignment> $assignments
      *
@@ -214,10 +255,12 @@ final class Assignments
     {
         $defaults = [];
         foreach ($assignments as $assignment) {
-            $values = $assignment instanceof Assignment ? [$assignment->value] : ($assignment->source instanceof RowConstructor ? $assignment->source->fields : []);
+            $source = $assignment instanceof RowAssignment ? $this->bare($assignment->source) : null;
+            $values = $assignment instanceof Assignment ? [$assignment->value] : ($source instanceof RowConstructor ? $source->fields : []);
             foreach ($values as $value) {
-                if ($value instanceof DefaultRequest) {
-                    $defaults[] = $value;
+                $default = $this->requested($value);
+                if ($default !== null) {
+                    $defaults[] = $default;
                 }
             }
         }

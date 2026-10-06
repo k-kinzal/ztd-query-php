@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Partition;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\GeneratedColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Problem\DefinitionRule;
@@ -53,8 +54,10 @@ final class PartitionSpec implements Clause
         if (!in_array(strtolower($this->strategy->value), ['list', 'range', 'hash'], true)) {
             $derivation->report(new DefinitionProblem(DefinitionRule::PartitionStrategy, $this->strategy));
         }
+        $generated = new GeneratedColumns();
         foreach ($this->elements as $element) {
             $element->deriveClause($derivation, $environment);
+            $generated->partitionKey($derivation, $element->key);
         }
     }
 

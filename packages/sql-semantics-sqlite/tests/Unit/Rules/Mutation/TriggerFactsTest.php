@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rules\Mutation;
 
+use PDO;
+use PDOException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +26,7 @@ use SqlSemantics\Platform\Sqlite\Statement\Relation\IndexChoice;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\CreateTrigger;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerEvent;
 use SqlSemantics\Platform\Sqlite\Statement\Trigger\TriggerTable;
+use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
@@ -113,5 +116,21 @@ final class TriggerFactsTest extends TestCase
         self::assertSame(MisuseRule::ParameterInTrigger, $facts->diagnostics[0]->rule);
         self::assertInstanceOf(Select::class, $statement->steps[0]);
         self::assertTrue($facts->covers($statement->steps[0]));
+    }
+
+    public function testDeriveReportsWritesOfGeneratedColumnsInTheProgramThatFailWhenItRuns(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $schema = 'CREATE TABLE t (a, b AS (a + 1)); CREATE TABLE s (x)';
+        $trigger = 'CREATE TRIGGER tr AFTER INSERT ON s BEGIN UPDATE t SET b = new.x; INSERT INTO t (b) VALUES (new.x); INSERT INTO t VALUES (new.x); END';
+        $operation = $semantics->analyze($trigger, [$semantics->analyze('CREATE TABLE t (a, b AS (a + 1))'), $semantics->analyze('CREATE TABLE s (x)')]);
+        $database = new PDO('sqlite::memory:');
+        $database->exec($schema);
+
+        self::assertSame(['cannot UPDATE generated column "b"', 'cannot INSERT into generated column "b"'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+        self::assertNotFalse($database->exec($trigger));
+        $this->expectException(PDOException::class);
+        $this->expectExceptionMessage('cannot UPDATE generated column "b"');
+        $database->exec('INSERT INTO s VALUES (1)');
     }
 }

@@ -23,6 +23,7 @@ use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Reference\Column\Resolution;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Reference\Missing\MissingInput;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
 use SqlSemantics\Statement\Type\Dependent;
@@ -43,7 +44,9 @@ use SqlSemantics\Validation\Equivalence;
  * items computing the same expression, resolve to that item; several
  * different items are ambiguous (ER_NON_UNIQ_ERROR). While an incompletely
  * known occurrence could still own the name, the alias is not chosen and the
- * outcome is conditional. Only a name found neither way continues outwards.
+ * outcome is conditional; so it is while a select list item whose name
+ * depends on missing inputs (OutputSlot::$unnamed) could have the name.
+ * Only a name found neither way continues outwards.
  * At a HAVING position (MYSQL-HAVING-SCOPE-001) the GROUP BY columns and
  * the select list are searched first (MYSQL-HAVING-REFERENCE-001); a name
  * written there outside set functions never sees the columns of the FROM
@@ -75,6 +78,9 @@ final class ColumnResolver
             $row = (new HavingScope())->row($scope);
             if ($row !== null) {
                 $result = (new ResultReferences())->find($row, $scope, $column, $qualifier, $depth);
+                if ($result instanceof ConditionalColumn) {
+                    return $this->undecided($column, $result->candidates, $open, $result->missing);
+                }
                 if ($result !== null) {
                     return $open === [] ? $result : $lookup->conditional($column, $result instanceof ResolvedColumn ? [$result] : [], $open);
                 }
@@ -93,6 +99,10 @@ final class ColumnResolver
                 }
 
                 return count($found) === 1 ? $found[0] : new AmbiguousColumn($column, $found);
+            }
+            $unnamed = $qualifier === null ? $this->unnamed($scope->aliases) : [];
+            if ($unnamed !== []) {
+                return $this->undecided($column, [], $open, $unnamed);
             }
             $aliases = $qualifier === null ? $scope->aliased($column) : [];
             if ($aliases !== []) {
@@ -179,6 +189,41 @@ final class ColumnResolver
         }
 
         return $open;
+    }
+
+    /**
+     * Answers the inputs the names of select list items depend on: an item without a decided name may be named anything.
+     *
+     * @param list<Field> $fields
+     * @return list<MissingInput>
+     */
+    public function unnamed(array $fields): array
+    {
+        $missing = [];
+        foreach ($fields as $field) {
+            array_push($missing, ...$field->slot->unnamed);
+        }
+
+        return $missing;
+    }
+
+    /**
+     * Builds the conditional outcome of a name that incompletely known occurrences or undecided item names may own.
+     *
+     * @param list<ResolvedColumn> $candidates
+     * @param list<VisibleRelation> $open
+     * @param list<MissingInput> $unnamed The inputs the names of select list items depend on
+     */
+    public function undecided(Name $column, array $candidates, array $open, array $unnamed): ConditionalColumn
+    {
+        $relations = [];
+        $missing = [];
+        foreach ($open as $relation) {
+            $relations[] = $relation->relation;
+            array_push($missing, ...LookupLevel::undecided($relation));
+        }
+
+        return new ConditionalColumn($column, $candidates, $relations, [...$missing, ...$unnamed]);
     }
 
     /**

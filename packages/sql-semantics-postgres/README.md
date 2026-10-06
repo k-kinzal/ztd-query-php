@@ -175,12 +175,28 @@ $semantics->analyze('DROP TABLE v', [$view])->facts->diagnostics[0]->message(); 
 $semantics->analyze('SELECT * FROM s FOR UPDATE', [$sequence])->facts->diagnostics[0]->message(); // => 'cannot lock rows in sequence "s"'
 ```
 
+### Generated columns
+
+A column with `GENERATED ALWAYS AS (expression) STORED` is declared as generated, and so is a column inherited from a generated column of a parent or of the partitioned table, or copied by `LIKE ... INCLUDING GENERATED`. An identity column is not generated in this sense. The analysis reports the server's errors for a value other than DEFAULT written into a generated column by INSERT, UPDATE, INSERT ... ON CONFLICT DO UPDATE and MERGE, for a generated column named by COPY, for a BEFORE trigger's WHEN condition that reads a generated column of NEW, and for definitions that misuse a generated column: a generation expression or a partition key that uses one, a foreign key on one with an ON UPDATE or ON DELETE action that would change it, an inherited column whose generation does not fit its parents, and ALTER TABLE actions such as SET DEFAULT on a generated column or DROP EXPRESSION on a regular one.
+
+```php
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\PostgreSql\Dialect;
+
+$semantics = new Semantics(Dialect::PostgreSql);
+$table = $semantics->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
+
+$table->declarations()[0]->columns[1]->generated; // => true
+$semantics->analyze('INSERT INTO t VALUES (1, 2)', [$table])->facts->diagnostics[0]->message(); // => 'cannot insert a non-DEFAULT value into column "b"'
+$semantics->analyze('UPDATE t SET a = 1, b = DEFAULT', [$table])->facts->diagnostics; // => []
+```
+
 ## Limitations
 
 - Type names depend on the declarations of earlier searched schemas in open and partial contexts, as described above.
 - The profile fixes `standard_conforming_strings = on` and a UTF-8 server encoding; SQL written for other settings is read as if these settings were in effect.
 - Version 1 contexts declare relations only. Functions, operators, types and other catalog objects that are not built in are missing inputs.
-- Some checks the server makes are not modeled as diagnostics, for example that a BEFORE trigger's WHEN condition does not read generated columns of NEW: declarations do not say which columns are generated.
+- Some checks of generation expressions are not reported: a system column or the whole row used in a generation expression, and, because a declaration does not keep generation expressions, conflicting generation expressions of inherited columns and changing the type of a column a generation expression uses. A column of a view is never generated, so writing a generated base column through an updatable view is not reported.
 - A declaration does not tell a partitioned table from a plain one, so checks that depend on partitioning (ATTACH PARTITION, PARTITION OF, partitioned-table restrictions) are not reported. Whether a view or a foreign table accepts INSERT, UPDATE, DELETE, COPY FROM or TRUNCATE depends on its definition, its triggers or its foreign-data wrapper, and is not reported either.
 - Sequences that serial and identity columns create are not declarations, so commands on sequences are checked only against sequences created with CREATE SEQUENCE. Row locks that FOR UPDATE pushes into a subquery or a view are not checked.
 - The server stops at the first error; the analysis reports every diagnostic it finds, so a statement can carry problems the server would never reach.

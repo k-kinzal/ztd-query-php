@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\Sqlite\Rules\Resolution;
 
 use SqlSemantics\Platform\Sqlite\Statement\Query\Problem\RandomColumnName;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Resolution\LookupLevel;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -30,7 +31,9 @@ use SqlSemantics\Statement\Reference\Missing\MissingInput;
  * result column alias of the query denotes that result column. A relation
  * whose columns are not all known (an undeclared table, or a column of a
  * subquery whose name follows an unexpanded star or is picked at random)
- * that does not answer makes the outcome conditional on what is missing. A
+ * that does not answer makes the outcome conditional on what is missing:
+ * the inputs of its open shape and those its unnamed columns depend on
+ * (`LookupLevel::undecided()`), or else the random name. A
  * relation whose hidden list holds QUALIFIED_ONLY is reachable with a
  * qualifier only (NEW, OLD, excluded). An environment that holds nothing
  * but common tables is no query level.
@@ -132,6 +135,8 @@ final class ColumnResolver
             }
         }
 
-        return $unnamed && $relation->shape->missing === [] ? [new RandomColumnName()] : $relation->shape->missing;
+        $undecided = LookupLevel::undecided($relation);
+
+        return $unnamed && $undecided === [] ? [new RandomColumnName()] : $undecided;
     }
 }

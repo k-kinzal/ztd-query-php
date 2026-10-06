@@ -125,7 +125,7 @@ final class CommonTables
         $slots = [];
         $columns = $pending->definition instanceof CommonTableExpression ? $pending->definition->columns : [];
         foreach ($this->nullable($anchor)->shape->slots as $position => $slot) {
-            $slots[] = new OutputSlot($columns[$position] ?? $slot->name, $slot->type, $slot->nullability, null, $slot);
+            $slots[] = isset($columns[$position]) ? new OutputSlot($columns[$position], $slot->type, $slot->nullability, null, $slot) : new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed);
         }
 
         return new RowShape($slots, $anchor->shape->missing);
@@ -138,7 +138,7 @@ final class CommonTables
     {
         $fields = [];
         foreach ($anchor->projection as $item) {
-            $fields[] = $item instanceof Field ? new Field($item->position, new OutputSlot($item->slot->name, $item->slot->type, Nullability::Nullable, null, $item->slot)) : $item;
+            $fields[] = $item instanceof Field ? new Field($item->position, new OutputSlot($item->slot->name, $item->slot->type, Nullability::Nullable, null, $item->slot, $item->slot->unnamed)) : $item;
         }
 
         return new QueryFact($fields, $anchor->names);

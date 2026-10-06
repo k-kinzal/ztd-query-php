@@ -159,6 +159,6 @@ final class Joining
      */
     public function nullable(OutputSlot $slot): OutputSlot
     {
-        return $slot->nullability === Nullability::Nullable ? $slot : new OutputSlot($slot->name, $slot->type, Nullability::Nullable, null, $slot);
+        return $slot->nullability === Nullability::Nullable ? $slot : new OutputSlot($slot->name, $slot->type, Nullability::Nullable, null, $slot, $slot->unnamed);
     }
 }

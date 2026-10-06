@@ -20,6 +20,7 @@ use SqlSemantics\Statement\Declaration\ImplicitColumn;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -75,5 +76,13 @@ final class TableShapesTest extends TestCase
 
         self::assertInstanceOf(ExplicitTable::class, $table);
         self::assertCount(2, (new TableShapes())->explicit($table, $operation->facts->relation($table), new Derivation($semantics->context()))->projection);
+    }
+
+    public function testExplicitKeepsTheInputsAnUnnamedColumnDependsOn(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("WITH c AS (SELECT 'é') TABLE c");
+
+        self::assertSame(1, $operation->fields()?->count());
+        self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);
     }
 }

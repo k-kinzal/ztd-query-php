@@ -24,6 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
@@ -135,5 +136,19 @@ final class CommonTablesTest extends TestCase
 
         self::assertInstanceOf(SetOperation::class, $query);
         self::assertCount(3, (new CommonTables())->operands($query));
+    }
+
+    public function testShapeKeepsTheInputsAnUnnamedColumnDependsOn(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT x FROM c) SELECT 1");
+
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
+    public function testNullableKeepsTheInputsAnUnnamedColumnDependsOn(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT 1 FROM c) SELECT * FROM c");
+
+        self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);
     }
 }

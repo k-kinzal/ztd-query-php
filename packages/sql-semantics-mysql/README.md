@@ -187,16 +187,34 @@ $semantics->analyze('SHOW CREATE TABLE v', [$table, $view])->field(1)->name?->va
 $semantics->analyze('ALTER TABLE v ADD COLUMN b INT', [$table, $view])->facts->diagnostics[0]->message(); // => 'v is not BASE TABLE.'
 ```
 
+### Generated columns
+
+A column defined with `AS (expr)`, `VIRTUAL` or `STORED`, is declared generated (`Column::$generated`), also in a copy made with `CREATE TABLE ... LIKE`; a column that `CREATE TABLE ... SELECT` takes from a query, or a view column, is not. The server computes such a column and accepts only a default value for it: a value other than `DEFAULT` or `DEFAULT(col)` written into it by `INSERT` or `REPLACE` (a row of `VALUES`, with or without a column list, `SET`, a query source), by `ON DUPLICATE KEY UPDATE` or by `UPDATE` is reported (`GeneratedColumnWrite`), whatever `IGNORE` and the SQL mode say. A query source passes the default only through a select item `DEFAULT(col)` of a single query block, so the columns of a union, of `TABLE` or of an expanded `*` are reported. `CREATE TABLE ... SELECT` reports a generated column of its column list that the query fills. `LOAD DATA` computes generated columns and ignores what it reads for them. From MySQL 8.0 on, the parser refuses `DEFAULT`, `ON UPDATE`, `AUTO_INCREMENT`, `SERIAL DEFAULT VALUE`, `COLUMN_FORMAT` and `STORAGE` on a generated column, and the type `SERIAL`, so analyzing such a definition throws `AnalysisException`.
+
+```php
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
+
+$semantics = new Semantics(Dialect::MySql);
+$table = $semantics->analyze('CREATE TABLE t (a INT, total INT AS (a * 2) STORED)');
+
+$table->declarations()[0]->columns[1]->generated; // => true
+$semantics->analyze('INSERT INTO t (a, total) VALUES (1, DEFAULT)', [$table])->facts->diagnostics; // => []
+$semantics->analyze('UPDATE t SET total = 3', [$table])->facts->diagnostics[0]->message(); // => "The value specified for generated column 'total' in table 't' is not allowed."
+```
+
 ## Limitations
 
 - Optimizer hints (`/*+ ... */` after `SELECT`, `INSERT`, `REPLACE`, `UPDATE` or `DELETE`) are not analyzed. The server reads them with a grammar of their own, and the parser this package uses delivers them as a comment, so from 5.7 on a statement with a hint is refused with `ImplementationGap` instead of being read without it. In MySQL 5.6 such a comment is an ordinary comment.
 - Version comments (`/*!80000 ... */`) are read as the selected release reads them: the body is part of the statement when the release is at least the written version, and a comment otherwise. Rendered SQL writes that reading without the comment markers, so it is SQL for the selected release.
 - Table and database names are compared exactly, as a server with `lower_case_table_names=0` (the default on Unix) compares them. A server running with 1 or 2 compares them without regard to letter case; that setting is not part of the analysis.
 - Column names are compared without regard to ASCII letter case. The server also folds letters outside ASCII; two column names that differ only in the case of such a letter are one name to the server and two names here.
-- The name of an unaliased select item whose text is read in `character_set_client` and holds characters outside ASCII, or is longer than 255 bytes, depends on that session state. The same applies to a string introduced with a character set other than `binary`, `utf8mb3` and `utf8mb4` that holds bytes outside ASCII, and to any string in `ucs2`, `utf16`, `utf16le` or `utf32`, whose name depends on the server's conversion table (`NameConversion`). Such a field has a null name and lists the input in `OutputSlot::$unnamed`, and a column lookup in a derived table that could only match it depends on that input. A name in `ORDER BY`, `GROUP BY` or `HAVING` is not taken to refer to it. A name of ASCII characters is known for every client character set that encodes ASCII as ASCII, which all of them but `swe7` do.
+- The name of an unaliased select item whose text is read in `character_set_client` and holds characters outside ASCII, or is longer than 255 bytes, depends on that session state. The same applies to a string introduced with a character set other than `binary`, `utf8mb3` and `utf8mb4` that holds bytes outside ASCII, and to any string in `ucs2`, `utf16`, `utf16le` or `utf32`, whose name depends on the server's conversion table (`NameConversion`). Such a field has a null name and lists the input in `OutputSlot::$unnamed`, and a column lookup in a derived table that could only match it depends on that input, as does a name in `GROUP BY`, `HAVING` or an `ORDER BY` expression that could name the item. A bare name in `ORDER BY` that a column of the `FROM` clause has still resolves to that column, although the server would take the item first if the item had that name. A name of ASCII characters is known for every client character set that encodes ASCII as ASCII, which all of them but `swe7` do.
 - The name `NAME_CONST` gives a column is derived for a string, decimal or integer number, hexadecimal or bit value and boolean name argument; other arguments are refused with `ImplementationGap`.
 - For a name the context does not declare, `SHOW CREATE TABLE` has a row shape that depends on whether the name is a table or a view (`TableOrView`).
 - A foreign key that references a view is not reported. The server refuses it only for a storage engine that keeps foreign keys, and the storage engine can come from the session. Writes into a view that cannot be updated are not reported either.
+- A write through a view into a column that reads a generated column is not reported; the server refuses it and names the column and table of the base table. The checks of a generated column definition that need its expression or keys are not reported: a reference to a later generated column or to an `AUTO_INCREMENT` column, `ON UPDATE`/`ON DELETE` actions of a foreign key over it, and keys the server refuses on a virtual column.
+- `INSERT ... VALUES ROW(...)`, which the server inserts as the rows of `INSERT ... VALUES`, is analyzed as a `VALUES` statement source: `DEFAULT` in it is reported and its values do not see the columns of the table.
 - When no current database is given, results that would show its name, such as the column name of `SHOW TABLES`, depend on it.
 
 See [Guarantees](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics/docs/guarantees.md) for the limits that apply to every database.

@@ -32,7 +32,7 @@ use SqlSemantics\Statement\Shape\OutputSlot;
  * every column of the tables the qualifier names, merged ones included. A
  * relation whose columns are not all known contributes its known columns
  * and an open star that names the missing inputs; columns whose names
- * depend on missing inputs (MYSQL-DERIVED-SHAPES-001) are still all known.
+ * depend on missing inputs (MYSQL-DERIVED-SHAPES-001) are known columns.
  * An item whose name depends on missing inputs is a field without a name
  * that names those inputs (OutputSlot::$unnamed). A star without any table and a qualifier
  * that names no table are reported. Terminates: one pass over the list.
@@ -83,7 +83,7 @@ final class Projection
             return $fields;
         }
         foreach ($environment->relations as $index => $relation) {
-            if ($this->open($relation)) {
+            if (!$relation->shape->complete()) {
                 foreach ($environment->relations as $each) {
                     $fields = $this->expand($fields, $each, true);
                 }
@@ -134,7 +134,7 @@ final class Projection
                 $fields[] = $this->field(count($fields), $relation, $slot);
             }
         }
-        if ($this->open($relation)) {
+        if (!$relation->shape->complete()) {
             $fields[] = new OpenStar($relation->shape->missing);
         }
 
@@ -147,26 +147,6 @@ final class Projection
     public function field(int $position, VisibleRelation $relation, OutputSlot $slot): Field
     {
         return new Field($position, new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed), null, new ResolvedColumn($relation->relation, $slot));
-    }
-
-    /**
-     * Tells whether a relation has columns that are not known, not merely columns whose names depend on inputs.
-     */
-    public function open(VisibleRelation $relation): bool
-    {
-        $unnamed = [];
-        foreach ($relation->shape->slots as $slot) {
-            foreach ($slot->unnamed as $input) {
-                $unnamed[] = $input->describe();
-            }
-        }
-        foreach ($relation->shape->missing as $missing) {
-            if (!in_array($missing->describe(), $unnamed, true)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

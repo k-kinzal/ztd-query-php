@@ -23,8 +23,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * Rule: MYSQL-DERIVED-SHAPES-001. Without a column list the columns are the
  * output slots of the query, with their names (MYSQL-SELECT-ITEM-NAME-001);
  * a slot whose name depends on missing inputs keeps them as its unnamed
- * inputs, and the shape names them too, so that a column lookup in the
- * relation depends on them (core column lookup reads only the shape). With a column list the list names the
+ * inputs, so that a column lookup in the relation depends on them
+ * (CORE-COLUMN-LOOKUP-001). With a column list the list names the
  * columns in order and the query gives their types, which depend on the
  * missing inputs of the query while its columns are not all known; a list whose length
  * differs from a complete query is reported, and a column without a slot is
@@ -46,14 +46,12 @@ final class DerivedShapes
         $shape = $fact->shape;
         if ($columns === []) {
             $slots = [];
-            $unnamed = [];
             foreach ($shape->slots as $slot) {
                 $slots[] = new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed);
-                array_push($unnamed, ...$slot->unnamed);
             }
             $this->unique($slots, $derivation);
 
-            return new RowShape($slots, [...$shape->missing, ...$unnamed]);
+            return new RowShape($slots, $shape->missing);
         }
         $problem = null;
         if ($shape->complete() && count($shape->slots) !== count($columns)) {

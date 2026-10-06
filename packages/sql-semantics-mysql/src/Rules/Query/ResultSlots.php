@@ -70,7 +70,7 @@ final class ResultSlots
                 $type = new Dependent($right->shape->missing);
                 $nullability = $operator === SetOperator::Except ? $slot->nullability : Nullability::Dependent;
             }
-            $fields[] = new Field($position, new OutputSlot($slot->name, $type, $nullability));
+            $fields[] = new Field($position, new OutputSlot($slot->name, $type, $nullability, null, null, $slot->unnamed));
         }
 
         return $fields;

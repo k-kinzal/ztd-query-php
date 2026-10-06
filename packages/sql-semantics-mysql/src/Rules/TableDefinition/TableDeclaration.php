@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
@@ -28,25 +29,31 @@ use SqlSemantics\Statement\Type\Known;
  * Rule: MYSQL-TABLE-DECLARATION-001. A CREATE TABLE declares one column per
  * column definition, in order, with the type as written and the NULL fact
  * of MYSQL-COLUMN-FLAGS-001; a column a table-level PRIMARY KEY names is NOT
- * NULL. Generated columns are ordinary columns for reading. An INVISIBLE
+ * NULL. A generated column (VIRTUAL or STORED) is an ordinary column for
+ * reading and is declared generated: the server computes its value and
+ * accepts only DEFAULT for it in a write. An INVISIBLE
  * column is found by name but not by `*` ("not part of SELECT *"): it is an
  * implicit column of the declaration.
  *
  * CREATE TABLE ... SELECT: "columns named only in the CREATE TABLE part come
  * first. Columns named in both parts or only in the SELECT part come after
  * that. The data type of SELECT columns can be overridden by also specifying
- * the column in the CREATE TABLE part." A column of the SELECT part takes the
- * name, the type and the NULL fact of its output field; the column list
+ * the column in the CREATE TABLE part." A column named in both parts takes
+ * its name from the SELECT part and the rest from the CREATE TABLE part.
+ * A column of the SELECT part takes the
+ * name, the type and the NULL fact of its output field and is not
+ * generated, also when the field reads a generated column; the column list
  * stops, and the declaration is incomplete, at the first field that has no
  * determined name or type or that an unexpanded star leaves open.
  *
  * CREATE VIEW: a view (RelationKind::View) with one column per output field,
  * named by the column list when one is written, with the type and NULL fact
- * of the field; incomplete under the same conditions and when the column
+ * of the field, never generated; incomplete under the same conditions and when the column
  * list has another length. Every other declaration is a base table.
  *
  * CREATE TABLE ... LIKE: the columns of the source table, as new
- * declarations with the same names, types and NULL facts; an undeclared
+ * declarations with the same names, types, NULL facts and generation (the
+ * copy keeps the generation expressions); an undeclared
  * source leaves the declaration empty and incomplete.
  * Terminates: one pass over the elements and the fields.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
@@ -64,7 +71,9 @@ final class TableDeclaration
      */
     public function column(ColumnDefinition $definition, bool $keyed = false): Column
     {
-        return new Column($definition->name->column, $definition->specification->dataType(), (new ColumnFlags())->nullability($definition->specification, $keyed));
+        $specification = $definition->specification;
+
+        return new Column($definition->name->column, $specification->dataType(), (new ColumnFlags())->nullability($specification, $keyed), $specification instanceof GeneratedColumn);
     }
 
     /**
@@ -106,7 +115,7 @@ final class TableDeclaration
         $used = [];
         foreach ($output === null ? [] : $this->settled($output) as $field) {
             $match = $field->name === null ? null : $this->find($field->name, $defined, $comparison);
-            $column = $match === null ? $this->fieldColumn($field, $field->name) : $defined[$match][1];
+            $column = $match === null ? $this->fieldColumn($field, $field->name) : $this->renamed($defined[$match][1], $field->name);
             if ($column === null) {
                 $complete = false;
                 break;
@@ -181,14 +190,22 @@ final class TableDeclaration
         }
         $columns = [];
         foreach ($source->columns as $column) {
-            $columns[] = new Column($column->name, $column->type, $column->nullability);
+            $columns[] = new Column($column->name, $column->type, $column->nullability, $column->generated);
         }
         $implicit = [];
         foreach ($source->implicit as $hidden) {
-            $implicit[] = new ImplicitColumn($hidden->names, new Column($hidden->column->name, $hidden->column->type, $hidden->column->nullability));
+            $implicit[] = new ImplicitColumn($hidden->names, new Column($hidden->column->name, $hidden->column->type, $hidden->column->nullability, $hidden->column->generated));
         }
 
         return new Table($name, $profile, $columns, $implicit, $source->complete);
+    }
+
+    /**
+     * Answers a defined column under the name a field of the SELECT part gives it.
+     */
+    public function renamed(Column $column, Name $name): Column
+    {
+        return new Column($name, $column->type, $column->nullability, $column->generated);
     }
 
     /**

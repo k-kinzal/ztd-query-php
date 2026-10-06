@@ -44,4 +44,11 @@ final class JoinedInputTest extends TestCase
         self::assertTrue(JoinedInput::of([new VisibleRelation(new Dual(), new RowShape([]))], [])->complete());
         self::assertFalse(JoinedInput::of([new VisibleRelation(new Dual(), new RowShape([], [new SessionState('x')]))], [])->complete());
     }
+
+    public function testCompleteTreatsANameThatDependsOnInputsAsUndecided(): void
+    {
+        $unnamed = new OutputSlot(null, new Known(new Integral(IntegralKind::Int)), Nullability::NotNull, null, null, [new SessionState('character_set_client')]);
+
+        self::assertFalse(JoinedInput::of([new VisibleRelation(new Dual(), new RowShape([$unnamed]))], [[0, 0]])->complete());
+    }
 }

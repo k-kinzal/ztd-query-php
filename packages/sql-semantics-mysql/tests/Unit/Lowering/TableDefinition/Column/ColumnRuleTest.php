@@ -8,7 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Diagnostic\AnalysisException;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\Column\ColumnRule;
 use SqlSemantics\Platform\MySql\Platform;
@@ -51,6 +54,44 @@ final class ColumnRuleTest extends TestCase
         $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT NULL DEFAULT 1 COMMENT \'c\')')->find('opt_column_attribute_list')[0];
 
         self::assertCount(3, (new ColumnRule($lowering))->attributes($node));
+    }
+
+    public function testSpecificationRefusesAnAttributeOfAGeneratedColumn(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $node = $platform->parser($profile)->parse('CREATE TABLE t (a INT, g INT AS (a) NOT NULL DEFAULT 1)')->find('field_def')[1];
+
+        $this->expectException(AnalysisException::class);
+        $this->expectExceptionMessage('Incorrect usage of DEFAULT and generated column');
+
+        (new ColumnRule($lowering))->specification($node);
+    }
+
+    public function testRefuseNamesTheFirstRefusedAttribute(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        $this->expectException(AnalysisException::class);
+        $this->expectExceptionMessage('Incorrect usage of COLUMN_FORMAT and generated column');
+
+        $semantics->analyze('CREATE TABLE t (a INT, g INT AS (a) UNIQUE COLUMN_FORMAT FIXED ON UPDATE CURRENT_TIMESTAMP)');
+    }
+
+    public function testRefuseNamesTheTypeSerial(): void
+    {
+        $this->expectException(AnalysisException::class);
+        $this->expectExceptionMessage('Incorrect usage of SERIAL and generated column');
+
+        (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t ADD g SERIAL AS (1)');
+    }
+
+    public function testRefuseAcceptsTheOtherAttributes(): void
+    {
+        $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, g INT AS (a) VIRTUAL NOT NULL UNIQUE KEY COMMENT \'c\' INVISIBLE)');
+
+        self::assertSame([], $create->facts->diagnostics);
     }
 
     public function testAlwaysAcceptsTheOptionalWords(): void

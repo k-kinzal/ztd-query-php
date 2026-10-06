@@ -6,7 +6,9 @@ namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\GeneratedColumnWrite;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
@@ -19,6 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
 use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Fact\QueryFact;
 
 /**
  * Reports the problems of a table definition that the server rejects.
@@ -32,7 +35,11 @@ use SqlSemantics\Statement\Declaration\Table;
  * the table, when its column list is complete (ER_KEY_COLUMN_DOES_NOT_EXITS);
  * a table without columns and without a query (ER_TABLE_MUST_HAVE_COLUMNS);
  * a column name that is not valid, among them the name a selected column
- * gets after its text (ER_WRONG_COLUMN_NAME, MYSQL-COLUMN-NAME-001).
+ * gets after its text (ER_WRONG_COLUMN_NAME, MYSQL-COLUMN-NAME-001); a
+ * generated column of the CREATE TABLE part that a column of the SELECT
+ * part names, so that the query would fill it
+ * (ER_NON_DEFAULT_VALUE_FOR_GENERATED_COLUMN; sql/sql_insert.cc
+ * `Query_result_create::create_table_for_query_block`).
  * Terminates: one pass over the elements and the key parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
  * https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html. Status: Implemented.
@@ -101,6 +108,21 @@ final class TableProblems
                 $derivation->report(new DuplicateColumn($column->name));
             }
             $seen[] = $column->name;
+        }
+    }
+
+    /**
+     * Reports each generated column of the CREATE TABLE part that a column of the SELECT part would fill (MYSQL-GENERATED-WRITE-001).
+     */
+    public function selected(CreateTable $definition, QueryFact $output, Derivation $derivation): void
+    {
+        $comparison = $derivation->context->columnNames;
+        foreach ((new TableDeclaration())->settled($output) as $field) {
+            foreach ($definition->elements as $element) {
+                if ($field->name !== null && $element instanceof ColumnDefinition && $element->specification instanceof GeneratedColumn && $comparison->equal($element->name->column->value, $field->name->value)) {
+                    $derivation->report(new GeneratedColumnWrite($field->name, $definition->name->name));
+                }
+            }
         }
     }
 

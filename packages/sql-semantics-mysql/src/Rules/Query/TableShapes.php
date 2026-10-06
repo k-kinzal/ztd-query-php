@@ -94,7 +94,7 @@ final class TableShapes
     {
         $fields = [];
         foreach ($fact->shape->slots as $position => $slot) {
-            $fields[] = new Field($position, new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot), null, new ResolvedColumn($table, $slot));
+            $fields[] = new Field($position, new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot, $slot->unnamed), null, new ResolvedColumn($table, $slot));
         }
         if (!$fact->shape->complete()) {
             $fields[] = new OpenStar($fact->shape->missing);

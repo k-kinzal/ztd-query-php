@@ -85,6 +85,7 @@ final class Qualifiers
         }
         $this->attributes($derivation, $qualifiers);
         $this->conflicts($derivation, $column, $qualifiers);
+        (new GeneratedColumns())->columnKeys($derivation, $qualifiers);
     }
 
     /**

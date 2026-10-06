@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Constraint\Table;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Attributes;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\GeneratedColumns;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\ForeignKeys;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\KeyClauses;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Writing;
@@ -91,6 +92,10 @@ final class ForeignKey implements Constraint
     {
         (new KeyClauses())->derive($derivation, $environment, $this->columns, []);
         (new ForeignKeys())->derive($derivation, $this, $this->table, $this->referenced, $this->match, $this->actions);
+        $generated = new GeneratedColumns();
+        if ($generated->among($derivation, $environment, $this->columns)) {
+            $generated->keyActions($derivation, $this->actions);
+        }
         (new Attributes())->report($derivation, $this->attributes, 'FOREIGN KEY', true, true, false);
     }
 

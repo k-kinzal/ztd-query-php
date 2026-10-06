@@ -41,7 +41,7 @@ use SqlSemantics\Statement\Shape\OutputSlot;
  * under the name `excluded`, the row proposed for insertion, each
  * qualifying the same columns, so an unqualified column of both is
  * ambiguous; DO UPDATE without a conflict target is reported. RETURNING
- * sees the target.
+ * sees the target. A generated column takes DEFAULT only (PG-GENERATED-WRITE-001).
  * Source: https://www.postgresql.org/docs/17/sql-insert.html,
  * https://www.postgresql.org/docs/17/sql-insert.html#SQL-ON-CONFLICT. Status: Implemented.
  *
@@ -60,19 +60,22 @@ final class InsertFacts
         $defaults = [];
         $rows = $insert->rows->rows();
         $width = count($rows[0]->values);
+        $assignments = new Assignments();
         foreach ($rows as $row) {
             if (count($row->values) !== $width) {
                 $derivation->report(new ArityMismatch(ArityRule::ValuesRows, '', $width, count($row->values)));
             }
             foreach ($row->values as $position => $value) {
                 $fact = $derivation->scalar($value, $base);
-                (new Assignments())->value($slots[$position] ?? null, $value, $fact->type, $derivation);
-                if ($value instanceof DefaultRequest) {
-                    $defaults[] = $value;
+                $assignments->value($slots[$position] ?? null, $value, $fact->type, $derivation);
+                $default = $assignments->requested($value);
+                if ($default !== null) {
+                    $defaults[] = $default;
                 }
             }
         }
         $this->arity($insert->columns, $target, $width, $derivation);
+        (new GeneratedWrites())->inserted($target, $insert->columns, array_map(static fn ($row): array => $row->values, $rows), $width, $derivation, $base);
         $defaults = [...$defaults, ...$this->conflict($insert->conflict, $target, $derivation, $base)];
         (new Placement())->values($insert, $defaults, [], $derivation);
 
@@ -99,6 +102,7 @@ final class InsertFacts
             }
             $this->arity($insert->columns, $target, $fields->count(), $derivation);
         }
+        (new GeneratedWrites())->inserted($target, $insert->columns, [], $fields?->count(), $derivation, $base);
         $defaults = $this->conflict($insert->conflict, $target, $derivation, $base);
         (new Placement())->values($insert, $defaults, [], $derivation);
 

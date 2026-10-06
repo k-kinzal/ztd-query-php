@@ -118,4 +118,26 @@ final class AssignmentsTest extends TestCase
         $query = $semantics->analyze('UPDATE t SET a = DEFAULT, b = (SELECT DEFAULT)', [$t, $u]);
         self::assertSame(['DEFAULT is not allowed in this context'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
     }
+
+    public function testFindAnswersTheSlotOfAColumnWrittenInPart(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $table = $semantics->analyze('CREATE TABLE t (a int[], b int[] GENERATED ALWAYS AS (a) STORED)');
+        $insert = $semantics->analyze('INSERT INTO t (b[1], a) VALUES (1, NULL)', $table->declarations());
+        self::assertSame(['cannot insert a non-DEFAULT value into column "b"'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $insert->facts->diagnostics));
+    }
+
+    public function testBareRemovesTheParentheses(): void
+    {
+        $default = new \SqlSemantics\Platform\PostgreSql\Statement\Expression\DefaultRequest();
+        self::assertSame($default, (new \SqlSemantics\Platform\PostgreSql\Rules\Manipulation\Assignments())->bare(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped($default))));
+    }
+
+    public function testRequestedAdmitsDefaultInParentheses(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-16.6');
+        $table = $semantics->analyze('CREATE TABLE t (a int, c int)');
+        $update = $semantics->analyze('UPDATE t SET a = ((DEFAULT)), (c) = ROW((DEFAULT))', $table->declarations());
+        self::assertSame([], $update->facts->diagnostics);
+    }
 }

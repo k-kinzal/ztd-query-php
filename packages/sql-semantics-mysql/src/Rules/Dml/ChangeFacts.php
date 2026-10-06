@@ -42,7 +42,8 @@ use SqlSemantics\Statement\Scalar;
  * name a table of its references. A column an UPDATE assigns, and a table
  * a multiple-table DELETE deletes from, must belong to a table or view; a
  * derived table, a table function or a common table is not updatable
- * (ER_NON_UPDATABLE_TABLE). The statements return no rows.
+ * (ER_NON_UPDATABLE_TABLE); a generated column takes only DEFAULT
+ * (MYSQL-GENERATED-WRITE-001). The statements return no rows.
  * Terminates: one pass over the finite parts. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/update.html,
  * https://dev.mysql.com/doc/refman/8.4/en/delete.html,
@@ -61,6 +62,7 @@ final class ChangeFacts
         $visible = $this->references($update->tables, $derivation, $base);
         $environment = new Environment($derivation->context, $base, $visible);
         $fields = (new WriteScope())->assign($update->assignments, $derivation, $environment, $environment, false);
+        (new GeneratedWrites())->assignments($update->assignments, $fields, $derivation);
         foreach ($fields as $field) {
             if ($field->resolution instanceof ResolvedColumn && !$this->updatable($field->resolution->relation, $derivation)) {
                 $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget));

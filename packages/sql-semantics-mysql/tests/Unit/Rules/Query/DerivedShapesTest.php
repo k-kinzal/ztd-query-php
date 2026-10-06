@@ -36,7 +36,7 @@ final class DerivedShapesTest extends TestCase
         $listed = (new DerivedShapes())->shape($fact, [new Name('x'), new Name('y')], $derivation);
 
         self::assertCount(2, $plain->slots);
-        self::assertEquals([new NameConversion('latin2')], $plain->missing);
+        self::assertTrue($plain->complete());
         self::assertEquals([new NameConversion('latin2')], $plain->slots[1]->unnamed);
         self::assertSame(['x', 'y'], array_map(static fn (OutputSlot $slot): ?string => $slot->name?->value, $listed->slots));
         self::assertTrue($listed->complete());

@@ -37,8 +37,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * WITHOUT ROWID table has no such column.
  *
  * Generated columns are ordinary columns for reading, VIRTUAL and STORED
- * alike. An ordinary table has no hidden columns; those exist only in
- * virtual tables, whose columns the module decides.
+ * alike, and are declared generated: they cannot be written
+ * (SQLITE-GENERATED-WRITE-001). An ordinary table has no hidden columns;
+ * those exist only in virtual tables, whose columns the module decides.
  * Terminates: one pass over the columns.
  * Source: https://sqlite.org/lang_createtable.html, https://sqlite.org/lang_createtable.html#rowid,
  * https://sqlite.org/withoutrowid.html, https://sqlite.org/stricttables.html, https://sqlite.org/gencol.html.
@@ -83,7 +84,7 @@ final class TableDeclaration
         $columns = [];
         foreach ($definition->columns as $position => $column) {
             $notNull = $column->notNull() || $position === $rowid || ($keyed && in_array($position, $key->columns, true));
-            $columns[] = new Column($column->name, $domains[$position], $notNull ? Nullability::NotNull : Nullability::Nullable);
+            $columns[] = new Column($column->name, $domains[$position], $notNull ? Nullability::NotNull : Nullability::Nullable, $column->generated() !== null);
         }
 
         return new Table($this->name($definition->name, $definition->temporary), $profile, $columns, $definition->withoutRowid() ? [] : [$this->rowid($rowid === null ? null : $columns[$rowid])]);

@@ -75,11 +75,12 @@ final class TableDeclarationTest extends TestCase
         self::assertSame(Nullability::NotNull, $table->columns[1]->nullability);
     }
 
-    public function testTableKeepsGeneratedColumnsAsOrdinaryNullableColumns(): void
+    public function testTableDeclaresGeneratedColumnsAsGeneratedNullableColumns(): void
     {
-        $table = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INT, b INT AS (a + 1) STORED, c AS (a) NOT NULL)')->declarations()[0];
+        $table = (new Semantics(Dialect::Sqlite))->analyze('CREATE TABLE t (a INT, b INT AS (a + 1) STORED, c AS (a) NOT NULL, d GENERATED ALWAYS AS (a) VIRTUAL)')->declarations()[0];
 
-        self::assertCount(3, $table->columns);
+        self::assertCount(4, $table->columns);
+        self::assertSame([false, true, true, true], array_map(static fn (Column $column): bool => $column->generated, $table->columns));
         self::assertSame(Nullability::Nullable, $table->columns[1]->nullability);
         self::assertSame(Nullability::NotNull, $table->columns[2]->nullability);
         self::assertSame('INT', $table->columns[1]->type->name());

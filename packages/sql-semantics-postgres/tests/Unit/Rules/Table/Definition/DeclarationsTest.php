@@ -76,4 +76,38 @@ final class DeclarationsTest extends TestCase
           0 => 'x integer NotNull',
         ], array_map(static fn ($column): string => $column->name->value . ' ' . $column->type->name() . ' ' . $column->nullability->name, $statement->declarations()[0]->columns));
     }
+
+    public function testCopyKeepsGeneratedColumnsOfParentsAndPartitions(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [];
+        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a) STORED) PARTITION BY LIST (a)')->declarations());
+        $child = $semantics->analyze('CREATE TABLE c (b int, x int) INHERITS (t)', $context);
+        $partition = $semantics->analyze('CREATE TABLE p1 PARTITION OF t FOR VALUES IN (1)', $context);
+        self::assertSame(
+            [[false, true, false], [false, true]],
+            [array_map(static fn ($column): bool => $column->generated, $child->declarations()[0]->columns), array_map(static fn ($column): bool => $column->generated, $partition->declarations()[0]->columns)],
+        );
+    }
+
+    public function testIncludesGeneratedAppliesTheOptionsInOrder(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $context = [];
+        array_push($context, ...$semantics->analyze('CREATE TABLE t (a int, b int GENERATED ALWAYS AS (a) STORED)')->declarations());
+        self::assertSame(
+            [[false, false], [false, true], [false, true], [false, false]],
+            array_map(
+                static fn (string $sql): array => array_map(static fn ($column): bool => $column->generated, $semantics->analyze($sql, $context)->declarations()[0]->columns),
+                ['CREATE TABLE l (LIKE t)', 'CREATE TABLE l (LIKE t INCLUDING GENERATED)', 'CREATE TABLE l (LIKE t EXCLUDING ALL INCLUDING ALL)', 'CREATE TABLE l (LIKE t INCLUDING GENERATED EXCLUDING ALL)'],
+            ),
+        );
+    }
+
+    public function testGeneratedTellsAGenerationClause(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $statement = $semantics->analyze('CREATE TABLE n (a int, b int GENERATED ALWAYS AS (a) STORED, c int GENERATED ALWAYS AS IDENTITY)');
+        self::assertSame([false, true, false], array_map(static fn ($column): bool => $column->generated, $statement->declarations()[0]->columns));
+    }
 }

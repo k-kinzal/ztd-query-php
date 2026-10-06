@@ -49,7 +49,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * kind (PG-RELATION-KIND-001, PG-ALTER-KIND-001). An identity can be added
  * only to a column that is NOT NULL, as declared or made by SET NOT NULL or
  * a primary key in the same statement ("must be declared NOT NULL before
- * identity can be added", ATExecAddIdentity).
+ * identity can be added", ATExecAddIdentity). The column actions must fit
+ * the generated columns of the relation (PG-ALTER-GENERATED-001).
  * Source: https://www.postgresql.org/docs/17/sql-altertable.html.
  * Termination: one pass over the actions. Status: Implemented.
  *
@@ -77,6 +78,7 @@ final class Alterations
                 $this->identity($derivation, $fact->shape, $alter, $command->column);
             }
         }
+        (new GeneratedChanges())->check($derivation, $fact->shape, $alter);
         foreach ($alter->commands as $command) {
             $command->deriveClause($derivation, $command instanceof AddColumn ? $this->widened($scope, $command, $derivation) : $scope);
         }

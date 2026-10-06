@@ -60,4 +60,19 @@ final class ColumnSetTest extends TestCase
           1 => 'a',
         ], array_map(static fn ($column): string => $column->name->value, $set->columns()));
     }
+
+    public function testAddKeepsTheGeneratedFlag(): void
+    {
+        $set = new \SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\ColumnSet();
+        $set->add(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, false, true);
+        self::assertSame(true, $set->columns()[0]->generated);
+    }
+
+    public function testInheritMergesTheGeneratedFlag(): void
+    {
+        $set = new \SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\ColumnSet();
+        $set->add(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, false);
+        $set->inherit(new \SqlSemantics\Statement\Declaration\Column(new \SqlSemantics\Statement\Identifier\Name('a'), \SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin::Int4, \SqlSemantics\Statement\Type\Nullability::Nullable, true));
+        self::assertSame([true, \SqlSemantics\Statement\Type\Nullability::Nullable], [$set->columns()[0]->generated, $set->columns()[0]->nullability]);
+    }
 }

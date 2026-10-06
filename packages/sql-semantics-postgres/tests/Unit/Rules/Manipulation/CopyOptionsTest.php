@@ -41,4 +41,20 @@ final class CopyOptionsTest extends TestCase
         $query = $semantics->analyze('COPY t (a) TO STDOUT CSV FORCE QUOTE b', [$t, $u]);
         self::assertSame(['FORCE_QUOTE column "b" not referenced by COPY'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $query->facts->diagnostics));
     }
+
+    public function testListedAnswersTheColumnsOfAListArgument(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $copy = $semantics->analyze("COPY t FROM STDIN (format csv, force_null (a, 'b'))");
+        self::assertInstanceOf(\SqlSemantics\Platform\PostgreSql\Statement\Manipulation\Copy\CopyTable::class, $copy->statement);
+        self::assertSame(['a', 'b'], array_map(static fn (\SqlSemantics\Statement\Identifier\Name $name): string => $name->value, (new \SqlSemantics\Platform\PostgreSql\Rules\Manipulation\CopyOptions())->listed($copy->statement->options[1])));
+    }
+
+    public function testCopiedReportsAGeneratedColumnOfAListArgument(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED, c int)');
+        $copy = $semantics->analyze('COPY g FROM STDIN WITH (FORMAT csv, FORCE_NOT_NULL (c, b))', $table->declarations());
+        self::assertSame(['column "b" is a generated column'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $copy->facts->diagnostics));
+    }
 }

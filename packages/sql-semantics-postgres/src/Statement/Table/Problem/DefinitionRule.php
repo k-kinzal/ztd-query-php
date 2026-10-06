@@ -63,4 +63,16 @@ enum DefinitionRule: string
     case TemporaryInPermanentSchema = 'cannot create temporary relation in non-temporary schema';
     case UnloggedInTemporarySchema = 'only temporary relations may be created in temporary schemas';
     case BeforeTriggerSystemColumn = "BEFORE trigger's WHEN condition cannot reference NEW system columns";
+    case BeforeTriggerGeneratedColumn = "BEFORE trigger's WHEN condition cannot reference NEW generated columns";
+    case GeneratedInGeneration = 'cannot use generated column "%s" in column generation expression';
+    case GeneratedPartitionKey = 'cannot use generated column in partition key';
+    case GeneratedKeyAction = 'invalid %s action for foreign key constraint containing generated column';
+    case InheritedGenerationConflict = 'inherited column "%s" has a generation conflict';
+    case GeneratedInheritsDefault = 'column "%s" inherits from generated column but specifies default';
+    case GeneratedInheritsIdentity = 'column "%s" inherits from generated column but specifies identity';
+    case ChildGeneration = 'child column "%s" specifies generation expression';
+    case GeneratedColumnDefault = 'column "%s" of relation "%s" is a generated column';
+    case NotStoredGenerated = 'column "%s" of relation "%s" is not a stored generated column';
+    case NotGenerated = 'column "%s" of relation "%s" is not a generated column';
+    case GeneratedTypeUsing = 'cannot specify USING when altering type of generated column';
 }

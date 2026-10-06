@@ -26,6 +26,7 @@ use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -163,5 +164,39 @@ final class ColumnResolverTest extends TestCase
         self::assertFalse((new ColumnResolver())->row($visible, new QualifiedName(new Name('OLD'))));
         self::assertFalse((new ColumnResolver())->row($visible, new QualifiedName(new Name('NEW'), new Name('db'))));
         self::assertFalse((new ColumnResolver())->row(new Environment($operation->context), new QualifiedName(new Name('NEW'))));
+    }
+
+    public function testFindIsConditionalWhileAnItemWithoutADecidedNameCouldHaveTheName(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int))]);
+        $operation = $semantics->analyze("SELECT 'é' FROM t GROUP BY q", [$table]);
+        $select = $operation->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $group = $select->groupBy;
+        self::assertNotNull($group);
+        $resolution = $operation->facts->scalar($group->items[0]->expression)->resolution;
+
+        self::assertInstanceOf(ConditionalColumn::class, $resolution);
+        self::assertEquals([new SessionState('character_set_client')], $resolution->missing);
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
+    public function testUnnamedAnswersTheInputsTheItemNamesDependOn(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 'é' AS x, 'ü'");
+
+        self::assertEquals([new SessionState('character_set_client')], (new ColumnResolver())->unnamed([$operation->field(0), $operation->field(1)]));
+    }
+
+    public function testUndecidedJoinsTheInputsOfOpenOccurrencesAndUnnamedItems(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a FROM u');
+        $input = $operation->inputRelation();
+        self::assertNotNull($input);
+        $resolution = (new ColumnResolver())->undecided(new Name('a'), [], [new VisibleRelation($input, $operation->facts->relation($input)->shape)], [new SessionState('character_set_client')]);
+
+        self::assertSame([$input], $resolution->relations);
+        self::assertCount(2, $resolution->missing);
     }
 }

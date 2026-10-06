@@ -60,4 +60,19 @@ final class CopyFactsTest extends TestCase
         self::assertSame(['cannot copy to sequence "s"'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY s FROM STDIN', $context)->facts->diagnostics));
         self::assertSame([], $semantics->analyze('COPY v FROM STDIN', $context)->facts->diagnostics);
     }
+
+    public function testColumnsReportsAGeneratedColumn(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-17.2');
+        $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED, c int)');
+        self::assertSame(['column "b" is a generated column'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY g (c, b) TO STDOUT', $table->declarations())->facts->diagnostics));
+    }
+
+    public function testGeneratedAnswersTheGeneratedColumns(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql, 'pg-16.6');
+        $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED, c text)');
+        self::assertSame(['FORCE_QUOTE column "c" not referenced by COPY'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY g (a) TO STDOUT CSV FORCE QUOTE c', $table->declarations())->facts->diagnostics));
+        self::assertSame(['column "b" is a generated column'], array_map(static fn ($problem): string => $problem->message(), $semantics->analyze('COPY g TO STDOUT CSV FORCE QUOTE b, c', $table->declarations())->facts->diagnostics));
+    }
 }

@@ -44,7 +44,8 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
  * relation, its system columns included; defaults and partition bound values
  * see no column. Problems: a column name written twice, a column named like
  * a system column, more than one primary key, an array of a serial type, a
- * primary key, unique, exclusion or foreign key constraint of a foreign table.
+ * primary key, unique, exclusion or foreign key constraint of a foreign table,
+ * and the generation rules of PG-GENERATED-COLUMN-001.
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html. Termination:
  * one pass over the elements. Status: Implemented.
  *
@@ -64,6 +65,7 @@ final class Definitions
         $fact = $derivation->target($create, new RelationFact($targets->shape($table), new DeclaredTable($table)));
         $scope = $targets->scope($derivation, $create, $name, $fact->shape, $targets->implicit($fact));
         $this->report($create->definition, $derivation, $name);
+        (new GeneratedColumns())->inherited($derivation, $create->definition);
         if ($create instanceof CreateTable) {
             (new CreationSchemas())->check($derivation, $create->name, $create->persistence);
         } else {

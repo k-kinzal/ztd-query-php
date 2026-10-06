@@ -39,7 +39,7 @@ final class InsertRowsTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('a'), new Integral(IntegralKind::Int), Nullability::NotNull), new Column(new Name('b'), new Integral(IntegralKind::BigInt))]);
-        $operation = $semantics->analyze('INSERT INTO t VALUES (), (1, a)', [$t]);
+        $operation = $semantics->analyze('INSERT INTO t VALUES (), ()', [$t]);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull($operation->facts->output);

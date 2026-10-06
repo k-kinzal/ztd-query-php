@@ -68,7 +68,7 @@ final class TriggerReferencesTest extends TestCase
         $fact = $trigger->facts->relation($trigger->statement);
         $references = new TriggerReferences();
         self::assertSame(
-            [[true, false], [false, true], null, [false, false], null, null],
+            [[true, false, false], [false, true, false], null, [false, false, false], null, null],
             [
                 $references->reference(new ColumnReference([new Name('old'), new Name('a')]), $fact),
                 $references->reference(new ColumnReference([new Name('new'), new Name('ctid')]), $fact),
@@ -76,6 +76,56 @@ final class TriggerReferencesTest extends TestCase
                 $references->reference(new ColumnStar([new Name('new')]), $fact),
                 $references->reference(new ColumnReference([new Name('new'), new Name('b')]), $fact),
                 $references->reference(new ColumnReference([new Name('t'), new Name('a')]), $fact),
+            ],
+        );
+    }
+
+    public function testCheckReportsANewGeneratedColumnInABeforeTrigger(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql, 'pg-16.6');
+        $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
+        $trigger = $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new.a > 0 AND new.b > 0) EXECUTE FUNCTION f()', $table->declarations());
+        self::assertSame(["BEFORE trigger's WHEN condition cannot reference NEW generated columns"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
+    }
+
+    public function testCheckReportsTheWholeNewRowOfATableWithAGeneratedColumn(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql, 'pg-17.2');
+        $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
+        $trigger = $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new IS DISTINCT FROM old) EXECUTE FUNCTION f()', $table->declarations());
+        self::assertSame(["BEFORE trigger's WHEN condition cannot reference NEW generated columns"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $trigger->facts->diagnostics));
+    }
+
+    public function testCheckAcceptsNewGeneratedColumnsInAnAfterTrigger(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql, 'pg-17.2');
+        $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
+        $trigger = $semantics->analyze('CREATE TRIGGER tr AFTER UPDATE ON g FOR EACH ROW WHEN (new.b > 0 AND (new).b > 0) EXECUTE FUNCTION f()', $table->declarations());
+        self::assertSame([], $trigger->facts->diagnostics);
+    }
+
+    public function testReferencesAnswersTheReferencesInWrittenOrder(): void
+    {
+        $semantics = new Semantics(Dialect::PostgreSql, 'pg-17.2');
+        $table = $semantics->analyze('CREATE TABLE g (a int, b int GENERATED ALWAYS AS (a * 2) STORED)', []);
+        $trigger = $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON g FOR EACH ROW WHEN (new.b > 0 AND new.ctid IS NOT NULL AND old.a = (new).a) EXECUTE FUNCTION f()', $table->declarations());
+        self::assertInstanceOf(CreateTrigger::class, $trigger->statement);
+        self::assertNotNull($trigger->statement->when);
+        self::assertSame(
+            [[false, false, true], [false, true, false], [true, false, false], [false, false, false]],
+            (new TriggerReferences())->references($trigger->statement->when, $trigger->facts->relation($trigger->statement)),
+        );
+    }
+
+    public function testSelectedReadsAFieldOfTheWholeRowAsAColumn(): void
+    {
+        $references = new TriggerReferences();
+        $new = new ColumnReference([new Name('new')]);
+        self::assertEquals(
+            [new ColumnReference([new Name('new'), new Name('b')]), null],
+            [
+                $references->selected(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Indirection(new \SqlSemantics\Platform\PostgreSql\Statement\Expression\Grouped($new), [new \SqlSemantics\Platform\PostgreSql\Statement\Expression\FieldSelection(new Name('b'))])),
+                $references->selected($new),
             ],
         );
     }

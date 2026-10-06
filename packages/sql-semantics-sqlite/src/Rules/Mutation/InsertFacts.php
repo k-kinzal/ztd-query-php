@@ -20,6 +20,7 @@ use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 
 /**
  * Derives the facts of an INSERT statement.
@@ -27,8 +28,9 @@ use SqlSemantics\Statement\Query;
  * Rule: SQLITE-INSERT-001. The source query is derived where the common
  * tables of the statement are visible; it does not see the written table.
  * The source must supply one value per column of the column list, or per
- * column of the table when no list is written; another count is reported
- * when both counts are known. In an ON CONFLICT clause the conflict target
+ * column of the table that is not generated when no list is written;
+ * another count is reported when both counts are known. Writes of generated
+ * columns follow SQLITE-GENERATED-WRITE-001. In an ON CONFLICT clause the conflict target
  * sees the written table; DO UPDATE sees the written table and, under the
  * qualifier `excluded`, the row that could not be inserted. An ON CONFLICT
  * clause on a view is reported (SQLITE-RELATION-KIND-001). RETURNING
@@ -55,16 +57,20 @@ final class InsertFacts
             (new RelationKinds())->refuse($written, KindRefusal::Upsert, $derivation);
         }
         $scope->names($into->columns, $target, $derivation);
+        $generated = new GeneratedWrites();
+        $generated->inserted($into->columns, $target, $derivation);
         if ($source !== null) {
             $rows = $derivation->query($source, $base);
-            $expected = $into->columns !== [] ? count($into->columns) : ($target->shape->complete() ? count($target->shape->slots) : null);
+            $expected = $into->columns !== [] ? count($into->columns) : ($target->shape->complete() ? $generated->writable($target->shape) : null);
             if ($expected !== null && $rows->shape->complete() && count($rows->shape->slots) !== $expected) {
                 $derivation->report(new ArityMismatch(ArityRule::InsertedValues, $expected, count($rows->shape->slots)));
             }
         }
         $excluded = new VisibleRelation($into->target, $target->shape, new Name('excluded'), null, [ColumnResolver::QUALIFIED_ONLY], $target->implicit);
-        foreach ($upserts as $upsert) {
-            $environment = new Environment($derivation->context, $base, [$target]);
+        $environment = new Environment($derivation->context, $base, [$target]);
+        $table = $written->table instanceof DeclaredTable ? $written->table->table : null;
+        $supplied = $table !== null && $source !== null && $generated->supplied($into->columns, $table, $target, $derivation);
+        foreach ($upserts as $index => $upsert) {
             foreach ($upsert->target === null ? [] : $upsert->target->terms as $term) {
                 $derivation->scalar($term->expression, $environment);
             }
@@ -73,6 +79,9 @@ final class InsertFacts
             }
             $update = new Environment($derivation->context, $base, [$target, $excluded]);
             $scope->assign($upsert->assignments, $target, $derivation, $update);
+            if ($upsert->assignments !== [] && $table !== null && $generated->reached($upserts, $index, $table, $supplied, $environment)) {
+                $generated->assigned($upsert->assignments, $target, $derivation);
+            }
             if ($upsert->where !== null) {
                 $derivation->scalar($upsert->where, $update);
             }

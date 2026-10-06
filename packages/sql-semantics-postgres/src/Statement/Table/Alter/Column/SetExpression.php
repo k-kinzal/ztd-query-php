@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\Column;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\Command\Alterations;
+use SqlSemantics\Platform\PostgreSql\Rules\Table\Definition\GeneratedColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Alter\AlterCommand;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -44,6 +45,7 @@ final class SetExpression implements AlterCommand
     {
         (new Alterations())->column($derivation, $environment, $this->column);
         $derivation->scalar($this->expression, $environment);
+        (new GeneratedColumns())->expression($derivation, $this->expression);
     }
 
     /**

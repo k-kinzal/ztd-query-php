@@ -29,14 +29,17 @@ use SqlSemantics\Statement\Identifier\Name;
  * Rule: PG-COPY-001. The table follows PG-TARGET-TABLE-001; COPY TO reads
  * only a table and COPY FROM writes neither a materialized view nor a
  * sequence (PG-RELATION-KIND-001; `cannot copy from view "v"`). A column of
- * the column list must be a column of the table and may be listed once;
- * without a list every column is copied. The WHERE condition sees the
+ * the column list must be a column of the table, may be listed once and
+ * may not be a generated column (`column "b" is a generated column`,
+ * CopyGetAttnums, copy.c); without a list every column but the generated
+ * columns is copied. The WHERE condition sees the
  * table and is allowed with COPY FROM only. The query of COPY TO is derived
  * as a nested query; a data-modifying statement without RETURNING and a
  * SELECT INTO are reported. PROGRAM with STDIN or STDOUT is reported. The
  * options follow PG-COPY-OPTIONS-001. COPY returns no rows: the data goes
  * to or comes from the file, the program or the client.
- * Source: https://www.postgresql.org/docs/17/sql-copy.html. Status: Implemented.
+ * Source: https://www.postgresql.org/docs/17/sql-copy.html,
+ * https://github.com/postgres/postgres/blob/REL_17_2/src/backend/commands/copy.c. Status: Implemented.
  *
  * @visibility SqlSemantics\Platform\PostgreSql
  */
@@ -59,7 +62,7 @@ final class CopyFacts
             $derivation->scalar($copy->where, new Environment($derivation->context, $environment, [$table]));
         }
         $this->program($copy->program, $copy->file, $derivation);
-        (new CopyOptions())->check($copy->binary, $copy->delimiters !== null, $copy->legacy, $copy->options, $copied, $derivation);
+        (new CopyOptions())->check($copy->binary, $copy->delimiters !== null, $copy->legacy, $copy->options, $copied, $derivation, $this->generated($table));
         $placement = new Placement();
         $placement->values($copy, [], [], $derivation);
         $placement->into($copy, $derivation);
@@ -119,7 +122,7 @@ final class CopyFacts
     }
 
     /**
-     * Derives the column list and answers the columns copied, or null when they are not known.
+     * Derives the column list and answers the columns copied, or null when they are not known; the columns of a table without a list exclude its generated columns.
      *
      * @param list<Name> $columns
      *
@@ -132,8 +135,14 @@ final class CopyFacts
         $seen = [];
         foreach ($columns as $column) {
             $found = false;
+            $generated = false;
             foreach ($table->shape->slots as $slot) {
-                $found = $found || ($slot->name !== null && $names->equal($slot->name->value, $column->value));
+                $match = $slot->name !== null && $names->equal($slot->name->value, $column->value);
+                $found = $found || $match;
+                $generated = $generated || ($match && $slot->declaration()?->generated === true);
+            }
+            if ($generated) {
+                $derivation->report(new ManipulationMisuse(ManipulationMisuseRule::CopyGeneratedColumn, $column->value));
             }
             if (!$found && $known) {
                 $derivation->report(new ManipulationMisuse(ManipulationMisuseRule::UnknownTargetColumn, $column->value, $table->relation instanceof TargetTable ? $table->relation->table->name->name->value : ''));
@@ -152,12 +161,29 @@ final class CopyFacts
         }
         $all = [];
         foreach ($table->shape->slots as $slot) {
-            if ($slot->name !== null) {
+            if ($slot->name !== null && $slot->declaration()?->generated !== true) {
                 $all[] = $slot->name;
             }
         }
 
         return $all;
+    }
+
+    /**
+     * Answers the names of the generated columns of a table.
+     *
+     * @return list<Name>
+     */
+    public function generated(VisibleRelation $table): array
+    {
+        $generated = [];
+        foreach ($table->shape->slots as $slot) {
+            if ($slot->name !== null && $slot->declaration()?->generated === true) {
+                $generated[] = $slot->name;
+            }
+        }
+
+        return $generated;
     }
 
     /**

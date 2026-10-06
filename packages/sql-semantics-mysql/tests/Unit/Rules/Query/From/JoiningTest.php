@@ -20,6 +20,7 @@ use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
@@ -79,5 +80,20 @@ final class JoiningTest extends TestCase
         $slot = new OutputSlot(new Name('a'), new Known(new Integral(IntegralKind::Int)), Nullability::Nullable);
 
         self::assertSame($slot, (new Joining())->nullable($slot));
+    }
+
+    public function testNullableKeepsTheInputsAnUnnamedSlotDependsOn(): void
+    {
+        $slot = new OutputSlot(null, new Known(new Integral(IntegralKind::Int)), Nullability::NotNull, null, null, [new SessionState('character_set_client')]);
+
+        self::assertEquals([new SessionState('character_set_client')], (new Joining())->nullable($slot)->unnamed);
+    }
+
+    public function testLocateLeavesAUsingColumnAnUnnamedColumnMayBe(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
+
+        self::assertSame([], $semantics->analyze("SELECT x FROM (SELECT 'é') AS d JOIN t USING (x)", [$t])->facts->diagnostics);
     }
 }

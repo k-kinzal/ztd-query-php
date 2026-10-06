@@ -36,12 +36,15 @@ use SqlSemantics\Statement\Type\Nullability;
  * the row). The written columns are the column list, or every column of the
  * table; they must be distinct. Each row of VALUES has one value per written
  * column, except an empty row without a column list, which writes the
- * defaults; rows also agree with each other. A query source is derived where
+ * defaults; rows also agree with each other, an empty row included. A query source is derived where
  * the table is not visible and must return one column per written column.
  * ON DUPLICATE KEY UPDATE assigns columns of the written table; its values
  * see the written table, the row alias (MYSQL-DML-ROW-ALIAS-001), whose
  * name may not be the table name, and, for a query source that is one query
- * block without GROUP BY, the relations of its FROM clause. A qualified star
+ * block without GROUP BY, the relations of its FROM clause. Generated
+ * columns take only DEFAULT (MYSQL-GENERATED-WRITE-001); a row or a query
+ * whose count does not match is reported for the count only, as the
+ * server stops there. A qualified star
  * in a 5.x column list is reported as the server's unknown column '*'.
  * Statements return no rows. Terminates: one pass over finite lists; the
  * source query is derived once. Source:
@@ -62,18 +65,24 @@ final class InsertFacts
         [$target, $written] = $this->open($insert->into, $derivation, $outer);
         $environment = new Environment($derivation->context, $outer, [$target]);
         $scope = new WriteScope();
+        $generated = new GeneratedWrites();
+        $table = $generated->table($insert->into->table, $derivation);
         $width = null;
         foreach ($insert->rows as $index => $row) {
             $count = count($row->values);
             $expected = $written === null ? $width : count($written);
             $mismatch = null;
-            if ($expected !== null && $count !== $expected && !($count === 0 && $insert->into->columns === null)) {
-                $mismatch = new ValueCountMismatch($expected, $count, $index + 1);
+            $columns = $count === 0 && $insert->into->columns === null ? null : $expected;
+            $against = $columns !== null && $count !== $columns ? $columns : ($width !== null && $count !== $width ? $width : null);
+            if ($against !== null) {
+                $mismatch = new ValueCountMismatch($against, $count, $index + 1);
                 $derivation->report($mismatch);
             }
             $width ??= $count;
             foreach ($row->values as $position => $value) {
-                $scope->value($value, $this->column($written, $position, $target, $mismatch), $derivation, $environment);
+                $column = $this->column($written, $position, $target, $mismatch);
+                $scope->value($value, $column, $derivation, $environment);
+                $generated->value($column, $value, $mismatch === null ? $table : null, $derivation);
             }
         }
         $this->duplicates($insert->onDuplicate, $insert->alias, $insert->into, $target, $written, [], $derivation, $outer);
@@ -87,6 +96,7 @@ final class InsertFacts
         [$target] = $this->open($insert->into, $derivation, $outer);
         $environment = new Environment($derivation->context, $outer, [$target]);
         $written = (new WriteScope())->assign($insert->assignments, $derivation, $environment, $environment, true);
+        (new GeneratedWrites())->assignments($insert->assignments, $written, $derivation);
         $this->duplicates($insert->onDuplicate, $insert->alias, $insert->into, $target, $written, [], $derivation, $outer);
     }
 
@@ -99,6 +109,9 @@ final class InsertFacts
         $rows = $derivation->query($insert->source, $outer);
         if ($written !== null && $rows->shape->complete() && count($rows->shape->slots) !== count($written)) {
             $derivation->report(new ValueCountMismatch(count($written), count($rows->shape->slots)));
+        } elseif ($written !== null) {
+            $generated = new GeneratedWrites();
+            $generated->query($written, $insert->source, $rows, $generated->table($insert->into->table, $derivation), $derivation);
         }
         $sources = $insert->onDuplicate === [] ? [] : (new SourceRelations())->visible($insert->source, $derivation);
         $this->duplicates($insert->onDuplicate, null, $insert->into, $target, $written, $sources, $derivation, $outer);
@@ -179,6 +192,7 @@ final class InsertFacts
         if ($assignments === []) {
             return;
         }
-        (new WriteScope())->assign($assignments, $derivation, new Environment($derivation->context, $outer, [$target]), new Environment($derivation->context, $outer, [...$visible, ...$sources]), false);
+        $fields = (new WriteScope())->assign($assignments, $derivation, new Environment($derivation->context, $outer, [$target]), new Environment($derivation->context, $outer, [...$visible, ...$sources]), false);
+        (new GeneratedWrites())->assignments($assignments, $fields, $derivation);
     }
 }

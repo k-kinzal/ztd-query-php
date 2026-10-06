@@ -8,12 +8,14 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\PostgreSql\Rules\Table\SystemColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\ColumnPrimaryKey;
+use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\Generated;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\Identity;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Column\NotNull;
 use SqlSemantics\Platform\PostgreSql\Statement\Constraint\Table\TablePrimaryKey;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnDefinition;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ColumnOptions;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeClause;
+use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\LikeOptionKind;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\ListedColumns;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\PartitionOf;
 use SqlSemantics\Platform\PostgreSql\Statement\Table\Element\TableForm;
@@ -38,7 +40,14 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
  * column of a type the context cannot identify is declared with the type its
  * name denotes on the search path. The declaration is complete only up to
  * the first column whose type name is an error or whose parent, LIKE source
- * or composite type the context does not declare. The system
+ * or composite type the context does not declare. A column is generated
+ * when its definition has a generation clause, when it is inherited from a
+ * generated column of a parent or of the partitioned table, or when a LIKE
+ * clause copies a generated column and its options include GENERATED
+ * (INCLUDING GENERATED or INCLUDING ALL, applied in order with the EXCLUDING
+ * options; without it the copy is a regular column). An identity column is
+ * not generated in this sense. Source of the inheritance rule: MergeAttributes,
+ * tablecmds.c; https://www.postgresql.org/docs/17/ddl-generated-columns.html. The system
  * columns are implicit (PG-SYSTEM-COLUMNS-001). A foreign table is declared as one, every other
  * definition as a base table (PG-RELATION-KIND-001).
  * Source: https://www.postgresql.org/docs/17/sql-createtable.html, https://www.postgresql.org/docs/17/ddl-inherit.html.
@@ -57,7 +66,7 @@ final class Declarations
         if ($form instanceof ListedColumns) {
             $this->listed($form, $derivation, $set);
         } elseif ($form instanceof PartitionOf) {
-            $this->copy($form->parent->name, $derivation, $set, true);
+            $this->copy($form->parent->name, $derivation, $set, null);
         } else {
             $set->close();
         }
@@ -74,19 +83,19 @@ final class Declarations
     public function listed(ListedColumns $form, Derivation $derivation, ColumnSet $set): void
     {
         foreach ($form->parents as $parent) {
-            $this->copy($parent->name, $derivation, $set, true);
+            $this->copy($parent->name, $derivation, $set, null);
         }
         $types = new ColumnTyping();
         foreach ($form->elements as $element) {
             if ($element instanceof LikeClause) {
-                $this->copy($element->table, $derivation, $set, false);
+                $this->copy($element->table, $derivation, $set, $element);
             } elseif ($element instanceof ColumnDefinition) {
                 $type = $types->descriptor($element->type, $derivation->context);
                 if ($type === null) {
                     $set->close();
                 }
                 $notNull = $types->serial($element->type) !== null || $this->notNull($element->qualifiers);
-                if ($type !== null && !$set->add($element->name, $type, $notNull) && $notNull) {
+                if ($type !== null && !$set->add($element->name, $type, $notNull, $this->generated($element->qualifiers)) && $notNull) {
                     $set->require($element->name);
                 }
             }
@@ -95,8 +104,10 @@ final class Declarations
 
     /**
      * Copies the columns of a parent or LIKE source, or closes the set when the context does not declare its columns.
+     *
+     * @param LikeClause|null $like The LIKE clause that copies the columns, or null for a parent
      */
-    public function copy(QualifiedName $source, Derivation $derivation, ColumnSet $set, bool $inherited): void
+    public function copy(QualifiedName $source, Derivation $derivation, ColumnSet $set, ?LikeClause $like): void
     {
         $resolution = $derivation->table($source, $derivation->environment());
         if (!$resolution instanceof DeclaredTable || !$resolution->table->complete) {
@@ -104,13 +115,45 @@ final class Declarations
 
             return;
         }
+        $generation = $like !== null && $this->includesGenerated($like);
         foreach ($resolution->table->columns as $column) {
-            if ($inherited) {
+            if ($like === null) {
                 $set->inherit($column);
             } else {
-                $set->add($column->name, $column->type, $column->nullability === \SqlSemantics\Statement\Type\Nullability::NotNull);
+                $set->add($column->name, $column->type, $column->nullability === \SqlSemantics\Statement\Type\Nullability::NotNull, $generation && $column->generated);
             }
         }
+    }
+
+    /**
+     * Tells whether the options of a LIKE clause, applied in order, include the generation expressions.
+     */
+    public function includesGenerated(LikeClause $like): bool
+    {
+        $included = false;
+        foreach ($like->options as $option) {
+            if ($option->kind === LikeOptionKind::Generated || $option->kind === LikeOptionKind::All) {
+                $included = $option->including;
+            }
+        }
+
+        return $included;
+    }
+
+    /**
+     * Tells whether column qualifiers hold a generation clause.
+     *
+     * @param list<Clause> $qualifiers
+     */
+    public function generated(array $qualifiers): bool
+    {
+        foreach ($qualifiers as $qualifier) {
+            if ($qualifier instanceof Generated) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

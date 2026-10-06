@@ -209,6 +209,21 @@ final class ColumnResolverTest extends TestCase
         self::assertInstanceOf(RandomColumnName::class, $random[0]);
     }
 
+    public function testMatchAnswersTheInputsTheNameOfAnUnnamedColumnDependsOn(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $derivation = new Derivation($semantics->context([], false));
+        $environment = $derivation->environment();
+        $input = new TableInput(new QualifiedName(new Name('t')));
+        $absent = new UndeclaredRelation(new QualifiedName(new Name('u')));
+        $relation = new VisibleRelation($input, new RowShape([new OutputSlot(new Name('a'), new Known(Storage::Integer), Nullability::NotNull), new OutputSlot(null, new Known(Storage::Integer), Nullability::NotNull, null, null, [$absent])]));
+        $missing = (new ColumnResolver())->match($environment, $relation, new Name('b'), true, 0);
+
+        self::assertSame([$absent], $missing);
+        self::assertInstanceOf(ResolvedColumn::class, (new ColumnResolver())->match($environment, $relation, new Name('A'), true, 0));
+        self::assertInstanceOf(ConditionalColumn::class, (new ColumnResolver())->find(new Environment($derivation->context, null, [$relation]), new Name('b')));
+    }
+
     public function testQualifiedOnlyIsAPositionNoSlotCanHave(): void
     {
         self::assertSame(-1, ColumnResolver::QUALIFIED_ONLY);
