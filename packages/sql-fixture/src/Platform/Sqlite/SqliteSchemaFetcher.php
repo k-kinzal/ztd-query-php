@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\Sqlite;
 
 use PDO;
+use RuntimeException;
 use SqlFixture\Schema\SchemaFetcherInterface;
 use SqlFixture\Schema\TableSchema;
 
 /**
  * Fetches table schemas from SQLite databases.
  *
- * Uses PRAGMA table_info to build the schema directly, avoiding the need
- * to parse CREATE TABLE statements for simple cases. Falls back to
- * sqlite_schema for full CREATE TABLE parsing when needed.
+ * Reads the CREATE TABLE text SQLite keeps in sqlite_schema and parses it
+ * with the SQLite grammar.
  */
 final class SqliteSchemaFetcher implements SchemaFetcherInterface
 {
@@ -29,16 +29,15 @@ final class SqliteSchemaFetcher implements SchemaFetcherInterface
 
     /**
      * Reads the named table from the selected database connection.
+     * @throws RuntimeException
      */
     public function fetchSchema(PDO $pdo, string $tableName): TableSchema
     {
         $createTableSql = (new Schema\CreateTableQuery())->fetchCreateTableSql($pdo, $tableName);
-
-        if ($createTableSql !== null) {
-            return $this->parser->parse($createTableSql);
+        if ($createTableSql === null) {
+            throw new RuntimeException("Table not found: {$tableName}");
         }
 
-        return (new Schema\PragmaSchema())->fetchSchemaViaPragma($pdo, $tableName);
+        return $this->parser->parse($createTableSql);
     }
-
 }

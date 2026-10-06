@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\Sqlite;
 
+use SqlFixture\Schema\Exception\InvalidSqlException;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\TableSchema;
+use SqlParser\Lexer\SourceException;
+use SqlParser\Sqlite\SqliteParser;
 
 /**
- * Simple regex-based parser for SQLite CREATE TABLE statements.
+ * Reads SQLite CREATE TABLE statements into table schemas.
  *
- * SQLite has a simpler type system based on "type affinity" rather than
- * a rigid type system. This parser handles the basic SQLite column
- * definitions and extracts type affinity information.
+ * The statement is parsed with the SQLite grammar, so the declared type
+ * names that drive type affinity, the column constraints and the table
+ * constraints are read from the syntax tree rather than from the text.
  *
  * @visibility public
  * @example Read column dimensions and a composite primary key
@@ -22,33 +25,35 @@ use SqlFixture\Schema\TableSchema;
  */
 final class SqliteSchemaParser implements SchemaParserInterface
 {
+    private SqliteParser $parser;
+
+    /**
+     * Loads the grammar tables once for every statement the parser will read.
+     */
+    public function __construct(?SqliteParser $parser = null)
+    {
+        $this->parser = $parser ?? new SqliteParser();
+    }
+
     /**
      * Parses the supplied declaration into its normalized representation.
-     * @throws \SqlFixture\Schema\Exception\InvalidSqlException
+     * @throws InvalidSqlException
+     * @throws \SqlFixture\Schema\Exception\ExpectedCreateTableException
      * @throws \SqlFixture\Schema\Exception\MissingColumnDefinitionsException
      */
     public function parse(string $createTableSql): TableSchema
     {
-        $sql = (new Schema\TableSyntax())->normalizeSql($createTableSql);
-
-        $tableName = (new Schema\TableSyntax())->extractTableName($sql);
-        if ($tableName === null) {
-            throw new \SqlFixture\Schema\Exception\InvalidSqlException($createTableSql, 'Could not extract table name');
+        try {
+            $tree = $this->parser->parse($createTableSql);
+        } catch (SourceException $exception) {
+            throw new InvalidSqlException($createTableSql, $exception->getMessage(), $exception);
         }
 
-        $columnsBlock = (new Schema\TableSyntax())->extractColumnsBlock($sql);
-        if ($columnsBlock === null) {
-            throw new \SqlFixture\Schema\Exception\MissingColumnDefinitionsException($tableName);
-        }
-
-        $primaryKeys = (new Schema\TableSyntax())->extractTablePrimaryKeys($columnsBlock);
-        $columns = (new Schema\DefinitionList())->parseColumns($columnsBlock, $tableName, $primaryKeys);
-
-        if ($columns === []) {
-            throw new \SqlFixture\Schema\Exception\MissingColumnDefinitionsException($tableName);
-        }
+        $statement = (new Schema\CreateTableStatement())->locate($tree, $createTableSql);
+        $tableName = (new Schema\TableDefinition())->extractTableName($statement, $createTableSql);
+        $columns = (new Schema\TableDefinition())->extractColumns($statement, $tableName);
+        $primaryKeys = (new Schema\TableDefinition())->extractPrimaryKeys($statement);
 
         return new TableSchema($tableName, $columns, $primaryKeys);
     }
-
 }
