@@ -128,6 +128,7 @@
             "@fuzz:roundtrip --max-runs=100",
             "@fuzz:schema --max-runs=100"
         ],
+        "ledger": "@php vendor/k-kinzal/sql-semantics/bin/production-ledger.php .",
         "lint": [
             "@autoload:check",
             "@format:check",
@@ -161,6 +162,7 @@
         "fuzz": "Run this database round-trip property with a bounded smoke budget.",
         "fuzz:schema": "Fuzz immutable pre-state declarations using sql-faker generation plans.",
         "fuzz:smoke": "Replay both corpora and run 100 mutations of state and statement analysis.",
+        "ledger": "Check that the lowering rules claim every production of every shipped grammar release.",
         "lint": "Run every static check: autoload, formatting, PHPStan, PHP compatibility, size and tree guards, and layer dependencies.",
         "loc-guard": "Check file size limits.",
         "phpstan": "Run PHPStan.",

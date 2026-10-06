@@ -149,6 +149,9 @@ jobs:
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
+      - name: Check that every grammar production has a lowering rule
+        if: matrix.package != 'sql-semantics'
+        run: composer ledger
       - name: Check PSR-4 paths and ambiguous classes
         run: composer autoload:check
       - name: Check the formatting
