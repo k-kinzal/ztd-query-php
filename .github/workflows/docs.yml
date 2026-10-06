@@ -60,7 +60,7 @@ jobs:
     needs: build
     name: Generate and publish the documentation site
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     permissions:
       contents: write
       pages: write
@@ -120,7 +120,7 @@ jobs:
 
           expected_sha="$(git -C .docs-branch rev-parse HEAD)"
           gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds" > /dev/null
-          for attempt in {1..60}; do
+          for attempt in {1..150}; do
             build="$(gh api "repos/${GITHUB_REPOSITORY}/pages/builds/latest")"
             if [ "$(jq -r .commit <<< "$build")" = "$expected_sha" ]; then
               case "$(jq -r .status <<< "$build")" in
