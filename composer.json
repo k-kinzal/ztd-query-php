@@ -67,7 +67,7 @@
         }
     ],
     "scripts": {
-        "docgen": "docgen --exclude=packages/*/src/Compatibility/ClassAliases.php --title=\"ZTD Query PHP\" --jobs=2 --memory-limit=2G",
+        "docgen": "docgen --exclude=packages/*/src/Compatibility/ClassAliases.php --title=\"ZTD Query PHP\" --jobs=2 --memory-limit=4G",
         "docgen:diff": [
             "Composer\\Config::disableProcessTimeout",
             "@docgen --diff=origin/main --exclude=packages/sql-semantics-*/resources/*"

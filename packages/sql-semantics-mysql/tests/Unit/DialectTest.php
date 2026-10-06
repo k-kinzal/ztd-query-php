@@ -5,18 +5,19 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Platform;
 
 #[CoversClass(Dialect::class)]
-#[UsesClass(Platform::class)]
+#[Medium]
 final class DialectTest extends TestCase
 {
-    public function testPlatformBelongsToThisDatabase(): void
+    public function testDatabaseNamesTheGrammarFamily(): void
     {
-        self::assertSame('mysql', Dialect::MySql->value);
-        self::assertInstanceOf(Platform::class, Dialect::MySql->platform());
+        self::assertSame('mysql', Dialect::MySql->database());
+        self::assertSame('mysql', (new Semantics(Dialect::MySql))->profile()->grammar->database());
+        self::assertSame('SELECT a FROM t', (new Semantics(Dialect::MySql))->analyze('select a from t')->toString());
     }
 }

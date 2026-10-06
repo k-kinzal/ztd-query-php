@@ -29,7 +29,7 @@ final class KeywordList
         }
         $keywords = [];
         foreach ($matches as $match) {
-            $keywords[strtoupper($match[1])] = $match[2];
+            $keywords[\SqlParser\Lexer\Ascii::upper($match[1])] = $match[2];
         }
         ksort($keywords);
 

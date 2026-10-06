@@ -60,7 +60,7 @@ final class KeywordTable
      */
     public function lookup(string $word, bool $function, SqlMode $mode): ?string
     {
-        $upper = strtoupper($word);
+        $upper = \SqlParser\Lexer\Ascii::upper($word);
         $terminal = $this->keywords[$upper] ?? ($function ? ($this->functions[$upper] ?? null) : null);
         if ($terminal === 'NOT_SYM' && $mode->highNotPrecedence) {
             return 'NOT2_SYM';
@@ -81,6 +81,6 @@ final class KeywordTable
      */
     public function has(string $word): bool
     {
-        return isset($this->keywords[strtoupper($word)]);
+        return isset($this->keywords[\SqlParser\Lexer\Ascii::upper($word)]);
     }
 }

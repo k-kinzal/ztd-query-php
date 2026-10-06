@@ -5,26 +5,21 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use Error;
-use SqlFormatter\Facade\Formatter;
 use SqlSemantics\Facade\Semantics;
-use SqlSemantics\Statement\Element;
-use SqlSemantics\Statement\Traversal;
+use SqlSemantics\Validation\Equivalence;
 use Throwable;
 
 /**
- * Every generated statement must be represented and written using its semantic data.
+ * Every generated statement must be analyzed into a semantic structure whose rendering analyzes into the same structure.
  */
 final class RoundTripTarget
 {
-    public function __construct(
-        private readonly Semantics $semantics,
-        private readonly Formatter $compact,
-        private readonly string $grammarVersion,
-    ) {
+    public function __construct(private readonly Semantics $semantics, private readonly string $grammarVersion)
+    {
     }
 
     /**
-     * Records rejections, serialization failures and differences as fuzz findings.
+     * Records rejections, implementation gaps, invariant violations and structural differences as fuzz findings.
      */
     public function verify(string $sql, string $input): void
     {
@@ -32,20 +27,20 @@ final class RoundTripTarget
         if ($sql === '') {
             throw new Error("Statement generation returned an empty string\n{$context}");
         }
-        $printed = null;
+        $rendered = null;
         try {
-            $statement = $this->semantics->analyze($sql);
-            $printed = $statement->toString();
-            $expected = $this->compact->format($sql);
-            $actual = $this->compact->format($printed);
+            $operation = $this->semantics->analyze($sql);
+            $rendered = $operation->toString();
+            $again = $this->semantics->analyze($rendered);
+            $difference = (new Equivalence())->difference($operation->statement, $again->statement);
+            if ($difference !== null) {
+                throw new Error('The structure of the rendered SQL differs from the structure of the input at ' . $difference);
+            }
+            if ($again->toString() !== $rendered) {
+                throw new Error('The rendering is not stable: ' . $again->toString());
+            }
         } catch (Throwable $failure) {
-            throw new Error("Semantic round trip failed\n{$context}\nPrinted: {$printed}\nError: {$failure->getMessage()}", 0, $failure);
-        }
-        if ($actual !== $expected) {
-            throw new Error("Semantic round trip changed the statement\n{$context}\nPrinted: {$printed}\nExpected: {$expected}\nActual: {$actual}");
-        }
-        if (Traversal::rewrite($statement->command, static fn (Element $value): Element => $value) !== $statement->command) {
-            throw new Error("Rewriting without replacing anything rebuilt the statement\n{$context}");
+            throw new Error("Semantic round trip failed\n{$context}\nRendered: {$rendered}\nError: {$failure->getMessage()}", 0, $failure);
         }
     }
 }

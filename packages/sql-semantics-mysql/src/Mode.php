@@ -7,47 +7,59 @@ namespace SqlSemantics\Platform\MySql;
 use SqlParser\MySql\SqlMode;
 
 /**
- * The MySQL session `sql_mode`, as far as it changes how SQL text is read and written.
+ * The parts of a MySQL session's `sql_mode` that change how SQL text is read.
  *
- * `ANSI_QUOTES` makes double quotes delimit identifiers, `NO_BACKSLASH_ESCAPES`
- * makes a backslash an ordinary character in a string, `PIPES_AS_CONCAT` makes
- * `||` concatenation, `HIGH_NOT_PRECEDENCE` makes `NOT` bind as tightly as `!`,
- * and `IGNORE_SPACE` lets a space separate a function name from its
- * parenthesis. Pass the value a session reports with `SELECT @@SESSION.sql_mode`.
+ * Five modes change tokenization: `ANSI_QUOTES`, `PIPES_AS_CONCAT`,
+ * `HIGH_NOT_PRECEDENCE`, `NO_BACKSLASH_ESCAPES` and `IGNORE_SPACE`. A
+ * combination mode such as `ANSI` turns on the ones it includes. Every other
+ * mode name, such as `STRICT_TRANS_TABLES` or `REAL_AS_FLOAT`, is read and not
+ * recorded: it changes no token, and a fact that depends on it names the
+ * session state it is missing.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html.
  *
  * @visibility public
- * @example Reading a session's mode
- *     $mode = \SqlSemantics\Platform\MySql\Mode::fromString('ANSI_QUOTES,STRICT_TRANS_TABLES');
- *     $mode->toString() // => 'ANSI_QUOTES'
- * @example Analyzing under the mode
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, mode: \SqlSemantics\Platform\MySql\Mode::fromString('ANSI_QUOTES'));
- *     $semantics->analyze('SELECT "x" FROM t')->toString() // => 'SELECT "x" FROM t'
+ * @example Reading the mode a session reports
+ *     \SqlSemantics\Platform\MySql\Mode::fromString('STRICT_TRANS_TABLES,ansi_quotes,NO_BACKSLASH_ESCAPES')->toString() // => 'ANSI_QUOTES,NO_BACKSLASH_ESCAPES'
+ * @example Reading double quotes as identifiers
+ *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, null, \SqlSemantics\Platform\MySql\Mode::fromString('ANSI_QUOTES'));
+ *     $semantics->analyze('SELECT "order" FROM t')->toString() // => 'SELECT `order` FROM t'
  */
-final class Mode implements \SqlSemantics\Core\Mode
+final class Mode implements \SqlSemantics\Contract\Mode
 {
     /**
-     * Supplies the tokenization flags of the mode.
+     * @param bool $ansiQuotes Whether double quotes delimit identifiers instead of strings
+     * @param bool $pipesAsConcat Whether `||` is string concatenation instead of `OR`
+     * @param bool $highNotPrecedence Whether `NOT` binds as tightly as `!`
+     * @param bool $noBackslashEscapes Whether a backslash in a string is an ordinary character
+     * @param bool $ignoreSpace Whether a function name may be followed by spaces before its parenthesis
      */
-    public function __construct(public readonly SqlMode $sqlMode = new SqlMode())
-    {
+    public function __construct(
+        public readonly bool $ansiQuotes = false,
+        public readonly bool $pipesAsConcat = false,
+        public readonly bool $highNotPrecedence = false,
+        public readonly bool $noBackslashEscapes = false,
+        public readonly bool $ignoreSpace = false,
+    ) {
     }
 
     /**
-     * Reads a `sql_mode` value as the server reports it, including combination modes such as `ANSI`.
+     * Reads a `sql_mode` value as `SELECT @@SESSION.sql_mode` answers it.
      */
-    public static function fromString(string $sqlMode): self
+    public static function fromString(string $modes): self
     {
-        return new self(SqlMode::fromString($sqlMode));
+        $flags = SqlMode::fromString($modes);
+
+        return new self($flags->ansiQuotes, $flags->pipesAsConcat, $flags->highNotPrecedence, $flags->noBackslashEscapes, $flags->ignoreSpace);
     }
 
     /**
-     * Spells the flags that are on as `sql_mode` names, comma separated.
+     * Answers the recorded modes in the canonical spelling the language profile keeps.
      */
     public function toString(): string
     {
         $names = [];
-        foreach (['ANSI_QUOTES' => $this->sqlMode->ansiQuotes, 'PIPES_AS_CONCAT' => $this->sqlMode->pipesAsConcat, 'HIGH_NOT_PRECEDENCE' => $this->sqlMode->highNotPrecedence, 'NO_BACKSLASH_ESCAPES' => $this->sqlMode->noBackslashEscapes, 'IGNORE_SPACE' => $this->sqlMode->ignoreSpace] as $name => $on) {
-            if ($on) {
+        foreach (['ANSI_QUOTES' => $this->ansiQuotes, 'PIPES_AS_CONCAT' => $this->pipesAsConcat, 'HIGH_NOT_PRECEDENCE' => $this->highNotPrecedence, 'NO_BACKSLASH_ESCAPES' => $this->noBackslashEscapes, 'IGNORE_SPACE' => $this->ignoreSpace] as $name => $enabled) {
+            if ($enabled) {
                 $names[] = $name;
             }
         }

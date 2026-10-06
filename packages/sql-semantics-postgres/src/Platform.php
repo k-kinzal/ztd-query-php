@@ -5,150 +5,145 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql;
 
 use InvalidArgumentException;
+use SqlParser\Lexer\ParameterSyntax;
+use SqlParser\Parser\Node;
 use SqlParser\Parser\SqlParser;
 use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlSemantics\Core\Analysis\TriviaReader;
-use SqlSemantics\Core\Builder as Composer;
-use SqlSemantics\Core\Language;
-use SqlSemantics\Core\Mode as SessionMode;
-use SqlSemantics\Core\Parameters;
-use SqlSemantics\Core\Platform as Contract;
-use SqlSemantics\Core\Policy;
-use SqlSemantics\Core\SearchPath as SessionSearchPath;
+use SqlParser\PostgreSql\PostgreSqlVersion;
+use SqlParser\Resource\VersionRegistry;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Contract\LexicalSettings;
+use SqlSemantics\Contract\Mode;
+use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Lowering\Productions;
+use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
+use SqlSemantics\Platform\PostgreSql\Rendering\Codec;
+use SqlSemantics\Platform\PostgreSql\Rules\LeafKeys;
+use SqlSemantics\Statement\Identifier\Comparison;
+use SqlSemantics\Statement\Identifier\Name;
 
 /**
- * Assembles PostgreSql semantic behavior from independent core contracts.
+ * Wires the PostgreSQL grammar releases, lowering rules and spelling rules into the analysis.
+ *
+ * Rule: PG-PROFILE-001. A profile fixes one shipped grammar release with
+ * `standard_conforming_strings = on` and a UTF-8 server encoding; PostgreSQL
+ * has no session mode that changes how its grammar reads text otherwise. An
+ * unquoted identifier is folded to lower case when it is decoded, so names are
+ * compared exactly afterwards. An unqualified relation name is searched in the
+ * temporary schema, then `pg_catalog`, then the schemas of the search path,
+ * unless the path lists those two itself.
+ * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS,
+ * https://www.postgresql.org/docs/17/runtime-config-client.html#GUC-SEARCH-PATH.
+ * Status: Implemented.
  *
  * @visibility SqlSemantics
  */
-final class Platform implements Contract
+final class Platform implements \SqlSemantics\Contract\Platform
 {
     /**
-     * Configures the selected grammar release and parameter syntax; this database has no session mode.
-     *
-     * @throws InvalidArgumentException When a mode is given
+     * @var array<string, SqlParser>
      */
-    public function parser(?string $version = null, ?SessionMode $mode = null, Parameters $parameters = Parameters::Native): SqlParser
+    private array $parsers = [];
+
+    /**
+     * Fixes the profile of a shipped PostgreSQL release; PostgreSQL reads SQL under no session mode.
+     *
+     * @throws InvalidArgumentException When the release is not shipped, a mode is given, or the installed grammar artifacts differ from the pinned ones
+     */
+    public function profile(?string $version, ?Mode $mode, ParameterStyle $parameters): LanguageProfile
     {
         if ($mode !== null) {
-            throw new InvalidArgumentException('This database reads SQL under no session mode; ' . $mode::class . ' given.');
+            throw new InvalidArgumentException('PostgreSQL reads SQL under no session mode; ' . $mode::class . ' given.');
+        }
+        $release = GrammarRelease::tryFrom((new PostgreSqlParser($version))->version());
+        if ($release === null || $release->database() !== PostgreSqlVersion::DIALECT) {
+            throw new InvalidArgumentException('No semantic profile exists for the selected grammar release.');
+        }
+        $artifact = (new VersionRegistry())->resolve(PostgreSqlVersion::DIALECT, $release->value);
+        if (hash_file('sha256', $artifact->tablePath) !== $release->grammarDigest() || hash_file('sha256', $artifact->keywordPath) !== $release->keywordDigest()) {
+            throw new InvalidArgumentException('The installed grammar artifacts do not match the fixed semantic profile.');
         }
 
-        return new PostgreSqlParser($version, parameters: $parameters->syntax());
+        return new LanguageProfile($release, new LexicalSettings(), $parameters);
     }
 
     /**
-     * Composes this database's values for a language.
+     * Answers the parser of a profile, created once per release and parameter style.
      */
-    public function builder(Language $language): Composer
+    public function parser(LanguageProfile $profile): SqlParser
     {
-        return new Builder($language);
-    }
+        $key = $profile->grammar->value . '/' . $profile->parameters->value;
 
-    /**
-     * Loads this package's statement construction map for the resolved release.
-     */
-    public function values(string $version): \SqlSemantics\Core\Analysis\ValueReader
-    {
-        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php', new TriviaReader(nestedBlocks: true));
-    }
-
-    /**
-     * Supplies the literal decoder for the resolved language.
-     */
-    public function literals(Language $language): Policy\LiteralRules
-    {
-        return new LiteralDecoder($language);
-    }
-
-    /**
-     * Reads unqualified names in the schemas of the `search_path`, by default `public`.
-     */
-    public function searchPath(?SessionSearchPath $path = null): array
-    {
-        return $path === null ? ['public'] : $path->schemas;
-    }
-
-    /**
-     * @return array{string, string}
-     */
-    public function statementNames(): array
-    {
-        return ['parse_toplevel', 'stmt'];
-    }
-
-    /**
-     * Maps the supported grammar productions onto semantic roles.
-     */
-    public function syntax(): Policy\SyntaxRules
-    {
-        return new Policy\SyntaxRules([
-            'autoIncrement' => [],
-            'generationStorage' => ['ColConstraintElem'],
-            'generationClause' => [],
-            'columnName' => ['ColId'],
-            'declaredType' => ['Typename'],
-            'expression' => ['a_expr'],
-            'tableElements' => ['OptTableElementList'],
-            'createTable' => ['CreateStmt'],
-            'createHeader' => [],
-            'tableName' => ['qualified_name'],
-            'tableConstraint' => ['TableConstraint'],
-        ]);
-    }
-
-    /**
-     * Names the positions where the grammar writes table names, and the forms that declare, drop, or merely name tables.
-     *
-     * The body of a common table expression names the ones written before it
-     * in a plain WITH clause, and every one of a recursive clause, itself
-     * and later ones included. The table INSERT, UPDATE, DELETE, or MERGE
-     * writes to is always a table, never a common table expression.
-     */
-    public function relations(): Policy\RelationRules
-    {
-        return new Policy\RelationRules(
-            nameSymbols: ['qualified_name', 'relation_expr', 'relation_expr_opt_alias', 'insert_target', 'qualified_name_list', 'relation_expr_list'],
-            declarations: [
-                ['rule' => 'CreateStmt', 'name' => 'qualified_name', 'conditional' => 'IF_P'],
-                ['rule' => 'CreateAsStmt', 'name' => 'create_as_target', 'conditional' => 'IF_P'],
-            ],
-            drops: [
-                ['rule' => 'DropStmt', 'requires' => ['object_type_any_name'], 'type' => ['object_type_any_name', ['TABLE']], 'names' => 'any_name_list', 'list' => ['any_name_list', ['any_name_list', ',', 'any_name']], 'conditional' => 'IF_P'],
-            ],
-            commonTableExpressions: [['rule' => 'common_table_expr', 'name' => 'name']],
-            ignored: [['rule' => 'ViewStmt', 'name' => 'qualified_name']],
-            parts: ['create_as_target' => ['qualified_name opt_column_list table_access_method_clause OptWith OnCommitOption OptTableSpace' => [0]]],
-            withClauses: ['opt_with_clause', 'with_clause'],
-            recursive: 'RECURSIVE',
-            visibility: Policy\WithVisibility::Preceding,
-            recursiveVisibility: Policy\WithVisibility::All,
-            targets: ['insert_target', 'relation_expr_opt_alias'],
+        return $this->parsers[$key] ??= new PostgreSqlParser(
+            $profile->grammar->value,
+            parameters: $profile->parameters === ParameterStyle::Named ? ParameterSyntax::Named : ParameterSyntax::Native,
         );
     }
 
     /**
-     * Supplies names semantics.
+     * Answers the productions of the release.
      */
-    public function names(): Policy\NameRules
+    public function productions(LanguageProfile $profile): Productions
     {
-        return new NameRules();
+        return Productions::load(dirname(__DIR__) . '/resources/productions/' . $profile->grammar->value . '.php');
     }
 
     /**
-     * Supplies types semantics.
+     * Lowers a parse tree into its statements.
      */
-    public function types(): Policy\TypeRules
+    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves): array
     {
-        return new TypeRules();
+        return (new Lowering($this->productions($profile), $leaves, $profile->grammar))->statements($tree);
     }
 
     /**
-     * Supplies schema semantics.
+     * Answers the name codec.
      */
-    public function schema(): Policy\SchemaRules
+    public function codec(LanguageProfile $profile): Codec
     {
-        return new SchemaRules();
+        return new Codec($profile->grammar);
     }
 
+    /**
+     * Answers the token comparison keys.
+     */
+    public function leafKeys(LanguageProfile $profile): LeafKeys
+    {
+        return new LeafKeys();
+    }
+
+    /**
+     * Creates a context: the temporary schema and `pg_catalog` are searched before the path unless the path names them, and names compare exactly.
+     */
+    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext
+    {
+        $schemas = $searchPath ?? ['public'];
+        $path = [];
+        foreach (['pg_temp', 'pg_catalog'] as $implicit) {
+            if (!in_array($implicit, $schemas, true)) {
+                $path[] = new Name($implicit);
+            }
+        }
+        $first = null;
+        foreach ($schemas as $schema) {
+            $name = new Name($schema);
+            $path[] = $name;
+            if ($first === null && $schema !== 'pg_temp' && $schema !== 'pg_catalog') {
+                $first = $name;
+            }
+        }
+
+        return new AnalysisContext($profile, $path, $tables, $complete, Comparison::Sensitive, Comparison::Sensitive, $first ?? $path[0]);
+    }
+
+    /**
+     * Answers the namespace of the PostgreSQL statement values.
+     */
+    public function statementNamespace(): string
+    {
+        return 'SqlSemantics\\Platform\\PostgreSql\\Statement\\';
+    }
 }

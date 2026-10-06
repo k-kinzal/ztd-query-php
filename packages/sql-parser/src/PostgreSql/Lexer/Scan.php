@@ -49,6 +49,6 @@ final class Scan
      */
     public static function startsIdentifier(string $byte): bool
     {
-        return $byte !== '' && (ctype_alpha($byte) || $byte === '_' || ord($byte) >= 0x80);
+        return $byte !== '' && (\SqlParser\Lexer\Ascii::letter($byte) || $byte === '_' || ord($byte) >= 0x80);
     }
 }

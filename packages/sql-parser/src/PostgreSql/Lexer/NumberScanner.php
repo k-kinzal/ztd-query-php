@@ -87,8 +87,8 @@ final class NumberScanner
     public static function fitsInt32(string $literal): bool
     {
         $literal = str_replace('_', '', $literal);
-        [$digits, $limit] = match (strtolower(substr($literal, 0, 2))) {
-            '0x' => [strtolower(substr($literal, 2)), '7fffffff'],
+        [$digits, $limit] = match (\SqlParser\Lexer\Ascii::lower(substr($literal, 0, 2))) {
+            '0x' => [\SqlParser\Lexer\Ascii::lower(substr($literal, 2)), '7fffffff'],
             '0o' => [substr($literal, 2), '17777777777'],
             '0b' => [substr($literal, 2), '1111111111111111111111111111111'],
             default => [$literal, '2147483647'],

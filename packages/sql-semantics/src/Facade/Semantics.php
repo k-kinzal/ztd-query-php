@@ -5,164 +5,193 @@ declare(strict_types=1);
 namespace SqlSemantics\Facade;
 
 use InvalidArgumentException;
-use SqlSemantics\Core\Analysis\Analyzer;
-use SqlSemantics\Core\Builder;
-use SqlSemantics\Core\Declarations;
-use SqlSemantics\Core\Dialect;
-use SqlSemantics\Core\Language;
-use SqlSemantics\Core\Mode;
-use SqlSemantics\Core\Parameters;
-use SqlSemantics\Core\SearchPath;
-use SqlSemantics\Statement\Statement;
+use SqlParser\Lexer\SourceException;
+use SqlParser\Parser\SqlParser;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\Dialect;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Contract\Mode;
+use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Contract\Platform;
+use SqlSemantics\Contract\Platforms;
+use SqlSemantics\Contract\SearchPath;
+use SqlSemantics\Diagnostic\AnalysisException;
+use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Operation;
+use SqlSemantics\Validation\LeafEmbedding;
+use SqlSemantics\Validation\Publication;
+use SqlSemantics\Validation\TokenCorrespondence;
+use SqlSemantics\Validation\ValueGraph;
 
 /**
- * Structures every statement of a selected SQL language into independent values.
+ * Analyzes SQL of one fixed language profile into read-only operations.
  *
- * This entry point needs no database connection. Statements are read as the
- * server reads them: with the grammar of one release, under the session
- * settings given as the mode, and with the selected parameter markers. A
- * statement analyzed with its dependencies, the declarations that came
- * before it, also resolves every table name it writes, reading a name
- * without a schema in the schemas of the session's search path; a name no
- * dependency declares is an error unless the declarations are partial.
+ * An operation holds the concrete structure of the statement, the facts
+ * derived against an explicit declaration context, and SQL rendered from that
+ * structure. Nothing here changes an operation: a different statement is
+ * analyzed anew or built from explicit inputs.
  *
  * @visibility public
- * @example Reconstructing SQL with the SQLite database package
- *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
- *     $semantics->analyze('DROP TABLE example')->toString() // => 'DROP TABLE example'
  * @example Resolving a query against the declaration it depends on
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $users = $semantics->analyze('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
  *     $query = $semantics->analyze('SELECT name FROM users WHERE id = 1', [$users]);
- *     $query->resolution?->tables()[0]->table?->name // => 'users'
+ *     $query->field('name')->column() === $users->declarations()[0]->columns[1] // => true
+ * @example Rendering SQL from the analyzed structure
+ *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
+ *     $semantics->analyze('select   1')->toString() // => 'SELECT 1'
  * @example Finding the statements of a script
  *     $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite);
  *     $semantics->split("SELECT 1; SELECT ';'") // => ['SELECT 1;', " SELECT ';'"]
  */
 final class Semantics
 {
-    private readonly Language $language;
-    private readonly Analyzer $analyzer;
+    private readonly Platform $platform;
+
+    private readonly LanguageProfile $profile;
+
+    private readonly SqlParser $parser;
 
     /**
-     * @var non-empty-list<string>
+     * @var list<string>|null
      */
-    private readonly array $searchPath;
+    private readonly ?array $searchPath;
 
     /**
-     * Selects the dialect and optionally one of its shipped grammar releases, a mode, and a parameter syntax.
+     * Fixes the language profile: database, grammar release, session mode and parameter style.
      *
      * @param Dialect $dialect The database
-     * @param string|null $grammarVersion A release tag the dialect ships, or null for its default
-     * @param Mode|null $mode The session settings SQL is read under, or null for the server's defaults
-     * @param Parameters $parameters Which parameter markers are read; the named syntax adds `:name`
-     * @param SearchPath|null $searchPath The schemas the session reads an unqualified table name in, such as MySQL's current database, or null for the server's default
+     * @param string|null $grammarVersion A release tag the database package ships, or null for its default
+     * @param Mode|null $mode The session settings SQL is read under, or null for the defaults of the database
+     * @param ParameterStyle $parameters Which parameter markers are read; the named style adds `:name`
+     * @param SearchPath|null $searchPath The schemas an unqualified relation name is searched in, or null for the default of the database
      *
-     * @throws InvalidArgumentException When the mode does not belong to the dialect, or the database cannot search the path
+     * @throws InvalidArgumentException When the release, mode or search path does not belong to the database
      */
-    public function __construct(Dialect $dialect, ?string $grammarVersion = null, ?Mode $mode = null, Parameters $parameters = Parameters::Native, ?SearchPath $searchPath = null)
+    public function __construct(Dialect $dialect, ?string $grammarVersion = null, ?Mode $mode = null, ParameterStyle $parameters = ParameterStyle::Native, ?SearchPath $searchPath = null)
     {
-        $this->language = new Language($dialect, $grammarVersion, $mode, $parameters);
-        $this->searchPath = $dialect->platform()->searchPath($searchPath);
-        $this->analyzer = new Analyzer($this->language, $this->searchPath);
+        $this->platform = Platforms::of($dialect->database());
+        $this->profile = $this->platform->profile($grammarVersion, $mode, $parameters);
+        $this->parser = $this->platform->parser($this->profile);
+        $this->searchPath = $searchPath?->schemas;
+        $this->platform->context($this->profile, $this->searchPath, [], false);
     }
 
     /**
-     * Answers the resolved language: dialect, release, mode, and parameter syntax.
+     * Answers the fixed language profile.
      */
-    public function language(): Language
+    public function profile(): LanguageProfile
     {
-        return $this->language;
+        return $this->profile;
     }
 
     /**
-     * Answers the schemas an unqualified table name is read in, in order; an unqualified declaration creates its table in the first.
+     * Creates an immutable declaration context.
      *
-     * @return non-empty-list<string>
+     * Null declarations give an open context: relations that are not declared
+     * may exist. A list, even an empty one, gives a context that enumerates
+     * every relation unless `$complete` is false. An operation in the list
+     * contributes the declarations it provides; it is not executed, and ALTER,
+     * DROP and writes contribute nothing.
+     *
+     * @param list<Table|Operation>|null $declarations The declarations, or null for an open context without any
+     * @param bool $complete Whether a given list enumerates every relation
+     *
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a declaration belongs to another language profile
      */
-    public function searchPath(): array
+    public function context(?array $declarations = null, bool $complete = true): AnalysisContext
     {
-        return $this->searchPath;
+        $tables = [];
+        foreach ($declarations ?? [] as $declaration) {
+            if ($declaration instanceof Operation) {
+                Check::input($this->profile->compatibleWith($declaration->profile()), 'A declaring operation must belong to the selected language profile.');
+                array_push($tables, ...$declaration->declarations());
+            } else {
+                $tables[] = $declaration;
+            }
+        }
+
+        return $this->platform->context($this->profile, $this->searchPath, $tables, $declarations !== null && $complete);
     }
 
     /**
-     * Builds an immutable statement from the SQL of one statement, resolved against its dependencies when they are given.
+     * Analyzes one input into an operation against an explicit declaration context.
      *
-     * Without dependencies the statement is structured only. With them, even
-     * none, the statement is also resolved: the tables it declares are read,
-     * and every table name it writes must be a common table expression it
-     * defines, a table a dependency declares, or a table it declares or
-     * drops itself. Dependencies are applied in order, so a later DROP TABLE
-     * removes an earlier declaration. With partial declarations, a name no
-     * dependency declares is an undeclared table instead of an error.
+     * Semantic problems of grammatical SQL, such as a missing column, are
+     * facts of the returned operation. The operation is returned only after
+     * its structure was confirmed to hold every operand of the input and its
+     * rendered SQL was confirmed to carry the same significant tokens.
      *
-     * @param list<Statement>|null $dependencies The declarations the statement is read against, in order
-     * @param Declarations $declarations Whether the dependencies declare every table of the database, or only some
+     * @param list<Table|Operation>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
      *
-     * @throws \SqlSemantics\Core\AnalysisException When SQL is not one statement of the selected language
-     * @throws \SqlSemantics\Core\SemanticException When a table name resolves to nothing under complete declarations or a declaration conflicts with a dependency
+     * @throws AnalysisException When the SQL is outside the selected grammar
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the context belongs to another language profile
      */
-    public function analyze(string $sql, ?array $dependencies = null, Declarations $declarations = Declarations::Complete): Statement
+    public function analyze(string $sql, array|AnalysisContext|null $context = null): Operation
     {
-        return $this->analyzer->analyze($sql, $dependencies, $declarations);
+        $declarations = $context instanceof AnalysisContext ? $context : $this->context($context);
+        Check::input($this->profile->compatibleWith($declarations->profile), 'The context must match the selected language profile.');
+        try {
+            $tree = $this->parser->parse($sql);
+        } catch (SourceException $error) {
+            throw new AnalysisException($error->getMessage(), 0, $error);
+        }
+        $leaves = new Leaves();
+        $statement = (new Publication())->root($this->platform->lower($tree, $this->profile, $leaves));
+        $operation = new Operation($declarations, $statement);
+
+        $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $this->platform->statementNamespace()]);
+        $dropped = (new LeafEmbedding())->dropped($leaves, $graph->objects($statement));
+        Check::invariant($dropped === null, 'The statement lost an operand of the input: ' . ($dropped === null ? '' : $dropped::class));
+        $tokens = new TokenCorrespondence();
+        $keys = $this->platform->leafKeys($this->profile);
+        $productions = $this->platform->productions($this->profile);
+        $difference = $tokens->difference($tokens->keys($tree, $productions, $keys), $tokens->keys($this->parser->parse($operation->toString()), $productions, $keys));
+        Check::invariant($difference === null, 'The rendered SQL does not carry the tokens of the input: ' . $difference . ' in: ' . $operation->toString());
+
+        return $operation;
     }
 
     /**
-     * Builds one immutable statement for each statement of a script, in order, each resolved against the dependencies and the statements before it when dependencies are given.
+     * Analyzes each statement of a script against the same explicit declaration context.
      *
-     * @param list<Statement>|null $dependencies
-     * @return list<Statement>
-     * @throws \SqlSemantics\Core\AnalysisException When a statement is not in the selected language
-     * @throws \SqlSemantics\Core\SemanticException When a table name resolves to nothing under complete declarations or a declaration conflicts
+     * No statement is executed for the ones after it.
+     *
+     * @param list<Table|Operation>|AnalysisContext|null $context The declarations, a prepared context, or null for an open context
+     * @return list<Operation>
+     *
+     * @throws AnalysisException When a statement is outside the selected grammar
      */
-    public function analyzeAll(string $sql, ?array $dependencies = null, Declarations $declarations = Declarations::Complete): array
+    public function analyzeAll(string $sql, array|AnalysisContext|null $context = null): array
     {
-        return $this->analyzer->analyzeAll($sql, $dependencies, $declarations);
+        $declarations = $context instanceof AnalysisContext ? $context : $this->context($context);
+        $operations = [];
+        foreach ($this->split($sql) as $statement) {
+            $operations[] = $this->analyze($statement, $declarations);
+        }
+
+        return $operations;
     }
 
     /**
-     * Finds the statement boundaries of a script, as the server finds them.
+     * Finds the statement boundaries of a script, as the database finds them.
      *
-     * Each text ends with its own terminator, and trailing whitespace and
-     * comments stay with the last statement. A semicolon inside a string, a
-     * comment, or a compound statement ends nothing.
+     * Each text ends with its own terminator; trailing whitespace and comments
+     * stay with the last statement. A semicolon inside a string, a comment, or
+     * a compound statement ends nothing.
      *
      * @return list<string>
-     * @throws \SqlSemantics\Core\AnalysisException When a statement is not in the selected language
+     *
+     * @throws AnalysisException When a statement is outside the selected grammar
      */
     public function split(string $sql): array
     {
-        return $this->analyzer->split($sql);
-    }
-
-    /**
-     * Decodes a literal without evaluating an expression or applying a column type.
-     *
-     * Numeric values remain exact decimal text. SQL NULL has its own variant;
-     * a value requiring evaluation throws rather than pretending to be NULL.
-     * @throws \SqlSemantics\Core\Literal\DecodingException When the value is not a decodable literal
-     */
-    public function decodeLiteral(\SqlSemantics\Statement\Element $value): \SqlSemantics\Statement\Literal\Literal
-    {
-        return (new \SqlSemantics\Core\Literal\Reader($this->language))->read($value);
-    }
-
-    /**
-     * Reads a standalone column type, keeping its syntax, declared facts, and effective numeric size.
-     *
-     * @throws \SqlSemantics\Core\AnalysisException When input is not exactly one type
-     * @throws \SqlSemantics\Core\SemanticException When the declared type has invalid parameters
-     */
-    public function type(string $sql): \SqlSemantics\Statement\Declaration\TypeDeclaration
-    {
-        return (new \SqlSemantics\Core\Ast\TypeInput($this->language))->read($sql);
-    }
-
-    /**
-     * Answers the composer of values for this language, spelling names and literals as the release and mode read them.
-     */
-    public function builder(): Builder
-    {
-        return $this->language->dialect->platform()->builder($this->language);
+        try {
+            return (new Splitter($this->parser))->split($sql);
+        } catch (SourceException $error) {
+            throw new AnalysisException($error->getMessage(), 0, $error);
+        }
     }
 }

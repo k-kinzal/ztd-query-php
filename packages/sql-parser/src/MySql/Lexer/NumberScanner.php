@@ -29,15 +29,15 @@ final class NumberScanner
     {
         $cursor = $scan->cursor;
         $start = $cursor->offset();
-        if ($cursor->peek() === '.' && ctype_digit($cursor->peek(1))) {
+        if ($cursor->peek() === '.' && \SqlParser\Lexer\Ascii::digit($cursor->peek(1))) {
             return $this->fraction($scan, $start);
         }
-        if (!ctype_digit($cursor->peek())) {
+        if (!\SqlParser\Lexer\Ascii::digit($cursor->peek())) {
             return null;
         }
         $prefixed = $cursor->match('0[xX][0-9A-Fa-f]+') ?? $cursor->match('0[bB][01]+');
         if ($prefixed !== null && !Scan::isIdentifierByte($cursor->peek())) {
-            return $scan->lexeme(strtolower($prefixed[1]) === 'x' ? 'HEX_NUM' : 'BIN_NUM', $start);
+            return $scan->lexeme(\SqlParser\Lexer\Ascii::lower($prefixed[1]) === 'x' ? 'HEX_NUM' : 'BIN_NUM', $start);
         }
         $cursor->seek($start);
         $digits = $cursor->match('[0-9]+') ?? '';

@@ -5,166 +5,150 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql;
 
 use InvalidArgumentException;
+use SqlParser\Lexer\ParameterSyntax;
 use SqlParser\MySql\MySqlParser;
-use SqlParser\MySql\MySqlVersion;
+use SqlParser\MySql\SqlMode;
+use SqlParser\Parser\Node;
 use SqlParser\Parser\SqlParser;
-use SqlSemantics\Core\Analysis\TriviaReader;
-use SqlSemantics\Core\Builder as Composer;
-use SqlSemantics\Core\Language;
-use SqlSemantics\Core\Mode as SessionMode;
-use SqlSemantics\Core\Parameters;
-use SqlSemantics\Core\Platform as Contract;
-use SqlSemantics\Core\Policy;
-use SqlSemantics\Core\SearchPath as SessionSearchPath;
+use SqlParser\Resource\VersionRegistry;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Contract\LexicalSettings;
+use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Lowering\Productions;
+use SqlSemantics\Platform\MySql\Lowering\Lowering;
+use SqlSemantics\Platform\MySql\Rendering\Codec;
+use SqlSemantics\Platform\MySql\Rules\LeafKeys;
+use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
+use SqlSemantics\Statement\Identifier\Comparison;
+use SqlSemantics\Statement\Identifier\Name;
 
 /**
- * Assembles MySql semantic behavior from independent core contracts.
+ * Wires the MySQL grammar releases, lowering rules and spelling rules into the analysis.
+ *
+ * Rule: MYSQL-PROFILE-001. A profile is one shipped grammar release, the
+ * five lexical sql_mode settings, and the parameter style. The installed
+ * grammar and keyword artifacts must have the digests the release pins.
+ *
+ * Rule: MYSQL-CONTEXT-001. An unqualified table name is searched in one
+ * database, the current database of the session; a context names it, and
+ * `mysql` is not assumed: without a search path the database is the name
+ * `(current)`, which no qualified name written in SQL can equal by accident
+ * of spelling only if the caller never declares it, so callers that use
+ * qualified names give the real name. Table and database names are compared
+ * exactly, which is the server setting lower_case_table_names=0, the default
+ * on Unix; the setting is server configuration, the language profile has no
+ * field for it, and a server that runs with 1 or 2 needs the core profile to
+ * record it (see the family plan). Column names are compared without regard
+ * to ASCII letter case. The server folds every letter by the simple case
+ * mapping of its system character set, so two column names that differ only
+ * in the case of a letter outside ASCII are one name to the server and two
+ * names here; for names whose letters outside ASCII are written identically
+ * the comparison is exact.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/identifier-case-sensitivity.html.
+ * Status: Implemented.
  *
  * @visibility SqlSemantics
  */
-final class Platform implements Contract
+final class Platform implements \SqlSemantics\Contract\Platform
 {
     /**
-     * Configures the selected grammar release under the session's `sql_mode` and parameter syntax.
-     *
-     * @throws InvalidArgumentException When the mode is not this database's Mode
+     * @var array<string, SqlParser>
      */
-    public function parser(?string $version = null, ?SessionMode $mode = null, Parameters $parameters = Parameters::Native): SqlParser
+    private array $parsers = [];
+
+    /**
+     * Fixes the profile of a shipped MySQL release under a session mode.
+     *
+     * The release is named as the parser tags it (`mysql-8.4.7`) or by its number alone (`8.4.7`);
+     * without a release the default of the installed parser is used.
+     *
+     * @throws InvalidArgumentException When the release is not shipped, the mode belongs to another database, or the installed grammar artifacts differ from the pinned ones
+     */
+    public function profile(?string $version, ?\SqlSemantics\Contract\Mode $mode, ParameterStyle $parameters): LanguageProfile
     {
         if ($mode !== null && !$mode instanceof Mode) {
-            throw new InvalidArgumentException('The mode must be a ' . Mode::class . ', ' . $mode::class . ' given.');
+            throw new InvalidArgumentException('MySQL reads SQL under a MySQL session mode; ' . $mode::class . ' given.');
+        }
+        $registry = new VersionRegistry();
+        $name = $version ?? $registry->resolve('mysql')->name;
+        $release = GrammarRelease::tryFrom(str_starts_with($name, 'mysql-') ? $name : 'mysql-' . $name);
+        if ($release === null || $release->database() !== 'mysql' || !in_array($release->value, $registry->names('mysql'), true)) {
+            throw new InvalidArgumentException('No semantic profile exists for the selected grammar release.');
+        }
+        $artifact = $registry->resolve('mysql', $release->value);
+        if (hash_file('sha256', $artifact->tablePath) !== $release->grammarDigest() || hash_file('sha256', $artifact->keywordPath) !== $release->keywordDigest()) {
+            throw new InvalidArgumentException('The installed grammar artifacts do not match the fixed semantic profile.');
         }
 
-        return new MySqlParser($version, $mode === null ? new \SqlParser\MySql\SqlMode() : $mode->sqlMode, parameters: $parameters->syntax());
+        return new LanguageProfile($release, new LexicalSettings($mode?->toString() ?? ''), $parameters);
     }
 
     /**
-     * Composes this database's values for a language.
+     * Answers the parser of a profile, created once per profile.
      */
-    public function builder(Language $language): Composer
+    public function parser(LanguageProfile $profile): SqlParser
     {
-        return new Builder($language);
+        $lexical = $profile->lexical;
+        $mode = new SqlMode($lexical->ansiQuotes, $lexical->pipesAsConcat, $lexical->highNotPrecedence, $lexical->noBackslashEscapes, $lexical->ignoreSpace);
+        $key = $profile->grammar->value . '|' . (new Mode($lexical->ansiQuotes, $lexical->pipesAsConcat, $lexical->highNotPrecedence, $lexical->noBackslashEscapes, $lexical->ignoreSpace))->toString() . '|' . $profile->parameters->value;
+
+        return $this->parsers[$key] ??= new MySqlParser($profile->grammar->value, $mode, new VersionRegistry(), $profile->parameters === ParameterStyle::Named ? ParameterSyntax::Named : ParameterSyntax::Native);
     }
 
     /**
-     * Loads this package's statement construction map for the resolved release.
+     * Answers the productions of the release.
      */
-    public function values(string $version): \SqlSemantics\Core\Analysis\ValueReader
+    public function productions(LanguageProfile $profile): Productions
     {
-        return \SqlSemantics\Core\Analysis\ValueReader::fromFile(dirname(__DIR__) . '/resources/mapping/' . basename($version) . '.php', new TriviaReader(executableVersion: MySqlVersion::resolve($version)->id()));
+        return Productions::load(dirname(__DIR__) . '/resources/productions/' . $profile->grammar->value . '.php');
     }
 
     /**
-     * Supplies the literal decoder for the resolved language.
+     * Lowers a parse tree into its statements.
      */
-    public function literals(Language $language): Policy\LiteralRules
+    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves): array
     {
-        return new LiteralDecoder($language);
+        return (new Lowering($this->productions($profile), $leaves, $profile))->statements($tree);
     }
 
     /**
-     * Reads unqualified names in the current database, the one schema of the path; without one, in an unnamed database of their own.
+     * Answers the name codec of the release.
+     */
+    public function codec(LanguageProfile $profile): Codec
+    {
+        return new Codec($profile->grammar);
+    }
+
+    /**
+     * Answers the token comparison keys under the lexical settings of the profile.
+     */
+    public function leafKeys(LanguageProfile $profile): LeafKeys
+    {
+        return new LeafKeys($profile->lexical);
+    }
+
+    /**
+     * Creates a context: one current database, exact table and database names, column names without regard to ASCII case.
      *
-     * @throws InvalidArgumentException When the path has more than one schema, as MySQL has one current database
+     * @throws InvalidArgumentException When the path names more than the current database
      */
-    public function searchPath(?SessionSearchPath $path = null): array
+    public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext
     {
-        if ($path === null) {
-            return [''];
-        }
-        if (count($path->schemas) !== 1) {
-            throw new InvalidArgumentException('MySQL reads unqualified names in its one current database, ' . count($path->schemas) . ' schemas given.');
+        if ($searchPath !== null && count($searchPath) !== 1) {
+            throw new InvalidArgumentException('MySQL searches an unqualified table name in the current database only.');
         }
 
-        return $path->schemas;
+        return new AnalysisContext($profile, [new Name($searchPath[0] ?? SessionDatabase::UNNAMED)], $tables, $complete, Comparison::Sensitive, Comparison::AsciiInsensitive);
     }
 
     /**
-     * @return array{string, string}
+     * Answers the namespace of the MySQL statement values.
      */
-    public function statementNames(): array
+    public function statementNamespace(): string
     {
-        return ['start_entry', 'simple_statement'];
+        return 'SqlSemantics\\Platform\\MySql\\Statement\\';
     }
-
-    /**
-     * Maps the supported grammar productions onto semantic roles.
-     */
-    public function syntax(): Policy\SyntaxRules
-    {
-        return new Policy\SyntaxRules([
-            'autoIncrement' => [],
-            'generationStorage' => ['opt_stored_attribute'],
-            'generationClause' => ['field_def'],
-            'statement' => ['statement'],
-            'columnName' => ['field_ident', 'ident'],
-            'declaredType' => ['type'],
-            'expression' => ['expr'],
-            'tableElements' => ['table_element_list', 'create_field_list'],
-            'createTable' => ['create_table_stmt', 'create'],
-            'createHeader' => [],
-            'tableName' => ['table_ident'],
-            'tableConstraint' => ['table_constraint_def'],
-        ]);
-    }
-
-    /**
-     * Names the positions where the grammar writes table names, and the forms that declare, drop, or merely name tables.
-     *
-     * The body of a common table expression names the ones written before it
-     * in its WITH clause, and itself only when the clause is recursive; a
-     * later one is not visible even then. The table an UPDATE or DELETE
-     * writes to is resolved like any other name, so it can be one.
-     */
-    public function relations(): Policy\RelationRules
-    {
-        return new Policy\RelationRules(
-            nameSymbols: ['table_ident', 'table_name', 'table_list'],
-            declarations: [
-                ['rule' => 'create_table_stmt', 'name' => 'table_ident', 'conditional' => 'opt_if_not_exists'],
-                ['rule' => 'create', 'requires' => ['TABLE_SYM'], 'name' => 'table_ident', 'conditional' => 'opt_if_not_exists'],
-            ],
-            drops: [
-                ['rule' => 'drop_table_stmt', 'names' => 'table_list', 'list' => ['table_list', ['table_list', ',', 'table_ident']], 'conditional' => 'if_exists'],
-                ['rule' => 'drop', 'requires' => ['table_or_tables'], 'names' => 'table_list', 'list' => ['table_list', ['table_list', ',', 'table_name']], 'conditional' => 'if_exists'],
-            ],
-            commonTableExpressions: [['rule' => 'common_table_expr', 'name' => 'ident']],
-            ignored: [
-                ['rule' => 'view_tail', 'name' => 'table_ident'],
-                ['rule' => 'drop_view_stmt', 'name' => 'table_list'],
-                ['rule' => 'drop', 'requires' => ['VIEW_SYM'], 'name' => 'table_list'],
-                ['rule' => 'table_to_table', 'pair' => ['table_ident', 'table_ident']],
-                ['rule' => 'alter_list_item', 'requires' => ['RENAME', 'table_ident'], 'name' => 'table_ident'],
-            ],
-            withClauses: ['opt_with_clause', 'with_clause'],
-            recursive: 'RECURSIVE_SYM',
-            visibility: Policy\WithVisibility::Preceding,
-            recursiveVisibility: Policy\WithVisibility::PrecedingAndItself,
-        );
-    }
-
-    /**
-     * Supplies names semantics.
-     */
-    public function names(): Policy\NameRules
-    {
-        return new NameRules();
-    }
-
-    /**
-     * Supplies types semantics.
-     */
-    public function types(): Policy\TypeRules
-    {
-        return new TypeRules();
-    }
-
-    /**
-     * Supplies schema semantics.
-     */
-    public function schema(): Policy\SchemaRules
-    {
-        return new SchemaRules();
-    }
-
 }

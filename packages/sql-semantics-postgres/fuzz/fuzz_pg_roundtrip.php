@@ -1,7 +1,7 @@
 <?php
 
 /**
- * PHP-Fuzzer entry point: every PostgreSQL statement sql-faker generates must round-trip through semantic statement data.
+ * PHP-Fuzzer entry point: every PostgreSQL statement sql-faker generates must analyze into a structure that its rendering analyzes into again.
  *
  * Usage:
  *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_roundtrip.php fuzz/corpus/pg/
@@ -19,22 +19,13 @@ use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\PostgreSql\PostgreSqlProvider;
-use SqlFormatter\Core\FormatOptions;
-use SqlFormatter\Core\Style;
-use SqlFormatter\Facade\Formatter;
-use SqlParser\PostgreSql\PostgreSqlParser;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\PostgreSql\Dialect;
 
 $grammarVersion = 'pg-' . (getenv('PG_VERSION') !== false ? getenv('PG_VERSION') : '17.2');
 $coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/pg');
 $provider = new PostgreSqlProvider(Factory::create(), $grammarVersion, $coverage);
-$parser = new PostgreSqlParser($grammarVersion);
-$target = new RoundTripTarget(
-    new Semantics(Dialect::PostgreSql, $grammarVersion),
-    new Formatter($parser, new FormatOptions(Style::Compact)),
-    $grammarVersion,
-);
+$target = new RoundTripTarget(new Semantics(Dialect::PostgreSql, $grammarVersion), $grammarVersion);
 $planner = $provider->planner();
 $constraints = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
 

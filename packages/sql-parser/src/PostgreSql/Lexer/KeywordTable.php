@@ -52,6 +52,6 @@ final class KeywordTable
      */
     public function lookup(string $word): ?string
     {
-        return $this->keywords[strtoupper($word)] ?? null;
+        return $this->keywords[\SqlParser\Lexer\Ascii::upper($word)] ?? null;
     }
 }
