@@ -173,38 +173,4 @@ final class LeafKeysTest extends TestCase
         );
         self::assertSame(LeafKeys::synonyms(), LeafKeys::synonyms());
     }
-
-    public function testSynonymousAcceptsTerminalsASynonymTableGivesOneKey(): void
-    {
-        $keys = new LeafKeys(new LexicalSettings());
-
-        self::assertTrue($keys->synonymous(new Token(1, '%', '%', 0), new Token(1, 'MOD_SYM', 'mod', 0)));
-        self::assertTrue($keys->synonymous(new Token(1, 'AND_SYM', 'AND', 0), new Token(1, 'AND_SYM', 'and', 0)));
-        self::assertFalse($keys->synonymous(new Token(1, 'AND_SYM', 'AND', 0), new Token(1, 'OR_SYM', 'OR', 0)));
-    }
-
-    public function testTerminalSynonymsListsEachTerminalWithItsKeys(): void
-    {
-        self::assertContains('%', LeafKeys::terminalSynonyms()['MOD_SYM']);
-        self::assertContains('MOD_SYM', LeafKeys::terminalSynonyms()['MOD_SYM']);
-    }
-
-    public function testSynonymousAcceptsAnotherSpellingOfARenderedName(): void
-    {
-        $keys = new LeafKeys(new LexicalSettings());
-
-        self::assertTrue($keys->synonymous(new Token(1, 'IDENT_QUOTED', '`a`', 0), new Token(1, 'IDENT', 'a', 0)));
-        self::assertTrue($keys->synonymous(new Token(1, 'IDENT_QUOTED', '`binary`', 0), new Token(1, 'BINARY', 'BINARY', 0)));
-        self::assertTrue($keys->synonymous(new Token(1, 'LEX_HOSTNAME', 'x', 0), new Token(1, 'TEXT_STRING', "'x'", 0)));
-        self::assertFalse($keys->synonymous(new Token(1, 'IDENT_QUOTED', '`a`', 0), new Token(1, 'IDENT', 'b', 0)));
-    }
-
-    public function testSpellsNameTellsTheTokensThatCanWriteAName(): void
-    {
-        $keys = new LeafKeys(new LexicalSettings());
-
-        self::assertTrue($keys->spellsName(new Token(1, 'IDENT_QUOTED', '`a b`', 0)));
-        self::assertTrue($keys->spellsName(new Token(1, 'ACTION', 'action', 0)));
-        self::assertFalse($keys->spellsName(new Token(1, 'NUM', '1', 0)));
-    }
 }

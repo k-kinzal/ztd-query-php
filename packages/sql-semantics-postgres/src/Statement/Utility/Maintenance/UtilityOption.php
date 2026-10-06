@@ -8,7 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\PostgreSql\Statement\Clause;
-use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Option\Toggle;
@@ -89,14 +88,9 @@ final class UtilityOption implements Clause
     public function text(): ?string
     {
         $argument = $this->argument;
-        if ($argument instanceof SignedNumber) {
-            $magnitude = $argument->magnitude;
-
-            return ($argument->negative ? '-' : '') . ($magnitude instanceof IntegerConstant ? $magnitude->digits : $magnitude->integer . '.' . $magnitude->fraction . ($magnitude->exponent === null ? '' : 'e' . $magnitude->exponent));
-        }
-
         return match (true) {
             $argument === null => null,
+            $argument instanceof SignedNumber => $argument->text(),
             $argument instanceof Word => $argument->word->value,
             $argument instanceof StringConstant => $argument->value,
             $argument instanceof Toggle => $argument->text(),

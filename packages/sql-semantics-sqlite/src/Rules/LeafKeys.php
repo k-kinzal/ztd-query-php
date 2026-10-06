@@ -93,30 +93,4 @@ final class LeafKeys implements \SqlSemantics\Contract\LeafKeys
             default => $token->name . ':' . (Noise::synonyms()[$token->name] ?? strtr($token->text, 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')),
         };
     }
-
-    /**
-     * Tells whether a written token is an equivalent spelling of the rendered one.
-     *
-     * The same terminal is always equivalent. The rendering writes every
-     * name as an identifier token; a written string, quoted identifier or
-     * bare word that decodes to the same name is the same name, as it is at
-     * every position where SQLite reads a name (`nm`, `ids`, `idj`). The
-     * rendering writes a number without digit separators; a written number
-     * with separators that has the same value is the same number. Whether a
-     * spelling keeps its meaning at its position is decided by reading the
-     * spelled SQL again (CORE-PUBLICATION-001), which refuses, for example, a
-     * string written where a column name is rendered in an expression.
-     */
-    public function synonymous(Token $rendered, Token $written): bool
-    {
-        if ($rendered->name === $written->name) {
-            return true;
-        }
-        if ($rendered->name === 'ID') {
-            return ($written->name === 'STRING' || preg_match('/\A[A-Za-z_\x80-\xFF][A-Za-z0-9_$\x80-\xFF]*\z/', $written->text) === 1)
-                && (new Identifiers())->decode($rendered->text) === (new Identifiers())->decode($written->text);
-        }
-
-        return in_array($rendered->name, ['INTEGER', 'FLOAT'], true) && $written->name === 'QNUMBER' && $this->literal($rendered) === $this->literal($written);
-    }
 }

@@ -26,7 +26,9 @@ use SqlSemantics\Platform\PostgreSql\Rules\Noise\UtilityNoise;
  * Rule: PG-LEAF-KEY-001. An identifier, and a keyword read through one of
  * the keyword-category nonterminals, is keyed by its decoded name. A string
  * constant is keyed by its decoded value, a bit string by its notation and
- * digits, a number by its exact value, a parameter by its canonical marker,
+ * digits, an integer constant by its value, a numeric constant (`FCONST`) by
+ * its exact text, which the server keeps as the value (PG-LEX-NUMBER-001), a
+ * parameter by its canonical marker,
  * an operator by its text. Every other token is keyed by its terminal; the
  * lookahead variants the parser's token filter introduces (`NOT_LA`,
  * `WITH_LA`, `WITHOUT_LA`, `NULLS_LA`, `FORMAT_LA`) are the same word as
@@ -64,25 +66,12 @@ final class LeafKeys implements \SqlSemantics\Contract\LeafKeys
             'SCONST' => 'string:' . (new Strings())->decode($token->text),
             'BCONST' => 'bits:b' . (new Strings())->digits($token->text),
             'XCONST' => 'bits:x' . (new Strings())->digits($token->text),
-            'ICONST', 'FCONST' => 'number:' . $this->number($token->text),
+            'ICONST' => 'number:' . (new Numerals())->decimal($token->text),
+            'FCONST' => 'float:' . $token->text,
             'PARAM' => 'param:' . (str_starts_with($token->text, '$') ? '$' . (new Numerals())->canonical(substr($token->text, 1)) : $token->text),
             'Op' => 'op:' . $token->text,
             default => self::LOOKAHEAD[$token->name] ?? $token->name,
         };
-    }
-
-    /**
-     * Answers the exact value of a numeric constant token as a key.
-     */
-    public function number(string $text): string
-    {
-        $numerals = new Numerals();
-        if ($numerals->integral($text)) {
-            return $numerals->decimal($text);
-        }
-        [$integer, $fraction, $exponent] = $numerals->parts($text);
-
-        return $integer . '.' . $fraction . 'e' . ($exponent ?? '0');
     }
 
     /**
@@ -95,13 +84,5 @@ final class LeafKeys implements \SqlSemantics\Contract\LeafKeys
         return self::$noise ??= LeafNoise::positions() + TypesNoise::positions() + ExpressionNoise::positions() + InvocationNoise::positions()
             + QueryNoise::positions() + ManipulationNoise::positions() + TableNoise::positions() + CatalogNoise::positions()
             + RoutineNoise::positions() + AccessNoise::positions() + UtilityNoise::positions();
-    }
-
-    /**
-     * Tells whether a written token is the same terminal as the rendered one.
-     */
-    public function synonymous(Token $rendered, Token $written): bool
-    {
-        return $rendered->name === $written->name;
     }
 }

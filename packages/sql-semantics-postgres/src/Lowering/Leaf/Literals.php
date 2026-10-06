@@ -36,7 +36,8 @@ use SqlSemantics\Statement\Scalar;
  * `BooleanLiteral`, `NullLiteral`, `TypedLiteral`, `PositionalParameter`,
  * `NamedParameter`, and the value classes they hold. Values are decoded by
  * PG-LEX-STRING-001 and PG-LEX-NUMBER-001. A written plus sign before a
- * number is dropped, as the grammar action drops it. PostgreSQL 17 rejects a
+ * number is dropped, as the grammar action drops it. An `FCONST` keeps its
+ * written text, which is the value the server stores. PostgreSQL 17 rejects a
  * parameter number above 2147483647 while scanning.
  * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS,
  * https://www.postgresql.org/docs/17/sql-expressions.html#SQL-EXPRESSIONS-PARAMETERS-POSITIONAL.
@@ -78,16 +79,11 @@ final class Literals
     }
 
     /**
-     * Lowers a numeric constant token: an integer of any size, or a constant with a point or an exponent.
+     * Lowers an `FCONST` token: the server keeps its written text as the value.
      */
-    public function numberToken(Token $number): IntegerConstant|NumericConstant
+    public function numberToken(Token $number): NumericConstant
     {
-        $numerals = new Numerals();
-        if ($numerals->integral($number->text)) {
-            return $this->lowering->leaves->record(new IntegerConstant($numerals->decimal($number->text)));
-        }
-
-        return $this->lowering->leaves->record(new NumericConstant(...$numerals->parts($number->text)));
+        return $this->lowering->leaves->record(new NumericConstant($number->text));
     }
 
     /**

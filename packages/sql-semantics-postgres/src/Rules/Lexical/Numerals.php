@@ -10,11 +10,15 @@ namespace SqlSemantics\Platform\PostgreSql\Rules\Lexical;
  * Rule: PG-LEX-NUMBER-001. Scope: the `ICONST` and `FCONST` terminals. A
  * constant written as an integer, in decimal, hexadecimal (`0x`), octal
  * (`0o`) or binary (`0b`) digits with optional underscores between digits, is
- * the integer it denotes whatever its size; the scanner only chooses the
- * terminal by whether the value fits 32 bits. A constant written with a
- * decimal point or an exponent keeps its integer digits, fraction digits and
- * exponent, because the fraction length is the display scale of the numeric
- * value. Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS-NUMERIC.
+ * the integer it denotes whatever its size. The scanner makes it an `ICONST`
+ * holding that integer when it fits 32 bits (`process_integer_literal` in
+ * `scan.l`); otherwise, and for every constant written with a decimal point
+ * or an exponent, it makes an `FCONST` that holds the written text itself
+ * (a `T_Float` node keeps the string), because the parser does not yet know
+ * the type the value is read as. Commands such as `SET`, storage parameters
+ * and trigger arguments receive that text verbatim, so `1e2` and `100.` are
+ * different values there. Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS-NUMERIC,
+ * `process_integer_literal` and the `{numeric}`, `{real}` rules of `src/backend/parser/scan.l` of PostgreSQL 17.
  * Termination: one pass over the digits per conversion step.
  * Status: Implemented.
  *
@@ -61,28 +65,27 @@ final class Numerals
     }
 
     /**
-     * Answers the integer digits, fraction digits and exponent of a constant written with a point or an exponent.
-     *
-     * @return array{string, string, string|null}
+     * Answers the canonical decimal digits of the integer a constant written as an integer denotes, or null for one with a point or an exponent.
      */
-    public function parts(string $text): array
+    public function integer(string $text): ?string
     {
-        $digits = str_replace('_', '', $text);
-        $mantissa = $digits;
-        $exponent = null;
-        $mark = strcspn($digits, 'eE');
-        if ($mark < strlen($digits)) {
-            $mantissa = substr($digits, 0, $mark);
-            $written = substr($digits, $mark + 1);
-            $magnitude = $this->canonical(ltrim($written, '+-'));
-            $exponent = $magnitude === '0' ? null : (str_starts_with($written, '-') ? '-' : '') . $magnitude;
-        }
-        $point = strpos($mantissa, '.');
-        if ($point === false) {
-            return [$this->canonical($mantissa), '', $exponent];
+        return $this->integral($text) ? $this->decimal($text) : null;
+    }
+
+    /**
+     * Tells whether a text is one constant the scanner reads as an `FCONST` and keeps as written.
+     *
+     * That is a decimal number with a point, an exponent or both, or an
+     * integer spelling whose value does not fit 32 bits.
+     */
+    public function kept(string $text): bool
+    {
+        $digits = '[0-9](?:_?[0-9])*';
+        if (preg_match('/\A(?:0[xX](?:_?[0-9A-Fa-f])+|0[oO](?:_?[0-7])+|0[bB](?:_?[01])+|' . $digits . ')\z/', $text) === 1) {
+            return !$this->within($this->decimal($text), '2147483647');
         }
 
-        return [$this->canonical(substr($mantissa, 0, $point)), substr($mantissa, $point + 1), $exponent];
+        return preg_match('/\A(?:' . $digits . '(?:\.(?:' . $digits . ')?)?|\.' . $digits . ')(?:[eE][-+]?' . $digits . ')?\z/', $text) === 1;
     }
 
     /**

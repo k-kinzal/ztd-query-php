@@ -38,8 +38,8 @@ final class UtilityOptionTest extends TestCase
                 (new UtilityOption(new Name('x'), new StringConstant('a b')))->text(),
                 (new UtilityOption(new Name('x'), Toggle::On))->text(),
                 (new UtilityOption(new Name('x'), new SignedNumber(true, new IntegerConstant('12'))))->text(),
-                (new UtilityOption(new Name('x'), new SignedNumber(false, new NumericConstant('1', '50'))))->text(),
-                (new UtilityOption(new Name('x'), new SignedNumber(false, new NumericConstant('2', '0', '-3'))))->text(),
+                (new UtilityOption(new Name('x'), new SignedNumber(false, new NumericConstant('1.50'))))->text(),
+                (new UtilityOption(new Name('x'), new SignedNumber(false, new NumericConstant('2.0e-3'))))->text(),
             ],
         );
     }

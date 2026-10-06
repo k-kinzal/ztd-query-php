@@ -32,6 +32,6 @@ final class RoleConnectionLimitTest extends TestCase
     public function testRejectsAFraction(): void
     {
         $this->expectExceptionMessage('A connection limit is an integer.');
-        new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RoleConnectionLimit(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('1', '5')));
+        new \SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Role\RoleConnectionLimit(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('1.5')));
     }
 }

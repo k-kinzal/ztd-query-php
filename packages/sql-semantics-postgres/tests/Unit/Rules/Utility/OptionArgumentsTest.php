@@ -47,7 +47,7 @@ final class OptionArgumentsTest extends TestCase
                 $values->boolean(new UtilityOption(new Name('verbose'), new StringConstant('yes'))),
                 $values->boolean(new UtilityOption(new Name('verbose'), new SignedNumber(false, new IntegerConstant('2')))),
                 $values->boolean(new UtilityOption(new Name('verbose'), new SignedNumber(true, new IntegerConstant('1')))),
-                $values->boolean(new UtilityOption(new Name('verbose'), new SignedNumber(false, new NumericConstant('1', '0')))),
+                $values->boolean(new UtilityOption(new Name('verbose'), new SignedNumber(false, new NumericConstant('1.0')))),
             ],
         );
     }
@@ -60,7 +60,7 @@ final class OptionArgumentsTest extends TestCase
             [
                 $values->integer(new UtilityOption(new Name('parallel'), new SignedNumber(false, new IntegerConstant('2147483647')))),
                 $values->integer(new UtilityOption(new Name('parallel'), new SignedNumber(true, new IntegerConstant('2147483647')))),
-                $values->integer(new UtilityOption(new Name('parallel'), new SignedNumber(false, new IntegerConstant('2147483648')))),
+                $values->integer(new UtilityOption(new Name('parallel'), new SignedNumber(false, new NumericConstant('2147483648')))),
                 $values->integer(new UtilityOption(new Name('parallel'), new StringConstant('2'))),
                 $values->integer(new UtilityOption(new Name('parallel'))),
             ],

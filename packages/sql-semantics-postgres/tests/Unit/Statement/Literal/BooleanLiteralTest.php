@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Literal;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
@@ -20,12 +20,23 @@ use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(BooleanLiteral::class)]
-#[Small]
+#[Medium]
 final class BooleanLiteralTest extends TestCase
 {
-    public function testOutputNameIsTheCatalogNameOfBoolean(): void
+    public function testGivesAnUnaliasedColumnNoName(): void
     {
-        self::assertSame('bool', (new BooleanLiteral(true))->outputName()->value);
+        $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT true, false');
+        self::assertSame(['?column?', '?column?'], [$query->field(0)->name?->value, $query->field(1)->name?->value]);
+    }
+
+    public function testADerivedColumnOfAConstantIsNotNamedBool(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        $missing = $semantics->analyze('SELECT bool FROM (SELECT true) s');
+        $found = $semantics->analyze('SELECT "?column?" FROM (SELECT true) s');
+        self::assertSame(['Column bool does not exist.'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), $missing->facts->diagnostics));
+        self::assertSame([], $found->facts->diagnostics);
+        self::assertEquals(new Known(Builtin::Bool), $found->field(0)->type);
     }
 
     public function testDeriveScalarIsBooleanAndNeverNull(): void

@@ -22,33 +22,33 @@ final class ObjectIdentifiersTest extends TestCase
         self::assertSame([], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON LARGE OBJECT 0, -7, 2147483647, 4294967295, -2147483648 TO joe')->facts->diagnostics));
     }
 
-    public function testProblemAcceptsAnInt4ValueOfEitherSign(): void
+    public function testCheckReadsTheWrittenTextOfANumericConstantAsStrtoulDoes(): void
+    {
+        self::assertSame(['invalid input syntax for type oid: "1_0000000000"', 'invalid input syntax for type oid: "0o40000000000"', 'value "0x100000000" is out of range for type oid'], array_map(static fn (\SqlSemantics\Statement\Fact\Diagnostic $diagnostic): string => $diagnostic->message(), (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('GRANT SELECT ON LARGE OBJECT 0x80000000, 1_0000000000, 0o40000000000, 03000000000, 0xFFFFFFFF, -0x80000000, 0x100000000 TO joe')->facts->diagnostics));
+    }
+
+    public function testProblemAcceptsEveryIntegerConstant(): void
     {
         self::assertNull((new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->problem(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(true, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('2147483647'))));
     }
 
     public function testProblemRejectsANegativeValueBeyondTheSignExtension(): void
     {
-        self::assertSame('value "-4294967295" is out of range for type oid', (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->problem(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(true, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('4294967295')))?->message());
+        self::assertSame('value "-4294967295" is out of range for type oid', (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->problem(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(true, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('4294967295')))?->message());
     }
 
     public function testProblemRejectsAValueOfMoreThanTenDigits(): void
     {
-        self::assertSame('value "10000000000" is out of range for type oid', (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->problem(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant('10000000000')))?->message());
+        self::assertSame('value "10000000000" is out of range for type oid', (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->problem(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber(false, new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('10000000000')))?->message());
     }
 
-    public function testSpellingWritesTheFractionAfterAPoint(): void
+    public function testUnsignedReadsDecimalHexadecimalAndOctalDigits(): void
     {
-        self::assertSame('12.50e-3', (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->spelling(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('12', '50', '-3')));
+        self::assertSame(['3000000000', '8589934591', '402653184'], [(new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->unsigned('3000000000'), (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->unsigned('0X1ffffffff'), (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->unsigned('03000000000')]);
     }
 
-    public function testSpellingWritesAnExponentWithoutAFraction(): void
+    public function testUnsignedReadsNothingFromAnyOtherText(): void
     {
-        self::assertSame('1e2', (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->spelling(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('1', '', '2')));
-    }
-
-    public function testSpellingKeepsTheTrailingPointOfAWholeNumber(): void
-    {
-        self::assertSame('100.', (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->spelling(new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('100')));
+        self::assertSame([null, null, null, null, null], [(new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->unsigned('1.5'), (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->unsigned('1e10'), (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->unsigned('3_000_000_000'), (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->unsigned('0b100000000000000000000000000000000'), (new \SqlSemantics\Platform\PostgreSql\Rules\Access\ObjectIdentifiers())->unsigned('08000000000')]);
     }
 }

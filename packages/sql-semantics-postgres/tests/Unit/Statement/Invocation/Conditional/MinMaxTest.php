@@ -17,6 +17,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Invocation\Conditional\MinMaxKind
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Type\Descriptor\Builtin;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
@@ -42,7 +43,7 @@ final class MinMaxTest extends TestCase
     public function testDeriveScalarIsTheCommonType(): void
     {
         $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
-        $fact = $derivation->scalar(new MinMax(MinMaxKind::Greatest, [new Constant(new IntegerConstant('1')), new Constant(new IntegerConstant('9999999999'))]), $derivation->environment());
+        $fact = $derivation->scalar(new MinMax(MinMaxKind::Greatest, [new Constant(new IntegerConstant('1')), new Constant(new NumericConstant('9999999999'))]), $derivation->environment());
         self::assertEquals(new ScalarFact(new Known(Builtin::Int8), Nullability::NotNull), $fact);
     }
 

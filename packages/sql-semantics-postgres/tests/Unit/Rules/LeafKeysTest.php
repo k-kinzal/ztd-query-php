@@ -42,24 +42,16 @@ final class LeafKeysTest extends TestCase
         self::assertNull((new LeafKeys())->key(new Token(0, '$end', '', 0), 'parse_toplevel: stmtmulti', 1));
     }
 
-    public function testNumberKeysANumericConstantByItsExactValue(): void
+    public function testKeyKeepsTheExactTextOfANumericConstant(): void
     {
-        self::assertSame('1000', (new LeafKeys())->number('1_000'));
-        self::assertSame('1.50e-3', (new LeafKeys())->number('1.50E-03'));
-        self::assertSame('0.5e0', (new LeafKeys())->number('.5'));
+        self::assertSame('float:1.50E-03', (new LeafKeys())->key(new Token(1, 'FCONST', '1.50E-03', 0), 'AexprConst: FCONST', 0));
+        self::assertSame('float:0x1FFFFFFFFF', (new LeafKeys())->key(new Token(1, 'FCONST', '0x1FFFFFFFFF', 0), 'NumericOnly: FCONST', 0));
+        self::assertNotSame((new LeafKeys())->key(new Token(1, 'FCONST', '1e2', 0), 'NumericOnly: FCONST', 0), (new LeafKeys())->key(new Token(1, 'FCONST', '100.', 0), 'NumericOnly: FCONST', 0));
     }
 
     public function testNoiseMergesTheFamilyTables(): void
     {
         self::assertSame([1], (new LeafKeys())->noise()['target_el: a_expr AS ColLabel']);
         self::assertSame([0, 1], (new LeafKeys())->noise()['opt_set_data: SET DATA_P']);
-    }
-
-    public function testSynonymousAcceptsOnlyTheSameTerminal(): void
-    {
-        $keys = new LeafKeys();
-
-        self::assertTrue($keys->synonymous(new Token(1, 'AND', 'AND', 0), new Token(1, 'AND', 'and', 0)));
-        self::assertFalse($keys->synonymous(new Token(1, 'AND', 'AND', 0), new Token(1, 'OR', 'OR', 0)));
     }
 }

@@ -16,7 +16,9 @@ use SqlSemantics\Statement\Snapshot;
 /**
  * One argument passed to a trigger function.
  *
- * The server passes every argument as a string: a number, a string constant or a word is kept as written.
+ * The server passes every argument as a string: an integer constant as its
+ * decimal value, a numeric constant as its written text, a string constant
+ * as its value and a word as its name (`TriggerFuncArg` in gram.y).
  * Source: https://www.postgresql.org/docs/17/sql-createtrigger.html.
  *
  * @visibility public

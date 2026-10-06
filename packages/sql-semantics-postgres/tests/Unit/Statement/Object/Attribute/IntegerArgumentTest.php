@@ -52,6 +52,6 @@ final class IntegerArgumentTest extends TestCase
     public function testRejectsANumberWithAPoint(): void
     {
         $this->expectExceptionMessage('An integer attribute is an integer that fits in 32 bits.');
-        new IntegerArgument(new SignedNumber(false, new NumericConstant('1', '0')));
+        new IntegerArgument(new SignedNumber(false, new NumericConstant('1.0')));
     }
 }

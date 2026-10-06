@@ -20,8 +20,14 @@ final class IntegerConstantTest extends TestCase
     public function testRenderWritesTheDigits(): void
     {
         $out = new Output(new Codec(GrammarRelease::PostgreSql172));
-        (new IntegerConstant('1208925819614629174706175'))->render($out);
-        self::assertSame('1208925819614629174706175', (new Lexical())->join($out->pieces()));
+        (new IntegerConstant('2147483647'))->render($out);
+        self::assertSame('2147483647', (new Lexical())->join($out->pieces()));
+    }
+
+    public function testRejectsAnIntegerBeyond32Bits(): void
+    {
+        $this->expectExceptionMessage('An integer constant fits 32 bits; a larger integer is a numeric constant.');
+        new IntegerConstant('2147483648');
     }
 
     public function testRejectsASign(): void

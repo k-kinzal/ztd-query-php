@@ -5,48 +5,50 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Statement\Literal;
 
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * The exact value of a numeric constant written with a decimal point or an exponent.
+ * A numeric constant the server keeps as its written text: one written with a decimal point or an exponent, or an integer too large for 32 bits.
  *
- * The value is the integer digits, the fraction digits and the power of ten;
- * no floating-point number is involved. The fraction digits are kept as
- * written because their count is the display scale of the numeric value, so
- * `1.0` and `1.00` are different constants.
- * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS-NUMERIC.
+ * The scanner reads such a constant as an `FCONST`, and the raw parser
+ * stores it as a `T_Float` node holding the written text, not a number. The
+ * text is the value: an expression reads it as `bigint` or `numeric` when
+ * its type is known, where `0001.50` is the numeric 1.50 with two fraction
+ * digits, but `SET`, storage parameters, trigger arguments and other options
+ * receive the text verbatim, so `SET application_name = 1e2` sets `1e2` and
+ * `0x1FFFFFFFFF` stays `0x1FFFFFFFFF`. The text is kept exactly, digit
+ * separators, letter case and leading zeros included, and written back as it
+ * is (PG-LEX-NUMBER-001).
+ * Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS-NUMERIC,
+ * `makeFloat` and `NumericOnly` in `src/backend/parser/gram.y` of PostgreSQL 17.
  *
  * @visibility public
- * @example Reading the parts of a numeric constant
+ * @example Reading the text of a numeric constant
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql))->analyze('SELECT 1_0.50e-3');
- *     $value = $query->statement->targets[0]->expression->value;
- *     [$value->integer, $value->fraction, $value->exponent] // => ['10', '50', '-3']
- * @example Rejecting an exponent of zero, which is written as no exponent
- *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('1', '5', '0') // throws \SqlSemantics\Diagnostic\InvalidConstruction
+ *     $query->statement->targets[0]->expression->value->text // => '1_0.50e-3'
+ * @example Rejecting an integer the scanner reads as an integer constant
+ *     new \SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant('100') // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
 final class NumericConstant implements Node
 {
     use Snapshot;
 
     /**
-     * @param string $integer The decimal digits before the point, without leading zeros
-     * @param string $fraction The decimal digits after the point, as many as written
-     * @param string|null $exponent The power of ten as a canonical integer other than zero, or null for none
+     * @param string $text The written text, without a sign
      */
-    public function __construct(public readonly string $integer, public readonly string $fraction = '', public readonly ?string $exponent = null)
+    public function __construct(public readonly string $text)
     {
-        Check::input(preg_match('/\A(?:0|[1-9][0-9]*)\z/', $integer) === 1, 'The integer digits of a numeric constant are canonical decimal digits.');
-        Check::input(preg_match('/\A[0-9]*\z/', $fraction) === 1, 'The fraction of a numeric constant is decimal digits.');
-        Check::input($exponent === null || preg_match('/\A-?[1-9][0-9]*\z/', $exponent) === 1, 'The exponent of a numeric constant is a canonical integer other than zero.');
+        Check::input((new Numerals())->kept($text), 'A numeric constant is a number with a point or an exponent, or an integer beyond 32 bits, as the scanner reads it.');
     }
 
     /**
-     * Writes the digits with a decimal point, so the constant is read as numeric again.
+     * Writes the text as it was written.
      */
     public function render(Output $out): void
     {
-        $out->spelled($this->integer . '.' . $this->fraction . ($this->exponent === null ? '' : 'e' . $this->exponent));
+        $out->spelled($this->text);
     }
 }

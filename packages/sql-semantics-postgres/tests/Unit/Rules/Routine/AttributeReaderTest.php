@@ -72,7 +72,7 @@ final class AttributeReaderTest extends TestCase
 
     public function testReadKeepsARejectedValueAsWritten(): void
     {
-        $number = new SignedNumber(false, new NumericConstant('1', '5'));
+        $number = new SignedNumber(false, new NumericConstant('1.5'));
         self::assertSame([$number, null], [(new AttributeReader())->read(Reading::Integer, $number), (new AttributeReader())->read(Reading::Text, null)]);
     }
 

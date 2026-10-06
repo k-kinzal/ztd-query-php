@@ -28,14 +28,21 @@ final class PrefixTypingTest extends TestCase
     public function testPrefixFoldsANegativeConstant(): void
     {
         $context = (new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true);
-        $constant = new Constant(new IntegerConstant('9223372036854775808'));
+        $constant = new Constant(new NumericConstant('9223372036854775808'));
         $fact = (new PrefixTyping())->prefix($context, new OperatorName(new Name('-')), new ScalarFact(new Known(Builtin::Numeric), Nullability::NotNull), $constant);
         self::assertEquals(new Known(Builtin::Int8), $fact->type);
     }
 
     public function testNegativeTypesByValue(): void
     {
-        self::assertSame([Builtin::Int4, Builtin::Int8, Builtin::Numeric], [(new PrefixTyping())->negative(new IntegerConstant('2147483648')), (new PrefixTyping())->negative(new IntegerConstant('2147483649')), (new PrefixTyping())->negative(new NumericConstant('1', '5'))]);
+        self::assertSame(
+            [Builtin::Int4, Builtin::Int4, Builtin::Int8, Builtin::Int8, Builtin::Numeric, Builtin::Numeric],
+            [
+                (new PrefixTyping())->negative(new IntegerConstant('2147483647')), (new PrefixTyping())->negative(new NumericConstant('0x8000_0000')),
+                (new PrefixTyping())->negative(new NumericConstant('2147483649')), (new PrefixTyping())->negative(new NumericConstant('9223372036854775808')),
+                (new PrefixTyping())->negative(new NumericConstant('9223372036854775809')), (new PrefixTyping())->negative(new NumericConstant('1.5')),
+            ],
+        );
     }
 
     public function testUnaryKeepsANumberType(): void

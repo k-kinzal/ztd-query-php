@@ -51,13 +51,13 @@ final class ArgumentTextTest extends TestCase
     public function testIntegerAnswersOnlyThirtyTwoBitIntegers(): void
     {
         $text = new ArgumentText();
-        self::assertSame([2147483647, null, null], [$text->integer(new SignedNumber(false, new IntegerConstant('2147483647'))), $text->integer(new SignedNumber(true, new IntegerConstant('2147483648'))), $text->integer(new SignedNumber(false, new NumericConstant('1', '5')))]);
+        self::assertSame([2147483647, null, null], [$text->integer(new SignedNumber(false, new IntegerConstant('2147483647'))), $text->integer(new SignedNumber(true, new NumericConstant('2147483648'))), $text->integer(new SignedNumber(false, new NumericConstant('1.5')))]);
     }
 
-    public function testNumberWritesAFloatCanonically(): void
+    public function testNumberWritesTheTextOfAFloatAsWritten(): void
     {
         $text = new ArgumentText();
-        self::assertSame(['-1.50e3', '99999999999'], [$text->number(new SignedNumber(true, new NumericConstant('1', '50', '3'))), $text->number(new SignedNumber(false, new IntegerConstant('99999999999')))]);
+        self::assertSame(['-1.50E3', '9_999_999_999', '-7'], [$text->number(new SignedNumber(true, new NumericConstant('1.50E3'))), $text->number(new SignedNumber(false, new NumericConstant('9_999_999_999'))), $text->number(new SignedNumber(true, new IntegerConstant('7')))]);
     }
 
     public function testJoinedSeparatesNamesWithDots(): void

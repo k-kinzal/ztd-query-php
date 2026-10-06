@@ -58,7 +58,7 @@ final class BinaryOperationTest extends TestCase
     public function testDeriveScalarPromotesAnIntegerAndANumeric(): void
     {
         $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
-        $fact = $derivation->scalar(new BinaryOperation(new OperatorName(new Name('*')), new Constant(new IntegerConstant('2')), new Constant(new NumericConstant('1', '5', null))), $derivation->environment());
+        $fact = $derivation->scalar(new BinaryOperation(new OperatorName(new Name('*')), new Constant(new IntegerConstant('2')), new Constant(new NumericConstant('1.5'))), $derivation->environment());
         self::assertEquals(new Known(Builtin::Numeric), $fact->type);
     }
 

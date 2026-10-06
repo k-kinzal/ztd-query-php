@@ -5,26 +5,27 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\PostgreSql\Rules\Access;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblem;
 use SqlSemantics\Platform\PostgreSql\Statement\Catalog\Access\Problem\AccessProblemRule;
-use SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant;
+use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 
 /**
  * Checks the numbers of GRANT and REVOKE ON LARGE OBJECT as object identifiers.
  *
  * Rule: PG-LARGE-OBJECT-OID-001. The server reads each number with
- * `oidparse()`: an integer constant within the int4 range is taken as it
- * is (a negative one wraps around), any other number keeps its spelling and
- * is read as an unsigned 32-bit integer with `uint32in_subr()`, which
- * rejects a fraction or an exponent ("invalid input syntax for type oid")
- * and a value beyond 4294967295 ("value … is out of range for type oid");
- * of the negative numbers outside int4 only -2147483648 passes, because
- * only it matches after sign extension. The check judges the exact value:
- * the server reads a constant beyond int4 from its spelling, so a radix
- * prefix other than `0x` or digit separators in such a constant, which
- * `strtoul()` does not read, are judged by their value. Whether a large
- * object exists is not a declaration a context holds and is not reported.
+ * `oidparse()`: an integer constant, which fits int4, is taken as it is (a
+ * negative one wraps around); a numeric constant keeps its written text, and
+ * the text with its sign is read as an unsigned 32-bit integer by
+ * `uint32in_subr()`, which calls `strtoul()` with base 0. That reads decimal
+ * digits, hexadecimal digits after `0x` and octal digits after a leading
+ * zero; any other text, such as a fraction, an exponent, digit separators or
+ * the `0o` and `0b` prefixes, is "invalid input syntax for type oid", and a
+ * value beyond 4294967295 is "value … is out of range for type oid"; of the
+ * negative values outside int4 only -2147483648 passes, because only it
+ * matches after sign extension. Whether a large object exists is not a
+ * declaration a context holds and is not reported.
  * Termination: one pass over a finite list.
  * Source: https://www.postgresql.org/docs/17/sql-grant.html, https://www.postgresql.org/docs/17/datatype-oid.html.
  * Status: Implemented.
@@ -34,14 +35,14 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 final class ObjectIdentifiers
 {
     /**
-     * The largest integer the lexer keeps as an integer constant.
-     */
-    private const INT4_MAX = 2147483647;
-
-    /**
      * The largest object identifier.
      */
-    private const OID_MAX = 4294967295;
+    private const OID_MAX = '4294967295';
+
+    /**
+     * The largest magnitude of a negative object identifier.
+     */
+    private const NEGATIVE_MAX = '2147483648';
 
     /**
      * Reports every number that is no object identifier.
@@ -63,27 +64,30 @@ final class ObjectIdentifiers
      */
     public function problem(SignedNumber $identifier): ?AccessProblem
     {
-        $sign = $identifier->negative ? '-' : '';
         $magnitude = $identifier->magnitude;
-        if ($magnitude instanceof NumericConstant) {
-            return new AccessProblem(AccessProblemRule::InvalidObjectIdentifier, [$sign . $this->spelling($magnitude)]);
+        if ($magnitude instanceof IntegerConstant) {
+            return null;
         }
-        $value = strlen($magnitude->digits) > 10 ? null : (int) $magnitude->digits;
-        $accepted = $value !== null && ($value <= self::INT4_MAX || ($identifier->negative ? $value === self::INT4_MAX + 1 : $value <= self::OID_MAX));
+        $value = $this->unsigned($magnitude->text);
+        if ($value === null) {
+            return new AccessProblem(AccessProblemRule::InvalidObjectIdentifier, [$identifier->text()]);
+        }
 
-        return $accepted ? null : new AccessProblem(AccessProblemRule::ObjectIdentifierRange, [$sign . $magnitude->digits]);
+        return (new Numerals())->within($value, $identifier->negative ? self::NEGATIVE_MAX : self::OID_MAX) ? null : new AccessProblem(AccessProblemRule::ObjectIdentifierRange, [$identifier->text()]);
     }
 
     /**
-     * Spells a numeric constant as the server echoes it: the fraction after a point, the exponent after `e`.
+     * Answers the canonical decimal digits `strtoul()` with base 0 reads from a whole text, or null when it does not read the whole text.
      */
-    public function spelling(NumericConstant $constant): string
+    public function unsigned(string $text): ?string
     {
-        $exponent = $constant->exponent === null ? '' : 'e' . $constant->exponent;
-        if ($constant->fraction === '' && $exponent !== '') {
-            return $constant->integer . $exponent;
-        }
+        $numerals = new Numerals();
 
-        return $constant->integer . '.' . $constant->fraction . $exponent;
+        return match (true) {
+            preg_match('/\A0[xX][0-9A-Fa-f]+\z/', $text) === 1 => $numerals->decimal($text),
+            preg_match('/\A0[0-7]+\z/', $text) === 1 => $numerals->decimal('0o' . substr($text, 1)),
+            preg_match('/\A[0-9]+\z/', $text) === 1 && $text[0] !== '0' => $numerals->canonical($text),
+            default => null,
+        };
     }
 }

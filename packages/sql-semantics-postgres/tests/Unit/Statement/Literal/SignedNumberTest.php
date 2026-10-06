@@ -32,10 +32,21 @@ final class SignedNumberTest extends TestCase
     public function testRenderWritesTheMinusSign(): void
     {
         $out = new Output(new Codec(GrammarRelease::PostgreSql172));
-        (new SignedNumber(true, new NumericConstant('1', '5')))->render($out);
+        (new SignedNumber(true, new NumericConstant('1.5')))->render($out);
         self::assertSame('- 1.5', (new Lexical())->join($out->pieces()));
         $second = new Output(new Codec(GrammarRelease::PostgreSql172));
         (new SignedNumber(false, new IntegerConstant('7')))->render($second);
         self::assertSame('7', (new Lexical())->join($second->pieces()));
+    }
+
+    public function testTextIsTheIntegerValueOrTheWrittenTextAfterTheSign(): void
+    {
+        self::assertSame(['-.5', '1e2', '-7', '0', '-0x1FFFFFFFFF'], [
+            (new SignedNumber(true, new NumericConstant('.5')))->text(),
+            (new SignedNumber(false, new NumericConstant('1e2')))->text(),
+            (new SignedNumber(true, new IntegerConstant('7')))->text(),
+            (new SignedNumber(true, new IntegerConstant('0')))->text(),
+            (new SignedNumber(true, new NumericConstant('0x1FFFFFFFFF')))->text(),
+        ]);
     }
 }

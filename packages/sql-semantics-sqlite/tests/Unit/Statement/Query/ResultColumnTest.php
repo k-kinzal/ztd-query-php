@@ -169,7 +169,7 @@ final class ResultColumnTest extends TestCase
 
     public function testRenderRefusesALayoutThatChangesAToken(): void
     {
-        $this->expectExceptionMessage('The rendered SQL does not correspond to the statement');
+        $this->expectExceptionMessage('The spelled SQL is not the rendered SQL at token 1');
 
         new Operation((new Semantics(Dialect::Sqlite))->context(), new Select([new ResultColumn(new IntegerLiteral('1'), null, new Layout([new Spelled('', '2')]))]));
     }

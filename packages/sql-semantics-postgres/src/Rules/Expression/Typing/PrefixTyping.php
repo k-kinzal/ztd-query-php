@@ -59,16 +59,16 @@ final class PrefixTyping
      */
     public function negative(IntegerConstant|NumericConstant $value): Builtin
     {
-        if ($value instanceof NumericConstant) {
+        $numerals = new Numerals();
+        $digits = $value instanceof IntegerConstant ? $value->digits : $numerals->integer($value->text);
+        if ($digits === null) {
             return Builtin::Numeric;
         }
-        $numerals = new Numerals();
-
-        if ($numerals->within($value->digits, '2147483648')) {
+        if ($numerals->within($digits, '2147483648')) {
             return Builtin::Int4;
         }
 
-        return $numerals->within($value->digits, '9223372036854775808') ? Builtin::Int8 : Builtin::Numeric;
+        return $numerals->within($digits, '9223372036854775808') ? Builtin::Int8 : Builtin::Numeric;
     }
 
     /**

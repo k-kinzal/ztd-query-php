@@ -30,13 +30,22 @@ final class NumeralsTest extends TestCase
         self::assertSame('1208925819614629174706175', (new Numerals())->decimal('0xFFFFFFFFFFFFFFFFFFFF'));
     }
 
-    public function testPartsKeepsFractionDigitsAndCanonicalizesTheRest(): void
+    public function testIntegerReadsOnlyIntegerSpellings(): void
     {
-        self::assertSame(['10', '50', '-3'], (new Numerals())->parts('1_0.50e-3'));
-        self::assertSame(['0', '5', null], (new Numerals())->parts('.5'));
-        self::assertSame(['1', '', null], (new Numerals())->parts('1.'));
-        self::assertSame(['1', '', '10'], (new Numerals())->parts('1E+010'));
-        self::assertSame(['1', '0', null], (new Numerals())->parts('1.0e0'));
+        self::assertSame('8589934591', (new Numerals())->integer('0x1_FFFF_FFFF'));
+        self::assertNull((new Numerals())->integer('1e2'));
+    }
+
+    public function testKeptTellsTheTextsTheScannerKeepsAsFconst(): void
+    {
+        self::assertSame(
+            [true, true, true, true, true, true, true],
+            [(new Numerals())->kept('1_0.50e-3'), (new Numerals())->kept('.5'), (new Numerals())->kept('1.'), (new Numerals())->kept('1E+010'), (new Numerals())->kept('2147483648'), (new Numerals())->kept('0x1FFFFFFFFF'), (new Numerals())->kept('0b1_0000_0000_0000_0000_0000_0000_0000_0000')],
+        );
+        self::assertSame(
+            [false, false, false, false, false, false],
+            [(new Numerals())->kept('2147483647'), (new Numerals())->kept('0x7FFFFFFF'), (new Numerals())->kept('1e'), (new Numerals())->kept('1__0.5'), (new Numerals())->kept('-1.5'), (new Numerals())->kept('.')],
+        );
     }
 
     public function testCanonicalStripsLeadingZeros(): void

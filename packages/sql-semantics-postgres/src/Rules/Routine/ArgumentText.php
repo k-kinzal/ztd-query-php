@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\PostgreSql\Rules\Routine;
 
-use SqlSemantics\Platform\PostgreSql\Rules\Lexical\Numerals;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\SignedNumber;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\StringConstant;
@@ -25,10 +24,9 @@ use SqlSemantics\Statement\Identifier\Name;
  * type name are its written parts, or `pg_catalog` and the internal name for
  * a type keyword, as `SystemTypeName` builds them; its text is those names
  * joined by dots with `%TYPE` and `[]` appended as `TypeNameToString` does;
- * modifiers and SETOF are not part of either. The text of a float is its
- * canonical spelling, which the server would take as written; no command
- * compares a float's text with a word, so the difference shows only in
- * messages. Terminates: no recursion.
+ * modifiers and SETOF are not part of either. The text of an integer node is
+ * its value, the text of a float node is the written text of the constant
+ * with the sign of `NumericOnly`. Terminates: no recursion.
  * Source: `defGetString`, `defGetQualifiedName` and `defGetInt32` in `src/backend/commands/define.c`,
  * `appendTypeNameToBuffer` in `src/backend/parser/parse_type.c` and `def_arg` in `src/backend/parser/gram.y` of PostgreSQL 17.
  * Status: Implemented.
@@ -72,7 +70,7 @@ final class ArgumentText
     public function integer(SignedNumber $number): ?int
     {
         $magnitude = $number->magnitude;
-        if (!$magnitude instanceof IntegerConstant || !(new Numerals())->within($magnitude->digits, '2147483647')) {
+        if (!$magnitude instanceof IntegerConstant) {
             return null;
         }
 
@@ -80,18 +78,11 @@ final class ArgumentText
     }
 
     /**
-     * Answers the text of a number: the integer value, or the canonical spelling of a float.
+     * Answers the text of a number: the integer value, or the written text of a float.
      */
     public function number(SignedNumber $number): string
     {
-        $integer = $this->integer($number);
-        if ($integer !== null) {
-            return (string) $integer;
-        }
-        $magnitude = $number->magnitude;
-        $digits = $magnitude instanceof IntegerConstant ? $magnitude->digits : $magnitude->integer . '.' . $magnitude->fraction . ($magnitude->exponent === null ? '' : 'e' . $magnitude->exponent);
-
-        return ($number->negative ? '-' : '') . $digits;
+        return $number->text();
     }
 
     /**

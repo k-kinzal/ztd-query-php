@@ -32,11 +32,6 @@ use SqlSemantics\Platform\PostgreSql\Statement\Utility\Maintenance\UtilityOption
 final class OptionArguments
 {
     /**
-     * The largest value of a 32-bit integer, as decimal digits.
-     */
-    private const INT32_MAX = '2147483647';
-
-    /**
      * Answers the Boolean value of an option, or null when its value is not Boolean.
      */
     public function boolean(UtilityOption $option): ?bool
@@ -77,9 +72,6 @@ final class OptionArguments
             return null;
         }
         $digits = $argument->magnitude->digits;
-        if (strlen($digits) > strlen(self::INT32_MAX) || (strlen($digits) === strlen(self::INT32_MAX) && strcmp($digits, self::INT32_MAX) > 0)) {
-            return null;
-        }
 
         return $argument->negative ? -(int) $digits : (int) $digits;
     }

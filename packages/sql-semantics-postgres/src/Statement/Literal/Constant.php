@@ -21,12 +21,15 @@ use SqlSemantics\Statement\Type\Nullability;
  * A numeric, string or bit-string constant used as an expression.
  *
  * Rule: PG-CONSTANT-001. Facts: an integer constant is `integer` when it
- * fits 32 bits, `bigint` when it fits 64 bits and `numeric` otherwise; a
- * constant with a decimal point or exponent is `numeric`; a string constant
+ * fits 32 bits; a numeric constant written as an integer is `bigint` when it
+ * fits 64 bits and `numeric` otherwise, as `make_const` reads the text of a
+ * `T_Float` node first as `int8` and then as `numeric`; a constant with a
+ * decimal point or exponent is `numeric`; a string constant
  * is of the pseudo-type `unknown` until its context resolves it; a bit-string
  * constant is `bit`. A constant is never NULL and gives a result column no
  * name. Source: https://www.postgresql.org/docs/17/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS,
- * https://www.postgresql.org/docs/17/typeconv-overview.html. Status: Implemented.
+ * https://www.postgresql.org/docs/17/typeconv-overview.html, `make_const` in
+ * `src/backend/parser/parse_node.c` of PostgreSQL 17. Status: Implemented.
  *
  * @visibility public
  * @example Reading the type of an integer constant too large for 32 bits
@@ -50,12 +53,12 @@ final class Constant implements Scalar, OutputNaming, IntegerValued
     public function builtin(): Builtin
     {
         if ($this->value instanceof IntegerConstant) {
-            $numerals = new Numerals();
-
-            return $numerals->within($this->value->digits, '2147483647') ? Builtin::Int4 : ($numerals->within($this->value->digits, '9223372036854775807') ? Builtin::Int8 : Builtin::Numeric);
+            return Builtin::Int4;
         }
         if ($this->value instanceof NumericConstant) {
-            return Builtin::Numeric;
+            $integer = (new Numerals())->integer($this->value->text);
+
+            return $integer !== null && (new Numerals())->within($integer, '9223372036854775807') ? Builtin::Int8 : Builtin::Numeric;
         }
 
         return $this->value instanceof StringConstant ? Builtin::Unknown : Builtin::Bit;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Leaf;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
 use SqlParser\PostgreSql\PostgreSqlParser;
@@ -18,7 +18,6 @@ use SqlSemantics\Platform\PostgreSql\Lowering\Lowering;
 use SqlSemantics\Platform\PostgreSql\Platform;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\Constant;
-use SqlSemantics\Platform\PostgreSql\Statement\Literal\IntegerConstant;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NamedParameter;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\PostgreSql\Statement\Literal\NumericConstant;
@@ -27,7 +26,7 @@ use SqlSemantics\Platform\PostgreSql\Statement\Literal\TypedLiteral;
 use SqlSemantics\Statement\Scalar;
 
 #[CoversClass(Literals::class)]
-#[Small]
+#[Medium]
 final class LiteralsTest extends TestCase
 {
     public function testStringTokenDecodesAnyStringSpelling(): void
@@ -42,15 +41,20 @@ final class LiteralsTest extends TestCase
         self::assertSame('a', $lowering->literals->string($tree->find('Sconst')[0])->value);
     }
 
-    public function testNumberTokenKeepsIntegersOfAnySizeAndExactNumerics(): void
+    public function testNumberTokenKeepsTheWrittenTextOfAnFconst(): void
     {
         $lowering = new Lowering((new Platform())->productions(new LanguageProfile(GrammarRelease::PostgreSql172)), new Leaves(), GrammarRelease::PostgreSql172);
-        $integer = $lowering->literals->numberToken(new Token(1, 'FCONST', '0xFFFFFFFFFF', 0));
-        $numeric = $lowering->literals->numberToken(new Token(1, 'FCONST', '1.50e-3', 0));
-        self::assertInstanceOf(IntegerConstant::class, $integer);
-        self::assertSame('1099511627775', $integer->digits);
-        self::assertInstanceOf(NumericConstant::class, $numeric);
-        self::assertSame(['1', '50', '-3'], [$numeric->integer, $numeric->fraction, $numeric->exponent]);
+        self::assertSame('0xFFFFFFFFFF', $lowering->literals->numberToken(new Token(1, 'FCONST', '0xFFFFFFFFFF', 0))->text);
+        self::assertSame('1.50E-03', $lowering->literals->numberToken(new Token(1, 'FCONST', '1.50E-03', 0))->text);
+    }
+
+    public function testNumberTokenKeepsTheTextASettingReceives(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\PostgreSql\Dialect::PostgreSql);
+        self::assertSame(
+            ['SET application_name TO 1e2', 'SET application_name TO .5', 'SET application_name TO - .5', 'SET application_name TO 0001.50', 'SET application_name TO 0x1FFFFFFFFF'],
+            [$semantics->analyze('SET application_name = 1e2')->toString(), $semantics->analyze('SET application_name = .5')->toString(), $semantics->analyze('SET application_name = -.5')->toString(), $semantics->analyze('SET application_name = 0001.50')->toString(), $semantics->analyze('SET application_name = 0x1FFFFFFFFF')->toString()],
+        );
     }
 
     public function testIntegerLowersAnIntegerConstant(): void

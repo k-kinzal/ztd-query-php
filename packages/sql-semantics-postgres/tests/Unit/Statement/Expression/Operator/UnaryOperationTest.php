@@ -32,14 +32,14 @@ final class UnaryOperationTest extends TestCase
     public function testDeriveScalarTypesANegativeConstantByItsValue(): void
     {
         $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
-        $fact = $derivation->scalar(new UnaryOperation(new OperatorName(new Name('-')), new Constant(new IntegerConstant('2147483648'))), $derivation->environment());
+        $fact = $derivation->scalar(new UnaryOperation(new OperatorName(new Name('-')), new Constant(new NumericConstant('2147483648'))), $derivation->environment());
         self::assertEquals(new Known(Builtin::Int4), $fact->type);
     }
 
     public function testDeriveScalarKeepsTheTypeOfANegatedNumber(): void
     {
         $derivation = new Derivation((new Platform())->context(new LanguageProfile(GrammarRelease::PostgreSql172), null, [], true));
-        $sum = new BinaryOperation(new OperatorName(new Name('^')), new Constant(new NumericConstant('1', '5')), new Constant(new IntegerConstant('2')));
+        $sum = new BinaryOperation(new OperatorName(new Name('^')), new Constant(new NumericConstant('1.5')), new Constant(new IntegerConstant('2')));
         $fact = $derivation->scalar(new UnaryOperation(new OperatorName(new Name('@')), $sum), $derivation->environment());
         self::assertEquals(new Known(Builtin::Numeric), $fact->type);
     }
