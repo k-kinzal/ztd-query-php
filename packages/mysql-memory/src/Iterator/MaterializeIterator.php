@@ -6,6 +6,7 @@ namespace MySqlMemory\Iterator;
 
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\Materialize;
+use Override;
 
 /**
  * Reads the rows of a query as a table, computing them when the scan starts.
@@ -35,7 +36,7 @@ final class MaterializeIterator implements RowIterator
     /**
      * Computes the rows of the query.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $inner = new Frame($frame->context, [], $this->path->lateral ? new Frame($frame->context, $frame->row, $frame->outer) : $frame->outer);
@@ -51,7 +52,7 @@ final class MaterializeIterator implements RowIterator
     /**
      * Answers the next row of the query.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         return $this->rows[$this->next++] ?? null;

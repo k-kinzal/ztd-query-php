@@ -7,6 +7,7 @@ namespace MySqlMemory\Evaluation\Leaf;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * `@name := value`: assigns a user variable and answers the value.
@@ -27,7 +28,7 @@ final class Assignment implements Evaluable
     /**
      * Answers the domain of the value.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->value->domain();
@@ -36,7 +37,7 @@ final class Assignment implements Evaluable
     /**
      * Evaluates the value and assigns it.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
         $value = $this->value->evaluate($frame);

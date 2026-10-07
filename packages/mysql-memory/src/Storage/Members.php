@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Storage;
 
-use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Error\ErrorCode;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Typing\Ordering;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**

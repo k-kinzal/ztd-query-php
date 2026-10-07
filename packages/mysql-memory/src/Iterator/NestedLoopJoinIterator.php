@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\JoinKind;
 use MySqlMemory\Plan\Path\NestedLoopJoin;
+use Override;
 
 /**
  * Pairs the rows of two inputs, reading the inner input again for each row of the outer one.
@@ -40,7 +41,7 @@ final class NestedLoopJoinIterator implements RowIterator
     /**
      * Starts the outer input.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $this->frame = $frame;
@@ -67,7 +68,7 @@ final class NestedLoopJoinIterator implements RowIterator
     /**
      * Answers the next paired row.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         $right = $this->path->kind === JoinKind::Right;

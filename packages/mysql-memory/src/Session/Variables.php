@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace MySqlMemory\Session;
 
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
-use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
 use MySqlMemory\Variable\Scope;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 
 /**
  * The variables of a session: its user variables, and the session values of the system variables.

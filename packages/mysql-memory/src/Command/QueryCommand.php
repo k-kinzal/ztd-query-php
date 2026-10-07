@@ -4,20 +4,21 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
+use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Plan\Planner;
-use MySqlMemory\Result\Reply;
-use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Result\Completion;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use MySqlMemory\Result\Reply;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Typing\Domain;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
@@ -32,7 +33,7 @@ final class QueryCommand implements Command
     /**
      * Answers true: a query starts with an empty diagnostics area.
      */
-    #[\Override]
+    #[Override]
     public function clearsDiagnostics(): bool
     {
         return true;
@@ -41,7 +42,7 @@ final class QueryCommand implements Command
     /**
      * Plans and executes the query, answering its rows.
      */
-    #[\Override]
+    #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;

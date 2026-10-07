@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
-use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Typing\Ordering;
+use Override;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 /**
  * [NOT] LIKE: whether a string matches a pattern of `%` (any characters) and `_` (one character).
@@ -44,7 +45,7 @@ final class Pattern implements Evaluable
     /**
      * Answers the domain of the truth value.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -53,7 +54,7 @@ final class Pattern implements Evaluable
     /**
      * Matches the string for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): ?int
     {
         $subject = Convert::toText($this->operand->evaluate($frame), $this->operand->domain());

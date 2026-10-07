@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Path;
 
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * Orders the rows of its input by values at positions of the row.
@@ -26,7 +27,7 @@ final class Sort implements AccessPath
     /**
      * Answers the width of the input.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return $this->input->width();

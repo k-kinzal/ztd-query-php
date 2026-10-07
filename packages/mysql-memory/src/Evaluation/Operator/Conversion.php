@@ -10,9 +10,9 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Decimal;
-use MySqlMemory\Value\Temporal;
+use Override;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * CAST(value AS type): the value converted into the domain of the type.
@@ -39,7 +39,7 @@ final class Conversion implements Evaluable
     /**
      * Answers the domain of the target.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -48,7 +48,7 @@ final class Conversion implements Evaluable
     /**
      * Converts the operand for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
         $value = $this->operand->evaluate($frame);
@@ -74,7 +74,7 @@ final class Conversion implements Evaluable
     public function integer(int|float|string $value, Domain $from, Context $context): int
     {
         $result = (int) Convert::toInteger($value, $from, $context, $this->domain->unsigned);
-        if ($this->domain->unsigned && $from->kind !== Kind::Double && !$from->unsigned && $result < 0 && Decimal::compare((string) Convert::toDecimal($value, $from, $context), "0") < 0) {
+        if ($this->domain->unsigned && $from->kind !== Kind::Double && !$from->unsigned && $result < 0 && Decimal::compare((string) Convert::toDecimal($value, $from, $context), '0') < 0) {
             $context->warning(ErrorCode::UnknownError, 'Cast to unsigned converted negative integer to its positive complement');
         }
 

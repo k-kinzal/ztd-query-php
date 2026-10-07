@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Path;
 
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * Combines the rows of two queries: UNION, INTERSECT or EXCEPT, with or without duplicates.
@@ -32,7 +33,7 @@ final class SetOperation implements AccessPath
     /**
      * Answers the number of combined columns.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return count($this->domains);

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Result;
 
+use Override;
+
 /**
  * The rows a statement returns, each value in the text the server sends for it.
  *
@@ -30,7 +32,7 @@ final class ResultSet implements Reply
     /**
      * Answers the warning count of the statement.
      */
-    #[\Override]
+    #[Override]
     public function warnings(): int
     {
         return $this->warnings;

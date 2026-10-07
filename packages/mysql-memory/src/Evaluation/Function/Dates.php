@@ -7,11 +7,10 @@ namespace MySqlMemory\Evaluation\Function;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Operator\Moments;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Temporal;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * The date and time functions that read parts of a value: DATE, YEAR, MONTH, DAY, HOUR, MINUTE, SECOND and the others.
@@ -30,9 +29,8 @@ final class Dates
      */
     public function routines(): array
     {
-        $part = static fn (int $length): \Closure => static fn (array $d, Signature $s): Domain => Domain::integer(Field::LongLong, $length)->withNullable(true);
         $routines = [
-            new Routine('DATE', 1, 1, static fn (array $d, Signature $s): Domain => new Domain(Kind::Date, Field::Date, 10, 0, false, Collation::binary(), true), fn (Frame $f, array $a): ?string => $this->moment($f, $a[0], Kind::Date)),
+            new Routine('DATE', 1, 1, fn (Frame $f, array $a): ?string => $this->moment($f, $a[0], Kind::Date)),
         ];
         $parts = [
             'YEAR' => [4, static fn (array $p): int => $p[0], Kind::Date],
@@ -49,7 +47,7 @@ final class Dates
             'WEEKDAY' => [1, static fn (array $p): int => ((int) gmdate('w', (int) gmmktime(0, 0, 0, $p[1], $p[2], $p[0])) + 6) % 7, Kind::Date],
         ];
         foreach ($parts as $name => [$length, $read, $kind]) {
-            $routines[] = new Routine($name, 1, 1, $part($length), fn (Frame $f, array $a): ?int => $this->part($f, $a[0], $read, $kind));
+            $routines[] = new Routine($name, 1, 1, fn (Frame $f, array $a): ?int => $this->part($f, $a[0], $read, $kind));
         }
 
         return $routines;

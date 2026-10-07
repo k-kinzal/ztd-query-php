@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
-use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
-use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Rules\Expression\NumericResult;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -72,10 +72,11 @@ final class Arithmetic implements Scalar
         $right = $operands->single($derivation->scalar($this->right, $environment), $derivation);
         $type = (new NumericResult())->binary($this->operator, $this->left, $left, $this->right, $right, $derivation->context->profile->grammar);
         $domains = (new Precision())->all([$left->type, $right->type]);
-        if ($domains !== null && $type instanceof Known) {
-            $numbers = new Numbers(Settings::of($derivation->context)->divPrecisionIncrement);
+        $settings = Settings::of($derivation->context);
+        if ($domains !== null && ($type instanceof Known || !$this->operator->bitwise())) {
+            $numbers = new Numbers($settings->divPrecisionIncrement, $settings->unsignedSubtraction);
             $domains = [$numbers->numeric($this->left, $domains[0]), $numbers->numeric($this->right, $domains[1])];
-            $type = new Known($this->operator->bitwise() ? (TypeClass::of($type->descriptor) === TypeClass::Unsigned ? $numbers->bits() : $numbers->binaryBits($this->operator, $domains)) : $numbers->binary($this->operator, $domains[0], $domains[1]));
+            $type = new Known($this->operator->bitwise() && $type instanceof Known ? (TypeClass::of($type->descriptor) === TypeClass::Unsigned ? $numbers->bits() : $numbers->binaryBits($this->operator, $domains)) : $numbers->binary($this->operator, $domains[0], $domains[1]));
         }
         $divides = $this->operator === ArithmeticOperator::Divide || $this->operator === ArithmeticOperator::IntegerDivide || $this->operator === ArithmeticOperator::Modulo;
 

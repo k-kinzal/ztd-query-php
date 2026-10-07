@@ -9,11 +9,12 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Calendar;
 use MySqlMemory\Value\Interval;
 use MySqlMemory\Value\Temporal;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * A date or time moved by an interval: `+ INTERVAL`, `- INTERVAL`, DATE_ADD, DATE_SUB, ADDDATE and SUBDATE.
@@ -40,7 +41,7 @@ final class DateShift implements Evaluable
     /**
      * Answers the domain of the result.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -49,7 +50,7 @@ final class DateShift implements Evaluable
     /**
      * Moves the value for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): ?string
     {
         $value = $this->operand->evaluate($frame);

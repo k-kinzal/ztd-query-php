@@ -7,9 +7,10 @@ namespace MySqlMemory\Evaluation\Leaf;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Temporal;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock as ClockKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * The current date or time: the instant the statement started, or the current instant for SYSDATE().
@@ -32,7 +33,7 @@ final class Clock implements Evaluable
     /**
      * Answers the domain of the value.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -41,7 +42,7 @@ final class Clock implements Evaluable
     /**
      * Reads the clock.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): string
     {
         $instant = $this->clock === ClockKind::SystemDate ? microtime(true) : $frame->context->started;

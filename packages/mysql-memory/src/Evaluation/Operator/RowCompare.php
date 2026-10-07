@@ -7,6 +7,7 @@ namespace MySqlMemory\Evaluation\Operator;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 
 /**
@@ -32,7 +33,7 @@ final class RowCompare implements Evaluable
     /**
      * Answers the domain of the truth value.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -41,7 +42,7 @@ final class RowCompare implements Evaluable
     /**
      * Compares the rows for a row of the block.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): ?int
     {
         $unknown = false;

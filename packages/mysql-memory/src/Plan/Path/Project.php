@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Path;
 
 use MySqlMemory\Evaluation\Evaluable;
+use Override;
 
 /**
  * Computes the output values of each row: the select list, and the keys sorted by after it.
@@ -24,7 +25,7 @@ final class Project implements AccessPath
     /**
      * Answers the number of expressions.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return count($this->expressions);

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Path;
 
+use Override;
+
 /**
  * Produces one row without values: the input of a query block without a FROM clause.
  *
@@ -14,7 +16,7 @@ final class SingleRow implements AccessPath
     /**
      * Answers zero: the row has no values.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return 0;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Path;
 
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * Computes a recursive common table expression: its nonrecursive part, then its recursive part over the rows of the last iteration, until an iteration adds no row.
@@ -38,7 +39,7 @@ final class RecursiveUnion implements AccessPath
     /**
      * Answers the number of columns.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return count($this->domains);

@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
-use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Integer;
 use MySqlMemory\Value\Order;
 use MySqlMemory\Value\Temporal;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Compares two values of known domains as the server decides to compare them.

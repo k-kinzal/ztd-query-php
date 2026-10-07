@@ -6,6 +6,7 @@ namespace MySqlMemory\Iterator;
 
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\WorkingTable;
+use Override;
 
 /**
  * Reads the rows of the last iteration of a recursive common table expression.
@@ -31,7 +32,7 @@ final class WorkingTableIterator implements RowIterator
     /**
      * Takes the rows of the last iteration.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $this->rows = $this->path->rows;
@@ -41,7 +42,7 @@ final class WorkingTableIterator implements RowIterator
     /**
      * Answers the next row.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         return $this->rows[$this->next++] ?? null;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Path;
 
 use MySqlMemory\Evaluation\Evaluable;
+use Override;
 
 /**
  * Keeps the rows of its input for which a condition is true.
@@ -24,7 +25,7 @@ final class Filter implements AccessPath
     /**
      * Answers the width of the input.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return $this->input->width();

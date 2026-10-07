@@ -11,6 +11,7 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DropDatabase;
@@ -31,7 +32,7 @@ final class DatabaseCommand implements Command
     /**
      * Answers true.
      */
-    #[\Override]
+    #[Override]
     public function clearsDiagnostics(): bool
     {
         return true;
@@ -40,7 +41,7 @@ final class DatabaseCommand implements Command
     /**
      * Executes the statement.
      */
-    #[\Override]
+    #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;

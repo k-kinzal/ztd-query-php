@@ -9,9 +9,10 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Integer;
+use Override;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Unary minus.
@@ -34,7 +35,7 @@ final class Minus implements Evaluable
     /**
      * Answers the domain of the result.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -43,7 +44,7 @@ final class Minus implements Evaluable
     /**
      * Negates the operand for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
         $value = $this->operand->evaluate($frame);

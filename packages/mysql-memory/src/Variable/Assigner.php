@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Variable;
 
-use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape;
-use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
-use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Session\SqlModes;
 use MySqlMemory\Session\Variables;
+use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
 
 /**
  * Checks and assigns a value to a system variable, as SET does.

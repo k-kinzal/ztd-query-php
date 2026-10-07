@@ -6,6 +6,7 @@ namespace MySqlMemory\Iterator;
 
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\Values;
+use Override;
 
 /**
  * Evaluates the rows of a VALUES list.
@@ -28,7 +29,7 @@ final class ValuesIterator implements RowIterator
     /**
      * Restarts at the first row.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $this->frame = $frame;
@@ -38,7 +39,7 @@ final class ValuesIterator implements RowIterator
     /**
      * Evaluates the next row.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         $expressions = $this->path->rows[$this->next++] ?? null;

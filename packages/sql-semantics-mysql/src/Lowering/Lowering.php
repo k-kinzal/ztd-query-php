@@ -175,6 +175,11 @@ final class Lowering
      * @param Leaves $leaves The record of operand leaves of this analysis
      * @param LanguageProfile $profile The language profile the tree was parsed under
      */
+    /**
+     * @var list<int> The byte offsets of the parameter markers of the input, in order
+     */
+    private array $markers = [];
+
     public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile)
     {
         $this->names = new NameRule($this);
@@ -204,8 +209,24 @@ final class Lowering
      * @return list<Statement>
      * @throws ImplementationGap When a production has no rule or the input holds an optimizer hint comment
      */
+    /**
+     * Answers the position of a parameter marker among the markers of the input, counted from 0.
+     */
+    public function marker(int $offset): ?int
+    {
+        $position = array_search($offset, $this->markers, true);
+
+        return $position === false ? null : $position;
+    }
+
     public function statements(Node $input): array
     {
+        $this->markers = [];
+        foreach ($input->tokens() as $token) {
+            if ($token->name === 'PARAM_MARKER') {
+                $this->markers[] = $token->offset;
+            }
+        }
         $hint = $this->profile->grammar === GrammarRelease::MySql5651 ? null : (new OptimizerHints())->first($input);
         if ($hint !== null) {
             throw ImplementationGap::rule('MySQL optimizer hints, which the parser delivers as a comment: ' . $hint);

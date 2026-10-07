@@ -8,6 +8,7 @@ use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\RecursiveUnion;
 use MySqlMemory\Value\Order;
+use Override;
 
 /**
  * Iterates a recursive common table expression to its fixed point.
@@ -35,7 +36,7 @@ final class RecursiveUnionIterator implements RowIterator
     /**
      * Computes every row.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $seen = [];
@@ -84,7 +85,7 @@ final class RecursiveUnionIterator implements RowIterator
     /**
      * Answers the next row.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         return $this->rows[$this->next++] ?? null;

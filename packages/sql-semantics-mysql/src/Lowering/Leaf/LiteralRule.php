@@ -282,6 +282,6 @@ final class LiteralRule
             throw ImplementationGap::production($form);
         }
 
-        return $this->lowering->leaves->record(new Parameter($form->token(0)->text));
+        return $this->lowering->leaves->record(new Parameter($form->token(0)->text, $this->lowering->marker($form->token(0)->offset)));
     }
 }

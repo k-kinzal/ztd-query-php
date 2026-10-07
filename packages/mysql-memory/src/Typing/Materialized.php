@@ -5,12 +5,9 @@ declare(strict_types=1);
 namespace MySqlMemory\Typing;
 
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
-
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Answers the domain of a column of a materialized result: a derived table, a common table expression, or a set operation.

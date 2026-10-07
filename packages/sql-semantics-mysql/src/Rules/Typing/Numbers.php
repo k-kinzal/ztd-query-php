@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
-use SqlSemantics\Statement\Scalar;
-use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
+use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Scalar;
 
 /**
  * Resolves the types of arithmetic.
@@ -32,8 +32,9 @@ final class Numbers
 {
     /**
      * @param int $divPrecisionIncrement The digits a division adds to the scale of its dividend
+     * @param bool $unsignedSubtraction Whether a subtraction with an unsigned operand is unsigned
      */
-    public function __construct(public readonly int $divPrecisionIncrement = 4)
+    public function __construct(public readonly int $divPrecisionIncrement = 4, public readonly bool $unsignedSubtraction = true)
     {
     }
 
@@ -92,7 +93,9 @@ final class Numbers
             ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::BitXor, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight => max($left->length, $right->length) + 1,
         };
 
-        return Domain::integer(Field::LongLong, min(21, $length), $left->unsigned || $right->unsigned);
+        $unsigned = ($left->unsigned || $right->unsigned) && ($operator !== ArithmeticOperator::Minus || $this->unsignedSubtraction);
+
+        return Domain::integer(Field::LongLong, min(21, $length), $unsigned);
     }
 
     /**

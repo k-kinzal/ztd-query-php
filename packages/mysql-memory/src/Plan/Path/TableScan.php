@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Path;
 
 use MySqlMemory\Dictionary\StoredTable;
+use Override;
 
 /**
  * Reads every row of a stored table, in the order of its clustered index.
@@ -26,7 +27,7 @@ final class TableScan implements AccessPath
     /**
      * Answers the number of columns of the table.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return count($this->table->definition->columns);

@@ -165,7 +165,7 @@ final class TableDeclarationTest extends TestCase
 
     public function testPartitionsNameEveryPartitionAndSubpartition(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $semantics = new Semantics(Dialect::MySql);
         $names = static fn (string $sql): ?array => ($partitions = $semantics->analyze($sql)->declarations()[0]->partitions) === null ? null : array_map(static fn ($name): string => $name->value, $partitions);
 
         self::assertSame([], $names('CREATE TABLE t (a INT)'));

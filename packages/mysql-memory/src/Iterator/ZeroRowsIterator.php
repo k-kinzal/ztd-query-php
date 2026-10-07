@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Iterator;
 
 use MySqlMemory\Evaluation\Frame;
+use Override;
 
 /**
  * Answers no row.
@@ -16,7 +17,7 @@ final class ZeroRowsIterator implements RowIterator
     /**
      * Does nothing.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
     }
@@ -24,7 +25,7 @@ final class ZeroRowsIterator implements RowIterator
     /**
      * Answers null.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         return null;

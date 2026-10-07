@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-
 use Collator;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 /**
  * The order of one collation: the comparison and the equality key of its strings.

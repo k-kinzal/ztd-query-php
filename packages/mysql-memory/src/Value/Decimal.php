@@ -179,7 +179,7 @@ final class Decimal
      */
     public static function fromDouble(float $value): string
     {
-        if ($value == 0.0) {
+        if ($value === 0.0) {
             return '0';
         }
         [$digits, $point] = Real::digits(abs($value));

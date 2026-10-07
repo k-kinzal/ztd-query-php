@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Typing;
 
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Aggregates the domains of values that one result takes: the results of CASE, IF, COALESCE, and the columns of a UNION.

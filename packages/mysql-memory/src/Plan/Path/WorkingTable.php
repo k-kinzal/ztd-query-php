@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Path;
 
+use Override;
+
 /**
  * The rows a recursive common table expression produced in its last iteration, read by its own references.
  *
@@ -26,7 +28,7 @@ final class WorkingTable implements AccessPath
     /**
      * Answers the number of columns.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return $this->width;

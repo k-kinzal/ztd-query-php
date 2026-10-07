@@ -7,6 +7,7 @@ namespace MySqlMemory\Iterator;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\Distinct;
 use MySqlMemory\Value\Order;
+use Override;
 
 /**
  * Passes the first row of each set of rows with equal leading values.
@@ -31,7 +32,7 @@ final class DistinctIterator implements RowIterator
     /**
      * Starts the input and forgets the rows seen.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $this->seen = [];
@@ -41,7 +42,7 @@ final class DistinctIterator implements RowIterator
     /**
      * Answers the next row not seen before.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         while (($row = $this->input->read()) !== null) {

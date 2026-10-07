@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Typing\Builtin;
 
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use Closure;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Resolves the results of string functions: a string in the collation the string arguments aggregate to, as long as the longest text the function can return.

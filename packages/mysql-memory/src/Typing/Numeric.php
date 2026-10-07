@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Resolves the domain of arithmetic: how each operand is read, and the domain of the result.

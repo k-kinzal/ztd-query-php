@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Path;
 
+use Override;
+
 /**
  * Skips a number of rows of its input and passes at most a number of the rest.
  *
@@ -23,7 +25,7 @@ final class Limit implements AccessPath
     /**
      * Answers the width of the input.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return $this->input->width();

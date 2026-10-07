@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Value;
 
-use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Typing\Ordering;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
@@ -49,7 +49,7 @@ final class Order
         return match ($domain->kind) {
             Kind::Integer, Kind::Year, Kind::Bit => 'i' . Integer::text((int) $value, $domain->unsigned),
             Kind::Decimal => 'd' . self::decimal((string) $value),
-            Kind::Double => 'f' . ((float) $value == 0.0 ? '0' : Real::format((float) $value)),
+            Kind::Double => 'f' . ((float) $value === 0.0 ? '0' : Real::format((float) $value)),
             Kind::String, Kind::Json => 's' . Ordering::of($domain->collation)->key((string) $value),
             default => 't' . $value,
         };

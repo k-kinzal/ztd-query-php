@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Server;
 
+use Closure;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
@@ -15,6 +16,7 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
+use Throwable;
 
 /**
  * One client connection: the handshake, then the commands of the client/server protocol, each answered from a session.
@@ -42,10 +44,10 @@ final class Client
     /**
      * @param Instance $instance The server
      * @param int $id The connection id
-     * @param \Closure $send Sends bytes to the client: fn (string): void
+     * @param Closure $send Sends bytes to the client: fn (string): void
      * @param string $host The address the client connects from
      */
-    public function __construct(public readonly Instance $instance, public readonly int $id, public readonly \Closure $send, public readonly string $host = 'localhost')
+    public function __construct(public readonly Instance $instance, public readonly int $id, public readonly Closure $send, public readonly string $host = 'localhost')
     {
         $this->messages = new Messages();
         $this->statements = new Statements($this);
@@ -82,7 +84,7 @@ final class Client
                 $this->packet($this->messages->error(1047, '08S01', ErrorCode::UnknownCommand->message()));
 
                 return false;
-            } catch (\Throwable $failure) {
+            } catch (Throwable $failure) {
                 $this->packet($this->messages->error(1105, 'HY000', 'mysql-memory internal error: ' . $failure::class . ': ' . $failure->getMessage()));
             }
         }

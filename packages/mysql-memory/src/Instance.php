@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory;
 
-use SqlSemantics\Contract\GrammarRelease;
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Session\Globals;
 use MySqlMemory\Session\Session;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 
 /**
@@ -60,7 +60,7 @@ final class Instance
      * @param string $host The host the session connects from
      * @param string|null $database The database to use, or null for none
      *
-     * @throws \MySqlMemory\Error\SqlError When the database does not exist
+     * @throws Error\SqlError When the database does not exist
      */
     public function connect(string $user = 'root', string $host = 'localhost', ?string $database = null): Session
     {

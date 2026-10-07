@@ -4,23 +4,21 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
-use SqlSemantics\Statement\Type\TypeFact;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
-use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
-use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
-use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * Checks the number of columns of operands and builds the facts of truth-valued operators.

@@ -7,6 +7,7 @@ namespace MySqlMemory\Evaluation\Function;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * A call of a built-in function.
@@ -27,7 +28,7 @@ final class Call implements Evaluable
     /**
      * Answers the domain of the result.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -36,7 +37,7 @@ final class Call implements Evaluable
     /**
      * Computes the result for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
         return ($this->routine->body)($frame, $this->arguments, $this->domain);

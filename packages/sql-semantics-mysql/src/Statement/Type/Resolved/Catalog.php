@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Type\Resolved;
 
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Statement\Snapshot;
 
 /**
  * The character sets and collations of every MySQL release, read from the catalogs generated from the servers.

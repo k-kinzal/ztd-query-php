@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Iterator;
 
 use MySqlMemory\Evaluation\Frame;
+use Override;
 
 /**
  * Answers one empty row.
@@ -18,7 +19,7 @@ final class SingleRowIterator implements RowIterator
     /**
      * Restarts the iteration.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $this->done = false;
@@ -27,7 +28,7 @@ final class SingleRowIterator implements RowIterator
     /**
      * Answers the empty row once.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         if ($this->done) {

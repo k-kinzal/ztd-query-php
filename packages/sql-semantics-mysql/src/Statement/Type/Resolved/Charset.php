@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Type\Resolved;
 
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\InvariantViolation;
+use SqlSemantics\Statement\Snapshot;
 
 /**
  * A character set of the server: its name and the most bytes one character takes.

@@ -4,37 +4,45 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
-use SqlSemantics\Statement\Type\NullOnly;
-use SqlSemantics\Statement\Type\Nullability;
-use MySqlMemory\Evaluation\Leaf\Retyped;
-use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
-use SqlSemantics\Statement\Type\Known;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Evaluable;
+use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
+use MySqlMemory\Typing\Domain;
+use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
+use SqlSemantics\Platform\MySql\Statement\Call\CharCall;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
+use SqlSemantics\Platform\MySql\Statement\Call\Extract;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
+use SqlSemantics\Platform\MySql\Statement\Call\Position;
+use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
+use SqlSemantics\Platform\MySql\Statement\Call\Trim;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
+use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\Not;
 use SqlSemantics\Platform\MySql\Statement\Expression\NullTest;
-use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
+use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Regexp;
+use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\SoundsLike;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
@@ -51,22 +59,15 @@ use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
-use SqlSemantics\Platform\MySql\Statement\Call\CharCall;
-use SqlSemantics\Platform\MySql\Statement\Call\Extract;
-use SqlSemantics\Platform\MySql\Statement\Call\Position;
-use SqlSemantics\Platform\MySql\Statement\Call\Trim;
-use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
-use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation;
-use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Regexp;
-use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\SoundsLike;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Statement\Type\NullOnly;
 
 /**
  * Compiles the expressions of a bound statement into evaluables: the resolving step of the server, done for each node once.
@@ -175,7 +176,7 @@ final class Compiler
      */
     public function domain(Scalar $node): Domain
     {
-        return $this->resolved($node) ?? throw ErrorCode::NotSupportedYet->error('the type of ' . (new \ReflectionClass($node))->getShortName());
+        return $this->resolved($node) ?? throw ErrorCode::NotSupportedYet->error('the type of ' . (new ReflectionClass($node))->getShortName());
     }
 
     /**
@@ -195,7 +196,7 @@ final class Compiler
         $type = $fact->type;
         $domain = $type instanceof Known && $type->descriptor instanceof Resolved ? Domain::of($type->descriptor, $nullable)->withNumericBytes($evaluable->domain()->numericBytes && $type->descriptor->kind === $evaluable->domain()->kind) : $evaluable->domain()->withNullable($nullable);
 
-        return $domain == $evaluable->domain() ? $evaluable : new Retyped($evaluable, $domain);
+        return $domain === $evaluable->domain() ? $evaluable : new Retyped($evaluable, $domain);
     }
 
     public function dispatch(Scalar $node, Scope $scope): Evaluable
@@ -251,7 +252,7 @@ final class Compiler
             $node instanceof ProgramVariable => throw ErrorCode::UndeclaredVariable->error($node->name->value),
             $node instanceof SystemVariable => $this->names->systemVariable($node),
             $node instanceof VariableAssignment => $this->names->assignment($node, $scope),
-            default => throw ErrorCode::NotSupportedYet->error('expression ' . (new \ReflectionClass($node))->getShortName()),
+            default => throw ErrorCode::NotSupportedYet->error('expression ' . (new ReflectionClass($node))->getShortName()),
         };
     }
 }

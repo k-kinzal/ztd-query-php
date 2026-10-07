@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Facade;
 
-use SqlSemantics\Contract\Session;
 use InvalidArgumentException;
 use SqlParser\Lexer\SourceException;
 use SqlParser\Parser\Node;
@@ -17,6 +16,7 @@ use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Contract\Platform;
 use SqlSemantics\Contract\Platforms;
 use SqlSemantics\Contract\SearchPath;
+use SqlSemantics\Contract\Session;
 use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Lowering\Leaves;

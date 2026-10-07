@@ -6,6 +6,7 @@ namespace MySqlMemory\Plan\Path;
 
 use MySqlMemory\Evaluation\Aggregate\Accumulation;
 use MySqlMemory\Evaluation\Evaluable;
+use Override;
 
 /**
  * Groups the rows of its input and computes the aggregates of each group.
@@ -37,7 +38,7 @@ final class Aggregate implements AccessPath
     /**
      * Answers the width of the input and one value per aggregate.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return $this->input->width() + count($this->aggregates);

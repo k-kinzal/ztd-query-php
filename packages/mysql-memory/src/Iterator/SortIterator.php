@@ -7,6 +7,7 @@ namespace MySqlMemory\Iterator;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\Sort;
 use MySqlMemory\Value\Order;
+use Override;
 
 /**
  * Reads the whole input and answers its rows in the order of the sort keys; ties keep input order.
@@ -33,7 +34,7 @@ final class SortIterator implements RowIterator
     /**
      * Reads and sorts the input.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $this->input->init($frame);
@@ -60,7 +61,7 @@ final class SortIterator implements RowIterator
     /**
      * Answers the next row in order.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         return $this->rows[$this->next++] ?? null;

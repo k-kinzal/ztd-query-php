@@ -11,13 +11,7 @@ use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Path\AccessPath;
 use MySqlMemory\Plan\Path\Aggregate as AggregatePath;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use MySqlMemory\Typing\Numeric;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
-use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
@@ -114,33 +108,11 @@ final class Grouping
         if ($node instanceof GroupConcat) {
             $order = array_map(static fn ($item): array => [$compiler->compile($item->expression, $scope), $item->direction?->value === 'DESC'], $node->order);
             $limit = (int) ($compiler->connection->variables->read('group_concat_max_len') ?? 1024);
-            $collation = $arguments === [] ? Collation::binary() : $arguments[0]->domain()->collation;
-            $domain = Domain::string(intdiv($limit, max(1, $collation->charset->maxLength)), $collation, $limit > 512 ? Field::Blob : Field::VarString)->withNullable(true);
 
-            return new Accumulation(null, $arguments, $node->distinct, $domain, $order, $node->separator === null ? ',' : $node->separator->value, $limit);
+            return new Accumulation(null, $arguments, $node->distinct, $compiler->domain($node), $order, $node->separator === null ? ',' : $node->separator->value, $limit);
         }
 
-        return new Accumulation($node->function, $arguments, $node->distinct, $this->domain($node->function, $arguments), [], ',', 0);
+        return new Accumulation($node->function, $arguments, $node->distinct, $compiler->domain($node), [], ',', 0);
     }
 
-    /**
-     * Answers the domain of the result of an aggregate function over its arguments.
-     *
-     * @param list<Evaluable> $arguments
-     */
-    public function domain(AggregateFunction $function, array $arguments): Domain
-    {
-        $argument = $arguments[0] ?? null;
-        $operand = $argument === null ? Kind::Integer : Numeric::operand($argument->domain());
-        $digits = $argument === null ? [1, 0] : Numeric::digits($argument->domain());
-
-        return match ($function) {
-            AggregateFunction::Count => Domain::integer(Field::LongLong, 21)->withNullable(false),
-            AggregateFunction::BitAnd, AggregateFunction::BitOr, AggregateFunction::BitXor => Domain::integer(Field::LongLong, 21, true)->withNullable(false),
-            AggregateFunction::Minimum, AggregateFunction::Maximum => ($argument?->domain() ?? Domain::null())->withNullable(true),
-            AggregateFunction::Sum => ($operand === Kind::Double ? Domain::double(23) : Domain::decimal(min(65, $digits[0] + 22), $digits[1]))->withNullable(true),
-            AggregateFunction::Average => ($operand === Kind::Double ? Domain::double(23) : Domain::decimal(min(65, $digits[0] + 4), min(30, $digits[1] + 4)))->withNullable(true),
-            default => Domain::double(23)->withNullable(true),
-        };
-    }
 }

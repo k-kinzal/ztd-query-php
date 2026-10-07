@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rules\Query\Having;
 
-use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -14,6 +13,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\ResultReferences;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Resolution\Environment;

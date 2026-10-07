@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings as Resolution;
 use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
@@ -13,9 +12,7 @@ use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Reply;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlParser\Lexer\SourceException;
-use SqlParser\Parser\SyntaxException;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Diagnostic\AnalysisException;
@@ -24,6 +21,8 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings as Resolution;
 use SqlSemantics\Statement\Operation;
 
 /**
@@ -156,7 +155,7 @@ final class Session
      */
     public function execute(string $statement, array $parameters = [], bool $prepared = false): Reply
     {
-        $operation = $this->analyze($statement, $prepared);
+        $operation = $this->analyze($statement, $prepared, $parameters);
         $context = new Context($this->modes(), $this->diagnostics, $this->variables, microtime(true));
         $command = (new Dispatcher())->command($operation->statement);
         if ($command->clearsDiagnostics()) {
@@ -177,8 +176,9 @@ final class Session
      * Parses and resolves one statement against the tables of the server.
      *
      * @throws SqlError When the statement does not parse or does not resolve
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to the parameter markers, in their order
      */
-    public function analyze(string $statement, bool $prepared = false): Operation
+    public function analyze(string $statement, bool $prepared = false, array $parameters = []): Operation
     {
         $semantics = $this->semantics();
         try {
@@ -191,7 +191,7 @@ final class Session
         }
         $database = $this->variables->database;
         try {
-            $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution()));
+            $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($this->bound($tree, $parameters, $prepared))));
         } catch (ImplementationGap $gap) {
             throw new SqlError(ErrorCode::NotSupportedYet, ErrorCode::NotSupportedYet->message($gap->getMessage()), $gap);
         } catch (AnalysisException $error) {
@@ -201,9 +201,38 @@ final class Session
     }
 
     /**
+     * Answers the type of the value bound to each parameter marker of a statement, by the position of the marker.
+     *
+     * A statement prepared before any value is bound types each marker as the server types a lone
+     * marker then: a VARCHAR of 16383 characters in the connection collation.
+     *
+     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound in the order of the markers
+     * @return array<int, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain>
+     */
+    public function bound(\SqlParser\Parser\Node $tree, array $parameters, bool $prepared = false): array
+    {
+        $bound = [];
+        $index = 0;
+        $unbound = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::string(16383, $this->resolution()->connection, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
+        foreach ($tree->tokens() as $token) {
+            if ($token->name !== 'PARAM_MARKER') {
+                continue;
+            }
+            if (isset($parameters[$index])) {
+                $bound[$index] = $parameters[$index][1]->resolved();
+            } elseif ($prepared) {
+                $bound[$index] = $unbound;
+            }
+            $index++;
+        }
+
+        return $bound;
+    }
+
+    /**
      * Answers the session variables SQL Semantics resolves types with.
      */
-    public function resolution(): Resolution
+    public function resolution(array $parameters = []): Resolution
     {
         $schemas = [];
         foreach ($this->instance->dictionary->schemas as $schema) {
@@ -214,7 +243,7 @@ final class Session
 
         $users = array_map(static fn (array $variable) => $variable[1]->resolved(), $this->variables->user);
 
-        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, (int) $this->variables->read('group_concat_max_len'), $users);
+        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, (int) $this->variables->read('group_concat_max_len'), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'));
     }
 
     /**

@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 
 /**
@@ -35,7 +36,7 @@ final class Logic implements Evaluable
     /**
      * Answers the domain of the truth value.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -44,7 +45,7 @@ final class Logic implements Evaluable
     /**
      * Combines the truth values of the operands for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): ?int
     {
         $left = Convert::toBool($this->left->evaluate($frame), $this->left->domain(), $frame->context);

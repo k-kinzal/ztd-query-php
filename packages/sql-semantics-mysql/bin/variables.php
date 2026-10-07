@@ -15,7 +15,7 @@ $mysqli->set_charset('utf8mb4');
 mysqli_report(MYSQLI_REPORT_OFF);
 $rows = static fn (string $sql): array => ($result = $mysqli->query($sql)) instanceof mysqli_result ? $result->fetch_all(MYSQLI_NUM) : [];
 $bounds = [];
-foreach ($rows("SELECT VARIABLE_NAME, MIN_VALUE, MAX_VALUE FROM performance_schema.variables_info") as [$name, $minimum, $maximum]) {
+foreach ($rows('SELECT VARIABLE_NAME, MIN_VALUE, MAX_VALUE FROM performance_schema.variables_info') as [$name, $minimum, $maximum]) {
     $bounds[strtolower((string) $name)] = [$minimum, $maximum];
 }
 $values = [];

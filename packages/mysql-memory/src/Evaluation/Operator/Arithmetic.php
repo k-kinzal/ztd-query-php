@@ -9,11 +9,12 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use MySqlMemory\Typing\Numeric;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Integer;
+use Override;
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * The arithmetic operators `+`, `-`, `*`, `/`, DIV and `%` over two operands.
@@ -47,7 +48,7 @@ final class Arithmetic implements Evaluable
     /**
      * Answers the domain of the result.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -56,7 +57,7 @@ final class Arithmetic implements Evaluable
     /**
      * Computes the result for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
         $left = $this->left->evaluate($frame);
@@ -83,7 +84,7 @@ final class Arithmetic implements Evaluable
      */
     public function real(float $left, float $right, Frame $frame): ?float
     {
-        if (($this->operator === ArithmeticOperator::Divide || $this->operator === ArithmeticOperator::Modulo) && $right == 0.0) {
+        if (($this->operator === ArithmeticOperator::Divide || $this->operator === ArithmeticOperator::Modulo) && $right === 0.0) {
             return $this->byZero($frame);
         }
         $result = match ($this->operator) {
@@ -127,8 +128,8 @@ final class Arithmetic implements Evaluable
      */
     public function integer(int $left, int $right, Frame $frame): ?int
     {
-        $leftText = Integer::text($left, $this->left->domain()->numericBytes || ($this->left->domain()->unsigned && Numeric::operand($this->left->domain()) === Kind::Integer));
-        $rightText = Integer::text($right, $this->right->domain()->numericBytes || ($this->right->domain()->unsigned && Numeric::operand($this->right->domain()) === Kind::Integer));
+        $leftText = Integer::text($left, $this->left->domain()->numericBytes || ($this->left->domain()->unsigned && (new Numbers())->operand($this->left->domain()->resolved()) === Kind::Integer));
+        $rightText = Integer::text($right, $this->right->domain()->numericBytes || ($this->right->domain()->unsigned && (new Numbers())->operand($this->right->domain()->resolved()) === Kind::Integer));
         if ($this->operator === ArithmeticOperator::Modulo) {
             if ($rightText === '0') {
                 return $this->byZero($frame);

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rules\Query\From;
 
-use SqlSemantics\Contract\SearchPath;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;

@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace MySqlMemory\Command;
 
 use MySqlMemory\Error\ErrorCode;
+use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Evaluation;
-use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
+use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DropDatabase;
@@ -58,7 +59,7 @@ final class Dispatcher
             $statement instanceof ShowWarnings, $statement instanceof ShowErrors => new WarningsCommand(),
             $statement instanceof Evaluation => new DoCommand(),
             $statement instanceof ShowTables => new ShowTablesCommand(),
-            default => throw ErrorCode::NotSupportedYet->error((new \ReflectionClass($statement))->getShortName()),
+            default => throw ErrorCode::NotSupportedYet->error((new ReflectionClass($statement))->getShortName()),
         };
     }
 }

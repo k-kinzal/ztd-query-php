@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query\From;
 
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
@@ -15,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\NamedRelation;

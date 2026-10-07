@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace MySqlMemory\Evaluation\Operator;
 
 use MySqlMemory\Error\ErrorCode;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * The bit operators `|`, `&`, `^`, `<<`, `>>` and `~` over 64-bit unsigned integers.
@@ -36,7 +37,7 @@ final class Bits implements Evaluable
     /**
      * Answers the domain of the result.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -45,7 +46,7 @@ final class Bits implements Evaluable
     /**
      * Computes the result for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int|string|null
     {
         if ($this->domain->kind === Kind::String) {

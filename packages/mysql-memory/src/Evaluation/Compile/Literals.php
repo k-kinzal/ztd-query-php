@@ -13,7 +13,6 @@ use MySqlMemory\Value\Temporal;
 use SqlSemantics\Platform\MySql\Rules\Typing\Literals as Rules;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\NumberForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;

@@ -7,6 +7,7 @@ namespace MySqlMemory\Iterator;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\Filter;
+use Override;
 
 /**
  * Passes the rows of its input for which the condition is true.
@@ -28,7 +29,7 @@ final class FilterIterator implements RowIterator
     /**
      * Starts the input.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $this->frame = $frame;
@@ -38,7 +39,7 @@ final class FilterIterator implements RowIterator
     /**
      * Answers the next row the condition holds for.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         $condition = $this->path->condition;

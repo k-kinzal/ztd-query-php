@@ -6,12 +6,12 @@ namespace MySqlMemory\Evaluation;
 
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Integer;
 use MySqlMemory\Value\NumericText;
 use MySqlMemory\Value\Real;
 use MySqlMemory\Value\Temporal;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Reads a value of one domain as a value of another kind, as the server reads an operand in a context.
@@ -123,9 +123,9 @@ final class Convert
 
         return match ($domain->kind) {
             Kind::Integer, Kind::Year, Kind::Bit => $value !== 0 && $value !== "\0",
-            Kind::Double => (float) $value != 0.0,
+            Kind::Double => (float) $value !== 0.0,
             Kind::Decimal => Decimal::compare((string) $value, '0') !== 0,
-            default => self::toDouble($value, $domain, $context) != 0.0,
+            default => self::toDouble($value, $domain, $context) !== 0.0,
         };
     }
 

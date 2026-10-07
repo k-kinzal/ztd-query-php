@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Aggregate\Accumulator;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\Aggregate;
 use MySqlMemory\Value\Order;
+use Override;
 
 /**
  * Groups the rows of its input and answers one row per group: its first row and its aggregates.
@@ -37,7 +38,7 @@ final class AggregateIterator implements RowIterator
     /**
      * Reads the whole input and folds the groups.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $this->input->init($frame);
@@ -112,7 +113,7 @@ final class AggregateIterator implements RowIterator
     /**
      * Answers the next group.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         return $this->rows[$this->next++] ?? null;

@@ -7,6 +7,7 @@ namespace MySqlMemory\Iterator;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\TableScan;
 use MySqlMemory\Storage\ClusterOrder;
+use Override;
 
 /**
  * Reads the rows of a table in clustered index order, as they were when the scan started.
@@ -42,7 +43,7 @@ final class TableScanIterator implements RowIterator
     /**
      * Takes the rows of the table in order.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $rows = (new ClusterOrder())->rows($this->path->table);
@@ -55,7 +56,7 @@ final class TableScanIterator implements RowIterator
     /**
      * Answers the next row.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         $this->current = $this->numbers[$this->next] ?? null;

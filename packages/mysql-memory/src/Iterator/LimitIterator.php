@@ -6,6 +6,7 @@ namespace MySqlMemory\Iterator;
 
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\Limit;
+use Override;
 
 /**
  * Skips the offset rows of its input and passes at most the count of the rest.
@@ -27,7 +28,7 @@ final class LimitIterator implements RowIterator
     /**
      * Starts the input.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $this->seen = 0;
@@ -37,7 +38,7 @@ final class LimitIterator implements RowIterator
     /**
      * Answers the next row within the bounds.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         $end = $this->path->count === null ? null : $this->path->offset + $this->path->count;

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Insert;
 
-use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
-use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
+use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Snapshot;

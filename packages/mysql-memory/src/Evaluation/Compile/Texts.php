@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
+use Closure;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
@@ -12,13 +13,8 @@ use MySqlMemory\Evaluation\Function\Call;
 use MySqlMemory\Evaluation\Function\Routine;
 use MySqlMemory\Evaluation\Function\Strings;
 use MySqlMemory\Evaluation\Scope;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Call\CharCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Position;
 use SqlSemantics\Platform\MySql\Statement\Call\Trim;
@@ -28,6 +24,11 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Regexp;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\SoundsLike;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Compiles the string forms written with keywords: COLLATE, BINARY, CONVERT ... USING, TRIM, POSITION, CHAR, SOUNDS LIKE and REGEXP.
@@ -50,9 +51,9 @@ final class Texts
      *
      * @param list<Evaluable> $arguments
      */
-    public function call(string $name, array $arguments, Domain $domain, \Closure $body): Call
+    public function call(string $name, array $arguments, Domain $domain, Closure $body): Call
     {
-        return new Call(new Routine($name, count($arguments), count($arguments), static fn (): Domain => $domain, $body), $arguments, $domain);
+        return new Call(new Routine($name, count($arguments), count($arguments), $body), $arguments, $domain);
     }
 
     /**
@@ -128,7 +129,7 @@ final class Texts
         $subject = $this->compiler->compile($node->subject, $scope);
         $removed = $node->removed === null ? null : $this->compiler->compile($node->removed, $scope);
         $arguments = $removed === null ? [$subject] : [$subject, $removed];
-        $result = (new Strings())->textDomain(array_map(static fn (Evaluable $argument): Domain => $argument->domain(), $arguments), new \MySqlMemory\Evaluation\Function\Signature($arguments, $this->compiler->settings), (new Strings())->length($subject->domain()));
+        $result = $this->compiler->domain($node);
         $side = $node->side ?? TrimSide::Both;
 
         return $this->call('TRIM', $arguments, $result, static function (Frame $f, array $a) use ($side): ?string {

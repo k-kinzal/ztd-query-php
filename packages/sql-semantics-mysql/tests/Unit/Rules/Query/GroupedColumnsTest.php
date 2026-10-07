@@ -45,7 +45,7 @@ final class GroupedColumnsTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $tables = [
             $semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))'),
-            $semantics->analyze("CREATE TABLE fz.t2 (id INT PRIMARY KEY, name VARCHAR(20) NOT NULL, flag TINYINT, UNIQUE KEY uk (name))"),
+            $semantics->analyze('CREATE TABLE fz.t2 (id INT PRIMARY KEY, name VARCHAR(20) NOT NULL, flag TINYINT, UNIQUE KEY uk (name))'),
         ];
         $diagnostics = $semantics->analyze($sql, $semantics->context($tables, true, new SearchPath('fz')))->facts->diagnostics;
 

@@ -52,7 +52,7 @@ final class SystemAssignmentTest extends TestCase
 
     public function testDeriveItemLeavesTheAssignmentsOfAStoredProgramToItsRun(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(Dialect::MySql);
+        $semantics = new Semantics(Dialect::MySql);
 
         self::assertSame(["Variable 'version' is a read only variable"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('SET @@version = 1')->facts->diagnostics));
         self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() SET @@version = 1')->facts->diagnostics);

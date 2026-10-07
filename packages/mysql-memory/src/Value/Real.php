@@ -24,7 +24,7 @@ final class Real
         if (is_nan($value) || is_infinite($value)) {
             return $value > 0 ? 'inf' : ($value < 0 ? '-inf' : 'nan');
         }
-        if ($value == 0.0) {
+        if ($value === 0.0) {
             return str_starts_with(sprintf('%F', $value), '-') ? '-0' : '0';
         }
         [$digits, $point] = self::digits(abs($value));

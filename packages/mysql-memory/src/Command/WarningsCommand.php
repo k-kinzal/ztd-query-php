@@ -6,12 +6,13 @@ namespace MySqlMemory\Command;
 
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use MySqlMemory\Result\ColumnFlag;
+use MySqlMemory\Result\Reply;
 use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
-use MySqlMemory\Result\Reply;
-use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Session\Session;
+use Override;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors;
 use SqlSemantics\Statement\Operation;
 
@@ -27,7 +28,7 @@ final class WarningsCommand implements Command
     /**
      * Answers false: the statement reads the area the last statement left.
      */
-    #[\Override]
+    #[Override]
     public function clearsDiagnostics(): bool
     {
         return false;
@@ -36,7 +37,7 @@ final class WarningsCommand implements Command
     /**
      * Answers the conditions.
      */
-    #[\Override]
+    #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $errors = $operation->statement instanceof ShowErrors;

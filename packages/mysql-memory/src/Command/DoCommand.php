@@ -12,6 +12,7 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\Evaluation;
 use SqlSemantics\Statement\Operation;
 
@@ -27,7 +28,7 @@ final class DoCommand implements Command
     /**
      * Answers true.
      */
-    #[\Override]
+    #[Override]
     public function clearsDiagnostics(): bool
     {
         return true;
@@ -36,7 +37,7 @@ final class DoCommand implements Command
     /**
      * Evaluates each expression.
      */
-    #[\Override]
+    #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;

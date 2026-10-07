@@ -19,6 +19,7 @@ use MySqlMemory\Storage\ClusterOrder;
 use MySqlMemory\Storage\Store;
 use MySqlMemory\Storage\Writer;
 use MySqlMemory\Value\Order;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
@@ -42,7 +43,7 @@ final class ChangeCommand implements Command
     /**
      * Answers true.
      */
-    #[\Override]
+    #[Override]
     public function clearsDiagnostics(): bool
     {
         return true;
@@ -51,7 +52,7 @@ final class ChangeCommand implements Command
     /**
      * Updates or deletes the rows.
      */
-    #[\Override]
+    #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;

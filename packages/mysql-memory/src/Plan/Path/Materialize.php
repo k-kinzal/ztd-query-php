@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Path;
 
 use MySqlMemory\Plan\QueryPlan;
+use Override;
 
 /**
  * Reads the rows of a query as a table: a derived table, or a reference to a common table expression.
@@ -27,7 +28,7 @@ final class Materialize implements AccessPath
     /**
      * Answers the number of columns of the query.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return count($this->query->domains);

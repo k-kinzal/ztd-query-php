@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table;
 
-use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
-use SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
@@ -14,7 +12,9 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\EnclosedQuery;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableDeclaration;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;

@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * IS [NOT] NULL, IS [NOT] TRUE, IS [NOT] FALSE and IS [NOT] UNKNOWN: never NULL.
@@ -29,7 +30,7 @@ final class IsTest implements Evaluable
     /**
      * Answers the domain of the truth value.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -38,7 +39,7 @@ final class IsTest implements Evaluable
     /**
      * Tests the operand for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int
     {
         $value = $this->operand->evaluate($frame);

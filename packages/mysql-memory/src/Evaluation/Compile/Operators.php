@@ -18,16 +18,10 @@ use MySqlMemory\Evaluation\Operator\Negation;
 use MySqlMemory\Evaluation\Operator\Pattern;
 use MySqlMemory\Evaluation\Operator\Range;
 use MySqlMemory\Evaluation\Scope;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use MySqlMemory\Typing\Aggregation;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use MySqlMemory\Typing\Numeric;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
-use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\Not;
@@ -40,6 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
 use SqlSemantics\Platform\MySql\Statement\Expression\Truth;
 use SqlSemantics\Platform\MySql\Statement\Expression\TruthTest;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 /**
  * Compiles operators and predicates, resolving the domain of each result and how its operands compare.

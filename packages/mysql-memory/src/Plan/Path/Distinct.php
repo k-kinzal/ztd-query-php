@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Path;
 
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * Passes the first row of each set of rows equal in their leading values.
@@ -26,7 +27,7 @@ final class Distinct implements AccessPath
     /**
      * Answers the width of the input.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return $this->input->width();

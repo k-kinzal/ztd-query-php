@@ -18,11 +18,11 @@ use MySqlMemory\Plan\Path\NestedLoopJoin;
 use MySqlMemory\Plan\Path\SingleRow;
 use MySqlMemory\Plan\Path\TableScan;
 use MySqlMemory\Typing\Materialized;
+use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
-use SqlSemantics\Platform\MySql\Statement\Relation\Join\JoinOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
@@ -63,7 +63,7 @@ final class Relations
             $relation instanceof TableList => $this->list($relation, $scope),
             $relation instanceof NestedRelation => $this->plan($relation->relation, $scope),
             $relation instanceof Dual => new SingleRow(),
-            default => throw ErrorCode::NotSupportedYet->error('relation ' . (new \ReflectionClass($relation))->getShortName()),
+            default => throw ErrorCode::NotSupportedYet->error('relation ' . (new ReflectionClass($relation))->getShortName()),
         };
     }
 
@@ -78,7 +78,7 @@ final class Relations
         if ($resolution instanceof CommonTable) {
             $plan = $this->planner->commonTable($resolution->definition);
             $merged = $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression && $this->mergeable($resolution->definition->query);
-            $kept = $merged || $plan->root instanceof \MySqlMemory\Plan\Path\RecursiveUnion || $plan->root instanceof \MySqlMemory\Plan\Path\WorkingTable;
+            $kept = $merged || $plan->root instanceof Path\RecursiveUnion || $plan->root instanceof Path\WorkingTable;
             $connection = $this->planner->settings->connectionCollation;
             $placed = $merged ? array_map(static fn ($domain) => Materialized::merged($domain, $connection), $plan->domains) : ($kept ? $plan->domains : array_map(Materialized::column(...), $plan->domains));
             $scope->place($reference, $placed, $plan->names);

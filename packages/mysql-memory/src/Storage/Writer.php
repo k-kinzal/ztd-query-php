@@ -12,9 +12,9 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Value\Order;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use MySqlMemory\Value\Order;
 
 /**
  * Writes rows into a stored table, keeping its unique keys and its AUTO_INCREMENT counter.

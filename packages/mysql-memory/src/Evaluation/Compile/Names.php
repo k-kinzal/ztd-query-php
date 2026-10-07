@@ -13,17 +13,16 @@ use MySqlMemory\Evaluation\Leaf\Outer;
 use MySqlMemory\Evaluation\Leaf\SystemVariableRead;
 use MySqlMemory\Evaluation\Leaf\UserVariableRead;
 use MySqlMemory\Evaluation\Scope;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Variable\Scope as VariableScope;
-use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
@@ -178,12 +177,12 @@ final class Names
     public function parameter(Parameter $parameter): Evaluable
     {
         $bound = $this->compiler->connection->parameters;
-        $index = $this->compiler->parameterIndex($parameter);
+        $index = $parameter->position ?? $this->compiler->parameterIndex($parameter);
         if (!isset($bound[$index])) {
             return new Constant(Domain::null(), null);
         }
 
-        return new Constant($bound[$index][1], $bound[$index][0]);
+        return new Constant($this->compiler->resolved($parameter) ?? $bound[$index][1], $bound[$index][0]);
     }
 
     /**

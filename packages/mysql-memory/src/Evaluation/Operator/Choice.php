@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * CASE: the result of the first branch whose condition holds, or whose value equals the operand.
@@ -32,7 +33,7 @@ final class Choice implements Evaluable
     /**
      * Answers the domain of the result.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -41,7 +42,7 @@ final class Choice implements Evaluable
     /**
      * Chooses and evaluates a result for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
         $operand = $this->operand?->evaluate($frame);

@@ -6,6 +6,7 @@ namespace MySqlMemory\Iterator;
 
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\Project;
+use Override;
 
 /**
  * Computes the output values of each row of its input.
@@ -27,7 +28,7 @@ final class ProjectIterator implements RowIterator
     /**
      * Starts the input.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $this->frame = $frame;
@@ -37,7 +38,7 @@ final class ProjectIterator implements RowIterator
     /**
      * Answers the output values of the next row.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         $row = $this->input->read();

@@ -52,7 +52,7 @@ final class InsertQueryTest extends TestCase
 
     public function testValuesSeesThroughALockingClause(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $semantics = new Semantics(Dialect::MySql);
         $locked = $semantics->analyze('INSERT INTO t VALUES ROW(1) LOCK IN SHARE MODE')->statement;
         $queried = $semantics->analyze('INSERT INTO t SELECT 1')->statement;
         self::assertInstanceOf(InsertQuery::class, $locked);

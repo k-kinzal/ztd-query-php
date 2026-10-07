@@ -330,7 +330,7 @@ final class DerivationTest extends TestCase
 
     public function testProgramDerivesAStoredStatementWhileInProgramHolds(): void
     {
-        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
         $operation = $semantics->analyze('CREATE PROCEDURE p() SET @@version = 1');
 
         self::assertSame([], $operation->facts->diagnostics);
@@ -338,7 +338,7 @@ final class DerivationTest extends TestCase
 
     public function testInProgramIsFalseOutsideAStoredProgram(): void
     {
-        $derivation = new Derivation((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->context([]));
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
 
         self::assertFalse($derivation->inProgram());
     }

@@ -9,6 +9,7 @@ use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Operator\Comparator;
 use MySqlMemory\Evaluation\Operator\Compare;
 use MySqlMemory\Typing\Domain;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 
 /**
@@ -46,7 +47,7 @@ final class Quantified implements Evaluable
     /**
      * Answers the domain of the truth value.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -55,7 +56,7 @@ final class Quantified implements Evaluable
     /**
      * Compares the value with the rows of the subquery.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): ?int
     {
         $value = $this->operand->evaluate($frame);

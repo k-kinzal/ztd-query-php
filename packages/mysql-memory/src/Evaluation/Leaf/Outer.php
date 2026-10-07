@@ -7,6 +7,7 @@ namespace MySqlMemory\Evaluation\Leaf;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * An expression of an enclosing block, evaluated in the frame of that block.
@@ -26,7 +27,7 @@ final class Outer implements Evaluable
     /**
      * Answers the domain of the expression.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->inner->domain();
@@ -35,7 +36,7 @@ final class Outer implements Evaluable
     /**
      * Evaluates the expression in the frame of its block.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
         return $this->inner->evaluate($frame->out($this->depth));

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
+use Closure;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -13,10 +14,12 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Assigner;
 use MySqlMemory\Variable\Scope as VariableScope;
+use Override;
+use ReflectionClass;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetCharacterSet;
@@ -43,7 +46,7 @@ final class SetCommand implements Command
     /**
      * Answers true.
      */
-    #[\Override]
+    #[Override]
     public function clearsDiagnostics(): bool
     {
         return true;
@@ -52,7 +55,7 @@ final class SetCommand implements Command
     /**
      * Assigns the variables.
      */
-    #[\Override]
+    #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;
@@ -84,7 +87,7 @@ final class SetCommand implements Command
     /**
      * Computes the value of one assignment and answers the action that assigns it.
      */
-    public function action(object $item, Planner $planner, Frame $frame, Assigner $assigner, Session $session): \Closure
+    public function action(object $item, Planner $planner, Frame $frame, Assigner $assigner, Session $session): Closure
     {
         if ($item instanceof UserAssignment) {
             $value = $planner->compiler->compile($item->value, new Scope());
@@ -121,7 +124,7 @@ final class SetCommand implements Command
             };
         }
 
-        throw ErrorCode::NotSupportedYet->error('SET ' . (new \ReflectionClass($item))->getShortName());
+        throw ErrorCode::NotSupportedYet->error('SET ' . (new ReflectionClass($item))->getShortName());
     }
 
     /**

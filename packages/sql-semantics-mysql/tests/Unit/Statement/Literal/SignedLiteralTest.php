@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Literal;
 
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -17,11 +16,7 @@ use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
-use SqlSemantics\Platform\MySql\Statement\Type\Floating;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Rendering\PieceKind;
 use SqlSemantics\Statement\Type\Known;

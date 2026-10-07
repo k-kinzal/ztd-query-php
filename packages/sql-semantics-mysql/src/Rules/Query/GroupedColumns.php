@@ -29,6 +29,7 @@ use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\OutputSlot;
+use UnitEnum;
 
 /**
  * Finds the first column a grouped or DISTINCT query block reads that its rows do not determine.
@@ -233,7 +234,7 @@ final class GroupedColumns
             if ($left::class !== $right::class) {
                 return false;
             }
-            if ($left instanceof \UnitEnum) {
+            if ($left instanceof UnitEnum) {
                 return $left === $right;
             }
             if ($left instanceof \SqlSemantics\Statement\Identifier\Name && $right instanceof \SqlSemantics\Statement\Identifier\Name) {

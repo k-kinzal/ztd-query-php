@@ -7,9 +7,10 @@ namespace MySqlMemory\Evaluation\Leaf;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Variable\Scope;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
-use MySqlMemory\Variable\Scope;
 
 /**
  * A system variable read: `@@name`, `@@SESSION.name` or `@@GLOBAL.name`.
@@ -30,7 +31,7 @@ final class SystemVariableRead implements Evaluable
     /**
      * Answers the domain of the value.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -39,7 +40,7 @@ final class SystemVariableRead implements Evaluable
     /**
      * Reads the value of the variable now.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
         $value = $frame->context->variables->system($this->definition, $this->scope);

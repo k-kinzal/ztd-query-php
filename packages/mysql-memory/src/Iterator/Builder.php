@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator;
 
+use LogicException;
 use MySqlMemory\Plan\Path\AccessPath;
 use MySqlMemory\Plan\Path\Aggregate;
 use MySqlMemory\Plan\Path\Distinct;
@@ -13,12 +14,12 @@ use MySqlMemory\Plan\Path\Materialize;
 use MySqlMemory\Plan\Path\NestedLoopJoin;
 use MySqlMemory\Plan\Path\Project;
 use MySqlMemory\Plan\Path\RecursiveUnion;
-use MySqlMemory\Plan\Path\WorkingTable;
 use MySqlMemory\Plan\Path\SetOperation;
 use MySqlMemory\Plan\Path\SingleRow;
 use MySqlMemory\Plan\Path\Sort;
 use MySqlMemory\Plan\Path\TableScan;
 use MySqlMemory\Plan\Path\Values;
+use MySqlMemory\Plan\Path\WorkingTable;
 use MySqlMemory\Plan\Path\ZeroRows;
 
 /**
@@ -54,7 +55,7 @@ final class Builder
             $path instanceof RecursiveUnion => new RecursiveUnionIterator($path, $this->build($path->anchor), $this->build($path->recursive)),
             $path instanceof WorkingTable => new WorkingTableIterator($path),
             $path instanceof SetOperation => new SetOperationIterator($path, $this->build($path->left), $this->build($path->right)),
-            default => throw new \LogicException('No iterator executes ' . $path::class . '.'),
+            default => throw new LogicException('No iterator executes ' . $path::class . '.'),
         };
     }
 }

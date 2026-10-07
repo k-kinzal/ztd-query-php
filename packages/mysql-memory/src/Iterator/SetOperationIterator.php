@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Plan\Path\SetKind;
 use MySqlMemory\Plan\Path\SetOperation;
 use MySqlMemory\Value\Order;
+use Override;
 
 /**
  * Combines the rows of two queries by UNION, INTERSECT or EXCEPT.
@@ -38,7 +39,7 @@ final class SetOperationIterator implements RowIterator
     /**
      * Reads both queries and combines them.
      */
-    #[\Override]
+    #[Override]
     public function init(Frame $frame): void
     {
         $left = $this->rows($this->left, new Frame($frame->context, [], $frame->outer));
@@ -98,7 +99,7 @@ final class SetOperationIterator implements RowIterator
     /**
      * Answers the next combined row.
      */
-    #[\Override]
+    #[Override]
     public function read(): ?array
     {
         return $this->rows[$this->next++] ?? null;

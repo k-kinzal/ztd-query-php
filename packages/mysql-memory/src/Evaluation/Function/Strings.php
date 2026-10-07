@@ -7,10 +7,8 @@ namespace MySqlMemory\Evaluation\Function;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
@@ -31,51 +29,34 @@ final class Strings
      */
     public function routines(): array
     {
-        $text = $this->textDomain(...);
 
         return [
-            new Routine('CONCAT', 1, -1, fn (array $d, Signature $s): Domain => $text($d, $s, array_sum(array_map($this->length(...), $d))), $this->concat(...)),
-            new Routine('CONCAT_WS', 2, -1, fn (array $d, Signature $s): Domain => $text($d, $s, array_sum(array_map($this->length(...), $d)) * 2)->withNullable($d[0]->nullable), $this->concatWs(...)),
-            new Routine('UPPER', 1, 1, fn (array $d, Signature $s): Domain => $text($d, $s, $this->length($d[0])), $this->upper(...)),
-            new Routine('UCASE', 1, 1, fn (array $d, Signature $s): Domain => $text($d, $s, $this->length($d[0])), $this->upper(...)),
-            new Routine('LOWER', 1, 1, fn (array $d, Signature $s): Domain => $text($d, $s, $this->length($d[0])), $this->lower(...)),
-            new Routine('LCASE', 1, 1, fn (array $d, Signature $s): Domain => $text($d, $s, $this->length($d[0])), $this->lower(...)),
-            new Routine('LEFT', 2, 2, fn (array $d, Signature $s): Domain => $text([$d[0]], $s, $this->length($d[0]))->withNullable($d[0]->nullable || $d[1]->nullable), $this->left(...)),
-            new Routine('RIGHT', 2, 2, fn (array $d, Signature $s): Domain => $text([$d[0]], $s, $this->length($d[0]))->withNullable($d[0]->nullable || $d[1]->nullable), $this->right(...)),
-            new Routine('SUBSTRING', 2, 3, fn (array $d, Signature $s): Domain => $text([$d[0]], $s, $this->length($d[0]))->withNullable(true), $this->substring(...)),
-            new Routine('SUBSTR', 2, 3, fn (array $d, Signature $s): Domain => $text([$d[0]], $s, $this->length($d[0]))->withNullable(true), $this->substring(...)),
-            new Routine('MID', 3, 3, fn (array $d, Signature $s): Domain => $text([$d[0]], $s, $this->length($d[0]))->withNullable(true), $this->substring(...)),
-            new Routine('REPLACE', 3, 3, fn (array $d, Signature $s): Domain => $text($d, $s, $this->length($d[0]) * max(1, $this->length($d[2]))), $this->replace(...)),
-            new Routine('REVERSE', 1, 1, fn (array $d, Signature $s): Domain => $text($d, $s, $this->length($d[0])), $this->reverse(...)),
-            new Routine('REPEAT', 2, 2, fn (array $d, Signature $s): Domain => $text([$d[0]], $s, min(16777216, $this->length($d[0]) * 64))->withNullable(true), $this->repeat(...)),
-            new Routine('LPAD', 3, 3, fn (array $d, Signature $s): Domain => $text([$d[0], $d[2]], $s, $this->length($d[0]))->withNullable(true), fn (Frame $f, array $a, Domain $r): ?string => $this->pad($f, $a, $r, true)),
-            new Routine('RPAD', 3, 3, fn (array $d, Signature $s): Domain => $text([$d[0], $d[2]], $s, $this->length($d[0]))->withNullable(true), fn (Frame $f, array $a, Domain $r): ?string => $this->pad($f, $a, $r, false)),
-            new Routine('LTRIM', 1, 1, fn (array $d, Signature $s): Domain => $text($d, $s, $this->length($d[0])), fn (Frame $f, array $a, Domain $r): ?string => $this->strip($f, $a, true, false)),
-            new Routine('RTRIM', 1, 1, fn (array $d, Signature $s): Domain => $text($d, $s, $this->length($d[0])), fn (Frame $f, array $a, Domain $r): ?string => $this->strip($f, $a, false, true)),
-            new Routine('SPACE', 1, 1, fn (array $d, Signature $s): Domain => $text([], $s, 64)->withNullable(true), $this->space(...)),
-            new Routine('HEX', 1, 1, fn (array $d, Signature $s): Domain => $text([], $s, $this->length($d[0]) * 2)->withNullable($d[0]->nullable), $this->hex(...)),
-            new Routine('UNHEX', 1, 1, fn (array $d, Signature $s): Domain => Domain::string(intdiv($this->length($d[0]) + 1, 2), Collation::binary())->withNullable(true), $this->unhex(...)),
-            new Routine('SUBSTRING_INDEX', 3, 3, fn (array $d, Signature $s): Domain => $text([$d[0], $d[1]], $s, $this->length($d[0])), $this->substringIndex(...)),
-            new Routine('INSERT', 4, 4, fn (array $d, Signature $s): Domain => $text([$d[0], $d[3]], $s, $this->length($d[0]) + $this->length($d[3])), $this->insert(...)),
+            new Routine('CONCAT', 1, -1, $this->concat(...)),
+            new Routine('CONCAT_WS', 2, -1, $this->concatWs(...)),
+            new Routine('UPPER', 1, 1, $this->upper(...)),
+            new Routine('UCASE', 1, 1, $this->upper(...)),
+            new Routine('LOWER', 1, 1, $this->lower(...)),
+            new Routine('LCASE', 1, 1, $this->lower(...)),
+            new Routine('LEFT', 2, 2, $this->left(...)),
+            new Routine('RIGHT', 2, 2, $this->right(...)),
+            new Routine('SUBSTRING', 2, 3, $this->substring(...)),
+            new Routine('SUBSTR', 2, 3, $this->substring(...)),
+            new Routine('MID', 3, 3, $this->substring(...)),
+            new Routine('REPLACE', 3, 3, $this->replace(...)),
+            new Routine('REVERSE', 1, 1, $this->reverse(...)),
+            new Routine('REPEAT', 2, 2, $this->repeat(...)),
+            new Routine('LPAD', 3, 3, fn (Frame $f, array $a, Domain $r): ?string => $this->pad($f, $a, $r, true)),
+            new Routine('RPAD', 3, 3, fn (Frame $f, array $a, Domain $r): ?string => $this->pad($f, $a, $r, false)),
+            new Routine('LTRIM', 1, 1, fn (Frame $f, array $a, Domain $r): ?string => $this->strip($f, $a, true, false)),
+            new Routine('RTRIM', 1, 1, fn (Frame $f, array $a, Domain $r): ?string => $this->strip($f, $a, false, true)),
+            new Routine('SPACE', 1, 1, $this->space(...)),
+            new Routine('HEX', 1, 1, $this->hex(...)),
+            new Routine('UNHEX', 1, 1, $this->unhex(...)),
+            new Routine('SUBSTRING_INDEX', 3, 3, $this->substringIndex(...)),
+            new Routine('INSERT', 4, 4, $this->insert(...)),
         ];
     }
 
-    /**
-     * Answers the domain of a string result over string arguments and a length in characters.
-     *
-     * @param list<Domain> $domains The arguments whose collations aggregate
-     */
-    public function textDomain(array $domains, Signature $signature, int $length): Domain
-    {
-        [$collation, $coercibility] = Collations::aggregate($domains, 'concat', $signature->settings->connectionCollation);
-        $nullable = false;
-        foreach ($domains as $domain) {
-            $nullable = $nullable || $domain->nullable;
-        }
-        $field = $length > 16383 ? Field::Blob : Field::VarString;
-
-        return Domain::string(min($length, 4294967295), $collation, $field)->withCollation($collation, $coercibility)->withNullable($nullable);
-    }
 
     /**
      * Answers the length in characters of the text of a value of a domain.

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Function;
 
-use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Operator\Comparator;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Typing\Ordering;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 /**
  * The string functions that answer numbers: LENGTH, CHAR_LENGTH, ASCII, LOCATE, INSTR, STRCMP, FIELD and FIND_IN_SET.
@@ -29,21 +29,20 @@ final class Measures
      */
     public function routines(): array
     {
-        $count = static fn (int $length): \Closure => static fn (array $d, Signature $s): Domain => Domain::integer(Field::LongLong, $length)->withNullable($s->nullable());
         $strings = new Strings();
 
         return [
-            new Routine('LENGTH', 1, 1, $count(10), fn (Frame $f, array $a): ?int => $this->bytes($f, $a[0])),
-            new Routine('OCTET_LENGTH', 1, 1, $count(10), fn (Frame $f, array $a): ?int => $this->bytes($f, $a[0])),
-            new Routine('BIT_LENGTH', 1, 1, $count(10), fn (Frame $f, array $a): ?int => ($b = $this->bytes($f, $a[0])) === null ? null : $b * 8),
-            new Routine('CHAR_LENGTH', 1, 1, $count(10), fn (Frame $f, array $a): ?int => $this->characters($f, $a[0], $strings)),
-            new Routine('CHARACTER_LENGTH', 1, 1, $count(10), fn (Frame $f, array $a): ?int => $this->characters($f, $a[0], $strings)),
-            new Routine('ASCII', 1, 1, $count(3), fn (Frame $f, array $a): ?int => ($t = Convert::toText($a[0]->evaluate($f), $a[0]->domain())) === null ? null : ($t === '' ? 0 : ord($t[0]))),
-            new Routine('LOCATE', 2, 3, $count(11), fn (Frame $f, array $a, Domain $r): ?int => $this->locate($f, $a[0], $a[1], $a[2] ?? null)),
-            new Routine('INSTR', 2, 2, $count(11), fn (Frame $f, array $a, Domain $r): ?int => $this->locate($f, $a[1], $a[0], null)),
-            new Routine('STRCMP', 2, 2, $count(2), $this->strcmp(...)),
-            new Routine('FIELD', 2, -1, static fn (array $d, Signature $s): Domain => Domain::integer(Field::LongLong, 3)->withNullable(false), $this->field(...)),
-            new Routine('FIND_IN_SET', 2, 2, $count(3), $this->findInSet(...)),
+            new Routine('LENGTH', 1, 1, fn (Frame $f, array $a): ?int => $this->bytes($f, $a[0])),
+            new Routine('OCTET_LENGTH', 1, 1, fn (Frame $f, array $a): ?int => $this->bytes($f, $a[0])),
+            new Routine('BIT_LENGTH', 1, 1, fn (Frame $f, array $a): ?int => ($b = $this->bytes($f, $a[0])) === null ? null : $b * 8),
+            new Routine('CHAR_LENGTH', 1, 1, fn (Frame $f, array $a): ?int => $this->characters($f, $a[0], $strings)),
+            new Routine('CHARACTER_LENGTH', 1, 1, fn (Frame $f, array $a): ?int => $this->characters($f, $a[0], $strings)),
+            new Routine('ASCII', 1, 1, fn (Frame $f, array $a): ?int => ($t = Convert::toText($a[0]->evaluate($f), $a[0]->domain())) === null ? null : ($t === '' ? 0 : ord($t[0]))),
+            new Routine('LOCATE', 2, 3, fn (Frame $f, array $a, Domain $r): ?int => $this->locate($f, $a[0], $a[1], $a[2] ?? null)),
+            new Routine('INSTR', 2, 2, fn (Frame $f, array $a, Domain $r): ?int => $this->locate($f, $a[1], $a[0], null)),
+            new Routine('STRCMP', 2, 2, $this->strcmp(...)),
+            new Routine('FIELD', 2, -1, $this->field(...)),
+            new Routine('FIND_IN_SET', 2, 2, $this->findInSet(...)),
         ];
     }
 

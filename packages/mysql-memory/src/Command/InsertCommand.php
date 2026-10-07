@@ -17,6 +17,7 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Typing\Domain;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
@@ -43,7 +44,7 @@ final class InsertCommand implements Command
     /**
      * Answers true.
      */
-    #[\Override]
+    #[Override]
     public function clearsDiagnostics(): bool
     {
         return true;
@@ -52,7 +53,7 @@ final class InsertCommand implements Command
     /**
      * Inserts the rows.
      */
-    #[\Override]
+    #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;

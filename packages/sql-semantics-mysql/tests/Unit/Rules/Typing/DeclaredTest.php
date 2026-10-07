@@ -4,36 +4,36 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rules\Typing;
 
-use SqlSemantics\Platform\MySql\Statement\Type\Floating;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
-use SqlSemantics\Platform\MySql\Statement\Type\Binary;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Enumeration;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
-use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Typing\Declared;
+use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Type\Binary;
+use SqlSemantics\Platform\MySql\Statement\Type\Character;
+use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
+use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
+use SqlSemantics\Platform\MySql\Statement\Type\Enumeration;
+use SqlSemantics\Platform\MySql\Statement\Type\Floating;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 
 #[CoversClass(Declared::class)]
 #[Small]

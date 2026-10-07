@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Path;
 
 use MySqlMemory\Evaluation\Evaluable;
+use Override;
 
 /**
  * Pairs each row of one input with each row of the other, the left columns first.
@@ -32,7 +33,7 @@ final class NestedLoopJoin implements AccessPath
     /**
      * Answers the width of both inputs.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return $this->left->width() + $this->right->width();

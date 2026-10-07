@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * NOT and `!`: 1 for a false operand, 0 for a true one, NULL for NULL.
@@ -27,7 +28,7 @@ final class Negation implements Evaluable
     /**
      * Answers the domain of the truth value.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -36,7 +37,7 @@ final class Negation implements Evaluable
     /**
      * Negates the truth value of the operand for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): ?int
     {
         $value = Convert::toBool($this->operand->evaluate($frame), $this->operand->domain(), $frame->context);

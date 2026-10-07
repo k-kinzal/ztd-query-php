@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Result;
 
+use Override;
+
 /**
  * The completion of a statement that returns no rows: what the server sends in an OK packet.
  *
@@ -31,7 +33,7 @@ final class Completion implements Reply
     /**
      * Answers the warning count of the statement.
      */
-    #[\Override]
+    #[Override]
     public function warnings(): int
     {
         return $this->warnings;

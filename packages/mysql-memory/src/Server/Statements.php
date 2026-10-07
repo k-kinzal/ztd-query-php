@@ -8,10 +8,10 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Protocol\Binary;
 use MySqlMemory\Protocol\PayloadReader;
 use MySqlMemory\Protocol\PayloadWriter;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 /**
  * The prepared statements of a connection: COM_STMT_PREPARE, COM_STMT_EXECUTE and the commands around them.

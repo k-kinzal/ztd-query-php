@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
-use SqlSemantics\Contract\GrammarRelease;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
+use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Iterator\Builder;
 use MySqlMemory\Plan\ColumnOrigin;
 use MySqlMemory\Plan\QueryPlan;
-use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Evaluation\Context;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Real;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Executes a query plan and writes its rows as the server sends them: each value in its text.

@@ -8,14 +8,8 @@ use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Function\Call;
 use MySqlMemory\Evaluation\Function\Library;
-use MySqlMemory\Evaluation\Function\Signature;
 use MySqlMemory\Evaluation\Leaf\Clock;
 use MySqlMemory\Evaluation\Scope;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Platform\MySql\Statement\Call\Clock as ClockKind;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
@@ -70,7 +64,7 @@ final class Calls
      *
      * @throws \MySqlMemory\Error\SqlError When the function is unknown or the arguments do not fit
      */
-    public function named(string $name, array $arguments, Scope $scope, ?Scalar $node = null): Evaluable
+    public function named(string $name, array $arguments, Scope $scope, Scalar $node): Evaluable
     {
         $routine = Library::instance()->find($name);
         if ($routine === null) {
@@ -80,11 +74,8 @@ final class Calls
             throw ErrorCode::WrongParameterCountToNativeFunction->error(strtoupper($name));
         }
         $compiled = array_map(fn (Scalar $argument): Evaluable => $this->compiler->compile($argument, $scope), $arguments);
-        $signature = new Signature($compiled, $this->compiler->settings);
 
-        $resolved = $node === null ? null : $this->compiler->resolved($node);
-
-        return new Call($routine, $compiled, $resolved ?? ($routine->domain)($signature->domains(), $signature));
+        return new Call($routine, $compiled, $this->compiler->domain($node));
     }
 
     /**

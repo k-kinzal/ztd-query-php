@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Path;
 
 use MySqlMemory\Evaluation\Evaluable;
+use Override;
 
 /**
  * Produces the rows a VALUES list or a table value constructor writes.
@@ -24,7 +25,7 @@ final class Values implements AccessPath
     /**
      * Answers the number of values of each row.
      */
-    #[\Override]
+    #[Override]
     public function width(): int
     {
         return $this->width;

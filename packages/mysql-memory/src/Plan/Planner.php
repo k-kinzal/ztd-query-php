@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
-use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Compiler;
@@ -18,8 +17,10 @@ use MySqlMemory\Plan\Path\SetOperation as SetPath;
 use MySqlMemory\Plan\Path\Sort;
 use MySqlMemory\Plan\Path\Values;
 use MySqlMemory\Plan\Path\WorkingTable;
+use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Typing\Aggregation;
 use MySqlMemory\Typing\Materialized;
+use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
@@ -96,7 +97,7 @@ final class Planner
             $query instanceof SetOperation => $this->set($query, $outer),
             $query instanceof ValuesQuery => $this->values($query, $outer),
             $query instanceof ExplicitTable => $this->blocks->table($query, $outer),
-            default => throw ErrorCode::NotSupportedYet->error('query ' . (new \ReflectionClass($query))->getShortName()),
+            default => throw ErrorCode::NotSupportedYet->error('query ' . (new ReflectionClass($query))->getShortName()),
         };
     }
 

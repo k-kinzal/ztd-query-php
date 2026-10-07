@@ -7,14 +7,14 @@ namespace MySqlMemory\Evaluation\Compile;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Operator\DateShift;
 use MySqlMemory\Evaluation\Scope;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Interval;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Scalar;
 
 /**

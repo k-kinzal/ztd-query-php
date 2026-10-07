@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
+use MySqlMemory\Result\ColumnFlag;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
-
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
-
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-
-use MySqlMemory\Result\ColumnFlag;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * The resolved type of an expression or a column: what the server knows of its values before it reads any.

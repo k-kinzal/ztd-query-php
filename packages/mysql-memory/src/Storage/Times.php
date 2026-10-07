@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Storage;
 
+use JsonException;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Convert;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Temporal;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Stores values into date, time, datetime, timestamp, year and JSON columns.
@@ -156,7 +157,7 @@ final class Times
         }
         try {
             $document = json_decode($text, false, 512, JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING);
-        } catch (\JsonException $failure) {
+        } catch (JsonException $failure) {
             throw ErrorCode::InvalidJsonText->error('Invalid value.', 0, $column->name);
         }
 

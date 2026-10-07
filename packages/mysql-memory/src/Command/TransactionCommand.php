@@ -9,6 +9,7 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Rollback;
 use SqlSemantics\Statement\Operation;
@@ -25,7 +26,7 @@ final class TransactionCommand implements Command
     /**
      * Answers true.
      */
-    #[\Override]
+    #[Override]
     public function clearsDiagnostics(): bool
     {
         return true;
@@ -34,7 +35,7 @@ final class TransactionCommand implements Command
     /**
      * Opens or ends the transaction of the session.
      */
-    #[\Override]
+    #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;

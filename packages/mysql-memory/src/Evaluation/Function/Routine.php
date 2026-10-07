@@ -20,10 +20,9 @@ final class Routine
      * @param string $name The function name, in upper case
      * @param int $minimum The fewest arguments
      * @param int $maximum The most arguments, or -1 for no bound
-     * @param Closure $domain Resolves the result domain: fn (list<Domain>, Signature): Domain
      * @param Closure $body Computes the result: fn (Frame, list<Evaluable>, Domain): int|float|string|null
      */
-    public function __construct(public readonly string $name, public readonly int $minimum, public readonly int $maximum, public readonly Closure $domain, public readonly Closure $body)
+    public function __construct(public readonly string $name, public readonly int $minimum, public readonly int $maximum, public readonly Closure $body)
     {
     }
 

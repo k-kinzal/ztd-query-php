@@ -11,6 +11,7 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Storage\TableData;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
 use SqlSemantics\Statement\Operation;
@@ -29,7 +30,7 @@ final class DropTableCommand implements Command
     /**
      * Answers true.
      */
-    #[\Override]
+    #[Override]
     public function clearsDiagnostics(): bool
     {
         return true;
@@ -38,7 +39,7 @@ final class DropTableCommand implements Command
     /**
      * Drops or empties the tables.
      */
-    #[\Override]
+    #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;

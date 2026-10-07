@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Type\Resolved;
 
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\Session;
+use SqlSemantics\Statement\Snapshot;
 
 /**
  * The session variables of a MySQL session that change the types statements resolve to.
@@ -41,6 +41,8 @@ final class Settings implements Session
      * @param array<string, Collation> $schemas The default collation of each schema, by name
      * @param int $groupConcatMaxLen The longest result of GROUP_CONCAT in bytes (group_concat_max_len)
      * @param array<string, Domain>|null $userVariables The type of the value each user variable holds, by name; null when the session does not say
+     * @param array<int, Domain> $parameters The type of the value bound to each parameter marker, by the position of the marker among the markers
+     * @param bool $unsignedSubtraction Whether subtracting from an unsigned integer gives an unsigned integer, as it does unless sql_mode has NO_UNSIGNED_SUBTRACTION
      */
     public function __construct(
         public readonly Collation $connection,
@@ -49,6 +51,8 @@ final class Settings implements Session
         array $schemas = [],
         public readonly int $groupConcatMaxLen = 1024,
         ?array $userVariables = null,
+        public readonly array $parameters = [],
+        public readonly bool $unsignedSubtraction = true,
     ) {
         $lower = [];
         foreach ($schemas as $name => $collation) {

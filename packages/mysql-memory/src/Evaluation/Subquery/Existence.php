@@ -7,6 +7,7 @@ namespace MySqlMemory\Evaluation\Subquery;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * EXISTS: 1 when the subquery has a row, else 0.
@@ -26,7 +27,7 @@ final class Existence implements Evaluable
     /**
      * Answers the domain of the truth value.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -35,7 +36,7 @@ final class Existence implements Evaluable
     /**
      * Tests the subquery for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int
     {
         return $this->rows->start($frame)->read() === null ? 0 : 1;

@@ -8,12 +8,10 @@ use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use MySqlMemory\Typing\Numeric;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Integer;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * The numeric functions: ABS, SIGN, CEILING, FLOOR, ROUND, TRUNCATE and the functions of real numbers.
@@ -33,16 +31,15 @@ final class Numbers
      */
     public function routines(): array
     {
-        $real = static fn (array $d, Signature $s): Domain => Domain::double(23)->withNullable(true);
         $routines = [
-            new Routine('ABS', 1, 1, fn (array $d, Signature $s): Domain => $this->same($d[0]), $this->abs(...)),
-            new Routine('SIGN', 1, 1, fn (array $d, Signature $s): Domain => Domain::integer(Field::LongLong, 2)->withNullable($d[0]->nullable), $this->sign(...)),
-            new Routine('CEILING', 1, 1, fn (array $d, Signature $s): Domain => $this->integral($d[0]), fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->toward($f, $a, $r, true)),
-            new Routine('CEIL', 1, 1, fn (array $d, Signature $s): Domain => $this->integral($d[0]), fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->toward($f, $a, $r, true)),
-            new Routine('FLOOR', 1, 1, fn (array $d, Signature $s): Domain => $this->integral($d[0]), fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->toward($f, $a, $r, false)),
-            new Routine('ROUND', 1, 2, fn (array $d, Signature $s): Domain => $this->rounded($d, $s), fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->round($f, $a, $r, false)),
-            new Routine('TRUNCATE', 2, 2, fn (array $d, Signature $s): Domain => $this->rounded($d, $s), fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->round($f, $a, $r, true)),
-            new Routine('PI', 0, 0, fn (array $d, Signature $s): Domain => Domain::double(8, 6)->withNullable(false), fn (): float => M_PI),
+            new Routine('ABS', 1, 1, $this->abs(...)),
+            new Routine('SIGN', 1, 1, $this->sign(...)),
+            new Routine('CEILING', 1, 1, fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->toward($f, $a, $r, true)),
+            new Routine('CEIL', 1, 1, fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->toward($f, $a, $r, true)),
+            new Routine('FLOOR', 1, 1, fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->toward($f, $a, $r, false)),
+            new Routine('ROUND', 1, 2, fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->round($f, $a, $r, false)),
+            new Routine('TRUNCATE', 2, 2, fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->round($f, $a, $r, true)),
+            new Routine('PI', 0, 0, fn (): float => M_PI),
         ];
         $functions = [
             'SQRT' => static fn (float $x): ?float => $x < 0 ? null : sqrt($x),
@@ -61,66 +58,16 @@ final class Numbers
             'RADIANS' => static fn (float $x): float => deg2rad($x),
         ];
         foreach ($functions as $name => $function) {
-            $routines[] = new Routine($name, 1, 1, $real, fn (Frame $f, array $a, Domain $r): ?float => $this->real($f, $a, $function));
+            $routines[] = new Routine($name, 1, 1, fn (Frame $f, array $a, Domain $r): ?float => $this->real($f, $a, $function));
         }
-        $routines[] = new Routine('POW', 2, 2, $real, fn (Frame $f, array $a, Domain $r): ?float => $this->power($f, $a));
-        $routines[] = new Routine('POWER', 2, 2, $real, fn (Frame $f, array $a, Domain $r): ?float => $this->power($f, $a));
+        $routines[] = new Routine('POW', 2, 2, fn (Frame $f, array $a, Domain $r): ?float => $this->power($f, $a));
+        $routines[] = new Routine('POWER', 2, 2, fn (Frame $f, array $a, Domain $r): ?float => $this->power($f, $a));
 
         return $routines;
     }
 
-    /**
-     * Answers the domain of a function whose result has the domain of its argument.
-     */
-    public function same(Domain $domain): Domain
-    {
-        return match (Numeric::operand($domain)) {
-            Kind::Integer => Domain::integer($domain->kind === Kind::Integer ? $domain->field : Field::LongLong, $domain->length, $domain->unsigned)->withNullable($domain->nullable),
-            Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(...Numeric::digits($domain))->withNullable($domain->nullable),
-            default => Domain::double(23)->withNullable($domain->nullable),
-        };
-    }
 
-    /**
-     * Answers the domain of CEILING and FLOOR: an integer for an exact argument that fits, else a decimal of scale 0, else a double.
-     */
-    public function integral(Domain $domain): Domain
-    {
-        $operand = Numeric::operand($domain);
-        if ($operand === Kind::Double) {
-            return Domain::double(23)->withNullable($domain->nullable);
-        }
-        [$precision, $scale] = Numeric::digits($domain);
-        $digits = $precision - $scale + ($scale > 0 ? 1 : 0);
 
-        return ($digits < 19 ? Domain::integer(Field::LongLong, $digits + 1, $domain->unsigned) : Domain::decimal($digits, 0))->withNullable($domain->nullable);
-    }
-
-    /**
-     * Answers the domain of ROUND and TRUNCATE: the argument's kind, with the decimals asked for when they are a constant.
-     *
-     * @param list<Domain> $domains
-     */
-    public function rounded(array $domains, Signature $signature): Domain
-    {
-        $domain = $domains[0];
-        $places = $signature->constant(1);
-        $decimals = $places === null ? ($domains === [$domain] ? 0 : null) : (int) $places;
-        $nullable = $domain->nullable || (isset($domains[1]) && $domains[1]->nullable);
-        if (Numeric::operand($domain) === Kind::Double) {
-            return Domain::double(23, $decimals === null ? Domain::NOT_FIXED : max(0, min(30, $decimals)))->withNullable($nullable);
-        }
-        [$precision, $scale] = Numeric::digits($domain);
-        if ($decimals === null) {
-            return Domain::decimal($precision, $scale)->withNullable($nullable);
-        }
-        $newScale = max(0, min(30, $decimals));
-        if (Numeric::operand($domain) === Kind::Integer && $newScale === 0) {
-            return Domain::integer(Field::LongLong, $domain->length, $domain->unsigned)->withNullable($nullable);
-        }
-
-        return Domain::decimal(min(65, $precision - $scale + $newScale + 1), $newScale)->withNullable($nullable);
-    }
 
     /**
      * ABS: the absolute value.
@@ -210,7 +157,7 @@ final class Numbers
             $number = (float) Convert::toDouble($value, $domain, $frame->context);
             $factor = 10 ** $places;
 
-            return $truncate ? ($number < 0 ? ceil($number * $factor) : floor($number * $factor)) / $factor : round($number, $places);
+            return $truncate ? ($number < 0 ? ceil($number * $factor) : floor($number * $factor)) / $factor : round($number * $factor, 0, PHP_ROUND_HALF_EVEN) / $factor;
         }
         $decimal = (string) Convert::toDecimal($value, $domain, $frame->context);
         $rounded = $truncate ? Decimal::truncate($decimal, $places) : Decimal::round($decimal, $places);

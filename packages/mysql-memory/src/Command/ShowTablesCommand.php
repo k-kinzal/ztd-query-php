@@ -8,12 +8,13 @@ use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use MySqlMemory\Result\Reply;
 use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
-use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
+use Override;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Statement\Operation;
@@ -30,7 +31,7 @@ final class ShowTablesCommand implements Command
     /**
      * Answers true.
      */
-    #[\Override]
+    #[Override]
     public function clearsDiagnostics(): bool
     {
         return true;
@@ -39,7 +40,7 @@ final class ShowTablesCommand implements Command
     /**
      * Lists the tables.
      */
-    #[\Override]
+    #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;

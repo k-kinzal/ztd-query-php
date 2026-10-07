@@ -8,6 +8,7 @@ use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use Override;
 
 /**
  * A scalar subquery: the value of its one row, NULL for no row, an error for more than one (ER_SUBQUERY_NO_1_ROW).
@@ -27,7 +28,7 @@ final class ScalarRead implements Evaluable
     /**
      * Answers the domain of the value.
      */
-    #[\Override]
+    #[Override]
     public function domain(): Domain
     {
         return $this->domain;
@@ -36,7 +37,7 @@ final class ScalarRead implements Evaluable
     /**
      * Computes the value for a row.
      */
-    #[\Override]
+    #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
         $iterator = $this->rows->start($frame);

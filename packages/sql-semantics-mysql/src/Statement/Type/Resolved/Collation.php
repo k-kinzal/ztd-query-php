@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Type\Resolved;
 
-use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\InvariantViolation;
+use SqlSemantics\Statement\Snapshot;
 
 /**
  * A collation of the server: its name, id, character set and whether it pads with spaces.

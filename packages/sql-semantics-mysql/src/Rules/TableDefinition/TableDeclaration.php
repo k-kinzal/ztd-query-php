@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
-use SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition;
-use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
-use SqlSemantics\Platform\MySql\Rules\Typing\Declared;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
-use SqlSemantics\Statement\Declaration\Key;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\LanguageProfile;
+use SqlSemantics\Platform\MySql\Rules\Typing\Declared;
+use SqlSemantics\Platform\MySql\Statement\Partition\PartitionClause;
+use SqlSemantics\Platform\MySql\Statement\Partition\SubpartitionDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\ImplicitColumn;
+use SqlSemantics\Statement\Declaration\Key;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Fact\QueryFact;
