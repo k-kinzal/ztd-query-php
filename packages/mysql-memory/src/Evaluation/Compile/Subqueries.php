@@ -45,7 +45,9 @@ final class Subqueries
             throw ErrorCode::OperandColumns->error(1);
         }
 
-        return new ScalarRead(new Rows($plan), $plan->domains[0]->withNullable(true));
+        $nullability = $this->compiler->facts->scalar($node)->nullability;
+
+        return new ScalarRead(new Rows($plan), $plan->domains[0]->withNullable($nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull));
     }
 
     /**

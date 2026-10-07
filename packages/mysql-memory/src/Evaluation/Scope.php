@@ -40,6 +40,11 @@ final class Scope
     public array $scans = [];
 
     /**
+     * @var array<int, list<\MySqlMemory\Plan\ColumnOrigin|null>> The origins of the columns of each merged derived table, by object id
+     */
+    public array $merged = [];
+
+    /**
      * @var array<int, string> The alias of each derived table and common table reference, by object id
      */
     public array $derived = [];
@@ -166,6 +171,7 @@ final class Scope
         $scope->names = $this->names;
         $scope->tables = $this->tables;
         $scope->derived = $this->derived;
+        $scope->merged = $this->merged;
         $scope->nodes = $this->nodes;
 
         return $scope;

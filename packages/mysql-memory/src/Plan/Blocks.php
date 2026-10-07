@@ -167,7 +167,9 @@ final class Blocks
         if (isset($scope->derived[$id])) {
             $position = $this->planner->compiler->names->position($scope, $resolution);
 
-            return new ColumnOrigin('', $scope->derived[$id], '', $scope->names[$id][$position] ?? '');
+            $inner = $scope->merged[$id][$position] ?? null;
+
+            return new ColumnOrigin($inner?->schema ?? '', $scope->derived[$id], $inner?->originalTable ?? '', $scope->names[$id][$position] ?? '', $inner?->flags ?? 0);
         }
         if (!isset($scope->tables[$id])) {
             return null;

@@ -77,7 +77,13 @@ final class Relations
         $resolution = $this->planner->compiler->facts->relation($reference)->table;
         if ($resolution instanceof CommonTable) {
             $plan = $this->planner->commonTable($resolution->definition);
-            $scope->place($reference, $plan->root instanceof \MySqlMemory\Plan\Path\RecursiveUnion || $plan->root instanceof \MySqlMemory\Plan\Path\WorkingTable ? $plan->domains : array_map(Materialized::column(...), $plan->domains), $plan->names);
+            $merged = $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression && $this->mergeable($resolution->definition->query);
+            $kept = $merged || $plan->root instanceof \MySqlMemory\Plan\Path\RecursiveUnion || $plan->root instanceof \MySqlMemory\Plan\Path\WorkingTable;
+            $connection = $this->planner->settings->connectionCollation;
+            $scope->place($reference, $merged ? array_map(static fn ($domain) => Materialized::merged($domain, $connection), $plan->domains) : ($kept ? $plan->domains : array_map(Materialized::column(...), $plan->domains)), $plan->names);
+            if ($merged) {
+                $scope->merged[spl_object_id($reference)] = $plan->origins;
+            }
             $scope->derived[spl_object_id($reference)] = $reference->alias?->value ?? $reference->name->name->value;
 
             return new Materialize($plan);
@@ -108,10 +114,38 @@ final class Relations
     {
         $plan = $this->planner->query($derived->query, $derived->lateral ? $scope : $scope->outer);
         $names = $derived->columns === [] ? $plan->names : array_map(static fn ($name): string => $name->value, $derived->columns);
-        $scope->place($derived, array_map(Materialized::column(...), $plan->domains), $names);
+        $merged = $this->mergeable($derived->query);
+        $connection = $this->planner->settings->connectionCollation;
+        $scope->place($derived, $merged ? array_map(static fn ($domain) => Materialized::merged($domain, $connection), $plan->domains) : array_map(Materialized::column(...), $plan->domains), $names);
+        if ($merged) {
+            $scope->merged[spl_object_id($derived)] = $plan->origins;
+        }
         $scope->derived[spl_object_id($derived)] = $derived->alias?->value ?? '';
 
         return new Materialize($plan, $derived->lateral);
+    }
+
+    /**
+     * Tells whether the server merges a derived query into the query that reads it instead of materializing it.
+     *
+     * A single query block that reads tables merges, unless it groups, aggregates, removes
+     * duplicates, limits its rows or has a window; its columns are then the columns and
+     * expressions it reads, with the keys of the columns.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/derived-table-optimization.html.
+     */
+    public function mergeable(\SqlSemantics\Statement\Query $query): bool
+    {
+        while ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery || ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression && $query->with === null && $query->orderBy === [] && $query->limit === null)) {
+            $query = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery ? $query->query : $query->body;
+        }
+        if (!$query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select || $query->from === null || $query->from instanceof Dual) {
+            return false;
+        }
+        if ($query->groupBy !== null || $query->having !== null || $query->limit !== null || $query->windows !== [] || in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $query->options, true)) {
+            return false;
+        }
+
+        return (new Grouping($this->planner))->collect($query) === [];
     }
 
     /**

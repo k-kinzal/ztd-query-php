@@ -31,6 +31,18 @@ final class Materialized
     }
 
     /**
+     * Answers the domain of a column of a merged derived table: a date or time reports the length of its text in the connection character set.
+     */
+    public static function merged(Domain $domain, Collation $connection): Domain
+    {
+        if (!$domain->kind->temporal()) {
+            return $domain;
+        }
+
+        return $domain->withCollation($connection, $domain->coercibility);
+    }
+
+    /**
      * Answers the domain of a column of a set operation: strings without decimals, NULL as an empty binary string.
      */
     public static function set(Domain $domain): Domain

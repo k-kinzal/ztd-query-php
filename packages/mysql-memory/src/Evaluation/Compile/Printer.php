@@ -29,7 +29,9 @@ final class Printer
         return match (true) {
             $node instanceof Grouped => $this->expression($node->operand),
             $node instanceof Arithmetic => '(' . $this->expression($node->left) . ' ' . strtolower($node->operator->value) . ' ' . $this->expression($node->right) . ')',
-            $node instanceof Unary => ($node->operator === UnaryOperator::Minus ? '-(' . $this->expression($node->operand) . ')' : strtolower($node->operator->value) . $this->expression($node->operand)),
+            $node instanceof Unary => $node->operator->value . '(' . $this->expression($node->operand) . ')',
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall => strtolower($node->function->value) . '(' . implode(',', array_map(fn ($argument): string => $this->expression($argument), $node->arguments)) . ')',
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall => strtolower($node->name->value) . '(' . implode(',', array_map(fn ($argument): string => $this->expression($argument->expression), $node->arguments)) . ')',
             $node instanceof NumberLiteral => $node->text,
             $node instanceof StringLiteral => "'" . str_replace("'", "\\'", $node->value()) . "'",
             $node instanceof NullLiteral => 'NULL',
