@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rules\Expression;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -71,6 +73,6 @@ final class OperandsTest extends TestCase
 
     public function testTruthIsAnInteger(): void
     {
-        self::assertEquals(new ScalarFact(new Known(new Integral(IntegralKind::BigInt)), Nullability::Dependent), (new Operands())->truth(Nullability::Dependent));
+        self::assertEquals(new ScalarFact(new Known(Domain::integer(Field::LongLong, 1)), Nullability::Dependent), (new Operands())->truth(Nullability::Dependent));
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
+use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
@@ -85,7 +86,7 @@ final class NumberLiteral implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return new ScalarFact(new Known($this->type()), Nullability::NotNull);
+        return new ScalarFact(new Known(Literals::of($derivation->context)->number($this)), Nullability::NotNull);
     }
 
     /**

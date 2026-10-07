@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Type\Resolved;
 
+use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\InvariantViolation;
 
@@ -16,6 +17,8 @@ use SqlSemantics\Diagnostic\InvariantViolation;
  */
 final class Charset
 {
+    use Snapshot;
+
     /**
      * @param string $name The name, `utf8mb3` for the `utf8` of 5.6 and 5.7
      * @param int $maxLength The most bytes one character takes

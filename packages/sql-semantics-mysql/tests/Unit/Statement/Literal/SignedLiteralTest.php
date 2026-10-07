@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Literal;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -39,18 +40,18 @@ final class SignedLiteralTest extends TestCase
         $float = (new SignedLiteral(true, new NumberLiteral('1e3')))->deriveScalar($derivation, $derivation->environment());
 
         self::assertInstanceOf(Known::class, $integer->type);
-        self::assertInstanceOf(Integral::class, $integer->type->descriptor);
-        self::assertSame(IntegralKind::BigInt, $integer->type->descriptor->kind);
-        self::assertFalse($integer->type->descriptor->unsigned());
+        self::assertInstanceOf(Domain::class, $integer->type->descriptor);
+        self::assertSame(['BIGINT', 2, false], [$integer->type->descriptor->name(), $integer->type->descriptor->length, $integer->type->descriptor->unsigned]);
         self::assertSame(Nullability::NotNull, $integer->nullability);
         self::assertInstanceOf(Known::class, $decimal->type);
-        self::assertInstanceOf(Decimal::class, $decimal->type->descriptor);
+        self::assertInstanceOf(Domain::class, $decimal->type->descriptor);
+        self::assertSame(['DECIMAL', 1], [$decimal->type->descriptor->name(), $decimal->type->descriptor->decimals]);
         self::assertInstanceOf(Known::class, $float->type);
-        self::assertInstanceOf(Floating::class, $float->type->descriptor);
-        self::assertSame(FloatingKind::Double, $float->type->descriptor->kind);
+        self::assertInstanceOf(Domain::class, $float->type->descriptor);
+        self::assertSame('DOUBLE', $float->type->descriptor->name());
     }
 
-    public function testDeriveScalarAnswersDecimalForANegatedIntegerBeyondTheSignedRange(): void
+    public function testDeriveScalarAnswersDecimalForANegatedIntegerBeyondTheSignedRangeAndBigIntForTheSmallest(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile(null, null, ParameterStyle::Native), null, [], false));
@@ -59,12 +60,15 @@ final class SignedLiteralTest extends TestCase
         $padded = (new SignedLiteral(true, new NumberLiteral('0009223372036854775808')))->deriveScalar($derivation, $derivation->environment());
 
         self::assertInstanceOf(Known::class, $smallest->type);
-        self::assertInstanceOf(Decimal::class, $smallest->type->descriptor);
+        self::assertInstanceOf(Domain::class, $smallest->type->descriptor);
+        self::assertSame(['BIGINT', 20], [$smallest->type->descriptor->name(), $smallest->type->descriptor->length]);
         self::assertSame(Nullability::NotNull, $smallest->nullability);
         self::assertInstanceOf(Known::class, $beyond->type);
-        self::assertInstanceOf(Decimal::class, $beyond->type->descriptor);
+        self::assertInstanceOf(Domain::class, $beyond->type->descriptor);
+        self::assertSame(['DECIMAL', 20], [$beyond->type->descriptor->name(), $beyond->type->descriptor->length]);
         self::assertInstanceOf(Known::class, $padded->type);
-        self::assertInstanceOf(Decimal::class, $padded->type->descriptor);
+        self::assertInstanceOf(Domain::class, $padded->type->descriptor);
+        self::assertSame(['BIGINT', 23], [$padded->type->descriptor->name(), $padded->type->descriptor->length]);
     }
 
     public function testDeriveScalarKeepsBigIntForTheLargestNegativeIntegerThatFits(): void
@@ -74,9 +78,8 @@ final class SignedLiteralTest extends TestCase
         $fact = (new SignedLiteral(true, new NumberLiteral('9223372036854775807')))->deriveScalar($derivation, $derivation->environment());
 
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Integral::class, $fact->type->descriptor);
-        self::assertSame(IntegralKind::BigInt, $fact->type->descriptor->kind);
-        self::assertFalse($fact->type->descriptor->unsigned());
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['BIGINT', 20, false], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->unsigned]);
     }
 
     public function testDeriveScalarKeepsTheUnsignedTypeOfAPositiveIntegerBeyondTheSignedRange(): void
@@ -86,9 +89,8 @@ final class SignedLiteralTest extends TestCase
         $fact = (new SignedLiteral(false, new NumberLiteral('9223372036854775808')))->deriveScalar($derivation, $derivation->environment());
 
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Integral::class, $fact->type->descriptor);
-        self::assertSame(IntegralKind::BigInt, $fact->type->descriptor->kind);
-        self::assertTrue($fact->type->descriptor->unsigned());
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['BIGINT', 19, true], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->unsigned]);
     }
 
     public function testRenderWritesTheSignAndTheNumber(): void

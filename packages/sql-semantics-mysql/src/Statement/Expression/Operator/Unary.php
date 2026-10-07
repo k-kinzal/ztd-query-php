@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
+use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Construction\Derivation;
@@ -60,11 +65,14 @@ final class Unary implements Scalar
         }
         $fact = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
         $numbers = new NumericResult();
+        $operand = (new Precision())->domain($fact->type);
+        $precise = new Numbers(Settings::of($derivation->context)->divPrecisionIncrement);
+        $bits = $numbers->bits([[$this->operand, $fact]], $derivation->context->profile->grammar);
 
         return match ($this->operator) {
             UnaryOperator::Plus => new ScalarFact($fact->type, $fact->nullability),
-            UnaryOperator::Minus => new ScalarFact($numbers->negation($this->operand, $fact), $fact->nullability),
-            UnaryOperator::Invert => new ScalarFact($numbers->bits([[$this->operand, $fact]], $derivation->context->profile->grammar), $fact->nullability),
+            UnaryOperator::Minus => new ScalarFact($operand === null ? $numbers->negation($this->operand, $fact) : new Known($precise->negated($operand)), $fact->nullability),
+            UnaryOperator::Invert => new ScalarFact($operand !== null && $bits instanceof Known && TypeClass::of($bits->descriptor) === TypeClass::Unsigned ? new Known($precise->bits()) : $bits, $fact->nullability),
             UnaryOperator::Not => $operands->truth($fact->nullability),
         };
     }

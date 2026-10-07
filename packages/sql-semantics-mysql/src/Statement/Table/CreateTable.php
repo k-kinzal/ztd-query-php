@@ -131,7 +131,7 @@ final class CreateTable implements Statement, Relation
     {
         foreach ($this->elements as $element) {
             if ($element instanceof ColumnDefinition) {
-                (new TypeNotices())->type($element->specification->type, $derivation);
+                (new TypeNotices())->type($element->specification->dataType(), $derivation);
             }
         }
         $output = $this->query === null ? null : $derivation->query($this->query->query, $derivation->environment());

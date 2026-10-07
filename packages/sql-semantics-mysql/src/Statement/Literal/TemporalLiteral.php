@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
+use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Strings;
@@ -69,7 +70,7 @@ final class TemporalLiteral implements Scalar
     {
         Check::input($this->escapes === EscapeRule::under($derivation->context->profile->lexical), 'A temporal literal must be spelled under the escape rule of the language profile.');
 
-        return new ScalarFact(new Known($this->type()), Nullability::NotNull);
+        return new ScalarFact(new Known(Literals::of($derivation->context)->temporal($this)), Nullability::NotNull);
     }
 
     /**

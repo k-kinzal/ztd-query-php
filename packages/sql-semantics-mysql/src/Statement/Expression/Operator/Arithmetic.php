@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
+use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\NumericResult;
@@ -66,6 +71,11 @@ final class Arithmetic implements Scalar
         $left = $operands->single($derivation->scalar($this->left, $environment), $derivation);
         $right = $operands->single($derivation->scalar($this->right, $environment), $derivation);
         $type = (new NumericResult())->binary($this->operator, $this->left, $left, $this->right, $right, $derivation->context->profile->grammar);
+        $domains = (new Precision())->all([$left->type, $right->type]);
+        if ($domains !== null && $type instanceof Known) {
+            $numbers = new Numbers(Settings::of($derivation->context)->divPrecisionIncrement);
+            $type = new Known($this->operator->bitwise() ? (TypeClass::of($type->descriptor) === TypeClass::Unsigned ? $numbers->bits() : $type->descriptor) : $numbers->binary($this->operator, $domains[0], $domains[1]));
+        }
         $divides = $this->operator === ArithmeticOperator::Divide || $this->operator === ArithmeticOperator::IntegerDivide || $this->operator === ArithmeticOperator::Modulo;
 
         return new ScalarFact($type, $divides ? Nullability::Nullable : $left->nullability->propagate($right->nullability));

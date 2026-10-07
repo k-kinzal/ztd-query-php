@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
@@ -95,6 +96,6 @@ final class Operands
      */
     public function truth(Nullability $nullability): ScalarFact
     {
-        return new ScalarFact(new Known(new Integral(IntegralKind::BigInt)), $nullability);
+        return new ScalarFact(new Known((new Numbers())->truth()), $nullability);
     }
 }

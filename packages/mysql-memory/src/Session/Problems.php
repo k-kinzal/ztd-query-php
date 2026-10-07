@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\GroupingRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable;
@@ -108,6 +111,9 @@ final class Problems
                 CountedList::ValueRows => ErrorCode::WrongValueCountOnRow->error(1),
                 CountedList::DerivedColumns => ErrorCode::ViewWrongList->error(),
             },
+            $diagnostic instanceof UnknownCollation => ErrorCode::UnknownCollation->error($diagnostic->name),
+            $diagnostic instanceof UnknownCharset => ErrorCode::UnknownCharacterSet->error($diagnostic->name),
+            $diagnostic instanceof CollationMismatch => ErrorCode::CollationCharsetMismatch->error($diagnostic->collation, $diagnostic->charset),
             default => new SqlError(ErrorCode::UnknownError, $diagnostic->message()),
         };
     }

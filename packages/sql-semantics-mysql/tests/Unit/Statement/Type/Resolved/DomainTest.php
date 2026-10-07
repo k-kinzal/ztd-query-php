@@ -85,4 +85,20 @@ final class DomainTest extends TestCase
         self::assertSame('NULL', Domain::null()->name());
         self::assertSame('ENUM', (new Domain(Kind::String, Field::Enum, 1, Domain::NOT_FIXED, false, $utf8, ['a']))->name());
     }
+
+    public function testDeclaredNamesTheTypeOfTheSameClass(): void
+    {
+        self::assertSame('INT', Domain::integer(Field::Long, 11)->declared()->name());
+        self::assertSame('DOUBLE', Domain::double()->declared()->name());
+        self::assertSame('TIMESTAMP', (new Domain(Kind::DateTime, Field::Timestamp, 19))->declared()->name());
+        self::assertSame('JSON', (new Domain(Kind::Json, Field::Json, 4294967295))->declared()->name());
+    }
+
+    public function testTextNamesTheStringTypeOfTheFieldAndCharacterSet(): void
+    {
+        self::assertSame('MEDIUMBLOB', Domain::string(1, Collation::binary(), Field::MediumBlob)->text()->name());
+        self::assertSame('LONGTEXT', Domain::string(1, Collation::known('utf8mb4_bin'), Field::LongBlob)->text()->name());
+        self::assertSame('GEOMETRY', Domain::string(1, Collation::binary(), Field::Geometry)->text()->name());
+    }
+
 }

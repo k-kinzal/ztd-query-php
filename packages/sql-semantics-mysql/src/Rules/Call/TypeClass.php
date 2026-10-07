@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Call;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Diagnostic\InvariantViolation;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
@@ -76,6 +77,7 @@ enum TypeClass
             $descriptor instanceof Spatial => self::Spatial,
             $descriptor instanceof Elementary => self::elementary($descriptor->kind),
             $descriptor instanceof CastTarget => self::cast($descriptor->kind),
+            $descriptor instanceof Domain => self::of($descriptor->declared()),
             default => self::foreign(),
         };
     }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Expression\Operator;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -33,7 +35,7 @@ final class BinaryCastTest extends TestCase
         $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
         $fact = $derivation->scalar(new BinaryCast(new NumberLiteral('1')), $derivation->environment());
 
-        self::assertEquals([new Known(new Binary(BinaryKind::VarBinary)), Nullability::NotNull], [$fact->type, $fact->nullability]);
+        self::assertEquals([new Known(Domain::string(2, Collation::binary())), Nullability::NotNull], [$fact->type, $fact->nullability]);
     }
 
     public function testRenderCastsAPrefixOperandWithoutParentheses(): void

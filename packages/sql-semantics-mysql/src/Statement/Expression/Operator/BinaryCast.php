@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
+use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Construction\Derivation;
@@ -49,14 +53,16 @@ final class BinaryCast implements Scalar
     }
 
     /**
-     * Derives the operand; the result is a binary string.
+     * Derives the operand; the result is a binary string the server marks as nullable whatever the operand.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
         Deprecation::raise(Deprecated::BinaryOperator, $derivation);
 
-        return new ScalarFact(new Known(new Binary(BinaryKind::VarBinary)), $fact->nullability);
+        $operand = (new Precision())->domain($fact->type);
+
+        return new ScalarFact(new Known($operand === null ? new Binary(BinaryKind::VarBinary) : (new Texts(Settings::of($derivation->context)))->binary($operand)), Nullability::Nullable);
     }
 
     /**

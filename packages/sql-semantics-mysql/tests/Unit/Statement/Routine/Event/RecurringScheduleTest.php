@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Routine\Event;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
@@ -40,7 +41,8 @@ final class RecurringScheduleTest extends TestCase
         self::assertInstanceOf(Known::class, $quantity);
         self::assertInstanceOf(Known::class, $starts);
 
-        self::assertInstanceOf(Integral::class, $quantity->descriptor);
+        self::assertInstanceOf(Domain::class, $quantity->descriptor);
+        self::assertSame('BIGINT', $quantity->descriptor->name());
         self::assertInstanceOf(Temporal::class, $starts->descriptor);
         self::assertTrue($create->facts->covers($schedule->ends));
         self::assertSame(IntervalUnit::Hour, $schedule->unit);

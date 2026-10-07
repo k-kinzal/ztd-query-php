@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Expression\Operator;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -29,7 +33,7 @@ final class CollatedTest extends TestCase
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
 
-        self::assertEquals(new Known(new Character(CharacterKind::VarChar)), $derivation->scalar(new Collated(new StringLiteral(['a']), new Name('utf8mb4_bin')), $derivation->environment())->type);
+        self::assertEquals(new Known(Domain::string(1, Collation::known('utf8mb4_bin'), Field::VarString, Coercibility::Explicit)), $derivation->scalar(new Collated(new StringLiteral(['a']), new Name('utf8mb4_bin')), $derivation->environment())->type);
     }
 
     public function testRenderChainsCollationsFromTheLeft(): void

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Facade;
 
+use SqlSemantics\Contract\Session;
 use InvalidArgumentException;
 use SqlParser\Lexer\SourceException;
 use SqlParser\Parser\Node;
@@ -116,11 +117,12 @@ final class Semantics
      * @param list<Table|Operation>|null $declarations The declarations, or null for an open context without any
      * @param bool $complete Whether a given list enumerates every relation
      * @param SearchPath|null $searchPath The schemas an unqualified relation name is searched in, or null for the path fixed at construction
+     * @param Session|null $session The session statements are resolved in, or null for a new session with the server defaults
      *
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When a declaration belongs to another language profile
      * @throws InvalidArgumentException When the search path does not belong to the database
      */
-    public function context(?array $declarations = null, bool $complete = true, ?SearchPath $searchPath = null): AnalysisContext
+    public function context(?array $declarations = null, bool $complete = true, ?SearchPath $searchPath = null, ?Session $session = null): AnalysisContext
     {
         $tables = [];
         foreach ($declarations ?? [] as $declaration) {
@@ -132,7 +134,7 @@ final class Semantics
             }
         }
 
-        return $this->platform->context($this->profile, $searchPath?->schemas ?? $this->searchPath, $tables, $declarations !== null && $complete);
+        return $this->platform->context($this->profile, $searchPath?->schemas ?? $this->searchPath, $tables, $declarations !== null && $complete)->withSession($session);
     }
 
     /**

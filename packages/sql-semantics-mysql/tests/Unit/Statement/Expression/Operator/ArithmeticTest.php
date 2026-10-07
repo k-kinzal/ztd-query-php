@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Expression\Operator;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -37,8 +39,8 @@ final class ArithmeticTest extends TestCase
         $sum = $derivation->scalar(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('2.5')), $derivation->environment());
         $quotient = $derivation->scalar(new Arithmetic(ArithmeticOperator::IntegerDivide, new NumberLiteral('1'), new NumberLiteral('2')), $derivation->environment());
 
-        self::assertEquals([new Known(new Decimal()), Nullability::NotNull], [$sum->type, $sum->nullability]);
-        self::assertEquals([new Known(new Integral(IntegralKind::BigInt)), Nullability::Nullable], [$quotient->type, $quotient->nullability]);
+        self::assertEquals([new Known(Domain::decimal(3, 1)), Nullability::NotNull], [$sum->type, $sum->nullability]);
+        self::assertEquals([new Known(Domain::integer(Field::LongLong, 2)), Nullability::Nullable], [$quotient->type, $quotient->nullability]);
     }
 
     public function testRenderWritesDivAsAKeywordAndKeepsTheLeftAssociation(): void

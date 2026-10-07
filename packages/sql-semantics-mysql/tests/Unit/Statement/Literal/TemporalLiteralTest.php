@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Literal;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -65,9 +66,8 @@ final class TemporalLiteralTest extends TestCase
         self::assertSame('2024-01-02 03:04:05.25', $literal->text);
         self::assertSame(EscapeRule::Backslash, $literal->escapes);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Temporal::class, $fact->type->descriptor);
-        self::assertSame(TemporalKind::DateTime, $fact->type->descriptor->kind);
-        self::assertSame('2', $fact->type->descriptor->precision);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['DATETIME', 22, 2], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->decimals]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
@@ -81,8 +81,8 @@ final class TemporalLiteralTest extends TestCase
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Temporal::class, $fact->type->descriptor);
-        self::assertSame(TemporalKind::Date, $fact->type->descriptor->kind);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['DATE', 10], [$fact->type->descriptor->name(), $fact->type->descriptor->length]);
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
     }
 

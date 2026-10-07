@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Literal;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -56,11 +57,8 @@ final class StringLiteralTest extends TestCase
         self::assertNull($literal->introducer);
         self::assertFalse($literal->national);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertSame(CharacterKind::VarChar, $fact->type->descriptor->kind);
-        self::assertNull($fact->type->descriptor->length);
-        self::assertFalse($fact->type->descriptor->national);
-        self::assertNull($fact->type->descriptor->charset);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARCHAR', 1, 'utf8mb4_0900_ai_ci'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
@@ -77,9 +75,8 @@ final class StringLiteralTest extends TestCase
 
         self::assertSame('utf8mb4', $literal->introducer?->value);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertSame(CharsetForm::Named, $fact->type->descriptor->charset?->form);
-        self::assertSame('utf8mb4', $fact->type->descriptor->charset->charset?->value);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame('utf8mb4_0900_ai_ci', $fact->type->descriptor->collation->name);
         self::assertSame("SELECT _utf8mb4 'x'", $operation->toString());
     }
 
@@ -97,9 +94,8 @@ final class StringLiteralTest extends TestCase
         self::assertTrue($literal->national);
         self::assertSame('xy', $literal->value());
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertTrue($fact->type->descriptor->national);
-        self::assertNull($fact->type->descriptor->charset);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARCHAR', 2, 'utf8mb3_general_ci'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame("SELECT N'x' 'y'", $operation->toString());
     }
 

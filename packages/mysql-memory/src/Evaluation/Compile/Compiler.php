@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
+use SqlSemantics\Statement\Type\Nullability;
+use MySqlMemory\Evaluation\Leaf\Retyped;
+use MySqlMemory\Typing\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
+use SqlSemantics\Statement\Type\Known;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Scope;
@@ -139,6 +144,31 @@ final class Compiler
             return $bound[0] === 0 ? $bound[1] : $this->names->outer($bound[1], $bound[0]);
         }
 
+        return $this->typed($node, $this->dispatch($node, $scope));
+    }
+
+    /**
+     * Gives a compiled expression the type SQL Semantics resolved for its node, when it resolved one.
+     */
+    public function typed(Scalar $node, Evaluable $evaluable): Evaluable
+    {
+        if (!$this->facts->covers($node)) {
+            return $evaluable;
+        }
+        $fact = $this->facts->scalar($node);
+        $nullable = match ($fact->nullability) {
+            Nullability::NotNull => false,
+            Nullability::Nullable => true,
+            Nullability::Dependent => $evaluable->domain()->nullable,
+        };
+        $type = $fact->type;
+        $domain = $type instanceof Known && $type->descriptor instanceof Resolved ? Domain::of($type->descriptor, $nullable) : $evaluable->domain()->withNullable($nullable);
+
+        return $domain == $evaluable->domain() ? $evaluable : new Retyped($evaluable, $domain);
+    }
+
+    public function dispatch(Scalar $node, Scope $scope): Evaluable
+    {
         return match (true) {
             $node instanceof Grouped => $this->compile($node->operand, $scope),
             $node instanceof ColumnUse => $this->names->column($node, $scope),

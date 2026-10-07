@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Expression;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -32,7 +34,7 @@ final class LogicalTest extends TestCase
         $and = new Logical(LogicalOperator::And, new NumberLiteral('1'), new NumberLiteral('2'));
         $or = new Logical(LogicalOperator::Or, new NumberLiteral('1'), new NullLiteral());
 
-        self::assertEquals(new Known(new Integral(IntegralKind::BigInt)), $derivation->scalar($and, $derivation->environment())->type);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 1)), $derivation->scalar($and, $derivation->environment())->type);
         self::assertSame(Nullability::NotNull, $derivation->scalar($and, $derivation->environment())->nullability);
         self::assertSame(Nullability::Nullable, $derivation->scalar($or, $derivation->environment())->nullability);
     }

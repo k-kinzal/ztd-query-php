@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
+use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
@@ -54,8 +59,10 @@ final class Collated implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
+        $operand = (new Precision())->domain($fact->type);
+        $domain = $operand === null ? null : (new Texts(Settings::of($derivation->context)))->collated($operand, $this->collation->value, $derivation);
 
-        return new ScalarFact($fact->type, $fact->nullability);
+        return new ScalarFact($domain === null ? $fact->type : new Known($domain), Nullability::Nullable);
     }
 
     /**

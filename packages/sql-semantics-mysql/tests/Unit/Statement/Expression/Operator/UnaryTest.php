@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Expression\Operator;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +45,7 @@ final class UnaryTest extends TestCase
         $invert = $derivation->scalar(new Unary(UnaryOperator::Invert, new StringLiteral(['7'])), $derivation->environment());
         $not = $derivation->scalar(new Unary(UnaryOperator::Not, new StringLiteral(['7'])), $derivation->environment());
 
-        self::assertEquals([new Known(new Character(CharacterKind::VarChar)), new Known(new Floating(FloatingKind::Double)), new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned])), new Known(new Integral(IntegralKind::BigInt))], [$plus->type, $minus->type, $invert->type, $not->type]);
+        self::assertEquals([new Known(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)), new Known(Domain::double(23)), new Known(Domain::integer(Field::LongLong, 21, true)), new Known(Domain::integer(Field::LongLong, 1))], [$plus->type, $minus->type, $invert->type, $not->type]);
     }
 
     public function testRenderNegatesACollatedOperandWithoutParentheses(): void

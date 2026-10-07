@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
@@ -118,7 +120,7 @@ final class NumericResult
                 $expression = $expression->operand;
             }
             $binary = $binary && !$expression instanceof RadixLiteral && !$expression instanceof NullLiteral
-                && $fact->type instanceof Known && $fact->type->descriptor instanceof Binary;
+                && $fact->type instanceof Known && ($fact->type->descriptor instanceof Binary || ($fact->type->descriptor instanceof Domain && $fact->type->descriptor->kind === Kind::String && $fact->type->descriptor->collation->bytes()));
         }
 
         return new Known($binary ? new Binary(BinaryKind::VarBinary) : $this->integer(true));

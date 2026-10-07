@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
+use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -44,7 +45,7 @@ final class BooleanLiteral implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return new ScalarFact(new Known(new Integral(IntegralKind::BigInt)), Nullability::NotNull);
+        return new ScalarFact(new Known(Literals::of($derivation->context)->boolean()), Nullability::NotNull);
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings as Resolution;
 use MySqlMemory\Command\Dispatcher;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
@@ -190,13 +191,28 @@ final class Session
         }
         $database = $this->variables->database;
         try {
-            $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database)));
+            $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution()));
         } catch (ImplementationGap $gap) {
             throw new SqlError(ErrorCode::NotSupportedYet, ErrorCode::NotSupportedYet->message($gap->getMessage()), $gap);
         } catch (AnalysisException $error) {
             throw (new Syntax())->error($error, $statement);
         }
         return $operation;
+    }
+
+    /**
+     * Answers the session variables SQL Semantics resolves types with.
+     */
+    public function resolution(): Resolution
+    {
+        $schemas = [];
+        foreach ($this->instance->dictionary->schemas as $schema) {
+            $schemas[$schema->name] = Collation::named($schema->collation) ?? Collation::known('utf8mb4_0900_ai_ci');
+        }
+        $connection = Collation::named((string) $this->variables->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci');
+        $server = Collation::named((string) $this->variables->read('collation_server'));
+
+        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, (int) $this->variables->read('group_concat_max_len'));
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Literal;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -41,9 +42,8 @@ final class RadixLiteralTest extends TestCase
         self::assertSame('1F', $literal->digits);
         self::assertNull($literal->introducer);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Binary::class, $fact->type->descriptor);
-        self::assertSame(BinaryKind::VarBinary, $fact->type->descriptor->kind);
-        self::assertNull($fact->type->descriptor->length);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARBINARY', 1, 'binary'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
@@ -62,11 +62,8 @@ final class RadixLiteralTest extends TestCase
         self::assertSame('1', $literal->digits);
         self::assertSame('latin1', $literal->introducer?->value);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertSame(CharacterKind::VarChar, $fact->type->descriptor->kind);
-        self::assertFalse($fact->type->descriptor->national);
-        self::assertSame(CharsetForm::Named, $fact->type->descriptor->charset?->form);
-        self::assertSame('latin1', $fact->type->descriptor->charset->charset?->value);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARCHAR', 1, 'latin1_swedish_ci'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 

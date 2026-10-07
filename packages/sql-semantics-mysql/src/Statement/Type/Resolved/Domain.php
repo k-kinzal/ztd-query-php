@@ -4,6 +4,23 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Type\Resolved;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Binary;
+use SqlSemantics\Platform\MySql\Statement\Type\Character;
+use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
+use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
+use SqlSemantics\Platform\MySql\Statement\Type\Floating;
+use SqlSemantics\Platform\MySql\Statement\Type\Integral;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Spatial;
+use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
+use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\TypeDescriptor;
 
@@ -27,6 +44,12 @@ final class Domain implements TypeDescriptor
      * The decimals of a value without a fixed number of fractional digits.
      */
     public const NOT_FIXED = 31;
+
+    private const INTEGRALS = [1 => IntegralKind::TinyInt, 2 => IntegralKind::SmallInt, 9 => IntegralKind::MediumInt, 3 => IntegralKind::Int];
+
+    private const BINARIES = [254 => BinaryKind::Binary, 249 => BinaryKind::TinyBlob, 252 => BinaryKind::Blob, 250 => BinaryKind::MediumBlob, 251 => BinaryKind::LongBlob];
+
+    private const CHARACTERS = [254 => CharacterKind::Char, 249 => CharacterKind::TinyText, 252 => CharacterKind::Text, 250 => CharacterKind::MediumText, 251 => CharacterKind::LongText];
 
     /**
      * The collation of a string; the binary collation for every other kind.
@@ -151,4 +174,44 @@ final class Domain implements TypeDescriptor
             Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Blob => $this->collation->bytes() ? 'BLOB' : 'TEXT',
         };
     }
+
+    /**
+     * Answers the type name that declares a value of the same class, without the attributes of this type.
+     */
+    public function declared(): TypeName
+    {
+        $unsigned = $this->unsigned ? [NumericModifier::Unsigned] : [];
+
+        return match ($this->kind) {
+            Kind::Integer => new Integral(self::INTEGRALS[$this->field->value] ?? IntegralKind::BigInt, null, $unsigned),
+            Kind::Decimal => new Decimal(null, null, $unsigned),
+            Kind::Double => new Floating($this->field === Field::Float ? FloatingKind::Float : FloatingKind::Double),
+            Kind::String, Kind::Null => $this->text(),
+            Kind::Date => new Temporal(TemporalKind::Date),
+            Kind::Time => new Temporal(TemporalKind::Time),
+            Kind::DateTime => new Temporal($this->field === Field::Timestamp ? TemporalKind::Timestamp : TemporalKind::DateTime),
+            Kind::Year => new Temporal(TemporalKind::Year),
+            Kind::Json => new Elementary(ElementaryKind::Json),
+            Kind::Bit => new Elementary(ElementaryKind::Bit),
+        };
+    }
+
+    /**
+     * Answers the type name that declares a string of the same field and character set class.
+     */
+    public function text(): TypeName
+    {
+        if ($this->field === Field::Geometry) {
+            return new Spatial(SpatialKind::Geometry);
+        }
+        if ($this->field === Field::Vector) {
+            return new Elementary(ElementaryKind::Vector);
+        }
+        if ($this->collation->bytes()) {
+            return new Binary(self::BINARIES[$this->field->value] ?? BinaryKind::VarBinary);
+        }
+
+        return new Character(self::CHARACTERS[$this->field->value] ?? CharacterKind::VarChar);
+    }
+
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Literal;
 
+use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Introducers;
@@ -86,9 +87,8 @@ final class StringLiteral implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         Check::input($this->escapes === EscapeRule::under($derivation->context->profile->lexical), 'A string literal must be spelled under the escape rule of the language profile.');
-        $charset = $this->introducer === null ? null : new CharsetAttribute(CharsetForm::Named, $this->introducer);
 
-        return new ScalarFact(new Known(new Character(CharacterKind::VarChar, null, $this->national, $charset)), Nullability::NotNull);
+        return new ScalarFact(new Known(Literals::of($derivation->context)->string($this)), Nullability::NotNull);
     }
 
     /**

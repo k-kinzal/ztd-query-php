@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Expression\Conversion;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -33,8 +35,8 @@ final class CharsetConversionTest extends TestCase
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
 
-        self::assertEquals(new Known(new Character(CharacterKind::VarChar, null, false, new CharsetAttribute(CharsetForm::Named, new Name('latin1')))), $derivation->scalar(new CharsetConversion(new StringLiteral(['x']), new CharsetName(new Name('latin1'))), $derivation->environment())->type);
-        self::assertEquals(new Known(new Binary(BinaryKind::VarBinary)), $derivation->scalar(new CharsetConversion(new StringLiteral(['x']), new CharsetName(new Name('BINARY'))), $derivation->environment())->type);
+        self::assertEquals(new Known(Domain::string(1, Collation::known('latin1_swedish_ci'))), $derivation->scalar(new CharsetConversion(new StringLiteral(['x']), new CharsetName(new Name('latin1'))), $derivation->environment())->type);
+        self::assertEquals(new Known(Domain::string(1, Collation::binary())), $derivation->scalar(new CharsetConversion(new StringLiteral(['x']), new CharsetName(new Name('BINARY'))), $derivation->environment())->type);
     }
 
     public function testRenderWritesUsing(): void

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Conversion;
 
+use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
@@ -57,8 +61,10 @@ final class CharsetConversion implements Scalar
         $name = $this->charset->name;
         Check::invariant($name !== null, 'CONVERT … USING names a character set.');
         $type = strtolower($name->value) === 'binary' ? new Binary(BinaryKind::VarBinary) : new Character(CharacterKind::VarChar, null, false, new CharsetAttribute(CharsetForm::Named, $name));
+        $operand = (new Precision())->domain($fact->type);
+        $domain = $operand === null ? null : (new Texts(Settings::of($derivation->context)))->converted($operand, $name->value, $derivation);
 
-        return new ScalarFact(new Known($type), $fact->nullability);
+        return new ScalarFact(new Known($domain ?? $type), Nullability::Nullable);
     }
 
     /**

@@ -18,8 +18,9 @@ use SqlSemantics\Statement\Snapshot;
  * every relation, and how names are compared. The same declaration object
  * given twice is kept once; different objects with the same name are kept as a
  * conflict. Nothing replaces a declaration, and no statement changes a context.
- * Routines, data types and session variables are not declared in a version 1
- * context; facts that need them name them as missing inputs.
+ * Routines and data types are not declared in a version 1 context; facts that
+ * need them name them as missing inputs. The session, when given, holds the
+ * session variables the platform resolves statements with.
  *
  * @visibility public
  * @example Telling an open context from a complete empty one
@@ -53,6 +54,7 @@ final class AnalysisContext
      * @param Comparison $relationNames How relation and schema names are compared
      * @param Comparison $columnNames How column names are compared
      * @param Name|null $declarationSchema The schema an unqualified declaration belongs to; the first searched schema by default
+     * @param Session|null $session The session statements are resolved in, or null for a new session with the server defaults
      */
     public function __construct(
         public readonly LanguageProfile $profile,
@@ -62,6 +64,7 @@ final class AnalysisContext
         public readonly Comparison $relationNames = Comparison::Sensitive,
         public readonly Comparison $columnNames = Comparison::Sensitive,
         ?Name $declarationSchema = null,
+        public readonly ?Session $session = null,
     ) {
         $path = Check::listOf($searchPath, Name::class, 'A context searches at least one schema.', 1);
         $unique = [];
@@ -92,4 +95,13 @@ final class AnalysisContext
 
         return $matches;
     }
+
+    /**
+     * Answers the same context resolving statements in another session.
+     */
+    public function withSession(?Session $session): self
+    {
+        return new self($this->profile, $this->searchPath, $this->tables, $this->complete, $this->relationNames, $this->columnNames, $this->declarationSchema, $session);
+    }
+
 }
