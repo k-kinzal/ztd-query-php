@@ -55,15 +55,22 @@ final class SemanticsTest extends TestCase
         self::assertSame([$operation->declarations()[0], $table], $context->tables);
     }
 
-    public function testContextRefusesAnOperationOfAnotherProfile(): void
+    public function testContextAcceptsAnOperationOfAnotherParameterStyle(): void
     {
         $native = new Semantics(Dialect::Sqlite);
         $named = new Semantics(Dialect::Sqlite, null, null, ParameterStyle::Named);
         $operation = $named->analyze('CREATE TABLE t (a INTEGER)');
 
-        $this->expectExceptionMessage('A declaring operation must belong to the selected language profile.');
+        self::assertSame($operation->declarations(), $native->context([$operation])->tables);
+    }
 
-        $native->context([$operation]);
+    public function testContextRefusesAnOperationOfAnotherRelease(): void
+    {
+        $operation = (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('CREATE TABLE t (a INT)');
+
+        $this->expectExceptionMessage('A declaring operation must belong to the grammar release of the selected language profile.');
+
+        (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7'))->context([$operation]);
     }
 
     public function testAnalyzeReturnsAnOperationBoundToTheGivenDeclarations(): void

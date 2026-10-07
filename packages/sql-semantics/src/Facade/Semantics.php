@@ -127,7 +127,7 @@ final class Semantics
         $tables = [];
         foreach ($declarations ?? [] as $declaration) {
             if ($declaration instanceof Operation) {
-                Check::input($this->profile->compatibleWith($declaration->profile()), 'A declaring operation must belong to the selected language profile.');
+                Check::input($this->profile->sharesDeclarationsWith($declaration->profile()), 'A declaring operation must belong to the grammar release of the selected language profile.');
                 array_push($tables, ...$declaration->declarations());
             } else {
                 $tables[] = $declaration;

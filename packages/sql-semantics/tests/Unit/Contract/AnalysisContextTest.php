@@ -95,7 +95,7 @@ final class AnalysisContextTest extends TestCase
         $sqlite = new LanguageProfile(GrammarRelease::Sqlite3472);
         $table = new Table(new QualifiedName(new Name('t')), new LanguageProfile(GrammarRelease::PostgreSql166), []);
 
-        $this->expectExceptionMessage('A declaration must belong to the language profile of the context.');
+        $this->expectExceptionMessage('A declaration must belong to the grammar release of the context.');
 
         new AnalysisContext($sqlite, [new Name('main')], [$table]);
     }

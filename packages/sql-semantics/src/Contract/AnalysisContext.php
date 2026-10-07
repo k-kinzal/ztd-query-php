@@ -69,7 +69,7 @@ final class AnalysisContext
         $path = Check::listOf($searchPath, Name::class, 'A context searches at least one schema.', 1);
         $unique = [];
         foreach (Check::listOf($tables, Table::class, 'Context declarations are tables.') as $table) {
-            Check::input($profile->compatibleWith($table->profile), 'A declaration must belong to the language profile of the context.');
+            Check::input($profile->sharesDeclarationsWith($table->profile), 'A declaration must belong to the grammar release of the context.');
             $unique[spl_object_id($table)] = $table;
         }
         $this->searchPath = $path;

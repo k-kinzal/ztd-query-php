@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Variable;
 
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Context;
