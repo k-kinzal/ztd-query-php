@@ -11,8 +11,11 @@ use SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\ValueCountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\MultiplePrimaryKeys;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns;
@@ -63,6 +66,12 @@ final class Problems
             $diagnostic instanceof TableExists => ErrorCode::TableExists->error($diagnostic->name->name->value),
             $diagnostic instanceof NotSupportedYet => ErrorCode::NotSupportedYet->error($diagnostic->feature),
             $diagnostic instanceof Misuse => $this->misuse($diagnostic->rule),
+            $diagnostic instanceof UnknownQualifier => ErrorCode::BadTable->error($diagnostic->table->name->value),
+            $diagnostic instanceof CountMismatch => match ($diagnostic->list) {
+                CountedList::SetOperands, CountedList::IntoVariables => ErrorCode::WrongNumberOfColumnsInSelect->error(),
+                CountedList::ValueRows => ErrorCode::WrongValueCountOnRow->error(1),
+                CountedList::DerivedColumns => ErrorCode::ViewWrongList->error(),
+            },
             default => new SqlError(ErrorCode::UnknownError, $diagnostic->message()),
         };
     }

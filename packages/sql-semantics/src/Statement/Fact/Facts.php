@@ -52,20 +52,27 @@ final class Facts
     public readonly array $diagnostics;
 
     /**
+     * @var list<Warning> The conditions the statement raises without failing, in the order it raises them
+     */
+    public readonly array $warnings;
+
+    /**
      * @param list<array{Scalar, ScalarFact}> $scalars The fact of each scalar expression
      * @param list<array{Node, RelationFact}> $relations The fact of each relation occurrence and table use
      * @param list<array{Query, QueryFact}> $queries The fact of each query
      * @param list<Table> $declarations The relation declarations the statement provides
      * @param QueryFact|null $output The rows the statement returns, when it returns rows
      * @param list<Diagnostic> $diagnostics The semantic problems of the statement
+     * @param list<Warning> $warnings The conditions the statement raises without failing
      */
-    public function __construct(array $scalars, array $relations, array $queries, array $declarations, public readonly ?QueryFact $output, array $diagnostics)
+    public function __construct(array $scalars, array $relations, array $queries, array $declarations, public readonly ?QueryFact $output, array $diagnostics, array $warnings = [])
     {
         $this->scalars = $this->index($scalars);
         $this->relations = $this->index($relations);
         $this->queries = $this->index($queries);
         $this->declarations = Check::listOf($declarations, Table::class, 'Provided declarations are tables.');
         $this->diagnostics = Check::listOf($diagnostics, Diagnostic::class, 'Diagnostics are diagnostic values.');
+        $this->warnings = Check::listOf($warnings, Warning::class, 'Warnings are warning values.');
     }
 
     /**

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
@@ -52,6 +54,7 @@ final class BinaryCast implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
+        Deprecation::raise(Deprecated::BinaryOperator, $derivation);
 
         return new ScalarFact(new Known(new Binary(BinaryKind::VarBinary)), $fact->nullability);
     }

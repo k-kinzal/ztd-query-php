@@ -39,11 +39,24 @@ final class CommonTablesTest extends TestCase
     public function testBindSeesEarlierTablesOnly(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH a AS (SELECT 1 AS x), b AS (SELECT x FROM a) SELECT x FROM b', []);
-        $forward = (new Semantics(Dialect::MySql))->analyze('WITH b AS (SELECT x FROM a), a AS (SELECT 1 AS x) SELECT 1', []);
+        $forward = (new Semantics(Dialect::MySql))->analyze('WITH b AS (SELECT x FROM a), a AS (SELECT 1 AS x) SELECT * FROM b', []);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertInstanceOf(Known::class, $operation->field('x')->type);
         self::assertInstanceOf(MissingTable::class, $forward->facts->diagnostics[0]);
+    }
+
+    public function testBindReportsTheProblemsOfAnExpressionOnlyWhereItIsUsed(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $unused = $semantics->analyze('WITH b AS (SELECT x FROM a), c (p, q) AS (SELECT 1) SELECT 1', []);
+        $used = $semantics->analyze('WITH c (p, q) AS (SELECT 1) SELECT * FROM c', []);
+        $once = $semantics->analyze('WITH b AS (SELECT x FROM a) SELECT * FROM b', []);
+        $twice = $semantics->analyze('WITH b AS (SELECT x FROM a) SELECT * FROM b, b AS d', []);
+
+        self::assertSame([], $unused->facts->diagnostics);
+        self::assertCount(1, $used->facts->diagnostics);
+        self::assertCount(count($once->facts->diagnostics), $twice->facts->diagnostics);
     }
 
     public function testExtendedAddsTablesWithoutAQueryLevel(): void

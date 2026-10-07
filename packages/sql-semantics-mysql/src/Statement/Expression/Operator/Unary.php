@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\NumericResult;
@@ -53,6 +55,9 @@ final class Unary implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $operands = new Operands();
+        if ($this->operator === UnaryOperator::Not) {
+            Deprecation::raise(Deprecated::BangNot, $derivation);
+        }
         $fact = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
         $numbers = new NumericResult();
 

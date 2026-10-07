@@ -164,6 +164,11 @@ final class Blocks
             return null;
         }
         $id = spl_object_id($resolution->relation);
+        if (isset($scope->derived[$id])) {
+            $position = $this->planner->compiler->names->position($scope, $resolution);
+
+            return new ColumnOrigin('', $scope->derived[$id], '', $scope->names[$id][$position] ?? '');
+        }
         if (!isset($scope->tables[$id])) {
             return null;
         }

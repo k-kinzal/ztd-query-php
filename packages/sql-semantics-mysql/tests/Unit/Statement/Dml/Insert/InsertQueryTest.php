@@ -31,7 +31,7 @@ final class InsertQueryTest extends TestCase
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(ValueCountMismatch::class, $operation->facts->diagnostics[0]);
-        self::assertNull($operation->facts->diagnostics[0]->row);
+        self::assertSame(1, $operation->facts->diagnostics[0]->row);
     }
 
     public function testDeriveStatementLetsUpdatesSeeTheSourceTables(): void

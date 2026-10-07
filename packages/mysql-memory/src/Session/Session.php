@@ -22,6 +22,7 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Statement\Operation;
 
 /**
@@ -160,6 +161,10 @@ final class Session
         if ($command->clearsDiagnostics()) {
             $this->diagnostics->clear();
         }
+        foreach ($operation->facts->warnings as $warning) {
+            $this->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
+        }
+        (new Problems())->raise($operation, $this);
         $this->transaction->beginStatement();
         $reply = $command->execute($operation, $this, $context, new Connection($this->variables, $context, $this->user, $this->host, $this->id, $parameters));
         $this->transaction->endStatement();
@@ -191,8 +196,6 @@ final class Session
         } catch (AnalysisException $error) {
             throw (new Syntax())->error($error, $statement);
         }
-        (new Problems())->raise($operation, $this);
-
         return $operation;
     }
 

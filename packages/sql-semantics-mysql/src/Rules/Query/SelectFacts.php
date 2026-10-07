@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
@@ -58,6 +60,9 @@ final class SelectFacts
     public function derive(Select $select, Derivation $derivation, Environment $outer): QueryFact
     {
         $context = $derivation->context;
+        if (in_array(SelectOption::CalcFoundRows, $select->options, true)) {
+            Deprecation::raise(Deprecated::CalcFoundRows, $derivation);
+        }
         $from = $select->from === null ? new JoinedInput(new RelationFact(new RowShape([])), [], []) : (new FromScope())->open($select->from, $derivation, $outer, []);
         $visible = $from->visible;
         $ordering = array_map(static fn (OrderItem $item): object => $item->expression, [...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)]);

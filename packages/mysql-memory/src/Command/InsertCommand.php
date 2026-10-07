@@ -92,6 +92,9 @@ final class InsertCommand implements Command
         if ($table === null) {
             throw ErrorCode::NoSuchTable->error($schema, $into->table->name->name->value);
         }
+        if ($into->table->partitions !== []) {
+            throw ErrorCode::PartitionClauseOnNonpartitioned->error();
+        }
 
         return $table;
     }
@@ -122,13 +125,15 @@ final class InsertCommand implements Command
             return [$positions, [$values]];
         }
         $columns = $statement->into->columns;
+        $columns = $columns !== null && $columns->columns === [] ? null : $columns;
         $positions = $columns === null ? array_values(array_filter(array_keys($definition->columns), static fn (int $index): bool => !$definition->columns[$index]->invisible)) : array_map($position, $columns->columns);
         if ($statement instanceof InsertQuery) {
-            return [$positions, $this->queried($statement, $planner, $context)];
+            return [$positions, $this->queried($statement, $planner, $context, count($positions))];
         }
         $rows = [];
         foreach ($statement->rows as $row) {
-            $rows[] = array_map(fn ($value) => $value instanceof DefaultRequest ? $value : $planner->compiler->compile($value, new Scope()), $row->values);
+            $values = array_map(fn ($value) => $value instanceof DefaultRequest ? $value : $planner->compiler->compile($value, new Scope()), $row->values);
+            $rows[] = $values === [] && $columns === null ? array_fill(0, count($positions), new DefaultRequest()) : $values;
         }
 
         return [$positions, $rows];
@@ -139,9 +144,12 @@ final class InsertCommand implements Command
      *
      * @return list<list<array{int|float|string|null, Domain}>>
      */
-    public function queried(InsertQuery $statement, Planner $planner, Context $context): array
+    public function queried(InsertQuery $statement, Planner $planner, Context $context, int $width): array
     {
         $plan = $planner->query($statement->source, null);
+        if (count($plan->domains) !== $width) {
+            throw ErrorCode::WrongValueCountOnRow->error(1);
+        }
         $iterator = (new Builder())->build($plan->root);
         $iterator->init(new Frame($context));
         $rows = [];

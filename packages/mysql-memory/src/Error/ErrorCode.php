@@ -95,11 +95,14 @@ enum ErrorCode: int
     case CantAggregateCollations = 1271;
     case UnknownCollation = 1273;
     case DeprecatedSyntax = 1287;
+    case OptionPreventsStatement = 1290;
     case TruncatedWrongValue = 1292;
     case UnsupportedPreparedStatement = 1295;
     case RoutineMissing = 1305;
     case UndeclaredVariable = 1327;
+    case NoData = 1329;
     case WrongObject = 1347;
+    case ViewWrongList = 1353;
     case NoDefaultForField = 1364;
     case DivisionByZero = 1365;
     case TruncatedWrongValueForField = 1366;
@@ -119,11 +122,14 @@ enum ErrorCode: int
     case DeprecatedSyntaxNoReplacement = 1681;
     case DataOutOfRange = 1690;
     case WrongVariableTypeInLimit = 1691;
+    case PartitionClauseOnNonpartitioned = 1747;
     case FieldInOrderNotSelect = 3065;
     case GeneratedColumnValue = 3105;
     case InvalidJsonText = 3140;
     case InvalidJsonTextInParameter = 3141;
     case InvalidJsonPath = 3143;
+    case RecursiveWithoutUnion = 3577;
+    case RecursionLimit = 3636;
     case RegexpError = 3685;
     case CheckConstraintViolated = 3819;
 

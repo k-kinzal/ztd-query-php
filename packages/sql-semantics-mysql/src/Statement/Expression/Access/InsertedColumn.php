@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Access;
 
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Rendering\Output;
@@ -45,7 +47,10 @@ final class InsertedColumn implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return new ScalarFact($derivation->scalar($this->column, $environment)->type, Nullability::Nullable);
+        $fact = $derivation->scalar($this->column, $environment);
+        Deprecation::raise(Deprecated::ValuesFunction, $derivation);
+
+        return new ScalarFact($fact->type, Nullability::Nullable);
     }
 
     /**

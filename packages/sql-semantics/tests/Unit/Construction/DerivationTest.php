@@ -20,6 +20,7 @@ use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\RelationFact;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -158,6 +159,27 @@ final class DerivationTest extends TestCase
         self::assertSame($declared->declarations()[0], $qualified->table);
     }
 
+    public function testDeferredWithholdsTheProblemsOfADefinitionUntilItsFirstUse(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $definition = new Star();
+        $problem = new MissingColumn(new Name('a'));
+        $environment = new Environment($derivation->context, null, [], [new CommonBinding(new Name('c'), $definition, new RowShape([]))]);
+
+        $result = $derivation->deferred($definition, static function () use ($derivation, $problem): string {
+            $derivation->report($problem);
+
+            return 'derived';
+        });
+        $withheld = $derivation->facts()->diagnostics;
+        $derivation->table(new QualifiedName(new Name('c')), $environment);
+        $derivation->table(new QualifiedName(new Name('c')), $environment);
+
+        self::assertSame('derived', $result);
+        self::assertSame([], $withheld);
+        self::assertSame([$problem], $derivation->facts()->diagnostics);
+    }
+
     public function testDeclareRecordsADeclarationTheStatementProvides(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
@@ -197,6 +219,22 @@ final class DerivationTest extends TestCase
         $derivation->report($problem);
 
         self::assertSame([$problem], $derivation->facts()->diagnostics);
+    }
+
+    public function testWarnRecordsAConditionThatIsNoProblem(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $warning = new class () implements Warning {
+            public function message(): string
+            {
+                return 'deprecated';
+            }
+        };
+
+        $derivation->warn($warning);
+
+        self::assertSame([$warning], $derivation->facts()->warnings);
+        self::assertSame([], $derivation->facts()->diagnostics);
     }
 
     public function testFactsFreezesEverythingRecorded(): void

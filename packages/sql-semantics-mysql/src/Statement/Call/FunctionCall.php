@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
@@ -76,6 +78,9 @@ final class FunctionCall implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        if ($this->schema === null && strcasecmp($this->name->value, 'FOUND_ROWS') === 0) {
+            Deprecation::raise(Deprecated::FoundRows, $derivation);
+        }
         $facts = [];
         foreach ($this->arguments as $argument) {
             $facts[] = (new Arguments())->one($argument->expression, $derivation, $environment);

@@ -44,6 +44,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
@@ -186,6 +187,7 @@ final class Compiler
             $node instanceof QuantifiedComparison => $this->subqueries->quantifiedComparison($node, $scope),
             $node instanceof InsertedColumn => $this->names->inserted($node, $scope),
             $node instanceof UserVariable => $this->names->userVariable($node),
+            $node instanceof ProgramVariable => throw ErrorCode::UndeclaredVariable->error($node->name->value),
             $node instanceof SystemVariable => $this->names->systemVariable($node),
             $node instanceof VariableAssignment => $this->names->assignment($node, $scope),
             default => throw ErrorCode::NotSupportedYet->error('expression ' . (new \ReflectionClass($node))->getShortName()),

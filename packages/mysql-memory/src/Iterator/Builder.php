@@ -12,6 +12,8 @@ use MySqlMemory\Plan\Path\Limit;
 use MySqlMemory\Plan\Path\Materialize;
 use MySqlMemory\Plan\Path\NestedLoopJoin;
 use MySqlMemory\Plan\Path\Project;
+use MySqlMemory\Plan\Path\RecursiveUnion;
+use MySqlMemory\Plan\Path\WorkingTable;
 use MySqlMemory\Plan\Path\SetOperation;
 use MySqlMemory\Plan\Path\SingleRow;
 use MySqlMemory\Plan\Path\Sort;
@@ -44,6 +46,8 @@ final class Builder
             $path instanceof Limit => new LimitIterator($path, $this->build($path->input)),
             $path instanceof Distinct => new DistinctIterator($path, $this->build($path->input)),
             $path instanceof Values => new ValuesIterator($path),
+            $path instanceof RecursiveUnion => new RecursiveUnionIterator($path, $this->build($path->anchor), $this->build($path->recursive)),
+            $path instanceof WorkingTable => new WorkingTableIterator($path),
             $path instanceof SetOperation => new SetOperationIterator($path, $this->build($path->left), $this->build($path->right)),
             default => throw new \LogicException('No iterator executes ' . $path::class . '.'),
         };

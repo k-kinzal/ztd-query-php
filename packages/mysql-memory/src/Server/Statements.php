@@ -61,6 +61,7 @@ final class Statements
         try {
             $session->split($sql);
             $operation = $session->analyze($sql, true);
+            (new \MySqlMemory\Session\Problems())->raise($operation, $session);
             $tokens = $session->semantics()->parser()->tokenize($sql);
             $parameters = count(array_filter($tokens, static fn ($token): bool => $token->text === '?'));
             $columns = $this->columns($operation, $session, $parameters);

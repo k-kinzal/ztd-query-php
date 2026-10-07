@@ -99,6 +99,9 @@ final class ChangeCommand implements Command
         if ($table === null) {
             throw ErrorCode::NoSuchTable->error($schema, $relation->name->name->value);
         }
+        if ($relation->partitions !== []) {
+            throw ErrorCode::PartitionClauseOnNonpartitioned->error();
+        }
 
         return $table;
     }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Table;
 
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
@@ -127,6 +129,11 @@ final class CreateTable implements Statement, Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
+        foreach ($this->elements as $element) {
+            if ($element instanceof ColumnDefinition) {
+                (new TypeNotices())->type($element->specification->type, $derivation);
+            }
+        }
         $output = $this->query === null ? null : $derivation->query($this->query->query, $derivation->environment());
         $table = (new TableDeclaration())->table($this, $output, $derivation);
         $derivation->declare($table);

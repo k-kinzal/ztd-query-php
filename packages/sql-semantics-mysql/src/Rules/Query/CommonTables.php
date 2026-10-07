@@ -39,7 +39,11 @@ use SqlSemantics\Validation\ValueGraph;
  * set operation is reported, and a reference to it sees columns that depend
  * on the missing nonrecursive part. The shape of every expression is that
  * of its query under its column list (MYSQL-DERIVED-SHAPES-001). The
- * bindings extend the enclosing scope without opening a query level.
+ * bindings extend the enclosing scope without opening a query level. The
+ * server resolves the query of an expression only where a table reference
+ * names the expression, so the problems of that query are reported at its
+ * first use and an expression that is never used reports none; a name
+ * defined twice is reported in any case.
  * Terminates: every expression is derived once. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/with.html ("The types of the CTE
  * result columns are inferred from the column types of the nonrecursive
@@ -70,7 +74,8 @@ final class CommonTables
                 }
                 $scope = $this->extended($outer, [...$bindings, new CommonBinding($table->name, $table, new RowShape([], [new RecursiveReference($table->name)]))]);
             }
-            $bindings[] = new CommonBinding($table->name, $table, (new DerivedShapes())->shape($derivation->query($table->query, $scope), $table->columns, $derivation));
+            $shape = $derivation->deferred($table, static fn (): RowShape => (new DerivedShapes())->shape($derivation->query($table->query, $scope), $table->columns, $derivation));
+            $bindings[] = new CommonBinding($table->name, $table, $shape);
         }
 
         return $this->extended($outer, $bindings);

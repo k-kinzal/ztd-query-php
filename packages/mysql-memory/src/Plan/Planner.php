@@ -16,7 +16,9 @@ use MySqlMemory\Plan\Path\SetKind;
 use MySqlMemory\Plan\Path\SetOperation as SetPath;
 use MySqlMemory\Plan\Path\Sort;
 use MySqlMemory\Plan\Path\Values;
+use MySqlMemory\Plan\Path\WorkingTable;
 use MySqlMemory\Typing\Aggregation;
+use MySqlMemory\Typing\Materialized;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
@@ -58,6 +60,11 @@ final class Planner
      * @var array<int, QueryPlan> The plans of common table expressions, by object id
      */
     public array $commonTables = [];
+
+    /**
+     * @var array<int, array{WorkingTable, list<\MySqlMemory\Typing\Domain>, list<string>}> The working tables of the recursive expressions being planned, by object id
+     */
+    public array $recursions = [];
 
     /**
      * @param Statement $statement The bound statement
@@ -129,11 +136,16 @@ final class Planner
     public function commonTable(Node $definition): QueryPlan
     {
         $id = spl_object_id($definition);
+        if (isset($this->recursions[$id])) {
+            [$working, $domains, $names] = $this->recursions[$id];
+
+            return new QueryPlan($working, $domains, $names);
+        }
         if (!isset($this->commonTables[$id])) {
             if (!isset($this->definitions[$id]) || !$definition instanceof CommonTableExpression) {
                 throw ErrorCode::NotSupportedYet->error('this common table expression');
             }
-            $plan = $this->query($definition->query, $this->definitions[$id][1]);
+            $plan = (new Recursion($this))->plan($definition, $this->definitions[$id][1]) ?? $this->query($definition->query, $this->definitions[$id][1]);
             $names = $definition->columns === [] ? $plan->names : array_map(static fn ($name): string => $name->value, $definition->columns);
             $this->commonTables[$id] = new QueryPlan($plan->root, $plan->domains, $names, $plan->origins);
         }
@@ -157,7 +169,7 @@ final class Planner
         $aggregation = new Aggregation($this->settings->connectionCollation);
         $domains = [];
         foreach ($left->domains as $position => $domain) {
-            $domains[] = $aggregation->of([$domain, $right->domains[$position]], 'UNION');
+            $domains[] = Materialized::set($aggregation->of([$domain, $right->domains[$position]], 'UNION'));
         }
         $kind = match ($operation->operator) {
             SetOperator::Union => SetKind::Union,

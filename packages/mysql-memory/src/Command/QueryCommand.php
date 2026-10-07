@@ -8,7 +8,17 @@ use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\Reply;
+use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Result\Completion;
+use MySqlMemory\Result\FieldType;
+use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
+use MySqlMemory\Typing\Domain;
+use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
+use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 
@@ -37,7 +47,83 @@ final class QueryCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof Query);
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $into = $this->destination($statement);
+        $result = (new Output())->result($planner->query($statement, null), $context);
+        if ($into === null) {
+            return $result;
+        }
 
-        return (new Output())->result($planner->query($statement, null), $context);
+        return $this->into($into, $result, $session, $context);
+    }
+
+    /**
+     * Finds the INTO destination of a query, written in the query or in the parentheses around it.
+     */
+    public function destination(Query $query): ?IntoDestination
+    {
+        while (true) {
+            if (($query instanceof Select || $query instanceof QueryStatement) && $query->into !== null) {
+                return $query->into;
+            }
+            if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery || $query instanceof QueryStatement) {
+                $query = $query->query;
+                continue;
+            }
+            if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression) {
+                $query = $query->body;
+                continue;
+            }
+
+            return null;
+        }
+    }
+
+    /**
+     * Writes the rows of a query to its INTO destination and answers the completion.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the destination refuses the rows
+     */
+    public function into(IntoDestination $into, ResultSet $result, Session $session, Context $context): Reply
+    {
+        if (!$into instanceof IntoVariables) {
+            $directory = (string) $session->variables->read('secure_file_priv');
+            throw ErrorCode::OptionPreventsStatement->error('--secure-file-priv');
+        }
+        if (count($into->targets) !== count($result->columns)) {
+            throw ErrorCode::WrongNumberOfColumnsInSelect->error();
+        }
+        if (count($result->rows) > 1) {
+            throw ErrorCode::TooManyRows->error();
+        }
+        if ($result->rows === []) {
+            $context->warning(ErrorCode::NoData);
+
+            return new Completion(0, 0, $context->diagnostics->count());
+        }
+        foreach ($into->targets as $index => $target) {
+            if (!$target instanceof UserVariable) {
+                throw ErrorCode::UndeclaredVariable->error($target->name->value);
+            }
+            $column = $result->columns[$index];
+            $session->variables->assign($target->name->value, $result->rows[0][$index], $this->domain($column));
+        }
+
+        return new Completion(1, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Answers the domain a user variable holds a value of a result column in.
+     */
+    public function domain(\MySqlMemory\Result\ResultColumn $column): Domain
+    {
+        if ($column->type->integral()) {
+            return Domain::integer(FieldType::LongLong, 21, $column->unsigned());
+        }
+
+        return match ($column->type) {
+            FieldType::NewDecimal, FieldType::Decimal => Domain::decimal(65, $column->decimals),
+            FieldType::Double, FieldType::Float => Domain::double(),
+            default => Domain::string(16777216, \MySqlMemory\Typing\Collation::tryFrom('binary') ?? \MySqlMemory\Typing\Collation::Binary, FieldType::MediumBlob),
+        };
     }
 }

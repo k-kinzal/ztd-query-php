@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
@@ -34,9 +37,11 @@ use SqlSemantics\Statement\Type\Nullability;
  * the columns, the rows and the assignments; a value may refer to a column
  * of the table (insert.html: a value may refer to a column set earlier in
  * the row). The written columns are the column list, or every column of the
- * table; they must be distinct. Each row of VALUES has one value per written
- * column, except an empty row without a column list, which writes the
- * defaults; rows also agree with each other, an empty row included. A query source is derived where
+ * table; they must be distinct, and an empty column list stands for every
+ * column. Each row of VALUES has one value per written column, except an
+ * empty row without a column list, which writes the defaults; rows also
+ * agree with each other, an empty row included. A query source whose width
+ * differs from the written columns is the mismatch of its first row. A query source is derived where
  * the table is not visible and must return one column per written column.
  * ON DUPLICATE KEY UPDATE assigns columns of the written table; its values
  * see the written table, the row alias (MYSQL-DML-ROW-ALIAS-001), whose
@@ -72,7 +77,7 @@ final class InsertFacts
             $count = count($row->values);
             $expected = $written === null ? $width : count($written);
             $mismatch = null;
-            $columns = $count === 0 && $insert->into->columns === null ? null : $expected;
+            $columns = $count === 0 && ($insert->into->columns === null || $insert->into->columns->columns === []) ? null : $expected;
             $against = $columns !== null && $count !== $columns ? $columns : ($width !== null && $count !== $width ? $width : null);
             if ($against !== null) {
                 $mismatch = new ValueCountMismatch($against, $count, $index + 1);
@@ -108,7 +113,7 @@ final class InsertFacts
         [$target, $written] = $this->open($insert->into, $derivation, $outer);
         $rows = $derivation->query($insert->source, $outer);
         if ($written !== null && $rows->shape->complete() && count($rows->shape->slots) !== count($written)) {
-            $derivation->report(new ValueCountMismatch(count($written), count($rows->shape->slots)));
+            $derivation->report(new ValueCountMismatch(count($written), count($rows->shape->slots), 1));
         } elseif ($written !== null) {
             $generated = new GeneratedWrites();
             $generated->query($written, $insert->source, $rows, $generated->table($insert->into->table, $derivation), $derivation);
@@ -124,9 +129,12 @@ final class InsertFacts
      */
     public function open(InsertInto $into, Derivation $derivation, Environment $outer): array
     {
+        if ($into->priority === InsertPriority::Delayed) {
+            Deprecation::raise($into->replace ? Deprecated::ReplaceDelayed : Deprecated::InsertDelayed, $derivation);
+        }
         $fact = $derivation->relation($into->table, $outer);
         $target = new VisibleRelation($into->table, $fact->shape, null, $into->table->name);
-        if ($into->columns === null) {
+        if ($into->columns === null || $into->columns->columns === []) {
             if (!$fact->shape->complete()) {
                 return [$target, null];
             }

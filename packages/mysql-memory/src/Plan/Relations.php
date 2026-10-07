@@ -17,6 +17,7 @@ use MySqlMemory\Plan\Path\Materialize;
 use MySqlMemory\Plan\Path\NestedLoopJoin;
 use MySqlMemory\Plan\Path\SingleRow;
 use MySqlMemory\Plan\Path\TableScan;
+use MySqlMemory\Typing\Materialized;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
@@ -76,7 +77,8 @@ final class Relations
         $resolution = $this->planner->compiler->facts->relation($reference)->table;
         if ($resolution instanceof CommonTable) {
             $plan = $this->planner->commonTable($resolution->definition);
-            $scope->place($reference, $plan->domains, $plan->names);
+            $scope->place($reference, $plan->root instanceof \MySqlMemory\Plan\Path\RecursiveUnion || $plan->root instanceof \MySqlMemory\Plan\Path\WorkingTable ? $plan->domains : array_map(Materialized::column(...), $plan->domains), $plan->names);
+            $scope->derived[spl_object_id($reference)] = $reference->alias?->value ?? $reference->name->name->value;
 
             return new Materialize($plan);
         }
@@ -87,6 +89,9 @@ final class Relations
         $stored = $this->planner->dictionary->table($name->schema?->value ?? $this->planner->settings->database, $name->name->value);
         if ($stored === null) {
             throw ErrorCode::NoSuchTable->error($name->schema?->value ?? $this->planner->settings->database, $name->name->value);
+        }
+        if ($reference->partitions !== []) {
+            throw ErrorCode::PartitionClauseOnNonpartitioned->error();
         }
         $definition = $stored->definition;
         $scope->place($reference, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
@@ -101,7 +106,8 @@ final class Relations
     {
         $plan = $this->planner->query($derived->query, $derived->lateral ? $scope : $scope->outer);
         $names = $derived->columns === [] ? $plan->names : array_map(static fn ($name): string => $name->value, $derived->columns);
-        $scope->place($derived, $plan->domains, $names);
+        $scope->place($derived, array_map(Materialized::column(...), $plan->domains), $names);
+        $scope->derived[spl_object_id($derived)] = $derived->alias?->value ?? '';
 
         return new Materialize($plan, $derived->lateral);
     }

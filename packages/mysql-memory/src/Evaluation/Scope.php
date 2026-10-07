@@ -35,6 +35,11 @@ final class Scope
     public array $tables = [];
 
     /**
+     * @var array<int, string> The alias of each derived table and common table reference, by object id
+     */
+    public array $derived = [];
+
+    /**
      * @var array<int, list<string>> The column names of each relation occurrence, by object id
      */
     public array $names = [];
@@ -155,6 +160,7 @@ final class Scope
         $scope->columns = $this->columns;
         $scope->names = $this->names;
         $scope->tables = $this->tables;
+        $scope->derived = $this->derived;
         $scope->nodes = $this->nodes;
 
         return $scope;

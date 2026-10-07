@@ -152,6 +152,13 @@ final class Rows
             [$existing, $key] = $conflict;
             $this->duplicates++;
             if ($this->into->replace) {
+                if ($key === $this->lastUnique()) {
+                    $same = $data->rows[$existing] === $row;
+                    $data->update($existing, $row);
+                    $this->affected += $same ? 1 : 2;
+
+                    return;
+                }
                 $data->delete($existing);
                 $this->affected++;
                 continue;
@@ -170,6 +177,21 @@ final class Rows
         }
         $data->insert($row);
         $this->affected++;
+    }
+
+    /**
+     * Answers the last unique key of the table, which REPLACE resolves by updating the row in place.
+     */
+    public function lastUnique(): ?\MySqlMemory\Dictionary\Key
+    {
+        $last = null;
+        foreach ($this->table->definition->keys as $key) {
+            if ($key->unique()) {
+                $last = $key;
+            }
+        }
+
+        return $last;
     }
 
     /**

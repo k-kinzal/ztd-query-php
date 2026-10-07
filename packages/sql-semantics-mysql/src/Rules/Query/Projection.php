@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Query\From\JoinedInput;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
@@ -18,7 +19,6 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Missing\MissingInput;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
 use SqlSemantics\Statement\Shape\OutputSlot;
@@ -115,7 +115,7 @@ final class Projection
             }
         }
         if (!$found) {
-            $derivation->report(new MissingTable($table));
+            $derivation->report(new UnknownQualifier($table));
         }
 
         return $fields;

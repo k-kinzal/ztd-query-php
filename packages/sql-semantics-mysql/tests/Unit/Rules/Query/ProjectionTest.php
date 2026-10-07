@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier;
 use SqlSemantics\Platform\MySql\Rules\Query\Projection;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
@@ -21,7 +22,6 @@ use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
@@ -70,7 +70,7 @@ final class ProjectionTest extends TestCase
         $operation = $semantics->analyze('SELECT u.* FROM t', [$t]);
 
         self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(UnknownQualifier::class, $operation->facts->diagnostics[0]);
     }
 
     public function testExpandAppendsAnOpenStarForUndeclaredColumns(): void

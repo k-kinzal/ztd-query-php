@@ -24,10 +24,10 @@ final class Diagnostics
     /**
      * Records a warning.
      */
-    public function warning(ErrorCode $code, string $message): void
+    public function warning(ErrorCode|int $code, string $message): void
     {
         if (count($this->conditions) < 64) {
-            $this->conditions[] = ['Warning', $code->value, $message];
+            $this->conditions[] = ['Warning', $code instanceof ErrorCode ? $code->value : $code, $message];
         }
     }
 

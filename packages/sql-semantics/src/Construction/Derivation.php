@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Construction;
 
+use Closure;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Resolution\Environment;
@@ -14,6 +15,7 @@ use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Fact\ScalarFact;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
@@ -58,6 +60,16 @@ final class Derivation
      * @var list<Diagnostic>
      */
     private array $diagnostics = [];
+
+    /**
+     * @var list<Warning>
+     */
+    private array $warnings = [];
+
+    /**
+     * @var array<int, list<Diagnostic>> The diagnostics withheld until a definition is used, by the object id of the definition
+     */
+    private array $withheld = [];
 
     private ?QueryFact $output = null;
 
@@ -209,13 +221,43 @@ final class Derivation
     }
 
     /**
+     * Derives the parts of a definition whose problems surface only where the definition is used.
+     *
+     * The parts receive their facts at once; the diagnostics they raise are
+     * kept back and reported when table() first resolves a name to the
+     * definition, in the place of that use. A definition that is never used
+     * reports nothing, as a database that resolves such a definition only
+     * for its uses never sees its problems.
+     *
+     * @template T
+     *
+     * @param Closure(): T $derive Derives the parts of the definition
+     * @return T
+     */
+    public function deferred(Node $definition, Closure $derive): mixed
+    {
+        $before = count($this->diagnostics);
+        $result = $derive();
+        $this->withheld[spl_object_id($definition)] = array_splice($this->diagnostics, $before);
+
+        return $result;
+    }
+
+    /**
      * Resolves a relation name: the nearest common table of the environment, then the context.
+     *
+     * Resolving a name to a common table reports the diagnostics its query
+     * withheld (deferred()), once.
      */
     public function table(QualifiedName $name, Environment $environment): TableResolution
     {
         if ($name->schema === null) {
             $common = $environment->commonTable($name->name);
             if ($common !== null) {
+                $id = spl_object_id($common->definition);
+                array_push($this->diagnostics, ...($this->withheld[$id] ?? []));
+                unset($this->withheld[$id]);
+
                 return new CommonTable($common->definition);
             }
         }
@@ -249,10 +291,18 @@ final class Derivation
     }
 
     /**
+     * Records a condition the statement raises without failing.
+     */
+    public function warn(Warning $warning): void
+    {
+        $this->warnings[] = $warning;
+    }
+
+    /**
      * Freezes the recorded facts.
      */
     public function facts(): Facts
     {
-        return new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->diagnostics);
+        return new Facts($this->scalars, $this->relations, $this->queries, $this->declarations, $this->output, $this->diagnostics, $this->warnings);
     }
 }
