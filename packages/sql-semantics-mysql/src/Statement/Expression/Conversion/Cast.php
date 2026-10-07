@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Conversion;
 
+use SqlSemantics\Platform\MySql\Rules\Typing\Casts;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
@@ -63,7 +66,10 @@ final class Cast implements Scalar
             return new ScalarFact(new Known(new Elementary(ElementaryKind::Json)), $fact->nullability);
         }
 
-        return new ScalarFact($result->type($this->target), $result->nullability($this->target, $fact->nullability));
+        $operand = (new Precision())->domain($fact->type);
+        $domain = $operand === null ? null : (new Casts(Settings::of($derivation->context), $grammar))->cast($operand, $this->target);
+
+        return new ScalarFact($domain === null ? $result->type($this->target) : new Known($domain), $result->nullability($this->target, $fact->nullability));
     }
 
     /**

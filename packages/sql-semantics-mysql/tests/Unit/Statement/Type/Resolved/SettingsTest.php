@@ -41,4 +41,11 @@ final class SettingsTest extends TestCase
         self::assertSame('utf8mb4_bin', $settings->schema('other')->name);
         self::assertSame('latin1_bin', (new Settings(Collation::known('latin1_bin')))->schema('other')->name);
     }
+
+    public function testUserVariablesAreKeyedByLowerCaseName(): void
+    {
+        self::assertSame(['a'], array_keys((new Settings(Collation::known('latin1_bin'), 4, null, [], 1024, ['A' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]))->userVariables ?? []));
+        self::assertNull((new Settings(Collation::known('latin1_bin')))->userVariables);
+    }
+
 }

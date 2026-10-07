@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Moments;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
@@ -56,7 +60,10 @@ final class IntervalAddition implements Scalar
         $operands->single($derivation->scalar($this->interval->quantity, $environment), $derivation);
         $operand = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
 
-        return new ScalarFact((new TemporalResult())->interval($operand->type, $this->interval->unit, $derivation->context->profile->grammar), Nullability::Nullable);
+        $domain = (new Precision())->domain($operand->type);
+        $type = $domain === null ? (new TemporalResult())->interval($operand->type, $this->interval->unit, $derivation->context->profile->grammar) : new Known((new Moments(Settings::of($derivation->context)))->shifted($domain, $this->interval->unit));
+
+        return new ScalarFact($type, Nullability::Nullable);
     }
 
     /**

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Expression\Operator;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +38,7 @@ final class IntervalAdditionTest extends TestCase
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
 
-        self::assertEquals(new Known(new Temporal(TemporalKind::DateTime)), $derivation->scalar(new IntervalAddition(new Interval(new NumberLiteral('1'), IntervalUnit::Hour), new TemporalLiteral(TemporalForm::Date, '2024-01-31')), $derivation->environment())->type);
+        self::assertEquals(new Known(new Domain(Kind::DateTime, Field::DateTime, 19)), $derivation->scalar(new IntervalAddition(new Interval(new NumberLiteral('1'), IntervalUnit::Hour), new TemporalLiteral(TemporalForm::Date, '2024-01-31')), $derivation->environment())->type);
     }
 
     public function testRenderLetsTheOperandExtendOverAComparison(): void

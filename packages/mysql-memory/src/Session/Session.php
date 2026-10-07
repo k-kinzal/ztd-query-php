@@ -212,7 +212,9 @@ final class Session
         $connection = Collation::named((string) $this->variables->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci');
         $server = Collation::named((string) $this->variables->read('collation_server'));
 
-        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, (int) $this->variables->read('group_concat_max_len'));
+        $users = array_map(static fn (array $variable) => $variable[1]->resolved(), $this->variables->user);
+
+        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, (int) $this->variables->read('group_concat_max_len'), $users);
     }
 
     /**

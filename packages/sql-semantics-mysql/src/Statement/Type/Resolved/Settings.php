@@ -30,11 +30,17 @@ final class Settings implements Session
     public readonly array $schemas;
 
     /**
+     * @var array<string, Domain>|null The type of the value each user variable holds, by lower-case name; null when unknown
+     */
+    public readonly ?array $userVariables;
+
+    /**
      * @param Collation $connection The collation of string literals (collation_connection)
      * @param int $divPrecisionIncrement The digits a division adds to the scale of its dividend (div_precision_increment)
      * @param Collation|null $server The default collation of a schema the settings do not list (collation_server); the connection collation when null
      * @param array<string, Collation> $schemas The default collation of each schema, by name
      * @param int $groupConcatMaxLen The longest result of GROUP_CONCAT in bytes (group_concat_max_len)
+     * @param array<string, Domain>|null $userVariables The type of the value each user variable holds, by name; null when the session does not say
      */
     public function __construct(
         public readonly Collation $connection,
@@ -42,12 +48,18 @@ final class Settings implements Session
         public readonly ?Collation $server = null,
         array $schemas = [],
         public readonly int $groupConcatMaxLen = 1024,
+        ?array $userVariables = null,
     ) {
         $lower = [];
         foreach ($schemas as $name => $collation) {
             $lower[strtolower($name)] = $collation;
         }
         $this->schemas = $lower;
+        $variables = null;
+        foreach ($userVariables ?? [] as $name => $domain) {
+            $variables[strtolower($name)] = $domain;
+        }
+        $this->userVariables = $userVariables === null ? null : ($variables ?? []);
     }
 
     /**

@@ -43,7 +43,7 @@ final class RecurringScheduleTest extends TestCase
 
         self::assertInstanceOf(Domain::class, $quantity->descriptor);
         self::assertSame('BIGINT', $quantity->descriptor->name());
-        self::assertInstanceOf(Temporal::class, $starts->descriptor);
+        self::assertSame('DATETIME', $starts->descriptor->name());
         self::assertTrue($create->facts->covers($schedule->ends));
         self::assertSame(IntervalUnit::Hour, $schedule->unit);
         self::assertSame([], $create->facts->diagnostics);

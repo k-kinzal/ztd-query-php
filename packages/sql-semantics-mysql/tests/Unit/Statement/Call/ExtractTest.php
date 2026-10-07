@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Call;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -32,7 +34,7 @@ final class ExtractTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new Extract(IntervalUnit::DayHour, new StringLiteral(['x'])), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Integer->descriptor()), $fact->type);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 5)), $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 

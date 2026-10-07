@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Temporal;
 
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Moments;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
@@ -54,7 +58,10 @@ final class DateArithmetic implements Scalar
         $date = (new Arguments())->one($this->date, $derivation, $environment);
         (new Arguments())->one($this->quantity, $derivation, $environment);
 
-        return new ScalarFact((new ResultTyping())->dateArithmetic($date->type, $this->unit), Nullability::Nullable);
+        $domain = (new Precision())->domain($date->type);
+        $type = $domain === null ? (new ResultTyping())->dateArithmetic($date->type, $this->unit) : new Known((new Moments(Settings::of($derivation->context)))->shifted($domain, $this->unit));
+
+        return new ScalarFact($type, Nullability::Nullable);
     }
 
     /**

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Expression\Operator;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -35,7 +38,7 @@ final class IntervalArithmeticTest extends TestCase
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
         $fact = $derivation->scalar(new IntervalArithmetic(new TemporalLiteral(TemporalForm::Date, '2024-01-31'), new Interval(new NumberLiteral('1'), IntervalUnit::Month), true), $derivation->environment());
 
-        self::assertEquals([new Known(new Temporal(TemporalKind::Date)), Nullability::Nullable], [$fact->type, $fact->nullability]);
+        self::assertEquals([new Known(new Domain(Kind::Date, Field::Date, 10)), Nullability::Nullable], [$fact->type, $fact->nullability]);
     }
 
     public function testRenderWritesTheSignBeforeTheInterval(): void

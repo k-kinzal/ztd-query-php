@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Moments;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
@@ -45,7 +48,9 @@ final class Extract implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new ResultTyping())->fact('IY', [(new Arguments())->one($this->source, $derivation, $environment)]);
+        $fact = (new ResultTyping())->fact('IY', [(new Arguments())->one($this->source, $derivation, $environment)]);
+
+        return new ScalarFact(new Known((new Moments(Settings::of($derivation->context)))->extract($this->unit)), $fact->nullability);
     }
 
     /**

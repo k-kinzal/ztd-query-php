@@ -34,7 +34,7 @@ final class OnceScheduleTest extends TestCase
         $fact = $create->facts->scalar($statement->schedule->at);
         self::assertInstanceOf(Known::class, $fact->type);
 
-        self::assertInstanceOf(Temporal::class, $fact->type->descriptor);
+        self::assertSame('DATETIME', $fact->type->descriptor->name());
         self::assertSame(Nullability::NotNull, $fact->nullability);
         self::assertSame([], $create->facts->diagnostics);
     }

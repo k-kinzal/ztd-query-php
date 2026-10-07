@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Variable;
 
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Variables;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
@@ -48,7 +51,9 @@ final class UserVariable implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return new ScalarFact(new Dependent([new SessionState('user variable @' . $this->name->value)]), Nullability::Dependent);
+        $domain = (new Variables(Settings::of($derivation->context)))->read($this->name->value);
+
+        return $domain === null ? new ScalarFact(new Dependent([new SessionState('user variable @' . $this->name->value)]), Nullability::Dependent) : new ScalarFact(new Known($domain), Nullability::Nullable);
     }
 
     /**

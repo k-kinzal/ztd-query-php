@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Call\Temporal;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -34,7 +37,7 @@ final class DateArithmeticTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new DateArithmetic(true, new TemporalLiteral(TemporalForm::Date, '2024-01-01'), new NumberLiteral('1'), IntervalUnit::Second), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::DateTime->descriptor()), $fact->type);
+        self::assertEquals(new Known(new Domain(Kind::DateTime, Field::DateTime, 19)), $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 

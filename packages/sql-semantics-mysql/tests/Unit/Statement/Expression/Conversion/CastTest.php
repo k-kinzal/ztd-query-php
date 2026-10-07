@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Expression\Conversion;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -34,7 +37,7 @@ final class CastTest extends TestCase
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
         $fact = $derivation->scalar(new Cast(new StringLiteral(['x']), new CastTarget(CastKind::DateTime, '3')), $derivation->environment());
 
-        self::assertEquals(new Known(new Temporal(TemporalKind::DateTime, '3')), $fact->type);
+        self::assertEquals(new Known(new Domain(Kind::DateTime, Field::DateTime, 23, 3)), $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 

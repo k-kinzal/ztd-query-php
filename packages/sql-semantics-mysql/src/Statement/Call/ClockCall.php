@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Moments;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
@@ -34,7 +36,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Typing the current timestamp with a precision
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CURRENT_TIMESTAMP(3)');
- *     [$query->field(0)->type->descriptor->precision, $query->field(0)->nullability] // => ['3', \SqlSemantics\Statement\Type\Nullability::NotNull]
+ *     [$query->field(0)->type->descriptor->decimals, $query->field(0)->nullability] // => [3, \SqlSemantics\Statement\Type\Nullability::NotNull]
  * @example Refusing a precision for a date
  *     new \SqlSemantics\Platform\MySql\Statement\Call\ClockCall(\SqlSemantics\Platform\MySql\Statement\Call\Clock::CurrentDate, new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('3')) // throws \SqlSemantics\Diagnostic\InvalidConstruction
  */
@@ -58,12 +60,9 @@ final class ClockCall implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $type = $this->clock->result()->descriptor();
-        if ($this->precision !== null && $type instanceof Temporal) {
-            $type = new Temporal($type->kind === TemporalKind::Time ? TemporalKind::Time : TemporalKind::DateTime, $this->precision->text);
-        }
+        $decimals = $this->precision === null ? 0 : (int) $this->precision->text;
 
-        return new ScalarFact(new Known($type), Nullability::NotNull);
+        return new ScalarFact(new Known((new Moments(Settings::of($derivation->context)))->clock($this->clock, $decimals)), Nullability::NotNull);
     }
 
     /**
