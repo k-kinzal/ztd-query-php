@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
+use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Compiler;
@@ -177,7 +178,7 @@ final class Planner
             SetOperator::Except => SetKind::Except,
         };
 
-        return new QueryPlan(new SetPath($kind, $operation->quantifier !== SetQuantifier::All, $left->root, $right->root, $domains), $domains, $left->names);
+        return new QueryPlan(new SetPath($kind, $operation->quantifier !== SetQuantifier::All, $left->root, $right->root, $domains), $domains, $left->names, $this->materialized($domains));
     }
 
     /**
@@ -203,4 +204,16 @@ final class Planner
 
         return new QueryPlan(new Values($rows, count($domains)), $domains, $names);
     }
+
+    /**
+     * Answers the origins of the columns of a temporary table: none, but a blob column is flagged as one.
+     *
+     * @param list<\MySqlMemory\Typing\Domain> $domains
+     * @return list<ColumnOrigin|null>
+     */
+    public function materialized(array $domains): array
+    {
+        return array_map(static fn ($domain): ?ColumnOrigin => $domain->field->blob() ? new ColumnOrigin('', '', '', '', ColumnFlag::Blob->value) : null, $domains);
+    }
+
 }

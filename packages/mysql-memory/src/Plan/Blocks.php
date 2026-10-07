@@ -85,7 +85,10 @@ final class Blocks
         $root = $this->limit($root, $select->limit, $outer);
         $root = $this->limit($root, $select->late?->limit, $outer);
 
-        return new QueryPlan($root, $domains, array_map(fn (Field $field): string => $this->name($field), $fields), array_map(fn (Field $field): ?ColumnOrigin => $this->origin($field, $scope), $fields));
+        $buffered = in_array(SelectOption::BufferResult, $select->options, true);
+        $origins = array_map(fn (Field $field): ?ColumnOrigin => $this->origin($field, $scope), $fields);
+
+        return new QueryPlan($root, $domains, array_map(fn (Field $field): string => $this->name($field), $fields), $buffered ? array_map(static fn (?ColumnOrigin $origin): ?ColumnOrigin => $origin?->unkeyed(), $origins) : $origins);
     }
 
     /**

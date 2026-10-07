@@ -32,6 +32,9 @@ final class Materialized
         if ($domain->kind === Kind::Integer && $domain->field === Field::LongLong && $domain->length < 11) {
             return new Domain(Kind::Integer, Field::Long, $domain->length, 0, $domain->unsigned, $domain->collation, $domain->nullable, [], $domain->coercibility);
         }
+        if ($domain->kind === Kind::String) {
+            return new Domain(Kind::String, $domain->field, $domain->length, 0, false, $domain->collation, $domain->nullable, $domain->members, $domain->coercibility);
+        }
 
         return self::set($domain);
     }

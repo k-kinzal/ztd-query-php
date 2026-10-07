@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Session;
 
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Variable\Catalog;
-use MySqlMemory\Variable\Definition;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
 use MySqlMemory\Variable\Scope;
 
 /**
@@ -71,10 +71,10 @@ final class Variables
     public int $foundRows = 0;
 
     /**
-     * @param Catalog $catalog The system variables the server knows
+     * @param SystemVariables $catalog The system variables the server knows
      * @param Globals $globals The global values of the server
      */
-    public function __construct(public readonly Catalog $catalog, public readonly Globals $globals)
+    public function __construct(public readonly SystemVariables $catalog, public readonly Globals $globals)
     {
     }
 

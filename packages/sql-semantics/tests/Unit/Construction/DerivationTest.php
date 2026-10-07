@@ -327,4 +327,20 @@ final class DerivationTest extends TestCase
         self::assertTrue($derivation->facts()->covers($select));
         self::assertNotSame($environment, $derivation->environment());
     }
+
+    public function testProgramDerivesAStoredStatementWhileInProgramHolds(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('CREATE PROCEDURE p() SET @@version = 1');
+
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
+    public function testInProgramIsFalseOutsideAStoredProgram(): void
+    {
+        $derivation = new Derivation((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\Sqlite\Dialect::Sqlite))->context([]));
+
+        self::assertFalse($derivation->inProgram());
+    }
+
 }

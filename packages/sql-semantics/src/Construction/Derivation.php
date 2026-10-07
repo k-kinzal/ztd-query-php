@@ -75,6 +75,8 @@ final class Derivation
 
     private ?Environment $base = null;
 
+    private int $programs = 0;
+
     /**
      * @param AnalysisContext $context The fixed declaration context every part is derived against
      */
@@ -172,6 +174,32 @@ final class Derivation
         $this->output = null;
         $node->deriveStatement($this);
         [$this->output, $this->declarations, $this->context, $this->base] = [$output, $declarations, $context, $base];
+    }
+
+    /**
+     * Derives a statement of a stored program in its environment, like inspected().
+     *
+     * The statement is stored for later: while it is derived, inProgram() answers true, so rules
+     * that the server applies only when a statement runs can leave it alone.
+     *
+     * @throws \SqlSemantics\Diagnostic\InvalidConstruction When the environment holds other declarations or another profile
+     */
+    public function program(Statement $node, Environment $environment): void
+    {
+        $this->programs++;
+        try {
+            $this->inspected($node, $environment);
+        } finally {
+            $this->programs--;
+        }
+    }
+
+    /**
+     * Answers whether the statement being derived belongs to a stored program rather than running now.
+     */
+    public function inProgram(): bool
+    {
+        return $this->programs > 0;
     }
 
     /**

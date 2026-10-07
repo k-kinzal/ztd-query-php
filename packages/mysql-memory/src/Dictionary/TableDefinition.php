@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Dictionary;
 
+use MySqlMemory\Result\ColumnFlag;
 use SqlSemantics\Statement\Declaration\Table;
 
 /**
@@ -125,6 +126,9 @@ final class TableDefinition
         }
         if ($column->onUpdateNow) {
             $flags |= 8192;
+        }
+        if ($column->domain->field->blob()) {
+            $flags |= ColumnFlag::Blob->value;
         }
 
         return $flags;

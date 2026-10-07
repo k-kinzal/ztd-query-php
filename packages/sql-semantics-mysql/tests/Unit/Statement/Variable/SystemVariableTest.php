@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Variable;
 
+use SqlSemantics\Statement\Type\Known;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -22,7 +23,7 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class SystemVariableTest extends TestCase
 {
-    public function testDeriveScalarNamesTheVariableAsMissingSessionState(): void
+    public function testDeriveScalarTypesAReadAsTheReleaseDefinesTheVariable(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@GLOBAL.sort_buffer_size');
 
@@ -31,9 +32,9 @@ final class SystemVariableTest extends TestCase
         self::assertInstanceOf(SelectExpression::class, $item0);
         self::assertInstanceOf(SystemVariable::class, $item0->expression);
         $fact = $operation->facts->scalar($item0->expression);
-        self::assertInstanceOf(Dependent::class, $fact->type);
-        self::assertSame('the session state: system variable @@GLOBAL.sort_buffer_size', $fact->type->missing[0]->describe());
-        self::assertSame(Nullability::Dependent, $fact->nullability);
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame('BIGINT', $fact->type->descriptor->name());
+        self::assertSame(Nullability::Nullable, $fact->nullability);
         self::assertNull($fact->resolution);
         self::assertSame('@@GLOBAL.sort_buffer_size', $operation->field(0)->name?->value);
     }
@@ -54,7 +55,7 @@ final class SystemVariableTest extends TestCase
         self::assertSame('the session state: system variable @@SESSION.innodb.x', $fact->type->missing[0]->describe());
     }
 
-    public function testDeriveScalarNamesAnUnscopedVariableWithoutAScope(): void
+    public function testDeriveScalarTypesAnUnscopedReadAsTheSessionValue(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@autocommit');
 
@@ -65,8 +66,8 @@ final class SystemVariableTest extends TestCase
         self::assertNull($item0->expression->scope);
         self::assertNull($item0->expression->instance);
         $fact = $operation->facts->scalar($item0->expression);
-        self::assertInstanceOf(Dependent::class, $fact->type);
-        self::assertSame('the session state: system variable @@autocommit', $fact->type->missing[0]->describe());
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame([1, false], [$fact->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain ? $fact->type->descriptor->length : 0, $fact->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain && $fact->type->descriptor->unsigned]);
     }
 
     public function testRenderWritesTheScopeTheInstanceAndTheNameWithoutSpaces(): void

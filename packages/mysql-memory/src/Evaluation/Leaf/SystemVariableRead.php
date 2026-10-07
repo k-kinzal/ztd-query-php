@@ -8,7 +8,7 @@ use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use MySqlMemory\Variable\Definition;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
 use MySqlMemory\Variable\Scope;
 
 /**

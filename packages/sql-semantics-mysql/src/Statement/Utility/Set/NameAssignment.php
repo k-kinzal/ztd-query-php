@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Set;
 
+use SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
@@ -54,10 +55,13 @@ final class NameAssignment implements SetItem
     }
 
     /**
-     * Derives the value.
+     * Derives the value, and checks that SET can change a variable written with a scope; a name without a scope may be a variable of a stored program.
      */
     public function deriveItem(Derivation $derivation): void
     {
+        if ($this->scope !== null && $this->qualifier === null && !$derivation->inProgram()) {
+            (new VariableAccess())->assign($this->name->value, $this->scope, $derivation);
+        }
         if ($this->value instanceof Scalar) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }

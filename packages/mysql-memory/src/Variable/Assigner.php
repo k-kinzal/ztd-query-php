@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Variable;
 
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
@@ -46,14 +47,17 @@ final class Assigner
         if ($definition === null) {
             throw ErrorCode::UnknownSystemVariable->error($name);
         }
-        if ($definition->readOnly) {
+        if ($definition->writability === Writability::ReadOnly) {
             throw ErrorCode::IncorrectGlobalLocalVariable->error($definition->name, 'read only');
         }
-        if ($scope === Scope::Session && $definition->scope === Scope::Global) {
+        if ($scope === Scope::Session && !$definition->reach->session()) {
             throw ErrorCode::GlobalVariable->error($definition->name);
         }
-        if ($scope === Scope::Global && $definition->scope === Scope::Session) {
+        if ($scope === Scope::Global && !$definition->reach->global()) {
             throw ErrorCode::LocalVariable->error($definition->name);
+        }
+        if ($scope === Scope::Session && $definition->writability === Writability::GlobalOnly) {
+            throw ErrorCode::VariableIsReadonly->error('SESSION', $definition->name, 'GLOBAL');
         }
         $checked = $domain === null ? ($scope === Scope::Global ? $definition->default : $this->variables->globals->value($definition)) : $this->check($definition, $value, $domain);
         if ($scope === Scope::Global) {
@@ -72,8 +76,8 @@ final class Assigner
     {
         $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
         return match ($definition->shape) {
-            Shape::Boolean => $this->boolean($definition, $value, $domain, $text),
-            Shape::Integer, Shape::Unsigned => $this->integer($definition, $value, $domain, $text),
+            ValueShape::Boolean => $this->boolean($definition, $value, $domain, $text),
+            ValueShape::Integer, ValueShape::Unsigned => $this->integer($definition, $value, $domain, $text),
             default => $this->text($definition, $value, $text),
         };
     }

@@ -136,7 +136,7 @@ final class DeclaredTest extends TestCase
         $declared = new Declared(Collation::binary());
 
         self::assertEquals(Domain::integer(Field::Tiny, 1), $declared->elementary(new Elementary(ElementaryKind::Boolean)));
-        self::assertSame('utf8mb4_bin', $declared->elementary(new Elementary(ElementaryKind::Json))->collation->name);
+        self::assertSame('binary', $declared->elementary(new Elementary(ElementaryKind::Json))->collation->name);
         self::assertSame(8, $declared->elementary(new Elementary(ElementaryKind::Bit, '8'))->length);
     }
 

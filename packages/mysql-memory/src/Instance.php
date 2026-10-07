@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace MySqlMemory;
 
+use SqlSemantics\Contract\GrammarRelease;
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Session\Globals;
 use MySqlMemory\Session\Session;
-use MySqlMemory\Variable\Catalog;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 
 /**
  * An in-memory MySQL server: its databases, its global variables, and the sessions connected to it.
@@ -32,7 +33,7 @@ final class Instance
 
     public readonly Globals $globals;
 
-    public readonly Catalog $catalog;
+    public readonly SystemVariables $catalog;
 
     private int $connections = 0;
 
@@ -44,7 +45,7 @@ final class Instance
      */
     public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null)
     {
-        $this->catalog = Catalog::release($version);
+        $this->catalog = SystemVariables::of(GrammarRelease::tryFrom('mysql-' . $version) ?? GrammarRelease::MySql847);
         $this->globals = new Globals(array_change_key_case($globals, CASE_LOWER));
         $this->dictionary = new Dictionary();
         foreach (['information_schema', 'mysql', 'performance_schema', 'sys', ...$databases] as $name) {

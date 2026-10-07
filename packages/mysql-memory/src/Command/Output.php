@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Iterator\Builder;
 use MySqlMemory\Plan\ColumnOrigin;
@@ -44,7 +46,9 @@ final class Output
         }
         $context->variables->foundRows = count($rows);
 
-        return new ResultSet($this->columns($plan), $rows, $context->diagnostics->count());
+        $results = $context->variables->read('character_set_results');
+
+        return new ResultSet($this->columns($plan, is_string($results) ? Charset::named($results) : null), $rows, $context->diagnostics->count());
     }
 
     /**
@@ -52,12 +56,12 @@ final class Output
      *
      * @return list<ResultColumn>
      */
-    public function columns(QueryPlan $plan): array
+    public function columns(QueryPlan $plan, ?Charset $results = null): array
     {
         $columns = [];
         foreach ($plan->domains as $position => $domain) {
             $origin = $plan->origins[$position] ?? null;
-            $columns[] = $this->column($plan->names[$position] ?? '', $domain, $origin);
+            $columns[] = $this->column($plan->names[$position] ?? '', $domain, $origin, $results);
         }
 
         return $columns;
@@ -65,13 +69,28 @@ final class Output
 
     /**
      * Answers the definition of one column.
+     *
+     * A string is sent converted to the character set of the results, so its length counts the
+     * bytes of its characters in that set; a set without results keeps the column's own.
      */
-    public function column(string $name, Domain $domain, ?ColumnOrigin $origin): ResultColumn
+    public function column(string $name, Domain $domain, ?ColumnOrigin $origin, ?Charset $results = null): ResultColumn
     {
-        $charset = $domain->kind === Kind::String || $domain->kind === Kind::Json ? $domain->collation->id : 63;
+        $text = ($domain->kind === Kind::String || $domain->kind === Kind::Json) && !$domain->collation->bytes();
+        $charset = $text ? ($results === null ? $domain->collation->id : $results->defaultCollation(GrammarRelease::MySql847)->id) : 63;
         $field = $domain->field === Field::Enum || $domain->field === Field::Set ? Field::String : $domain->field;
+        $length = $text && $results !== null ? $this->converted($domain->length, $results->maxLength) : $domain->byteLength();
 
-        return new ResultColumn($name, $field, $domain->byteLength(), $domain->decimals, $domain->flags() | ($origin?->flags ?? 0), $charset, $origin?->column ?? '', $origin?->table ?? '', $origin?->originalTable ?? '', $origin?->schema ?? '');
+        return new ResultColumn($name, $field, $length, $domain->decimals, $domain->flags() | ($origin?->flags ?? 0), $charset, $origin?->column ?? '', $origin?->table ?? '', $origin?->originalTable ?? '', $origin?->schema ?? '');
+    }
+
+    /**
+     * Answers the bytes of a number of characters in a character set, at most what a length field holds.
+     */
+    public function converted(int $characters, int $width): int
+    {
+        $bytes = $characters * $width;
+
+        return $bytes > 4294967295 ? intdiv(4294967295, $width) * $width : $bytes;
     }
 
     /**

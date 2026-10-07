@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\VariableMisuse;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownPartition;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnpartitionedTable;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix;
@@ -121,6 +123,8 @@ final class Problems
             }, $diagnostic->message()),
             $diagnostic instanceof UnpartitionedTable => ErrorCode::PartitionClauseOnNonpartitioned->error(),
             $diagnostic instanceof UnknownPartition => ErrorCode::UnknownPartition->error($diagnostic->partition, $diagnostic->table),
+            $diagnostic instanceof UnknownSystemVariable => ErrorCode::UnknownSystemVariable->error($diagnostic->name),
+            $diagnostic instanceof VariableMisuse => new SqlError(ErrorCode::from($diagnostic->rule->code()), $diagnostic->message()),
             $diagnostic instanceof UnknownCollation => ErrorCode::UnknownCollation->error($diagnostic->name),
             $diagnostic instanceof UnknownCharset => ErrorCode::UnknownCharacterSet->error($diagnostic->name),
             $diagnostic instanceof CollationMismatch => ErrorCode::CollationCharsetMismatch->error($diagnostic->collation, $diagnostic->charset),

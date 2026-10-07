@@ -23,6 +23,8 @@ final class Differential
      */
     public const DATABASE = 'fz';
 
+    private ?PDO $guard = null;
+
     /**
      * @param string $native The PDO DSN of the MySQL server, without a database
      * @param string $nativeUser The user of the MySQL server
@@ -57,8 +59,11 @@ final class Differential
      */
     public function difference(string $sql): ?string
     {
+        $guard = $this->guard();
         $expected = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql);
+        $this->repair($guard);
         $again = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql);
+        $this->repair($guard);
         if ($expected !== $again) {
             return null;
         }
@@ -74,6 +79,37 @@ final class Differential
         }
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * Answers the connection that repairs the MySQL server after a statement, opened once before any statement runs.
+     */
+    public function guard(): PDO
+    {
+        return $this->guard ??= new PDO($this->native, $this->nativeUser, $this->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
+    }
+
+    /**
+     * Restores what a statement may have changed for the account and the server: the account, its password and privileges, and the global modes that refuse connections or writes.
+     */
+    public function repair(PDO $guard): void
+    {
+        $account = $guard->query('SELECT CURRENT_USER()');
+        $current = $account === false ? '' : (string) $account->fetchColumn();
+        [$user, $host] = explode('@', $current === '' ? $this->nativeUser . '@%' : $current, 2) + [1 => '%'];
+        $quoted = $guard->quote($user) . '@' . $guard->quote($host);
+        $password = $guard->quote($this->nativePassword);
+        foreach ([
+            "CREATE USER IF NOT EXISTS {$quoted} IDENTIFIED BY {$password}",
+            "ALTER USER {$quoted} IDENTIFIED BY {$password} ACCOUNT UNLOCK PASSWORD EXPIRE NEVER",
+            "GRANT ALL ON *.* TO {$quoted} WITH GRANT OPTION",
+            "SET DEFAULT ROLE NONE TO {$quoted}",
+            'SET GLOBAL offline_mode = OFF',
+            'SET GLOBAL super_read_only = OFF',
+            'SET GLOBAL read_only = OFF',
+        ] as $statement) {
+            $guard->exec($statement);
+        }
     }
 
     /**
@@ -103,12 +139,15 @@ final class Differential
     }
 
     /**
-     * Connects to a server and prepares the fixture database.
+     * Connects to a server and prepares the fixture database, writable again if a statement made it read-only.
      */
     public function connect(string $dsn, string $user, string $password): PDO
     {
         try {
             $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => $this->emulate]);
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
+            $pdo->exec('ALTER SCHEMA `' . self::DATABASE . '` READ ONLY = 0');
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $pdo->exec('DROP DATABASE IF EXISTS `' . self::DATABASE . '`');
             $pdo->exec('CREATE DATABASE `' . self::DATABASE . '`');
             $pdo->exec('USE `' . self::DATABASE . '`');

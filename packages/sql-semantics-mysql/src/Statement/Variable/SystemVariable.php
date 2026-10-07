@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Variable;
 
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Rendering\Output;
@@ -43,19 +45,25 @@ final class SystemVariable implements Scalar
      * @param Name $name The variable name
      * @param VariableScope|null $scope The scope written before the name; the grammar reads GLOBAL or SESSION in an expression and also PERSIST and PERSIST_ONLY in SET
      * @param Name|null $instance The instance or component name of a structured variable
+     * @param bool $assigned Whether SET assigns the variable rather than an expression reading it
      */
-    public function __construct(public readonly Name $name, public readonly ?VariableScope $scope = null, public readonly ?Name $instance = null)
+    public function __construct(public readonly Name $name, public readonly ?VariableScope $scope = null, public readonly ?Name $instance = null, public readonly bool $assigned = false)
     {
     }
 
     /**
-     * Derives the dependence on the server.
+     * Derives the type of a read from the variables of the release, reporting a variable the read cannot have; an assigned variable is checked by its assignment.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $subject = 'system variable @@' . ($this->scope === null ? '' : $this->scope->value . '.') . ($this->instance === null ? '' : $this->instance->value . '.') . $this->name->value;
+        $dependent = new ScalarFact(new Dependent([new SessionState($subject)]), Nullability::Dependent);
+        if ($this->instance !== null || $this->assigned) {
+            return $dependent;
+        }
+        $definition = (new VariableAccess())->read($this->name->value, $this->scope, $derivation);
 
-        return new ScalarFact(new Dependent([new SessionState($subject)]), Nullability::Dependent);
+        return $definition === null ? $dependent : new ScalarFact(new Known($definition->domain), Nullability::Nullable);
     }
 
     /**

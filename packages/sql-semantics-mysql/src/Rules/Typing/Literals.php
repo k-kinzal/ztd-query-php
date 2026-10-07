@@ -29,7 +29,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  * DECIMAL of its digits, where leading zeros count as one; a literal with an exponent is a DOUBLE
  * as long as its text. A string is
  * a VARCHAR of its characters in the connection collation or the character set of its
- * introducer; a hexadecimal or bit literal is a binary string of its bytes. A temporal literal
+ * introducer; a hexadecimal or bit literal is a binary string of its bytes, with no decimals unless
+ * an introducer makes it a character string. A temporal literal
  * keeps the fractional digits it writes, up to six.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/literals.html.
  *
@@ -121,7 +122,9 @@ final class Literals
         $bits = $literal->radix === Radix::Bit ? strlen($literal->digits) : strlen($literal->digits) * 4;
         $collation = $literal->introducer === null ? Collation::binary() : $this->introduced($literal->introducer->value);
 
-        return Domain::string(intdiv($bits + 7, 8), $collation, Field::VarString, Coercibility::Coercible);
+        $bytes = intdiv($bits + 7, 8);
+
+        return $literal->introducer === null ? new Domain(Kind::String, Field::VarString, $bytes, 0, false, $collation, [], Coercibility::Coercible) : Domain::string($bytes, $collation, Field::VarString, Coercibility::Coercible);
     }
 
     /**

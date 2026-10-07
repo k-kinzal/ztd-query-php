@@ -19,7 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Variable\Scope as VariableScope;
-use MySqlMemory\Variable\Shape;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -241,19 +241,13 @@ final class Names
             null => VariableScope::Both,
             default => VariableScope::Global,
         };
-        if ($scope === VariableScope::Global && $definition->scope === VariableScope::Session) {
+        if ($scope === VariableScope::Global && !$definition->reach->global()) {
             throw ErrorCode::IncorrectGlobalLocalVariable->error($variable->name->value, 'SESSION');
         }
-        if ($scope === VariableScope::Session && $definition->scope === VariableScope::Global) {
+        if ($scope === VariableScope::Session && !$definition->reach->session()) {
             throw ErrorCode::IncorrectGlobalLocalVariable->error($variable->name->value, 'GLOBAL');
         }
-        $domain = match ($definition->shape) {
-            Shape::Boolean => new Domain(Kind::Integer, Field::LongLong, 1, 0, false, Collation::binary(), false),
-            Shape::Integer => Domain::integer(Field::LongLong, 21),
-            Shape::Unsigned => Domain::integer(Field::LongLong, 21, true),
-            Shape::Double => Domain::double(),
-            default => Domain::string(21845, Collation::known('utf8mb3_general_ci'))->withCollation(Collation::known('utf8mb3_general_ci'), Coercibility::SystemConstant),
-        };
+        $domain = Domain::of($definition->domain, true);
 
         return new SystemVariableRead($definition, $scope === VariableScope::Global ? VariableScope::Global : VariableScope::Session, $domain->withNullable(true));
     }

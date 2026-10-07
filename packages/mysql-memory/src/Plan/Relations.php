@@ -80,10 +80,9 @@ final class Relations
             $merged = $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression && $this->mergeable($resolution->definition->query);
             $kept = $merged || $plan->root instanceof \MySqlMemory\Plan\Path\RecursiveUnion || $plan->root instanceof \MySqlMemory\Plan\Path\WorkingTable;
             $connection = $this->planner->settings->connectionCollation;
-            $scope->place($reference, $merged ? array_map(static fn ($domain) => Materialized::merged($domain, $connection), $plan->domains) : ($kept ? $plan->domains : array_map(Materialized::column(...), $plan->domains)), $plan->names);
-            if ($merged) {
-                $scope->merged[spl_object_id($reference)] = $plan->origins;
-            }
+            $placed = $merged ? array_map(static fn ($domain) => Materialized::merged($domain, $connection), $plan->domains) : ($kept ? $plan->domains : array_map(Materialized::column(...), $plan->domains));
+            $scope->place($reference, $placed, $plan->names);
+            $scope->merged[spl_object_id($reference)] = $merged ? $plan->origins : $this->planner->materialized($placed);
             $scope->derived[spl_object_id($reference)] = $reference->alias?->value ?? $reference->name->name->value;
 
             return new Materialize($plan);
@@ -116,10 +115,9 @@ final class Relations
         $names = $derived->columns === [] ? $plan->names : array_map(static fn ($name): string => $name->value, $derived->columns);
         $merged = $this->mergeable($derived->query);
         $connection = $this->planner->settings->connectionCollation;
-        $scope->place($derived, $merged ? array_map(static fn ($domain) => Materialized::merged($domain, $connection), $plan->domains) : array_map(Materialized::column(...), $plan->domains), $names);
-        if ($merged) {
-            $scope->merged[spl_object_id($derived)] = $plan->origins;
-        }
+        $placed = $merged ? array_map(static fn ($domain) => Materialized::merged($domain, $connection), $plan->domains) : array_map(Materialized::column(...), $plan->domains);
+        $scope->place($derived, $placed, $names);
+        $scope->merged[spl_object_id($derived)] = $merged ? $plan->origins : $this->planner->materialized($placed);
         $scope->derived[spl_object_id($derived)] = $derived->alias?->value ?? '';
 
         return new Materialize($plan, $derived->lateral);

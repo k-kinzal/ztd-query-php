@@ -68,7 +68,7 @@ final class BodyFacts
         if ($statement instanceof Query) {
             $derivation->query($statement, $scope->environment);
         } elseif ($statement instanceof Statement) {
-            $derivation->inspected($statement, $scope->environment);
+            $derivation->program($statement, $scope->environment);
         }
     }
 }

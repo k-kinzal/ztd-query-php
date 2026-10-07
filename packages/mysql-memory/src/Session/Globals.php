@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use MySqlMemory\Variable\Definition;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
 
 /**
  * The global values of the system variables of one server.

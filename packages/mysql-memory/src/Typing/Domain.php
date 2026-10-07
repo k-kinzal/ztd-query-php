@@ -160,9 +160,6 @@ final class Domain
         if ($this->collation === Collation::binary() && $this->kind !== Kind::Null) {
             $flags |= ColumnFlag::Binary->value;
         }
-        if (in_array($this->field, [Field::Blob, Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Json], true)) {
-            $flags |= ColumnFlag::Blob->value;
-        }
         if ($this->kind->numeric() && $this->field !== Field::Year) {
             $flags |= ColumnFlag::Numeric->value;
         }

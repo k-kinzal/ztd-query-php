@@ -33,7 +33,7 @@ final class SystemAssignmentTest extends TestCase
 
     public function testDeriveItemReportsARowAsTheValue(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SET @@SESSION.x = (1, 2)');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SET @@SESSION.sort_buffer_size = (1, 2)');
 
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
@@ -49,4 +49,13 @@ final class SystemAssignmentTest extends TestCase
         $this->expectExceptionMessage('A bare name assigned to a system variable is its text.');
         new SystemAssignment(new SystemVariable(new Name('x')), new BareName(new Name('y'), null, false));
     }
+
+    public function testDeriveItemLeavesTheAssignmentsOfAStoredProgramToItsRun(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(Dialect::MySql);
+
+        self::assertSame(["Variable 'version' is a read only variable"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('SET @@version = 1')->facts->diagnostics));
+        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() SET @@version = 1')->facts->diagnostics);
+    }
+
 }

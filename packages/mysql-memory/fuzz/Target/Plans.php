@@ -12,7 +12,8 @@ use SqlFaker\Generation\Plan\RulePlan;
 /**
  * The generation plans of the differential fuzz targets.
  *
- * The statement plan is the whole grammar. The other plans name only the fixture tables and
+ * The statement plan is the whole grammar except the statements that stop, restart, clone or kill
+ * the server and its sessions. The other plans name only the fixture tables and
  * columns, so the generated statements read and write rows instead of failing on unknown names.
  */
 final class Plans
@@ -24,7 +25,10 @@ final class Plans
     {
         $root = in_array($grammar, ['mysql-5.6.51', 'mysql-5.7.44'], true) ? 'statement' : 'simple_statement_or_begin';
         if ($mode === 'statement') {
-            return GenerationPlan::fromRule($root)->requiringNonEmpty();
+            $lifecycle = ProductionPattern::anyOf(...array_map(static fn (string $rule): ProductionPattern => ProductionPattern::exactly($rule), ['shutdown_stmt', 'restart_server_stmt', 'clone_stmt', 'kill', 'shutdown', 'kill_type']));
+
+            return GenerationPlan::fromRule($root)->requiringNonEmpty()
+                ->withRule($root === 'statement' ? 'statement' : 'simple_statement', RulePlan::any()->allowing(ProductionPattern::excluding($lifecycle)));
         }
         $start = match ($mode) {
             'expression' => 'expr',

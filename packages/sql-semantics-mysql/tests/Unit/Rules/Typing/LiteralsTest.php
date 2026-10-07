@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rules\Typing;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -88,7 +89,7 @@ final class LiteralsTest extends TestCase
     {
         $literals = new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
 
-        self::assertEquals(Domain::string(2, Collation::binary(), Field::VarString, Coercibility::Coercible), $literals->radix(new RadixLiteral(Radix::Hexadecimal, 'ABC')));
+        self::assertEquals(new Domain(Kind::String, Field::VarString, 2, 0, false, Collation::binary(), [], Coercibility::Coercible), $literals->radix(new RadixLiteral(Radix::Hexadecimal, 'ABC')));
         self::assertSame(2, $literals->radix(new RadixLiteral(Radix::Bit, '100000000'))->length);
         self::assertSame('latin1_swedish_ci', $literals->radix(new RadixLiteral(Radix::Bit, '1', new Name('latin1')))->collation->name);
     }

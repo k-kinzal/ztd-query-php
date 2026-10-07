@@ -21,4 +21,13 @@ final class ColumnOrigin
     public function __construct(public readonly string $schema, public readonly string $table, public readonly string $originalTable, public readonly string $column, public readonly int $flags = 0)
     {
     }
+
+    /**
+     * Answers the same origin without key flags, as a result buffered in a temporary table reports it.
+     */
+    public function unkeyed(): self
+    {
+        return new self($this->schema, $this->table, $this->originalTable, $this->column, $this->flags & ~(2 | 4 | 8));
+    }
+
 }

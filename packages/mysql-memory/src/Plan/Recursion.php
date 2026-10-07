@@ -58,7 +58,7 @@ final class Recursion
         unset($this->planner->recursions[$id]);
         $limit = (int) ($this->planner->compiler->connection->variables->read('cte_max_recursion_depth') ?? 1000);
 
-        return new QueryPlan(new RecursiveUnion($anchor->root, $recursive->root, $working, $query->quantifier !== SetQuantifier::All, $domains, $limit), $domains, $names);
+        return new QueryPlan(new RecursiveUnion($anchor->root, $recursive->root, $working, $query->quantifier !== SetQuantifier::All, $domains, $limit), $domains, $names, $this->planner->materialized($domains));
     }
 
     /**

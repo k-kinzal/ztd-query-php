@@ -254,7 +254,7 @@ final class Declared
         return match ($type->kind) {
             ElementaryKind::Boolean => Domain::integer(Field::Tiny, 1),
             ElementaryKind::Serial => Domain::integer(Field::LongLong, 20, true),
-            ElementaryKind::Json => new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin')),
+            ElementaryKind::Json => new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::binary()),
             ElementaryKind::Bit => new Domain(Kind::Bit, Field::Bit, $type->length === null ? 1 : (int) $type->length, 0, true),
             ElementaryKind::Vector => new Domain(Kind::String, Field::Vector, ($type->length === null ? 2048 : (int) $type->length) * 4, Domain::NOT_FIXED, false, Collation::binary()),
         };
