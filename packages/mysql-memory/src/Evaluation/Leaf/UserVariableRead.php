@@ -8,7 +8,7 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * A user variable read: its value now, converted to the domain it had when the statement was resolved.

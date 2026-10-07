@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Function;
 
+use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Operator\Comparator;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
 
@@ -28,7 +29,7 @@ final class Measures
      */
     public function routines(): array
     {
-        $count = static fn (int $length): \Closure => static fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, $length)->withNullable($s->nullable());
+        $count = static fn (int $length): \Closure => static fn (array $d, Signature $s): Domain => Domain::integer(Field::LongLong, $length)->withNullable($s->nullable());
         $strings = new Strings();
 
         return [
@@ -41,7 +42,7 @@ final class Measures
             new Routine('LOCATE', 2, 3, $count(11), fn (Frame $f, array $a, Domain $r): ?int => $this->locate($f, $a[0], $a[1], $a[2] ?? null)),
             new Routine('INSTR', 2, 2, $count(11), fn (Frame $f, array $a, Domain $r): ?int => $this->locate($f, $a[1], $a[0], null)),
             new Routine('STRCMP', 2, 2, $count(2), $this->strcmp(...)),
-            new Routine('FIELD', 2, -1, static fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, 3)->withNullable(false), $this->field(...)),
+            new Routine('FIELD', 2, -1, static fn (array $d, Signature $s): Domain => Domain::integer(Field::LongLong, 3)->withNullable(false), $this->field(...)),
             new Routine('FIND_IN_SET', 2, 2, $count(3), $this->findInSet(...)),
         ];
     }
@@ -86,7 +87,7 @@ final class Measures
         }
         $length = count($pattern);
         for ($i = $from - 1, $last = count($characters) - $length; $i <= $last; $i++) {
-            if ($collation->compare(implode('', array_slice($characters, $i, $length)), $search) === 0) {
+            if (Ordering::of($collation)->compare(implode('', array_slice($characters, $i, $length)), $search) === 0) {
                 return $i + 1;
             }
         }
@@ -145,7 +146,7 @@ final class Measures
         }
         [$collation] = Collations::aggregate([$arguments[0]->domain(), $arguments[1]->domain()], 'find_in_set', $arguments[1]->domain()->collation);
         foreach (explode(',', $list) as $index => $member) {
-            if ($collation->compare($member, $value) === 0) {
+            if (Ordering::of($collation)->compare($member, $value) === 0) {
                 return $index + 1;
             }
         }

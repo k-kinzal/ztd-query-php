@@ -7,9 +7,9 @@ namespace MySqlMemory\Evaluation\Compile;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Operator\DateShift;
 use MySqlMemory\Evaluation\Scope;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Interval;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
@@ -78,10 +78,10 @@ final class Dates
         $micro = in_array($unit, [IntervalUnit::Microsecond, IntervalUnit::SecondMicrosecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::HourMicrosecond, IntervalUnit::DayMicrosecond], true) ? 6 : 0;
 
         return match ($operand->kind) {
-            Kind::Date => Interval::dated($unit) ? new Domain(Kind::Date, FieldType::Date, 10) : new Domain(Kind::DateTime, FieldType::DateTime, 19 + ($micro > 0 ? 7 : 0), $micro),
-            Kind::DateTime => new Domain(Kind::DateTime, FieldType::DateTime, max($operand->length, 19 + ($micro > 0 ? 7 : 0)), max($operand->decimals, $micro)),
-            Kind::Time => new Domain(Kind::Time, FieldType::Time, max($operand->length, 10 + ($micro > 0 ? 7 : 0)), max($operand->decimals, $micro)),
-            default => Domain::string(29, $this->compiler->settings->connectionCollation, FieldType::String)->withNullable(true),
+            Kind::Date => Interval::dated($unit) ? new Domain(Kind::Date, Field::Date, 10) : new Domain(Kind::DateTime, Field::DateTime, 19 + ($micro > 0 ? 7 : 0), $micro),
+            Kind::DateTime => new Domain(Kind::DateTime, Field::DateTime, max($operand->length, 19 + ($micro > 0 ? 7 : 0)), max($operand->decimals, $micro)),
+            Kind::Time => new Domain(Kind::Time, Field::Time, max($operand->length, 10 + ($micro > 0 ? 7 : 0)), max($operand->decimals, $micro)),
+            default => Domain::string(29, $this->compiler->settings->connectionCollation, Field::String)->withNullable(true),
         };
     }
 
@@ -93,7 +93,7 @@ final class Dates
         $source = $this->compiler->compile($node->source, $scope);
         $unit = $node->unit;
         $lengths = ['YEAR' => 4, 'MONTH' => 2, 'DAY' => 2, 'HOUR' => 2, 'MINUTE' => 2, 'SECOND' => 2, 'MICROSECOND' => 6, 'WEEK' => 2, 'QUARTER' => 1, 'YEAR_MONTH' => 6, 'DAY_HOUR' => 4, 'DAY_MINUTE' => 6, 'DAY_SECOND' => 8, 'HOUR_MINUTE' => 4, 'HOUR_SECOND' => 6, 'MINUTE_SECOND' => 4, 'DAY_MICROSECOND' => 14, 'HOUR_MICROSECOND' => 12, 'MINUTE_MICROSECOND' => 10, 'SECOND_MICROSECOND' => 8];
-        $domain = Domain::integer(FieldType::LongLong, ($lengths[$unit->value] ?? 2) + 1)->withNullable(true);
+        $domain = Domain::integer(Field::LongLong, ($lengths[$unit->value] ?? 2) + 1)->withNullable(true);
         $moments = new \MySqlMemory\Evaluation\Operator\Moments();
 
         return (new Texts($this->compiler))->call('EXTRACT', [$source], $domain, static function (\MySqlMemory\Evaluation\Frame $f, array $a) use ($unit, $moments): ?int {
@@ -109,7 +109,7 @@ final class Dates
                 $parts = $t === null ? null : [0, 0, 0, $t[1], $t[2], $t[3], $t[4]];
                 $sign = $t !== null && $t[0] ? -1 : 1;
             } else {
-                $moment = $moments->convert($value, $domain, new Domain(Kind::DateTime, FieldType::DateTime, 26, 6), $f->context);
+                $moment = $moments->convert($value, $domain, new Domain(Kind::DateTime, Field::DateTime, 26, 6), $f->context);
                 $parts = $moment === null ? null : \MySqlMemory\Value\Temporal::parseDateTime($moment);
                 $sign = 1;
             }

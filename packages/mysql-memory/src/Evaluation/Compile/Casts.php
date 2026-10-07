@@ -7,12 +7,12 @@ namespace MySqlMemory\Evaluation\Compile;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Operator\Conversion;
-use MySqlMemory\Result\FieldType;
-use MySqlMemory\Typing\Charset;
-use MySqlMemory\Typing\Coercibility;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
@@ -53,18 +53,18 @@ final class Casts
         $nullable = $operand->nullable;
         $decimals = $target->length === null ? 0 : (int) $target->length;
         $domain = match ($target->kind) {
-            CastKind::Signed => Domain::integer(FieldType::LongLong, 21),
-            CastKind::Unsigned => Domain::integer(FieldType::LongLong, 21, true),
+            CastKind::Signed => Domain::integer(Field::LongLong, 21),
+            CastKind::Unsigned => Domain::integer(Field::LongLong, 21, true),
             CastKind::Decimal => Domain::decimal($target->length === null ? 10 : (int) $target->length, $target->scale === null ? 0 : (int) $target->scale),
             CastKind::Double, CastKind::Real => Domain::double(22),
-            CastKind::Float => $target->length !== null && (int) $target->length > 24 ? Domain::double(22) : new Domain(Kind::Double, FieldType::Float, 12, Domain::NOT_FIXED),
-            CastKind::Date => new Domain(Kind::Date, FieldType::Date, 10, 0, false, Collation::Binary, true),
-            CastKind::Time => new Domain(Kind::Time, FieldType::Time, 10 + ($decimals > 0 ? $decimals + 1 : 0), $decimals, false, Collation::Binary, true),
-            CastKind::DateTime => new Domain(Kind::DateTime, FieldType::DateTime, 19 + ($decimals > 0 ? $decimals + 1 : 0), $decimals, false, Collation::Binary, true),
-            CastKind::Year => new Domain(Kind::Year, FieldType::Year, 4, 0, true, Collation::Binary, true),
+            CastKind::Float => $target->length !== null && (int) $target->length > 24 ? Domain::double(22) : new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED),
+            CastKind::Date => new Domain(Kind::Date, Field::Date, 10, 0, false, Collation::binary(), true),
+            CastKind::Time => new Domain(Kind::Time, Field::Time, 10 + ($decimals > 0 ? $decimals + 1 : 0), $decimals, false, Collation::binary(), true),
+            CastKind::DateTime => new Domain(Kind::DateTime, Field::DateTime, 19 + ($decimals > 0 ? $decimals + 1 : 0), $decimals, false, Collation::binary(), true),
+            CastKind::Year => new Domain(Kind::Year, Field::Year, 4, 0, true, Collation::binary(), true),
             CastKind::Char, CastKind::NationalChar => $this->text($operand, $target),
-            CastKind::Binary => Domain::string($target->length === null ? $this->length($operand) : (int) $target->length, Collation::Binary),
-            CastKind::Json => new Domain(Kind::Json, FieldType::Json, 4294967295, Domain::NOT_FIXED, false, Collation::Utf8mb4Bin),
+            CastKind::Binary => Domain::string($target->length === null ? $this->length($operand) : (int) $target->length, Collation::binary()),
+            CastKind::Json => new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin')),
             default => throw ErrorCode::NotSupportedYet->error('CAST AS ' . $target->kind->value),
         };
 
@@ -78,13 +78,13 @@ final class Casts
     {
         $collation = $this->compiler->settings->connectionCollation;
         if ($target->kind === CastKind::NationalChar) {
-            $collation = Collation::Utf8mb3GeneralCi;
+            $collation = Collation::known('utf8mb3_general_ci');
         } elseif ($target->charset !== null) {
             $collation = match ($target->charset->form) {
-                CharsetForm::Ascii => Collation::AsciiGeneralCi,
-                CharsetForm::Unicode => Collation::Utf8mb40900AiCi,
-                CharsetForm::Byte, CharsetForm::Binary => Collation::Binary,
-                default => $target->charset->charset === null ? $collation : (Charset::named($target->charset->charset->value)?->defaultCollation() ?? $collation),
+                CharsetForm::Ascii => Collation::known('ascii_general_ci'),
+                CharsetForm::Unicode => Collation::known('utf8mb4_0900_ai_ci'),
+                CharsetForm::Byte, CharsetForm::Binary => Collation::binary(),
+                default => $target->charset->charset === null ? $collation : (Charset::named($target->charset->charset->value)?->defaultCollation($this->compiler->settings->release()) ?? $collation),
             };
         }
         $length = $target->length === null ? $this->length($operand) : (int) $target->length;

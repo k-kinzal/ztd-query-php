@@ -12,8 +12,8 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Result\FieldType;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Order;
 
 /**
@@ -177,7 +177,7 @@ final class Writer
             Kind::Time => '00:00:00' . ($domain->decimals > 0 ? '.' . str_repeat('0', $domain->decimals) : ''),
             Kind::Json => 'null',
             Kind::Bit => str_repeat("\0", (int) ceil($domain->length / 8)),
-            default => $domain->field === FieldType::Enum ? ($domain->members[0] ?? '') : ($domain->field === FieldType::String && $domain->collation === \MySqlMemory\Typing\Collation::Binary ? str_repeat("\0", $domain->length) : ''),
+            default => $domain->field === Field::Enum ? ($domain->members[0] ?? '') : ($domain->field === Field::String && $domain->collation === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary() ? str_repeat("\0", $domain->length) : ''),
         };
     }
 }

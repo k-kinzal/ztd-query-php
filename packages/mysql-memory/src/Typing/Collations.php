@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
 
@@ -56,21 +64,21 @@ final class Collations
      */
     public static function tie(Collation $left, Collation $right, Coercibility $level, string $operation): Collation
     {
-        if ($left === Collation::Binary || $right === Collation::Binary) {
-            return Collation::Binary;
+        if ($left === Collation::binary() || $right === Collation::binary()) {
+            return Collation::binary();
         }
-        if ($left->charset() === $right->charset()) {
-            if ($left->binary() !== $right->binary()) {
-                return $left->binary() ? $left : $right;
+        if ($left->charset === $right->charset) {
+            if ($left->binaryOrder() !== $right->binaryOrder()) {
+                return $left->binaryOrder() ? $left : $right;
             }
         }
         if ($level === Coercibility::Coercible || $level === Coercibility::Numeric || $level === Coercibility::Ignorable) {
-            return $left->charset() === Charset::Utf8mb4 ? $left : ($right->charset() === Charset::Utf8mb4 ? $right : $left);
+            return $left->charset === Charset::known('utf8mb4') ? $left : ($right->charset === Charset::known('utf8mb4') ? $right : $left);
         }
         if ($level === Coercibility::None) {
             return $left;
         }
 
-        throw ErrorCode::CantAggregateTwoCollations->error($left->value, strtoupper($level->name === 'Implicit' ? 'IMPLICIT' : $level->name), $right->value, strtoupper($level->name === 'Implicit' ? 'IMPLICIT' : $level->name), $operation);
+        throw ErrorCode::CantAggregateTwoCollations->error($left->name, strtoupper($level->name === 'Implicit' ? 'IMPLICIT' : $level->name), $right->name, strtoupper($level->name === 'Implicit' ? 'IMPLICIT' : $level->name), $operation);
     }
 }

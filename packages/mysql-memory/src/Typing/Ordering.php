@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+
 use Collator;
 
 /**
@@ -34,7 +36,7 @@ final class Ordering
      */
     public static function of(Collation $collation): self
     {
-        return self::$orderings[$collation->value] ??= new self($collation, self::collator($collation));
+        return self::$orderings[$collation->name] ??= new self($collation, self::collator($collation));
     }
 
     /**
@@ -42,16 +44,15 @@ final class Ordering
      */
     public static function collator(Collation $collation): ?Collator
     {
-        $strength = match ($collation) {
-            Collation::Utf8mb40900AiCi, Collation::Utf8mb4UnicodeCi => Collator::PRIMARY,
-            Collation::Utf8mb40900AsCi => Collator::SECONDARY,
-            Collation::Utf8mb40900AsCs => Collator::TERTIARY,
-            default => null,
-        };
-        if ($strength === null) {
+        if (preg_match('/\A[a-z0-9]+_(?:([a-z]{2}(?:_[a-z]{2,4})?)_)?(?:0900_(ai_ci|as_ci|as_cs)|(unicode(?:_520)?_ci))\z/', $collation->name, $match) !== 1) {
             return null;
         }
-        $collator = new Collator('root');
+        $strength = match ($match[2] ?? '') {
+            'as_ci' => Collator::SECONDARY,
+            'as_cs' => Collator::TERTIARY,
+            default => Collator::PRIMARY,
+        };
+        $collator = new Collator(($match[1] ?? '') === '' ? 'root' : $match[1]);
         $collator->setStrength($strength);
 
         return $collator;
@@ -70,7 +71,7 @@ final class Ordering
                 return $order;
             }
         }
-        if ($this->collation->binary() || $this->collator !== null) {
+        if ($this->collation->binaryOrder() || $this->collator !== null) {
             return $left <=> $right;
         }
 
@@ -90,7 +91,7 @@ final class Ordering
             }
         }
 
-        return $this->collation->binary() || $this->collator !== null ? $text : $this->folded($text);
+        return $this->collation->binaryOrder() || $this->collator !== null ? $text : $this->folded($text);
     }
 
     /**
@@ -98,7 +99,7 @@ final class Ordering
      */
     public function padded(string $text): string
     {
-        return $this->collation->padSpace() ? rtrim($text, ' ') : $text;
+        return $this->collation->padSpace ? rtrim($text, ' ') : $text;
     }
 
     /**
@@ -106,7 +107,7 @@ final class Ordering
      */
     public function folded(string $text): string
     {
-        if ($this->collation->charset()->maxLength() === 1 || !mb_check_encoding($text, 'UTF-8')) {
+        if ($this->collation->charset->maxLength === 1 || !mb_check_encoding($text, 'UTF-8')) {
             return strtoupper($text);
         }
         $stripped = transliterator_transliterate('NFD; [:Nonspacing Mark:] Remove; NFC', $text);

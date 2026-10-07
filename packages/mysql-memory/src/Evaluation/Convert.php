@@ -6,7 +6,7 @@ namespace MySqlMemory\Evaluation;
 
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Integer;
 use MySqlMemory\Value\NumericText;

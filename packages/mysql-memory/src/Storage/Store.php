@@ -8,10 +8,10 @@ use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
-use MySqlMemory\Result\FieldType;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Integer;
 use MySqlMemory\Value\NumericText;
@@ -113,10 +113,10 @@ final class Store
     public function range(Domain $domain): array
     {
         $bits = match ($domain->field) {
-            FieldType::Tiny => 8,
-            FieldType::Short => 16,
-            FieldType::Int24 => 24,
-            FieldType::Long => 32,
+            Field::Tiny => 8,
+            Field::Short => 16,
+            Field::Int24 => 24,
+            Field::Long => 32,
             default => 64,
         };
         if ($domain->unsigned) {
@@ -173,7 +173,7 @@ final class Store
         if ($column->domain->decimals < Domain::NOT_FIXED) {
             $number = round($number, $column->domain->decimals);
         }
-        if ($column->domain->field === FieldType::Float) {
+        if ($column->domain->field === Field::Float) {
             $single = unpack('g', pack('g', $number));
             $number = is_array($single) ? (float) $single[1] : $number;
             if (is_infinite($number)) {
@@ -192,23 +192,23 @@ final class Store
     {
         $to = $column->domain;
         $text = (string) Convert::toText($value, $from);
-        if ($to->field === FieldType::Enum || $to->field === FieldType::Set) {
+        if ($to->field === Field::Enum || $to->field === Field::Set) {
             return (new Members($this))->value($text, $from, $column);
         }
-        $charset = $to->collation->charset();
+        $charset = $to->collation->charset;
         $limit = $to->length;
         if ($charset->length($text) > $limit) {
-            $kept = $charset->maxLength() === 1 || !mb_check_encoding($text, 'UTF-8') ? substr($text, 0, $limit) : mb_substr($text, 0, $limit, 'UTF-8');
+            $kept = $charset->maxLength === 1 || !mb_check_encoding($text, 'UTF-8') ? substr($text, 0, $limit) : mb_substr($text, 0, $limit, 'UTF-8');
             $rest = substr($text, strlen($kept));
-            if (trim($rest, ' ') === '' && $to->collation !== Collation::Binary) {
+            if (trim($rest, ' ') === '' && $to->collation !== Collation::binary()) {
                 $this->context->note(ErrorCode::DataTruncated, $column->name, $this->row);
             } else {
                 $this->adjust($this->context->strict ? ErrorCode::DataTooLong : ErrorCode::DataTruncated, $column->name, $this->row);
             }
             $text = $kept;
         }
-        if ($to->field === FieldType::String) {
-            return $to->collation === Collation::Binary ? str_pad($text, $limit, "\0") : rtrim($text, ' ');
+        if ($to->field === Field::String) {
+            return $to->collation === Collation::binary() ? str_pad($text, $limit, "\0") : rtrim($text, ' ');
         }
 
         return $text;

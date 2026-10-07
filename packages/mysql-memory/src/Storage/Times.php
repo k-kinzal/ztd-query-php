@@ -7,9 +7,9 @@ namespace MySqlMemory\Storage;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Convert;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Temporal;
 
 /**
@@ -109,8 +109,8 @@ final class Times
     public function invalid(string $text, ColumnDefinition $column): string
     {
         $kind = match ($column->domain->field) {
-            FieldType::Date => 'date',
-            FieldType::Time => 'time',
+            Field::Date => 'date',
+            Field::Time => 'time',
             default => 'datetime',
         };
         $this->store->adjust(ErrorCode::TruncatedWrongValueForField, $kind, $text, $column->name, $this->store->row);

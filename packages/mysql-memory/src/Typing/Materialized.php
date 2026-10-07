@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 /**
  * Answers the domain of a column of a materialized result: a derived table, a common table expression, or a set operation.
@@ -23,8 +29,8 @@ final class Materialized
      */
     public static function column(Domain $domain): Domain
     {
-        if ($domain->kind === Kind::Integer && $domain->field === FieldType::LongLong && $domain->length < 11) {
-            return new Domain(Kind::Integer, FieldType::Long, $domain->length, 0, $domain->unsigned, $domain->collation, $domain->nullable, [], $domain->coercibility);
+        if ($domain->kind === Kind::Integer && $domain->field === Field::LongLong && $domain->length < 11) {
+            return new Domain(Kind::Integer, Field::Long, $domain->length, 0, $domain->unsigned, $domain->collation, $domain->nullable, [], $domain->coercibility);
         }
 
         return self::set($domain);
@@ -48,10 +54,10 @@ final class Materialized
     public static function set(Domain $domain): Domain
     {
         if ($domain->kind === Kind::Null) {
-            return new Domain(Kind::String, FieldType::VarString, 0, 0, false, Collation::Binary, true, [], Coercibility::Ignorable);
+            return new Domain(Kind::String, Field::VarString, 0, 0, false, Collation::binary(), true, [], Coercibility::Ignorable);
         }
         if ($domain->kind === Kind::String) {
-            $length = $domain->field === FieldType::Blob ? min(4294967295, $domain->length * $domain->collation->charset()->maxLength()) : $domain->length;
+            $length = $domain->field === Field::Blob ? min(4294967295, $domain->length * $domain->collation->charset->maxLength) : $domain->length;
 
             return new Domain(Kind::String, $domain->field, $length, 0, false, $domain->collation, $domain->nullable, $domain->members, $domain->coercibility);
         }

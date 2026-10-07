@@ -13,7 +13,7 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Assigner;
 use MySqlMemory\Variable\Scope as VariableScope;
@@ -107,10 +107,10 @@ final class SetCommand implements Command
         }
         if ($item instanceof SetNames || $item instanceof SetCharacterSet) {
             $charset = $item->charset->name?->value ?? 'utf8mb4';
-            $collation = $item instanceof SetNames && $item->collation?->name !== null ? $item->collation->name->value : (\MySqlMemory\Typing\Charset::named($charset)?->defaultCollation()->value ?? $charset);
+            $collation = $item instanceof SetNames && $item->collation?->name !== null ? $item->collation->name->value : (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($charset)?->defaultCollation($planner->settings->release())->name ?? $charset);
 
             return static function () use ($assigner, $charset, $collation, $item): void {
-                $text = Domain::string(64, Collation::Utf8mb40900AiCi);
+                $text = Domain::string(64, Collation::known('utf8mb4_0900_ai_ci'));
                 foreach (['character_set_client', 'character_set_results'] as $name) {
                     $assigner->assign($name, VariableScope::Session, $charset, $text);
                 }
@@ -132,10 +132,10 @@ final class SetCommand implements Command
     public function value(Scalar|SetWord $value, Planner $planner, Frame $frame): array
     {
         if ($value instanceof SetWord) {
-            return $value === SetWord::Default ? [null, null] : [$value->value, Domain::string(16, Collation::Utf8mb40900AiCi)];
+            return $value === SetWord::Default ? [null, null] : [$value->value, Domain::string(16, Collation::known('utf8mb4_0900_ai_ci'))];
         }
         if ($value instanceof BareName) {
-            return [$value->word->value, Domain::string(64, Collation::Utf8mb40900AiCi)];
+            return [$value->word->value, Domain::string(64, Collation::known('utf8mb4_0900_ai_ci'))];
         }
         $compiled = $planner->compiler->compile($value, new Scope());
 

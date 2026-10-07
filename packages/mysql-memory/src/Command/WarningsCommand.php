@@ -6,7 +6,7 @@ namespace MySqlMemory\Command;
 
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Result\Reply;
@@ -47,9 +47,9 @@ final class WarningsCommand implements Command
             }
         }
         $columns = [
-            new ResultColumn('Level', FieldType::VarString, 28, 31, ColumnFlag::NotNull->value, 33),
-            new ResultColumn('Code', FieldType::Long, 4, 0, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value, 63),
-            new ResultColumn('Message', FieldType::VarString, 2048, 31, ColumnFlag::NotNull->value, 33),
+            new ResultColumn('Level', Field::VarString, 28, 31, ColumnFlag::NotNull->value, 33),
+            new ResultColumn('Code', Field::Long, 4, 0, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value, 63),
+            new ResultColumn('Message', Field::VarString, 2048, 31, ColumnFlag::NotNull->value, 33),
         ];
 
         return new ResultSet($columns, $rows);

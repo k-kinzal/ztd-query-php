@@ -10,11 +10,11 @@ use MySqlMemory\Plan\ColumnOrigin;
 use MySqlMemory\Plan\QueryPlan;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Context;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Real;
 
 /**
@@ -68,8 +68,8 @@ final class Output
      */
     public function column(string $name, Domain $domain, ?ColumnOrigin $origin): ResultColumn
     {
-        $charset = $domain->kind === Kind::String || $domain->kind === Kind::Json ? $domain->collation->id() : 63;
-        $field = $domain->field === FieldType::Enum || $domain->field === FieldType::Set ? FieldType::String : $domain->field;
+        $charset = $domain->kind === Kind::String || $domain->kind === Kind::Json ? $domain->collation->id : 63;
+        $field = $domain->field === Field::Enum || $domain->field === Field::Set ? Field::String : $domain->field;
 
         return new ResultColumn($name, $field, $domain->byteLength(), $domain->decimals, $domain->flags() | ($origin?->flags ?? 0), $charset, $origin?->column ?? '', $origin?->table ?? '', $origin?->originalTable ?? '', $origin?->schema ?? '');
     }
@@ -82,7 +82,7 @@ final class Output
         if ($value === null) {
             return null;
         }
-        if ($domain->kind === Kind::Double && $domain->field === FieldType::Float && $domain->decimals >= Domain::NOT_FIXED) {
+        if ($domain->kind === Kind::Double && $domain->field === Field::Float && $domain->decimals >= Domain::NOT_FIXED) {
             return Real::format((float) sprintf('%.6G', (float) $value));
         }
         if ($domain->kind === Kind::Bit) {

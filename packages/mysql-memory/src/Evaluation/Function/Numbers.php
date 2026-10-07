@@ -8,9 +8,9 @@ use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Typing\Numeric;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Integer;
@@ -36,7 +36,7 @@ final class Numbers
         $real = static fn (array $d, Signature $s): Domain => Domain::double(23)->withNullable(true);
         $routines = [
             new Routine('ABS', 1, 1, fn (array $d, Signature $s): Domain => $this->same($d[0]), $this->abs(...)),
-            new Routine('SIGN', 1, 1, fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, 2)->withNullable($d[0]->nullable), $this->sign(...)),
+            new Routine('SIGN', 1, 1, fn (array $d, Signature $s): Domain => Domain::integer(Field::LongLong, 2)->withNullable($d[0]->nullable), $this->sign(...)),
             new Routine('CEILING', 1, 1, fn (array $d, Signature $s): Domain => $this->integral($d[0]), fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->toward($f, $a, $r, true)),
             new Routine('CEIL', 1, 1, fn (array $d, Signature $s): Domain => $this->integral($d[0]), fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->toward($f, $a, $r, true)),
             new Routine('FLOOR', 1, 1, fn (array $d, Signature $s): Domain => $this->integral($d[0]), fn (Frame $f, array $a, Domain $r): int|float|string|null => $this->toward($f, $a, $r, false)),
@@ -75,7 +75,7 @@ final class Numbers
     public function same(Domain $domain): Domain
     {
         return match (Numeric::operand($domain)) {
-            Kind::Integer => Domain::integer($domain->kind === Kind::Integer ? $domain->field : FieldType::LongLong, $domain->length, $domain->unsigned)->withNullable($domain->nullable),
+            Kind::Integer => Domain::integer($domain->kind === Kind::Integer ? $domain->field : Field::LongLong, $domain->length, $domain->unsigned)->withNullable($domain->nullable),
             Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(...Numeric::digits($domain))->withNullable($domain->nullable),
             default => Domain::double(23)->withNullable($domain->nullable),
         };
@@ -93,7 +93,7 @@ final class Numbers
         [$precision, $scale] = Numeric::digits($domain);
         $digits = $precision - $scale + ($scale > 0 ? 1 : 0);
 
-        return ($digits < 19 ? Domain::integer(FieldType::LongLong, $digits + 1, $domain->unsigned) : Domain::decimal($digits, 0))->withNullable($domain->nullable);
+        return ($digits < 19 ? Domain::integer(Field::LongLong, $digits + 1, $domain->unsigned) : Domain::decimal($digits, 0))->withNullable($domain->nullable);
     }
 
     /**
@@ -116,7 +116,7 @@ final class Numbers
         }
         $newScale = max(0, min(30, $decimals));
         if (Numeric::operand($domain) === Kind::Integer && $newScale === 0) {
-            return Domain::integer(FieldType::LongLong, $domain->length, $domain->unsigned)->withNullable($nullable);
+            return Domain::integer(Field::LongLong, $domain->length, $domain->unsigned)->withNullable($nullable);
         }
 
         return Domain::decimal(min(65, $precision - $scale + $newScale + 1), $newScale)->withNullable($nullable);

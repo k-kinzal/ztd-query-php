@@ -7,7 +7,7 @@ namespace MySqlMemory\Evaluation\Aggregate;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Order;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;

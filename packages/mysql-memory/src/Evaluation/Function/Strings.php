@@ -7,11 +7,11 @@ namespace MySqlMemory\Evaluation\Function;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Result\FieldType;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * The string functions that build strings: CONCAT, LEFT, SUBSTRING, REPLACE, LPAD and the others.
@@ -54,7 +54,7 @@ final class Strings
             new Routine('RTRIM', 1, 1, fn (array $d, Signature $s): Domain => $text($d, $s, $this->length($d[0])), fn (Frame $f, array $a, Domain $r): ?string => $this->strip($f, $a, false, true)),
             new Routine('SPACE', 1, 1, fn (array $d, Signature $s): Domain => $text([], $s, 64)->withNullable(true), $this->space(...)),
             new Routine('HEX', 1, 1, fn (array $d, Signature $s): Domain => $text([], $s, $this->length($d[0]) * 2)->withNullable($d[0]->nullable), $this->hex(...)),
-            new Routine('UNHEX', 1, 1, fn (array $d, Signature $s): Domain => Domain::string(intdiv($this->length($d[0]) + 1, 2), Collation::Binary)->withNullable(true), $this->unhex(...)),
+            new Routine('UNHEX', 1, 1, fn (array $d, Signature $s): Domain => Domain::string(intdiv($this->length($d[0]) + 1, 2), Collation::binary())->withNullable(true), $this->unhex(...)),
             new Routine('SUBSTRING_INDEX', 3, 3, fn (array $d, Signature $s): Domain => $text([$d[0], $d[1]], $s, $this->length($d[0])), $this->substringIndex(...)),
             new Routine('INSERT', 4, 4, fn (array $d, Signature $s): Domain => $text([$d[0], $d[3]], $s, $this->length($d[0]) + $this->length($d[3])), $this->insert(...)),
         ];
@@ -72,7 +72,7 @@ final class Strings
         foreach ($domains as $domain) {
             $nullable = $nullable || $domain->nullable;
         }
-        $field = $length > 16383 ? FieldType::Blob : FieldType::VarString;
+        $field = $length > 16383 ? Field::Blob : Field::VarString;
 
         return Domain::string(min($length, 4294967295), $collation, $field)->withCollation($collation, $coercibility)->withNullable($nullable);
     }
@@ -122,7 +122,7 @@ final class Strings
      */
     public function bytes(Domain $domain): bool
     {
-        return $domain->collation->charset()->maxLength() === 1;
+        return $domain->collation->charset->maxLength === 1;
     }
 
     /**
@@ -185,7 +185,7 @@ final class Strings
             return null;
         }
 
-        return $result->collation === Collation::Binary ? $texts[0] : ($this->bytes($result) ? strtoupper($texts[0]) : mb_strtoupper($texts[0], 'UTF-8'));
+        return $result->collation === Collation::binary() ? $texts[0] : ($this->bytes($result) ? strtoupper($texts[0]) : mb_strtoupper($texts[0], 'UTF-8'));
     }
 
     /**
@@ -200,7 +200,7 @@ final class Strings
             return null;
         }
 
-        return $result->collation === Collation::Binary ? $texts[0] : ($this->bytes($result) ? strtolower($texts[0]) : mb_strtolower($texts[0], 'UTF-8'));
+        return $result->collation === Collation::binary() ? $texts[0] : ($this->bytes($result) ? strtolower($texts[0]) : mb_strtolower($texts[0], 'UTF-8'));
     }
 
     /**

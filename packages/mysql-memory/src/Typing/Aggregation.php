@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 /**
  * Aggregates the domains of values that one result takes: the results of CASE, IF, COALESCE, and the columns of a UNION.
@@ -67,7 +71,7 @@ final class Aggregation
      */
     public function integers(array $domains): Domain
     {
-        $order = [FieldType::Tiny, FieldType::Short, FieldType::Int24, FieldType::Long, FieldType::LongLong];
+        $order = [Field::Tiny, Field::Short, Field::Int24, Field::Long, Field::LongLong];
         $widest = 0;
         $length = 0;
         $unsigned = true;
@@ -112,12 +116,12 @@ final class Aggregation
         $kinds = array_unique(array_map(static fn (Domain $domain): string => $domain->kind->name, $domains));
         $decimals = max(array_map(static fn (Domain $domain): int => $domain->decimals, $domains));
         if (count($kinds) === 1) {
-            $field = count(array_unique(array_map(static fn (Domain $domain): int => $domain->field->value, $domains))) === 1 ? $domains[0]->field : FieldType::DateTime;
+            $field = count(array_unique(array_map(static fn (Domain $domain): int => $domain->field->value, $domains))) === 1 ? $domains[0]->field : Field::DateTime;
 
             return new Domain($domains[0]->kind, $field, max(array_map(static fn (Domain $domain): int => $domain->length, $domains)), $decimals);
         }
         if (!in_array(Kind::Time->name, $kinds, true)) {
-            return new Domain(Kind::DateTime, FieldType::DateTime, 19 + ($decimals > 0 ? $decimals + 1 : 0), $decimals);
+            return new Domain(Kind::DateTime, Field::DateTime, 19 + ($decimals > 0 ? $decimals + 1 : 0), $decimals);
         }
 
         return $this->strings($domains, 'case');
@@ -135,13 +139,13 @@ final class Aggregation
         $blob = false;
         foreach ($domains as $domain) {
             $length = max($length, $domain->kind === Kind::String ? $domain->length : $this->textLength($domain));
-            $blob = $blob || $domain->field === FieldType::Blob;
+            $blob = $blob || $domain->field === Field::Blob;
         }
-        if ($collation === Collation::Binary && count(array_filter($domains, static fn (Domain $domain): bool => $domain->kind === Kind::String)) === 0) {
+        if ($collation === Collation::binary() && count(array_filter($domains, static fn (Domain $domain): bool => $domain->kind === Kind::String)) === 0) {
             $collation = $this->connection;
         }
 
-        return Domain::string($length, $collation, $blob ? FieldType::Blob : FieldType::VarString)->withCollation($collation, $coercibility);
+        return Domain::string($length, $collation, $blob ? Field::Blob : Field::VarString)->withCollation($collation, $coercibility);
     }
 
     /**

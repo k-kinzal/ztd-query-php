@@ -9,7 +9,7 @@ use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Operator\Coerce;
 use MySqlMemory\Evaluation\Operator\Comparator;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Aggregation;
 use MySqlMemory\Typing\Domain;
 
@@ -36,7 +36,7 @@ final class Control
             new Routine('IFNULL', 2, 2, fn (array $d, Signature $s): Domain => (new Aggregation($s->settings->connectionCollation))->of($d, 'ifnull')->withNullable($d[0]->nullable && $d[1]->nullable), $this->coalesce(...)),
             new Routine('COALESCE', 1, -1, fn (array $d, Signature $s): Domain => (new Aggregation($s->settings->connectionCollation))->of($d, 'coalesce')->withNullable(count(array_filter($d, static fn (Domain $x): bool => !$x->nullable)) === 0), $this->coalesce(...)),
             new Routine('NULLIF', 2, 2, fn (array $d, Signature $s): Domain => $d[0]->withNullable(true), $this->nullif(...)),
-            new Routine('ISNULL', 1, 1, fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, 1)->withNullable(false), fn (Frame $f, array $a, Domain $r): int => $a[0]->evaluate($f) === null ? 1 : 0),
+            new Routine('ISNULL', 1, 1, fn (array $d, Signature $s): Domain => Domain::integer(Field::LongLong, 1)->withNullable(false), fn (Frame $f, array $a, Domain $r): int => $a[0]->evaluate($f) === null ? 1 : 0),
         ];
     }
 

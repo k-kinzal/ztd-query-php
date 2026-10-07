@@ -8,10 +8,10 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Protocol\Binary;
 use MySqlMemory\Protocol\PayloadReader;
 use MySqlMemory\Protocol\PayloadWriter;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 /**
  * The prepared statements of a connection: COM_STMT_PREPARE, COM_STMT_EXECUTE and the commands around them.
@@ -73,7 +73,7 @@ final class Statements
         $this->client->packet((new PayloadWriter())->integer(0, 1)->integer($id, 4)->integer(count($columns), 2)->integer($parameters, 2)->integer(0, 1)->integer(0, 2)->payload());
         if ($parameters > 0) {
             for ($i = 0; $i < $parameters; $i++) {
-                $this->client->packet($this->client->messages->column(new ResultColumn('?', FieldType::VarString, 0, 0, 128, 63)));
+                $this->client->packet($this->client->messages->column(new ResultColumn('?', Field::VarString, 0, 0, 128, 63)));
             }
             $this->client->packet($this->client->messages->eof(0, $this->client->status()));
         }
@@ -117,10 +117,10 @@ final class Statements
         }
         [$sql, $count, $types, $long] = $this->prepared[$id];
         $session = $this->client->session();
-        $collation = Collation::named((string) $session->variables->read('collation_connection')) ?? Collation::Utf8mb40900AiCi;
+        $collation = Collation::named((string) $session->variables->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci');
         [$values, $types] = (new Binary())->parameters($reader, $count, $types, $collation);
         foreach ($long as $index => $data) {
-            $values[$index] = (new Binary())->text($data, FieldType::Blob, $collation);
+            $values[$index] = (new Binary())->text($data, Field::Blob, $collation);
         }
         $this->prepared[$id] = [$sql, $count, $types, []];
         $answers = $session->run($sql, $values, true);

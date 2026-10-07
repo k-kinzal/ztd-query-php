@@ -4,19 +4,21 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Result;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+
 /**
  * The definition of one column of a result set, as the server describes it to the client.
  *
  * @visibility public
  * @example Describing an integer column
- *     $column = new \MySqlMemory\Result\ResultColumn('id', \MySqlMemory\Result\FieldType::Long, 11, 0, \MySqlMemory\Result\ColumnFlag::NotNull->value, 63);
+ *     $column = new \MySqlMemory\Result\ResultColumn('id', \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, 11, 0, \MySqlMemory\Result\ColumnFlag::NotNull->value, 63);
  *     [$column->name, $column->type->name, $column->binary()] // => ['id', 'Long', true]
  */
 final class ResultColumn
 {
     /**
      * @param string $name The column name the client sees, the alias when there is one
-     * @param FieldType $type The type code
+     * @param Field $type The type code
      * @param int $length The display length in bytes of the column's character set
      * @param int $decimals The number of decimals, 31 for a floating type of no fixed scale or a string
      * @param int $flags The ColumnFlag bits
@@ -28,7 +30,7 @@ final class ResultColumn
      */
     public function __construct(
         public readonly string $name,
-        public readonly FieldType $type,
+        public readonly Field $type,
         public readonly int $length,
         public readonly int $decimals,
         public readonly int $flags,

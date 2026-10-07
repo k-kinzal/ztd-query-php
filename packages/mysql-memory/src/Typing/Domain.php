@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+
 use MySqlMemory\Result\ColumnFlag;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 /**
  * The resolved type of an expression or a column: what the server knows of its values before it reads any.
@@ -16,8 +23,8 @@ use MySqlMemory\Result\FieldType;
  *
  * @visibility public
  * @example The domain of an integer column
- *     $domain = \MySqlMemory\Typing\Domain::integer(FieldType::Long, 11);
- *     [$domain->kind, $domain->field, $domain->unsigned] // => [\MySqlMemory\Typing\Kind::Integer, \MySqlMemory\Result\FieldType::Long, false]
+ *     $domain = \MySqlMemory\Typing\Domain::integer(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, 11);
+ *     [$domain->kind, $domain->field, $domain->unsigned] // => [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, false]
  */
 final class Domain
 {
@@ -26,36 +33,55 @@ final class Domain
      */
     public const NOT_FIXED = 31;
 
+    public readonly Collation $collation;
+
     /**
      * @param Kind $kind How a value is held at run time
-     * @param FieldType $field The field type the protocol reports
+     * @param Field $field The field type the protocol reports
      * @param int $length The display length in characters
      * @param int $decimals The number of decimals, or NOT_FIXED
      * @param bool $unsigned Whether an integer or decimal is UNSIGNED
-     * @param Collation $collation The collation of a string; binary for every other kind
+     * @param Collation|null $collation The collation of a string; binary for every other kind when null
      * @param bool $nullable Whether a value can be NULL
      * @param list<string> $members The members of an ENUM or SET, in declared order
      * @param Coercibility $coercibility How strongly the collation of a string holds against another
      */
     public function __construct(
         public readonly Kind $kind,
-        public readonly FieldType $field,
+        public readonly Field $field,
         public readonly int $length = 0,
         public readonly int $decimals = 0,
         public readonly bool $unsigned = false,
-        public readonly Collation $collation = Collation::Binary,
+        ?Collation $collation = null,
         public readonly bool $nullable = true,
         public readonly array $members = [],
         public readonly Coercibility $coercibility = Coercibility::Implicit,
     ) {
+        $this->collation = $collation ?? Collation::binary();
+    }
+
+    /**
+     * Creates the domain of a type SQL Semantics resolved.
+     */
+    public static function of(Resolved $type, bool $nullable): self
+    {
+        return new self($type->kind, $type->field, $type->length, $type->decimals, $type->unsigned, $type->collation, $nullable, $type->members, $type->coercibility);
+    }
+
+    /**
+     * Answers the type without its nullability, as SQL Semantics resolves it.
+     */
+    public function resolved(): Resolved
+    {
+        return new Resolved($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility);
     }
 
     /**
      * Creates the domain of an integer of a field type.
      */
-    public static function integer(FieldType $field = FieldType::LongLong, int $length = 21, bool $unsigned = false): self
+    public static function integer(Field $field = Field::LongLong, int $length = 21, bool $unsigned = false): self
     {
-        return new self(Kind::Integer, $field, $length, 0, $unsigned, Collation::Binary, false);
+        return new self(Kind::Integer, $field, $length, 0, $unsigned, Collation::binary(), false);
     }
 
     /**
@@ -63,7 +89,7 @@ final class Domain
      */
     public static function decimal(int $precision, int $scale, bool $unsigned = false): self
     {
-        return new self(Kind::Decimal, FieldType::NewDecimal, $precision + ($scale > 0 ? 1 : 0) + ($unsigned ? 0 : 1), $scale, $unsigned, Collation::Binary, false);
+        return new self(Kind::Decimal, Field::NewDecimal, $precision + ($scale > 0 ? 1 : 0) + ($unsigned ? 0 : 1), $scale, $unsigned, Collation::binary(), false);
     }
 
     /**
@@ -71,13 +97,13 @@ final class Domain
      */
     public static function double(int $length = 22, int $decimals = self::NOT_FIXED): self
     {
-        return new self(Kind::Double, FieldType::Double, $length, $decimals, false, Collation::Binary, false);
+        return new self(Kind::Double, Field::Double, $length, $decimals, false, Collation::binary(), false);
     }
 
     /**
      * Creates the domain of a variable-length string of a collation.
      */
-    public static function string(int $length, Collation $collation, FieldType $field = FieldType::VarString): self
+    public static function string(int $length, Collation $collation, Field $field = Field::VarString): self
     {
         return new self(Kind::String, $field, $length, self::NOT_FIXED, false, $collation, false);
     }
@@ -87,7 +113,7 @@ final class Domain
      */
     public static function null(): self
     {
-        return new self(Kind::Null, FieldType::Null, 0, 0, false, Collation::Binary, true, [], Coercibility::Ignorable);
+        return new self(Kind::Null, Field::Null, 0, 0, false, Collation::binary(), true, [], Coercibility::Ignorable);
     }
 
     /**
@@ -119,7 +145,7 @@ final class Domain
      */
     public function byteLength(): int
     {
-        return $this->kind === Kind::String || $this->kind->temporal() ? $this->length * $this->collation->charset()->maxLength() : $this->length;
+        return $this->kind === Kind::String || $this->kind->temporal() ? $this->length * $this->collation->charset->maxLength : $this->length;
     }
 
     /**
@@ -131,19 +157,19 @@ final class Domain
         if ($this->unsigned) {
             $flags |= ColumnFlag::Unsigned->value;
         }
-        if ($this->collation === Collation::Binary && $this->kind !== Kind::Null) {
+        if ($this->collation === Collation::binary() && $this->kind !== Kind::Null) {
             $flags |= ColumnFlag::Binary->value;
         }
-        if (in_array($this->field, [FieldType::Blob, FieldType::TinyBlob, FieldType::MediumBlob, FieldType::LongBlob, FieldType::Json], true)) {
+        if (in_array($this->field, [Field::Blob, Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Json], true)) {
             $flags |= ColumnFlag::Blob->value;
         }
-        if ($this->kind->numeric() && $this->field !== FieldType::Year) {
+        if ($this->kind->numeric() && $this->field !== Field::Year) {
             $flags |= ColumnFlag::Numeric->value;
         }
-        if ($this->field === FieldType::Enum) {
+        if ($this->field === Field::Enum) {
             $flags |= ColumnFlag::Enum->value;
         }
-        if ($this->field === FieldType::Set) {
+        if ($this->field === Field::Set) {
             $flags |= ColumnFlag::Set->value;
         }
 

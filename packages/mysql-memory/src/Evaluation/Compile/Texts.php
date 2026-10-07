@@ -12,13 +12,13 @@ use MySqlMemory\Evaluation\Function\Call;
 use MySqlMemory\Evaluation\Function\Routine;
 use MySqlMemory\Evaluation\Function\Strings;
 use MySqlMemory\Evaluation\Scope;
-use MySqlMemory\Result\FieldType;
-use MySqlMemory\Typing\Charset;
-use MySqlMemory\Typing\Coercibility;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Call\CharCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Position;
 use SqlSemantics\Platform\MySql\Statement\Call\Trim;
@@ -68,12 +68,12 @@ final class Texts
             throw ErrorCode::UnknownCollation->error($node->collation->value);
         }
         $domain = $operand->domain();
-        $charset = $domain->kind === Kind::String ? $domain->collation->charset() : $this->compiler->settings->connectionCollation->charset();
-        if ($collation->charset() !== $charset) {
-            throw ErrorCode::CollationCharsetMismatch->error($collation->value, $charset->value);
+        $charset = $domain->kind === Kind::String ? $domain->collation->charset : $this->compiler->settings->connectionCollation->charset;
+        if ($collation->charset !== $charset) {
+            throw ErrorCode::CollationCharsetMismatch->error($collation->name, $charset->name);
         }
         $length = $domain->kind === Kind::String ? $domain->length : (new Strings())->length($domain);
-        $result = (new Domain(Kind::String, $domain->field === FieldType::Blob ? FieldType::Blob : FieldType::VarString, $length, Domain::NOT_FIXED, false, $collation, $domain->nullable))->withCollation($collation, Coercibility::Explicit);
+        $result = (new Domain(Kind::String, $domain->field === Field::Blob ? Field::Blob : Field::VarString, $length, Domain::NOT_FIXED, false, $collation, $domain->nullable))->withCollation($collation, Coercibility::Explicit);
 
         return $this->call('COLLATE', [$operand], $result, static fn (Frame $f, array $a): ?string => Convert::toText($a[0]->evaluate($f), $a[0]->domain()));
     }
@@ -85,8 +85,8 @@ final class Texts
     {
         $operand = $this->compiler->compile($node->operand, $scope);
         $domain = $operand->domain();
-        $length = $domain->kind === Kind::String ? $domain->length * $domain->collation->charset()->maxLength() : (new Strings())->length($domain);
-        $result = Domain::string($length, Collation::Binary, $domain->field === FieldType::Blob ? FieldType::Blob : FieldType::VarString)->withCollation(Collation::Binary, Coercibility::Implicit)->withNullable($domain->nullable);
+        $length = $domain->kind === Kind::String ? $domain->length * $domain->collation->charset->maxLength : (new Strings())->length($domain);
+        $result = Domain::string($length, Collation::binary(), $domain->field === Field::Blob ? Field::Blob : Field::VarString)->withCollation(Collation::binary(), Coercibility::Implicit)->withNullable($domain->nullable);
 
         return $this->call('BINARY', [$operand], $result, static fn (Frame $f, array $a): ?string => Convert::toText($a[0]->evaluate($f), $a[0]->domain()));
     }
@@ -106,17 +106,17 @@ final class Texts
         }
         $domain = $operand->domain();
         $length = $domain->kind === Kind::String ? $domain->length : (new Strings())->length($domain);
-        $collation = $charset->defaultCollation();
+        $collation = $charset->defaultCollation($this->compiler->settings->release());
         $result = Domain::string($length, $collation)->withCollation($collation, Coercibility::Implicit)->withNullable(true);
 
         return $this->call('CONVERT', [$operand], $result, static function (Frame $f, array $a) use ($charset): ?string {
             $text = Convert::toText($a[0]->evaluate($f), $a[0]->domain());
-            if ($text === null || $charset === Charset::Binary || $charset === Charset::Utf8mb4 || !mb_check_encoding($text, 'UTF-8')) {
+            if ($text === null || $charset === Charset::binary() || $charset === Charset::known('utf8mb4') || !mb_check_encoding($text, 'UTF-8')) {
                 return $text;
             }
-            $converted = @mb_convert_encoding($text, $charset === Charset::Latin1 ? 'Windows-1252' : 'ASCII', 'UTF-8');
+            $converted = @mb_convert_encoding($text, $charset === Charset::known('latin1') ? 'Windows-1252' : 'ASCII', 'UTF-8');
 
-            return is_string($converted) ? mb_convert_encoding($converted, 'UTF-8', $charset === Charset::Latin1 ? 'Windows-1252' : 'ASCII') : $text;
+            return is_string($converted) ? mb_convert_encoding($converted, 'UTF-8', $charset === Charset::known('latin1') ? 'Windows-1252' : 'ASCII') : $text;
         });
     }
 
@@ -169,8 +169,8 @@ final class Texts
     public function char(CharCall $node, Scope $scope): Evaluable
     {
         $arguments = array_map(fn ($argument): Evaluable => $this->compiler->compile($argument, $scope), $node->arguments);
-        $collation = $node->charset === null ? Collation::Binary : (Charset::named($node->charset->name?->value ?? 'binary')?->defaultCollation() ?? Collation::Binary);
-        $result = Domain::string(count($arguments) * 4 / ($collation === Collation::Binary ? 1 : 1), $collation)->withCollation($collation, Coercibility::Coercible)->withNullable($collation !== Collation::Binary);
+        $collation = $node->charset === null ? Collation::binary() : (Charset::named($node->charset->name?->value ?? 'binary')?->defaultCollation($this->compiler->settings->release()) ?? Collation::binary());
+        $result = Domain::string(count($arguments) * 4 / ($collation === Collation::binary() ? 1 : 1), $collation)->withCollation($collation, Coercibility::Coercible)->withNullable($collation !== Collation::binary());
 
         return $this->call('CHAR', $arguments, $result, static function (Frame $f, array $a): string {
             $bytes = '';
@@ -251,7 +251,7 @@ final class Texts
             if ($text === null || $expression === null) {
                 return null;
             }
-            $flags = $collation->binary() || str_ends_with($collation->value, '_cs') ? 'u' : 'ui';
+            $flags = $collation->binaryOrder() || str_ends_with($collation->name, '_cs') ? 'u' : 'ui';
             $matched = @preg_match('/' . str_replace('/', '\\/', $expression) . '/' . $flags, $text);
             if ($matched === false) {
                 throw ErrorCode::RegexpError->error('The regular expression is not valid.');

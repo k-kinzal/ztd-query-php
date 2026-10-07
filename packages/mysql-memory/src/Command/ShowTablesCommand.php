@@ -8,12 +8,12 @@ use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowLike;
 use SqlSemantics\Statement\Operation;
@@ -58,7 +58,7 @@ final class ShowTablesCommand implements Command
             $pattern = '/\A' . strtr(preg_quote($statement->filter->pattern->value, '/'), ['%' => '.*', '_' => '.']) . '\z/s';
             $names = array_values(array_filter($names, static fn (string $table): bool => preg_match($pattern, $table) === 1));
         }
-        $column = new ResultColumn('Tables_in_' . $name, FieldType::VarString, 256, 0, ColumnFlag::NotNull->value, Collation::Utf8mb3GeneralCi->id(), 'TABLE_NAME', 'TABLES', 'TABLES', 'information_schema');
+        $column = new ResultColumn('Tables_in_' . $name, Field::VarString, 256, 0, ColumnFlag::NotNull->value, Collation::known('utf8mb3_general_ci')->id, 'TABLE_NAME', 'TABLES', 'TABLES', 'information_schema');
 
         return new ResultSet([$column], array_map(static fn (string $table): array => [$table], $names));
     }

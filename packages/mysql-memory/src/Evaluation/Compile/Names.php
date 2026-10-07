@@ -13,11 +13,11 @@ use MySqlMemory\Evaluation\Leaf\Outer;
 use MySqlMemory\Evaluation\Leaf\SystemVariableRead;
 use MySqlMemory\Evaluation\Leaf\UserVariableRead;
 use MySqlMemory\Evaluation\Scope;
-use MySqlMemory\Result\FieldType;
-use MySqlMemory\Typing\Coercibility;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Variable\Scope as VariableScope;
 use MySqlMemory\Variable\Shape;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
@@ -30,7 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope as Written;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
-use SqlSemantics\Statement\Shape\Field;
+use SqlSemantics\Statement\Shape\Field as ShapeField;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -116,7 +116,7 @@ final class Names
     /**
      * Compiles a select item an alias or a position names.
      */
-    public function field(Field $field, Scope $scope): Evaluable
+    public function field(ShapeField $field, Scope $scope): Evaluable
     {
         if ($scope->output) {
             return new ColumnRead($scope->columns[(int) array_key_first($scope->columns)][$field->position], $field->position);
@@ -193,7 +193,7 @@ final class Names
     {
         [$value, $domain] = $this->compiler->connection->variables->user($variable->name->value);
         if ($value === null) {
-            $domain = Domain::string(0, Collation::Binary, FieldType::MediumBlob)->withCollation($this->compiler->settings->connectionCollation, Coercibility::Implicit);
+            $domain = Domain::string(0, Collation::binary(), Field::MediumBlob)->withCollation($this->compiler->settings->connectionCollation, Coercibility::Implicit);
         }
 
         return new UserVariableRead($variable->name->value, $domain->withNullable(true));
@@ -215,11 +215,11 @@ final class Names
     public function stored(Domain $domain): Domain
     {
         return match ($domain->kind) {
-            Kind::Integer, Kind::Year, Kind::Bit => Domain::integer(FieldType::LongLong, 21, $domain->unsigned),
+            Kind::Integer, Kind::Year, Kind::Bit => Domain::integer(Field::LongLong, 21, $domain->unsigned),
             Kind::Decimal => Domain::decimal(65, $domain->decimals),
             Kind::Double => Domain::double(),
-            Kind::Null => Domain::string(0, Collation::Binary, FieldType::MediumBlob),
-            default => Domain::string(16777216, $domain->collation, FieldType::MediumBlob)->withCollation($domain->collation, Coercibility::Implicit),
+            Kind::Null => Domain::string(0, Collation::binary(), Field::MediumBlob),
+            default => Domain::string(16777216, $domain->collation, Field::MediumBlob)->withCollation($domain->collation, Coercibility::Implicit),
         };
     }
 
@@ -248,11 +248,11 @@ final class Names
             throw ErrorCode::IncorrectGlobalLocalVariable->error($variable->name->value, 'GLOBAL');
         }
         $domain = match ($definition->shape) {
-            Shape::Boolean => new Domain(Kind::Integer, FieldType::LongLong, 1, 0, false, Collation::Binary, false),
-            Shape::Integer => Domain::integer(FieldType::LongLong, 21),
-            Shape::Unsigned => Domain::integer(FieldType::LongLong, 21, true),
+            Shape::Boolean => new Domain(Kind::Integer, Field::LongLong, 1, 0, false, Collation::binary(), false),
+            Shape::Integer => Domain::integer(Field::LongLong, 21),
+            Shape::Unsigned => Domain::integer(Field::LongLong, 21, true),
             Shape::Double => Domain::double(),
-            default => Domain::string(21845, Collation::Utf8mb3GeneralCi)->withCollation(Collation::Utf8mb3GeneralCi, Coercibility::SystemConstant),
+            default => Domain::string(21845, Collation::known('utf8mb3_general_ci'))->withCollation(Collation::known('utf8mb3_general_ci'), Coercibility::SystemConstant),
         };
 
         return new SystemVariableRead($definition, $scope === VariableScope::Global ? VariableScope::Global : VariableScope::Session, $domain->withNullable(true));

@@ -11,10 +11,10 @@ use MySqlMemory\Evaluation\Function\Library;
 use MySqlMemory\Evaluation\Function\Signature;
 use MySqlMemory\Evaluation\Leaf\Clock;
 use MySqlMemory\Evaluation\Scope;
-use MySqlMemory\Result\FieldType;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock as ClockKind;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
@@ -93,9 +93,9 @@ final class Calls
         $decimals = $call->precision === null ? 0 : (int) $call->precision->text;
         $fraction = $decimals > 0 ? $decimals + 1 : 0;
         $domain = match ($call->clock) {
-            ClockKind::CurrentDate, ClockKind::UtcDate => new Domain(Kind::Date, FieldType::Date, 10, 0, false, Collation::Binary, false),
-            ClockKind::CurrentTime, ClockKind::UtcTime => new Domain(Kind::Time, FieldType::Time, 8 + $fraction, $decimals, false, Collation::Binary, false),
-            default => new Domain(Kind::DateTime, FieldType::DateTime, 19 + $fraction, $decimals, false, Collation::Binary, false),
+            ClockKind::CurrentDate, ClockKind::UtcDate => new Domain(Kind::Date, Field::Date, 10, 0, false, Collation::binary(), false),
+            ClockKind::CurrentTime, ClockKind::UtcTime => new Domain(Kind::Time, Field::Time, 8 + $fraction, $decimals, false, Collation::binary(), false),
+            default => new Domain(Kind::DateTime, Field::DateTime, 19 + $fraction, $decimals, false, Collation::binary(), false),
         };
 
         return new Clock($call->clock, $domain);

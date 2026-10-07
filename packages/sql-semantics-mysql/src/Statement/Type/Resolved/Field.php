@@ -2,18 +2,19 @@
 
 declare(strict_types=1);
 
-namespace MySqlMemory\Result;
+namespace SqlSemantics\Platform\MySql\Statement\Type\Resolved;
 
 /**
- * The type code of a result column, as the protocol sends it in a column definition.
+ * The column type code the server reports for a resolved type in result metadata.
  *
- * Source: https://dev.mysql.com/doc/dev/mysql-server/latest/field__types_8h.html.
+ * Each case holds the code of the client/server protocol.
+ * Source: https://dev.mysql.com/doc/dev/mysql-server/latest/page_protocol_com_query_response_text_resultset_column_definition.html.
  *
  * @visibility public
- * @example Reading the code of a type
- *     \MySqlMemory\Result\FieldType::LongLong->value // => 8
+ * @example Reading the protocol code of BIGINT
+ *     \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong->value // => 8
  */
-enum FieldType: int
+enum Field: int
 {
     case Decimal = 0;
     case Tiny = 1;
@@ -46,10 +47,7 @@ enum FieldType: int
     case Geometry = 255;
 
     /**
-     * Tells whether the binary protocol sends a value of this type as an integer.
-     *
-     * @example Integers and years
-     *     [\MySqlMemory\Result\FieldType::Year->integral(), \MySqlMemory\Result\FieldType::Double->integral()] // => [true, false]
+     * Answers whether the code is an integer type, YEAR included.
      */
     public function integral(): bool
     {
@@ -57,13 +55,18 @@ enum FieldType: int
     }
 
     /**
-     * Tells whether the binary protocol sends a value of this type as a date or a time.
-     *
-     * @example Temporal types
-     *     [\MySqlMemory\Result\FieldType::DateTime->temporal(), \MySqlMemory\Result\FieldType::Year->temporal()] // => [true, false]
+     * Answers whether the code is a date, time, datetime or timestamp type.
      */
     public function temporal(): bool
     {
         return in_array($this, [self::Date, self::NewDate, self::DateTime, self::Timestamp, self::Time], true);
+    }
+
+    /**
+     * Answers whether the code is a BLOB or TEXT type, JSON included.
+     */
+    public function blob(): bool
+    {
+        return in_array($this, [self::Blob, self::TinyBlob, self::MediumBlob, self::LongBlob, self::Json], true);
     }
 }

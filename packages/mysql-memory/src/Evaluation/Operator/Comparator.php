@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
+use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Integer;
 use MySqlMemory\Value\Order;
@@ -55,7 +56,7 @@ final class Comparator
             ($left->kind === Kind::Decimal || $integer($left)) && ($right->kind === Kind::Decimal || $integer($right)) => Kind::Decimal,
             default => Kind::Double,
         };
-        $collation = $mode === Kind::String || $mode->temporal() ? Collations::aggregate([$left, $right], $operation, $connection)[0] : Collation::Binary;
+        $collation = $mode === Kind::String || $mode->temporal() ? Collations::aggregate([$left, $right], $operation, $connection)[0] : Collation::binary();
 
         return new self($mode, $left, $right, $collation);
     }
@@ -85,7 +86,7 @@ final class Comparator
         }
 
         return match ($this->mode) {
-            Kind::String, Kind::Json => $this->collation->compare(self::text($left, $this->left), self::text($right, $this->right)),
+            Kind::String, Kind::Json => Ordering::of($this->collation)->compare(self::text($left, $this->left), self::text($right, $this->right)),
             Kind::Integer => Integer::compare((int) $left, $this->left->unsigned, (int) $right, $this->right->unsigned),
             Kind::Decimal => Decimal::compare((string) Convert::toDecimal($left, $this->left, $context), (string) Convert::toDecimal($right, $this->right, $context)),
             Kind::DateTime, Kind::Time, Kind::Date => $this->temporalOrder($left, $right, $context),
@@ -101,7 +102,7 @@ final class Comparator
         $leftValue = self::moment($left, $this->left, $this->mode);
         $rightValue = self::moment($right, $this->right, $this->mode);
         if ($leftValue === null || $rightValue === null) {
-            return $this->collation->compare(self::text($left, $this->left), self::text($right, $this->right));
+            return Ordering::of($this->collation)->compare(self::text($left, $this->left), self::text($right, $this->right));
         }
 
         return $this->mode === Kind::Time ? Order::time($leftValue) <=> Order::time($rightValue) : $leftValue <=> $rightValue;

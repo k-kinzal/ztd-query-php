@@ -18,12 +18,12 @@ use MySqlMemory\Evaluation\Operator\Negation;
 use MySqlMemory\Evaluation\Operator\Pattern;
 use MySqlMemory\Evaluation\Operator\Range;
 use MySqlMemory\Evaluation\Scope;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Aggregation;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Typing\Numeric;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
@@ -62,7 +62,7 @@ final class Operators
      */
     public function truth(bool $nullable): Domain
     {
-        return new Domain(Kind::Integer, FieldType::LongLong, 1, 0, false, Collation::Binary, $nullable);
+        return new Domain(Kind::Integer, Field::LongLong, 1, 0, false, Collation::binary(), $nullable);
     }
 
     /**
@@ -74,7 +74,7 @@ final class Operators
         $right = $this->compiler->compile($node->right, $scope);
         $text = (new Printer())->expression($node);
         if ($node->operator->bitwise()) {
-            return new Bits($node->operator, $left, $right, Domain::integer(FieldType::LongLong, 21, true)->withNullable($left->domain()->nullable || $right->domain()->nullable), $text);
+            return new Bits($node->operator, $left, $right, Domain::integer(Field::LongLong, 21, true)->withNullable($left->domain()->nullable || $right->domain()->nullable), $text);
         }
 
         return new ArithmeticEvaluable($node->operator, $left, $right, Numeric::binary($node->operator, $left->domain(), $right->domain(), $this->compiler->settings->divPrecisionIncrement), $text);
@@ -90,7 +90,7 @@ final class Operators
         return match ($node->operator) {
             UnaryOperator::Plus => $operand,
             UnaryOperator::Not => new Negation($operand, $this->truth($operand->domain()->nullable)),
-            UnaryOperator::Invert => new Bits(null, $operand, $operand, Domain::integer(FieldType::LongLong, 21, true)->withNullable($operand->domain()->nullable), (new Printer())->expression($node)),
+            UnaryOperator::Invert => new Bits(null, $operand, $operand, Domain::integer(Field::LongLong, 21, true)->withNullable($operand->domain()->nullable), (new Printer())->expression($node)),
             UnaryOperator::Minus => new Minus($operand, $this->negated($operand->domain()), (new Printer())->expression($node)),
         };
     }
@@ -101,9 +101,9 @@ final class Operators
     public function negated(Domain $domain): Domain
     {
         return match (Numeric::operand($domain)) {
-            Kind::Integer => Domain::integer(FieldType::LongLong, $domain->length + ($domain->unsigned ? 1 : 0), false)->withNullable($domain->nullable),
+            Kind::Integer => Domain::integer(Field::LongLong, $domain->length + ($domain->unsigned ? 1 : 0), false)->withNullable($domain->nullable),
             Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(Numeric::digits($domain)[0], Numeric::digits($domain)[1])->withNullable($domain->nullable),
-            default => new Domain(Kind::Double, FieldType::Double, 23, $domain->kind === Kind::Double ? $domain->decimals : Domain::NOT_FIXED, false, Collation::Binary, $domain->nullable),
+            default => new Domain(Kind::Double, Field::Double, 23, $domain->kind === Kind::Double ? $domain->decimals : Domain::NOT_FIXED, false, Collation::binary(), $domain->nullable),
         };
     }
 

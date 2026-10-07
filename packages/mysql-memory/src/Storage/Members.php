@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Storage;
 
+use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Error\ErrorCode;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Stores values into ENUM and SET columns: a member, or a set of members in declared order.
@@ -35,7 +36,7 @@ final class Members
     public function value(string $text, Domain $from, ColumnDefinition $column): string
     {
         $members = $column->domain->members;
-        if ($column->domain->field === FieldType::Enum) {
+        if ($column->domain->field === Field::Enum) {
             $member = $this->member($text, $from, $members, $column);
             if ($member === null) {
                 $this->store->adjust(ErrorCode::DataTruncated, $column->name, $this->store->row);
@@ -72,7 +73,7 @@ final class Members
             return $position === 0 ? '' : ($members[$position - 1] ?? null);
         }
         foreach ($members as $member) {
-            if ($column->domain->collation->compare(rtrim($member, ' '), rtrim($text, ' ')) === 0) {
+            if (Ordering::of($column->domain->collation)->compare(rtrim($member, ' '), rtrim($text, ' ')) === 0) {
                 return $member;
             }
         }

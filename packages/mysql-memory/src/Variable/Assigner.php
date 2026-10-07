@@ -9,10 +9,10 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Session\SqlModes;
 use MySqlMemory\Session\Variables;
-use MySqlMemory\Typing\Charset;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Checks and assigns a value to a system variable, as SET does.
@@ -147,7 +147,7 @@ final class Assigner
                 throw ErrorCode::UnknownCollation->error($text);
             }
 
-            return $collation->value;
+            return $collation->name;
         }
         if (str_starts_with($definition->name, 'character_set_')) {
             $charset = Charset::named($text);
@@ -155,7 +155,7 @@ final class Assigner
                 throw ErrorCode::UnknownCharacterSet->error($text);
             }
 
-            return $charset->value;
+            return $charset->name;
         }
 
         return $text;

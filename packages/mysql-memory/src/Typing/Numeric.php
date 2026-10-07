@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
 
 /**
@@ -57,12 +61,12 @@ final class Numeric
         $nullable = $left->nullable || $right->nullable || in_array($operator, [ArithmeticOperator::Divide, ArithmeticOperator::Modulo, ArithmeticOperator::IntegerDivide], true);
         $kinds = [self::operand($left), self::operand($right)];
         if ($operator === ArithmeticOperator::IntegerDivide) {
-            return Domain::integer(FieldType::LongLong, max(1, $left->length - ($left->decimals > 0 && $left->decimals < Domain::NOT_FIXED ? $left->decimals + 1 : 0) + ($kinds[1] !== Kind::Integer ? 1 : 0)), $left->unsigned || $right->unsigned)->withNullable($nullable);
+            return Domain::integer(Field::LongLong, max(1, $left->length - ($left->decimals > 0 && $left->decimals < Domain::NOT_FIXED ? $left->decimals + 1 : 0) + ($kinds[1] !== Kind::Integer ? 1 : 0)), $left->unsigned || $right->unsigned)->withNullable($nullable);
         }
         if (in_array(Kind::Double, $kinds, true)) {
             $decimals = $left->kind === Kind::Null || $right->kind === Kind::Null ? 0 : Domain::NOT_FIXED;
 
-            return new Domain(Kind::Double, FieldType::Double, $decimals === 0 ? 2 : 23, $decimals, false, Collation::Binary, $nullable);
+            return new Domain(Kind::Double, Field::Double, $decimals === 0 ? 2 : 23, $decimals, false, Collation::binary(), $nullable);
         }
         if ($operator === ArithmeticOperator::Divide || in_array(Kind::Decimal, $kinds, true)) {
             return self::decimal($operator, self::digits($left), self::digits($right), $divIncrement, $left->unsigned && $right->unsigned)->withNullable($nullable);
@@ -74,7 +78,7 @@ final class Numeric
             default => max($left->length, $right->length) + 1,
         };
 
-        return Domain::integer(FieldType::LongLong, min(21, $length), $unsigned)->withNullable($nullable);
+        return Domain::integer(Field::LongLong, min(21, $length), $unsigned)->withNullable($nullable);
     }
 
     /**

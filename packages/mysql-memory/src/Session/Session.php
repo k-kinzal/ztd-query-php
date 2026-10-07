@@ -12,7 +12,7 @@ use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Reply;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlParser\Lexer\SourceException;
 use SqlParser\Parser\SyntaxException;
 use SqlSemantics\Contract\ParameterStyle;
@@ -223,7 +223,7 @@ final class Session
      */
     public function settings(): Settings
     {
-        $collation = Collation::named((string) $this->variables->read('collation_connection')) ?? Collation::Utf8mb40900AiCi;
+        $collation = Collation::named((string) $this->variables->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci');
 
         return new Settings($collation, $this->modes(), (int) $this->variables->read('div_precision_increment'), $this->variables->database, $this->instance->version);
     }

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
+use SqlSemantics\Contract\GrammarRelease;
 use MySqlMemory\Session\SqlModes;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 /**
  * The session settings that decide how a statement is resolved: what the server reads when it prepares a statement.
@@ -28,5 +29,13 @@ final class Settings
         public readonly string $database = '',
         public readonly string $version = '8.4.7',
     ) {
+    }
+
+    /**
+     * Answers the release whose character sets and collations the session has.
+     */
+    public function release(): GrammarRelease
+    {
+        return GrammarRelease::tryFrom('mysql-' . $this->version) ?? GrammarRelease::MySql847;
     }
 }

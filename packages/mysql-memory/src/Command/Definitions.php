@@ -14,12 +14,12 @@ use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\Clock;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Storage\Store;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Declared;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CommentAttribute;
@@ -75,7 +75,7 @@ final class Definitions
         }
         $elements = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof ColumnElement));
         $scope = new Scope();
-        $declared = new Declared($collation);
+        $declared = new Declared($collation, $this->planner->settings->release());
         $columns = [];
         $keys = [];
         foreach ($elements as $position => $element) {
@@ -93,7 +93,7 @@ final class Definitions
         $this->check($columns, $keys);
         usort($keys, static fn (Key $left, Key $right): int => ($right->kind === KeyKind::Primary) <=> ($left->kind === KeyKind::Primary));
 
-        return new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->value, $create->temporaryWords > 0);
+        return new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0);
     }
 
     /**
@@ -101,10 +101,10 @@ final class Definitions
      */
     public function collation(CreateTable $create): Collation
     {
-        $collation = Collation::named($this->schemaCollation) ?? Collation::Utf8mb40900AiCi;
+        $collation = Collation::named($this->schemaCollation) ?? Collation::known('utf8mb4_0900_ai_ci');
         foreach ($create->options as $option) {
             if ($option instanceof CharsetOption && $option->charset->name !== null) {
-                $collation = \MySqlMemory\Typing\Charset::named($option->charset->name->value)?->defaultCollation() ?? $collation;
+                $collation = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($option->charset->name->value)?->defaultCollation($this->planner->settings->release()) ?? $collation;
             }
             if ($option instanceof CollationOption && $option->collation->name !== null) {
                 $collation = Collation::named($option->collation->name->value) ?? $collation;
@@ -158,7 +158,7 @@ final class Definitions
         foreach ($attributes as $attribute) {
             if ($attribute instanceof DefaultLiteral || $attribute instanceof DefaultExpression) {
                 $value = $attribute instanceof DefaultLiteral ? $attribute->value : $attribute->expression;
-                if (in_array($column->domain->field, [FieldType::Blob, FieldType::Json], true) && $attribute instanceof DefaultLiteral) {
+                if (in_array($column->domain->field, [Field::Blob, Field::Json], true) && $attribute instanceof DefaultLiteral) {
                     throw ErrorCode::BlobCantHaveDefault->error($column->name);
                 }
                 $evaluable = $this->planner->compiler->compile($value, new Scope());

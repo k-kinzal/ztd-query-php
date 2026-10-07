@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
+use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
 
 /**
@@ -79,7 +80,7 @@ final class Pattern implements Evaluable
      */
     public function characters(string $text): array
     {
-        if ($this->collation->charset()->maxLength() === 1 || !mb_check_encoding($text, 'UTF-8')) {
+        if ($this->collation->charset->maxLength === 1 || !mb_check_encoding($text, 'UTF-8')) {
             return $text === '' ? [] : str_split($text);
         }
 
@@ -135,7 +136,7 @@ final class Pattern implements Evaluable
 
                 return false;
             }
-            if (!isset($subject[$at]) || ($kind === 'c' && $this->collation->compare($subject[$at], $character) !== 0)) {
+            if (!isset($subject[$at]) || ($kind === 'c' && Ordering::of($this->collation)->compare($subject[$at], $character) !== 0)) {
                 return false;
             }
             $at++;

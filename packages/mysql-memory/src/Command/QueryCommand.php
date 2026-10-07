@@ -10,7 +10,7 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Result\Completion;
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Typing\Domain;
@@ -117,13 +117,13 @@ final class QueryCommand implements Command
     public function domain(\MySqlMemory\Result\ResultColumn $column): Domain
     {
         if ($column->type->integral()) {
-            return Domain::integer(FieldType::LongLong, 21, $column->unsigned());
+            return Domain::integer(Field::LongLong, 21, $column->unsigned());
         }
 
         return match ($column->type) {
-            FieldType::NewDecimal, FieldType::Decimal => Domain::decimal(65, $column->decimals),
-            FieldType::Double, FieldType::Float => Domain::double(),
-            default => Domain::string(16777216, \MySqlMemory\Typing\Collation::tryFrom('binary') ?? \MySqlMemory\Typing\Collation::Binary, FieldType::MediumBlob),
+            Field::NewDecimal, Field::Decimal => Domain::decimal(65, $column->decimals),
+            Field::Double, Field::Float => Domain::double(),
+            default => Domain::string(16777216, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named('binary') ?? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), Field::MediumBlob),
         };
     }
 }

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Value;
 
+use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Compares and keys values of one domain, as the server sorts, groups and indexes them.
@@ -30,7 +31,7 @@ final class Order
             Kind::Integer, Kind::Year, Kind::Bit => Integer::compare((int) $left, $domain->unsigned, (int) $right, $domain->unsigned),
             Kind::Decimal => Decimal::compare((string) $left, (string) $right),
             Kind::Double => (float) $left <=> (float) $right,
-            Kind::String, Kind::Json => $domain->collation->compare((string) $left, (string) $right),
+            Kind::String, Kind::Json => Ordering::of($domain->collation)->compare((string) $left, (string) $right),
             Kind::Time => self::time((string) $left) <=> self::time((string) $right),
             Kind::Date, Kind::DateTime, Kind::Null => (string) $left <=> (string) $right,
         };
@@ -49,7 +50,7 @@ final class Order
             Kind::Integer, Kind::Year, Kind::Bit => 'i' . Integer::text((int) $value, $domain->unsigned),
             Kind::Decimal => 'd' . self::decimal((string) $value),
             Kind::Double => 'f' . ((float) $value == 0.0 ? '0' : Real::format((float) $value)),
-            Kind::String, Kind::Json => 's' . $domain->collation->key((string) $value),
+            Kind::String, Kind::Json => 's' . Ordering::of($domain->collation)->key((string) $value),
             default => 't' . $value,
         };
     }

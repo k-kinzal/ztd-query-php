@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Protocol;
 
-use MySqlMemory\Result\FieldType;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use MySqlMemory\Result\ResultColumn;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Integer;
 use MySqlMemory\Value\Temporal;
 
@@ -50,14 +50,14 @@ final class Binary
     {
         $unsigned = $column->unsigned();
         match ($column->type) {
-            FieldType::Tiny => $writer->integer((int) $value, 1),
-            FieldType::Short, FieldType::Year => $writer->integer((int) $value, 2),
-            FieldType::Long, FieldType::Int24 => $writer->integer((int) $value, 4),
-            FieldType::LongLong => $writer->integer($unsigned ? Integer::fromUnsignedText($value) : (int) $value, 8),
-            FieldType::Float => $writer->bytes(pack('g', (float) $value)),
-            FieldType::Double => $writer->bytes(pack('e', (float) $value)),
-            FieldType::Date, FieldType::NewDate, FieldType::DateTime, FieldType::Timestamp => $writer->bytes($this->dateTime($value)),
-            FieldType::Time => $writer->bytes($this->time($value)),
+            Field::Tiny => $writer->integer((int) $value, 1),
+            Field::Short, Field::Year => $writer->integer((int) $value, 2),
+            Field::Long, Field::Int24 => $writer->integer((int) $value, 4),
+            Field::LongLong => $writer->integer($unsigned ? Integer::fromUnsignedText($value) : (int) $value, 8),
+            Field::Float => $writer->bytes(pack('g', (float) $value)),
+            Field::Double => $writer->bytes(pack('e', (float) $value)),
+            Field::Date, Field::NewDate, Field::DateTime, Field::Timestamp => $writer->bytes($this->dateTime($value)),
+            Field::Time => $writer->bytes($this->time($value)),
             default => $writer->lengthEncodedString($value),
         };
     }
@@ -118,7 +118,7 @@ final class Binary
                 $values[] = [null, Domain::null()];
                 continue;
             }
-            $values[] = $this->parameter($reader, $types[$i] ?? FieldType::VarString->value, $collation);
+            $values[] = $this->parameter($reader, $types[$i] ?? Field::VarString->value, $collation);
         }
 
         return [$values, $types];
@@ -132,7 +132,7 @@ final class Binary
     public function parameter(PayloadReader $reader, int $type, Collation $collation): array
     {
         $unsigned = ($type & 0x8000) !== 0;
-        $field = FieldType::tryFrom($type & 0xFF) ?? FieldType::VarString;
+        $field = Field::tryFrom($type & 0xFF) ?? Field::VarString;
         $integer = static function (int $bytes, int $value) use ($unsigned): int {
             if ($unsigned || $bytes === 8) {
                 return $value;
@@ -143,13 +143,13 @@ final class Binary
         };
 
         return match ($field) {
-            FieldType::Tiny => [$integer(1, $reader->integer(1)), Domain::integer(FieldType::LongLong, 4, $unsigned)->withNullable(false)],
-            FieldType::Short, FieldType::Year => [$integer(2, $reader->integer(2)), Domain::integer(FieldType::LongLong, 6, $unsigned)->withNullable(false)],
-            FieldType::Long, FieldType::Int24 => [$integer(4, $reader->integer(4)), Domain::integer(FieldType::LongLong, 11, $unsigned)->withNullable(false)],
-            FieldType::LongLong => [$reader->integer(8), Domain::integer(FieldType::LongLong, 20, $unsigned)->withNullable(false)],
-            FieldType::Float => [(float) (unpack('g', $reader->bytes(4))[1] ?? 0.0), Domain::double()->withNullable(false)],
-            FieldType::Double => [(float) (unpack('e', $reader->bytes(8))[1] ?? 0.0), Domain::double()->withNullable(false)],
-            FieldType::Null => [null, Domain::null()],
+            Field::Tiny => [$integer(1, $reader->integer(1)), Domain::integer(Field::LongLong, 4, $unsigned)->withNullable(false)],
+            Field::Short, Field::Year => [$integer(2, $reader->integer(2)), Domain::integer(Field::LongLong, 6, $unsigned)->withNullable(false)],
+            Field::Long, Field::Int24 => [$integer(4, $reader->integer(4)), Domain::integer(Field::LongLong, 11, $unsigned)->withNullable(false)],
+            Field::LongLong => [$reader->integer(8), Domain::integer(Field::LongLong, 20, $unsigned)->withNullable(false)],
+            Field::Float => [(float) (unpack('g', $reader->bytes(4))[1] ?? 0.0), Domain::double()->withNullable(false)],
+            Field::Double => [(float) (unpack('e', $reader->bytes(8))[1] ?? 0.0), Domain::double()->withNullable(false)],
+            Field::Null => [null, Domain::null()],
             default => $this->text($reader->lengthEncodedString(), $field, $collation),
         };
     }
@@ -159,13 +159,13 @@ final class Binary
      *
      * @return array{string, Domain}
      */
-    public function text(string $value, FieldType $field, Collation $collation): array
+    public function text(string $value, Field $field, Collation $collation): array
     {
-        if ($field === FieldType::NewDecimal || $field === FieldType::Decimal) {
+        if ($field === Field::NewDecimal || $field === Field::Decimal) {
             return [$value, Domain::decimal(max(1, strlen(str_replace(['-', '.'], '', $value))), strpos($value, '.') === false ? 0 : strlen($value) - strpos($value, '.') - 1)->withNullable(false)];
         }
-        $collation = $field === FieldType::Blob || $field === FieldType::LongBlob || $field === FieldType::MediumBlob || $field === FieldType::TinyBlob ? Collation::Binary : $collation;
+        $collation = $field === Field::Blob || $field === Field::LongBlob || $field === Field::MediumBlob || $field === Field::TinyBlob ? Collation::binary() : $collation;
 
-        return [$value, (new Domain(Kind::String, FieldType::VarString, mb_strlen($value, 'UTF-8'), Domain::NOT_FIXED, false, $collation, false))];
+        return [$value, (new Domain(Kind::String, Field::VarString, mb_strlen($value, 'UTF-8'), Domain::NOT_FIXED, false, $collation, false))];
     }
 }

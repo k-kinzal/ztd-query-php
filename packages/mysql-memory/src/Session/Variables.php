@@ -85,7 +85,7 @@ final class Variables
      */
     public function user(string $name): array
     {
-        return $this->user[strtolower($name)] ?? [null, Domain::string(0, \MySqlMemory\Typing\Collation::Binary, \MySqlMemory\Result\FieldType::MediumBlob)];
+        return $this->user[strtolower($name)] ?? [null, Domain::string(0, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::MediumBlob)];
     }
 
     /**

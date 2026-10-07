@@ -10,7 +10,7 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Temporal;
 
@@ -106,12 +106,12 @@ final class Conversion implements Evaluable
         if ($this->limit === null) {
             return $value;
         }
-        $characters = $this->domain->collation->charset();
+        $characters = $this->domain->collation->charset;
         if ($characters->length($value) <= $this->limit) {
             return $value;
         }
         $context->warning(ErrorCode::TruncatedWrongValue, $this->target . '(' . $this->limit . ')', $value);
 
-        return $characters->maxLength() === 1 || !mb_check_encoding($value, 'UTF-8') ? substr($value, 0, $this->limit) : mb_substr($value, 0, $this->limit, 'UTF-8');
+        return $characters->maxLength === 1 || !mb_check_encoding($value, 'UTF-8') ? substr($value, 0, $this->limit) : mb_substr($value, 0, $this->limit, 'UTF-8');
     }
 }

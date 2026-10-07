@@ -7,10 +7,10 @@ namespace MySqlMemory\Evaluation\Function;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Operator\Moments;
-use MySqlMemory\Result\FieldType;
-use MySqlMemory\Typing\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use MySqlMemory\Typing\Domain;
-use MySqlMemory\Typing\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Value\Temporal;
 
 /**
@@ -30,9 +30,9 @@ final class Dates
      */
     public function routines(): array
     {
-        $part = static fn (int $length): \Closure => static fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, $length)->withNullable(true);
+        $part = static fn (int $length): \Closure => static fn (array $d, Signature $s): Domain => Domain::integer(Field::LongLong, $length)->withNullable(true);
         $routines = [
-            new Routine('DATE', 1, 1, static fn (array $d, Signature $s): Domain => new Domain(Kind::Date, FieldType::Date, 10, 0, false, Collation::Binary, true), fn (Frame $f, array $a): ?string => $this->moment($f, $a[0], Kind::Date)),
+            new Routine('DATE', 1, 1, static fn (array $d, Signature $s): Domain => new Domain(Kind::Date, Field::Date, 10, 0, false, Collation::binary(), true), fn (Frame $f, array $a): ?string => $this->moment($f, $a[0], Kind::Date)),
         ];
         $parts = [
             'YEAR' => [4, static fn (array $p): int => $p[0], Kind::Date],
@@ -65,7 +65,7 @@ final class Dates
             return null;
         }
 
-        return (new Moments())->convert($value, $argument->domain(), new Domain($kind, $kind === Kind::Date ? FieldType::Date : FieldType::DateTime, 26, 6), $frame->context);
+        return (new Moments())->convert($value, $argument->domain(), new Domain($kind, $kind === Kind::Date ? Field::Date : Field::DateTime, 26, 6), $frame->context);
     }
 
     /**
@@ -89,7 +89,7 @@ final class Dates
 
             return $parts === null ? null : $read([0, 0, 0, $parts[1], $parts[2], $parts[3], $parts[4]]);
         }
-        $moment = (new Moments())->convert($value, $domain, new Domain(Kind::DateTime, FieldType::DateTime, 26, 6), $frame->context);
+        $moment = (new Moments())->convert($value, $domain, new Domain(Kind::DateTime, Field::DateTime, 26, 6), $frame->context);
         $parts = $moment === null ? null : Temporal::parseDateTime($moment);
 
         return $parts === null ? null : $read($parts);
