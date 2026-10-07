@@ -213,6 +213,6 @@ final class Operators
      */
     public function cast(Cast $node, Scope $scope): Evaluable
     {
-        return (new Casts($this->compiler))->cast($this->compiler->compile($node->operand, $scope), $node->target);
+        return (new Casts($this->compiler))->cast($this->compiler->compile($node->operand, $scope), $node->target, $node);
     }
 }

@@ -40,7 +40,7 @@ final class Dates
      */
     public function arithmetic(IntervalArithmetic $node, Scope $scope): Evaluable
     {
-        return $this->shift($node->operand, $node->interval->quantity, $node->interval->unit, $node->subtract, $scope);
+        return $this->shift($node->operand, $node->interval->quantity, $node->interval->unit, $node->subtract, $scope, $node);
     }
 
     /**
@@ -48,7 +48,7 @@ final class Dates
      */
     public function addition(IntervalAddition $node, Scope $scope): Evaluable
     {
-        return $this->shift($node->operand, $node->interval->quantity, $node->interval->unit, false, $scope);
+        return $this->shift($node->operand, $node->interval->quantity, $node->interval->unit, false, $scope, $node);
     }
 
     /**
@@ -56,34 +56,20 @@ final class Dates
      */
     public function call(DateArithmetic $node, Scope $scope): Evaluable
     {
-        return $this->shift($node->date, $node->quantity, $node->unit, $node->subtract, $scope);
+        return $this->shift($node->date, $node->quantity, $node->unit, $node->subtract, $scope, $node);
     }
 
     /**
      * Compiles a date moved by an interval.
      */
-    public function shift(Scalar $operand, Scalar $quantity, IntervalUnit $unit, bool $subtract, Scope $scope): Evaluable
+    public function shift(Scalar $operand, Scalar $quantity, IntervalUnit $unit, bool $subtract, Scope $scope, Scalar $node): Evaluable
     {
         $date = $this->compiler->compile($operand, $scope);
         $amount = $this->compiler->compile($quantity, $scope);
 
-        return new DateShift($date, $amount, $unit, $subtract, $this->domain($date->domain(), $unit));
+        return new DateShift($date, $amount, $unit, $subtract, $this->compiler->domain($node));
     }
 
-    /**
-     * Answers the domain of a date moved by a unit.
-     */
-    public function domain(Domain $operand, IntervalUnit $unit): Domain
-    {
-        $micro = in_array($unit, [IntervalUnit::Microsecond, IntervalUnit::SecondMicrosecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::HourMicrosecond, IntervalUnit::DayMicrosecond], true) ? 6 : 0;
-
-        return match ($operand->kind) {
-            Kind::Date => Interval::dated($unit) ? new Domain(Kind::Date, Field::Date, 10) : new Domain(Kind::DateTime, Field::DateTime, 19 + ($micro > 0 ? 7 : 0), $micro),
-            Kind::DateTime => new Domain(Kind::DateTime, Field::DateTime, max($operand->length, 19 + ($micro > 0 ? 7 : 0)), max($operand->decimals, $micro)),
-            Kind::Time => new Domain(Kind::Time, Field::Time, max($operand->length, 10 + ($micro > 0 ? 7 : 0)), max($operand->decimals, $micro)),
-            default => Domain::string(29, $this->compiler->settings->connectionCollation, Field::String)->withNullable(true),
-        };
-    }
 
     /**
      * Compiles EXTRACT(unit FROM value): the parts of the unit, written together as one integer.
@@ -92,8 +78,7 @@ final class Dates
     {
         $source = $this->compiler->compile($node->source, $scope);
         $unit = $node->unit;
-        $lengths = ['YEAR' => 4, 'MONTH' => 2, 'DAY' => 2, 'HOUR' => 2, 'MINUTE' => 2, 'SECOND' => 2, 'MICROSECOND' => 6, 'WEEK' => 2, 'QUARTER' => 1, 'YEAR_MONTH' => 6, 'DAY_HOUR' => 4, 'DAY_MINUTE' => 6, 'DAY_SECOND' => 8, 'HOUR_MINUTE' => 4, 'HOUR_SECOND' => 6, 'MINUTE_SECOND' => 4, 'DAY_MICROSECOND' => 14, 'HOUR_MICROSECOND' => 12, 'MINUTE_MICROSECOND' => 10, 'SECOND_MICROSECOND' => 8];
-        $domain = Domain::integer(Field::LongLong, ($lengths[$unit->value] ?? 2) + 1)->withNullable(true);
+        $domain = $this->compiler->domain($node);
         $moments = new \MySqlMemory\Evaluation\Operator\Moments();
 
         return (new Texts($this->compiler))->call('EXTRACT', [$source], $domain, static function (\MySqlMemory\Evaluation\Frame $f, array $a) use ($unit, $moments): ?int {

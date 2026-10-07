@@ -74,7 +74,7 @@ final class Texts
             throw ErrorCode::CollationCharsetMismatch->error($collation->name, $charset->name);
         }
         $length = $domain->kind === Kind::String ? $domain->length : (new Strings())->length($domain);
-        $result = (new Domain(Kind::String, $domain->field === Field::Blob ? Field::Blob : Field::VarString, $length, Domain::NOT_FIXED, false, $collation, $domain->nullable))->withCollation($collation, Coercibility::Explicit);
+        $result = $this->compiler->domain($node);
 
         return $this->call('COLLATE', [$operand], $result, static fn (Frame $f, array $a): ?string => Convert::toText($a[0]->evaluate($f), $a[0]->domain()));
     }
@@ -87,7 +87,7 @@ final class Texts
         $operand = $this->compiler->compile($node->operand, $scope);
         $domain = $operand->domain();
         $length = $domain->kind === Kind::String ? $domain->length * $domain->collation->charset->maxLength : (new Strings())->length($domain);
-        $result = Domain::string($length, Collation::binary(), $domain->field === Field::Blob ? Field::Blob : Field::VarString)->withCollation(Collation::binary(), Coercibility::Implicit)->withNullable($domain->nullable);
+        $result = $this->compiler->domain($node);
 
         return $this->call('BINARY', [$operand], $result, static fn (Frame $f, array $a): ?string => Convert::toText($a[0]->evaluate($f), $a[0]->domain()));
     }
@@ -108,7 +108,7 @@ final class Texts
         $domain = $operand->domain();
         $length = $domain->kind === Kind::String ? $domain->length : (new Strings())->length($domain);
         $collation = $charset->defaultCollation($this->compiler->settings->release());
-        $result = Domain::string($length, $collation)->withCollation($collation, Coercibility::Implicit)->withNullable(true);
+        $result = $this->compiler->domain($node);
 
         return $this->call('CONVERT', [$operand], $result, static function (Frame $f, array $a) use ($charset): ?string {
             $text = Convert::toText($a[0]->evaluate($f), $a[0]->domain());
@@ -171,7 +171,7 @@ final class Texts
     {
         $arguments = array_map(fn ($argument): Evaluable => $this->compiler->compile($argument, $scope), $node->arguments);
         $collation = $node->charset === null ? Collation::binary() : (Charset::named($node->charset->name?->value ?? 'binary')?->defaultCollation($this->compiler->settings->release()) ?? Collation::binary());
-        $result = Domain::string(count($arguments) * 4 / ($collation === Collation::binary() ? 1 : 1), $collation)->withCollation($collation, Coercibility::Coercible)->withNullable($collation !== Collation::binary());
+        $result = $this->compiler->domain($node);
 
         return $this->call('CHAR', $arguments, $result, static function (Frame $f, array $a): string {
             $bytes = '';
