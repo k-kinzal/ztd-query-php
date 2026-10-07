@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Path\Combine;
 
-use MySqlMemory\Plan\Path\Source\WorkingTable;
 use MySqlMemory\Plan\Path\AccessPath;
+use MySqlMemory\Plan\Path\Source\WorkingTable;
 use MySqlMemory\Typing\Domain;
 use Override;
 

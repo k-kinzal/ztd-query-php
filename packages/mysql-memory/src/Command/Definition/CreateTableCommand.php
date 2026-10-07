@@ -16,7 +16,7 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
-use MySqlMemory\Storage\TableData;
+use MySqlMemory\Storage\Heap;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Statement\Operation;
@@ -72,7 +72,7 @@ final class CreateTableCommand implements Command
         }
         $planner = new Planner($create, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $definition = (new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schemaName);
-        $schema->tables[$name] = new StoredTable($this->primaryNotNull($definition), new TableData());
+        $schema->tables[$name] = new StoredTable($this->primaryNotNull($definition), new Heap());
 
         return new Completion(0, 0, $context->diagnostics->count());
     }
@@ -89,7 +89,7 @@ final class CreateTableCommand implements Command
         $columns = $definition->columns;
         foreach ($primary->columns as $position) {
             $column = $columns[$position];
-            $columns[$position] = new ColumnDefinition($column->name, $column->domain->withNullable(false), $column->default->declared && $column->default->value === null && $column->default->expression === null ? \MySqlMemory\Dictionary\ColumnDefault::none() : $column->default, $column->autoIncrement, $column->onUpdateNow, $column->generated, $column->invisible, $column->declaration, $column->comment);
+            $columns[$position] = new ColumnDefinition($column->name, $column->domain->withNullable(false), $column->default->declared && $column->default->value === null && $column->default->expression === null ? \MySqlMemory\Dictionary\Fill::none() : $column->default, $column->autoIncrement, $column->onUpdateNow, $column->generated, $column->invisible, $column->declaration, $column->comment);
         }
 
         return new TableDefinition($definition->schema, $definition->name, $columns, $definition->keys, $definition->declaration, $definition->engine, $definition->collation, $definition->temporary, $definition->comment);

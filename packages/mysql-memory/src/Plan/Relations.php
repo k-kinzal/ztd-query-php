@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
-use MySqlMemory\Typing\Domain;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
@@ -13,11 +12,12 @@ use MySqlMemory\Evaluation\Operator\Comparison\Compare;
 use MySqlMemory\Evaluation\Operator\Logic;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Path\AccessPath;
-use MySqlMemory\Plan\Path\JoinKind;
-use MySqlMemory\Plan\Path\Transform\Materialize;
 use MySqlMemory\Plan\Path\Combine\NestedLoopJoin;
+use MySqlMemory\Plan\Path\JoinKind;
 use MySqlMemory\Plan\Path\Source\SingleRow;
 use MySqlMemory\Plan\Path\Source\TableScan;
+use MySqlMemory\Plan\Path\Transform\Materialize;
+use MySqlMemory\Typing\Domain;
 use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
@@ -126,7 +126,7 @@ final class Relations
      * @param list<Domain> $planned The types of the columns of the plan of its query
      * @return list<Domain>
      */
-    public function shaped(\SqlSemantics\Statement\Relation $relation, array $planned): array
+    public function shaped(Relation $relation, array $planned): array
     {
         $domains = [];
         foreach ($this->planner->compiler->facts->relation($relation)->shape->slots as $position => $slot) {

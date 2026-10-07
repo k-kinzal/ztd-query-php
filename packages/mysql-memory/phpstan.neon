@@ -9,6 +9,7 @@ parameters:
         forbiddenNamespacePrefixes: ['Tests\\Fixture', 'Tests\\Fixtures']
         broadCatchAllowedPaths:
             - src/Server/Client.php
+            - fuzz/campaign.php
     phpVersion: 80100
     level: max
     paths: [src, tests, fuzz]

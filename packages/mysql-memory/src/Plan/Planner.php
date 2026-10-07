@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
-use MySqlMemory\Typing\Domain;
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Compiler;
@@ -12,13 +11,14 @@ use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Scope;
-use MySqlMemory\Plan\Path\Transform\Project;
-use MySqlMemory\Plan\Path\SetKind;
 use MySqlMemory\Plan\Path\Combine\SetOperation as SetPath;
-use MySqlMemory\Plan\Path\Transform\Sort;
-use MySqlMemory\Plan\Path\Source\Values;
+use MySqlMemory\Plan\Path\SetKind;
+use MySqlMemory\Plan\Path\Source\Inline;
 use MySqlMemory\Plan\Path\Source\WorkingTable;
+use MySqlMemory\Plan\Path\Transform\Project;
+use MySqlMemory\Plan\Path\Transform\Sort;
 use MySqlMemory\Result\ColumnFlag;
+use MySqlMemory\Typing\Domain;
 use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
@@ -63,7 +63,7 @@ final class Planner
     public array $commonTables = [];
 
     /**
-     * @var array<int, array{WorkingTable, list<\MySqlMemory\Typing\Domain>, list<string>}> The working tables of the recursive expressions being planned, by object id
+     * @var array<int, array{WorkingTable, list<Domain>, list<string>}> The working tables of the recursive expressions being planned, by object id
      */
     public array $recursions = [];
 
@@ -197,13 +197,13 @@ final class Planner
         $domains = $this->outputs($query);
         $names = array_map(static fn (int $position): string => 'column_' . $position, array_keys($domains));
 
-        return new QueryPlan(new Values($rows, count($domains)), $domains, $names);
+        return new QueryPlan(new Inline($rows, count($domains)), $domains, $names);
     }
 
     /**
      * Answers the origins of the columns of a temporary table: none, but a blob column is flagged as one.
      *
-     * @param list<\MySqlMemory\Typing\Domain> $domains
+     * @param list<Domain> $domains
      * @return list<ColumnOrigin|null>
      */
     public function materialized(array $domains): array

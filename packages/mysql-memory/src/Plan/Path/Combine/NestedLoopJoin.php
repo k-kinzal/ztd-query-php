@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Path\Combine;
 
-use MySqlMemory\Plan\Path\JoinKind;
-use MySqlMemory\Plan\Path\AccessPath;
 use MySqlMemory\Evaluation\Evaluable;
+use MySqlMemory\Plan\Path\AccessPath;
+use MySqlMemory\Plan\Path\JoinKind;
 use Override;
 
 /**

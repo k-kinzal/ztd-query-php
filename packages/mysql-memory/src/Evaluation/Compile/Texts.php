@@ -25,9 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Regexp;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\SoundsLike;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**

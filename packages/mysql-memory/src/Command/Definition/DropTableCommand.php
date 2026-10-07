@@ -11,7 +11,7 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
-use MySqlMemory\Storage\TableData;
+use MySqlMemory\Storage\Heap;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
@@ -53,7 +53,7 @@ final class DropTableCommand implements Command
             if ($table === null) {
                 throw ErrorCode::NoSuchTable->error($schema, $statement->table->name->value);
             }
-            $table->data = new TableData();
+            $table->data = new Heap();
 
             return new Completion();
         }

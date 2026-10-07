@@ -6,7 +6,7 @@ namespace MySqlMemory\Session;
 
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Storage\TableData;
+use MySqlMemory\Storage\Heap;
 
 /**
  * The transaction of a session, and the atomicity of each statement.
@@ -26,12 +26,12 @@ final class Transaction
     public bool $open = false;
 
     /**
-     * @var array<int, array{StoredTable, TableData}> The rows of each table before the current statement changed it
+     * @var array<int, array{StoredTable, Heap}> The rows of each table before the current statement changed it
      */
     private array $statement = [];
 
     /**
-     * @var array<int, array{StoredTable, TableData}> The rows of each table before the open transaction changed it
+     * @var array<int, array{StoredTable, Heap}> The rows of each table before the open transaction changed it
      */
     private array $kept = [];
 

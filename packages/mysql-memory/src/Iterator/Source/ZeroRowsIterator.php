@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator\Source;
 
-use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Iterator\RowIterator;
 use Override;
 
 /**

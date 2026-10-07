@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Path\Source;
 
-use MySqlMemory\Plan\Path\AccessPath;
 use MySqlMemory\Evaluation\Evaluable;
+use MySqlMemory\Plan\Path\AccessPath;
 use Override;
 
 /**
@@ -13,7 +13,7 @@ use Override;
  *
  * @visibility MySqlMemory
  */
-final class Values implements AccessPath
+final class Inline implements AccessPath
 {
     /**
      * @param list<list<Evaluable>> $rows The expressions of each row

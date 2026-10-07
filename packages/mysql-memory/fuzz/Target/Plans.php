@@ -20,6 +20,8 @@ final class Plans
 {
     /**
      * Answers the plan of a mode: statement, query, expression or write.
+     *
+     * @return GenerationPlan<true>
      */
     public function plan(string $mode, string $grammar): GenerationPlan
     {
@@ -48,11 +50,24 @@ final class Plans
             )));
         }
 
-        return $plan->withExpansionBudget((int) (getenv('MYSQL_MEMORY_BUDGET') ?: 96));
+        return $plan->withExpansionBudget($this->budget());
+    }
+
+    /**
+     * Answers the expansion budget: MYSQL_MEMORY_BUDGET, or 96.
+     */
+    public function budget(): int
+    {
+        $budget = getenv('MYSQL_MEMORY_BUDGET');
+
+        return is_string($budget) && $budget !== '' ? (int) $budget : 96;
     }
 
     /**
      * Constrains a query to the common forms: SELECT from the fixture tables, joins and derived tables, without INTO, locking, partitions or samples.
+     *
+     * @param GenerationPlan<true> $plan
+     * @return GenerationPlan<true>
      */
     public function mainstream(GenerationPlan $plan): GenerationPlan
     {
@@ -78,6 +93,9 @@ final class Plans
 
     /**
      * Constrains table and column names to the fixture.
+     *
+     * @param GenerationPlan<true> $plan
+     * @return GenerationPlan<true>
      */
     public function named(GenerationPlan $plan): GenerationPlan
     {

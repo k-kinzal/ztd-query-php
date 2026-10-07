@@ -4,38 +4,38 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator;
 
+use LogicException;
+use MySqlMemory\Iterator\Combine\NestedLoopJoinIterator;
 use MySqlMemory\Iterator\Combine\RecursiveUnionIterator;
 use MySqlMemory\Iterator\Combine\SetOperationIterator;
-use MySqlMemory\Iterator\Combine\NestedLoopJoinIterator;
-use MySqlMemory\Iterator\Transform\MaterializeIterator;
-use MySqlMemory\Iterator\Transform\AggregateIterator;
-use MySqlMemory\Iterator\Transform\LimitIterator;
-use MySqlMemory\Iterator\Transform\SortIterator;
-use MySqlMemory\Iterator\Transform\DistinctIterator;
-use MySqlMemory\Iterator\Transform\ProjectIterator;
-use MySqlMemory\Iterator\Transform\FilterIterator;
-use MySqlMemory\Iterator\Source\WorkingTableIterator;
-use MySqlMemory\Iterator\Source\ValuesIterator;
-use MySqlMemory\Iterator\Source\ZeroRowsIterator;
 use MySqlMemory\Iterator\Source\SingleRowIterator;
 use MySqlMemory\Iterator\Source\TableScanIterator;
-use LogicException;
+use MySqlMemory\Iterator\Source\InlineIterator;
+use MySqlMemory\Iterator\Source\WorkingTableIterator;
+use MySqlMemory\Iterator\Source\ZeroRowsIterator;
+use MySqlMemory\Iterator\Transform\AggregateIterator;
+use MySqlMemory\Iterator\Transform\DistinctIterator;
+use MySqlMemory\Iterator\Transform\FilterIterator;
+use MySqlMemory\Iterator\Transform\LimitIterator;
+use MySqlMemory\Iterator\Transform\MaterializeIterator;
+use MySqlMemory\Iterator\Transform\ProjectIterator;
+use MySqlMemory\Iterator\Transform\SortIterator;
 use MySqlMemory\Plan\Path\AccessPath;
+use MySqlMemory\Plan\Path\Combine\NestedLoopJoin;
+use MySqlMemory\Plan\Path\Combine\RecursiveUnion;
+use MySqlMemory\Plan\Path\Combine\SetOperation;
+use MySqlMemory\Plan\Path\Source\SingleRow;
+use MySqlMemory\Plan\Path\Source\TableScan;
+use MySqlMemory\Plan\Path\Source\Inline;
+use MySqlMemory\Plan\Path\Source\WorkingTable;
+use MySqlMemory\Plan\Path\Source\ZeroRows;
 use MySqlMemory\Plan\Path\Transform\Aggregate;
 use MySqlMemory\Plan\Path\Transform\Distinct;
 use MySqlMemory\Plan\Path\Transform\Filter;
 use MySqlMemory\Plan\Path\Transform\Limit;
 use MySqlMemory\Plan\Path\Transform\Materialize;
-use MySqlMemory\Plan\Path\Combine\NestedLoopJoin;
 use MySqlMemory\Plan\Path\Transform\Project;
-use MySqlMemory\Plan\Path\Combine\RecursiveUnion;
-use MySqlMemory\Plan\Path\Combine\SetOperation;
-use MySqlMemory\Plan\Path\Source\SingleRow;
 use MySqlMemory\Plan\Path\Transform\Sort;
-use MySqlMemory\Plan\Path\Source\TableScan;
-use MySqlMemory\Plan\Path\Source\Values;
-use MySqlMemory\Plan\Path\Source\WorkingTable;
-use MySqlMemory\Plan\Path\Source\ZeroRows;
 
 /**
  * Creates the iterator tree that executes an access path tree.
@@ -66,7 +66,7 @@ final class Builder
             $path instanceof Sort => new SortIterator($path, $this->build($path->input)),
             $path instanceof Limit => new LimitIterator($path, $this->build($path->input)),
             $path instanceof Distinct => new DistinctIterator($path, $this->build($path->input)),
-            $path instanceof Values => new ValuesIterator($path),
+            $path instanceof Inline => new InlineIterator($path),
             $path instanceof RecursiveUnion => new RecursiveUnionIterator($path, $this->build($path->anchor), $this->build($path->recursive)),
             $path instanceof WorkingTable => new WorkingTableIterator($path),
             $path instanceof SetOperation => new SetOperationIterator($path, $this->build($path->left), $this->build($path->right)),

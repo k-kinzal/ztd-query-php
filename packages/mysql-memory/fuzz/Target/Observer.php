@@ -54,20 +54,28 @@ final class Observer
     /**
      * Answers the rows as a multiset: sorted by their serialization.
      *
-     * @param list<list<mixed>> $rows
-     * @return list<list<mixed>>
+     * @param array<mixed> $rows
+     * @return list<mixed>
      */
     public function bag(array $rows): array
     {
-        usort($rows, static fn (array $left, array $right): int => serialize($left) <=> serialize($right));
+        $keys = [];
+        foreach ($rows as $index => $row) {
+            $keys[$index] = serialize($row);
+        }
+        asort($keys);
+        $sorted = [];
+        foreach (array_keys($keys) as $index) {
+            $sorted[] = $rows[$index];
+        }
 
-        return $rows;
+        return $sorted;
     }
 
     /**
      * Answers the warnings of the last statement.
      *
-     * @return list<list<mixed>>|string
+     * @return array<mixed>|string
      */
     public function warnings(PDO $pdo): array|string
     {
@@ -91,6 +99,9 @@ final class Observer
         try {
             $names = $pdo->query('SHOW TABLES FROM `' . $database . '`');
             foreach ($names === false ? [] : $names->fetchAll(PDO::FETCH_COLUMN) as $name) {
+                if (!is_string($name)) {
+                    continue;
+                }
                 $rows = $pdo->query('SELECT * FROM `' . $database . '`.`' . $name . '`');
                 $tables[$name] = $rows === false ? null : $this->bag($rows->fetchAll(PDO::FETCH_NUM));
             }

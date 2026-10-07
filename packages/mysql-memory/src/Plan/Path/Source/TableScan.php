@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Path\Source;
 
-use MySqlMemory\Plan\Path\AccessPath;
 use MySqlMemory\Dictionary\StoredTable;
+use MySqlMemory\Plan\Path\AccessPath;
 use Override;
 
 /**

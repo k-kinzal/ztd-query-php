@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator\Transform;
 
-use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Plan\Path\Transform\Filter;
 use Override;
 

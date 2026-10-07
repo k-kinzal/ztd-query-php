@@ -16,7 +16,7 @@ use MySqlMemory\Typing\Domain;
  *
  * @visibility MySqlMemory
  */
-final class Information
+final class Introspection
 {
     /**
      * Answers the functions of the family.

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Definition;
 
-use MySqlMemory\Dictionary\ColumnDefault;
+use MySqlMemory\Dictionary\Fill;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\KeyKind;
@@ -141,7 +141,7 @@ final class Definitions
         $domain = $domain->withNullable($nullable && !$serial);
         $keywords = array_map(static fn ($attribute) => $attribute->keyword, array_values(array_filter($attributes, static fn ($attribute): bool => $attribute instanceof KeywordAttribute)));
         $name = $element->name->column->value;
-        $column = new ColumnDefinition($name, $domain, ColumnDefault::none(), $serial || in_array(ColumnKeyword::AutoIncrement, $keywords, true), false, null, in_array(ColumnKeyword::Invisible, $keywords, true), $declaration, $comment);
+        $column = new ColumnDefinition($name, $domain, Fill::none(), $serial || in_array(ColumnKeyword::AutoIncrement, $keywords, true), false, null, in_array(ColumnKeyword::Invisible, $keywords, true), $declaration, $comment);
 
         return new ColumnDefinition($name, $domain, $this->default($attributes, $column, $create), $column->autoIncrement, $this->onUpdate($attributes), null, $column->invisible, $declaration, $comment);
     }
@@ -151,7 +151,7 @@ final class Definitions
      *
      * @param list<object> $attributes
      */
-    public function default(array $attributes, ColumnDefinition $column, CreateTable $create): ColumnDefault
+    public function default(array $attributes, ColumnDefinition $column, CreateTable $create): Fill
     {
         foreach ($attributes as $attribute) {
             if ($attribute instanceof DefaultLiteral || $attribute instanceof DefaultExpression) {
@@ -161,10 +161,10 @@ final class Definitions
                 }
                 $evaluable = $this->planner->compiler->compile($value, new Scope());
                 if ($evaluable instanceof Clock) {
-                    return new ColumnDefault(true, null, $evaluable, true, 'CURRENT_TIMESTAMP');
+                    return new Fill(true, null, $evaluable, true, 'CURRENT_TIMESTAMP');
                 }
                 if ($attribute instanceof DefaultExpression) {
-                    return new ColumnDefault(true, null, $evaluable, false, null);
+                    return new Fill(true, null, $evaluable, false, null);
                 }
                 $frame = new Frame($this->planner->compiler->connection->context);
                 $raw = $evaluable->evaluate($frame);
@@ -182,11 +182,11 @@ final class Definitions
                     $context->strict = $strict;
                 }
 
-                return ColumnDefault::constant($stored, $raw === null ? null : (string) $stored);
+                return Fill::constant($stored, $raw === null ? null : (string) $stored);
             }
         }
 
-        return $column->nullable() && !$column->autoIncrement ? ColumnDefault::constant(null, null) : ColumnDefault::none();
+        return $column->nullable() && !$column->autoIncrement ? Fill::constant(null, null) : Fill::none();
     }
 
     /**

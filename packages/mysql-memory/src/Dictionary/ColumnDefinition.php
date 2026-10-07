@@ -18,7 +18,7 @@ final class ColumnDefinition
     /**
      * @param string $name The column name as declared
      * @param Domain $domain The domain of the stored values; its nullability is the column's
-     * @param ColumnDefault $default What an insert that names no value stores
+     * @param Fill $default What an insert that names no value stores
      * @param bool $autoIncrement Whether the column takes the next AUTO_INCREMENT value
      * @param bool $onUpdateNow Whether an update that changes the row stores the current time
      * @param Evaluable|null $generated The expression a generated column is computed by
@@ -29,7 +29,7 @@ final class ColumnDefinition
     public function __construct(
         public readonly string $name,
         public readonly Domain $domain,
-        public readonly ColumnDefault $default,
+        public readonly Fill $default,
         public readonly bool $autoIncrement = false,
         public readonly bool $onUpdateNow = false,
         public readonly ?Evaluable $generated = null,

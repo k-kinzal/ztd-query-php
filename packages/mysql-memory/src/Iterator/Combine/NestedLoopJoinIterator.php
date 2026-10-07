@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator\Combine;
 
-use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Plan\Path\JoinKind;
+use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Plan\Path\Combine\NestedLoopJoin;
+use MySqlMemory\Plan\Path\JoinKind;
 use Override;
 
 /**

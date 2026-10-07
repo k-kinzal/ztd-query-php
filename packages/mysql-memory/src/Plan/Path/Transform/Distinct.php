@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Path\Transform;
 
-use MySqlMemory\Plan\Path\Source\Values;
 use MySqlMemory\Plan\Path\AccessPath;
 use MySqlMemory\Typing\Domain;
 use Override;

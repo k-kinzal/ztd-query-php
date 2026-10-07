@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator\Combine;
 
-use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Plan\Path\Combine\RecursiveUnion;
 use MySqlMemory\Value\Order;
 use Override;

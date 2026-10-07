@@ -27,7 +27,7 @@ final class Library
     {
         if (self::$instance === null) {
             $routines = [];
-            foreach ([new Strings(), new Measures(), new Numbers(), new Control(), new Information(), new Dates()] as $family) {
+            foreach ([new Strings(), new Measures(), new Numbers(), new Control(), new Introspection(), new Dates()] as $family) {
                 foreach ($family->routines() as $routine) {
                     $routines[$routine->name] = $routine;
                 }

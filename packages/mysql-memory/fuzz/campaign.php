@@ -57,7 +57,7 @@ for ($i = 0; $i < $count; $i++) {
 uasort($kinds, static fn (array $left, array $right): int => $right[0] <=> $left[0]);
 $failures = array_sum(array_column($kinds, 0));
 foreach ($kinds as $kind => [$number, $sql, $difference]) {
-    echo "### {$number} × {$kind}\n    {$sql}\n" . preg_replace('/^/m', '    ', substr($difference, 0, (int) (getenv('MYSQL_MEMORY_DIFF_BYTES') ?: 900))) . "\n";
+    echo "### {$number} × {$kind}\n    {$sql}\n" . preg_replace('/^/m', '    ', substr($difference, 0, (int) ((new Servers())->environment('MYSQL_MEMORY_DIFF_BYTES', '900')))) . "\n";
 }
 echo "--- {$failures} of {$compared} differ\n";
 

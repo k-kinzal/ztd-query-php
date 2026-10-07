@@ -12,7 +12,7 @@ namespace MySqlMemory\Storage;
  *
  * @visibility MySqlMemory
  */
-final class TableData
+final class Heap
 {
     /**
      * @param array<int, list<int|float|string|null>> $rows The rows by row number

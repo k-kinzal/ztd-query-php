@@ -41,7 +41,7 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 /**
  * Raises the first problem SQL Semantics found in a statement as the error the server reports for it.
  *
- * @visibility MySqlMemory\Session
+ * @visibility MySqlMemory
  */
 final class Problems
 {

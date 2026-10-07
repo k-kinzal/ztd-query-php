@@ -16,7 +16,7 @@ use MySqlMemory\Evaluation\Evaluable;
  *
  * @visibility MySqlMemory
  */
-final class ColumnDefault
+final class Fill
 {
     /**
      * @param bool $declared Whether the column has a default, explicit or implied

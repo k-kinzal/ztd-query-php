@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator\Combine;
 
-use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Plan\Path\SetKind;
+use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Plan\Path\Combine\SetOperation;
+use MySqlMemory\Plan\Path\SetKind;
 use MySqlMemory\Value\Order;
 use Override;
 

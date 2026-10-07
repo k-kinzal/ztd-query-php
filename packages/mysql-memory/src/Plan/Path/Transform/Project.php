@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Path\Transform;
 
-use MySqlMemory\Plan\Path\AccessPath;
 use MySqlMemory\Evaluation\Evaluable;
+use MySqlMemory\Plan\Path\AccessPath;
 use Override;
 
 /**

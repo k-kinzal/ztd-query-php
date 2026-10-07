@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
  * The Unicode collations use the root collator of ICU at the strength of the collation; a
  * string that is not valid UTF-8 is compared by its bytes.
  *
- * @visibility MySqlMemory\Typing
+ * @visibility MySqlMemory
  */
 final class Ordering
 {

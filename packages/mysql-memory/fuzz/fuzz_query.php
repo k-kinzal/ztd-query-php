@@ -32,7 +32,7 @@ $constraints = $plans->plan('query', $grammar);
  */
 $config->setAllowedExceptions([]);
 $config->setMaxLen(4096);
-$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $plans, $target, $server): void {
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $plans, $target): void {
     $sql = $plans->statement('query', $provider->generate((new BytePlanCompiler())->compile($input, $planner, $constraints)));
     $target->verify($sql, $input);
 });

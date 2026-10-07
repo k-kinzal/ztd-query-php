@@ -30,8 +30,8 @@ final class Servers
         $version = getenv('MYSQL_VERSION') !== false ? (string) getenv('MYSQL_VERSION') : MySqlRelease::DEFAULT;
         $dsn = getenv('MYSQL_MEMORY_NATIVE_DSN');
         if ($dsn !== false && $dsn !== '') {
-            $user = (string) (getenv('MYSQL_MEMORY_NATIVE_USER') ?: 'root');
-            $password = (string) (getenv('MYSQL_MEMORY_NATIVE_PASSWORD') ?: 'root');
+            $user = $this->environment('MYSQL_MEMORY_NATIVE_USER', 'root');
+            $password = $this->environment('MYSQL_MEMORY_NATIVE_PASSWORD', 'root');
         } else {
             $endpoint = Testcontainers::run(MySqlRelease::container($version))->getData(Endpoint::class);
             $dsn = 'mysql:host=' . $endpoint->host . ';port=' . $endpoint->port;
@@ -41,12 +41,24 @@ final class Servers
         $native = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $globals = [];
         $statement = $native->query('SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.global_variables');
-        foreach ($statement === false ? [] : $statement->fetchAll(PDO::FETCH_NUM) as [$name, $value]) {
-            $globals[strtolower((string) $name)] = (string) $value;
+        foreach ($statement === false ? [] : $statement->fetchAll(PDO::FETCH_KEY_PAIR) as $name => $value) {
+            $globals[strtolower((string) $name)] = is_scalar($value) ? (string) $value : '';
         }
-        $account = (string) $native->query('SELECT USER()')?->fetchColumn();
+        $identity = $native->query('SELECT USER()');
+        $account = $identity === false ? '' : $identity->fetchColumn();
+        $account = is_string($account) ? $account : '';
         $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1));
 
         return [new Differential($dsn, $user, $password, $server->dsn(), $emulate), 'mysql-' . $version, $server];
+    }
+
+    /**
+     * Answers an environment variable, or the fallback when it is unset or empty.
+     */
+    public function environment(string $name, string $fallback): string
+    {
+        $value = getenv($name);
+
+        return is_string($value) && $value !== '' ? $value : $fallback;
     }
 }

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
-use MySqlMemory\Command\Definition\DropTableCommand;
 use MySqlMemory\Command\Definition\CreateTableCommand;
-use MySqlMemory\Command\Write\MultipleChangeCommand;
+use MySqlMemory\Command\Definition\DropTableCommand;
 use MySqlMemory\Command\Write\ChangeCommand;
 use MySqlMemory\Command\Write\InsertCommand;
+use MySqlMemory\Command\Write\MultipleChangeCommand;
 use MySqlMemory\Error\ErrorCode;
 use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;

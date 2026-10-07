@@ -11,7 +11,6 @@ use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Typing\Ordering;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 /**
  * The string functions that answer numbers: LENGTH, CHAR_LENGTH, ASCII, LOCATE, INSTR, STRCMP, FIELD and FIND_IN_SET.

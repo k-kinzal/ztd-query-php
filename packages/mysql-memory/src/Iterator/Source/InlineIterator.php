@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator\Source;
 
-use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Plan\Path\Source\Values;
+use MySqlMemory\Iterator\RowIterator;
+use MySqlMemory\Plan\Path\Source\Inline;
 use Override;
 
 /**
@@ -14,16 +14,16 @@ use Override;
  *
  * @visibility MySqlMemory
  */
-final class ValuesIterator implements RowIterator
+final class InlineIterator implements RowIterator
 {
     private Frame $frame;
 
     private int $next = 0;
 
     /**
-     * @param Values $path The path executed
+     * @param Inline $path The path executed
      */
-    public function __construct(public readonly Values $path)
+    public function __construct(public readonly Inline $path)
     {
     }
 
