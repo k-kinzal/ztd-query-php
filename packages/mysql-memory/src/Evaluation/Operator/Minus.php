@@ -1,0 +1,75 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Evaluation\Operator;
+
+use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Evaluation\Convert;
+use MySqlMemory\Evaluation\Evaluable;
+use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Typing\Domain;
+use MySqlMemory\Typing\Kind;
+use MySqlMemory\Value\Decimal;
+use MySqlMemory\Value\Integer;
+
+/**
+ * Unary minus.
+ *
+ * Negating the smallest BIGINT, or an unsigned value above it, is an error (ER_DATA_OUT_OF_RANGE).
+ *
+ * @visibility MySqlMemory
+ */
+final class Minus implements Evaluable
+{
+    /**
+     * @param Evaluable $operand The operand
+     * @param Domain $domain The domain of the result
+     * @param string $text The expression as the server prints it
+     */
+    public function __construct(public readonly Evaluable $operand, public readonly Domain $domain, public readonly string $text)
+    {
+    }
+
+    /**
+     * Answers the domain of the result.
+     */
+    #[\Override]
+    public function domain(): Domain
+    {
+        return $this->domain;
+    }
+
+    /**
+     * Negates the operand for a row.
+     */
+    #[\Override]
+    public function evaluate(Frame $frame): int|float|string|null
+    {
+        $value = $this->operand->evaluate($frame);
+        if ($value === null) {
+            return null;
+        }
+        $domain = $this->operand->domain();
+
+        return match ($this->domain->kind) {
+            Kind::Integer => $this->integer((int) Convert::toInteger($value, $domain, $frame->context), $domain->unsigned),
+            Kind::Decimal => Decimal::negate((string) Convert::toDecimal($value, $domain, $frame->context)),
+            default => -(float) Convert::toDouble($value, $domain, $frame->context),
+        };
+    }
+
+    /**
+     * Negates an integer, within the signed range.
+     */
+    public function integer(int $value, bool $unsigned): int
+    {
+        $negated = '-' . Integer::text($value, $unsigned);
+        $negated = Decimal::canonical($negated);
+        if (!Integer::signedRange($negated)) {
+            throw ErrorCode::DataOutOfRange->error('BIGINT', $this->text);
+        }
+
+        return (int) $negated;
+    }
+}

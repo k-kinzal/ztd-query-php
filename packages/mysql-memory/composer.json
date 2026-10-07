@@ -1,0 +1,195 @@
+{
+    "name": "k-kinzal/mysql-memory",
+    "description": "An in-memory MySQL server for tests: SQL is parsed and bound with SQL Semantics and executed over in-memory tables, reachable through PDO and mysqli",
+    "type": "library",
+    "license": "MIT",
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/mysql-memory",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/mysql-memory/"
+    },
+    "require": {
+        "php": "^8.1",
+        "ext-bcmath": "*",
+        "ext-intl": "*",
+        "ext-mbstring": "*",
+        "k-kinzal/sql-parser": "dev-main",
+        "k-kinzal/sql-semantics": "dev-main",
+        "k-kinzal/sql-semantics-mysql": "dev-main"
+    },
+    "require-dev": {
+        "ext-pdo_mysql": "*",
+        "brianium/paratest": "^7.3",
+        "deptrac/deptrac": "^3.0",
+        "fakerphp/faker": "^1.23",
+        "friendsofphp/php-cs-fixer": "^3.95.25",
+        "k-kinzal/container": "dev-main",
+        "k-kinzal/php-ai-toolkit": "dev-main",
+        "k-kinzal/sql-faker": "dev-main",
+        "nikic/php-fuzzer": "^0.0.11",
+        "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^10.5",
+        "squizlabs/php_codesniffer": "^4.0.4"
+    },
+    "suggest": {
+        "ext-pdo_mysql": "To connect to the server with PDO",
+        "ext-mysqli": "To connect to the server with mysqli"
+    },
+    "repositories": [
+        {
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        },
+        {
+            "type": "path",
+            "url": "../sql-parser",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-parser": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-semantics-mysql",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-semantics-mysql": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-faker",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-faker": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../container",
+            "options": {
+                "versions": {
+                    "k-kinzal/container": "dev-main"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "MySqlMemory\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Fuzz\\": "fuzz/"
+        }
+    },
+    "bin": [
+        "bin/mysql-memory"
+    ],
+    "scripts": {
+        "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
+        "compat": "phpcs",
+        "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
+        "docgen": "docgen --packages=. --title=k-kinzal/mysql-memory",
+        "docgen:diff": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --diff=origin/main --serve"
+        ],
+        "docgen:fresh": "@docgen --no-cache",
+        "docgen:serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --serve"
+        ],
+        "doctest": "phpunit --testsuite doctest",
+        "format": "php-cs-fixer fix --allow-risky=yes",
+        "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "fuzz": "@fuzz:smoke",
+        "fuzz:expression": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/expression') || mkdir('fuzz/corpus/expression', 0777, true);\" --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_expression.php fuzz/corpus/expression/ --timeout=60"
+        ],
+        "fuzz:query": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/query') || mkdir('fuzz/corpus/query', 0777, true);\" --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_query.php fuzz/corpus/query/ --timeout=60"
+        ],
+        "fuzz:smoke": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:expression --max-runs=100",
+            "@fuzz:query --max-runs=100",
+            "@fuzz:statement --max-runs=100"
+        ],
+        "fuzz:statement": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/statement') || mkdir('fuzz/corpus/statement', 0777, true);\" --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_statement.php fuzz/corpus/statement/ --timeout=60"
+        ],
+        "lint": [
+            "@autoload:check",
+            "@format:check",
+            "@phpstan",
+            "@compat",
+            "@loc-guard",
+            "@tree-guard",
+            "@deptrac"
+        ],
+        "loc-guard": "loc-guard --config=loc.yaml",
+        "phpstan": "phpstan analyse --memory-limit=1G",
+        "test": "paratest --processes=auto",
+        "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:integration": "phpunit --testsuite integration",
+        "test:unit": "phpunit --testsuite unit",
+        "tree-guard": "tree-guard --config=tree.yaml"
+    },
+    "scripts-descriptions": {
+        "autoload:check": "Check that the PSR-4 autoload mapping is strict and unambiguous.",
+        "compat": "Check compatibility with PHP 8.1 and later with PHP_CodeSniffer.",
+        "deptrac": "Check the layer dependencies with Deptrac.",
+        "docgen": "Generate the API documentation into build/docs.",
+        "docgen:diff": "Generate the API documentation marked with the changes against origin/main, and serve it.",
+        "docgen:fresh": "Generate the API documentation without the cache.",
+        "docgen:serve": "Generate the API documentation and serve it locally.",
+        "doctest": "Run the @example blocks of the PHPDoc as tests.",
+        "format": "Fix the code style with PHP-CS-Fixer.",
+        "format:check": "Check the code style with PHP-CS-Fixer without changing files.",
+        "fuzz": "Run every differential fuzz target with the bounded smoke budget.",
+        "fuzz:expression": "Compare SELECT statements over grammar-generated expressions with a MySQL server.",
+        "fuzz:query": "Compare grammar-generated SELECT and DML statements over a fixture schema with a MySQL server.",
+        "fuzz:smoke": "Run each differential fuzz target for up to 100 executions; individual fuzz:* commands run continuously.",
+        "fuzz:statement": "Compare every grammar-generated statement with a MySQL server.",
+        "lint": "Run every static check: autoload, formatting, PHPStan, PHP compatibility, size and tree guards, and layer dependencies.",
+        "loc-guard": "Check file size limits.",
+        "phpstan": "Run PHPStan.",
+        "test": "Run all test suites in parallel.",
+        "test:coverage": "Run the unit tests in parallel and write the coverage and JUnit reports to build/.",
+        "test:integration": "Run the tests that compare the server with MySQL servers started with Testcontainers.",
+        "test:unit": "Run the unit tests.",
+        "tree-guard": "Check the directory structure rules."
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "platform": {
+            "php": "8.1.0"
+        },
+        "sort-packages": true
+    }
+}

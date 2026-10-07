@@ -1,0 +1,42 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Runs an in-memory MySQL server.
+ *
+ * Usage: mysql-memory [--listen=tcp://127.0.0.1:3306] [--release=8.4.7] [--database=NAME]... [--global=NAME=VALUE]...
+ * Prints "ready ADDRESS" once it accepts connections.
+ */
+
+declare(strict_types=1);
+
+$autoload = $GLOBALS['_composer_autoload_path'] ?? null;
+foreach ([$autoload, __DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php'] as $candidate) {
+    if (is_string($candidate) && is_file($candidate)) {
+        require $candidate;
+        break;
+    }
+}
+
+$listen = 'tcp://127.0.0.1:3306';
+$release = '8.4.7';
+$databases = [];
+$globals = [];
+foreach (array_slice($argv, 1) as $argument) {
+    if (str_starts_with($argument, '--listen=')) {
+        $listen = substr($argument, 9);
+    } elseif (str_starts_with($argument, '--release=')) {
+        $release = substr($argument, 10);
+    } elseif (str_starts_with($argument, '--database=')) {
+        $databases[] = substr($argument, 11);
+    } elseif (str_starts_with($argument, '--global=')) {
+        [$name, $value] = explode('=', substr($argument, 9), 2) + [1 => ''];
+        $globals[$name] = $value;
+    }
+}
+
+$listener = new MySqlMemory\Server\Listener(new MySqlMemory\Instance($release, $globals, $databases), $listen);
+$address = $listener->open();
+fwrite(STDOUT, 'ready ' . $address . "\n");
+fflush(STDOUT);
+$listener->serve();

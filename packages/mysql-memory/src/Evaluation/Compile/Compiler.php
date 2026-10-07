@@ -1,0 +1,157 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Evaluation\Compile;
+
+use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Evaluation\Evaluable;
+use MySqlMemory\Evaluation\Scope;
+use MySqlMemory\Plan\Planner;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
+use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
+use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
+use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
+use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
+use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
+use SqlSemantics\Platform\MySql\Statement\Expression\Not;
+use SqlSemantics\Platform\MySql\Statement\Expression\NullTest;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between;
+use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
+use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
+use SqlSemantics\Platform\MySql\Statement\Expression\TruthTest;
+use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
+use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
+use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
+use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Scalar;
+
+/**
+ * Compiles the expressions of a bound statement into evaluables: the resolving step of the server, done for each node once.
+ *
+ * Each node is read with the facts SQL Semantics derived for it: the column a name resolves to,
+ * the select item an alias names. An expression form the emulator does not evaluate is refused
+ * with ER_NOT_SUPPORTED_YET.
+ *
+ * @visibility MySqlMemory
+ */
+final class Compiler
+{
+    public readonly Literals $literals;
+
+    public readonly Operators $operators;
+
+    public readonly Names $names;
+
+    public readonly Calls $calls;
+
+    public readonly Subqueries $subqueries;
+
+    /**
+     * @var array<int, int>|null The index of each parameter marker of the statement, by object id
+     */
+    private ?array $parameters = null;
+
+    /**
+     * @param Facts $facts The facts of the bound statement
+     * @param Settings $settings The session settings
+     * @param Planner $planner The planner of the statement, for subqueries
+     * @param Connection $connection What the expressions read of the connection at compile time
+     */
+    public function __construct(public readonly Facts $facts, public readonly Settings $settings, public readonly Planner $planner, public readonly Connection $connection)
+    {
+        $this->literals = new Literals($settings);
+        $this->operators = new Operators($this);
+        $this->names = new Names($this);
+        $this->calls = new Calls($this);
+        $this->subqueries = new Subqueries($this);
+    }
+
+    /**
+     * Answers the index of a parameter marker among the markers of the statement, in written order.
+     */
+    public function parameterIndex(Parameter $parameter): int
+    {
+        if ($this->parameters === null) {
+            $this->parameters = [];
+            foreach ((new Walker())->find($this->planner->statement, Parameter::class) as $index => $marker) {
+                $this->parameters[spl_object_id($marker)] = $index;
+            }
+        }
+
+        return $this->parameters[spl_object_id($parameter)] ?? 0;
+    }
+
+    /**
+     * Compiles an expression in the scope of its query block.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the expression is refused
+     */
+    public function compile(Scalar $node, Scope $scope): Evaluable
+    {
+        $bound = $scope->bound($node);
+        if ($bound !== null) {
+            return $bound[0] === 0 ? $bound[1] : $this->names->outer($bound[1], $bound[0]);
+        }
+
+        return match (true) {
+            $node instanceof Grouped => $this->compile($node->operand, $scope),
+            $node instanceof ColumnUse => $this->names->column($node, $scope),
+            $node instanceof OutputOrdinal => $this->names->ordinal($node, $scope),
+            $node instanceof NumberLiteral => $this->literals->number($node),
+            $node instanceof SignedLiteral => $this->literals->signed($node),
+            $node instanceof StringLiteral => $this->literals->string($node),
+            $node instanceof RadixLiteral => $this->literals->radix($node),
+            $node instanceof TemporalLiteral => $this->literals->temporal($node),
+            $node instanceof BooleanLiteral => $this->literals->boolean($node),
+            $node instanceof NullLiteral => $this->literals->null($node),
+            $node instanceof Parameter => $this->names->parameter($node),
+            $node instanceof Arithmetic => $this->operators->arithmetic($node, $scope),
+            $node instanceof Unary => $this->operators->unary($node, $scope),
+            $node instanceof Comparison => $this->operators->comparison($node, $scope),
+            $node instanceof Logical => $this->operators->logical($node, $scope),
+            $node instanceof Not => $this->operators->not($node, $scope),
+            $node instanceof NullTest => $this->operators->nullTest($node, $scope),
+            $node instanceof TruthTest => $this->operators->truthTest($node, $scope),
+            $node instanceof Between => $this->operators->between($node, $scope),
+            $node instanceof InList => $this->operators->inList($node, $scope),
+            $node instanceof Like => $this->operators->like($node, $scope),
+            $node instanceof CaseExpression => $this->operators->caseOf($node, $scope),
+            $node instanceof Cast => $this->operators->cast($node, $scope),
+            $node instanceof FunctionCall => $this->calls->function($node, $scope),
+            $node instanceof KeywordCall => $this->calls->keyword($node, $scope),
+            $node instanceof ClockCall => $this->calls->clock($node, $scope),
+            $node instanceof Aggregate, $node instanceof GroupConcat => throw ErrorCode::InvalidGroupFunctionUse->error(),
+            $node instanceof ScalarSubquery => $this->subqueries->scalar($node, $scope),
+            $node instanceof Exists => $this->subqueries->exists($node, $scope),
+            $node instanceof InQuery => $this->subqueries->in($node, $scope),
+            $node instanceof QuantifiedComparison => $this->subqueries->quantifiedComparison($node, $scope),
+            $node instanceof InsertedColumn => $this->names->inserted($node, $scope),
+            $node instanceof UserVariable => $this->names->userVariable($node),
+            $node instanceof SystemVariable => $this->names->systemVariable($node),
+            $node instanceof VariableAssignment => $this->names->assignment($node, $scope),
+            default => throw ErrorCode::NotSupportedYet->error('expression ' . (new \ReflectionClass($node))->getShortName()),
+        };
+    }
+}
