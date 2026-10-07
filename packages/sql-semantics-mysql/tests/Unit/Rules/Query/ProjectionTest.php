@@ -73,6 +73,15 @@ final class ProjectionTest extends TestCase
         self::assertInstanceOf(UnknownQualifier::class, $operation->facts->diagnostics[0]);
     }
 
+    public function testAdmitsComparesTheDatabaseOfAQualifierWithTheCurrentOne(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $context = $semantics->context(null, false, new \SqlSemantics\Contract\SearchPath('fz'));
+
+        self::assertSame("Unknown table 't2.t2'", $semantics->analyze('SELECT t2.t2.* FROM t2', $context)->facts->diagnostics[0]->message());
+        self::assertSame([], $semantics->analyze('SELECT fz.t2.* FROM t2', $context)->facts->diagnostics);
+    }
+
     public function testExpandAppendsAnOpenStarForUndeclaredColumns(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT t.*, 1 FROM t');

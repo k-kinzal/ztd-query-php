@@ -60,11 +60,14 @@ final class SelectFacts
     public function derive(Select $select, Derivation $derivation, Environment $outer): QueryFact
     {
         $context = $derivation->context;
-        if (in_array(SelectOption::CalcFoundRows, $select->options, true)) {
-            Deprecation::raise(Deprecated::CalcFoundRows, $derivation);
+        foreach ($select->options as $option) {
+            if ($option === SelectOption::CalcFoundRows || $option === SelectOption::NoCache) {
+                Deprecation::raise($option === SelectOption::NoCache ? Deprecated::NoCache : Deprecated::CalcFoundRows, $derivation);
+            }
         }
         $from = $select->from === null ? new JoinedInput(new RelationFact(new RowShape([])), [], []) : (new FromScope())->open($select->from, $derivation, $outer, []);
         $visible = $from->visible;
+        (new FromScope())->unique($visible, $derivation);
         $ordering = array_map(static fn (OrderItem $item): object => $item->expression, [...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)]);
         $expressions = array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items);
         $aggregate = $select->groupBy === null && (new Aggregation())->aggregates([...$expressions, ...$ordering, ...array_values(array_filter([$select->having, $select->qualify]))]);

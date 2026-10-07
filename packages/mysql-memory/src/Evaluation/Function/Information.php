@@ -28,20 +28,24 @@ final class Information
      */
     public function routines(): array
     {
-        $name = static fn (int $length): Domain => Domain::string($length, Collation::Utf8mb3GeneralCi)->withCollation(Collation::Utf8mb3GeneralCi, Coercibility::SystemConstant);
+        $name = static fn (int $length, bool $nullable): Domain => Domain::string($length, Collation::Utf8mb40900AiCi)->withCollation(Collation::Utf8mb40900AiCi, Coercibility::SystemConstant)->withNullable($nullable);
+        $user = static fn (array $d, Signature $s): Domain => $name(288, true);
 
         return [
-            new Routine('DATABASE', 0, 0, fn (array $d, Signature $s): Domain => $name(64)->withNullable(true), fn (Frame $f): ?string => $f->context->variables->database === '' ? null : $f->context->variables->database),
-            new Routine('SCHEMA', 0, 0, fn (array $d, Signature $s): Domain => $name(64)->withNullable(true), fn (Frame $f): ?string => $f->context->variables->database === '' ? null : $f->context->variables->database),
-            new Routine('USER', 0, 0, fn (array $d, Signature $s): Domain => $name(288)->withNullable(false), fn (Frame $f): string => $f->context->variables->account),
-            new Routine('SESSION_USER', 0, 0, fn (array $d, Signature $s): Domain => $name(288)->withNullable(false), fn (Frame $f): string => $f->context->variables->account),
-            new Routine('SYSTEM_USER', 0, 0, fn (array $d, Signature $s): Domain => $name(288)->withNullable(false), fn (Frame $f): string => $f->context->variables->account),
-            new Routine('CURRENT_USER', 0, 0, fn (array $d, Signature $s): Domain => $name(288)->withNullable(false), fn (Frame $f): string => $f->context->variables->definer),
-            new Routine('VERSION', 0, 0, fn (array $d, Signature $s): Domain => $name(28)->withNullable(false), fn (Frame $f): string => (string) $f->context->variables->read('version')),
-            new Routine('CONNECTION_ID', 0, 0, fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, 10, true)->withNullable(false), fn (Frame $f): int => $f->context->variables->connection),
+            new Routine('DATABASE', 0, 0, fn (array $d, Signature $s): Domain => $name(64, true), fn (Frame $f): ?string => $f->context->variables->database === '' ? null : $f->context->variables->database),
+            new Routine('SCHEMA', 0, 0, fn (array $d, Signature $s): Domain => $name(64, true), fn (Frame $f): ?string => $f->context->variables->database === '' ? null : $f->context->variables->database),
+            new Routine('USER', 0, 0, $user, fn (Frame $f): string => $f->context->variables->account),
+            new Routine('SESSION_USER', 0, 0, $user, fn (Frame $f): string => $f->context->variables->account),
+            new Routine('SYSTEM_USER', 0, 0, $user, fn (Frame $f): string => $f->context->variables->account),
+            new Routine('CURRENT_USER', 0, 0, $user, fn (Frame $f): string => $f->context->variables->definer),
+            new Routine('VERSION', 0, 0, fn (array $d, Signature $s): Domain => $name(strlen($s->settings->version), false), fn (Frame $f): string => (string) $f->context->variables->read('version')),
+            new Routine('CONNECTION_ID', 0, 0, fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, 21), fn (Frame $f): int => $f->context->variables->connection),
             new Routine('LAST_INSERT_ID', 0, 1, fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, 21, true)->withNullable($d !== [] && $d[0]->nullable), $this->lastInsertId(...)),
-            new Routine('ROW_COUNT', 0, 0, fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, 21)->withNullable(false), fn (Frame $f): int => $f->context->variables->rowCount),
-            new Routine('FOUND_ROWS', 0, 0, fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, 21)->withNullable(false), fn (Frame $f): int => $f->context->variables->foundRows),
+            new Routine('ROW_COUNT', 0, 0, fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, 21), fn (Frame $f): int => $f->context->variables->rowCount),
+            new Routine('FOUND_ROWS', 0, 0, fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, 21), fn (Frame $f): int => $f->context->variables->foundRows),
+            new Routine('CHARSET', 1, 1, fn (array $d, Signature $s): Domain => $name(64, true), fn (Frame $f, array $a): string => $a[0]->domain()->kind === \MySqlMemory\Typing\Kind::String ? $a[0]->domain()->collation->charset()->value : 'binary'),
+            new Routine('COLLATION', 1, 1, fn (array $d, Signature $s): Domain => $name(64, true), fn (Frame $f, array $a): string => $a[0]->domain()->kind === \MySqlMemory\Typing\Kind::String ? $a[0]->domain()->collation->value : 'binary'),
+            new Routine('COERCIBILITY', 1, 1, fn (array $d, Signature $s): Domain => Domain::integer(FieldType::LongLong, 10), fn (Frame $f, array $a): int => $a[0]->domain()->kind === \MySqlMemory\Typing\Kind::Null ? 6 : ($a[0]->domain()->kind === \MySqlMemory\Typing\Kind::String ? $a[0]->domain()->coercibility->value : 5)),
         ];
     }
 

@@ -35,6 +35,11 @@ final class Scope
     public array $tables = [];
 
     /**
+     * @var array<int, \MySqlMemory\Plan\Path\TableScan> The scan of each base table occurrence, by object id
+     */
+    public array $scans = [];
+
+    /**
      * @var array<int, string> The alias of each derived table and common table reference, by object id
      */
     public array $derived = [];

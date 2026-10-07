@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Evaluation;
+use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
@@ -47,6 +48,7 @@ final class Dispatcher
         return match (true) {
             $statement instanceof Query => new QueryCommand(),
             $statement instanceof InsertRows, $statement instanceof InsertSet, $statement instanceof InsertQuery => new InsertCommand(),
+            $statement instanceof Update && MultipleChangeCommand::joined($statement), $statement instanceof MultipleDelete => new MultipleChangeCommand(),
             $statement instanceof Update, $statement instanceof Delete => new ChangeCommand(),
             $statement instanceof CreateTable => new CreateTableCommand(),
             $statement instanceof DropTable, $statement instanceof TruncateTable => new DropTableCommand(),

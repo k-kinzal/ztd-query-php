@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
+use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
@@ -39,24 +42,48 @@ final class Problems
      */
     public function raise(Operation $operation, Session $session): void
     {
+        foreach ((new Walker())->find($operation->statement, ProgramVariable::class) as $variable) {
+            throw ErrorCode::UndeclaredVariable->error($variable->name->value);
+        }
         $diagnostics = $operation->facts->diagnostics;
         if ($diagnostics === []) {
             return;
         }
-        throw $this->error($diagnostics[0], $session);
+        $locator = (new Locator())->statement($operation->statement);
+        $names = [];
+        foreach ($locator->nodes() as $node) {
+            $resolution = $operation->facts->covers($node) ? $operation->facts->scalar($node)->resolution : null;
+            $place = $locator->place($node);
+            if ($resolution instanceof Diagnostic && $place !== null) {
+                $names[spl_object_id($resolution)] = [$resolution, $place];
+            }
+        }
+        foreach ($diagnostics as $diagnostic) {
+            if (!isset($names[spl_object_id($diagnostic)])) {
+                throw $this->error($diagnostic, $session, 'field list');
+            }
+            $first = null;
+            foreach ($names as $candidate) {
+                if ($first === null || Locator::precedes($candidate[1][1], $first[1][1])) {
+                    $first = $candidate;
+                }
+            }
+            assert($first !== null);
+            throw $this->error($first[0], $session, $first[1][0]);
+        }
     }
 
     /**
-     * Answers the server error of a diagnostic.
+     * Answers the server error of a diagnostic, for a name read in a clause.
      */
-    public function error(Diagnostic $diagnostic, Session $session): SqlError
+    public function error(Diagnostic $diagnostic, Session $session, string $clause = 'field list'): SqlError
     {
         $database = $session->variables->database;
 
         return match (true) {
             $diagnostic instanceof MissingTable => $diagnostic->name->schema === null && $database === '' ? ErrorCode::NoDatabase->error() : ErrorCode::NoSuchTable->error($diagnostic->name->schema?->value ?? $database, $diagnostic->name->name->value),
-            $diagnostic instanceof MissingColumn => ErrorCode::BadField->error(($diagnostic->qualifier === null ? '' : $diagnostic->qualifier->name->value . '.') . $diagnostic->name->value, 'field list'),
-            $diagnostic instanceof AmbiguousColumn => ErrorCode::NonUniqueColumn->error($diagnostic->name->value, 'field list'),
+            $diagnostic instanceof MissingColumn => ErrorCode::BadField->error(($diagnostic->qualifier === null ? '' : $diagnostic->qualifier->name->value . '.') . $diagnostic->name->value, $clause),
+            $diagnostic instanceof AmbiguousColumn => ErrorCode::NonUniqueColumn->error($diagnostic->name->value, $clause),
             $diagnostic instanceof NonUniqueTable => ErrorCode::NonUniqueTable->error($diagnostic->alias->value),
             $diagnostic instanceof ValueCountMismatch => $diagnostic->row === null ? ErrorCode::WrongValueCount->error() : ErrorCode::WrongValueCountOnRow->error($diagnostic->row),
             $diagnostic instanceof OperandColumns => ErrorCode::OperandColumns->error($diagnostic->expected),
@@ -66,7 +93,8 @@ final class Problems
             $diagnostic instanceof TableExists => ErrorCode::TableExists->error($diagnostic->name->name->value),
             $diagnostic instanceof NotSupportedYet => ErrorCode::NotSupportedYet->error($diagnostic->feature),
             $diagnostic instanceof Misuse => $this->misuse($diagnostic->rule),
-            $diagnostic instanceof UnknownQualifier => ErrorCode::BadTable->error($diagnostic->table->name->value),
+            $diagnostic instanceof UnknownQualifier => ErrorCode::BadTable->error(($diagnostic->table->schema === null ? '' : $diagnostic->table->schema->value . '.') . $diagnostic->table->name->value),
+            $diagnostic instanceof UnknownDeleteTable => ErrorCode::UnknownTable->error($diagnostic->table->name->value, 'MULTI DELETE'),
             $diagnostic instanceof CountMismatch => match ($diagnostic->list) {
                 CountedList::SetOperands, CountedList::IntoVariables => ErrorCode::WrongNumberOfColumnsInSelect->error(),
                 CountedList::ValueRows => ErrorCode::WrongValueCountOnRow->error(1),

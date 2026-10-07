@@ -95,8 +95,10 @@ final class Relations
         }
         $definition = $stored->definition;
         $scope->place($reference, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
+        $scan = new TableScan($stored);
+        $scope->scans[spl_object_id($reference)] = $scan;
 
-        return new TableScan($stored);
+        return $scan;
     }
 
     /**

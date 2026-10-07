@@ -28,10 +28,13 @@ final class Plans
         }
         $start = match ($mode) {
             'expression' => 'expr',
-            'query' => 'select_stmt',
+            'query', 'select' => 'select_stmt',
             default => 'simple_statement',
         };
         $plan = $this->named(GenerationPlan::fromRule($start)->requiringNonEmpty());
+        if ($mode === 'select') {
+            $plan = $this->mainstream($plan);
+        }
         if ($mode === 'write') {
             $plan = $plan->withRule('simple_statement', RulePlan::any()->allowing(ProductionPattern::anyOf(
                 ProductionPattern::exactly('insert_stmt'),
@@ -42,6 +45,31 @@ final class Plans
         }
 
         return $plan->withExpansionBudget((int) (getenv('MYSQL_MEMORY_BUDGET') ?: 96));
+    }
+
+    /**
+     * Constrains a query to the common forms: SELECT from the fixture tables, joins and derived tables, without INTO, locking, partitions or samples.
+     */
+    public function mainstream(GenerationPlan $plan): GenerationPlan
+    {
+        $empty = RulePlan::any()->allowing(ProductionPattern::exactly());
+
+        return $plan
+            ->withRule('select_stmt', RulePlan::any()->allowing(ProductionPattern::exactly('query_expression')))
+            ->withRule('query_primary', RulePlan::any()->allowing(ProductionPattern::exactly('query_specification')))
+            ->withRule('query_specification', RulePlan::any()->allowing(ProductionPattern::excluding(ProductionPattern::containing('into_clause'))))
+            ->withRule('opt_from_clause', RulePlan::any()->allowing(ProductionPattern::nonEmpty()))
+            ->withRule('from_tables', RulePlan::any()->allowing(ProductionPattern::exactly('table_reference_list')))
+            ->withRule('table_reference', RulePlan::any()->allowing(ProductionPattern::anyOf(ProductionPattern::exactly('table_factor'), ProductionPattern::exactly('joined_table'))))
+            ->withRule('table_factor', RulePlan::any()->allowing(ProductionPattern::anyOf(ProductionPattern::exactly('single_table'), ProductionPattern::exactly('derived_table'))))
+            ->withRule('opt_use_partition', $empty)
+            ->withRule('opt_index_hints_list', $empty)
+            ->withRule('opt_tablesample_clause', $empty)
+            ->withRule('opt_window_clause', $empty)
+            ->withRule('opt_qualify_clause', $empty)
+            ->withRule('table_wild', RulePlan::any()->withLexeme('IDENT', LexemeConstraint::oneOf('t1', 't2', 'x')))
+            ->withRule('select_alias', RulePlan::any()->withLexeme('IDENT', LexemeConstraint::oneOf('x', 'y', 'a')))
+            ->withRule('opt_table_alias', RulePlan::any()->withLexeme('IDENT', LexemeConstraint::oneOf('x', 'y')));
     }
 
     /**

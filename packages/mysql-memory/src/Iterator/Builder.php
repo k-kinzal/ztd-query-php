@@ -29,12 +29,17 @@ use MySqlMemory\Plan\Path\ZeroRows;
 final class Builder
 {
     /**
+     * @var array<int, TableScanIterator> The iterator of each table scan built, by the object id of its path
+     */
+    public array $scans = [];
+
+    /**
      * Creates the iterator of a path and, recursively, of its inputs.
      */
     public function build(AccessPath $path): RowIterator
     {
         return match (true) {
-            $path instanceof TableScan => new TableScanIterator($path),
+            $path instanceof TableScan => $this->scans[spl_object_id($path)] = new TableScanIterator($path),
             $path instanceof SingleRow => new SingleRowIterator(),
             $path instanceof ZeroRows => new ZeroRowsIterator(),
             $path instanceof Filter => new FilterIterator($path, $this->build($path->input)),

@@ -23,6 +23,16 @@ final class TableScanIterator implements RowIterator
     private int $next = 0;
 
     /**
+     * @var list<int> The row numbers, in the order of the rows
+     */
+    private array $numbers = [];
+
+    /**
+     * The number of the row read last, or null before the first and after the last.
+     */
+    public ?int $current = null;
+
+    /**
      * @param TableScan $path The scan executed
      */
     public function __construct(public readonly TableScan $path)
@@ -35,8 +45,11 @@ final class TableScanIterator implements RowIterator
     #[\Override]
     public function init(Frame $frame): void
     {
-        $this->rows = array_values((new ClusterOrder())->rows($this->path->table));
+        $rows = (new ClusterOrder())->rows($this->path->table);
+        $this->numbers = array_keys($rows);
+        $this->rows = array_values($rows);
         $this->next = 0;
+        $this->current = null;
     }
 
     /**
@@ -45,6 +58,8 @@ final class TableScanIterator implements RowIterator
     #[\Override]
     public function read(): ?array
     {
+        $this->current = $this->numbers[$this->next] ?? null;
+
         return $this->rows[$this->next++] ?? null;
     }
 }

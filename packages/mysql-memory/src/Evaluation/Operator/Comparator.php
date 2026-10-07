@@ -55,7 +55,7 @@ final class Comparator
             ($left->kind === Kind::Decimal || $integer($left)) && ($right->kind === Kind::Decimal || $integer($right)) => Kind::Decimal,
             default => Kind::Double,
         };
-        $collation = $mode === Kind::String ? Collations::aggregate([$left, $right], $operation, $connection)[0] : Collation::Binary;
+        $collation = $mode === Kind::String || $mode->temporal() ? Collations::aggregate([$left, $right], $operation, $connection)[0] : Collation::Binary;
 
         return new self($mode, $left, $right, $collation);
     }
@@ -101,7 +101,7 @@ final class Comparator
         $leftValue = self::moment($left, $this->left, $this->mode);
         $rightValue = self::moment($right, $this->right, $this->mode);
         if ($leftValue === null || $rightValue === null) {
-            return (float) Convert::toDouble($left, $this->left, $context) <=> (float) Convert::toDouble($right, $this->right, $context);
+            return $this->collation->compare(self::text($left, $this->left), self::text($right, $this->right));
         }
 
         return $this->mode === Kind::Time ? Order::time($leftValue) <=> Order::time($rightValue) : $leftValue <=> $rightValue;

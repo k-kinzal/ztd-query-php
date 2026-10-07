@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
+use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
@@ -112,14 +113,58 @@ final class InsertFacts
     {
         [$target, $written] = $this->open($insert->into, $derivation, $outer);
         $rows = $derivation->query($insert->source, $outer);
-        if ($written !== null && $rows->shape->complete() && count($rows->shape->slots) !== count($written)) {
+        $mismatch = $this->constructed($insert, $written);
+        if ($mismatch !== null) {
+            $derivation->report($mismatch);
+        } elseif ($written !== null && $rows->shape->complete() && count($rows->shape->slots) !== count($written) && !$this->defaulted($insert)) {
             $derivation->report(new ValueCountMismatch(count($written), count($rows->shape->slots), 1));
-        } elseif ($written !== null) {
+        } elseif ($written !== null && !$this->defaulted($insert)) {
             $generated = new GeneratedWrites();
             $generated->query($written, $insert->source, $rows, $generated->table($insert->into->table, $derivation), $derivation);
         }
         $sources = $insert->onDuplicate === [] ? [] : (new SourceRelations())->visible($insert->source, $derivation);
         $this->duplicates($insert->onDuplicate, null, $insert->into, $target, $written, $sources, $derivation, $outer);
+    }
+
+    /**
+     * Answers the count mismatch of the first row of a VALUES ROW(...) source that does not fit the written columns.
+     *
+     * VALUES ROW(...) writes rows as VALUES (...) does: each row has one value
+     * per written column, except an empty row without a column list.
+     *
+     * @param list<Field>|null $written
+     */
+    public function constructed(InsertQuery $insert, ?array $written): ?ValueCountMismatch
+    {
+        if (!$insert->source instanceof ValuesQuery || $written === null) {
+            return null;
+        }
+        $listed = $insert->into->columns !== null && $insert->into->columns->columns !== [];
+        foreach ($insert->source->rows as $index => $row) {
+            $count = count($row->values);
+            if ($count !== count($written) && ($count !== 0 || $listed)) {
+                return new ValueCountMismatch(count($written), $count, $index + 1);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Tells whether a source writes only empty VALUES ROW() rows, which write the defaults.
+     */
+    public function defaulted(InsertQuery $insert): bool
+    {
+        if (!$insert->source instanceof ValuesQuery || ($insert->into->columns !== null && $insert->into->columns->columns !== [])) {
+            return false;
+        }
+        foreach ($insert->source->rows as $row) {
+            if ($row->values !== []) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
