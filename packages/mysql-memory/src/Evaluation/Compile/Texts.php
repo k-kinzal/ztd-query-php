@@ -160,7 +160,7 @@ final class Texts
      */
     public function position(Position $node, Scope $scope): Evaluable
     {
-        return $this->compiler->calls->named('LOCATE', [$node->substring, $node->string], $scope);
+        return $this->compiler->calls->named('LOCATE', [$node->substring, $node->string], $scope, $node);
     }
 
     /**
@@ -197,7 +197,7 @@ final class Texts
     {
         $left = $this->compiler->compile($node->operand, $scope);
         $right = $this->compiler->compile($node->pattern, $scope);
-        $domain = $this->compiler->operators->truth(true);
+        $domain = $this->compiler->domain($node);
 
         return $this->call('SOUNDS LIKE', [$left, $right], $domain, static function (Frame $f, array $a): ?int {
             $one = Convert::toText($a[0]->evaluate($f), $a[0]->domain());
@@ -243,7 +243,7 @@ final class Texts
         $pattern = $this->compiler->compile($node->pattern, $scope);
         [$collation] = Collations::aggregate([$subject->domain(), $pattern->domain()], 'regexp_like', $this->compiler->settings->connectionCollation, true);
         $negated = $node->negated;
-        $domain = $this->compiler->operators->truth($subject->domain()->nullable || $pattern->domain()->nullable);
+        $domain = $this->compiler->domain($node);
 
         return $this->call('REGEXP', [$subject, $pattern], $domain, static function (Frame $f, array $a) use ($collation, $negated): ?int {
             $text = Convert::toText($a[0]->evaluate($f), $a[0]->domain());

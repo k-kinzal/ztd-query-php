@@ -58,11 +58,11 @@ final class Operators
     }
 
     /**
-     * Answers the domain of a truth value that is NULL when an operand can be.
+     * Answers the type of a truth value the engine builds without a node of its own, such as the equalities of a USING join.
      */
     public function truth(bool $nullable): Domain
     {
-        return new Domain(Kind::Integer, Field::LongLong, 1, 0, false, Collation::binary(), $nullable);
+        return Domain::integer(Field::LongLong, 1)->withNullable($nullable);
     }
 
     /**
@@ -74,10 +74,10 @@ final class Operators
         $right = $this->compiler->compile($node->right, $scope);
         $text = (new Printer())->expression($node);
         if ($node->operator->bitwise()) {
-            return new Bits($node->operator, $left, $right, Domain::integer(Field::LongLong, 21, true)->withNullable($left->domain()->nullable || $right->domain()->nullable), $text);
+            return new Bits($node->operator, $left, $right, $this->compiler->domain($node), $text);
         }
 
-        return new ArithmeticEvaluable($node->operator, $left, $right, Numeric::binary($node->operator, $left->domain(), $right->domain(), $this->compiler->settings->divPrecisionIncrement), $text);
+        return new ArithmeticEvaluable($node->operator, $left, $right, $this->compiler->domain($node), $text);
     }
 
     /**
@@ -89,23 +89,12 @@ final class Operators
 
         return match ($node->operator) {
             UnaryOperator::Plus => $operand,
-            UnaryOperator::Not => new Negation($operand, $this->truth($operand->domain()->nullable)),
-            UnaryOperator::Invert => new Bits(null, $operand, $operand, Domain::integer(Field::LongLong, 21, true)->withNullable($operand->domain()->nullable), (new Printer())->expression($node)),
-            UnaryOperator::Minus => new Minus($operand, $this->negated($operand->domain()), (new Printer())->expression($node)),
+            UnaryOperator::Not => new Negation($operand, $this->compiler->domain($node)),
+            UnaryOperator::Invert => new Bits(null, $operand, $operand, $this->compiler->domain($node), (new Printer())->expression($node)),
+            UnaryOperator::Minus => new Minus($operand, $this->compiler->domain($node), (new Printer())->expression($node)),
         };
     }
 
-    /**
-     * Answers the domain of a negated operand.
-     */
-    public function negated(Domain $domain): Domain
-    {
-        return match (Numeric::operand($domain)) {
-            Kind::Integer => Domain::integer(Field::LongLong, $domain->length + ($domain->unsigned ? 1 : 0), false)->withNullable($domain->nullable),
-            Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(Numeric::digits($domain)[0], Numeric::digits($domain)[1])->withNullable($domain->nullable),
-            default => new Domain(Kind::Double, Field::Double, 23, $domain->kind === Kind::Double ? $domain->decimals : Domain::NOT_FIXED, false, Collation::binary(), $domain->nullable),
-        };
-    }
 
     /**
      * Compiles a comparison.
@@ -119,7 +108,7 @@ final class Operators
         $right = $this->compiler->compile($node->right, $scope);
         $comparator = Comparator::of($left->domain(), $right->domain(), $node->operator->value, $this->compiler->settings->connectionCollation);
 
-        return new Compare($node->operator, $left, $right, $comparator, $this->truth($node->operator !== ComparisonOperator::NullSafeEqual && ($left->domain()->nullable || $right->domain()->nullable)));
+        return new Compare($node->operator, $left, $right, $comparator, $this->compiler->domain($node));
     }
 
     /**
@@ -130,7 +119,7 @@ final class Operators
         $left = $this->compiler->compile($node->left, $scope);
         $right = $this->compiler->compile($node->right, $scope);
 
-        return new Logic($node->operator, $left, $right, $this->truth($left->domain()->nullable || $right->domain()->nullable));
+        return new Logic($node->operator, $left, $right, $this->compiler->domain($node));
     }
 
     /**
@@ -138,9 +127,7 @@ final class Operators
      */
     public function not(Not $node, Scope $scope): Evaluable
     {
-        $operand = $this->compiler->compile($node->operand, $scope);
-
-        return new Negation($operand, $this->truth($operand->domain()->nullable));
+        return new Negation($this->compiler->compile($node->operand, $scope), $this->compiler->domain($node));
     }
 
     /**
@@ -148,7 +135,7 @@ final class Operators
      */
     public function nullTest(NullTest $node, Scope $scope): Evaluable
     {
-        return new IsTest($this->compiler->compile($node->operand, $scope), null, $node->negated, $this->truth(false));
+        return new IsTest($this->compiler->compile($node->operand, $scope), null, $node->negated, $this->compiler->domain($node));
     }
 
     /**
@@ -162,7 +149,7 @@ final class Operators
             Truth::Unknown => null,
         };
 
-        return new IsTest($this->compiler->compile($node->operand, $scope), $truth, $node->negated, $this->truth(false));
+        return new IsTest($this->compiler->compile($node->operand, $scope), $truth, $node->negated, $this->compiler->domain($node));
     }
 
     /**
@@ -174,10 +161,8 @@ final class Operators
         $low = $this->compiler->compile($node->low, $scope);
         $high = $this->compiler->compile($node->high, $scope);
         $connection = $this->compiler->settings->connectionCollation;
-        Collations::aggregate([$operand->domain(), $low->domain(), $high->domain()], 'between', $connection, true);
-        $nullable = $operand->domain()->nullable || $low->domain()->nullable || $high->domain()->nullable;
 
-        return new Range($operand, $low, $high, Comparator::of($operand->domain(), $low->domain(), 'between', $connection), Comparator::of($operand->domain(), $high->domain(), 'between', $connection), $node->negated, $this->truth($nullable));
+        return new Range($operand, $low, $high, Comparator::of($operand->domain(), $low->domain(), 'between', $connection), Comparator::of($operand->domain(), $high->domain(), 'between', $connection), $node->negated, $this->compiler->domain($node));
     }
 
     /**
@@ -190,14 +175,12 @@ final class Operators
         }
         $operand = $this->compiler->compile($node->operand, $scope);
         $elements = [];
-        $nullable = $operand->domain()->nullable;
         foreach ($node->elements as $element) {
             $compiled = $this->compiler->compile($element, $scope);
             $elements[] = [$compiled, Comparator::of($operand->domain(), $compiled->domain(), 'in', $this->compiler->settings->connectionCollation)];
-            $nullable = $nullable || $compiled->domain()->nullable;
         }
 
-        return new Membership($operand, $elements, $node->negated, $this->truth($nullable));
+        return new Membership($operand, $elements, $node->negated, $this->compiler->domain($node));
     }
 
     /**
@@ -210,7 +193,7 @@ final class Operators
         $escape = $node->escape === null ? null : $this->compiler->compile($node->escape, $scope);
         [$collation] = Collations::aggregate([$operand->domain(), $pattern->domain()], 'like', $this->compiler->settings->connectionCollation, true);
 
-        return new Pattern($operand, $pattern, $escape, $collation, $node->negated, $this->truth($operand->domain()->nullable || $pattern->domain()->nullable));
+        return new Pattern($operand, $pattern, $escape, $collation, $node->negated, $this->compiler->domain($node));
     }
 
     /**
@@ -220,18 +203,14 @@ final class Operators
     {
         $operand = $node->operand === null ? null : $this->compiler->compile($node->operand, $scope);
         $branches = [];
-        $results = [];
         foreach ($node->branches as $branch) {
             $condition = $this->compiler->compile($branch->condition, $scope);
-            $result = $this->compiler->compile($branch->result, $scope);
             $comparator = $operand === null ? null : Comparator::of($operand->domain(), $condition->domain(), 'case', $this->compiler->settings->connectionCollation);
-            $branches[] = [$condition, $comparator, $result];
-            $results[] = $result->domain();
+            $branches[] = [$condition, $comparator, $this->compiler->compile($branch->result, $scope)];
         }
         $else = $node->else === null ? null : $this->compiler->compile($node->else, $scope);
-        $domain = (new Aggregation($this->compiler->settings->connectionCollation))->of([...$results, ...($else === null ? [] : [$else->domain()])], 'case');
 
-        return new Choice($operand, $branches, $else, $domain->withNullable($domain->nullable || $else === null));
+        return new Choice($operand, $branches, $else, $this->compiler->domain($node));
     }
 
     /**

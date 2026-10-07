@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
+use MySqlMemory\Error\ErrorCode;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -44,8 +46,11 @@ final class Bits implements Evaluable
      * Computes the result for a row.
      */
     #[\Override]
-    public function evaluate(Frame $frame): ?int
+    public function evaluate(Frame $frame): int|string|null
     {
+        if ($this->domain->kind === Kind::String) {
+            return $this->bytes($frame);
+        }
         $left = Convert::toInteger($this->left->evaluate($frame), $this->left->domain(), $frame->context, true);
         if ($left === null) {
             return null;
@@ -66,4 +71,59 @@ final class Bits implements Evaluable
             default => $right < 0 || $right >= 64 ? 0 : ($left >> $right) & (PHP_INT_MAX >> ($right === 0 ? 0 : $right - 1) | ($right === 0 ? PHP_INT_MIN : 0)),
         };
     }
+
+    /**
+     * Evaluates the operator on binary strings: byte by byte, or shifting the bits within the length of the string.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the operands of AND, OR or XOR differ in length
+     */
+    public function bytes(Frame $frame): ?string
+    {
+        $left = $this->left->evaluate($frame);
+        if ($left === null) {
+            return null;
+        }
+        $left = (string) Convert::toText($left, $this->left->domain());
+        if ($this->operator === null) {
+            return ~$left;
+        }
+        $right = $this->right->evaluate($frame);
+        if ($right === null) {
+            return null;
+        }
+        if ($this->operator === ArithmeticOperator::ShiftLeft || $this->operator === ArithmeticOperator::ShiftRight) {
+            return $this->shifted($left, (int) Convert::toInteger($right, $this->right->domain(), $frame->context, true), $this->operator === ArithmeticOperator::ShiftLeft);
+        }
+        $right = (string) Convert::toText($right, $this->right->domain());
+        if (strlen($left) !== strlen($right)) {
+            throw ErrorCode::BitwiseOperandsSize->error();
+        }
+
+        return match ($this->operator) {
+            ArithmeticOperator::BitAnd => $left & $right,
+            ArithmeticOperator::BitXor => $left ^ $right,
+            default => $left | $right,
+        };
+    }
+
+    /**
+     * Shifts the bits of a binary string by a count, keeping its length.
+     */
+    public function shifted(string $bytes, int $count, bool $left): string
+    {
+        $bits = '';
+        foreach (str_split($bytes) as $byte) {
+            $bits .= str_pad(decbin(ord($byte)), 8, '0', STR_PAD_LEFT);
+        }
+        $width = strlen($bits);
+        $count = $count < 0 || $count > $width ? $width : $count;
+        $shifted = $left ? substr($bits, $count) . str_repeat('0', $count) : str_repeat('0', $count) . substr($bits, 0, $width - $count);
+        $result = '';
+        foreach ($width === 0 ? [] : str_split($shifted, 8) as $octet) {
+            $result .= chr((int) bindec($octet));
+        }
+
+        return $result;
+    }
+
 }

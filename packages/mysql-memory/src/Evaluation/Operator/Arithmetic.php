@@ -127,8 +127,8 @@ final class Arithmetic implements Evaluable
      */
     public function integer(int $left, int $right, Frame $frame): ?int
     {
-        $leftText = Integer::text($left, $this->left->domain()->unsigned && Numeric::operand($this->left->domain()) === Kind::Integer);
-        $rightText = Integer::text($right, $this->right->domain()->unsigned && Numeric::operand($this->right->domain()) === Kind::Integer);
+        $leftText = Integer::text($left, $this->left->domain()->numericBytes || ($this->left->domain()->unsigned && Numeric::operand($this->left->domain()) === Kind::Integer));
+        $rightText = Integer::text($right, $this->right->domain()->numericBytes || ($this->right->domain()->unsigned && Numeric::operand($this->right->domain()) === Kind::Integer));
         if ($this->operator === ArithmeticOperator::Modulo) {
             if ($rightText === '0') {
                 return $this->byZero($frame);

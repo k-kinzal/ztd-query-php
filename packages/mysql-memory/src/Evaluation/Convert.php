@@ -33,6 +33,10 @@ final class Convert
             return null;
         }
 
+        if ($domain->numericBytes && $domain->kind === Kind::String) {
+            $domain = new Domain(Kind::Bit, $domain->field, $domain->length, 0, true);
+        }
+
         return match ($domain->kind) {
             Kind::Integer, Kind::Year => Integer::real((int) $value, $domain->unsigned),
             Kind::Double => (float) $value,
@@ -53,6 +57,10 @@ final class Convert
             return null;
         }
 
+        if ($domain->numericBytes && $domain->kind === Kind::String) {
+            $domain = new Domain(Kind::Bit, $domain->field, $domain->length, 0, true);
+        }
+
         return match ($domain->kind) {
             Kind::Integer, Kind::Year => (int) $value,
             Kind::Double => Integer::fromReal((float) $value, $unsigned),
@@ -71,6 +79,10 @@ final class Convert
     {
         if ($value === null) {
             return null;
+        }
+
+        if ($domain->numericBytes && $domain->kind === Kind::String) {
+            $domain = new Domain(Kind::Bit, $domain->field, $domain->length, 0, true);
         }
 
         return match ($domain->kind) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings as Resolution;
 use SqlSemantics\Contract\GrammarRelease;
 use MySqlMemory\Session\SqlModes;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
@@ -21,6 +22,7 @@ final class Settings
      * @param int $divPrecisionIncrement The digits a decimal division adds to the scale of the dividend
      * @param string $database The current database, or the empty string for none
      * @param string $version The server version the session reports
+     * @param Resolution|null $resolution The session as SQL Semantics resolves types in it; the server defaults when null
      */
     public function __construct(
         public readonly Collation $connectionCollation,
@@ -28,7 +30,16 @@ final class Settings
         public readonly int $divPrecisionIncrement = 4,
         public readonly string $database = '',
         public readonly string $version = '8.4.7',
+        public readonly ?Resolution $resolution = null,
     ) {
+    }
+
+    /**
+     * Answers the session as SQL Semantics resolves types in it.
+     */
+    public function resolution(): Resolution
+    {
+        return $this->resolution ?? new Resolution($this->connectionCollation, $this->divPrecisionIncrement);
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
+use SqlSemantics\Statement\Type\NullOnly;
 use SqlSemantics\Statement\Type\Nullability;
 use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Typing\Domain;
@@ -107,7 +108,7 @@ final class Compiler
      */
     public function __construct(public readonly Facts $facts, public readonly Settings $settings, public readonly Planner $planner, public readonly Connection $connection)
     {
-        $this->literals = new Literals($settings);
+        $this->literals = new Literals($this);
         $this->operators = new Operators($this);
         $this->names = new Names($this);
         $this->calls = new Calls($this);
@@ -148,6 +149,36 @@ final class Compiler
     }
 
     /**
+     * Answers the type SQL Semantics resolved for a node, with the nullability it derived, or null when it resolved only the class of the type.
+     */
+    public function resolved(Scalar $node): ?Domain
+    {
+        if (!$this->facts->covers($node)) {
+            return null;
+        }
+        $fact = $this->facts->scalar($node);
+        $type = $fact->type;
+        if ($type instanceof NullOnly) {
+            return Domain::null();
+        }
+        if (!$type instanceof Known || !$type->descriptor instanceof Resolved) {
+            return null;
+        }
+
+        return Domain::of($type->descriptor, $fact->nullability !== Nullability::NotNull);
+    }
+
+    /**
+     * Answers the type SQL Semantics resolved for a node.
+     *
+     * @throws \MySqlMemory\Error\SqlError When SQL Semantics resolved only the class of its type
+     */
+    public function domain(Scalar $node): Domain
+    {
+        return $this->resolved($node) ?? throw ErrorCode::NotSupportedYet->error('the type of ' . (new \ReflectionClass($node))->getShortName());
+    }
+
+    /**
      * Gives a compiled expression the type SQL Semantics resolved for its node, when it resolved one.
      */
     public function typed(Scalar $node, Evaluable $evaluable): Evaluable
@@ -162,7 +193,7 @@ final class Compiler
             Nullability::Dependent => $evaluable->domain()->nullable,
         };
         $type = $fact->type;
-        $domain = $type instanceof Known && $type->descriptor instanceof Resolved ? Domain::of($type->descriptor, $nullable) : $evaluable->domain()->withNullable($nullable);
+        $domain = $type instanceof Known && $type->descriptor instanceof Resolved ? Domain::of($type->descriptor, $nullable)->withNumericBytes($evaluable->domain()->numericBytes && $type->descriptor->kind === $evaluable->domain()->kind) : $evaluable->domain()->withNullable($nullable);
 
         return $domain == $evaluable->domain() ? $evaluable : new Retyped($evaluable, $domain);
     }
@@ -202,7 +233,7 @@ final class Compiler
             $node instanceof CharCall => $this->texts->char($node, $scope),
             $node instanceof SoundsLike => $this->texts->soundsLike($node, $scope),
             $node instanceof Regexp => $this->texts->regexp($node, $scope),
-            $node instanceof Concatenation => $this->calls->named('CONCAT', [$node->left, $node->right], $scope),
+            $node instanceof Concatenation => $this->calls->named('CONCAT', [$node->left, $node->right], $scope, $node),
             $node instanceof Extract => $this->dates->extract($node, $scope),
             $node instanceof DefaultOfColumn => $this->names->default($node, $scope),
             $node instanceof IntervalAddition => $this->dates->addition($node, $scope),

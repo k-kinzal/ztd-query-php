@@ -129,6 +129,7 @@ enum ErrorCode: int
     case InvalidJsonText = 3140;
     case InvalidJsonTextInParameter = 3141;
     case InvalidJsonPath = 3143;
+    case BitwiseOperandsSize = 3513;
     case RecursiveWithoutUnion = 3577;
     case RecursionLimit = 3636;
     case RegexpError = 3685;

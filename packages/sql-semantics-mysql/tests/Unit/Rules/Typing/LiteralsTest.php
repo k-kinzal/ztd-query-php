@@ -99,7 +99,7 @@ final class LiteralsTest extends TestCase
         $literals = new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
 
         self::assertSame([10, 0], [$literals->temporal(new TemporalLiteral(TemporalForm::Date, '2024-01-02'))->length, 0]);
-        self::assertSame([12, 3], [$literals->temporal(new TemporalLiteral(TemporalForm::Time, '10:00:00.123'))->length, $literals->temporal(new TemporalLiteral(TemporalForm::Time, '10:00:00.123'))->decimals]);
+        self::assertSame([14, 3], [$literals->temporal(new TemporalLiteral(TemporalForm::Time, '10:00:00.123'))->length, $literals->temporal(new TemporalLiteral(TemporalForm::Time, '10:00:00.123'))->decimals]);
         self::assertSame(26, $literals->temporal(new TemporalLiteral(TemporalForm::Timestamp, '2024-01-02 00:00:00.1234567'))->length);
     }
 

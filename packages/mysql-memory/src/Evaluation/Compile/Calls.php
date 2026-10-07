@@ -50,7 +50,7 @@ final class Calls
         }
         $arguments = array_map(static fn ($argument): Scalar => $argument->expression, $call->arguments);
 
-        return $this->named($call->name->value, $arguments, $scope);
+        return $this->named($call->name->value, $arguments, $scope, $call);
     }
 
     /**
@@ -60,7 +60,7 @@ final class Calls
      */
     public function keyword(KeywordCall $call, Scope $scope): Evaluable
     {
-        return $this->named($call->function->value, $call->arguments, $scope);
+        return $this->named($call->function->value, $call->arguments, $scope, $call);
     }
 
     /**
@@ -70,7 +70,7 @@ final class Calls
      *
      * @throws \MySqlMemory\Error\SqlError When the function is unknown or the arguments do not fit
      */
-    public function named(string $name, array $arguments, Scope $scope): Evaluable
+    public function named(string $name, array $arguments, Scope $scope, ?Scalar $node = null): Evaluable
     {
         $routine = Library::instance()->find($name);
         if ($routine === null) {
@@ -82,7 +82,9 @@ final class Calls
         $compiled = array_map(fn (Scalar $argument): Evaluable => $this->compiler->compile($argument, $scope), $arguments);
         $signature = new Signature($compiled, $this->compiler->settings);
 
-        return new Call($routine, $compiled, ($routine->domain)($signature->domains(), $signature));
+        $resolved = $node === null ? null : $this->compiler->resolved($node);
+
+        return new Call($routine, $compiled, $resolved ?? ($routine->domain)($signature->domains(), $signature));
     }
 
     /**
@@ -90,14 +92,6 @@ final class Calls
      */
     public function clock(ClockCall $call, Scope $scope): Evaluable
     {
-        $decimals = $call->precision === null ? 0 : (int) $call->precision->text;
-        $fraction = $decimals > 0 ? $decimals + 1 : 0;
-        $domain = match ($call->clock) {
-            ClockKind::CurrentDate, ClockKind::UtcDate => new Domain(Kind::Date, Field::Date, 10, 0, false, Collation::binary(), false),
-            ClockKind::CurrentTime, ClockKind::UtcTime => new Domain(Kind::Time, Field::Time, 8 + $fraction, $decimals, false, Collation::binary(), false),
-            default => new Domain(Kind::DateTime, Field::DateTime, 19 + $fraction, $decimals, false, Collation::binary(), false),
-        };
-
-        return new Clock($call->clock, $domain);
+        return new Clock($call->clock, $this->compiler->domain($call));
     }
 }

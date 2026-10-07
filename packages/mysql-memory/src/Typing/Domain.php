@@ -45,6 +45,7 @@ final class Domain
      * @param bool $nullable Whether a value can be NULL
      * @param list<string> $members The members of an ENUM or SET, in declared order
      * @param Coercibility $coercibility How strongly the collation of a string holds against another
+     * @param bool $numericBytes Whether the bytes of a binary string read as the integer they spell in a numeric context, as for a hexadecimal or bit literal
      */
     public function __construct(
         public readonly Kind $kind,
@@ -56,8 +57,17 @@ final class Domain
         public readonly bool $nullable = true,
         public readonly array $members = [],
         public readonly Coercibility $coercibility = Coercibility::Implicit,
+        public readonly bool $numericBytes = false,
     ) {
         $this->collation = $collation ?? Collation::binary();
+    }
+
+    /**
+     * Answers the same domain with bytes that read as the integer they spell in a numeric context.
+     */
+    public function withNumericBytes(bool $numericBytes = true): self
+    {
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $numericBytes);
     }
 
     /**
@@ -121,7 +131,7 @@ final class Domain
      */
     public function withNullable(bool $nullable): self
     {
-        return $nullable === $this->nullable ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $nullable, $this->members, $this->coercibility);
+        return $nullable === $this->nullable ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $nullable, $this->members, $this->coercibility, $this->numericBytes);
     }
 
     /**
@@ -129,7 +139,7 @@ final class Domain
      */
     public function withCollation(Collation $collation, Coercibility $coercibility): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->nullable, $this->members, $coercibility);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->nullable, $this->members, $coercibility, $this->numericBytes);
     }
 
     /**

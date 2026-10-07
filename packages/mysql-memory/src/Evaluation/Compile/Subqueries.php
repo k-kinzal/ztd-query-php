@@ -45,9 +45,7 @@ final class Subqueries
             throw ErrorCode::OperandColumns->error(1);
         }
 
-        $nullability = $this->compiler->facts->scalar($node)->nullability;
-
-        return new ScalarRead(new Rows($plan), $plan->domains[0]->withNullable($nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull));
+        return new ScalarRead(new Rows($plan), $this->compiler->resolved($node) ?? $plan->domains[0]->withNullable(true));
     }
 
     /**
@@ -55,7 +53,7 @@ final class Subqueries
      */
     public function exists(Exists $node, Scope $scope): Evaluable
     {
-        return new Existence(new Rows($this->compiler->planner->query($node->query, $scope)), $this->compiler->operators->truth(false));
+        return new Existence(new Rows($this->compiler->planner->query($node->query, $scope)), $this->compiler->domain($node));
     }
 
     /**

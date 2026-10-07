@@ -138,7 +138,7 @@ final class Literals
 
         return match ($literal->form) {
             TemporalForm::Date => new Domain(Kind::Date, Field::Date, 10, 0, false, null, [], Coercibility::Numeric),
-            TemporalForm::Time => new Domain(Kind::Time, Field::Time, 8 + $fraction, $decimals, false, null, [], Coercibility::Numeric),
+            TemporalForm::Time => new Domain(Kind::Time, Field::Time, 10 + $fraction, $decimals, false, null, [], Coercibility::Numeric),
             TemporalForm::Timestamp => new Domain(Kind::DateTime, Field::DateTime, 19 + $fraction, $decimals, false, null, [], Coercibility::Numeric),
         };
     }

@@ -121,6 +121,7 @@ return [
     3140 => ['22032', 'Invalid JSON text: "%s" at position %d in value for column \'%s\'.'],
     3141 => ['22032', 'Invalid JSON text in argument %d to function %s: "%s" at position %d.'],
     3143 => ['42000', 'Invalid JSON path expression. The error is around character position %d.'],
+    3513 => ['HY000', 'Binary operands of bitwise operators must be of equal length'],
     3577 => ['HY000', 'In recursive query block of Recursive Common Table Expression \'%s\', the recursive table must be referenced only once, and not in any subquery'],
     3636 => ['HY000', 'Recursive query aborted after %d iterations. Try increasing @@cte_max_recursion_depth to a larger value.'],
     3685 => ['HY000', 'Illegal argument to a regular expression.'],

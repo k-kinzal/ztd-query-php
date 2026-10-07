@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
+use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -131,6 +136,37 @@ final class Numbers
     public function bits(): Domain
     {
         return Domain::integer(Field::LongLong, 21, true);
+    }
+
+    /**
+     * Answers how an operand takes part in arithmetic: a hexadecimal or bit literal without an introducer as the unsigned integer its bytes spell.
+     *
+     * The integer is as wide as the largest value its bytes hold, and a bit literal one digit wider.
+     */
+    public function numeric(Scalar $node, Domain $domain): Domain
+    {
+        while ($node instanceof Grouped) {
+            $node = $node->operand;
+        }
+        if (!$node instanceof RadixLiteral || $node->introducer !== null || $domain->kind !== Kind::String) {
+            return $domain;
+        }
+        $digits = strlen(rtrim(sprintf('%.0F', 256 ** $domain->length - 1), '.'));
+
+        return Domain::integer(Field::LongLong, min(20, $digits) + ($node->radix === Radix::Bit ? 1 : 0), true);
+    }
+
+    /**
+     * Resolves a bit operator on binary strings: a binary string as long as its longest operand, or its left operand for a shift.
+     *
+     * @param list<Domain> $operands The left operand, and the right one of a binary operator
+     */
+    public function binaryBits(?ArithmeticOperator $operator, array $operands): Domain
+    {
+        $shift = $operator === ArithmeticOperator::ShiftLeft || $operator === ArithmeticOperator::ShiftRight;
+        $length = $shift ? $operands[0]->length : max(array_map(static fn (Domain $operand): int => $operand->length, $operands));
+
+        return Domain::string($length, Collation::binary());
     }
 
     /**

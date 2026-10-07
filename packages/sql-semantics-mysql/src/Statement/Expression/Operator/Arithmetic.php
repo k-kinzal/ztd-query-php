@@ -74,7 +74,8 @@ final class Arithmetic implements Scalar
         $domains = (new Precision())->all([$left->type, $right->type]);
         if ($domains !== null && $type instanceof Known) {
             $numbers = new Numbers(Settings::of($derivation->context)->divPrecisionIncrement);
-            $type = new Known($this->operator->bitwise() ? (TypeClass::of($type->descriptor) === TypeClass::Unsigned ? $numbers->bits() : $type->descriptor) : $numbers->binary($this->operator, $domains[0], $domains[1]));
+            $domains = [$numbers->numeric($this->left, $domains[0]), $numbers->numeric($this->right, $domains[1])];
+            $type = new Known($this->operator->bitwise() ? (TypeClass::of($type->descriptor) === TypeClass::Unsigned ? $numbers->bits() : $numbers->binaryBits($this->operator, $domains)) : $numbers->binary($this->operator, $domains[0], $domains[1]));
         }
         $divides = $this->operator === ArithmeticOperator::Divide || $this->operator === ArithmeticOperator::IntegerDivide || $this->operator === ArithmeticOperator::Modulo;
 
