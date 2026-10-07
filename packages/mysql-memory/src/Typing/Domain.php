@@ -140,6 +140,12 @@ final class Domain
         if ($this->kind->numeric() && $this->field !== FieldType::Year) {
             $flags |= ColumnFlag::Numeric->value;
         }
+        if ($this->field === FieldType::Enum) {
+            $flags |= ColumnFlag::Enum->value;
+        }
+        if ($this->field === FieldType::Set) {
+            $flags |= ColumnFlag::Set->value;
+        }
 
         return $flags;
     }
