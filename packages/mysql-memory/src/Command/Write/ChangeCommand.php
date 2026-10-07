@@ -93,9 +93,9 @@ final class ChangeCommand implements Command
     public function table(Operation $operation, TableReference|WriteTarget $relation, Session $session): StoredTable
     {
         $resolution = $operation->facts->relation($relation)->table;
-        $schema = $relation->name->schema?->value ?? $session->variables->database;
+        $schema = $relation->name->schema->value ?? $session->variables->database;
         if ($resolution instanceof DeclaredTable) {
-            $schema = $resolution->table->name->schema?->value ?? $schema;
+            $schema = $resolution->table->name->schema->value ?? $schema;
         }
         $table = $session->instance->dictionary->table($schema, $relation->name->name->value);
         if ($table === null) {
@@ -176,7 +176,7 @@ final class ChangeCommand implements Command
                     $context->warning(ErrorCode::BadNull, $definition->columns[$position]->name);
                     $stored = $writer->implicit($definition->columns[$position]);
                 }
-                $row[$position] = $stored;
+                array_splice($row, $position, 1, [$stored]);
                 $assigned[$position] = true;
             }
             if (!$this->differs($old, $row, $table)) {

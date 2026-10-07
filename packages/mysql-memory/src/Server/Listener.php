@@ -62,7 +62,7 @@ final class Listener
         }
         $clients = [];
         $sockets = [];
-        while (true) {
+        for (;;) {
             $read = [$this->server, ...$sockets];
             $write = null;
             $except = null;

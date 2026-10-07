@@ -35,6 +35,8 @@ final class PayloadReader
 
     /**
      * Reads a fixed-length unsigned integer of one to eight bytes.
+     *
+     * @throws MalformedPacket When the payload ends before the field
      */
     public function integer(int $bytes): int
     {
@@ -49,6 +51,8 @@ final class PayloadReader
 
     /**
      * Reads a length-encoded integer, or null for the NULL marker 0xFB.
+     *
+     * @throws MalformedPacket When the payload ends before the field or the integer starts with 0xFF
      */
     public function lengthEncoded(): ?int
     {
@@ -66,6 +70,8 @@ final class PayloadReader
 
     /**
      * Reads a string prefixed by its length-encoded length.
+     *
+     * @throws MalformedPacket When the payload ends before the field
      */
     public function lengthEncodedString(): string
     {
@@ -74,6 +80,8 @@ final class PayloadReader
 
     /**
      * Reads a string terminated by a NUL byte, consuming the terminator.
+     *
+     * @throws MalformedPacket When the string has no terminator
      */
     public function nulTerminated(): string
     {
@@ -89,6 +97,8 @@ final class PayloadReader
 
     /**
      * Reads a number of bytes.
+     *
+     * @throws MalformedPacket When the length is negative or the payload ends before the bytes
      */
     public function bytes(int $length): string
     {

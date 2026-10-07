@@ -49,7 +49,7 @@ final class Ordering
         $strength = match ($match[2] ?? '') {
             'as_ci' => Collator::SECONDARY,
             'as_cs' => Collator::TERTIARY,
-            default => Collator::PRIMARY,
+            'ai_ci', '' => Collator::PRIMARY,
         };
         $collator = new Collator(($match[1] ?? '') === '' ? 'root' : $match[1]);
         $collator->setStrength($strength);
@@ -84,7 +84,7 @@ final class Ordering
     {
         $text = $this->padded($text);
         if ($this->collator !== null && mb_check_encoding($text, 'UTF-8')) {
-            $key = $this->collator->getSortKey($text);
+            $key = collator_get_sort_key($this->collator, $text);
             if ($key !== false) {
                 return $key;
             }

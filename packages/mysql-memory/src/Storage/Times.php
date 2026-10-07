@@ -7,6 +7,7 @@ namespace MySqlMemory\Storage;
 use JsonException;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Temporal;
@@ -34,6 +35,8 @@ final class Times
 
     /**
      * Stores into a temporal column.
+     *
+     * @throws SqlError When the value is refused
      */
     public function value(int|float|string $value, Domain $from, ColumnDefinition $column): int|string
     {
@@ -82,6 +85,8 @@ final class Times
 
     /**
      * Stores into a TIME column.
+     *
+     * @throws SqlError When the value is refused
      */
     public function time(string $text, Domain $from, ColumnDefinition $column): string
     {
@@ -106,32 +111,36 @@ final class Times
 
     /**
      * Refuses or zeroes a value that is no valid date or time.
+     *
+     * @throws SqlError When the value is refused
      */
     public function invalid(string $text, ColumnDefinition $column): string
     {
         $kind = match ($column->domain->field) {
             Field::Date => 'date',
             Field::Time => 'time',
-            default => 'datetime',
+            Field::Decimal, Field::Tiny, Field::Short, Field::Long, Field::Float, Field::Double, Field::Null, Field::Timestamp, Field::LongLong, Field::Int24, Field::DateTime, Field::Year, Field::NewDate, Field::VarChar, Field::Bit, Field::Vector, Field::Json, Field::NewDecimal, Field::Enum, Field::Set, Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Blob, Field::VarString, Field::String, Field::Geometry => 'datetime',
         };
         $this->store->adjust(ErrorCode::TruncatedWrongValueForField, $kind, $text, $column->name, $this->store->row);
 
         return match ($column->domain->kind) {
             Kind::Date => '0000-00-00',
             Kind::Time => Temporal::time(false, 0, 0, 0, 0, $column->domain->decimals),
-            default => '0000-00-00 00:00:00' . Temporal::fraction(0, $column->domain->decimals),
+            Kind::Integer, Kind::Decimal, Kind::Double, Kind::String, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => '0000-00-00 00:00:00' . Temporal::fraction(0, $column->domain->decimals),
         };
     }
 
     /**
      * Stores into a YEAR column.
+     *
+     * @throws SqlError When the value is refused
      */
     public function year(int|float|string $value, Domain $from, ColumnDefinition $column): int
     {
         $year = (int) Convert::toInteger($value, $from, $this->store->context);
         $text = $from->kind === Kind::String ? trim((string) $value) : '';
         if ($from->kind !== Kind::String || strlen($text) <= 2) {
-            if ($year >= 1 && $year <= 69 || ($text !== '' && $year === 0 && $text !== '0' && $text !== '')) {
+            if ($year >= 1 && $year <= 69 || ($text !== '' && $year === 0 && $text !== '0')) {
                 $year += 2000;
             } elseif ($year >= 70 && $year <= 99) {
                 $year += 1900;
@@ -148,6 +157,8 @@ final class Times
 
     /**
      * Stores into a JSON column: the canonical text of a valid document.
+     *
+     * @throws SqlError When the text is no valid document
      */
     public function json(int|float|string $value, Domain $from, ColumnDefinition $column): string
     {
@@ -158,7 +169,7 @@ final class Times
         try {
             $document = json_decode($text, false, 512, JSON_THROW_ON_ERROR | JSON_BIGINT_AS_STRING);
         } catch (JsonException $failure) {
-            throw ErrorCode::InvalidJsonText->error('Invalid value.', 0, $column->name);
+            throw new SqlError(ErrorCode::InvalidJsonText, ErrorCode::InvalidJsonText->message('Invalid value.', 0, $column->name), $failure);
         }
 
         return (string) json_encode($document, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);

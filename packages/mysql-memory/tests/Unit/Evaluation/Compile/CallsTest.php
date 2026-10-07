@@ -1,0 +1,87 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Evaluation\Compile;
+
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Compile\Calls;
+use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(Calls::class)]
+#[Small]
+final class CallsTest extends TestCase
+{
+    public function testFunctionCompilesACallWrittenByName(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT ABS(-3), CONCAT('a', 'b', 'c'), LENGTH('abc')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['3', 'abc', '3']], $result->rows);
+    }
+
+    public function testFunctionRefusesAStoredFunctionThatDoesNotExist(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1305);
+        $this->expectExceptionMessage('FUNCTION d.f does not exist');
+
+        $session->query('SELECT d.f(1)');
+    }
+
+    public function testKeywordCompilesACallOfAFunctionWhoseNameIsAKeyword(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT LEFT('abcd', 2), RIGHT('abcd', 2), REPEAT('ab', 2), INSERT('abcd', 2, 1, 'X')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['ab', 'cd', 'abab', 'aXcd']], $result->rows);
+    }
+
+    public function testNamedRefusesAWrongNumberOfArguments(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1582);
+        $this->expectExceptionMessage("Incorrect parameter count in the call to native function 'ABS'");
+
+        $session->query('SELECT ABS(1, 2)');
+    }
+
+    public function testNamedCompilesTheArgumentsOfTheCall(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT ABS(2 - 5), ABS(NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['3', null]], $result->rows);
+    }
+
+    public function testClockCompilesTheClocksWithTheirFractionalDigits(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT LENGTH(CURDATE()), LENGTH(NOW()), LENGTH(NOW(3)), LENGTH(CURTIME()), LENGTH(UTC_TIMESTAMP(6))')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['10', '19', '23', '8', '26']], $result->rows);
+    }
+
+    public function testClockReadsTheSameInstantForEveryCallOfAStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT NOW(6) = NOW(6), CURRENT_TIMESTAMP(6) = NOW(6)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1']], $result->rows);
+    }
+}

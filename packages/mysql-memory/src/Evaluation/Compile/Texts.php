@@ -99,7 +99,7 @@ final class Texts
     public function convert(CharsetConversion $node, Scope $scope): Evaluable
     {
         $operand = $this->compiler->compile($node->operand, $scope);
-        $name = $node->charset->name?->value ?? 'binary';
+        $name = $node->charset->name->value ?? 'binary';
         $charset = Charset::named($name);
         if ($charset === null) {
             throw ErrorCode::UnknownCharacterSet->error($name);
@@ -116,7 +116,7 @@ final class Texts
             }
             $converted = @mb_convert_encoding($text, $charset === Charset::known('latin1') ? 'Windows-1252' : 'ASCII', 'UTF-8');
 
-            return is_string($converted) ? mb_convert_encoding($converted, 'UTF-8', $charset === Charset::known('latin1') ? 'Windows-1252' : 'ASCII') : $text;
+            return mb_convert_encoding($converted, 'UTF-8', $charset === Charset::known('latin1') ? 'Windows-1252' : 'ASCII');
         });
     }
 
@@ -169,7 +169,7 @@ final class Texts
     public function char(CharCall $node, Scope $scope): Evaluable
     {
         $arguments = array_map(fn ($argument): Evaluable => $this->compiler->compile($argument, $scope), $node->arguments);
-        $collation = $node->charset === null ? Collation::binary() : (Charset::named($node->charset->name?->value ?? 'binary')?->defaultCollation($this->compiler->settings->release()) ?? Collation::binary());
+        $collation = $node->charset === null ? Collation::binary() : (Charset::named($node->charset->name->value ?? 'binary')?->defaultCollation($this->compiler->settings->release()) ?? Collation::binary());
         $result = $this->compiler->domain($node);
 
         return $this->call('CHAR', $arguments, $result, static function (Frame $f, array $a): string {

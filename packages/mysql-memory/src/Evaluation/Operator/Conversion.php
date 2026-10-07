@@ -64,7 +64,7 @@ final class Conversion implements Evaluable
             Kind::Double => Convert::toDouble($value, $from, $context),
             Kind::Date, Kind::DateTime, Kind::Time => (new Moments())->convert($value, $from, $this->domain, $context),
             Kind::Year => (new Moments())->year($value, $from, $context),
-            default => $this->text((string) Convert::toText($value, $from), $context),
+            Kind::String, Kind::Json, Kind::Bit, Kind::Null => $this->text((string) Convert::toText($value, $from), $context),
         };
     }
 

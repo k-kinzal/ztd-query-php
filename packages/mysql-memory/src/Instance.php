@@ -29,10 +29,19 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
  */
 final class Instance
 {
+    /**
+     * The databases of the server and the tables they hold.
+     */
     public readonly Dictionary $dictionary;
 
+    /**
+     * The global values of the system variables, shared by every session.
+     */
     public readonly Globals $globals;
 
+    /**
+     * The system variables the emulated release knows.
+     */
     public readonly SystemVariables $catalog;
 
     private int $connections = 0;

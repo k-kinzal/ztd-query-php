@@ -50,7 +50,7 @@ final class CreateTableCommand implements Command
         $create = $operation->statement;
         assert($create instanceof CreateTable);
         $session->transaction->commit();
-        $schemaName = $create->name->schema?->value ?? $session->variables->database;
+        $schemaName = $create->name->schema->value ?? $session->variables->database;
         if ($schemaName === '') {
             throw ErrorCode::NoDatabase->error();
         }
@@ -89,7 +89,7 @@ final class CreateTableCommand implements Command
         $columns = $definition->columns;
         foreach ($primary->columns as $position) {
             $column = $columns[$position];
-            $columns[$position] = new ColumnDefinition($column->name, $column->domain->withNullable(false), $column->default->declared && $column->default->value === null && $column->default->expression === null ? \MySqlMemory\Dictionary\Fill::none() : $column->default, $column->autoIncrement, $column->onUpdateNow, $column->generated, $column->invisible, $column->declaration, $column->comment);
+            array_splice($columns, $position, 1, [new ColumnDefinition($column->name, $column->domain->withNullable(false), $column->default->declared && $column->default->value === null && $column->default->expression === null ? \MySqlMemory\Dictionary\Fill::none() : $column->default, $column->autoIncrement, $column->onUpdateNow, $column->generated, $column->invisible, $column->declaration, $column->comment)]);
         }
 
         return new TableDefinition($definition->schema, $definition->name, $columns, $definition->keys, $definition->declaration, $definition->engine, $definition->collation, $definition->temporary, $definition->comment);

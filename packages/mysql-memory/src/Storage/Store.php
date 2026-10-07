@@ -6,6 +6,7 @@ namespace MySqlMemory\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Typing\Domain;
@@ -41,7 +42,7 @@ final class Store
     /**
      * Converts a value of a domain into the value a column stores.
      *
-     * @throws \MySqlMemory\Error\SqlError When the value is refused
+     * @throws SqlError When the value is refused
      */
     public function value(int|float|string|null $value, Domain $from, ColumnDefinition $column): int|float|string|null
     {
@@ -65,7 +66,7 @@ final class Store
     /**
      * Raises or records an adjustment: an error under a strict mode, else a warning.
      *
-     * @throws \MySqlMemory\Error\SqlError Under a strict mode
+     * @throws SqlError Under a strict mode
      */
     public function adjust(ErrorCode $code, string|int ...$arguments): void
     {
@@ -77,6 +78,8 @@ final class Store
 
     /**
      * Stores into an integer column.
+     *
+     * @throws SqlError When the value is refused
      */
     public function integer(int|float|string $value, Domain $from, ColumnDefinition $column): int
     {
@@ -96,6 +99,7 @@ final class Store
         } else {
             $number = Decimal::round((string) Convert::toDecimal($value, $from, $this->context), 0);
         }
+        $number = Decimal::numeric($number);
         [$low, $high] = $this->range($to);
         if (bccomp($number, $low, 0) < 0 || bccomp($number, $high, 0) > 0) {
             $this->adjust(ErrorCode::OutOfRange, $column->name, $this->row);
@@ -108,7 +112,7 @@ final class Store
     /**
      * Answers the lowest and highest value of an integer domain.
      *
-     * @return array{string, string}
+     * @return array{numeric-string, numeric-string}
      */
     public function range(Domain $domain): array
     {
@@ -117,7 +121,7 @@ final class Store
             Field::Short => 16,
             Field::Int24 => 24,
             Field::Long => 32,
-            default => 64,
+            Field::Decimal, Field::Float, Field::Double, Field::Null, Field::Timestamp, Field::LongLong, Field::Date, Field::Time, Field::DateTime, Field::Year, Field::NewDate, Field::VarChar, Field::Bit, Field::Vector, Field::Json, Field::NewDecimal, Field::Enum, Field::Set, Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Blob, Field::VarString, Field::String, Field::Geometry => 64,
         };
         if ($domain->unsigned) {
             return ['0', bcsub(bcpow('2', (string) $bits), '1')];
@@ -128,6 +132,8 @@ final class Store
 
     /**
      * Stores into a DECIMAL column.
+     *
+     * @throws SqlError When the value is refused
      */
     public function decimal(int|float|string $value, Domain $from, ColumnDefinition $column): string
     {
@@ -158,6 +164,8 @@ final class Store
 
     /**
      * Stores into a FLOAT or DOUBLE column; a FLOAT holds single precision.
+     *
+     * @throws SqlError When the value is refused
      */
     public function real(int|float|string $value, Domain $from, ColumnDefinition $column): float
     {
@@ -175,7 +183,7 @@ final class Store
         }
         if ($column->domain->field === Field::Float) {
             $single = unpack('g', pack('g', $number));
-            $number = is_array($single) ? (float) $single[1] : $number;
+            $number = is_array($single) && is_float($single[1]) ? $single[1] : $number;
             if (is_infinite($number)) {
                 $this->adjust(ErrorCode::OutOfRange, $column->name, $this->row);
                 $number = $number > 0 ? 3.4028234663852886e38 : -3.4028234663852886e38;
@@ -187,6 +195,8 @@ final class Store
 
     /**
      * Stores into a string column: CHAR, VARCHAR, TEXT, BINARY, BLOB, ENUM or SET.
+     *
+     * @throws SqlError When the value is refused
      */
     public function string(int|float|string $value, Domain $from, ColumnDefinition $column): string
     {
@@ -216,6 +226,8 @@ final class Store
 
     /**
      * Stores into a BIT column: the bytes of the number, refusing a number of more bits.
+     *
+     * @throws SqlError When the value is refused
      */
     public function bit(int|float|string $value, Domain $from, ColumnDefinition $column): string
     {

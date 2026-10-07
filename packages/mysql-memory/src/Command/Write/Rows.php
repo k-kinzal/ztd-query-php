@@ -88,15 +88,15 @@ final class Rows
             $value = $values[$index];
             $column = $definition->columns[$position];
             if ($value instanceof DefaultRequest) {
-                $row[$position] = $this->defaulted($position, $frame, $store, $number, true);
+                array_splice($row, $position, 1, [$this->defaulted($position, $frame, $store, $number, true)]);
                 continue;
             }
             [$raw, $domain] = $value instanceof Evaluable ? [$value->evaluate($frame), $value->domain()] : $value;
-            $row[$position] = $this->notNull($store->value($raw, $domain, $column), $position, $store, $number, $single);
+            array_splice($row, $position, 1, [$this->notNull($store->value($raw, $domain, $column), $position, $store, $number, $single)]);
         }
         foreach ($definition->columns as $position => $column) {
             if (!isset($named[$position])) {
-                $row[$position] = $this->defaulted($position, $frame, $store, $number, false);
+                array_splice($row, $position, 1, [$this->defaulted($position, $frame, $store, $number, false)]);
             }
         }
         [$row, $generated] = $this->writer->autoIncrement($row, $this->context->modes->has('NO_AUTO_VALUE_ON_ZERO'));
@@ -210,8 +210,9 @@ final class Rows
         foreach ($this->onDuplicate as $assignment) {
             $position = (new Assignments($this->planner, $this->table))->position($assignment->column);
             $value = $this->planner->compiler->compile($assignment->value, $scope);
-            $row[$position] = $store->value($value->evaluate($frame), $value->domain(), $this->table->definition->columns[$position]);
-            $frame->row[$position] = $row[$position];
+            $stored = $store->value($value->evaluate($frame), $value->domain(), $this->table->definition->columns[$position]);
+            array_splice($row, $position, 1, [$stored]);
+            array_splice($frame->row, $position, 1, [$stored]);
         }
         $changed = false;
         foreach ($row as $position => $value) {

@@ -37,8 +37,14 @@ final class Client
 
     private int $capabilities = 0;
 
+    /**
+     * Builds the payloads the connection sends.
+     */
     public readonly Messages $messages;
 
+    /**
+     * The prepared statements of the connection.
+     */
     public readonly Statements $statements;
 
     /**
@@ -94,6 +100,8 @@ final class Client
 
     /**
      * Answers one packet; answers false when the client quits.
+     *
+     * @throws MalformedPacket When the packet does not follow the protocol
      */
     public function handle(string $payload): bool
     {
@@ -118,6 +126,8 @@ final class Client
 
     /**
      * Reads the handshake response and opens the session.
+     *
+     * @throws MalformedPacket When the handshake response ends before a field
      */
     public function authenticate(PayloadReader $reader): bool
     {

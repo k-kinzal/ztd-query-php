@@ -69,7 +69,7 @@ final class Bits implements Evaluable
             ArithmeticOperator::BitAnd => $left & $right,
             ArithmeticOperator::BitXor => $left ^ $right,
             ArithmeticOperator::ShiftLeft => $right < 0 || $right >= 64 ? 0 : $left << $right,
-            default => $right < 0 || $right >= 64 ? 0 : ($left >> $right) & (PHP_INT_MAX >> ($right === 0 ? 0 : $right - 1) | ($right === 0 ? PHP_INT_MIN : 0)),
+            ArithmeticOperator::ShiftRight, ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::Multiply, ArithmeticOperator::Divide, ArithmeticOperator::Modulo, ArithmeticOperator::IntegerDivide => $right < 0 || $right >= 64 ? 0 : ($left >> $right) & (PHP_INT_MAX >> ($right === 0 ? 0 : $right - 1) | ($right === 0 ? PHP_INT_MIN : 0)),
         };
     }
 
@@ -103,7 +103,7 @@ final class Bits implements Evaluable
         return match ($this->operator) {
             ArithmeticOperator::BitAnd => $left & $right,
             ArithmeticOperator::BitXor => $left ^ $right,
-            default => $left | $right,
+            ArithmeticOperator::BitOr, ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::Multiply, ArithmeticOperator::Divide, ArithmeticOperator::Modulo, ArithmeticOperator::IntegerDivide => $left | $right,
         };
     }
 
@@ -120,7 +120,7 @@ final class Bits implements Evaluable
         $count = $count < 0 || $count > $width ? $width : $count;
         $shifted = $left ? substr($bits, $count) . str_repeat('0', $count) : str_repeat('0', $count) . substr($bits, 0, $width - $count);
         $result = '';
-        foreach ($width === 0 ? [] : str_split($shifted, 8) as $octet) {
+        foreach (str_split($shifted, 8) as $octet) {
             $result .= chr((int) bindec($octet));
         }
 

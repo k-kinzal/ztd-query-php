@@ -40,10 +40,19 @@ use SqlSemantics\Statement\Operation;
  */
 final class Session
 {
+    /**
+     * The user variables and the session values of the system variables.
+     */
     public readonly Variables $variables;
 
+    /**
+     * The warnings, notes and error of the last statement, as SHOW WARNINGS reads them.
+     */
     public readonly Diagnostics $diagnostics;
 
+    /**
+     * The open transaction and the rows a failing statement restores.
+     */
     public readonly Transaction $transaction;
 
     /**
@@ -231,6 +240,8 @@ final class Session
 
     /**
      * Answers the session variables SQL Semantics resolves types with.
+     *
+     * @param array<int, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain> $parameters The type of the value bound to each parameter marker, by the position of the marker
      */
     public function resolution(array $parameters = []): Resolution
     {

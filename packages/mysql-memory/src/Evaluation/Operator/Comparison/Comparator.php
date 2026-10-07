@@ -90,7 +90,7 @@ final class Comparator
             Kind::Integer => Integer::compare((int) $left, $this->left->unsigned, (int) $right, $this->right->unsigned),
             Kind::Decimal => Decimal::compare((string) Convert::toDecimal($left, $this->left, $context), (string) Convert::toDecimal($right, $this->right, $context)),
             Kind::DateTime, Kind::Time, Kind::Date => $this->temporalOrder($left, $right, $context),
-            default => (float) Convert::toDouble($left, $this->left, $context) <=> (float) Convert::toDouble($right, $this->right, $context),
+            Kind::Double, Kind::Year, Kind::Bit, Kind::Null => (float) Convert::toDouble($left, $this->left, $context) <=> (float) Convert::toDouble($right, $this->right, $context),
         };
     }
 

@@ -26,36 +26,39 @@ final class Walker
     public function find(object $root, string $class, bool $intoQueries = true): array
     {
         $found = [];
-        $this->visit($root, $class, $intoQueries, $found, true);
+        if ($root instanceof Node) {
+            $this->visit($root, $class, $intoQueries, $found, true);
+        }
 
         return $found;
     }
 
     /**
-     * Collects matching nodes under a value.
+     * Collects the matching nodes under a node, the node included.
      *
-     * @param list<object> $found
+     * @template T of object
+     *
+     * @param class-string<T> $class
+     * @param list<T> $found
+     * @param-out list<T> $found
      */
-    public function visit(mixed $value, string $class, bool $intoQueries, array &$found, bool $root = false): void
+    public function visit(Node $node, string $class, bool $intoQueries, array &$found, bool $root = false): void
     {
-        if (is_array($value)) {
-            foreach ($value as $item) {
-                $this->visit($item, $class, $intoQueries, $found);
+        if ($node instanceof $class) {
+            $found[] = $node;
+        }
+        if (!$root && !$intoQueries && $node instanceof Query) {
+            return;
+        }
+        $properties = get_object_vars($node);
+        $children = [];
+        array_walk_recursive($properties, static function ($value) use (&$children): void {
+            if ($value instanceof Node) {
+                $children[] = $value;
             }
-
-            return;
-        }
-        if (!$value instanceof Node) {
-            return;
-        }
-        if ($value instanceof $class) {
-            $found[] = $value;
-        }
-        if (!$root && !$intoQueries && $value instanceof Query) {
-            return;
-        }
-        foreach (get_object_vars($value) as $property) {
-            $this->visit($property, $class, $intoQueries, $found);
+        });
+        foreach ($children as $child) {
+            $this->visit($child, $class, $intoQueries, $found);
         }
     }
 }

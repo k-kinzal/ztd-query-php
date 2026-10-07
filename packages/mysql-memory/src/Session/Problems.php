@@ -79,7 +79,6 @@ final class Problems
                     $first = $candidate;
                 }
             }
-            assert($first !== null);
             throw $this->error($first[0], $session, $first[1][0]);
         }
     }
@@ -92,7 +91,7 @@ final class Problems
         $database = $session->variables->database;
 
         return match (true) {
-            $diagnostic instanceof MissingTable => $diagnostic->name->schema === null && $database === '' ? ErrorCode::NoDatabase->error() : ErrorCode::NoSuchTable->error($diagnostic->name->schema?->value ?? $database, $diagnostic->name->name->value),
+            $diagnostic instanceof MissingTable => $diagnostic->name->schema === null && $database === '' ? ErrorCode::NoDatabase->error() : ErrorCode::NoSuchTable->error($diagnostic->name->schema->value ?? $database, $diagnostic->name->name->value),
             $diagnostic instanceof MissingColumn => ErrorCode::BadField->error(($diagnostic->qualifier === null ? '' : $diagnostic->qualifier->name->value . '.') . $diagnostic->name->value, $clause),
             $diagnostic instanceof AmbiguousColumn => ErrorCode::NonUniqueColumn->error($diagnostic->name->value, $clause),
             $diagnostic instanceof NonUniqueTable => ErrorCode::NonUniqueTable->error($diagnostic->alias->value),
@@ -140,7 +139,9 @@ final class Problems
         return match ($rule) {
             MisuseRule::StarWithoutTables => ErrorCode::NoTablesUsed->error(),
             MisuseRule::DerivedWithoutAlias => ErrorCode::DerivedMustHaveAlias->error(),
-            default => new SqlError(ErrorCode::UnknownError, $rule->value),
+            MisuseRule::DuplicateAlias, MisuseRule::TableFunctionWithoutAlias, MisuseRule::DuplicateCommonTable, MisuseRule::RecursiveWithoutAnchor,
+            MisuseRule::DuplicateColumn, MisuseRule::DuplicateWindow, MisuseRule::UnknownWindow, MisuseRule::UnknownLockedTable,
+            MisuseRule::AmbiguousJoinColumn => new SqlError(ErrorCode::UnknownError, $rule->value),
         };
     }
 }

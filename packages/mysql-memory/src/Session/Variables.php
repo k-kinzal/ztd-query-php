@@ -99,7 +99,7 @@ final class Variables
     /**
      * Answers the value of a system variable in a scope: the session value, or the global one.
      */
-    public function system(Definition $definition, Scope $scope): string|int|null
+    public function system(Definition $definition, Scope $scope): string|int
     {
         $name = $definition->name;
         if ($scope !== Scope::Global && array_key_exists($name, $this->session)) {

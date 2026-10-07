@@ -103,14 +103,13 @@ final class Accumulator
                     : Decimal::add((string) ($this->value ?? '0'), (string) Convert::toDecimal($value, $domain, $context));
                 break;
             case AggregateFunction::BitAnd:
+                $this->value = ($this->count === 1 ? -1 : (int) $this->value) & (int) Convert::toInteger($value, $domain, $context, true);
+                break;
             case AggregateFunction::BitOr:
+                $this->value = (int) $this->value | (int) Convert::toInteger($value, $domain, $context, true);
+                break;
             case AggregateFunction::BitXor:
-                $bits = (int) Convert::toInteger($value, $domain, $context, true);
-                $this->value = match ($this->accumulation->function) {
-                    AggregateFunction::BitAnd => ($this->count === 1 ? -1 : (int) $this->value) & $bits,
-                    AggregateFunction::BitOr => (int) $this->value | $bits,
-                    default => (int) $this->value ^ $bits,
-                };
+                $this->value = (int) $this->value ^ (int) Convert::toInteger($value, $domain, $context, true);
                 break;
             case AggregateFunction::StandardDeviation:
             case AggregateFunction::Variance:
@@ -159,7 +158,7 @@ final class Accumulator
             AggregateFunction::StandardDeviation, AggregateFunction::SampleStandardDeviation => $this->spread(true),
             AggregateFunction::Variance, AggregateFunction::SampleVariance => $this->spread(false),
             null => $this->concatenation($frame),
-            default => $this->count === 0 ? null : $this->value,
+            AggregateFunction::Minimum, AggregateFunction::Maximum, AggregateFunction::JsonArray, AggregateFunction::Collect => $this->count === 0 ? null : $this->value,
         };
     }
 

@@ -30,7 +30,7 @@ final class Coerce
             Kind::Integer => Convert::toInteger($value, $from, $context, $to->unsigned),
             Kind::Decimal => Decimal::round((string) Convert::toDecimal($value, $from, $context), $to->decimals),
             Kind::Double => Convert::toDouble($value, $from, $context),
-            default => Convert::toText($value, $from),
+            Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Convert::toText($value, $from),
         };
     }
 

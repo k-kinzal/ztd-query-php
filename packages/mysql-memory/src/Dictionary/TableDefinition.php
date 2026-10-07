@@ -93,7 +93,7 @@ final class TableDefinition
             }
         }
         foreach ($this->keys as $key) {
-            if ($key->kind !== KeyKind::Unique || in_array(true, array_map(fn (int $column): bool => $this->columns[$column]->nullable(), $key->columns), true) || array_filter($key->prefixes) !== []) {
+            if ($key->kind !== KeyKind::Unique || in_array(true, array_map(fn (int $column): bool => $this->columns[$column]->nullable(), $key->columns), true) || array_filter($key->prefixes, static fn (?int $prefix): bool => $prefix !== null && $prefix !== 0) !== []) {
                 continue;
             }
 

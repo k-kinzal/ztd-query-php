@@ -24,6 +24,8 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
@@ -86,9 +88,9 @@ final class InsertCommand implements Command
     public function table(Operation $operation, InsertInto $into, Session $session): StoredTable
     {
         $resolution = $operation->facts->relation($into->table)->table;
-        $schema = $into->table->name->schema?->value ?? $session->variables->database;
+        $schema = $into->table->name->schema->value ?? $session->variables->database;
         if ($resolution instanceof DeclaredTable) {
-            $schema = $resolution->table->name->schema?->value ?? $schema;
+            $schema = $resolution->table->name->schema->value ?? $schema;
         }
         $table = $session->instance->dictionary->table($schema, $into->table->name->name->value);
         if ($table === null) {
@@ -110,7 +112,10 @@ final class InsertCommand implements Command
     {
         $definition = $table->definition;
         $facts = $planner->compiler->facts;
-        $position = static function ($use) use ($facts, $definition): int {
+        $position = static function (ColumnUse|TableWildcard $use) use ($facts, $definition): int {
+            if ($use instanceof TableWildcard) {
+                throw ErrorCode::NotSupportedYet->error('a table wildcard in the column list of INSERT');
+            }
             $resolution = $facts->scalar($use)->resolution;
             $declaration = $resolution instanceof ResolvedColumn ? $resolution->slot->declaration() : null;
             foreach ($definition->columns as $index => $column) {

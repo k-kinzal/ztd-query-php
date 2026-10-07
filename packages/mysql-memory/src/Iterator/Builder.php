@@ -8,9 +8,9 @@ use LogicException;
 use MySqlMemory\Iterator\Combine\NestedLoopJoinIterator;
 use MySqlMemory\Iterator\Combine\RecursiveUnionIterator;
 use MySqlMemory\Iterator\Combine\SetOperationIterator;
+use MySqlMemory\Iterator\Source\InlineIterator;
 use MySqlMemory\Iterator\Source\SingleRowIterator;
 use MySqlMemory\Iterator\Source\TableScanIterator;
-use MySqlMemory\Iterator\Source\InlineIterator;
 use MySqlMemory\Iterator\Source\WorkingTableIterator;
 use MySqlMemory\Iterator\Source\ZeroRowsIterator;
 use MySqlMemory\Iterator\Transform\AggregateIterator;
@@ -24,9 +24,9 @@ use MySqlMemory\Plan\Path\AccessPath;
 use MySqlMemory\Plan\Path\Combine\NestedLoopJoin;
 use MySqlMemory\Plan\Path\Combine\RecursiveUnion;
 use MySqlMemory\Plan\Path\Combine\SetOperation;
+use MySqlMemory\Plan\Path\Source\Inline;
 use MySqlMemory\Plan\Path\Source\SingleRow;
 use MySqlMemory\Plan\Path\Source\TableScan;
-use MySqlMemory\Plan\Path\Source\Inline;
 use MySqlMemory\Plan\Path\Source\WorkingTable;
 use MySqlMemory\Plan\Path\Source\ZeroRows;
 use MySqlMemory\Plan\Path\Transform\Aggregate;
@@ -51,6 +51,8 @@ final class Builder
 
     /**
      * Creates the iterator of a path and, recursively, of its inputs.
+     *
+     * @throws LogicException When no iterator executes the path
      */
     public function build(AccessPath $path): RowIterator
     {

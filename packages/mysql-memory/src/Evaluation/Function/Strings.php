@@ -66,7 +66,7 @@ final class Strings
         return match ($domain->kind) {
             Kind::Double => $domain->decimals < Domain::NOT_FIXED ? $domain->length : 22,
             Kind::Null => 0,
-            default => $domain->length,
+            Kind::Integer, Kind::Decimal, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit => $domain->length,
         };
     }
 

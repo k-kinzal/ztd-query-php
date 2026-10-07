@@ -58,7 +58,8 @@ final class Binary
             Field::Double => $writer->bytes(pack('e', (float) $value)),
             Field::Date, Field::NewDate, Field::DateTime, Field::Timestamp => $writer->bytes($this->dateTime($value)),
             Field::Time => $writer->bytes($this->time($value)),
-            default => $writer->lengthEncodedString($value),
+            Field::Decimal, Field::Null, Field::VarChar, Field::Bit, Field::Vector, Field::Json, Field::NewDecimal, Field::Enum, Field::Set,
+            Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Blob, Field::VarString, Field::String, Field::Geometry => $writer->lengthEncodedString($value),
         };
     }
 
@@ -99,6 +100,8 @@ final class Binary
      *
      * @param list<int> $types The type and flags of each parameter, as last bound
      * @return array{list<array{int|float|string|null, Domain}>, list<int>} The values, and the types read
+     *
+     * @throws MalformedPacket When the payload ends before a value
      */
     public function parameters(PayloadReader $reader, int $count, array $types, Collation $collation): array
     {
@@ -114,7 +117,7 @@ final class Binary
         }
         $values = [];
         for ($i = 0; $i < $count; $i++) {
-            if ((ord($bitmap[intdiv($i, 8)]) >> ($i % 8)) & 1) {
+            if (((ord($bitmap[intdiv($i, 8)]) >> ($i % 8)) & 1) === 1) {
                 $values[] = [null, Domain::null()];
                 continue;
             }
@@ -128,6 +131,8 @@ final class Binary
      * Reads one parameter value of a type.
      *
      * @return array{int|float|string|null, Domain}
+     *
+     * @throws MalformedPacket When the payload ends before the value
      */
     public function parameter(PayloadReader $reader, int $type, Collation $collation): array
     {
@@ -147,11 +152,29 @@ final class Binary
             Field::Short, Field::Year => [$integer(2, $reader->integer(2)), Domain::integer(Field::LongLong, 6, $unsigned)->withNullable(false)],
             Field::Long, Field::Int24 => [$integer(4, $reader->integer(4)), Domain::integer(Field::LongLong, 11, $unsigned)->withNullable(false)],
             Field::LongLong => [$reader->integer(8), Domain::integer(Field::LongLong, 20, $unsigned)->withNullable(false)],
-            Field::Float => [(float) (unpack('g', $reader->bytes(4))[1] ?? 0.0), Domain::double()->withNullable(false)],
-            Field::Double => [(float) (unpack('e', $reader->bytes(8))[1] ?? 0.0), Domain::double()->withNullable(false)],
+            Field::Float => [$this->float($reader, 'g', 4), Domain::double()->withNullable(false)],
+            Field::Double => [$this->float($reader, 'e', 8), Domain::double()->withNullable(false)],
             Field::Null => [null, Domain::null()],
-            default => $this->text($reader->lengthEncodedString(), $field, $collation),
+            Field::Decimal, Field::Timestamp, Field::Date, Field::Time, Field::DateTime, Field::NewDate, Field::VarChar, Field::Bit, Field::Vector,
+            Field::Json, Field::NewDecimal, Field::Enum, Field::Set, Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Blob,
+            Field::VarString, Field::String, Field::Geometry => $this->text($reader->lengthEncodedString(), $field, $collation),
         };
+    }
+
+    /**
+     * Reads a little-endian IEEE 754 number of four or eight bytes, unpacked with a pack() format.
+     *
+     * @param string $format `g` for a FLOAT, `e` for a DOUBLE
+     * @param int $length The number of bytes the format reads
+     *
+     * @throws MalformedPacket When the payload ends before the number
+     */
+    public function float(PayloadReader $reader, string $format, int $length): float
+    {
+        $unpacked = unpack($format, $reader->bytes($length));
+        $value = $unpacked === false ? null : $unpacked[1] ?? null;
+
+        return is_float($value) ? $value : 0.0;
     }
 
     /**

@@ -35,7 +35,7 @@ final class Dictionary
      */
     public function table(string $schema, string $name): ?StoredTable
     {
-        return $this->schemas[$schema]?->table($name) ?? null;
+        return $this->schema($schema)?->table($name);
     }
 
     /**

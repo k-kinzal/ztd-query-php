@@ -6,6 +6,7 @@ namespace MySqlMemory\Server;
 
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Protocol\Binary;
+use MySqlMemory\Protocol\MalformedPacket;
 use MySqlMemory\Protocol\PayloadReader;
 use MySqlMemory\Protocol\PayloadWriter;
 use MySqlMemory\Result\ResultColumn;
@@ -40,6 +41,8 @@ final class Statements
 
     /**
      * Answers one prepared statement command.
+     *
+     * @throws MalformedPacket When the command ends before a field
      */
     public function handle(int $command, PayloadReader $reader): bool
     {
@@ -106,6 +109,8 @@ final class Statements
 
     /**
      * Answers COM_STMT_EXECUTE: runs the statement with its parameters bound.
+     *
+     * @throws MalformedPacket When the command ends before a field
      */
     public function execute(PayloadReader $reader): bool
     {
@@ -136,6 +141,8 @@ final class Statements
 
     /**
      * Takes COM_STMT_SEND_LONG_DATA, which has no answer.
+     *
+     * @throws MalformedPacket When the command ends before a field
      */
     public function longData(PayloadReader $reader): bool
     {

@@ -96,7 +96,7 @@ final class Blocks
      */
     public function table(ExplicitTable $table, ?Scope $outer): QueryPlan
     {
-        $schema = $table->table->schema?->value ?? $this->planner->settings->database;
+        $schema = $table->table->schema->value ?? $this->planner->settings->database;
         $stored = $this->planner->dictionary->table($schema, $table->table->name->value);
         if ($stored === null) {
             throw ErrorCode::NoSuchTable->error($schema, $table->table->name->value);
@@ -129,6 +129,8 @@ final class Blocks
 
     /**
      * Evaluates a LIMIT or OFFSET value.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the value is not an integer
      */
     public function bound(\SqlSemantics\Statement\Scalar $value, ?Scope $outer): int
     {
@@ -172,7 +174,7 @@ final class Blocks
 
             $inner = $scope->merged[$id][$position] ?? null;
 
-            return new ColumnOrigin($inner?->schema ?? '', $scope->derived[$id], $inner?->originalTable ?? '', $scope->names[$id][$position] ?? '', $inner?->flags ?? 0);
+            return new ColumnOrigin($inner->schema ?? '', $scope->derived[$id], $inner->originalTable ?? '', $scope->names[$id][$position] ?? '', $inner->flags ?? 0);
         }
         if (!isset($scope->tables[$id])) {
             return null;

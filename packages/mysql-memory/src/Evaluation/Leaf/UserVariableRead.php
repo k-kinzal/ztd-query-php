@@ -50,7 +50,7 @@ final class UserVariableRead implements Evaluable
             Kind::Integer => Convert::toInteger($value, $domain, $frame->context),
             Kind::Decimal => Convert::toDecimal($value, $domain, $frame->context),
             Kind::Double => Convert::toDouble($value, $domain, $frame->context),
-            default => Convert::toText($value, $domain),
+            Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Convert::toText($value, $domain),
         };
     }
 }

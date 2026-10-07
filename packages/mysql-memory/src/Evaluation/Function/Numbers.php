@@ -85,7 +85,7 @@ final class Numbers
         return match ($result->kind) {
             Kind::Integer => $result->unsigned ? (int) Convert::toInteger($value, $domain, $frame->context, true) : $this->absolute((int) Convert::toInteger($value, $domain, $frame->context)),
             Kind::Decimal => ltrim((string) Convert::toDecimal($value, $domain, $frame->context), '-'),
-            default => abs((float) Convert::toDouble($value, $domain, $frame->context)),
+            Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => abs((float) Convert::toDouble($value, $domain, $frame->context)),
         };
     }
 
@@ -172,6 +172,7 @@ final class Numbers
      * Applies a function of a real number, NULL outside its domain.
      *
      * @param list<Evaluable> $arguments
+     * @param callable(float): ?float $function
      */
     public function real(Frame $frame, array $arguments, callable $function): ?float
     {

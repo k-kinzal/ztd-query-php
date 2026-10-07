@@ -63,7 +63,7 @@ final class DatabaseCommand implements Command
             }
             $collation = 'utf8mb4_0900_ai_ci';
             foreach ($statement->options as $option) {
-                if ($option instanceof DatabaseCollation) {
+                if ($option instanceof DatabaseCollation && $option->collation->name !== null) {
                     $collation = strtolower($option->collation->name->value);
                 }
             }

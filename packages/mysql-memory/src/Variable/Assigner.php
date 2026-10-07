@@ -80,12 +80,14 @@ final class Assigner
         return match ($definition->shape) {
             ValueShape::Boolean => $this->boolean($definition, $value, $domain, $text),
             ValueShape::Integer, ValueShape::Unsigned => $this->integer($definition, $value, $domain, $text),
-            default => $this->text($definition, $value, $text),
+            ValueShape::Double, ValueShape::Text => $this->text($definition, $value, $text),
         };
     }
 
     /**
      * Checks a boolean value.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the value is not a boolean
      */
     public function boolean(Definition $definition, int|float|string|null $value, Domain $domain, string $text): string
     {
@@ -111,6 +113,8 @@ final class Assigner
 
     /**
      * Checks an integer value, clipping it to the bounds of the variable.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the value is NULL or not an integer
      */
     public function integer(Definition $definition, int|float|string|null $value, Domain $domain, string $text): int
     {
@@ -133,6 +137,8 @@ final class Assigner
 
     /**
      * Checks a text value; sql_mode and the collation and character set variables are checked by name.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the value is NULL, or not a mode, collation or character set the variable takes
      */
     public function text(Definition $definition, int|float|string|null $value, string $text): string
     {

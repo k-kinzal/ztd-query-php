@@ -80,20 +80,44 @@ use SqlSemantics\Statement\Type\NullOnly;
  */
 final class Compiler
 {
+    /**
+     * Compiles the literals of the statement.
+     */
     public readonly Literals $literals;
 
+    /**
+     * Compiles the operators and predicates of the statement.
+     */
     public readonly Operators $operators;
 
+    /**
+     * Compiles the columns, select items, parameters and variables of the statement.
+     */
     public readonly Names $names;
 
+    /**
+     * Compiles the calls of built-in functions of the statement.
+     */
     public readonly Calls $calls;
 
+    /**
+     * Compiles the subqueries of the statement used as values and in predicates.
+     */
     public readonly Subqueries $subqueries;
 
+    /**
+     * Compiles the date arithmetic of the statement.
+     */
     public readonly Dates $dates;
 
+    /**
+     * Compiles the string forms of the statement written with keywords.
+     */
     public readonly Texts $texts;
 
+    /**
+     * Compiles the row comparisons of the statement.
+     */
     public readonly Rows $rows;
 
     /**
@@ -199,6 +223,11 @@ final class Compiler
         return $domain === $evaluable->domain() ? $evaluable : new Retyped($evaluable, $domain);
     }
 
+    /**
+     * Compiles a node by its form, before it is given the type SQL Semantics resolved for it.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the form is one the emulator does not evaluate, or is not valid where it is written
+     */
     public function dispatch(Scalar $node, Scope $scope): Evaluable
     {
         return match (true) {

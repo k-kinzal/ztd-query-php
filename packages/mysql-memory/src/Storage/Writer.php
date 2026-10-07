@@ -177,7 +177,7 @@ final class Writer
             Kind::Time => '00:00:00' . ($domain->decimals > 0 ? '.' . str_repeat('0', $domain->decimals) : ''),
             Kind::Json => 'null',
             Kind::Bit => str_repeat("\0", (int) ceil($domain->length / 8)),
-            default => $domain->field === Field::Enum ? ($domain->members[0] ?? '') : ($domain->field === Field::String && $domain->collation === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary() ? str_repeat("\0", $domain->length) : ''),
+            Kind::String, Kind::Null => $domain->field === Field::Enum ? ($domain->members[0] ?? '') : ($domain->field === Field::String && $domain->collation === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary() ? str_repeat("\0", $domain->length) : ''),
         };
     }
 }

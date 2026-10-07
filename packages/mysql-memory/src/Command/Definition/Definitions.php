@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Definition;
 
-use MySqlMemory\Dictionary\Fill;
 use MySqlMemory\Dictionary\ColumnDefinition;
+use MySqlMemory\Dictionary\Fill;
 use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\TableDefinition;
@@ -150,6 +150,8 @@ final class Definitions
      * Answers the default of a column from its attributes.
      *
      * @param list<object> $attributes
+     *
+     * @throws \MySqlMemory\Error\SqlError When the column cannot take the default
      */
     public function default(array $attributes, ColumnDefinition $column, CreateTable $create): Fill
     {

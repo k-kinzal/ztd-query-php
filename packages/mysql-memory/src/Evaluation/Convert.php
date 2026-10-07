@@ -108,7 +108,7 @@ final class Convert
         return match ($domain->kind) {
             Kind::Integer, Kind::Year => Integer::text((int) $value, $domain->unsigned),
             Kind::Double => $domain->decimals < Domain::NOT_FIXED ? Real::fixed((float) $value, $domain->decimals) : Real::format((float) $value),
-            default => (string) $value,
+            Kind::Decimal, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json, Kind::Bit, Kind::Null => (string) $value,
         };
     }
 
@@ -125,7 +125,7 @@ final class Convert
             Kind::Integer, Kind::Year, Kind::Bit => $value !== 0 && $value !== "\0",
             Kind::Double => (float) $value !== 0.0,
             Kind::Decimal => Decimal::compare((string) $value, '0') !== 0,
-            default => self::toDouble($value, $domain, $context) !== 0.0,
+            Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json, Kind::Null => self::toDouble($value, $domain, $context) !== 0.0,
         };
     }
 
@@ -148,7 +148,7 @@ final class Convert
     public static function stringInteger(string $text, Context $context, bool $unsigned): int
     {
         $read = NumericText::integer($text);
-        $number = $read->number;
+        $number = Decimal::numeric($read->number);
         $inRange = $unsigned ? Integer::unsignedRange($number) || Integer::signedRange($number) : Integer::signedRange($number);
         if (!$read->complete || !$inRange) {
             $context->warning(ErrorCode::TruncatedWrongValue, 'INTEGER', $text);
@@ -165,18 +165,19 @@ final class Convert
      */
     public static function exactInteger(string $number, bool $unsigned): int
     {
+        $numeric = Decimal::numeric($number);
         if ($unsigned) {
-            if (bccomp($number, '0', 0) < 0) {
+            if (bccomp($numeric, '0', 0) < 0) {
                 return 0;
             }
 
-            return bccomp($number, Integer::UNSIGNED_MAX, 0) > 0 ? -1 : Integer::fromUnsignedText($number);
+            return bccomp($numeric, Integer::UNSIGNED_MAX, 0) > 0 ? -1 : Integer::fromUnsignedText($numeric);
         }
-        if (bccomp($number, (string) PHP_INT_MAX, 0) > 0) {
+        if (bccomp($numeric, (string) PHP_INT_MAX, 0) > 0) {
             return PHP_INT_MAX;
         }
 
-        return bccomp($number, (string) PHP_INT_MIN, 0) < 0 ? PHP_INT_MIN : (int) $number;
+        return bccomp($numeric, (string) PHP_INT_MIN, 0) < 0 ? PHP_INT_MIN : (int) $numeric;
     }
 
     /**

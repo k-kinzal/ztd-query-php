@@ -124,7 +124,7 @@ final class QueryCommand implements Command
         return match ($column->type) {
             Field::NewDecimal, Field::Decimal => Domain::decimal(65, $column->decimals),
             Field::Double, Field::Float => Domain::double(),
-            default => Domain::string(16777216, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named('binary') ?? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), Field::MediumBlob),
+            Field::Tiny, Field::Short, Field::Long, Field::Null, Field::Timestamp, Field::LongLong, Field::Int24, Field::Date, Field::Time, Field::DateTime, Field::Year, Field::NewDate, Field::VarChar, Field::Bit, Field::Vector, Field::Json, Field::Enum, Field::Set, Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Blob, Field::VarString, Field::String, Field::Geometry => Domain::string(16777216, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named('binary') ?? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), Field::MediumBlob),
         };
     }
 }

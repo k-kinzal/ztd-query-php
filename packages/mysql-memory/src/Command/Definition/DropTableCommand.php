@@ -48,7 +48,7 @@ final class DropTableCommand implements Command
         $dictionary = $session->instance->dictionary;
         $database = $session->variables->database;
         if ($statement instanceof TruncateTable) {
-            $schema = $statement->table->schema?->value ?? $database;
+            $schema = $statement->table->schema->value ?? $database;
             $table = $dictionary->table($schema, $statement->table->name->value);
             if ($table === null) {
                 throw ErrorCode::NoSuchTable->error($schema, $statement->table->name->value);
@@ -62,7 +62,7 @@ final class DropTableCommand implements Command
         $found = [];
         foreach ($statement->tables as $target) {
             $name = $target->name;
-            $schema = $name->schema?->value ?? $database;
+            $schema = $name->schema->value ?? $database;
             if ($dictionary->table($schema, $name->name->value) === null) {
                 $missing[] = $schema . '.' . $name->name->value;
             } else {

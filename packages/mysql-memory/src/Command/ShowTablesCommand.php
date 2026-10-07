@@ -45,7 +45,7 @@ final class ShowTablesCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof ShowTables);
-        $name = $statement->database?->value ?? $session->variables->database;
+        $name = $statement->database->value ?? $session->variables->database;
         if ($name === '') {
             throw ErrorCode::NoDatabase->error();
         }

@@ -51,7 +51,7 @@ final class Order
             Kind::Decimal => 'd' . self::decimal((string) $value),
             Kind::Double => 'f' . ((float) $value === 0.0 ? '0' : Real::format((float) $value)),
             Kind::String, Kind::Json => 's' . Ordering::of($domain->collation)->key((string) $value),
-            default => 't' . $value,
+            Kind::Date, Kind::Time, Kind::DateTime, Kind::Null => 't' . $value,
         };
     }
 

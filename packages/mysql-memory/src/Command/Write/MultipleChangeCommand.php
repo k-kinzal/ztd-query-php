@@ -115,7 +115,7 @@ final class MultipleChangeCommand implements Command
     {
         foreach ($scope->nodes as $node) {
             $id = spl_object_id($node);
-            if ($node instanceof TableReference && isset($scope->scans[$id]) && ($node->alias?->value ?? $node->name->name->value) === $name) {
+            if ($node instanceof TableReference && isset($scope->scans[$id]) && ($node->alias->value ?? $node->name->name->value) === $name) {
                 return $id;
             }
         }

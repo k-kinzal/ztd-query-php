@@ -80,7 +80,7 @@ final class Output
         $field = $domain->field === Field::Enum || $domain->field === Field::Set ? Field::String : $domain->field;
         $length = $text && $results !== null ? $this->converted($domain->length, $results->maxLength) : $domain->byteLength();
 
-        return new ResultColumn($name, $field, $length, $domain->decimals, $domain->flags() | ($origin?->flags ?? 0), $charset, $origin?->column ?? '', $origin?->table ?? '', $origin?->originalTable ?? '', $origin?->schema ?? '');
+        return new ResultColumn($name, $field, $length, $domain->decimals, $domain->flags() | ($origin->flags ?? 0), $charset, $origin->column ?? '', $origin->table ?? '', $origin->originalTable ?? '', $origin->schema ?? '');
     }
 
     /**

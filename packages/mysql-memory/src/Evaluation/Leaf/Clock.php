@@ -56,7 +56,7 @@ final class Clock implements Evaluable
         return match ($this->domain->kind) {
             Kind::Date => Temporal::date($parts[0], $parts[1], $parts[2]),
             Kind::Time => Temporal::time(false, $parts[3], $parts[4], $parts[5], $micro, $this->domain->decimals),
-            default => Temporal::dateTime($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], $micro, $this->domain->decimals),
+            Kind::Integer, Kind::Decimal, Kind::Double, Kind::String, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Temporal::dateTime($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], $micro, $this->domain->decimals),
         };
     }
 }

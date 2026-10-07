@@ -68,7 +68,7 @@ final class Literals
         return new Constant($domain, match ($domain->kind) {
             Kind::Double => (float) $text,
             Kind::Integer => $domain->unsigned ? Integer::fromUnsignedText(Decimal::canonical($text)) : (int) Decimal::canonical($text),
-            default => Decimal::canonical($text),
+            Kind::Decimal, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Decimal::canonical($text),
         });
     }
 

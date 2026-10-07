@@ -6,6 +6,7 @@ namespace MySqlMemory\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Typing\Ordering;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -32,6 +33,8 @@ final class Members
 
     /**
      * Stores a text into an ENUM or SET column.
+     *
+     * @throws SqlError When the value is refused
      */
     public function value(string $text, Domain $from, ColumnDefinition $column): string
     {

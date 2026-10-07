@@ -35,7 +35,7 @@ final class Interval
         if (isset($simple[$unit->name])) {
             $number = NumericText::exact($quantity)->number;
             if ($unit === IntervalUnit::Second) {
-                return new self(0, (int) Decimal::round(bcmul($number, '1000000', 6), 0));
+                return new self(0, (int) Decimal::round(bcmul(Decimal::numeric($number), '1000000', 6), 0));
             }
 
             return new self(0, (int) Decimal::round($number, 0) * $simple[$unit->name]);
@@ -46,7 +46,7 @@ final class Interval
             return new self($count * match ($unit) {
                 IntervalUnit::Month => 1,
                 IntervalUnit::Quarter => 3,
-                default => 12,
+                IntervalUnit::Year => 12,
             }, 0);
         }
 
@@ -75,7 +75,7 @@ final class Interval
             IntervalUnit::HourMicrosecond => ['hour', 'minute', 'second', 'micro'],
             IntervalUnit::MinuteSecond => ['minute', 'second'],
             IntervalUnit::MinuteMicrosecond => ['minute', 'second', 'micro'],
-            default => ['second', 'micro'],
+            IntervalUnit::Microsecond, IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year, IntervalUnit::SecondMicrosecond => ['second', 'micro'],
         };
         $numbers = array_slice($numbers, 0, count($parts));
         $values = array_combine(array_slice($parts, count($parts) - count($numbers)), $numbers);

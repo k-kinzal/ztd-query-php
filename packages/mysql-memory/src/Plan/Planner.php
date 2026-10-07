@@ -46,10 +46,19 @@ use SqlSemantics\Statement\Statement;
  */
 final class Planner
 {
+    /**
+     * The compiler of the expressions of the statement.
+     */
     public readonly Compiler $compiler;
 
+    /**
+     * The planner of query blocks.
+     */
     public readonly Blocks $blocks;
 
+    /**
+     * The planner of FROM clauses.
+     */
     public readonly Relations $relations;
 
     /**

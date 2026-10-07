@@ -33,7 +33,7 @@ final class Locator
     public array $places = [];
 
     /**
-     * @var list<Node> Keeps the located nodes alive
+     * @var list<ColumnUse> Keeps the located nodes alive
      */
     private array $nodes = [];
 
@@ -85,7 +85,7 @@ final class Locator
     /**
      * Answers the located column names.
      *
-     * @return list<Node>
+     * @return list<ColumnUse>
      */
     public function nodes(): array
     {
@@ -105,32 +105,40 @@ final class Locator
     /**
      * Locates the column names under a value, read in a clause at an order.
      *
+     * The nodes under the value are visited depth first in the order of their properties; each
+     * property, and each member of a list, adds its position to the order.
+     *
+     * @param Node|list<Node>|null $value
      * @param list<int> $order
      */
-    public function visit(mixed $value, string $clause, array $order): void
+    public function visit(Node|array|null $value, string $clause, array $order): void
     {
-        if (is_array($value)) {
-            foreach (array_values($value) as $index => $item) {
-                $this->visit($item, $clause, [...$order, $index]);
+        $values = [$value];
+        $orders = [$order];
+        while (($at = array_pop($orders)) !== null) {
+            $current = array_pop($values);
+            $children = [];
+            $positions = [];
+            if (is_array($current)) {
+                foreach (array_values($current) as $index => $item) {
+                    $children[] = $item;
+                    $positions[] = [...$at, $index];
+                }
+            } elseif ($current instanceof Select) {
+                $this->select($current, $at);
+            } elseif ($current instanceof Node) {
+                if ($current instanceof ColumnUse) {
+                    $this->places[spl_object_id($current)] = [$clause, $at];
+                    $this->nodes[] = $current;
+                }
+                $index = 0;
+                foreach (get_object_vars($current) as $property) {
+                    $children[] = $property;
+                    $positions[] = [...$at, $index++];
+                }
             }
-
-            return;
-        }
-        if (!$value instanceof Node) {
-            return;
-        }
-        if ($value instanceof Select) {
-            $this->select($value, $order);
-
-            return;
-        }
-        if ($value instanceof ColumnUse) {
-            $this->places[spl_object_id($value)] = [$clause, $order];
-            $this->nodes[] = $value;
-        }
-        $index = 0;
-        foreach (get_object_vars($value) as $property) {
-            $this->visit($property, $clause, [...$order, $index++]);
+            array_push($values, ...array_reverse($children));
+            array_push($orders, ...array_reverse($positions));
         }
     }
 
@@ -158,7 +166,7 @@ final class Locator
      *
      * @param list<int> $order
      */
-    public function from(mixed $relation, array $order): void
+    public function from(?Node $relation, array $order): void
     {
         if ($relation instanceof DerivedTable) {
             $this->visit($relation->query, 'field list', [...$order, 0, count($this->places)]);
@@ -175,7 +183,9 @@ final class Locator
             foreach (get_object_vars($relation) as $property) {
                 if (is_array($property)) {
                     foreach ($property as $member) {
-                        $this->from($member, $order);
+                        if ($member instanceof Node) {
+                            $this->from($member, $order);
+                        }
                     }
                 } elseif ($property instanceof Node && !$property instanceof ColumnUse) {
                     $this->from($property, $order);
@@ -189,7 +199,7 @@ final class Locator
      *
      * @param list<int> $order
      */
-    public function conditions(mixed $relation, array $order): void
+    public function conditions(?Node $relation, array $order): void
     {
         if (!$relation instanceof Node || $relation instanceof DerivedTable) {
             return;
@@ -201,10 +211,12 @@ final class Locator
 
             return;
         }
-        foreach (get_object_vars($relation) as $index => $property) {
+        foreach (get_object_vars($relation) as $property) {
             if (is_array($property)) {
                 foreach (array_values($property) as $position => $member) {
-                    $this->conditions($member, [...$order, $position]);
+                    if ($member instanceof Node) {
+                        $this->conditions($member, [...$order, $position]);
+                    }
                 }
             }
         }

@@ -81,17 +81,17 @@ final class Relations
             $placed = $this->shaped($reference, $plan->domains);
             $scope->place($reference, $placed, $plan->names);
             $scope->merged[spl_object_id($reference)] = $merged ? $plan->origins : $this->planner->materialized($placed);
-            $scope->derived[spl_object_id($reference)] = $reference->alias?->value ?? $reference->name->name->value;
+            $scope->derived[spl_object_id($reference)] = $reference->alias->value ?? $reference->name->name->value;
 
             return new Materialize($plan);
         }
         if (!$resolution instanceof DeclaredTable) {
-            throw ErrorCode::NoSuchTable->error($reference->name->schema?->value ?? $this->planner->settings->database, $reference->name->name->value);
+            throw ErrorCode::NoSuchTable->error($reference->name->schema->value ?? $this->planner->settings->database, $reference->name->name->value);
         }
         $name = $resolution->table->name;
-        $stored = $this->planner->dictionary->table($name->schema?->value ?? $this->planner->settings->database, $name->name->value);
+        $stored = $this->planner->dictionary->table($name->schema->value ?? $this->planner->settings->database, $name->name->value);
         if ($stored === null) {
-            throw ErrorCode::NoSuchTable->error($name->schema?->value ?? $this->planner->settings->database, $name->name->value);
+            throw ErrorCode::NoSuchTable->error($name->schema->value ?? $this->planner->settings->database, $name->name->value);
         }
         if ($reference->partitions !== []) {
             throw ErrorCode::NotSupportedYet->error('partition selection');
@@ -115,7 +115,7 @@ final class Relations
         $placed = $this->shaped($derived, $plan->domains);
         $scope->place($derived, $placed, $names);
         $scope->merged[spl_object_id($derived)] = $merged ? $plan->origins : $this->planner->materialized($placed);
-        $scope->derived[spl_object_id($derived)] = $derived->alias?->value ?? '';
+        $scope->derived[spl_object_id($derived)] = $derived->alias->value ?? '';
 
         return new Materialize($plan, $derived->lateral);
     }
@@ -155,13 +155,12 @@ final class Relations
      */
     public function list(TableList $list, Scope $scope): AccessPath
     {
-        $path = null;
-        foreach ($list->members as $member) {
-            $next = $this->plan($member, $scope);
-            $path = $path === null ? $next : new NestedLoopJoin($path, $next, JoinKind::Inner, null, $this->lateral($member));
+        $path = $this->plan($list->members[0], $scope);
+        foreach (array_slice($list->members, 1) as $member) {
+            $path = new NestedLoopJoin($path, $this->plan($member, $scope), JoinKind::Inner, null, $this->lateral($member));
         }
 
-        return $path ?? new SingleRow();
+        return $path;
     }
 
     /**

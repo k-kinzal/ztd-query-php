@@ -75,7 +75,7 @@ final class Arithmetic implements Evaluable
         return match ($this->domain->kind) {
             Kind::Double => $this->real((float) Convert::toDouble($left, $this->left->domain(), $frame->context), (float) Convert::toDouble($right, $this->right->domain(), $frame->context), $frame),
             Kind::Decimal => $this->decimal((string) Convert::toDecimal($left, $this->left->domain(), $frame->context), (string) Convert::toDecimal($right, $this->right->domain(), $frame->context), $frame),
-            default => $this->integer((int) Convert::toInteger($left, $this->left->domain(), $frame->context), (int) Convert::toInteger($right, $this->right->domain(), $frame->context), $frame),
+            Kind::Integer, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => $this->integer((int) Convert::toInteger($left, $this->left->domain(), $frame->context), (int) Convert::toInteger($right, $this->right->domain(), $frame->context), $frame),
         };
     }
 
@@ -92,7 +92,7 @@ final class Arithmetic implements Evaluable
             ArithmeticOperator::Minus => $left - $right,
             ArithmeticOperator::Multiply => $left * $right,
             ArithmeticOperator::Divide => $left / $right,
-            default => fmod($left, $right),
+            ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight, ArithmeticOperator::Modulo, ArithmeticOperator::IntegerDivide, ArithmeticOperator::BitXor => fmod($left, $right),
         };
         if (is_infinite($result) || is_nan($result)) {
             throw ErrorCode::DataOutOfRange->error('DOUBLE', $this->text);
@@ -111,7 +111,7 @@ final class Arithmetic implements Evaluable
             ArithmeticOperator::Minus => Decimal::subtract($left, $right),
             ArithmeticOperator::Multiply => Decimal::multiply($left, $right),
             ArithmeticOperator::Divide => Decimal::divide($left, $right, $this->domain->decimals),
-            default => Decimal::modulo($left, $right),
+            ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight, ArithmeticOperator::Modulo, ArithmeticOperator::IntegerDivide, ArithmeticOperator::BitXor => Decimal::modulo($left, $right),
         };
         if ($result === null) {
             return $this->byZero($frame);
@@ -128,8 +128,8 @@ final class Arithmetic implements Evaluable
      */
     public function integer(int $left, int $right, Frame $frame): ?int
     {
-        $leftText = Integer::text($left, $this->left->domain()->numericBytes || ($this->left->domain()->unsigned && (new Numbers())->operand($this->left->domain()->resolved()) === Kind::Integer));
-        $rightText = Integer::text($right, $this->right->domain()->numericBytes || ($this->right->domain()->unsigned && (new Numbers())->operand($this->right->domain()->resolved()) === Kind::Integer));
+        $leftText = Decimal::numeric(Integer::text($left, $this->left->domain()->numericBytes || ($this->left->domain()->unsigned && (new Numbers())->operand($this->left->domain()->resolved()) === Kind::Integer)));
+        $rightText = Decimal::numeric(Integer::text($right, $this->right->domain()->numericBytes || ($this->right->domain()->unsigned && (new Numbers())->operand($this->right->domain()->resolved()) === Kind::Integer)));
         if ($this->operator === ArithmeticOperator::Modulo) {
             if ($rightText === '0') {
                 return $this->byZero($frame);
@@ -139,7 +139,7 @@ final class Arithmetic implements Evaluable
             $result = match ($this->operator) {
                 ArithmeticOperator::Plus => bcadd($leftText, $rightText, 0),
                 ArithmeticOperator::Minus => bcsub($leftText, $rightText, 0),
-                default => bcmul($leftText, $rightText, 0),
+                ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight, ArithmeticOperator::Multiply, ArithmeticOperator::Divide, ArithmeticOperator::IntegerDivide, ArithmeticOperator::BitXor => bcmul($leftText, $rightText, 0),
             };
         }
 

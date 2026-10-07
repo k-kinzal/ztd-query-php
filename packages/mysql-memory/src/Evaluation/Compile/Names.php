@@ -218,7 +218,7 @@ final class Names
             Kind::Decimal => Domain::decimal(65, $domain->decimals),
             Kind::Double => Domain::double(),
             Kind::Null => Domain::string(0, Collation::binary(), Field::MediumBlob),
-            default => Domain::string(16777216, $domain->collation, Field::MediumBlob)->withCollation($domain->collation, Coercibility::Implicit),
+            Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json => Domain::string(16777216, $domain->collation, Field::MediumBlob)->withCollation($domain->collation, Coercibility::Implicit),
         };
     }
 
@@ -238,7 +238,7 @@ final class Names
             Written::Global => VariableScope::Global,
             Written::Session => VariableScope::Session,
             null => VariableScope::Both,
-            default => VariableScope::Global,
+            Written::Persist, Written::PersistOnly => VariableScope::Global,
         };
         if ($scope === VariableScope::Global && !$definition->reach->global()) {
             throw ErrorCode::IncorrectGlobalLocalVariable->error($variable->name->value, 'SESSION');

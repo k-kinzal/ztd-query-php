@@ -39,7 +39,9 @@ final class Integer
      */
     public static function fromUnsignedText(string $text): int
     {
-        return bccomp($text, (string) PHP_INT_MAX, 0) > 0 ? (int) bcsub($text, '18446744073709551616', 0) : (int) $text;
+        $number = Decimal::numeric($text);
+
+        return bccomp($number, (string) PHP_INT_MAX, 0) > 0 ? (int) bcsub($number, '18446744073709551616', 0) : (int) $text;
     }
 
     /**
@@ -47,7 +49,9 @@ final class Integer
      */
     public static function signedRange(string $text): bool
     {
-        return bccomp($text, '-9223372036854775808', 0) >= 0 && bccomp($text, '9223372036854775807', 0) <= 0;
+        $number = Decimal::numeric($text);
+
+        return bccomp($number, '-9223372036854775808', 0) >= 0 && bccomp($number, '9223372036854775807', 0) <= 0;
     }
 
     /**
@@ -55,7 +59,9 @@ final class Integer
      */
     public static function unsignedRange(string $text): bool
     {
-        return bccomp($text, '0', 0) >= 0 && bccomp($text, self::UNSIGNED_MAX, 0) <= 0;
+        $number = Decimal::numeric($text);
+
+        return bccomp($number, '0', 0) >= 0 && bccomp($number, self::UNSIGNED_MAX, 0) <= 0;
     }
 
     /**

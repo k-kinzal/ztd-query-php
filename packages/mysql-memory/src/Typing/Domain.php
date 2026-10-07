@@ -30,6 +30,9 @@ final class Domain
      */
     public const NOT_FIXED = 31;
 
+    /**
+     * The collation of a string; binary for every other kind.
+     */
     public readonly Collation $collation;
 
     /**

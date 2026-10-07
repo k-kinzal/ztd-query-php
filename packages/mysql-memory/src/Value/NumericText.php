@@ -51,7 +51,7 @@ final class NumericText
         $shift = (int) $exponent;
         $scale = max(0, Decimal::scale($mantissa) - $shift);
         $factor = bcpow('10', (string) abs($shift), 0);
-        $value = $shift >= 0 ? bcmul(rtrim($mantissa, '.'), $factor, $scale) : bcdiv(rtrim($mantissa, '.'), $factor, $scale);
+        $value = $shift >= 0 ? bcmul(Decimal::numeric(rtrim($mantissa, '.')), $factor, $scale) : bcdiv(rtrim($mantissa, '.'), $factor, $scale);
 
         return new self(Decimal::canonical($value), $real->complete);
     }

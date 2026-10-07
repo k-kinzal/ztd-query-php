@@ -56,7 +56,7 @@ final class Minus implements Evaluable
         return match ($this->domain->kind) {
             Kind::Integer => $this->integer((int) Convert::toInteger($value, $domain, $frame->context), $domain->unsigned),
             Kind::Decimal => Decimal::negate((string) Convert::toDecimal($value, $domain, $frame->context)),
-            default => -(float) Convert::toDouble($value, $domain, $frame->context),
+            Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => -(float) Convert::toDouble($value, $domain, $frame->context),
         };
     }
 
