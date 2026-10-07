@@ -78,7 +78,7 @@ final class Measures
         if ($search === null || $text === null || $from === null) {
             return null;
         }
-        [$collation] = Collations::aggregate([$needle->domain(), $haystack->domain()], 'locate', $haystack->domain()->collation);
+        [$collation] = Collations::aggregate([$needle->domain(), $haystack->domain()], 'locate', $haystack->domain()->collation, true);
         $strings = new Strings();
         $characters = $strings->characters($text, $haystack->domain());
         $pattern = $strings->characters($search, $needle->domain());
@@ -144,7 +144,7 @@ final class Measures
         if ($list === '' || str_contains($value, ',')) {
             return 0;
         }
-        [$collation] = Collations::aggregate([$arguments[0]->domain(), $arguments[1]->domain()], 'find_in_set', $arguments[1]->domain()->collation);
+        [$collation] = Collations::aggregate([$arguments[0]->domain(), $arguments[1]->domain()], 'find_in_set', $arguments[1]->domain()->collation, true);
         foreach (explode(',', $list) as $index => $member) {
             if (Ordering::of($collation)->compare($member, $value) === 0) {
                 return $index + 1;

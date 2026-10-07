@@ -49,4 +49,17 @@ final class InsertQueryTest extends TestCase
         self::assertSame('INSERT INTO t (SELECT 1 LIMIT 1) UNION SELECT 2', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('insert into t (select 1 limit 1) union select 2')->toString());
         self::assertSame('INSERT INTO t TABLE u', (new Semantics(Dialect::MySql))->analyze('insert t table u')->toString());
     }
+
+    public function testValuesSeesThroughALockingClause(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $locked = $semantics->analyze('INSERT INTO t VALUES ROW(1) LOCK IN SHARE MODE')->statement;
+        $queried = $semantics->analyze('INSERT INTO t SELECT 1')->statement;
+        self::assertInstanceOf(InsertQuery::class, $locked);
+        self::assertInstanceOf(InsertQuery::class, $queried);
+
+        self::assertCount(1, $locked->values()->rows ?? []);
+        self::assertNull($queried->values());
+    }
+
 }

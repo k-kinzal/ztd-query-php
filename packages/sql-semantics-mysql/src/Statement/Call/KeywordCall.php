@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
@@ -73,7 +74,7 @@ final class KeywordCall implements Scalar
             return new ScalarFact($typing->dateArithmetic($facts[0]->type, IntervalUnit::Day), $typing->nullability('Y', $facts));
         }
 
-        return $typing->fact($this->function->result(), $facts);
+        return (new Results())->refine($this->function->value, $this->arguments, $facts, $typing->fact($this->function->result(), $facts), $derivation);
     }
 
     /**

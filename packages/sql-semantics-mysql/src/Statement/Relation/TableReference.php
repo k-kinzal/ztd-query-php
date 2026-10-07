@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Relation;
 
+use SqlSemantics\Platform\MySql\Rules\Query\PartitionSelection;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
@@ -97,7 +98,10 @@ final class TableReference implements NamedRelation
             $derivation->scalar($this->sample->percentage, new Environment($derivation->context, $environment));
         }
 
-        return (new TableShapes())->named($this->name, $derivation, $environment);
+        $fact = (new TableShapes())->named($this->name, $derivation, $environment);
+        (new PartitionSelection())->check($this->partitions, $fact, $derivation);
+
+        return $fact;
     }
 
     /**

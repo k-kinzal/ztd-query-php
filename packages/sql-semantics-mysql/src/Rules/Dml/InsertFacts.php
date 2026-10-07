@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
-use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
@@ -113,7 +112,7 @@ final class InsertFacts
     {
         [$target, $written] = $this->open($insert->into, $derivation, $outer);
         $rows = $derivation->query($insert->source, $outer);
-        $mismatch = $this->constructed($insert, $written);
+        $mismatch = $this->mismatchedRow($insert, $written);
         if ($mismatch !== null) {
             $derivation->report($mismatch);
         } elseif ($written !== null && $rows->shape->complete() && count($rows->shape->slots) !== count($written) && !$this->defaulted($insert)) {
@@ -134,13 +133,14 @@ final class InsertFacts
      *
      * @param list<Field>|null $written
      */
-    public function constructed(InsertQuery $insert, ?array $written): ?ValueCountMismatch
+    public function mismatchedRow(InsertQuery $insert, ?array $written): ?ValueCountMismatch
     {
-        if (!$insert->source instanceof ValuesQuery || $written === null) {
+        $values = $insert->values();
+        if ($values === null || $written === null) {
             return null;
         }
         $listed = $insert->into->columns !== null && $insert->into->columns->columns !== [];
-        foreach ($insert->source->rows as $index => $row) {
+        foreach ($values->rows as $index => $row) {
             $count = count($row->values);
             if ($count !== count($written) && ($count !== 0 || $listed)) {
                 return new ValueCountMismatch(count($written), $count, $index + 1);
@@ -155,10 +155,11 @@ final class InsertFacts
      */
     public function defaulted(InsertQuery $insert): bool
     {
-        if (!$insert->source instanceof ValuesQuery || ($insert->into->columns !== null && $insert->into->columns->columns !== [])) {
+        $values = $insert->values();
+        if ($values === null || ($insert->into->columns !== null && $insert->into->columns->columns !== [])) {
             return false;
         }
-        foreach ($insert->source->rows as $row) {
+        foreach ($values->rows as $row) {
             if ($row->values !== []) {
                 return false;
             }

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Call;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -41,8 +45,8 @@ final class FunctionCallTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new FunctionCall(new Name('concat'), [new CallArgument(new StringLiteral(['x'])), new CallArgument(new NumberLiteral('1'))]), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Character->descriptor()), $fact->type);
-        self::assertSame(Nullability::NotNull, $fact->nullability);
+        self::assertEquals(new Known(Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)), $fact->type);
+        self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 
     public function testDeriveScalarDependsOnAStoredFunction(): void

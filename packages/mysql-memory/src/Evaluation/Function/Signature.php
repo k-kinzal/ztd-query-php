@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Function;
 
+use MySqlMemory\Evaluation\Leaf\Constant;
+use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Typing\Domain;
@@ -54,6 +56,10 @@ final class Signature
     {
         $argument = $this->arguments[$index] ?? null;
 
-        return $argument instanceof \MySqlMemory\Evaluation\Leaf\Constant ? $argument->value : null;
+        while ($argument instanceof Retyped) {
+            $argument = $argument->evaluable;
+        }
+
+        return $argument instanceof Constant ? $argument->value : null;
     }
 }

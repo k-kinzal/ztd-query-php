@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Construction\Derivation;
@@ -86,7 +87,12 @@ final class FunctionCall implements Scalar
             $facts[] = (new Arguments())->one($argument->expression, $derivation, $environment);
         }
 
-        return (new RoutineCalls())->result($this, $facts, $derivation);
+        $fact = (new RoutineCalls())->result($this, $facts, $derivation);
+        if ($this->schema !== null) {
+            return $fact;
+        }
+
+        return (new Results())->refine($this->name->value, array_map(static fn ($argument): Scalar => $argument->expression, $this->arguments), $facts, $fact, $derivation);
     }
 
     /**

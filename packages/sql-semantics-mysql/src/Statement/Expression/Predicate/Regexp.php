@@ -54,6 +54,7 @@ final class Regexp implements Scalar
         $operands = new Operands();
         $operand = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
         $pattern = $operands->single($derivation->scalar($this->pattern, $environment), $derivation);
+        $operands->collated([$operand, $pattern], 'regexp_like', $derivation);
 
         return $operands->truth($operand->nullability->propagate($pattern->nullability));
     }

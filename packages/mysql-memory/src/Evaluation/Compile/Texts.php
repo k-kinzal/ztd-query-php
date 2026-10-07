@@ -241,7 +241,7 @@ final class Texts
     {
         $subject = $this->compiler->compile($node->operand, $scope);
         $pattern = $this->compiler->compile($node->pattern, $scope);
-        [$collation] = Collations::aggregate([$subject->domain(), $pattern->domain()], 'regexp_like', $this->compiler->settings->connectionCollation);
+        [$collation] = Collations::aggregate([$subject->domain(), $pattern->domain()], 'regexp_like', $this->compiler->settings->connectionCollation, true);
         $negated = $node->negated;
         $domain = $this->compiler->operators->truth($subject->domain()->nullable || $pattern->domain()->nullable);
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Statement\Expression\Branching;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -32,7 +33,7 @@ final class CaseExpressionTest extends TestCase
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
         $fact = $derivation->scalar(new CaseExpression(null, [new CaseBranch(new NumberLiteral('1'), new NumberLiteral('2')), new CaseBranch(new NumberLiteral('0'), new NumberLiteral('2.5'))]), $derivation->environment());
 
-        self::assertEquals(new Known(new Decimal()), $fact->type);
+        self::assertEquals(new Known(Domain::decimal(2, 1)), $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 

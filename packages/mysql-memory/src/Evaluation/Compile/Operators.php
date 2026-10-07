@@ -174,7 +174,7 @@ final class Operators
         $low = $this->compiler->compile($node->low, $scope);
         $high = $this->compiler->compile($node->high, $scope);
         $connection = $this->compiler->settings->connectionCollation;
-        Collations::aggregate([$operand->domain(), $low->domain(), $high->domain()], 'between', $connection);
+        Collations::aggregate([$operand->domain(), $low->domain(), $high->domain()], 'between', $connection, true);
         $nullable = $operand->domain()->nullable || $low->domain()->nullable || $high->domain()->nullable;
 
         return new Range($operand, $low, $high, Comparator::of($operand->domain(), $low->domain(), 'between', $connection), Comparator::of($operand->domain(), $high->domain(), 'between', $connection), $node->negated, $this->truth($nullable));
@@ -208,7 +208,7 @@ final class Operators
         $operand = $this->compiler->compile($node->operand, $scope);
         $pattern = $this->compiler->compile($node->pattern, $scope);
         $escape = $node->escape === null ? null : $this->compiler->compile($node->escape, $scope);
-        [$collation] = Collations::aggregate([$operand->domain(), $pattern->domain()], 'like', $this->compiler->settings->connectionCollation);
+        [$collation] = Collations::aggregate([$operand->domain(), $pattern->domain()], 'like', $this->compiler->settings->connectionCollation, true);
 
         return new Pattern($operand, $pattern, $escape, $collation, $node->negated, $this->truth($operand->domain()->nullable || $pattern->domain()->nullable));
     }

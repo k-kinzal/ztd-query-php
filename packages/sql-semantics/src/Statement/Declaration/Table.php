@@ -7,6 +7,7 @@ namespace SqlSemantics\Statement\Declaration;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Statement\Identifier\Comparison;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
 
@@ -42,6 +43,11 @@ final class Table
     public readonly array $keys;
 
     /**
+     * @var list<Name>|null The partitions and subpartitions a statement can select by name; empty when the table is not partitioned, null when unknown
+     */
+    public readonly ?array $partitions;
+
+    /**
      * @param QualifiedName $name The declared name
      * @param LanguageProfile $profile The language profile the declaration was read under
      * @param list<Column> $columns The declared columns in declaration order
@@ -49,6 +55,7 @@ final class Table
      * @param bool $complete Whether the column list is the complete member list of the relation
      * @param RelationKind $kind Whether the relation is a base table, a view, or another kind of relation
      * @param list<Key> $keys The primary key and the unique keys over the columns, the primary key first
+     * @param list<Name>|null $partitions The partitions and subpartitions a statement can select by name; empty when the table is not partitioned, null when the declaration does not say
      */
     public function __construct(
         public readonly QualifiedName $name,
@@ -58,10 +65,12 @@ final class Table
         public readonly bool $complete = true,
         public readonly RelationKind $kind = RelationKind::BaseTable,
         array $keys = [],
+        ?array $partitions = null,
     ) {
         $this->columns = Check::listOf($columns, Column::class, 'Table columns are an ordered list of column declarations.');
         $this->implicit = Check::listOf($implicit, ImplicitColumn::class, 'Implicit table columns are a list of implicit column declarations.');
         $this->keys = Check::listOf($keys, Key::class, 'Table keys are a list of key declarations.');
+        $this->partitions = $partitions === null ? null : Check::listOf($partitions, Name::class, 'Partitions are named.');
     }
 
     /**

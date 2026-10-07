@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
+use SqlSemantics\Statement\Type\TypeFact;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
@@ -89,6 +95,23 @@ final class Operands
             }
             $expected = $width;
         }
+    }
+
+    /**
+     * Reports strings compared under collations that cannot be reconciled.
+     *
+     * The collations take part only when every operand is a string whose type resolved.
+     *
+     * @param list<ScalarFact> $facts The compared operands
+     * @param string $operation The operation as the server names it
+     */
+    public function collated(array $facts, string $operation, Derivation $derivation): void
+    {
+        $domains = (new Precision())->all(array_map(static fn (ScalarFact $fact): TypeFact => $fact->type, $facts));
+        if ($domains === null || count(array_filter($domains, static fn (Domain $domain): bool => $domain->kind !== Kind::String)) > 0) {
+            return;
+        }
+        (new Collations(Settings::of($derivation->context)->connection))->aggregate($domains, $operation, $derivation, true);
     }
 
     /**

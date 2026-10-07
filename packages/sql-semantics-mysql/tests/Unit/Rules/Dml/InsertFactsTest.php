@@ -117,4 +117,29 @@ final class InsertFactsTest extends TestCase
 
         self::assertSame('Not unique table/alias', $operation->facts->diagnostics[0]->message());
     }
+
+    public function testMismatchedRowIsTheFirstRowOfAnotherWidth(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $insert = $semantics->analyze('INSERT INTO t VALUES ROW(1, 2), ROW(3)')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $insert);
+        $slot = new \SqlSemantics\Statement\Shape\OutputSlot(new \SqlSemantics\Statement\Identifier\Name('a'), new \SqlSemantics\Statement\Type\NullOnly(), \SqlSemantics\Statement\Type\Nullability::Nullable);
+        $written = [new \SqlSemantics\Statement\Shape\Field(0, $slot), new \SqlSemantics\Statement\Shape\Field(1, $slot)];
+
+        self::assertSame([2, 1, 2], [(new InsertFacts())->mismatchedRow($insert, $written)?->expected, (new InsertFacts())->mismatchedRow($insert, $written)?->actual, (new InsertFacts())->mismatchedRow($insert, $written)?->row]);
+        self::assertNull((new InsertFacts())->mismatchedRow($insert, null));
+    }
+
+    public function testDefaultedHoldsForEmptyRowsWithoutAColumnList(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $empty = $semantics->analyze('INSERT INTO t VALUES ROW(), ROW() LOCK IN SHARE MODE')->statement;
+        $listed = $semantics->analyze('INSERT INTO t (a) VALUES ROW()')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $empty);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $listed);
+
+        self::assertTrue((new InsertFacts())->defaulted($empty));
+        self::assertFalse((new InsertFacts())->defaulted($listed));
+    }
+
 }

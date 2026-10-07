@@ -29,13 +29,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class BinaryCastTest extends TestCase
 {
-    public function testDeriveScalarIsABinaryString(): void
+    public function testDeriveScalarIsANullableBinaryString(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
         $fact = $derivation->scalar(new BinaryCast(new NumberLiteral('1')), $derivation->environment());
 
-        self::assertEquals([new Known(Domain::string(2, Collation::binary())), Nullability::NotNull], [$fact->type, $fact->nullability]);
+        self::assertEquals([new Known(Domain::string(2, Collation::binary())), Nullability::Nullable], [$fact->type, $fact->nullability]);
     }
 
     public function testRenderCastsAPrefixOperandWithoutParentheses(): void

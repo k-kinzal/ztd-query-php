@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
 use MySqlMemory\Dictionary\ColumnDefault;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Key;
@@ -134,10 +135,8 @@ final class Definitions
         if ($specification instanceof GeneratedColumn && $specification->collation?->name !== null) {
             $collation = Collation::named($specification->collation->name->value);
         }
-        $domain = $declared->domain($specification->dataType(), $collation);
-        if ($domain->kind === Kind::String || $domain->kind === Kind::Json) {
-            $domain = new Domain($domain->kind, $domain->field, $domain->length, 0, false, $domain->collation, true, $domain->members);
-        }
+        $resolved = $declaration?->type;
+        $domain = $resolved instanceof Resolved ? Domain::of($resolved, true) : $declared->domain($specification->dataType(), $collation);
         $nullable = $declaration === null ? true : $declaration->nullability !== Nullability::NotNull;
         $serial = $specification->dataType() instanceof Elementary && $specification->dataType()->kind === ElementaryKind::Serial;
         $domain = $domain->withNullable($nullable && !$serial);

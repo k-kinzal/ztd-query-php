@@ -97,7 +97,7 @@ final class Relations
             throw ErrorCode::NoSuchTable->error($name->schema?->value ?? $this->planner->settings->database, $name->name->value);
         }
         if ($reference->partitions !== []) {
-            throw ErrorCode::PartitionClauseOnNonpartitioned->error();
+            throw ErrorCode::NotSupportedYet->error('partition selection');
         }
         $definition = $stored->definition;
         $scope->place($reference, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);

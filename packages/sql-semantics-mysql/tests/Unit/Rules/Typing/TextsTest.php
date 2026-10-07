@@ -26,7 +26,7 @@ final class TextsTest extends TestCase
 {
     public function testLengthWritesADoubleInTwentyTwoCharacters(): void
     {
-        $texts = $this->texts();
+        $texts = new Texts(new Settings(Collation::known('latin1_bin')));
 
         self::assertSame(22, $texts->length(Domain::double()));
         self::assertSame(5, $texts->length(Domain::double(5, 2)));
@@ -36,44 +36,34 @@ final class TextsTest extends TestCase
 
     public function testCollatedKeepsTheLengthAndMakesTheCollationExplicit(): void
     {
-        $derivation = $this->derivation();
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
 
-        self::assertEquals(Domain::string(3, Collation::known('latin1_german1_ci'), Field::VarString, Coercibility::Explicit), $this->texts()->collated(Domain::string(3, Collation::known('latin1_bin')), 'latin1_german1_ci', $derivation));
-        self::assertEquals(Domain::string(4, Collation::known('latin1_bin'), Field::VarString, Coercibility::Explicit), $this->texts()->collated(Domain::integer(Field::LongLong, 4), 'latin1_bin', $derivation));
+        self::assertEquals(Domain::string(3, Collation::known('latin1_german1_ci'), Field::VarString, Coercibility::Explicit), new Texts(new Settings(Collation::known('latin1_bin')))->collated(Domain::string(3, Collation::known('latin1_bin')), 'latin1_german1_ci', $derivation));
+        self::assertEquals(Domain::string(4, Collation::known('latin1_bin'), Field::VarString, Coercibility::Explicit), new Texts(new Settings(Collation::known('latin1_bin')))->collated(Domain::integer(Field::LongLong, 4), 'latin1_bin', $derivation));
         self::assertSame([], $derivation->facts()->diagnostics);
     }
 
     public function testCollatedReportsAnUnknownOrMismatchedCollation(): void
     {
-        $derivation = $this->derivation();
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
 
-        self::assertNull($this->texts()->collated(Domain::string(1, Collation::known('latin1_bin')), 'klingon_ci', $derivation));
-        self::assertNull($this->texts()->collated(Domain::string(1, Collation::known('latin1_bin')), 'utf8mb4_bin', $derivation));
+        self::assertNull(new Texts(new Settings(Collation::known('latin1_bin')))->collated(Domain::string(1, Collation::known('latin1_bin')), 'klingon_ci', $derivation));
+        self::assertNull(new Texts(new Settings(Collation::known('latin1_bin')))->collated(Domain::string(1, Collation::known('latin1_bin')), 'utf8mb4_bin', $derivation));
         self::assertEquals([new UnknownCollation('klingon_ci'), new CollationMismatch('utf8mb4_bin', 'latin1')], $derivation->facts()->diagnostics);
     }
 
     public function testBinaryCountsTheBytesOfAString(): void
     {
-        self::assertEquals(Domain::string(12, Collation::binary()), $this->texts()->binary(Domain::string(3, Collation::known('utf8mb4_bin'))));
-        self::assertEquals(Domain::string(22, Collation::binary(), Field::Blob), $this->texts()->binary(Domain::string(22, Collation::binary(), Field::Blob)));
+        self::assertEquals(Domain::string(12, Collation::binary()), new Texts(new Settings(Collation::known('latin1_bin')))->binary(Domain::string(3, Collation::known('utf8mb4_bin'))));
+        self::assertEquals(Domain::string(22, Collation::binary(), Field::Blob), new Texts(new Settings(Collation::known('latin1_bin')))->binary(Domain::string(22, Collation::binary(), Field::Blob)));
     }
 
     public function testConvertedTakesTheDefaultCollationOfTheCharacterSet(): void
     {
-        $derivation = $this->derivation();
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
 
-        self::assertEquals(Domain::string(3, Collation::known('utf8mb4_0900_ai_ci')), $this->texts()->converted(Domain::string(3, Collation::known('latin1_bin')), 'utf8mb4', $derivation));
-        self::assertNull($this->texts()->converted(Domain::string(3, Collation::known('latin1_bin')), 'klingon', $derivation));
+        self::assertEquals(Domain::string(3, Collation::known('utf8mb4_0900_ai_ci')), new Texts(new Settings(Collation::known('latin1_bin')))->converted(Domain::string(3, Collation::known('latin1_bin')), 'utf8mb4', $derivation));
+        self::assertNull(new Texts(new Settings(Collation::known('latin1_bin')))->converted(Domain::string(3, Collation::known('latin1_bin')), 'klingon', $derivation));
         self::assertEquals([new UnknownCharset('klingon')], $derivation->facts()->diagnostics);
-    }
-
-    public function texts(): Texts
-    {
-        return new Texts(new Settings(Collation::known('latin1_bin')));
-    }
-
-    public function derivation(): Derivation
-    {
-        return new Derivation((new Semantics(Dialect::MySql))->context([]));
     }
 }

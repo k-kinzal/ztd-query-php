@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Branching;
 
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
@@ -81,7 +86,11 @@ final class CaseExpression implements Scalar
             $nullability = $nullability->propagate($result->nullability);
         }
 
-        return new ScalarFact((new TypeAggregation())->aggregate($types), $nullability);
+        $domains = (new Precision())->all($types);
+        $settings = Settings::of($derivation->context);
+        $domain = $domains === null ? null : (new Aggregation(new Collations($settings->connection)))->of($domains, 'case', $derivation);
+
+        return new ScalarFact($domain === null ? (new TypeAggregation())->aggregate($types) : new Known($domain), $nullability);
     }
 
     /**

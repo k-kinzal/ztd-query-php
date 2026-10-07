@@ -56,7 +56,7 @@ final class Comparator
             ($left->kind === Kind::Decimal || $integer($left)) && ($right->kind === Kind::Decimal || $integer($right)) => Kind::Decimal,
             default => Kind::Double,
         };
-        $collation = $mode === Kind::String || $mode->temporal() ? Collations::aggregate([$left, $right], $operation, $connection)[0] : Collation::binary();
+        $collation = $mode === Kind::String || $mode->temporal() ? Collations::aggregate([$left, $right], $operation, $connection, true)[0] : Collation::binary();
 
         return new self($mode, $left, $right, $collation);
     }

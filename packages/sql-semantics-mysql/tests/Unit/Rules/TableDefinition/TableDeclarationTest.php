@@ -162,4 +162,15 @@ final class TableDeclarationTest extends TestCase
         self::assertSame([['a'], ['b'], ['c'], ['a', 'b']], array_map(static fn ($key): array => array_map(static fn ($column): string => $column->name->value, $key->columns), $table->keys));
         self::assertTrue($table->keys[0]->primary);
     }
+
+    public function testPartitionsNameEveryPartitionAndSubpartition(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $names = static fn (string $sql): ?array => ($partitions = $semantics->analyze($sql)->declarations()[0]->partitions) === null ? null : array_map(static fn ($name): string => $name->value, $partitions);
+
+        self::assertSame([], $names('CREATE TABLE t (a INT)'));
+        self::assertSame(['p0', 'p1', 'p2'], $names('CREATE TABLE t (a INT) PARTITION BY HASH (a) PARTITIONS 3'));
+        self::assertSame(['r0', 'r0sp0', 'r0sp1', 'r1', 'r1sp0', 'r1sp1'], $names('CREATE TABLE t (a INT) PARTITION BY RANGE (a) SUBPARTITION BY HASH (a) SUBPARTITIONS 2 (PARTITION r0 VALUES LESS THAN (10), PARTITION r1 VALUES LESS THAN MAXVALUE)'));
+    }
+
 }

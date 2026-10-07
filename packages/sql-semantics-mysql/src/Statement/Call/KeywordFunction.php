@@ -97,10 +97,10 @@ enum KeywordFunction: string
     public function result(): string
     {
         return match ($this) {
-            self::CurrentUser, self::User, self::Charset, self::Collation => 'TN',
+            self::CurrentUser, self::User, self::Charset, self::Collation => 'TY',
             self::Date => 'AY',
             self::Day, self::Hour, self::Minute, self::Month, self::Second, self::Year, self::Microsecond, self::Quarter, self::Week, self::Contains => 'IY',
-            self::Insert, self::Left, self::Right, self::Replace, self::Reverse, self::Substring => 'SP',
+            self::Insert, self::Left, self::Right, self::Replace, self::Reverse, self::Substring => 'SY',
             self::Interval, self::RowCount, self::Grouping => 'IN',
             self::Time => 'MY',
             self::Timestamp => 'EY',

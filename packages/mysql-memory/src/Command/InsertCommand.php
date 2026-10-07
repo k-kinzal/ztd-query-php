@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
-use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Connection;
@@ -128,11 +127,12 @@ final class InsertCommand implements Command
         $columns = $statement->into->columns;
         $columns = $columns !== null && $columns->columns === [] ? null : $columns;
         $positions = $columns === null ? array_values(array_filter(array_keys($definition->columns), static fn (int $index): bool => !$definition->columns[$index]->invisible)) : array_map($position, $columns->columns);
-        if ($statement instanceof InsertQuery && !$statement->source instanceof ValuesQuery) {
+        $values = $statement instanceof InsertQuery ? $statement->values() : null;
+        if ($statement instanceof InsertQuery && $values === null) {
             return [$positions, $this->queried($statement, $planner, $context, count($positions))];
         }
         $rows = [];
-        foreach ($statement instanceof InsertQuery ? $statement->source->rows : $statement->rows as $row) {
+        foreach ($values === null ? $statement->rows : $values->rows as $row) {
             $values = array_map(fn ($value) => $value instanceof DefaultRequest ? $value : $planner->compiler->compile($value, new Scope()), $row->values);
             $rows[] = $values === [] && $columns === null ? array_fill(0, count($positions), new DefaultRequest()) : $values;
         }

@@ -33,4 +33,13 @@ final class Coerce
             default => Convert::toText($value, $from),
         };
     }
+
+    /**
+     * Converts the branch IF or CASE chose to their result: a decimal keeps the scale of the branch, as the server returns it.
+     */
+    public static function branch(int|float|string|null $value, Domain $from, Domain $to, Context $context): int|float|string|null
+    {
+        return $to->kind === Kind::Decimal ? Convert::toDecimal($value, $from, $context) : self::to($value, $from, $to, $context);
+    }
+
 }

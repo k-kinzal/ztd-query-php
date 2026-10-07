@@ -68,6 +68,7 @@ final class InList implements Scalar
         }
         $operands = new Operands();
         $operands->comparable($facts, $derivation);
+        $operands->collated($facts, ' IN ', $derivation);
 
         return $operands->truth($nullability);
     }

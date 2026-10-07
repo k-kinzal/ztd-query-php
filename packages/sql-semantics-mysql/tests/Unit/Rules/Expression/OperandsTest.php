@@ -6,6 +6,9 @@ namespace Tests\Unit\Rules\Expression;
 
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -75,4 +78,16 @@ final class OperandsTest extends TestCase
     {
         self::assertEquals(new ScalarFact(new Known(Domain::integer(Field::LongLong, 1)), Nullability::Dependent), (new Operands())->truth(Nullability::Dependent));
     }
+
+    public function testCollatedReportsStringsUnderConflictingCollations(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $fact = static fn (string $collation): ScalarFact => new ScalarFact(new Known(Domain::string(5, Collation::known($collation))), Nullability::Nullable);
+
+        (new Operands())->collated([$fact('utf8mb4_bin'), $fact('latin1_bin')], '=', $derivation);
+        (new Operands())->collated([$fact('utf8mb4_general_ci'), $fact('utf8mb4_unicode_ci')], '=', $derivation);
+
+        self::assertCount(1, $derivation->facts()->diagnostics);
+    }
+
 }

@@ -114,6 +114,7 @@ return [
     1681 => ['HY000', "'%s' is deprecated and will be removed in a future release."],
     1690 => ['22003', "%s value is out of range in '%s'"],
     1691 => ['HY000', 'A variable of a non-integer based type in LIMIT clause'],
+    1735 => ['HY000', 'Unknown partition \'%s\' in table \'%s\''],
     1747 => ['HY000', 'PARTITION () clause on non partitioned table'],
     3065 => ['HY000', "Expression #%d of ORDER BY clause is not in SELECT list, references column '%s' which is not in SELECT list; this is incompatible with %s"],
     3105 => ['HY000', "The value specified for generated column '%s' in table '%s' is not allowed."],

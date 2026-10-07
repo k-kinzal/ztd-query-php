@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Dml\Insert;
 
+use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
@@ -45,6 +47,19 @@ final class InsertQuery implements Statement
     {
         $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
         Check::input(!$into->replace || $this->onDuplicate === [], 'REPLACE has no ON DUPLICATE KEY UPDATE.');
+    }
+
+    /**
+     * Answers the VALUES rows the source writes, also under a locking clause, or null when the source is another query.
+     */
+    public function values(): ?ValuesQuery
+    {
+        $source = $this->source;
+        while ($source instanceof QueryStatement) {
+            $source = $source->query;
+        }
+
+        return $source instanceof ValuesQuery ? $source : null;
     }
 
     /**

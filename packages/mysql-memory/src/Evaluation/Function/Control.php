@@ -49,7 +49,7 @@ final class Control
     {
         $chosen = Convert::toBool($arguments[0]->evaluate($frame), $arguments[0]->domain(), $frame->context) === true ? $arguments[1] : $arguments[2];
 
-        return Coerce::to($chosen->evaluate($frame), $chosen->domain(), $result, $frame->context);
+        return Coerce::branch($chosen->evaluate($frame), $chosen->domain(), $result, $frame->context);
     }
 
     /**

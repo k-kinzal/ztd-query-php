@@ -4,16 +4,12 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
-
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
-
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
+use SqlSemantics\Platform\MySql\Rules\Typing\Collations as Rules;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 /**
  * Decides the collation an operation over several strings compares or produces them in.
@@ -29,56 +25,30 @@ use MySqlMemory\Error\SqlError;
 final class Collations
 {
     /**
-     * Answers the collation and coercibility of an operation over operand domains.
+     * Answers the collation and coercibility of an operation by the rules of SQL Semantics.
      *
-     * @param list<Domain> $domains The operands; numbers take part with their own level
-     *
+     * @param list<Domain> $domains The operands
+     * @param string $operation The operation as the server names it
+     * @param Collation $connection The collation a value that is not a string is written in
+     * @param bool $comparison Whether the operation compares
      * @return array{Collation, Coercibility}
      *
-     * @throws SqlError When two operands of one level have collations that do not mix
+     * @throws SqlError When the collations conflict
      */
-    public static function aggregate(array $domains, string $operation, Collation $connection): array
+    public static function aggregate(array $domains, string $operation, Collation $connection, bool $comparison = false): array
     {
-        $collation = null;
-        $level = Coercibility::Ignorable;
-        foreach ($domains as $domain) {
-            $candidate = $domain->kind === Kind::String || $domain->kind === Kind::Json ? $domain->collation : $connection;
-            $candidateLevel = $domain->kind === Kind::Null ? Coercibility::Ignorable : ($domain->kind === Kind::String || $domain->kind === Kind::Json ? $domain->coercibility : Coercibility::Numeric);
-            if ($collation === null || $candidateLevel->value < $level->value) {
-                [$collation, $level] = [$candidate, $candidateLevel];
-                continue;
-            }
-            if ($candidateLevel !== $level || $candidate === $collation) {
-                continue;
-            }
-            $collation = self::tie($collation, $candidate, $level, $operation);
+        $rules = new Rules($connection);
+        $resolved = array_map(static fn (Domain $domain) => $domain->resolved(), $domains);
+        $settled = $rules->settle($resolved, $comparison);
+        if ($settled !== null) {
+            return $settled;
         }
+        $mix = new IllegalCollationMix(array_map(static fn ($domain): array => [$rules->operand($domain)[0]->name, $rules->operand($domain)[1]], $resolved), $operation);
 
-        return [$collation ?? $connection, $level];
-    }
-
-    /**
-     * Decides between two collations of operands of one level.
-     *
-     * @throws SqlError When the collations do not mix
-     */
-    public static function tie(Collation $left, Collation $right, Coercibility $level, string $operation): Collation
-    {
-        if ($left === Collation::binary() || $right === Collation::binary()) {
-            return Collation::binary();
-        }
-        if ($left->charset === $right->charset) {
-            if ($left->binaryOrder() !== $right->binaryOrder()) {
-                return $left->binaryOrder() ? $left : $right;
-            }
-        }
-        if ($level === Coercibility::Coercible || $level === Coercibility::Numeric || $level === Coercibility::Ignorable) {
-            return $left->charset === Charset::known('utf8mb4') ? $left : ($right->charset === Charset::known('utf8mb4') ? $right : $left);
-        }
-        if ($level === Coercibility::None) {
-            return $left;
-        }
-
-        throw ErrorCode::CantAggregateTwoCollations->error($left->name, strtoupper($level->name === 'Implicit' ? 'IMPLICIT' : $level->name), $right->name, strtoupper($level->name === 'Implicit' ? 'IMPLICIT' : $level->name), $operation);
+        return throw new SqlError(match (count($domains)) {
+            2 => ErrorCode::CantAggregateTwoCollations,
+            3 => ErrorCode::CantAggregateThreeCollations,
+            default => ErrorCode::CantAggregateCollations,
+        }, $mix->message());
     }
 }

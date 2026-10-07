@@ -39,7 +39,7 @@ final class LiteralsTest extends TestCase
 
     public function testNumberCountsTheWrittenDigitsOfAnInteger(): void
     {
-        $literals = $this->literals();
+        $literals = new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
 
         self::assertEquals(Domain::integer(Field::LongLong, 4), $literals->number(new NumberLiteral('123')));
         self::assertEquals(Domain::integer(Field::LongLong, 7), $literals->number(new NumberLiteral('000123')));
@@ -50,7 +50,7 @@ final class LiteralsTest extends TestCase
 
     public function testNumberKeepsTheZeroBeforeThePointOfADecimal(): void
     {
-        $literals = $this->literals();
+        $literals = new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
 
         self::assertSame(4, $literals->number(new NumberLiteral('0.5'))->length);
         self::assertSame(4, $literals->number(new NumberLiteral('000.5'))->length);
@@ -64,14 +64,14 @@ final class LiteralsTest extends TestCase
 
     public function testWithinComparesDigitsWithABound(): void
     {
-        self::assertTrue($this->literals()->within('99', '100'));
-        self::assertTrue($this->literals()->within('100', '100'));
-        self::assertFalse($this->literals()->within('101', '100'));
+        self::assertTrue(new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->within('99', '100'));
+        self::assertTrue(new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->within('100', '100'));
+        self::assertFalse(new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->within('101', '100'));
     }
 
     public function testStringTakesTheConnectionTheIntroducerOrTheNationalCollation(): void
     {
-        $literals = $this->literals();
+        $literals = new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
 
         self::assertEquals(Domain::string(2, Collation::known('latin1_bin'), Field::VarString, Coercibility::Coercible), $literals->string(new StringLiteral(["\xe9\xe9"])));
         self::assertSame('utf8mb4_0900_ai_ci', $literals->string(new StringLiteral(['x'], introducer: new Name('utf8mb4')))->collation->name);
@@ -80,13 +80,13 @@ final class LiteralsTest extends TestCase
 
     public function testIntroducedFallsBackToBinaryForAnUnknownCharacterSet(): void
     {
-        self::assertSame('latin1_swedish_ci', $this->literals()->introduced('latin1')->name);
-        self::assertSame(Collation::binary(), $this->literals()->introduced('klingon'));
+        self::assertSame('latin1_swedish_ci', new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->introduced('latin1')->name);
+        self::assertSame(Collation::binary(), new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->introduced('klingon'));
     }
 
     public function testRadixCountsBytes(): void
     {
-        $literals = $this->literals();
+        $literals = new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
 
         self::assertEquals(Domain::string(2, Collation::binary(), Field::VarString, Coercibility::Coercible), $literals->radix(new RadixLiteral(Radix::Hexadecimal, 'ABC')));
         self::assertSame(2, $literals->radix(new RadixLiteral(Radix::Bit, '100000000'))->length);
@@ -95,7 +95,7 @@ final class LiteralsTest extends TestCase
 
     public function testTemporalKeepsUpToSixFractionalDigits(): void
     {
-        $literals = $this->literals();
+        $literals = new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
 
         self::assertSame([10, 0], [$literals->temporal(new TemporalLiteral(TemporalForm::Date, '2024-01-02'))->length, 0]);
         self::assertSame([12, 3], [$literals->temporal(new TemporalLiteral(TemporalForm::Time, '10:00:00.123'))->length, $literals->temporal(new TemporalLiteral(TemporalForm::Time, '10:00:00.123'))->decimals]);
@@ -104,11 +104,6 @@ final class LiteralsTest extends TestCase
 
     public function testBooleanIsABigIntOfOneDigit(): void
     {
-        self::assertEquals(Domain::integer(Field::LongLong, 1), $this->literals()->boolean());
-    }
-
-    public function literals(): Literals
-    {
-        return new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
+        self::assertEquals(Domain::integer(Field::LongLong, 1), new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->boolean());
     }
 }

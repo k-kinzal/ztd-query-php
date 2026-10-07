@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
@@ -59,7 +60,9 @@ final class Concatenation implements Scalar
         $left = $operands->single($derivation->scalar($this->left, $environment), $derivation);
         $right = $operands->single($derivation->scalar($this->right, $environment), $derivation);
 
-        return new ScalarFact((new StringResult())->concatenation([$left->type, $right->type]), $left->nullability->propagate($right->nullability));
+        $fact = new ScalarFact((new StringResult())->concatenation([$left->type, $right->type]), $left->nullability->propagate($right->nullability));
+
+        return (new Results())->refine('CONCAT', [$this->left, $this->right], [$left, $right], $fact, $derivation);
     }
 
     /**

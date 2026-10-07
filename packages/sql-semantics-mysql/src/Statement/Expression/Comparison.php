@@ -62,6 +62,7 @@ final class Comparison implements Scalar
         $right = $derivation->scalar($this->right, $environment);
         $operands = new Operands();
         $operands->comparable([$left, $right], $derivation);
+        $operands->collated([$left, $right], $this->operator->value, $derivation);
 
         return $operands->truth($this->operator === ComparisonOperator::NullSafeEqual ? Nullability::NotNull : $left->nullability->propagate($right->nullability));
     }

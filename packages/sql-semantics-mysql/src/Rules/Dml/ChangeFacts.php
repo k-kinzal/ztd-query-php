@@ -131,7 +131,7 @@ final class ChangeFacts
     }
 
     /**
-     * Derives the table references and answers the relations they make visible.
+     * Derives the table references, reports a name two of them share, and answers the relations they make visible.
      *
      * @param list<Relation> $tables
      * @return list<VisibleRelation>
@@ -143,6 +143,7 @@ final class ChangeFacts
         foreach ($tables as $table) {
             array_push($visible, ...$from->open($table, $derivation, $base, $visible)->visible);
         }
+        $from->unique($visible, $derivation);
 
         return $visible;
     }

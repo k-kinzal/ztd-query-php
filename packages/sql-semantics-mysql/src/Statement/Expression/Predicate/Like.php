@@ -57,8 +57,10 @@ final class Like implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $operands = new Operands();
-        $nullability = $operands->single($derivation->scalar($this->operand, $environment), $derivation)->nullability
-            ->propagate($operands->single($derivation->scalar($this->pattern, $environment), $derivation)->nullability);
+        $operand = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
+        $pattern = $operands->single($derivation->scalar($this->pattern, $environment), $derivation);
+        $operands->collated([$operand, $pattern], 'like', $derivation);
+        $nullability = $operand->nullability->propagate($pattern->nullability);
         if ($this->escape !== null) {
             $nullability = $nullability->propagate($operands->single($derivation->scalar($this->escape, $environment), $derivation)->nullability);
         }

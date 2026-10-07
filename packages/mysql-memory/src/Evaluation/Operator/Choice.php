@@ -49,10 +49,10 @@ final class Choice implements Evaluable
             $value = $condition->evaluate($frame);
             $chosen = $comparator === null ? Convert::toBool($value, $condition->domain(), $frame->context) === true : $comparator->compare($operand, $value, $frame->context) === 0;
             if ($chosen) {
-                return Coerce::to($result->evaluate($frame), $result->domain(), $this->domain, $frame->context);
+                return Coerce::branch($result->evaluate($frame), $result->domain(), $this->domain, $frame->context);
             }
         }
 
-        return $this->else === null ? null : Coerce::to($this->else->evaluate($frame), $this->else->domain(), $this->domain, $frame->context);
+        return $this->else === null ? null : Coerce::branch($this->else->evaluate($frame), $this->else->domain(), $this->domain, $frame->context);
     }
 }

@@ -49,11 +49,13 @@ final class Context
     }
 
     /**
-     * Records a warning that is never an error.
+     * Records a warning; a statement that writes data under a strict mode raises every warning as an error.
+     *
+     * @throws SqlError When the warning is an error in this statement
      */
     public function warning(ErrorCode $code, string|int ...$arguments): void
     {
-        $this->diagnostics->warning($code, $code->message(...$arguments));
+        $this->warn($code, ...$arguments);
     }
 
     /**

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownPartition;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnpartitionedTable;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
@@ -111,6 +114,13 @@ final class Problems
                 CountedList::ValueRows => ErrorCode::WrongValueCountOnRow->error(1),
                 CountedList::DerivedColumns => ErrorCode::ViewWrongList->error(),
             },
+            $diagnostic instanceof IllegalCollationMix => new SqlError(match (count($diagnostic->operands)) {
+                2 => ErrorCode::CantAggregateTwoCollations,
+                3 => ErrorCode::CantAggregateThreeCollations,
+                default => ErrorCode::CantAggregateCollations,
+            }, $diagnostic->message()),
+            $diagnostic instanceof UnpartitionedTable => ErrorCode::PartitionClauseOnNonpartitioned->error(),
+            $diagnostic instanceof UnknownPartition => ErrorCode::UnknownPartition->error($diagnostic->partition, $diagnostic->table),
             $diagnostic instanceof UnknownCollation => ErrorCode::UnknownCollation->error($diagnostic->name),
             $diagnostic instanceof UnknownCharset => ErrorCode::UnknownCharacterSet->error($diagnostic->name),
             $diagnostic instanceof CollationMismatch => ErrorCode::CollationCharsetMismatch->error($diagnostic->collation, $diagnostic->charset),

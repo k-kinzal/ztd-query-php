@@ -122,6 +122,7 @@ enum ErrorCode: int
     case DeprecatedSyntaxNoReplacement = 1681;
     case DataOutOfRange = 1690;
     case WrongVariableTypeInLimit = 1691;
+    case UnknownPartition = 1735;
     case PartitionClauseOnNonpartitioned = 1747;
     case FieldInOrderNotSelect = 3065;
     case GeneratedColumnValue = 3105;

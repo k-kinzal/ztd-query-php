@@ -29,7 +29,7 @@ final class NativeFunctionsTest extends TestCase
     {
         $natives = new NativeFunctions();
 
-        self::assertSame([1, -1, 'SP', false], $natives->row(GrammarRelease::MySql847, 'Concat', 3));
+        self::assertSame([1, -1, 'SY', false], $natives->row(GrammarRelease::MySql847, 'Concat', 3));
         self::assertNull($natives->row(GrammarRelease::MySql847, 'ABS', 2));
         self::assertSame([1, 1, 'EY', false], $natives->row(GrammarRelease::MySql847, 'from_unixtime', 1));
         self::assertSame([2, 2, 'TY', false], $natives->row(GrammarRelease::MySql847, 'from_unixtime', 2));

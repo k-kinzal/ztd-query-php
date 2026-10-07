@@ -61,6 +61,7 @@ final class Between implements Scalar
         $high = $derivation->scalar($this->high, $environment);
         $operands = new Operands();
         $operands->comparable([$operand, $low, $high], $derivation);
+        $operands->collated([$operand, $low, $high], 'between', $derivation);
 
         return $operands->truth($operand->nullability->propagate($low->nullability)->propagate($high->nullability));
     }

@@ -16,7 +16,7 @@ final class NativeCatalogTest extends TestCase
     public function testRowsHoldAReleaseMaskArgumentCountsAndAResultCode(): void
     {
         self::assertCount(232, NativeCatalog::ROWS);
-        self::assertSame([[511, 1, -1, 'SP']], NativeCatalog::ROWS['CONCAT']);
+        self::assertSame([[511, 1, -1, 'SY']], NativeCatalog::ROWS['CONCAT']);
         self::assertContainsOnly('array', NativeCatalog::ROWS);
     }
 }
