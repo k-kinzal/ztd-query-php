@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\GroupingRule;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use MySqlMemory\Evaluation\Compile\Walker;
@@ -45,7 +47,8 @@ final class Problems
         foreach ((new Walker())->find($operation->statement, ProgramVariable::class) as $variable) {
             throw ErrorCode::UndeclaredVariable->error($variable->name->value);
         }
-        $diagnostics = $operation->facts->diagnostics;
+        $grouping = $session->modes()->has('ONLY_FULL_GROUP_BY');
+        $diagnostics = array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => $grouping || !$diagnostic instanceof NonGroupedColumn));
         if ($diagnostics === []) {
             return;
         }
@@ -93,6 +96,11 @@ final class Problems
             $diagnostic instanceof TableExists => ErrorCode::TableExists->error($diagnostic->name->name->value),
             $diagnostic instanceof NotSupportedYet => ErrorCode::NotSupportedYet->error($diagnostic->feature),
             $diagnostic instanceof Misuse => $this->misuse($diagnostic->rule),
+            $diagnostic instanceof NonGroupedColumn => new SqlError(match ($diagnostic->rule) {
+                GroupingRule::NotDetermined => ErrorCode::WrongFieldWithGroup,
+                GroupingRule::WithoutGroupBy => ErrorCode::MixOfGroupFunctionAndFields,
+                GroupingRule::NotSelected => ErrorCode::FieldInOrderNotSelect,
+            }, $diagnostic->message()),
             $diagnostic instanceof UnknownQualifier => ErrorCode::BadTable->error(($diagnostic->table->schema === null ? '' : $diagnostic->table->schema->value . '.') . $diagnostic->table->name->value),
             $diagnostic instanceof UnknownDeleteTable => ErrorCode::UnknownTable->error($diagnostic->table->name->value, 'MULTI DELETE'),
             $diagnostic instanceof CountMismatch => match ($diagnostic->list) {

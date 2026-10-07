@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rules\Query\Having;
 
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -41,7 +42,8 @@ final class ResultReferencesTest extends TestCase
 
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame('a', $resolution->slot->name?->value);
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertCount(1, $operation->facts->diagnostics);
+        self::assertInstanceOf(NonGroupedColumn::class, $operation->facts->diagnostics[0]);
     }
 
     public function testGroupingSkipsAColumnOfAnotherOccurrenceAndReportsTwoDifferentColumns(): void
@@ -61,7 +63,7 @@ final class ResultReferencesTest extends TestCase
         self::assertInstanceOf(ResolvedColumn::class, $selected);
 
         self::assertSame($selected->relation, $resolution->relation);
-        self::assertSame([], $other->facts->diagnostics);
+        self::assertInstanceOf(NonGroupedColumn::class, $other->facts->diagnostics[0]);
         self::assertCount(1, $ambiguous->facts->diagnostics);
         self::assertInstanceOf(AmbiguousColumn::class, $ambiguous->facts->diagnostics[0]);
     }

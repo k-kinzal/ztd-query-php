@@ -154,4 +154,12 @@ final class TableDeclarationTest extends TestCase
         self::assertTrue((new TableDeclaration())->named(new Name('A'), [new Name('a')], Comparison::AsciiInsensitive));
         self::assertFalse((new TableDeclaration())->named(new Name('b'), [new Name('a')], Comparison::AsciiInsensitive));
     }
+
+    public function testKeysListsThePrimaryKeyFirstThenTheUniqueKeys(): void
+    {
+        $table = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, b INT UNIQUE, c SERIAL, UNIQUE (a, b), PRIMARY KEY (a), INDEX (b), UNIQUE (b(2)))')->declarations()[0];
+
+        self::assertSame([['a'], ['b'], ['c'], ['a', 'b']], array_map(static fn ($key): array => array_map(static fn ($column): string => $column->name->value, $key->columns), $table->keys));
+        self::assertTrue($table->keys[0]->primary);
+    }
 }

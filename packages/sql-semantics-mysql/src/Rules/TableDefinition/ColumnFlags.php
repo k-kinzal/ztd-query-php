@@ -82,6 +82,30 @@ final class ColumnFlags
     }
 
     /**
+     * Tells whether a column attribute keyword is written.
+     */
+    public function keyword(ColumnSpecification $specification, ColumnKeyword $keyword): bool
+    {
+        foreach ($specification->columnAttributes() as $attribute) {
+            if ($attribute instanceof KeywordAttribute && $attribute->keyword === $keyword) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Tells whether the type of a column is SERIAL, which is a unique key of its own.
+     */
+    public function serial(ColumnSpecification $specification): bool
+    {
+        $type = $specification->dataType();
+
+        return $type instanceof Elementary && $type->kind === ElementaryKind::Serial;
+    }
+
+    /**
      * Tells whether the column is INVISIBLE: the last visibility attribute written says INVISIBLE.
      */
     public function invisible(ColumnSpecification $specification): bool

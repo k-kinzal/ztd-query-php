@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\TableDefinition;
 
+use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
+use SqlSemantics\Statement\Declaration\Key;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
@@ -133,7 +135,9 @@ final class TableDeclaration
             }
         }
 
-        return $this->split($definition->name, [...$all, ...$selected], $derivation->context->profile, $complete);
+        $columns = [...$all, ...$selected];
+
+        return $this->split($definition->name, $columns, $derivation->context->profile, $complete, $this->keys($definition, $columns, $comparison));
     }
 
     /**
@@ -141,7 +145,55 @@ final class TableDeclaration
      *
      * @param list<array{ColumnDefinition|null, Column}> $columns Each column with the definition it comes from, if any
      */
-    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete): Table
+    /**
+     * Answers the keys a definition declares over its columns: the primary key first, then the unique keys in written order.
+     *
+     * A column attribute PRIMARY KEY or UNIQUE, and SERIAL, declare a key of
+     * that one column; a PRIMARY KEY or UNIQUE element a key of its columns. A
+     * key part that names no column, or an expression, makes no key.
+     *
+     * @param list<array{ColumnDefinition|null, Column}> $columns
+     * @return list<Key>
+     */
+    public function keys(CreateTable $definition, array $columns, Comparison $comparison): array
+    {
+        $primary = [];
+        $unique = [];
+        $flags = new ColumnFlags();
+        foreach ($columns as [$element, $column]) {
+            if ($element === null) {
+                continue;
+            }
+            if ($flags->keyword($element->specification, ColumnKeyword::PrimaryKey)) {
+                $primary[] = new Key(true, [$column]);
+            }
+            if ($flags->keyword($element->specification, ColumnKeyword::Unique) || $flags->serial($element->specification)) {
+                $unique[] = new Key(false, [$column]);
+            }
+        }
+        foreach ($definition->elements as $element) {
+            if (!$element instanceof IndexDefinition || ($element->kind !== IndexKind::Primary && $element->kind !== IndexKind::Unique)) {
+                continue;
+            }
+            $parts = [];
+            foreach ($element->parts as $part) {
+                $match = $part instanceof ColumnPart && $part->length === null ? $this->find($part->column, $columns, $comparison) : null;
+                if ($match === null) {
+                    continue 2;
+                }
+                $parts[] = $columns[$match][1];
+            }
+            if ($element->kind === IndexKind::Primary) {
+                $primary[] = new Key(true, $parts);
+            } else {
+                $unique[] = new Key(false, $parts);
+            }
+        }
+
+        return [...$primary, ...$unique];
+    }
+
+    public function split(QualifiedName $name, array $columns, LanguageProfile $profile, bool $complete, array $keys = []): Table
     {
         $visible = [];
         $implicit = [];
@@ -154,7 +206,7 @@ final class TableDeclaration
             }
         }
 
-        return new Table($name, $profile, $visible, $implicit, $complete);
+        return new Table($name, $profile, $visible, $implicit, $complete, RelationKind::BaseTable, $keys);
     }
 
     /**

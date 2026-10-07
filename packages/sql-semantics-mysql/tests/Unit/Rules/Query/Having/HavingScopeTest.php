@@ -84,7 +84,7 @@ final class HavingScopeTest extends TestCase
     public function testLeaveLetsTheArgumentsOfASetFunctionSeeTheColumns(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze('SELECT a FROM t HAVING MAX(c) > 0', [$semantics->analyze('CREATE TABLE t (a INT, c INT)')]);
+        $operation = $semantics->analyze('SELECT MAX(a) FROM t HAVING MAX(c) > 0', [$semantics->analyze('CREATE TABLE t (a INT, c INT)')]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);

@@ -90,6 +90,7 @@ final class SelectFacts
             $derivation->scalar($select->qualify, $results);
         }
         (new SortScopes())->derive([...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)], $derivation, $results, $items, true);
+        (new GroupedColumns())->check($select, $visible, $derivation);
         (new TailFacts())->limit($select->limit, $derivation, $outer);
         (new TailFacts())->limit($select->late?->limit, $derivation, $outer);
         foreach ($select->procedure === null ? [] : $select->procedure->arguments as $argument) {

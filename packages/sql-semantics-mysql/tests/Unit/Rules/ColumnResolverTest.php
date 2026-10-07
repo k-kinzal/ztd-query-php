@@ -47,7 +47,7 @@ final class ColumnResolverTest extends TestCase
 
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($table->columns[0], $resolution->declaration());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame(["Expression #1 of SELECT list is not in GROUP BY clause and contains nonaggregated column '(current).t.b' which is not functionally dependent on columns in GROUP BY clause; this is incompatible with sql_mode=only_full_group_by"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testFindFallsBackToTheAliasOfASelectListItem(): void
