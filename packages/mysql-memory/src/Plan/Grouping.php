@@ -115,7 +115,7 @@ final class Grouping
             $order = array_map(static fn ($item): array => [$compiler->compile($item->expression, $scope), $item->direction?->value === 'DESC'], $node->order);
             $limit = (int) ($compiler->connection->variables->read('group_concat_max_len') ?? 1024);
             $collation = $arguments === [] ? Collation::Binary : $arguments[0]->domain()->collation;
-            $domain = Domain::string(intdiv($limit, max(1, $collation->charset()->maxLength())), $collation, $limit > 512 ? FieldType::Blob : FieldType::VarString);
+            $domain = Domain::string(intdiv($limit, max(1, $collation->charset()->maxLength())), $collation, $limit > 512 ? FieldType::Blob : FieldType::VarString)->withNullable(true);
 
             return new Accumulation(null, $arguments, $node->distinct, $domain, $order, $node->separator === null ? ',' : $node->separator->value(), $limit);
         }
@@ -138,9 +138,9 @@ final class Grouping
             AggregateFunction::Count => Domain::integer(FieldType::LongLong, 21)->withNullable(false),
             AggregateFunction::BitAnd, AggregateFunction::BitOr, AggregateFunction::BitXor => Domain::integer(FieldType::LongLong, 21, true)->withNullable(false),
             AggregateFunction::Minimum, AggregateFunction::Maximum => ($argument?->domain() ?? Domain::null())->withNullable(true),
-            AggregateFunction::Sum => $operand === Kind::Double ? Domain::double(23) : Domain::decimal(min(65, $digits[0] + 22), $digits[1]),
-            AggregateFunction::Average => $operand === Kind::Double ? Domain::double(23) : Domain::decimal(min(65, $digits[0] + 4), min(30, $digits[1] + 4)),
-            default => Domain::double(23),
+            AggregateFunction::Sum => ($operand === Kind::Double ? Domain::double(23) : Domain::decimal(min(65, $digits[0] + 22), $digits[1]))->withNullable(true),
+            AggregateFunction::Average => ($operand === Kind::Double ? Domain::double(23) : Domain::decimal(min(65, $digits[0] + 4), min(30, $digits[1] + 4)))->withNullable(true),
+            default => Domain::double(23)->withNullable(true),
         };
     }
 }

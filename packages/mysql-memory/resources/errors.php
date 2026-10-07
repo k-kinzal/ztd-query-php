@@ -116,5 +116,6 @@ return [
     3140 => ['22032', 'Invalid JSON text: "%s" at position %d in value for column \'%s\'.'],
     3141 => ['22032', 'Invalid JSON text in argument %d to function %s: "%s" at position %d.'],
     3143 => ['42000', 'Invalid JSON path expression. The error is around character position %d.'],
+    3685 => ['HY000', 'Illegal argument to a regular expression.'],
     3819 => ['HY000', "Check constraint '%s' is violated."],
 ];

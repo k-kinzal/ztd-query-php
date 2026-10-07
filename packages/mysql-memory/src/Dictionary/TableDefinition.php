@@ -101,4 +101,32 @@ final class TableDefinition
 
         return [];
     }
+
+    /**
+     * Answers the column definition flags a column of the table carries: its keys, AUTO_INCREMENT and default.
+     */
+    public function flags(int $position): int
+    {
+        $flags = 0;
+        foreach ($this->keys as $key) {
+            if ($key->kind === KeyKind::Primary && in_array($position, $key->columns, true)) {
+                $flags |= 2;
+            } elseif ($key->kind === KeyKind::Unique && in_array($position, $key->columns, true)) {
+                $flags |= 4;
+            } elseif ($key->columns[0] === $position) {
+                $flags |= 8;
+            }
+        }
+        $column = $this->columns[$position];
+        if ($column->autoIncrement) {
+            $flags |= 512;
+        } elseif (!$column->default->declared && !$column->nullable()) {
+            $flags |= 4096;
+        }
+        if ($column->onUpdateNow) {
+            $flags |= 8192;
+        }
+
+        return $flags;
+    }
 }

@@ -106,7 +106,7 @@ final class Declared
             CharacterKind::LongText => [FieldType::Blob, 4294967295],
         };
 
-        return Domain::string(in_array($type->kind, [CharacterKind::TinyText, CharacterKind::Text, CharacterKind::MediumText, CharacterKind::LongText, CharacterKind::Long, CharacterKind::LongVarChar, CharacterKind::LongCharVarying], true) ? intdiv($length, $collation->charset()->maxLength()) : $length, $collation, $field);
+        return Domain::string($length, $collation, $field);
     }
 
     /**

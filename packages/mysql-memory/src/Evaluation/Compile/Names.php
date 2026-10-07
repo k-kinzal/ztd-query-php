@@ -196,7 +196,7 @@ final class Names
             $domain = Domain::string(0, Collation::Binary, FieldType::MediumBlob)->withCollation($this->compiler->settings->connectionCollation, Coercibility::Implicit);
         }
 
-        return new UserVariableRead($variable->name->value, $domain);
+        return new UserVariableRead($variable->name->value, $domain->withNullable(true));
     }
 
     /**
@@ -256,5 +256,32 @@ final class Names
         };
 
         return new SystemVariableRead($definition, $scope === VariableScope::Global ? VariableScope::Global : VariableScope::Session, $domain->withNullable(true));
+    }
+
+    /**
+     * Compiles DEFAULT(column): the default of the column.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the column has no default
+     */
+    public function default(\SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn $node, Scope $scope): Evaluable
+    {
+        $resolution = $this->compiler->facts->scalar($node->column)->resolution;
+        if (!$resolution instanceof ResolvedColumn) {
+            throw ErrorCode::BadField->error($node->column->name->value, 'field list');
+        }
+        $located = $scope->locate($resolution->relation);
+        $definition = $located === null ? null : ($located[1]->tables[spl_object_id($resolution->relation)] ?? null);
+        if ($definition === null) {
+            throw ErrorCode::NotSupportedYet->error('DEFAULT of a column of a derived table');
+        }
+        $column = $definition->columns[$this->position($located[1], $resolution)];
+        if (!$column->default->declared) {
+            throw ErrorCode::NoDefaultForField->error($column->name);
+        }
+        if ($column->default->expression !== null) {
+            return $column->default->expression;
+        }
+
+        return new Constant($column->domain->withNullable($column->default->value === null), $column->default->value);
     }
 }

@@ -102,7 +102,10 @@ final class Blocks
         $visible = array_values(array_filter(array_keys($columns), static fn (int $position): bool => !$columns[$position]->invisible));
         $expressions = array_map(static fn (int $position) => new ColumnRead($columns[$position]->domain, $position), $visible);
 
-        return new QueryPlan(new Project(new TableScan($stored), $expressions), array_map(static fn (int $position) => $columns[$position]->domain, $visible), array_map(static fn (int $position): string => $columns[$position]->name, $visible));
+        $definition = $stored->definition;
+        $origins = array_map(static fn (int $position): ColumnOrigin => new ColumnOrigin($definition->schema, $definition->name, $definition->name, $columns[$position]->name, $definition->flags($position)), $visible);
+
+        return new QueryPlan(new Project(new TableScan($stored), $expressions), array_map(static fn (int $position) => $columns[$position]->domain, $visible), array_map(static fn (int $position): string => $columns[$position]->name, $visible), $origins);
     }
 
     /**
@@ -168,6 +171,6 @@ final class Blocks
         $position = $this->planner->compiler->names->position($scope, $resolution);
         $alias = $resolution->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference && $resolution->relation->alias !== null ? $resolution->relation->alias->value : $definition->name;
 
-        return new ColumnOrigin($definition->schema, $alias, $definition->name, $definition->columns[$position]->name);
+        return new ColumnOrigin($definition->schema, $alias, $definition->name, $definition->columns[$position]->name, $definition->flags($position));
     }
 }

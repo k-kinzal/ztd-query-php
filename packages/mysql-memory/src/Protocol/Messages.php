@@ -52,7 +52,7 @@ final class Messages
     {
         $writer = (new PayloadWriter())->integer(0, 1)->lengthEncoded($affectedRows)->lengthEncoded($lastInsertId)->integer($status, 2)->integer($warnings, 2);
 
-        return $writer->bytes($info)->payload();
+        return $info === '' ? $writer->payload() : $writer->lengthEncodedString($info)->payload();
     }
 
     /**

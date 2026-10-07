@@ -43,8 +43,9 @@ final class Client
      * @param Instance $instance The server
      * @param int $id The connection id
      * @param \Closure $send Sends bytes to the client: fn (string): void
+     * @param string $host The address the client connects from
      */
-    public function __construct(public readonly Instance $instance, public readonly int $id, public readonly \Closure $send)
+    public function __construct(public readonly Instance $instance, public readonly int $id, public readonly \Closure $send, public readonly string $host = 'localhost')
     {
         $this->messages = new Messages();
         $this->statements = new Statements($this);
@@ -134,7 +135,7 @@ final class Client
             $database = $database === '' ? null : $database;
         }
         try {
-            $this->session = $this->instance->connect($user, '%', $database);
+            $this->session = $this->instance->connect($user, $this->instance->clientHost ?? $this->host, $database);
         } catch (SqlError $error) {
             $this->packet($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage()));
 

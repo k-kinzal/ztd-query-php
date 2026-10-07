@@ -124,6 +124,7 @@ enum ErrorCode: int
     case InvalidJsonText = 3140;
     case InvalidJsonTextInParameter = 3141;
     case InvalidJsonPath = 3143;
+    case RegexpError = 3685;
     case CheckConstraintViolated = 3819;
 
     /**

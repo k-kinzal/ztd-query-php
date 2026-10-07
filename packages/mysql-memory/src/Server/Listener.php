@@ -78,6 +78,9 @@ final class Listener
                     stream_set_blocking($accepted, true);
                     $id = (int) $accepted;
                     $sockets[$id] = $accepted;
+                    $peer = (string) stream_socket_get_name($accepted, true);
+                    $host = str_contains($peer, ':') ? substr($peer, 0, (int) strrpos($peer, ':')) : 'localhost';
+                    $host = $host === '127.0.0.1' || $host === '::1' || $host === '' ? 'localhost' : $host;
                     $clients[$id] = new Client($this->instance, ++$this->connections, static function (string $bytes) use ($accepted): void {
                         for ($written = 0; $written < strlen($bytes);) {
                             $sent = @fwrite($accepted, substr($bytes, $written));
@@ -86,7 +89,7 @@ final class Listener
                             }
                             $written += $sent;
                         }
-                    });
+                    }, $host);
                     $clients[$id]->greet();
                     continue;
                 }

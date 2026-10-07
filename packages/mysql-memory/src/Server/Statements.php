@@ -60,7 +60,7 @@ final class Statements
         $session = $this->client->session();
         try {
             $session->split($sql);
-            $operation = $session->analyze($sql);
+            $operation = $session->analyze($sql, true);
             $tokens = $session->semantics()->parser()->tokenize($sql);
             $parameters = count(array_filter($tokens, static fn ($token): bool => $token->text === '?'));
             $columns = $this->columns($operation, $session, $parameters);
@@ -122,7 +122,7 @@ final class Statements
             $values[$index] = (new Binary())->text($data, FieldType::Blob, $collation);
         }
         $this->prepared[$id] = [$sql, $count, $types, []];
-        $answers = $session->run($sql, $values);
+        $answers = $session->run($sql, $values, true);
         foreach ($answers as $answer) {
             if ($answer instanceof SqlError) {
                 return $this->client->send($this->client->messages->error($answer->getCode(), $answer->sqlState(), $answer->getMessage()));

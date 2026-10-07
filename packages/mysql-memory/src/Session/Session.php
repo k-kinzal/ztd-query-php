@@ -96,9 +96,10 @@ final class Session
      * Runs the statements of a text until one fails, and answers the reply or error of each run.
      *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound to parameter markers
+     * @param bool $prepared Whether the text is a prepared statement, where parameter markers are allowed
      * @return list<Reply|SqlError>
      */
-    public function run(string $sql, array $parameters = []): array
+    public function run(string $sql, array $parameters = [], bool $prepared = false): array
     {
         try {
             $statements = $this->split($sql);
@@ -111,7 +112,7 @@ final class Session
         $answers = [];
         foreach ($statements as $statement) {
             try {
-                $answers[] = $this->execute($statement, $parameters);
+                $answers[] = $this->execute($statement, $parameters, $prepared);
             } catch (SqlError $error) {
                 $this->transaction->abortStatement();
                 $this->diagnostics->error($error->getCode(), $error->getMessage());
@@ -151,9 +152,9 @@ final class Session
      *
      * @throws SqlError When the statement fails
      */
-    public function execute(string $statement, array $parameters = []): Reply
+    public function execute(string $statement, array $parameters = [], bool $prepared = false): Reply
     {
-        $operation = $this->analyze($statement);
+        $operation = $this->analyze($statement, $prepared);
         $context = new Context($this->modes(), $this->diagnostics, $this->variables, microtime(true));
         $command = (new Dispatcher())->command($operation->statement);
         if ($command->clearsDiagnostics()) {
@@ -171,13 +172,16 @@ final class Session
      *
      * @throws SqlError When the statement does not parse or does not resolve
      */
-    public function analyze(string $statement): Operation
+    public function analyze(string $statement, bool $prepared = false): Operation
     {
         $semantics = $this->semantics();
         try {
             $tree = $semantics->parser()->parse($statement);
         } catch (SourceException $error) {
             throw (new Syntax())->error($error, $statement);
+        }
+        if (!$prepared) {
+            (new Syntax())->markers($tree, $statement);
         }
         $database = $this->variables->database;
         try {

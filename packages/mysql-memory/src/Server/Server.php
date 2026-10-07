@@ -37,14 +37,18 @@ final class Server
      * @param string $version The MySQL release emulated
      * @param list<string> $databases Databases created at start
      * @param array<string, string|int> $globals Global variable values the server starts with
+     * @param string|null $clientHost The host every client is seen connecting from, or null for its address
      *
      * @throws RuntimeException When the process cannot be started
      */
-    public static function start(string $version = '8.4.7', array $databases = [], array $globals = []): self
+    public static function start(string $version = '8.4.7', array $databases = [], array $globals = [], ?string $clientHost = null): self
     {
-        $command = [PHP_BINARY, '-d', 'memory_limit=-1', dirname(__DIR__, 2) . '/bin/mysql-memory', '--listen=tcp://127.0.0.1:0', '--release=' . $version];
+        $command = [PHP_BINARY, '-d', 'memory_limit=-1', '-d', 'xdebug.mode=off', dirname(__DIR__, 2) . '/bin/mysql-memory', '--listen=tcp://127.0.0.1:0', '--release=' . $version];
         foreach ($databases as $database) {
             $command[] = '--database=' . $database;
+        }
+        if ($clientHost !== null) {
+            $command[] = '--client-host=' . $clientHost;
         }
         foreach ($globals as $name => $value) {
             $command[] = '--global=' . $name . '=' . $value;

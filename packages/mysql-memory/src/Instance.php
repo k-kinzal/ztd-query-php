@@ -40,8 +40,9 @@ final class Instance
      * @param string $version The MySQL release emulated, as `8.4.7`
      * @param array<string, string|int> $globals Global variable values the server starts with, by name
      * @param list<string> $databases Databases created at start, besides the system ones
+     * @param string|null $clientHost The host every client is seen connecting from, or null for its address
      */
-    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [])
+    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null)
     {
         $this->catalog = Catalog::release($version);
         $this->globals = new Globals(array_change_key_case($globals, CASE_LOWER));

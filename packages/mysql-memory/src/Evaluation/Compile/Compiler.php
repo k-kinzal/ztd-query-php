@@ -21,7 +21,10 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\Not;
 use SqlSemantics\Platform\MySql\Statement\Expression\NullTest;
+use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
@@ -44,6 +47,17 @@ use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
+use SqlSemantics\Platform\MySql\Statement\Call\CharCall;
+use SqlSemantics\Platform\MySql\Statement\Call\Extract;
+use SqlSemantics\Platform\MySql\Statement\Call\Position;
+use SqlSemantics\Platform\MySql\Statement\Call\Trim;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
+use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation;
+use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Regexp;
+use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\SoundsLike;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Scalar;
 
@@ -68,6 +82,12 @@ final class Compiler
 
     public readonly Subqueries $subqueries;
 
+    public readonly Dates $dates;
+
+    public readonly Texts $texts;
+
+    public readonly Rows $rows;
+
     /**
      * @var array<int, int>|null The index of each parameter marker of the statement, by object id
      */
@@ -86,6 +106,9 @@ final class Compiler
         $this->names = new Names($this);
         $this->calls = new Calls($this);
         $this->subqueries = new Subqueries($this);
+        $this->dates = new Dates($this);
+        $this->texts = new Texts($this);
+        $this->rows = new Rows($this);
     }
 
     /**
@@ -139,6 +162,20 @@ final class Compiler
             $node instanceof Like => $this->operators->like($node, $scope),
             $node instanceof CaseExpression => $this->operators->caseOf($node, $scope),
             $node instanceof Cast => $this->operators->cast($node, $scope),
+            $node instanceof IntervalArithmetic => $this->dates->arithmetic($node, $scope),
+            $node instanceof Collated => $this->texts->collated($node, $scope),
+            $node instanceof BinaryCast => $this->texts->binary($node, $scope),
+            $node instanceof CharsetConversion => $this->texts->convert($node, $scope),
+            $node instanceof Trim => $this->texts->trim($node, $scope),
+            $node instanceof Position => $this->texts->position($node, $scope),
+            $node instanceof CharCall => $this->texts->char($node, $scope),
+            $node instanceof SoundsLike => $this->texts->soundsLike($node, $scope),
+            $node instanceof Regexp => $this->texts->regexp($node, $scope),
+            $node instanceof Concatenation => $this->calls->named('CONCAT', [$node->left, $node->right], $scope),
+            $node instanceof Extract => $this->dates->extract($node, $scope),
+            $node instanceof DefaultOfColumn => $this->names->default($node, $scope),
+            $node instanceof IntervalAddition => $this->dates->addition($node, $scope),
+            $node instanceof DateArithmetic => $this->dates->call($node, $scope),
             $node instanceof FunctionCall => $this->calls->function($node, $scope),
             $node instanceof KeywordCall => $this->calls->keyword($node, $scope),
             $node instanceof ClockCall => $this->calls->clock($node, $scope),

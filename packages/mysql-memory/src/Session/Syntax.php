@@ -6,6 +6,7 @@ namespace MySqlMemory\Session;
 
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
+use SqlParser\Parser\Node;
 use SqlParser\Parser\SyntaxException;
 use Throwable;
 
@@ -18,6 +19,23 @@ use Throwable;
  */
 final class Syntax
 {
+    /**
+     * Refuses a parameter marker outside a prepared statement, as the parser of the server does.
+     *
+     * @throws SqlError When the statement holds a parameter marker
+     */
+    public function markers(Node $tree, string $statement): void
+    {
+        foreach ($tree->tokens() as $token) {
+            if ($token->text === '?' && $token->name === 'PARAM_MARKER') {
+                $offset = $token->offset;
+                $line = substr_count(substr($statement, 0, $offset), "\n") + 1;
+
+                throw new SqlError(ErrorCode::ParseError, ErrorCode::ParseError->message(mb_strcut(substr($statement, $offset), 0, 80, 'UTF-8'), $line));
+            }
+        }
+    }
+
     /**
      * Answers the parse error of a failure to read a statement.
      */

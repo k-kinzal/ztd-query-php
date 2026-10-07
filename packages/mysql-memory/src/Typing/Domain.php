@@ -55,7 +55,7 @@ final class Domain
      */
     public static function integer(FieldType $field = FieldType::LongLong, int $length = 21, bool $unsigned = false): self
     {
-        return new self(Kind::Integer, $field, $length, 0, $unsigned);
+        return new self(Kind::Integer, $field, $length, 0, $unsigned, Collation::Binary, false);
     }
 
     /**
@@ -63,7 +63,7 @@ final class Domain
      */
     public static function decimal(int $precision, int $scale, bool $unsigned = false): self
     {
-        return new self(Kind::Decimal, FieldType::NewDecimal, $precision + ($scale > 0 ? 1 : 0) + ($unsigned ? 0 : 1), $scale, $unsigned);
+        return new self(Kind::Decimal, FieldType::NewDecimal, $precision + ($scale > 0 ? 1 : 0) + ($unsigned ? 0 : 1), $scale, $unsigned, Collation::Binary, false);
     }
 
     /**
@@ -71,7 +71,7 @@ final class Domain
      */
     public static function double(int $length = 22, int $decimals = self::NOT_FIXED): self
     {
-        return new self(Kind::Double, FieldType::Double, $length, $decimals);
+        return new self(Kind::Double, FieldType::Double, $length, $decimals, false, Collation::Binary, false);
     }
 
     /**
@@ -79,7 +79,7 @@ final class Domain
      */
     public static function string(int $length, Collation $collation, FieldType $field = FieldType::VarString): self
     {
-        return new self(Kind::String, $field, $length, self::NOT_FIXED, false, $collation);
+        return new self(Kind::String, $field, $length, self::NOT_FIXED, false, $collation, false);
     }
 
     /**

@@ -4,7 +4,7 @@
 /**
  * Runs an in-memory MySQL server.
  *
- * Usage: mysql-memory [--listen=tcp://127.0.0.1:3306] [--release=8.4.7] [--database=NAME]... [--global=NAME=VALUE]...
+ * Usage: mysql-memory [--listen=tcp://127.0.0.1:3306] [--release=8.4.7] [--database=NAME]... [--global=NAME=VALUE]... [--client-host=HOST]
  * Prints "ready ADDRESS" once it accepts connections.
  */
 
@@ -22,6 +22,7 @@ $listen = 'tcp://127.0.0.1:3306';
 $release = '8.4.7';
 $databases = [];
 $globals = [];
+$clientHost = null;
 foreach (array_slice($argv, 1) as $argument) {
     if (str_starts_with($argument, '--listen=')) {
         $listen = substr($argument, 9);
@@ -29,13 +30,15 @@ foreach (array_slice($argv, 1) as $argument) {
         $release = substr($argument, 10);
     } elseif (str_starts_with($argument, '--database=')) {
         $databases[] = substr($argument, 11);
+    } elseif (str_starts_with($argument, '--client-host=')) {
+        $clientHost = substr($argument, 14);
     } elseif (str_starts_with($argument, '--global=')) {
         [$name, $value] = explode('=', substr($argument, 9), 2) + [1 => ''];
         $globals[$name] = $value;
     }
 }
 
-$listener = new MySqlMemory\Server\Listener(new MySqlMemory\Instance($release, $globals, $databases), $listen);
+$listener = new MySqlMemory\Server\Listener(new MySqlMemory\Instance($release, $globals, $databases, $clientHost), $listen);
 $address = $listener->open();
 fwrite(STDOUT, 'ready ' . $address . "\n");
 fflush(STDOUT);

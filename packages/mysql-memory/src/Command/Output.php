@@ -69,7 +69,7 @@ final class Output
     public function column(string $name, Domain $domain, ?ColumnOrigin $origin): ResultColumn
     {
         $charset = $domain->kind === Kind::String || $domain->kind === Kind::Json ? $domain->collation->id() : 63;
-        $field = $domain->field === FieldType::String && $origin === null ? FieldType::VarString : $domain->field;
+        $field = $domain->field;
 
         return new ResultColumn($name, $field, $domain->byteLength(), $domain->decimals, $domain->flags() | ($origin?->flags ?? 0), $charset, $origin?->column ?? '', $origin?->table ?? '', $origin?->originalTable ?? '', $origin?->schema ?? '');
     }

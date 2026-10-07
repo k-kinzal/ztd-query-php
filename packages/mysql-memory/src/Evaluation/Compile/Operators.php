@@ -112,6 +112,9 @@ final class Operators
      */
     public function comparison(Comparison $node, Scope $scope): Evaluable
     {
+        if ($this->compiler->rows->elements($node->left) !== null || $this->compiler->rows->elements($node->right) !== null) {
+            return $this->compiler->rows->compare($node->operator, $node->left, $node->right, $scope);
+        }
         $left = $this->compiler->compile($node->left, $scope);
         $right = $this->compiler->compile($node->right, $scope);
         $comparator = Comparator::of($left->domain(), $right->domain(), $node->operator->value, $this->compiler->settings->connectionCollation);
@@ -182,6 +185,9 @@ final class Operators
      */
     public function inList(InList $node, Scope $scope): Evaluable
     {
+        if ($this->compiler->rows->elements($node->operand) !== null) {
+            return $this->compiler->rows->in($node->operand, $node->elements, $node->negated, $scope);
+        }
         $operand = $this->compiler->compile($node->operand, $scope);
         $elements = [];
         $nullable = $operand->domain()->nullable;
