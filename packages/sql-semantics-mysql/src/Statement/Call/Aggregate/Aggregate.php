@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Aggregate;
 
+use SqlSemantics\Statement\Type\TypeFact;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregates;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\AggregateResults;
@@ -96,7 +101,11 @@ final class Aggregate implements SetFunction
         }
         (new Windows())->derive($this->over, $derivation, $environment);
 
-        return (new AggregateResults())->aggregate($this, $facts, $derivation);
+        $fact = (new AggregateResults())->aggregate($this, $facts, $derivation);
+        $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));
+        $domain = $arguments === null ? null : (new Aggregates(Settings::of($derivation->context)))->result($this->function, $arguments[0] ?? null);
+
+        return $domain === null ? $fact : new ScalarFact(new Known($domain), $fact->nullability);
     }
 
     /**

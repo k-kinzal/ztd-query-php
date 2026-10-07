@@ -31,8 +31,9 @@ final class CharCallTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new CharCall([new NumberLiteral('1')]), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Binary->descriptor()), $fact->type);
-        self::assertSame(Nullability::NotNull, $fact->nullability);
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame(TypeClass::Binary, TypeClass::of($fact->type->descriptor));
+        self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 
     public function testRenderWritesTheCharacterSet(): void

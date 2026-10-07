@@ -37,6 +37,7 @@ final class TextResults
             'LCASE' => $same,
             'REVERSE' => $same,
             'LTRIM' => $same,
+            'TRIM' => static fn (Invocation $call): ?Domain => $call->text($call->domains, $call->length($call->domain(count($call->domains) - 1)), 'trim'),
             'RTRIM' => $same,
             'LEFT' => fn (Invocation $call): ?Domain => $call->text([$call->domain(0)], $this->leading($call), 'left'),
             'RIGHT' => fn (Invocation $call): ?Domain => $call->text([$call->domain(0)], $this->leading($call), 'right'),

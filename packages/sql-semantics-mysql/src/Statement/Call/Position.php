@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
@@ -50,7 +51,9 @@ final class Position implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new ResultTyping())->fact('IP', [(new Arguments())->one($this->substring, $derivation, $environment), (new Arguments())->one($this->string, $derivation, $environment)]);
+        $facts = [(new Arguments())->one($this->substring, $derivation, $environment), (new Arguments())->one($this->string, $derivation, $environment)];
+
+        return (new Results())->refine('LOCATE', [$this->substring, $this->string], $facts, (new ResultTyping())->fact('IP', $facts), $derivation);
     }
 
     /**

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
@@ -20,16 +22,18 @@ use SqlSemantics\Statement\Type\Nullability;
 /**
  * A call of CHAR(): the characters whose codes the arguments are, in a binary string or in the character set written after USING.
  *
- * Rule: MYSQL-CHAR-CALL-001. NULL arguments are skipped, so the result is
- * never NULL; without USING it is a binary string, with USING a character
- * string. Terminates: the arguments are strict parts.
+ * Rule: MYSQL-CHAR-CALL-001. NULL arguments are skipped; the server still
+ * marks the result as nullable, since a code that is not a character of the
+ * character set gives NULL. Without USING it is a binary string, with USING a
+ * character string, four characters long for each code. Terminates: the
+ * arguments are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_char.
  * Status: Implemented.
  *
  * @visibility public
  * @example Typing CHAR() with a character set
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CHAR(77, 121 USING utf8mb4)');
- *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['VARCHAR', \SqlSemantics\Statement\Type\Nullability::NotNull]
+ *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['VARCHAR', \SqlSemantics\Statement\Type\Nullability::Nullable]
  */
 final class CharCall implements Scalar
 {
@@ -58,7 +62,10 @@ final class CharCall implements Scalar
             (new Arguments())->one($argument, $derivation, $environment);
         }
 
-        return new ScalarFact(new Known(($this->charset === null ? TypeClass::Binary : TypeClass::Character)->descriptor()), Nullability::NotNull);
+        $name = $this->charset?->name?->value;
+        $domain = (new Texts(Settings::of($derivation->context)))->character(count($this->arguments), $name, $derivation);
+
+        return new ScalarFact(new Known($domain ?? ($this->charset === null ? TypeClass::Binary : TypeClass::Character)->descriptor()), Nullability::Nullable);
     }
 
     /**

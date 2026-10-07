@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Call\Aggregate;
 
+use SqlSemantics\Statement\Type\TypeFact;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregates;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
@@ -31,7 +36,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * the rows in the written order, separated by the separator (a comma by
  * default). The result is a string in the character set of the arguments,
  * binary when one is binary; it is NULL when a group has no non-NULL row.
- * Its length is cut to group_concat_max_len. The grammar of MySQL 8.0 and
+ * Its length is cut to group_concat_max_len, which also decides its type:
+ * a VARCHAR up to 512 characters and a long blob beyond. The grammar of MySQL 8.0 and
  * later accepts OVER, which the server rejects (ER_NOT_SUPPORTED_YET).
  * Terminates: the parts are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html#function_group-concat.
@@ -40,7 +46,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Typing GROUP_CONCAT()
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT GROUP_CONCAT(DISTINCT 'a' SEPARATOR ';')");
- *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['VARCHAR', \SqlSemantics\Statement\Type\Nullability::Nullable]
+ *     [$query->field(0)->type->descriptor->name(), $query->field(0)->nullability] // => ['TEXT', \SqlSemantics\Statement\Type\Nullability::Nullable]
  */
 final class GroupConcat implements SetFunction
 {
@@ -100,7 +106,10 @@ final class GroupConcat implements SetFunction
             $derivation->report(new UnsupportedWindowing(WindowingLimit::GroupConcat));
         }
 
-        return new ScalarFact((new ResultTyping())->type('S', $facts), Nullability::Nullable);
+        $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));
+        $domain = $arguments === null ? null : (new Aggregates(Settings::of($derivation->context)))->concatenated($arguments, $derivation);
+
+        return new ScalarFact($domain === null ? (new ResultTyping())->type('S', $facts) : new Known($domain), Nullability::Nullable);
     }
 
     /**

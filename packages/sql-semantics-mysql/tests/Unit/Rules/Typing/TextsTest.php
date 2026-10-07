@@ -66,4 +66,16 @@ final class TextsTest extends TestCase
         self::assertNull(new Texts(new Settings(Collation::known('latin1_bin')))->converted(Domain::string(3, Collation::known('latin1_bin')), 'klingon', $derivation));
         self::assertEquals([new UnknownCharset('klingon')], $derivation->facts()->diagnostics);
     }
+
+    public function testCharacterCountsFourCharactersForEachCode(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $texts = new Texts(new Settings(Collation::known('latin1_bin')));
+
+        self::assertEquals(Domain::string(8, Collation::binary(), Field::VarString, Coercibility::Coercible), $texts->character(2, null, $derivation));
+        self::assertSame('latin1_swedish_ci', $texts->character(1, 'latin1', $derivation)?->collation->name);
+        self::assertNull($texts->character(1, 'klingon', $derivation));
+        self::assertEquals([new UnknownCharset('klingon')], $derivation->facts()->diagnostics);
+    }
+
 }

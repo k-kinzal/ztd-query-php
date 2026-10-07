@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 
 /**
- * Resolves the types of string conversions: COLLATE, BINARY and CONVERT … USING.
+ * Resolves the types of string conversions: COLLATE, BINARY, CONVERT … USING and CHAR.
  *
  * A value that is not a string is first written as text in the connection character set; its
  * length is its display length, and 22 for a double without fixed decimals. COLLATE keeps the
@@ -96,4 +96,23 @@ final class Texts
 
         return Domain::string($length, $charset->defaultCollation($derivation->context->profile->grammar));
     }
+
+    /**
+     * Resolves CHAR(n, … [USING charset]): four characters for each code, binary without USING, reporting an unknown character set.
+     */
+    public function character(int $codes, ?string $charset, Derivation $derivation): ?Domain
+    {
+        if ($charset === null) {
+            return Domain::string($codes * 4, Collation::binary(), Field::VarString, Coercibility::Coercible);
+        }
+        $found = Charset::named($charset);
+        if ($found === null) {
+            $derivation->report(new UnknownCharset($charset));
+
+            return null;
+        }
+
+        return Domain::string($codes * 4, $found->defaultCollation($derivation->context->profile->grammar), Field::VarString, Coercibility::Coercible);
+    }
+
 }

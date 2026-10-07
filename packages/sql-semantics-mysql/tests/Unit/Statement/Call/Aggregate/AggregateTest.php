@@ -45,7 +45,8 @@ final class AggregateTest extends TestCase
         $order = new NumberLiteral('1');
         $fact = $derivation->scalar(new Aggregate(AggregateFunction::Average, [new NumberLiteral('1')], over: new WindowSpec(null, [], [new OrderItem($order)])), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Decimal->descriptor()), $fact->type);
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame(TypeClass::Decimal, TypeClass::of($fact->type->descriptor));
         self::assertSame(Nullability::NotNull, $derivation->facts()->scalar($order)->nullability);
     }
 
