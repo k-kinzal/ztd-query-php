@@ -4,23 +4,38 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator;
 
+use MySqlMemory\Iterator\Combine\RecursiveUnionIterator;
+use MySqlMemory\Iterator\Combine\SetOperationIterator;
+use MySqlMemory\Iterator\Combine\NestedLoopJoinIterator;
+use MySqlMemory\Iterator\Transform\MaterializeIterator;
+use MySqlMemory\Iterator\Transform\AggregateIterator;
+use MySqlMemory\Iterator\Transform\LimitIterator;
+use MySqlMemory\Iterator\Transform\SortIterator;
+use MySqlMemory\Iterator\Transform\DistinctIterator;
+use MySqlMemory\Iterator\Transform\ProjectIterator;
+use MySqlMemory\Iterator\Transform\FilterIterator;
+use MySqlMemory\Iterator\Source\WorkingTableIterator;
+use MySqlMemory\Iterator\Source\ValuesIterator;
+use MySqlMemory\Iterator\Source\ZeroRowsIterator;
+use MySqlMemory\Iterator\Source\SingleRowIterator;
+use MySqlMemory\Iterator\Source\TableScanIterator;
 use LogicException;
 use MySqlMemory\Plan\Path\AccessPath;
-use MySqlMemory\Plan\Path\Aggregate;
-use MySqlMemory\Plan\Path\Distinct;
-use MySqlMemory\Plan\Path\Filter;
-use MySqlMemory\Plan\Path\Limit;
-use MySqlMemory\Plan\Path\Materialize;
-use MySqlMemory\Plan\Path\NestedLoopJoin;
-use MySqlMemory\Plan\Path\Project;
-use MySqlMemory\Plan\Path\RecursiveUnion;
-use MySqlMemory\Plan\Path\SetOperation;
-use MySqlMemory\Plan\Path\SingleRow;
-use MySqlMemory\Plan\Path\Sort;
-use MySqlMemory\Plan\Path\TableScan;
-use MySqlMemory\Plan\Path\Values;
-use MySqlMemory\Plan\Path\WorkingTable;
-use MySqlMemory\Plan\Path\ZeroRows;
+use MySqlMemory\Plan\Path\Transform\Aggregate;
+use MySqlMemory\Plan\Path\Transform\Distinct;
+use MySqlMemory\Plan\Path\Transform\Filter;
+use MySqlMemory\Plan\Path\Transform\Limit;
+use MySqlMemory\Plan\Path\Transform\Materialize;
+use MySqlMemory\Plan\Path\Combine\NestedLoopJoin;
+use MySqlMemory\Plan\Path\Transform\Project;
+use MySqlMemory\Plan\Path\Combine\RecursiveUnion;
+use MySqlMemory\Plan\Path\Combine\SetOperation;
+use MySqlMemory\Plan\Path\Source\SingleRow;
+use MySqlMemory\Plan\Path\Transform\Sort;
+use MySqlMemory\Plan\Path\Source\TableScan;
+use MySqlMemory\Plan\Path\Source\Values;
+use MySqlMemory\Plan\Path\Source\WorkingTable;
+use MySqlMemory\Plan\Path\Source\ZeroRows;
 
 /**
  * Creates the iterator tree that executes an access path tree.

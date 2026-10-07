@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
+use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;

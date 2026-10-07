@@ -6,8 +6,8 @@ namespace MySqlMemory\Plan;
 
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Scope;
-use MySqlMemory\Plan\Path\RecursiveUnion;
-use MySqlMemory\Plan\Path\WorkingTable;
+use MySqlMemory\Plan\Path\Combine\RecursiveUnion;
+use MySqlMemory\Plan\Path\Source\WorkingTable;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;

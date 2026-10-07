@@ -50,6 +50,7 @@ final class Texts
      * Answers a call of an inline routine over compiled arguments.
      *
      * @param list<Evaluable> $arguments
+     * @param Closure(Frame, list<Evaluable>, Domain): (int|float|string|null) $body Computes the result
      */
     public function call(string $name, array $arguments, Domain $domain, Closure $body): Call
     {

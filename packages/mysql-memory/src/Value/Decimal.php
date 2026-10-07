@@ -49,19 +49,19 @@ final class Decimal
         $value = self::canonical($value);
         $current = self::scale($value);
         if ($scale >= $current) {
-            return self::canonical(bcadd($value, '0', max(0, $scale)));
+            return self::canonical(bcadd(self::numeric($value), '0', max(0, $scale)));
         }
         $half = '0.' . str_repeat('0', max(0, $scale)) . '5';
         if ($scale < 0) {
             $half = '5' . str_repeat('0', -$scale - 1);
         }
-        $shifted = str_starts_with($value, '-') ? bcsub($value, $half, $current) : bcadd($value, $half, $current);
+        $shifted = str_starts_with($value, '-') ? bcsub(self::numeric($value), self::numeric($half), $current) : bcadd(self::numeric($value), self::numeric($half), $current);
         if ($scale >= 0) {
-            return self::canonical(bcadd($shifted, '0', $scale));
+            return self::canonical(bcadd(self::numeric($shifted), '0', $scale));
         }
         $unit = '1' . str_repeat('0', -$scale);
 
-        return self::canonical(bcmul(bcdiv($shifted, $unit, 0), $unit, 0));
+        return self::canonical(bcmul(bcdiv(self::numeric($shifted), self::numeric($unit), 0), self::numeric($unit), 0));
     }
 
     /**
@@ -70,11 +70,11 @@ final class Decimal
     public static function truncate(string $value, int $scale): string
     {
         if ($scale >= 0) {
-            return self::canonical(bcadd(self::canonical($value), '0', $scale));
+            return self::canonical(bcadd(self::numeric(self::canonical($value)), '0', $scale));
         }
         $unit = '1' . str_repeat('0', -$scale);
 
-        return self::canonical(bcmul(bcdiv(self::canonical($value), $unit, 0), $unit, 0));
+        return self::canonical(bcmul(bcdiv(self::numeric(self::canonical($value)), self::numeric($unit), 0), self::numeric($unit), 0));
     }
 
     /**
@@ -82,7 +82,7 @@ final class Decimal
      */
     public static function add(string $left, string $right): string
     {
-        return self::canonical(bcadd($left, $right, max(self::scale($left), self::scale($right))));
+        return self::canonical(bcadd(self::numeric($left), self::numeric($right), max(self::scale($left), self::scale($right))));
     }
 
     /**
@@ -90,7 +90,7 @@ final class Decimal
      */
     public static function subtract(string $left, string $right): string
     {
-        return self::canonical(bcsub($left, $right, max(self::scale($left), self::scale($right))));
+        return self::canonical(bcsub(self::numeric($left), self::numeric($right), max(self::scale($left), self::scale($right))));
     }
 
     /**
@@ -100,7 +100,7 @@ final class Decimal
     {
         $scale = self::scale($left) + self::scale($right);
 
-        return self::round(bcmul($left, $right, $scale), min(30, $scale));
+        return self::round(bcmul(self::numeric($left), self::numeric($right), $scale), min(30, $scale));
     }
 
     /**
@@ -108,11 +108,11 @@ final class Decimal
      */
     public static function divide(string $left, string $right, int $scale): ?string
     {
-        if (bccomp($right, '0', self::scale($right)) === 0) {
+        if (bccomp(self::numeric($right), '0', self::scale($right)) === 0) {
             return null;
         }
 
-        return self::round(bcdiv($left, $right, $scale + 1), $scale);
+        return self::round(bcdiv(self::numeric($left), self::numeric($right), $scale + 1), $scale);
     }
 
     /**
@@ -121,11 +121,11 @@ final class Decimal
     public static function modulo(string $left, string $right): ?string
     {
         $scale = max(self::scale($left), self::scale($right));
-        if (bccomp($right, '0', $scale) === 0) {
+        if (bccomp(self::numeric($right), '0', $scale) === 0) {
             return null;
         }
 
-        return self::canonical(bcmod($left, $right, $scale));
+        return self::canonical(bcmod(self::numeric($left), self::numeric($right), $scale));
     }
 
     /**
@@ -133,7 +133,7 @@ final class Decimal
      */
     public static function compare(string $left, string $right): int
     {
-        return bccomp($left, $right, max(self::scale($left), self::scale($right)));
+        return bccomp(self::numeric($left), self::numeric($right), max(self::scale($left), self::scale($right)));
     }
 
     /**
@@ -168,7 +168,7 @@ final class Decimal
     public static function fromInteger(int $value, bool $unsigned = false): string
     {
         if ($unsigned && $value < 0) {
-            return bcadd((string) $value, '18446744073709551616', 0);
+            return bcadd(self::numeric((string) $value), self::numeric('18446744073709551616'), 0);
         }
 
         return (string) $value;
@@ -194,4 +194,15 @@ final class Decimal
 
         return $sign . $digits . str_repeat('0', $point - $length);
     }
+
+    /**
+     * Answers a decimal text as bcmath reads it: the text itself when it is a number, else zero.
+     *
+     * @return numeric-string
+     */
+    public static function numeric(string $value): string
+    {
+        return is_numeric($value) ? $value : '0';
+    }
+
 }

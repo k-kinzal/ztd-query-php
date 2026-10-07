@@ -35,7 +35,7 @@ final class Scope
     public array $tables = [];
 
     /**
-     * @var array<int, \MySqlMemory\Plan\Path\TableScan> The scan of each base table occurrence, by object id
+     * @var array<int, \MySqlMemory\Plan\Path\Source\TableScan> The scan of each base table occurrence, by object id
      */
     public array $scans = [];
 

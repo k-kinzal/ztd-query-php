@@ -6,9 +6,9 @@ namespace MySqlMemory\Evaluation\Compile;
 
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Evaluable;
-use MySqlMemory\Evaluation\Operator\Comparator;
+use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Evaluation\Operator\Logic;
-use MySqlMemory\Evaluation\Operator\RowCompare;
+use MySqlMemory\Evaluation\Operator\Comparison\RowCompare;
 use MySqlMemory\Evaluation\Scope;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;

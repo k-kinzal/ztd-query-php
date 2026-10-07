@@ -10,7 +10,7 @@ use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Path\AccessPath;
-use MySqlMemory\Plan\Path\Aggregate as AggregatePath;
+use MySqlMemory\Plan\Path\Transform\Aggregate as AggregatePath;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;

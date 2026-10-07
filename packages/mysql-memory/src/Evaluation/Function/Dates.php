@@ -32,22 +32,11 @@ final class Dates
         $routines = [
             new Routine('DATE', 1, 1, fn (Frame $f, array $a): ?string => $this->moment($f, $a[0], Kind::Date)),
         ];
-        $parts = [
-            'YEAR' => [4, static fn (array $p): int => $p[0], Kind::Date],
-            'MONTH' => [2, static fn (array $p): int => $p[1], Kind::Date],
-            'DAY' => [2, static fn (array $p): int => $p[2], Kind::Date],
-            'DAYOFMONTH' => [2, static fn (array $p): int => $p[2], Kind::Date],
-            'HOUR' => [3, static fn (array $p): int => $p[3], Kind::Time],
-            'MINUTE' => [2, static fn (array $p): int => $p[4], Kind::Time],
-            'SECOND' => [2, static fn (array $p): int => $p[5], Kind::Time],
-            'MICROSECOND' => [6, static fn (array $p): int => $p[6], Kind::Time],
-            'QUARTER' => [1, static fn (array $p): int => intdiv($p[1] + 2, 3), Kind::Date],
-            'DAYOFYEAR' => [3, static fn (array $p): int => (int) date('z', (int) gmmktime(0, 0, 0, $p[1], $p[2], $p[0])) + 1, Kind::Date],
-            'DAYOFWEEK' => [1, static fn (array $p): int => (int) gmdate('w', (int) gmmktime(0, 0, 0, $p[1], $p[2], $p[0])) + 1, Kind::Date],
-            'WEEKDAY' => [1, static fn (array $p): int => ((int) gmdate('w', (int) gmmktime(0, 0, 0, $p[1], $p[2], $p[0])) + 6) % 7, Kind::Date],
-        ];
-        foreach ($parts as $name => [$length, $read, $kind]) {
-            $routines[] = new Routine($name, 1, 1, fn (Frame $f, array $a): ?int => $this->part($f, $a[0], $read, $kind));
+        foreach (['YEAR', 'MONTH', 'DAY', 'DAYOFMONTH', 'QUARTER', 'DAYOFYEAR', 'DAYOFWEEK', 'WEEKDAY'] as $name) {
+            $routines[] = new Routine($name, 1, 1, fn (Frame $f, array $a): ?int => $this->part($f, $a[0], $name, Kind::Date));
+        }
+        foreach (['HOUR', 'MINUTE', 'SECOND', 'MICROSECOND'] as $name) {
+            $routines[] = new Routine($name, 1, 1, fn (Frame $f, array $a): ?int => $this->part($f, $a[0], $name, Kind::Time));
         }
 
         return $routines;
@@ -68,28 +57,50 @@ final class Dates
 
     /**
      * Reads a part of the date or time of an argument.
-     *
-     * @param callable(list<int>): int $read
      */
-    public function part(Frame $frame, Evaluable $argument, callable $read, Kind $kind): ?int
+    public function part(Frame $frame, Evaluable $argument, string $name, Kind $kind): ?int
     {
         $value = $argument->evaluate($frame);
         if ($value === null) {
             return null;
         }
         $domain = $argument->domain();
-        if ($kind === Kind::Time && ($domain->kind === Kind::Time || $domain->kind === Kind::String && Temporal::parseDateTime((string) $value) === null)) {
+        if ($kind === Kind::Time && ($domain->kind === Kind::Time || ($domain->kind === Kind::String && Temporal::parseTime((string) $value) !== null))) {
             $time = (new Moments())->time($value, $domain, 6, $frame->context);
             if ($time === null) {
                 return null;
             }
             $parts = Temporal::parseTime($time);
 
-            return $parts === null ? null : $read([0, 0, 0, $parts[1], $parts[2], $parts[3], $parts[4]]);
+            return $parts === null ? null : $this->read($name, [0, 0, 0, $parts[1], $parts[2], $parts[3], $parts[4]]);
         }
         $moment = (new Moments())->convert($value, $domain, new Domain(Kind::DateTime, Field::DateTime, 26, 6), $frame->context);
         $parts = $moment === null ? null : Temporal::parseDateTime($moment);
 
-        return $parts === null ? null : $read($parts);
+        return $parts === null ? null : $this->read($name, $parts);
+    }
+
+    /**
+     * Reads a named part from the year, month, day, hour, minute, second and microsecond of a moment.
+     *
+     * @param array{int, int, int, int, int, int, int, 7?: bool} $parts
+     */
+    public function read(string $name, array $parts): int
+    {
+        $day = static fn (): int => (int) gmmktime(0, 0, 0, $parts[1], $parts[2], $parts[0]);
+
+        return match ($name) {
+            'YEAR' => $parts[0],
+            'MONTH' => $parts[1],
+            'QUARTER' => intdiv($parts[1] + 2, 3),
+            'DAYOFYEAR' => (int) gmdate('z', $day()) + 1,
+            'DAYOFWEEK' => (int) gmdate('w', $day()) + 1,
+            'WEEKDAY' => ((int) gmdate('w', $day()) + 6) % 7,
+            'HOUR' => $parts[3],
+            'MINUTE' => $parts[4],
+            'SECOND' => $parts[5],
+            'MICROSECOND' => $parts[6],
+            default => $parts[2],
+        };
     }
 }

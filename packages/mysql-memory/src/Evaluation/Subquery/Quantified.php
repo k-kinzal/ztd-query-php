@@ -6,8 +6,8 @@ namespace MySqlMemory\Evaluation\Subquery;
 
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Evaluation\Operator\Comparator;
-use MySqlMemory\Evaluation\Operator\Compare;
+use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
+use MySqlMemory\Evaluation\Operator\Comparison\Compare;
 use MySqlMemory\Typing\Domain;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;

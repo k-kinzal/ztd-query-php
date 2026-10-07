@@ -7,7 +7,7 @@ namespace MySqlMemory\Evaluation\Function;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Evaluation\Operator\Comparator;
+use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Typing\Ordering;

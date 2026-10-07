@@ -6,7 +6,7 @@ namespace MySqlMemory\Evaluation\Compile;
 
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Evaluable;
-use MySqlMemory\Evaluation\Operator\Comparator;
+use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Evaluation\Subquery\Existence;
 use MySqlMemory\Evaluation\Subquery\Quantified;
