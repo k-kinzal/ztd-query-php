@@ -117,7 +117,7 @@ final class Grouping
             $collation = $arguments === [] ? Collation::Binary : $arguments[0]->domain()->collation;
             $domain = Domain::string(intdiv($limit, max(1, $collation->charset()->maxLength())), $collation, $limit > 512 ? FieldType::Blob : FieldType::VarString)->withNullable(true);
 
-            return new Accumulation(null, $arguments, $node->distinct, $domain, $order, $node->separator === null ? ',' : $node->separator->value(), $limit);
+            return new Accumulation(null, $arguments, $node->distinct, $domain, $order, $node->separator === null ? ',' : $node->separator->value, $limit);
         }
 
         return new Accumulation($node->function, $arguments, $node->distinct, $this->domain($node->function, $arguments), [], ',', 0);

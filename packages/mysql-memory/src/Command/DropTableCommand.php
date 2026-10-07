@@ -58,7 +58,8 @@ final class DropTableCommand implements Command
         assert($statement instanceof DropTable);
         $missing = [];
         $found = [];
-        foreach ($statement->tables as $name) {
+        foreach ($statement->tables as $target) {
+            $name = $target->name;
             $schema = $name->schema?->value ?? $database;
             if ($dictionary->table($schema, $name->name->value) === null) {
                 $missing[] = $schema . '.' . $name->name->value;

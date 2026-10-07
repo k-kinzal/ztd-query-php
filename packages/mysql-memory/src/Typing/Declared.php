@@ -177,7 +177,7 @@ final class Declared
     public function enumeration(Enumeration $type, ?Collation $collation): Domain
     {
         $collation = $this->charset($type->charset, $collation ?? $this->collation);
-        $members = array_map(static fn ($member): string => $member->value(), $type->members);
+        $members = array_map(static fn ($member): string => $member->value, $type->members);
         $lengths = array_map(static fn (string $member): int => $collation->charset()->length($member), $members);
         $length = $type->kind === EnumerationKind::Enum ? max([0, ...$lengths]) : array_sum($lengths) + max(0, count($members) - 1);
 

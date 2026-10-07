@@ -41,7 +41,9 @@ final class Syntax
      */
     public function error(Throwable $failure, string $statement): SqlError
     {
-        for ($cause = $failure; $cause !== null && !$cause instanceof SyntaxException; $cause = $cause->getPrevious()) {
+        $cause = $failure;
+        while ($cause !== null && !$cause instanceof SyntaxException) {
+            $cause = $cause->getPrevious();
         }
         if (!$cause instanceof SyntaxException) {
             return new SqlError(ErrorCode::ParseError, ErrorCode::ParseError->message('', 1), $failure);

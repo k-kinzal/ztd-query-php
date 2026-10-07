@@ -25,7 +25,7 @@ final class Real
             return $value > 0 ? 'inf' : ($value < 0 ? '-inf' : 'nan');
         }
         if ($value == 0.0) {
-            return 1 / $value < 0 ? '-0' : '0';
+            return str_starts_with(sprintf('%F', $value), '-') ? '-0' : '0';
         }
         [$digits, $point] = self::digits(abs($value));
         $sign = $value < 0 ? '-' : '';
@@ -55,6 +55,7 @@ final class Real
      */
     public static function digits(float $value): array
     {
+        $text = sprintf('%.16e', $value);
         for ($precision = 1; $precision <= 17; $precision++) {
             $text = sprintf('%.' . ($precision - 1) . 'e', $value);
             if ((float) $text === $value) {

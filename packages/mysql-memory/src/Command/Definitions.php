@@ -128,18 +128,18 @@ final class Definitions
                 $collation = Collation::named($attribute->collation->name->value);
             }
             if ($attribute instanceof CommentAttribute) {
-                $comment = $attribute->comment->value();
+                $comment = $attribute->comment->value;
             }
         }
         if ($specification instanceof GeneratedColumn && $specification->collation?->name !== null) {
             $collation = Collation::named($specification->collation->name->value);
         }
-        $domain = $declared->domain($specification->type, $collation);
+        $domain = $declared->domain($specification->dataType(), $collation);
         if ($domain->kind === Kind::String || $domain->kind === Kind::Json) {
             $domain = new Domain($domain->kind, $domain->field, $domain->length, 0, false, $domain->collation, true, $domain->members);
         }
         $nullable = $declaration === null ? true : $declaration->nullability !== Nullability::NotNull;
-        $serial = $specification->type instanceof Elementary && $specification->type->kind === ElementaryKind::Serial;
+        $serial = $specification->dataType() instanceof Elementary && $specification->dataType()->kind === ElementaryKind::Serial;
         $domain = $domain->withNullable($nullable && !$serial);
         $keywords = array_map(static fn ($attribute) => $attribute->keyword, array_values(array_filter($attributes, static fn ($attribute): bool => $attribute instanceof KeywordAttribute)));
         $name = $element->name->column->value;
@@ -224,7 +224,7 @@ final class Definitions
                 $keys[] = new Key('', KeyKind::Unique, [$position]);
             }
         }
-        if ($specification->type instanceof Elementary && $specification->type->kind === ElementaryKind::Serial) {
+        if ($specification->dataType() instanceof Elementary && $specification->dataType()->kind === ElementaryKind::Serial) {
             $keys[] = new Key('', KeyKind::Unique, [$position]);
         }
 
@@ -266,7 +266,7 @@ final class Definitions
             IndexKind::Index => KeyKind::Index,
         };
 
-        return new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->value ?? ''), $kind, $positions, $prefixes);
+        return new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes);
     }
 
     /**

@@ -55,7 +55,7 @@ final class ShowTablesCommand implements Command
         $names = array_keys($schema->tables);
         sort($names, SORT_STRING);
         if ($statement->filter instanceof ShowLike) {
-            $pattern = '/\A' . strtr(preg_quote($statement->filter->pattern->value(), '/'), ['%' => '.*', '_' => '.']) . '\z/s';
+            $pattern = '/\A' . strtr(preg_quote($statement->filter->pattern->value, '/'), ['%' => '.*', '_' => '.']) . '\z/s';
             $names = array_values(array_filter($names, static fn (string $table): bool => preg_match($pattern, $table) === 1));
         }
         $column = new ResultColumn('Tables_in_' . $name, FieldType::VarString, 256, 0, ColumnFlag::NotNull->value, Collation::Utf8mb3GeneralCi->id(), 'TABLE_NAME', 'TABLES', 'TABLES', 'information_schema');
