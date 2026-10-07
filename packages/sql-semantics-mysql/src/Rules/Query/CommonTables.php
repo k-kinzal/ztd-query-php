@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
+use SqlSemantics\Statement\Type\TypeFact;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
+use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
@@ -67,14 +74,16 @@ final class CommonTables
             }
             $seen[$key] = true;
             $scope = $this->extended($outer, $bindings);
-            if ($with->recursive && $this->refers($table->query, $table->name, $derivation)) {
+            $recursive = $with->recursive && $this->refers($table->query, $table->name, $derivation);
+            $materialized = $recursive || (new Materialization())->mergeable($table->query) ? null : $table->query;
+            if ($recursive) {
                 $operands = $this->operands($table->query);
                 if (count($operands) < 2 || $this->refers($operands[0], $table->name, $derivation)) {
                     $derivation->report(new Misuse(MisuseRule::RecursiveWithoutAnchor));
                 }
                 $scope = $this->extended($outer, [...$bindings, new CommonBinding($table->name, $table, new RowShape([], [new RecursiveReference($table->name)]))]);
             }
-            $shape = $derivation->deferred($table, static fn (): RowShape => (new DerivedShapes())->shape($derivation->query($table->query, $scope), $table->columns, $derivation));
+            $shape = $derivation->deferred($table, static fn (): RowShape => (new DerivedShapes())->shape($derivation->query($table->query, $scope), $table->columns, $derivation, $materialized));
             $bindings[] = new CommonBinding($table->name, $table, $shape);
         }
 
@@ -137,13 +146,24 @@ final class CommonTables
     }
 
     /**
+     * Answers the type a column of a recursive table keeps from its anchor: settled alone in the temporary table.
+     */
+    public function recursive(TypeFact $type, ?Derivation $derivation): TypeFact
+    {
+        $domain = $derivation === null ? null : (new Precision())->domain($type);
+        $settled = $domain === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of([$domain], 'UNION', $derivation);
+
+        return $settled === null ? $type : new Known((new Materialization())->set($settled));
+    }
+
+    /**
      * Answers the output of a recursive set operation: the columns of its nonrecursive part, all nullable.
      */
-    public function nullable(QueryFact $anchor): QueryFact
+    public function nullable(QueryFact $anchor, ?Derivation $derivation = null): QueryFact
     {
         $fields = [];
         foreach ($anchor->projection as $item) {
-            $fields[] = $item instanceof Field ? new Field($item->position, new OutputSlot($item->slot->name, $item->slot->type, Nullability::Nullable, null, $item->slot, $item->slot->unnamed)) : $item;
+            $fields[] = $item instanceof Field ? new Field($item->position, new OutputSlot($item->slot->name, $this->recursive($item->slot->type, $derivation), Nullability::Nullable, null, $item->slot, $item->slot->unnamed)) : $item;
         }
 
         return new QueryFact($fields, $anchor->names);

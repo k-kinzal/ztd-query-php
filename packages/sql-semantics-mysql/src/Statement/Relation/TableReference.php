@@ -8,7 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rendering\LeadingDot;
-use SqlSemantics\Platform\MySql\Rules\Query\PartitionSelection;
+use SqlSemantics\Platform\MySql\Rules\Query\From\PartitionSelection;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;

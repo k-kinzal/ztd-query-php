@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
+use MySqlMemory\Typing\Domain;
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Compiler;
@@ -18,8 +19,6 @@ use MySqlMemory\Plan\Path\Sort;
 use MySqlMemory\Plan\Path\Values;
 use MySqlMemory\Plan\Path\WorkingTable;
 use MySqlMemory\Result\ColumnFlag;
-use MySqlMemory\Typing\Aggregation;
-use MySqlMemory\Typing\Materialized;
 use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
@@ -168,11 +167,7 @@ final class Planner
         if (count($left->domains) !== count($right->domains)) {
             throw ErrorCode::WrongNumberOfColumnsInSelect->error();
         }
-        $aggregation = new Aggregation($this->settings->connectionCollation);
-        $domains = [];
-        foreach ($left->domains as $position => $domain) {
-            $domains[] = Materialized::set($aggregation->of([$domain, $right->domains[$position]], 'UNION'));
-        }
+        $domains = $this->outputs($operation);
         $kind = match ($operation->operator) {
             SetOperator::Union => SetKind::Union,
             SetOperator::Intersect => SetKind::Intersect,
@@ -199,8 +194,7 @@ final class Planner
             }
             $rows[] = $compiled;
         }
-        $aggregation = new Aggregation($this->settings->connectionCollation);
-        $domains = array_map(static fn (array $domains) => $aggregation->of($domains, 'VALUES'), array_values($columns));
+        $domains = $this->outputs($query);
         $names = array_map(static fn (int $position): string => 'column_' . $position, array_keys($domains));
 
         return new QueryPlan(new Values($rows, count($domains)), $domains, $names);
@@ -215,6 +209,28 @@ final class Planner
     public function materialized(array $domains): array
     {
         return array_map(static fn ($domain): ?ColumnOrigin => $domain->field->blob() ? new ColumnOrigin('', '', '', '', ColumnFlag::Blob->value) : null, $domains);
+    }
+
+
+    /**
+     * Answers the types of the columns a query returns, as SQL Semantics resolved them.
+     *
+     * @return list<Domain>
+     *
+     * @throws \MySqlMemory\Error\SqlError When SQL Semantics resolved only the class of a type
+     */
+    public function outputs(Query $query): array
+    {
+        $domains = [];
+        foreach ($this->compiler->facts->query($query)->shape->slots as $slot) {
+            $type = $slot->type;
+            if (!$type instanceof \SqlSemantics\Statement\Type\Known || !$type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
+                throw ErrorCode::NotSupportedYet->error('the type of a set operation column');
+            }
+            $domains[] = Domain::of($type->descriptor, $slot->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull);
+        }
+
+        return $domains;
     }
 
 }

@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Rules\Query;
+namespace Tests\Unit\Rules\Query\From;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
-use SqlSemantics\Platform\MySql\Rules\Query\PartitionSelection;
+use SqlSemantics\Platform\MySql\Rules\Query\From\PartitionSelection;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownPartition;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnpartitionedTable;
 

@@ -54,7 +54,7 @@ final class SetFacts
         $right = $derivation->query($rightQuery, $pending === null ? $outer : $tables->anchored($outer, $pending, $left, $derivation));
         $fact = new QueryFact((new ResultSlots())->combine($left, $right, $operator, $derivation), $derivation->context->columnNames);
 
-        return $pending === null ? $fact : $tables->nullable($left);
+        return $pending === null ? $fact : $tables->nullable($left, $derivation);
     }
 
     /**

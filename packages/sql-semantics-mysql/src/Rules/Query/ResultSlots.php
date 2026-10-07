@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
+use SqlSemantics\Statement\Type\TypeFact;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
+use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
@@ -61,7 +68,7 @@ final class ResultSlots
         foreach ($left->shape->slots as $position => $slot) {
             $other = $right->shape->complete() ? $right->shape->slots[$position] ?? null : null;
             if ($other !== null) {
-                $type = (new TypeAggregation())->aggregate([$slot->type, $other->type]);
+                $type = $this->settled($slot->type, $other->type, $derivation);
                 $nullability = $this->nullability($operator, $slot->nullability, $other->nullability);
             } elseif ($problem !== null) {
                 $type = new Invalid($problem);
@@ -74,6 +81,17 @@ final class ResultSlots
         }
 
         return $fields;
+    }
+
+    /**
+     * Answers the type of a column of a set operation: the resolved type both operands settle on in the temporary table, else the class they aggregate to.
+     */
+    public function settled(TypeFact $left, TypeFact $right, Derivation $derivation): TypeFact
+    {
+        $domains = (new Precision())->all([$left, $right]);
+        $domain = $domains === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of($domains, 'UNION', $derivation);
+
+        return $domain === null ? (new TypeAggregation())->aggregate([$left, $right]) : new Known((new Materialization())->set($domain));
     }
 
     /**
@@ -115,7 +133,10 @@ final class ResultSlots
             foreach ($facts as $fact) {
                 $nullability = $nullability->propagate($fact->nullability);
             }
-            $type = (new TypeAggregation())->aggregate(array_map(static fn (ScalarFact $fact) => $fact->type, $facts));
+            $types = array_map(static fn (ScalarFact $fact): TypeFact => $fact->type, $facts);
+            $domains = (new Precision())->all($types);
+            $domain = $domains === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of($domains, 'VALUES', $derivation);
+            $type = $domain === null ? (new TypeAggregation())->aggregate($types) : new Known($domain);
             $fields[] = new Field($position, new OutputSlot(new Name('column_' . $position), $type, $nullability));
         }
 

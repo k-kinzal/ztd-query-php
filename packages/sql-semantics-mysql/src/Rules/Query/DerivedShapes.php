@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
+use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
@@ -40,10 +44,11 @@ final class DerivedShapes
      * Answers the shape of the rows the query produces under the given column names.
      *
      * @param list<Name> $columns The column list; empty when the query names the columns
+     * @param Query|null $materialized The query when the server materializes its rows in a temporary table, whose columns take the types of that table
      */
-    public function shape(QueryFact $fact, array $columns, Derivation $derivation): RowShape
+    public function shape(QueryFact $fact, array $columns, Derivation $derivation, ?Query $materialized = null): RowShape
     {
-        $shape = $fact->shape;
+        $shape = $materialized === null ? $fact->shape : $this->materialized($fact->shape, (new Materialization())->narrows($materialized));
         if ($columns === []) {
             $slots = [];
             foreach ($shape->slots as $slot) {
@@ -72,6 +77,20 @@ final class DerivedShapes
         $this->unique($slots, $derivation);
 
         return new RowShape($slots);
+    }
+
+    /**
+     * Answers a shape with the types a temporary table gives its columns.
+     */
+    public function materialized(RowShape $shape, bool $narrows): RowShape
+    {
+        $slots = [];
+        foreach ($shape->slots as $slot) {
+            $domain = (new Precision())->domain($slot->type);
+            $slots[] = $domain === null ? $slot : new OutputSlot($slot->name, new Known((new Materialization())->column($domain, $narrows)), $slot->nullability, $slot->column, $slot->origin, $slot->unnamed);
+        }
+
+        return new RowShape($slots, $shape->missing);
     }
 
     /**

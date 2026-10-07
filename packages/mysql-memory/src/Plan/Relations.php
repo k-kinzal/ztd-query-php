@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
+use MySqlMemory\Typing\Domain;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
@@ -17,7 +18,6 @@ use MySqlMemory\Plan\Path\Materialize;
 use MySqlMemory\Plan\Path\NestedLoopJoin;
 use MySqlMemory\Plan\Path\SingleRow;
 use MySqlMemory\Plan\Path\TableScan;
-use MySqlMemory\Typing\Materialized;
 use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
@@ -78,9 +78,7 @@ final class Relations
         if ($resolution instanceof CommonTable) {
             $plan = $this->planner->commonTable($resolution->definition);
             $merged = $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression && $this->mergeable($resolution->definition->query);
-            $kept = $merged || $plan->root instanceof Path\RecursiveUnion || $plan->root instanceof Path\WorkingTable;
-            $connection = $this->planner->settings->connectionCollation;
-            $placed = $merged ? array_map(static fn ($domain) => Materialized::merged($domain, $connection), $plan->domains) : ($kept ? $plan->domains : array_map(Materialized::column(...), $plan->domains));
+            $placed = $this->shaped($reference, $plan->domains);
             $scope->place($reference, $placed, $plan->names);
             $scope->merged[spl_object_id($reference)] = $merged ? $plan->origins : $this->planner->materialized($placed);
             $scope->derived[spl_object_id($reference)] = $reference->alias?->value ?? $reference->name->name->value;
@@ -114,13 +112,29 @@ final class Relations
         $plan = $this->planner->query($derived->query, $derived->lateral ? $scope : $scope->outer);
         $names = $derived->columns === [] ? $plan->names : array_map(static fn ($name): string => $name->value, $derived->columns);
         $merged = $this->mergeable($derived->query);
-        $connection = $this->planner->settings->connectionCollation;
-        $placed = $merged ? array_map(static fn ($domain) => Materialized::merged($domain, $connection), $plan->domains) : array_map(Materialized::column(...), $plan->domains);
+        $placed = $this->shaped($derived, $plan->domains);
         $scope->place($derived, $placed, $names);
         $scope->merged[spl_object_id($derived)] = $merged ? $plan->origins : $this->planner->materialized($placed);
         $scope->derived[spl_object_id($derived)] = $derived->alias?->value ?? '';
 
         return new Materialize($plan, $derived->lateral);
+    }
+
+    /**
+     * Answers the types of the columns of a derived table or common table as SQL Semantics resolved them, keeping a planned type it resolved only the class of.
+     *
+     * @param list<Domain> $planned The types of the columns of the plan of its query
+     * @return list<Domain>
+     */
+    public function shaped(\SqlSemantics\Statement\Relation $relation, array $planned): array
+    {
+        $domains = [];
+        foreach ($this->planner->compiler->facts->relation($relation)->shape->slots as $position => $slot) {
+            $type = $slot->type;
+            $domains[] = $type instanceof \SqlSemantics\Statement\Type\Known && $type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain ? Domain::of($type->descriptor, $slot->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull) : $planned[$position] ?? Domain::null();
+        }
+
+        return $domains;
     }
 
     /**
@@ -133,17 +147,7 @@ final class Relations
      */
     public function mergeable(\SqlSemantics\Statement\Query $query): bool
     {
-        while ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery || ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression && $query->with === null && $query->orderBy === [] && $query->limit === null)) {
-            $query = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery ? $query->query : $query->body;
-        }
-        if (!$query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select || $query->from === null || $query->from instanceof Dual) {
-            return false;
-        }
-        if ($query->groupBy !== null || $query->having !== null || $query->limit !== null || $query->windows !== [] || in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $query->options, true)) {
-            return false;
-        }
-
-        return (new Grouping($this->planner))->collect($query) === [];
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->mergeable($query);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Rules\Query;
+namespace SqlSemantics\Platform\MySql\Rules\Query\From;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownPartition;

@@ -8,8 +8,6 @@ use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Path\RecursiveUnion;
 use MySqlMemory\Plan\Path\WorkingTable;
-use MySqlMemory\Typing\Aggregation;
-use MySqlMemory\Typing\Materialized;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
@@ -48,8 +46,7 @@ final class Recursion
             return null;
         }
         $anchor = $this->planner->query($query->left, $outer);
-        $aggregation = new Aggregation($this->planner->settings->connectionCollation);
-        $domains = array_map(static fn ($domain) => Materialized::set($aggregation->of([$domain], 'UNION'))->withNullable(true), $anchor->domains);
+        $domains = $this->planner->outputs($query);
         $names = $definition->columns === [] ? $anchor->names : array_map(static fn ($name): string => $name->value, $definition->columns);
         $working = new WorkingTable(count($domains));
         $id = spl_object_id($definition);

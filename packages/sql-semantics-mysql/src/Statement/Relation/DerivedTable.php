@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Relation;
 
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
@@ -68,7 +69,7 @@ final class DerivedTable implements Relation
             $derivation->report(new Misuse(MisuseRule::DerivedWithoutAlias));
         }
 
-        return new RelationFact((new DerivedShapes())->shape($derivation->query($this->query, $environment), $this->columns, $derivation));
+        return new RelationFact((new DerivedShapes())->shape($derivation->query($this->query, $environment), $this->columns, $derivation, (new Materialization())->mergeable($this->query) ? null : $this->query));
     }
 
     /**
