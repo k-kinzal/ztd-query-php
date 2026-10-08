@@ -8,6 +8,7 @@ use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\Plan\LexemeConstraint;
 use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\Generation\Plan\RulePlan;
+use SqlFaker\MySql\Grammar\MySqlGrammar;
 
 /**
  * The generation plans of the differential fuzz targets.
@@ -39,7 +40,7 @@ final class Plans
         };
         $plan = $this->named(GenerationPlan::fromRule($start)->requiringNonEmpty());
         if ($mode === 'select') {
-            $plan = $this->mainstream($plan);
+            $plan = $this->mainstream($plan, $grammar);
         }
         if ($mode === 'write') {
             $plan = $plan->withRule('simple_statement', RulePlan::any()->allowing(ProductionPattern::anyOf(
@@ -66,12 +67,20 @@ final class Plans
     /**
      * Constrains a query to the common forms: SELECT from the fixture tables, joins and derived tables, without INTO, locking, partitions or samples.
      *
+     * Rules the grammar of the release lacks, such as QUALIFY and TABLESAMPLE before 8.4, are left out.
+     *
      * @param GenerationPlan<true> $plan
      * @return GenerationPlan<true>
      */
-    public function mainstream(GenerationPlan $plan): GenerationPlan
+    public function mainstream(GenerationPlan $plan, string $grammar): GenerationPlan
     {
         $empty = RulePlan::any()->allowing(ProductionPattern::exactly());
+        $rules = MySqlGrammar::load($grammar)->ruleMap;
+        foreach (['opt_tablesample_clause', 'opt_qualify_clause'] as $rule) {
+            if (isset($rules[$rule])) {
+                $plan = $plan->withRule($rule, $empty);
+            }
+        }
 
         return $plan
             ->withRule('select_stmt', RulePlan::any()->allowing(ProductionPattern::exactly('query_expression')))
@@ -83,9 +92,7 @@ final class Plans
             ->withRule('table_factor', RulePlan::any()->allowing(ProductionPattern::anyOf(ProductionPattern::exactly('single_table'), ProductionPattern::exactly('derived_table'))))
             ->withRule('opt_use_partition', $empty)
             ->withRule('opt_index_hints_list', $empty)
-            ->withRule('opt_tablesample_clause', $empty)
             ->withRule('opt_window_clause', $empty)
-            ->withRule('opt_qualify_clause', $empty)
             ->withRule('table_wild', RulePlan::any()->withLexeme('IDENT', LexemeConstraint::oneOf('t1', 't2', 'x')))
             ->withRule('select_alias', RulePlan::any()->withLexeme('IDENT', LexemeConstraint::oneOf('x', 'y', 'a')))
             ->withRule('opt_table_alias', RulePlan::any()->withLexeme('IDENT', LexemeConstraint::oneOf('x', 'y')));

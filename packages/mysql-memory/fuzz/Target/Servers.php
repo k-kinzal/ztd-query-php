@@ -8,6 +8,7 @@ use Container\Endpoint;
 use Container\MySqlRelease;
 use MySqlMemory\Server\Server;
 use PDO;
+use PDOException;
 use Testcontainers\Testcontainers;
 
 /**
@@ -88,13 +89,17 @@ final class Servers
     }
 
     /**
-     * Answers the rows of a query as lists of strings.
+     * Answers the rows of a query as lists of strings, or none when the release lacks the table it reads.
      *
      * @return list<list<string>>
      */
     public function rows(PDO $native, string $sql): array
     {
-        $statement = $native->query($sql);
+        try {
+            $statement = $native->query($sql);
+        } catch (PDOException) {
+            return [];
+        }
         $rows = [];
         foreach ($statement === false ? [] : $statement->fetchAll(PDO::FETCH_NUM) as $row) {
             $values = [];
