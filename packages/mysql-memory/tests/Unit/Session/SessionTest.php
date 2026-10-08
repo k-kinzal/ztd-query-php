@@ -378,4 +378,21 @@ final class SessionTest extends TestCase
 
         self::assertSame(-1, $session->variables->rowCount);
     }
+
+    public function testExecuteRecordsTheErrorsFoundWhileParsingAmongTheWarnings(): void
+    {
+        $session = (new Instance())->connect();
+        $collation = $session->run("SELECT BINARY ('a' COLLATE nope) COLLATE nope2");
+        $collations = $session->query('SHOW WARNINGS')[0];
+        $session->run('SELECT BINARY CAST(1 AS JSON ARRAY)');
+        $array = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(SqlError::class, $collation[0]);
+        self::assertSame("Unknown collation: 'nope'", $collation[0]->getMessage());
+        self::assertInstanceOf(ResultSet::class, $collations);
+        self::assertSame([['Error', '1273', "Unknown collation: 'nope'"], ['Error', '1273', "Unknown collation: 'nope2'"], ['Warning', '1287', "'BINARY expr' is deprecated and will be removed in a future release. Please use CAST instead"]], $collations->rows);
+        self::assertInstanceOf(ResultSet::class, $array);
+        self::assertSame([['Error', '1235', "This version of MySQL doesn't yet support 'CAST-ing data to array of JSON'"]], $array->rows);
+    }
+
 }

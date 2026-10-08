@@ -134,7 +134,7 @@ final class Semantics
             }
         }
 
-        return $this->platform->context($this->profile, $searchPath?->schemas ?? $this->searchPath, $tables, $declarations !== null && $complete)->withSession($session);
+        return $this->platform->context($this->profile, $searchPath->schemas ?? $this->searchPath, $tables, $declarations !== null && $complete)->withSession($session);
     }
 
     /**

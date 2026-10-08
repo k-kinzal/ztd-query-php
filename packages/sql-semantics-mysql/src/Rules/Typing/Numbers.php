@@ -163,12 +163,14 @@ final class Numbers
     /**
      * Resolves a bit operator on binary strings: a binary string as long as its longest operand, or its left operand for a shift.
      *
-     * @param list<Domain> $operands The left operand, and the right one of a binary operator
+     * @param ArithmeticOperator|null $operator The binary operator, or null for the unary inversion
+     * @param Domain $left The left operand, or the only one of the inversion
+     * @param Domain|null $right The right operand of a binary operator
      */
-    public function binaryBits(?ArithmeticOperator $operator, array $operands): Domain
+    public function binaryBits(?ArithmeticOperator $operator, Domain $left, ?Domain $right = null): Domain
     {
         $shift = $operator === ArithmeticOperator::ShiftLeft || $operator === ArithmeticOperator::ShiftRight;
-        $length = $shift ? $operands[0]->length : max(array_map(static fn (Domain $operand): int => $operand->length, $operands));
+        $length = $shift || $right === null ? $left->length : max($left->length, $right->length);
 
         return Domain::string($length, Collation::binary());
     }

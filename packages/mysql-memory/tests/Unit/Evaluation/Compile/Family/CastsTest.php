@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation\Compile\Family;
 
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Family\Casts;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
@@ -52,4 +53,23 @@ final class CastsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame(['NewDecimal', 2], [$result->columns[0]->type->name, $result->columns[0]->decimals]);
     }
+
+    public function testAtTimeZoneRefusesAValueThatIsNoTimestampAndAZoneThatIsNotUtc(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (x TIMESTAMP NULL, y DATETIME)');
+        $value = $session->run("SELECT CAST(y AT TIME ZONE 'x' AS DATETIME) FROM t");
+        $zone = $session->run("SELECT CAST(x AT TIME ZONE '+01:00' AS DATETIME) FROM t");
+        $null = $session->query("SELECT CAST(NULL AT TIME ZONE 'UTC' AS DATETIME)")[0];
+
+        self::assertInstanceOf(SqlError::class, $value[0]);
+        self::assertSame([3998, 'Cannot cast value to TIMESTAMP WITH TIME ZONE.'], [$value[0]->getCode(), $value[0]->getMessage()]);
+        self::assertInstanceOf(SqlError::class, $zone[0]);
+        self::assertSame([1298, "Unknown or incorrect time zone: '+01:00'"], [$zone[0]->getCode(), $zone[0]->getMessage()]);
+        self::assertInstanceOf(ResultSet::class, $null);
+        self::assertSame([[null]], $null->rows);
+    }
+
 }

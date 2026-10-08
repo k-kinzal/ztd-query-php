@@ -246,4 +246,17 @@ final class ConversionTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['E9', 'C3A9', 'C3A9']], $result->rows);
     }
+
+    public function testIntegerTakesTheComplementOfANegativeDecimalWithoutANote(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CAST(-1.5 AS UNSIGNED), CAST(CONCAT('-1') AS UNSIGNED)")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['18446744073709551614', '18446744073709551615']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
 }

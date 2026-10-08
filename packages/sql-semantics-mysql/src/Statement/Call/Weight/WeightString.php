@@ -8,12 +8,20 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 
 /**
  * A call of WEIGHT_STRING(): the binary weight string of a string under its collation.
@@ -21,8 +29,11 @@ use SqlSemantics\Statement\Snapshot;
  * Rule: MYSQL-WEIGHT-STRING-001. The argument may be cast to CHAR(n) or
  * BINARY(n) first; MySQL 5.6 and 5.7 also take a LEVEL clause of levels or a
  * range of levels, and not after a BINARY cast. The result is a binary
- * string; it is NULL when the argument is NULL. Terminates: the operand is a
- * strict part.
+ * string; it is NULL when the argument is NULL. The weight of a number, of a
+ * binary string, or of a value cast to BINARY(n) is a VARBINARY of the length
+ * of the value as text, or of n, and at least 8 (verified on a live 8.4
+ * server); the length of the weight of another string is not resolved.
+ * Terminates: the operand is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_weight-string,
  * https://dev.mysql.com/doc/refman/5.7/en/string-functions.html#function_weight-string.
  * Status: Implemented.
@@ -68,7 +79,19 @@ final class WeightString implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new ResultTyping())->fact('BY', [(new Arguments())->one($this->subject, $derivation, $environment)]);
+        $fact = (new Arguments())->one($this->subject, $derivation, $environment);
+        $base = (new ResultTyping())->fact('BY', [$fact]);
+        $operand = (new Precision())->domain($fact->type);
+        if ($operand === null || ($this->cast !== WeightCast::Binary && $operand->kind === Kind::String && $operand->collation->charset !== Charset::binary())) {
+            return $base;
+        }
+        $length = match (true) {
+            $this->cast === WeightCast::Binary && $this->length !== null => (int) $this->length->text,
+            $operand->kind === Kind::String => $operand->length * $operand->collation->charset->maxLength,
+            default => (new Texts(Settings::of($derivation->context)))->length($operand),
+        };
+
+        return new ScalarFact(new Known(Domain::string(max(8, $length), Collation::binary())), $base->nullability);
     }
 
     /**

@@ -163,7 +163,7 @@ final class Projection
             return false;
         }
 
-        $schema = $relation->name->schema?->value ?? ($derivation->context->searchPath[0]->value ?? null);
+        $schema = $relation->name->schema->value ?? ($derivation->context->searchPath[0]->value ?? null);
 
         return $qualifier->schema === null || $schema === null || $names->equal($schema, $qualifier->schema->value);
     }

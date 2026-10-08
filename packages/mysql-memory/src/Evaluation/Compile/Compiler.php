@@ -6,6 +6,7 @@ namespace MySqlMemory\Evaluation\Compile;
 
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Family\Calls;
+use MySqlMemory\Evaluation\Compile\Family\Casts;
 use MySqlMemory\Evaluation\Compile\Family\Dates;
 use MySqlMemory\Evaluation\Compile\Family\Jsons;
 use MySqlMemory\Evaluation\Compile\Family\Texts;
@@ -25,11 +26,15 @@ use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Position;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
 use SqlSemantics\Platform\MySql\Statement\Call\Trim;
+use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\JsonExtraction;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
+use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
@@ -166,14 +171,15 @@ final class Compiler
      * A user variable the statement assigns anywhere varies by row.
      *
      * @param bool $correlation Whether a correlated subquery varies by row
+     * @param bool $assignmentsVary Whether an assignment to a user variable varies by row; when false, it stays as long as the value it assigns
      */
-    public function constancy(Scalar $node, bool $correlation = true): Constancy
+    public function constancy(Scalar $node, bool $correlation = true, bool $assignmentsVary = true): Constancy
     {
         if ($this->assigned === null) {
             $this->assigned = array_values(array_unique(array_map(static fn (VariableAssignment $assignment): string => strtolower($assignment->target->name->value), (new Walker())->find($this->planner->statement, VariableAssignment::class))));
         }
 
-        return Constancy::of($node, $this->facts, $correlation, $this->assigned);
+        return Constancy::of($node, $this->facts, $correlation, $this->assigned, $assignmentsVary);
     }
 
     /**
@@ -287,6 +293,7 @@ final class Compiler
             $node instanceof Like => $this->operators->like($node, $scope),
             $node instanceof CaseExpression => $this->operators->caseOf($node, $scope),
             $node instanceof Cast => $this->operators->cast($node, $scope),
+            $node instanceof AtTimeZone => (new Casts($this))->atTimeZone($node, $scope),
             $node instanceof IntervalArithmetic => $this->dates->arithmetic($node, $scope),
             $node instanceof Collated => $this->texts->collated($node, $scope),
             $node instanceof BinaryCast => $this->texts->binary($node, $scope),
@@ -296,11 +303,14 @@ final class Compiler
             $node instanceof CharCall => $this->texts->char($node, $scope),
             $node instanceof SoundsLike => $this->texts->soundsLike($node, $scope),
             $node instanceof Regexp => $this->texts->regexp($node, $scope),
+            $node instanceof WeightString => $this->texts->weight($node, $scope),
+            $node instanceof FullTextSearch => $this->texts->match($node, $scope),
             $node instanceof JsonExtraction => $this->jsons->extraction($node, $scope),
             $node instanceof MemberOf => $this->jsons->member($node, $scope),
             $node instanceof Concatenation => $this->calls->named('CONCAT', [$node->left, $node->right], $scope, $node),
             $node instanceof Extract => $this->dates->extract($node, $scope),
             $node instanceof DefaultOfColumn => $this->names->default($node, $scope),
+            $node instanceof OdbcEscape => $this->literals->odbc($node, $scope),
             $node instanceof IntervalAddition => $this->dates->addition($node, $scope),
             $node instanceof DateArithmetic => $this->dates->call($node, $scope),
             $node instanceof FunctionCall => $this->calls->function($node, $scope),

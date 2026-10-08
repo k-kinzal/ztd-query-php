@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace MySqlMemory\Evaluation\Compile\Family;
 
 use Closure;
+use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Compiler;
+use MySqlMemory\Evaluation\Compile\Constancy;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -14,6 +16,7 @@ use MySqlMemory\Evaluation\Function\Call;
 use MySqlMemory\Evaluation\Function\Routine;
 use MySqlMemory\Evaluation\Function\Strings;
 use MySqlMemory\Evaluation\Operator\Conversion;
+use MySqlMemory\Evaluation\Operator\Weight;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
@@ -22,6 +25,8 @@ use SqlSemantics\Platform\MySql\Statement\Call\CharCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Position;
 use SqlSemantics\Platform\MySql\Statement\Call\Trim;
 use SqlSemantics\Platform\MySql\Statement\Call\TrimSide;
+use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
@@ -30,6 +35,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\SoundsLike;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 /**
  * Compiles the string forms written with keywords: COLLATE, BINARY, CONVERT ... USING, TRIM, POSITION, CHAR, SOUNDS LIKE and REGEXP.
@@ -235,12 +241,20 @@ final class Texts
     /**
      * Compiles `a [NOT] REGEXP b`: whether a matches the regular expression b, in the collation of both.
      *
+     * A binary string matched with a string of another character set, either way, is an error
+     * (ER_CHARACTER_SET_MISMATCH) that names the binary side 'binary' and the other by its
+     * collation; a value that is no string mixes with either (verified on a live 8.4 server).
+     *
      * @throws \MySqlMemory\Error\SqlError When the collations do not mix
      */
     public function regexp(Regexp $node, Scope $scope): Evaluable
     {
         $subject = $this->compiler->compile($node->operand, $scope);
         $pattern = $this->compiler->compile($node->pattern, $scope);
+        $sides = array_map(static fn (Domain $domain): ?string => $domain->kind !== Kind::String ? null : ($domain->collation->charset === Charset::binary() ? 'binary' : $domain->collation->name), [$subject->domain(), $pattern->domain()]);
+        if ($sides[0] !== null && $sides[1] !== null && ($sides[0] === 'binary') !== ($sides[1] === 'binary')) {
+            throw ErrorCode::CharacterSetMismatch->error($sides[0], $sides[1], 'regexp_like');
+        }
         [$collation] = Collations::aggregate([$subject->domain(), $pattern->domain()], 'regexp_like', $this->compiler->settings->connectionCollation, true);
         $negated = $node->negated;
         $domain = $this->compiler->domain($node);
@@ -262,5 +276,62 @@ final class Texts
 
             return ($matched === 1) !== $negated ? 1 : 0;
         });
+    }
+
+    /**
+     * Compiles WEIGHT_STRING; a LEVEL clause is not emulated.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the call has a LEVEL clause
+     */
+    public function weight(WeightString $node, Scope $scope): Evaluable
+    {
+        if ($node->levels !== [] || $node->range !== null) {
+            throw ErrorCode::NotSupportedYet->error('WEIGHT_STRING with LEVEL');
+        }
+
+        return new Weight($this->compiler->compile($node->subject, $scope), $node->cast, $node->length === null ? null : (int) $node->length->text, $this->compiler->domain($node));
+    }
+
+    /**
+     * Compiles MATCH (columns) AGAINST (expr) as far as the server checks it before it searches.
+     *
+     * The text searched for is constant for the statement, else the call is an error naming
+     * AGAINST; the columns are of one table, else it names MATCH; and a FULLTEXT index of the
+     * table has exactly those columns, in any order, else no index matches. The search itself is
+     * not emulated (verified on a live 8.4 server).
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/fulltext-search.html.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the call is refused, or when it would search
+     */
+    public function match(FullTextSearch $node, Scope $scope): Evaluable
+    {
+        if ($this->compiler->constancy($node->against) === Constancy::Row) {
+            throw ErrorCode::WrongArguments->error('AGAINST');
+        }
+        $table = null;
+        $positions = [];
+        foreach ($node->columns as $column) {
+            $resolution = $this->compiler->facts->scalar($column)->resolution;
+            if (!$resolution instanceof ResolvedColumn) {
+                throw ErrorCode::WrongArguments->error('MATCH');
+            }
+            $located = $scope->locate($resolution->relation);
+            $definition = $located === null ? null : ($located[1]->tables[spl_object_id($resolution->relation)] ?? null);
+            if ($located === null || $definition === null || ($table !== null && $table !== $definition)) {
+                throw ErrorCode::WrongArguments->error('MATCH');
+            }
+            $table = $definition;
+            $positions[] = $this->compiler->names->position($located[1], $resolution);
+        }
+        sort($positions);
+        foreach ($table->keys as $key) {
+            $indexed = $key->columns;
+            sort($indexed);
+            if ($key->kind === KeyKind::FullText && $indexed === $positions) {
+                throw ErrorCode::NotSupportedYet->error('MATCH ... AGAINST');
+            }
+        }
+
+        throw ErrorCode::FullTextIndexNotFound->error();
     }
 }

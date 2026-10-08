@@ -175,4 +175,48 @@ final class TextsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['E9', '61', '1', '00E9']], $result->rows);
     }
+
+    public function testRegexpRefusesABinaryStringWithAStringOfAnotherCharacterSet(): void
+    {
+        $session = (new Instance())->connect();
+        $left = $session->run("SELECT X'41' REGEXP 'a'");
+        $right = $session->run("SELECT 'a' REGEXP BINARY 'a'");
+        $result = $session->query("SELECT X'31' REGEXP 1, B'1000001' REGEXP B'1000001'")[0];
+
+        self::assertInstanceOf(SqlError::class, $left[0]);
+        self::assertSame([3995, "Character set 'binary' cannot be used in conjunction with 'utf8mb4_0900_ai_ci' in call to regexp_like."], [$left[0]->getCode(), $left[0]->getMessage()]);
+        self::assertInstanceOf(SqlError::class, $right[0]);
+        self::assertSame("Character set 'utf8mb4_0900_ai_ci' cannot be used in conjunction with 'binary' in call to regexp_like.", $right[0]->getMessage());
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1']], $result->rows);
+    }
+
+    public function testWeightCompilesWeightString(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT WEIGHT_STRING(1) = 0x8000000000000001')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
+    public function testMatchChecksTheCallAsTheServerDoesBeforeItSearches(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT, b TEXT, c TEXT, FULLTEXT (c))');
+        $session->query('CREATE TABLE u (b TEXT)');
+        $against = $session->run('SELECT MATCH(b) AGAINST (b) FROM t');
+        $tables = $session->run("SELECT MATCH(t.b, u.b) AGAINST ('x') FROM t, u");
+        $index = $session->run("SELECT MATCH(b) AGAINST ('x') FROM t");
+
+        self::assertInstanceOf(SqlError::class, $against[0]);
+        self::assertSame('Incorrect arguments to AGAINST', $against[0]->getMessage());
+        self::assertInstanceOf(SqlError::class, $tables[0]);
+        self::assertSame('Incorrect arguments to MATCH', $tables[0]->getMessage());
+        self::assertInstanceOf(SqlError::class, $index[0]);
+        self::assertSame([1191, "Can't find FULLTEXT index matching the column list"], [$index[0]->getCode(), $index[0]->getMessage()]);
+    }
+
 }

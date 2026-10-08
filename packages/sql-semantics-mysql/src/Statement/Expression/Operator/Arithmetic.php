@@ -77,7 +77,7 @@ final class Arithmetic implements Scalar
             $numbers = new Numbers($settings->divPrecisionIncrement, $settings->unsignedSubtraction);
             $bytes = $domains;
             $domains = [$numbers->numeric($this->left, $domains[0]), $numbers->numeric($this->right, $domains[1])];
-            $type = new Known($this->operator->bitwise() && $type instanceof Known ? (TypeClass::of($type->descriptor) === TypeClass::Unsigned ? $numbers->bits() : $numbers->binaryBits($this->operator, $bytes)) : $numbers->binary($this->operator, $domains[0], $domains[1]));
+            $type = new Known($this->operator->bitwise() && $type instanceof Known ? (TypeClass::of($type->descriptor) === TypeClass::Unsigned ? $numbers->bits() : $numbers->binaryBits($this->operator, $bytes[0], $bytes[1])) : $numbers->binary($this->operator, $domains[0], $domains[1]));
         }
         $divides = $this->operator === ArithmeticOperator::Divide || $this->operator === ArithmeticOperator::IntegerDivide || $this->operator === ArithmeticOperator::Modulo;
 

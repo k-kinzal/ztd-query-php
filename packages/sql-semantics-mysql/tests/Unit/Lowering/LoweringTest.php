@@ -23,6 +23,33 @@ use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Begin;
 #[Medium]
 final class LoweringTest extends TestCase
 {
+    public function testMarkerAnswersThePositionOfAParameterMarkerOfTheLastInput(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+
+        $lowering->statements($platform->parser($profile)->parse('SELECT ?, a, ?'));
+
+        self::assertSame(0, $lowering->marker(7));
+        self::assertSame(1, $lowering->marker(13));
+        self::assertNull($lowering->marker(10));
+    }
+
+    public function testMarkerForgetsTheMarkersOfAnEarlierInput(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $parser = $platform->parser($profile);
+
+        $lowering->statements($parser->parse('SELECT ?'));
+        $lowering->statements($parser->parse('SELECT 1, ?'));
+
+        self::assertNull($lowering->marker(7));
+        self::assertSame(0, $lowering->marker(10));
+    }
+
     public function testStatementsAnswerTheOneStatementOfAnInput(): void
     {
         $platform = new Platform();

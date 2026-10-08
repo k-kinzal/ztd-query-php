@@ -62,4 +62,13 @@ final class SqlErrorTest extends TestCase
         self::assertSame([[1048, "Column 'p' cannot be null"], [1364, "Field 'q' doesn't have a default value"]], array_map(static fn (array $condition): array => [$condition[1], $condition[2]], $session->diagnostics->conditions));
         self::assertSame(['22032', [[3140, 'x']]], [(new SqlError(ErrorCode::JsonDocumentTooDeep, 'y', null, [[3140, 'x']]))->sqlState(), (new SqlError(ErrorCode::JsonDocumentTooDeep, 'y', null, [[3140, 'x']]))->following]);
     }
+
+    public function testSqlStateIsTheStateOfAnErrorRecordedWhileParsing(): void
+    {
+        $error = new SqlError(ErrorCode::UnknownCollation, "Unknown collation: 'x'", null, [], null, null, true);
+
+        self::assertSame('HY000', $error->sqlState());
+        self::assertTrue($error->recorded);
+    }
+
 }

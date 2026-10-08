@@ -146,4 +146,15 @@ final class LiteralsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['0000-00-00', '2024-00-00', '2024-01-00 00:00:00']], $result->rows);
     }
+
+    public function testOdbcReadsATemporalLiteralOrStandsForTheOperand(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT { d '2020-1-1' }, { ts '2020-01-01 10:00:00.5' }, { t '1 10:00:00' }, { foo 1 + 1 }, { D '2020-01-01' }")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2020-01-01', '2020-01-01 10:00:00.5', '34:00:00', '2', '2020-01-01']], $result->rows);
+        self::assertSame(['{ d \'2020-1-1\' }', '{ ts \'2020-01-01 10:00:00.5\' }', '{ t \'1 10:00:00\' }', '{ foo 1 + 1 }', '2020-01-01'], array_map(static fn ($column): string => $column->name, $result->columns));
+    }
+
 }

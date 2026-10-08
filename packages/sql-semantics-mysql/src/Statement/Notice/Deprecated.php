@@ -37,6 +37,7 @@ enum Deprecated: string
     case NoCache = "'SQL_NO_CACHE' is deprecated and will be removed in a future release.";
     case IntoInsideQuery = 'The INTO clause is deprecated inside query blocks of query expressions and will be removed in a future release. Please move the INTO clause to the end of statement instead.';
     case Utf8Alias = "'utf8' is currently an alias for the character set UTF8MB3, but will be an alias for UTF8MB4 in a future release. Please consider using UTF8MB4 in order to be unambiguous.";
+    case Utf8mb3 = "'utf8mb3' is deprecated and will be removed in a future release. Please use utf8mb4 instead";
 
     /**
      * Answers the error number the warning is raised with.
@@ -51,7 +52,7 @@ enum Deprecated: string
             self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache => 1681,
             self::Utf8Alias => 3719,
             self::IntoInsideQuery => 3962,
-            self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth => 1287,
+            self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth, self::Utf8mb3 => 1287,
         };
     }
 

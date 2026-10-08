@@ -7,6 +7,7 @@ namespace Tests\Unit\Facade;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlParser\Lexer\SourceException;
 use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
@@ -32,6 +33,23 @@ final class SemanticsTest extends TestCase
         self::assertSame(GrammarRelease::Sqlite3472, $semantics->profile()->grammar);
         self::assertSame(ParameterStyle::Named, $semantics->profile()->parameters);
         self::assertSame($semantics->profile(), $semantics->profile());
+    }
+
+    public function testParserAnswersOneParserWhoseTreesTheFacadeAnalyzes(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+
+        $tree = $semantics->parser()->parse('select   2');
+
+        self::assertSame($semantics->parser(), $semantics->parser());
+        self::assertSame('SELECT 2', $semantics->analyze($tree)->toString());
+    }
+
+    public function testParserRefusesSqlOutsideTheGrammarOfTheProfile(): void
+    {
+        $this->expectException(SourceException::class);
+
+        (new Semantics(Dialect::Sqlite))->parser()->parse('SELECT FROM WHERE');
     }
 
     public function testContextIsOpenWithoutDeclarationsAndCompleteWithAList(): void

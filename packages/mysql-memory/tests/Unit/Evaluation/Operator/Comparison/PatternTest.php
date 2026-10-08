@@ -208,4 +208,15 @@ final class PatternTest extends TestCase
 
         self::assertSame(['|', '|'], [$pattern->escapeText($frame), $pattern->escapeText($frame)]);
     }
+
+    public function testEvaluateChecksTheEscapeBeforeItReadsTheString(): void
+    {
+        $session = (new Instance())->connect();
+        $answers = $session->run("SELECT (1/0) LIKE 'a' ESCAPE CONCAT('ab')");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Error', '1210', 'Incorrect arguments to ESCAPE']], $warnings->rows);
+    }
 }

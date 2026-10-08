@@ -74,7 +74,7 @@ final class Unary implements Scalar
         return match ($this->operator) {
             UnaryOperator::Plus => new ScalarFact($fact->type, $fact->nullability),
             UnaryOperator::Minus => new ScalarFact($operand === null ? $numbers->negation($this->operand, $fact) : new Known($precise->negated($operand, (new Constants())->negative($this->operand) || $numbers->beyond($this->operand))), $fact->nullability),
-            UnaryOperator::Invert => new ScalarFact($operand === null || !$bits instanceof Known ? $bits : new Known(TypeClass::of($bits->descriptor) === TypeClass::Unsigned ? $precise->bits() : $precise->binaryBits(null, [$operand])), $fact->nullability),
+            UnaryOperator::Invert => new ScalarFact($operand === null || !$bits instanceof Known ? $bits : new Known(TypeClass::of($bits->descriptor) === TypeClass::Unsigned ? $precise->bits() : $precise->binaryBits(null, $operand)), $fact->nullability),
             UnaryOperator::Not => $operands->truth($fact->nullability),
         };
     }

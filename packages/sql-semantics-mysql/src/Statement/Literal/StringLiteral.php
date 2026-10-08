@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Introducers;
 use SqlSemantics\Platform\MySql\Rules\Strings;
 use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -84,6 +85,9 @@ final class StringLiteral implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         Check::input($this->escapes === EscapeRule::under($derivation->context->profile->lexical), 'A string literal must be spelled under the escape rule of the language profile.');
+        if ($this->introducer !== null) {
+            Deprecation::charset($this->introducer->value, $derivation);
+        }
 
         return new ScalarFact(new Known(Literals::of($derivation->context)->string($this)), Nullability::NotNull);
     }

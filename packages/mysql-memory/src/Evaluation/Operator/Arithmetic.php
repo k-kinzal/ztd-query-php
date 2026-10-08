@@ -56,27 +56,45 @@ final class Arithmetic implements Evaluable
 
     /**
      * Computes the result for a row.
+     *
+     * In double precision or as an integer both operands are read, each converted in its turn,
+     * before a NULL makes the result NULL; as an exact decimal, and for DIV, a NULL left operand
+     * leaves the right one unread.
      */
     #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
-        $left = $this->left->evaluate($frame);
-        if ($left === null) {
-            return null;
-        }
-        $right = $this->right->evaluate($frame);
-        if ($right === null) {
-            return null;
-        }
         if ($this->operator === ArithmeticOperator::IntegerDivide) {
-            return $this->integerDivide($left, $right, $frame);
+            return $this->integerDivide($frame);
+        }
+        if ($this->domain->kind === Kind::Decimal) {
+            $left = Convert::toDecimal($this->left->evaluate($frame), $this->left->domain(), $frame->context);
+            if ($left === null) {
+                return null;
+            }
+            $right = Convert::toDecimal($this->right->evaluate($frame), $this->right->domain(), $frame->context);
+
+            return $right === null ? null : $this->decimal($left, $right, $frame);
+        }
+        $left = $this->operand($this->left, $frame);
+        $right = $this->operand($this->right, $frame);
+        if ($left === null || $right === null) {
+            return null;
         }
 
-        return match ($this->domain->kind) {
-            Kind::Double => $this->real((float) Convert::toDouble($left, $this->left->domain(), $frame->context), (float) Convert::toDouble($right, $this->right->domain(), $frame->context), $frame),
-            Kind::Decimal => $this->decimal((string) Convert::toDecimal($left, $this->left->domain(), $frame->context), (string) Convert::toDecimal($right, $this->right->domain(), $frame->context), $frame),
-            Kind::Integer, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => $this->integer((int) Convert::toInteger($left, $this->left->domain(), $frame->context), (int) Convert::toInteger($right, $this->right->domain(), $frame->context), $frame),
-        };
+        return $this->domain->kind === Kind::Double ? $this->real((float) $left, (float) $right, $frame) : $this->integer((int) $left, (int) $right, $frame);
+    }
+
+    /**
+     * Reads an operand for a row in the kind of a double or integer result.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors
+     */
+    public function operand(Evaluable $operand, Frame $frame): int|float|null
+    {
+        $value = $operand->evaluate($frame);
+
+        return $this->domain->kind === Kind::Double ? Convert::toDouble($value, $operand->domain(), $frame->context) : Convert::toInteger($value, $operand->domain(), $frame->context);
     }
 
     /**
@@ -147,12 +165,18 @@ final class Arithmetic implements Evaluable
     }
 
     /**
-     * Computes DIV: the quotient truncated toward zero.
+     * Computes DIV: the quotient truncated toward zero; a NULL left operand leaves the right one unread.
      */
-    public function integerDivide(int|float|string $left, int|float|string $right, Frame $frame): ?int
+    public function integerDivide(Frame $frame): ?int
     {
-        $leftText = (string) Convert::toDecimal($left, $this->left->domain(), $frame->context);
-        $rightText = (string) Convert::toDecimal($right, $this->right->domain(), $frame->context);
+        $leftText = Convert::operandDecimal($this->left->evaluate($frame), $this->left, $frame->context);
+        if ($leftText === null) {
+            return null;
+        }
+        $rightText = Convert::operandDecimal($this->right->evaluate($frame), $this->right, $frame->context);
+        if ($rightText === null) {
+            return null;
+        }
         if (Decimal::compare($rightText, '0') === 0) {
             return $this->byZero($frame);
         }

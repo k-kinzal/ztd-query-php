@@ -114,7 +114,7 @@ final class GroupedColumns
     {
         $groups = [];
         $determined = [];
-        foreach ($select->groupBy?->items ?? [] as $item) {
+        foreach ($select->groupBy->items ?? [] as $item) {
             $expression = $this->target($item->expression, $facts);
             $groups[] = $expression;
             foreach ($this->columns($expression, $relations, $facts, false) as [$key]) {
@@ -243,43 +243,67 @@ final class GroupedColumns
 
     /**
      * Tells whether two parts of a statement are written alike: same classes and values, column names without regard to case, and with facts two column names that resolve to the same column of the same occurrence however they are qualified (`t.a + 1` is `a + 1`, verified on a live 8.4 server).
+     *
+     * The parts are compared property by property, through lists and nested parts; an enum case
+     * is the same only as itself, and any other value only as an identical one.
      */
-    public function same(mixed $left, mixed $right, ?Facts $facts = null): bool
+    public function same(Node $left, Node $right, ?Facts $facts = null): bool
     {
-        if (is_array($left) && is_array($right)) {
-            if (count($left) !== count($right)) {
-                return false;
-            }
-            foreach ($left as $index => $value) {
-                if (!array_key_exists($index, $right) || !$this->same($value, $right[$index], $facts)) {
+        $pending = [[$left, $right]];
+        while ($pending !== []) {
+            [$first, $second] = array_pop($pending);
+            if (is_array($first) && is_array($second)) {
+                if (count($first) !== count($second)) {
                     return false;
                 }
-            }
+                foreach ($first as $index => $value) {
+                    if (!array_key_exists($index, $second)) {
+                        return false;
+                    }
+                    $pending[] = [$value, $second[$index]];
+                }
 
-            return true;
-        }
-        if (is_object($left) && is_object($right)) {
-            if ($left::class !== $right::class) {
+                continue;
+            }
+            if (!is_object($first) || !is_object($second)) {
+                if ($first !== $second) {
+                    return false;
+                }
+
+                continue;
+            }
+            if ($first::class !== $second::class) {
                 return false;
             }
-            if ($left instanceof UnitEnum) {
-                return $left === $right;
+            if ($first instanceof UnitEnum) {
+                if ($first !== $second) {
+                    return false;
+                }
+
+                continue;
             }
-            if ($left instanceof Name && $right instanceof Name) {
-                return strcasecmp($left->value, $right->value) === 0;
+            if ($first instanceof Name && $second instanceof Name) {
+                if (strcasecmp($first->value, $second->value) !== 0) {
+                    return false;
+                }
+
+                continue;
             }
-            if ($facts !== null && $left instanceof ColumnUse && $right instanceof ColumnUse && $facts->covers($left) && $facts->covers($right)) {
-                $first = $facts->scalar($left)->resolution;
-                $second = $facts->scalar($right)->resolution;
-                if ($first instanceof ResolvedColumn && $second instanceof ResolvedColumn) {
-                    return $this->key($first) === $this->key($second);
+            if ($facts !== null && $first instanceof ColumnUse && $second instanceof ColumnUse && $facts->covers($first) && $facts->covers($second)) {
+                $one = $facts->scalar($first)->resolution;
+                $two = $facts->scalar($second)->resolution;
+                if ($one instanceof ResolvedColumn && $two instanceof ResolvedColumn) {
+                    if ($this->key($one) !== $this->key($two)) {
+                        return false;
+                    }
+
+                    continue;
                 }
             }
-
-            return $this->same(get_object_vars($left), get_object_vars($right), $facts);
+            $pending[] = [get_object_vars($first), get_object_vars($second)];
         }
 
-        return $left === $right;
+        return true;
     }
 
     /**
@@ -316,17 +340,9 @@ final class GroupedColumns
      * @param array<int, VisibleRelation> $relations
      * @return list<array{string, ResolvedColumn}>
      */
-    public function columns(mixed $value, array $relations, Facts $facts, bool $aggregated): array
+    public function columns(Node $value, array $relations, Facts $facts, bool $aggregated): array
     {
-        if (is_array($value)) {
-            $found = [];
-            foreach ($value as $item) {
-                array_push($found, ...$this->columns($item, $relations, $facts, $aggregated));
-            }
-
-            return $found;
-        }
-        if (!$value instanceof Node || (!$aggregated && ($value instanceof Aggregate && $value->over === null || $value instanceof GroupConcat && $value->over === null || $value instanceof JsonObjectAggregate || $value instanceof KeywordCall && $value->function === KeywordFunction::Grouping))) {
+        if (!$aggregated && ($value instanceof Aggregate && $value->over === null || $value instanceof GroupConcat && $value->over === null || $value instanceof JsonObjectAggregate || $value instanceof KeywordCall && $value->function === KeywordFunction::Grouping)) {
             return [];
         }
         if ($value instanceof ColumnUse && $facts->covers($value)) {
@@ -337,9 +353,16 @@ final class GroupedColumns
 
             return $resolution instanceof ResolvedColumn && isset($relations[spl_object_id($resolution->relation)]) ? [[$this->key($resolution), $resolution]] : [];
         }
+        $properties = get_object_vars($value);
+        $children = [];
+        array_walk_recursive($properties, static function ($property) use (&$children): void {
+            if ($property instanceof Node) {
+                $children[] = $property;
+            }
+        });
         $found = [];
-        foreach (get_object_vars($value) as $property) {
-            array_push($found, ...$this->columns($property, $relations, $facts, $aggregated));
+        foreach ($children as $child) {
+            array_push($found, ...$this->columns($child, $relations, $facts, $aggregated));
         }
 
         return $found;
@@ -718,9 +741,9 @@ final class GroupedColumns
     public function name(ResolvedColumn $column, array $relations, Derivation $derivation): string
     {
         $relation = $relations[spl_object_id($column->relation)] ?? null;
-        $table = $relation?->alias?->value ?? $relation?->name?->name->value ?? '';
-        $schema = $relation?->name === null ? null : ($relation->name->schema?->value ?? ($derivation->context->searchPath[0]->value ?? null));
-        $name = $column->slot->name?->value ?? '';
+        $table = $relation->alias->value ?? $relation->name->name->value ?? '';
+        $schema = $relation?->name === null ? null : ($relation->name->schema->value ?? ($derivation->context->searchPath[0]->value ?? null));
+        $name = $column->slot->name->value ?? '';
 
         return ($schema === null ? '' : $schema . '.') . $table . '.' . $name;
     }

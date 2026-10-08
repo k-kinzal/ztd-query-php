@@ -7,9 +7,13 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Conversion;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -25,7 +29,8 @@ use SqlSemantics\Statement\Type\Known;
  * is accepted.
  *
  * Rule: MYSQL-AT-TIME-ZONE-001. Facts: a DATETIME of the given precision;
- * NULL when the operand is. Terminates: the operand is a strict part.
+ * NULL when the operand is. A precision above 6 is a problem the server
+ * finds while it parses the cast. Terminates: the operand is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast.
  * Status: Implemented.
  *
@@ -56,8 +61,14 @@ final class AtTimeZone implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
+        if ((int) ($this->precision ?? '0') > 6) {
+            $problem = new TooBigPrecision((int) $this->precision, 'CAST');
+            $derivation->report($problem);
+            $derivation->warn(new ParseFailure($problem, true));
+        }
+        $decimals = min(6, (int) ($this->precision ?? '0'));
 
-        return new ScalarFact(new Known(new Temporal(TemporalKind::DateTime, $this->precision)), $fact->nullability);
+        return new ScalarFact(new Known(new Domain(Kind::DateTime, Field::DateTime, 19 + ($decimals > 0 ? $decimals + 1 : 0), $decimals, false, null, [], Coercibility::Numeric)), $fact->nullability);
     }
 
     /**

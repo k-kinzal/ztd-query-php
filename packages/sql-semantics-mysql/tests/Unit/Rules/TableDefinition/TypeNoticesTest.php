@@ -12,6 +12,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 
@@ -24,7 +25,7 @@ final class TypeNoticesTest extends TestCase
         $semantics = new Semantics(Dialect::MySql);
         $warnings = $semantics->analyze('CREATE TABLE w (a INT(11), b INT ZEROFILL, c FLOAT(5,2), d DECIMAL(5,2) UNSIGNED, f TINYINT(1), g YEAR(4), h CHAR(1) CHARACTER SET utf8)')->facts->warnings;
 
-        self::assertSame([Deprecated::DisplayWidth, Deprecated::Zerofill, Deprecated::FloatingDigits, Deprecated::UnsignedFraction, Deprecated::YearWidth, Deprecated::Utf8Alias], array_map(static fn ($warning): Deprecated => $warning->construct, $warnings));
+        self::assertEquals(array_map(static fn (Deprecated $construct): Deprecation => new Deprecation($construct), [Deprecated::DisplayWidth, Deprecated::Zerofill, Deprecated::FloatingDigits, Deprecated::UnsignedFraction, Deprecated::YearWidth, Deprecated::Utf8Alias]), $warnings);
     }
 
     public function testTypeAcceptsTinyintOfWidthOne(): void

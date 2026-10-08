@@ -172,4 +172,28 @@ final class BitsTest extends TestCase
 
         $session->query("SELECT b | X'010203' FROM t");
     }
+
+    public function testOperandReadsADecimalOrADoubleAsASignedInteger(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT ~18446744073709551616, ~-1.5, -4e0 ^ 0, ~1e30')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['9223372036854775808', '1', '18446744073709551612', '9223372036854775808']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DECIMAL value: '18446744073709551616'"]], $warnings->rows);
+    }
+
+    public function testOperandRefusesADoubleResultBeyondTheRange(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1690);
+        $this->expectExceptionMessage("BIGINT value is out of range in '(0 - 1e30)'");
+
+        $session->query('SELECT ~(0 - 1e30)');
+    }
+
 }

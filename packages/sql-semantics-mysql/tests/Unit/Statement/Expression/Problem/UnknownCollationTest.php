@@ -17,4 +17,10 @@ final class UnknownCollationTest extends TestCase
     {
         self::assertSame("Unknown collation: 'klingon_ci'", (new UnknownCollation('klingon_ci'))->message());
     }
+
+    public function testMessageQuotesAtMost64CharactersOfTheName(): void
+    {
+        self::assertSame("Unknown collation: '" . str_repeat('é', 64) . "'", (new UnknownCollation(str_repeat('é', 70)))->message());
+    }
+
 }

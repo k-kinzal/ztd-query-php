@@ -65,4 +65,37 @@ final class CastTest extends TestCase
 
         self::assertSame('CAST(1 AS CHAR(2) ARRAY)', (new Lexical())->join($out->pieces()));
     }
+
+    public function testArrayRefusalNamesTheTypesNoMultiValuedIndexTakes(): void
+    {
+        $refusals = array_map(static fn (CastTarget $target): ?string => (new Cast(new NumberLiteral('1'), $target, true))->arrayRefusal(), [new CastTarget(CastKind::Json), new CastTarget(CastKind::Real), new CastTarget(CastKind::MultiLineString), new CastTarget(CastKind::Char), new CastTarget(CastKind::NationalChar, '3'), new CastTarget(CastKind::Char, '3'), new CastTarget(CastKind::Signed)]);
+
+        self::assertSame(['CAST-ing data to array of JSON', 'CAST-ing data to array of DOUBLE', 'CAST-ing data to array of MULTILINESTRING>', 'CAST-ing data to array of char/binary BLOBs', 'specifying charset for multi-valued index', null, null], $refusals);
+    }
+
+    public function testDeriveScalarRefusesAnArrayOfJsonWhileParsing(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CAST(1 AS JSON ARRAY)');
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[0]);
+        self::assertTrue($operation->facts->warnings[0]->aborts);
+        self::assertSame("This version of MySQL doesn't yet support 'CAST-ing data to array of JSON'.", $operation->facts->diagnostics[0]->message());
+    }
+
+    public function testDeriveScalarWarnsAboutAUtf8mb3Target(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CAST(1 AS CHAR CHARACTER SET utf8mb3)');
+
+        self::assertSame(["'utf8mb3' is deprecated and will be removed in a future release. Please use utf8mb4 instead"], array_map(static fn ($warning): string => $warning->message(), $operation->facts->warnings));
+    }
+
+    public function testDeriveScalarRefusesATooBigPrecisionWhileParsing(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT CAST(1 AS DATETIME(7))');
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[0]);
+        self::assertTrue($operation->facts->warnings[0]->aborts);
+        self::assertSame("Too-big precision 7 specified for 'CAST'. Maximum is 6.", $operation->facts->diagnostics[0]->message());
+    }
+
 }

@@ -27,7 +27,9 @@ final class Interval
     }
 
     /**
-     * Reads an interval from the text of its quantity and its unit, or answers null when the text holds no number.
+     * Reads an interval from the text of its quantity and its unit, or answers null when the text holds more numbers than a compound unit has parts.
+     *
+     * A text that holds no number is an empty interval.
      */
     public static function read(string $quantity, IntervalUnit $unit): ?self
     {
@@ -54,14 +56,14 @@ final class Interval
     }
 
     /**
-     * Reads the parts of a compound unit from a string.
+     * Reads the parts of a compound unit from a string, or answers null when it holds more numbers than the unit has parts.
      */
     public static function compound(string $quantity, IntervalUnit $unit): ?self
     {
         $text = trim($quantity);
         $negative = str_starts_with($text, '-');
         if (preg_match_all('/[0-9]+/', $text, $matches) === 0) {
-            return null;
+            return new self(0, 0);
         }
         $numbers = array_map('intval', $matches[0]);
         $parts = match ($unit) {
@@ -77,7 +79,9 @@ final class Interval
             IntervalUnit::MinuteMicrosecond => ['minute', 'second', 'micro'],
             IntervalUnit::Microsecond, IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year, IntervalUnit::SecondMicrosecond => ['second', 'micro'],
         };
-        $numbers = array_slice($numbers, 0, count($parts));
+        if (count($numbers) > count($parts)) {
+            return null;
+        }
         $values = array_combine(array_slice($parts, count($parts) - count($numbers)), $numbers);
         if (isset($values['micro']) && preg_match('/[.]([0-9]+)\s*\z/', $text, $fraction) === 1) {
             $values['micro'] = (int) substr(str_pad($fraction[1], 6, '0'), 0, 6);

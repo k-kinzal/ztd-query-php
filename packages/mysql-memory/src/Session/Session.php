@@ -22,6 +22,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings as Resolution;
@@ -151,7 +152,9 @@ final class Session
             } catch (SqlError $error) {
                 $this->transaction->abortStatement();
                 $this->variables->rowCount = -1;
-                $this->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
+                if (!$error->recorded) {
+                    $this->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
+                }
                 foreach ($error->following as [$code, $message]) {
                     $this->diagnostics->error($code, $message);
                 }
@@ -188,6 +191,9 @@ final class Session
      * Executes one statement.
      *
      * ROW_COUNT() then answers the rows the statement affected, or -1 when it answered rows or failed.
+     * The warnings the server raises while it parses the statement are recorded first, in order,
+     * with the error of each problem it finds while it parses, such as an unknown collation, up
+     * to one that stops the parse; the first of those errors fails the statement.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_row-count.
      *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters
@@ -209,8 +215,21 @@ final class Session
             $this->diagnostics->clear();
         }
         $late = array_filter($operation->facts->warnings, Problems::afterReading(...));
+        $failure = null;
         foreach (array_diff_key($operation->facts->warnings, $late) as $warning) {
+            if ($warning instanceof ParseFailure) {
+                $error = (new Problems())->error($warning->problem, $this, 'field list', $operation->statement);
+                $this->diagnostics->error($error->getCode(), $error->getMessage());
+                $failure ??= $error;
+                if ($warning->aborts) {
+                    break;
+                }
+                continue;
+            }
             $this->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
+        }
+        if ($failure !== null) {
+            throw new SqlError($failure->error, $failure->getMessage(), $failure, [], null, null, true);
         }
         (new Problems())->read($operation, $this);
         foreach ($late as $warning) {

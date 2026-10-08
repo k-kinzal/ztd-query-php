@@ -63,7 +63,7 @@ final class Conversion implements Evaluable
 
         return match ($this->domain->kind) {
             Kind::Integer => $this->integer($value, $from, $context),
-            Kind::Decimal => $this->decimal((string) Convert::toDecimal($value, $from, $context), $context),
+            Kind::Decimal => $this->decimal((string) Convert::operandDecimal($value, $this->operand, $context), $context),
             Kind::Double => Convert::toDouble($value, $from, $context),
             Kind::Date, Kind::DateTime, Kind::Time => (new Moments())->convert($value, $from, $this->domain, $context),
             Kind::Year => (new Moments())->year($value, $from, $context),
@@ -104,12 +104,15 @@ final class Conversion implements Evaluable
     }
 
     /**
-     * Converts to SIGNED or UNSIGNED.
+     * Converts to SIGNED or UNSIGNED; a decimal converts as Convert::decimalInteger() reads it.
      */
     public function integer(int|float|string $value, Domain $from, Context $context): int
     {
+        if ($from->kind === Kind::Decimal) {
+            return Convert::decimalInteger((string) $value, $context, $this->domain->unsigned);
+        }
         $result = (int) Convert::toInteger($value, $from, $context, $this->domain->unsigned);
-        if ($this->domain->unsigned && $from->kind !== Kind::Double && !$from->unsigned && $result < 0 && Decimal::compare((string) Convert::toDecimal($value, $from, $context), '0') < 0) {
+        if ($this->domain->unsigned && $from->kind === Kind::Integer && !$from->unsigned && $result < 0) {
             $context->warning(ErrorCode::UnknownError, 'Cast to unsigned converted negative integer to its positive complement');
         }
 

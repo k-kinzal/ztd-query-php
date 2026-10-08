@@ -93,4 +93,17 @@ final class LogicTest extends TestCase
 
         self::assertSame($domain, $logic->domain());
     }
+
+    public function testEvaluateLeavesTheRightOperandOfXorUnreadForANullLeft(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT NULL XOR ('a' + 0)")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
 }

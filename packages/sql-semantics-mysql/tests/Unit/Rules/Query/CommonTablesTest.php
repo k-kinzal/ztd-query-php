@@ -23,6 +23,11 @@ use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as DomainField;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
@@ -33,6 +38,7 @@ use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Statement\Type\NullOnly;
 
 #[CoversClass(CommonTables::class)]
 #[Medium]
@@ -111,6 +117,28 @@ final class CommonTablesTest extends TestCase
         $shape = (new CommonTables())->shape(new CommonBinding(new Name('c'), $table, new RowShape([])), $anchor, $derivation);
 
         self::assertSame('x', $shape->slots[0]->name?->value);
+    }
+
+    public function testRecursiveKeepsTheTypeWithoutADerivation(): void
+    {
+        $type = new NullOnly();
+
+        self::assertSame($type, (new CommonTables())->recursive($type, null));
+    }
+
+    public function testRecursiveKeepsATypeWithoutAResolvedDomain(): void
+    {
+        $type = new Known(new Integral(IntegralKind::BigInt));
+
+        self::assertSame($type, (new CommonTables())->recursive($type, new Derivation((new Semantics(Dialect::MySql))->context())));
+    }
+
+    public function testRecursiveSettlesTheTypeAsATemporaryTableColumn(): void
+    {
+        $settled = (new CommonTables())->recursive(new NullOnly(), new Derivation((new Semantics(Dialect::MySql))->context()));
+
+        self::assertInstanceOf(Known::class, $settled);
+        self::assertEquals(new Domain(Kind::String, DomainField::VarString, 0, 0, false, Collation::binary(), [], Coercibility::Ignorable), $settled->descriptor);
     }
 
     public function testNullableMakesEveryColumnNullable(): void

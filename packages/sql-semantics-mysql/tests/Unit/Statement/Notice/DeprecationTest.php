@@ -29,12 +29,16 @@ final class DeprecationTest extends TestCase
         self::assertSame([], $legacy->facts()->warnings);
     }
 
-    public function testCodeAndMessageAreThoseOfTheConstruct(): void
+    public function testCodeIsThatOfTheConstruct(): void
     {
-        $warning = new Deprecation(Deprecated::InsertDelayed);
+        self::assertSame(3005, (new Deprecation(Deprecated::InsertDelayed))->code());
+        self::assertSame(1287, (new Deprecation(Deprecated::BangNot))->code());
+    }
 
-        self::assertSame(3005, $warning->code());
-        self::assertSame('INSERT DELAYED is no longer supported. The statement was converted to INSERT.', $warning->message());
+    public function testMessageIsTheTextOfTheConstruct(): void
+    {
+        self::assertSame('INSERT DELAYED is no longer supported. The statement was converted to INSERT.', (new Deprecation(Deprecated::InsertDelayed))->message());
+        self::assertSame("'!' is deprecated and will be removed in a future release. Please use NOT instead", (new Deprecation(Deprecated::BangNot))->message());
     }
 
     public function testStatementsRaiseTheirWarningsInWrittenOrder(): void
@@ -48,4 +52,17 @@ final class DeprecationTest extends TestCase
         self::assertSame([Deprecated::ValuesFunction->value], $codes('INSERT INTO t (a) VALUES (1) ON DUPLICATE KEY UPDATE a = VALUES(a)'));
         self::assertSame([Deprecated::AssignmentInExpression->value], $codes('SELECT @a := 1'));
     }
+
+    public function testCharsetRecordsTheWarningOfUtf8AndUtf8mb3(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+
+        Deprecation::charset('UTF8MB3', $derivation);
+        Deprecation::charset('utf8', $derivation);
+        Deprecation::charset('utf8mb4', $derivation);
+
+        self::assertEquals([new Deprecation(Deprecated::Utf8mb3), new Deprecation(Deprecated::Utf8Alias)], $derivation->facts()->warnings);
+        self::assertSame(1287, (new Deprecation(Deprecated::Utf8mb3))->code());
+    }
+
 }

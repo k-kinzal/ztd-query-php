@@ -8,7 +8,12 @@ use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Leaf\ColumnRead;
+use MySqlMemory\Evaluation\Leaf\Outer;
+use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Value\Integer;
+use MySqlMemory\Value\Real;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -52,14 +57,14 @@ final class Bits implements Evaluable
         if ($this->domain->kind === Kind::String) {
             return $this->bytes($frame);
         }
-        $left = Convert::toInteger($this->left->evaluate($frame), $this->left->domain(), $frame->context, true);
+        $left = $this->operand($this->left, $this->left->evaluate($frame), $frame);
         if ($left === null) {
             return null;
         }
         if ($this->operator === null) {
             return ~$left;
         }
-        $right = Convert::toInteger($this->right->evaluate($frame), $this->right->domain(), $frame->context, true);
+        $right = $this->operand($this->right, $this->right->evaluate($frame), $frame);
         if ($right === null) {
             return null;
         }
@@ -71,6 +76,44 @@ final class Bits implements Evaluable
             ArithmeticOperator::ShiftLeft => $right < 0 || $right >= 64 ? 0 : $left << $right,
             ArithmeticOperator::ShiftRight, ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::Multiply, ArithmeticOperator::Divide, ArithmeticOperator::Modulo, ArithmeticOperator::IntegerDivide => $right < 0 || $right >= 64 ? 0 : ($left >> $right) & (PHP_INT_MAX >> ($right === 0 ? 0 : $right - 1) | ($right === 0 ? PHP_INT_MIN : 0)),
         };
+    }
+
+    /**
+     * Reads the value of an operand as a 64-bit integer: a decimal or a double as a signed one, anything else as an unsigned one.
+     *
+     * A decimal beyond the signed range saturates with a warning. A double is rounded half to
+     * even; beyond the signed range it saturates, silently for a literal, with a warning
+     * (ER_TRUNCATED_WRONG_VALUE) for a column, and is an error (ER_DATA_OUT_OF_RANGE) for the
+     * result of an arithmetic operator.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors, or a double result is beyond the range
+     */
+    public function operand(Evaluable $operand, int|float|string|null $value, Frame $frame): ?int
+    {
+        $domain = $operand->domain();
+        if ($value !== null && $domain->kind === Kind::Decimal) {
+            return Convert::decimalInteger((string) $value, $frame->context, false);
+        }
+        if ($value !== null && $domain->kind === Kind::Double) {
+            $real = (float) $value;
+            $rounded = round($real, 0, PHP_ROUND_HALF_EVEN);
+            if ($rounded >= 9223372036854775807.0 || $rounded < -9223372036854775808.0) {
+                $origin = $operand;
+                while ($origin instanceof Retyped) {
+                    $origin = $origin->evaluable;
+                }
+                if ($origin instanceof Arithmetic || $origin instanceof Minus) {
+                    throw ErrorCode::DataOutOfRange->error('BIGINT', $origin->text);
+                }
+                if ($origin instanceof ColumnRead || $origin instanceof Outer) {
+                    $frame->context->warning(ErrorCode::TruncatedWrongValue, 'INTEGER', Real::format($real));
+                }
+            }
+
+            return Integer::fromReal($real, false);
+        }
+
+        return Convert::toInteger($value, $domain, $frame->context, true);
     }
 
     /**
@@ -93,7 +136,7 @@ final class Bits implements Evaluable
             return null;
         }
         if ($this->operator === ArithmeticOperator::ShiftLeft || $this->operator === ArithmeticOperator::ShiftRight) {
-            return $this->shifted($left, (int) Convert::toInteger($right, $this->right->domain(), $frame->context, true), $this->operator === ArithmeticOperator::ShiftLeft);
+            return $this->shifted($left, (int) $this->operand($this->right, $right, $frame), $this->operator === ArithmeticOperator::ShiftLeft);
         }
         $right = (string) Convert::toText($right, $this->right->domain());
         if (strlen($left) !== strlen($right)) {

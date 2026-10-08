@@ -12,6 +12,12 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
+use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
@@ -19,6 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
@@ -53,6 +60,21 @@ final class Locator
      * @var list<ClockCall> Keeps the located clock calls alive
      */
     private array $clocks = [];
+
+    /**
+     * @var list<array{InQuery|QuantifiedComparison, string, list<int>}> Each IN, ANY and ALL over a subquery, with the clause and the resolution order it is read at
+     */
+    public array $predicates = [];
+
+    /**
+     * @var list<array{Cast, string, list<int>}> Each cast to an array outside a functional index, of a type a multi-valued index takes, with the clause and the resolution order it is read at
+     */
+    public array $arrays = [];
+
+    /**
+     * @var array<int, true> The casts that are the expression of a functional key part, by object id
+     */
+    public array $keyed = [];
 
     /**
      * Locates the column names of a statement.
@@ -191,7 +213,23 @@ final class Locator
                 $this->select($current, $at);
             } elseif ($current instanceof QueryExpression) {
                 $this->expression($current, $clause, $at);
+            } elseif ($current instanceof InQuery || $current instanceof QuantifiedComparison) {
+                $this->predicates[] = [$current, $clause, $at];
+                $early = self::early($current);
+                $this->visit($current->operand, 'IN/ALL/ANY subquery', [...$at, $early ? 2 : 1]);
+                $children[] = $current->query;
+                $positions[] = [...$at, 0];
             } elseif ($current instanceof Node) {
+                if ($current instanceof ExpressionPart) {
+                    $keyed = $current->expression;
+                    while ($keyed instanceof Grouped) {
+                        $keyed = $keyed->operand;
+                    }
+                    $this->keyed[spl_object_id($keyed)] = true;
+                }
+                if ($current instanceof Cast && $current->array && $current->arrayRefusal() === null && !isset($this->keyed[spl_object_id($current)])) {
+                    $this->arrays[] = [$current, $clause, $at];
+                }
                 if ($current instanceof ColumnUse || $current instanceof OutputOrdinal || $current instanceof FunctionCall) {
                     $this->places[spl_object_id($current)] = [$clause, $at];
                     $this->nodes[] = $current;
@@ -209,6 +247,19 @@ final class Locator
             array_push($values, ...array_reverse($children));
             array_push($orders, ...array_reverse($positions));
         }
+    }
+
+    /**
+     * Tells whether the server checks the width of the subquery of IN, ANY or ALL before it resolves the operand.
+     *
+     * The subquery is resolved first. The width is checked before the operand for ALL, and for
+     * ANY with an operator other than `=`; after it for IN, `= ANY` and `<> ALL`.
+     */
+    public static function early(InQuery|QuantifiedComparison $predicate): bool
+    {
+        return $predicate instanceof QuantifiedComparison
+            && !($predicate->quantifier === Quantifier::Any && $predicate->operator === ComparisonOperator::Equal)
+            && !($predicate->quantifier === Quantifier::All && $predicate->operator === ComparisonOperator::NotEqual);
     }
 
     /**

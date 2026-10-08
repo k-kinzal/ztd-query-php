@@ -352,4 +352,24 @@ final class GroupingTest extends TestCase
 
         self::assertSame([true, false, true], [$grouping->same($operation->field(0)->expression, $operation->field(1)->expression), $grouping->same($operation->field(0)->expression, $operation->field(2)->expression), $grouping->same(1, 1)]);
     }
+
+    public function testPlanLeavesAConstantGroupingExpressionUnevaluated(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (1), (2)');
+        $grouped = $session->query('SELECT a, COUNT(*) FROM t GROUP BY a, 1/0 ORDER BY a')[0];
+        $warnings = $session->query('SHOW COUNT(*) WARNINGS')[0];
+        $empty = $session->query('SELECT COUNT(*) FROM t WHERE a > 5 GROUP BY 1/0')[0];
+
+        self::assertInstanceOf(ResultSet::class, $grouped);
+        self::assertSame([['1', '2'], ['2', '1']], $grouped->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['0']], $warnings->rows);
+        self::assertInstanceOf(ResultSet::class, $empty);
+        self::assertSame([], $empty->rows);
+    }
+
 }

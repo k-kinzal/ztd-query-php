@@ -77,6 +77,8 @@ final class IsTest implements Evaluable
      * A comparison, LIKE, NOT and XOR are NULL exactly when an operand is, so only the nullness of
      * their operands is evaluated, from the left, and `<=>` is never NULL; a comparison of a string as a number or a
      * temporal value with an operand that varies by row is evaluated whole. Anything else is evaluated.
+     * NOT LIKE, or the negation of a LIKE, reads and checks the escape of the LIKE first, as the
+     * server evaluates the LIKE it negates.
      */
     public static function absent(Evaluable $value, Frame $frame): bool
     {
@@ -93,9 +95,21 @@ final class IsTest implements Evaluable
             return self::absent($value->left, $frame) || self::absent($value->right, $frame);
         }
         if ($value instanceof Pattern) {
+            if ($value->negated && $value->escape !== null) {
+                $value->escapeText($frame);
+            }
+
             return self::absent($value->operand, $frame) || self::absent($value->pattern, $frame);
         }
         if ($value instanceof Negation) {
+            $negated = $value->operand;
+            while ($negated instanceof Retyped) {
+                $negated = $negated->evaluable;
+            }
+            if ($negated instanceof Pattern && $negated->escape !== null) {
+                $negated->escapeText($frame);
+            }
+
             return self::absent($value->operand, $frame);
         }
         if ($value instanceof Logic && $value->operator === LogicalOperator::Xor) {

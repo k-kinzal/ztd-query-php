@@ -138,4 +138,21 @@ final class QuantifiedTest extends TestCase
 
         self::assertSame([0, 1], [$quantified->result(true), $quantified->result(false)]);
     }
+
+    public function testEvaluateComparesWithTheRowsWithoutConversionWarnings(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2)');
+        $result = $session->query("SELECT 'x' IN (SELECT a FROM t), 'x' > ANY (SELECT a FROM t)")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '0']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
 }

@@ -109,10 +109,7 @@ final class Blocks
             $keys[] = [count($expressions), $key->domain(), $item->direction?->value === 'DESC'];
             $expressions[] = $key;
         }
-        $root = new Project($input, $expressions);
-        if (in_array(SelectOption::Distinct, $select->options, true)) {
-            $root = new Distinct($root, $domains);
-        }
+        $root = $this->distinct($select, $fields, $input, $expressions, $domains);
         if ($keys !== []) {
             $root = new Sort($root, $keys);
         }
@@ -124,6 +121,37 @@ final class Blocks
         $origins = array_map(fn (Field $field, bool $rolled, Domain $domain): ?ColumnOrigin => $rolled ? ($materialized ? $this->planner->materialized([$domain])[0] : null) : $this->origin($field, $scope), $fields, $rolled, $domains);
 
         return new QueryPlan($root, $domains, array_map(fn (Field $field): string => $this->name($field), $fields), $buffered ? array_map(static fn (?ColumnOrigin $origin): ?ColumnOrigin => $origin?->unkeyed(), $origins) : $origins);
+    }
+
+    /**
+     * Projects the rows of a block and removes duplicates under DISTINCT.
+     *
+     * Under DISTINCT an item constant for the statement is evaluated only for the rows that
+     * remain: the duplicates are found among the other items (verified on a live 8.4 server).
+     *
+     * @param list<Field> $fields The fields of the select list
+     * @param list<Evaluable> $expressions The select list, then the ORDER BY keys
+     * @param list<Domain> $domains The domains of the select list
+     */
+    public function distinct(Select $select, array $fields, AccessPath $input, array $expressions, array $domains): AccessPath
+    {
+        if (!in_array(SelectOption::Distinct, $select->options, true)) {
+            return new Project($input, $expressions);
+        }
+        $compiler = $this->planner->compiler;
+        $constants = [];
+        foreach ($fields as $position => $field) {
+            if ($field->expression !== null && $compiler->constancy($field->expression)->constant() && (new Walker())->find($field->expression, Query::class) === []) {
+                $constants[$position] = $expressions[$position];
+            }
+        }
+        if ($constants === []) {
+            return new Distinct(new Project($input, $expressions), $domains);
+        }
+        $placeheld = array_map(static fn (int $position, Evaluable $expression): Evaluable => isset($constants[$position]) ? new Constant($expression->domain(), null) : $expression, array_keys($expressions), $expressions);
+        $distinct = new Distinct(new Project($input, $placeheld), $domains);
+
+        return new Project($distinct, array_map(static fn (int $position, Evaluable $expression): Evaluable => $constants[$position] ?? new ColumnRead($expression->domain(), $position), array_keys($expressions), $expressions));
     }
 
     /**

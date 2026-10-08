@@ -87,6 +87,7 @@ enum ErrorCode: int
     case LockedOrActiveTransaction = 1192;
     case UnknownSystemVariable = 1193;
     case ReplicaNotConfigured = 1200;
+    case FullTextIndexNotFound = 1191;
     case WrongArguments = 1210;
     case CommandFailed = 1220;
     case WrongUsage = 1221;
@@ -126,6 +127,7 @@ enum ErrorCode: int
     case OptionPreventsStatement = 1290;
     case TruncatedWrongValue = 1292;
     case UnsupportedPreparedStatement = 1295;
+    case UnknownTimeZone = 1298;
     case InvalidCharacterString = 1300;
     case AllowedPacketOverflowed = 1301;
     case FeatureDisabled = 1289;
@@ -350,6 +352,8 @@ enum ErrorCode: int
     case LocalInfileDisabled = 3948;
     case GroupPasswordTooLong = 3972;
     case InvalidUserAttributeJson = 3982;
+    case CharacterSetMismatch = 3995;
+    case TimeZoneCast = 3998;
     case AutoextendMultiple = 4023;
     case AutoextendSize = 4025;
     case RoleGrantedToItself = 4027;

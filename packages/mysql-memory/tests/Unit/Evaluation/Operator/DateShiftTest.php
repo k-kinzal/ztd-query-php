@@ -144,4 +144,60 @@ final class DateShiftTest extends TestCase
 
         self::assertSame($domain, $shift->domain());
     }
+
+    public function testEvaluateLeavesTheIntervalUnreadForAValueThatIsNoDate(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT 'x' + INTERVAL (1 DIV 0) DAY, NULL + INTERVAL (1 DIV 0) DAY")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Incorrect datetime value: 'x'"]], $warnings->rows);
+    }
+
+    public function testMomentQuotesANumberAsTheServerWritesIt(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SELECT ~0 + INTERVAL 1 DAY, -0e0 + INTERVAL 1 DAY, 1e20 + INTERVAL 1 DAY, 0x0E + INTERVAL 1 DAY');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([
+            ['Warning', '1292', "Incorrect datetime value: '-1'"],
+            ['Warning', '1292', "Incorrect datetime value: '-0'"],
+            ['Warning', '1292', "Incorrect datetime value: '1e20'"],
+            ['Warning', '1292', "Incorrect datetime value: '\\x0E'"],
+        ], $warnings->rows);
+    }
+
+    public function testMomentReadsADateFollowedByMoreTextWithAWarning(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT '2020-01-01x' + INTERVAL 1 DAY")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2020-01-02']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect date value: '2020-01-01x'"]], $warnings->rows);
+    }
+
+    public function testIntervalReadsTheQuantityAsTheUnitTakesIt(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT '2020-01-01' + INTERVAL '1.5' DAY, '2020-01-01' + INTERVAL '1x' SECOND, '2020-01-01' + INTERVAL 'a' DAY_HOUR, '2020-01-01' + INTERVAL '1 2 3' DAY_HOUR")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2020-01-02', '2020-01-01 00:00:01', '2020-01-01 00:00:00', null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([
+            ['Warning', '1292', "Truncated incorrect INTEGER value: '1.5'"],
+            ['Warning', '1292', "Truncated incorrect DECIMAL value: '1x'"],
+            ['Warning', '1441', 'Datetime function: date_add_interval field overflow'],
+        ], $warnings->rows);
+    }
+
 }

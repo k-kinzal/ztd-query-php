@@ -169,4 +169,13 @@ final class ItemNamingTest extends TestCase
         self::assertTrue((new ItemNaming((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context()->profile))->legacy());
         self::assertFalse((new ItemNaming((new Semantics(Dialect::MySql, 'mysql-8.0.44'))->context()->profile))->legacy());
     }
+
+    public function testOwnNamesAnOdbcEscapeAsItsOperandUnlessItIsATemporalLiteral(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertEquals(new Name('a'), $naming->name(new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape(new Name('fn'), new ColumnUse(new Name('a'))))));
+        self::assertNull($naming->own(new \SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape(new Name('d'), new StringLiteral(['2024-01-31']))));
+    }
+
 }

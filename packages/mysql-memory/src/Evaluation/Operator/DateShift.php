@@ -10,7 +10,9 @@ use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Calendar;
+use MySqlMemory\Value\Integer;
 use MySqlMemory\Value\Interval;
+use MySqlMemory\Value\Real;
 use MySqlMemory\Value\Temporal;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
@@ -49,32 +51,31 @@ final class DateShift implements Evaluable
 
     /**
      * Moves the value for a row.
+     *
+     * The value is read first: when it is NULL, or no date, the interval is not read at all.
      */
     #[Override]
     public function evaluate(Frame $frame): ?string
     {
         $value = $this->operand->evaluate($frame);
-        $quantity = $this->quantity->evaluate($frame);
-        if ($value === null || $quantity === null) {
+        if ($value === null) {
             return null;
         }
-        $interval = Interval::read((string) Convert::toText($quantity, $this->quantity->domain()), $this->unit);
+        if ($this->domain->kind === Kind::Time) {
+            $interval = $this->interval($frame);
+
+            return $interval === null ? null : $this->time((string) $value, $this->subtract ? -$interval->microseconds : $interval->microseconds);
+        }
+        $parts = $this->moment($value, $frame);
+        if ($parts === null) {
+            return null;
+        }
+        $interval = $this->interval($frame);
         if ($interval === null) {
             return null;
         }
         $months = $this->subtract ? -$interval->months : $interval->months;
         $micro = $this->subtract ? -$interval->microseconds : $interval->microseconds;
-        if ($this->domain->kind === Kind::Time) {
-            return $this->time((string) $value, $micro);
-        }
-        $domain = $this->operand->domain();
-        $text = $domain->kind === Kind::String || $domain->kind->temporal() ? (string) Convert::toText($value, $domain) : (string) Convert::toDecimal($value, $domain, $frame->context);
-        $parts = Temporal::parseDateTime($text);
-        if ($parts === null || !Temporal::valid($parts[0], $parts[1], $parts[2]) || $parts[1] === 0 || $parts[2] === 0) {
-            $frame->context->warning(ErrorCode::TruncatedWrongValue, 'datetime', $text);
-
-            return null;
-        }
         [$year, $month, $day, $hour, $minute, $second, $fraction, $timed] = $parts;
         if ($months !== 0) {
             $moved = Calendar::addMonths($year, $month, $day, $months);
@@ -93,6 +94,74 @@ final class DateShift implements Evaluable
         }
 
         return $this->write($moved, $timed || $fraction !== 0 || !Interval::dated($this->unit), $fraction !== 0 || $moved[6] !== 0);
+    }
+
+    /**
+     * Reads the value moved as the parts of a datetime, or answers null with a warning when it is no date.
+     *
+     * A date followed by more text is read with a warning (ER_TRUNCATED_WRONG_VALUE); anything
+     * else that is no date, a date with a zero month or day included, warns that it is an
+     * incorrect datetime value. The warning quotes a string with the bytes of a binary one
+     * escaped, an integer as a signed one, and a double as the server writes it.
+     *
+     * @return array{int, int, int, int, int, int, int, bool}|null
+     * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors
+     */
+    public function moment(int|float|string $value, Frame $frame): ?array
+    {
+        $domain = $this->operand->domain();
+        $textual = $domain->kind === Kind::String || $domain->kind->temporal();
+        $text = $textual ? (string) Convert::toText($value, $domain) : (string) Convert::toDecimal($value, $domain, $frame->context);
+        $shown = match (true) {
+            $textual => Convert::shown($text, Convert::readableCharset($domain)),
+            $domain->kind === Kind::Integer => (string) (int) $value,
+            $domain->kind === Kind::Double => Real::format((float) $value),
+            default => $text,
+        };
+        $parts = Temporal::parseDateTime($text);
+        $scanned = $parts === null ? Temporal::scanDateTime($text) : null;
+        if ($scanned !== null && $scanned[8] !== '' && Temporal::valid($scanned[0], $scanned[1], $scanned[2]) && $scanned[1] !== 0 && $scanned[2] !== 0) {
+            $frame->context->warning(ErrorCode::TruncatedWrongValue, $scanned[7] ? 'datetime' : 'date', $shown);
+
+            return [$scanned[0], $scanned[1], $scanned[2], $scanned[3], $scanned[4], $scanned[5], (int) substr(str_pad($scanned[6], 6, '0'), 0, 6), $scanned[7]];
+        }
+        if ($parts === null || !Temporal::valid($parts[0], $parts[1], $parts[2]) || $parts[1] === 0 || $parts[2] === 0) {
+            $frame->context->warnMessage(ErrorCode::TruncatedWrongValue, ErrorCode::WrongValue->message('datetime', $shown));
+
+            return null;
+        }
+
+        return $parts;
+    }
+
+    /**
+     * Reads the interval for a row, or answers null when its quantity is NULL or overflows its unit.
+     *
+     * The quantity of SECOND is read as a decimal, of another single unit as an integer, and of a
+     * compound unit as text; a text with more numbers than the unit has parts warns
+     * (ER_DATETIME_FUNCTION_OVERFLOW).
+     *
+     * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors
+     */
+    public function interval(Frame $frame): ?Interval
+    {
+        $quantity = $this->quantity->evaluate($frame);
+        if ($quantity === null) {
+            return null;
+        }
+        $domain = $this->quantity->domain();
+        $text = match ($this->unit) {
+            IntervalUnit::Second => (string) Convert::toDecimal($quantity, $domain, $frame->context),
+            IntervalUnit::Microsecond, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year => Integer::text((int) Convert::toInteger($quantity, $domain, $frame->context), $domain->unsigned && $domain->kind === Kind::Integer),
+            IntervalUnit::YearMonth, IntervalUnit::DayHour, IntervalUnit::DayMinute, IntervalUnit::DaySecond, IntervalUnit::DayMicrosecond, IntervalUnit::HourMinute, IntervalUnit::HourSecond, IntervalUnit::HourMicrosecond, IntervalUnit::MinuteSecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::SecondMicrosecond => (string) Convert::toText($quantity, $domain),
+        };
+
+        $interval = Interval::read($text, $this->unit);
+        if ($interval === null) {
+            $frame->context->warning(ErrorCode::DatetimeFunctionOverflow, 'date_add_interval');
+        }
+
+        return $interval;
     }
 
     /**

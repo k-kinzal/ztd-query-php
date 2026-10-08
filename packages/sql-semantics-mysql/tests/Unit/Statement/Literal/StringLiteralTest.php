@@ -177,4 +177,12 @@ final class StringLiteralTest extends TestCase
 
         new StringLiteral(['a'], EscapeRule::Backslash, new Name('utf8mb4'), true);
     }
+
+    public function testDeriveScalarWarnsAboutAUtf8mb3Introducer(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _utf8mb3 'a', _utf8 'b'");
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias)], $operation->facts->warnings);
+    }
+
 }

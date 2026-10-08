@@ -122,4 +122,29 @@ final class ScalarReadTest extends TestCase
 
         self::assertSame($domain, $read->domain());
     }
+
+    public function testEvaluateKeepsTheValueOfASubqueryRunOnce(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2)');
+        $result = $session->query('SELECT (SELECT a FROM t ORDER BY a LIMIT 1), (SELECT 1/0 FROM t LIMIT 1) FROM t')[0];
+        $warnings = $session->query('SHOW COUNT(*) WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', null], ['1', null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['1']], $warnings->rows);
+    }
+
+    public function testReadAnswersNullForNoRow(): void
+    {
+        $read = new ScalarRead(new Rows(new QueryPlan(new ZeroRows(1), [Domain::null()], ['x'])), Domain::null(), true);
+        $session = (new Instance())->connect();
+
+        self::assertNull($read->read(new \MySqlMemory\Evaluation\Frame(new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0))));
+    }
+
 }

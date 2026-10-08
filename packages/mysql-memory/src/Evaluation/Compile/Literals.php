@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace MySqlMemory\Evaluation\Compile;
 
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Constant;
+use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Integer;
 use MySqlMemory\Value\Temporal;
 use SqlSemantics\Platform\MySql\Rules\Typing\Literals as Rules;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
@@ -129,6 +132,33 @@ final class Literals
         }
 
         return new Constant($domain, $value);
+    }
+
+    /**
+     * Compiles an ODBC escape `{ kind expr }`.
+     *
+     * With the kind `d`, `t` or `ts`, written in lower case, over a string that is a DATE, TIME or
+     * TIMESTAMP literal of that kind, the escape is that literal; otherwise it is its operand.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-literals.html.
+     */
+    public function odbc(OdbcEscape $escape, Scope $scope): Evaluable
+    {
+        $form = match ($escape->kind->value) {
+            'd' => 'DATE',
+            't' => 'TIME',
+            'ts' => 'DATETIME',
+            default => null,
+        };
+        if ($form !== null && $escape->operand instanceof StringLiteral) {
+            $domain = $this->compiler->domain($escape);
+            $modes = $this->compiler->settings->modes;
+            $value = Temporal::literal($form, $escape->operand->value(), $domain->kind->temporal() ? $domain->decimals : 0, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'));
+            if ($value !== null) {
+                return new Constant($domain, $value);
+            }
+        }
+
+        return $this->compiler->compile($escape->operand, $scope);
     }
 
     /**

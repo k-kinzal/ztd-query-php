@@ -31,13 +31,21 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\ValueCountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch;
+use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\CollationMismatch;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
+use SqlSemantics\Platform\MySql\Statement\Expression\Row;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
+use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
 use SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
@@ -92,8 +100,10 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operation;
+use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Type\Dependent;
@@ -118,6 +128,9 @@ final class Problems
 {
     /**
      * Raises the error of the first problem of an operation, if any; an account statement raises its own, in the order its command checks them.
+     *
+     * A column of MATCH that does not resolve is followed by the error of the AGAINST of the MATCH
+     * (ER_WRONG_ARGUMENTS), as the server goes on to check it (verified on a live 8.4 server).
      *
      * @throws SqlError When the operation has a problem
      */
@@ -169,6 +182,13 @@ final class Problems
         $locator = (new Locator())->statement($operation->statement);
         $dropped = array_diff(array_map(spl_object_id(...), $operation->facts->diagnostics), array_map(spl_object_id(...), $diagnostics));
         $located = [];
+        $searched = [];
+        foreach ((new Walker())->find($operation->statement, FullTextSearch::class) as $search) {
+            foreach ($search->columns as $column) {
+                $searched[spl_object_id($column)] = true;
+            }
+        }
+        $matched = [];
         foreach ([...$locator->nodes(), ...$locator->clocks()] as $node) {
             $problem = $operation->facts->covers($node) ? $this->problem($node, $operation) : null;
             $problem = $problem instanceof FunctionCall && !in_array($problem, $calls, true) ? null : $problem;
@@ -176,6 +196,29 @@ final class Problems
             $place = $locator->place($node);
             if ($problem !== null && $place !== null && !in_array(spl_object_id($problem), $dropped, true)) {
                 $located[spl_object_id($problem)] = [$problem, $place];
+                if (isset($searched[spl_object_id($node)])) {
+                    $matched[spl_object_id($problem)] = true;
+                }
+            }
+        }
+        foreach ($locator->arrays as [$cast, $clause, $at]) {
+            $refusal = new NotSupportedYet(Cast::ARRAY_OUTSIDE_INDEX);
+            $located[spl_object_id($refusal)] = [$refusal, [$clause, $at]];
+        }
+        foreach ($operation->statement instanceof Query ? (new Walker())->find($operation->statement, DefaultOfColumn::class) : [] as $default) {
+            $place = $locator->place($default->column);
+            $name = $place === null ? null : $this->undefaulted($default, $operation, $session);
+            if ($place !== null && $name !== null) {
+                $refusal = ErrorCode::NoDefaultForField->error($name);
+                $located[spl_object_id($refusal)] = [$refusal, [$place[0], [...$place[1], 0]]];
+            }
+        }
+        $claimed = [];
+        foreach ($locator->predicates as [$predicate, $clause, $at]) {
+            $width = $this->width($predicate, $operation, $diagnostics, $claimed);
+            if ($width !== null) {
+                $claimed[] = $width[0];
+                $located[spl_object_id($width[0])] = [$width[0], [$clause, [...$at, $width[1] ? 1 : 2]]];
             }
         }
         foreach ($diagnostics as $diagnostic) {
@@ -198,11 +241,13 @@ final class Problems
             }
         }
         if ($first !== null) {
-            throw match (true) {
+            $error = match (true) {
+                $first[0] instanceof SqlError => $first[0],
                 $first[0] instanceof FunctionCall => $this->routine($first[0], $session),
                 $first[0] instanceof ClockCall => $this->precision($first[0]),
                 default => $this->error($first[0], $session, $first[1][0], $operation->statement),
             };
+            throw isset($matched[spl_object_id($first[0])]) ? new SqlError($error->error, $error->getMessage(), null, [[ErrorCode::WrongArguments->value, ErrorCode::WrongArguments->message('AGAINST')]]) : $error;
         }
         foreach ($calls as $call) {
             throw $this->routine($call, $session);
@@ -260,6 +305,11 @@ final class Problems
             $target = $cast->target;
             if (($target->kind === CastKind::Time || $target->kind === CastKind::DateTime) && $target->length !== null && (int) $target->length > 6) {
                 throw ErrorCode::TooBigPrecision->error((int) $target->length, 'CAST', 6);
+            }
+        }
+        foreach ((new Walker())->find($operation->statement, AtTimeZone::class) as $zoned) {
+            if ($zoned->precision !== null && (int) $zoned->precision > 6) {
+                throw ErrorCode::TooBigPrecision->error((int) $zoned->precision, 'CAST', 6);
             }
         }
         (new \MySqlMemory\Command\Show\Inspection())->check($operation->statement, $session);
@@ -475,6 +525,68 @@ final class Problems
     }
 
     /**
+     * Answers the name of the column DEFAULT() reads when the column is of a stored table and has no default, else null.
+     *
+     * The server refuses such a DEFAULT() where it resolves it (ER_NO_DEFAULT_FOR_FIELD), whether
+     * any row is read or not (verified on a live 8.4 server).
+     */
+    public function undefaulted(DefaultOfColumn $default, Operation $operation, Session $session): ?string
+    {
+        $resolution = $operation->facts->covers($default->column) ? $operation->facts->scalar($default->column)->resolution : null;
+        $declaration = $resolution instanceof ResolvedColumn ? $resolution->slot->declaration() : null;
+        if ($declaration === null) {
+            return null;
+        }
+        foreach ($session->instance->dictionary->schemas as $schema) {
+            foreach ($schema->tables as $table) {
+                foreach ($table->definition->columns as $column) {
+                    if ($column->declaration === $declaration) {
+                        return $column->default->declared ? null : $column->name;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Answers the problem of IN, ANY or ALL over a subquery whose width is not the width of its single-valued operand, and whether the server finds it before it resolves the operand.
+     *
+     * The server checks the width after it resolves the subquery: before it resolves the operand
+     * of ALL, and of ANY with an operator other than `=` (Locator::early()), and after it for IN,
+     * `= ANY` and `<> ALL` (verified on a live 8.4 server). The problem is the one the statement
+     * reports, or a new one when the operand did not resolve.
+     *
+     * @param list<Diagnostic> $diagnostics The problems of the statement
+     * @param list<Diagnostic> $claimed The problems already answered for another predicate
+     * @return array{OperandColumns, bool}|null
+     */
+    public function width(InQuery|QuantifiedComparison $predicate, Operation $operation, array $diagnostics, array $claimed): ?array
+    {
+        $operand = $predicate->operand;
+        while ($operand instanceof Grouped) {
+            $operand = $operand->operand;
+        }
+        if ($operand instanceof Row || !$operation->facts->covers($predicate->query)) {
+            return null;
+        }
+        $shape = $operation->facts->query($predicate->query)->shape;
+        $width = count($shape->slots);
+        if (!$shape->complete() || $width === 1) {
+            return null;
+        }
+        $early = Locator::early($predicate);
+        foreach ($diagnostics as $diagnostic) {
+            if ($diagnostic instanceof OperandColumns && $diagnostic->expected === 1 && $diagnostic->actual === $width && !in_array($diagnostic, $claimed, true)) {
+                return [$diagnostic, $early];
+            }
+        }
+
+        return $early ? [new OperandColumns(1, $width), true] : null;
+    }
+
+    /**
      * Answers the error of a clock call whose precision is above 6, named as the server names the function.
      *
      * Source: https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html.
@@ -570,7 +682,8 @@ final class Problems
             $diagnostic instanceof UnknownPartition => ErrorCode::UnknownPartition->error($diagnostic->partition, $diagnostic->table),
             $diagnostic instanceof UnknownSystemVariable => ErrorCode::UnknownSystemVariable->error($diagnostic->name),
             $diagnostic instanceof VariableMisuse => new SqlError(ErrorCode::from($diagnostic->rule->code()), $diagnostic->message()),
-            $diagnostic instanceof UnknownCollation => ErrorCode::UnknownCollation->error($diagnostic->name),
+            $diagnostic instanceof UnknownCollation => ErrorCode::UnknownCollation->error(mb_substr($diagnostic->name, 0, 64)),
+            $diagnostic instanceof TooBigPrecision => ErrorCode::TooBigPrecision->error($diagnostic->precision, $diagnostic->function, 6),
             $diagnostic instanceof UnknownAlterChoice => ($diagnostic->lock ? ErrorCode::UnknownAlterLock : ErrorCode::UnknownAlterAlgorithm)->error($diagnostic->name->value),
             $diagnostic instanceof BucketCountOutOfRange => ErrorCode::DataOutOfRange->error('Number of buckets', 'ANALYZE TABLE'),
             $diagnostic instanceof UnknownCharset => ErrorCode::UnknownCharacterSet->error($diagnostic->name),

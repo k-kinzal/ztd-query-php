@@ -47,6 +47,24 @@ final class Deprecation implements Warning
     }
 
     /**
+     * Records the warning of a character set name an expression writes: the alias utf8, or utf8mb3.
+     *
+     * An introducer, CONVERT ... USING and CAST ... CHARACTER SET warn about the name; a
+     * collation name does not (verified on a live 8.4 server).
+     */
+    public static function charset(string $name, Derivation $derivation): void
+    {
+        $construct = match (strtolower($name)) {
+            'utf8' => Deprecated::Utf8Alias,
+            'utf8mb3' => Deprecated::Utf8mb3,
+            default => null,
+        };
+        if ($construct !== null) {
+            self::raise($construct, $derivation);
+        }
+    }
+
+    /**
      * Answers the error number of the warning.
      */
     public function code(): int

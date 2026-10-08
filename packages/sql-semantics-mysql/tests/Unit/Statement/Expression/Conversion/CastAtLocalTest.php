@@ -41,4 +41,13 @@ final class CastAtLocalTest extends TestCase
 
         self::assertSame('CAST(NULL AT LOCAL AS SIGNED ARRAY)', (new Lexical())->join($out->pieces()));
     }
+
+    public function testDeriveScalarPlacesTheRefusalAmongTheWarnings(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT BINARY CAST(1 AT LOCAL AS SIGNED)');
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $operation->facts->warnings[1]);
+    }
+
 }

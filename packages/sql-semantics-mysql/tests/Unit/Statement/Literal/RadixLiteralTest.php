@@ -133,4 +133,12 @@ final class RadixLiteralTest extends TestCase
 
         new RadixLiteral(Radix::Hexadecimal, '1F', new Name('UTF8MB4'));
     }
+
+    public function testDeriveScalarWarnsAboutAUtf8mb3Introducer(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _utf8mb3 X'41', _utf8mb3 b'1'");
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3)], $operation->facts->warnings);
+    }
+
 }

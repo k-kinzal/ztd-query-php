@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Subquery;
 
+use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Evaluation\Operator\Comparison\Compare;
+use MySqlMemory\Session\Diagnostics;
 use MySqlMemory\Typing\Domain;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
@@ -55,17 +57,22 @@ final class Quantified implements Evaluable
 
     /**
      * Compares the value with the rows of the subquery.
+     *
+     * The server compares the value with cached copies of the values, so a value converted for
+     * the comparison, such as a string read as a number, converts without a warning.
      */
     #[Override]
     public function evaluate(Frame $frame): ?int
     {
         $value = $this->operand->evaluate($frame);
+        $context = $frame->context;
+        $quiet = new Context($context->modes, new Diagnostics(), $context->variables, $context->started);
         $iterator = $this->rows->start($frame);
         $unknown = false;
         $any = false;
         while (($row = $iterator->read()) !== null) {
             $any = true;
-            $order = $this->comparator->compare($value, $row[0], $frame->context);
+            $order = $this->comparator->compare($value, $row[0], $quiet);
             $holds = $order === null ? null : Compare::holds($this->operator, $order);
             if ($holds === null) {
                 $unknown = true;

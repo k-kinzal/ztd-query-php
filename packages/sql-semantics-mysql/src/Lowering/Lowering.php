@@ -171,15 +171,15 @@ final class Lowering
     public readonly UtilityRules $utility;
 
     /**
-     * @param Productions $productions The productions of the grammar release
-     * @param Leaves $leaves The record of operand leaves of this analysis
-     * @param LanguageProfile $profile The language profile the tree was parsed under
-     */
-    /**
      * @var list<int> The byte offsets of the parameter markers of the input, in order
      */
     private array $markers = [];
 
+    /**
+     * @param Productions $productions The productions of the grammar release
+     * @param Leaves $leaves The record of operand leaves of this analysis
+     * @param LanguageProfile $profile The language profile the tree was parsed under
+     */
     public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile)
     {
         $this->names = new NameRule($this);
@@ -204,13 +204,10 @@ final class Lowering
     }
 
     /**
-     * Lowers a complete input into the statements it holds: one, or none for an empty input.
-     *
-     * @return list<Statement>
-     * @throws ImplementationGap When a production has no rule or the input holds an optimizer hint comment
-     */
-    /**
      * Answers the position of a parameter marker among the markers of the input, counted from 0.
+     *
+     * The markers are those of the input statements() last read; an offset that holds no marker
+     * answers null.
      */
     public function marker(int $offset): ?int
     {
@@ -219,6 +216,12 @@ final class Lowering
         return $position === false ? null : $position;
     }
 
+    /**
+     * Lowers a complete input into the statements it holds: one, or none for an empty input.
+     *
+     * @return list<Statement>
+     * @throws ImplementationGap When a production has no rule or the input holds an optimizer hint comment
+     */
     public function statements(Node $input): array
     {
         $this->markers = [];

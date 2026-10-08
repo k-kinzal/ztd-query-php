@@ -65,10 +65,11 @@ enum Constancy: int
      *
      * @param bool $correlation Whether a subquery that reads a column of the enclosing block varies by row; when false, every subquery is fixed for the statement
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns, which vary by row
+     * @param bool $assignmentsVary Whether an assignment to a user variable varies by row; when false, it stays as long as the value it assigns
      */
-    public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = []): self
+    public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true): self
     {
-        return self::within($node, $facts, 0, $correlation, $assigned);
+        return self::within($node, $facts, 0, $correlation, $assigned, $assignmentsVary);
     }
 
     /**
@@ -77,33 +78,35 @@ enum Constancy: int
      * Inside a subquery only a column of a block outside the expression varies by row.
      *
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns
+     * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
      */
-    public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned): self
+    public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true): self
     {
         if ($node instanceof ColumnUse) {
             return self::column($node, $facts, $level);
         }
         if ($level > 0) {
-            return self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned);
+            return self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary);
         }
         $merged = $node instanceof ScalarSubquery ? self::merged($node->query) : null;
         if ($merged !== null) {
-            return self::within($merged, $facts, 0, $correlation, $assigned);
+            return self::within($merged, $facts, 0, $correlation, $assigned, $assignmentsVary);
         }
         if ($node instanceof Query) {
-            $inner = self::children($node, $facts, 1, $correlation, $assigned);
+            $inner = self::children($node, $facts, 1, $correlation, $assigned, $assignmentsVary);
 
             return $inner === self::Row && $correlation ? self::Row : self::Statement;
         }
 
         return match (true) {
+            $node instanceof VariableAssignment && !$assignmentsVary => self::Statement->join(self::within($node->value, $facts, 0, $correlation, $assigned, $assignmentsVary)),
             $node instanceof OutputOrdinal, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof VariableAssignment, $node instanceof DefaultOfColumn, $node instanceof InsertedColumn => self::Row,
             $node instanceof UserVariable => in_array(strtolower($node->name->value), $assigned, true) ? self::Row : self::Statement,
             $node instanceof SystemVariable, $node instanceof Parameter => self::Statement,
             $node instanceof ClockCall => $node->clock === Clock::SystemDate ? self::Row : self::Statement,
-            $node instanceof FunctionCall => self::function(strtoupper($node->name->value), count($node->arguments))->join(self::children($node, $facts, 0, $correlation, $assigned)),
-            $node instanceof KeywordCall => ($node->function === KeywordFunction::User || $node->function === KeywordFunction::CurrentUser ? self::Statement : self::Resolved)->join(self::children($node, $facts, 0, $correlation, $assigned)),
-            default => self::children($node, $facts, 0, $correlation, $assigned),
+            $node instanceof FunctionCall => self::function(strtoupper($node->name->value), count($node->arguments))->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary)),
+            $node instanceof KeywordCall => ($node->function === KeywordFunction::User || $node->function === KeywordFunction::CurrentUser ? self::Statement : self::Resolved)->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary)),
+            default => self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary),
         };
     }
 
@@ -136,8 +139,9 @@ enum Constancy: int
      * Joins how long the children of a node stay the same.
      *
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns
+     * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
      */
-    public static function children(Node $node, Facts $facts, int $level, bool $correlation, array $assigned): self
+    public static function children(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true): self
     {
         $children = [];
         $properties = get_object_vars($node);
@@ -148,7 +152,7 @@ enum Constancy: int
         });
         $constancy = self::Resolved;
         foreach ($children as $child) {
-            $constancy = $constancy->join(self::within($child, $facts, $level, $correlation, $assigned));
+            $constancy = $constancy->join(self::within($child, $facts, $level, $correlation, $assigned, $assignmentsVary));
             if ($constancy === self::Row) {
                 break;
             }

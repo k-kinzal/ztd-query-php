@@ -11,6 +11,9 @@ use SqlSemantics\Contract\AnalysisContext;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect as MySqlDialect;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Platform\Sqlite\Dialect;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Comparison;
@@ -117,5 +120,26 @@ final class AnalysisContextTest extends TestCase
         self::assertTrue($context->complete);
         self::assertSame([$table], $context->declared(new QualifiedName(new Name('T')), new Name('main')));
         self::assertFalse($semantics->context()->complete);
+    }
+
+    public function testWithSessionKeepsTheDeclarationsAndReplacesTheSession(): void
+    {
+        $semantics = new Semantics(MySqlDialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)')->declarations()[0];
+        $session = new Settings(Collation::known('latin1_swedish_ci'));
+        $context = $semantics->context([$table], false);
+
+        $resolved = $context->withSession($session);
+
+        self::assertNull($context->session);
+        self::assertSame($session, $resolved->session);
+        self::assertSame([$table], $resolved->tables);
+        self::assertFalse($resolved->complete);
+        self::assertSame($context->profile, $resolved->profile);
+        self::assertSame($context->searchPath, $resolved->searchPath);
+        self::assertSame($context->declarationSchema, $resolved->declarationSchema);
+        self::assertSame($context->relationNames, $resolved->relationNames);
+        self::assertSame($context->columnNames, $resolved->columnNames);
+        self::assertNull($resolved->withSession(null)->session);
     }
 }

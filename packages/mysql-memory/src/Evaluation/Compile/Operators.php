@@ -35,6 +35,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
+use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Not;
 use SqlSemantics\Platform\MySql\Statement\Expression\NullTest;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
@@ -93,15 +94,13 @@ final class Operators
      */
     public function unary(Unary $node, Scope $scope): Evaluable
     {
-        $tested = $node->operator === UnaryOperator::Not ? $this->tested($node->operand) : null;
-        if ($tested !== null) {
-            return $this->nullness($tested[0], !$tested[1], $scope, $node);
+        if ($node->operator === UnaryOperator::Not) {
+            return $this->negated($node->operand, $scope, $node);
         }
         $operand = $this->compiler->compile($node->operand, $scope);
 
         return match ($node->operator) {
             UnaryOperator::Plus => $operand,
-            UnaryOperator::Not => $this->negation($operand, $node->operand, $node),
             UnaryOperator::Invert => new Bits(null, $operand, $operand, $this->compiler->domain($node), (new Printer($this->compiler->facts, $this->compiler->settings->database))->expression($node)),
             UnaryOperator::Minus => new Minus($operand, $this->compiler->domain($node), (new Printer($this->compiler->facts, $this->compiler->settings->database))->expression($node)),
         };
@@ -124,16 +123,22 @@ final class Operators
      * Compiles a comparison of two scalar operands.
      *
      * Operands compared as doubles are read as doubles when they are evaluated, a constant one once
-     * for the statement.
+     * for the statement; an integer compared with a NULL on its right is read so too, as the
+     * server compares NULL as a string. The left operand of a comparison the server substitutes
+     * for a subquery predicate comes compiled.
      */
-    public function compare(ComparisonOperator $operator, Scalar $leftNode, Scalar $rightNode, Scope $scope, Scalar $node): Evaluable
+    public function compare(ComparisonOperator $operator, Scalar $leftNode, Scalar $rightNode, Scope $scope, Scalar $node, ?Evaluable $substituted = null): Evaluable
     {
-        $left = $this->compiler->compile($leftNode, $scope);
+        $left = $substituted ?? $this->compiler->compile($leftNode, $scope);
         $right = $this->compiler->compile($rightNode, $scope);
         $connection = $this->compiler->settings->connectionCollation;
         $comparator = Comparator::of($left->domain(), $right->domain(), $operator->value, $connection);
         $converted = $comparator->mode !== Kind::String && $comparator->mode !== Kind::Json && ($left->domain()->kind === Kind::String || $right->domain()->kind === Kind::String);
         $nullFromOperands = !$converted || !$this->varies($leftNode) || !$this->varies($rightNode);
+        if ($comparator->mode === Kind::Integer && $right->domain()->kind === Kind::Null) {
+            $left = $this->numeric($left, $leftNode);
+            $comparator = Comparator::of($left->domain(), $right->domain(), $operator->value, $connection);
+        }
         if ($comparator->mode === Kind::Double) {
             $left = $this->numeric($left, $leftNode);
             $right = $this->numeric($right, $rightNode);
@@ -145,10 +150,12 @@ final class Operators
 
     /**
      * Reads an operand a comparison compares as doubles as a double, when it is evaluated: once for the statement when it is constant.
+     *
+     * An assignment to a user variable of a constant value is constant here.
      */
     public function numeric(Evaluable $operand, Scalar $node): Evaluable
     {
-        return $operand->domain()->kind === Kind::Double ? $operand : new Numeric($operand, $this->compiler->constancy($node)->constant());
+        return $operand->domain()->kind === Kind::Double ? $operand : new Numeric($operand, $this->compiler->constancy($node, true, false)->constant());
     }
 
     /**
@@ -159,7 +166,7 @@ final class Operators
         $kind = $operand->domain()->kind;
         $converted = in_array($kind, [Kind::String, Kind::Json, Kind::Date, Kind::Time, Kind::DateTime], true);
 
-        return $converted && $this->compiler->constancy($node)->constant() ? new Numeric($operand, true) : $operand;
+        return $converted && $this->compiler->constancy($node, true, false)->constant() ? new Numeric($operand, true) : $operand;
     }
 
     /**
@@ -186,12 +193,45 @@ final class Operators
      */
     public function not(Not $node, Scope $scope): Evaluable
     {
-        $tested = $this->tested($node->operand);
+        return $this->negated($node->operand, $scope, $node);
+    }
+
+    /**
+     * Compiles the negation of an operand as the server rewrites it before it evaluates anything.
+     *
+     * The negation of a test of NULL is the opposite test; of AND or OR, the other operator over
+     * the negated operands; of XOR, XOR with its left operand negated; and of a negation of a test
+     * or of a logical operator, that test or operator itself. A test of NULL a negation makes, as
+     * opposed to one written, is evaluated for every row even when its operand is constant.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/logical-operators.html.
+     */
+    public function negated(Scalar $operand, Scope $scope, Scalar $node): Evaluable
+    {
+        while ($operand instanceof Grouped) {
+            $operand = $operand->operand;
+        }
+        $tested = $this->tested($operand);
         if ($tested !== null) {
             return $this->nullness($tested[0], !$tested[1], $scope, $node);
         }
+        if ($operand instanceof Logical) {
+            $domain = $this->compiler->domain($node);
 
-        return $this->negation($this->compiler->compile($node->operand, $scope), $node->operand, $node);
+            return match ($operand->operator) {
+                LogicalOperator::And => new Logic(LogicalOperator::Or, $this->negated($operand->left, $scope, $node), $this->negated($operand->right, $scope, $node), $domain),
+                LogicalOperator::Or => new Logic(LogicalOperator::And, $this->negated($operand->left, $scope, $node), $this->negated($operand->right, $scope, $node), $domain),
+                LogicalOperator::Xor => new Logic(LogicalOperator::Xor, $this->negated($operand->left, $scope, $node), $this->truthOperand($this->compiler->compile($operand->right, $scope), $operand->right), $domain),
+            };
+        }
+        $inner = $operand instanceof Not || ($operand instanceof Unary && $operand->operator === UnaryOperator::Not) ? $operand->operand : null;
+        while ($inner instanceof Grouped) {
+            $inner = $inner->operand;
+        }
+        if ($inner !== null && ($inner instanceof Logical || $this->tested($inner) !== null)) {
+            return $this->compiler->compile($inner, $scope);
+        }
+
+        return $this->negation($this->compiler->compile($operand, $scope), $operand, $node);
     }
 
     /**

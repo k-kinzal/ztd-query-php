@@ -374,4 +374,21 @@ final class BlocksTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame(["Truncated incorrect DOUBLE value: 'x'", "Truncated incorrect DOUBLE value: 'x'", "Truncated incorrect DOUBLE value: 'x'"], array_column($warnings->rows, 2));
     }
+
+    public function testDistinctEvaluatesAConstantItemOnlyForTheRowsThatRemain(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (1), (2)');
+        $result = $session->query('SELECT DISTINCT a, 1/0 FROM t ORDER BY a DESC')[0];
+        $warnings = $session->query('SHOW COUNT(*) WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', null], ['1', null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['2']], $warnings->rows);
+    }
+
 }

@@ -279,4 +279,59 @@ final class ConvertTest extends TestCase
     {
         self::assertSame(['utf8mb4', 'latin1', 'binary'], [Convert::readableCharset(Domain::string(2, Collation::known('utf16_general_ci')))->name, Convert::readableCharset(Domain::string(2, Collation::known('latin1_swedish_ci')))->name, Convert::readableCharset(Domain::integer())->name]);
     }
+
+    public function testOperandDecimalWarnsForAColumnAsTheServerDoes(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (s VARCHAR(10))');
+        $session->query("INSERT INTO t VALUES ('a'), ('3x'), ('')");
+        $result = $session->query('SELECT s DIV 3 FROM t')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0'], ['1'], ['0']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([
+            ['Warning', '1366', "Incorrect DECIMAL value: '0' for column '' at row -1"],
+            ['Warning', '1292', "Truncated incorrect DECIMAL value: 'a'"],
+            ['Warning', '1292', "Truncated incorrect DECIMAL value: '3x'"],
+            ['Warning', '1366', "Incorrect DECIMAL value: '0' for column '' at row -1"],
+            ['Warning', '1292', "Truncated incorrect DECIMAL value: ''"],
+        ], $warnings->rows);
+    }
+
+    public function testOperandDecimalReadsTheBinaryStringOfABitOperatorAsALiteral(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SELECT ~BINARY('a') DIV 1");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(['Warning', '1292', "Truncated incorrect DECIMAL value: '\\x9E'"], $warnings->rows[1]);
+    }
+
+    public function testStringIntegerWarnsForAnEmptyString(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SELECT '' & 1, ' ' + 0, CAST('' AS DECIMAL)");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect INTEGER value: ''"], ['Warning', '1292', "Truncated incorrect DECIMAL value: ''"]], $warnings->rows);
+    }
+
+    public function testDecimalIntegerSaturatesWithAWarning(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT CAST(18446744073709551616 AS SIGNED), CAST(-1.5 AS UNSIGNED), CAST(-18446744073709551616 AS UNSIGNED)')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['9223372036854775807', '18446744073709551614', '9223372036854775808']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DECIMAL value: '18446744073709551616'"], ['Warning', '1292', "Truncated incorrect DECIMAL value: '-18446744073709551616'"]], $warnings->rows);
+    }
+
 }

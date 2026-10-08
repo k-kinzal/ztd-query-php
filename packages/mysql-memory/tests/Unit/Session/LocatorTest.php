@@ -257,4 +257,33 @@ final class LocatorTest extends TestCase
         self::assertSame([[ColumnUse::class], [ClockCall::class]], [array_map(static fn (object $node): string => $node::class, $locator->nodes()), array_map(static fn (object $node): string => $node::class, $locator->clocks())]);
         self::assertSame(['field list', 'where clause'], array_map(static fn (array $place): string => $place[0], array_values($locator->places)));
     }
+
+    public function testStatementLocatesTheSubqueryOfAPredicateBeforeItsOperand(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT, b INT)');
+        $locator = (new Locator())->statement($session->analyze('SELECT a IN (SELECT b FROM t), a = ALL (SELECT b FROM t) FROM t')->statement);
+
+        self::assertSame([['IN/ALL/ANY subquery', [1, 0, 1]], ['field list', [1, 0, 0, 1, 0]], ['IN/ALL/ANY subquery', [1, 1, 2]], ['field list', [1, 1, 0, 1, 0]]], array_values($locator->places));
+        self::assertCount(2, $locator->predicates);
+    }
+
+    public function testEarlyHoldsForAllAndForAnyOtherThanEquality(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+        $locator = (new Locator())->statement($session->analyze('SELECT 1 IN (TABLE t), 1 = ANY (TABLE t), 1 <> ALL (TABLE t), 1 = ALL (TABLE t), 1 > ANY (TABLE t)')->statement);
+
+        self::assertSame([false, false, false, true, true], array_map(static fn (array $predicate): bool => Locator::early($predicate[0]), $locator->predicates));
+    }
+
+    public function testStatementLocatesACastToAnArrayOutsideAFunctionalIndex(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $locator = (new Locator())->statement($session->analyze('SELECT CAST(1 AS SIGNED ARRAY), CAST(2 AS UNSIGNED)')->statement);
+
+        self::assertCount(1, $locator->arrays);
+        self::assertSame('field list', $locator->arrays[0][1]);
+    }
+
 }

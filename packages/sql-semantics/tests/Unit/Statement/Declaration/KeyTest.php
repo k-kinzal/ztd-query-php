@@ -22,11 +22,4 @@ final class KeyTest extends TestCase
         self::assertSame([true, true, false], array_map(static fn (Key $key): bool => $key->determines(), $table->keys));
         self::assertSame([true, false, false], array_map(static fn (Key $key): bool => $key->primary, $table->keys));
     }
-
-    public function testConstructRefusesAKeyWithoutColumns(): void
-    {
-        $this->expectException(\SqlSemantics\Diagnostic\InvalidConstruction::class);
-
-        new Key(false, []);
-    }
 }

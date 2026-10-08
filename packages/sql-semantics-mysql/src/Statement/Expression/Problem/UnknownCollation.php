@@ -31,10 +31,10 @@ final class UnknownCollation implements Diagnostic
     }
 
     /**
-     * Describes the problem as the server does.
+     * Describes the problem as the server does, quoting at most 64 characters of the name.
      */
     public function message(): string
     {
-        return sprintf("Unknown collation: '%s'", $this->name);
+        return sprintf("Unknown collation: '%s'", mb_substr($this->name, 0, 64));
     }
 }

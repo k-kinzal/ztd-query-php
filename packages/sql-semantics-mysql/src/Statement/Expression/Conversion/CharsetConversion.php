@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
@@ -60,6 +61,7 @@ final class CharsetConversion implements Scalar
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
         $name = $this->charset->name;
         Check::invariant($name !== null, 'CONVERT … USING names a character set.');
+        Deprecation::charset($name->value, $derivation);
         $type = strtolower($name->value) === 'binary' ? new Binary(BinaryKind::VarBinary) : new Character(CharacterKind::VarChar, null, false, new CharsetAttribute(CharsetForm::Named, $name));
         $operand = (new Precision())->domain($fact->type);
         $domain = $operand === null ? null : (new Texts(Settings::of($derivation->context)))->converted($operand, $name->value, $derivation);

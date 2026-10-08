@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation\Operator\Comparison;
 
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\Constant;
@@ -141,4 +142,21 @@ final class IsTestTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $whole);
         self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $whole->rows);
     }
+
+    public function testAbsentChecksTheEscapeOfANegatedLike(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (b VARCHAR(5))');
+        $session->query("INSERT INTO t VALUES ('a')");
+        $negated = $session->run("SELECT (b NOT LIKE 'a' ESCAPE USER()) IS NULL FROM t");
+        $plain = $session->query("SELECT (b LIKE 'a' ESCAPE USER()) IS NULL FROM t")[0];
+
+        self::assertInstanceOf(SqlError::class, $negated[0]);
+        self::assertSame(1210, $negated[0]->getCode());
+        self::assertInstanceOf(ResultSet::class, $plain);
+        self::assertSame([['0']], $plain->rows);
+    }
+
 }

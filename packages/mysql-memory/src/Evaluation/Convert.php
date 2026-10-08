@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace MySqlMemory\Evaluation;
 
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Evaluation\Leaf\ColumnRead;
+use MySqlMemory\Evaluation\Leaf\Constant;
+use MySqlMemory\Evaluation\Leaf\Outer;
+use MySqlMemory\Evaluation\Leaf\Retyped;
+use MySqlMemory\Evaluation\Operator\Bits;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Encoding;
@@ -19,7 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * Reads a value of one domain as a value of another kind, as the server reads an operand in a context.
  *
  * A string read as a number takes the number at its start and warns (ER_TRUNCATED_WRONG_VALUE)
- * when more follows. A double read as an integer is rounded half to even and saturates; a
+ * when more follows; read as an integer or a decimal, an empty string warns too. A double read as an integer is rounded half to even and saturates; a
  * decimal is rounded half away from zero.
  *
  * @visibility MySqlMemory
@@ -99,6 +104,40 @@ final class Convert
     }
 
     /**
+     * Reads the value of an operand as an exact decimal text, warning as the server does for where a string comes from.
+     *
+     * A string that holds no number at all, read from anything but a literal or the binary string
+     * of a bit operator, warns that it is an incorrect DECIMAL value of 0
+     * (ER_TRUNCATED_WRONG_VALUE_FOR_FIELD). A string read from a literal, a bit operator or a
+     * column also warns (ER_TRUNCATED_WRONG_VALUE) when it is not wholly a number, an empty
+     * string included; a string computed by a function or read from a variable does not.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors
+     */
+    public static function operandDecimal(int|float|string|null $value, Evaluable $operand, Context $context): ?string
+    {
+        $domain = $operand->domain();
+        if ($value === null || ($domain->kind !== Kind::String && $domain->kind !== Kind::Json) || $domain->numericBytes) {
+            return self::toDecimal($value, $domain, $context);
+        }
+        $text = self::readable((string) $value, $domain);
+        $read = NumericText::exact($text);
+        $origin = $operand;
+        while ($origin instanceof Retyped) {
+            $origin = $origin->evaluable;
+        }
+        $literal = $origin instanceof Constant || $origin instanceof Bits;
+        if (!$literal && preg_match('/\A[ \t\n\r\v\f]*[+-]?\.?[0-9]/', $text) !== 1) {
+            $context->warnMessage(ErrorCode::TruncatedWrongValueForField, ErrorCode::TruncatedWrongValueForField->message('DECIMAL', '0', '', -1));
+        }
+        if (($literal || $origin instanceof ColumnRead || $origin instanceof Outer) && (!$read->complete || trim($text, " \t\n\r\v\f") === '')) {
+            $context->warning(ErrorCode::TruncatedWrongValue, 'DECIMAL', self::shown($text, self::readableCharset($domain)));
+        }
+
+        return $read->number;
+    }
+
+    /**
      * Reads a value as the text the server writes for it.
      */
     public static function toText(int|float|string|null $value, Domain $domain): ?string
@@ -139,7 +178,7 @@ final class Convert
     public static function stringNumber(string $text, string $kind, Context $context, bool $exact, ?Charset $charset = null): string
     {
         $read = $exact ? NumericText::exact($text) : NumericText::real($text);
-        if (!$read->complete) {
+        if (!$read->complete || ($exact && trim($text, " \t\n\r\v\f") === '')) {
             $context->warning(ErrorCode::TruncatedWrongValue, $kind, self::shown($text, $charset));
         }
 
@@ -188,7 +227,7 @@ final class Convert
         $read = NumericText::integer($text);
         $number = Decimal::numeric($read->number);
         $inRange = $unsigned ? Integer::unsignedRange($number) || Integer::signedRange($number) : Integer::signedRange($number);
-        if (!$read->complete || !$inRange) {
+        if (!$read->complete || !$inRange || trim($text, " \t\n\r\v\f") === '') {
             $context->warning(ErrorCode::TruncatedWrongValue, 'INTEGER', self::shown($text, $charset));
         }
         if (!$inRange) {
@@ -196,6 +235,32 @@ final class Convert
         }
 
         return $unsigned && bccomp($number, (string) PHP_INT_MAX, 0) > 0 ? Integer::fromUnsignedText($number) : (int) $number;
+    }
+
+    /**
+     * Reads a decimal as a 64-bit integer, as a bit operator or CAST to SIGNED or UNSIGNED reads it.
+     *
+     * The decimal is rounded half away from zero. A negative one read as unsigned keeps its two's
+     * complement; one beyond the range, which reaches to the largest unsigned integer when read as
+     * unsigned, takes the nearest bound with a warning (ER_TRUNCATED_WRONG_VALUE).
+     *
+     * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors
+     */
+    public static function decimalInteger(string $value, Context $context, bool $unsigned): int
+    {
+        $number = Decimal::numeric(Decimal::round($value, 0));
+        if (bccomp($number, (string) PHP_INT_MIN, 0) < 0) {
+            $context->warning(ErrorCode::TruncatedWrongValue, 'DECIMAL', $value);
+
+            return PHP_INT_MIN;
+        }
+        if (bccomp($number, $unsigned ? Integer::UNSIGNED_MAX : (string) PHP_INT_MAX, 0) > 0) {
+            $context->warning(ErrorCode::TruncatedWrongValue, 'DECIMAL', $value);
+
+            return $unsigned ? -1 : PHP_INT_MAX;
+        }
+
+        return bccomp($number, (string) PHP_INT_MAX, 0) > 0 ? Integer::fromUnsignedText($number) : (int) $number;
     }
 
     /**

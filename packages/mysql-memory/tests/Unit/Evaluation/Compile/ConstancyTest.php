@@ -109,4 +109,16 @@ final class ConstancyTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1'], ['1', '1'], [null, '1']], $result->rows);
     }
+
+    public function testOfTakesAnAssignmentAsItsValueWhenAssignmentsDoNotVary(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT (@v := 1), (@w := @w + 1)');
+        $constant = $operation->field(0)->expression;
+        $varying = $operation->field(1)->expression;
+        self::assertNotNull($constant);
+        self::assertNotNull($varying);
+
+        self::assertSame([Constancy::Statement, Constancy::Row, Constancy::Row], [Constancy::of($constant, $operation->facts, true, ['v', 'w'], false), Constancy::of($varying, $operation->facts, true, ['v', 'w'], false), Constancy::of($constant, $operation->facts, true, ['v', 'w'])]);
+    }
+
 }

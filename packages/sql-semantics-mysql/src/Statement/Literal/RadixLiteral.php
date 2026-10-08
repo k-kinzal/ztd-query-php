@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Introducers;
 use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
 use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Rendering\Output;
@@ -61,6 +62,10 @@ final class RadixLiteral implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        if ($this->introducer !== null) {
+            Deprecation::charset($this->introducer->value, $derivation);
+        }
+
         return new ScalarFact(new Known(Literals::of($derivation->context)->radix($this)), Nullability::NotNull);
     }
 

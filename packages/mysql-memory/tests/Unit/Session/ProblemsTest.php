@@ -929,4 +929,78 @@ final class ProblemsTest extends TestCase
         $this->expectExceptionMessage("Too-big precision 263 specified for 'CAST'. Maximum is 6.");
         $session->query('SELECT CAST(NOW() AS TIME(263)) FROM nosuch');
     }
+
+    public function testWidthFindsTheWidthOfAllBeforeItsOperandAndOfInAfterIt(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT, b INT)');
+        $all = $session->run('SELECT nope = ALL (SELECT a, b FROM t) FROM t');
+        $in = $session->run('SELECT nope IN (SELECT a, b FROM t) FROM t');
+        $subquery = $session->run('SELECT nope IN (SELECT nope2 FROM t) FROM t');
+
+        self::assertInstanceOf(SqlError::class, $all[0]);
+        self::assertSame([1241, 'Operand should contain 1 column(s)'], [$all[0]->getCode(), $all[0]->getMessage()]);
+        self::assertInstanceOf(SqlError::class, $in[0]);
+        self::assertSame([1054, "Unknown column 'nope' in 'IN/ALL/ANY subquery'"], [$in[0]->getCode(), $in[0]->getMessage()]);
+        self::assertInstanceOf(SqlError::class, $subquery[0]);
+        self::assertSame("Unknown column 'nope2' in 'field list'", $subquery[0]->getMessage());
+    }
+
+    public function testRaiseFollowsAnUnknownColumnOfMatchWithTheErrorOfAgainst(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->run("SELECT MATCH(nope) AGAINST ('x') FROM t");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Error', '1054', "Unknown column 'nope' in 'field list'"], ['Error', '1210', 'Incorrect arguments to AGAINST']], $warnings->rows);
+    }
+
+    public function testRaiseRefusesACastToAnArrayWhereItResolvesTheCast(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $before = $session->run('SELECT nope, CAST(1 AS SIGNED ARRAY) FROM t');
+        $after = $session->run('SELECT CAST(1 AS SIGNED ARRAY), nope FROM t');
+
+        self::assertInstanceOf(SqlError::class, $before[0]);
+        self::assertSame(1054, $before[0]->getCode());
+        self::assertInstanceOf(SqlError::class, $after[0]);
+        self::assertSame("This version of MySQL doesn't yet support 'Use of CAST( .. AS .. ARRAY) outside of functional index in CREATE(non-SELECT)/ALTER TABLE or in general expressions'", $after[0]->getMessage());
+    }
+
+    public function testReadRefusesTheTooBigPrecisionOfAtTimeZoneFirst(): void
+    {
+        $session = (new Instance())->connect();
+        $answers = $session->run("SELECT CAST(nope AT TIME ZONE 'x' AS DATETIME(7))");
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame("Too-big precision 7 specified for 'CAST'. Maximum is 6.", $answers[0]->getMessage());
+    }
+
+    public function testUndefaultedRefusesDefaultOfAColumnWithoutADefaultWhereItIsResolved(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, a INT)');
+        $first = $session->run('SELECT DEFAULT(id), nope FROM t');
+        $later = $session->run('SELECT nope, DEFAULT(id) FROM t');
+        $result = $session->query('SELECT DEFAULT(a) FROM t')[0];
+
+        self::assertInstanceOf(SqlError::class, $first[0]);
+        self::assertSame([1364, "Field 'id' doesn't have a default value"], [$first[0]->getCode(), $first[0]->getMessage()]);
+        self::assertInstanceOf(SqlError::class, $later[0]);
+        self::assertSame(1054, $later[0]->getCode());
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+    }
+
 }

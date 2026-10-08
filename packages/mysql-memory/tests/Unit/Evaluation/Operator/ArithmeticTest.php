@@ -250,4 +250,39 @@ final class ArithmeticTest extends TestCase
 
         self::assertSame($domain, $arithmetic->domain());
     }
+
+    public function testEvaluateConvertsTheOtherOperandOfANullInDoublePrecision(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT NULL + 'a', 1/0 + 'b'")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"], ['Warning', '1365', 'Division by 0'], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $warnings->rows);
+    }
+
+    public function testOperandReadsBothIntegerOperandsBeforeANullDecides(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SELECT CAST(NULL AS SIGNED) + (1 DIV 0), CAST(NULL AS DECIMAL) + (1.5 / 0)');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1365', 'Division by 0']], $warnings->rows);
+    }
+
+    public function testIntegerDivideReadsAStringOfAFunctionWithoutTruncationWarnings(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CONCAT('a') DIV 3, CONCAT('7x') DIV 3, 'a' DIV NULL, NULL DIV 'a'")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '2', null, null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1366', "Incorrect DECIMAL value: '0' for column '' at row -1"], ['Warning', '1292', "Truncated incorrect DECIMAL value: 'a'"]], $warnings->rows);
+    }
+
 }

@@ -10,6 +10,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
@@ -127,14 +128,15 @@ final class ItemNaming
     /**
      * Answers the own name of an item that names itself, its text with the character set it is in, or null when the item is named after its written text.
      *
-     * A column reference answers itself: it is named by its column name.
+     * A column reference answers itself: it is named by its column name. Parentheses, a unary
+     * plus and an ODBC escape that stands for its operand name the item as their operand does.
      *
      * @return ColumnUse|Name|array{string, string}|null
      * @throws ImplementationGap When NAME_CONST names the column after a value this rule does not spell
      */
     public function own(Scalar $expression): ColumnUse|Name|array|null
     {
-        while ($expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus)) {
+        while ($expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus) || ($expression instanceof OdbcEscape && $expression->literal() === null)) {
             $expression = $expression->operand;
         }
 

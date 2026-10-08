@@ -10,6 +10,7 @@ use MySqlMemory\Evaluation\Aggregate\GroupingFlags;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
+use MySqlMemory\Evaluation\Leaf\Constant;
 use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Evaluation\Operator\Conversion;
 use MySqlMemory\Evaluation\Scope;
@@ -29,6 +30,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
@@ -63,8 +65,9 @@ final class Grouping
      * Plans the grouping of a block over its input; answers the grouped path and the scope its later clauses compile in.
      *
      * GROUP BY CUBE runs only on a secondary engine, so a statement that
-     * passes every check before planning fails on it (verified on a live
-     * 8.4 server).
+     * passes every check before planning fails on it. A grouping expression
+     * constant for the statement is not evaluated, without WITH ROLLUP: every
+     * row falls in the same group by it (verified on a live 8.4 server).
      *
      * @return array{AccessPath, Scope}
      * @throws \MySqlMemory\Error\SqlError When the block groups by CUBE
@@ -82,7 +85,9 @@ final class Grouping
         $groups = [];
         $targets = [];
         foreach ($select->groupBy === null ? [] : $select->groupBy->items as $item) {
-            $groups[] = $compiler->compile($item->expression, $scope);
+            $group = $compiler->compile($item->expression, $scope);
+            $constant = $select->groupBy?->modifier === null && $compiler->constancy($item->expression)->constant() && (new Walker())->find($item->expression, Query::class) === [];
+            $groups[] = $constant ? new Constant($group->domain(), null) : $group;
             $targets[] = $this->target($item->expression);
         }
         $accumulations = array_map(fn (Scalar $node): Accumulation => $this->accumulation($node, $scope), $aggregates);

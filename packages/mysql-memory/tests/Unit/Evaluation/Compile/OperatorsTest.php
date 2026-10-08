@@ -321,4 +321,58 @@ final class OperatorsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $each);
         self::assertSame(['1365', '1292', '1365', '1365', '1292', '1365'], array_column($each->rows, 1));
     }
+
+    public function testNegatedPushesNotIntoAndOrAndXor(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2), (3)');
+        $session->query('SELECT NOT ((1/0) IS NULL OR 0) FROM t');
+        $pushed = $session->query('SHOW COUNT(*) WARNINGS')[0];
+        $session->query('SELECT NOT (NOT ((1/0) IS NULL)) FROM t');
+        $cancelled = $session->query('SHOW COUNT(*) WARNINGS')[0];
+        $result = $session->query('SELECT NOT (a > 1 AND a < 3), NOT (a = 1 XOR a = 2), ! (a = 1 OR NULL) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $pushed);
+        self::assertSame([['3']], $pushed->rows);
+        self::assertInstanceOf(ResultSet::class, $cancelled);
+        self::assertSame([['1']], $cancelled->rows);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0', '0'], ['0', '0', null], ['1', '1', null]], $result->rows);
+    }
+
+    public function testCompareReadsAConstantIntegerComparedWithNullOnce(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2), (3)');
+        $session->query('SELECT (1 DIV 0) = NULL FROM t');
+        $left = $session->query('SHOW COUNT(*) WARNINGS')[0];
+        $session->query('SELECT NULL <=> (1 DIV 0) FROM t');
+        $right = $session->query('SHOW COUNT(*) WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $left);
+        self::assertSame([['1']], $left->rows);
+        self::assertInstanceOf(ResultSet::class, $right);
+        self::assertSame([['3']], $right->rows);
+    }
+
+    public function testNumericReadsAnAssignmentOfAConstantOnce(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2), (3)');
+        $session->query("SELECT (@l := 'a') = 1 FROM t");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(['1287', '1292'], array_column($warnings->rows, 1));
+    }
+
 }

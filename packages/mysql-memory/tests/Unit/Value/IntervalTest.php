@@ -74,9 +74,16 @@ final class IntervalTest extends TestCase
         self::assertSame(1999999, $interval?->microseconds);
     }
 
-    public function testCompoundAnswersNullForATextWithoutNumbers(): void
+    public function testCompoundReadsATextWithoutNumbersAsAnEmptyInterval(): void
     {
-        self::assertNull(Interval::compound('abc', IntervalUnit::DayHour));
+        $interval = Interval::compound('abc', IntervalUnit::DayHour);
+
+        self::assertSame([0, 0], [$interval?->months, $interval?->microseconds]);
+    }
+
+    public function testCompoundAnswersNullForMoreNumbersThanTheUnitHasParts(): void
+    {
+        self::assertNull(Interval::compound('1 2 3', IntervalUnit::DayHour));
     }
 
     public function testDatedHoldsForUnitsOfWholeDays(): void

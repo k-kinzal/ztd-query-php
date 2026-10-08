@@ -43,7 +43,7 @@ final class Logic implements Evaluable
     }
 
     /**
-     * Combines the truth values of the operands for a row.
+     * Combines the truth values of the operands for a row; the right operand is not read when the left one decides the result, a NULL one for XOR included.
      */
     #[Override]
     public function evaluate(Frame $frame): ?int
@@ -55,12 +55,15 @@ final class Logic implements Evaluable
         if ($this->operator === LogicalOperator::Or && $left === true) {
             return 1;
         }
+        if ($this->operator === LogicalOperator::Xor && $left === null) {
+            return null;
+        }
         $right = Convert::toBool($this->right->evaluate($frame), $this->right->domain(), $frame->context);
 
         return match ($this->operator) {
             LogicalOperator::And => $right === false ? 0 : ($left === null || $right === null ? null : 1),
             LogicalOperator::Or => $right === true ? 1 : ($left === null || $right === null ? null : 0),
-            LogicalOperator::Xor => $left === null || $right === null ? null : ($left !== $right ? 1 : 0),
+            LogicalOperator::Xor => $right === null ? null : ($left !== $right ? 1 : 0),
         };
     }
 }

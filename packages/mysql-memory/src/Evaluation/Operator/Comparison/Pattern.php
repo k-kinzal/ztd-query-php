@@ -60,16 +60,16 @@ final class Pattern implements Evaluable
     }
 
     /**
-     * Matches the string for a row; the pattern is not evaluated for a NULL string.
+     * Matches the string for a row; the escape is read before the string, and the pattern is not evaluated for a NULL string.
      *
      * @throws \MySqlMemory\Error\SqlError When an escape checked at the first row is more than one character
      */
     #[Override]
     public function evaluate(Frame $frame): ?int
     {
+        $escape = $this->escape === null ? $this->symbol('\\') : $this->escapeText($frame);
         $subject = $this->text($this->operand, $frame);
         $pattern = $subject === null ? null : $this->text($this->pattern, $frame);
-        $escape = $this->escape === null ? $this->symbol('\\') : $this->escapeText($frame);
         if ($subject === null || $pattern === null) {
             return null;
         }
