@@ -22,6 +22,11 @@ use Testcontainers\Testcontainers;
 final class Servers
 {
     /**
+     * The account the differential target repairs the servers through.
+     */
+    public const GUARD = 'memory_guard';
+
+    /**
      * Starts both servers and answers the differential target over them, and the grammar of the release.
      *
      * @return array{Differential, string, Server}
@@ -49,8 +54,29 @@ final class Servers
         $account = $identity === false ? '' : $identity->fetchColumn();
         $account = is_string($account) ? $account : '';
         $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1));
+        $this->guard($native, $version, $password);
+        $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
-        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version), 'mysql-' . $version, $server];
+        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD), 'mysql-' . $version, $server];
+    }
+
+    /**
+     * Creates the account the differential target repairs the servers through, on one server.
+     *
+     * The account has every privilege, and no generated statement names it, so a statement that
+     * drops or locks the account the statements run as cannot take the repair down with it. It is
+     * created on both servers, so that both list the same accounts.
+     */
+    public function guard(PDO $connection, string $version, string $password): void
+    {
+        $account = "'" . self::GUARD . "'@'%'";
+        $quoted = $connection->quote($password);
+        $statements = str_starts_with($version, '5.6.')
+            ? ["GRANT ALL ON *.* TO {$account} IDENTIFIED BY {$quoted} WITH GRANT OPTION"]
+            : ["CREATE USER IF NOT EXISTS {$account} IDENTIFIED BY {$quoted}", "GRANT ALL ON *.* TO {$account} WITH GRANT OPTION"];
+        foreach ($statements as $statement) {
+            $connection->exec($statement);
+        }
     }
 
     /**
@@ -65,7 +91,7 @@ final class Servers
     {
         $statements = [];
         foreach ($this->rows($native, 'SELECT User, Host FROM mysql.user') as [$name, $host]) {
-            if (!in_array($name, ['root', 'healthchecker', 'mysql.infoschema', 'mysql.session', 'mysql.sys'], true)) {
+            if (!in_array($name, ['root', self::GUARD, 'healthchecker', 'mysql.infoschema', 'mysql.session', 'mysql.sys'], true)) {
                 $statements[] = (str_starts_with($version, '5.6.') ? 'DROP USER ' : 'DROP USER IF EXISTS ') . $native->quote($name) . '@' . $native->quote($host);
             }
         }

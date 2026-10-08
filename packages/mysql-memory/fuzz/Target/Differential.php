@@ -28,12 +28,18 @@ final class Differential
     private ?PDO $memoryGuard = null;
 
     /**
+     * The account the statements run as on the MySQL server, read before any statement ran.
+     */
+    private ?string $account = null;
+
+    /**
      * @param string $native The PDO DSN of the MySQL server, without a database
      * @param string $nativeUser The user of the MySQL server
      * @param string $nativePassword The password of the MySQL server
      * @param string $memory The PDO DSN of mysql-memory, without a database
      * @param bool $emulate Whether PDO emulates prepared statements
      * @param string $version The MySQL release of both servers, as `8.4.7`
+     * @param string|null $guardUser The account the MySQL server is repaired through, or null for the native user
      */
     public function __construct(
         public readonly string $native,
@@ -42,6 +48,7 @@ final class Differential
         public readonly string $memory,
         public readonly bool $emulate = true,
         public readonly string $version = '8.4.7',
+        public readonly ?string $guardUser = null,
     ) {
     }
 
@@ -87,11 +94,19 @@ final class Differential
     }
 
     /**
-     * Answers the connection that repairs the MySQL server after a statement, opened once before any statement runs.
+     * Answers the connection that repairs the MySQL server after a statement, opened once before any statement runs, as the guard account.
      */
     public function guard(): PDO
     {
-        return $this->guard ??= new PDO($this->native, $this->nativeUser, $this->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
+        if ($this->guard === null) {
+            $statements = new PDO($this->native, $this->nativeUser, $this->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
+            $account = $statements->query('SELECT CURRENT_USER()');
+            $current = $account === false ? '' : $account->fetchColumn();
+            $this->account = is_string($current) && $current !== '' ? $current : $this->nativeUser . '@%';
+            $this->guard = new PDO($this->native, $this->guardUser ?? $this->nativeUser, $this->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
+        }
+
+        return $this->guard;
     }
 
     /**
@@ -103,13 +118,12 @@ final class Differential
     }
 
     /**
-     * Restores what a statement may have changed for the account and the server: the account, its password and privileges, and the global modes that refuse connections or writes.
+     * Restores what a statement may have changed for the account and the server: the account the guard authenticated as, its password and privileges, and the global modes that refuse connections or writes.
      */
     public function repair(PDO $guard): void
     {
-        $account = $guard->query('SELECT CURRENT_USER()');
-        $current = $account === false ? '' : (string) $account->fetchColumn();
-        [$user, $host] = explode('@', $current === '' ? $this->nativeUser . '@%' : $current, 2) + [1 => '%'];
+        $this->guard();
+        [$user, $host] = explode('@', $this->account ?? $this->nativeUser . '@%', 2) + [1 => '%'];
         $quoted = $guard->quote($user) . '@' . $guard->quote($host);
         $password = $guard->quote($this->nativePassword);
         foreach ($this->repairs($quoted, $password) as $statement) {
@@ -134,6 +148,7 @@ final class Differential
                 "GRANT ALL ON *.* TO {$quoted} IDENTIFIED BY {$password} WITH GRANT OPTION",
                 "SET PASSWORD FOR {$quoted} = PASSWORD({$password})",
                 'SET GLOBAL read_only = OFF',
+                'SET GLOBAL tx_read_only = OFF',
             ];
         }
         $statements = [
@@ -144,6 +159,7 @@ final class Differential
             'SET GLOBAL offline_mode = OFF',
             'SET GLOBAL super_read_only = OFF',
             'SET GLOBAL read_only = OFF',
+            'SET GLOBAL transaction_read_only = OFF',
             'ALTER INSTANCE ENABLE INNODB REDO_LOG',
         ];
 
