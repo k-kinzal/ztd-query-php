@@ -26,4 +26,12 @@ final class StoredTableTest extends TestCase
         self::assertNotNull($table);
         self::assertSame([['a', 'b'], [1 => [1, 'x'], 2 => [2, null]]], [[$table->definition->columns[0]->name, $table->definition->columns[1]->name], $table->data->rows]);
     }
+
+    public function testHistogramsStartEmpty(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t (a INT)');
+
+        self::assertSame([], $session->instance->dictionary->table('d', 't')?->histograms);
+    }
 }

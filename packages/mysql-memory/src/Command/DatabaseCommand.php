@@ -13,6 +13,7 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
+use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCollation;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DropDatabase;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase;
@@ -62,6 +63,11 @@ final class DatabaseCommand implements Command
                 return new Completion(0, 0, 1);
             }
             $collation = 'utf8mb4_0900_ai_ci';
+            foreach ($statement->options as $option) {
+                if ($option instanceof DatabaseCharset && $option->charset->name !== null) {
+                    $collation = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($option->charset->name->value)?->defaultCollation($session->settings()->release())->name ?? $collation;
+                }
+            }
             foreach ($statement->options as $option) {
                 if ($option instanceof DatabaseCollation && $option->collation->name !== null) {
                     $collation = strtolower($option->collation->name->value);

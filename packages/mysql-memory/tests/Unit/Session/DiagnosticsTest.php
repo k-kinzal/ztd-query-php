@@ -96,6 +96,23 @@ final class DiagnosticsTest extends TestCase
         self::assertSame(0, $diagnostics->count());
     }
 
+    public function testSignalRecordsAWarningWithTheItemsItSets(): void
+    {
+        $diagnostics = new Diagnostics();
+        $diagnostics->signal(1000, 'w', ['RETURNED_SQLSTATE' => '01234', 'TABLE_NAME' => 'tt']);
+
+        self::assertSame([['Warning', 1000, 'w']], $diagnostics->conditions);
+        self::assertSame(['01234', 'tt', ''], [$diagnostics->item(0, 'RETURNED_SQLSTATE'), $diagnostics->item(0, 'TABLE_NAME'), $diagnostics->item(0, 'CLASS_ORIGIN')]);
+    }
+
+    public function testItemAnswersTheItemsOfAConditionTheServerRaised(): void
+    {
+        $diagnostics = new Diagnostics();
+        $diagnostics->warning(1365, 'Division by 0');
+
+        self::assertSame(['22012', 'ISO 9075', 'ISO 9075', ''], [$diagnostics->item(0, 'RETURNED_SQLSTATE'), $diagnostics->item(0, 'CLASS_ORIGIN'), $diagnostics->item(0, 'SUBCLASS_ORIGIN'), $diagnostics->item(0, 'TABLE_NAME')]);
+    }
+
     public function testCountCountsTheConditions(): void
     {
         $diagnostics = new Diagnostics();

@@ -42,6 +42,15 @@ final class DatabaseCommandTest extends TestCase
         self::assertSame('utf8mb4_bin', $session->instance->dictionary->schema('d')?->collation);
     }
 
+    public function testExecuteCreatesADatabaseWithTheDefaultCollationOfTheCharacterSetItNames(): void
+    {
+        $session = (new Instance())->connect();
+
+        $session->query('CREATE DATABASE l CHARACTER SET latin1; CREATE DATABASE b COLLATE latin1_bin CHARACTER SET latin1');
+
+        self::assertSame(['latin1_swedish_ci', 'latin1_bin'], [$session->instance->dictionary->schema('l')?->collation, $session->instance->dictionary->schema('b')?->collation]);
+    }
+
     public function testExecuteRefusesToCreateAnExistingDatabase(): void
     {
         $session = (new Instance())->connect();

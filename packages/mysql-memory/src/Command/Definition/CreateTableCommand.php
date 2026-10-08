@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Statement\Operation;
 
 /**
- * Executes CREATE TABLE: declares the table in its database, with no rows.
+ * Executes CREATE TABLE: declares the table in its database, with no rows, or with the rows of its query (TableQueries).
  *
  * The statement commits the open transaction. CREATE TABLE IF NOT EXISTS of an existing table
  * succeeds with a note.
@@ -60,7 +60,7 @@ final class CreateTableCommand implements Command
             throw ErrorCode::BadDatabase->error($schemaName);
         }
         $name = $create->name->name->value;
-        if ($schema->table($name) !== null) {
+        if ($schema->table($name) !== null || isset($schema->views[$name])) {
             if (!$create->ifNotExists) {
                 throw ErrorCode::TableExists->error($name);
             }
@@ -69,7 +69,7 @@ final class CreateTableCommand implements Command
             return new Completion(0, 0, $context->diagnostics->count());
         }
         if ($create->query !== null) {
-            throw ErrorCode::NotSupportedYet->error('CREATE TABLE ... SELECT');
+            return (new TableQueries($session, $context, $connection))->create($create, $operation, $schema);
         }
         $planner = new Planner($create, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $definition = (new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schemaName);
@@ -96,7 +96,7 @@ final class CreateTableCommand implements Command
             array_splice($columns, $position, 1, [new ColumnDefinition($column->name, $column->domain->withNullable(false), $column->default->declared && $column->default->value === null && $column->default->expression === null ? \MySqlMemory\Dictionary\Fill::none() : $column->default, $column->autoIncrement, $column->onUpdateNow, $column->generated, $column->invisible, $column->declaration, $column->comment)]);
         }
 
-        return new TableDefinition($definition->schema, $definition->name, $columns, $definition->keys, $definition->declaration, $definition->engine, $definition->collation, $definition->temporary, $definition->comment);
+        return new TableDefinition($definition->schema, $definition->name, $columns, $definition->keys, $definition->declaration, $definition->engine, $definition->collation, $definition->temporary, $definition->comment, $definition->statement);
     }
 
     /**

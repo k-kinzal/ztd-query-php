@@ -367,4 +367,17 @@ final class StoreTest extends TestCase
 
         self::assertSame(["\xE9\x80", "\x00\xE9"], [(new Store($context))->value('é€', Domain::string(2, Collation::known('utf8mb4_0900_ai_ci')), $latin1), (new Store($context))->value('é', Domain::string(2, Collation::known('utf8mb4_0900_ai_ci')), $ucs2)]);
     }
+
+    public function testStringReportsAStringTooLongAsTruncatedDataWhenItCopiesATable(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0, true);
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+        $column = new ColumnDefinition('b', new Domain(Kind::String, Field::VarChar, 3, 0, false, $collation), Fill::none());
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1265);
+        $this->expectExceptionMessage("Data truncated for column 'b' at row 2");
+
+        (new Store($context, 2, 't', true))->value('hello', new Domain(Kind::String, Field::VarChar, 10, 0, false, $collation), $column);
+    }
 }

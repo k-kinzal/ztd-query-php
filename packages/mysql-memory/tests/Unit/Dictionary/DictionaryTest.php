@@ -57,6 +57,19 @@ final class DictionaryTest extends TestCase
         self::assertSame(['a', 'b'], [$declarations[0]->name->name->value, $declarations[1]->name->name->value]);
     }
 
+    public function testDeclarationsListsTheViewsAfterTheTablesOfADatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE VIEW v AS SELECT 1 AS x');
+        $session->query('CREATE TABLE t (y INT)');
+
+        $declarations = $session->instance->dictionary->declarations();
+
+        self::assertSame([['t', null], ['v', 'd']], [[$declarations[0]->name->name->value, $declarations[0]->name->schema?->value], [$declarations[1]->name->name->value, $declarations[1]->name->schema?->value]]);
+    }
+
     public function testDeclarationsIsEmptyWithoutTables(): void
     {
         $dictionary = new Dictionary(['d' => new Schema('d')]);

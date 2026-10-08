@@ -92,6 +92,12 @@ final class Locator
 
             return $this;
         }
+        $filters = (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere::class);
+        if ($filters !== []) {
+            $this->visit($filters, 'where clause', []);
+
+            return $this;
+        }
         $this->visit($statement, 'field list', []);
 
         return $this;

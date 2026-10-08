@@ -15,7 +15,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
  *
  * The server keeps its metadata in utf8mb3: the names of the session, the user and the version
  * hold like system constants, and the character set and collation names CHARSET() and
- * COLLATION() answer are coercible, all in utf8mb3_general_ci.
+ * COLLATION() answer are coercible, all in utf8mb3_general_ci. The list of active roles
+ * CURRENT_ROLE() answers is a LONGTEXT of 50331648 characters (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html,
  * https://dev.mysql.com/doc/refman/8.4/en/charset-metadata.html.
  *
@@ -39,6 +40,7 @@ final class SessionResults
             'SESSION_USER' => $name(288),
             'SYSTEM_USER' => $name(288),
             'CURRENT_USER' => $name(288),
+            'CURRENT_ROLE' => static fn (Invocation $call): Domain => Domain::string(50331648, Collation::known('utf8mb3_general_ci'), Field::LongBlob, Coercibility::SystemConstant),
             'CHARSET' => $name(64, Coercibility::Coercible),
             'COLLATION' => $name(64, Coercibility::Coercible),
             'VERSION' => static fn (Invocation $call): Domain => $name(strlen(substr($call->derivation->context->profile->grammar->value, strlen('mysql-'))))($call),

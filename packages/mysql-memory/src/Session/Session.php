@@ -58,6 +58,26 @@ final class Session
     public readonly Transaction $transaction;
 
     /**
+     * @var list<array{string, string, string, bool}> The tables LOCK TABLES locked: the database, the table, the name the statements use and whether the lock is a WRITE lock
+     */
+    public array $locks = [];
+
+    /**
+     * @var array<string, \MySqlMemory\Command\Access\Handler> The tables HANDLER ... OPEN opened, by lowercase handler name
+     */
+    public array $handlers = [];
+
+    /**
+     * The text of the statement being executed, which a stored program keeps its body from.
+     */
+    public string $text = '';
+
+    /**
+     * @var array<string, array{string, int}> The text and parameter count of each statement PREPARE named, by lower-case name
+     */
+    public array $prepared = [];
+
+    /**
      * @var array<string, Semantics> The analyzers of each lexical mode, by mode
      */
     private array $semantics = [];
@@ -77,6 +97,7 @@ final class Session
         $this->variables->connection = $id;
         $this->variables->account = $user . '@' . $host;
         $this->variables->definer = $user . '@%';
+        $this->variables->roles = array_values($instance->accounts->defaults[(new \MySqlMemory\Account\Identity($user, '%'))->key()] ?? []);
         $this->diagnostics = new Diagnostics();
         $this->transaction = new Transaction($instance->dictionary);
         if ($database !== null) {
@@ -125,11 +146,12 @@ final class Session
         $answers = [];
         foreach ($statements as $statement) {
             try {
-                $answers[] = $this->execute($statement, $parameters, $prepared);
+                $reply = $this->execute($statement, $parameters, $prepared);
+                array_push($answers, ...($reply instanceof \MySqlMemory\Result\Batch ? $reply->replies : [$reply]));
             } catch (SqlError $error) {
                 $this->transaction->abortStatement();
                 $this->variables->rowCount = -1;
-                $this->diagnostics->error($error->getCode(), $error->getMessage());
+                $this->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
                 foreach ($error->following as [$code, $message]) {
                     $this->diagnostics->error($code, $message);
                 }
@@ -174,6 +196,7 @@ final class Session
      */
     public function execute(string $statement, array $parameters = [], bool $prepared = false): Reply
     {
+        $this->text = $statement;
         try {
             $operation = $this->analyze($statement, $prepared, $parameters);
             $command = (new Dispatcher())->command($operation->statement);
@@ -194,6 +217,9 @@ final class Session
             $this->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
         }
         (new Problems())->raise($operation, $this);
+        if ($this->locks !== []) {
+            (new \MySqlMemory\Command\Access\Locks())->check($operation->statement, $this);
+        }
         $this->transaction->beginStatement();
         $reply = $command->execute($operation, $this, $context, new Connection($this->variables, $context, $this->user, $this->host, $this->id, $parameters));
         $this->transaction->endStatement();
@@ -220,7 +246,9 @@ final class Session
             (new Syntax())->markers($tree, $statement);
         }
         (new Syntax())->temporals($tree, $this->modes());
+        (new Syntax())->debugOnly($tree, $statement);
         $database = $this->variables->database;
+        \MySqlMemory\Plan\Views::refreshAll($this->instance->dictionary, $this->settings());
         try {
             $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($this->bound($tree, $parameters, $prepared))));
         } catch (ImplementationGap $gap) {

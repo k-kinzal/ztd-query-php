@@ -312,4 +312,19 @@ final class RowsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1'], ['2', '0']], $result->rows);
     }
+
+    public function testDefaultedWritesNullForANullableColumnWithoutDefault(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET sql_mode = ''; CREATE DATABASE d; USE d; CREATE TABLE t (a INT, c INT DEFAULT 5); ALTER TABLE t ALTER COLUMN c DROP DEFAULT");
+
+        $session->query('INSERT INTO t (a) VALUES (1)');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        $result = $session->query('SELECT a, c FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1364', "Field 'c' doesn't have a default value"]], $warnings->rows);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', null]], $result->rows);
+    }
 }

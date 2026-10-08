@@ -11,7 +11,7 @@ use MySqlMemory\Typing\Domain;
 /**
  * An expression whose type SQL Semantics resolved: it evaluates as compiled and reports that type.
  *
- * @visibility MySqlMemory\Evaluation
+ * @visibility MySqlMemory
  */
 final class Retyped implements Evaluable
 {

@@ -135,6 +135,10 @@ final class Rows
 
     /**
      * Answers the value a column takes when a row names none or DEFAULT.
+     *
+     * A column without a default, as after ALTER COLUMN ... DROP DEFAULT, is ER_NO_DEFAULT_FOR_FIELD
+     * under a strict mode; otherwise it takes NULL when it admits NULL, else the implicit default
+     * of its type (verified on a live 8.4 server).
      */
     public function defaulted(int $position, Frame $frame, Store $store, int $number, bool $explicit): int|float|string|null
     {
@@ -145,7 +149,7 @@ final class Rows
         }
         $store->adjust(ErrorCode::NoDefaultForField, $column->name);
 
-        return $this->writer->implicit($column);
+        return $column->nullable() ? null : $this->writer->implicit($column);
     }
 
     /**

@@ -34,6 +34,13 @@ final class SqlErrorTest extends TestCase
         self::assertSame($previous, $error->getPrevious());
     }
 
+    public function testSqlStateAnswersTheStateASignalGave(): void
+    {
+        $error = new SqlError(ErrorCode::SignalException, 'boom', null, [], ['RETURNED_SQLSTATE' => '45001'], 5001);
+
+        self::assertSame(['45001', 5001, 'boom'], [$error->sqlState(), $error->getCode(), $error->getMessage()]);
+    }
+
     public function testSqlStateOfAStatementThatFails(): void
     {
         $session = (new Instance())->connect();

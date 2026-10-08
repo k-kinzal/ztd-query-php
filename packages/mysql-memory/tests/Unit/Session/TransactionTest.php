@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Transaction;
@@ -146,5 +147,92 @@ final class TransactionTest extends TestCase
         self::assertFalse($session->transaction->open);
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1']], $result->rows);
+    }
+
+    public function testGuardRefusesAnEndWhileAnXaTransactionIsActive(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("XA START 'x'");
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1399);
+        $this->expectExceptionMessage('XAER_RMFAIL: The command cannot be executed when global transaction is in the  ACTIVE state');
+
+        $session->transaction->guard();
+    }
+
+    public function testRestorePutsBackTheRowsBeforeTheTransaction(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $session = $instance->connect();
+        $session->query('CREATE TABLE d.t (a INT); INSERT INTO d.t VALUES (1); BEGIN; INSERT INTO d.t VALUES (2)');
+        $session->transaction->restore();
+
+        self::assertSame([1 => [1]], $instance->dictionary->table('d', 't')?->data->rows);
+    }
+
+    public function testDetachTakesTheChangedRowsOutOfTheTables(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $session = $instance->connect();
+        $session->query("CREATE TABLE d.t (a INT); XA START 'x'; INSERT INTO d.t VALUES (2)");
+        $changes = $session->transaction->detach();
+
+        self::assertSame([[], [1 => [2]], false], [$instance->dictionary->table('d', 't')?->data->rows, $changes[0][1]->rows, $session->transaction->open]);
+    }
+
+    public function testSavepointSetsNothingOutsideATransaction(): void
+    {
+        $transaction = new Transaction((new Instance())->dictionary);
+        $transaction->savepoint('a');
+
+        self::assertSame([], $transaction->savepoints);
+    }
+
+    public function testSavepointReplacesAnEarlierSavepointOfTheSameName(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('BEGIN; SAVEPOINT A; SAVEPOINT b; SAVEPOINT a');
+
+        self::assertSame(['b', 'a'], array_column($session->transaction->savepoints, 1));
+    }
+
+    public function testFindComparesNamesWithoutRegardToCaseAndAccents(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('BEGIN; SAVEPOINT e; SAVEPOINT x');
+
+        self::assertSame([0, 0, null], [$session->transaction->find('É'), $session->transaction->find('E'), $session->transaction->find('e ')]);
+    }
+
+    public function testRollbackToRestoresTheRowsAtTheSavepoint(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $session->query('CREATE TABLE d.t (a INT); BEGIN; INSERT INTO d.t VALUES (1); SAVEPOINT s1; INSERT INTO d.t VALUES (2); SAVEPOINT s2; INSERT INTO d.t VALUES (3)');
+        $session->transaction->rollbackTo('S1');
+        $result = $session->query('SELECT a FROM d.t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[['1']], ['s1']], [$result->rows, array_column($session->transaction->savepoints, 1)]);
+    }
+
+    public function testRollbackToRefusesAMissingSavepoint(): void
+    {
+        $transaction = new Transaction((new Instance())->dictionary);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1305);
+        $this->expectExceptionMessage('SAVEPOINT a does not exist');
+
+        $transaction->rollbackTo('a');
+    }
+
+    public function testReleaseDeletesTheSavepointsSetAfterIt(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('BEGIN; SAVEPOINT a; SAVEPOINT b; SAVEPOINT c');
+        $session->transaction->release('b');
+
+        self::assertSame(['a'], array_column($session->transaction->savepoints, 1));
     }
 }

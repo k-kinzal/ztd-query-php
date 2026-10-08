@@ -213,6 +213,10 @@ final class Blocks
     {
         $schema = $table->table->schema->value ?? $this->planner->settings->database;
         $stored = $this->planner->dictionary->table($schema, $table->table->name->value);
+        $view = $this->planner->dictionary->schema($schema)->views[$table->table->name->value] ?? null;
+        if ($stored === null && $view !== null) {
+            return (new Views($this->planner))->table($view);
+        }
         if ($stored === null) {
             throw ErrorCode::NoSuchTable->error($schema, $table->table->name->value);
         }

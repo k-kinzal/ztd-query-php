@@ -304,6 +304,17 @@ final class SessionTest extends TestCase
         self::assertTrue($settings->modes->has('ONLY_FULL_GROUP_BY'));
     }
 
+    public function testQueryReadsTheDefaultRolesOfTheAccountActive(): void
+    {
+        $instance = new Instance();
+        $instance->connect()->query('CREATE ROLE r; CREATE USER u DEFAULT ROLE r');
+
+        $roles = $instance->connect('u')->query('SELECT CURRENT_ROLE()')[0];
+
+        self::assertInstanceOf(ResultSet::class, $roles);
+        self::assertSame([['`r`@`%`']], $roles->rows);
+    }
+
     public function testUseMakesADatabaseTheCurrentOne(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();

@@ -71,4 +71,16 @@ final class TransactionCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['4']], $result->rows);
     }
+
+    public function testExecuteRefusesCommitWhileAnXaTransactionIsActive(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("XA START 'a'");
+
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1399);
+        $this->expectExceptionMessage('XAER_RMFAIL: The command cannot be executed when global transaction is in the  ACTIVE state');
+
+        $session->query('COMMIT');
+    }
 }

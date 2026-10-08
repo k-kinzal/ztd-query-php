@@ -16,7 +16,7 @@ use Throwable;
  *
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html#error_er_parse_error.
  *
- * @visibility MySqlMemory\Session
+ * @visibility MySqlMemory
  */
 final class Syntax
 {
@@ -29,6 +29,29 @@ final class Syntax
     {
         foreach ($tree->tokens() as $token) {
             if ($token->text === '?' && $token->name === 'PARAM_MARKER') {
+                $offset = $token->offset;
+                $line = substr_count(substr($statement, 0, $offset), "\n") + 1;
+
+                throw new SqlError(ErrorCode::ParseError, ErrorCode::ParseError->message(mb_strcut(substr($statement, $offset), 0, 80, 'UTF-8'), $line));
+            }
+        }
+    }
+
+    /**
+     * Refuses SHOW PARSE_TREE, which only a debug build of the server runs, as the parser of a release build does: a syntax error at PARSE_TREE.
+     *
+     * The server reads the whole statement first, so the problems it finds while it parses the
+     * statement inside come before (verified on a live 8.4 server).
+     *
+     * @throws SqlError When the statement is SHOW PARSE_TREE
+     */
+    public function debugOnly(Node $tree, string $statement): void
+    {
+        $previous = null;
+        foreach ($tree->tokens() as $token) {
+            $shown = $previous?->name === 'SHOW';
+            $previous = $token;
+            if ($token->name === 'PARSE_TREE_SYM' && $shown) {
                 $offset = $token->offset;
                 $line = substr_count(substr($statement, 0, $offset), "\n") + 1;
 

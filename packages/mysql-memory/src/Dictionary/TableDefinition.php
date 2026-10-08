@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Dictionary;
 
 use MySqlMemory\Result\ColumnFlag;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Statement\Declaration\Table;
 
@@ -25,6 +26,7 @@ final class TableDefinition
      * @param string $collation The default collation of the table
      * @param bool $temporary Whether the table is a temporary table of one session
      * @param string $comment The comment of the table
+     * @param CreateTable|null $statement The CREATE TABLE statement that declares the table as it is, which a change of the table starts from; null when none is known
      */
     public function __construct(
         public readonly string $schema,
@@ -36,6 +38,7 @@ final class TableDefinition
         public readonly string $collation = 'utf8mb4_0900_ai_ci',
         public readonly bool $temporary = false,
         public readonly string $comment = '',
+        public readonly ?CreateTable $statement = null,
     ) {
     }
 

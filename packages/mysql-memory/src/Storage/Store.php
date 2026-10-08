@@ -37,8 +37,9 @@ final class Store
      * @param Context $context The statement writing, whose mode decides between warnings and errors
      * @param int $row The number of the row being written, counted from 1, for messages
      * @param string $table The name the statement writes the table under, which qualifies the column an invalid JSON text is reported for; empty when it writes several tables
+     * @param bool $copying Whether the rows of a table are copied into its new definition by ALTER TABLE, where a string too long is truncated data even under a strict mode
      */
-    public function __construct(public readonly Context $context, public int $row = 1, public readonly string $table = '')
+    public function __construct(public readonly Context $context, public int $row = 1, public readonly string $table = '', public readonly bool $copying = false)
     {
     }
 
@@ -216,7 +217,7 @@ final class Store
             if (trim($rest, ' ') === '' && $to->collation !== Collation::binary()) {
                 $this->context->note(ErrorCode::DataTruncated, $column->name, $this->row);
             } else {
-                $this->adjust($this->context->strict ? ErrorCode::DataTooLong : ErrorCode::DataTruncated, $column->name, $this->row);
+                $this->adjust($this->context->strict && !$this->copying ? ErrorCode::DataTooLong : ErrorCode::DataTruncated, $column->name, $this->row);
             }
             $text = $kept;
         }

@@ -91,6 +91,10 @@ final class Relations
             throw ErrorCode::NoSuchTable->error($reference->name->schema->value ?? $this->planner->settings->database, $reference->name->name->value);
         }
         $name = $resolution->table->name;
+        $view = $this->planner->dictionary->schema($name->schema->value ?? $this->planner->settings->database)->views[$name->name->value] ?? null;
+        if ($view !== null && $resolution->table === $view->declaration) {
+            return (new Views($this->planner))->plan($reference, $view, $scope, $this);
+        }
         $stored = $this->planner->dictionary->table($name->schema->value ?? $this->planner->settings->database, $name->name->value);
         if ($stored === null) {
             throw ErrorCode::NoSuchTable->error($name->schema->value ?? $this->planner->settings->database, $name->name->value);

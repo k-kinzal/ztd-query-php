@@ -221,6 +221,9 @@ final class TableDeclaration
     /**
      * Builds the declaration of a view from the output of its query and the names of its columns.
      *
+     * A column the query returns as NULL alone is a column of the NULL type, as the server
+     * reports it when it reads the view (verified on a live 8.4 server).
+     *
      * @param list<Name|null> $names The name of each column: the column list when one is written, else the names the query gives
      * @param bool $listed Whether the names are a written column list, whose length must match the query
      */
@@ -230,7 +233,8 @@ final class TableDeclaration
         $complete = $output->shape->complete() && (!$listed || count($names) === count($fields));
         $columns = [];
         foreach ($fields as $position => $field) {
-            $column = $this->fieldColumn($field, $names[$position] ?? null);
+            $named = $names[$position] ?? null;
+            $column = $field->type instanceof \SqlSemantics\Statement\Type\NullOnly && $named !== null ? new Column($named, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::null(), $field->nullability) : $this->fieldColumn($field, $named);
             if ($column === null) {
                 $complete = false;
                 break;

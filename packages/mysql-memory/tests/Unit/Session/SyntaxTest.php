@@ -18,6 +18,28 @@ use RuntimeException;
 #[Small]
 final class SyntaxTest extends TestCase
 {
+    public function testDebugOnlyRefusesShowParseTreeAtParseTree(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage("You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'parse_tree   select 1' at line 1");
+
+        $session->query('show   parse_tree   select 1');
+    }
+
+    public function testDebugOnlyAcceptsParseTreeAsAName(): void
+    {
+        $session = (new Instance())->connect();
+        $tree = $session->semantics()->parser()->parse('SELECT 1 AS parse_tree');
+        (new Syntax())->debugOnly($tree, 'SELECT 1 AS parse_tree');
+        $result = $session->query('SELECT 1 AS parse_tree')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame('parse_tree', $result->columns[0]->name);
+    }
+
     public function testMarkersRefusesAParameterMarker(): void
     {
         $session = (new Instance())->connect();

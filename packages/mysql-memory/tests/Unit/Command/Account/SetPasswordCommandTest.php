@@ -1,0 +1,79 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Command\Account;
+
+use MySqlMemory\Account\Identity;
+use MySqlMemory\Command\Account\SetPasswordCommand;
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(SetPasswordCommand::class)]
+#[Small]
+final class SetPasswordCommandTest extends TestCase
+{
+    public function testClearsDiagnosticsAnswersTrue(): void
+    {
+        self::assertTrue((new SetPasswordCommand())->clearsDiagnostics());
+    }
+
+    public function testExecuteSetsThePasswordOfTheSession(): void
+    {
+        $session = (new Instance())->connect();
+
+        $session->query("SET PASSWORD = 'a''b'");
+
+        self::assertSame("a'b", $session->instance->accounts->find(new Identity('root', '%'))?->password);
+    }
+
+    public function testExecuteRefusesAMissingAccount(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1133);
+        $this->expectExceptionMessage("Can't find any matching row in the user table");
+
+        $session->query("SET PASSWORD FOR nobody = 'x'");
+    }
+
+    public function testExecuteRefusesAWrongCurrentPassword(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET PASSWORD = 'root'");
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3891);
+        $this->expectExceptionMessage('Incorrect current password. Specify the correct password which has to be replaced.');
+
+        $session->query("SET PASSWORD = 'x' REPLACE 'wrong' RETAIN CURRENT PASSWORD");
+    }
+
+    public function testExecuteRefusesTheCurrentPasswordOfAnotherAccount(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE USER u IDENTIFIED BY 'x'");
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3893);
+        $this->expectExceptionMessage('Do not specify the current password while changing it for other users.');
+
+        $session->query("SET PASSWORD FOR u = 'y' REPLACE 'x'");
+    }
+
+    public function testExecuteAnswersARandomPassword(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE USER u');
+
+        $reply = $session->query('SET PASSWORD FOR u TO RANDOM')[0];
+
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['user', 16], ['host', 16], ['generated password', 72], ['auth_factor', 13]], array_map(static fn ($column): array => [$column->name, $column->length], $reply->columns));
+    }
+}

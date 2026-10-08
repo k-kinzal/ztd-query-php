@@ -115,4 +115,12 @@ final class TableDefinitionTest extends TestCase
         self::assertNotNull($table);
         self::assertSame([64, 4160], [$table->definition->flags(0), $table->definition->flags(1)]);
     }
+
+    public function testStatementHoldsTheStatementThatDeclaresTheTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t (a INT)');
+
+        self::assertSame('t', $session->instance->dictionary->table('d', 't')?->definition->statement?->name->name->value);
+    }
 }

@@ -10,7 +10,7 @@ use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
 
 /**
- * The information functions: DATABASE, USER, VERSION, CONNECTION_ID, LAST_INSERT_ID, ROW_COUNT and FOUND_ROWS.
+ * The information functions: DATABASE, USER, CURRENT_ROLE, VERSION, CONNECTION_ID, LAST_INSERT_ID, ROW_COUNT and FOUND_ROWS.
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html.
  *
@@ -33,6 +33,7 @@ final class Introspection
             new Routine('SESSION_USER', 0, 0, fn (Frame $f): string => $f->context->variables->account),
             new Routine('SYSTEM_USER', 0, 0, fn (Frame $f): string => $f->context->variables->account),
             new Routine('CURRENT_USER', 0, 0, fn (Frame $f): string => $f->context->variables->definer),
+            new Routine('CURRENT_ROLE', 0, 0, fn (Frame $f): string => $f->context->variables->roles === [] ? 'NONE' : implode(',', array_map(static fn (\MySqlMemory\Account\Identity $role): string => $role->backquoted(), $f->context->variables->roles))),
             new Routine('VERSION', 0, 0, fn (Frame $f): string => (string) $f->context->variables->read('version')),
             new Routine('CONNECTION_ID', 0, 0, fn (Frame $f): int => $f->context->variables->connection),
             new Routine('LAST_INSERT_ID', 0, 1, $this->lastInsertId(...)),

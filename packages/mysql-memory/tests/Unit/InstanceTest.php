@@ -15,12 +15,31 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class InstanceTest extends TestCase
 {
+    public function testConnectionsCountsTheSessionsOpened(): void
+    {
+        $instance = new Instance();
+        $instance->connect();
+        $instance->connect();
+
+        self::assertSame(2, $instance->connections());
+    }
+
     public function testConnectNumbersTheConnectionsFromOne(): void
     {
         $instance = new Instance();
 
         self::assertSame(1, $instance->connect()->id);
         self::assertSame(2, $instance->connect()->id);
+    }
+
+    public function testConnectSeesTheAccountsOfANewServer(): void
+    {
+        $session = (new Instance())->connect();
+        $grants = $session->query("SHOW GRANTS FOR 'mysql.sys'@localhost")[0];
+
+        self::assertInstanceOf(ResultSet::class, $grants);
+        self::assertSame(['root@localhost', 'root@%', 'mysql.infoschema@localhost', 'mysql.session@localhost', 'mysql.sys@localhost'], array_values(array_map(static fn ($account): string => $account->identity->text(), $session->instance->accounts->accounts)));
+        self::assertSame([['GRANT USAGE ON *.* TO `mysql.sys`@`localhost`'], ['GRANT AUDIT_ABORT_EXEMPT,FIREWALL_EXEMPT,SYSTEM_USER ON *.* TO `mysql.sys`@`localhost`'], ['GRANT TRIGGER ON `sys`.* TO `mysql.sys`@`localhost`'], ['GRANT SELECT ON `sys`.`sys_config` TO `mysql.sys`@`localhost`']], $grants->rows);
     }
 
     public function testConnectOpensASessionAsTheUserFromTheHost(): void

@@ -50,6 +50,9 @@ final class Dictionary
             foreach ($schema->tables as $table) {
                 $declarations[] = $table->definition->declaration;
             }
+            foreach ($schema->views as $view) {
+                $declarations[] = $view->declaration;
+            }
         }
 
         return $declarations;

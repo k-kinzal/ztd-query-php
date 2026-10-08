@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Typing;
 
 use Collator;
+use Transliterator;
 use MySqlMemory\Value\Encoding;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
@@ -24,6 +25,11 @@ final class Ordering
      * @var array<string, self>
      */
     private static array $orderings = [];
+
+    /**
+     * The transliterator that removes accents, created on first use.
+     */
+    private static ?Transliterator $accents = null;
 
     /**
      * @param Collation $collation The collation
@@ -123,7 +129,11 @@ final class Ordering
         if ($this->collation->charset->maxLength === 1 || !mb_check_encoding($text, 'UTF-8')) {
             return strtoupper($text);
         }
-        $stripped = transliterator_transliterate('NFD; [:Nonspacing Mark:] Remove; NFC', $text);
+        if (preg_match('/[\x80-\xff]/', $text) !== 1) {
+            return strtoupper($text);
+        }
+        self::$accents ??= Transliterator::create('NFD; [:Nonspacing Mark:] Remove; NFC');
+        $stripped = self::$accents === null ? false : self::$accents->transliterate($text);
 
         return mb_strtoupper($stripped === false ? $text : $stripped, 'UTF-8');
     }

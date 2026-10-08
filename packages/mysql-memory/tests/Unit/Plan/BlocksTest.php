@@ -173,6 +173,22 @@ final class BlocksTest extends TestCase
         self::assertSame(['t', 't', 'd', 'c'], [$result->columns[1]->table, $result->columns[1]->originalTable, $result->columns[1]->schema, $result->columns[1]->originalName]);
     }
 
+    public function testTableReadsTheRowsOfAView(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2)');
+        $session->query('CREATE VIEW v (x) AS SELECT a * 10 FROM t');
+
+        $result = $session->query('TABLE v')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['10'], ['20']], $result->rows);
+        self::assertSame(['x', 'v', 'v'], [$result->columns[0]->name, $result->columns[0]->table, $result->columns[0]->originalTable]);
+    }
+
     public function testTableRaisesForATableThatDoesNotExist(): void
     {
         $session = (new Instance())->connect();

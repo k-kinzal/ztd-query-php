@@ -28,7 +28,19 @@ final class IntrospectionTest extends TestCase
     {
         $names = array_map(static fn ($routine): string => $routine->name, (new Introspection())->routines());
 
-        self::assertSame(['DATABASE', 'SCHEMA', 'USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER', 'VERSION', 'CONNECTION_ID', 'LAST_INSERT_ID', 'ROW_COUNT', 'FOUND_ROWS', 'CHARSET', 'COLLATION', 'COERCIBILITY'], $names);
+        self::assertSame(['DATABASE', 'SCHEMA', 'USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER', 'CURRENT_ROLE', 'VERSION', 'CONNECTION_ID', 'LAST_INSERT_ID', 'ROW_COUNT', 'FOUND_ROWS', 'CHARSET', 'COLLATION', 'COERCIBILITY'], $names);
+    }
+
+    public function testRoutinesAnswerTheRolesActiveInTheSession(): void
+    {
+        $session = (new Instance())->connect();
+        $before = $session->query('SELECT CURRENT_ROLE()')[0];
+        $session->query('CREATE ROLE r2, r1; GRANT r1, r2 TO root; SET ROLE ALL');
+        $after = $session->query('SELECT CURRENT_ROLE()')[0];
+
+        self::assertInstanceOf(ResultSet::class, $before);
+        self::assertInstanceOf(ResultSet::class, $after);
+        self::assertSame([[['NONE']], [['`r1`@`%`,`r2`@`%`']]], [$before->rows, $after->rows]);
     }
 
     public function testRoutinesAnswerNullForTheDatabaseBeforeOneIsChosen(): void

@@ -159,4 +159,18 @@ final class CreateTableCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['Warning', '1831', "Duplicate index 'a_2' defined on the table 'p.u'. This is deprecated and will be disallowed in a future release."]], $warnings->rows);
     }
+
+    public function testExecuteFillsATableWithTheRowsOfItsQuery(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2)');
+
+        $reply = $session->query('CREATE TABLE c SELECT a FROM t')[0];
+        $rows = $session->query('SELECT * FROM c')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(2, $reply->affectedRows);
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([['1'], ['2']], $rows->rows);
+    }
 }

@@ -36,6 +36,76 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class ProblemsTest extends TestCase
 {
+    public function testAnsweredLeavesTheMissingTableOfAShowStatementToItsCommand(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $show = $session->analyze('SHOW CREATE TABLE nosuch')->statement;
+        $select = $session->analyze('SELECT * FROM nosuch')->statement;
+        $missing = new \SqlSemantics\Statement\Reference\Table\MissingTable(new QualifiedName(new Name('nosuch')));
+
+        self::assertTrue(Problems::answered($show, $missing));
+        self::assertFalse(Problems::answered($select, $missing));
+    }
+
+    public function testAnsweredLeavesTheMissingTablesOfTheDefinitionAndMaintenanceStatementsToTheirCommands(): void
+    {
+        $session = (new Instance())->connect();
+        $missing = new \SqlSemantics\Statement\Reference\Table\MissingTable(new QualifiedName(new Name('nosuch')));
+
+        self::assertSame([true, true, true, true, true, false], [
+            Problems::answered($session->analyze('CHECK TABLE nosuch')->statement, $missing),
+            Problems::answered($session->analyze('ALTER TABLE nosuch ADD a INT')->statement, $missing),
+            Problems::answered($session->analyze('RENAME TABLE nosuch TO x')->statement, $missing),
+            Problems::answered($session->analyze('LOCK TABLES nosuch READ')->statement, $missing),
+            Problems::answered($session->analyze("LOAD DATA INFILE 'x' INTO TABLE nosuch")->statement, $missing),
+            Problems::answered($session->analyze('TRUNCATE TABLE nosuch')->statement, $missing),
+        ]);
+    }
+
+    public function testRaiseLeavesTheProblemsOfAnAlterTableToItsCommand(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $error = $session->run('CREATE INDEX i ON abc.t ((zz + 1)) ALGORITHM = bogus')[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame([1800, "Unknown ALGORITHM 'bogus'"], [$error->getCode(), $error->getMessage()]);
+    }
+
+    public function testRaiseRaisesAtLocalWhileItReadsTheStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1235);
+        $this->expectExceptionMessage("This version of MySQL doesn't yet support 'AT LOCAL'");
+
+        $session->query("SELECT CAST('2020-01-01' AT LOCAL AS DATETIME) FROM nope");
+    }
+
+    public function testErrorReportsABucketCountOutOfRange(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1690);
+        $this->expectExceptionMessage("Number of buckets value is out of range in 'ANALYZE TABLE'");
+
+        $session->query('ANALYZE TABLE t UPDATE HISTOGRAM ON a WITH 0 BUCKETS');
+    }
+
+    public function testRaiseLeavesTheProblemsOfAnAccountStatementToItsCommand(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze("ALTER USER nobody ATTRIBUTE '[1]'");
+        (new Problems())->raise($operation, $session);
+
+        self::assertCount(1, $operation->facts->diagnostics);
+    }
+
     public function testRaiseLeavesAStatementWithoutDiagnostics(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
@@ -630,6 +700,14 @@ final class ProblemsTest extends TestCase
         self::assertSame('FUNCTION p.f does not exist', (new Problems())->routine(new FunctionCall(new Name('f')), $session)->getMessage());
         self::assertSame('FUNCTION q.f does not exist', (new Problems())->routine(new FunctionCall(new Name('f'), [], new Name('q')), $session)->getMessage());
         self::assertSame(1046, (new Problems())->routine(new FunctionCall(new Name('f')), (new Instance())->connect())->getCode());
+    }
+
+    public function testRoutineCountsTheArgumentsOfAStoredFunction(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE FUNCTION f(a INT) RETURNS INT DETERMINISTIC RETURN a');
+
+        self::assertSame([1318, 'Incorrect number of arguments for FUNCTION p.f; expected 1, got 0'], [(new Problems())->routine(new FunctionCall(new Name('F')), $session)->getCode(), (new Problems())->routine(new FunctionCall(new Name('F')), $session)->getMessage()]);
     }
 
     public function testWriteNamesTheStatementOfATargetThatIsNotUpdatable(): void

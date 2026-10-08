@@ -30,7 +30,32 @@ final class ShowTablesCommandTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['a_x'], ['ab'], ['b']], $result->rows);
-        self::assertSame(['Tables_in_d', 'TABLE_NAME', 'TABLES', 'information_schema'], [$result->columns[0]->name, $result->columns[0]->originalName, $result->columns[0]->originalTable, $result->columns[0]->schema]);
+        self::assertSame(['Tables_in_d', 'Tables_in_d', 'TABLES', 'tables', ''], [$result->columns[0]->name, $result->columns[0]->originalName, $result->columns[0]->table, $result->columns[0]->originalTable, $result->columns[0]->schema]);
+    }
+
+    public function testExecuteListsTheViewsAndTheTypeOfEachButNotTheTemporaryTables(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE TEMPORARY TABLE tt (a INT); CREATE VIEW v AS SELECT 1 AS x');
+
+        $result = $session->query('SHOW FULL TABLES')[0];
+        $views = $session->query("SHOW FULL TABLES WHERE Table_type = 'VIEW'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['t', 'BASE TABLE'], ['v', 'VIEW']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $views);
+        self::assertSame([['v', 'VIEW']], $views->rows);
+    }
+
+    public function testExecuteNamesTheColumnWithTheLikePattern(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+
+        $result = $session->query("SHOW TABLES LIKE 'T'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['Tables_in_d (T)', []], [$result->columns[0]->name, $result->rows]);
     }
 
     public function testExecuteListsTheTablesOfTheDatabaseItNames(): void

@@ -96,7 +96,7 @@ final class Definitions
         $this->check($columns, $keys);
         usort($keys, static fn (Key $left, Key $right): int => ($right->kind === KeyKind::Primary) <=> ($left->kind === KeyKind::Primary));
 
-        return new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0);
+        return new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0, '', $create);
     }
 
     /**

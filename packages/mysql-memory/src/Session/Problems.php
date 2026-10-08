@@ -7,10 +7,14 @@ namespace MySqlMemory\Session;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
+use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
+use SqlSemantics\Platform\MySql\Statement\Alter\DropIndex;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
+use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn;
+use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
@@ -18,6 +22,8 @@ use SqlSemantics\Platform\MySql\Statement\Call\Problem\NamedArgument;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\ReservedFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount;
+use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen;
+use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\DuplicateColumn as DuplicateWrittenColumn;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\GeneratedColumnWrite;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable;
@@ -57,7 +63,20 @@ use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CacheIndex;
+use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\LoadIndex;
+use SqlSemantics\Platform\MySql\Statement\Server\Lock\LockTables;
+use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable;
+use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\ChecksumTable;
+use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable;
+use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable;
+use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\BucketCountOutOfRange;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\MultiplePrimaryKeys;
@@ -98,12 +117,21 @@ use SqlSemantics\Statement\Type\Invalid;
 final class Problems
 {
     /**
-     * Raises the error of the first problem of an operation, if any.
+     * Raises the error of the first problem of an operation, if any; an account statement raises its own, in the order its command checks them.
      *
      * @throws SqlError When the operation has a problem
      */
     public function raise(Operation $operation, Session $session): void
     {
+        if (\MySqlMemory\Command\Account\Names::owns($operation->statement) || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables) {
+            return;
+        }
+        if ((new \MySqlMemory\Command\Program\ProgramProblems())->raise($operation, $session, $this)) {
+            return;
+        }
+        if ($operation->statement instanceof AlterTable || $operation->statement instanceof CreateIndex || $operation->statement instanceof DropIndex) {
+            return;
+        }
         $calls = array_values(array_filter((new Walker())->find($operation->statement, FunctionCall::class), static fn (FunctionCall $call): bool => self::undeclared($call, $operation)));
         if ($calls !== [] && (new Walker())->find($operation->statement, CommonTableExpression::class) !== []) {
             $reached = array_fill_keys(array_map(spl_object_id(...), $this->reached($operation->statement)), true);
@@ -112,6 +140,7 @@ final class Problems
         $grouping = $session->modes()->has('ONLY_FULL_GROUP_BY');
         $database = $session->variables->database;
         $diagnostics = array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => ($grouping || !$diagnostic instanceof NonGroupedColumn)
+            && !self::answered($operation->statement, $diagnostic)
             && !($operation->statement instanceof DropTable && $diagnostic instanceof MissingTable && ($diagnostic->name->schema !== null || $database !== ''))));
         $this->read($operation, $session);
         foreach ((new Walker())->find($operation->statement, IntoVariables::class) as $into) {
@@ -208,6 +237,9 @@ final class Problems
         }
         $alias = null;
         foreach ($operation->facts->diagnostics as $diagnostic) {
+            if (\MySqlMemory\Command\Program\ProgramProblems::parameter($operation->statement, $diagnostic)) {
+                continue;
+            }
             if (self::parsed($diagnostic)) {
                 throw $this->error($diagnostic, $session, 'field list', $operation->statement);
             }
@@ -230,6 +262,8 @@ final class Problems
                 throw ErrorCode::TooBigPrecision->error((int) $target->length, 'CAST', 6);
             }
         }
+        (new \MySqlMemory\Command\Show\Inspection())->check($operation->statement, $session);
+        (new \MySqlMemory\Command\Explain\ExplainCommand())->check($operation->statement, $session);
     }
 
     /**
@@ -339,7 +373,8 @@ final class Problems
      */
     public static function parsed(Diagnostic $diagnostic): bool
     {
-        return $diagnostic instanceof WrongArgumentCount || $diagnostic instanceof NamedArgument || $diagnostic instanceof ReservedFunction;
+        return $diagnostic instanceof WrongArgumentCount || $diagnostic instanceof NamedArgument || $diagnostic instanceof ReservedFunction
+            || ($diagnostic instanceof NotSupportedYet && $diagnostic->feature === 'AT LOCAL');
     }
 
     /**
@@ -359,6 +394,44 @@ final class Problems
     public static function late(Diagnostic $diagnostic): bool
     {
         return $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::DuplicateWindow;
+    }
+
+    /**
+     * Tells whether the command of a statement reports a problem itself, in its rows or in its own order of checks.
+     *
+     * A table maintenance or key cache statement reports a missing table, and a histogram request
+     * naming several tables, in its rows. A data definition statement checks the tables and
+     * columns it changes as the server does, while it runs; ALTER TABLE, CREATE INDEX and DROP
+     * INDEX open the table before they resolve the expressions of their key parts and defaults
+     * (verified on a live 8.4 server).
+     */
+    public static function answered(Node $statement, Diagnostic $diagnostic): bool
+    {
+        $administration = $statement instanceof CheckTable || $statement instanceof OptimizeTable || $statement instanceof RepairTable || $statement instanceof AnalyzeTable
+            || $statement instanceof CacheIndex || $statement instanceof LoadIndex || $statement instanceof ChecksumTable;
+        if ($administration) {
+            return $diagnostic instanceof MissingTable || $diagnostic instanceof HistogramTables || $diagnostic instanceof UnknownHistogramColumn;
+        }
+        if ($statement instanceof AlterTable || $statement instanceof CreateIndex || $statement instanceof DropIndex) {
+            return true;
+        }
+        if ($statement instanceof RenameTable) {
+            return $diagnostic instanceof MissingTable || $diagnostic instanceof TableExists;
+        }
+        if ($statement instanceof CreateTableLike || $statement instanceof LockTables || $statement instanceof HandlerOpen) {
+            return $diagnostic instanceof MissingTable;
+        }
+        if ($statement instanceof LoadTable) {
+            return $diagnostic instanceof MissingTable || $diagnostic instanceof MissingColumn || $diagnostic instanceof UnpartitionedTable || $diagnostic instanceof UnknownPartition;
+        }
+        if ((new \MySqlMemory\Command\Show\Inspection())->inspects($statement)) {
+            return $diagnostic instanceof MissingTable;
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainConnection || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowParseTree) {
+            return $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse;
+        }
+
+        return false;
     }
 
     /**
@@ -431,6 +504,13 @@ final class Problems
             return ErrorCode::NoDatabase->error();
         }
 
+        $function = $session->instance->dictionary->schema($call->schema->value ?? $database)->functions[strtolower($call->name->value)] ?? null;
+        if ($function !== null) {
+            $count = count($function->statement->parameters->parameters);
+
+            return $count === count($call->arguments) ? ErrorCode::NotSupportedYet->error('calls of stored functions') : ErrorCode::RoutineArgumentCount->error('FUNCTION', $function->schema . '.' . $function->name, $count, count($call->arguments));
+        }
+
         return ErrorCode::RoutineMissing->error('FUNCTION', ($call->schema->value ?? $database) . '.' . $call->name->value);
     }
 
@@ -491,8 +571,15 @@ final class Problems
             $diagnostic instanceof UnknownSystemVariable => ErrorCode::UnknownSystemVariable->error($diagnostic->name),
             $diagnostic instanceof VariableMisuse => new SqlError(ErrorCode::from($diagnostic->rule->code()), $diagnostic->message()),
             $diagnostic instanceof UnknownCollation => ErrorCode::UnknownCollation->error($diagnostic->name),
+            $diagnostic instanceof UnknownAlterChoice => ($diagnostic->lock ? ErrorCode::UnknownAlterLock : ErrorCode::UnknownAlterAlgorithm)->error($diagnostic->name->value),
+            $diagnostic instanceof BucketCountOutOfRange => ErrorCode::DataOutOfRange->error('Number of buckets', 'ANALYZE TABLE'),
             $diagnostic instanceof UnknownCharset => ErrorCode::UnknownCharacterSet->error($diagnostic->name),
             $diagnostic instanceof CollationMismatch => ErrorCode::CollationCharsetMismatch->error($diagnostic->collation, $diagnostic->charset),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem => (new \MySqlMemory\Error\ProgramErrors())->error($diagnostic),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind => (new \MySqlMemory\Error\ProgramErrors())->relation($diagnostic, $database),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount => ErrorCode::ViewWrongList->error(),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly => ErrorCode::FeatureDisabled->error('SHOW PROCEDURE|FUNCTION CODE', '--with-debug'),
+            \MySqlMemory\Command\Admin\Refusals::handles($diagnostic) => (new \MySqlMemory\Command\Admin\Refusals())->error($diagnostic, $statement, $session->text),
             default => new SqlError(ErrorCode::UnknownError, $diagnostic->message()),
         };
     }

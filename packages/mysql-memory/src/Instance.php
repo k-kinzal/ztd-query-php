@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory;
 
+use MySqlMemory\Account\Accounts;
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Dictionary\Schema;
+use MySqlMemory\Registry\Registry;
 use MySqlMemory\Session\Globals;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
@@ -44,6 +46,16 @@ final class Instance
      */
     public readonly SystemVariables $catalog;
 
+    /**
+     * The accounts and roles of the server, their privileges and roles.
+     */
+    public readonly Accounts $accounts;
+
+    /**
+     * The resource groups, foreign servers, spatial reference systems, tablespaces, binary log and prepared XA branches of the server.
+     */
+    public readonly Registry $registry;
+
     private int $connections = 0;
 
     /**
@@ -57,6 +69,8 @@ final class Instance
         $this->catalog = SystemVariables::of(GrammarRelease::tryFrom('mysql-' . $version) ?? GrammarRelease::MySql847);
         $this->globals = new Globals(array_change_key_case($globals, CASE_LOWER));
         $this->dictionary = new Dictionary();
+        $this->accounts = Accounts::installed();
+        $this->registry = new Registry();
         foreach (['information_schema', 'mysql', 'performance_schema', 'sys', ...$databases] as $name) {
             $this->dictionary->schemas[$name] = new Schema($name);
         }
@@ -74,5 +88,13 @@ final class Instance
     public function connect(string $user = 'root', string $host = 'localhost', ?string $database = null): Session
     {
         return new Session($this, ++$this->connections, $user, $host, $database);
+    }
+
+    /**
+     * Answers the number of sessions opened so far, which is the id of the last one.
+     */
+    public function connections(): int
+    {
+        return $this->connections;
     }
 }

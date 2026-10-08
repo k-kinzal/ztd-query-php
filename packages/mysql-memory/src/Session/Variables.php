@@ -55,6 +55,11 @@ final class Variables
     public string $definer = 'root@%';
 
     /**
+     * @var list<\MySqlMemory\Account\Identity> The roles active in the session (CURRENT_ROLE())
+     */
+    public array $roles = [];
+
+    /**
      * The connection id (CONNECTION_ID()).
      */
     public int $connection = 1;

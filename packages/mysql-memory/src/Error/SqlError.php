@@ -22,10 +22,12 @@ final class SqlError extends RuntimeException
      * @param string $text The message, with the arguments of the error filled in
      * @param Throwable|null $previous The failure the error reports, if any
      * @param list<array{int, string}> $following The further error conditions the server records after this one, each an error number and a message
+     * @param array<string, string>|null $signalled The condition information items a SIGNAL statement gives the condition, RETURNED_SQLSTATE among them, by name; null for an error the server raises
+     * @param int|null $number The error number a SIGNAL statement gives the condition, or null for that of the error
      */
-    public function __construct(public readonly ErrorCode $error, string $text, ?Throwable $previous = null, public readonly array $following = [])
+    public function __construct(public readonly ErrorCode $error, string $text, ?Throwable $previous = null, public readonly array $following = [], public readonly ?array $signalled = null, ?int $number = null)
     {
-        parent::__construct($text, $error->value, $previous);
+        parent::__construct($text, $number ?? $error->value, $previous);
     }
 
     /**
@@ -33,6 +35,6 @@ final class SqlError extends RuntimeException
      */
     public function sqlState(): string
     {
-        return $this->error->sqlState();
+        return $this->signalled['RETURNED_SQLSTATE'] ?? $this->error->sqlState();
     }
 }

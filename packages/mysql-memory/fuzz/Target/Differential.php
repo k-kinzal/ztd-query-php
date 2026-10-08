@@ -25,6 +25,8 @@ final class Differential
 
     private ?PDO $guard = null;
 
+    private ?PDO $memoryGuard = null;
+
     /**
      * @param string $native The PDO DSN of the MySQL server, without a database
      * @param string $nativeUser The user of the MySQL server
@@ -67,6 +69,7 @@ final class Differential
         if ($expected !== $again) {
             return null;
         }
+        $this->repair($this->memoryGuard());
         $actual = $this->run($this->memory, 'root', '', $sql);
         if ($expected === $actual) {
             return null;
@@ -87,6 +90,14 @@ final class Differential
     public function guard(): PDO
     {
         return $this->guard ??= new PDO($this->native, $this->nativeUser, $this->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
+    }
+
+    /**
+     * Answers the connection that repairs mysql-memory before a statement, so that it starts from the state the MySQL server is repaired to.
+     */
+    public function memoryGuard(): PDO
+    {
+        return $this->memoryGuard ??= new PDO($this->memory, 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
     }
 
     /**
