@@ -19,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 
 #[CoversClass(Invocation::class)]
@@ -63,5 +64,12 @@ final class InvocationTest extends TestCase
     public function testAggregationUsesTheConnection(): void
     {
         self::assertSame('utf8mb4_0900_ai_ci', new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->aggregation()->collations->connection->name);
+    }
+
+    public function testLengthTakesTheDisplayLengthOfAFloat(): void
+    {
+        $call = new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])));
+
+        self::assertSame([12, 22], [$call->length(new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED)), $call->length(Domain::double(5))]);
     }
 }

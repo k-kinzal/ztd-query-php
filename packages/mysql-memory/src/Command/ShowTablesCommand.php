@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
@@ -18,7 +18,8 @@ use SqlSemantics\Statement\Operation;
 /**
  * Executes SHOW TABLES: the tables and views of a database, in name order, optionally filtered by LIKE or WHERE.
  *
- * Temporary tables are not listed. FULL adds the type of each: BASE TABLE or VIEW. LIKE matches
+ * Temporary tables are not listed; the system tables of the release are. FULL adds the type of
+ * each: BASE TABLE, VIEW or SYSTEM VIEW. LIKE matches
  * the name as it is written, and names the column with the pattern (verified on a live 8.4
  * server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-tables.html.
@@ -60,6 +61,11 @@ final class ShowTablesCommand implements Command
         }
         foreach ($schema->views as $view) {
             $rows[] = [$view->name, 'VIEW'];
+        }
+        foreach ($session->instance->dictionary->system?->catalog->tables ?? [] as $system) {
+            if ($system->schema === $schema->name) {
+                $rows[] = [$system->name, $system->type];
+            }
         }
         usort($rows, static fn (array $left, array $right): int => strcmp($left[0], $right[0]));
         $full = $statement->listing?->full() ?? false;

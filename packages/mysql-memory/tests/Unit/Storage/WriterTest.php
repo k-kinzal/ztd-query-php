@@ -231,4 +231,53 @@ final class WriterTest extends TestCase
         self::assertSame([['Warning', 1062, "Duplicate entry 'ab' for key 'uc'"]], $modern->conditions);
         self::assertSame([], $legacy->conditions);
     }
+
+    public function testGenerateComputesTheGeneratedColumnsInColumnOrder(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (a VARCHAR(10), b INT AS (a), c TINYINT AS (length(a) * 100) STORED, d VARCHAR(2) AS (a)); SET sql_mode = ''; INSERT INTO t (a) VALUES ('xyz')");
+
+        $result1 = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result1);
+        $result2 = $session->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result2);
+        self::assertSame([[['Warning', '1366', "Incorrect integer value: 'xyz' for column 'b' at row 1"], ['Warning', '1264', "Out of range value for column 'c' at row 1"], ['Warning', '1265', "Data truncated for column 'd' at row 1"]], [['xyz', '0', '127', 'xy']]], [$result1->rows, $result2->rows]);
+    }
+
+    public function testViolatedAnswersTheFirstViolatedConstraintByName(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE m (a INT, CONSTRAINT b2 CHECK (a > 5), CONSTRAINT a1 CHECK (a > 10), CONSTRAINT z CHECK (a IS NULL OR a > 0) NOT ENFORCED)');
+
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(3819);
+        $this->expectExceptionMessage("Check constraint 'a1' is violated.");
+
+        $session->query('INSERT INTO m VALUES (1)');
+    }
+    public function testConflictWaitsForADuplicateAnotherTransactionInserted(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $first = $instance->connect('root', 'localhost', 'd');
+        $second = $instance->connect('root', 'localhost', 'd');
+        $first->query('CREATE TABLE t (id INT PRIMARY KEY); BEGIN; INSERT INTO t VALUES (1)');
+
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1205);
+
+        $second->query('INSERT INTO t VALUES (1)');
+    }
+
+    public function testExistingChecksTheCommittedVersionsOfTheRowsOthersChanged(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $first = $instance->connect('root', 'localhost', 'd');
+        $second = $instance->connect('root', 'localhost', 'd');
+        $first->query('CREATE TABLE t (id INT PRIMARY KEY); INSERT INTO t VALUES (1); BEGIN; DELETE FROM t');
+        $table = $instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $writer = new Writer($table, new Context($second->modes(), $second->diagnostics, $second->variables, 0.0));
+
+        self::assertSame([1, null], [$writer->existing([1], null, $second->transaction)[0] ?? null, $writer->existing([1], null, $first->transaction)]);
+    }
 }

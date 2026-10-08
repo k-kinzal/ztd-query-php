@@ -146,4 +146,16 @@ final class TableLayoutTest extends TestCase
 
         self::assertSame('CREATE TABLE d.t (a INT) COLLATE utf8mb4_0900_ai_ci', (new Operation($session->semantics()->context(), $layout->statement()))->toString());
     }
+
+    public function testRenamedAnswersTheNewNameOfAColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $layout = TableLayout::of($table->definition);
+        array_splice($layout->columns, 1, 1);
+
+        self::assertSame(['a', false, null], [$layout->renamed('A'), $layout->renamed('b'), $layout->renamed('z')]);
+    }
 }

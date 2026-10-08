@@ -8,6 +8,8 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\ChangeFacts;
+use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
@@ -22,7 +24,8 @@ use SqlSemantics\Statement\Statement;
  *
  * Mirrors the server's `PT_update`: the statement is a multiple-table
  * UPDATE when its table references hold more than one table. The facts
- * follow MYSQL-UPDATE-001.
+ * follow MYSQL-UPDATE-001. The hints of the comment written right after
+ * UPDATE are kept with the statement.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/update.html.
  *
  * @visibility public
@@ -33,6 +36,11 @@ use SqlSemantics\Statement\Statement;
 final class Update implements Statement
 {
     use Snapshot;
+
+    /**
+     * @var list<OptimizerHint> The hints of the comment written right after the verb, in written order
+     */
+    public readonly array $hints;
 
     /**
      * @var list<Relation> The table references in written order
@@ -58,6 +66,7 @@ final class Update implements Statement
      * @param Scalar|null $where The row predicate
      * @param list<OrderItem> $orderBy The order the rows are updated in
      * @param Limit|null $limit The most rows updated
+     * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
      * @throws InvalidConstruction When there is no table or no assignment
      */
     public function __construct(
@@ -69,7 +78,9 @@ final class Update implements Statement
         public readonly ?Scalar $where = null,
         array $orderBy = [],
         public readonly ?Limit $limit = null,
+        array $hints = [],
     ) {
+        $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         $this->tables = Check::listOf($tables, Relation::class, 'UPDATE names at least one table reference.', 1);
         $this->assignments = Check::listOf($assignments, Assignment::class, 'UPDATE holds at least one assignment.', 1);
         $this->orderBy = Check::listOf($orderBy, OrderItem::class, 'ORDER BY holds ordering items.');
@@ -89,6 +100,10 @@ final class Update implements Statement
     public function render(Output $out): void
     {
         $out->node($this->with)->keyword('UPDATE');
+        $comment = (new HintComment($this->hints))->text();
+        if ($comment !== null) {
+            $out->comment($comment);
+        }
         if ($this->lowPriority) {
             $out->keyword('LOW_PRIORITY');
         }

@@ -7,14 +7,15 @@ namespace MySqlMemory\Error;
 /**
  * A server error number the emulator raises, with its SQLSTATE and message format.
  *
- * Each family of errors is an enum backed by the error number: AccountError, AdministrationError, DataError,
- * ProgramError, QueryError, SchemaError and StatementError. ErrorNumbers finds the error of a number.
+ * Each family of errors is an enum of the Family namespace backed by the error number: AccountError,
+ * AdministrationError, ConstraintError, DataError, PartitionError, ProgramError, QueryError, SchemaError,
+ * StatementError and TransactionError. ErrorNumbers finds the error of a number.
  * The formats are those of the server error reference; resources/errors.php holds them.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
  *
  * @visibility public
  * @example Building the error of a missing table
- *     $error = \MySqlMemory\Error\QueryError::NoSuchTable->error('shop', 'items');
+ *     $error = \MySqlMemory\Error\Family\QueryError::NoSuchTable->error('shop', 'items');
  *     [$error->getCode(), $error->sqlState(), $error->getMessage()] // => [1146, '42S02', "Table 'shop.items' doesn't exist"]
  */
 interface ErrorCode

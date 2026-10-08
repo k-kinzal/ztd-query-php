@@ -171,4 +171,13 @@ final class MeasuresTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['2', '3', '3', '2', '2', '4', '8']], $result->rows);
     }
+
+    public function testLocateComparesTheBytesOfTheSubstringInTheCollationOfTheText(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT LOCATE('ss', 'aßb'), LOCATE('E', 'aébé'), LOCATE(_binary'B', 'abc'), LOCATE('B' COLLATE utf8mb4_bin, 'abc'), LOCATE('b', _binary'ABC'), INSTR('aébé', 'É'), LOCATE('', 'abc', 4)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', '0', '2', '2', '0', '2', '4']], $result->rows);
+    }
 }

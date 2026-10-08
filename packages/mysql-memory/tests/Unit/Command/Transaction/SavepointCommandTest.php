@@ -115,4 +115,15 @@ final class SavepointCommandTest extends TestCase
 
         $session->query('SAVEPOINT x');
     }
+    public function testExecuteWarnsThatATableThatIsNotTransactionalChangedAfterTheSavepoint(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE m (a INT) ENGINE=MyISAM; SET autocommit = 0; SAVEPOINT s; INSERT INTO m VALUES (1)');
+        $reply = $session->query('ROLLBACK TO SAVEPOINT s')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([1, [['Warning', '1196', "Some non-transactional changed tables couldn't be rolled back"]]], [$reply->warnings, $warnings->rows]);
+    }
 }

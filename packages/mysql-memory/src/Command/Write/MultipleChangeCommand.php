@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Write;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
@@ -17,6 +17,8 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
+use MySqlMemory\Storage\Constrained;
+use MySqlMemory\Storage\References;
 use MySqlMemory\Storage\Store;
 use MySqlMemory\Storage\Writer;
 use Override;
@@ -60,9 +62,8 @@ final class MultipleChangeCommand implements Command
         $scope = new Scope();
         $relation = count($statement->tables) === 1 ? $statement->tables[0] : new TableList($statement->tables);
         $path = $planner->relations->plan($relation, $scope);
-        if ($statement->where !== null) {
-            $path = new Filter($path, $planner->compiler->compile($statement->where, $scope));
-        }
+        $filter = $statement->where === null ? null : new Filter($path, $planner->compiler->compile($statement->where, $scope));
+        $path = (new \MySqlMemory\Plan\Locking($planner))->lock(null, $scope, $path, $filter, $this->written($statement, $planner, $scope));
         $builder = new Builder();
         $iterator = $builder->build($path);
         $frame = new Frame($context);
@@ -97,16 +98,39 @@ final class MultipleChangeCommand implements Command
             }
             $table = $scope->scans[$id]->table;
             $session->transaction->touch($table);
-            $numbers = array_unique(array_filter(array_map(static fn (array $match): ?int => $match[1][$id] ?? null, $matches), static fn (?int $number): bool => $number !== null));
-            foreach ($numbers as $number) {
-                if (isset($table->data->rows[$number])) {
-                    $table->data->delete($number);
-                    $deleted++;
-                }
-            }
+            $numbers = array_values(array_unique(array_filter(array_map(static fn (array $match): ?int => $match[1][$id] ?? null, $matches), static fn (?int $number): bool => $number !== null)));
+            $deleted += (new ChangeCommand())->delete($table, $numbers, new References($session, $context), in_array(DeleteOption::Ignore, $statement->options, true));
         }
 
         return new Completion($deleted, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Answers the occurrences a statement writes, which its read of the join locks exclusively: the targets of a DELETE, the tables an UPDATE assigns columns of.
+     *
+     * @return array<int, true>
+     */
+    public function written(Update|MultipleDelete $statement, Planner $planner, Scope $scope): array
+    {
+        $written = [];
+        if ($statement instanceof MultipleDelete) {
+            foreach ($statement->targets as $target) {
+                $id = $this->occurrence($scope, $target->name->value);
+                if ($id !== null) {
+                    $written[$id] = true;
+                }
+            }
+
+            return $written;
+        }
+        foreach ($statement->assignments as $assignment) {
+            $resolution = $planner->compiler->facts->scalar($assignment->column)->resolution;
+            if ($resolution instanceof ResolvedColumn) {
+                $written[spl_object_id($resolution->relation)] = true;
+            }
+        }
+
+        return $written;
     }
 
     /**
@@ -151,7 +175,11 @@ final class MultipleChangeCommand implements Command
             foreach ($assignments as [$id, $position, $value]) {
                 $values[] = [$id, $position, $value->evaluate($frame), $value];
             }
-            $changed += $this->apply($values, $numbers, $scope, $done, $session, $context, $index + 1, $statement->ignore, $direct);
+            try {
+                $changed += $this->apply($values, $numbers, $scope, $done, $session, $context, $index + 1, $statement->ignore, $direct);
+            } catch (\MySqlMemory\Error\SqlError $error) {
+                throw self::failed($error);
+            }
         }
 
         return new Completion($changed, 0, $context->diagnostics->count(), sprintf('Rows matched: %d  Changed: %d  Warnings: %d', count($done), $changed, $context->diagnostics->count()));
@@ -202,20 +230,40 @@ final class MultipleChangeCommand implements Command
             }
             $session->transaction->touch($table);
             $writer = new Writer($table, $context);
-            $row = $writer->refresh($row, $assigned[$id] ?? []);
-            $conflict = $writer->conflict($row, $number);
-            if ($conflict !== null) {
-                if ($ignore) {
-                    $writer->ignored($row, $conflict[1]);
-                    continue;
-                }
-                throw $writer->duplicate($row, $conflict[1]);
-            }
-            $table->data->update($number, $row);
-            $changed++;
+            $old = $table->data->rows[$number];
+            $row = $writer->refresh($writer->generate($row, new Store($context, $line, $direct !== null && $direct[0] === $id ? $direct[1] : ''), fn (int $position, $value) => (new ChangeCommand())->nonNull($value, $table->definition->columns[$position], $writer)), $assigned[$id] ?? []);
+            $changed += $this->stored($table, $number, $row, $old, $writer, $session, $ignore) ? 1 : 0;
         }
 
         return $changed;
+    }
+
+    /**
+     * Stores the new values of a row a multiple-table UPDATE assigns, between the BEFORE and AFTER UPDATE triggers of its table, and tells whether the row changed.
+     *
+     * The triggers fire for the row whether it changes or not; a row the constraints refuse with
+     * IGNORE fires no AFTER trigger.
+     *
+     * @param list<int|float|string|null> $row
+     * @param list<int|float|string|null> $old
+     *
+     * @throws \MySqlMemory\Error\SqlError When a trigger fails or a constraint refuses the row
+     */
+    public function stored(\MySqlMemory\Dictionary\StoredTable $table, int $number, array $row, array $old, Writer $writer, Session $session, bool $ignore): bool
+    {
+        $context = $writer->context;
+        $triggers = new \MySqlMemory\Program\Triggers($session, $table);
+        $row = $triggers->before('UPDATE', $row, $old, $context) ?? $row;
+        if ($row !== $old && !(new Constrained($writer, new References($session, $context)))->updated($row, $old, $number, $ignore)) {
+            return false;
+        }
+        if ($row !== $old) {
+            $session->transaction->write($table, $number);
+            $table->data->update($number, $row);
+        }
+        $triggers->after('UPDATE', $row, $old, $context);
+
+        return $row !== $old;
     }
 
     /**
@@ -247,6 +295,19 @@ final class MultipleChangeCommand implements Command
         }
 
         return $first;
+    }
+
+    /**
+     * Answers the error of a row a constraint refuses, followed by the error the server adds when a multiple-table update fails writing a row (verified on a live 8.4 server).
+     */
+    public static function failed(\MySqlMemory\Error\SqlError $error): \MySqlMemory\Error\SqlError
+    {
+        $written = [DataError::DuplicateEntry, DataError::CheckConstraintViolated, \MySqlMemory\Error\Family\ConstraintError::NoReferencedRow, \MySqlMemory\Error\Family\ConstraintError::RowIsReferenced];
+        if (!in_array($error->error, $written, true)) {
+            return $error;
+        }
+
+        return new \MySqlMemory\Error\SqlError($error->error, $error->getMessage(), $error->getPrevious(), [...$error->following, [1105, 'An error occurred in multi-table update']], $error->signalled, null, $error->recorded);
     }
 
     /**

@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Type\Known;
@@ -28,6 +29,15 @@ final class ResultsTest extends TestCase
         self::assertArrayHasKey('CONCAT', Results::rules());
         self::assertArrayHasKey('PI', Results::rules());
         self::assertArrayHasKey('USER', Results::rules());
+        self::assertArrayHasKey('REGEXP_REPLACE', Results::rules());
+    }
+
+    public function testRefineMakesARegexpReplacementOfMultibyteCharactersNullable(): void
+    {
+        $fact = new ScalarFact(new Known(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'))), Nullability::NotNull);
+        $text = Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'));
+
+        self::assertSame(Nullability::Nullable, (new Results())->refine('REGEXP_REPLACE', [], [new ScalarFact(new Known($text), Nullability::NotNull), new ScalarFact(new Known($text), Nullability::NotNull), new ScalarFact(new Known($text), Nullability::NotNull)], $fact, new Derivation((new Semantics(Dialect::MySql))->context([])))->nullability);
     }
 
     public function testTypeNeedsARuleAndResolvedArguments(): void

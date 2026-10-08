@@ -11,6 +11,8 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
+use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
@@ -63,9 +65,28 @@ final class Printer
             $node instanceof NumberLiteral => $node->text,
             $node instanceof StringLiteral => "'" . str_replace("'", "\\'", $node->value()) . "'",
             $node instanceof NullLiteral => 'NULL',
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral => $node->form->value . "'" . $node->text . "'",
             $node instanceof ColumnUse => $this->column($node),
+            $node instanceof RadixLiteral => $this->radix($node),
             default => strtolower((new ReflectionClass($node))->getShortName()),
         };
+    }
+
+    /**
+     * Prints a hexadecimal or bit literal: `0x` and the hexadecimal digits of its bytes, `X''` when it has none, or its introducer and its bytes quoted.
+     */
+    public function radix(RadixLiteral $node): string
+    {
+        $digits = $node->digits;
+        if ($node->radix === Radix::Bit) {
+            $digits = $digits === '' ? '' : implode('', array_map(static fn (string $octet): string => sprintf('%02x', bindec($octet)), str_split(str_pad($digits, (int) ceil(strlen($digits) / 8) * 8, '0', STR_PAD_LEFT), 8)));
+        }
+        $hex = strtolower(strlen($digits) % 2 === 1 ? '0' . $digits : $digits);
+        if ($node->introducer !== null) {
+            return '_' . $node->introducer->value . "'" . hex2bin($hex) . "'";
+        }
+
+        return $hex === '' ? "X''" : '0x' . $hex;
     }
 
     /**

@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\MySql\Rules\Query\Grouping;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Query\Aggregation;
+use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\GroupingRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
@@ -14,6 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
@@ -37,7 +40,9 @@ use SqlSemantics\Statement\Shape\OpenStar;
  * an aggregate (WithoutGroupBy). A DISTINCT block reports the first ORDER BY
  * column that no select item is (NotSelected). The server checks this after
  * it resolves the block, only when the statement resolved without problem
- * so far, and only under ONLY_FULL_GROUP_BY. Terminates: the
+ * so far, and only under ONLY_FULL_GROUP_BY; a GROUP BY item holding an
+ * aggregate or a window function, itself or through the alias of a select
+ * item, is refused before, so the block is not checked. Terminates: the
  * determined set only grows and is bounded by the columns of the block.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/group-by-handling.html.
  * Status: Implemented.
@@ -55,7 +60,7 @@ final class GroupedColumns
     public function check(Select $select, array $visible, array $fields, Derivation $derivation): void
     {
         $facts = $derivation->facts();
-        if ($facts->diagnostics !== []) {
+        if ($facts->diagnostics !== [] || $this->computed($select, $facts)) {
             return;
         }
         $relations = [];
@@ -74,6 +79,31 @@ final class GroupedColumns
         if ($problem !== null) {
             $derivation->report($problem);
         }
+    }
+
+    /**
+     * Tells whether a GROUP BY item, or the select item its alias names, holds an aggregate or a window function, which the server refuses before it checks the columns.
+     */
+    public function computed(Select $select, Facts $facts): bool
+    {
+        $matching = new Matching();
+        $pending = array_map(static fn ($item): Scalar => $matching->target($item->expression, $facts), $select->groupBy->items ?? []);
+        while ($pending !== []) {
+            $value = array_pop($pending);
+            if (is_array($value)) {
+                array_push($pending, ...array_values($value));
+                continue;
+            }
+            if (!is_object($value) || $value instanceof Query) {
+                continue;
+            }
+            if ($value instanceof SetFunction || $value instanceof WindowFunction) {
+                return true;
+            }
+            array_push($pending, ...array_values(get_object_vars($value)));
+        }
+
+        return false;
     }
 
     /**

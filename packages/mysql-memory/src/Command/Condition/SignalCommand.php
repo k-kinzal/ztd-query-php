@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Condition;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\AdministrationError;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Condition\SqlState;
 use SqlSemantics\Statement\Operation;
 
 /**
- * Executes SIGNAL and RESIGNAL outside a stored program.
+ * Executes SIGNAL and RESIGNAL.
  *
  * SIGNAL raises the condition of its SQLSTATE: a class '01' value is a warning and the statement
  * succeeds, a class '02' value is the error ER_SIGNAL_NOT_FOUND and any other the error
@@ -36,8 +36,11 @@ use SqlSemantics\Statement\Operation;
  * is refused (ER_WRONG_VALUE_FOR_VAR), MESSAGE_TEXT holds at most 128 characters and the other
  * text items 64 (ER_COND_ITEM_TOO_LONG), and MYSQL_ERRNO is rounded to an integer from 1 to
  * 65535; a decimal beyond the 64-bit range warns that it is truncated first. RESIGNAL has no
- * handler to act in outside a program (ER_RESIGNAL_WITHOUT_ACTIVE_HANDLER), and leaves the
- * conditions of the statement before in the diagnostics area (verified on a live 8.4 server).
+ * handler to act in outside a handler (ER_RESIGNAL_WITHOUT_ACTIVE_HANDLER), and leaves the
+ * conditions of the statement before in the diagnostics area. Inside a handler, RESIGNAL starts
+ * from the conditions the handler handles: with an SQLSTATE it adds its condition to them as
+ * SIGNAL does, and without one it raises the handled condition again (verified on a live 8.4
+ * server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/signal.html,
  * https://dev.mysql.com/doc/refman/8.4/en/resignal.html.
  *
@@ -79,16 +82,26 @@ final class SignalCommand implements Command
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;
-        if ($statement instanceof Resignal) {
+        assert($statement instanceof Signal || $statement instanceof Resignal);
+        $stacked = $session->program === null ? [] : $session->program->stacked;
+        if ($statement instanceof Resignal && $stacked === []) {
             throw ProgramError::ResignalWithoutHandler->error();
         }
-        assert($statement instanceof Signal && $statement->condition instanceof SqlState);
-        $state = $statement->condition->state->value;
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $values = [];
         foreach ($statement->items as $item) {
             $values[$item->name->value] = $planner->compiler->compile($item->value, new Scope());
         }
+        if ($statement instanceof Resignal) {
+            $area = $stacked[count($stacked) - 1];
+            $context->diagnostics->conditions = $area->conditions;
+            $context->diagnostics->signalled = $area->signalled;
+            if ($statement->condition === null) {
+                return $this->again($area, $values, $context);
+            }
+        }
+        assert($statement->condition instanceof SqlState);
+        $state = $statement->condition->state->value;
         [$signalled, $number] = $this->items($state, $values, $context);
         $message = $signalled[ConditionItemName::MessageText->value] ?? null;
         $class = substr($state, 0, 2);
@@ -104,6 +117,39 @@ final class SignalCommand implements Command
         }
 
         throw new SqlError($code, $message ?? $code->message(), null, [], $signalled, $number);
+    }
+
+    /**
+     * Raises again the condition a handler handles, as RESIGNAL without SQLSTATE does: the last condition of its area, with the items the statement sets changed in place.
+     *
+     * The area of the handler becomes the diagnostics area; a warning is raised again as a
+     * warning, any other condition as an error (verified on a live 8.4 server).
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/resignal.html.
+     *
+     * @param array<string, Evaluable> $values The compiled value of each item the statement sets, by item name
+     *
+     * @throws SqlError When the condition is an error, or an item is refused
+     */
+    public function again(\MySqlMemory\Session\Diagnostics $area, array $values, Context $context): Reply
+    {
+        $position = count($area->conditions) - 1;
+        if ($position < 0) {
+            throw ProgramError::ResignalWithoutHandler->error();
+        }
+        [$level, $code, $text] = $area->conditions[$position];
+        $state = $area->item($position, 'RETURNED_SQLSTATE');
+        [$signalled, $number] = $this->items($state, $values, $context);
+        $kept = $area->signalled[$position] ?? ['RETURNED_SQLSTATE' => $state];
+        $signalled = [...$kept, ...$signalled];
+        $message = $signalled[ConditionItemName::MessageText->value] ?? $text;
+        $number ??= $code;
+        $context->diagnostics->conditions[$position] = [$level, $number, $message];
+        $context->diagnostics->signalled[$position] = $signalled;
+        if ($level !== 'Error') {
+            return new Completion(0, 0, $context->diagnostics->count());
+        }
+
+        throw new SqlError(ProgramError::SignalException, $message, null, [], $signalled, $number, true);
     }
 
     /**

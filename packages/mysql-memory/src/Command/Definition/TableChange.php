@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Definition;
 
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Command\Definition\Partition\PartitionChange;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Error\StatementError;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Alter\Column\AddColumn;
@@ -95,6 +96,21 @@ final class TableChange
     public bool $copies = false;
 
     /**
+     * Whether an action adds a foreign key, which the server copies the table for while foreign_key_checks is on.
+     */
+    public bool $referencing = false;
+
+    /**
+     * @var list<string> The indexes the actions drop, by the names they had
+     */
+    public array $dropped = [];
+
+    /**
+     * @var list<string> The partitions whose rows the actions remove, by name: those DROP PARTITION drops and TRUNCATE PARTITION empties
+     */
+    public array $emptied = [];
+
+    /**
      * Whether the actions include ORDER BY, which the server ignores on a table with a clustered index.
      */
     public bool $ordered = false;
@@ -137,6 +153,8 @@ final class TableChange
             }
             if ($command instanceof AddConstraint) {
                 $added[] = [$command->element, null];
+                $this->copies = $this->copies || ($command->element instanceof CheckConstraint && $command->element->enforced !== false);
+                $this->referencing = $this->referencing || $command->element instanceof ForeignKey;
 
                 continue;
             }
@@ -221,8 +239,14 @@ final class TableChange
                 throw SchemaError::PrimaryKeyInvisible->error();
             }
         } elseif ($command instanceof ConstraintEnforcement) {
-            if ($this->constraint($command->constraint->value, $command->kind === ElementKind::Check) === null) {
+            $index = $this->constraint($command->constraint->value, $command->kind === ElementKind::Check);
+            if ($index === null) {
                 throw $command->kind === ElementKind::Check ? SchemaError::CheckConstraintNotFound->error($command->constraint->value) : SchemaError::ConstraintNotFound->error($command->constraint->value);
+            }
+            $check = $this->layout->keys[$index][0];
+            if ($check instanceof CheckConstraint) {
+                $this->layout->keys[$index] = [new CheckConstraint($check->condition, $check->name, $command->enforced ? null : false), null];
+                $this->copies = $this->copies || ($command->enforced && $check->enforced === false);
             }
         } elseif ($command instanceof SetTableOptions) {
             $this->options($command->options);
@@ -252,10 +276,10 @@ final class TableChange
             $this->toggled = true;
         } elseif ($command instanceof SecondaryLoad) {
             throw new SqlError(SchemaError::SecondaryEngineFailed, 'Secondary engine operation failed. No secondary engine defined.');
-        } elseif ($command instanceof TablespaceCommand || $command instanceof PartitionBy) {
-            throw StatementError::NotSupportedYet->error('ALTER TABLE ' . ($command instanceof PartitionBy ? 'PARTITION BY' : 'TABLESPACE'));
-        } elseif ($command instanceof StandaloneCommand || $command instanceof TrailingCommand) {
-            throw SchemaError::PartitionManagementOnNonpartitioned->error();
+        } elseif ($command instanceof TablespaceCommand) {
+            throw StatementError::NotSupportedYet->error('ALTER TABLE TABLESPACE');
+        } elseif ($command instanceof PartitionBy || $command instanceof StandaloneCommand || $command instanceof TrailingCommand) {
+            (new PartitionChange($this))->apply($command);
         } elseif (!$command instanceof ValidationOption) {
             $this->ordered = $command instanceof Reorder || $this->ordered;
             $this->copies = $this->copies || $this->ordered;
@@ -285,6 +309,7 @@ final class TableChange
             if ($index === null) {
                 throw SchemaError::CantDropFieldOrKey->error($name);
             }
+            $this->dropped[] = $name;
             array_splice($layout->keys, $index, 1);
 
             return;

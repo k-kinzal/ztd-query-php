@@ -15,8 +15,13 @@ final class NativeCatalogTest extends TestCase
 {
     public function testRowsHoldAReleaseMaskArgumentCountsAndAResultCode(): void
     {
-        self::assertCount(232, NativeCatalog::ROWS);
+        self::assertCount(230, NativeCatalog::ROWS);
         self::assertSame([[511, 1, -1, 'SY']], NativeCatalog::ROWS['CONCAT']);
         self::assertContainsOnly('array', NativeCatalog::ROWS);
+    }
+
+    public function testRowsKeyTheNullabilityOfGtidSubsetOnTheRelease(): void
+    {
+        self::assertSame([[3, 2, 2, 'IN'], [508, 2, 2, 'IP']], NativeCatalog::ROWS['GTID_SUBSET']);
     }
 }

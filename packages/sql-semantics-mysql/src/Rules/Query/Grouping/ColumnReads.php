@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Query\Grouping;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
+use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -25,7 +26,7 @@ use SqlSemantics\Statement\Shape\OutputSlot;
  * derived table or a common table is the column of the occurrence, not the one it selects.
  * An alias of a select item reads the columns of the item. Aggregates without a window, and the
  * arguments of GROUPING(), read their columns only when asked, since a grouped block may
- * aggregate any column.
+ * aggregate any column; so does the argument of ANY_VALUE(), which the check accepts as it is.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/group-by-handling.html.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -40,7 +41,7 @@ final class ColumnReads
      */
     public function columns(Node $value, array $relations, Facts $facts, bool $aggregated): array
     {
-        if (!$aggregated && $this->aggregate($value)) {
+        if (!$aggregated && ($this->aggregate($value) || $this->anyValue($value))) {
             return [];
         }
         if ($value instanceof ColumnUse && $facts->covers($value)) {
@@ -75,6 +76,14 @@ final class ColumnReads
             || $value instanceof GroupConcat && $value->over === null
             || $value instanceof JsonObjectAggregate
             || $value instanceof KeywordCall && $value->function === KeywordFunction::Grouping;
+    }
+
+    /**
+     * Tells whether a part of an expression is a call of ANY_VALUE(), whose argument a grouped block may read whatever columns it reads.
+     */
+    public function anyValue(Node $value): bool
+    {
+        return $value instanceof FunctionCall && $value->schema === null && strcasecmp($value->name->value, 'ANY_VALUE') === 0;
     }
 
     /**

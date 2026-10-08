@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
 use SqlSemantics\Platform\MySql\Rules\Typing\Aggregates;
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
@@ -103,7 +104,10 @@ final class Aggregate implements SetFunction
 
         $fact = (new AggregateResults())->aggregate($this, $facts, $derivation);
         $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));
-        $domain = $arguments === null ? null : (new Aggregates(Settings::of($derivation->context)))->result($this->function, $arguments[0] ?? null);
+        $domain = $arguments === null ? null : (new Aggregates(Settings::of($derivation->context)))->result($this->function, $arguments[0] ?? null, $derivation->context->profile->grammar);
+        if ($domain !== null && $this->over !== null && in_array($this->function, [AggregateFunction::Minimum, AggregateFunction::Maximum, AggregateFunction::JsonArray], true)) {
+            $domain = (new Materialization())->windowed($domain, $derivation->context->profile->grammar);
+        }
 
         return $domain === null ? $fact : new ScalarFact(new Known($domain), $fact->nullability);
     }

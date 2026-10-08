@@ -133,8 +133,10 @@ final class Stages
      * A table maintenance or key cache statement reports a missing table, and a histogram request
      * naming several tables, in its rows. A data definition statement checks the tables and
      * columns it changes as the server does, while it runs; ALTER TABLE, CREATE INDEX and DROP
-     * INDEX open the table before they resolve the expressions of their key parts and defaults
-     * (verified on a live 8.4 server).
+     * INDEX open the table before they resolve the expressions of their key parts and defaults;
+     * CREATE TABLE reports a column its generated columns, expression defaults and CHECK
+     * constraints read that it lacks, each with its own error, and a table a foreign key
+     * references that does not exist (verified on a live 8.4 server).
      */
     public static function answered(Node $statement, Diagnostic $diagnostic): bool
     {
@@ -146,6 +148,9 @@ final class Stages
         }
         if ($statement instanceof RenameTable) {
             return $diagnostic instanceof MissingTable || $diagnostic instanceof TableExists;
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $statement->query === null) {
+            return $diagnostic instanceof MissingColumn || $diagnostic instanceof MissingTable;
         }
         if ($statement instanceof CreateTableLike || $statement instanceof LockTables || $statement instanceof HandlerOpen) {
             return $diagnostic instanceof MissingTable;

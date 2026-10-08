@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
-use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;

@@ -8,8 +8,8 @@ use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\ColumnText;
 use MySqlMemory\Dictionary\Routine;
 use MySqlMemory\Dictionary\Schema;
-use MySqlMemory\Error\ProgramError;
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -47,12 +47,19 @@ use SqlSemantics\Statement\Operation;
 final class RoutineCommand implements Command
 {
     /**
-     * Answers true.
+     * @param bool $clears Whether the statement starts with an empty diagnostics area: a program whose body declares a handler is created leaving the area as it was (verified on a live 8.4 server)
+     */
+    public function __construct(public readonly bool $clears = true)
+    {
+    }
+
+    /**
+     * Answers whether the statement starts with an empty diagnostics area.
      */
     #[Override]
     public function clearsDiagnostics(): bool
     {
-        return true;
+        return $this->clears;
     }
 
     /**

@@ -75,11 +75,13 @@ final class Invocation
 
     /**
      * Answers the length in characters of a value written as text.
+     *
+     * A double without fixed decimals takes 22 characters, a FLOAT its display length (verified on a live 8.4 server).
      */
     public function length(Domain $domain): int
     {
         return match ($domain->kind) {
-            Kind::Double => $domain->decimals < Domain::NOT_FIXED ? $domain->length : 22,
+            Kind::Double => $domain->decimals < Domain::NOT_FIXED || $domain->field === Field::Float ? $domain->length : 22,
             Kind::Null => 0,
             Kind::Integer, Kind::Decimal, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit => $domain->length,
         };

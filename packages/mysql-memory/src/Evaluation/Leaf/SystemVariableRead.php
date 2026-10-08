@@ -15,6 +15,9 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
 /**
  * A system variable read: `@@name`, `@@SESSION.name` or `@@GLOBAL.name`.
  *
+ * `timestamp` reads the instant the statement started at, which is the timestamp the session
+ * set, if any.
+ *
  * @visibility MySqlMemory
  */
 final class SystemVariableRead implements Evaluable
@@ -43,6 +46,9 @@ final class SystemVariableRead implements Evaluable
     #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
+        if ($this->definition->name === 'timestamp') {
+            return round($frame->context->started, 6);
+        }
         $value = $frame->context->variables->system($this->definition, $this->scope);
         if ($value === null) {
             return null;

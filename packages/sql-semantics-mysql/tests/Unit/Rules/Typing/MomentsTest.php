@@ -32,6 +32,25 @@ final class MomentsTest extends TestCase
         self::assertEquals(Domain::string(29, Collation::known('utf8mb4_0900_ai_ci'), Field::String, Coercibility::Coercible), $moments->shifted(Domain::integer(), IntervalUnit::Day));
     }
 
+    public function testShiftedMovesATimeByDaysToADatetimeAndKeepsTheFractionOfSeconds(): void
+    {
+        $moments = new Moments(new Settings(Collation::known('utf8mb4_0900_ai_ci')));
+        $time = new Domain(Kind::Time, Field::Time, 10);
+
+        self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 19), $moments->shifted($time, IntervalUnit::Day));
+        self::assertEquals(new Domain(Kind::Time, Field::Time, 17, 6), $moments->shifted($time, IntervalUnit::DayMicrosecond));
+        self::assertEquals($time, $moments->shifted($time, IntervalUnit::Day, 0, true));
+        self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 21, 1), $moments->shifted(new Domain(Kind::DateTime, Field::DateTime, 19), IntervalUnit::Second, 1));
+        self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 19), $moments->shifted(new Domain(Kind::DateTime, Field::DateTime, 19), IntervalUnit::Minute, 1));
+    }
+
+    public function testQuantityCountsTheFractionalDigitsOfANumberOfUnits(): void
+    {
+        $moments = new Moments(new Settings(Collation::known('utf8mb4_0900_ai_ci')));
+
+        self::assertSame([0, 3, 6, 6, 0], [$moments->quantity(Domain::integer()), $moments->quantity(Domain::decimal(10, 3)), $moments->quantity(Domain::double()), $moments->quantity(Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'))), $moments->quantity(null)]);
+    }
+
     public function testExtractCountsThePartsAndASign(): void
     {
         $moments = new Moments(new Settings(Collation::known('utf8mb4_0900_ai_ci')));

@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator\Transform;
 
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Plan\Path\Transform\Sort;
+use MySqlMemory\Value\Json\JsonKind;
+use MySqlMemory\Value\Json\JsonNode;
 use MySqlMemory\Value\Order;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Reads the whole input and answers its rows in the order of the sort keys; ties keep input order.
@@ -44,6 +48,7 @@ final class SortIterator implements RowIterator
             $rows[] = $row;
         }
         $keys = $this->path->keys;
+        $this->nonScalar($rows, $frame);
         $indexes = array_keys($rows);
         usort($indexes, static function (int $left, int $right) use ($rows, $keys): int {
             foreach ($keys as [$position, $domain, $descending]) {
@@ -57,6 +62,28 @@ final class SortIterator implements RowIterator
         });
         $this->rows = array_map(static fn (int $index): array => $rows[$index], $indexes);
         $this->next = 0;
+    }
+
+    /**
+     * Warns once that sorting by an array or an object of a JSON key is not supported, as the server does when it meets one (verified on a live 8.4 server).
+     *
+     * @param list<list<int|float|string|null>> $rows
+     */
+    public function nonScalar(array $rows, Frame $frame): void
+    {
+        foreach ($this->path->keys as [$position, $domain]) {
+            if ($domain->kind !== Kind::Json) {
+                continue;
+            }
+            foreach ($rows as $row) {
+                $value = $row[$position];
+                if ($value !== null && in_array(JsonNode::load((string) $value)->type, [JsonKind::Array, JsonKind::Object], true)) {
+                    $frame->context->diagnostics->warning(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message('sorting of non-scalar JSON values'));
+
+                    return;
+                }
+            }
+        }
     }
 
     /**

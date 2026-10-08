@@ -152,4 +152,13 @@ final class ConstancyTest extends TestCase
 
         self::assertSame([Constancy::Statement, Constancy::Resolved, Constancy::Statement, Constancy::Resolved], [Constancy::of($user->expression, $operation->facts), Constancy::of($user->expression, $operation->facts, true, [], true, true), Constancy::of($session->expression, $operation->facts), Constancy::of($session->expression, $operation->facts, true, [], true, true)]);
     }
+
+    public function testFormMakesAWindowFunctionVaryByRow(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT ROW_NUMBER() OVER ()');
+        $call = $operation->field(0)->expression;
+        self::assertNotNull($call);
+
+        self::assertSame(Constancy::Row, Constancy::of($call, $operation->facts));
+    }
 }

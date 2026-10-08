@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
-use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;

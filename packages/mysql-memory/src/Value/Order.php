@@ -6,13 +6,15 @@ namespace MySqlMemory\Value;
 
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Typing\Ordering;
+use MySqlMemory\Value\Json\JsonKind;
+use MySqlMemory\Value\Json\JsonNode;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Compares and keys values of one domain, as the server sorts, groups and indexes them.
  *
  * NULL is lower than every value and equal to NULL. Strings follow their collation; numbers
- * their value, so `1.0` and `1.00` are equal.
+ * their value, so `1.0` and `1.00` are equal. JSON values follow the JSON order ({@see self::json()}).
  *
  * @visibility MySqlMemory
  */
@@ -31,7 +33,8 @@ final class Order
             Kind::Integer, Kind::Year, Kind::Bit => Integer::compare((int) $left, $domain->unsigned, (int) $right, $domain->unsigned),
             Kind::Decimal => Decimal::compare((string) $left, (string) $right),
             Kind::Double => (float) $left <=> (float) $right,
-            Kind::String, Kind::Json => Ordering::of($domain->collation)->compare((string) $left, (string) $right),
+            Kind::Json => self::json((string) $left, (string) $right),
+            Kind::String => Ordering::of($domain->collation)->compare((string) $left, (string) $right),
             Kind::Time => self::time((string) $left) <=> self::time((string) $right),
             Kind::Date, Kind::DateTime, Kind::Null => (string) $left <=> (string) $right,
         };
@@ -50,9 +53,26 @@ final class Order
             Kind::Integer, Kind::Year, Kind::Bit => 'i' . Integer::text((int) $value, $domain->unsigned),
             Kind::Decimal => 'd' . self::decimal((string) $value),
             Kind::Double => 'f' . ((float) $value === 0.0 ? '0' : Real::format((float) $value)),
-            Kind::String, Kind::Json => 's' . Ordering::of($domain->collation)->key((string) $value),
+            Kind::Json => 'j' . JsonNode::load((string) $value)->key(),
+            Kind::String => 's' . Ordering::of($domain->collation)->key((string) $value),
             Kind::Date, Kind::Time, Kind::DateTime, Kind::Null => 't' . $value,
         };
+    }
+
+    /**
+     * Compares two JSON values as the server sorts them: by the JSON order, two arrays or two objects by their sizes only.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/json.html ("Comparison and Ordering of JSON Values").
+     */
+    public static function json(string $left, string $right): int
+    {
+        $leftNode = JsonNode::load($left);
+        $rightNode = JsonNode::load($right);
+        if ($leftNode->type === $rightNode->type && ($leftNode->type === JsonKind::Array || $leftNode->type === JsonKind::Object)) {
+            return count($leftNode->children()) <=> count($rightNode->children());
+        }
+
+        return $leftNode->compare($rightNode);
     }
 
     /**

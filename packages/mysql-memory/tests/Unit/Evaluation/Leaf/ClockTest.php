@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\Clock;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -20,6 +21,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class ClockTest extends TestCase
 {
+    public function testEvaluateReadsTheSystemDateOnTheClockOfTheServer(): void
+    {
+        $instance = new Instance();
+        $instance->registry->threads->pass(86400.0 * 400);
+        $session = $instance->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        self::assertGreaterThan(date('Y-m-d H:i:s', time() + 86400 * 399), (new Clock(ClockKind::SystemDate, new Domain(Kind::DateTime, Field::DateTime, 19)))->evaluate($frame));
+    }
+
     public function testDomainAnswersTheDomainOfTheValue(): void
     {
         $domain = new Domain(Kind::Date, Field::Date, 10);
@@ -67,5 +78,16 @@ final class ClockTest extends TestCase
         $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
 
         self::assertNotSame(date('Y-m-d', 0), (new Clock(ClockKind::SystemDate, new Domain(Kind::Date, Field::Date, 10)))->evaluate($frame));
+    }
+
+    public function testEvaluateReadsTheTimestampAndTheTimeZoneOfTheSession(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET timestamp = 1700000000.123456');
+        $session->query("SET time_zone = 'Asia/Tokyo'");
+
+        $reply = $session->query('SELECT NOW(6), CURDATE(), UTC_TIMESTAMP()')[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['2023-11-15 07:13:20.123456', '2023-11-15', '2023-11-14 22:13:20']], $reply->rows);
     }
 }

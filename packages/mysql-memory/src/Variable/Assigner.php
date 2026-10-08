@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Variable;
 
-use MySqlMemory\Error\AdministrationError;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
+use MySqlMemory\Evaluation\Function\Digest\Ciphers;
 use MySqlMemory\Session\SqlModes;
 use MySqlMemory\Session\Variables;
 use MySqlMemory\Typing\Domain;
@@ -27,7 +28,8 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
  * 0; an integer is clipped to its bounds with a warning; NULL is taken by character_set_results,
  * session_track_system_variables, innodb_tmpdir and innodb_ft_user_stopword_table only, and
  * refused by any other variable; DEFAULT restores the global value, or the compiled default for
- * a global assignment.
+ * a global assignment. block_encryption_mode takes the name of an AES mode, in any case, or its
+ * number, and holds the name in lower case.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-variable.html.
  *
  * @visibility MySqlMemory
@@ -66,11 +68,33 @@ final class Assigner
             throw AdministrationError::VariableIsReadonly->error('SESSION', $definition->name, 'GLOBAL');
         }
         $checked = $domain === null ? ($scope === Scope::Global ? $definition->default : $this->variables->globals->value($definition)) : $this->check($definition, $value, $domain);
-        if ($scope === Scope::Global) {
-            $this->variables->globals->set($definition, $checked);
-        } else {
-            $this->variables->set($definition, $checked);
+        if ($definition->name === 'timestamp' && ($domain === null || $checked === null)) {
+            unset($this->variables->session['timestamp']);
+
+            return;
         }
+        foreach ($this->aliases($definition) as $alias) {
+            if ($scope === Scope::Global) {
+                $this->variables->globals->set($alias, $checked);
+            } else {
+                $this->variables->set($alias, $checked);
+            }
+        }
+    }
+
+    /**
+     * Answers a variable with the variables that are other names of it: transaction_isolation and tx_isolation, transaction_read_only and tx_read_only, which MySQL 5.7 has both of.
+     *
+     * Source: https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_tx_isolation.
+     *
+     * @return list<Definition>
+     */
+    public function aliases(Definition $definition): array
+    {
+        $names = ['transaction_isolation' => 'tx_isolation', 'tx_isolation' => 'transaction_isolation', 'transaction_read_only' => 'tx_read_only', 'tx_read_only' => 'transaction_read_only'];
+        $alias = isset($names[$definition->name]) ? $this->variables->catalog->find($names[$definition->name]) : null;
+
+        return $alias === null ? [$definition] : [$definition, $alias];
     }
 
     /**
@@ -81,11 +105,42 @@ final class Assigner
     public function check(Definition $definition, int|float|string|null $value, Domain $domain): string|int|null
     {
         $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
+        $clock = new TimeSettings($this->context);
+        if ($definition->name === 'time_zone') {
+            return $clock->zone($value, $domain);
+        }
+        if ($definition->name === 'lc_time_names') {
+            return $clock->locale($value, $domain);
+        }
+        if ($definition->name === 'timestamp') {
+            return $clock->timestamp($value, $domain);
+        }
+        if ($definition->name === 'transaction_isolation' || $definition->name === 'tx_isolation') {
+            return $this->isolation($definition, $value, $domain, $text);
+        }
+
         return match ($definition->shape) {
             ValueShape::Boolean => $this->boolean($definition, $value, $domain, $text),
             ValueShape::Integer, ValueShape::Unsigned => $this->integer($definition, $value, $domain, $text),
             ValueShape::Double, ValueShape::Text => $this->text($definition, $value, $text),
         };
+    }
+
+    /**
+     * Checks an isolation level: its name in any letter case, or its number from 0 to 3; held as the name in upper case.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_transaction_isolation.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the value names no isolation level
+     */
+    public function isolation(Definition $definition, int|float|string|null $value, Domain $domain, string $text): string
+    {
+        if ($value !== null && ($domain->kind === Kind::Decimal || $domain->kind === Kind::Double)) {
+            throw AdministrationError::WrongTypeForVariable->error($definition->name);
+        }
+        $level = $value === null ? null : \MySqlMemory\Concurrency\Isolation::named($text);
+
+        return $level->value ?? throw AdministrationError::WrongValueForVariable->error($definition->name, $text);
     }
 
     /**
@@ -160,6 +215,9 @@ final class Assigner
             }
 
             return $modes->toString();
+        }
+        if ($definition->name === 'block_encryption_mode') {
+            return Ciphers::mode($text) ?? throw AdministrationError::WrongValueForVariable->error($definition->name, $text);
         }
         if (str_starts_with($definition->name, 'collation_')) {
             $collation = Collation::named($text);

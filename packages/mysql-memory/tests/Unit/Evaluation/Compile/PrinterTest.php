@@ -17,10 +17,13 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
+use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\NamedRelation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -212,5 +215,17 @@ final class PrinterTest extends TestCase
 
         self::assertSame(1, (new Printer($operation->facts))->position($resolution));
         self::assertSame(-1, (new Printer())->position($resolution));
+    }
+
+    public function testExpressionWritesATemporalLiteralWithItsKeyword(): void
+    {
+        self::assertSame("DATE'2020-01-01'", (new Printer())->expression(new \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Date, '2020-01-01')));
+    }
+
+    public function testRadixWritesTheBytesOfAHexadecimalOrBitLiteral(): void
+    {
+        $printer = new Printer();
+
+        self::assertSame(['0x0102', "X''", '0x05', "_latin1'A'"], [$printer->radix(new RadixLiteral(Radix::Hexadecimal, '102')), $printer->radix(new RadixLiteral(Radix::Hexadecimal, '')), $printer->expression(new RadixLiteral(Radix::Bit, '101')), $printer->radix(new RadixLiteral(Radix::Hexadecimal, '41', new Name('latin1')))]);
     }
 }

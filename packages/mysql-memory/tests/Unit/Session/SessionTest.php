@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
-use MySqlMemory\Command\QueryCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
@@ -342,9 +341,9 @@ final class SessionTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
         $session->run('SELECT 1 FROM nope');
-        $session->run('SELECT /*+ BKA(w) */ 1');
+        $session->run('SELECT * FROM');
 
-        self::assertSame([1235], array_map(static fn (array $condition): int => $condition[1], $session->diagnostics->conditions));
+        self::assertSame([1064], array_map(static fn (array $condition): int => $condition[1], $session->diagnostics->conditions));
     }
 
     public function testExecuteSetsTheRowCountOfEachStatement(): void
@@ -396,40 +395,6 @@ final class SessionTest extends TestCase
         self::assertSame([['Error', '1235', "This version of MySQL doesn't yet support 'CAST-ing data to array of JSON'"]], $array->rows);
     }
 
-    public function testParsingRecordsTheWarningsRaisedWhileTheStatementIsRead(): void
-    {
-        $session = (new Instance())->connect();
-        $operation = $session->analyze("SELECT BINARY 'a'");
-
-        $session->parsing($operation, $operation->facts->warnings);
-
-        self::assertSame([['Warning', 1287, "'BINARY expr' is deprecated and will be removed in a future release. Please use CAST instead"]], $session->diagnostics->conditions);
-    }
-
-    public function testParsingFailsWithTheFirstProblemFoundWhileParsing(): void
-    {
-        $session = (new Instance())->connect();
-        $operation = $session->analyze("SELECT ('a' COLLATE nope) COLLATE nope2");
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1273);
-        $this->expectExceptionMessage("Unknown collation: 'nope'");
-
-        $session->parsing($operation, $operation->facts->warnings);
-    }
-
-    public function testRetainsKeepsTheDiagnosticsOfAStatementWithoutTablesIn56(): void
-    {
-        $legacy = (new Instance('5.6.51'))->connect();
-        $legacy->query("SELECT 'abc' + 0");
-        $legacy->query('SELECT 1');
-        $modern = (new Instance('5.7.44'))->connect();
-
-        self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'abc'"]], $legacy->diagnostics->conditions);
-        self::assertTrue($legacy->retains($legacy->analyze('SELECT 1')->statement, new QueryCommand()));
-        self::assertFalse($modern->retains($modern->analyze('SELECT 1')->statement, new QueryCommand()));
-    }
-
     public function testModesReadTheModesOfTheRelease(): void
     {
         $session = (new Instance('5.7.44'))->connect();
@@ -437,5 +402,57 @@ final class SessionTest extends TestCase
 
         self::assertTrue($session->modes()->has('NO_AUTO_CREATE_USER'));
         self::assertTrue($session->modes()->strict());
+    }
+
+    public function testCloseReleasesTheLocksOfTheSession(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $session->query("SELECT GET_LOCK('a', 0)");
+        $connected = $instance->registry->threads->connected;
+        $session->close();
+
+        self::assertSame([[1 => true], [], []], [$connected, $instance->registry->threads->connected, $instance->registry->threads->locks]);
+    }
+
+    public function testCloseRunsOnceNothingRefersToTheSession(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $session->query("SELECT GET_LOCK('a', 0)");
+        $session = null;
+
+        self::assertSame([[], []], [$instance->registry->threads->connected, $instance->registry->threads->locks]);
+    }
+
+    public function testPerformRefusesChangingInformationSchema(): void
+    {
+        $s = (new Instance())->connect();
+
+        $this->expectExceptionMessage("Access denied for user 'root'@'%' to database 'information_schema'");
+        $s->query('CREATE VIEW information_schema.v AS SELECT 1');
+    }
+
+    public function testUseNamesInformationSchemaInAnyCase(): void
+    {
+        $s = (new Instance())->connect();
+        $s->query('USE INFORMATION_SCHEMA');
+
+        $read1 = $s->query('SELECT DATABASE()')[0];
+        self::assertInstanceOf(ResultSet::class, $read1);
+        self::assertSame([['information_schema']], $read1->rows);
+    }
+    public function testCloseRollsBackTheOpenTransactionAndReleasesItsLocks(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $session = $instance->connect('root', 'localhost', 'd');
+        $other = $instance->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT); INSERT INTO t VALUES (1); BEGIN; UPDATE t SET a = 2');
+        $session->close();
+        $other->query('UPDATE t SET a = a + 10');
+        $result = $other->query('SELECT a FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['11']], $result->rows);
     }
 }

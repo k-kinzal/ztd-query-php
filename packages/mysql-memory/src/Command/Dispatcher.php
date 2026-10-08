@@ -7,7 +7,7 @@ namespace MySqlMemory\Command;
 use MySqlMemory\Command\Write\ChangeCommand;
 use MySqlMemory\Command\Write\InsertCommand;
 use MySqlMemory\Command\Write\MultipleChangeCommand;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\StatementError;
 use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement as MySql;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
@@ -112,6 +112,7 @@ final class Dispatcher
         MySql\Utility\Show\Server\ShowEngineStatus::class => Show\Server\ShowEnginesCommand::class,
         MySql\Utility\Show\Server\ShowPlugins::class => Show\Server\ShowPluginsCommand::class,
         MySql\Utility\Show\Server\ShowPrivileges::class => Show\Server\ShowPrivilegesCommand::class,
+        MySql\Utility\Show\Server\ShowProcesslist::class => Show\Server\ShowProcesslistCommand::class,
         MySql\Utility\Show\Session\ShowProfiles::class => Show\Server\ShowProfilesCommand::class,
         MySql\Utility\Show\Session\ShowProfile::class => Show\Server\ShowProfilesCommand::class,
         MySql\Utility\Explain\Help::class => Show\Server\HelpCommand::class,
@@ -145,6 +146,7 @@ final class Dispatcher
         MySql\Account\AlterDefaultRole::class => Account\RoleCommand::class,
         MySql\Utility\Show\Server\ShowGrants::class => Account\ShowGrantsCommand::class,
         MySql\Utility\Show\Server\ShowCreateUser::class => Account\ShowCreateUserCommand::class,
+        MySql\Utility\Set\SetTransaction::class => Transaction\SetTransactionCommand::class,
         MySql\Server\Transaction\Savepoint::class => Transaction\SavepointCommand::class,
         MySql\Server\Transaction\RollbackToSavepoint::class => Transaction\SavepointCommand::class,
         MySql\Server\Transaction\ReleaseSavepoint::class => Transaction\SavepointCommand::class,
@@ -222,8 +224,29 @@ final class Dispatcher
             $statement instanceof Update && MultipleChangeCommand::joined($statement) => new MultipleChangeCommand(),
             $statement instanceof Update, $statement instanceof Delete => new View\ViewWriteCommand(new ChangeCommand()),
             $statement instanceof Resignal => Condition\SignalCommand::resignal($statement),
+            self::handles($statement) => match (true) {
+                $statement instanceof MySql\Routine\CreateTrigger => new Program\TriggerCommand(false),
+                $statement instanceof MySql\Routine\CreateEvent => new Program\EventCommand(false),
+                default => new Program\RoutineCommand(false),
+            },
             $command !== null => new $command(),
             default => throw StatementError::NotSupportedYet->error((new ReflectionClass($statement))->getShortName()),
         };
+    }
+
+    /**
+     * Tells whether a statement creates a stored program whose body declares a handler, which the server creates leaving the diagnostics area as it was.
+     */
+    public static function handles(Statement $statement): bool
+    {
+        return self::program($statement) && (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, MySql\Routine\Program\HandlerDeclaration::class) !== [];
+    }
+
+    /**
+     * Tells whether a statement creates a stored program: a procedure, a function, a trigger or an event.
+     */
+    public static function program(\SqlSemantics\Statement\Node $statement): bool
+    {
+        return $statement instanceof MySql\Routine\CreateProcedure || $statement instanceof MySql\Routine\CreateFunction || $statement instanceof MySql\Routine\CreateTrigger || $statement instanceof MySql\Routine\CreateEvent;
     }
 }

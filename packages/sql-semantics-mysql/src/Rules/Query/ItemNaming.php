@@ -181,6 +181,8 @@ final class ItemNaming
     /**
      * Answers the value of the name argument of NAME_CONST as the server converts it to text.
      *
+     * A name that is not a literal, NULL among them, is empty, as the server refuses the call.
+     *
      * @throws ImplementationGap When the argument is a value this rule does not spell
      */
     public function constant(Scalar $argument): string
@@ -199,6 +201,9 @@ final class ItemNaming
         }
         if ($argument instanceof BooleanLiteral) {
             return $argument->value ? '1' : '0';
+        }
+        if (!$argument instanceof NumberLiteral && !$argument instanceof RadixLiteral) {
+            return '';
         }
         throw ImplementationGap::rule('the column name NAME_CONST takes from a name argument other than a string, a decimal or integer number, a hexadecimal or bit value, or a boolean');
     }

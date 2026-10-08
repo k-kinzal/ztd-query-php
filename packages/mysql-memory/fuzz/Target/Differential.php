@@ -122,7 +122,8 @@ final class Differential
      *
      * MySQL 5.6 lacks CREATE USER IF NOT EXISTS, ALTER USER IDENTIFIED BY, roles, offline_mode and
      * super_read_only: GRANT creates the account there and SET PASSWORD restores its password.
-     * MySQL 5.7 lacks roles.
+     * MySQL 5.7 lacks roles and the redo log switch. A statement that disables the InnoDB redo
+     * log would leave the MySQL server unable to restart, so every repair enables it again.
      *
      * @return list<string>
      */
@@ -143,9 +144,10 @@ final class Differential
             'SET GLOBAL offline_mode = OFF',
             'SET GLOBAL super_read_only = OFF',
             'SET GLOBAL read_only = OFF',
+            'ALTER INSTANCE ENABLE INNODB REDO_LOG',
         ];
 
-        return str_starts_with($this->version, '5.7.') ? array_values(array_diff($statements, ["SET DEFAULT ROLE NONE TO {$quoted}"])) : $statements;
+        return str_starts_with($this->version, '5.7.') ? array_values(array_diff($statements, ["SET DEFAULT ROLE NONE TO {$quoted}", 'ALTER INSTANCE ENABLE INNODB REDO_LOG'])) : $statements;
     }
 
     /**

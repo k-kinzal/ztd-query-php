@@ -169,4 +169,17 @@ final class RollupItemsTest extends TestCase
 
         self::assertSame([true, false], [(new RollupItems())->rolledAt($query, 0, $derivation), (new RollupItems())->rolledAt($query, 1, $derivation)]);
     }
+
+    public function testWindowedGivesTheRollupItemsTheColumnsOfTheTemporaryTableOfTheWindow(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (p INT)');
+        $operation = $semantics->analyze('SELECT p, ROW_NUMBER() OVER (ORDER BY p DESC) FROM t GROUP BY p WITH ROLLUP', [$table]);
+        $select = $operation->statement;
+        self::assertInstanceOf(Select::class, $select);
+
+        self::assertTrue((new RollupItems())->windowed($select));
+        self::assertEquals(new Known(Domain::integer(FieldType::LongLong, 11)), $operation->field(0)->type);
+        self::assertSame(Nullability::NotNull, $operation->field(1)->nullability);
+    }
 }

@@ -20,8 +20,9 @@ final class TableScan implements AccessPath
 {
     /**
      * @param StoredTable $table The table read
+     * @param list<int>|null $partitions The partitions read, by position, or null for every row
      */
-    public function __construct(public readonly StoredTable $table)
+    public function __construct(public readonly StoredTable $table, public readonly ?array $partitions = null)
     {
     }
 

@@ -8,7 +8,7 @@ use MySqlMemory\Command\Admin\Literals;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Registry\PreparedBranch;
@@ -90,9 +90,10 @@ final class XaCommand implements Command
         }
         $transaction = $session->transaction;
         $transaction->guard();
-        if ($transaction->open) {
+        if ($transaction->active()) {
             throw StatementError::XaWorkOutside->error();
         }
+        $transaction->end();
         $key = $this->key($statement->xid);
         if (isset($session->instance->registry->prepared[$key])) {
             throw StatementError::XaDuplicateXid->error();
@@ -164,15 +165,13 @@ final class XaCommand implements Command
 
             return;
         }
-        if ($transaction->open) {
+        if ($transaction->active()) {
             throw StatementError::XaWrongState->error(XaState::NonExisting->value);
         }
         $registry = $session->instance->registry;
         $prepared = $registry->prepared[$key] ?? throw StatementError::XaUnknownXid->error();
         if ($commit) {
-            foreach ($prepared->changes as [$table, $data]) {
-                $table->data = $data;
-            }
+            $session->instance->transactions->apply($prepared->changes);
         }
         unset($registry->prepared[$key]);
     }

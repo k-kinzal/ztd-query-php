@@ -87,8 +87,9 @@ final class Variables
     /**
      * @param SystemVariables $catalog The system variables the server knows
      * @param Globals $globals The global values of the server
+     * @param \MySqlMemory\Instance $instance The server the session is connected to, whose clock, user-level locks and accounts the functions of a statement read
      */
-    public function __construct(public readonly SystemVariables $catalog, public readonly Globals $globals)
+    public function __construct(public readonly SystemVariables $catalog, public readonly Globals $globals, public readonly \MySqlMemory\Instance $instance = new \MySqlMemory\Instance())
     {
         $this->connected = $globals->values;
     }
@@ -133,6 +134,18 @@ final class Variables
     public function set(Definition $definition, string|int|null $value): void
     {
         $this->session[$definition->name] = $value;
+    }
+
+    /**
+     * Answers the instant a statement of the session starts at: the `timestamp` the session set, or else the current time.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_timestamp.
+     */
+    public function instant(): float
+    {
+        $set = $this->session['timestamp'] ?? null;
+
+        return $set === null ? $this->instance->registry->threads->now() : (float) $set;
     }
 
     /**

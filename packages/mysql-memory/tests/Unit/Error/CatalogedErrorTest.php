@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Error;
 
 use MySqlMemory\Error\CatalogedError;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\StatementError;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;

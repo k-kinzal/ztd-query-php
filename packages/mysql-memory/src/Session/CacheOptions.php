@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Error\StatementError;
 use SqlParser\Lexer\LexicalException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\SyntaxException;

@@ -211,4 +211,16 @@ final class XaCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame(128, $result->columns[3]->length);
     }
+    public function testFinishCommitsThePreparedRowsKeepingTheChangesOfOtherSessions(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $first = $instance->connect('root', 'localhost', 'd');
+        $second = $instance->connect('root', 'localhost', 'd');
+        $first->query("CREATE TABLE t (a INT); XA START 'x'; INSERT INTO t VALUES (1); XA END 'x'; XA PREPARE 'x'");
+        $second->query("INSERT INTO t VALUES (2); XA COMMIT 'x'");
+        $result = $second->query('SELECT a FROM t ORDER BY a')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1'], ['2']], $result->rows);
+    }
 }

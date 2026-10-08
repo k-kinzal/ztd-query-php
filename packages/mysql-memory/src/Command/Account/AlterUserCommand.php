@@ -8,7 +8,7 @@ use MySqlMemory\Account\Account;
 use MySqlMemory\Account\Credentials;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;

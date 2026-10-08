@@ -34,6 +34,8 @@ use SqlSemantics\Validation\Equivalence;
 /**
  * Resolves a column name the way MySQL does: the columns of a query first, then its select list aliases.
  *
+ * In a stored program a name first denotes a parameter, a local variable or a column of the row
+ * of a trigger (MYSQL-PROGRAM-VARIABLE-LOOKUP-001).
  * Rule: MYSQL-COLUMN-LOOKUP-001. The lookup starts at the innermost query and
  * moves outwards one query at a time. At one query the relation occurrences
  * the qualifier admits are searched as in CORE-COLUMN-LOOKUP-001: one known
@@ -71,6 +73,10 @@ final class ColumnResolver
      */
     public function find(Environment $environment, Name $column, ?QualifiedName $qualifier = null): Resolution
     {
+        $variable = (new ProgramVariables())->find($environment, $column, $qualifier);
+        if ($variable !== null) {
+            return $variable;
+        }
         $lookup = new ColumnLookup();
         $open = [];
         $depth = 0;

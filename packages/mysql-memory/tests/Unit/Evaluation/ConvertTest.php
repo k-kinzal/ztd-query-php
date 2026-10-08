@@ -186,6 +186,24 @@ final class ConvertTest extends TestCase
         self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'abc'"], ['Warning', 1292, "Truncated incorrect DOUBLE value: '1x'"]], $session->diagnostics->conditions);
     }
 
+    public function testStringRealReadsAnOverflowAsTheLargestDoubleOfItsSignAndWarns(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+
+        self::assertSame([PHP_FLOAT_MAX, -PHP_FLOAT_MAX, 12.5], [Convert::stringReal('1e400', $context), Convert::stringReal(' -1e400', $context), Convert::stringReal('12.5', $context)]);
+        self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: '1e400'"], ['Warning', 1292, "Truncated incorrect DOUBLE value: ' -1e400'"]], $session->diagnostics->conditions);
+    }
+
+    public function testStringRealWarnsOnceForAnOverflowThatMoreFollows(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+
+        self::assertSame(PHP_FLOAT_MAX, Convert::stringReal('1e400x', $context));
+        self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: '1e400x'"]], $session->diagnostics->conditions);
+    }
+
     public function testStringNumberReadsTheNumberAtTheStartAndWarnsWithTheKindRead(): void
     {
         $session = (new Instance())->connect();
@@ -339,6 +357,29 @@ final class ConvertTest extends TestCase
         $session = (new Instance('5.7.44'))->connect();
         $session->query("SELECT CONCAT('1x') + 0, LOWER('ax') = 0");
 
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testOrdinalReadsEnumAndSetValuesAsNumbers(): void
+    {
+        $enum = new Domain(Kind::String, Field::Enum, 2, 31, false, Collation::known('utf8mb4_0900_ai_ci'), true, ['x', 'yy']);
+        $set = new Domain(Kind::String, Field::Set, 5, 31, false, Collation::known('utf8mb4_0900_ai_ci'), true, ['a', 'b', 'c']);
+        $text = new Domain(Kind::String, Field::VarString, 2, 31, false, Collation::known('utf8mb4_0900_ai_ci'));
+
+        self::assertSame([2, 0, 5, null], [Convert::ordinal('yy', $enum), Convert::ordinal('', $enum), Convert::ordinal('a,c', $set), Convert::ordinal('yy', $text)]);
+    }
+
+    public function testToDoubleReadsAnEnumValueAsItsPosition(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query("CREATE TABLE t (e ENUM('x', 'yy'), s SET('a', 'b', 'c'))");
+        $session->query("INSERT INTO t VALUES ('yy', 'a,c')");
+        $result = $session->query('SELECT e + 0, CEILING(e), s + 0 FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', '2', '5']], $result->rows);
         self::assertSame([], $session->diagnostics->conditions);
     }
 }

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\SchemaError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Diagnostics;

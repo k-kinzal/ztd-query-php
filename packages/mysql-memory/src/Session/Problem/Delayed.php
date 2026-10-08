@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Problem;
 
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority;
@@ -53,7 +53,7 @@ final class Delayed
         $name = $into->table->name;
         $table = $session->instance->dictionary->table($name->schema->value ?? $session->variables->database, $name->name->value);
         if ($table !== null && $into->table->partitions !== []) {
-            throw \MySqlMemory\Error\SchemaError::PartitionClauseOnNonpartitioned->error();
+            throw \MySqlMemory\Error\Family\SchemaError::PartitionClauseOnNonpartitioned->error();
         }
         if ($table !== null && !in_array(strtolower($table->definition->engine), self::ENGINES, true)) {
             throw QueryError::DelayedNotSupported->error($name->name->value);

@@ -6,8 +6,8 @@ namespace MySqlMemory\Command\Program;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\Schema;
-use MySqlMemory\Error\ProgramError;
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;

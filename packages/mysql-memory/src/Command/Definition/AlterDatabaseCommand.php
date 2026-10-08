@@ -6,10 +6,10 @@ namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\Schema;
-use MySqlMemory\Error\AccountError;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\AccountError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Program;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;

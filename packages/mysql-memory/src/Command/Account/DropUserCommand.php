@@ -6,7 +6,7 @@ namespace MySqlMemory\Command\Account;
 
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;

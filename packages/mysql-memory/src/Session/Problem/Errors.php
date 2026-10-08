@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Problem;
 
-use MySqlMemory\Error\AdministrationError;
-use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\ErrorNumbers;
-use MySqlMemory\Error\ProgramError;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;

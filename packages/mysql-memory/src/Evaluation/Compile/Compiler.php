@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
-use MySqlMemory\Error\ProgramError;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Family\Calls;
 use MySqlMemory\Evaluation\Compile\Family\Casts;
 use MySqlMemory\Evaluation\Compile\Family\Dates;
@@ -16,6 +16,8 @@ use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
+use MySqlMemory\Plan\Window\Resolution;
+use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Typing\Quietness;
 use ReflectionClass;
@@ -25,9 +27,12 @@ use SqlSemantics\Platform\MySql\Statement\Call\CharCall;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Extract;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Position;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
+use SqlSemantics\Platform\MySql\Statement\Call\Temporal\GetFormat;
+use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Trim;
 use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
@@ -264,6 +269,12 @@ final class Compiler
         $domain = $type instanceof Known && $type->descriptor instanceof Resolved ? Domain::of($type->descriptor, $nullable)->withNumericBytes($evaluable->domain()->numericBytes && $type->descriptor->kind === $evaluable->domain()->kind) : $evaluable->domain()->withNullable($nullable);
         if ($domain->kind === Kind::String && $this->settings->legacy()) {
             $domain = ($node instanceof SystemVariable ? $evaluable->domain()->withNullable($nullable) : $domain)->withQuiet(!(new Quietness())->loud($node));
+        } elseif ($domain->kind === Kind::String && $node instanceof FunctionCall && in_array(strtoupper($node->name->value), Calls::QUIET, true)) {
+            $domain = $domain->withQuiet();
+        }
+
+        if ($domain->kind === Kind::Json) {
+            $domain = $domain->withSource($evaluable->domain()->source);
         }
 
         return $domain === $evaluable->domain() ? $evaluable : new Retyped($evaluable, $domain);
@@ -320,7 +331,7 @@ final class Compiler
             $node instanceof DefaultOfColumn => $this->names->default($node, $scope),
             $node instanceof InsertedColumn => $this->names->inserted($node, $scope),
             $node instanceof UserVariable => $this->names->userVariable($node),
-            $node instanceof ProgramVariable => throw ProgramError::UndeclaredVariable->error($node->name->value),
+            $node instanceof ProgramVariable => ($variable = $this->connection->program?->variable($node->name->value)) !== null ? new \MySqlMemory\Evaluation\Leaf\ProgramRead($variable) : throw ProgramError::UndeclaredVariable->error($node->name->value),
             $node instanceof SystemVariable => $this->names->systemVariable($node),
             $node instanceof VariableAssignment => $this->names->assignment($node, $scope),
             default => null,
@@ -350,6 +361,7 @@ final class Compiler
             $node instanceof AtTimeZone => (new Casts($this))->atTimeZone($node, $scope),
             $node instanceof JsonExtraction => $this->jsons->extraction($node, $scope),
             $node instanceof MemberOf => $this->jsons->member($node, $scope),
+            $node instanceof JsonValueCall => $this->jsons->jsonValue($node, $scope),
             default => null,
         };
     }
@@ -380,7 +392,9 @@ final class Compiler
     /**
      * Compiles a function call or date arithmetic, or answers null for a node of another form.
      *
-     * An aggregate reaches here only outside the grouped output, where it is refused with ER_INVALID_GROUP_FUNC_USE.
+     * An aggregate reaches here only outside the grouped output, where it is refused with ER_INVALID_GROUP_FUNC_USE,
+     * and a window function only outside the select list and ORDER BY of its block, where it is refused with
+     * ER_WINDOW_INVALID_WINDOW_FUNC_USE.
      *
      * @throws \MySqlMemory\Error\SqlError When the call is refused
      */
@@ -391,9 +405,12 @@ final class Compiler
             $node instanceof Extract => $this->dates->extract($node, $scope),
             $node instanceof IntervalAddition => $this->dates->addition($node, $scope),
             $node instanceof DateArithmetic => $this->dates->call($node, $scope),
+            $node instanceof TimestampCall => $this->dates->timestamp($node, $scope),
+            $node instanceof GetFormat => $this->dates->format($node, $scope),
             $node instanceof FunctionCall => $this->calls->function($node, $scope),
             $node instanceof KeywordCall => $this->calls->keyword($node, $scope),
             $node instanceof ClockCall => $this->calls->clock($node, $scope),
+            Windowing::windowed($node) => throw QueryError::WindowFunctionMisplaced->error(Resolution::named($node)),
             $node instanceof Aggregate, $node instanceof GroupConcat => throw QueryError::InvalidGroupFunctionUse->error(),
             default => null,
         };

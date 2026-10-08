@@ -6,12 +6,16 @@ namespace Tests\Unit\Command\Definition;
 
 use MySqlMemory\Command\Definition\DropTableCommand;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 
 #[CoversClass(DropTableCommand::class)]
 #[Small]
@@ -104,5 +108,85 @@ final class DropTableCommandTest extends TestCase
         self::assertSame([1051, '42S02', "Unknown table 'p.nope,nodb.x'"], [$error->getCode(), $error->sqlState(), $error->getMessage()]);
         self::assertInstanceOf(ResultSet::class, $tables);
         self::assertSame([['w']], $tables->rows);
+    }
+
+    public function testReferencedRefusesToDropATableAnotherTableReferences(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE p (id INT PRIMARY KEY); CREATE TABLE c (pid INT, FOREIGN KEY (pid) REFERENCES p(id))');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3730);
+        $this->expectExceptionMessage("Cannot drop table 'p' referenced by a foreign key constraint 'c_ibfk_1' on table 'c'.");
+
+        $session->query('DROP TABLE IF EXISTS p, nope');
+    }
+
+    public function testReferencedLetsAStatementDropTheReferencingTableToo(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE p (id INT PRIMARY KEY); CREATE TABLE c (pid INT, FOREIGN KEY (pid) REFERENCES p(id)); DROP TABLE p, c');
+
+        $result1 = $session->query('SHOW TABLES')[0];
+        self::assertInstanceOf(ResultSet::class, $result1);
+        self::assertSame([], $result1->rows);
+    }
+
+    public function testTruncatedRefusesToEmptyATableAnotherTableReferences(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE p (id INT PRIMARY KEY); CREATE TABLE c (pid INT, FOREIGN KEY (pid) REFERENCES p(id))');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1701);
+        $this->expectExceptionMessage('Cannot truncate a table referenced in a foreign key constraint (`d`.`c`, CONSTRAINT `c_ibfk_1`)');
+
+        $session->query('TRUNCATE TABLE p');
+    }
+
+    public function testExecuteDropsTheTemporaryTableBeforeTheBaseTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1); CREATE TEMPORARY TABLE t (b INT); DROP TABLE t');
+
+        $result2 = $session->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result2);
+        self::assertSame([['1']], $result2->rows);
+    }
+
+    public function testReferencedRefusesWithRowIsReferencedInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE p (id INT PRIMARY KEY); CREATE TABLE c (pid INT, FOREIGN KEY (pid) REFERENCES p(id))');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1217);
+        $this->expectExceptionMessage('Cannot delete or update a parent row: a foreign key constraint fails');
+
+        $session->query('DROP TABLE p');
+    }
+
+    public function testTruncateEmptiesTheTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2)');
+
+        $reply = (new DropTableCommand())->truncate(new TruncateTable(new QualifiedName(new Name('t'))), $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $result = $session->query('SELECT a FROM t')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+    }
+
+    public function testTruncateRefusesAMissingTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1146);
+
+        (new DropTableCommand())->truncate(new TruncateTable(new QualifiedName(new Name('nope'))), $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
     }
 }

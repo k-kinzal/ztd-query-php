@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Error\StatementError;
 use MySqlMemory\Value\Temporal;
 use SqlParser\Parser\Node;
 use SqlParser\Parser\SyntaxException;
@@ -152,13 +152,16 @@ final class Syntax
     }
 
     /**
-     * Answers the parse error of a failure to read a statement.
+     * Answers the parse error of a failure to read a statement; an attribute a generated column cannot have is ER_WRONG_USAGE, as the parser of the server refuses it (verified on a live 8.4 server).
      */
     public function error(Throwable $failure, string $statement): SqlError
     {
         $cause = $failure;
         while ($cause !== null && !$cause instanceof SyntaxException) {
             $cause = $cause->getPrevious();
+        }
+        if (!$cause instanceof SyntaxException && preg_match('/\AIncorrect usage of (.+) and generated column\z/', $failure->getMessage(), $usage) === 1) {
+            return new SqlError(StatementError::WrongUsage, StatementError::WrongUsage->message($usage[1], 'generated column'), $failure);
         }
         if (!$cause instanceof SyntaxException) {
             return new SqlError(StatementError::ParseError, StatementError::ParseError->message('', 1), $failure);

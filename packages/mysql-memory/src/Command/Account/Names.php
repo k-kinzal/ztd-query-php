@@ -6,10 +6,10 @@ namespace MySqlMemory\Command\Account;
 
 use LogicException;
 use MySqlMemory\Account\Identity;
-use MySqlMemory\Error\AccountError;
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\AccountError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Error\StatementError;
 use MySqlMemory\Session\Diagnostics;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;

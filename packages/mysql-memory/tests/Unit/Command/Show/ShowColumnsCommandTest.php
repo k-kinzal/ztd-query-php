@@ -90,4 +90,31 @@ final class ShowColumnsCommandTest extends TestCase
     {
         self::assertSame([['Field', 64], ['Type', 196605], ['Collation', 32], ['Null', 3], ['Key', 3], ['Default', 196605], ['Extra', 30], ['Privileges', 80], ['Comment', 1024]], array_map(static fn ($heading): array => [$heading->name, $heading->length], (new ShowColumnsCommand())->legacy(true)));
     }
+
+    public function testSystemListsTheColumnsOfASystemTable(): void
+    {
+        $s = (new Instance())->connect();
+
+        $read1 = $s->query('SHOW COLUMNS FROM information_schema.SCHEMATA')[0];
+        self::assertInstanceOf(ResultSet::class, $read1);
+        self::assertSame([['CATALOG_NAME', 'varchar(64)', 'NO', '', null, ''], ['SQL_PATH', 'varbinary(0)', 'YES', '', null, '']], array_values(array_filter($read1->rows, static fn (array $row): bool => in_array($row[0], ['CATALOG_NAME', 'SQL_PATH'], true))));
+        $read2 = $s->query("SHOW FULL COLUMNS FROM mysql.db LIKE 'Select_priv'")[0];
+        self::assertInstanceOf(ResultSet::class, $read2);
+        self::assertSame([['Select_priv', 'enum(\'N\',\'Y\')', 'utf8mb3_general_ci', 'NO', '', 'N', '', 'select,insert,update,references', '']], $read2->rows);
+    }
+
+    public function testTemporaryValuesListsATemporaryTableAsTheServerDoes(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TEMPORARY TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, c VARCHAR(5) DEFAULT 'x', e INT DEFAULT (c + 1))");
+
+        $result1 = $session->query('SHOW COLUMNS FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result1);
+        self::assertSame([['id', 'int', 'NO', 'PRI', null, 'auto_increment'], ['c', 'varchar(5)', 'YES', '', 'x', 'NULL'], ['e', 'int', 'YES', '', '((`c` + 1))', 'NULL']], $result1->rows);
+    }
+
+    public function testTemporaryReadsTheColumnsOfATemporaryTableApart(): void
+    {
+        self::assertSame(['TMP_TABLE_COLUMNS', 40], [(new ShowColumnsCommand())->temporary(false)[0]->table, (new ShowColumnsCommand())->temporary(false)[5]->length]);
+    }
 }

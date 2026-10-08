@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment;
@@ -18,10 +20,13 @@ use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(WindowFunction::class)]
@@ -49,5 +54,13 @@ final class WindowFunctionTest extends TestCase
         self::assertSame('NTH_VALUE(a, 2) FROM FIRST RESPECT NULLS OVER w', (new Lexical())->join($out->pieces()));
     }
 
+    public function testDeriveScalarResolvesTheTypeTheTemporaryTableOfTheWindowHolds(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT NOT NULL)');
+        $query = $semantics->analyze('SELECT ROW_NUMBER() OVER (), FIRST_VALUE(a) OVER (), LAG(a, 1, a) OVER () FROM t', [$table]);
 
+        self::assertEquals([new Known(Domain::integer(Field::LongLong, 21)), new Known(Domain::integer(Field::LongLong, 11))], [$query->field(0)->type, $query->field(1)->type]);
+        self::assertSame([Nullability::NotNull, Nullability::Nullable, Nullability::NotNull], [$query->field(0)->nullability, $query->field(1)->nullability, $query->field(2)->nullability]);
+    }
 }

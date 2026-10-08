@@ -150,4 +150,16 @@ final class SyntaxTest extends TestCase
 
         $session->query('PARSE_GCOL_EXPR (1)');
     }
+
+    public function testErrorRefusesAnAttributeAGeneratedColumnCannotHave(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1221);
+        $this->expectExceptionMessage('Incorrect usage of DEFAULT and generated column');
+
+        $session->query('CREATE TABLE t1 (a INT, b INT AS (a) DEFAULT 1)');
+    }
 }

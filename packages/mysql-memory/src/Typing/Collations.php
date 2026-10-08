@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\SqlError;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Typing\Collations as Rules;

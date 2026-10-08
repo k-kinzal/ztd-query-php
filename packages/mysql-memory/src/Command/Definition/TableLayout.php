@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Definition;
 
+use MySqlMemory\Command\Definition\Constraint\ConstraintLayout;
 use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\StatementError;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
@@ -20,7 +21,9 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\KeywordAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption;
@@ -58,6 +61,21 @@ final class TableLayout
      * @var array<int, string>
      */
     public array $names = [];
+
+    /**
+     * The name of the table before the change, which the names the server gave its constraints follow.
+     */
+    public string $original = '';
+
+    /**
+     * @var array<string, true> The foreign keys the table had before the change, by lowercase name
+     */
+    public array $kept = [];
+
+    /**
+     * How the table is partitioned, as its CREATE TABLE statement writes it, or null when it is not.
+     */
+    public ?\SqlSemantics\Platform\MySql\Statement\Partition\Partitioning $partitioning = null;
 
     /**
      * @param QualifiedName $name The table name with its database
@@ -102,9 +120,12 @@ final class TableLayout
         }
         $keys = array_map(static fn (Key $key): array => [self::index($key, $definition), $key], $definition->keys);
         foreach ($statement->elements as $element) {
-            if (!$element instanceof ColumnElement && !$element instanceof IndexDefinition) {
+            if (!$element instanceof ColumnElement && !$element instanceof IndexDefinition && !$element instanceof CheckConstraint && !$element instanceof ForeignKey) {
                 $keys[] = [$element, null];
             }
+        }
+        foreach ((new ConstraintLayout())->elements($definition) as $element) {
+            $keys[] = [$element, null];
         }
 
         $options = array_values(array_filter($statement->options, static fn (TableOption $option): bool => !$option instanceof CharsetOption && !$option instanceof CollationOption));
@@ -113,6 +134,11 @@ final class TableLayout
         $layout = new self(new QualifiedName(new Name($definition->name), new Name($definition->schema)), $columns, $keys, $options, $statement->temporaryWords);
         $layout->undefaulted = $undefaulted;
         $layout->names = array_map(static fn ($column): string => $column->name, $definition->columns);
+        $layout->original = $definition->name;
+        $layout->partitioning = $statement->partitioning;
+        foreach ($definition->foreignKeys as $key) {
+            $layout->kept[mb_strtolower($key->name)] = true;
+        }
 
         return $layout;
     }
@@ -128,7 +154,7 @@ final class TableLayout
         if (!$specification instanceof OrdinaryColumn && !$specification instanceof GeneratedColumn) {
             return $element;
         }
-        $attributes = array_values(array_filter($specification->attributes, static fn (ColumnAttribute $attribute): bool => !$attribute instanceof KeywordAttribute || ($attribute->keyword !== ColumnKeyword::PrimaryKey && $attribute->keyword !== ColumnKeyword::Unique)));
+        $attributes = array_values(array_filter((new ConstraintLayout())->unchecked($specification->attributes), static fn (ColumnAttribute $attribute): bool => !$attribute instanceof KeywordAttribute || ($attribute->keyword !== ColumnKeyword::PrimaryKey && $attribute->keyword !== ColumnKeyword::Unique)));
         $collated = array_filter($attributes, static fn (ColumnAttribute $attribute): bool => $attribute instanceof CollateAttribute) !== [];
         if ($collation !== null && !$collated && !($specification instanceof GeneratedColumn && $specification->collation !== null)) {
             $attributes[] = new CollateAttribute(new CollationName(new Name($collation)));
@@ -227,18 +253,40 @@ final class TableLayout
     }
 
     /**
+     * Answers the name a column of the table before the change has after it: its new name, false when it is dropped, null when the table had no such column.
+     */
+    public function renamed(string $name): string|false|null
+    {
+        foreach ($this->names as $position => $old) {
+            if (strcasecmp($old, $name) === 0) {
+                return $this->covered($position) ?? false;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Answers the CREATE TABLE statement that declares the table of the layout.
      *
      * An index the table had covers the columns it covered under their new names, or a new column
      * of the name of a column it covered; a column dropped leaves the index, and an index without
-     * columns is dropped.
+     * columns is dropped. The constraints follow the columns they read (ConstraintLayout).
+     *
+     * @throws \MySqlMemory\Error\SqlError When the change drops or renames a column a constraint or a generated column needs
      */
     public function statement(): CreateTable
     {
+        $constraints = new ConstraintLayout();
+        $renamed = $this->renamed(...);
         $elements = array_map(static fn (array $column): ColumnElement => $column[0], $this->columns);
+        $columns = $elements;
         foreach ($this->keys as [$element, $key]) {
             if ($key === null || !$element instanceof IndexDefinition) {
-                $elements[] = $element;
+                $adapted = $constraints->adapted($this->original === '' ? $element : $constraints->renamed($element, $this->original, $this->name->name->value), $renamed);
+                if ($adapted !== null) {
+                    $elements[] = $adapted;
+                }
 
                 continue;
             }
@@ -255,6 +303,8 @@ final class TableLayout
             }
         }
 
-        return new CreateTable($this->name, $elements, $this->options, null, null, $this->temporaryWords);
+        $constraints->dependencies($columns, $renamed);
+
+        return new CreateTable($this->name, $elements, $this->options, $this->partitioning, null, $this->temporaryWords);
     }
 }

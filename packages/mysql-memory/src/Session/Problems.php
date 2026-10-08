@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use MySqlMemory\Error\ProgramError;
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problem\Locations;
@@ -74,7 +74,7 @@ final class Problems
         $calls = $this->calls($operation);
         $diagnostics = $this->pending($operation, $session);
         $this->read($operation, $session);
-        $this->into($operation->statement);
+        $this->into($operation->statement, $session);
         $this->prepared($operation, $session);
         foreach ($calls as $call) {
             if ($call->named()) {
@@ -83,6 +83,7 @@ final class Problems
         }
         $this->paths($operation, $session, $diagnostics);
         $this->opened($operation, $session, $diagnostics);
+        (new \MySqlMemory\Hint\Hints())->resolve($operation->statement, $session);
         (new Problem\Delayed())->check($operation->statement, $session);
         [$located, $matched] = (new Locations())->located($operation, $calls, $diagnostics, $session);
         $this->unlocated($diagnostics, $located, $session, $operation->statement);
@@ -172,15 +173,15 @@ final class Problems
     }
 
     /**
-     * Raises the error of an INTO clause naming a variable of a stored program outside one (ER_SP_UNDECLARED_VAR).
+     * Raises the error of an INTO clause naming a variable no running stored program declares (ER_SP_UNDECLARED_VAR).
      *
      * @throws SqlError When an INTO clause names such a variable
      */
-    public function into(Node $statement): void
+    public function into(Node $statement, ?Session $session = null): void
     {
         foreach ((new Walker())->find($statement, IntoVariables::class) as $into) {
             foreach ($into->targets as $target) {
-                if ($target instanceof ProgramVariable) {
+                if ($target instanceof ProgramVariable && $session?->program?->variable($target->name->value) === null) {
                     throw ProgramError::UndeclaredVariable->error($target->name->value);
                 }
             }

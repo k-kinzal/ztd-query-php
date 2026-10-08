@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Show;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;

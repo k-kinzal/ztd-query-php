@@ -6,7 +6,7 @@ namespace Tests\Unit\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Fill;
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Session\Diagnostics;

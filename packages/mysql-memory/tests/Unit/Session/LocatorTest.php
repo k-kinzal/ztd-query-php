@@ -214,58 +214,6 @@ final class LocatorTest extends TestCase
         self::assertSame([['field list', [4, 1, 0]], ['where clause', [4, 2, 1]]], array_values($locator->places));
     }
 
-    public function testFromLocatesOnlyTheDerivedTables(): void
-    {
-        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
-        $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT a FROM (SELECT b FROM t WHERE c = 1) AS s JOIN t AS u ON u.a = 1')->statement;
-        self::assertInstanceOf(Select::class, $statement);
-        $locator = new Locator();
-        $locator->from($statement->from, [7]);
-
-        self::assertSame(['b', 'c'], array_map(static fn (ColumnUse|OutputOrdinal|FunctionCall $node): string => $node instanceof OutputOrdinal ? (string) $node->position() : $node->name->value, $locator->nodes()));
-        self::assertSame(['field list', 'where clause'], array_column(array_values($locator->places), 0));
-    }
-
-    public function testFromLocatesNothingInABaseTable(): void
-    {
-        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
-        $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT a FROM t')->statement;
-        self::assertInstanceOf(Select::class, $statement);
-        $locator = new Locator();
-        $locator->from($statement->from, []);
-        $locator->from(null, []);
-
-        self::assertSame([], $locator->places);
-    }
-
-    public function testConditionsLocatesTheOnConditionsOfTheJoins(): void
-    {
-        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
-        $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT t.a FROM t JOIN t AS u ON u.c = 1 WHERE t.b = 1')->statement;
-        self::assertInstanceOf(Select::class, $statement);
-        $locator = new Locator();
-        $locator->conditions($statement->from, [3]);
-
-        self::assertSame(['c'], array_map(static fn (ColumnUse|OutputOrdinal|FunctionCall $node): string => $node instanceof OutputOrdinal ? (string) $node->position() : $node->name->value, $locator->nodes()));
-        self::assertSame([['on clause', [3, 2, 1]]], array_values($locator->places));
-    }
-
-    public function testConditionsLocatesNothingWithoutAJoin(): void
-    {
-        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
-        $session->query('CREATE TABLE t (a INT, b INT, c INT)');
-        $statement = $session->analyze('SELECT a FROM (SELECT a FROM t AS x JOIN t AS y ON x.b = y.b) AS s')->statement;
-        self::assertInstanceOf(Select::class, $statement);
-        $locator = new Locator();
-        $locator->conditions($statement->from, []);
-        $locator->conditions(null, []);
-
-        self::assertSame([], $locator->places);
-    }
-
     public function testNodesAnswersThePositionsAndCallsToo(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
@@ -357,5 +305,29 @@ final class LocatorTest extends TestCase
         $locator = (new Locator())->statement($session->analyze('SELECT 1 IN (SELECT *)')->statement);
 
         self::assertCount(1, $locator->stars);
+    }
+
+    public function testSpecificationsLocatesTheNamesOfTheWindowsAfterTheOrderBy(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT, b INT, c INT)');
+        $locator = (new Locator())->statement($session->analyze('SELECT RANK() OVER (ORDER BY a) FROM t WINDOW w AS (PARTITION BY c) ORDER BY b')->statement);
+
+        self::assertSame([['order clause', [6, 0, 0]], ['window partition by', [6, PHP_INT_MAX, 0, 0, 0, 0]], ['window order by', [6, PHP_INT_MAX, 1, 1, 0, 0]]], array_values($locator->places));
+    }
+
+    public function testWindowedRecordsACallAndTheWindowItNames(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+        $statement = $session->analyze('SELECT ROW_NUMBER() OVER w FROM t WINDOW w AS ()')->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $item = $statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $item);
+        $locator = new Locator();
+        $locator->windowed($item->expression, 'field list', [1, 0]);
+        $locator->windowed($statement, 'field list', []);
+
+        self::assertSame([[['field list', [1, 0]]], [['w', [1, 0]]]], [array_map(static fn (array $entry): array => [$entry[1], $entry[2]], $locator->functions), array_map(static fn (array $entry): array => [$entry[0]->value, $entry[1]], $locator->windows)]);
     }
 }

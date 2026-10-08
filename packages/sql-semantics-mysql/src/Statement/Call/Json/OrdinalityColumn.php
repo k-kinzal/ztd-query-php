@@ -7,9 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Json;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Identifier\Name;
@@ -21,8 +20,9 @@ use SqlSemantics\Statement\Type\Nullability;
 /**
  * A `name FOR ORDINALITY` column of JSON_TABLE: the number of the row, counting from 1.
  *
- * Rule: MYSQL-JSON-TABLE-COLUMN-001 (ordinality). The column is an INT
- * UNSIGNED that is never NULL at its own nesting level. Terminates: a leaf.
+ * Rule: MYSQL-JSON-TABLE-COLUMN-001 (ordinality). The column is an
+ * unsigned BIGINT of ten digits, reported as nullable; it is never NULL at
+ * its own nesting level (verified on a live 8.4 server). Terminates: a leaf.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-table-functions.html.
  * Status: Implemented.
  *
@@ -48,7 +48,7 @@ final class OrdinalityColumn implements JsonTableColumn
      */
     public function deriveColumns(Derivation $derivation, Environment $environment): array
     {
-        return [new OutputSlot($this->name, new Known(new Integral(IntegralKind::Int, null, [NumericModifier::Unsigned])), Nullability::NotNull)];
+        return [new OutputSlot($this->name, new Known(Domain::integer(Field::LongLong, 10, true)), Nullability::Nullable)];
     }
 
     /**

@@ -148,4 +148,33 @@ final class SignalCommandTest extends TestCase
 
         self::assertSame([['Warning', 1292, "Truncated incorrect DECIMAL value: '18446744073709551616'"], ['Error', 1231, "Variable 'MYSQL_ERRNO' can't be set to the value of '18446744073709551616'"]], $session->diagnostics->conditions);
     }
+
+    public function testAgainRaisesTheHandledConditionWithTheItemsChanged(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT PRIMARY KEY)');
+        $session->query('INSERT INTO t VALUES (1)');
+        $session->query("CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL SET MESSAGE_TEXT = 'changed'; INSERT INTO t VALUES (1); END");
+
+        $answers = $session->run('CALL p()');
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame([1062, '23000', 'changed', [['Error', 1062, 'changed']]], [$answers[0]->getCode(), $answers[0]->sqlState(), $answers[0]->getMessage(), $session->diagnostics->conditions]);
+    }
+
+    public function testExecuteAddsTheConditionOfAResignalWithAnSqlstateToTheHandledOnes(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT PRIMARY KEY)');
+        $session->query('INSERT INTO t VALUES (1)');
+        $session->query("CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'new', MYSQL_ERRNO = 5000; INSERT INTO t VALUES (1); END");
+
+        $session->run('CALL p()');
+
+        self::assertSame([['Error', 1062, "Duplicate entry '1' for key 't.PRIMARY'"], ['Error', 5000, 'new']], $session->diagnostics->conditions);
+    }
 }

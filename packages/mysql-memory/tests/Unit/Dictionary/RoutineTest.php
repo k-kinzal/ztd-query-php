@@ -48,4 +48,17 @@ final class RoutineTest extends TestCase
     {
         self::assertSame('`a``b`', Routine::quoted('a`b'));
     }
+
+    public function testReturnedTypesAStringInTheCollationOfItsDatabaseWithoutDecimals(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d CHARACTER SET latin1');
+        $session->query("CREATE FUNCTION d.f() RETURNS VARCHAR(3) DETERMINISTIC RETURN 'a'");
+        $routine = $session->instance->dictionary->schema('d')?->functions['f'];
+        self::assertNotNull($routine);
+
+        $returned = $routine->returned();
+
+        self::assertSame(['latin1_swedish_ci', 3, 0, true], [$returned->collation->name, $returned->length, $returned->decimals, $returned->nullable]);
+    }
 }

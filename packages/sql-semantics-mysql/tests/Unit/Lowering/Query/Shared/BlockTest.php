@@ -103,4 +103,11 @@ final class BlockTest extends TestCase
 
         $block->select();
     }
+
+    public function testHintedKeepsTheHintsThroughTheTrailingClauses(): void
+    {
+        $block = (new Block([], [new SelectExpression(new NumberLiteral('1'))]))->hinted([new \SqlSemantics\Platform\MySql\Statement\Hint\Form\BlockNameHint('q')]);
+
+        self::assertSame(['QB_NAME(`q`)'], array_map(static fn ($hint): string => $hint->text(), $block->then(new Trailer())->bare()->select()->hints));
+    }
 }

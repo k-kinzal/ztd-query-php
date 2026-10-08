@@ -121,6 +121,19 @@ final class Declared
     }
 
     /**
+     * Resolves the type of a column of JSON_TABLE: as a column declares it, a string or JSON column reporting no decimals (verified on a live 8.4 server).
+     */
+    public function tableFunction(TypeDescriptor $type): Domain
+    {
+        $domain = $this->domain($type);
+        if ($domain->kind !== Kind::String && $domain->kind !== Kind::Json) {
+            return $domain;
+        }
+
+        return new Domain($domain->kind, $domain->field, $domain->length, 0, $domain->unsigned, $domain->collation, $domain->members, $domain->coercibility, $domain->display);
+    }
+
+    /**
      * Resolves an integer type, which reports a declared display width for itself.
      */
     public function integral(Integral $type): Domain

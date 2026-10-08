@@ -14,6 +14,8 @@ use SqlSemantics\Platform\MySql\Statement\Call\CallArgument;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
@@ -59,6 +61,16 @@ final class FunctionCallTest extends TestCase
         self::assertSame(Nullability::Dependent, $fact->nullability);
     }
 
+    public function testDeriveScalarLeavesAFunctionTheReleaseLacksToARoutine(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $derivation = new Derivation($platform->context($profile, null, [], false));
+        $fact = $derivation->scalar(new FunctionCall(new Name('regexp_like'), [new CallArgument(new StringLiteral(['a'])), new CallArgument(new StringLiteral(['a']))]), $derivation->environment());
+
+        self::assertSame(Nullability::Dependent, $fact->nullability);
+    }
+
     public function testRenderGluesTheNameToItsParenthesis(): void
     {
         $platform = new Platform();
@@ -77,5 +89,23 @@ final class FunctionCallTest extends TestCase
         (new FunctionCall(new Name('count'), []))->render($out);
 
         self::assertSame('`count`()', (new Lexical())->join($out->pieces()));
+    }
+
+    public function testDeriveScalarWarnsThatDesEncryptIsDeprecatedIn57(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], false));
+        $derivation->scalar(new FunctionCall(new Name('des_encrypt'), [new CallArgument(new StringLiteral(['x']))]), $derivation->environment());
+
+        self::assertEquals([new Deprecation(Deprecated::DesEncrypt)], $derivation->facts()->warnings);
+    }
+
+    public function testDeriveScalarWarnsThatJsonMergeIsDeprecated(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
+        $derivation->scalar(new FunctionCall(new Name('json_merge'), [new CallArgument(new StringLiteral(['1'])), new CallArgument(new StringLiteral(['2']))]), $derivation->environment());
+
+        self::assertEquals([new Deprecation(Deprecated::JsonMerge)], $derivation->facts()->warnings);
     }
 }

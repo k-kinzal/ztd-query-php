@@ -281,6 +281,43 @@ final class NamesTest extends TestCase
         self::assertSame([[null, '0000-00-00 00:00:00.000']], $result->rows);
     }
 
+    public function testDefaultReadsAnAutoIncrementColumnAsZero(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, a INT); INSERT INTO t (a) VALUES (1)');
+
+        $result = $session->query('SELECT DEFAULT(id) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0']], $result->rows);
+        self::assertSame(['t', 'id'], [$result->columns[0]->table, $result->columns[0]->originalName]);
+    }
+
+    public function testDefaultRefusesADefaultWrittenAsAnExpression(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, f INT DEFAULT (a + 1))');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3773);
+        $this->expectExceptionMessage('DEFAULT function cannot be used with default value expressions');
+
+        $session->query('SELECT DEFAULT(f) FROM t');
+    }
+
+    public function testDefaultReadsTheDefaultOfTheTableAnInsertWrites(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT DEFAULT 5, b INT)');
+        $session->query('INSERT INTO t (b, a) VALUES (1, DEFAULT(a) * 3)');
+        $session->query('INSERT INTO t SET b = DEFAULT(a)');
+
+        $result = $session->query('SELECT a, b FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['15', '1'], ['5', '5']], $result->rows);
+    }
+
     public function testColumnReadsAnInvisibleColumnByName(): void
     {
         $session = (new Instance())->connect();
@@ -304,5 +341,32 @@ final class NamesTest extends TestCase
         $this->expectExceptionMessage("Unknown system variable 'hot.sort_buffer_size'");
 
         $session->query('SELECT @@hot.sort_buffer_size');
+    }
+
+    public function testFieldRefusesTheAliasOfAWindowFunctionInHaving(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3594);
+        $this->expectExceptionMessage("You cannot use the alias 'r' of an expression containing a window function in this context.'");
+
+        $session->query('SELECT a, RANK() OVER () + 1 r FROM t HAVING r > 0');
+    }
+
+    public function testFieldReadsTheAliasOfAWindowFunctionInTheOrderBy(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2)');
+
+        $result = $session->query('SELECT a, ROW_NUMBER() OVER (ORDER BY a) r FROM t ORDER BY r + 0 DESC')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', '2'], ['1', '1']], $result->rows);
     }
 }

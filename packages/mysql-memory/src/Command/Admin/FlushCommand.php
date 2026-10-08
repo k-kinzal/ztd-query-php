@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\AdministrationError;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;

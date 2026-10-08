@@ -196,4 +196,26 @@ final class CompilerTest extends TestCase
 
         self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'x'"]], $session->diagnostics->conditions);
     }
+
+    public function testTypedMakesTheStringOfGreatestAndLeastQuiet(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SELECT GREATEST('a', 'b') = 0, LEAST('x', 'y') + 0, CONCAT('z') = 0");
+
+        self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'z'"]], $session->diagnostics->conditions);
+    }
+
+    public function testCompileCallRefusesAWindowFunctionOutsideTheSelectListAndOrderBy(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3593);
+        $this->expectExceptionMessage("You cannot use the window function 'sum' in this context.'");
+
+        $session->query('SELECT SUM(SUM(a) OVER ()) FROM t');
+    }
 }

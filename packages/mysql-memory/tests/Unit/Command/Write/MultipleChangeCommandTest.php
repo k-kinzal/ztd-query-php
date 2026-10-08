@@ -215,4 +215,61 @@ final class MultipleChangeCommandTest extends TestCase
 
         self::assertSame([], $session->diagnostics->conditions);
     }
+
+    public function testFailedAddsTheErrorOfAFailedMultipleTableUpdate(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE a (id INT PRIMARY KEY); CREATE TABLE b (id INT PRIMARY KEY); INSERT INTO a VALUES (1), (2); INSERT INTO b VALUES (1), (2)');
+        $replies = $session->run('UPDATE a JOIN b ON a.id = b.id SET a.id = 5');
+        $error = $replies[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame([[1105, 'An error occurred in multi-table update']], $error->following);
+    }
+
+    public function testStoredFiresTheUpdateTriggersOfAJoinedRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('CREATE TABLE u (a INT)');
+        $session->query('INSERT INTO t VALUES (1)');
+        $session->query('INSERT INTO u VALUES (1), (2)');
+        $session->query("CREATE TRIGGER au AFTER UPDATE ON u FOR EACH ROW SET @m = CONCAT(IFNULL(@m, ''), OLD.a, NEW.a)");
+        $session->query('UPDATE u, t SET u.a = u.a + 10 WHERE t.a = 1');
+
+        $result = $session->query('SELECT @m')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['111212']], $result->rows);
+    }
+    public function testWrittenAnswersTheOccurrencesTheStatementWrites(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT); CREATE TABLE u (a INT)');
+        $operation = $session->analyze('DELETE t FROM t JOIN u ON t.a = u.a');
+        $statement = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete::class, $statement);
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new \MySqlMemory\Plan\Planner($statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context), $session->instance->dictionary);
+        $scope = new \MySqlMemory\Evaluation\Scope();
+        $planner->relations->plan($statement->tables[0], $scope);
+
+        self::assertSame([['t'], 1], [array_map(static fn (int $id): string => $scope->scans[$id]->table->definition->name, array_keys((new MultipleChangeCommand())->written($statement, $planner, $scope))), count($scope->scans) - 1]);
+    }
+
+    public function testExecuteLocksTheRowsOfTheTablesItWrites(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $first = $instance->connect('root', 'localhost', 'd');
+        $second = $instance->connect('root', 'localhost', 'd');
+        $first->query('CREATE TABLE t (a INT, b INT); CREATE TABLE u (a INT); INSERT INTO t VALUES (1, 0); INSERT INTO u VALUES (1)');
+        $first->query('BEGIN; UPDATE t JOIN u ON t.a = u.a SET t.b = 1');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1205);
+
+        $second->query('SELECT * FROM t FOR SHARE');
+    }
 }

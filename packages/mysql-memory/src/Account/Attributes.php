@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Account;
 
-use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Value\Json\Json;
 use MySqlMemory\Value\Json\JsonKind;

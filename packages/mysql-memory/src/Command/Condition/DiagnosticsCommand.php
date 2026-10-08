@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Condition;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -29,13 +29,16 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Operation;
 
 /**
- * Executes GET DIAGNOSTICS outside a stored program: reads the diagnostics area of the statement before it into user variables.
+ * Executes GET DIAGNOSTICS: reads the diagnostics area of the statement before it into variables.
+ *
+ * In a stored program the items can be read into local variables, and GET STACKED DIAGNOSTICS
+ * reads the conditions the running handler handles.
  *
  * The statement leaves the area as it is. NUMBER counts its conditions and ROW_COUNT is the
  * row count of the statement before. A condition number that names no condition assigns
  * nothing and adds the error ER_DA_INVALID_CONDITION_NUMBER to the area, and the statement
  * still succeeds. The text items are utf8mb3 strings and the numbers integers. GET STACKED
- * DIAGNOSTICS has no handler to read outside a program (ER_GET_STACKED_DA_WITHOUT_ACTIVE_HANDLER),
+ * DIAGNOSTICS has no handler to read outside a handler (ER_GET_STACKED_DA_WITHOUT_ACTIVE_HANDLER),
  * an error the area does not record: it keeps the conditions of the statement before (verified
  * on live 8.0, 8.4 and 9.1 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/get-diagnostics.html.
@@ -61,10 +64,11 @@ final class DiagnosticsCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof GetDiagnostics);
-        if ($statement->area === DiagnosticsArea::Stacked) {
+        $stacked = $session->program === null ? [] : $session->program->stacked;
+        if ($statement->area === DiagnosticsArea::Stacked && $stacked === []) {
             throw new SqlError(ProgramError::StackedWithoutHandler, ProgramError::StackedWithoutHandler->message(), null, [], null, null, true);
         }
-        $diagnostics = $session->diagnostics;
+        $diagnostics = $statement->area === DiagnosticsArea::Stacked ? $stacked[count($stacked) - 1] : $session->diagnostics;
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $integer = $planner->compiler->names->stored(Domain::integer());
         $text = $planner->compiler->names->stored(Domain::string(0, Collation::known('utf8mb3_general_ci')));
@@ -92,7 +96,9 @@ final class DiagnosticsCommand implements Command
         }
         foreach ($assignments as [$target, $value, $domain]) {
             if (!$target instanceof UserVariable) {
-                throw ProgramError::UndeclaredVariable->error($target->value);
+                $variable = $session->program?->variable($target->value) ?? throw ProgramError::UndeclaredVariable->error($target->value);
+                $variable->assign($value, $domain, $context);
+                continue;
             }
             $session->variables->assign($target->name->value, $value, $domain);
         }

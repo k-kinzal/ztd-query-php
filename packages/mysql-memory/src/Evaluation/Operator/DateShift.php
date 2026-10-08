@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -16,6 +16,7 @@ use MySqlMemory\Value\Real;
 use MySqlMemory\Value\Temporal;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
@@ -99,7 +100,7 @@ final class DateShift implements Evaluable
     /**
      * Reads the value moved as the parts of a datetime, or answers null with a warning when it is no date.
      *
-     * A date followed by more text is read with a warning (ER_TRUNCATED_WRONG_VALUE); anything
+     * A TIME is the time on the day the statement started. A date followed by more text is read with a warning (ER_TRUNCATED_WRONG_VALUE); anything
      * else that is no date, a date with a zero month or day included, warns that it is an
      * incorrect datetime value. The warning quotes a string with the bytes of a binary one
      * escaped, an integer as a signed one, and a double as the server writes it.
@@ -110,14 +111,15 @@ final class DateShift implements Evaluable
     public function moment(int|float|string $value, Frame $frame): ?array
     {
         $domain = $this->operand->domain();
+        if ($domain->kind === Kind::Time) {
+            $moment = (new Moments())->convert($value, $domain, new Domain(Kind::DateTime, Field::DateTime, 26, 6), $frame->context);
+            $parts = $moment === null ? null : Temporal::parseDateTime($moment);
+
+            return $parts === null ? null : [$parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], $parts[6], true];
+        }
         $textual = $domain->kind === Kind::String || $domain->kind->temporal();
         $text = $textual ? (string) Convert::toText($value, $domain) : (string) Convert::toDecimal($value, $domain, $frame->context);
-        $shown = match (true) {
-            $textual => Convert::shown($text, Convert::readableCharset($domain)),
-            $domain->kind === Kind::Integer => (string) (int) $value,
-            $domain->kind === Kind::Double => Real::format((float) $value),
-            default => $text,
-        };
+        $shown = $this->shown($value, $domain, $text);
         $parts = Temporal::parseDateTime($text);
         $scanned = $parts === null ? Temporal::scanDateTime($text) : null;
         if ($scanned !== null && $scanned[8] !== '' && Temporal::valid($scanned[0], $scanned[1], $scanned[2]) && $scanned[1] !== 0 && $scanned[2] !== 0) {
@@ -132,6 +134,19 @@ final class DateShift implements Evaluable
         }
 
         return $parts;
+    }
+
+    /**
+     * Answers how a warning quotes a value that is no date: a string or temporal value as its text with the bytes of a binary one escaped, an integer as a signed one, and a double as the server writes it.
+     */
+    public function shown(int|float|string $value, Domain $domain, string $text): string
+    {
+        return match (true) {
+            $domain->kind === Kind::String || $domain->kind->temporal() => Convert::shown($text, Convert::readableCharset($domain)),
+            $domain->kind === Kind::Integer => (string) (int) $value,
+            $domain->kind === Kind::Double => Real::format((float) $value),
+            default => $text,
+        };
     }
 
     /**

@@ -10,8 +10,10 @@ use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Registry\Registry;
 use MySqlMemory\Session\Globals;
 use MySqlMemory\Session\Session;
+use MySqlMemory\System\SystemSchemas;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
+use WeakReference;
 
 /**
  * An in-memory MySQL server: its databases, its global variables, and the sessions connected to it.
@@ -56,6 +58,21 @@ final class Instance
      */
     public readonly Registry $registry;
 
+    /**
+     * @var array<int, WeakReference<Session>> The sessions opened, by connection id; a session no longer referenced has ended
+     */
+    public array $sessions = [];
+
+    /**
+     * The time the server started, in seconds since the epoch.
+     */
+    public readonly float $started;
+
+    /**
+     * The transactions of the sessions, their row locks and the row versions their snapshots read.
+     */
+    public readonly Concurrency\Transactions $transactions;
+
     private int $connections = 0;
 
     /**
@@ -79,9 +96,20 @@ final class Instance
         $this->dictionary = new Dictionary();
         $this->accounts = Accounts::installed();
         $this->registry = new Registry();
-        foreach (['information_schema', 'mysql', 'performance_schema', 'sys', ...$databases] as $name) {
-            $this->dictionary->schemas[$name] = new Schema($name);
+        $this->transactions = new Concurrency\Transactions();
+        $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
+        $system = $legacy ? ['information_schema' => 'utf8mb3_general_ci', 'mysql' => 'latin1_swedish_ci', 'performance_schema' => 'utf8mb3_general_ci', 'sys' => 'utf8mb3_general_ci'] : ['information_schema' => 'utf8mb3_general_ci', 'mysql' => 'utf8mb4_0900_ai_ci', 'performance_schema' => 'utf8mb4_0900_ai_ci', 'sys' => 'utf8mb4_0900_ai_ci'];
+        if ($release === GrammarRelease::MySql5651) {
+            unset($system['sys']);
         }
+        foreach ($system as $name => $collation) {
+            $this->dictionary->schemas[$name] = new Schema($name, $collation);
+        }
+        foreach ($databases as $name) {
+            $this->dictionary->schemas[$name] ??= new Schema($name);
+        }
+        $this->dictionary->system = new SystemSchemas($this, $release);
+        $this->started = microtime(true);
     }
 
     /**
@@ -95,7 +123,10 @@ final class Instance
      */
     public function connect(string $user = 'root', string $host = 'localhost', ?string $database = null): Session
     {
-        return new Session($this, ++$this->connections, $user, $host, $database);
+        $session = new Session($this, ++$this->connections, $user, $host, $database);
+        $this->sessions[$session->id] = WeakReference::create($session);
+
+        return $session;
     }
 
     /**

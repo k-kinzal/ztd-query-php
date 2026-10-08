@@ -63,4 +63,9 @@ final class UpdateTest extends TestCase
 
         new Update(null, false, false, [new WriteTarget(new QualifiedName(new Name('t')))], []);
     }
+
+    public function testRenderWritesTheHintCommentAfterTheVerb(): void
+    {
+        self::assertSame('WITH c AS (SELECT 1) UPDATE /*+ NO_BKA(`t`) */ t SET a = 1', (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1) UPDATE /*+ no_bka(t) */ t SET a = 1')->toString());
+    }
 }

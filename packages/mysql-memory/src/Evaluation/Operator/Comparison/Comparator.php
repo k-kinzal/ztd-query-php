@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator\Comparison;
 
+use MySqlMemory\Evaluation\Compile\Family\Jsons;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Typing\Collations;
@@ -12,6 +13,7 @@ use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Encoding;
 use MySqlMemory\Value\Integer;
+use MySqlMemory\Value\Json\JsonNode;
 use MySqlMemory\Value\Order;
 use MySqlMemory\Value\Temporal;
 use SqlSemantics\Contract\GrammarRelease;
@@ -25,7 +27,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * Two strings compare as strings in their aggregated collation, converted into its character set; two integers as integers, a BIT
  * value as the unsigned integer of its bits; a
  * date or time and a string or another temporal value as datetimes; a decimal and a decimal or
- * integer as decimals; anything else as doubles.
+ * integer as decimals; anything else as doubles. A JSON value and any value compare as JSON values,
+ * the other value made a JSON value from its type: a string is a JSON string, not a JSON text, and
+ * a predicate a JSON boolean ({@see JsonNode::compare()}).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/type-conversion.html.
  *
  * @visibility MySqlMemory
@@ -37,9 +41,19 @@ final class Comparator
      * @param Domain $left The domain of the left value
      * @param Domain $right The domain of the right value
      * @param Collation $collation The collation strings are compared in
+     * @param bool $leftBoolean Whether the left value is that of a predicate, which a JSON comparison takes as a JSON boolean
+     * @param bool $rightBoolean Whether the right value is that of a predicate
      */
-    public function __construct(public readonly Kind $mode, public readonly Domain $left, public readonly Domain $right, public readonly Collation $collation)
+    public function __construct(public readonly Kind $mode, public readonly Domain $left, public readonly Domain $right, public readonly Collation $collation, public readonly bool $leftBoolean = false, public readonly bool $rightBoolean = false)
     {
+    }
+
+    /**
+     * Answers the same comparator, the values of predicates on either side taken as JSON booleans.
+     */
+    public function withBooleans(bool $left, bool $right): self
+    {
+        return new self($this->mode, $this->left, $this->right, $this->collation, $left, $right);
     }
 
     /**
@@ -120,12 +134,23 @@ final class Comparator
         }
 
         return match ($this->mode) {
-            Kind::String, Kind::Json => Ordering::of($this->collation)->compare(self::text($left, $this->left, $this->collation), self::text($right, $this->right, $this->collation)),
+            Kind::Json => self::json($left, $this->left, $this->leftBoolean)->compare(self::json($right, $this->right, $this->rightBoolean)),
+            Kind::String => Ordering::of($this->collation)->compare(self::text($left, $this->left, $this->collation), self::text($right, $this->right, $this->collation)),
             Kind::Integer => Integer::compare(self::integer($left, $this->left, $context), $this->left->unsigned || $this->left->kind === Kind::Bit, self::integer($right, $this->right, $context), $this->right->unsigned || $this->right->kind === Kind::Bit),
             Kind::Decimal => Decimal::compare((string) Convert::toDecimal($left, $this->left, $context), (string) Convert::toDecimal($right, $this->right, $context)),
             Kind::DateTime, Kind::Time, Kind::Date => $this->temporalOrder($left, $right, $context),
             Kind::Double, Kind::Year, Kind::Bit, Kind::Null => (float) Convert::toDouble($left, $this->left, $context) <=> (float) Convert::toDouble($right, $this->right, $context),
         };
+    }
+
+    /**
+     * Answers a value compared as JSON: a JSON value as it is, any other value made a JSON value from its type, a string being a JSON string.
+     *
+     * @param bool $boolean Whether the value is that of a predicate
+     */
+    public static function json(int|float|string $value, Domain $domain, bool $boolean): JsonNode
+    {
+        return $domain->kind === Kind::Json ? JsonNode::load((string) $value) : Jsons::value($value, $domain, $boolean);
     }
 
     /**

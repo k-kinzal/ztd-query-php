@@ -9,8 +9,10 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Typing\Casts;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -33,7 +35,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * @visibility public
  * @example Typing JSON_VALUE() with RETURNING
  *     $query = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT JSON_VALUE('{\"a\": 1}', '$.a' RETURNING SIGNED NULL ON EMPTY)");
- *     $query->field(0)->type->descriptor->name() // => 'SIGNED'
+ *     $query->field(0)->type->descriptor->name() // => 'BIGINT'
  */
 final class JsonValueCall implements Scalar
 {
@@ -57,7 +59,7 @@ final class JsonValueCall implements Scalar
     }
 
     /**
-     * Derives the parts; the result has the RETURNING type.
+     * Derives the parts; the result has the RETURNING type, resolved as {@see Casts::returning()} says.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
@@ -69,7 +71,9 @@ final class JsonValueCall implements Scalar
             }
         }
 
-        return new ScalarFact(new Known($this->returning ?? TypeClass::Character->descriptor()), Nullability::Nullable);
+        $domain = (new Casts(Settings::of($derivation->context), $derivation->context->profile->grammar))->returning($this->returning);
+
+        return new ScalarFact(new Known($domain ?? $this->returning ?? TypeClass::Character->descriptor()), Nullability::Nullable);
     }
 
     /**

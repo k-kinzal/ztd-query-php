@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Aggregate;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Evaluation\Compile\Family\Jsons;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Function\Json\Constructions;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Encoding;
+use MySqlMemory\Value\Json\JsonEdit;
+use MySqlMemory\Value\Json\JsonKind;
+use MySqlMemory\Value\Json\JsonNode;
 use MySqlMemory\Value\Order;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
@@ -18,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 /**
  * The fold of one aggregate over the rows of one group.
  *
- * NULL arguments are skipped. COUNT counts the rows whose arguments are all not NULL; SUM, AVG,
+ * NULL arguments are skipped, except by JSON_ARRAYAGG and JSON_OBJECTAGG, which keep a NULL value as the JSON null. COUNT counts the rows whose arguments are all not NULL; SUM, AVG,
  * MIN and MAX of no value are NULL; the bit aggregates of no value are their identity.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html.
  *
@@ -45,6 +50,11 @@ final class Accumulator
     private array $parts = [];
 
     /**
+     * @var array<int|string, JsonNode> The elements of JSON_ARRAYAGG, or the members of JSON_OBJECTAGG by name
+     */
+    private array $json = [];
+
+    /**
      * @param Accumulation $accumulation The aggregate folded
      */
     public function __construct(public readonly Accumulation $accumulation)
@@ -56,6 +66,11 @@ final class Accumulator
      */
     public function add(Frame $frame): void
     {
+        if ($this->accumulation->function === AggregateFunction::JsonArray) {
+            $this->collect($frame);
+
+            return;
+        }
         $values = [];
         $key = '';
         foreach ($this->accumulation->arguments as $argument) {
@@ -81,6 +96,29 @@ final class Accumulator
         if ($values !== []) {
             $this->fold($frame, $values[0]);
         }
+    }
+
+    /**
+     * Folds a row into JSON_ARRAYAGG or JSON_OBJECTAGG: a NULL value is the JSON null; a NULL name is refused, and a later member of a name replaces an earlier one.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html#function_json-arrayagg.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a name is NULL or a binary string
+     */
+    public function collect(Frame $frame): void
+    {
+        $arguments = $this->accumulation->arguments;
+        $this->count++;
+        if (!$this->accumulation->object) {
+            $this->json[] = Jsons::argument($arguments[0], $frame);
+
+            return;
+        }
+        $name = $arguments[0]->evaluate($frame);
+        if ($name === null) {
+            throw DataError::JsonDocumentNullKey->error();
+        }
+        $this->json[Constructions::name($name, $arguments[0])] = Jsons::argument($arguments[1], $frame);
     }
 
     /**
@@ -194,7 +232,8 @@ final class Accumulator
             AggregateFunction::StandardDeviation, AggregateFunction::SampleStandardDeviation => $this->spread(true),
             AggregateFunction::Variance, AggregateFunction::SampleVariance => $this->spread(false),
             null => $this->concatenation($frame),
-            AggregateFunction::Minimum, AggregateFunction::Maximum, AggregateFunction::JsonArray, AggregateFunction::Collect => $this->count === 0 ? null : $this->value,
+            AggregateFunction::JsonArray => $this->count === 0 ? null : ($this->accumulation->object ? JsonEdit::object($this->json) : new JsonNode(JsonKind::Array, array_values($this->json)))->store(),
+            AggregateFunction::Minimum, AggregateFunction::Maximum, AggregateFunction::Collect => $this->count === 0 ? null : $this->value,
         };
     }
 

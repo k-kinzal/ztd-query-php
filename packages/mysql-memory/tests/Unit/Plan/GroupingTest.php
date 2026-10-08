@@ -394,4 +394,43 @@ final class GroupingTest extends TestCase
 
         self::assertSame([true, false], [$grouping->sameProperties($first, $second->operand), $grouping->sameProperties($first, $third)]);
     }
+
+    public function testGroupableRefusesAnAliasOfAWindowFunction(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1056);
+        $this->expectExceptionMessage("Can't group on 'r'");
+
+        $session->query('SELECT a, RANK() OVER () r FROM t GROUP BY a, (r)');
+    }
+
+    public function testGroupableRefusesAnAggregateReadThroughAnAliasInsideAnExpression(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT, b INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1056);
+        $this->expectExceptionMessage("Can't group on '???'");
+
+        $session->query('SELECT a, SUM(b) s FROM t GROUP BY a, s + 1');
+    }
+
+    public function testJsonFoldsJsonAggregatesWithPredicatesAsBooleans(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE s (id INT, j JSON)');
+        $session->query("INSERT INTO s VALUES (1, '1'), (2, '\"a\"'), (3, NULL)");
+        $result = $session->query('SELECT JSON_ARRAYAGG(j), JSON_OBJECTAGG(id, id > 1), JSON_ARRAYAGG(1.50) FROM s')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['[1, "a", null]', '{"1": false, "2": true, "3": true}', '[1.50, 1.50, 1.50]']], $result->rows);
+    }
 }

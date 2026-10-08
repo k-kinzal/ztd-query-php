@@ -10,6 +10,8 @@ use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
+use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
@@ -46,7 +48,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * bytes of its characters as characters, a temporal value is text in the
  * connection collation, and a JSON value is text in the connection
  * collation of as many characters as its bytes hold in utf8mb4. When the rows of the block pass through a
- * temporary table, for ORDER BY, DISTINCT or a materialized derived table,
+ * temporary table, for ORDER BY, DISTINCT, a window function or a materialized derived table,
  * a rollup item takes the column the table gives it: an integer, BIT or
  * YEAR becomes an INT up to 9 digits and a BIGINT beyond, keeping its sign;
  * a string other than TEXT or BLOB, and a TINYTEXT or TINYBLOB, becomes a
@@ -77,7 +79,7 @@ final class RollupItems
         }
         $facts = $derivation->facts();
         $groups = $this->groups($select, $facts);
-        $materialized = $select->orderBy !== [] || ($select->late !== null && $select->late->orderBy !== []) || in_array(SelectOption::Distinct, $select->options, true);
+        $materialized = $select->orderBy !== [] || ($select->late !== null && $select->late->orderBy !== []) || in_array(SelectOption::Distinct, $select->options, true) || $this->windowed($select);
         $connection = Settings::of($derivation->context)->connection;
         $fields = [];
         foreach ($items as $field) {
@@ -97,6 +99,30 @@ final class RollupItems
         }
 
         return $fields;
+    }
+
+    /**
+     * Tells whether the select list or ORDER BY of a block holds a window function, outside nested queries.
+     */
+    public function windowed(Select $select): bool
+    {
+        $pending = [...$select->items, ...$select->orderBy];
+        while ($pending !== []) {
+            $value = array_pop($pending);
+            if (is_array($value)) {
+                array_push($pending, ...array_values($value));
+                continue;
+            }
+            if (!is_object($value) || $value instanceof Query) {
+                continue;
+            }
+            if ($value instanceof WindowFunction || ($value instanceof SetFunction && !$value->aggregates())) {
+                return true;
+            }
+            array_push($pending, ...array_values(get_object_vars($value)));
+        }
+
+        return false;
     }
 
     /**
@@ -151,13 +177,13 @@ final class RollupItems
     }
 
     /**
-     * Tells whether an expression reads a grouping expression outside aggregates and subqueries.
+     * Tells whether an expression reads a grouping expression outside aggregates, window functions and subqueries.
      *
      * @param list<Scalar> $groups
      */
     public function reads(Node $node, array $groups, Facts $facts): bool
     {
-        if ($node instanceof Query || $node instanceof Aggregate && $node->over === null || $node instanceof GroupConcat && $node->over === null || $node instanceof JsonObjectAggregate || $node instanceof KeywordCall && $node->function === KeywordFunction::Grouping) {
+        if ($node instanceof Query || $node instanceof WindowFunction || $node instanceof Aggregate && $node->over === null || $node instanceof GroupConcat && $node->over === null || $node instanceof JsonObjectAggregate || $node instanceof KeywordCall && $node->function === KeywordFunction::Grouping) {
             return false;
         }
         if ($node instanceof Scalar && (new Matching())->listed($node, $groups, $facts)) {

@@ -55,6 +55,7 @@ final class AnalysisContext
      * @param Comparison $columnNames How column names are compared
      * @param Name|null $declarationSchema The schema an unqualified declaration belongs to; the first searched schema by default
      * @param Session|null $session The session statements are resolved in, or null for a new session with the server defaults
+     * @param list<string> $foldedSchemas The schemas whose name and relation names compare without regard to ASCII case, whatever relationNames says
      */
     public function __construct(
         public readonly LanguageProfile $profile,
@@ -65,6 +66,7 @@ final class AnalysisContext
         public readonly Comparison $columnNames = Comparison::Sensitive,
         ?Name $declarationSchema = null,
         public readonly ?Session $session = null,
+        public readonly array $foldedSchemas = [],
     ) {
         $path = Check::listOf($searchPath, Name::class, 'A context searches at least one schema.', 1);
         $unique = [];
@@ -85,9 +87,10 @@ final class AnalysisContext
     public function declared(QualifiedName $name, Name $schema): array
     {
         $matches = [];
+        $names = $this->folded($schema->value) ? Comparison::AsciiInsensitive : $this->relationNames;
         foreach ($this->tables as $table) {
-            if ($this->relationNames->equal($table->name->name->value, $name->name->value)
-                && $this->relationNames->equal(($table->name->schema ?? $this->declarationSchema)->value, $schema->value)
+            if ($names->equal($table->name->name->value, $name->name->value)
+                && $names->equal(($table->name->schema ?? $this->declarationSchema)->value, $schema->value)
                 && ($name->catalog === null || $table->name->catalog === null || $this->relationNames->equal($name->catalog->value, $table->name->catalog->value))) {
                 $matches[] = $table;
             }
@@ -97,11 +100,25 @@ final class AnalysisContext
     }
 
     /**
+     * Tells whether a schema is one whose name and relation names compare without regard to ASCII case.
+     */
+    public function folded(string $schema): bool
+    {
+        foreach ($this->foldedSchemas as $folded) {
+            if (Comparison::AsciiInsensitive->equal($folded, $schema)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Answers the same context resolving statements in another session.
      */
     public function withSession(?Session $session): self
     {
-        return new self($this->profile, $this->searchPath, $this->tables, $this->complete, $this->relationNames, $this->columnNames, $this->declarationSchema, $session);
+        return new self($this->profile, $this->searchPath, $this->tables, $this->complete, $this->relationNames, $this->columnNames, $this->declarationSchema, $session, $this->foldedSchemas);
     }
 
 }

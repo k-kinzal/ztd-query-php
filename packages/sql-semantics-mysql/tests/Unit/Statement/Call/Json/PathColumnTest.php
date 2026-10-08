@@ -18,6 +18,10 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -37,7 +41,7 @@ final class PathColumnTest extends TestCase
         $default = new NumberLiteral('1');
         $slots = (new PathColumn(new Name('a'), $type, new StringLiteral(['$.a']), false, null, new JsonResponse(JsonResponseKind::Default, $default)))->deriveColumns($derivation, $derivation->environment());
 
-        self::assertEquals([new OutputSlot(new Name('a'), new Known($type), Nullability::Nullable)], $slots);
+        self::assertEquals([new OutputSlot(new Name('a'), new Known(new Domain(Kind::Integer, Field::Long, 11, 0, false, null, [], Coercibility::Numeric)), Nullability::Nullable)], $slots);
         self::assertSame(Nullability::NotNull, $derivation->facts()->scalar($default)->nullability);
     }
 

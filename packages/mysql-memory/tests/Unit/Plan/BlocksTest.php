@@ -297,6 +297,17 @@ final class BlocksTest extends TestCase
         self::assertSame(['', 16], [$ordered->columns[0]->table, $ordered->columns[0]->flags & 16]);
     }
 
+    public function testOriginReportsTheColumnDefaultReads(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, a INT DEFAULT 5)');
+        $result = $session->query('SELECT DEFAULT(x.a), DEFAULT(id), DEFAULT(a) + 0 FROM t AS x')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['a', 'x', 't', 'd'], [$result->columns[0]->originalName, $result->columns[0]->table, $result->columns[0]->originalTable, $result->columns[0]->schema]);
+        self::assertSame([1, ''], [$result->columns[1]->flags & 1, $result->columns[2]->table]);
+    }
+
     public function testOriginReportsTheBaseColumnThroughTheAliasOfItsTable(): void
     {
         $session = (new Instance())->connect();
@@ -444,5 +455,54 @@ final class BlocksTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $buffered);
         self::assertInstanceOf(ResultSet::class, $direct);
         self::assertSame([0, 2, 't', 't'], [$buffered->columns[0]->flags & 2, $direct->columns[0]->flags & 2, $buffered->columns[0]->originalTable, $direct->columns[0]->originalTable]);
+    }
+
+    public function testSelectComputesWindowsAfterHavingAndFlagsABlobWindowFunction(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE u (p INT, t TEXT)');
+        $session->query("INSERT INTO u VALUES (2, 'x'), (1, 'y'), (2, 'z'), (NULL, 'w'), (1, 'v')");
+        $result = $session->query('SELECT p, COUNT(*) c, RANK() OVER (ORDER BY COUNT(*)) FROM u GROUP BY p HAVING c > 1 ORDER BY p DESC LIMIT 1')[0];
+        $blob = $session->query('SELECT FIRST_VALUE(t) OVER () FROM u')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $blob);
+
+        self::assertSame([['2', '2', '1']], $result->rows);
+        self::assertSame([252, 1048560], [$blob->columns[0]->type->value, $blob->columns[0]->length]);
+        self::assertNotSame(0, $blob->columns[0]->flags & 16);
+    }
+
+    public function testSelectSortsForTheOrderByBeforeWindowsThatDoNotSort(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE u (id INT)');
+        $session->query('INSERT INTO u VALUES (1), (2), (3)');
+
+        $result = $session->query('SELECT id, ROW_NUMBER() OVER () FROM u ORDER BY id DESC LIMIT 2')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['3', '1'], ['2', '2']], $result->rows);
+    }
+
+    public function testViewedNamesAColumnOfAViewAsTheViewDoes(): void
+    {
+        $s = (new Instance())->connect();
+        $s->query('CREATE DATABASE d');
+        $s->query('USE d');
+        $s->query('CREATE TABLE t (a INT)');
+        $s->query('CREATE VIEW v AS SELECT a AS A1, a + 1 AS B FROM t');
+
+        $read1 = $s->query('SELECT a1, b FROM v')[0];
+        self::assertInstanceOf(ResultSet::class, $read1);
+        $read2 = $s->query('SELECT a1, b FROM v')[0];
+        self::assertInstanceOf(ResultSet::class, $read2);
+        $read3 = $s->query('SELECT a1 AS a1 FROM v')[0];
+        self::assertInstanceOf(ResultSet::class, $read3);
+        $read4 = $s->query('SELECT table_name FROM information_schema.tables LIMIT 0')[0];
+        self::assertInstanceOf(ResultSet::class, $read4);
+        self::assertSame(['A1', 'B', 'a1', 'TABLE_NAME'], [$read1->columns[0]->name, $read2->columns[1]->name, $read3->columns[0]->name, $read4->columns[0]->name]);
     }
 }

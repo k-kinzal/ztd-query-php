@@ -23,10 +23,10 @@ use SqlSemantics\Statement\Operation;
  * Executes SHOW TABLE STATUS: one row for each base table of a database, in name order.
  *
  * The figures are those InnoDB reports for a table of one page: 16384 bytes of data and as
- * many for each secondary key, the rows it holds and their average length. They are read once
- * and kept, as the data dictionary keeps them for information_schema_stats_expiry seconds. The
- * creation and update times are the time of that first read, an update time only for a table
- * that holds rows.
+ * many for each secondary key and for the FTS_DOC_ID_INDEX of a table with a full-text key,
+ * the rows it holds and their average length. They are read once and kept, as the data
+ * dictionary keeps them for information_schema_stats_expiry seconds. The creation and update
+ * times are the time of that first read, an update time only for a table that holds rows.
  * LIKE matches the table names with regard to case. A WHERE condition that depends on the rows
  * makes the server read them from a derived table, whose column metadata differs (verified on a
  * live 8.4 server).
@@ -111,6 +111,7 @@ final class ShowTableStatusCommand implements Command
         foreach ($definition->keys as $key) {
             $secondary += $key === $primary ? 0 : 1;
         }
+        $secondary += array_filter($definition->keys, static fn ($key): bool => $key->kind === \MySqlMemory\Dictionary\KeyKind::FullText) === [] ? 0 : 1;
         $counter = $table->data->autoIncrement;
 
         return [

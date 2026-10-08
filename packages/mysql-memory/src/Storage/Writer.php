@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Storage;
 
+use Closure;
+use MySqlMemory\Concurrency\LockMode;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
@@ -41,12 +43,47 @@ final class Writer
     /**
      * Answers the number of the first row a row conflicts with in a unique key, and the key; null when none.
      *
+     * The row is checked against the latest rows, and against the committed versions of the rows
+     * other open transactions changed or deleted. A conflicting row another transaction holds is
+     * waited for, as InnoDB waits to lock a duplicate, and the check starts again once it is
+     * locked; the duplicate is then locked shared, or exclusively when the statement goes on to
+     * change it.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-locks-set.html.
+     *
+     * @param list<int|float|string|null> $row
+     * @param LockMode $mode The lock the statement takes of the duplicate
+     * @return array{int, Key}|null
+     *
+     * @throws SqlError When the duplicate cannot be locked
+     */
+    public function conflict(array $row, ?int $except = null, LockMode $mode = LockMode::Shared): ?array
+    {
+        $variables = $this->context->variables;
+        $transaction = $variables->instance->transactions->of($variables->connection);
+        for (;;) {
+            $found = $this->existing($row, $except, $transaction);
+            if ($found === null || $transaction === null) {
+                return $found;
+            }
+            $waited = $transaction->access->contended($this->table, $found[0], $mode);
+            $transaction->access->lock($this->table, $found[0], $mode);
+            if (!$waited) {
+                return $found;
+            }
+        }
+    }
+
+    /**
+     * Answers the number of the first row a row duplicates in a unique key among the rows a write checks, and the key; null when none.
+     *
      * @param list<int|float|string|null> $row
      * @return array{int, Key}|null
      */
-    public function conflict(array $row, ?int $except = null): ?array
+    public function existing(array $row, ?int $except, ?\MySqlMemory\Session\Transaction $transaction): ?array
     {
         $definition = $this->table->definition;
+        $rows = $transaction?->access->rows($this->table, LockMode::Shared) ?? $this->table->data->rows;
+        $earlier = $transaction === null ? [] : $transaction->system->earlier($this->table, $transaction);
         foreach ($definition->keys as $key) {
             if (!$key->unique()) {
                 continue;
@@ -55,9 +92,11 @@ final class Writer
             if ($wanted === null) {
                 continue;
             }
-            foreach ($this->table->data->rows as $number => $existing) {
-                if ($number !== $except && $this->key($existing, $key) === $wanted) {
-                    return [$number, $key];
+            foreach ([$rows, $earlier] as $candidates) {
+                foreach ($candidates as $number => $existing) {
+                    if ($existing !== null && $number !== $except && $this->key($existing, $key) === $wanted) {
+                        return [$number, $key];
+                    }
                 }
             }
         }
@@ -205,6 +244,51 @@ final class Writer
         }
 
         return $row;
+    }
+
+    /**
+     * Computes the generated columns of a row in column order, each from the values before it, stored as the column stores a value.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-generated-columns.html.
+     *
+     * @param list<int|float|string|null> $row
+     * @param Closure(int, int|float|string|null): (int|float|string|null)|null $notNull Decides what NULL in a NOT NULL generated column becomes, by its position
+     * @return list<int|float|string|null>
+     *
+     * @throws SqlError When a value cannot be stored
+     */
+    public function generate(array $row, Store $store, ?Closure $notNull = null): array
+    {
+        $frame = new Frame($this->context);
+        foreach ($this->table->definition->columns as $position => $column) {
+            if ($column->generated === null) {
+                continue;
+            }
+            $frame->row = $row;
+            $value = $store->value($column->generated->evaluate($frame), $column->generated->domain(), $column);
+            array_splice($row, $position, 1, [$value === null && !$column->nullable() && $notNull !== null ? $notNull($position, $value) : $value]);
+        }
+
+        return $row;
+    }
+
+    /**
+     * Answers the first enforced CHECK constraint of the table a row violates, in the order of their names, or null: a condition that is false; NULL passes.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table-check-constraints.html.
+     *
+     * @param list<int|float|string|null> $row
+     */
+    public function violated(array $row): ?\MySqlMemory\Dictionary\Check
+    {
+        $frame = new Frame($this->context, $row);
+        foreach ($this->table->definition->checks as $check) {
+            if ($check->enforced && Convert::toBool($check->condition->evaluate($frame), $check->condition->domain(), $this->context) === false) {
+                return $check;
+            }
+        }
+
+        return null;
     }
 
     /**

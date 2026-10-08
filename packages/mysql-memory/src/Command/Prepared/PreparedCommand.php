@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Prepared;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
@@ -84,6 +84,7 @@ final class PreparedCommand implements Command
         if ($prepared->statement instanceof Prepare || $prepared->statement instanceof Execute || $prepared->statement instanceof Deallocate) {
             throw StatementError::UnsupportedPreparedStatement->error();
         }
+        (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
         (new Problems())->raise($prepared, $session);
         $parameters = count(array_filter($session->semantics()->parser()->tokenize($text), static fn ($token): bool => $token->name === 'PARAM_MARKER'));
         $session->prepared[$key] = [$text, $parameters];

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Error;
 
-use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\ProgramErrors;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;

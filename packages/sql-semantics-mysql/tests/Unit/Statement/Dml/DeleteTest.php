@@ -37,4 +37,9 @@ final class DeleteTest extends TestCase
     {
         self::assertSame('DELETE LOW_PRIORITY QUICK IGNORE FROM t PARTITION (p) WHERE a = 1 ORDER BY b LIMIT 5', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('delete low_priority quick ignore from t partition (p) where a = 1 order by b limit 5')->toString());
     }
+
+    public function testRenderWritesTheHintCommentAfterTheVerb(): void
+    {
+        self::assertSame('DELETE /*+ BKA() */ FROM t', (new Semantics(Dialect::MySql))->analyze('DELETE /*+ BKA() */ FROM t')->toString());
+    }
 }

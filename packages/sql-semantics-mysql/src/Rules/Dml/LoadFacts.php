@@ -37,7 +37,7 @@ final class LoadFacts
         $fact = $derivation->relation($load->table, $base);
         $environment = new Environment($derivation->context, $base, [new VisibleRelation($load->table, $fact->shape, null, $load->table->name, [], (new TableShapes())->implicit($fact))]);
         foreach ($load->columns as $column) {
-            $derivation->scalar($column, $column instanceof ColumnUse ? $environment : $base);
+            $derivation->scalar($column, $column instanceof ColumnUse ? (new WriteScope())->written($environment) : $base);
         }
         (new WriteScope())->assign($load->assignments, $derivation, $environment, $environment, false);
     }

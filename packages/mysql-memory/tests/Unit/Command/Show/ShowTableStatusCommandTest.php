@@ -81,4 +81,16 @@ final class ShowTableStatusCommandTest extends TestCase
         self::assertSame([Field::Long, Field::LongLong], [$plain[2]->field, $derived[2]->field]);
         self::assertSame([Field::Blob, Field::VarString], [$plain[17]->field, $derived[17]->field]);
     }
+
+    public function testStatisticsCountsThePageOfTheFullTextDocumentIndex(): void
+    {
+        $s = (new Instance())->connect();
+        $s->query('CREATE DATABASE d');
+        $s->query('USE d');
+        $s->query('CREATE TABLE t (a INT PRIMARY KEY, b TEXT, FULLTEXT KEY (b))');
+
+        $read1 = $s->query('SHOW TABLE STATUS')[0];
+        self::assertInstanceOf(ResultSet::class, $read1);
+        self::assertSame('32768', $read1->rows[0][8]);
+    }
 }

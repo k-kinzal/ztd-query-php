@@ -97,6 +97,7 @@ final class PrimaryRule
             $clauses->predicate($form->node($at + 3)),
             $clauses->windows($form->node($at + 4)),
             $qualify ? $clauses->predicate($form->node($at + 5)) : null,
+            hints: $this->lowering->hints($form->token(0)),
         );
     }
 

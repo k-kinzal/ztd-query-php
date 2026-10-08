@@ -128,4 +128,16 @@ final class TableRebuildTest extends TestCase
             TableRebuild::inPlace(new Domain(Kind::String, Field::Enum, 1, 0, false, $collation, true, ['x', 'y']), new Domain(Kind::String, Field::Enum, 1, 0, false, $collation, true, ['y', 'x'])),
         ]);
     }
+
+    public function testReferencedRefusesRowsANewForeignKeyFindsNoParentFor(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE p (id INT PRIMARY KEY); CREATE TABLE c (id INT, pid INT); INSERT INTO c VALUES (1, 2)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1452);
+        $this->expectExceptionMessage('Cannot add or update a child row: a foreign key constraint fails (`d`.`#sql-1_1`, CONSTRAINT `c_ibfk_1` FOREIGN KEY (`pid`) REFERENCES `p` (`id`))');
+
+        $session->query('ALTER TABLE c ADD FOREIGN KEY (pid) REFERENCES p(id)');
+    }
 }

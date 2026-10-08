@@ -446,4 +446,53 @@ final class RelationsTest extends TestCase
         self::assertSame(Field::Null, $column->domain->field);
         self::assertNull($relations->find($scope, [spl_object_id($statement)], 'c'));
     }
+
+    public function testJsonTableReadsTheColumnsOfTheTablesBefore(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE p (id INT, doc JSON)');
+        $session->query("INSERT INTO p VALUES (1, '[1,2]'), (2, '[3]'), (3, NULL)");
+        $joined = $session->query("SELECT p.id, t.v FROM p, JSON_TABLE(p.doc, '$[*]' COLUMNS (v INT PATH '$')) AS t")[0];
+        $left = $session->query("SELECT p.id, t.v FROM p LEFT JOIN JSON_TABLE(p.doc, '$[*]' COLUMNS (v INT PATH '$')) AS t ON TRUE")[0];
+
+        self::assertInstanceOf(ResultSet::class, $joined);
+        self::assertInstanceOf(ResultSet::class, $left);
+        self::assertSame([['1', '1'], ['1', '2'], ['2', '3']], $joined->rows);
+        self::assertSame([['1', '1'], ['1', '2'], ['2', '3'], ['3', null]], $left->rows);
+    }
+
+    public function testFlattenedListsTheNestedColumnsInOrder(): void
+    {
+        $columns = [new \MySqlMemory\Plan\Path\Source\JsonColumn('ordinality', 'n', Domain::integer()), new \MySqlMemory\Plan\Path\Source\JsonColumn('nested', '', Domain::null(), \MySqlMemory\Value\Json\JsonPath::parse('$'), columns: [new \MySqlMemory\Plan\Path\Source\JsonColumn('path', 'v', Domain::double(), \MySqlMemory\Value\Json\JsonPath::parse('$'))])];
+
+        self::assertSame(['n', 'v'], Relations::flattened($columns)[1]);
+    }
+
+    public function testJsonColumnReadsTheDefaultAsAJsonText(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT * FROM JSON_TABLE('[{}]', '$[*]' COLUMNS (a INT PATH '$.a' DEFAULT '\"7\"' ON EMPTY, b JSON PATH '$.a' DEFAULT '[1]' ON EMPTY)) AS t")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['7', '[1]']], $result->rows);
+        $this->expectExceptionMessage('Invalid JSON text in argument 1 to function JSON_TABLE: "Invalid value." at position 0.');
+        $session->query("SELECT * FROM JSON_TABLE('[1]', '$[*]' COLUMNS (a INT PATH '$' DEFAULT 'x' ON EMPTY)) AS t");
+    }
+
+    public function testJsonPathRefusesAPathThatIsNotValid(): void
+    {
+        self::assertCount(1, Relations::jsonPath('$.a')->legs);
+        $this->expectExceptionMessage('Invalid JSON path expression. The error is around character position 1.');
+        Relations::jsonPath('x');
+    }
+
+    public function testTableReadsASystemTableWithTheRowsItHoldsNow(): void
+    {
+        $s = (new Instance())->connect();
+        $s->query('CREATE DATABASE d');
+
+        $read1 = $s->query("SELECT s.SCHEMA_NAME FROM information_schema.SCHEMATA s JOIN information_schema.SCHEMATA t USING (SCHEMA_NAME) WHERE s.SCHEMA_NAME < 'm' ORDER BY 1")[0];
+        self::assertInstanceOf(ResultSet::class, $read1);
+        self::assertSame([['d'], ['information_schema']], $read1->rows);
+    }
 }

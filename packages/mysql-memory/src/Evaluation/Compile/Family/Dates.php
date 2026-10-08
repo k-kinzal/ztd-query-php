@@ -8,10 +8,15 @@ use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Function\Dates as Parts;
+use MySqlMemory\Evaluation\Function\Time\Formatting;
+use MySqlMemory\Evaluation\Function\Time\Spans;
 use MySqlMemory\Evaluation\Operator\DateShift;
 use MySqlMemory\Evaluation\Scope;
 use SqlSemantics\Platform\MySql\Statement\Call\Extract;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
+use SqlSemantics\Platform\MySql\Statement\Call\Temporal\GetFormat;
+use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampCall;
+use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampOperation;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic;
@@ -69,6 +74,34 @@ final class Dates
         $amount = $this->compiler->compile($quantity, $scope);
 
         return new DateShift($date, $amount, $unit, $subtract, $this->compiler->domain($node));
+    }
+
+    /**
+     * Compiles TIMESTAMPADD, a date moved by an interval, and TIMESTAMPDIFF, the whole units between two dates.
+     */
+    public function timestamp(TimestampCall $node, Scope $scope): Evaluable
+    {
+        if ($node->operation === TimestampOperation::Add) {
+            return $this->shift($node->second, $node->first, $node->unit, false, $scope, $node);
+        }
+        $first = $this->compiler->compile($node->first, $scope);
+        $second = $this->compiler->compile($node->second, $scope);
+        $unit = $node->unit;
+        $spans = new Spans();
+
+        return (new Texts($this->compiler))->call('TIMESTAMPDIFF', [$first, $second], $this->compiler->domain($node), static fn (Frame $f, array $a): ?int => $spans->difference($f, $unit, $a[0], $a[1]));
+    }
+
+    /**
+     * Compiles GET_FORMAT(kind, standard): the format of a kind of value in a standard.
+     */
+    public function format(GetFormat $node, Scope $scope): Evaluable
+    {
+        $standard = $this->compiler->compile($node->standard, $scope);
+        $kind = $node->format;
+        $formatting = new Formatting();
+
+        return (new Texts($this->compiler))->call('GET_FORMAT', [$standard], $this->compiler->domain($node), static fn (Frame $f, array $a): ?string => $formatting->standard($kind, $a[0]->evaluate($f)));
     }
 
     /**

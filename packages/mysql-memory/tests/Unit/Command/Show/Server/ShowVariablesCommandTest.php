@@ -57,4 +57,14 @@ final class ShowVariablesCommandTest extends TestCase
         self::assertArrayNotHasKey('timestamp', $global);
         self::assertSame(['1700000000.500000', '1', 'ON'], [$local['timestamp'], $local['pseudo_thread_id'], $local['autocommit']]);
     }
+
+    public function testStatusListsTheStatusVariablesWithTheStatementCounters(): void
+    {
+        $s = (new Instance())->connect();
+
+        self::assertSame([['Com_select', '0'], ['Threads_connected', '1']], array_values(array_filter((new ShowVariablesCommand())->status($s, true), static fn (array $row): bool => in_array($row[0], ['Com_select', 'Threads_connected'], true))));
+        $read1 = $s->query("SHOW SESSION STATUS LIKE 'Com_select'")[0];
+        self::assertInstanceOf(ResultSet::class, $read1);
+        self::assertSame([['Com_select', '0']], $read1->rows);
+    }
 }

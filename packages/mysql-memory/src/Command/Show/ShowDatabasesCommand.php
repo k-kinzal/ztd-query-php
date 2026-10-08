@@ -19,8 +19,8 @@ use SqlSemantics\Statement\Operation;
  * Executes SHOW DATABASES and SHOW SCHEMAS: the databases of the server, in name order, optionally filtered by LIKE or WHERE.
  *
  * The column is Database, read from INFORMATION_SCHEMA.SCHEMATA; LIKE names it with the
- * pattern and matches the name with regard to letter case (verified on live 8.0, 8.4 and 9.1
- * servers).
+ * pattern and matches the name with regard to letter case. MySQL 5.6 and 5.7 list
+ * INFORMATION_SCHEMA first (verified on live 5.6.51, 5.7.44, 8.0, 8.4 and 9.1 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-databases.html.
  *
  * @visibility MySqlMemory
@@ -46,6 +46,9 @@ final class ShowDatabasesCommand implements Command
         assert($statement instanceof ShowDatabases);
         $names = array_map(static fn ($schema): string => $schema->name, array_values($session->instance->dictionary->schemas));
         sort($names, SORT_STRING);
+        if ($session->settings()->legacy()) {
+            $names = ['information_schema', ...array_values(array_diff($names, ['information_schema']))];
+        }
         $heading = 'Database' . ($statement->filter instanceof ShowLike ? ' (' . $statement->filter->pattern->value . ')' : '');
         $headings = [Heading::text($heading, Field::VarString, 64, 4225, 0, $heading, 'SCHEMATA', 'schemata')];
 

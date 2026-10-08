@@ -110,6 +110,13 @@ final class ItemNamingTest extends TestCase
         self::assertSame(['x', 'utf8mb3'], $naming->own(new FunctionCall(new Name('name_const'), [new CallArgument(new StringLiteral(['x'])), new CallArgument(new NumberLiteral('1'))])));
     }
 
+    public function testConstantAnswersAnEmptyNameForAnArgumentThatIsNoLiteral(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertSame(['', ''], [$naming->constant(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()), $naming->constant(new Unary(UnaryOperator::Minus, new NumberLiteral('1')))]);
+    }
+
     public function testConstantRefusesAValueItDoesNotSpell(): void
     {
         $this->expectExceptionMessage('the column name NAME_CONST takes from a name argument other than');

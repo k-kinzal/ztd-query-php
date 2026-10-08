@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -81,5 +82,29 @@ final class CastsTest extends TestCase
 
         self::assertEquals(Domain::integer(Field::LongLong, 4), $casts->cast(Domain::decimal(2, 1), new CastTarget(CastKind::Signed)));
         self::assertEquals(Domain::integer(Field::LongLong, 21, true), $casts->cast(Domain::double(), new CastTarget(CastKind::Unsigned)));
+    }
+
+    public function testReturningResolvesTheTypesOfJsonValue(): void
+    {
+        $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
+
+        self::assertEquals(Domain::string(512, Collation::known('utf8mb4_0900_bin'), Field::VarString, Coercibility::Coercible), $casts->returning(null));
+        self::assertEquals(Domain::string(3, Collation::known('utf8mb4_0900_bin'), Field::VarString, Coercibility::Coercible), $casts->returning(new CastTarget(CastKind::Char, '3')));
+        self::assertEquals(Domain::string(4294967295, Collation::binary(), Field::LongBlob, Coercibility::Coercible), $casts->returning(new CastTarget(CastKind::Binary)));
+        self::assertEquals(new Domain(Kind::Date, Field::Date, 10, 0, false, Collation::known('utf8mb4_0900_bin')), $casts->returning(new CastTarget(CastKind::Date)));
+        self::assertEquals(Domain::integer(Field::LongLong, 21), $casts->returning(new CastTarget(CastKind::Signed)));
+    }
+
+    public function testStringIsALongTextForAJsonValue(): void
+    {
+        $json = new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'));
+
+        self::assertEquals(Domain::string(4294967295, Collation::binary(), Field::LongBlob), (new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->string($json, new CastTarget(CastKind::Binary), Collation::binary()));
+        self::assertEquals(Domain::string(4294967295, Collation::binary()), (new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql5744))->string($json, new CastTarget(CastKind::Binary), Collation::binary()));
+    }
+
+    public function testCastMakesAYearOfFiveDigitsIn80(): void
+    {
+        self::assertSame([5, 4], [(new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql8044))->cast(Domain::integer(), new CastTarget(CastKind::Year))?->length, (new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->cast(Domain::integer(), new CastTarget(CastKind::Year))?->length]);
     }
 }

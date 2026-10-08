@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Admin;
 
-use MySqlMemory\Error\AdministrationError;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange;

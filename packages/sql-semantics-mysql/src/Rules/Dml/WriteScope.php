@@ -21,7 +21,8 @@ use SqlSemantics\Statement\Shape\OutputSlot;
  * Derives the parts that the data manipulation statements share: written columns, values and assignments.
  *
  * Rule: MYSQL-DML-SCOPE-001. A written column is a column use resolved
- * among the tables the statement writes; it becomes a field with the type
+ * among the tables the statement writes, never a variable of a stored
+ * program (MYSQL-PROGRAM-VARIABLE-LOOKUP-001); it becomes a field with the type
  * and nullability of the column. A value is derived where the statement
  * says; the value DEFAULT is derived where the only field of the
  * environment is the column it is assigned to (MYSQL-DML-DEFAULT-001).
@@ -43,6 +44,14 @@ final class WriteScope
         $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
 
         return new Field($position, new OutputSlot($column->name, $fact->type, $fact->nullability, null, $origin), null, $fact->resolution);
+    }
+
+    /**
+     * Answers the environment that names the columns a statement writes: the same relations, where a name is never a variable of a stored program.
+     */
+    public function written(Environment $environment): Environment
+    {
+        return new Environment($environment->context, $environment->outer, $environment->relations, $environment->commonTables, $environment->aliases, true);
     }
 
     /**
@@ -68,7 +77,7 @@ final class WriteScope
     {
         $fields = [];
         foreach ($assignments as $position => $assignment) {
-            $field = $this->field($position, $assignment->column, $derivation->scalar($assignment->column, $columns));
+            $field = $this->field($position, $assignment->column, $derivation->scalar($assignment->column, $this->written($columns)));
             $this->value($assignment->value, $field, $derivation, $values);
             $fields[] = $field;
         }

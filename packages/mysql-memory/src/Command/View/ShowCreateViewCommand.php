@@ -9,8 +9,8 @@ use MySqlMemory\Command\Program\ProgramSource;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
 use MySqlMemory\Dictionary\Routine;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -82,7 +82,7 @@ final class ShowCreateViewCommand implements Command
             $context->diagnostics->warning($error->error, $error->getMessage());
         }
         $current = $session->variables->database;
-        $text = (new ViewText($view->created->facts, $current, $view->database))->query($view->definition) ?? $view->select;
+        $text = (new ViewText($view->created->facts, $current, $view->database))->query($view->definition, true, $view->hints) ?? $view->select;
         $create = $view->create(($view->schema === $current ? '' : Routine::quoted($view->schema) . '.') . Routine::quoted($view->name), $text);
         $flag = ColumnFlag::NotNull->value;
 

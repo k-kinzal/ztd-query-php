@@ -171,4 +171,26 @@ final class ColumnChangeTest extends TestCase
         self::assertSame(['b' => true], $layout->undefaulted);
         self::assertSame('b', $layout->columns[0][0]->name->column->value);
     }
+
+    public function testStoredRefusesAChangeBetweenVirtualAndStored(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE g (a INT, b INT AS (a))');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3106);
+        $this->expectExceptionMessage("'Changing the STORED status' is not supported for generated columns.");
+
+        $session->query('ALTER TABLE g MODIFY b INT AS (a) STORED');
+    }
+
+    public function testStoredLetsAStoredColumnBecomeAnOrdinaryOne(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE g (a INT, c INT AS (a) STORED); INSERT INTO g (a) VALUES (1); ALTER TABLE g MODIFY c INT');
+
+        $result1 = $session->query('SHOW CREATE TABLE g')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result1);
+        self::assertSame("CREATE TABLE `g` (\n  `a` int DEFAULT NULL,\n  `c` int DEFAULT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci", $result1->rows[0][1]);
+    }
 }

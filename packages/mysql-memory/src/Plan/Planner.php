@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan;
 
 use MySqlMemory\Dictionary\Dictionary;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Settings;

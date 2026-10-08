@@ -159,4 +159,21 @@ final class VariablesTest extends TestCase
         self::assertSame([[null, 'utf8mb4']], $result->rows);
         self::assertNull($session->variables->read('character_set_results'));
     }
+
+    public function testInstantReadsTheClockOfTheServer(): void
+    {
+        $instance = new Instance();
+        $instance->registry->threads->pass(7200.0);
+        $variables = new Variables($instance->catalog, $instance->globals, $instance);
+
+        self::assertGreaterThan(microtime(true) + 7100.0, $variables->instant());
+    }
+
+    public function testInstantReadsTheTimestampTheSessionSet(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET timestamp = 1700000000.5');
+
+        self::assertSame(1700000000.5, $session->variables->instant());
+    }
 }

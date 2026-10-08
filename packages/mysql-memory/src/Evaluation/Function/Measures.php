@@ -12,6 +12,7 @@ use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Value\Encoding;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * The string functions that answer numbers: LENGTH, CHAR_LENGTH, ASCII, LOCATE, INSTR, STRCMP, FIELD and FIND_IN_SET.
@@ -68,6 +69,11 @@ final class Measures
 
     /**
      * LOCATE(substring, text[, start]): the position of the first occurrence at or after a start, or 0.
+     *
+     * The text is searched in its own collation, whatever the collation of the substring, which
+     * is converted into its character set. At each character the next bytes of the text, as many
+     * as the substring has, are compared with it, so that ß matches ss in a collation that
+     * equates them but E does not match é (verified on a live 8.4 server).
      */
     public function locate(Frame $frame, Evaluable $needle, Evaluable $haystack, ?Evaluable $start): ?int
     {
@@ -77,19 +83,21 @@ final class Measures
         if ($search === null || $text === null || $from === null) {
             return null;
         }
-        [$collation] = Collations::aggregate([$needle->domain(), $haystack->domain()], 'locate', $haystack->domain()->collation, true);
+        $collation = $haystack->domain()->kind === Kind::String ? $haystack->domain()->collation : Collations::aggregate([$needle->domain(), $haystack->domain()], 'locate', $haystack->domain()->collation, true)[0];
         $strings = new Strings();
         $search = Encoding::convert($search, $strings->charset($needle->domain()), $collation->charset);
         $characters = Encoding::characters(Encoding::convert($text, $strings->charset($haystack->domain()), $collation->charset), $collation->charset);
-        $pattern = Encoding::characters($search, $collation->charset);
         if ($from < 1 || $from > count($characters) + 1) {
             return 0;
         }
-        $length = count($pattern);
-        for ($i = $from - 1, $last = count($characters) - $length; $i <= $last; $i++) {
-            if (Ordering::of($collation)->compare(implode('', array_slice($characters, $i, $length)), $search) === 0) {
+        $bytes = strlen($search);
+        $rest = implode('', array_slice($characters, $from - 1));
+        $ordering = Ordering::of($collation);
+        for ($i = $from - 1, $last = count($characters); $i <= $last && strlen($rest) >= $bytes; $i++) {
+            if ($ordering->compare(substr($rest, 0, $bytes), $search) === 0) {
                 return $i + 1;
             }
+            $rest = substr($rest, strlen($characters[$i] ?? $rest));
         }
 
         return 0;

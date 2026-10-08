@@ -170,4 +170,13 @@ final class DatesTest extends TestCase
 
         self::assertSame([16, 15, 14, 13, 29, 9, 2, 1, 2024, 15000016, 1415000016, 1415, 131415000016, 131415, 1314, 29131415000016, 29131415, 291314, 2913, 202402], $units);
     }
+
+    public function testPartTakesAZeroDayButDayOfWeekRefusesIt(): void
+    {
+        $session = (new Instance())->connect();
+
+        $reply = $session->query("SELECT DAYOFMONTH('2024-01-00'), DAYOFWEEK('2024-01-00'), DAYOFWEEK('0000-01-01')")[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['0', null, '1']], $reply->rows);
+    }
 }

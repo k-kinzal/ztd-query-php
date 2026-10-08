@@ -6,7 +6,14 @@ namespace SqlSemantics\Platform\MySql\Rules\Typing\Builtin;
 
 use Closure;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Typing\Constants;
 use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberForm;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -25,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  */
 final class MathResults
 {
-    private const REAL = ['SQRT', 'EXP', 'LN', 'LOG', 'LOG2', 'LOG10', 'SIN', 'COS', 'TAN', 'ASIN', 'ACOS', 'ATAN', 'COT', 'DEGREES', 'RADIANS', 'POW', 'POWER'];
+    private const REAL = ['SQRT', 'EXP', 'LN', 'LOG', 'LOG2', 'LOG10', 'SIN', 'COS', 'TAN', 'ASIN', 'ACOS', 'ATAN', 'ATAN2', 'COT', 'DEGREES', 'RADIANS', 'POW', 'POWER', 'RAND'];
 
     /**
      * Answers the rule of each function, by name.
@@ -40,8 +47,9 @@ final class MathResults
             'CEIL' => fn (Invocation $call): Domain => $this->integral($call->domain(0), $this->legacy($call)),
             'FLOOR' => fn (Invocation $call): Domain => $this->integral($call->domain(0), $this->legacy($call)),
             'ROUND' => $this->rounded(...),
-            'TRUNCATE' => $this->rounded(...),
+            'TRUNCATE' => fn (Invocation $call): Domain => $this->legacy($call) ? $this->legacyTruncated($call) : $this->truncated($call),
             'PI' => static fn (Invocation $call): Domain => Domain::double(8, 6),
+            'MOD' => $this->modulo(...),
         ];
         foreach (self::REAL as $name) {
             $rules[$name] = static fn (Invocation $call): Domain => Domain::double(23);
@@ -75,19 +83,30 @@ final class MathResults
     }
 
     /**
-     * Resolves CEILING and FLOOR; in MySQL 5.6 and 5.7 the BIGINT is as long as the argument without its fraction, and two more.
+     * Resolves CEILING and FLOOR: an integer makes a BIGINT, a decimal a BIGINT up to 18 integral digits and a DECIMAL beyond, anything else a double.
+     *
+     * In MySQL 5.6 and 5.7 an integer or a decimal makes a BIGINT as long as the argument without
+     * its fraction, and two more, any result at most 17 long, and the double is 17 long with no
+     * decimals (verified on a live 5.7.44 server).
      */
     public function integral(Domain $domain, bool $legacy = false): Domain
     {
         $numbers = new Numbers();
-        if ($numbers->operand($domain) === Kind::Double) {
-            return Domain::double(23);
+        if ($numbers->operand($domain) === Kind::Double || $domain->kind->temporal()) {
+            return $legacy ? new Domain(Kind::Double, Field::Double, 17, 0, false, null, [], Coercibility::Numeric) : Domain::double(23);
+        }
+        if (!$legacy && $numbers->operand($domain) === Kind::Integer) {
+            return Domain::integer(Field::LongLong, 21, $domain->unsigned || $domain->kind === Kind::Bit);
         }
         [$precision, $scale] = $numbers->digits($domain);
         $digits = $precision - $scale + ($scale > 0 ? 1 : 0);
-        $length = $legacy ? $domain->length - ($domain->decimals > 0 ? $domain->decimals + 1 : 0) + 2 : 21;
+        if (!$legacy) {
+            return $digits < 19 ? Domain::integer(Field::LongLong, 21, $domain->unsigned) : Domain::decimal($digits, 0);
+        }
+        $length = min(17, $domain->length - ($domain->decimals > 0 ? $domain->decimals + 1 : 0) + 2);
+        $decimal = Domain::decimal($digits, 0);
 
-        return $digits < 19 ? Domain::integer(Field::LongLong, $length, $domain->unsigned) : Domain::decimal($digits, 0);
+        return $digits < 19 ? Domain::integer(Field::LongLong, $length, $domain->unsigned) : new Domain(Kind::Decimal, Field::NewDecimal, min(17, $decimal->length), 0, false, null, [], Coercibility::Numeric);
     }
 
     /**
@@ -112,5 +131,93 @@ final class MathResults
         }
 
         return Domain::decimal(min(65, $precision - $scale + $newScale + 1), $newScale);
+    }
+
+    /**
+     * Resolves TRUNCATE from MySQL 8.0 on: an integer makes a BIGINT, a double, a string or a temporal value a double, and a decimal keeps its integral digits with the decimals a constant second argument asks for, at most its own.
+     *
+     * A second argument that is not constant leaves a decimal its type (verified on live 8.0 and 8.4 servers).
+     */
+    public function truncated(Invocation $call): Domain
+    {
+        $numbers = new Numbers();
+        $domain = $call->domain(0);
+        $kind = $numbers->operand($domain);
+        if ($kind === Kind::Double || $domain->kind->temporal()) {
+            return Domain::double(23);
+        }
+        if ($kind === Kind::Integer) {
+            return Domain::integer(Field::LongLong, 21, $domain->unsigned || $domain->kind === Kind::Bit);
+        }
+        [$precision, $scale] = $numbers->digits($domain);
+        $places = $this->places($call);
+        if ($places === null) {
+            return Domain::decimal($precision, $scale);
+        }
+        $kept = max(0, min($scale, $places));
+
+        return Domain::decimal(max(1, $precision - $scale + $kept), $kept);
+    }
+
+    /**
+     * Resolves TRUNCATE in MySQL 5.6 and 5.7: an integer keeps its length, a decimal keeps its integral digits and its sign with the decimals a constant second argument asks for, and anything else makes a double of those decimals, 17 characters and the decimals long (verified on a live 5.7.44 server).
+     */
+    public function legacyTruncated(Invocation $call): Domain
+    {
+        $numbers = new Numbers();
+        $domain = $call->domain(0);
+        $kind = $numbers->operand($domain);
+        if ($kind === Kind::Integer && !$domain->kind->temporal()) {
+            return Domain::integer(Field::LongLong, $domain->length, $domain->unsigned);
+        }
+        $places = $this->places($call);
+        if ($places === null) {
+            return $this->rounded($call);
+        }
+        $kept = max(0, min(30, $places));
+        if ($kind !== Kind::Decimal || $domain->kind->temporal()) {
+            return new Domain(Kind::Double, Field::Double, 17 + $kept, $kept, false, null, [], Coercibility::Numeric);
+        }
+        [$precision, $scale] = $numbers->digits($domain);
+
+        return Domain::decimal(max(1, min(65, $precision - $scale + $kept)), $kept, $domain->unsigned);
+    }
+
+    /**
+     * Answers the decimals the constant second argument of ROUND or TRUNCATE asks for, or null when it is not constant.
+     *
+     * An integer constant asks for its value, NULL for none, and a decimal or floating-point
+     * literal for its value rounded to an integer.
+     */
+    public function places(Invocation $call): ?int
+    {
+        $node = $call->nodes[1] ?? null;
+        $value = $node === null ? null : (new Constants())->value($node);
+        $constant = $call->constant(1) ?? ($value === null ? null : ($value[1] && $value[0] < 0 ? PHP_INT_MAX : $value[0]));
+        while ($node instanceof Grouped) {
+            $node = $node->operand;
+        }
+
+        return match (true) {
+            $constant !== null => $constant,
+            $node instanceof NullLiteral => 0,
+            $node instanceof NumberLiteral && $node->form === NumberForm::Decimal => (int) round((float) $node->text),
+            $node instanceof NumberLiteral && $node->form === NumberForm::Float => (int) round((float) $node->text, 0, PHP_ROUND_HALF_EVEN),
+            default => null,
+        };
+    }
+
+    /**
+     * Resolves MOD(N, M) as the operator N % M.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/mathematical-functions.html#function_mod.
+     */
+    public function modulo(Invocation $call): Domain
+    {
+        $numbers = new Numbers($call->settings->divPrecisionIncrement, $call->settings->unsignedSubtraction);
+        $left = isset($call->nodes[0]) ? $numbers->numeric($call->nodes[0], $call->domain(0)) : $call->domain(0);
+        $right = isset($call->nodes[1]) ? $numbers->numeric($call->nodes[1], $call->domain(1)) : $call->domain(1);
+
+        return $numbers->binary(ArithmeticOperator::Modulo, $left, $right);
     }
 }

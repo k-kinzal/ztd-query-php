@@ -45,13 +45,14 @@ The rest of the behavior is modeled on MySQL 8.4: the error messages, the defaul
 | `INSERT`, `REPLACE`, `UPDATE`, `DELETE` | Emulated; see [Writes](#writes) |
 | `CREATE`, `ALTER`, `DROP DATABASE`; `CREATE`, `ALTER`, `RENAME`, `DROP`, `TRUNCATE TABLE`; `CREATE`, `DROP INDEX` | Emulated; see [Definitions](#definitions) |
 | `CREATE`, `ALTER`, `DROP VIEW` | Emulated; see [Views](#views) |
-| Procedures, functions, triggers, events | Definitions emulated; see [Stored programs](#stored-programs) |
-| `CALL` | Emulated for simple procedures; see [Stored programs](#stored-programs) |
+| Procedures, functions, triggers | Emulated; see [Stored programs](#stored-programs) |
+| Events | Definitions emulated, never run; see [Stored programs](#stored-programs) |
+| `CALL` | Emulated; see [Stored programs](#stored-programs) |
 | Users, roles, passwords, `GRANT`, `REVOKE`, `SET ROLE`, `SET DEFAULT ROLE` | Emulated, not enforced; see [Accounts](#accounts) |
-| `START TRANSACTION`, `BEGIN`, `COMMIT`, `ROLLBACK`, savepoints, `XA` | Emulated; see [Transactions](#transactions) |
+| `START TRANSACTION`, `BEGIN`, `COMMIT`, `ROLLBACK`, savepoints, `SET TRANSACTION`, `XA` | Emulated; see [Transactions](#transactions) |
 | `SET`, `SET NAMES`, `SET CHARACTER SET`, `SET PERSIST` | Emulated; see [Variables](#variables) |
 | `PREPARE`, `EXECUTE`, `DEALLOCATE PREPARE` | Emulated |
-| `SIGNAL`, `RESIGNAL`, `GET DIAGNOSTICS` | Emulated outside stored programs |
+| `SIGNAL`, `RESIGNAL`, `GET DIAGNOSTICS` | Emulated |
 | `LOCK TABLES`, `UNLOCK TABLES` | Emulated; locks never wait |
 | `HANDLER` | Emulated |
 | `DO`, `USE` | Emulated |
@@ -62,9 +63,9 @@ The rest of the behavior is modeled on MySQL 8.4: the error messages, the defaul
 | `INSTALL`, `UNINSTALL PLUGIN` and `COMPONENT` | Refused as a server with no plugin library refuses them |
 | Replication and binary log statements | Answered as a server that is neither a replica nor a source with replicas |
 | `LOAD DATA`, `IMPORT TABLE`, `SELECT ... INTO OUTFILE` / `DUMPFILE` | Refused as a server with `--secure-file-priv` and `local_infile` off refuses them |
-| `SET TRANSACTION`, `SHOW DATABASES`, `SHOW PROCESSLIST`, `KILL`, `SHUTDOWN`, `RESTART`, `CLONE`, `CREATE FUNCTION ... SONAME` | Not supported: error 1235 |
+| `KILL`, `SHUTDOWN`, `RESTART`, `CLONE`, `CREATE FUNCTION ... SONAME` | Not supported: error 1235 |
 
-A statement, an expression form or a function that the emulator does not run fails with error 1235 (`ER_NOT_SUPPORTED_YET`, SQLSTATE `42000`), whose message names it: `This version of MySQL doesn't yet support 'SetTransaction'`. It fails before it changes anything. The server raises the same error for a few statements it does not support itself; those are not differences.
+A statement, an expression form or a function that the emulator does not run fails with error 1235 (`ER_NOT_SUPPORTED_YET`, SQLSTATE `42000`), whose message names it: `This version of MySQL doesn't yet support 'Kill'`. It fails before it changes anything. The server raises the same error for a few statements it does not support itself; those are not differences.
 
 ## Queries
 
@@ -76,7 +77,23 @@ A statement, an expression form or a function that the emulator does not run fai
 - The `ONLY_FULL_GROUP_BY` check (error 1055) with the functional dependencies the server recognizes.
 - Result column names, including the names of unaliased expressions (`SELECT 1+1` names its column `1+1`), and the column metadata the server sends, which depends on whether a column is read from a base table, a view, a derived table or a temporary table.
 
-Not supported: window functions (`OVER`), `JSON_TABLE`, full-text search (`MATCH ... AGAINST`), partition selection (`FROM t PARTITION (p0)`) and optimizer hints (`/*+ ... */`).
+- Window functions, in MySQL 8.0 and later: `ROW_NUMBER`, `RANK`, `DENSE_RANK`, `PERCENT_RANK`, `CUME_DIST`, `NTILE`, `LAG`, `LEAD`, `FIRST_VALUE`, `LAST_VALUE`, `NTH_VALUE`, and the aggregates `SUM`, `AVG`, `COUNT`, `MIN`, `MAX`, the bit aggregates and the statistical ones with `OVER`. Windows have `PARTITION BY`, `ORDER BY` and `ROWS` or `RANGE` frames, including `INTERVAL` offsets over dates and times; named windows of the `WINDOW` clause can refine one another. Windows are computed after `HAVING` and before `DISTINCT`, `ORDER BY` and `LIMIT`, and over the rows of `GROUP BY`. The rows leave in the order of the last window that sorts, and a single-table query whose windows do not sort applies its `ORDER BY` before them, as the server does. The server's errors are raised in its order of checks: windows used where they are not allowed (3593, 3594), refinements of named windows (3579 to 3583), positions in `PARTITION BY` or `ORDER BY` (3592), nested windows (3595), frames (3586 to 3590, 3596), the arguments of `NTILE`, `LEAD`, `LAG` and `NTH_VALUE` (1210), and the forms the server does not support (`IGNORE NULLS`, `FROM LAST`, `GROUPS`, `EXCLUDE`, `DISTINCT` and `GROUP_CONCAT` over a window, 1235). The result columns of `MIN`, `MAX`, `FIRST_VALUE`, `LAST_VALUE`, `NTH_VALUE`, `LEAD` and `LAG` take the types the temporary table of the window holds. `SHOW CREATE VIEW` writes the windows of a view as the server stores them.
+
+- `JSON_TABLE` in MySQL 8.0 and later, as a table function in `FROM`: its document may read the columns of the tables before it (`FROM t, JSON_TABLE(t.doc, ...)`, `LEFT JOIN JSON_TABLE(...) ON TRUE`) and of outer queries. Every column kind is evaluated (`FOR ORDINALITY`, `PATH`, `EXISTS PATH`, sibling and nested `NESTED PATH`s), with `ON EMPTY` and `ON ERROR` (`NULL`, `DEFAULT 'json'`, `ERROR` with errors 3665, 3666, 3669, 3155 and 3156, and the deprecation warning for `ON ERROR` written first), and the columns take their declared types as the server reports them. Values are converted into the column types exactly; the conversions of `BIT`, `ENUM` and `SET` columns, and of some strings into `TIME`, differ, and the notes and deprecation warnings the server adds while storing a value are not raised.
+
+Not supported: full-text search (`MATCH ... AGAINST`) and the partitions of a table partitioned by `KEY` (`FROM t PARTITION (p0)` fails with error 1235; the other methods are supported).
+
+### Optimizer hints
+
+Hint comments (`/*+ ... */`) right after `SELECT`, `INSERT`, `REPLACE`, `UPDATE` and `DELETE` are read as the server reads them, in MySQL 5.7 (its smaller set of hints) and later; in MySQL 5.6 they are ordinary comments. Every hint of the manual is accepted, with the server's warnings in the server's order:
+
+- a problem in the comment is warning 1064 (`Optimizer hint syntax error`, `Unsupported MAX_EXECUTION_TIME`), and the hints before it still count;
+- a hint that repeats or contradicts an earlier one is warning 3126, a query block name no block has is 3127, a table, an index or a variable the hint names that does not exist is 3128, `MAX_EXECUTION_TIME` outside the first block of a `SELECT` statement is 3125, `RESOURCE_GROUP` outside block 1 is 3515, `SET_VAR` of a variable that does not take the hint is 3637, and an unknown resource group is 3651;
+- query blocks are numbered and named (`select#N`, `QB_NAME`) as the server numbers them, a common table expression once per reference.
+
+`SET_VAR` sets the session value of its variable for the statement, with the checks and warnings of `SET`, and restores it when the statement ends, also when it fails; `div_precision_increment` and `group_concat_max_len` also type the statement. A prepared statement raises the hint warnings when it is prepared, and only the `SET_VAR` value warnings when it runs. `SHOW CREATE VIEW` writes the `INDEX`, `JOIN_INDEX`, `GROUP_INDEX` and `ORDER_INDEX` hints a view keeps, as the server does.
+
+The hints change no result: join order, index, join buffering, merge and subquery strategy hints are checked only, `MAX_EXECUTION_TIME` sets no timer, and `RESOURCE_GROUP` binds no thread. Known differences: the hint warnings of a statement of a stored procedure are raised when it runs, not also when the procedure is created; the hints of a stored function or a trigger are ignored without a warning, where the server warns about unresolved names at the first call of a function; a syntax problem in a common table expression warns once, not again for each reference; a deprecation warning written after the hint comment of a subquery comes before its syntax warning; `EXPLAIN` writes no note 1003 with the hints.
 
 Without `ORDER BY`, a table is read in the order of its clustered index (the primary key, else the first unique key over `NOT NULL` columns, else insertion order), as an InnoDB table scan reads it. The server may choose another access path and return rows in another order; only `ORDER BY` fixes the order on both.
 
@@ -88,42 +105,65 @@ Without `ORDER BY`, a table is read in the order of its clustered index (the pri
 - Collations: the collation of each comparison is decided by coercibility as the server decides it (error 1267 for an illegal mix). The Unicode collations compare with ICU, at the strength of the collation, so `'é' = 'e'` is true under `utf8mb4_0900_ai_ci` and false under `utf8mb4_0900_as_cs`; `PAD SPACE` and `NO PAD` collations treat trailing spaces as the server does.
 - `CASE`, `CAST` and `CONVERT` to every target type, `CONVERT ... USING`, `BINARY`, `COLLATE`.
 - Date arithmetic: `DATE_ADD`, `DATE_SUB`, `+ INTERVAL`, `- INTERVAL` with every unit, and `EXTRACT`.
-- JSON: the `->` and `->>` operators, `MEMBER OF`, and JSON columns, which store the normalized document (`'{"b":1,"a":2}'` reads back as `{"a": 2, "b": 1}`). `CAST(text AS JSON)` differs: it answers the text as written, not the normalized document.
+- JSON: JSON columns store the normalized document (`'{"b":1,"a":2}'` reads back as `{"a": 2, "b": 1}`), and JSON values keep the types the server keeps in its binary format: a decimal (`JSON_OBJECT('p', 5.00)` keeps `5.00`), an unsigned integer, a date, a time, a datetime, a timestamp and an opaque value (`"base64:type15:..."`) keep their type through functions, columns and `JSON_TYPE`. `CAST(... AS JSON)` normalizes a string as a JSON column does (error 3141 naming `cast_as_json`) and makes other values JSON values of their type. JSON values compare with each other and with SQL values by the server's JSON rules (an SQL string is a JSON string, a predicate a JSON boolean, types ranked from `NULL` to opaque values); `BETWEEN` with JSON compares as the server does, with its warning; `ORDER BY`, `GROUP BY`, `DISTINCT`, `MIN` and `MAX` follow the JSON order, with the warning for sorting arrays and objects. A JSON value read as a number or a date converts by its value with the server's warnings 3155 and 3156, naming the column or function and the row. The `->` and `->>` operators and `MEMBER OF` are evaluated.
 - User variables (`@v`, `@v := expr`) and system variables (`@@v`, `@@SESSION.v`, `@@GLOBAL.v`).
-- `NOW()`, `CURRENT_TIMESTAMP`, `CURDATE()`, `CURTIME()`, `LOCALTIME`, `LOCALTIMESTAMP`, the `UTC_` clocks and `SYSDATE()`. Every clock of a statement except `SYSDATE()` reads the instant the statement started.
+- `NOW()`, `CURRENT_TIMESTAMP`, `CURDATE()`, `CURTIME()`, `LOCALTIME`, `LOCALTIMESTAMP`, the `UTC_` clocks and `SYSDATE()`. Every clock of a statement except `SYSDATE()` reads the instant the statement started, in the time zone of the session (`time_zone`). `SET timestamp = n` fixes that instant for the session, as on the server, so a test can pin the clocks, `UNIX_TIMESTAMP()` and `CURRENT_TIMESTAMP` defaults; `SET timestamp = DEFAULT` (or 0) restores the clock.
 
 ### Built-in functions
 
-Besides the keyword forms above (`CAST`, `CONVERT`, `TRIM`, `POSITION`, `SUBSTRING ... FROM`, `CHAR`, `EXTRACT`, `DATE_ADD`, `DATE_SUB` and the clocks), these functions are evaluated:
+Besides the keyword forms above (`CAST`, `CONVERT`, `TRIM`, `POSITION`, `SUBSTRING ... FROM`, `CHAR`, `EXTRACT`, `DATE_ADD`, `DATE_SUB`, `TIMESTAMPADD`, `TIMESTAMPDIFF`, `GET_FORMAT` and the clocks), these functions are evaluated:
 
 | Family | Functions |
 |--------|-----------|
 | Strings | `CONCAT`, `CONCAT_WS`, `HEX`, `UNHEX`, `LPAD`, `RPAD`, `LTRIM`, `RTRIM`, `REPEAT`, `REPLACE`, `REVERSE`, `SPACE`, `LOWER`, `LCASE`, `UPPER`, `UCASE`, `INSERT`, `LEFT`, `RIGHT`, `MID`, `SUBSTR`, `SUBSTRING`, `SUBSTRING_INDEX` |
-| String measures | `ASCII`, `BIT_LENGTH`, `CHAR_LENGTH`, `CHARACTER_LENGTH`, `LENGTH`, `OCTET_LENGTH`, `FIELD`, `FIND_IN_SET`, `INSTR`, `LOCATE`, `STRCMP` |
-| Numbers | `ABS`, `ACOS`, `ASIN`, `ATAN`, `CEIL`, `CEILING`, `COS`, `COT`, `DEGREES`, `EXP`, `FLOOR`, `LN`, `LOG`, `LOG10`, `LOG2`, `PI`, `POW`, `POWER`, `RADIANS`, `ROUND`, `SIGN`, `SIN`, `SQRT`, `TAN`, `TRUNCATE` |
+| String measures | `ASCII`, `BIT_LENGTH`, `CHAR_LENGTH`, `CHARACTER_LENGTH`, `LENGTH`, `OCTET_LENGTH`, `FIELD`, `FIND_IN_SET`, `INSTR`, `LOCATE`, `ORD`, `STRCMP`, `UNCOMPRESSED_LENGTH` |
+| String formats and encodings | `FORMAT` (with every locale of `lc_time_names`), `ELT`, `MAKE_SET`, `EXPORT_SET`, `SOUNDEX`, `QUOTE`, `TO_BASE64`, `FROM_BASE64`, `BIN`, `OCT`, `CONV`, `COMPRESS`, `UNCOMPRESS`, `LOAD_FILE` (always NULL: the emulator has no server files) |
+| Regular expressions (MySQL 8.0 and later) | `REGEXP_LIKE`, `REGEXP_INSTR`, `REGEXP_SUBSTR`, `REGEXP_REPLACE`, and the `REGEXP` and `RLIKE` operators, with the ICU syntax, flags, errors and result types of the server. Two limits remain: a search the server stops for `regexp_time_limit` or `regexp_stack_limit` is matched by PCRE, which gives up at other points (error 3699 or 3698 when it does), and a pattern PCRE cannot compile, such as a repetition count in the thousands (`.{10000}`) or a property listed with very many ranges (`\p{age=3.0}`), fails with error 3700 |
+| Numbers | `ABS`, `ACOS`, `ASIN`, `ATAN` (with one or two arguments), `ATAN2`, `BIT_COUNT`, `CEIL`, `CEILING`, `COS`, `COT`, `CRC32`, `DEGREES`, `EXP`, `FLOOR`, `LN`, `LOG`, `LOG10`, `LOG2`, `MOD`, `PI`, `POW`, `POWER`, `RADIANS`, `RAND`, `ROUND`, `SIGN`, `SIN`, `SQRT`, `TAN`, `TRUNCATE` |
+| Comparison | `GREATEST`, `LEAST`, `INTERVAL` |
 | Control flow | `COALESCE`, `IF`, `IFNULL`, `ISNULL`, `NULLIF` |
-| Dates | `DATE`, `DAY`, `DAYOFMONTH`, `DAYOFWEEK`, `DAYOFYEAR`, `HOUR`, `MICROSECOND`, `MINUTE`, `MONTH`, `QUARTER`, `SECOND`, `WEEKDAY`, `YEAR` |
-| Information | `CHARSET`, `COERCIBILITY`, `COLLATION`, `CONNECTION_ID`, `CURRENT_ROLE`, `CURRENT_USER`, `DATABASE`, `SCHEMA`, `FOUND_ROWS`, `LAST_INSERT_ID`, `ROW_COUNT`, `SESSION_USER`, `SYSTEM_USER`, `USER`, `VERSION` |
-| Aggregates | `COUNT` (with `DISTINCT`), `SUM`, `AVG`, `MIN`, `MAX`, `BIT_AND`, `BIT_OR`, `BIT_XOR`, `STD`, `STDDEV`, `STDDEV_POP`, `STDDEV_SAMP`, `VARIANCE`, `VAR_POP`, `VAR_SAMP`, `GROUP_CONCAT` (with `ORDER BY` and `SEPARATOR`) |
+| Dates | `DATE`, `DAY`, `DAYOFMONTH`, `DAYOFWEEK`, `DAYOFYEAR`, `HOUR`, `MICROSECOND`, `MINUTE`, `MONTH`, `QUARTER`, `SECOND`, `WEEKDAY`, `YEAR`, `TIME`, `TIMESTAMP` (with one or two arguments), `ADDTIME`, `SUBTIME`, `TIMEDIFF`, `DATEDIFF`, `MAKEDATE`, `MAKETIME`, `SEC_TO_TIME`, `TIME_TO_SEC`, `TO_DAYS`, `FROM_DAYS`, `TO_SECONDS`, `LAST_DAY`, `DAYNAME` and `MONTHNAME` (in the locale of `lc_time_names`), `ADDDATE` and `SUBDATE` with a number of days, `WEEK` (every mode, and `default_week_format`), `WEEKOFYEAR`, `YEARWEEK`, `PERIOD_ADD`, `PERIOD_DIFF`, `DATE_FORMAT`, `TIME_FORMAT` and `STR_TO_DATE` (every specifier), `UNIX_TIMESTAMP` and `FROM_UNIXTIME` (with fractional seconds and a format), `CONVERT_TZ` (offsets and named zones). Dates with a zero month or day, the zero date, `sql_mode`, fractional seconds, negative times and the 838:59:59 limit of `TIME` are handled as the server handles them, with its warnings |
+| Information | `CHARSET`, `COERCIBILITY`, `COLLATION`, `CONNECTION_ID`, `CURRENT_ROLE`, `CURRENT_USER`, `DATABASE`, `SCHEMA`, `FOUND_ROWS`, `ICU_VERSION`, `LAST_INSERT_ID`, `ROLES_GRAPHML`, `ROW_COUNT`, `SESSION_USER`, `SYSTEM_USER`, `USER`, `VERSION`, `BENCHMARK` |
+| Locking | `GET_LOCK`, `RELEASE_LOCK`, `RELEASE_ALL_LOCKS`, `IS_FREE_LOCK`, `IS_USED_LOCK` |
+| Miscellaneous | `ANY_VALUE`, `NAME_CONST`, `SLEEP`, `DEFAULT(col)`, `VALUES(col)` |
+| Performance Schema (MySQL 8.0 and later) | `FORMAT_BYTES`, `FORMAT_PICO_TIME`, `PS_CURRENT_THREAD_ID`, `PS_THREAD_ID` |
+| Hashes, encryption and identifiers | `MD5`, `SHA`, `SHA1`, `SHA2`, `RANDOM_BYTES`, `VALIDATE_PASSWORD_STRENGTH` (always 0: the emulator has no `validate_password` component), `AES_ENCRYPT` and `AES_DECRYPT` (every mode of `block_encryption_mode`, the initialization vector and the `hkdf` and `pbkdf2_hmac` key derivations), `UUID`, `UUID_SHORT`, `UUID_TO_BIN`, `BIN_TO_UUID`, `IS_UUID`, `INET_ATON`, `INET_NTOA`, `INET6_ATON`, `INET6_NTOA`, `IS_IPV4`, `IS_IPV6`, `IS_IPV4_COMPAT`, `IS_IPV4_MAPPED`; in MySQL 5.6 and 5.7 also `PASSWORD`, `ENCRYPT`, `DES_ENCRYPT` and `DES_DECRYPT` (with the default keys of a server without `--des-key-file`), and `OLD_PASSWORD` in 5.6 |
+| XML | `EXTRACTVALUE`, `UPDATEXML`, with the XPath subset of the manual as the server reads it: its lenient XML reader and its messages, `text()` and the other node type tests keeping the nodes they apply to, the axes the server does not support read as `child`, and the arithmetic of its SQL operations (`div` divides into an integer) |
+| Replication | `GTID_SUBSET`, `GTID_SUBTRACT` (with the tags of MySQL 8.3 and later), and `WAIT_FOR_EXECUTED_GTID_SET`, `SOURCE_POS_WAIT`, `MASTER_POS_WAIT` and `WAIT_UNTIL_SQL_THREAD_AFTER_GTIDS`, which answer as a server that is neither source nor replica, with `GTID_MODE` OFF |
+| Vectors (MySQL 9.0 and later) | `STRING_TO_VECTOR`, `TO_VECTOR`, `VECTOR_TO_STRING`, `FROM_VECTOR`, `VECTOR_DIM` |
+| Statement digests (MySQL 8.0 and later) | `STATEMENT_DIGEST`, `STATEMENT_DIGEST_TEXT`, with the server's token numbers, reductions (`?, ...`, `(...)`, `IN (...)`, folded signs), optimizer hints and 1024-byte limit, so the digests equal the server's |
+| JSON (MySQL 5.7 and later) | `JSON_ARRAY`, `JSON_OBJECT`, `JSON_QUOTE`, `JSON_UNQUOTE`, `JSON_TYPE`, `JSON_VALID`, `JSON_LENGTH`, `JSON_DEPTH`, `JSON_KEYS`, `JSON_EXTRACT`, `JSON_CONTAINS`, `JSON_CONTAINS_PATH`, `JSON_SEARCH` (with the escape character and the collation of its arguments), `JSON_SET`, `JSON_INSERT`, `JSON_REPLACE`, `JSON_REMOVE`, `JSON_ARRAY_APPEND`, `JSON_ARRAY_INSERT`, `JSON_MERGE_PATCH`, `JSON_MERGE_PRESERVE`, `JSON_MERGE` (with its deprecation warning), `JSON_PRETTY`, `JSON_STORAGE_SIZE`, `JSON_STORAGE_FREE`; in MySQL 8.0 and later also `JSON_OVERLAPS`, `JSON_VALUE` (with `RETURNING`, `ON EMPTY` and `ON ERROR`), `JSON_SCHEMA_VALID` and `JSON_SCHEMA_VALIDATION_REPORT` (JSON Schema draft 4, with the server's report). Paths, errors (3140 to 3165, 3853, 3966, 3967) and their positions are the server's. `JSON_STORAGE_FREE` is always 0, as values are stored whole; `JSON_STORAGE_SIZE` is the server's for documents read from JSON text, and may differ for documents that hold decimals or opaque values built by functions; a validation report names the first failing member in the normalized order of the document, where the server follows the order of a JSON text as written |
+| Aggregates | `COUNT` (with `DISTINCT`), `SUM`, `AVG`, `MIN`, `MAX`, `BIT_AND`, `BIT_OR`, `BIT_XOR`, `STD`, `STDDEV`, `STDDEV_POP`, `STDDEV_SAMP`, `VARIANCE`, `VAR_POP`, `VAR_SAMP`, `GROUP_CONCAT` (with `ORDER BY` and `SEPARATOR`), `JSON_ARRAYAGG` and `JSON_OBJECTAGG` (also over windows) |
 
-Any other function fails with error 1235 naming it, for example `This version of MySQL doesn't yet support 'function DATE_FORMAT'`. Among them are the JSON functions (`JSON_EXTRACT`, `JSON_OBJECT` and the rest), the regular expression functions, the hash, random and UUID functions, `GREATEST` and `LEAST`, `FORMAT`, the locking functions, the spatial functions, and date functions such as `DATE_FORMAT`, `STR_TO_DATE`, `DATEDIFF`, `TIMESTAMPDIFF`, `LAST_DAY` and `CONVERT_TZ`. `JSON_ARRAYAGG` is accepted but answers NULL, and `JSON_OBJECTAGG` fails with error 1235.
+Any other function fails with error 1235 naming it, for example `This version of MySQL doesn't yet support 'function ST_ASTEXT'`. Among them are `ENCODE` and `DECODE` of MySQL 5.6 and 5.7, and the spatial functions.
+
+`UUID()`, `UUID_SHORT()`, `RANDOM_BYTES()` and `ENCRYPT()` without a salt cannot give the server's values: `UUID()` is a version 1 UUID with a node drawn at random for each emulated server, and `UUID_SHORT()` counts from the time the emulated server first answers it instead of the time the server started. `SHA2` is typed as long as its longest digest unless its length is a literal, where the server also sizes it by a constant expression such as `1 + 0`.
+
+`RAND(N)` answers the sequence of the server for each seed: a seed known for the statement starts one sequence that each row advances, any other seed starts one for each row. `RAND()` without a seed draws from PHP's random generator, so its values differ from the server's. A `RAND` of the select list is evaluated for every row before `ORDER BY` and `LIMIT` apply, where the server evaluates it only for the rows it sends, so with those clauses the values can come in another order. `GREATEST` and `LEAST` are evaluated as MySQL 8.0 and later evaluate them; MySQL 5.6 and 5.7 compare numbers with strings and temporal values otherwise, and the emulator does not follow them there.
+
+**Time, sleeps and user-level locks.** The emulator never stalls the caller. `SLEEP(n)` answers at once, and the time it would take passes on the clock of the emulated server instead: `SYSDATE()` in the same statement, and `NOW()` and the other clocks of every later statement of every session, read the current time plus all the time sleeps and lock waits have passed so far. User-level locks are shared by the sessions of one `Instance` (or one `Server`), case-insensitive and accent-sensitive, counted when a session takes one again, and released when the session ends: `Session::close()`, the client disconnecting, `COM_RESET_CONNECTION`, or the `Session` object being destroyed. Since one statement runs at a time, a lock another session holds cannot be released while `GET_LOCK()` waits: it answers 0 after letting its timeout pass on the clock, and a negative (endless) timeout answers 0 at once where the server would wait forever. `BENCHMARK(count, expr)` evaluates an expression that assigns no variable, reads no subquery and calls no function such as `RAND()`, `SLEEP()` or `GET_LOCK()` only as often as the warnings it raises still fit the diagnostics area; any other expression is evaluated `count` times.
+
+**Values that depend on the server.** `ICU_VERSION()` answers the ICU version each release bundles (77.1 for 8.0.44 and 8.4.7, 73.1 for 9.1.0; the values of 8.1, 8.2, 8.3 and 9.0 are not verified). A thread id (`PS_CURRENT_THREAD_ID()`, `PS_THREAD_ID()`) is the connection id plus the number of threads a freshly started server of the release runs before its first client (40 for 8.0.44, 37 for 8.4.7, 36 for 9.1.0), while a long-running server numbers its threads further apart. `ROLES_GRAPHML()` lists the accounts the emulator models: no `healthchecker` account, which some Docker images add; the edges of one grantee are listed together, in the order its first role was granted, where the server lists every edge in the order of the grants. `NAME_CONST('x', TRUE)` is accepted, where the server refuses a boolean value with error 1210.
+
+**Functions the server keeps for itself.** `CONVERT_CPU_ID_MASK()`, `CONVERT_INTERVAL_TO_USER_INTERVAL()` and the other functions the server reserves for its own views are refused with error 3566 whatever their arguments, as the server refuses them. `LIKE_RANGE_MIN()` and `LIKE_RANGE_MAX()`, which only a debug build of MySQL 5.7 has, do not exist (error 1305), as in a release build. `SOURCE_POS_WAIT()` and `MASTER_POS_WAIT()` without a channel fail with error 3079 from MySQL 8.1 on, as MySQL 8.4 and 9.1 do on a server without replication channels; 8.1 to 8.3 are not verified. In MySQL 5.6 `GTID_SUBTRACT()` of arguments that cannot be NULL is reported NOT NULL by the server and nullable by the emulator. A statement given to `STATEMENT_DIGEST()` or `STATEMENT_DIGEST_TEXT()` is refused for what the parser of the server checks itself (a syntax error, an empty text, a table named without its database while none is chosen); the checks the server makes beyond those while it parses, such as an unknown system variable, an unknown collation or an invalid default value, are not made, and the digest is computed.
 
 ## Writes
 
-- `INSERT` and `REPLACE` with `VALUES`, `VALUE`, `SET` or a query, with or without a column list; `DEFAULT` and `DEFAULT(col)`; `INSERT IGNORE`; `ON DUPLICATE KEY UPDATE` with `VALUES(col)`.
+- `INSERT` and `REPLACE` with `VALUES`, `VALUE`, `SET` or a query, with or without a column list; `DEFAULT` and `DEFAULT(col)`; `INSERT IGNORE`; `ON DUPLICATE KEY UPDATE` with `VALUES(col)` or the row alias of `INSERT ... AS alias` and its column aliases (`AS new(x, y)`); `UPDATE ... SET col = DEFAULT`.
 - `UPDATE` and `DELETE` of one table with `ORDER BY` and `LIMIT`; multiple-table `UPDATE` and `DELETE`.
 - The affected-row count, the last insert id and the information text are the server's: an `INSERT ... ON DUPLICATE KEY UPDATE` counts 2 for a row it updates, a `REPLACE` 2 for a row it replaces, and an `UPDATE` counts the rows it changed.
 - Values are stored as the column type says. Under a non-strict `sql_mode` an integer out of range is clipped, a string too long is cut, and a string that is no number reads as 0, each with the server's warning; under a strict mode each is the server's error. Dates, times, `ENUM`, `SET`, `BIT`, `YEAR`, `DECIMAL` and JSON columns follow the rules of the server, including the zero-date checks of `NO_ZERO_DATE` and `NO_ZERO_IN_DATE`.
 - Primary and unique keys are enforced (error 1062, with the key named `table.key` as MySQL 8.0 and later name it). `AUTO_INCREMENT` generates values, honors `NO_AUTO_VALUE_ON_ZERO`, and is reset by `TRUNCATE TABLE`.
-- Column defaults: constants, expressions (`DEFAULT (1 + 1)`), `CURRENT_TIMESTAMP` and `ON UPDATE CURRENT_TIMESTAMP`.
+- Column defaults: constants, expressions (`DEFAULT (1 + 1)`), expressions that read the other columns of the row (`DEFAULT (b + 1)`, computed in column order from the values the row has so far), `CURRENT_TIMESTAMP` and `ON UPDATE CURRENT_TIMESTAMP`, with the server's refusals (errors 3767 to 3772, 1054 in `'default value expression'`).
+- Generated columns, `VIRTUAL` and `STORED`, are computed on every insert and update from the columns before them, stored as the column type says with the server's warnings and errors, and can be indexed. A value written into one is refused (error 3105) unless it is `DEFAULT`. The expressions are refused as the server refuses them: nondeterministic functions (3763), subqueries (3102), variables (3772), later generated columns (3107), `AUTO_INCREMENT` columns (3109), aggregates and windows (1111, 3593), a virtual column in the primary key (3106), and the attributes a generated column cannot have (1221).
+- `CHECK` constraints, named and unnamed, on a column or the table, `ENFORCED` or `NOT ENFORCED`, are evaluated on every insert and update in the order of their names; a condition that is NULL passes, a false one is error 3819, or a warning with `IGNORE`. MySQL 5.6 and 5.7 read them and ignore them, as the server does.
+- Foreign keys are checked as InnoDB checks them, row by row: a child row needs a parent row (error 1452), and deleting or changing a referenced parent row is refused (error 1451) unless the key cascades with `CASCADE` or `SET NULL`; `SET DEFAULT`, `RESTRICT` and `NO ACTION` refuse it. Cascades go through further keys and self-referencing tables. `REPLACE` of a referenced row deletes it first. `foreign_key_checks = 0` turns every check and cascade off. With `IGNORE` a refused row is a warning. The messages name the key as the server writes it.
+- Partitioned tables place each row in its `RANGE`, `LIST` (with or without `COLUMNS`) or `HASH` (also `LINEAR`) partition, refuse a row no partition holds (error 1526), and read and write only the partitions a statement names (`PARTITION (p0)`, error 1748 for a row outside them).
 - A statement that fails changes nothing, even after some of its rows were written.
 
 Not emulated:
 
-- **Foreign keys** are kept in the table definition but neither checked nor acted on: a row may reference a missing parent, and deleting a parent neither fails nor cascades.
-- **`CHECK` constraints** are kept but not checked.
-- **Generated columns** are kept but not computed: their values are NULL.
-- **`ON DUPLICATE KEY UPDATE` with a row alias** (`INSERT ... AS new ON DUPLICATE KEY UPDATE a = new.a`) fails with error 1235 when a row conflicts.
+- **Deep cascades**: InnoDB's limit of 15 nested cascades (error 3008) is applied without the server's exact accounting.
 - **Spatial values**: spatial columns can be declared and hold NULL, but no spatial value can be made.
 
 ## Definitions
@@ -136,9 +176,10 @@ Not emulated:
 
 Differences:
 
-- **Storage engines** are kept as written but have no effect: every table is transactional and behaves as an InnoDB table.
-- **Temporary tables** are visible to every session of the server, outlive the session that created them, and cannot take the name of an existing table.
-- **Partitioning**: a partitioned table can be created and behaves as one table; `ALTER TABLE ... PARTITION BY` fails with error 1235.
+- **Storage engines**: an InnoDB table is transactional, and a table of any other engine (`MyISAM`, `MEMORY`, `CSV`, `ARCHIVE`, ...) is not: see [Transactions](#transactions). Otherwise every engine stores rows as InnoDB does.
+- **Temporary tables** belong to the session that creates them: only it sees them, a temporary table hides a base table of its name from it, they end with the session, and `SHOW TABLES` and `INFORMATION_SCHEMA` leave them out. A statement that names one twice fails with error 1137, and `ROLLBACK` warns that creating or dropping one is not undone (1751, 1752).
+- **Foreign keys, `CHECK` constraints and generated columns** are kept with the names the server gives them (`t_ibfk_1`, `t_chk_1`), which follow a renamed table; foreign key and `CHECK` constraint names are unique in a database. `ALTER TABLE` adds, drops and changes them with the server's checks: an existing row that violates a new constraint is refused, a column a constraint or generated column reads cannot be dropped or renamed (1828, 1829, 3959, 3108), an index a foreign key needs cannot be dropped (1553), a referenced table cannot be dropped or truncated (3730, 1701). `SHOW CREATE TABLE` writes them as the server does.
+- **Partitioning**: `PARTITION BY` in `CREATE TABLE` and `ALTER TABLE` with the server's checks, `REMOVE PARTITIONING`, and `ADD`, `DROP`, `TRUNCATE` and `COALESCE PARTITION`; the other partition actions fail with error 1235. Rows of a table partitioned by `KEY` are not placed in their partitions (the server's hash is not reproduced).
 
 ## Views
 
@@ -147,13 +188,19 @@ Differences:
 ## Stored programs
 
 - `CREATE`, `ALTER` and `DROP` of procedures, functions, triggers and events, with their checks and characteristics, and the `SHOW CREATE`, `SHOW ... STATUS`, `SHOW ... CODE`, `SHOW TRIGGERS` and `SHOW EVENTS` statements that list them.
-- `CALL` runs a procedure whose body is one statement, or a `BEGIN ... END` block of statements without declarations or flow control, with `IN` parameters. Each query of the body answers a result set, and the procedure then answers the completion of its last statement.
+- Bodies run as the server runs them: `BEGIN ... END` blocks with labels; `DECLARE` of local variables (typed as declared, with `DEFAULT`), conditions, cursors and handlers; `IF`, `CASE`, `LOOP`, `WHILE`, `REPEAT`, `ITERATE`, `LEAVE` and `RETURN`. A statement of a body is resolved when it runs, against the tables of that moment, in the database of the program and under the `sql_mode` the program was created with. A name a parameter or local variable has denotes the variable before a column of the same name, except where a statement names the columns it writes. A value assigned to a variable (`SET`, `SELECT ... INTO`, `FETCH`, `DEFAULT`, `RETURN`) is stored as into a column of the variable's type, so that a warning is the server's error under a strict `sql_mode`.
+- Handlers: `CONTINUE` and `EXIT` handlers for error numbers, `SQLSTATE` values, declared conditions, `SQLWARNING`, `NOT FOUND` and `SQLEXCEPTION`, searched from the innermost block outwards with the server's precedence (error number, then `SQLSTATE`, then the classes). A handler runs in the scope of its block, without the handlers of that block, and clears the conditions it handled. `SIGNAL` and `RESIGNAL` (with or without `SQLSTATE` and `SET`), `GET CURRENT` and `GET STACKED DIAGNOSTICS` into local or user variables. An error no handler handles ends the program; the warnings of the last statement are left in the diagnostics area.
+- Cursors: `OPEN`, `FETCH` (`NOT FOUND` past the last row) and `CLOSE`, with errors 1324 to 1326 and 1328.
+- `CALL` binds `IN`, `OUT` and `INOUT` parameters: an `OUT` or `INOUT` argument is a user variable, a variable of the calling program or a column of the `NEW` row of a `BEFORE` trigger (error 1414 otherwise), which receives the value of the parameter. Each query of a procedure, and of the procedures it calls, answers a result set, and the procedure then answers a completion with the rows its last statement affected, which `ROW_COUNT()` reads; the result sets come before an error that ends the procedure. A procedure that calls itself deeper than `max_sp_recursion_depth` fails with error 1456. Each statement of a procedure stands on its own: one that fails does not undo the statements before it.
+- Stored functions are called in any expression (select lists, `WHERE`, values written by `INSERT` and `UPDATE`), each call running the function with its arguments stored into the parameter types; the declared `RETURNS` type converts the value, with the call named in its warnings and errors, and a function that ends without `RETURN` fails with error 1321. A function cannot call itself (error 1424), and the conditions of its last statement are added to those of the statement that calls it. A native function of the same name is called instead of an unqualified stored function.
+- Triggers fire for each row, `BEFORE` and `AFTER` `INSERT`, `UPDATE` and `DELETE`, in their `FOLLOWS` and `PRECEDES` order, with `NEW` and `OLD` and `SET NEW.col` in `BEFORE` triggers. `INSERT ... ON DUPLICATE KEY UPDATE` fires `BEFORE INSERT` and then the `UPDATE` triggers for a row that conflicts, `REPLACE` the `DELETE` triggers of the rows it replaces, and `UPDATE` its triggers for every matched row, changed or not. A trigger that fails fails its statement, which then changes nothing. A function or trigger that writes a table the statement invoking it uses fails with error 1442.
+- Events never run. `event_scheduler` reads `ON`, as it does on a new MySQL 8.0 or later server, but the emulator keeps the events it is given without ever running them, so that tests do not depend on the clock: run the body of an event yourself where a test needs its effect.
 
 Not emulated:
 
-- **Stored functions do not run**: a call fails with error 1235 (`calls of stored functions`).
-- **Triggers never fire**, and **events never run**.
-- **`CALL`** of a procedure with `OUT` or `INOUT` parameters, `DECLARE`, or flow control (`IF`, loops, handlers) fails with error 1235.
+- **Metadata of some variables**: a result column that reads a `DATE`, `TIME`, `DATETIME`, `TIMESTAMP` or `JSON` variable of a stored program has the length and decimals of a column of that type, where the server sends the length of its text; a `YEAR` variable is sent as a number.
+- **The name of a call in errors**: a value a stored function returns that its type refuses is named after the call as the emulator prints it (`f2(1)`), never after the alias of the select item that holds it.
+- **Privileges** of the definer or invoker are not checked, as no privilege is.
 
 ## Accounts
 
@@ -163,15 +210,22 @@ The server starts with the accounts of a new installation: `root` at `localhost`
 
 ## Transactions
 
-- `START TRANSACTION`, `BEGIN`, `COMMIT`, `ROLLBACK`, `autocommit`, `SAVEPOINT`, `ROLLBACK TO SAVEPOINT`, `RELEASE SAVEPOINT`, and the implicit commits of the statements that cause them.
+- `START TRANSACTION` (with `READ ONLY`, `READ WRITE` and `WITH CONSISTENT SNAPSHOT`), `BEGIN`, `COMMIT` and `ROLLBACK` (with `AND CHAIN`), `autocommit`, `SAVEPOINT`, `ROLLBACK TO SAVEPOINT`, `RELEASE SAVEPOINT`, and the implicit commits of the statements that cause them. With `autocommit` off, a transaction starts with the first statement, so savepoints and `ROLLBACK` work without `BEGIN`; turning `autocommit` on commits it. A transaction is reported active (`SERVER_STATUS_IN_TRANS`, `PDO::inTransaction()`) from `BEGIN`, or once it read an InnoDB table or wrote a table.
+- `SET [GLOBAL | SESSION] TRANSACTION ISOLATION LEVEL ... , READ ONLY | READ WRITE`, `transaction_isolation` and `transaction_read_only` (`tx_isolation` and `tx_read_only` in MySQL 5.6 and 5.7). Without a scope, and as `SET @@transaction_isolation`, the characteristics apply to the next transaction only, and setting them while a transaction is active fails with error 1568.
+- Read-only transactions: a write of a table that is not temporary, `SELECT ... FOR UPDATE` of one, and creating or dropping a temporary table fail with error 1792; in a read-only session the statements that commit implicitly fail too.
 - `XA START`, `END`, `PREPARE`, `COMMIT`, `ROLLBACK` and `RECOVER`, with the XA states and errors of the server.
-- Statement atomicity: a statement that fails restores every table it changed.
+- Statement atomicity: a statement that fails restores the rows it changed. `AUTO_INCREMENT` values it took are not given back, as in InnoDB.
+- **Isolation between sessions**, as InnoDB isolates transactions. A consistent read sees a snapshot: under `REPEATABLE READ` (the default) the snapshot the first consistent read of the transaction took, or `START TRANSACTION WITH CONSISTENT SNAPSHOT`; under `READ COMMITTED` a snapshot for each statement; under `READ UNCOMMITTED` the latest rows, uncommitted changes included. Every level sees the changes of its own transaction. Locking reads (`FOR UPDATE`, `FOR SHARE`, `LOCK IN SHARE MODE`), `UPDATE` and `DELETE` read the latest committed rows; an `UPDATE` under `READ COMMITTED` or `READ UNCOMMITTED` reads a row another transaction holds semi-consistently, waiting for it only when its committed version meets the `WHERE` condition. Under `SERIALIZABLE`, a plain `SELECT` inside a transaction is a locking read (`FOR SHARE`); with `autocommit` on it is a consistent read.
+- **Row locks.** A locking read locks the rows it returns, shared or exclusive, and `INSERT`, `UPDATE`, `DELETE` and the actions of foreign keys lock the rows they write exclusively, until the transaction ends. A statement that writes locks the rows it reads from other tables (`INSERT ... SELECT`, subqueries) shared under `REPEATABLE READ` and `SERIALIZABLE`. An insert that duplicates a unique key of a row another transaction holds waits for it, and a foreign key check locks the rows it reads shared, waiting for a referenced or referencing row another transaction holds. `NOWAIT` fails at once with error 3572, and `SKIP LOCKED` leaves the row out.
+- **Lock waits.** Through `Server` or the `mysql-memory` command, a statement that needs a row lock another connection holds waits while the other connections are served, and once the lock is free reads the row again. The wait ends with error 1205 after `innodb_lock_wait_timeout` seconds, which rolls back the statement; a wait that would close a cycle is a deadlock, error 1213, which rolls back the whole transaction of the lighter transaction of the cycle (the one whose request closed it between equals). Sessions used in process (`Instance::connect()`) run one statement at a time, so nothing could release a lock while one waits: a conflicting lock fails at once with error 1205, and the timeout passes on the server's clock.
+- **Storage engines that are not transactional.** A table of an engine other than InnoDB (`MyISAM`, `MEMORY`, `CSV`, ...) takes no row lock and no snapshot: every session reads its latest rows. Its changes stay when a statement fails or a transaction is rolled back, and the server's warning 1196 (`ER_WARNING_NOT_COMPLETE_ROLLBACK`) follows a failed statement, `ROLLBACK` or `ROLLBACK TO SAVEPOINT` that leaves such changes. From MySQL 9.0 on, a transaction that updates tables of InnoDB and of another engine warns once (6414).
 
 Differences:
 
-- **No isolation between sessions.** A write is visible to every session at once, before it is committed. `ROLLBACK` restores the rows each table had when the transaction first changed it, which also discards what other sessions wrote to that table in the meantime.
-- **No waiting.** Row locks (`FOR UPDATE`) and table locks (`LOCK TABLES`) never block another session.
-- **`SET TRANSACTION`** fails with error 1235.
+- **Locks are taken on whole rows that meet the conditions.** There are no gap or next-key locks, so an insert into a range another transaction read with a locking read does not wait. A statement locks, and waits for, only the rows that meet its `WHERE` condition, in their latest or committed version; the server locks every row it reads through the index it uses, which is every row of the table when no index serves the condition, so a statement that waits on the server can run at once here. The weight that chooses a deadlock's victim counts the rows each transaction changed and one group of locks for each table and lock mode, close to InnoDB's count of its lock structures.
+- **A locking clause does not lock the tables of a view** the block reads, which the server merges into the block and locks.
+- **Table locks, user-level locks and metadata locks never wait.** `LOCK TABLES` and `GET_LOCK()` do not block another session, and a statement that changes a table definition does not wait for the transactions that use the table.
+- **XA PREPARE** releases the row locks of the branch, which the server keeps until `XA COMMIT` or `XA ROLLBACK`.
 
 ## Variables
 
@@ -183,21 +237,44 @@ Differences:
 Differences:
 
 - **Values given at start** (`globals`, `--global`) are stored as written, without the checks and normalization of `SET GLOBAL`. `--global=sql_mode=ANSI` makes `@@sql_mode` read `ANSI`, where `SET GLOBAL sql_mode = 'ANSI'` stores the modes `ANSI` stands for.
-- **Time zone.** The system time zone is UTC. `time_zone` can be set, but `NOW()` and the other clocks read UTC whatever it says.
-- **Status variables** are not kept: `SHOW STATUS` lists none.
+- **Time zone.** The system time zone (`SYSTEM`) is UTC. `time_zone` takes an offset (`+05:30`) or a name of the time zone tables (`Europe/Paris`, `posix/...`, `right/...`), as a server whose tables are loaded does; an unknown name fails with error 1298. The clocks, `UNIX_TIMESTAMP`, `FROM_UNIXTIME` and `CONVERT_TZ` read it, and `TIMESTAMP` columns are stored in UTC and shown in it, so a value shows another time when `time_zone` changes. A local time that a change to summer time skips is stored as the instant of the change, with warning 1299 (error 1292 under a strict mode); a repeated local time is the earlier instant. The named zones follow the tz database of PHP, and, as the server's tables, keep after 2037 the offset in force at the end of 2037; so a zone whose rules changed since that database was published can differ. Leap seconds are not counted, as the server does not count them when its leap second table is empty.
+- **Status variables** are listed with the names and scopes of the release, but no counter is kept: a counter reads 0. `Uptime`, `Threads_connected`, `Threads_running` and `Connections` are counted, and the values that describe the configuration are those of a server of the release.
 
 ## Inspection
 
-- `SHOW TABLES`, `SHOW COLUMNS` and `DESCRIBE`, `SHOW INDEX`, `SHOW TABLE STATUS`, `SHOW OPEN TABLES`, `SHOW CREATE DATABASE`, `TABLE` and `VIEW`, `SHOW VARIABLES`, `SHOW COLLATION`, `SHOW CHARACTER SET`, `SHOW ENGINES`, `SHOW ENGINE`, `SHOW PLUGINS`, `SHOW PRIVILEGES`, `SHOW PROFILES`, `SHOW WARNINGS`, `SHOW ERRORS`, `SHOW COUNT(*) WARNINGS`, and the `SHOW` statements of stored programs, accounts and replication, with the column metadata of the server.
+- `SHOW TABLES`, `SHOW COLUMNS` and `DESCRIBE`, `SHOW INDEX`, `SHOW DATABASES`, `SHOW [FULL] PROCESSLIST`, `SHOW STATUS`, `SHOW TABLE STATUS`, `SHOW OPEN TABLES`, `SHOW CREATE DATABASE`, `TABLE` and `VIEW`, `SHOW VARIABLES`, `SHOW COLLATION`, `SHOW CHARACTER SET`, `SHOW ENGINES`, `SHOW ENGINE`, `SHOW PLUGINS`, `SHOW PRIVILEGES`, `SHOW PROFILES`, `SHOW WARNINGS`, `SHOW ERRORS`, `SHOW COUNT(*) WARNINGS`, and the `SHOW` statements of stored programs, accounts and replication, with the column metadata of the server.
 - `SHOW TABLE STATUS` reports the figures InnoDB reports for a table of one page.
 - `HELP` finds no topic: the server's help tables are not included.
 - `EXPLAIN` answers the plan of a statement as a server that scans every table would: one row per table with access type `ALL` in the traditional format, and the matching `TREE` and `JSON` documents. Only the plan of a statement that reads no table is the server's; the plans of the server come from its optimizer and cost model, which the emulator does not have.
 
 Differences:
 
-- **No system tables.** The databases `information_schema`, `mysql`, `performance_schema` and `sys` exist but hold no table: `SELECT * FROM information_schema.TABLES` fails with error 1146 (`Table 'information_schema.TABLES' doesn't exist`).
-- **`SHOW DATABASES`** and **`SHOW PROCESSLIST`** fail with error 1235.
+- **`SHOW PROCESSLIST`** lists the sessions of the server; the event scheduler daemon is not listed, the time a session has spent in its state reads 0, and a session's host is the one it connected as, without a port.
 - **`CHECKSUM TABLE`** answers a stable checksum of the rows, which is not the server's.
+
+## System tables
+
+The databases `information_schema`, `mysql` and `performance_schema` hold every table a server of the emulated release has, with its columns and the column metadata a result reports: names, types, lengths, collations, flags, and the base table and database each column is read from. Their names are found as on the server: the name of `INFORMATION_SCHEMA` and of its tables in any case, the others as written. In MySQL 8.0 and later a column of an `INFORMATION_SCHEMA` view is named as the view names it, in any case the statement writes it. The rows are computed from the state of the server each time a statement reads a table, so the tables can be joined, filtered, sorted, grouped and read in subqueries and views like any other. `SHOW TABLES`, `SHOW COLUMNS` and `DESCRIBE` list them.
+
+| Tables | Rows |
+|---|---|
+| `SCHEMATA`, `TABLES`, `COLUMNS`, `STATISTICS`, `KEY_COLUMN_USAGE`, `TABLE_CONSTRAINTS`, `REFERENTIAL_CONSTRAINTS`, `CHECK_CONSTRAINTS`, `VIEWS` | The databases, tables, views, columns, keys and constraints of the dictionary, and the system tables themselves in `TABLES` and `COLUMNS` |
+| `ROUTINES`, `PARAMETERS`, `TRIGGERS`, `EVENTS` | The stored programs |
+| `CHARACTER_SETS`, `COLLATIONS`, `COLLATION_CHARACTER_SET_APPLICABILITY`, `ENGINES`, `PLUGINS`, `KEYWORDS`, `RESOURCE_GROUPS`, `ST_SPATIAL_REFERENCE_SYSTEMS` | Those of a server of the release |
+| `USER_PRIVILEGES`, `SCHEMA_PRIVILEGES`, `TABLE_PRIVILEGES`, `COLUMN_PRIVILEGES`; `mysql.user`, `db`, `tables_priv`, `columns_priv`, `procs_priv`, `global_grants`, `proxies_priv`, `role_edges`, `default_roles`, `servers` | The accounts, roles, grants and foreign servers |
+| `PROCESSLIST`, `performance_schema.processlist` | The sessions connected |
+| `performance_schema.global_variables`, `session_variables`, `variables_by_thread`, `global_status`, `session_status`, `status_by_thread`; in 5.6, `INFORMATION_SCHEMA.GLOBAL_VARIABLES` and the like | The system and status variables |
+| `mysql.time_zone`, `mysql.time_zone_name` | The named time zones, numbered as `mysql_tzinfo_to_sql` numbers them |
+
+Differences:
+
+- **The other tables are empty.** The InnoDB tables of `INFORMATION_SCHEMA`, `FILES`, `PARTITIONS`, `OPTIMIZER_TRACE`, the role tables (`APPLICABLE_ROLES` and the like), the instrument, event, lock and thread tables of the Performance Schema, the help tables and the time zone transition tables of `mysql`, and the other system tables hold no row. The `sys` database holds no table.
+- **Figures and times are the emulator's.** The figures of `TABLES` are those of `SHOW TABLE STATUS`; a system table reports 0 rows and bytes. Creation times of system tables, the times of grants and of password changes are the time the server started, and grants are recorded as made by `root@localhost`. Password hashes differ from the server's, as their salts do.
+- **Privileges do not filter rows.** Every account sees every row, as root does.
+- **Order without `ORDER BY`.** The rows come in the order the server returns them for a plain scan of the table; a server that reads a table through an index can return them in another order.
+- **`ST_SPATIAL_REFERENCE_SYSTEMS`** has empty definitions: the emulator does not carry them.
+- **`INFORMATION_SCHEMA.PARAMETERS.PARAMETER_MODE`** is sent as a `CHAR` column; the server sends the `ENUM` type code.
+- **Writing a system table** is refused: a table of `INFORMATION_SCHEMA` with error 1044, a table of the Performance Schema with error 1142, as the server refuses them; writing or altering a table of `mysql` fails with error 1235. `SELECT ... FOR UPDATE` of an `INFORMATION_SCHEMA` table is not refused.
 
 ## Performance
 

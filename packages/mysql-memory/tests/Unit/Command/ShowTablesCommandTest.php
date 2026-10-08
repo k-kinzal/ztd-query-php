@@ -105,4 +105,16 @@ final class ShowTablesCommandTest extends TestCase
 
         $session->query('SHOW TABLES FROM nope');
     }
+
+    public function testExecuteListsTheSystemTables(): void
+    {
+        $s = (new Instance())->connect();
+
+        $read1 = $s->query("SHOW FULL TABLES FROM information_schema LIKE 'SCHEMA%'")[0];
+        self::assertInstanceOf(ResultSet::class, $read1);
+        self::assertSame([['SCHEMATA', 'SYSTEM VIEW'], ['SCHEMATA_EXTENSIONS', 'SYSTEM VIEW'], ['SCHEMA_PRIVILEGES', 'SYSTEM VIEW']], $read1->rows);
+        $read2 = $s->query("SHOW TABLES FROM mysql LIKE 'time%'")[0];
+        self::assertInstanceOf(ResultSet::class, $read2);
+        self::assertSame([['time_zone'], ['time_zone_leap_second'], ['time_zone_name'], ['time_zone_transition'], ['time_zone_transition_type']], $read2->rows);
+    }
 }

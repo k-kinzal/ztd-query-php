@@ -6,22 +6,25 @@ namespace MySqlMemory\Evaluation\Compile\Family;
 
 use Closure;
 use MySqlMemory\Dictionary\KeyKind;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\SchemaError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Compile\Constancy;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Function\Call;
+use MySqlMemory\Evaluation\Function\Pattern\Patterns;
 use MySqlMemory\Evaluation\Function\Routine;
 use MySqlMemory\Evaluation\Function\Strings;
+use MySqlMemory\Evaluation\Function\Text\Soundex;
 use MySqlMemory\Evaluation\Operator\Conversion;
 use MySqlMemory\Evaluation\Operator\Weight;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Value\Encoding;
 use SqlSemantics\Platform\MySql\Statement\Call\CharCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Position;
@@ -180,7 +183,9 @@ final class Texts
         $collation = $node->charset === null ? Collation::binary() : (Charset::named($node->charset->name->value ?? 'binary')?->defaultCollation($this->compiler->settings->release()) ?? Collation::binary());
         $result = $this->compiler->domain($node);
 
-        return $this->call('CHAR', $arguments, $result, static function (Frame $f, array $a): string {
+        $charset = $collation->charset;
+
+        return $this->call('CHAR', $arguments, $result, static function (Frame $f, array $a) use ($charset): ?string {
             $bytes = '';
             foreach ($a as $argument) {
                 $value = Convert::toInteger($argument->evaluate($f), $argument->domain(), $f->context, true);
@@ -194,50 +199,68 @@ final class Texts
                 $bytes .= $chunk === '' ? "\0" : $chunk;
             }
 
-            return $bytes;
+            return Texts::characters($bytes, $charset, $f);
         });
     }
 
     /**
-     * Compiles `a SOUNDS LIKE b`: SOUNDEX(a) = SOUNDEX(b).
+     * Takes the bytes CHAR writes as characters of a character set.
+     *
+     * The bytes are padded with leading zero bytes to the width of a UCS-2, UTF-16 or UTF-32
+     * unit. Bytes that are no character warn (ER_INVALID_CHARACTER_STRING), quoting up to three
+     * of them from the first; a single-byte set keeps them, a multibyte one answers NULL under a
+     * strict SQL mode and the characters before them otherwise (verified on a live 8.4 server).
+     *
+     * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors
+     */
+    public static function characters(string $bytes, Charset $charset, Frame $frame): ?string
+    {
+        if ($charset === Charset::binary()) {
+            return $bytes;
+        }
+        $unit = match ($charset->name) {
+            'ucs2', 'utf16', 'utf16le' => 2,
+            'utf32' => 4,
+            default => 1,
+        };
+        $bytes = strlen($bytes) % $unit === 0 ? $bytes : str_repeat("\0", $unit - strlen($bytes) % $unit) . $bytes;
+        if (Encoding::valid($bytes, $charset)) {
+            return $bytes;
+        }
+        $valid = Encoding::prefix($bytes, $charset);
+        $frame->context->warning(DataError::InvalidCharacterString, $charset->name, strtoupper(bin2hex(substr($bytes, $valid, 3))));
+        if ($charset->maxLength === 1) {
+            return $bytes;
+        }
+
+        return $frame->context->modes->strict() ? null : substr($bytes, 0, $valid);
+    }
+
+    /**
+     * Compiles `a SOUNDS LIKE b`: SOUNDEX(a) = SOUNDEX(b), compared in the collation of both (verified on a live 8.4 server).
+     *
+     * @throws \MySqlMemory\Error\SqlError When the collations do not mix
      */
     public function soundsLike(SoundsLike $node, Scope $scope): Evaluable
     {
         $left = $this->compiler->compile($node->operand, $scope);
         $right = $this->compiler->compile($node->pattern, $scope);
         $domain = $this->compiler->domain($node);
+        [$collation] = Collations::aggregate([$left->domain(), $right->domain()], '=', $this->compiler->settings->connectionCollation, true);
 
-        return $this->call('SOUNDS LIKE', [$left, $right], $domain, static function (Frame $f, array $a): ?int {
-            $one = Convert::toText($a[0]->evaluate($f), $a[0]->domain());
-            $two = Convert::toText($a[1]->evaluate($f), $a[1]->domain());
+        return $this->call('SOUNDS LIKE', [$left, $right], $domain, static function (Frame $f, array $a) use ($collation): ?int {
+            $codes = [];
+            foreach ($a as $argument) {
+                $text = Convert::toText($argument->evaluate($f), $argument->domain());
+                if ($text === null) {
+                    return null;
+                }
+                $charset = (new Strings())->charset($argument->domain());
+                $codes[] = Encoding::convert((new Soundex())->code($text, $charset), $charset, $collation->charset);
+            }
 
-            return $one === null || $two === null ? null : (Texts::soundex($one) === Texts::soundex($two) ? 1 : 0);
+            return Ordering::of($collation)->compare($codes[0], $codes[1]) === 0 ? 1 : 0;
         });
-    }
-
-    /**
-     * Answers the SOUNDEX code of a string: its first letter and the digits of the consonants after it.
-     */
-    public static function soundex(string $text): string
-    {
-        $codes = ['B' => 1, 'F' => 1, 'P' => 1, 'V' => 1, 'C' => 2, 'G' => 2, 'J' => 2, 'K' => 2, 'Q' => 2, 'S' => 2, 'X' => 2, 'Z' => 2, 'D' => 3, 'T' => 3, 'L' => 4, 'M' => 5, 'N' => 5, 'R' => 6];
-        $letters = preg_replace('/[^A-Z]/', '', strtoupper($text)) ?? '';
-        if ($letters === '') {
-            return '';
-        }
-        $result = $letters[0];
-        $last = $codes[$letters[0]] ?? 0;
-        for ($i = 1, $length = strlen($letters); $i < $length; $i++) {
-            $code = $codes[$letters[$i]] ?? 0;
-            if ($code !== 0 && $code !== $last) {
-                $result .= $code;
-            }
-            if ($letters[$i] !== 'H' && $letters[$i] !== 'W') {
-                $last = $code;
-            }
-        }
-
-        return str_pad($result, 4, '0');
     }
 
     /**
@@ -246,6 +269,9 @@ final class Texts
      * A binary string matched with a string of another character set, either way, is an error
      * (ER_CHARACTER_SET_MISMATCH) that names the binary side 'binary' and the other by its
      * collation; a value that is no string mixes with either (verified on a live 8.4 server).
+     * MySQL 8.0 and later match as REGEXP_LIKE does, with ICU (see Patterns); MySQL 5.6 and 5.7
+     * match with the Henry Spencer library, approximated here by PCRE.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/regexp.html#operator_regexp.
      *
      * @throws \MySqlMemory\Error\SqlError When the collations do not mix
      */
@@ -260,6 +286,15 @@ final class Texts
         [$collation] = Collations::aggregate([$subject->domain(), $pattern->domain()], 'regexp_like', $this->compiler->settings->connectionCollation, true);
         $negated = $node->negated;
         $domain = $this->compiler->domain($node);
+        if (!$this->compiler->settings->legacy()) {
+            $patterns = new Patterns();
+
+            return $this->call('REGEXP', [$subject, $pattern], $domain, static function (Frame $f, array $a) use ($patterns, $negated): ?int {
+                $matched = $patterns->like($f, $a);
+
+                return $matched === null ? null : (($matched === 1) !== $negated ? 1 : 0);
+            });
+        }
 
         return $this->call('REGEXP', [$subject, $pattern], $domain, static function (Frame $f, array $a) use ($collation, $negated): ?int {
             $text = Convert::toText($a[0]->evaluate($f), $a[0]->domain());
@@ -271,7 +306,12 @@ final class Texts
             $text = Encoding::convert($text, $strings->charset($a[0]->domain()), Charset::known('utf8mb4'));
             $expression = Encoding::convert($expression, $strings->charset($a[1]->domain()), Charset::known('utf8mb4'));
             $flags = $collation->binaryOrder() || str_ends_with($collation->name, '_cs') ? 'u' : 'ui';
-            $matched = @preg_match('/' . str_replace('/', '\\/', $expression) . '/' . $flags, $text);
+            set_error_handler(static fn (): bool => true);
+            try {
+                $matched = preg_match('/' . str_replace('/', '\\/', $expression) . '/' . $flags, $text);
+            } finally {
+                restore_error_handler();
+            }
             if ($matched === false) {
                 throw DataError::RegexpError->error('The regular expression is not valid.');
             }

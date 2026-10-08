@@ -6,8 +6,8 @@ namespace MySqlMemory\Plan;
 
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Dictionary\View;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Evaluation\Compile\Walker;
@@ -120,9 +120,10 @@ final class Views
     /**
      * Answers a table of no rows with the columns of a view, as SHOW COLUMNS and DESCRIBE describe a view.
      *
-     * A column read from a table has the default of that column; a computed one that is never
-     * NULL has the zero value of its type, and another none; a column of NULL alone is a
-     * VARBINARY(0) (verified on a live 8.4 server).
+     * A column read from a table has the default and the comment of that column, the zero value
+     * of its type for an AUTO_INCREMENT column; a computed one that is never NULL has the zero
+     * value of its type, and another none; a column of NULL alone is a VARBINARY(0) (verified on
+     * a live 8.4 server).
      */
     public static function stored(View $view, Dictionary $dictionary): \MySqlMemory\Dictionary\StoredTable
     {
@@ -131,9 +132,10 @@ final class Views
             $type = $column->type;
             $nullable = $column->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull;
             $domain = $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain && $type->kind !== Kind::Null ? Domain::of($type, $nullable) : new Domain(Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, 0, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), true);
-            $base = self::baseDefault($view, $dictionary, $view->positions[$index] ?? $index);
+            $read = self::base($view, $dictionary, $view->positions[$index] ?? $index);
+            $base = $read === null || $read->autoIncrement ? null : $read->default;
             $default = $base ?? ($nullable ? \MySqlMemory\Dictionary\Fill::none() : \MySqlMemory\Dictionary\Fill::constant(self::zero($domain), null));
-            $columns[] = new \MySqlMemory\Dictionary\ColumnDefinition($column->name->value, $domain, $default, false, false, null, false, $column);
+            $columns[] = new \MySqlMemory\Dictionary\ColumnDefinition($column->name->value, $domain, $default, false, false, null, false, $column, $read->comment ?? '');
         }
 
         return new \MySqlMemory\Dictionary\StoredTable(new \MySqlMemory\Dictionary\TableDefinition($view->schema, $view->name, $columns, [], $view->declaration, ''), new \MySqlMemory\Storage\Heap());
@@ -147,6 +149,16 @@ final class Views
      */
     public static function baseDefault(View $view, Dictionary $dictionary, int $position): ?\MySqlMemory\Dictionary\Fill
     {
+        return self::base($view, $dictionary, $position)?->default;
+    }
+
+    /**
+     * Answers the table column an output column of the query of a view reads directly, or null for a computed column.
+     *
+     * @param int $position The position of the column in the output of the query
+     */
+    public static function base(View $view, Dictionary $dictionary, int $position): ?\MySqlMemory\Dictionary\ColumnDefinition
+    {
         $field = $view->operation->facts->query($view->query)->projection[$position] ?? null;
         $resolution = $field instanceof \SqlSemantics\Statement\Shape\Field && ($field->expression === null || $field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) ? ($field->expression === null ? $field->resolution : $view->operation->facts->scalar($field->expression)->resolution) : null;
         if (!$resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn || !$resolution->relation instanceof TableReference || $resolution->slot->name === null) {
@@ -156,7 +168,7 @@ final class Views
         $table = $dictionary->table($read->schema->value ?? $view->database, $read->name->value);
         $column = $table?->definition->position($resolution->slot->name->value);
 
-        return $table !== null && $column !== null ? $table->definition->columns[$column]->default : null;
+        return $table !== null && $column !== null ? $table->definition->columns[$column] : null;
     }
 
     /**

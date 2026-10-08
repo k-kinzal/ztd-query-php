@@ -28,7 +28,7 @@ final class NumbersTest extends TestCase
     {
         $names = array_map(static fn ($routine): string => $routine->name, (new Numbers())->routines());
 
-        self::assertSame(['ABS', 'SIGN', 'CEILING', 'CEIL', 'FLOOR', 'ROUND', 'TRUNCATE', 'PI', 'SQRT', 'EXP', 'SIN', 'COS', 'TAN', 'ASIN', 'ACOS', 'ATAN', 'COT', 'DEGREES', 'RADIANS', 'LN', 'LOG2', 'LOG10', 'LOG', 'POW', 'POWER'], $names);
+        self::assertSame(['ABS', 'SIGN', 'CEILING', 'CEIL', 'FLOOR', 'ROUND', 'TRUNCATE', 'PI', 'SQRT', 'EXP', 'SIN', 'COS', 'TAN', 'ASIN', 'ACOS', 'COT', 'DEGREES', 'RADIANS', 'LN', 'LOG2', 'LOG10', 'LOG', 'POW', 'POWER'], $names);
     }
 
     public function testAbsKeepsTheTypeOfTheArgument(): void
@@ -392,5 +392,33 @@ final class NumbersTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['0', '0', '-5.72953e-319', '-1.73e-322', '180', '3.141592653589793']], $result->rows);
+    }
+
+    public function testTowardMakesAnIntegerABigintAndADateADouble(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (bi BIGINT, dt DATE)');
+        $session->query("INSERT INTO t VALUES (-9000000000000000000, '2020-01-02')");
+        $result = $session->query('SELECT CEILING(bi), FLOOR(dt) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['-9000000000000000000', '20200102']], $result->rows);
+        self::assertSame([[Field::LongLong, 21], [Field::Double, 23]], [[$result->columns[0]->type, $result->columns[0]->length], [$result->columns[1]->type, $result->columns[1]->length]]);
+    }
+
+    public function testRoundTruncatesADecimalToTheDecimalsItHasAndKeepsAnIntegerABigint(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (bi BIGINT, d DECIMAL(10,3))');
+        $session->query('INSERT INTO t VALUES (-9000000000000000000, -2.567)');
+        $result = $session->query('SELECT TRUNCATE(d, 2), TRUNCATE(d, 5), TRUNCATE(d, -2), TRUNCATE(bi, 2) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['-2.56', '-2.567', '0', '-9000000000000000000']], $result->rows);
+        self::assertSame([[11, 2], [12, 3], [8, 0], [21, 0]], array_map(static fn ($column): array => [$column->length, $column->decimals], $result->columns));
     }
 }

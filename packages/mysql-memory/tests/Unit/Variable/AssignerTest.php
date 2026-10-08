@@ -321,4 +321,66 @@ final class AssignerTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['REAL_AS_FLOAT,PIPES_AS_CONCAT,ANSI_QUOTES,IGNORE_SPACE,ONLY_FULL_GROUP_BY,ANSI']], $result->rows);
     }
+
+    public function testTextTakesABlockEncryptionModeByNameOrNumber(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET block_encryption_mode = 'AES-256-OFB'");
+        $named = $session->query('SELECT @@block_encryption_mode')[0];
+        $session->query('SET block_encryption_mode = 5');
+        $numbered = $session->query('SELECT @@block_encryption_mode')[0];
+
+        self::assertInstanceOf(ResultSet::class, $named);
+        self::assertInstanceOf(ResultSet::class, $numbered);
+        self::assertSame([[['aes-256-ofb']], [['aes-256-cbc']]], [$named->rows, $numbered->rows]);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Variable 'block_encryption_mode' can't be set to the value of 'aes-128-cfb'");
+
+        $session->query("SET block_encryption_mode = 'aes-128-cfb'");
+    }
+
+    public function testCheckReadsTheVariablesOfTheClock(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET time_zone = 'europe/paris'");
+        $session->query('SET lc_time_names = 5');
+        $session->query('SET timestamp = 1');
+        $session->query('SET timestamp = DEFAULT');
+
+        $reply = $session->query('SELECT @@time_zone, @@lc_time_names')[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['Europe/Paris', 'fr_FR']], $reply->rows);
+        self::assertGreaterThan(1700000000, $session->variables->instant());
+    }
+    public function testIsolationHoldsTheNameOfALevelInUpperCase(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET transaction_isolation = 'read-committed'");
+        $named = $session->variables->read('transaction_isolation');
+        $session->query('SET transaction_isolation = 0');
+
+        self::assertSame(['READ-COMMITTED', 'READ-UNCOMMITTED'], [$named, $session->variables->read('transaction_isolation')]);
+    }
+
+    public function testIsolationRefusesAValueThatNamesNoLevel(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1231);
+        $this->expectExceptionMessage("Variable 'transaction_isolation' can't be set to the value of 'REPEATABLE READ'");
+
+        $session->query("SET transaction_isolation = 'REPEATABLE READ'");
+    }
+
+    public function testAliasesSetsBothNamesOfAVariableMySql57Has(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('SET tx_read_only = 1');
+        $result = $session->query('SELECT @@transaction_read_only, @@tx_read_only')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1']], $result->rows);
+    }
 }

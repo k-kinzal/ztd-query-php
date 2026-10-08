@@ -8,7 +8,7 @@ use MySqlMemory\Typing\Ordering;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 /**
- * The server-wide objects of the emulated server besides databases and accounts: resource groups, foreign servers, spatial reference systems, tablespaces, the binary log and the prepared XA branches.
+ * The server-wide objects of the emulated server besides databases and accounts: resource groups, foreign servers, spatial reference systems, tablespaces, the binary log, the prepared XA branches, and the client threads with their user-level locks.
  *
  * The emulated server runs no replication: the default channel exists unconfigured, with its
  * receiver thread stopped. Its applier thread runs once START REPLICA SQL_THREAD starts it, until
@@ -33,6 +33,11 @@ final class Registry
      * The binary log files.
      */
     public readonly BinaryLog $binaryLog;
+
+    /**
+     * The sessions connected, their user-level locks and the clock of the server.
+     */
+    public readonly Threads $threads;
 
     /**
      * @var array<string, ForeignServer> The foreign servers, by the key of their name
@@ -62,6 +67,7 @@ final class Registry
         $this->resourceGroups = new ResourceGroups();
         $this->spatialCatalog = new SpatialCatalog();
         $this->binaryLog = new BinaryLog();
+        $this->threads = new Threads();
     }
 
     /**

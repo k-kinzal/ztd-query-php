@@ -18,7 +18,7 @@ trait CatalogedError
      * Answers the error number: the backing value of the case.
      *
      * @example A missing table
-     *     \MySqlMemory\Error\QueryError::NoSuchTable->number() // => 1146
+     *     \MySqlMemory\Error\Family\QueryError::NoSuchTable->number() // => 1146
      */
     public function number(): int
     {
@@ -29,7 +29,7 @@ trait CatalogedError
      * Answers the SQLSTATE of the error.
      *
      * @example A duplicate key
-     *     \MySqlMemory\Error\DataError::DuplicateEntry->sqlState() // => '23000'
+     *     \MySqlMemory\Error\Family\DataError::DuplicateEntry->sqlState() // => '23000'
      */
     public function sqlState(): string
     {
@@ -40,7 +40,7 @@ trait CatalogedError
      * Answers the message with the arguments filled into the format of the error.
      *
      * @example A missing column
-     *     \MySqlMemory\Error\QueryError::BadField->message('a', 'field list') // => "Unknown column 'a' in 'field list'"
+     *     \MySqlMemory\Error\Family\QueryError::BadField->message('a', 'field list') // => "Unknown column 'a' in 'field list'"
      */
     public function message(string|int ...$arguments): string
     {
@@ -56,7 +56,7 @@ trait CatalogedError
      * Answers the error with the arguments filled into its message.
      *
      * @example No database selected
-     *     \MySqlMemory\Error\QueryError::NoDatabase->error()->getMessage() // => 'No database selected'
+     *     \MySqlMemory\Error\Family\QueryError::NoDatabase->error()->getMessage() // => 'No database selected'
      */
     public function error(string|int ...$arguments): SqlError
     {

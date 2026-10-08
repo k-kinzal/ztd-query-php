@@ -36,6 +36,11 @@ final class View
     public array $positions = [];
 
     /**
+     * The index-level hints the query of the view keeps, as SHOW CREATE VIEW writes them after its first SELECT, or the empty string.
+     */
+    public string $hints = '';
+
+    /**
      * @param string $schema The database of the view
      * @param string $name The name of the view
      * @param array{string, string} $definer The user and host of the definer

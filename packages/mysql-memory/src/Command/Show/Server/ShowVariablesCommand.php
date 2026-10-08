@@ -12,6 +12,7 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
+use MySqlMemory\System\Performance\StatusVariables;
 use MySqlMemory\Variable\Scope;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -28,8 +29,9 @@ use SqlSemantics\Statement\Operation;
  * value of each variable that has one; a NULL value is listed as the empty string. The session
  * timestamp is the time of the statement, and pseudo_thread_id the connection id. The rows are
  * read from the variables tables of the Performance Schema, which the column metadata names.
- * LIKE matches the names without regard to case. The emulator keeps no status counters, so
- * SHOW STATUS lists no variable.
+ * LIKE matches the names without regard to case. SHOW STATUS lists the status variables of the
+ * release, and the statement counters the tables leave out; the emulator keeps no counter, so
+ * each reads 0 ({@see StatusVariables}).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-variables.html,
  * https://dev.mysql.com/doc/refman/8.4/en/show-status.html.
  *
@@ -55,7 +57,7 @@ final class ShowVariablesCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof ShowVariables || $statement instanceof ShowStatus);
         $global = $statement->scope === VariableScope::Global;
-        $rows = $statement instanceof ShowVariables ? $this->variables($session, $global, $context) : [];
+        $rows = $statement instanceof ShowVariables ? $this->variables($session, $global, $context) : $this->status($session, $global);
         $table = ($global ? 'global_' : 'session_') . ($statement instanceof ShowVariables ? 'variables' : 'status');
         $headings = [
             Heading::text('Variable_name', Field::VarString, 64, ColumnFlag::NotNull->value | ColumnFlag::NoDefaultValue->value, 0, 'Variable_name', $table, $table, 'performance_schema', 'utf8mb4_0900_ai_ci'),
@@ -63,6 +65,21 @@ final class ShowVariablesCommand implements Command
         ];
 
         return (new Listing($headings))->result($rows, $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb4_0900_ai_ci');
+    }
+
+    /**
+     * Answers the name and value of each status variable of a scope, as performance_schema lists them and with the statement counters.
+     *
+     * @return list<array{string, string}>
+     */
+    public function status(Session $session, bool $global): array
+    {
+        $connected = 0;
+        foreach ($session->instance->sessions as $id => $reference) {
+            $connected += $reference->get() !== null && isset($session->instance->registry->threads->connected[$id]) ? 1 : 0;
+        }
+
+        return StatusVariables::of($session->settings()->release())->values($session->instance, $global, false, $connected, false);
     }
 
     /**

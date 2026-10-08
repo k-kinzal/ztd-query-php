@@ -8,8 +8,8 @@ use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -87,7 +87,9 @@ final class RenameTableCommand implements Command
             unset($dictionary->schemas[$table->definition->schema]->tables[$table->definition->name]);
         }
         foreach ($moves as [$table, $to]) {
+            $from = [$table->definition->schema, $table->definition->name];
             $table->definition = $this->renamed($session, $context, $connection, $table, $to[0], $to[1]);
+            $dictionary->retarget($from[0], $from[1], $to[0], $to[1]);
         }
         foreach ($names as $table) {
             $dictionary->schemas[$table->definition->schema]->tables[$table->definition->name] = $table;

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\ProgramError;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Plan\Planner;
@@ -37,6 +37,10 @@ use SqlSemantics\Statement\Query;
 
 /**
  * Executes a query: SELECT, a set operation, VALUES or TABLE.
+ *
+ * A query whose INTO names variables of a stored program computes its values as a write does,
+ * so that a warning is an error under a strict sql_mode, and stores each value as into a column
+ * of the variable's type (verified on a live 8.4 server).
  *
  * @visibility MySqlMemory
  */
@@ -68,6 +72,9 @@ final class QueryCommand implements Command
         if ($session->settings()->release() === GrammarRelease::MySql910 && $this->unites($statement) && $plan->domains !== []) {
             $nullable = $plan->domains[0]->nullable;
             $plan = new QueryPlan($plan->root, array_map(static fn (Domain $domain): Domain => $domain->withNullable($nullable), $plan->domains), $plan->names, $plan->origins);
+        }
+        if ($into instanceof IntoVariables && array_filter($into->targets, static fn ($target): bool => !$target instanceof UserVariable) !== []) {
+            $context->strict = $context->modes->strict();
         }
         $result = (new Output())->result($plan, $context, $this->calculates($statement));
         if ($into === null) {
@@ -167,10 +174,12 @@ final class QueryCommand implements Command
             return new Completion(0, 0, $context->diagnostics->count());
         }
         foreach ($into->targets as $index => $target) {
-            if (!$target instanceof UserVariable) {
-                throw ProgramError::UndeclaredVariable->error($target->name->value);
-            }
             $column = $result->columns[$index];
+            if (!$target instanceof UserVariable) {
+                $variable = $session->program?->variable($target->name->value) ?? throw ProgramError::UndeclaredVariable->error($target->name->value);
+                $variable->assign($result->rows[0][$index], $this->domain($column), $context);
+                continue;
+            }
             $session->variables->assign($target->name->value, $result->rows[0][$index], $this->domain($column));
         }
         if (count($result->rows) > 1) {

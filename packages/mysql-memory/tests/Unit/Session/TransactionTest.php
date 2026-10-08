@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
+use MySqlMemory\Concurrency\Isolation;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
@@ -16,63 +17,48 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class TransactionTest extends TestCase
 {
-    public function testTouchKeepsTheRowsAFailedStatementRestores(): void
+    public function testWriteKeepsTheRowsAFailedStatementRestores(): void
     {
         $instance = new Instance('8.4.7', [], ['d']);
         $instance->connect()->query('CREATE TABLE d.t (a INT); INSERT INTO d.t VALUES (1)');
         $table = $instance->dictionary->table('d', 't');
         self::assertNotNull($table);
         $transaction = new Transaction($instance->dictionary);
-        $transaction->beginStatement();
-        $transaction->touch($table);
+        $transaction->statements->begin();
+        $transaction->write($table, $table->data->nextRow);
         $table->data->insert([2]);
-        $transaction->touch($table);
-        $table->data->insert([3]);
-        $transaction->abortStatement();
+        $transaction->write($table, 1);
+        $table->data->update(1, [3]);
+        $transaction->statements->abort();
 
         self::assertSame([1 => [1]], $table->data->rows);
     }
 
-    public function testBeginStatementForgetsTheRowsOfTheLastStatement(): void
+    public function testWriteKeepsNothingOfATableThatIsNotTransactional(): void
     {
         $instance = new Instance('8.4.7', [], ['d']);
-        $instance->connect()->query('CREATE TABLE d.t (a INT); INSERT INTO d.t VALUES (1)');
+        $instance->connect()->query('CREATE TABLE d.t (a INT) ENGINE=MyISAM; INSERT INTO d.t VALUES (1)');
         $table = $instance->dictionary->table('d', 't');
         self::assertNotNull($table);
         $transaction = new Transaction($instance->dictionary);
-        $transaction->touch($table);
+        $transaction->statements->begin();
+        $transaction->write($table, $table->data->nextRow);
         $table->data->insert([2]);
-        $transaction->beginStatement();
-        $transaction->abortStatement();
+        $transaction->statements->abort();
 
-        self::assertSame([1 => [1], 2 => [2]], $table->data->rows);
+        self::assertSame([[1 => [1], 2 => [2]], true], [$table->data->rows, $transaction->unrestored]);
     }
 
-    public function testEndStatementKeepsTheChanges(): void
+    public function testTransactionalTellsInnoDbTablesApart(): void
     {
         $instance = new Instance('8.4.7', [], ['d']);
-        $instance->connect()->query('CREATE TABLE d.t (a INT)');
-        $table = $instance->dictionary->table('d', 't');
-        self::assertNotNull($table);
-        $transaction = new Transaction($instance->dictionary);
-        $transaction->beginStatement();
-        $transaction->touch($table);
-        $table->data->insert([2]);
-        $transaction->endStatement();
-        $transaction->abortStatement();
+        $instance->connect()->query('CREATE TABLE d.t (a INT); CREATE TABLE d.m (a INT) ENGINE=MEMORY');
+        $innodb = $instance->dictionary->table('d', 't');
+        $memory = $instance->dictionary->table('d', 'm');
+        self::assertNotNull($innodb);
+        self::assertNotNull($memory);
 
-        self::assertSame([1 => [2]], $table->data->rows);
-    }
-
-    public function testAbortStatementRestoresTheRowsOfAFailedInsert(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; CREATE TABLE d.t (a INT PRIMARY KEY); INSERT INTO d.t VALUES (2)');
-        $session->run('INSERT INTO d.t VALUES (1), (2), (3)');
-        $result = $session->query('SELECT a FROM d.t ORDER BY a')[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['2']], $result->rows);
+        self::assertSame([true, false], [Transaction::transactional($innodb), Transaction::transactional($memory)]);
     }
 
     public function testBeginOpensATransaction(): void
@@ -91,7 +77,7 @@ final class TransactionTest extends TestCase
         self::assertNotNull($table);
         $transaction = new Transaction($instance->dictionary);
         $transaction->begin();
-        $transaction->touch($table);
+        $transaction->write($table, $table->data->nextRow);
         $table->data->insert([1]);
         $transaction->commit();
         $transaction->rollback();
@@ -120,14 +106,14 @@ final class TransactionTest extends TestCase
         self::assertNotNull($table);
         $transaction = new Transaction($instance->dictionary);
         $transaction->begin();
-        $transaction->beginStatement();
-        $transaction->touch($table);
+        $transaction->statements->begin();
+        $transaction->write($table, $table->data->nextRow);
         $table->data->insert([2]);
-        $transaction->endStatement();
-        $transaction->beginStatement();
-        $transaction->touch($table);
+        $transaction->statements->end();
+        $transaction->statements->begin();
+        $transaction->write($table, 1);
         $table->data->delete(1);
-        $transaction->endStatement();
+        $transaction->statements->end();
         $transaction->rollback();
 
         self::assertFalse($transaction->open);
@@ -178,61 +164,101 @@ final class TransactionTest extends TestCase
         $session->query("CREATE TABLE d.t (a INT); XA START 'x'; INSERT INTO d.t VALUES (2)");
         $changes = $session->transaction->detach();
 
-        self::assertSame([[], [1 => [2]], false], [$instance->dictionary->table('d', 't')?->data->rows, $changes[0][1]->rows, $session->transaction->open]);
+        self::assertSame([[], 1, [2], false], [$instance->dictionary->table('d', 't')?->data->rows, $changes[0][2], $changes[0][3], $session->transaction->open]);
     }
 
-    public function testSavepointSetsNothingOutsideATransaction(): void
+    public function testTouchMakesTheTransactionActive(): void
     {
-        $transaction = new Transaction((new Instance())->dictionary);
-        $transaction->savepoint('a');
+        $instance = new Instance('8.4.7', [], ['d']);
+        $instance->connect()->query('CREATE TABLE d.t (a INT)');
+        $table = $instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $transaction = new Transaction($instance->dictionary);
+        $transaction->open = true;
+        $transaction->touch($table);
 
-        self::assertSame([], $transaction->savepoints);
+        self::assertTrue($transaction->active());
     }
 
-    public function testSavepointReplacesAnEarlierSavepointOfTheSameName(): void
+    public function testActiveTellsAnExplicitTransactionOrAnEngagedOne(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT) ENGINE=MyISAM; SET autocommit = 0; SELECT * FROM t');
+        $myisam = $session->transaction->active();
+        $session->query('INSERT INTO t VALUES (1)');
+
+        self::assertSame([false, true], [$myisam, $session->transaction->active()]);
+    }
+
+    public function testSessionIsolationReadsTheVariableOfTheRelease(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query("SET SESSION tx_isolation = 'READ-COMMITTED'");
+
+        self::assertSame([Isolation::ReadCommitted, Isolation::RepeatableRead], [$session->transaction->sessionIsolation(), (new Transaction((new Instance())->dictionary))->sessionIsolation()]);
+    }
+
+    public function testSessionReadOnlyReadsTransactionReadOnly(): void
     {
         $session = (new Instance())->connect();
-        $session->query('BEGIN; SAVEPOINT A; SAVEPOINT b; SAVEPOINT a');
+        $session->query('SET SESSION transaction_read_only = 1');
 
-        self::assertSame(['b', 'a'], array_column($session->transaction->savepoints, 1));
+        self::assertSame([true, false], [$session->transaction->sessionReadOnly(), (new Transaction((new Instance())->dictionary))->sessionReadOnly()]);
     }
 
-    public function testFindComparesNamesWithoutRegardToCaseAndAccents(): void
+    public function testAutocommitReadsTheVariable(): void
     {
         $session = (new Instance())->connect();
-        $session->query('BEGIN; SAVEPOINT e; SAVEPOINT x');
+        $session->query('SET autocommit = 0');
 
-        self::assertSame([0, 0, null], [$session->transaction->find('É'), $session->transaction->find('E'), $session->transaction->find('e ')]);
+        self::assertSame([false, true], [$session->transaction->autocommit(), (new Transaction((new Instance())->dictionary))->autocommit()]);
     }
 
-    public function testRollbackToRestoresTheRowsAtTheSavepoint(): void
+    public function testForgetClosesTheReadView(): void
     {
-        $session = (new Instance('8.4.7', [], ['d']))->connect();
-        $session->query('CREATE TABLE d.t (a INT); BEGIN; INSERT INTO d.t VALUES (1); SAVEPOINT s1; INSERT INTO d.t VALUES (2); SAVEPOINT s2; INSERT INTO d.t VALUES (3)');
-        $session->transaction->rollbackTo('S1');
-        $result = $session->query('SELECT a FROM d.t')[0];
+        $instance = new Instance('8.4.7', [], ['d']);
+        $session = $instance->connect();
+        $session->query('START TRANSACTION WITH CONSISTENT SNAPSHOT');
+        $snapshot = $session->transaction->snapshot;
+        $session->transaction->forget();
+
+        self::assertSame([0, null, []], [$snapshot, $session->transaction->snapshot, $instance->transactions->views]);
+    }
+
+    public function testDisconnectRollsBackAndReleasesTheLocks(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $session = $instance->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT); BEGIN; INSERT INTO t VALUES (1)');
+        $session->transaction->disconnect();
+        $table = $instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+
+        self::assertSame([[], [], null], [$table->data->rows, $instance->transactions->locks->held, $instance->transactions->of($session->id)]);
+    }
+
+    public function testBeginTakesTheSnapshotAtOnceWithAConsistentSnapshot(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $reader = $instance->connect('root', 'localhost', 'd');
+        $writer = $instance->connect('root', 'localhost', 'd');
+        $reader->query('CREATE TABLE t (a INT); START TRANSACTION WITH CONSISTENT SNAPSHOT');
+        $writer->query('INSERT INTO t VALUES (1)');
+        $result = $reader->query('SELECT a FROM t')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([[['1']], ['s1']], [$result->rows, array_column($session->transaction->savepoints, 1)]);
+        self::assertSame([], $result->rows);
     }
 
-    public function testRollbackToRefusesAMissingSavepoint(): void
+    public function testEndKeepsTheChangesAndReleasesTheLocks(): void
     {
-        $transaction = new Transaction((new Instance())->dictionary);
+        $instance = new Instance('8.4.7', [], ['d']);
+        $session = $instance->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT); BEGIN; INSERT INTO t VALUES (1); SAVEPOINT a');
+        $session->transaction->end();
+        $table = $instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
 
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1305);
-        $this->expectExceptionMessage('SAVEPOINT a does not exist');
-
-        $transaction->rollbackTo('a');
-    }
-
-    public function testReleaseDeletesTheSavepointsSetAfterIt(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('BEGIN; SAVEPOINT a; SAVEPOINT b; SAVEPOINT c');
-        $session->transaction->release('b');
-
-        self::assertSame(['a'], array_column($session->transaction->savepoints, 1));
+        self::assertSame([[1 => [1]], [], false, []], [$table->data->rows, $instance->transactions->locks->held, $session->transaction->open, $session->transaction->savepoints->list]);
     }
 }

@@ -31,8 +31,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
-use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
-use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
@@ -89,6 +87,16 @@ final class Locator
      * @var list<array{Name, list<int>}> Each window name a query block uses, with the resolution order it is checked at: OVER name where the call is resolved, the window a specification refines after ORDER BY
      */
     public array $windows = [];
+
+    /**
+     * @var list<WindowSpec> The windows written after OVER in the query block being located, whose names are resolved after its ORDER BY
+     */
+    public array $specifications = [];
+
+    /**
+     * @var list<array{WindowFunction|Aggregate|GroupConcat|JsonObjectAggregate, string, list<int>}> Each window function and aggregate call, with the clause and resolution order it is read at
+     */
+    public array $functions = [];
 
     /**
      * @var list<array{SetOperation|OrderedSetOperation, list<int>}> Each set operation, with the resolution order its operands are compared at: once its right operand is resolved
@@ -260,6 +268,9 @@ final class Locator
                 $this->visit($current->operand, 'IN/ALL/ANY subquery', [...$at, $this->operandFirst ? 0 : ($early ? 2 : 1)]);
                 $children[] = $current->query;
                 $positions[] = [...$at, $this->operandFirst ? 1 : 0];
+            } elseif ($current instanceof WindowSpec) {
+                $this->record($current, $clause, $at);
+                $this->specifications[] = $current;
             } elseif ($current instanceof Node) {
                 $this->record($current, $clause, $at);
                 $index = 0;
@@ -278,7 +289,8 @@ final class Locator
      *
      * A functional key part marks its cast, ungrouped, as keyed; a cast to an array of a type a
      * multi-valued index takes, outside a key part, is recorded with its place; a column name,
-     * select list position or function call is located, and so is a clock call.
+     * select list position or function call is located, and so is a clock call; a window function
+     * or aggregate call, and the window names, are recorded as windowed() records them.
      *
      * @param list<int> $order
      */
@@ -304,6 +316,19 @@ final class Locator
         }
         if ($node instanceof SetOperation || $node instanceof OrderedSetOperation) {
             $this->sets[] = [$node, [...$order, (int) array_search('right', array_keys(get_object_vars($node)), true), PHP_INT_MAX]];
+        }
+        $this->windowed($node, $clause, $order);
+    }
+
+    /**
+     * Records a window function or aggregate call read in a clause at an order, the window name it uses after OVER, checked where the call is resolved, and the window a specification refines, checked after the ORDER BY of its block.
+     *
+     * @param list<int> $order
+     */
+    public function windowed(Node $node, string $clause, array $order): void
+    {
+        if ($node instanceof WindowFunction || $node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate) {
+            $this->functions[] = [$node, $clause, $order];
         }
         $over = $node instanceof WindowFunction || $node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate ? $node->over : null;
         if ($over instanceof Name) {
@@ -348,8 +373,11 @@ final class Locator
     public function select(Select $select, array $order): void
     {
         $outer = $this->block;
+        $outerSpecifications = $this->specifications;
+        $this->specifications = [];
         $this->block = $order;
-        $this->from($select->from, $order);
+        $clause = new FromClause($this);
+        $clause->derived($select->from, $order);
         foreach ($select->items as $item) {
             if ($item instanceof TableWildcard) {
                 $this->wildcards[] = [$item, [...$order, 1, -1]];
@@ -362,11 +390,13 @@ final class Locator
             $this->visit($item instanceof SelectExpression ? $item->expression : $item, 'field list', [...$order, 1, $index]);
         }
         $this->visit($select->where, 'where clause', [...$order, 2]);
-        $this->conditions($select->from, [...$order, 3]);
+        $clause->conditions($select->from, [...$order, 3]);
         $this->visit($select->groupBy, 'group statement', [...$order, 4]);
         $this->visit($select->having, 'having clause', [...$order, 5]);
         $this->visit($select->orderBy, 'order clause', [...$order, 6]);
         $this->visit($select->limit, 'field list', [...$order, 7]);
+        $this->specifications($select, $order);
+        $this->specifications = $outerSpecifications;
         $pending = $select->windows;
         while (($node = array_pop($pending)) !== null) {
             if ($node instanceof WindowSpec && $node->base !== null) {
@@ -384,63 +414,21 @@ final class Locator
     }
 
     /**
-     * Locates the derived tables of a FROM clause, resolved before the rest of their block.
+     * Locates the names of the PARTITION BY and ORDER BY of the windows of a query block, which the server resolves after its ORDER BY: the named windows of the WINDOW clause, then the windows written after OVER, in written order (verified on a live 8.4 server).
      *
      * @param list<int> $order
      */
-    public function from(?Node $relation, array $order): void
+    public function specifications(Select $select, array $order): void
     {
-        if ($relation instanceof DerivedTable) {
-            $this->visit($relation->query, 'field list', [...$order, 0, count($this->places)]);
-
-            return;
-        }
-        if ($relation instanceof JoinedTable) {
-            $this->from($relation->left, $order);
-            $this->from($relation->right, $order);
-
-            return;
-        }
-        if ($relation instanceof Node && !$relation instanceof Query) {
-            foreach (get_object_vars($relation) as $property) {
-                if (is_array($property)) {
-                    foreach ($property as $member) {
-                        if ($member instanceof Node) {
-                            $this->from($member, $order);
-                        }
-                    }
-                } elseif ($property instanceof Node && !$property instanceof ColumnUse) {
-                    $this->from($property, $order);
-                }
+        $windows = [];
+        foreach ($select->windows as $definition) {
+            if ($definition->specification instanceof WindowSpec) {
+                $windows[] = $definition->specification;
             }
         }
-    }
-
-    /**
-     * Locates the ON conditions of a FROM clause.
-     *
-     * @param list<int> $order
-     */
-    public function conditions(?Node $relation, array $order): void
-    {
-        if (!$relation instanceof Node || $relation instanceof DerivedTable) {
-            return;
-        }
-        if ($relation instanceof JoinedTable) {
-            $this->conditions($relation->left, [...$order, 0]);
-            $this->conditions($relation->right, [...$order, 1]);
-            $this->visit($relation->on, 'on clause', [...$order, 2]);
-
-            return;
-        }
-        foreach (get_object_vars($relation) as $property) {
-            if (is_array($property)) {
-                foreach (array_values($property) as $position => $member) {
-                    if ($member instanceof Node) {
-                        $this->conditions($member, [...$order, $position]);
-                    }
-                }
-            }
+        foreach ([...$windows, ...$this->specifications] as $index => $window) {
+            $this->visit($window->partition, 'window partition by', [...$order, 6, PHP_INT_MAX, $index, 0]);
+            $this->visit($window->order, 'window order by', [...$order, 6, PHP_INT_MAX, $index, 1]);
         }
     }
 }

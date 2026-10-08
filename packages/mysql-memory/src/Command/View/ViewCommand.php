@@ -8,8 +8,8 @@ use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Program\ProgramSource;
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Dictionary\View;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Walker;
@@ -86,7 +86,8 @@ final class ViewCommand implements Command
         $query = $resolvedStatement->definition->query;
         $algorithm = self::algorithm($definition->algorithm, $query, $context);
         $check = self::checkOption($definition->check);
-        $schema->views[$name] = new View($database, $name, ProgramSource::definer($definition->definer, $session, $context), $algorithm, ($definition->security ?? \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Definer)->value, $check, $select, $session->variables->database === '' ? $database : $session->variables->database, $resolved, $query, $declaration, Views::tables($resolved, $query, $session->variables->database), [(string) $session->variables->read('character_set_client'), (string) $session->variables->read('collation_connection')]);
+        $schema->views[$name] = $view = new View($database, $name, ProgramSource::definer($definition->definer, $session, $context), $algorithm, ($definition->security ?? \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Definer)->value, $check, $select, $session->variables->database === '' ? $database : $session->variables->database, $resolved, $query, $declaration, Views::tables($resolved, $query, $session->variables->database), [(string) $session->variables->read('character_set_client'), (string) $session->variables->read('collation_connection')]);
+        $view->hints = (new \MySqlMemory\Hint\Hints())->view($query, $session);
 
         return new Completion(0, 0, $context->diagnostics->count());
     }

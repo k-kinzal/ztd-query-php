@@ -11,6 +11,7 @@ use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use WeakReference;
 
 #[CoversClass(Connection::class)]
 #[Small]
@@ -44,5 +45,13 @@ final class ConnectionTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['42']], $result->rows);
+    }
+
+    public function testSessionAnswersTheSessionWhileItLives(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+
+        self::assertSame([$session, null], [(new Connection($session->variables, $context, session: WeakReference::create($session)))->session(), (new Connection($session->variables, $context))->session()]);
     }
 }

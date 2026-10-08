@@ -333,4 +333,20 @@ final class AccumulatorTest extends TestCase
         self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
         self::assertSame([['é12ü34', '00E900310032002C00330034']], $result->rows);
     }
+
+    public function testCollectKeepsNullsAndRefusesANullName(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE s (id INT, j JSON)');
+        $session->query("INSERT INTO s VALUES (1, '1'), (2, NULL)");
+        $result = $session->query('SELECT JSON_ARRAYAGG(j), JSON_OBJECTAGG(id, j), JSON_ARRAYAGG(j) FROM s WHERE id > 5')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([[null, null, null]], $result->rows);
+        $all = $session->query('SELECT JSON_ARRAYAGG(j) FROM s')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $all);
+        self::assertSame([['[1, null]']], $all->rows);
+        $this->expectExceptionMessage('JSON documents may not contain NULL member names.');
+        $session->query('SELECT JSON_OBJECTAGG(j, id) FROM s');
+    }
 }

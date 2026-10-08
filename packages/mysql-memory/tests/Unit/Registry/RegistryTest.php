@@ -18,6 +18,13 @@ final class RegistryTest extends TestCase
         self::assertSame(Registry::key('admin_e'), Registry::key('Admin_É'));
     }
 
+    public function testThreadsStartWithoutSessionsOrLocks(): void
+    {
+        $registry = new Registry();
+
+        self::assertSame([[], [], 0.0], [$registry->threads->connected, $registry->threads->locks, $registry->threads->passed]);
+    }
+
     public function testKeyKeepsTrailingSpaces(): void
     {
         self::assertNotSame(Registry::key('a'), Registry::key('a '));

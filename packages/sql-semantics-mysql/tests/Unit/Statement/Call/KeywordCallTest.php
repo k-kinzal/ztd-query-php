@@ -10,17 +10,19 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -48,7 +50,7 @@ final class KeywordCallTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new KeywordCall(KeywordFunction::AddDate, [new TemporalLiteral(TemporalForm::Date, '2024-01-01'), new NumberLiteral('1')]), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Date->descriptor()), $fact->type);
+        self::assertEquals(new Known(new Domain(Kind::Date, Field::Date, 10)), $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 
@@ -60,5 +62,14 @@ final class KeywordCallTest extends TestCase
         (new KeywordCall(KeywordFunction::CurrentUser, []))->render($out);
 
         self::assertSame('CURRENT_USER()', (new Lexical())->join($out->pieces()));
+    }
+
+    public function testDeriveScalarWarnsThatOldPasswordIsDeprecatedIn56(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.6.51', null, ParameterStyle::Native), null, [], false));
+        $derivation->scalar(new KeywordCall(KeywordFunction::OldPassword, [new StringLiteral(['x'])]), $derivation->environment());
+
+        self::assertEquals([new Deprecation(Deprecated::OldPassword)], $derivation->facts()->warnings);
     }
 }

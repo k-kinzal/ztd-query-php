@@ -40,18 +40,25 @@ final class Results
     {
         return self::$rules ??= array_merge(
             (new TextResults())->rules(),
+            (new FormatResults())->rules(),
             (new CountResults())->rules(),
             (new MathResults())->rules(),
+            (new Extreme\ExtremeResults())->rules(),
             (new ControlResults())->rules(),
             (new SessionResults())->rules(),
+            (new ServerResults())->rules(),
             (new DateResults())->rules(),
+            (new SpecialResults())->rules(),
+            (new DigestResults())->rules(),
+            (new JsonResults())->rules(),
+            (new Pattern\PatternResults())->rules(),
         );
     }
 
     /**
      * Refines the fact of a call with the type its rule resolves, when it resolves one.
      *
-     * MySQL 5.6 answers the account functions as NOT NULL (verified on a live 5.6.51 server).
+     * MySQL 5.6 answers the account functions and PASSWORD as NOT NULL (verified on a live 5.6.51 server).
      *
      * @param list<Scalar> $arguments The arguments
      * @param list<ScalarFact> $facts The fact of each argument
@@ -59,7 +66,9 @@ final class Results
     public function refine(string $name, array $arguments, array $facts, ScalarFact $fact, Derivation $derivation): ScalarFact
     {
         $type = $this->type($name, $arguments, array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts), $derivation);
-        $nullability = $derivation->context->profile->grammar === GrammarRelease::MySql5651 && in_array(strtoupper($name), ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER'], true) ? Nullability::NotNull : $fact->nullability;
+        $nullability = $derivation->context->profile->grammar === GrammarRelease::MySql5651 && in_array(strtoupper($name), ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER', 'PASSWORD'], true) ? Nullability::NotNull : $fact->nullability;
+
+        $nullability = (new Pattern\PatternResults())->nullability($name, $type, $nullability);
 
         return $type === null ? $fact : new ScalarFact(new Known($type), $nullability, $fact->resolution);
     }

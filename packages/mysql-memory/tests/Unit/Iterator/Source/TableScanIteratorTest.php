@@ -9,6 +9,7 @@ use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Instance;
 use MySqlMemory\Iterator\Source\TableScanIterator;
 use MySqlMemory\Plan\Path\Source\TableScan;
+use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -92,5 +93,36 @@ final class TableScanIteratorTest extends TestCase
         self::assertSame([[1], null], $first);
         self::assertSame([0], $iterator->read());
         self::assertSame([1], $iterator->read());
+    }
+
+    public function testInitShowsTimestampsInTheZoneOfTheSession(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (ts TIMESTAMP)');
+        $session->query("INSERT INTO t VALUES ('2024-01-01 00:00:00')");
+        $session->query("SET time_zone = '-05:00'");
+
+        $reply = $session->query('SELECT ts FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['2023-12-31 19:00:00']], $reply->rows);
+    }
+    public function testInitReadsTheRowsTheTransactionOfTheSessionSees(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $reader = $instance->connect('root', 'localhost', 'd');
+        $writer = $instance->connect('root', 'localhost', 'd');
+        $reader->query('CREATE TABLE t (a INT); INSERT INTO t VALUES (1)');
+        $writer->query('BEGIN; INSERT INTO t VALUES (2)');
+        $table = $instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $iterator = new TableScanIterator(new TableScan($table));
+        $iterator->init(new Frame(new Context($reader->modes(), $reader->diagnostics, $reader->variables, 0.0)));
+        $first = [$iterator->read(), $iterator->read()];
+        $iterator->locking = \MySqlMemory\Concurrency\LockMode::Shared;
+        $iterator->init(new Frame(new Context($reader->modes(), $reader->diagnostics, $reader->variables, 0.0)));
+
+        self::assertSame([[[1], null], [1], [2]], [$first, $iterator->read(), $iterator->read()]);
     }
 }

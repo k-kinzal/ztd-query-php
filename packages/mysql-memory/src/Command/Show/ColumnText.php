@@ -230,8 +230,11 @@ final class ColumnText
         if (!$default->declared || $column->autoIncrement) {
             return null;
         }
-        if ($default->now || $default->expression !== null) {
+        if ($default->now) {
             return $default->text;
+        }
+        if ($default->expression !== null) {
+            return $default->text === null ? null : str_replace("'", "\\'", $default->text);
         }
         if ($default->value === null) {
             return null;
@@ -288,6 +291,9 @@ final class ColumnText
         $extra = [];
         if ($column->autoIncrement) {
             $extra[] = 'auto_increment';
+        }
+        if ($column->generated !== null) {
+            $extra[] = $column->stored ? 'STORED GENERATED' : 'VIRTUAL GENERATED';
         }
         if ($column->default->declared && ($column->default->now || $column->default->expression !== null) && !$column->autoIncrement) {
             $extra[] = 'DEFAULT_GENERATED';

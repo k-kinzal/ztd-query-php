@@ -173,4 +173,21 @@ final class CreateTableCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $rows);
         self::assertSame([['1'], ['2']], $rows->rows);
     }
+
+    public function testExecuteLetsATemporaryTableHideABaseTableOfItsName(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $other = $instance->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1); CREATE TEMPORARY TABLE t (b INT)');
+        $other->query('USE d');
+
+        $result1 = $session->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result1);
+        $result2 = $other->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result2);
+        $result3 = $session->query('SHOW TABLES')[0];
+        self::assertInstanceOf(ResultSet::class, $result3);
+        self::assertSame([[], [['1']], [['t']]], [$result1->rows, $result2->rows, $result3->rows]);
+    }
 }

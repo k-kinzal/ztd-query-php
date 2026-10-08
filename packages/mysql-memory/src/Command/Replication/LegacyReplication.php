@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Replication;
 
-use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;

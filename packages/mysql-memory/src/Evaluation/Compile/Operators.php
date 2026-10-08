@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Family\Casts;
-use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Evaluation\Function\Strings;
+use MySqlMemory\Evaluation\Function\Json\Predicate;
 use MySqlMemory\Evaluation\Leaf\Constant;
 use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Evaluation\Operator\Arithmetic as ArithmeticEvaluable;
@@ -19,14 +18,12 @@ use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Evaluation\Operator\Comparison\Compare;
 use MySqlMemory\Evaluation\Operator\Comparison\IsTest;
 use MySqlMemory\Evaluation\Operator\Comparison\Membership;
-use MySqlMemory\Evaluation\Operator\Comparison\Pattern;
 use MySqlMemory\Evaluation\Operator\Comparison\Range;
 use MySqlMemory\Evaluation\Operator\DoubleOperand;
 use MySqlMemory\Evaluation\Operator\Logic;
 use MySqlMemory\Evaluation\Operator\Minus;
 use MySqlMemory\Evaluation\Operator\Negation;
 use MySqlMemory\Evaluation\Scope;
-use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
@@ -46,6 +43,8 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
 use SqlSemantics\Platform\MySql\Statement\Expression\Truth;
 use SqlSemantics\Platform\MySql\Statement\Expression\TruthTest;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Scalar;
@@ -106,7 +105,6 @@ final class Operators
         };
     }
 
-
     /**
      * Compiles a comparison.
      */
@@ -143,6 +141,10 @@ final class Operators
             $left = $this->numeric($left, $leftNode);
             $right = $this->numeric($right, $rightNode);
             $comparator = Comparator::of($left->domain(), $right->domain(), $operator->value, $connection, $this->compiler->settings->release());
+        }
+
+        if ($comparator->mode === Kind::Json) {
+            $comparator = $comparator->withBooleans($this->compiler->jsons->boolean($leftNode), $this->compiler->jsons->boolean($rightNode));
         }
 
         return new Compare($operator, $left, $right, $comparator, $this->compiler->domain($node), $nullFromOperands);
@@ -319,7 +321,9 @@ final class Operators
      * Compiles [NOT] BETWEEN.
      *
      * Values compared as doubles are read as doubles once for each row. When one bound compares as
-     * a string and the other as a number, all three compare as doubles.
+     * a string and the other as a number, all three compare as doubles. A JSON value is compared
+     * as its text, or as a double read from it, with a warning that the comparison of JSON values is
+     * not supported there (verified on a live 8.4 server).
      */
     public function between(Between $node, Scope $scope): Evaluable
     {
@@ -327,15 +331,25 @@ final class Operators
         $low = $this->compiler->compile($node->low, $scope);
         $high = $this->compiler->compile($node->high, $scope);
         $connection = $this->compiler->settings->connectionCollation;
-        $modes = [Comparator::of($operand->domain(), $low->domain(), 'between', $connection)->mode, Comparator::of($operand->domain(), $high->domain(), 'between', $connection)->mode];
+        $json = array_filter([$operand, $low, $high], static fn (Evaluable $value): bool => $value->domain()->kind === Kind::Json) !== [];
+        if ($json) {
+            $this->compiler->connection->context->diagnostics->warning(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message('comparison of JSON in the BETWEEN operator'));
+        }
+        $text = static fn (Evaluable $value): Domain => $value->domain()->kind === Kind::Json ? Domain::string(4294967295, Collation::known('utf8mb4_bin')) : $value->domain();
+        $modes = [Comparator::of($text($operand), $text($low), 'between', $connection)->mode, Comparator::of($text($operand), $text($high), 'between', $connection)->mode];
         $numeric = static fn (Kind $mode): bool => in_array($mode, [Kind::Double, Kind::Decimal, Kind::Integer], true);
         if ($modes === [Kind::Double, Kind::Double] || (in_array(Kind::String, $modes, true) && ($numeric($modes[0]) || $numeric($modes[1])))) {
             $operand = $operand->domain()->kind === Kind::Double ? $operand : new DoubleOperand($operand, false);
             $low = $low->domain()->kind === Kind::Double ? $low : new DoubleOperand($low, false);
             $high = $high->domain()->kind === Kind::Double ? $high : new DoubleOperand($high, false);
         }
+        $comparator = static function (Evaluable $left, Evaluable $right) use ($text, $connection, $json): Comparator {
+            $comparator = Comparator::of($json ? $text($left) : $left->domain(), $json ? $text($right) : $right->domain(), 'between', $connection);
 
-        return new Range($operand, $low, $high, Comparator::of($operand->domain(), $low->domain(), 'between', $connection), Comparator::of($operand->domain(), $high->domain(), 'between', $connection), $node->negated, $this->compiler->domain($node));
+            return $json ? new Comparator($comparator->mode, $left->domain(), $right->domain(), $comparator->collation) : $comparator;
+        };
+
+        return new Range($operand, $low, $high, $comparator($operand, $low), $comparator($operand, $high), $node->negated, $this->compiler->domain($node));
     }
 
     /**
@@ -373,48 +387,13 @@ final class Operators
     }
 
     /**
-     * Compiles [NOT] LIKE.
-     *
-     * An ESCAPE expression that varies by row is refused (ER_WRONG_ARGUMENTS). One known when the
-     * statement is resolved is evaluated then, and refused when it is more than one character; one
-     * known only when the statement runs, such as USER() or a user variable, is checked when the
-     * first row is matched, so a LIKE never evaluated never refuses it.
+     * Compiles [NOT] LIKE, as Patterns compiles it.
      *
      * @throws \MySqlMemory\Error\SqlError When the escape varies by row, or is known to be more than one character
      */
     public function like(Like $node, Scope $scope): Evaluable
     {
-        $operand = $this->compiler->compile($node->operand, $scope);
-        $pattern = $this->compiler->compile($node->pattern, $scope);
-        $constancy = $node->escape === null ? Constancy::Resolved : $this->compiler->constancy($node->escape);
-        if ($constancy === Constancy::Row) {
-            throw StatementError::WrongArguments->error('ESCAPE');
-        }
-        $escape = match (true) {
-            $node->escape === null => null,
-            $constancy === Constancy::Statement => $this->compiler->compile($node->escape, $scope),
-            default => $this->escape($node->escape, $scope),
-        };
-        [$collation] = Collations::aggregate([$operand->domain(), $pattern->domain()], 'like', $this->compiler->settings->connectionCollation, true, $this->compiler->settings->release());
-
-        return new Pattern($operand, $pattern, $escape, $collation, $node->negated, $this->compiler->domain($node), $constancy === Constancy::Statement);
-    }
-
-    /**
-     * Compiles and evaluates an ESCAPE expression known when the statement is resolved into its value.
-     *
-     * @throws \MySqlMemory\Error\SqlError When the escape is more than one character
-     */
-    public function escape(Scalar $node, Scope $scope): Evaluable
-    {
-        $compiled = $this->compiler->compile($node, $scope);
-        $value = $compiled->evaluate(new Frame($this->compiler->connection->context));
-        $text = Convert::toText($value, $compiled->domain());
-        if ($text !== null && (new Strings())->count($text, $compiled->domain()) > 1) {
-            throw StatementError::WrongArguments->error('ESCAPE');
-        }
-
-        return new Constant($compiled->domain(), $value);
+        return (new Patterns($this->compiler))->like($node, $scope);
     }
 
     /**
@@ -439,6 +418,11 @@ final class Operators
      */
     public function cast(Cast $node, Scope $scope): Evaluable
     {
-        return (new Casts($this->compiler))->cast($this->compiler->compile($node->operand, $scope), $node->target, $node);
+        $operand = $this->compiler->compile($node->operand, $scope);
+        if ($node->target->kind === CastKind::Json && $this->compiler->jsons->boolean($node->operand)) {
+            $operand = new Predicate($operand);
+        }
+
+        return (new Casts($this->compiler))->cast($operand, $node->target, $node);
     }
 }

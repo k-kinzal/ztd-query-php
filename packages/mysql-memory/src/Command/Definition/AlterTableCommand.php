@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Command;
+use MySqlMemory\Command\Definition\Constraint\Constraints;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\AdministrationError;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Context;
@@ -100,6 +101,7 @@ final class AlterTableCommand implements Command
         $layout = TableLayout::of($table->definition);
         $change = new TableChange($layout, $table->definition->name, $database, $session->settings()->release());
         $change->apply($commands);
+        $change->copies = $change->copies || ($change->referencing && $session->variables->read('foreign_key_checks') !== 'OFF');
         $target = $layout->name->schema->value ?? $schema;
         $renamed = $target !== $schema || $layout->name->name->value !== $table->definition->name;
         if ($renamed) {
@@ -146,15 +148,16 @@ final class AlterTableCommand implements Command
      * Raises the first problem the analysis found that the change itself does not settle, then a
      * call of a function that is not declared.
      *
-     * A missing table, an unknown or duplicate column, an existing table, an unknown key column
-     * and an unknown ALGORITHM or LOCK are left to the change.
+     * A missing table, an unknown or duplicate column, a column an expression reads that the
+     * table lacks, an existing table, an unknown key column and an unknown ALGORITHM or LOCK are
+     * left to the change.
      *
      * @throws \MySqlMemory\Error\SqlError When the statement has such a problem
      */
     public function resolve(Operation $operation, Session $session): void
     {
         foreach ($operation->facts->diagnostics as $diagnostic) {
-            if (!$diagnostic instanceof MissingTable && !$diagnostic instanceof UnknownColumn && !$diagnostic instanceof DuplicateColumn && !$diagnostic instanceof TableExists && !$diagnostic instanceof UnknownKeyColumn && !$diagnostic instanceof UnknownAlterChoice) {
+            if (!$diagnostic instanceof MissingTable && !$diagnostic instanceof \SqlSemantics\Statement\Reference\Column\MissingColumn && !$diagnostic instanceof UnknownColumn && !$diagnostic instanceof DuplicateColumn && !$diagnostic instanceof TableExists && !$diagnostic instanceof UnknownKeyColumn && !$diagnostic instanceof UnknownAlterChoice) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
         }
@@ -175,9 +178,16 @@ final class AlterTableCommand implements Command
     {
         $context = $rebuild->context;
         $definition = $rebuild->definition($layout, $this->others($rebuild->session, $table));
+        $schema = $rebuild->session->instance->dictionary->schema($definition->schema);
+        if ($schema !== null && !$definition->temporary) {
+            Constraints::unique($definition, $schema, $table);
+        }
+        $needs = new Constraint\KeyNeeds($rebuild->session, $context);
+        $needs->dropped($table, $definition, $change->dropped);
+        $needs->followed($table, $layout);
         $origins = array_map(static fn (array $column): ?int => $column[1], $layout->columns);
         $copies = $this->copies($table->definition, $definition, $origins, $change, $context);
-        $data = $rebuild->rows($table, $definition, $origins);
+        $data = $rebuild->rows($this->emptied($table, $change->emptied, $context), $definition, $origins);
         if ($change->ordered && $definition->primaryKey() !== null) {
             $context->warning(StatementError::UnknownError, 'ORDER BY ignored as there is a user-defined clustered index in the table \'' . $definition->name . '\'');
         }
@@ -326,6 +336,7 @@ final class AlterTableCommand implements Command
         foreach ($new->columns as $position => $column) {
             $origin = $origins[$position] ?? null;
             if ($origin === null) {
+                $copies = $copies || $this->copiesAdded($column);
                 continue;
             }
             $before = $old->columns[$origin];
@@ -347,13 +358,51 @@ final class AlterTableCommand implements Command
     }
 
     /**
+     * Tells whether adding a column copies the table: a STORED generated column, or a column whose
+     * default is an expression other than the current time.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html.
+     */
+    public function copiesAdded(ColumnDefinition $column): bool
+    {
+        return ($column->generated !== null && $column->stored) || ($column->default->expression !== null && !$column->default->now);
+    }
+
+    /**
      * Tells whether the change of one column copies the table: the column becomes AUTO_INCREMENT,
-     * or becomes NOT NULL outside a strict mode.
+     * becomes NOT NULL outside a strict mode, or is or becomes a generated column whose expression
+     * or storage changes (a new STORED generated column copies it too).
      * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html.
      */
     public function copiesColumn(ColumnDefinition $before, ColumnDefinition $after, Context $context): bool
     {
-        return ($after->autoIncrement && !$before->autoIncrement) || ($before->nullable() && !$after->nullable() && !$context->modes->strict());
+        $generated = ($before->generated !== null) !== ($after->generated !== null) || $before->stored !== $after->stored || $before->expression !== $after->expression;
+
+        return $generated || ($after->autoIncrement && !$before->autoIncrement) || ($before->nullable() && !$after->nullable() && !$context->modes->strict());
+    }
+
+    /**
+     * Answers a table without the rows of the partitions a change empties: those DROP PARTITION drops and TRUNCATE PARTITION empties.
+     *
+     * @param list<string> $names The partitions emptied
+     *
+     * @throws \MySqlMemory\Error\SqlError When a row lands in no partition
+     */
+    public function emptied(StoredTable $table, array $names, Context $context): StoredTable
+    {
+        $partitioning = $table->definition->partitioning;
+        if ($names === [] || $partitioning === null) {
+            return $table;
+        }
+        $partitions = new \MySqlMemory\Storage\Partitions($table->definition, $partitioning, $context);
+        $emptied = array_map(static fn (string $name): ?int => $partitioning->partition($name), $names);
+        $data = $table->data->copy();
+        foreach ($data->rows as $number => $row) {
+            if (in_array($partitions->locate($row), $emptied, true)) {
+                $data->delete($number);
+            }
+        }
+
+        return new StoredTable($table->definition, $data);
     }
 
     /**
@@ -362,7 +411,8 @@ final class AlterTableCommand implements Command
     public function move(Session $session, StoredTable $table, string $schema, string $name): void
     {
         $dictionary = $session->instance->dictionary;
-        unset($dictionary->schemas[$schema]->tables[$name]);
-        $dictionary->schemas[$table->definition->schema]->tables[$table->definition->name] = $table;
+        $dictionary->release($table, $schema, $name);
+        $dictionary->store($table);
+        $dictionary->retarget($schema, $name, $table->definition->schema, $table->definition->name);
     }
 }

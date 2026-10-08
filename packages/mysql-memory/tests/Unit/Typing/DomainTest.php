@@ -130,4 +130,11 @@ final class DomainTest extends TestCase
         self::assertFalse($quiet->withQuiet(false)->quiet);
         self::assertSame($quiet, $quiet->withQuiet());
     }
+
+    public function testWithSourceNamesWhereAJsonValueComesFrom(): void
+    {
+        $domain = Domain::integer();
+
+        self::assertSame(['j', $domain], [$domain->withSource('j')->source, $domain->withSource('')]);
+    }
 }

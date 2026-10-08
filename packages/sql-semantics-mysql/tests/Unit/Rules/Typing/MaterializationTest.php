@@ -106,4 +106,21 @@ final class MaterializationTest extends TestCase
         self::assertEquals(new Domain(Kind::String, Field::String, 0, 0, false, Collation::binary(), [], Coercibility::Ignorable), (new Materialization())->set(Domain::null(), GrammarRelease::MySql8044));
         self::assertSame(Field::VarString, (new Materialization())->set(Domain::null(), GrammarRelease::MySql910)->field);
     }
+
+    public function testWindowedHoldsIntegersAsIntOrBigintAndStringsAsVarcharWithoutDecimals(): void
+    {
+        $materialization = new Materialization();
+        $tiny = $materialization->windowed(Domain::column(Field::Tiny, 4));
+        $int = $materialization->windowed(Domain::column(Field::Long, 11));
+        $text = $materialization->windowed(Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'), Field::String));
+        $blob = $materialization->windowed(Domain::string(262140, Collation::known('utf8mb4_0900_ai_ci'), Field::Blob));
+        $time = $materialization->windowed(new Domain(Kind::Time, Field::Time, 52, 2));
+
+        self::assertSame([Field::Long, 4], [$tiny->field, $tiny->length]);
+        self::assertSame([Field::LongLong, 11], [$int->field, $int->length]);
+        self::assertSame([Field::VarString, 3, 0], [$text->field, $text->length, $text->decimals]);
+        self::assertSame([Field::Blob, 1048560], [$blob->field, $blob->length]);
+        self::assertSame([Field::Time, 13], [$time->field, $time->length]);
+        self::assertSame([Field::VarString, 0], [$materialization->windowed(Domain::null())->field, $materialization->windowed(Domain::null())->length]);
+    }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
@@ -26,7 +26,8 @@ use SqlSemantics\Statement\Node;
  * SQL_BUFFER_RESULT and SQL_CALC_FOUND_ROWS belong to the first query block of the statement, or
  * of the query whose rows an INSERT or a CREATE TABLE writes; any other block, a later operand of
  * a set operation, a subquery, a derived table or a common table, has the first of them in that
- * order refused (ER_CANT_USE_OPTION_HERE). The blocks are checked in written order, each before
+ * order refused (ER_CANT_USE_OPTION_HERE); a statement of a stored program is checked when it
+ * runs, as a statement of its own. The blocks are checked in written order, each before
  * the blocks written in it (verified on a live 8.4 server). MySQL 5.6 and 5.7 also refuse a query
  * cache modifier in any of those other blocks, and INTO in a union operand but the last
  * (verified on live 5.6.51 and 5.7.44 servers).
@@ -47,11 +48,12 @@ final class Placement
         $this->cached($statement, $release);
         $this->united($statement, $release);
         $first = $this->first($statement);
+        $program = \MySqlMemory\Command\Dispatcher::program($statement);
         foreach ((new Walker())->find($statement, Select::class) as $select) {
             if (in_array(SelectOption::All, $select->options, true) && in_array(SelectOption::Distinct, $select->options, true)) {
                 throw StatementError::WrongUsage->error('ALL', 'DISTINCT');
             }
-            if ($select === $first) {
+            if ($select === $first || $program) {
                 continue;
             }
             foreach ([SelectOption::HighPriority, SelectOption::BufferResult, SelectOption::CalcFoundRows] as $option) {

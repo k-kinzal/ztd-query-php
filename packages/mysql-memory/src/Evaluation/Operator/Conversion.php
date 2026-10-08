@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Evaluation\Compile\Family\Jsons;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Function\Json\Coercions;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Encoding;
@@ -23,7 +25,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * A string that is not a date or time converts to NULL with a warning. A string converts into
  * the character set of the target. A string longer than a CHAR(N) or BINARY(N) target is cut with a warning that names the bytes it keeps; a shorter one
  * is padded with 0x00 bytes to the length of a BINARY(N) target. A negative number cast to UNSIGNED takes
- * its two's complement with a warning.
+ * its two's complement with a warning. A value converted to JSON is read or made as
+ * {@see Jsons::cast()} says.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html.
  *
  * @visibility MySqlMemory
@@ -66,11 +69,30 @@ final class Conversion implements Evaluable
             Kind::Integer => $this->integer($value, $from, $context),
             Kind::Decimal => $this->decimal((string) Convert::operandDecimal($value, $this->operand, $context), $context),
             Kind::Double => Convert::toDouble($value, $from, $context),
-            Kind::Date, Kind::DateTime, Kind::Time => (new Moments())->convert($value, $from, $this->domain, $context),
+            Kind::Date, Kind::DateTime, Kind::Time => $this->moment($value, $from, $context),
             Kind::Year => (new Moments())->year($value, $from, $context),
             Kind::String => ($text = self::transcode((string) Convert::toText($value, $from), $from, $this->domain->collation->charset, $context)) === null ? null : $this->text($text, $context),
-            Kind::Json, Kind::Bit, Kind::Null => $this->text((string) Convert::toText($value, $from), $context),
+            Kind::Json => Jsons::cast($value, $this->operand),
+            Kind::Bit, Kind::Null => $this->text((string) Convert::toText($value, $from), $context),
         };
+    }
+
+    /**
+     * Converts a value to the temporal type of the target; a JSON value is first read as a string or a temporal value ({@see Coercions::toTemporal()}).
+     *
+     * @throws \MySqlMemory\Error\SqlError When the statement raises warnings as errors
+     */
+    public function moment(int|float|string $value, Domain $from, Context $context): ?string
+    {
+        if ($from->kind === Kind::Json) {
+            $read = Coercions::toTemporal((string) $value, $from, $this->domain->kind, $context);
+            if ($read === null) {
+                return null;
+            }
+            [$value, $from] = $read;
+        }
+
+        return (new Moments())->convert($value, $from, $this->domain, $context);
     }
 
     /**

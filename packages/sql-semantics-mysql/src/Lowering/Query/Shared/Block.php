@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Shared;
 
 use SqlSemantics\Diagnostic\AnalysisException;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering;
@@ -43,6 +44,7 @@ final class Block
      * @param list<WindowDefinition> $windows The named windows
      * @param Scalar|null $qualify The QUALIFY predicate
      * @param Trailer $trailer The clauses written after the block
+     * @param list<OptimizerHint> $hints The hints of the comment written right after SELECT
      */
     public function __construct(
         public readonly array $options,
@@ -55,6 +57,7 @@ final class Block
         public readonly array $windows = [],
         public readonly ?Scalar $qualify = null,
         public readonly Trailer $trailer = new Trailer(),
+        public readonly array $hints = [],
     ) {
     }
 
@@ -65,7 +68,7 @@ final class Block
      */
     public function then(Trailer $later): self
     {
-        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $this->trailer->then($later));
+        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $this->trailer->then($later), $this->hints);
     }
 
     /**
@@ -98,11 +101,21 @@ final class Block
     }
 
     /**
+     * Answers the block with the hints of the comment written right after its SELECT.
+     *
+     * @param list<OptimizerHint> $hints The hints, in written order
+     */
+    public function hinted(array $hints): self
+    {
+        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $this->trailer, $hints);
+    }
+
+    /**
      * Answers the block without the clauses written after it.
      */
     public function bare(): self
     {
-        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify);
+        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, hints: $this->hints);
     }
 
     /**
@@ -125,6 +138,6 @@ final class Block
             $position = IntoPosition::AfterItems;
         }
 
-        return new Select($this->options, $this->items, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $trailer->orderBy, $trailer->limit, $trailer->procedure, $trailer->locking, $into, $position, $late);
+        return new Select($this->options, $this->items, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $trailer->orderBy, $trailer->limit, $trailer->procedure, $trailer->locking, $into, $position, $late, $this->hints);
     }
 }

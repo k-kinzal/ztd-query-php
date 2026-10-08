@@ -6,6 +6,8 @@ namespace MySqlMemory\Evaluation\Function;
 
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Function\Time\Readings;
+use MySqlMemory\Evaluation\Function\Time\Zeros;
 use MySqlMemory\Evaluation\Operator\Moments;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Temporal;
@@ -16,7 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 /**
  * The date and time functions that read parts of a value: DATE, YEAR, MONTH, DAY, HOUR, MINUTE, SECOND and the others.
  *
- * An argument that is no valid date or time makes the result NULL with a warning.
+ * An argument that is no valid date or time makes the result NULL with a warning. YEAR, MONTH,
+ * DAY and QUARTER take a zero month or day; DAYOFYEAR, DAYOFWEEK and WEEKDAY refuse them.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html.
  *
  * @visibility MySqlMemory
@@ -108,8 +111,7 @@ final class Dates
 
             return $parts === null ? null : $this->read($name, [0, 0, 0, $parts[1], $parts[2], $parts[3], $parts[4]]);
         }
-        $moment = (new Moments())->convert($value, $domain, new Domain(Kind::DateTime, Field::DateTime, 26, 6), $frame->context);
-        $parts = $moment === null ? null : Temporal::parseDateTime($moment);
+        $parts = (new Readings())->value($value, $domain, in_array($name, ['DAYOFYEAR', 'DAYOFWEEK', 'WEEKDAY'], true) ? Zeros::Refused : Zeros::Dated, $frame->context);
 
         return $parts === null ? null : $this->read($name, $parts);
     }
@@ -121,15 +123,15 @@ final class Dates
      */
     public function read(string $name, array $parts): int
     {
-        $day = static fn (): int => (int) gmmktime(0, 0, 0, $parts[1], $parts[2], $parts[0]);
+        $day = static fn (): int => Readings::dayNumber($parts[0], $parts[1], $parts[2]);
 
         return match ($name) {
             'YEAR' => $parts[0],
             'MONTH' => $parts[1],
             'QUARTER' => intdiv($parts[1] + 2, 3),
-            'DAYOFYEAR' => (int) gmdate('z', $day()) + 1,
-            'DAYOFWEEK' => (int) gmdate('w', $day()) + 1,
-            'WEEKDAY' => ((int) gmdate('w', $day()) + 6) % 7,
+            'DAYOFYEAR' => $day() - Readings::dayNumber($parts[0], 1, 1) + 1,
+            'DAYOFWEEK' => (Readings::weekday($day()) + 1) % 7 + 1,
+            'WEEKDAY' => Readings::weekday($day()),
             'HOUR' => $parts[3],
             'MINUTE' => $parts[4],
             'SECOND' => $parts[5],
@@ -158,8 +160,7 @@ final class Dates
 
             return $parts === null ? null : ($parts[0] ? -1 : 1) * $this->unit($unit, [0, 0, 0, $parts[1], $parts[2], $parts[3], $parts[4]]);
         }
-        $moment = (new Moments())->convert($value, $domain, new Domain(Kind::DateTime, Field::DateTime, 26, 6), $frame->context);
-        $parts = $moment === null ? null : Temporal::parseDateTime($moment);
+        $parts = (new Readings())->value($value, $domain, Zeros::Dated, $frame->context);
 
         return $parts === null ? null : $this->unit($unit, $parts);
     }

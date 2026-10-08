@@ -38,6 +38,15 @@ final class ColumnReadsTest extends TestCase
         self::assertSame([], $columns->columns($select->items[0]->expression, [], $operation->facts, true));
     }
 
+    public function testAnyValueHoldsForACallOfAnyValue(): void
+    {
+        $select = (new Semantics(Dialect::MySql))->analyze('SELECT ANY_VALUE(a), any_value(a) + 1, COALESCE(a) FROM t1')->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $reads = new ColumnReads();
+
+        self::assertSame([true, false, false], array_map(static fn (object $item): bool => $item instanceof SelectExpression && $reads->anyValue($item->expression), $select->items));
+    }
+
     public function testAggregateHoldsForAnAggregateWithoutAWindowAndForGrouping(): void
     {
         $select = (new Semantics(Dialect::MySql))->analyze('SELECT COUNT(a), COUNT(a) OVER (), GROUPING(a), a + 1, GROUP_CONCAT(a), JSON_OBJECTAGG(a, b) FROM t1 GROUP BY a WITH ROLLUP')->statement;

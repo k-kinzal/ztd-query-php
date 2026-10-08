@@ -132,4 +132,30 @@ final class ViewTextTest extends TestCase
 
         self::assertSame($text, $text->expressions->text);
     }
+
+    public function testSelectWritesTheWindowsTheCallsUseAfterHaving(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE u (id INT, p INT, o INT)');
+        $session->query('CREATE VIEW v AS SELECT id, SUM(id) OVER (v) a FROM u WINDOW w AS (PARTITION BY p), v AS (w ORDER BY o), x AS (ORDER BY id)');
+
+        $result = $session->query('SHOW CREATE VIEW v')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertStringEndsWith('AS select `u`.`id` AS `id`,sum(`u`.`id`) OVER (`v` )  AS `a` from `u` window `w` AS (PARTITION BY `u`.`p` ) , `v` AS (`w` ORDER BY `u`.`o` ) ', $result->rows[0][1] ?? '');
+    }
+
+    public function testQueryWritesTheHintsAfterTheSelectOfTheFirstBlock(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT, KEY ka (a))');
+        $session->query('CREATE VIEW c AS WITH w AS (SELECT /*+ INDEX(t ka) */ a FROM t) SELECT /*+ NO_INDEX(t) */ w.a FROM w, t UNION SELECT a FROM t');
+
+        $result = $session->query('SHOW CREATE VIEW c')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertStringEndsWith('AS with `w` as (select `t`.`a` AS `a` from `t`) select /*+ INDEX(`t`@`select#2` `ka`) NO_INDEX(`t`@`select#1`) */ `w`.`a` AS `a` from (`w` join `t`) union select `t`.`a` AS `a` from `t`', $result->rows[0][1] ?? '');
+    }
 }

@@ -67,4 +67,16 @@ final class SortIteratorTest extends TestCase
 
         self::assertNull($iterator->read());
     }
+
+    public function testNonScalarWarnsOnceOfSortingArraysAndObjects(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE s (id INT, j JSON)');
+        $session->query("INSERT INTO s VALUES (1, '1'), (2, '\"a\"'), (3, 'null'), (4, NULL), (5, 'true'), (6, '[1]'), (7, '{\"a\":1}'), (8, '1.0'), (12, '[0,5]'), (13, '{}')");
+        $result = $session->query('SELECT id FROM s ORDER BY j')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['4'], ['3'], ['1'], ['8'], ['2'], ['13'], ['7'], ['6'], ['12'], ['5']], $result->rows);
+        self::assertSame(1, $result->warnings);
+    }
 }

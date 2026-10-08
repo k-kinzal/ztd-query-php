@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Call\Temporal;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Rules\Typing\Moments;
@@ -56,10 +57,10 @@ final class DateArithmetic implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $date = (new Arguments())->one($this->date, $derivation, $environment);
-        (new Arguments())->one($this->quantity, $derivation, $environment);
+        $quantity = (new Arguments())->one($this->quantity, $derivation, $environment);
 
         $domain = (new Precision())->domain($date->type);
-        $type = $domain === null ? (new ResultTyping())->dateArithmetic($date->type, $this->unit) : new Known((new Moments(Settings::of($derivation->context)))->shifted($domain, $this->unit));
+        $type = $domain === null ? (new ResultTyping())->dateArithmetic($date->type, $this->unit) : new Known(($moments = new Moments(Settings::of($derivation->context)))->shifted($domain, $this->unit, $moments->quantity((new Precision())->domain($quantity->type)), in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)));
 
         return new ScalarFact($type, Nullability::Nullable);
     }

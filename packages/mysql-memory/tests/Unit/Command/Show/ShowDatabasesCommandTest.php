@@ -36,4 +36,14 @@ final class ShowDatabasesCommandTest extends TestCase
         self::assertSame(['Database (sh%)', [['shop']]], [$like->columns[0]->name, $like->rows]);
         self::assertSame([], $cased->rows);
     }
+
+    public function testExecuteListsInformationSchemaFirstInMySql57(): void
+    {
+        $s = (new Instance('5.7.44'))->connect();
+        $s->query('CREATE DATABASE a');
+
+        $read1 = $s->query('SHOW DATABASES')[0];
+        self::assertInstanceOf(ResultSet::class, $read1);
+        self::assertSame([['information_schema'], ['a'], ['mysql'], ['performance_schema'], ['sys']], $read1->rows);
+    }
 }

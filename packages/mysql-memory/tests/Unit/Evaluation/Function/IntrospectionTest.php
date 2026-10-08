@@ -147,6 +147,32 @@ final class IntrospectionTest extends TestCase
         self::assertSame([['utf8mb3_general_ci', 'utf8mb3_general_ci', 'utf8mb3_general_ci', '3', 'utf8mb3_general_ci', '4', '1', '1']], $result->rows);
     }
 
+    public function testCurrentRoleOrdersTheRolesByUserThenHost(): void
+    {
+        self::assertSame(['NONE', '`A`@`c`,`a`@`%`,`a`@`b`,`a b`@`a`'], [(new Introspection())->currentRole([]), (new Introspection())->currentRole([new \MySqlMemory\Account\Identity('a b', 'a'), new \MySqlMemory\Account\Identity('a', 'b'), new \MySqlMemory\Account\Identity('A', 'c'), new \MySqlMemory\Account\Identity('a', '%')])]);
+    }
+
+    public function testTextualTellsAStringOrJsonValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (j JSON)');
+        $result = $session->query('SELECT CHARSET(JSON_ARRAY()), COLLATION(JSON_ARRAY()), CHARSET(j), COLLATION(NOW()) FROM (SELECT 1) x LEFT JOIN t ON 1')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['utf8mb4', 'utf8mb4_bin', 'binary', 'binary']], $result->rows);
+        self::assertSame([true, false], [(new Introspection())->textual(new Constant(Domain::string(1, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary()), 'a')), (new Introspection())->textual(new Constant(Domain::integer(), 1))]);
+    }
+
+    public function testCoercibilityAnswersImplicitForAUserVariable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET @n = 1');
+        $result = $session->query('SELECT COERCIBILITY(@n), COERCIBILITY(@nope), COERCIBILITY(NOW()), COERCIBILITY(CONCAT(1)), COERCIBILITY(JSON_ARRAY())')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', '2', '5', '4', '2']], $result->rows);
+    }
+
     public function testRoutinesAnswerTheCoercibilityOfEachKindOfValue(): void
     {
         $session = (new Instance())->connect();

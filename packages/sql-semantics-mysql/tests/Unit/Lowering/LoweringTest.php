@@ -130,4 +130,17 @@ final class LoweringTest extends TestCase
         self::assertSame('start_entry: sql_statement', $lowering->form($platform->parser($profile)->parse('SELECT 1'))->signature);
         self::assertSame($profile, $lowering->profile);
     }
+
+    public function testHintsAnswerTheHintsOfTheCommentAfterAKeyword(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
+        $lowering = new Lowering($platform->productions($profile), new Leaves(), $profile);
+        $tree = $platform->parser($profile)->parse('SELECT /*+ QB_NAME(q) */ 1');
+
+        $lowering->statements($tree);
+
+        self::assertSame(['QB_NAME(`q`)'], array_map(static fn ($hint): string => $hint->text(), $lowering->hints($tree->tokens()[0])));
+        self::assertSame([], $lowering->hints($tree->tokens()[1]));
+    }
 }

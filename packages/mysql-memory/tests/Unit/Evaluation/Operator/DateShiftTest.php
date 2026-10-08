@@ -157,6 +157,13 @@ final class DateShiftTest extends TestCase
         self::assertSame([['Warning', '1292', "Incorrect datetime value: 'x'"]], $warnings->rows);
     }
 
+    public function testShownQuotesAValueAsTheServerWritesIt(): void
+    {
+        $shift = new DateShift(new Constant(Domain::string(10, Collation::binary()), '2024-01-15'), new Constant(Domain::integer(), 1), IntervalUnit::Day, false, Domain::string(29, Collation::binary()));
+
+        self::assertSame(['-1', '1e20', '1.50', '\\x0E'], [$shift->shown(-1, Domain::integer(), '-1'), $shift->shown(1e20, Domain::double(), '100000000000000000000'), $shift->shown('1.50', Domain::decimal(3, 2), '1.50'), $shift->shown("\x0E", Domain::string(1, Collation::binary()), "\x0E")]);
+    }
+
     public function testMomentQuotesANumberAsTheServerWritesIt(): void
     {
         $session = (new Instance())->connect();
@@ -200,4 +207,13 @@ final class DateShiftTest extends TestCase
         ], $warnings->rows);
     }
 
+    public function testMomentPutsATimeOnTheDayOfTheStatementForAUnitOfDays(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET timestamp = 1700000000');
+
+        $reply = $session->query("SELECT DATE_ADD(TIME'10:00:00', INTERVAL 1 DAY), DATE_ADD(TIME'10:00:00', INTERVAL 1 HOUR)")[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['2023-11-15 10:00:00', '11:00:00']], $reply->rows);
+    }
 }

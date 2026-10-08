@@ -93,13 +93,14 @@ final class InsertRule
         $skip = $ignore === null ? false : $this->lowering->options->present($form->node($ignore));
         $alias = $layout[6] === null ? null : $this->alias($form->node($layout[6]));
         $updates = $layout[7] === null ? [] : $this->updates($form->node($layout[7]));
+        $hints = $this->lowering->hints($form->token(0));
         if ($form->node->children[$source] instanceof Node) {
             [$columns, $body] = (new InsertSourceRule($this->lowering))->source($form->node($source));
 
-            return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns), $body, $alias, $updates);
+            return $this->build(new InsertInto($replace, $priority, $skip, $target, $columns, $hints), $body, $alias, $updates);
         }
 
-        return new InsertSet(new InsertInto($replace, $priority, $skip, $target), (new ValueRule($this->lowering))->assignments($form->node($source + 1)), $alias, $updates);
+        return new InsertSet(new InsertInto($replace, $priority, $skip, $target, hints: $hints), (new ValueRule($this->lowering))->assignments($form->node($source + 1)), $alias, $updates);
     }
 
     /**

@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
@@ -16,6 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -60,4 +64,12 @@ final class AggregateTest extends TestCase
         self::assertSame('COUNT(ALL *) OVER w', (new Lexical())->join($out->pieces()));
     }
 
+    public function testDeriveScalarResolvesMinOverAWindowAsTheTemporaryTableHoldsIt(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a TINYINT, c CHAR(3))');
+        $query = $semantics->analyze('SELECT MIN(a) OVER (), MAX(c) OVER (), MIN(a) FROM t', [$table]);
+
+        self::assertEquals([new Known(Domain::integer(Field::Long, 4)), Field::VarString, Field::Tiny], [$query->field(0)->type, $query->field(1)->type instanceof Known && $query->field(1)->type->descriptor instanceof Domain ? $query->field(1)->type->descriptor->field : null, $query->field(2)->type instanceof Known && $query->field(2)->type->descriptor instanceof Domain ? $query->field(2)->type->descriptor->field : null]);
+    }
 }

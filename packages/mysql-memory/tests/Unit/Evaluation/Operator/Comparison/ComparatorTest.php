@@ -263,4 +263,22 @@ final class ComparatorTest extends TestCase
 
         self::assertSame([5, -1, 7], [Comparator::integer("\x05", new Domain(Kind::Bit, Field::Bit, 8, 0, true), $context), Comparator::integer(str_repeat("\xFF", 8), new Domain(Kind::Bit, Field::Bit, 64, 0, true), $context), Comparator::integer(7, Domain::integer(), $context)]);
     }
+
+    public function testWithBooleansTakesPredicatesAsJsonBooleans(): void
+    {
+        $result = (new Instance())->connect()->query("SELECT CAST('true' AS JSON) = 1, CAST('true' AS JSON) = TRUE, CAST('true' AS JSON) = (1 = 1)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1', '1']], $result->rows);
+        self::assertTrue(Comparator::of(Domain::integer(), Domain::integer(), '=', Collation::known('utf8mb4_0900_ai_ci'))->withBooleans(true, false)->leftBoolean);
+    }
+
+    public function testJsonMakesAnSqlValueAJsonValue(): void
+    {
+        $result = (new Instance())->connect()->query("SELECT CAST('{\"a\":1}' AS JSON) = '{\"a\":1}', CAST('\"x\"' AS JSON) = 'x', CAST('1.0' AS JSON) = 1, CAST('\"b\"' AS JSON) > CAST('\"ab\"' AS JSON), CAST('[]' AS JSON) > CAST('{}' AS JSON), CAST(DATE'2020-01-01' AS JSON) = '2020-01-01'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1', '1', '1', '1', '0']], $result->rows);
+        self::assertSame('STRING', Comparator::json('x', Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')), false)->name());
+    }
 }

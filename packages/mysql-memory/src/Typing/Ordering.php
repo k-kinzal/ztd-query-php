@@ -85,10 +85,10 @@ final class Ordering
             }
         }
         if ($this->collation->binaryOrder() || $this->collator !== null) {
-            return $left <=> $right;
+            return strcmp($left, $right) <=> 0;
         }
 
-        return $this->folded($left) <=> $this->folded($right);
+        return strcmp($this->folded($left), $this->folded($right)) <=> 0;
     }
 
     /**

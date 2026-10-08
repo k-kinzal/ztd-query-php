@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
-use MySqlMemory\Error\AdministrationError;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Assignment;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Leaf\Constant;
 use MySqlMemory\Evaluation\Leaf\Outer;
+use MySqlMemory\Evaluation\Leaf\ProgramRead;
 use MySqlMemory\Evaluation\Leaf\SystemVariableRead;
 use MySqlMemory\Evaluation\Leaf\UserVariableRead;
 use MySqlMemory\Evaluation\Scope;
+use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Scope as VariableScope;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
@@ -32,6 +34,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope as Written;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field as ShapeField;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Type\Nullability;
@@ -40,7 +43,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * Compiles names: columns, select items named by alias or position, parameters and variables.
  *
  * A column is read at the position its relation occurrence has in the row of the block that
- * holds it; the facts name the occurrence and the column. A column of a stored table is found by
+ * holds it; the facts name the occurrence and the column. A name that denotes a variable of the
+ * running stored program reads the variable. A column of a stored table is found by
  * its declaration, so invisible columns are found too.
  *
  * @visibility MySqlMemory\Evaluation
@@ -69,12 +73,19 @@ final class Names
         if (!$resolution instanceof ResolvedColumn) {
             throw QueryError::BadField->error($use->name->value, 'field list');
         }
+        $program = $this->compiler->connection->program;
+        if ($program !== null && $scope->locate($resolution->relation) === null) {
+            $variable = $use->qualifier === null ? $program->find($resolution->relation, $use->name->value) : $program->row($use->qualifier->name->value)?->variable($use->name->value);
+            if ($variable !== null) {
+                return new ProgramRead($variable);
+            }
+        }
 
         return $this->resolved($resolution, $scope, $fact->nullability !== Nullability::NotNull);
     }
 
     /**
-     * Compiles a column a resolution names.
+     * Compiles a column a resolution names; a JSON column is the source its values are named by in warnings.
      */
     public function resolved(ResolvedColumn $resolution, Scope $scope, bool $nullable): Evaluable
     {
@@ -86,6 +97,9 @@ final class Names
         $id = spl_object_id($resolution->relation);
         $ordinal = $this->position($holder, $resolution);
         $domain = $holder->columns[$id][$ordinal]->withNullable($nullable);
+        if ($domain->kind === Kind::Json) {
+            $domain = $domain->withSource($holder->names[$id][$ordinal] ?? '');
+        }
 
         return new ColumnRead($domain, $holder->offsets[$id] + $ordinal, $depth);
     }
@@ -117,6 +131,12 @@ final class Names
 
     /**
      * Compiles a select item an alias or a position names.
+     *
+     * An item holding a window function is read by its alias only where the window functions of its
+     * block are computed, in the ORDER BY of the block; elsewhere, in HAVING or a subquery, it is
+     * refused with ER_WINDOW_INVALID_WINDOW_FUNC_ALIAS_USE (verified on a live 8.4 server).
+     *
+     * @throws \MySqlMemory\Error\SqlError When the item holds a window function not computed yet
      */
     public function field(ShapeField $field, Scope $scope): Evaluable
     {
@@ -124,6 +144,12 @@ final class Names
             return new ColumnRead($scope->columns[(int) array_key_first($scope->columns)][$field->position], $field->position);
         }
         if ($field->expression !== null) {
+            foreach ((new Walker())->find($field->expression, Scalar::class, false) as $node) {
+                if (Windowing::windowed($node) && ($scope->bound($node)[0] ?? null) !== 0) {
+                    throw QueryError::WindowAliasMisplaced->error($field->name->value ?? '');
+                }
+            }
+
             return $this->compiler->compile($field->expression, $scope);
         }
         if ($field->resolution instanceof ResolvedColumn) {
@@ -261,9 +287,12 @@ final class Names
     /**
      * Compiles DEFAULT(column): the default of the column.
      *
-     * The default CURRENT_TIMESTAMP reads as NULL, or as the zero value when the column is NOT NULL.
+     * The default CURRENT_TIMESTAMP reads as NULL, or as the zero value when the column is NOT NULL;
+     * an AUTO_INCREMENT column without a default reads as 0, and a default written as an expression
+     * is ER_DEFAULT_AS_VAL_GENERATED (verified on a live 8.4 server). In the rows of an INSERT, the
+     * column is one of the table written, which the scope holds without reading its rows.
      *
-     * @throws \MySqlMemory\Error\SqlError When the column has no default
+     * @throws \MySqlMemory\Error\SqlError When the column has no default, or a default written as an expression
      */
     public function default(\SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn $node, Scope $scope): Evaluable
     {
@@ -272,11 +301,15 @@ final class Names
             throw QueryError::BadField->error($node->column->name->value, 'field list');
         }
         $located = $scope->locate($resolution->relation);
-        $definition = $located === null ? null : ($located[1]->tables[spl_object_id($resolution->relation)] ?? null);
-        if ($definition === null) {
+        $holder = $located[1] ?? (isset($scope->tables[spl_object_id($resolution->relation)]) ? $scope : null);
+        $definition = $holder === null ? null : ($holder->tables[spl_object_id($resolution->relation)] ?? null);
+        if ($holder === null || $definition === null) {
             throw StatementError::NotSupportedYet->error('DEFAULT of a column of a derived table');
         }
-        $column = $definition->columns[$this->position($located[1], $resolution)];
+        $column = $definition->columns[$this->position($holder, $resolution)];
+        if (!$column->default->declared && $column->autoIncrement) {
+            return new Constant($column->domain->withNullable(false), 0);
+        }
         if (!$column->default->declared) {
             throw DataError::NoDefaultForField->error($column->name);
         }
@@ -284,7 +317,7 @@ final class Names
             return new Constant($column->domain, $column->nullable() ? null : '0000-00-00 00:00:00' . ($column->domain->decimals > 0 ? '.' . str_repeat('0', $column->domain->decimals) : ''));
         }
         if ($column->default->expression !== null) {
-            return $column->default->expression;
+            throw QueryError::DefaultOfExpression->error();
         }
 
         return new Constant($column->domain->withNullable($column->default->value === null), $column->default->value);

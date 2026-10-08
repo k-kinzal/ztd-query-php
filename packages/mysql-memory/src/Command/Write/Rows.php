@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Write;
 
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Evaluable;
@@ -14,13 +14,16 @@ use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Session\Session;
+use MySqlMemory\Storage\References;
 use MySqlMemory\Storage\Store;
+use MySqlMemory\Storage\TimestampZones;
 use MySqlMemory\Storage\Writer;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Order;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\RowAlias;
 
 /**
  * Writes the rows of one INSERT or REPLACE statement, and counts what it did.
@@ -60,6 +63,7 @@ final class Rows
      * @param InsertInto $into The head of the statement
      * @param list<Assignment> $onDuplicate The ON DUPLICATE KEY UPDATE assignments
      * @param Session $session The session
+     * @param RowAlias|null $alias The alias INSERT ... AS gives the row it was to write, which ON DUPLICATE KEY UPDATE reads after the existing row
      */
     public function __construct(
         public readonly StoredTable $table,
@@ -68,6 +72,7 @@ final class Rows
         public readonly InsertInto $into,
         public readonly array $onDuplicate,
         public readonly Session $session,
+        public readonly ?RowAlias $alias = null,
     ) {
         $this->writer = new Writer($table, $context);
     }
@@ -93,14 +98,16 @@ final class Rows
         }
         $frame = new Frame($this->context);
         $store = new Store($this->context, $number, $this->into->table->name->name->value);
-        $row = array_fill(0, count($definition->columns), null);
+        $row = array_map(static fn ($column) => $column->default->expression === null ? $column->default->value : null, $definition->columns);
         $named = [];
         foreach ($positions as $index => $position) {
             $named[$position] = true;
             $value = $values[$index];
             $column = $definition->columns[$position];
             if ($value instanceof DefaultRequest) {
-                array_splice($row, $position, 1, [$this->defaulted($position, $frame, $store, $number, true)]);
+                $frame->row = $row;
+                array_splice($row, $position, 1, [$column->generated !== null ? null : $this->defaulted($position, $frame, $store, $number, true)]);
+                $frame->row = [];
                 continue;
             }
             [$raw, $domain] = $value instanceof Evaluable ? [$value->evaluate($frame), $value->domain()] : $value;
@@ -110,16 +117,80 @@ final class Rows
                 throw $queried ? $this->unfilled($error, $named) : $error;
             }
         }
-        foreach ($definition->columns as $position => $column) {
-            if (!isset($named[$position])) {
-                array_splice($row, $position, 1, [$this->defaulted($position, $frame, $store, $number, false)]);
-            }
-        }
+        $row = $this->completed($row, $named, $store, $number, $single);
+        $row = $this->triggers()->before('INSERT', $row, null, $this->context) ?? $row;
         [$row, $generated] = $this->writer->autoIncrement($row, $this->context->modes->has('NO_AUTO_VALUE_ON_ZERO'));
         if ($generated !== null) {
             $this->generated ??= $generated;
         }
+        $check = $this->writer->violated($row);
+        if ($check !== null) {
+            if (!$this->into->ignore) {
+                throw DataError::CheckConstraintViolated->error($check->name);
+            }
+            $this->context->diagnostics->warning(DataError::CheckConstraintViolated, DataError::CheckConstraintViolated->message($check->name));
+
+            return;
+        }
+        if (!$this->partitioned($row)) {
+            return;
+        }
         $this->place($row, $number, $single);
+    }
+
+    /**
+     * Tells whether a row of a partitioned table lands in a partition, and in one the statement names; a row that does not is refused, or with IGNORE left out with a warning.
+     *
+     * @param list<int|float|string|null> $row
+     *
+     * @throws SqlError When the row is refused without IGNORE
+     */
+    public function partitioned(array $row): bool
+    {
+        $definition = $this->table->definition;
+        if ($definition->partitioning === null) {
+            return true;
+        }
+        $partitions = new \MySqlMemory\Storage\Partitions($definition, $definition->partitioning, $this->context);
+        try {
+            $partitions->place($row, $this->into->table->partitions === [] ? null : $partitions->selected($this->into->table->partitions));
+        } catch (SqlError $error) {
+            if (!$this->into->ignore || !$error->error instanceof \MySqlMemory\Error\Family\PartitionError) {
+                throw $error;
+            }
+            $this->context->diagnostics->warning($error->error, $error->getMessage());
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Fills the columns a row names no value for, in column order: a generated column computed from the values before it, another column its default, which an expression computes from the row so far.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/data-type-defaults.html.
+     *
+     * @param list<int|float|string|null> $row
+     * @param array<int, true> $named The positions of the columns the row names
+     * @return list<int|float|string|null>
+     *
+     * @throws SqlError When a value is refused
+     */
+    public function completed(array $row, array $named, Store $store, int $number, bool $single): array
+    {
+        $frame = new Frame($this->context);
+        foreach ($this->table->definition->columns as $position => $column) {
+            $frame->row = $row;
+            if ($column->generated !== null) {
+                $value = $store->value($column->generated->evaluate($frame), $column->generated->domain(), $column);
+                array_splice($row, $position, 1, [$this->notNull($value, $position, $store, $number, $single)]);
+            } elseif (!isset($named[$position])) {
+                array_splice($row, $position, 1, [$this->defaulted($position, $frame, $store, $number, false)]);
+            }
+        }
+
+        return $row;
     }
 
     /**
@@ -198,19 +269,15 @@ final class Rows
     public function place(array $row, int $number, bool $single = false): void
     {
         $data = $this->table->data;
-        while (($conflict = $this->writer->conflict($row)) !== null) {
+        while (($conflict = $this->writer->conflict($row, null, $this->into->replace || $this->onDuplicate !== [] ? \MySqlMemory\Concurrency\LockMode::Exclusive : \MySqlMemory\Concurrency\LockMode::Shared)) !== null) {
             [$existing, $key] = $conflict;
             $this->duplicates++;
             if ($this->into->replace) {
-                if ($key === $this->lastUnique()) {
-                    $same = $data->rows[$existing] === $row;
-                    $data->update($existing, $row);
-                    $this->affected += $same ? 1 : 2;
-
+                [$affected, $placed] = (new Replacement($this->table, $this->context, $this->session))->replace($row, $existing, $key);
+                $this->affected += $affected;
+                if ($placed) {
                     return;
                 }
-                $data->delete($existing);
-                $this->affected++;
                 continue;
             }
             if ($this->onDuplicate !== []) {
@@ -225,23 +292,36 @@ final class Rows
             }
             throw $this->writer->duplicate($row, $key);
         }
+        $orphan = $this->references()->orphan($this->table, $row);
+        if ($orphan !== null) {
+            $error = $this->references()->violation($this->table, $orphan, false);
+            if (!$this->into->ignore) {
+                throw $error;
+            }
+            $this->context->diagnostics->warning($error->error, $error->getMessage());
+
+            return;
+        }
+        $this->session->transaction->write($this->table, $data->nextRow);
         $data->insert($row);
         $this->affected++;
+        $this->triggers()->after('INSERT', $row, null, $this->context);
     }
 
     /**
-     * Answers the last unique key of the table, which REPLACE resolves by updating the row in place.
+     * Answers the triggers of the table.
      */
-    public function lastUnique(): ?\MySqlMemory\Dictionary\Key
+    public function triggers(): \MySqlMemory\Program\Triggers
     {
-        $last = null;
-        foreach ($this->table->definition->keys as $key) {
-            if ($key->unique()) {
-                $last = $key;
-            }
-        }
+        return new \MySqlMemory\Program\Triggers($this->session, $this->table);
+    }
 
-        return $last;
+    /**
+     * Answers the keeper of the foreign keys the statement writes.
+     */
+    public function references(): References
+    {
+        return new References($this->session, $this->context);
     }
 
     /**
@@ -258,7 +338,8 @@ final class Rows
         $data = $this->table->data;
         $old = $data->rows[$existing];
         $scope = $this->updateScope();
-        $frame = new Frame($this->context, [...$old, ...$new]);
+        $zones = new TimestampZones();
+        $frame = new Frame($this->context, [...$zones->local($this->table, $old, $this->context), ...$zones->local($this->table, $new, $this->context)]);
         $row = $old;
         $store = new Store($this->context, $number, $this->into->table->name->name->value);
         $assigned = [];
@@ -268,22 +349,37 @@ final class Rows
             $value = $this->planner->compiler->compile($assignment->value, $scope);
             $stored = $this->notNull($store->value($value->evaluate($frame), $value->domain(), $this->table->definition->columns[$position]), $position, $store, $number, $single);
             array_splice($row, $position, 1, [$stored]);
-            array_splice($frame->row, $position, 1, [$stored]);
+            $frame->row = [...$zones->local($this->table, $row, $this->context), ...array_slice($frame->row, count($row))];
         }
+        $row = $this->writer->generate($row, $store, fn (int $position, $value) => $this->notNull($value, $position, $store, $number, $single));
+        $row = $this->triggers()->before('UPDATE', $row, $old, $this->context) ?? $row;
         $changed = false;
         foreach ($row as $position => $value) {
             $changed = $changed || Order::key($value, $this->table->definition->columns[$position]->domain) !== Order::key($old[$position], $this->table->definition->columns[$position]->domain);
         }
         if (!$changed) {
+            $this->triggers()->after('UPDATE', $row, $old, $this->context);
+
             return;
         }
         $row = $this->writer->refresh($row, $assigned);
+        $check = $this->writer->violated($row);
+        if ($check !== null) {
+            throw DataError::CheckConstraintViolated->error($check->name);
+        }
         $conflict = $this->writer->conflict($row, $existing);
         if ($conflict !== null) {
             throw $this->writer->duplicate($row, $conflict[1]);
         }
+        $orphan = $this->references()->orphan($this->table, $row, $old);
+        if ($orphan !== null) {
+            throw $this->references()->violation($this->table, $orphan, false);
+        }
+        $this->references()->updating($this->table, $old, $row);
+        $this->session->transaction->write($this->table, $existing);
         $data->update($existing, $row);
         $this->affected += 2;
+        $this->triggers()->after('UPDATE', $row, $old, $this->context);
     }
 
     /**
@@ -297,6 +393,9 @@ final class Rows
             $domains = array_map(static fn ($column) => $column->domain, $definition->columns);
             $names = array_map(static fn ($column): string => $column->name, $definition->columns);
             $scope->place($this->into->table, $domains, $names, $definition);
+            if ($this->alias !== null) {
+                $scope->place($this->alias, $domains, $names, $definition);
+            }
             $scope->inserted = $definition;
             $this->updateScope = $scope;
         }

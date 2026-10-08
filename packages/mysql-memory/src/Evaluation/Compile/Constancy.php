@@ -6,11 +6,13 @@ namespace MySqlMemory\Evaluation\Compile;
 
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
@@ -38,7 +40,7 @@ use SqlSemantics\Statement\Scalar;
  * known when the statement is resolved. The account functions (USER() and its synonyms), the
  * clocks of the statement, CONNECTION_ID(), LAST_INSERT_ID(), FOUND_ROWS(), user and system
  * variables the statement does not assign, parameters and an uncorrelated subquery are fixed for the statement but known only
- * when it runs. A column, an aggregate, an assignment, a correlated subquery and a function such
+ * when it runs. A column, an aggregate, a window function, an assignment, a correlated subquery and a function such
  * as RAND() or SYSDATE() vary by row. A subquery of one select item without a table or any other
  * clause is the expression it selects, as the server merges it into the enclosing block.
  *
@@ -119,11 +121,11 @@ enum Constancy: int
     {
         return match (true) {
             $node instanceof VariableAssignment && !$assignmentsVary => self::Statement->join(self::within($node->value, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy)),
-            $node instanceof OutputOrdinal, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof VariableAssignment, $node instanceof DefaultOfColumn, $node instanceof InsertedColumn => self::Row,
+            $node instanceof OutputOrdinal, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof WindowFunction, $node instanceof JsonObjectAggregate, $node instanceof VariableAssignment, $node instanceof DefaultOfColumn, $node instanceof InsertedColumn => self::Row,
             $node instanceof UserVariable => in_array(strtolower($node->name->value), $assigned, true) ? self::Row : self::Statement,
             $node instanceof SystemVariable, $node instanceof Parameter => self::Statement,
             $node instanceof ClockCall => $node->clock === Clock::SystemDate ? self::Row : self::Statement,
-            $node instanceof FunctionCall => ($legacy && in_array(strtoupper($node->name->value), self::ACCOUNT_FUNCTIONS, true) ? self::Resolved : self::function(strtoupper($node->name->value), count($node->arguments)))->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy)),
+            $node instanceof FunctionCall => ($node->schema !== null || \MySqlMemory\Evaluation\Function\Library::instance()->find($node->name->value) === null ? self::Row : ($legacy && in_array(strtoupper($node->name->value), self::ACCOUNT_FUNCTIONS, true) ? self::Resolved : self::function(strtoupper($node->name->value), count($node->arguments))))->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy)),
             $node instanceof KeywordCall => (!$legacy && ($node->function === KeywordFunction::User || $node->function === KeywordFunction::CurrentUser) ? self::Statement : self::Resolved)->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy)),
             default => self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy),
         };

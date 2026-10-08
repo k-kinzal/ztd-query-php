@@ -6,9 +6,9 @@ namespace MySqlMemory\Command\Write;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Evaluable;
@@ -69,7 +69,7 @@ final class InsertCommand implements Command
         $context->strict = $context->modes->strict() && !$into->ignore;
         $session->transaction->touch($table);
         [$positions, $sources] = $this->sources($statement, $planner, $table, $context);
-        $rows = new Rows($table, $context, $planner, $into, $statement instanceof InsertQuery ? [] : $statement->onDuplicate, $session);
+        $rows = new Rows($table, $context, $planner, $into, $statement instanceof InsertQuery ? [] : $statement->onDuplicate, $session, $statement instanceof InsertQuery ? null : $statement->alias);
         $queried = $statement instanceof InsertQuery && $statement->values() === null;
         foreach ($sources as $index => $values) {
             $rows->write($values === [] ? [] : $positions, $values, $index + 1, count($sources) === 1 && !$queried, $queried);
@@ -98,7 +98,7 @@ final class InsertCommand implements Command
         if ($table === null) {
             throw QueryError::NoSuchTable->error($schema, $into->table->name->name->value);
         }
-        if ($into->table->partitions !== []) {
+        if ($into->table->partitions !== [] && $table->definition->partitioning === null) {
             throw SchemaError::PartitionClauseOnNonpartitioned->error();
         }
 
@@ -108,7 +108,8 @@ final class InsertCommand implements Command
     /**
      * Answers the positions of the columns written and, for each row, the value of each: an evaluable, DEFAULT, or a computed value with its domain.
      *
-     * An empty row without a column list names no column: each takes its default as a column no
+     * The values are compiled in a scope that holds the table written, without its rows, where
+     * DEFAULT(column) finds the default of a column. An empty row without a column list names no column: each takes its default as a column no
      * row names does, and a column without one is warned about once (verified on a live 8.4
      * server).
      *
@@ -131,9 +132,11 @@ final class InsertCommand implements Command
             }
             throw QueryError::BadField->error($use->name->value, 'field list');
         };
+        $scope = new Scope();
+        $scope->tables[spl_object_id($statement->into->table)] = $definition;
         if ($statement instanceof InsertSet) {
             $positions = array_map(static fn ($assignment): int => $position($assignment->column), $statement->assignments);
-            $values = array_map(fn ($assignment) => $assignment->value instanceof DefaultRequest ? $assignment->value : $planner->compiler->compile($assignment->value, new Scope()), $statement->assignments);
+            $values = array_map(fn ($assignment) => $assignment->value instanceof DefaultRequest ? $assignment->value : $planner->compiler->compile($assignment->value, $scope), $statement->assignments);
 
             return [$positions, [$values]];
         }
@@ -146,7 +149,7 @@ final class InsertCommand implements Command
         }
         $rows = [];
         foreach ($values === null ? $statement->rows : $values->rows as $row) {
-            $values = array_map(fn ($value) => $value instanceof DefaultRequest ? $value : $planner->compiler->compile($value, new Scope()), $row->values);
+            $values = array_map(fn ($value) => $value instanceof DefaultRequest ? $value : $planner->compiler->compile($value, $scope), $row->values);
             $rows[] = $values === [] && $columns === null ? [] : $values;
         }
 

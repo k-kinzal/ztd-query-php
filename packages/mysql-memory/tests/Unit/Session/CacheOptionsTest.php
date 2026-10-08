@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Error\StatementError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\CacheOptions;
 use PHPUnit\Framework\Attributes\CoversClass;

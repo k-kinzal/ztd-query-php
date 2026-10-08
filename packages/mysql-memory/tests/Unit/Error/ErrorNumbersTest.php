@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Error;
 
-use MySqlMemory\Error\AccountError;
-use MySqlMemory\Error\AdministrationError;
-use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\ErrorNumbers;
-use MySqlMemory\Error\ProgramError;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\AccountError;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\ConstraintError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\PartitionError;
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Error\Family\TransactionError;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -40,6 +43,6 @@ final class ErrorNumbersTest extends TestCase
 
     public function testFamiliesListsTheEnumsOfTheErrorFamilies(): void
     {
-        self::assertSame([AccountError::class, AdministrationError::class, DataError::class, ProgramError::class, QueryError::class, SchemaError::class, StatementError::class], ErrorNumbers::FAMILIES);
+        self::assertSame([AccountError::class, AdministrationError::class, ConstraintError::class, DataError::class, PartitionError::class, ProgramError::class, QueryError::class, SchemaError::class, StatementError::class, TransactionError::class], ErrorNumbers::FAMILIES);
     }
 }

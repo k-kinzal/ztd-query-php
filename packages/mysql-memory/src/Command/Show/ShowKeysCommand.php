@@ -81,7 +81,7 @@ final class ShowKeysCommand implements Command
             }
         }
 
-        return (new Listing($this->headings()))->result($rows, $operation, $session, $context, $connection, $statement->filter);
+        return (new Listing($definition->temporary && !$session->settings()->legacy() ? $this->temporary() : $this->headings()))->result($rows, $operation, $session, $context, $connection, $statement->filter);
     }
 
     /**
@@ -128,6 +128,36 @@ final class ShowKeysCommand implements Command
             KeyKind::Spatial => 'SPATIAL',
             KeyKind::Primary, KeyKind::Unique, KeyKind::Index => strcasecmp($engine, 'MEMORY') === 0 || strcasecmp($engine, 'HEAP') === 0 ? 'HASH' : 'BTREE',
         };
+    }
+
+    /**
+     * Answers the columns of the rows that list the indexes of a temporary table, which the server reads apart from INFORMATION_SCHEMA (verified on a live 8.4 server).
+     *
+     * @return list<Heading>
+     */
+    public function temporary(): array
+    {
+        $table = 'TMP_TABLE_KEYS';
+        $required = ColumnFlag::NotNull->value;
+        $number = ColumnFlag::Numeric->value;
+
+        return [
+            Heading::text('Table', Field::VarString, 64, $required, 0, 'Table', $table),
+            new Heading('Non_unique', Field::LongLong, 2, $required | $number, 0, false, 'Non_unique', $table),
+            Heading::text('Key_name', Field::VarString, 64, $required, 0, 'Key_name', $table),
+            new Heading('Seq_in_index', Field::LongLong, 3, $required | $number, 0, false, 'Seq_in_index', $table),
+            Heading::text('Column_name', Field::VarString, 64, 0, 0, 'Column_name', $table),
+            Heading::text('Collation', Field::VarString, 1, 0, 0, 'Collation', $table),
+            new Heading('Cardinality', Field::LongLong, 22, $number, 0, false, 'Cardinality', $table),
+            new Heading('Sub_part', Field::LongLong, 4, $number, 0, false, 'Sub_part', $table),
+            Heading::text('Packed', Field::VarString, 10, 0, 0, 'Packed', $table),
+            Heading::text('Null', Field::VarString, 3, $required, 0, 'Null', $table),
+            Heading::text('Index_type', Field::VarString, 16, $required, 0, 'Index_type', $table),
+            Heading::text('Comment', Field::VarString, 16, 0, 0, 'Comment', $table),
+            Heading::text('Index_comment', Field::VarString, 1024, $required, 0, 'Index_comment', $table),
+            Heading::text('Visible', Field::VarString, 4, 0, 0, 'Visible', $table),
+            Heading::text('Expression', Field::Blob, 4294967295, ColumnFlag::Blob->value | ColumnFlag::Binary->value, 0, 'Expression', $table),
+        ];
     }
 
     /**

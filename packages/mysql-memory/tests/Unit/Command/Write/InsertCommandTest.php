@@ -119,6 +119,17 @@ final class InsertCommandTest extends TestCase
         self::assertSame([['1', '2'], ['1', '2'], ['1', '3']], $result->rows);
     }
 
+    public function testSourcesReadsDefaultOfAColumnOfTheTableWritten(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT DEFAULT 5, b INT NOT NULL)');
+        $session->query('INSERT INTO t (b, a) VALUES (1, DEFAULT(a) * 3)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Field 'b' doesn't have a default value");
+        $session->query('INSERT INTO t (a, b) VALUES (1, DEFAULT(b))');
+    }
+
     public function testSourcesWritesEveryRowOfAValuesSourceWithDefaults(): void
     {
         $session = (new Instance())->connect();

@@ -9,7 +9,7 @@ use MySqlMemory\Account\Catalog;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Account\Privileges;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;

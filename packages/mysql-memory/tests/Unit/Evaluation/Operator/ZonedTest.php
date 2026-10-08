@@ -38,4 +38,18 @@ final class ZonedTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['2020-01-01 10:00:00.000000', '2020-01-01 10:00:00'], [null, null]], $result->rows);
     }
+
+    public function testEvaluateConvertsTheTimestampOfTheSessionZoneBackToUtc(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE z (ts TIMESTAMP(3))');
+        $session->query("SET time_zone = '+05:00'");
+        $session->query("INSERT INTO z VALUES ('2024-01-01 10:00:00.123')");
+
+        $reply = $session->query("SELECT CAST(ts AT TIME ZONE 'UTC' AS DATETIME(3)) FROM z")[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['2024-01-01 05:00:00.000']], $reply->rows);
+    }
 }

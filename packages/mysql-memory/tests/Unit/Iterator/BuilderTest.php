@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Aggregate\Accumulation;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
+use MySqlMemory\Evaluation\Window\WindowFrame;
 use MySqlMemory\Instance;
 use MySqlMemory\Iterator\Builder;
 use MySqlMemory\Iterator\Combine\NestedLoopJoinIterator;
@@ -25,6 +26,7 @@ use MySqlMemory\Iterator\Transform\LimitIterator;
 use MySqlMemory\Iterator\Transform\MaterializeIterator;
 use MySqlMemory\Iterator\Transform\ProjectIterator;
 use MySqlMemory\Iterator\Transform\SortIterator;
+use MySqlMemory\Iterator\Transform\WindowIterator;
 use MySqlMemory\Plan\Path\Combine\NestedLoopJoin;
 use MySqlMemory\Plan\Path\Combine\RecursiveUnion;
 use MySqlMemory\Plan\Path\Combine\SetOperation;
@@ -42,6 +44,7 @@ use MySqlMemory\Plan\Path\Transform\Limit;
 use MySqlMemory\Plan\Path\Transform\Materialize;
 use MySqlMemory\Plan\Path\Transform\Project;
 use MySqlMemory\Plan\Path\Transform\Sort;
+use MySqlMemory\Plan\Path\Transform\Window;
 use MySqlMemory\Plan\QueryPlan;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -138,5 +141,28 @@ final class BuilderTest extends TestCase
         $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
 
         self::assertSame([[1], [2], null], [$iterator->read(), $iterator->read(), $iterator->read()]);
+    }
+
+    public function testBuildCreatesTheIteratorOfAWindowOverTheIteratorOfItsInput(): void
+    {
+        $window = (new Builder())->build(new Window(new ZeroRows(1), [], [], WindowFrame::default(false), []));
+
+        self::assertInstanceOf(WindowIterator::class, $window);
+        self::assertInstanceOf(ZeroRowsIterator::class, $window->input);
+    }
+    public function testBuildMakesALockingReadOfALock(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $instance->connect()->query('CREATE TABLE d.t (a INT)');
+        $table = $instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $scan = new TableScan($table);
+        $builder = new Builder();
+        $iterator = $builder->build(new \MySqlMemory\Plan\Path\Transform\Lock($scan, null, [[$scan, 0, \MySqlMemory\Concurrency\LockMode::Exclusive, null]]));
+        $scanned = $builder->scans[spl_object_id($scan)] ?? null;
+
+        self::assertInstanceOf(\MySqlMemory\Iterator\Transform\LockIterator::class, $iterator);
+        self::assertInstanceOf(TableScanIterator::class, $scanned);
+        self::assertSame(\MySqlMemory\Concurrency\LockMode::Exclusive, $scanned->locking);
     }
 }

@@ -17,8 +17,9 @@ final class ColumnOrigin
      * @param string $originalTable The table name
      * @param string $column The column name as declared
      * @param int $flags The key and default flags of the column
+     * @param bool $exact Whether the flags are all a result reports for the column but NOT NULL, as for a column of a system table, rather than those its type adds to
      */
-    public function __construct(public readonly string $schema, public readonly string $table, public readonly string $originalTable, public readonly string $column, public readonly int $flags = 0)
+    public function __construct(public readonly string $schema, public readonly string $table, public readonly string $originalTable, public readonly string $column, public readonly int $flags = 0, public readonly bool $exact = false)
     {
     }
 
@@ -27,7 +28,7 @@ final class ColumnOrigin
      */
     public function unkeyed(): self
     {
-        return new self($this->schema, $this->table, $this->originalTable, $this->column, $this->flags & ~(2 | 4 | 8));
+        return new self($this->schema, $this->table, $this->originalTable, $this->column, $this->flags & ~(2 | 4 | 8), $this->exact);
     }
 
 }

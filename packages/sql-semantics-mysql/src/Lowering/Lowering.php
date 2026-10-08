@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering;
 
+use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
@@ -17,10 +17,10 @@ use SqlSemantics\Platform\MySql\Lowering\Call\CallRules;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\DefinitionRoutes;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\DefinitionTails;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\Family;
-use SqlSemantics\Platform\MySql\Lowering\Dispatch\OptimizerHints;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\StatementRoutes;
 use SqlSemantics\Platform\MySql\Lowering\Dml\DmlRules;
 use SqlSemantics\Platform\MySql\Lowering\Expression\ExpressionRules;
+use SqlSemantics\Platform\MySql\Lowering\Hint\HintReader;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\CharsetRule;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\LiteralRule;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\NameRule;
@@ -36,6 +36,8 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\TableChangeRules;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\TableDefinitionRules;
 use SqlSemantics\Platform\MySql\Lowering\Type\TypeRule;
 use SqlSemantics\Platform\MySql\Lowering\Utility\UtilityRules;
+use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -48,8 +50,9 @@ use SqlSemantics\Statement\Statement;
  * input holds none. A statement is handed to the family that owns its rule
  * (MYSQL-STATEMENT-ROUTES-001, MYSQL-DEFINITION-ROUTES-001). The other
  * start_entry alternatives begin with a grammar selector token the lexer
- * never produces, so no SQL text reaches them. An optimizer hint comment is
- * reported as a missing rule (MYSQL-OPTIMIZER-HINTS-001). Terminates: the
+ * never produces, so no SQL text reaches them. The hint comments of the
+ * input are read once (MYSQL-OPTIMIZER-HINTS-001) and kept with the query
+ * block or statement whose keyword they follow. Terminates: the
  * root rules are unit productions over strict subtrees.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/sql-statements.html.
  * Status: Implemented.
@@ -176,6 +179,11 @@ final class Lowering
     private array $markers = [];
 
     /**
+     * @var array<int, HintComment> The hint comments of the input, by the offset of the keyword each follows
+     */
+    private array $hints = [];
+
+    /**
      * @param Productions $productions The productions of the grammar release
      * @param Leaves $leaves The record of operand leaves of this analysis
      * @param LanguageProfile $profile The language profile the tree was parsed under
@@ -217,10 +225,20 @@ final class Lowering
     }
 
     /**
+     * Answers the hints of the comment that follows a keyword of the input statements() last read, in written order; none when no comment does.
+     *
+     * @return list<OptimizerHint>
+     */
+    public function hints(Token $keyword): array
+    {
+        return $this->hints[$keyword->offset]->hints ?? [];
+    }
+
+    /**
      * Lowers a complete input into the statements it holds: one, or none for an empty input.
      *
      * @return list<Statement>
-     * @throws ImplementationGap When a production has no rule or the input holds an optimizer hint comment
+     * @throws ImplementationGap When a production has no rule
      */
     public function statements(Node $input): array
     {
@@ -230,10 +248,7 @@ final class Lowering
                 $this->markers[] = $token->offset;
             }
         }
-        $hint = $this->profile->grammar === GrammarRelease::MySql5651 ? null : (new OptimizerHints())->first($input);
-        if ($hint !== null) {
-            throw ImplementationGap::rule('MySQL optimizer hints, which the parser delivers as a comment: ' . $hint);
-        }
+        $this->hints = (new HintReader($this->profile->grammar, $this->profile->lexical->ansiQuotes))->comments($input);
         $form = $this->productions->form($input);
         Check::invariant(!isset(self::SELECTED[$form->signature]), 'A grammar selector entry is not reachable from SQL text: ' . $form->signature);
         if ($form->signature === 'start_entry: sql_statement') {

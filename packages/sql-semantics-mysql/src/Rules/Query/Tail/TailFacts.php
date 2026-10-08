@@ -20,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Query;
@@ -107,7 +108,7 @@ final class TailFacts
                 continue;
             }
             $derivation->scalar($operand, new Environment($derivation->context, $outer));
-            if ($operand instanceof ProgramVariable && !$derivation->inProgram()) {
+            if ($operand instanceof ProgramVariable && !$derivation->inProgram() && Settings::of($derivation->context)->variable($operand->name->value) === null) {
                 $derivation->report(new UndeclaredVariable($operand->name));
             }
         }

@@ -180,7 +180,7 @@ final class FactorRule
         if ($factor->signature === 'table_factor: SELECT_SYM select_options select_item_list table_expression') {
             $items = new ItemRule($this->lowering);
 
-            return (new BlockRule($this->lowering))->expression($factor->node(3), $items->options($factor->node(1)), $items->items($factor->node(2)));
+            return (new BlockRule($this->lowering))->expression($factor->node(3), $items->options($factor->node(1)), $items->items($factor->node(2)))->hinted($this->lowering->hints($factor->token(0)));
         }
         if ($factor->signature === 'table_factor: select_derived_init get_select_lex select_derived2') {
             $init = $this->lowering->form($factor->node(0));
@@ -189,7 +189,7 @@ final class FactorRule
             }
             $this->lowering->options->skip($factor->node(1));
 
-            return (new BlockRule($this->lowering))->derived($factor->node(2));
+            return (new BlockRule($this->lowering))->derived($factor->node(2))->hinted($this->lowering->hints($init->token(0)));
         }
         $inner = $this->parens($factor);
 

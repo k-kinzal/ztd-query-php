@@ -29,4 +29,9 @@ final class ColumnOriginTest extends TestCase
 
         self::assertSame(ColumnFlag::Blob->value, $origin->flags);
     }
+
+    public function testUnkeyedKeepsWhetherTheFlagsAreExact(): void
+    {
+        self::assertTrue((new ColumnOrigin('', 't', 't', 'x', 2, true))->unkeyed()->exact);
+    }
 }

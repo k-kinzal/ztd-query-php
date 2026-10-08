@@ -62,4 +62,14 @@ final class CalendarTest extends TestCase
     {
         self::assertNull(Calendar::addMicroseconds(9999, 12, 31, 23, 59, 59, 0, 1000000));
     }
+
+    public function testEpochCountsSecondsFrom1970(): void
+    {
+        self::assertSame([0, 1711846800, -1], [Calendar::epoch(1970, 1, 1, 0, 0, 0), Calendar::epoch(2024, 3, 31, 1, 0, 0), Calendar::epoch(1969, 12, 31, 23, 59, 59)]);
+    }
+
+    public function testMomentAnswersTheDateAndTimeOfSecondsFrom1970(): void
+    {
+        self::assertSame([[2024, 3, 31, 1, 0, 0], [3001, 1, 18, 23, 59, 59]], [Calendar::moment(1711846800), Calendar::moment(32536771199)]);
+    }
 }

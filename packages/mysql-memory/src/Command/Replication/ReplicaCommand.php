@@ -6,10 +6,10 @@ namespace MySqlMemory\Command\Replication;
 
 use MySqlMemory\Command\Admin\Literals;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\AccountError;
-use MySqlMemory\Error\AdministrationError;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\AccountError;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Registry\Registry;

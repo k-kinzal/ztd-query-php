@@ -109,4 +109,9 @@ final class OrderingTest extends TestCase
     {
         self::assertSame([256, "\x00", "\xFF"], [strlen(Ordering::bytes()), Ordering::bytes()[0], Ordering::bytes()[255]]);
     }
+
+    public function testCompareComparesNumericStringsByTheirBytes(): void
+    {
+        self::assertSame([-1, -1], [Ordering::of(Collation::known('utf8mb4_bin'))->compare('10', '9'), Ordering::of(Collation::binary())->compare('10', '9')]);
+    }
 }

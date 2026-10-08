@@ -56,6 +56,32 @@ final class Calendar
     }
 
     /**
+     * Answers the seconds from 1970-01-01 00:00:00 to a date and time, negative before it.
+     */
+    public static function epoch(int $year, int $month, int $day, int $hour, int $minute, int $second): int
+    {
+        return (self::days($year, $month, $day) - 719528) * 86400 + $hour * 3600 + $minute * 60 + $second;
+    }
+
+    /**
+     * Answers the date and time a number of seconds from 1970-01-01 00:00:00 reaches.
+     *
+     * @return array{int, int, int, int, int, int}
+     */
+    public static function moment(int $seconds): array
+    {
+        $days = intdiv($seconds, 86400);
+        $rest = $seconds % 86400;
+        if ($rest < 0) {
+            $rest += 86400;
+            $days--;
+        }
+        [$year, $month, $day] = self::date($days + 719528);
+
+        return [$year, $month, $day, intdiv($rest, 3600), intdiv($rest % 3600, 60), $rest % 60];
+    }
+
+    /**
      * Answers the number of days of a month.
      */
     public static function monthLength(int $year, int $month): int

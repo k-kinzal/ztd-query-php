@@ -217,4 +217,32 @@ final class DispatcherTest extends TestCase
             ],
         );
     }
+
+    public function testHandlesTellsWhetherAProgramDeclaresAHandler(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+
+        self::assertSame([true, false], [
+            Dispatcher::handles($semantics->analyze('CREATE PROCEDURE p() BEGIN BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET @x = 1; END; END')->statement),
+            Dispatcher::handles($semantics->analyze('CREATE PROCEDURE p() BEGIN SET @x = 1; END')->statement),
+        ]);
+    }
+
+    public function testProgramTellsWhetherAStatementCreatesAStoredProgram(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+
+        self::assertSame([true, false], [Dispatcher::program($semantics->analyze('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SET @x = 1')->statement), Dispatcher::program($semantics->analyze('SELECT 1')->statement)]);
+    }
+
+    public function testCommandOfAProgramDeclaringAHandlerKeepsTheDiagnosticsArea(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('SELECT 1/0');
+        $session->query('CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION SET @x = 1; END');
+
+        self::assertSame([['Warning', 1365, 'Division by 0']], $session->diagnostics->conditions);
+    }
 }

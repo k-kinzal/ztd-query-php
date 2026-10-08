@@ -124,4 +124,19 @@ final class InstanceTest extends TestCase
         self::assertSame(['latin1', 'latin1_swedish_ci'], [$session->variables->read('character_set_client'), $session->variables->read('collation_connection')]);
         self::assertSame('utf8mb4', (new Instance())->connect()->variables->read('character_set_client'));
     }
+
+    public function testConnectsFindTheSystemDatabasesOfTheRelease(): void
+    {
+        self::assertSame([['information_schema', 'utf8mb3_general_ci'], ['mysql', 'latin1_swedish_ci'], ['performance_schema', 'utf8mb3_general_ci']], array_map(static fn ($schema): array => [$schema->name, $schema->collation], array_values((new Instance('5.6.51'))->dictionary->schemas)));
+        self::assertSame(['information_schema', 'mysql', 'performance_schema', 'sys'], array_keys((new Instance())->dictionary->schemas));
+    }
+
+    public function testConnectRecordsTheSession(): void
+    {
+        $instance = new Instance();
+        $s = $instance->connect();
+
+        self::assertSame($s, $instance->sessions[$s->id]->get());
+        self::assertLessThanOrEqual(microtime(true), $instance->started);
+    }
 }

@@ -86,6 +86,8 @@ final class GroupedColumnsTest extends TestCase
         yield 'right join using' => ['SELECT t1.b FROM t1 RIGHT JOIN t2 USING (id) GROUP BY id'];
         yield 'natural join' => ['SELECT t2.name FROM t1 NATURAL JOIN t2 GROUP BY t1.id'];
         yield 'nested join' => ['SELECT t2.name FROM (t1 JOIN t2 ON t1.id = t2.id) GROUP BY t1.id'];
+        yield 'any value' => ['SELECT a, ANY_VALUE(b) + 1 FROM t1 GROUP BY a ORDER BY ANY_VALUE(b)'];
+        yield 'any value without grouping' => ['SELECT ANY_VALUE(b), COUNT(*) FROM t1'];
     }
 
     #[DataProvider('providerCheckAcceptsColumnsTheRowsDetermine')]
@@ -193,5 +195,23 @@ final class GroupedColumnsTest extends TestCase
         self::assertSame('fz.t1.a', $columns->name($column, [spl_object_id($select->from) => new VisibleRelation($select->from, $shape, null, $select->from->name)], new Derivation($context)));
         self::assertSame('x.a', $columns->name($column, [spl_object_id($select->from) => new VisibleRelation($select->from, $shape, new Name('x'))], new Derivation($context)));
         self::assertSame('.a', $columns->name($column, [], new Derivation($context)));
+    }
+
+    public function testComputedFindsAnAggregateOrAWindowFunctionAGroupByItemReads(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
+        $grouped = static function (string $sql) use ($semantics, $table): array {
+            $query = $semantics->analyze($sql, [$table]);
+            self::assertInstanceOf(Select::class, $query->statement);
+
+            return [$query->statement, $query->facts];
+        };
+        [$window, $windowFacts] = $grouped('SELECT a, RANK() OVER () AS r FROM t GROUP BY r');
+        [$plain, $plainFacts] = $grouped('SELECT a FROM t GROUP BY a');
+
+        self::assertTrue((new GroupedColumns())->computed($window, $windowFacts));
+        self::assertFalse((new GroupedColumns())->computed($plain, $plainFacts));
+        self::assertSame([], $windowFacts->diagnostics);
     }
 }

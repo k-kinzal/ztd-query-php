@@ -11,8 +11,8 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -30,8 +30,8 @@ final class OrdinalityColumnTest extends TestCase
         $slots = (new OrdinalityColumn(new Name('n')))->deriveColumns($derivation, $derivation->environment());
 
         self::assertCount(1, $slots);
-        self::assertSame(Nullability::NotNull, $slots[0]->nullability);
-        self::assertEquals(new Known(new Integral(IntegralKind::Int, null, [\SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier::Unsigned])), $slots[0]->type);
+        self::assertSame(Nullability::Nullable, $slots[0]->nullability);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 10, true)), $slots[0]->type);
     }
 
     public function testRenderWritesForOrdinality(): void

@@ -96,6 +96,7 @@ final class ChangeRule
             $queries->where($form->node($where)),
             $queries->ordering($form->node($order)),
             $this->limit($form->node($limit)),
+            $this->lowering->hints($form->token($with === null ? 0 : $with + 1)),
         );
     }
 
@@ -112,7 +113,7 @@ final class ChangeRule
             [$with, $options, $table, $alias, $partitions, $where, $order, $limit] = $single;
             $target = new WriteTarget($this->lowering->names->qualified($form->node($table)), $alias === null ? null : $queries->alias($form->node($alias)), $queries->partitions($form->node($partitions)), $alias === null ? AliasMark::As : $queries->mark($form->node($alias)));
 
-            return new Delete($with === null ? null : $queries->with($form->node($with)), $this->options($form->node($options)), $target, $queries->where($form->node($where)), $queries->ordering($form->node($order)), $queries->limit($form->node($limit)));
+            return new Delete($with === null ? null : $queries->with($form->node($with)), $this->options($form->node($options)), $target, $queries->where($form->node($where)), $queries->ordering($form->node($order)), $queries->limit($form->node($limit)), $this->lowering->hints($form->token($with === null ? 0 : $with + 1)));
         }
         [$spelling, $with, $options, $targets, $tables, $where] = self::MULTIPLE[$form->signature] ?? throw ImplementationGap::production($form);
 
@@ -123,6 +124,7 @@ final class ChangeRule
             $spelling,
             $queries->tables($form->node($tables)),
             $queries->where($form->node($where)),
+            $this->lowering->hints($form->token($with === null ? 0 : $with + 1)),
         );
     }
 

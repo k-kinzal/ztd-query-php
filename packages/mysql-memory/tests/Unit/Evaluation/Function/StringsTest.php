@@ -305,4 +305,27 @@ final class StringsTest extends TestCase
         self::assertSame(['é', "\x00b"], [(new Strings())->slice('héb', 1, 1, Domain::string(4, Collation::known('utf8mb4_0900_ai_ci'))), (new Strings())->slice("\x00a\x00b", 1, null, Domain::string(4, Collation::known('ucs2_general_ci')))]);
     }
 
+    public function testHexReadsANumberAsASignedBigint(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT HEX(1e20), HEX(-1.5e0), HEX(2.5e0), HEX(-2.5), HEX(99999999999999999999.5), HEX(18446744073709551615)')[0];
+        $legacy = (new Instance('5.7.44'))->connect()->query('SELECT HEX(1e20), HEX(2.5e0)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $legacy);
+        self::assertSame([['7FFFFFFFFFFFFFFF', 'FFFFFFFFFFFFFFFE', '2', 'FFFFFFFFFFFFFFFD', '7FFFFFFFFFFFFFFF', 'FFFFFFFFFFFFFFFF']], $result->rows);
+        self::assertSame([['FFFFFFFFFFFFFFFF', '3']], $legacy->rows);
+    }
+
+    public function testUnhexWarnsOfAStringThatIsNotHexadecimal(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT UNHEX('G1'), UNHEX(4.1), UNHEX('41')")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([[null, null, 'A']], $result->rows);
+        self::assertSame([['Warning', '1411', "Incorrect string value: ''G1'' for function unhex"], ['Warning', '1411', "Incorrect string value: '4.1' for function unhex"]], $warnings->rows);
+    }
 }

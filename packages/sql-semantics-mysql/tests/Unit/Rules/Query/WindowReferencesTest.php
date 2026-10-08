@@ -49,4 +49,11 @@ final class WindowReferencesTest extends TestCase
 
         self::assertEquals([new Misuse(MisuseRule::UnknownWindow, new Name('zz'))], $operation->facts->diagnostics);
     }
+
+    public function testCheckReportsAWindowNameInWhereAndGroupBy(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertCount(2, $semantics->analyze('SELECT 1 FROM (SELECT 1 a) t WHERE RANK() OVER w > 0 GROUP BY RANK() OVER v')->facts->diagnostics);
+    }
 }

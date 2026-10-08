@@ -104,6 +104,35 @@ final class Materialization
     }
 
     /**
+     * Resolves the value a window function reads from the temporary table of its window: MIN, MAX, FIRST_VALUE, LAST_VALUE, NTH_VALUE, LEAD and LAG answer it as the table holds it.
+     *
+     * An integer, a YEAR and a BIT become an INT when shorter than 10 characters and a BIGINT
+     * otherwise, as long as the value; a string a VARCHAR without decimals, a TEXT or BLOB of any
+     * size, or a string longer than 65535, a BLOB as long as its bytes; JSON the longest JSON
+     * without decimals; a temporal value takes the length of its type and
+     * fractional digits; NULL an empty binary string, a CHAR before MySQL 8.1 as in a set
+     * operation (verified on live 8.0 and 8.4 servers).
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/window-function-optimization.html.
+     */
+    public function windowed(Domain $domain, GrammarRelease $release = GrammarRelease::MySql847): Domain
+    {
+        $fraction = $domain->decimals > 0 && $domain->decimals <= 6 ? $domain->decimals + 1 : 0;
+
+        return match ($domain->kind) {
+            Kind::Integer, Kind::Year, Kind::Bit => new Domain(Kind::Integer, $domain->length < 10 ? Field::Long : Field::LongLong, $domain->length, 0, $domain->unsigned, null, [], Coercibility::Numeric),
+            Kind::String => ($domain->field->blob() || $domain->length > 65535
+                ? new Domain(Kind::String, Field::Blob, min(4294967295, $domain->length * ($domain->field->blob() ? $domain->collation->charset->maxLength : 1)), 0, false, $domain->collation, [], $domain->coercibility)
+                : new Domain(Kind::String, Field::VarString, $domain->length, 0, false, $domain->collation, [], $domain->coercibility)),
+            Kind::Date => new Domain(Kind::Date, $domain->field, 10, 0, false, null, [], $domain->coercibility),
+            Kind::DateTime => new Domain(Kind::DateTime, $domain->field, 19 + $fraction, $domain->decimals, false, null, [], $domain->coercibility),
+            Kind::Time => new Domain(Kind::Time, $domain->field, 10 + $fraction, $domain->decimals, false, null, [], $domain->coercibility),
+            Kind::Json => new Domain(Kind::Json, Field::Json, 4294967295, 0, false, Collation::binary(), [], $domain->coercibility),
+            Kind::Null => $this->set($domain, $release),
+            Kind::Decimal, Kind::Double => $domain,
+        };
+    }
+
+    /**
      * Answers a string column of a length without decimals.
      */
     public function text(Domain $domain, int $length): Domain

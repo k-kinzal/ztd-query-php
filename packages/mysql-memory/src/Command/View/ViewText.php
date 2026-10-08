@@ -62,17 +62,20 @@ final class ViewText
      * Writes a query, or answers null when it holds a construct the writer does not know.
      *
      * @param bool $named Whether the select items are named with AS, as they are but in a subquery of an expression
+     * @param string $hints The hint comment the first block of the query keeps, written after its SELECT, or the empty string
      */
-    public function query(Query $query, bool $named = true): ?string
+    public function query(Query $query, bool $named = true, string $hints = ''): ?string
     {
         if ($query instanceof QueryStatement || $query instanceof ParenthesizedQuery) {
-            return $this->query($query->query, $named);
+            return $this->query($query->query, $named, $hints);
         }
         if ($query instanceof Select) {
-            return $this->select($query, $named);
+            $text = $this->select($query, $named);
+
+            return $text === null ? null : 'select ' . $hints . substr($text, 7);
         }
         if ($query instanceof SetOperation) {
-            $left = $query->left instanceof Query ? $this->query($query->left, $named) : null;
+            $left = $query->left instanceof Query ? $this->query($query->left, $named, $hints) : null;
             $right = $this->query($query->right, $named);
 
             return $left === null || $right === null ? null : $left . ' ' . strtolower($query->operator->value) . ($query->quantifier === SetQuantifier::All ? ' all ' : ' ') . $right;
@@ -92,7 +95,7 @@ final class ViewText
             }
             $text = 'with ' . ($query->with->recursive ? 'recursive ' : '') . implode(',', $tables) . ' ';
         }
-        $body = $this->query($query->body, $named);
+        $body = $this->query($query->body, $named, $hints);
         $tail = $this->tail($query->orderBy, $query->limit);
 
         return $body === null || $tail === null ? null : $text . $body . $tail;
@@ -148,9 +151,10 @@ final class ViewText
             }
             $text .= ' having ' . $having;
         }
+        $windows = (new WindowText($this->expressions))->clause($select);
         $tail = $this->tail($select->orderBy, $select->limit);
 
-        return $tail === null || $select->windows !== [] || $select->qualify !== null ? null : $text . $tail;
+        return $tail === null || $windows === null || $select->qualify !== null ? null : $text . $windows . $tail;
     }
 
     /**

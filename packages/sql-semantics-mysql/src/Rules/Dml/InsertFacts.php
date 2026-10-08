@@ -175,7 +175,7 @@ final class InsertFacts
 
             return [$target, $fields];
         }
-        $environment = new Environment($derivation->context, $outer, [$target]);
+        $environment = new Environment($derivation->context, $outer, [$target], [], [], true);
         $scope = new WriteScope();
         $fields = [];
         foreach ($into->columns->columns as $position => $column) {

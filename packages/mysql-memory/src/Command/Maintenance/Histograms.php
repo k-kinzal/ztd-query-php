@@ -6,8 +6,8 @@ namespace MySqlMemory\Command\Maintenance;
 
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Value\Json\Json;
 use MySqlMemory\Value\Json\JsonSyntax;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\DropHistogram;

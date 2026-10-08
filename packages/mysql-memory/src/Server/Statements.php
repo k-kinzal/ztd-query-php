@@ -64,6 +64,7 @@ final class Statements
         try {
             $session->split($sql);
             $operation = $session->analyze($sql, true);
+            (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
             (new \MySqlMemory\Session\Problems())->raise($operation, $session);
             $tokens = $session->semantics()->parser()->tokenize($sql);
             $parameters = count(array_filter($tokens, static fn ($token): bool => $token->text === '?'));
@@ -100,7 +101,7 @@ final class Statements
         if (!$operation->statement instanceof \SqlSemantics\Statement\Query) {
             return [];
         }
-        $context = new \MySqlMemory\Evaluation\Context($session->modes(), new \MySqlMemory\Session\Diagnostics(), $session->variables, microtime(true));
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), new \MySqlMemory\Session\Diagnostics(), $session->variables, $session->variables->instant());
         $connection = new \MySqlMemory\Evaluation\Compile\Connection($session->variables, $context, $session->user, $session->host, $session->id, []);
         $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
 
@@ -118,7 +119,7 @@ final class Statements
         $reader->integer(1);
         $reader->integer(4);
         if (!isset($this->prepared[$id])) {
-            return $this->client->send($this->client->messages->error(1243, 'HY000', \MySqlMemory\Error\StatementError::UnknownStatementHandler->message((string) $id, 'mysqld_stmt_execute')));
+            return $this->client->send($this->client->messages->error(1243, 'HY000', \MySqlMemory\Error\Family\StatementError::UnknownStatementHandler->message((string) $id, 'mysqld_stmt_execute')));
         }
         [$sql, $count, $types, $long] = $this->prepared[$id];
         $session = $this->client->session();
@@ -129,11 +130,11 @@ final class Statements
         }
         $this->prepared[$id] = [$sql, $count, $types, []];
         $answers = $session->run($sql, $values, true);
-        foreach ($answers as $answer) {
+        foreach ($answers as $index => $answer) {
             if ($answer instanceof SqlError) {
                 return $this->client->send($this->client->messages->error($answer->getCode(), $answer->sqlState(), $answer->getMessage()));
             }
-            $this->client->reply($answer, 0, $answer instanceof ResultSet);
+            $this->client->reply($answer, $index < count($answers) - 1 ? 8 : 0, $answer instanceof ResultSet);
         }
 
         return true;

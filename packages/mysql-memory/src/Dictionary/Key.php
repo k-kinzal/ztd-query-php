@@ -20,8 +20,9 @@ final class Key
      * @param list<int> $columns The positions of the indexed columns, in index order
      * @param list<int|null> $prefixes The number of leading characters indexed of each column, or null for the whole value
      * @param list<bool> $descending Whether each column is indexed in descending order; a missing entry is ascending
+     * @param bool $generated Whether the server added the index for a foreign key, which an index another foreign key needs replaces
      */
-    public function __construct(public readonly string $name, public readonly KeyKind $kind, public readonly array $columns, public readonly array $prefixes = [], public readonly array $descending = [])
+    public function __construct(public readonly string $name, public readonly KeyKind $kind, public readonly array $columns, public readonly array $prefixes = [], public readonly array $descending = [], public readonly bool $generated = false)
     {
     }
 

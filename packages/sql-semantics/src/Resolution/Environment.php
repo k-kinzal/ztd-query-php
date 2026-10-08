@@ -26,6 +26,7 @@ final class Environment
      * @param list<VisibleRelation> $relations The relation occurrences visible at this position
      * @param list<CommonBinding> $commonTables The common tables introduced at this level; later bindings shadow earlier ones
      * @param list<Field> $aliases The output fields this position may refer to by alias
+     * @param bool $written Whether the position names the columns a statement writes, where a name is a column and never a variable of a stored program
      */
     public function __construct(
         public readonly AnalysisContext $context,
@@ -33,6 +34,7 @@ final class Environment
         public readonly array $relations = [],
         public readonly array $commonTables = [],
         public readonly array $aliases = [],
+        public readonly bool $written = false,
     ) {
     }
 

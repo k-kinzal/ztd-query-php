@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Dictionary\ColumnDefinition;
+use MySqlMemory\Command\Definition\Constraint\Constraints;
 use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Plan\Planner;
@@ -51,7 +51,9 @@ final class CreateTableCommand implements Command
     {
         $create = $operation->statement;
         assert($create instanceof CreateTable);
-        $session->transaction->commit();
+        if ($create->temporaryWords === 0) {
+            $session->transaction->commit();
+        }
         $schemaName = $create->name->schema->value ?? $session->variables->database;
         if ($schemaName === '') {
             throw QueryError::NoDatabase->error();
@@ -61,7 +63,7 @@ final class CreateTableCommand implements Command
             throw QueryError::BadDatabase->error($schemaName);
         }
         $name = $create->name->name->value;
-        if ($schema->table($name) !== null || isset($schema->views[$name])) {
+        if ($create->temporaryWords > 0 ? $session->temporaries->table($schemaName, $name) !== null : $schema->table($name) !== null || isset($schema->views[$name])) {
             if (!$create->ifNotExists) {
                 throw SchemaError::TableExists->error($name);
             }
@@ -69,15 +71,21 @@ final class CreateTableCommand implements Command
 
             return new Completion(0, 0, $context->diagnostics->count());
         }
+        if ($create->temporaryWords > 0 && $session->transaction->open) {
+            $session->transaction->temporaries['created'] = true;
+        }
         if ($create->query !== null) {
             return (new TableQueries($session, $context, $connection))->create($create, $operation, $schema);
         }
         $planner = new Planner($create, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $definition = (new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schemaName);
+        if (!$definition->temporary) {
+            Constraints::unique($definition, $schema);
+        }
         foreach ($this->duplicates($definition->keys) as $duplicate) {
             $context->warning(SchemaError::DuplicateIndex, $duplicate->name, $schemaName . '.' . $name);
         }
-        $schema->tables[$name] = new StoredTable($this->primaryNotNull($definition), new Heap());
+        $session->instance->dictionary->store(new StoredTable($this->primaryNotNull($definition), new Heap()));
 
         return new Completion(0, 0, $context->diagnostics->count());
     }
@@ -94,10 +102,10 @@ final class CreateTableCommand implements Command
         $columns = $definition->columns;
         foreach ($primary->columns as $position) {
             $column = $columns[$position];
-            array_splice($columns, $position, 1, [new ColumnDefinition($column->name, $column->domain->withNullable(false), $column->default->declared && $column->default->value === null && $column->default->expression === null ? \MySqlMemory\Dictionary\Fill::none() : $column->default, $column->autoIncrement, $column->onUpdateNow, $column->generated, $column->invisible, $column->declaration, $column->comment)]);
+            array_splice($columns, $position, 1, [$column->withDomain($column->domain->withNullable(false))->withDefault($column->default->declared && $column->default->value === null && $column->default->expression === null ? \MySqlMemory\Dictionary\Fill::none() : $column->default)]);
         }
 
-        return new TableDefinition($definition->schema, $definition->name, $columns, $definition->keys, $definition->declaration, $definition->engine, $definition->collation, $definition->temporary, $definition->comment, $definition->statement);
+        return $definition->withColumns($columns);
     }
 
     /**

@@ -6,8 +6,8 @@ namespace MySqlMemory\Command\Show;
 
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Value\Encoding;
@@ -47,10 +47,10 @@ final class Inspection
     public function check(Node $statement, Session $session): void
     {
         try {
-            if ($statement instanceof ShowColumns || $statement instanceof ShowKeys) {
+            if (($statement instanceof ShowColumns && $this->system($statement->table, $statement->database, $session) === null) || $statement instanceof ShowKeys) {
                 $this->table($statement->table, $statement->database, $session);
             }
-            if ($statement instanceof DescribeTable || $statement instanceof ShowCreateTable) {
+            if (($statement instanceof DescribeTable && $this->system($statement->table, null, $session) === null) || $statement instanceof ShowCreateTable) {
                 $this->table($statement->table, null, $session);
             }
             if ($statement instanceof ShowTableStatus || $statement instanceof ShowTables) {
@@ -122,6 +122,22 @@ final class Inspection
     }
 
     /**
+     * Answers the system table a statement inspects, or null when it inspects another table.
+     *
+     * @param Name|null $database The database written after FROM or IN, which replaces the one written with the name
+     */
+    public function system(InspectedTable $table, ?Name $database, Session $session): ?\SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable
+    {
+        $written = ($database ?? $table->name->schema)->value ?? $session->variables->database;
+        $schema = $session->instance->dictionary->schema($written);
+        if ($schema === null || $schema->table($table->name->name->value) !== null || isset($schema->views[$table->name->name->value])) {
+            return null;
+        }
+
+        return $session->instance->dictionary->system?->find($schema->name, $table->name->name->value);
+    }
+
+    /**
      * Answers the table a statement inspects.
      *
      * @param Name|null $database The database written after FROM or IN, which replaces the one written with the name
@@ -136,7 +152,7 @@ final class Inspection
             throw \MySqlMemory\Session\Problem\Errors::unknown($written, $name, $session->settings()->release());
         }
         $schema = $this->database($database ?? $table->name->schema, $session);
-        $stored = $schema->table($name);
+        $stored = $session->temporaries->table($schema->name, $name) ?? $schema->table($name);
         if ($stored === null && isset($schema->views[$name])) {
             return \MySqlMemory\Plan\Views::stored($schema->views[$name], $session->instance->dictionary);
         }

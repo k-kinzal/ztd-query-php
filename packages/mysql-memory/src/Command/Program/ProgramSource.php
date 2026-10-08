@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Program;
 
-use MySqlMemory\Error\AccountError;
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\AccountError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Session\Session;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;

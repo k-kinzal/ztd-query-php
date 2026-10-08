@@ -150,4 +150,11 @@ final class DeclaredTest extends TestCase
 
         self::assertSame([1, 3], [$declared->enumeration($enum, Collation::known('latin1_swedish_ci'))->length, $declared->enumeration($set, Collation::known('latin1_swedish_ci'))->length]);
     }
+
+    public function testTableFunctionResolvesAStringWithoutDecimals(): void
+    {
+        $declared = new Declared(Collation::known('utf8mb4_0900_ai_ci'));
+
+        self::assertSame([0, 0, 11], [$declared->tableFunction(new Character(CharacterKind::VarChar, '5'))->decimals, $declared->tableFunction(new Elementary(ElementaryKind::Json))->decimals, $declared->tableFunction(new Integral(IntegralKind::Int))->length]);
+    }
 }

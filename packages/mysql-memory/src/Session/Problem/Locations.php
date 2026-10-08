@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Problem;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
+use MySqlMemory\Plan\Window\Resolution;
+use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Session\Locator;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\FullTextSearch;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
@@ -33,6 +37,7 @@ use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Missing\UndeclaredRoutine;
+use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Invalid;
 
@@ -69,6 +74,7 @@ final class Locations
         $located = $this->wildcards($locator, $diagnostics, $located);
         $located = $this->stars($operation, $locator, $diagnostics, $located);
         $located = $this->windows($locator, $diagnostics, $located);
+        $located = $this->misplaced($locator, $located);
         $located = $this->sets($operation, $locator, $diagnostics, $located);
 
         return [$this->widths($operation, $locator, $diagnostics, $located), $matched];
@@ -173,7 +179,7 @@ final class Locations
         $existing = self::existing($operation);
         foreach ($locator->stars as [$select, $at]) {
             if (!in_array($select, $existing, true)) {
-                $refusal = array_shift($misuses) ?? \MySqlMemory\Error\QueryError::NoTablesUsed->error();
+                $refusal = array_shift($misuses) ?? QueryError::NoTablesUsed->error();
                 $located[spl_object_id($refusal)] = [$refusal, ['field list', $at]];
             }
         }
@@ -215,6 +221,37 @@ final class Locations
                 if ($diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::UnknownWindow && $diagnostic->name === $name) {
                     $located[spl_object_id($diagnostic)] = [$diagnostic, ['field list', $at]];
                 }
+            }
+        }
+
+        return $located;
+    }
+
+    /**
+     * Adds the refusals of window functions outside the select list and ORDER BY of their block, or in an argument of another window function or of an aggregate, each placed right after its arguments.
+     *
+     * The server refuses such a call where it resolves it, with ER_WINDOW_INVALID_WINDOW_FUNC_USE
+     * (verified on a live 8.4 server).
+     *
+     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     */
+    public function misplaced(Locator $locator, array $located): array
+    {
+        $walker = new Walker();
+        $nested = [];
+        foreach ($locator->functions as [$call]) {
+            $window = $call->over instanceof WindowSpec ? array_map(spl_object_id(...), $walker->find($call->over, Scalar::class, false)) : [];
+            foreach ($walker->find($call, Scalar::class, false) as $node) {
+                if ($node !== $call && Windowing::windowed($node) && !in_array(spl_object_id($node), $window, true)) {
+                    $nested[spl_object_id($node)] = true;
+                }
+            }
+        }
+        foreach ($locator->functions as [$call, $clause, $at]) {
+            if (Windowing::windowed($call) && (isset($nested[spl_object_id($call)]) || !in_array($clause, ['field list', 'order clause', 'window partition by', 'window order by'], true))) {
+                $refusal = QueryError::WindowFunctionMisplaced->error(Resolution::named($call));
+                $located[spl_object_id($refusal)] = [$refusal, [$clause, [...$at, PHP_INT_MAX]]];
             }
         }
 
@@ -336,7 +373,7 @@ final class Locations
      * Answers the name of the column DEFAULT() reads when the column is of a stored table and has no default, else null.
      *
      * The server refuses such a DEFAULT() where it resolves it (ER_NO_DEFAULT_FOR_FIELD), whether
-     * any row is read or not (verified on a live 8.4 server).
+     * any row is read or not; an AUTO_INCREMENT column reads as 0 (verified on a live 8.4 server).
      */
     public function undefaulted(DefaultOfColumn $default, Operation $operation, Session $session): ?string
     {
@@ -349,7 +386,7 @@ final class Locations
             foreach ($schema->tables as $table) {
                 foreach ($table->definition->columns as $column) {
                     if ($column->declaration === $declaration) {
-                        return $column->default->declared ? null : $column->name;
+                        return $column->default->declared || $column->autoIncrement ? null : $column->name;
                     }
                 }
             }

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Definition;
 
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\ConstraintError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use SqlSemantics\Platform\MySql\Statement\Alter\Column\ChangeColumn;
 use SqlSemantics\Platform\MySql\Statement\Alter\Column\ColumnPosition;
@@ -19,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\KeywordAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\GeneratedStorage;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 
 /**
@@ -71,6 +73,7 @@ final class ColumnChange
         $layout = $this->layout;
         $index = $this->existing(($command->column ?? $command->definition->name)->column->value);
         $origin = $layout->columns[$index][1];
+        $this->stored($layout->columns[$index][0], $command->definition);
         unset($layout->undefaulted[mb_strtolower($layout->columns[$index][0]->name->column->value)]);
         if ($command->position === null) {
             $layout->columns[$index] = [$command->definition, $origin];
@@ -80,6 +83,21 @@ final class ColumnChange
         array_splice($layout->columns, $index, 1);
 
         return [[$command->definition, $command->position, $origin]];
+    }
+
+    /**
+     * Refuses a change of a column between VIRTUAL and STORED, or between VIRTUAL and not generated; a STORED column may become an ordinary one and back.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table-generated-columns.html.
+     *
+     * @throws SqlError When the change does
+     */
+    public function stored(ColumnElement $old, ColumnElement $new): void
+    {
+        $kind = static fn (ColumnElement $element): string => $element->specification instanceof GeneratedColumn ? ($element->specification->storage === GeneratedStorage::Stored ? 'stored' : 'virtual') : 'ordinary';
+        if ($kind($old) !== $kind($new) && ($kind($old) === 'virtual' || $kind($new) === 'virtual')) {
+            throw ConstraintError::GeneratedUnsupported->error('Changing the STORED status');
+        }
     }
 
     /**

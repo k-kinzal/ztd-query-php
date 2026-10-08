@@ -121,4 +121,57 @@ final class CallsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([], $warnings->rows);
     }
+
+    public function testNamedCountsArgumentsKnownForTheStatementAsKnownWhenTheRoutineAsks(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET @s = 1');
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2)');
+        $result = $session->query('SELECT RAND(@s) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0.40540353712197724'], ['0.8716141803857071']], $result->rows);
+    }
+
+    public function testNamedLetsTheRoutineCheckArgumentsKnownWhenTheStatementIsResolved(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a VARCHAR(10))');
+        $result = $session->query('SELECT SHA2(a, 7) FROM t')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([[], [['Warning', '1583', "Incorrect parameters in the call to native function 'sha2'"]]], [$result->rows, $warnings->rows]);
+    }
+
+    public function testStoredCallsAStoredFunctionOfADatabaseNamedInAnotherCase(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE FUNCTION f() RETURNS TINYINT UNSIGNED DETERMINISTIC RETURN 1');
+
+        $result1 = $session->query('SELECT d.f(), D.F()')[0];
+        self::assertInstanceOf(ResultSet::class, $result1);
+        self::assertSame([['1', '1']], $result1->rows);
+    }
+
+    public function testStoredRefusesAnotherNumberOfArguments(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE FUNCTION f(a INT, b INT) RETURNS INT DETERMINISTIC RETURN a + b');
+
+        $this->expectExceptionCode(1318);
+        $this->expectExceptionMessage('Incorrect number of arguments for FUNCTION d.f; expected 2, got 1');
+
+        $session->query('SELECT f(1)');
+    }
 }

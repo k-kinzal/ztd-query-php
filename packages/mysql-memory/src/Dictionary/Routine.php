@@ -6,6 +6,7 @@ namespace MySqlMemory\Dictionary;
 
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 /**
  * A stored procedure or stored function: its signature, characteristics and body as the server stores them.
@@ -18,6 +19,11 @@ use SqlSemantics\Platform\MySql\Statement\Routine\CreateProcedure;
  */
 final class Routine
 {
+    /**
+     * The type the function returns, once it is known.
+     */
+    private ?\MySqlMemory\Typing\Domain $returnType = null;
+
     /**
      * @param string $schema The database of the routine
      * @param string $name The name as it was created
@@ -52,6 +58,32 @@ final class Routine
         public readonly array $charsets,
         public readonly CreateProcedure|CreateFunction $statement,
     ) {
+    }
+
+    /**
+     * Answers the type a function returns: the type of a column declared as its RETURNS clause, in the collation of the database of the function when the clause names none; a procedure returns NULL.
+     */
+    public function returned(): \MySqlMemory\Typing\Domain
+    {
+        if ($this->returnType !== null) {
+            return $this->returnType;
+        }
+        $declared = new \MySqlMemory\Typing\Declared(Collation::named($this->charsets[2]) ?? Collation::known('utf8mb4_0900_ai_ci'));
+        $statement = $this->statement;
+        if (!$statement instanceof CreateFunction) {
+            return $this->returnType = \MySqlMemory\Typing\Domain::null();
+        }
+        $collation = $statement->collation?->name === null ? null : Collation::named($statement->collation->name->value);
+        $domain = $declared->domain($statement->returns, $collation);
+        if ($collation !== null && $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && !$domain->collation->bytes()) {
+            $domain = $domain->withCollation($collation, $domain->coercibility);
+        }
+
+        if ($domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String) {
+            $domain = new \MySqlMemory\Typing\Domain($domain->kind, $domain->field, $domain->length, 0, $domain->unsigned, $domain->collation, true, $domain->members, $domain->coercibility);
+        }
+
+        return $this->returnType = $domain->withNullable(true);
     }
 
     /**

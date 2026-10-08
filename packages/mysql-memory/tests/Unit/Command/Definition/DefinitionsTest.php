@@ -310,4 +310,12 @@ final class DefinitionsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['é', 'é,x', 'E9', 'E92C78', '1']], $result->rows);
     }
+
+    public function testEngineTakesTheLastEngineOptionOrInnoDB(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT) ENGINE=InnoDB ENGINE=MyISAM; CREATE TABLE u (a INT)');
+
+        self::assertSame(['MyISAM', 'InnoDB'], [$session->instance->dictionary->table('d', 't')?->definition->engine, $session->instance->dictionary->table('d', 'u')?->definition->engine]);
+    }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Function;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
@@ -51,7 +51,6 @@ final class Numbers
             'TAN' => static fn (float $x): float => tan($x),
             'ASIN' => static fn (float $x): ?float => $x < -1 || $x > 1 ? null : asin($x),
             'ACOS' => static fn (float $x): ?float => $x < -1 || $x > 1 ? null : acos($x),
-            'ATAN' => static fn (float $x): float => atan($x),
             'COT' => static fn (float $x): float => fdiv(1, tan($x)),
             'DEGREES' => static fn (float $x): float => $x * (180 / M_PI) + 0.0,
             'RADIANS' => static fn (float $x): float => $x * (M_PI / 180) + 0.0,

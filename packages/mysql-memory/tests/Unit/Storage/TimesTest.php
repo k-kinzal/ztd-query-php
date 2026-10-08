@@ -6,7 +6,7 @@ namespace Tests\Unit\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Fill;
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
@@ -430,5 +430,40 @@ final class TimesTest extends TestCase
         $this->expectExceptionCode(3140);
 
         (new Times(new Store($context)))->json('{bad', Domain::string(4, Collation::known('utf8mb4_0900_ai_ci')), $column);
+    }
+
+    public function testTimestampMovesTheValueToUtcOrAnswersNullOutsideTheRange(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('c', new Domain(Kind::DateTime, Field::Timestamp, 19), Fill::none());
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (ts TIMESTAMP NULL); SET time_zone = '+01:00'; SET sql_mode = ''");
+        $session->query("INSERT INTO t VALUES ('1970-01-01 01:00:01'), ('1970-01-01 01:00:00')");
+        $session->query("SET time_zone = '+00:00'");
+        $reply = $session->query('SELECT ts FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['1970-01-01 00:00:01'], ['0000-00-00 00:00:00']], $reply->rows);
+        self::assertSame(['2038-01-19 03:14:07', null, null], [(new Times(new Store($context)))->timestamp('2038-01-19 03:14:07', 2038, 0, 'x', $column), (new Times(new Store($context)))->timestamp('2038-01-19 03:14:08', 2038, 0, 'x', $column), (new Times(new Store($context)))->timestamp('1899-12-31 23:00:00', 1899, 0, 'x', $column)]);
+    }
+
+    public function testMomentStoresATimestampInUtcAndWarnsOfASkippedTime(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (ts TIMESTAMP(2) NULL)');
+        $session->query("SET time_zone = 'Europe/Paris'");
+        $session->query("SET sql_mode = ''");
+        $session->query("INSERT INTO t VALUES ('2024-03-31 02:59:59.99')");
+        $reply = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        $warnings = $reply->rows;
+        $session->query("SET time_zone = 'UTC'");
+
+        $reply = $session->query('SELECT ts FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['2024-03-31 01:00:00.99']], $reply->rows);
+        self::assertSame([['Warning', '1299', "Invalid TIMESTAMP value in column 'ts' at row 1"]], $warnings);
     }
 }

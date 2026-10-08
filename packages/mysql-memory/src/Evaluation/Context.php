@@ -9,6 +9,8 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Diagnostics;
 use MySqlMemory\Session\SqlModes;
 use MySqlMemory\Session\Variables;
+use MySqlMemory\Value\Calendar;
+use MySqlMemory\Value\Zone;
 use WeakMap;
 
 /**
@@ -30,6 +32,11 @@ final class Context
     public readonly WeakMap $kept;
 
     /**
+     * The number of the row the statement is sending, counted from 1, which warnings about a JSON value read as another type name.
+     */
+    public int $row = 1;
+
+    /**
      * @param SqlModes $modes The sql_mode of the session
      * @param Diagnostics $diagnostics Where warnings of the statement are recorded
      * @param Variables $variables The user and system variables the statement reads and assigns
@@ -44,6 +51,29 @@ final class Context
         public bool $strict = false,
     ) {
         $this->kept = new WeakMap();
+    }
+
+    /**
+     * Answers the time zone of the session (time_zone); a name that is no zone reads as UTC.
+     */
+    public function zone(): Zone
+    {
+        return Zone::named((string) $this->variables->read('time_zone')) ?? Zone::utc();
+    }
+
+    /**
+     * Answers the date and time an instant shows in the time zone of the session, with its microseconds.
+     *
+     * @param float|null $instant The Unix time, with microseconds; the instant the statement started when null
+     * @return array{int, int, int, int, int, int, int}
+     */
+    public function local(?float $instant = null): array
+    {
+        $instant ??= $this->started;
+        $seconds = (int) floor($instant);
+        $micro = min(999999, (int) round(($instant - $seconds) * 1000000));
+
+        return [...Calendar::moment($this->zone()->local($seconds)), $micro];
     }
 
     /**

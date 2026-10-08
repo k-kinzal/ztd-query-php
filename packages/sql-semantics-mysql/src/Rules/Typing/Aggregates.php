@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\JsonResults;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
@@ -17,7 +19,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  *
  * COUNT and the bit aggregates are BIGINTs; MIN and MAX keep the type of their argument; SUM of
  * an exact number is a DECIMAL 22 digits wider, AVG one 4 digits and 4 decimals wider, and both
- * are doubles for a double; the statistical aggregates are doubles; JSON_ARRAYAGG is JSON.
+ * are doubles for a double, SUM(NULL) a DOUBLE 17 long without decimals and AVG(NULL) one 21
+ * long with 4 (verified on live 8.0, 8.4 and 9.1 servers); the statistical aggregates are
+ * doubles; JSON_ARRAYAGG is JSON.
  * GROUP_CONCAT is a string in the collation its arguments aggregate to, as long as
  * group_concat_max_len up to 512 characters and a long blob beyond.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html.
@@ -36,7 +40,7 @@ final class Aggregates
     /**
      * Resolves an aggregate other than GROUP_CONCAT over an argument, or answers null for ST_COLLECT.
      */
-    public function result(AggregateFunction $function, ?Domain $argument): ?Domain
+    public function result(AggregateFunction $function, ?Domain $argument, GrammarRelease $release = GrammarRelease::MySql847): ?Domain
     {
         $numbers = new Numbers();
         $operand = $argument === null ? Kind::Integer : $numbers->operand($argument);
@@ -45,12 +49,20 @@ final class Aggregates
         return match ($function) {
             AggregateFunction::Count => Domain::integer(Field::LongLong, 21),
             AggregateFunction::BitAnd, AggregateFunction::BitOr, AggregateFunction::BitXor => Domain::integer(Field::LongLong, 21, true),
-            AggregateFunction::Minimum, AggregateFunction::Maximum => $argument ?? Domain::null(),
-            AggregateFunction::Sum => $operand === Kind::Double ? Domain::double(23) : Domain::decimal(min(65, $precision + 22), $scale),
-            AggregateFunction::Average => $operand === Kind::Double ? Domain::double(23) : Domain::decimal(min(65, $precision + 4), min(30, $scale + 4)),
+            AggregateFunction::Minimum, AggregateFunction::Maximum => $argument?->kind === Kind::Json && $release !== GrammarRelease::MySql5744 ? JsonResults::json($release) : $argument ?? Domain::null(),
+            AggregateFunction::Sum => match (true) {
+                $argument?->kind === Kind::Null => Domain::double(17, 0),
+                $operand === Kind::Double => Domain::double(23),
+                default => Domain::decimal(min(65, $precision + 22), $scale),
+            },
+            AggregateFunction::Average => match (true) {
+                $argument?->kind === Kind::Null => Domain::double(21, 4),
+                $operand === Kind::Double => Domain::double(23),
+                default => Domain::decimal(min(65, $precision + 4), min(30, $scale + 4)),
+            },
             AggregateFunction::StandardDeviation, AggregateFunction::Variance, AggregateFunction::SampleStandardDeviation,
             AggregateFunction::SampleVariance => Domain::double(23),
-            AggregateFunction::JsonArray => new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin')),
+            AggregateFunction::JsonArray => JsonResults::json($release, true),
             AggregateFunction::Collect => null,
         };
     }

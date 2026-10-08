@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Problem;
 
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\SqlError;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;

@@ -4,6 +4,16 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Error;
 
+use MySqlMemory\Error\Family\AccountError;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\ConstraintError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\PartitionError;
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Error\Family\TransactionError;
 use ValueError;
 
 /**
@@ -13,14 +23,14 @@ use ValueError;
  *
  * @visibility public
  * @example Finding the error of a number
- *     \MySqlMemory\Error\ErrorNumbers::tryFrom(1146) // => \MySqlMemory\Error\QueryError::NoSuchTable
+ *     \MySqlMemory\Error\ErrorNumbers::tryFrom(1146) // => \MySqlMemory\Error\Family\QueryError::NoSuchTable
  */
 final class ErrorNumbers
 {
     /**
      * The enums of the families of errors, each backed by the error number.
      */
-    public const FAMILIES = [AccountError::class, AdministrationError::class, DataError::class, ProgramError::class, QueryError::class, SchemaError::class, StatementError::class];
+    public const FAMILIES = [AccountError::class, AdministrationError::class, ConstraintError::class, DataError::class, PartitionError::class, ProgramError::class, QueryError::class, SchemaError::class, StatementError::class, TransactionError::class];
 
     /**
      * Answers the error of a number, or null when the emulator does not raise that number.

@@ -198,7 +198,7 @@ final class AlterTableCommandTest extends TestCase
         $table = $session->instance->dictionary->table('d', 't');
         self::assertNotNull($table);
 
-        self::assertCount(1, (new AlterTableCommand())->others($session, $table));
+        self::assertSame(['u'], array_values(array_map(static fn ($declaration): string => $declaration->name->name->value, array_filter((new AlterTableCommand())->others($session, $table), static fn ($declaration): bool => !in_array($declaration->name->schema?->value, ['information_schema', 'mysql', 'performance_schema'], true)))));
     }
 
     public function testCopiesRefusesAlgorithmInplaceForAChangeOfType(): void
@@ -366,5 +366,50 @@ final class AlterTableCommandTest extends TestCase
         $this->expectExceptionCode(1146);
 
         $session->query('ALTER TABLE nodb.t ADD x INT');
+    }
+
+    public function testEmptiedLeavesOutTheRowsOfTheTruncatedPartitions(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT) PARTITION BY RANGE (a) (PARTITION p0 VALUES LESS THAN (10), PARTITION p1 VALUES LESS THAN (40)); INSERT INTO t VALUES (1), (15), (30); ALTER TABLE t TRUNCATE PARTITION p1');
+
+        $result1 = $session->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result1);
+        self::assertSame([['1']], $result1->rows);
+    }
+
+    public function testRebuildValidatesTheRowsAgainstAnEnforcedCheckConstraint(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT, CHECK (a > 0) NOT ENFORCED); INSERT INTO t VALUES (0, 1)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3819);
+        $this->expectExceptionMessage("Check constraint 't_chk_1' is violated.");
+
+        $session->query('ALTER TABLE t ALTER CHECK t_chk_1 ENFORCED');
+    }
+
+    public function testRebuildCopiesTheRowsForANewStoredGeneratedColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE g (a INT); INSERT INTO g VALUES (1)');
+
+        $altered = $session->query('ALTER TABLE g ADD e INT AS (a + 1) STORED')[0];
+        self::assertInstanceOf(Completion::class, $altered);
+        self::assertSame(1, $altered->affectedRows);
+        $result2 = $session->query('SELECT * FROM g')[0];
+        self::assertInstanceOf(ResultSet::class, $result2);
+        self::assertSame([['1', '2']], $result2->rows);
+    }
+
+    public function testCopiesAddedAnswersTrueForAStoredGeneratedColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT AS (a + 1) STORED, c INT AS (a + 1) VIRTUAL, e INT DEFAULT (a + 1), f DATETIME DEFAULT CURRENT_TIMESTAMP)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+
+        self::assertSame([false, true, false, true, false], array_map(static fn ($column): bool => (new AlterTableCommand())->copiesAdded($column), $table->definition->columns));
     }
 }

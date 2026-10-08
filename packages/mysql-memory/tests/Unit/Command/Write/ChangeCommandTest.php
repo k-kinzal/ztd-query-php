@@ -252,4 +252,126 @@ final class ChangeCommandTest extends TestCase
 
         self::assertSame([['Warning', 1062, "Duplicate entry '1' for key 'PRIMARY'"]], $session->diagnostics->conditions);
     }
+
+    public function testAssignedComputesTheGeneratedColumnsOfTheChangedRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT AS (a * 2), c INT AS (a + 1) STORED); INSERT INTO t (a) VALUES (1); UPDATE t SET a = 5, b = DEFAULT');
+
+        $result1 = $session->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result1);
+        self::assertSame([['5', '10', '6']], $result1->rows);
+    }
+
+    public function testDefaultedComputesAnExpressionDefaultFromTheRowSoFar(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE d (a INT, b INT DEFAULT (c * 10), c INT DEFAULT 5); INSERT INTO d VALUES (1, 1, 1), (2, 2, 7); UPDATE d SET c = 3, b = DEFAULT WHERE a = 1; UPDATE d SET b = DEFAULT, c = 2 WHERE a = 2');
+
+        $result2 = $session->query('SELECT * FROM d')[0];
+        self::assertInstanceOf(ResultSet::class, $result2);
+        self::assertSame([['1', '30', '3'], ['2', '70', '2']], $result2->rows);
+    }
+
+    public function testDefaultedRefusesAColumnWithoutDefaultUnderAStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE u (a INT NOT NULL); INSERT INTO u VALUES (1)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1364);
+        $this->expectExceptionMessage("Field 'a' doesn't have a default value");
+
+        $session->query('UPDATE u SET a = DEFAULT');
+    }
+
+    public function testNonNullStoresTheImplicitDefaultOutsideAStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE u (a INT NOT NULL); INSERT INTO u VALUES (1); SET sql_mode = ''; UPDATE u SET a = NULL");
+
+        $result3 = $session->query('SELECT * FROM u')[0];
+        self::assertInstanceOf(ResultSet::class, $result3);
+        self::assertSame([['0']], $result3->rows);
+    }
+
+    public function testDeleteKeepsARowAForeignKeyKeepsWithIgnore(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE p (id INT PRIMARY KEY); CREATE TABLE c (pid INT, CONSTRAINT fk FOREIGN KEY (pid) REFERENCES p(id)); INSERT INTO p VALUES (1), (2); INSERT INTO c VALUES (1); DELETE IGNORE FROM p');
+
+        $result4 = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $result4);
+        $result5 = $session->query('SELECT * FROM p')[0];
+        self::assertInstanceOf(ResultSet::class, $result5);
+        self::assertSame([[['Warning', '1451', 'Cannot delete or update a parent row: a foreign key constraint fails (`d`.`c`, CONSTRAINT `fk` FOREIGN KEY (`pid`) REFERENCES `p` (`id`))']], [['1']]], [$result4->rows, $result5->rows]);
+    }
+
+    public function testMatchedReadsTheNamedPartitionsOnly(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE r (a INT) PARTITION BY RANGE (a) (PARTITION p0 VALUES LESS THAN (10), PARTITION p1 VALUES LESS THAN (20)); INSERT INTO r VALUES (1), (15); DELETE FROM r PARTITION (p0)');
+
+        $result6 = $session->query('SELECT * FROM r')[0];
+        self::assertInstanceOf(ResultSet::class, $result6);
+        self::assertSame([['15']], $result6->rows);
+    }
+    public function testMatchedWaitsForARowAnotherTransactionHolds(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $first = $instance->connect('root', 'localhost', 'd');
+        $second = $instance->connect('root', 'localhost', 'd');
+        $first->query('CREATE TABLE t (id INT PRIMARY KEY, v INT); INSERT INTO t VALUES (1, 10), (2, 20); BEGIN; UPDATE t SET v = 11 WHERE id = 1');
+        $second->query('UPDATE t SET v = 21 WHERE id = 2');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1205);
+
+        $second->query('DELETE FROM t WHERE v = 10');
+    }
+
+    public function testMatchedStopsAtTheLimitWithoutOrderBy(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $first = $instance->connect('root', 'localhost', 'd');
+        $second = $instance->connect('root', 'localhost', 'd');
+        $first->query('CREATE TABLE t (id INT PRIMARY KEY, v INT); INSERT INTO t VALUES (1, 10), (2, 20); BEGIN; UPDATE t SET v = 21 WHERE id = 2');
+        $second->query('UPDATE t SET v = 0 LIMIT 1');
+        $result = $second->query('SELECT * FROM t WHERE id = 1')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0']], $result->rows);
+    }
+
+    public function testSelectedAnswersTheOrderingValuesOfARowTheConditionSelects(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $frame = new \MySqlMemory\Evaluation\Frame(new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $where = new \MySqlMemory\Evaluation\Leaf\ColumnRead(\MySqlMemory\Typing\Domain::integer(), 0);
+        $command = new ChangeCommand();
+
+        self::assertSame([[], null, null], [$command->selected($table, [1], $frame, $where, []), $command->selected($table, [0], $frame, $where, []), $command->selected($table, null, $frame, null, [])]);
+    }
+    public function testMatchedReadsARowAnotherTransactionHoldsSemiConsistentlyForAnUpdateUnderReadCommitted(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $first = $instance->connect('root', 'localhost', 'd');
+        $second = $instance->connect('root', 'localhost', 'd');
+        $first->query('CREATE TABLE t (id INT PRIMARY KEY, v INT); INSERT INTO t VALUES (1, 1), (2, 2); BEGIN; UPDATE t SET v = 5 WHERE id = 1');
+        $reply = $second->query('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED; UPDATE t SET v = 6 WHERE v = 5')[1];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame(0, $reply->affectedRows);
+    }
+
+    public function testSortedOrdersTheRowsByTheirKeysKeepingEqualRowsInOrder(): void
+    {
+        $matched = [[0, [1, 5]], [1, [3, 5]], [2, [1, 4]], [3, [1, 5]]];
+        $keys = [[new \MySqlMemory\Evaluation\Leaf\ColumnRead(\MySqlMemory\Typing\Domain::integer(), 0), true], [new \MySqlMemory\Evaluation\Leaf\ColumnRead(\MySqlMemory\Typing\Domain::integer(), 1), false]];
+
+        self::assertSame([[[1, [3, 5]], [2, [1, 4]], [0, [1, 5]], [3, [1, 5]]], $matched], [(new ChangeCommand())->sorted($matched, $keys), (new ChangeCommand())->sorted($matched, [])]);
+    }
 }

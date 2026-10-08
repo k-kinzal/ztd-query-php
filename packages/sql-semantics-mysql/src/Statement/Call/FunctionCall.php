@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
+use SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions;
 use SqlSemantics\Platform\MySql\Rules\Call\RoutineCalls;
 use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
@@ -82,13 +83,25 @@ final class FunctionCall implements Scalar
         if ($this->schema === null && strcasecmp($this->name->value, 'FOUND_ROWS') === 0) {
             Deprecation::raise(Deprecated::FoundRows, $derivation);
         }
+        $legacy = $this->schema === null ? match (strtoupper($this->name->value)) {
+            'DES_ENCRYPT' => Deprecated::DesEncrypt,
+            'DES_DECRYPT' => Deprecated::DesDecrypt,
+            'ENCRYPT' => Deprecated::Encrypt,
+            'MASTER_POS_WAIT' => Deprecated::MasterPosWait,
+            'WAIT_UNTIL_SQL_THREAD_AFTER_GTIDS' => Deprecated::WaitUntilSqlThreadAfterGtids,
+            'JSON_MERGE' => Deprecated::JsonMerge,
+            default => null,
+        } : null;
+        if ($legacy !== null) {
+            Deprecation::raise($legacy, $derivation);
+        }
         $facts = [];
         foreach ($this->arguments as $argument) {
             $facts[] = (new Arguments())->one($argument->expression, $derivation, $environment);
         }
 
         $fact = (new RoutineCalls())->result($this, $facts, $derivation);
-        if ($this->schema !== null) {
+        if ($this->schema !== null || !(new NativeFunctions())->exists($derivation->context->profile->grammar, $this->name->value)) {
             return $fact;
         }
 

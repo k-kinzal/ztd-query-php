@@ -262,4 +262,26 @@ final class MomentsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['2024', '1999']], $result->rows);
     }
+
+    public function testPartsReadsTheDatetimeAndTheTextAfterIt(): void
+    {
+        $instance = new Instance();
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables($instance->catalog, $instance->globals), 0.0);
+
+        self::assertSame([[2024, 1, 15, 10, 20, 30, 500000, true, 'x'], [2024, 1, 15, 0, 0, 0, 0, false, ''], null], [(new Moments())->parts('2024-01-15 10:20:30.5x', Domain::string(30, Collation::binary()), $context, null, '2024-01-15 10:20:30.5x'), (new Moments())->parts(20240115, Domain::integer(), $context, null, '20240115'), (new Moments())->parts('2024-00-15', Domain::string(30, Collation::binary()), $context, [false, true], '2024-00-15')]);
+    }
+
+    public function testPaddedReadsShortNumbersAsDates(): void
+    {
+        self::assertSame(['000101', '09991231', '00000000', '100', '240101101010.5'], [(new Moments())->padded('101'), (new Moments())->padded('9991231'), (new Moments())->padded('0'), (new Moments())->padded('100'), (new Moments())->padded('240101101010.5')]);
+    }
+
+    public function testConvertDropsTheFractionOfANumberWithoutATimeAndTakesZerosItIsAllowed(): void
+    {
+        $session = (new Instance())->connect();
+
+        $reply = $session->query('SELECT CAST(20240101.5 AS DATETIME(1)), DATE(9991231)')[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['2024-01-01 00:00:00.0', '0999-12-31']], $reply->rows);
+    }
 }

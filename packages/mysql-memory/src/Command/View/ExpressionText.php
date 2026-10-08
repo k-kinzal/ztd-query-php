@@ -8,6 +8,7 @@ use MySqlMemory\Dictionary\Routine;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
@@ -85,7 +86,8 @@ final class ExpressionText
             $scalar instanceof Grouped => $this->scalar($scalar->operand),
             $scalar instanceof NumberLiteral, $scalar instanceof SignedLiteral, $scalar instanceof StringLiteral, $scalar instanceof NullLiteral, $scalar instanceof BooleanLiteral => $this->literal($scalar),
             $scalar instanceof FunctionCall => $this->call(strtolower($scalar->name->value), array_map(static fn ($argument): Scalar => $argument->expression, $scalar->arguments), $scalar->schema === null ? '' : Routine::quoted($scalar->schema->value) . '.'),
-            $scalar instanceof Aggregate => $this->aggregate($scalar),
+            $scalar instanceof Aggregate => ($scalar->over === null ? $this->aggregate($scalar) : (new WindowText($this))->aggregate($scalar)),
+            $scalar instanceof WindowFunction => (new WindowText($this))->call($scalar),
             $scalar instanceof CaseExpression => $this->branches($scalar),
             $scalar instanceof ScalarSubquery => $this->subquery('(', $scalar->query, ')'),
             $scalar instanceof Exists => $this->subquery('exists(', $scalar->query, ')'),

@@ -22,6 +22,7 @@ use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Rules\LeafKeys;
 use SqlSemantics\Platform\MySql\Rules\SessionDatabase;
+use SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTables;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 
@@ -133,6 +134,10 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Creates a context: one current database, exact table and database names, column names without regard to ASCII case.
      *
+     * The name of INFORMATION_SCHEMA and the names of its tables are compared without regard to
+     * case, whatever lower_case_table_names says.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/identifier-case-sensitivity.html.
+     *
      * @throws InvalidArgumentException When the path names more than the current database
      */
     public function context(LanguageProfile $profile, ?array $searchPath, array $tables, bool $complete): AnalysisContext
@@ -141,7 +146,7 @@ final class Platform implements \SqlSemantics\Contract\Platform
             throw new InvalidArgumentException('MySQL searches an unqualified table name in the current database only.');
         }
 
-        return new AnalysisContext($profile, [new Name($searchPath[0] ?? SessionDatabase::UNNAMED)], $tables, $complete, Comparison::Sensitive, Comparison::AsciiInsensitive);
+        return new AnalysisContext($profile, [new Name($searchPath[0] ?? SessionDatabase::UNNAMED)], $tables, $complete, Comparison::Sensitive, Comparison::AsciiInsensitive, null, null, [SystemTables::INFORMATION_SCHEMA]);
     }
 
     /**

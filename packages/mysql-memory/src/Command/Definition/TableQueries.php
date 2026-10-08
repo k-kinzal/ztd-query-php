@@ -7,8 +7,8 @@ namespace MySqlMemory\Command\Definition;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -105,7 +105,7 @@ final class TableQueries
         $definition = (new TableRebuild($this->session, $this->context, $this->connection))->definition($layout, $this->session->instance->dictionary->declarations());
         $table = new StoredTable($definition, new Heap());
         [$records, $affected, $duplicates] = $this->fill($table, $plan, $create->query->duplicate);
-        $schema->tables[$definition->name] = $table;
+        $this->session->instance->dictionary->store($table);
         $warnings = $this->context->diagnostics->count();
 
         return new Completion($affected, 0, $warnings, 'Records: ' . $records . '  Duplicates: ' . $duplicates . '  Warnings: ' . $warnings);

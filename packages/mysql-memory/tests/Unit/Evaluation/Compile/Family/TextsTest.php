@@ -135,9 +135,26 @@ final class TextsTest extends TestCase
         self::assertSame([['1', '0', null]], $result->rows);
     }
 
-    public function testSoundexAnswersTheFirstLetterAndTheDigitsOfTheConsonants(): void
+    public function testSoundsLikeComparesTheCodesInTheCollationOfBoth(): void
     {
-        self::assertSame(['H400', 'Q36324', 'R163', 'R163', ''], [Texts::soundex('Hello'), Texts::soundex('Quadratically'), Texts::soundex('Robert'), Texts::soundex('Rupert'), Texts::soundex('123')]);
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT 'éb' SOUNDS LIKE 'eb', 'éb' COLLATE utf8mb4_bin SOUNDS LIKE 'Éb', 'ÄÖ' SOUNDS LIKE 'Ä'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0', '1']], $result->rows);
+    }
+
+    public function testCharactersKeepsValidBytesAndRefusesInvalidOnesInAStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $strict = $session->query('SELECT HEX(CHAR(0x41C3 USING utf8mb4)), HEX(CHAR(0x41C3 USING ascii)), HEX(CHAR(0x414243 USING utf16))')[0];
+        $session->query("SET sql_mode = ''");
+        $loose = $session->query('SELECT HEX(CHAR(0x41C3 USING utf8mb4))')[0];
+
+        self::assertInstanceOf(ResultSet::class, $strict);
+        self::assertInstanceOf(ResultSet::class, $loose);
+        self::assertSame([[null, '41C3', '00414243']], $strict->rows);
+        self::assertSame([['41']], $loose->rows);
     }
 
     public function testRegexpMatchesInTheCollationOfBothOperands(): void
@@ -147,6 +164,26 @@ final class TextsTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1', '0', '1', '1', null]], $result->rows);
+    }
+
+    public function testRegexpMatchesAsRegexpLikeFromMySql80(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT 'STRASSE' REGEXP 'straße', 'a\\nb' REGEXP '^b', 'abc' REGEXP '\\\\p{Lu}'")[0];
+        $error = $session->run("SELECT 'abc' REGEXP 'a{2,1}'");
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0', '1']], $result->rows);
+        self::assertInstanceOf(SqlError::class, $error[0]);
+        self::assertSame([3693, 'The maximum is less than the minumum in a {min,max} interval.'], [$error[0]->getCode(), $error[0]->getMessage()]);
+    }
+
+    public function testRegexpKeepsItsOwnMatchingInMySql57(): void
+    {
+        $result = (new Instance('5.7.44'))->connect()->query("SELECT 'STRASSE' REGEXP 'straße', 'abc' REGEXP 'B'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1']], $result->rows);
     }
 
     public function testRegexpIsCaseSensitiveInABinaryCollation(): void

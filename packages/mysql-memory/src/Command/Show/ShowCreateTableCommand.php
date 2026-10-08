@@ -30,8 +30,9 @@ use SqlSemantics\Statement\Operation;
  *
  * Each column is written with its type, a character set and collation that differ from the
  * table's, NOT NULL (or NULL for a TIMESTAMP that takes NULL), its default, ON UPDATE,
- * AUTO_INCREMENT, INVISIBLE and its comment; then the keys in the order the server keeps them;
- * then the options: the engine, the next AUTO_INCREMENT value when it is above 1, the character
+ * AUTO_INCREMENT, INVISIBLE and its comment, a generated column its expression and storage in
+ * place of a default; then the keys in the order the server keeps them; then the foreign keys and
+ * the CHECK constraints (ConstraintText); then the options: the engine, the next AUTO_INCREMENT value when it is above 1, the character
  * set, its collation unless it is the default collation of a character set other than utf8mb4,
  * and the comment. The column of the statement is as long as the statement, at least 1024
  * characters (verified on a live 8.4 server).
@@ -89,8 +90,11 @@ final class ShowCreateTableCommand implements Command
         foreach ((new Keys())->ordered($table) as $key) {
             $lines[] = '  ' . $this->key($key, $table);
         }
+        foreach ((new ConstraintText($this->release === GrammarRelease::MySql5651 || $this->release === GrammarRelease::MySql5744))->lines($table) as $line) {
+            $lines[] = '  ' . $line;
+        }
 
-        return 'CREATE ' . ($table->temporary ? 'TEMPORARY ' : '') . 'TABLE ' . $this->name($table->name) . " (\n" . implode(",\n", $lines) . "\n) " . $this->options($stored);
+        return 'CREATE ' . ($table->temporary ? 'TEMPORARY ' : '') . 'TABLE ' . $this->name($table->name) . " (\n" . implode(",\n", $lines) . "\n) " . $this->options($stored) . ($table->partitioning === null ? '' : "\n" . $table->partitioning->text);
     }
 
     /**
@@ -103,12 +107,15 @@ final class ShowCreateTableCommand implements Command
         $type = $text->written($table, $column);
         $written = $this->name($column->name) . ' ' . $text->type($domain, $type);
         $written .= $this->collation($column, $table);
+        if ($column->generated !== null) {
+            $written .= ' GENERATED ALWAYS AS (' . $column->expression . ')' . ($column->stored ? ' STORED' : ' VIRTUAL');
+        }
         if (!$column->nullable()) {
             $written .= ' NOT NULL';
         } elseif ($domain->field === Field::Timestamp) {
             $written .= ' NULL';
         }
-        $written .= $text->createDefault($column, $type);
+        $written .= $column->generated === null ? $text->createDefault($column, $type) : '';
         if ($column->onUpdateNow) {
             $written .= ' ON UPDATE CURRENT_TIMESTAMP' . ($domain->decimals > 0 ? '(' . $domain->decimals . ')' : '');
         }

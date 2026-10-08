@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
+use MySqlMemory\Session\Diagnostics;
+use MySqlMemory\Session\SqlModes;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -99,5 +101,23 @@ final class ContextTest extends TestCase
         $context->warning(DataError::DivisionByZero);
 
         self::assertCount(0, $context->kept);
+    }
+
+    public function testZoneReadsTheTimeZoneOfTheSession(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET time_zone = 'europe/paris'");
+        $context = new Context(new SqlModes([]), new Diagnostics(), $session->variables, 0.0);
+
+        self::assertSame('Europe/Paris', $context->zone()->name);
+    }
+
+    public function testLocalAnswersTheInstantInTheZoneOfTheSession(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET time_zone = '+09:00'");
+        $context = new Context(new SqlModes([]), new Diagnostics(), $session->variables, 1700000000.25);
+
+        self::assertSame([2023, 11, 15, 7, 13, 20, 250000], $context->local());
     }
 }

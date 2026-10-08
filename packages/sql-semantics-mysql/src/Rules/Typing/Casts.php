@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\JsonResults;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -23,7 +25,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  * default; DOUBLE and REAL are doubles, FLOAT a single unless its precision exceeds 24; the
  * temporal targets keep the fractional digits written; CHAR is a string in the connection
  * collation or the character set written, BINARY a binary string, both as long as written or as
- * the operand written as text; JSON is JSON. The spatial targets have no resolved type.
+ * the operand written as text; JSON is JSON; YEAR is four digits wide, five in MySQL 8.0 (verified
+ * on a live 8.0.44 server). The spatial targets have no resolved type.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -58,13 +61,47 @@ final class Casts
             CastKind::Date => new Domain(Kind::Date, Field::Date, 10),
             CastKind::Time => new Domain(Kind::Time, Field::Time, 10 + $fraction, $decimals),
             CastKind::DateTime => new Domain(Kind::DateTime, Field::DateTime, 19 + $fraction, $decimals),
-            CastKind::Year => new Domain(Kind::Year, Field::Year, 4, 0, true),
+            CastKind::Year => new Domain(Kind::Year, Field::Year, $this->release === GrammarRelease::MySql8044 ? 5 : 4, 0, true),
             CastKind::Char, CastKind::NationalChar => $this->string($operand, $target, $this->collation($target)),
             CastKind::Binary => $this->string($operand, $target, Collation::binary()),
-            CastKind::Json => new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin')),
+            CastKind::Json => JsonResults::json($this->release),
             CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiLineString,
             CastKind::MultiPolygon, CastKind::GeometryCollection => null,
         };
+    }
+
+    /**
+     * Resolves the RETURNING type of JSON_VALUE: VARCHAR(512) in utf8mb4_0900_bin by default.
+     *
+     * CHAR without a character set is in utf8mb4_0900_bin, and CHAR or BINARY without a length is
+     * a LONGTEXT or LONGBLOB; the strings are coercible. A date or time is sent in utf8mb4, so
+     * its length counts four bytes a character; every other type is that of CAST (verified on a
+     * live 8.4 server).
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/json-search-functions.html#function_json-value.
+     */
+    public function returning(?CastTarget $target): ?Domain
+    {
+        $text = Collation::known('utf8mb4_0900_bin');
+        if ($target === null) {
+            return Domain::string(512, $text, Field::VarString, Coercibility::Coercible);
+        }
+        $length = $target->length === null ? null : (int) $target->length;
+        $collation = match ($target->kind) {
+            CastKind::Char => $target->charset === null ? $text : $this->collation($target),
+            CastKind::NationalChar => $this->collation($target),
+            CastKind::Binary => Collation::binary(),
+            CastKind::Signed, CastKind::Unsigned, CastKind::Date, CastKind::Time, CastKind::DateTime, CastKind::Decimal, CastKind::Json, CastKind::Year, CastKind::Real, CastKind::Double, CastKind::Float,
+            CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiLineString, CastKind::MultiPolygon, CastKind::GeometryCollection => null,
+        };
+        if ($collation !== null) {
+            return Domain::string($length ?? 4294967295, $collation, $length === null ? Field::LongBlob : Field::VarString, Coercibility::Coercible);
+        }
+        $domain = $this->cast(Domain::null(), $target);
+        if ($domain === null || !$domain->kind->temporal()) {
+            return $domain;
+        }
+
+        return new Domain($domain->kind, $domain->field, $domain->length, $domain->decimals, false, $text);
     }
 
     /**
@@ -84,10 +121,14 @@ final class Casts
     }
 
     /**
-     * Resolves CHAR or BINARY in a collation: a string as long as written, or as the operand written as text.
+     * Resolves CHAR or BINARY in a collation: a string as long as written, or as the operand written as text; a JSON value without a length is a LONGTEXT or LONGBLOB from MySQL 8.0 (verified on live 8.0.44 and 8.4 servers).
      */
     public function string(Domain $operand, CastTarget $target, Collation $collation): Domain
     {
+        if ($target->length === null && $operand->kind === Kind::Json && $this->release !== GrammarRelease::MySql5651 && $this->release !== GrammarRelease::MySql5744) {
+            return Domain::string(4294967295, $collation, Field::LongBlob);
+        }
+
         return Domain::string($target->length === null ? $this->length($operand) : (int) $target->length, $collation);
     }
 

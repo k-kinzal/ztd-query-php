@@ -193,4 +193,23 @@ final class ViewsTest extends TestCase
             Views::zero(new Domain(Kind::Null, Field::Null)),
         ]);
     }
+
+    public function testBaseAnswersTheColumnAViewColumnReads(): void
+    {
+        $s = (new Instance())->connect();
+        $s->query('CREATE DATABASE d');
+        $s->query('USE d');
+        $s->query("CREATE TABLE t (a INT AUTO_INCREMENT PRIMARY KEY, b INT COMMENT 'bee')");
+        $s->query('CREATE VIEW v AS SELECT a, b, a + 1 AS c FROM t');
+        $view = $s->instance->dictionary->schema('d')->views['v'] ?? null;
+        self::assertNotNull($view);
+
+        self::assertSame(['a', 'b', null], [Views::base($view, $s->instance->dictionary, 0)?->name, Views::base($view, $s->instance->dictionary, 1)?->name, Views::base($view, $s->instance->dictionary, 2)?->name]);
+        $read1 = $s->query('SHOW COLUMNS FROM v')[0];
+        self::assertInstanceOf(ResultSet::class, $read1);
+        self::assertSame([['a', 'int', 'NO', '', '0', ''], ['b', 'int', 'YES', '', null, '']], array_slice($read1->rows, 0, 2));
+        $read2 = $s->query("SHOW FULL COLUMNS FROM v LIKE 'b'")[0];
+        self::assertInstanceOf(ResultSet::class, $read2);
+        self::assertSame('bee', $read2->rows[0][8]);
+    }
 }

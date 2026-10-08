@@ -153,4 +153,14 @@ final class InspectionTest extends TestCase
 
         $session->query('SHOW COLUMNS FROM nodb.t');
     }
+
+    public function testSystemFindsTheSystemTableAStatementInspects(): void
+    {
+        $s = (new Instance())->connect();
+        $s->query('CREATE DATABASE d');
+        $s->query('USE d');
+        $s->query('CREATE TABLE t (a INT)');
+
+        self::assertSame(['SCHEMATA', null, null], [(new Inspection())->system(new InspectedTable(new QualifiedName(new Name('schemata'), new Name('INFORMATION_SCHEMA'))), null, $s)?->name, (new Inspection())->system(new InspectedTable(new QualifiedName(new Name('t'))), null, $s), (new Inspection())->system(new InspectedTable(new QualifiedName(new Name('user'))), new Name('nowhere'), $s)]);
+    }
 }

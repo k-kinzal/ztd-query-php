@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
-use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Typing\Domain;
@@ -96,12 +96,39 @@ final class Times
             return $this->problem(DataError::OutOfRange, $text, $column);
         }
         $result = $to->kind === Kind::Date ? Temporal::date($moment[0], $moment[1], $moment[2]) : Temporal::dateTime($moment[0], $moment[1], $moment[2], $moment[3], $moment[4], $moment[5], $moment[6], $decimals);
-        if ($to->field === Field::Timestamp && !$zero && (strcmp($result, '1970-01-01 00:00:01') < 0 || strcmp($result, '2038-01-19 03:14:08') >= 0)) {
-            return $this->problem(DataError::OutOfRange, $text, $column);
+        if ($to->field === Field::Timestamp && !$zero) {
+            $result = $this->timestamp($result, $moment[0], $decimals, $text, $column);
+            if ($result === null) {
+                return $this->problem(DataError::OutOfRange, $text, $column);
+            }
         }
         $this->leftover($text, $parts[8], $moment, $column);
 
         return $result;
+    }
+
+    /**
+     * Turns a datetime stored into a TIMESTAMP column from the session time zone into UTC, or answers null when it is out of the range of a TIMESTAMP.
+     *
+     * A time the zone skips is refused in strict mode and stored with a warning otherwise; years
+     * before 1900 are not moved.
+     *
+     * @throws SqlError When the time is skipped by the zone in strict mode
+     */
+    public function timestamp(string $result, int $year, int $decimals, string $text, ColumnDefinition $column): ?string
+    {
+        $context = $this->store->context;
+        $zone = $context->zone();
+        $zones = new TimestampZones();
+        if (!$zone->universal() && $year >= 1900 && $zones->skipped($result, $zone)) {
+            if ($context->strict) {
+                throw new SqlError(DataError::TruncatedWrongValue, DataError::TruncatedWrongValueForField->message($this->kind($column), $text, $column->name, $this->store->row));
+            }
+            $context->diagnostics->warning(DataError::InvalidTimestamp, DataError::InvalidTimestamp->message($column->name, $this->store->row));
+        }
+        $result = $zone->universal() || $year < 1900 ? $result : $zones->universal($result, $decimals, $zone);
+
+        return strcmp($result, '1970-01-01 00:00:01') < 0 || strcmp($result, '2038-01-19 03:14:08') >= 0 ? null : $result;
     }
 
     /**
@@ -118,7 +145,7 @@ final class Times
         $truncate = $context->modes->has('TIME_TRUNCATE_FRACTIONAL');
         if ($from->kind === Kind::Time) {
             $time = Temporal::scanTime($text);
-            $moment = $time === null ? null : Temporal::onDay($context->started, $time[0], $time[1], $time[2], $time[3], Temporal::micro($time[4], $truncate));
+            $moment = $time === null ? null : Temporal::onDay($context->zone()->local((int) floor($context->started)), $time[0], $time[1], $time[2], $time[3], Temporal::micro($time[4], $truncate));
 
             return $moment === null ? [null, 0] : [[$moment[0], $moment[1], $moment[2], $moment[3], $moment[4], $moment[5], '', true, ''], $moment[6]];
         }
@@ -287,7 +314,7 @@ final class Times
             return (int) substr((string) $value, 0, 4);
         }
         if ($from->kind === Kind::Time) {
-            return getdate((int) $this->store->context->started)['year'];
+            return $this->store->context->local()[0];
         }
         if ($from->kind === Kind::String) {
             $text = (string) $value;

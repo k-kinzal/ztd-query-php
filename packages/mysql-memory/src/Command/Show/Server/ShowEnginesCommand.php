@@ -7,7 +7,7 @@ namespace MySqlMemory\Command\Show\Server;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
@@ -24,7 +24,8 @@ use SqlSemantics\Statement\Operation;
 /**
  * Executes SHOW ENGINES and SHOW ENGINE ... {STATUS | MUTEX | LOGS}.
  *
- * SHOW ENGINES lists the storage engines of the server and what they support. SHOW ENGINE names
+ * SHOW ENGINES lists the storage engines of the server and what they support, in the order
+ * INFORMATION_SCHEMA.ENGINES lists them. SHOW ENGINE names
  * an engine, by its name or an alias, or ALL; an engine the server does not have or has
  * disabled is ER_UNKNOWN_STORAGE_ENGINE, named as written. The status, mutexes and logs an
  * engine reports describe the running server, its threads, waits and files; the emulator has
@@ -54,7 +55,7 @@ final class ShowEnginesCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof ShowEngineCatalog || $statement instanceof ShowEngineLogs || $statement instanceof ShowEngineMutex || $statement instanceof ShowEngineStatus);
         if ($statement instanceof ShowEngineCatalog) {
-            return (new Listing($this->catalogHeadings()))->sent(ServerCatalog::shared()->engines, $context);
+            return (new Listing($this->catalogHeadings()))->sent(\MySqlMemory\System\Server\ServerTables::of($session->settings()->release())->engines, $context);
         }
         if ($statement->engine !== null && ServerCatalog::shared()->engine($statement->engine->value) === null) {
             throw SchemaError::UnknownStorageEngine->error($statement->engine->value);

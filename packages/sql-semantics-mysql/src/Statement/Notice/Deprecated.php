@@ -11,8 +11,10 @@ use SqlSemantics\Contract\GrammarRelease;
  *
  * Each case holds the error number and the text of its warning. Release 5.6 warns only that
  * DELAYED is deprecated, and 5.7 that it is converted and that the query cache modifiers,
- * PROCEDURE ANALYSE, a direction in GROUP BY and a name after a leading dot are deprecated
- * (verified on live 5.6.51 and 5.7.44 servers).
+ * PROCEDURE ANALYSE, a direction in GROUP BY and a name after a leading dot are deprecated.
+ * Release 5.6 also warns about OLD_PASSWORD(), and 5.7 about DES_ENCRYPT(), DES_DECRYPT() and
+ * ENCRYPT() (verified on live 5.6.51 and 5.7.44 servers). MySQL 8.0 and later warn about
+ * MASTER_POS_WAIT() and WAIT_UNTIL_SQL_THREAD_AFTER_GTIDS() (verified on live 8.0.44 and 8.4 servers).
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html#error_er_warn_deprecated_syntax.
  *
  * @visibility public
@@ -49,6 +51,13 @@ enum Deprecated: string
     case Utf8Alias = "'utf8' is currently an alias for the character set UTF8MB3, but will be an alias for UTF8MB4 in a future release. Please consider using UTF8MB4 in order to be unambiguous.";
     case Utf8mb3 = "'utf8mb3' is deprecated and will be removed in a future release. Please use utf8mb4 instead";
     case National = 'NATIONAL/NCHAR/NVARCHAR implies the character set UTF8MB3, which will be replaced by UTF8MB4 in a future release. Please consider using CHAR(x) CHARACTER SET UTF8MB4 in order to be unambiguous.';
+    case OldPassword = "'OLD_PASSWORD' is deprecated and will be removed in a future release. Please use PASSWORD instead";
+    case DesEncrypt = "'DES_ENCRYPT' is deprecated and will be removed in a future release. Please use AES_ENCRYPT instead";
+    case DesDecrypt = "'DES_DECRYPT' is deprecated and will be removed in a future release. Please use AES_DECRYPT instead";
+    case Encrypt = "'ENCRYPT' is deprecated and will be removed in a future release. Please use AES_ENCRYPT instead";
+    case MasterPosWait = "'MASTER_POS_WAIT' is deprecated and will be removed in a future release. Please use SOURCE_POS_WAIT instead";
+    case WaitUntilSqlThreadAfterGtids = "'WAIT_UNTIL_SQL_THREAD_AFTER_GTIDS' is deprecated and will be removed in a future release. Please use WAIT_FOR_EXECUTED_GTID_SET instead";
+    case JsonMerge = "'JSON_MERGE' is deprecated and will be removed in a future release. Please use JSON_MERGE_PRESERVE/JSON_MERGE_PATCH instead";
 
     /**
      * Answers the error number the warning is raised with.
@@ -64,7 +73,7 @@ enum Deprecated: string
             self::Utf8Alias => 3719,
             self::National => 3720,
             self::IntoInsideQuery => 3962,
-            self::DelayedInsert, self::DelayedReplace, self::GroupByDirection, self::BinaryBitwise, self::DotColumn, self::DotTable, self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth, self::Utf8mb3 => 1287,
+            self::DelayedInsert, self::DelayedReplace, self::GroupByDirection, self::BinaryBitwise, self::DotColumn, self::DotTable, self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth, self::Utf8mb3, self::OldPassword, self::DesEncrypt, self::DesDecrypt, self::Encrypt, self::MasterPosWait, self::WaitUntilSqlThreadAfterGtids, self::JsonMerge => 1287,
         };
     }
 
@@ -77,12 +86,16 @@ enum Deprecated: string
     public function warnedIn(GrammarRelease $release): bool
     {
         if ($release === GrammarRelease::MySql5651) {
-            return $this === self::DelayedInsert || $this === self::DelayedReplace;
+            return $this === self::DelayedInsert || $this === self::DelayedReplace || $this === self::OldPassword;
         }
         if ($release === GrammarRelease::MySql5744) {
-            return in_array($this, [self::InsertDelayed, self::ReplaceDelayed, self::Cache, self::NoCache, self::ProcedureAnalyse, self::GroupByDirection, self::DotColumn, self::DotTable, self::BinaryBitwise], true);
+            return in_array($this, [self::InsertDelayed, self::ReplaceDelayed, self::Cache, self::NoCache, self::ProcedureAnalyse, self::GroupByDirection, self::DotColumn, self::DotTable, self::BinaryBitwise, self::DesEncrypt, self::DesDecrypt, self::Encrypt, self::JsonMerge], true);
         }
 
-        return !in_array($this, [self::DelayedInsert, self::DelayedReplace, self::BinaryBitwise], true);
+        if ($this === self::WaitUntilSqlThreadAfterGtids) {
+            return $release === GrammarRelease::MySql8044 || $release === GrammarRelease::MySql810;
+        }
+
+        return !in_array($this, [self::DelayedInsert, self::DelayedReplace, self::BinaryBitwise, self::OldPassword, self::DesEncrypt, self::DesDecrypt, self::Encrypt], true);
     }
 }

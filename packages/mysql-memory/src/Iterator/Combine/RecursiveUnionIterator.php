@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator\Combine;
 
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Plan\Path\Combine\RecursiveUnion;

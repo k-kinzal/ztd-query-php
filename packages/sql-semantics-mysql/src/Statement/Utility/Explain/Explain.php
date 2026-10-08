@@ -64,7 +64,7 @@ final class Explain implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         $context = $derivation->context;
-        $derivation->inspected($this->statement, $this->database === null ? null : new Environment(new AnalysisContext($context->profile, [$this->database], $context->tables, $context->complete, $context->relationNames, $context->columnNames, $context->declarationSchema, $context->session)));
+        $derivation->inspected($this->statement, $this->database === null ? null : new Environment(new AnalysisContext($context->profile, [$this->database], $context->tables, $context->complete, $context->relationNames, $context->columnNames, $context->declarationSchema, $context->session, $context->foldedSchemas)));
         (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into);
     }
 

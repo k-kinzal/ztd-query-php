@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session\Problem;
 
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Problem\ValueRows;
 use PHPUnit\Framework\Attributes\CoversClass;

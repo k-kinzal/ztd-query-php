@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Value\Json\JsonPath;
 use MySqlMemory\Value\Json\JsonSyntax;

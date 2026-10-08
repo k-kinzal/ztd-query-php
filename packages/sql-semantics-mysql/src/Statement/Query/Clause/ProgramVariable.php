@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Clause;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -14,6 +15,7 @@ use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -21,9 +23,11 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * Rule: MYSQL-PROGRAM-VARIABLE-001. A bare name in LIMIT or after INTO
  * denotes a variable or parameter declared by the enclosing stored program;
- * outside one the server reports an undeclared variable. The declaration is
- * runtime program state the analysis context does not hold, so the type and
- * the NULL fact depend on it. Source:
+ * outside one the server reports an undeclared variable. A statement of a
+ * running program is given the variables in scope (Settings::$program): the
+ * name then has the declared type of the innermost variable of the name and
+ * can be NULL. Otherwise the declaration is program state the analysis
+ * context does not hold, so the type and the NULL fact depend on it. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/select.html (LIMIT),
  * https://dev.mysql.com/doc/refman/8.4/en/select-into.html.
  * Status: Implemented.
@@ -45,10 +49,14 @@ final class ProgramVariable implements Scalar
     }
 
     /**
-     * Depends on the declaration of the variable in the enclosing stored program.
+     * Has the type of the variable a running program declares, else depends on the declaration of the variable in the enclosing stored program.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        $declared = Settings::of($derivation->context)->variable($this->name->value);
+        if ($declared !== null) {
+            return new ScalarFact(new Known($declared[0]->domains[$declared[1]]), Nullability::Nullable);
+        }
         return new ScalarFact(new Dependent([new SessionState('stored program variable ' . $this->name->value)]), Nullability::Dependent);
     }
 

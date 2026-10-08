@@ -15,10 +15,9 @@ use MySqlMemory\Value\Real;
  *
  * The document is written with `", "` between values and `": "` after a name. The members of an
  * object are ordered by the length of their names, then by their bytes; of members with one name
- * the last is kept. A number without a fraction or an exponent that fits a signed or unsigned
- * 64-bit integer is an integer (`-0` is `0`); every other number is a double, written as
- * {@see self::double()} says. A string is written with `\"`, `\\`, `\b`, `\f`, `\n`, `\r`, `\t`
- * and `\u00XX` for the other control characters; every other character is written as itself.
+ * the last is kept. A number is read as {@see JsonNumber} says. A string is written with `\"`,
+ * `\\`, `\b`, `\f`, `\n`, `\r`, `\t` and `\u00XX` for the other control characters; every other
+ * character is written as itself.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json.html.
  *
  * @visibility MySqlMemory
@@ -42,22 +41,23 @@ final class Json
 
     /**
      * @param string $text The JSON text
+     * @param int $limit The deepest nesting the reading accepts
      */
-    public function __construct(public readonly string $text)
+    public function __construct(public readonly string $text, public readonly int $limit = self::MAX_DEPTH)
     {
     }
 
     /**
-     * Reads a JSON text and answers the document in the text the server returns.
+     * Reads a JSON text and answers the document in the text the server returns; a text nesting deeper than a limit, 100 by default, is refused.
      *
      * @example A document
      *     \MySqlMemory\Value\Json\Json::canonical('{"b":1,"a":[1.0,"x/y"]}') // => '{"a": [1.0, "x/y"], "b": 1}'
      *
      * @throws JsonSyntax When the text is not a JSON document
      */
-    public static function canonical(string $text): string
+    public static function canonical(string $text, int $limit = self::MAX_DEPTH): string
     {
-        $json = new self($text);
+        $json = new self($text, $limit);
         $json->space();
         if ($json->at >= strlen($text)) {
             throw new JsonSyntax('The document is empty.', $json->at);
@@ -69,6 +69,19 @@ final class Json
         }
 
         return $document;
+    }
+
+    /**
+     * Answers the JSON text of a JSON value as an SQL expression holds it, without the typed text that may follow it ({@see JsonNode::store()}).
+     *
+     * @example A decimal
+     *     \MySqlMemory\Value\Json\Json::visible("1.50\0`d1.50") // => '1.50'
+     */
+    public static function visible(string $stored): string
+    {
+        $split = strpos($stored, "\0");
+
+        return $split === false ? $stored : substr($stored, 0, $split);
     }
 
     /**
@@ -95,7 +108,7 @@ final class Json
             $next === 't' => $this->literal('true'),
             $next === 'f' => $this->literal('false'),
             $next === 'n' => $this->literal('null'),
-            $next === '-' || ctype_digit($next) => $this->number(),
+            $next === '-' || ctype_digit($next) => (new JsonNumber($this))->read(),
             default => throw new JsonSyntax('Invalid value.', $this->at),
         };
     }
@@ -109,7 +122,7 @@ final class Json
     {
         $this->at++;
         $this->depth++;
-        if ($this->depth > self::MAX_DEPTH) {
+        if ($this->depth > $this->limit) {
             throw new JsonSyntax('Terminate parsing due to Handler error.', $this->at, true);
         }
         $this->space();
@@ -293,79 +306,6 @@ final class Json
         $this->at += 6;
 
         return (int) hexdec($digits);
-    }
-
-    /**
-     * Reads a number.
-     *
-     * @throws JsonSyntax When the number is malformed or too big for a double
-     */
-    public function number(): string
-    {
-        $start = $this->at;
-        if ($this->text[$this->at] === '-') {
-            $this->at++;
-        }
-        $integer = strspn($this->text, '0123456789', $this->at);
-        if ($integer === 0) {
-            throw new JsonSyntax('Invalid value.', $this->at);
-        }
-        $this->at += $this->text[$this->at] === '0' ? 1 : $integer;
-        $fraction = 0;
-        $exponent = null;
-        if (($this->text[$this->at] ?? '') === '.') {
-            $this->at++;
-            $fraction = strspn($this->text, '0123456789', $this->at);
-            if ($fraction === 0) {
-                throw new JsonSyntax('Miss fraction part in number.', $this->at);
-            }
-            $this->at += $fraction;
-        }
-        if (in_array($this->text[$this->at] ?? '', ['e', 'E'], true)) {
-            $exponent = $this->exponent();
-        }
-        $written = substr($this->text, $start, $this->at - $start);
-        if ($fraction === 0 && $exponent === null && self::integral($written)) {
-            return $written === '-0' ? '0' : $written;
-        }
-        $value = (float) $written;
-        if (($exponent !== null && $exponent > 308 + $fraction) || is_infinite($value)) {
-            throw new JsonSyntax('Number too big to be stored in double.', $start);
-        }
-
-        return self::double($value);
-    }
-
-    /**
-     * Reads the exponent of a number from its `e` or `E`, and answers its value.
-     *
-     * An exponent of more than nine significant digits reads as 999999999, with its sign.
-     *
-     * @throws JsonSyntax When no digit follows the `e` and its sign
-     */
-    public function exponent(): int
-    {
-        $this->at++;
-        $sign = in_array($this->text[$this->at] ?? '', ['+', '-'], true) ? $this->text[$this->at++] : '+';
-        $digits = strspn($this->text, '0123456789', $this->at);
-        if ($digits === 0) {
-            throw new JsonSyntax('Miss exponent in number.', $this->at);
-        }
-        $magnitude = ltrim(substr($this->text, $this->at, $digits), '0');
-        $this->at += $digits;
-
-        return (strlen($magnitude) > 9 ? 999999999 : (int) $magnitude) * ($sign === '-' ? -1 : 1);
-    }
-
-    /**
-     * Tells whether an integer, as written, fits a signed 64-bit integer when negative or an unsigned one otherwise.
-     */
-    public static function integral(string $written): bool
-    {
-        $magnitude = ltrim($written, '-');
-        $limit = $written[0] === '-' ? '9223372036854775808' : '18446744073709551615';
-
-        return strlen($magnitude) < strlen($limit) || (strlen($magnitude) === strlen($limit) && strcmp($magnitude, $limit) <= 0);
     }
 
     /**

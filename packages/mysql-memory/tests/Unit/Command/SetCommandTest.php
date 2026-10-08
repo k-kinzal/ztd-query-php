@@ -110,7 +110,7 @@ final class SetCommandTest extends TestCase
         self::assertSame([['utf8mb4', 'utf8mb4_bin']], $result->rows);
     }
 
-    public function testActionSetsTheCharacterSetOfTheClientAndTheResults(): void
+    public function testCharsetSetsTheCharacterSetOfTheClientAndTheResults(): void
     {
         $session = (new Instance())->connect();
 
@@ -121,7 +121,7 @@ final class SetCommandTest extends TestCase
         self::assertSame([['latin1', 'latin1']], $result->rows);
     }
 
-    public function testActionSetsTheDefaultNames(): void
+    public function testCharsetSetsTheDefaultNames(): void
     {
         $session = (new Instance())->connect();
         $session->query('SET NAMES latin1');
@@ -152,5 +152,73 @@ final class SetCommandTest extends TestCase
             [Scope::Global, Scope::Global, Scope::Global, Scope::Session, Scope::Session],
             [$command->scope(VariableScope::Global), $command->scope(VariableScope::Persist), $command->scope(VariableScope::PersistOnly), $command->scope(VariableScope::Session), $command->scope(null)],
         );
+    }
+
+    public function testVariableAssignsAVariableOfTheProgramAtOnce(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE PROCEDURE p() BEGIN DECLARE x, y INT DEFAULT 7; SET x = 1, @u = x + y; SET @v = x, x = 3, y = x; SELECT @u, @v, x, y; END');
+
+        $result1 = $session->query('CALL p()')[0];
+        self::assertInstanceOf(ResultSet::class, $result1);
+        self::assertSame([['8', '1', '3', '3']], $result1->rows);
+    }
+
+    public function testVariableRefusesAColumnOfTheNewRowOfAnAfterTrigger(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('CREATE PROCEDURE p() SELECT 1');
+        $program = new \MySqlMemory\Program\Activation('TRIGGER', 'd.t', true, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'));
+        $program->scope[] = new \MySqlMemory\Program\Row(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [new \MySqlMemory\Program\Variable('a', \MySqlMemory\Typing\Domain::integer())], 'NEW');
+        $session->program = $program;
+        $trigger = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('CREATE TRIGGER x AFTER INSERT ON t FOR EACH ROW SET NEW.a = 1')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Routine\CreateTrigger::class, $trigger);
+        $statement = $trigger->body;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $statement);
+        $item = $statement->items[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment::class, $item);
+
+        $this->expectExceptionCode(1362);
+        $this->expectExceptionMessage('Updating of NEW row is not allowed in after trigger');
+
+        (new SetCommand())->variable($item, $session);
+    }
+
+    public function testLocalAssignsTheVariableABareNameNames(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE PROCEDURE p() BEGIN DECLARE x INT DEFAULT 4; DECLARE y INT; SET y = x; SELECT y; END');
+
+        $result = $session->query('CALL p()')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['4']], $result->rows);
+    }
+    public function testActionGivesTheNextTransactionTheIsolationLevelAnUnscopedVariableNames(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET @@transaction_isolation = 'READ-COMMITTED'");
+        $result = $session->query('SELECT @@transaction_isolation')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[['REPEATABLE-READ']], \MySqlMemory\Concurrency\Isolation::ReadCommitted], [$result->rows, $session->transaction->nextIsolation]);
+    }
+
+    public function testActionRefusesTheNextTransactionAccessModeWhileATransactionIsActive(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('BEGIN; SET @@session.transaction_read_only = 1');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1568);
+
+        $session->query('SET @@transaction_read_only = 1');
     }
 }

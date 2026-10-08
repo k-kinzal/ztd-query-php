@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Server;
 
 use Closure;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Error\StatementError;
 use MySqlMemory\Instance;
 use MySqlMemory\Protocol\Capability;
 use MySqlMemory\Protocol\MalformedPacket;
@@ -170,6 +170,14 @@ final class Client
     }
 
     /**
+     * Ends the session of the connection, as the client disconnects.
+     */
+    public function close(): void
+    {
+        $this->session?->close();
+    }
+
+    /**
      * Answers the server status flags of the session.
      */
     public function status(): int
@@ -179,7 +187,7 @@ final class Client
         }
         $autocommit = in_array(strtoupper((string) $this->session->variables->read('autocommit')), ['ON', '1'], true) ? 2 : 0;
 
-        return $autocommit | ($this->session->transaction->open ? 1 : 0) | ($this->session->modes()->has('NO_BACKSLASH_ESCAPES') ? 512 : 0);
+        return $autocommit | ($this->session->transaction->active() ? 1 : 0) | ($this->session->modes()->has('NO_BACKSLASH_ESCAPES') ? 512 : 0);
     }
 
     /**
@@ -203,6 +211,7 @@ final class Client
     {
         if ($reset) {
             $session = $this->session();
+            $session->close();
             $this->session = $this->instance->connect($session->user, $session->host, $session->variables->database === '' ? null : $session->variables->database);
         }
 

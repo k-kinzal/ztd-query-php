@@ -123,4 +123,35 @@ final class TableDefinitionTest extends TestCase
 
         self::assertSame('t', $session->instance->dictionary->table('d', 't')?->definition->statement?->name->name->value);
     }
+
+    public function testWithColumnsAnswersTheDefinitionWithOtherColumns(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT, CHECK (a > 0))');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $definition = $table->definition->withColumns([$table->definition->columns[1]]);
+
+        self::assertSame([['b'], 1], [array_map(static fn ($column): string => $column->name, $definition->columns), count($definition->checks)]);
+    }
+
+    public function testWithConstraintsAnswersTheDefinitionWithOtherConstraints(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, CHECK (a > 0))');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+
+        self::assertSame([], $table->definition->withConstraints([], [])->checks);
+    }
+
+    public function testWithPartitioningAnswersTheDefinitionWithAnotherPartitioning(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT) PARTITION BY HASH (a)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+
+        self::assertSame([true, null], [$table->definition->partitioning !== null, $table->definition->withPartitioning(null)->partitioning]);
+    }
 }

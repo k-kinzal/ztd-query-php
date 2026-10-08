@@ -43,6 +43,7 @@ final class Output
     {
         $limit = $calculate && $plan->root instanceof Limit ? $plan->root : null;
         $iterator = (new Builder())->build($limit === null ? $plan->root : $limit->input);
+        $context->row = 1;
         $iterator->init(new Frame($context));
         $width = count($plan->domains);
         $results = $context->variables->read('character_set_results');
@@ -51,6 +52,7 @@ final class Output
         $found = 0;
         while (($row = $iterator->read()) !== null) {
             $found++;
+            $context->row = $found + 1;
             if ($limit !== null && ($found <= $limit->offset || ($limit->count !== null && $found > $limit->offset + $limit->count))) {
                 continue;
             }
@@ -100,7 +102,8 @@ final class Output
      * A string is sent converted to the character set of the results, so its length counts the
      * bytes of its characters in that set; a set without results keeps the column's own. A
      * temporal value in a character set, as a rollup item is, is sent as such a string. A
-     * ZEROFILL column carries no BINARY flag.
+     * ZEROFILL column carries no BINARY flag. A column of a system table carries the flags the
+     * server reports for it, and NOT NULL when its type is.
      */
     public function column(string $name, Domain $domain, ?ColumnOrigin $origin, ?Charset $results = null): ResultColumn
     {
@@ -109,7 +112,7 @@ final class Output
         $field = $domain->field === Field::Enum || $domain->field === Field::Set ? Field::String : $domain->field;
         $length = $text && $results !== null ? $this->converted($domain->length, $results->maxLength, in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true)) : $domain->byteLength();
 
-        $flags = $domain->flags() | ($origin->flags ?? 0);
+        $flags = $origin !== null && $origin->exact ? $origin->flags | ($domain->flags() & ColumnFlag::NotNull->value) : $domain->flags() | ($origin->flags ?? 0);
         if (($flags & ColumnFlag::ZeroFill->value) !== 0) {
             $flags &= ~ColumnFlag::Binary->value;
         }

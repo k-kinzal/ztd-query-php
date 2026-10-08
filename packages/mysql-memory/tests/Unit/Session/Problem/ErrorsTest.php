@@ -551,7 +551,7 @@ final class ErrorsTest extends TestCase
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
         $statement = $session->analyze('SELECT 1')->statement;
-        $refusal = \MySqlMemory\Error\DataError::NoDefaultForField->error('a');
+        $refusal = \MySqlMemory\Error\Family\DataError::NoDefaultForField->error('a');
 
         $matched = (new Errors())->located(new \SqlSemantics\Statement\Reference\Column\MissingColumn(new Name('x')), 'where clause', true, $session, $statement);
 

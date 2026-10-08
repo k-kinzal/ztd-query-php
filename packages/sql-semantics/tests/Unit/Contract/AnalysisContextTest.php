@@ -71,6 +71,25 @@ final class AnalysisContextTest extends TestCase
         self::assertSame([$table], $insensitive->declared(new QualifiedName(new Name('USERS')), new Name('MAIN')));
     }
 
+    public function testDeclaredFoldsTheNamesOfAFoldedSchema(): void
+    {
+        $profile = new LanguageProfile(GrammarRelease::Sqlite3472);
+        $folded = new Table(new QualifiedName(new Name('TABLES'), new Name('information_schema')), $profile, []);
+        $exact = new Table(new QualifiedName(new Name('Users'), new Name('app')), $profile, []);
+        $context = new AnalysisContext($profile, [new Name('app')], [$folded, $exact], true, Comparison::Sensitive, Comparison::Sensitive, null, null, ['information_schema']);
+
+        self::assertSame([$folded], $context->declared(new QualifiedName(new Name('tables')), new Name('INFORMATION_SCHEMA')));
+        self::assertSame([], $context->declared(new QualifiedName(new Name('users')), new Name('app')));
+    }
+
+    public function testFoldedTellsTheSchemasWhoseNamesAreFolded(): void
+    {
+        $context = new AnalysisContext(new LanguageProfile(GrammarRelease::Sqlite3472), [new Name('main')], [], true, Comparison::Sensitive, Comparison::Sensitive, null, null, ['information_schema']);
+
+        self::assertSame([true, false], [$context->folded('Information_Schema'), $context->folded('main')]);
+        self::assertSame(['information_schema'], $context->withSession(null)->foldedSchemas);
+    }
+
     public function testDeclaredMatchesACatalogOnlyWhenBothSidesWriteOne(): void
     {
         $profile = new LanguageProfile(GrammarRelease::Sqlite3472);

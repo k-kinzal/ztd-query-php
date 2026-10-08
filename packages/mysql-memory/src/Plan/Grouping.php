@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Aggregate\Accumulation;
 use MySqlMemory\Evaluation\Aggregate\GroupingFlags;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Evaluable;
+use MySqlMemory\Evaluation\Function\Json\Predicate;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Leaf\Constant;
 use MySqlMemory\Evaluation\Leaf\Retyped;
@@ -17,9 +18,12 @@ use MySqlMemory\Evaluation\Operator\Conversion;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Path\AccessPath;
 use MySqlMemory\Plan\Path\Transform\Aggregate as AggregatePath;
+use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
@@ -86,6 +90,7 @@ final class Grouping
         $groups = [];
         $targets = [];
         foreach ($select->groupBy === null ? [] : $select->groupBy->items as $item) {
+            $this->groupable($item->expression);
             $group = $compiler->compile($item->expression, $scope);
             $constant = $select->groupBy?->modifier === null && $compiler->constancy($item->expression)->constant() && (new Walker())->find($item->expression, Query::class) === [];
             $groups[] = $constant ? new Constant($group->domain(), null) : $group;
@@ -102,6 +107,39 @@ final class Grouping
         $columns = $rollup ? $this->rollup($select, $groups, $targets, $grouped, $width + count($aggregates)) : [];
 
         return [new AggregatePath($input, $groups, $accumulations, $rollup, $columns), $grouped];
+    }
+
+    /**
+     * Checks that a GROUP BY item does not group by an aggregate or a window function through the alias or position of a select item.
+     *
+     * An item that is such an alias or position is refused with ER_WRONG_GROUP_FIELD naming the
+     * select item; an item that reads an aggregate through an alias inside an expression is refused
+     * with the name `???` (verified on a live 8.4 server).
+     *
+     * @throws \MySqlMemory\Error\SqlError When the item groups by an aggregate or a window function
+     */
+    public function groupable(Scalar $expression): void
+    {
+        $facts = $this->planner->compiler->facts;
+        $walker = new Walker();
+        $direct = $expression;
+        while ($direct instanceof Grouped) {
+            $direct = $direct->operand;
+        }
+        foreach ($walker->find($expression, Scalar::class, false) as $node) {
+            $resolution = ($node instanceof ColumnUse || $node instanceof OutputOrdinal) && $facts->covers($node) ? $facts->scalar($node)->resolution : null;
+            if (!$resolution instanceof AliasTarget || $resolution->field->expression === null) {
+                continue;
+            }
+            $computes = static fn (object $found): bool => Windowing::windowed($found) || (($found instanceof Aggregate || $found instanceof GroupConcat || $found instanceof JsonObjectAggregate) && $found->over === null);
+            $found = array_filter($walker->find($resolution->field->expression, Scalar::class, false), $computes);
+            if ($found !== [] && $node === $direct) {
+                throw QueryError::WrongGroupField->error($this->planner->blocks->name($resolution->field));
+            }
+            if (array_filter($found, static fn (object $call): bool => !Windowing::windowed($call)) !== []) {
+                throw QueryError::WrongGroupField->error('???');
+            }
+        }
     }
 
     /**
@@ -320,7 +358,7 @@ final class Grouping
     /**
      * Finds the aggregates of a block in its select list, HAVING and ORDER BY, outside its subqueries.
      *
-     * @return list<Aggregate|GroupConcat>
+     * @return list<Aggregate|GroupConcat|JsonObjectAggregate>
      */
     public function collect(Select $select): array
     {
@@ -349,17 +387,40 @@ final class Grouping
                     $found[] = $node;
                 }
             }
+            foreach ($walker->find($root, JsonObjectAggregate::class, false) as $node) {
+                if ($node->over === null) {
+                    $found[] = $node;
+                }
+            }
         }
 
         return $found;
     }
 
     /**
-     * Compiles an aggregate into the fold of its arguments.
+     * Compiles a value JSON_ARRAYAGG or JSON_OBJECTAGG folds, marking a predicate, whose value becomes a JSON boolean.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the value cannot be compiled
      */
-    public function accumulation(Aggregate|GroupConcat $node, Scope $scope): Accumulation
+    public function json(Scalar $value, Scope $scope): Evaluable
+    {
+        $compiled = $this->planner->compiler->compile($value, $scope);
+
+        return $this->planner->compiler->jsons->boolean($value) ? new Predicate($compiled) : $compiled;
+    }
+
+    /**
+     * Compiles an aggregate into the fold of its arguments; JSON_OBJECTAGG folds its name and value.
+     */
+    public function accumulation(Aggregate|GroupConcat|JsonObjectAggregate $node, Scope $scope): Accumulation
     {
         $compiler = $this->planner->compiler;
+        if ($node instanceof JsonObjectAggregate) {
+            return new Accumulation(AggregateFunction::JsonArray, [$compiler->compile($node->key, $scope), $this->json($node->value, $scope)], false, $compiler->domain($node), [], ',', 0, true);
+        }
+        if ($node instanceof Aggregate && $node->function === AggregateFunction::JsonArray) {
+            return new Accumulation($node->function, array_map(fn (Scalar $argument): Evaluable => $this->json($argument, $scope), $node->arguments), false, $compiler->domain($node), [], ',', 0);
+        }
         $arguments = array_map(static fn (Scalar $argument): Evaluable => $compiler->compile($argument, $scope), $node->arguments);
         if ($node instanceof GroupConcat) {
             $order = array_map(static fn ($item): array => [$compiler->compile($item->expression, $scope), $item->direction?->value === 'DESC'], $node->order);

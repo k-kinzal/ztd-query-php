@@ -241,14 +241,15 @@ final class Temporal
     /**
      * Answers the datetime a time names on the day of an instant: the time added to its midnight, or subtracted when negative.
      *
+     * @param float $instant The instant as seconds of the local clock since 1970-01-01 00:00:00
      * @return array{int, int, int, int, int, int, int}|null The parts, or null outside years 0 to 9999
      */
     public static function onDay(float $instant, bool $negative, int $hours, int $minute, int $second, int $micro): ?array
     {
-        $today = getdate((int) $instant);
+        $today = Calendar::moment((int) floor($instant));
         $delta = (($hours * 3600 + $minute * 60 + $second) * 1000000 + $micro) * ($negative ? -1 : 1);
 
-        return Calendar::addMicroseconds($today['year'], $today['mon'], $today['mday'], 0, 0, 0, 0, $delta);
+        return Calendar::addMicroseconds($today[0], $today[1], $today[2], 0, 0, 0, 0, $delta);
     }
 
     /**

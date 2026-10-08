@@ -31,4 +31,13 @@ final class CountResultsTest extends TestCase
         self::assertEquals(Domain::integer(Field::LongLong, 21), $rules['GROUPING'](new Invocation([Domain::integer()], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
         self::assertEquals(Domain::integer(Field::LongLong, 21, true), $rules['LAST_INSERT_ID'](new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
     }
+
+    public function testRulesTypeCrc32BitCountAndInterval(): void
+    {
+        $rules = (new CountResults())->rules();
+        $call = new Invocation([Domain::integer()], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])));
+        $legacy = new Invocation([Domain::integer()], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([])));
+
+        self::assertEquals([Domain::integer(Field::LongLong, 10, true), Domain::integer(Field::LongLong, 21), Domain::integer(Field::LongLong, 2), Domain::integer(Field::LongLong, 2)], [$rules['CRC32']($call), $rules['BIT_COUNT']($call), $rules['BIT_COUNT']($legacy), $rules['INTERVAL']($call)]);
+    }
 }

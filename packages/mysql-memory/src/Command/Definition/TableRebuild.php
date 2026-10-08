@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Definition;
 
+use MySqlMemory\Command\Definition\Constraint\ConstraintLayout;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Fill;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\DataError;
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\ConstraintError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -19,7 +21,9 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Storage\ClusterOrder;
 use MySqlMemory\Storage\Heap;
+use MySqlMemory\Storage\References;
 use MySqlMemory\Storage\Store;
+use MySqlMemory\Storage\TimestampZones;
 use MySqlMemory\Storage\Writer;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Contract\SearchPath;
@@ -79,18 +83,29 @@ final class TableRebuild
         $operation = new Operation($this->session->semantics()->context($declarations, true, $database === '' ? null : new SearchPath($database), $this->session->resolution()), $create);
         $planner = new Planner($create, $operation->facts, $this->session->settings(), $this->connection, $this->session->instance->dictionary);
         $command = new CreateTableCommand();
-        $definition = $command->primaryNotNull((new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schemaName));
+        $definitions = new Definitions($planner, $schema->collation);
+        $constraints = new ConstraintLayout();
+        $elements = array_map(static fn (array $key) => $key[0], $layout->keys);
+        $definitions->checkBase = $constraints->highest($elements, $layout->original === '' ? $layout->name->name->value : $layout->original, '_chk_');
+        $definitions->foreignBase = $constraints->highest($elements, $layout->original === '' ? $layout->name->name->value : $layout->original, '_ibfk_');
+        $definitions->keptForeign = $layout->kept;
+        foreach ($layout->keys as [, $key]) {
+            if ($key !== null && $key->generated) {
+                $definitions->generatedKeys[mb_strtolower($key->name)] = true;
+            }
+        }
+        $definition = $command->primaryNotNull($definitions->table($create, $operation->declarations()[0], $schemaName));
         foreach ($warn ? $command->duplicates($definition->keys) : [] as $duplicate) {
             $this->context->warning(SchemaError::DuplicateIndex, $duplicate->name, $schemaName . '.' . $definition->name);
         }
         $columns = [];
         foreach ($definition->columns as $column) {
             $columns[] = isset($layout->undefaulted[mb_strtolower($column->name)])
-                ? new ColumnDefinition($column->name, $column->domain, Fill::none(), $column->autoIncrement, $column->onUpdateNow, $column->generated, $column->invisible, $column->declaration, $column->comment)
+                ? $column->withDefault(Fill::none())
                 : $column;
         }
 
-        return new TableDefinition($definition->schema, $definition->name, $columns, $definition->keys, $definition->declaration, $definition->engine, $definition->collation, $definition->temporary, $definition->comment, $definition->statement);
+        return $definition->withColumns($columns);
     }
 
     /**
@@ -116,18 +131,32 @@ final class TableRebuild
             $frame = new Frame($context);
             $number = 0;
             $resequenced = [];
-            foreach ((new ClusterOrder())->rows($old) as $row) {
+            foreach ((new TimestampZones())->rows($old, (new ClusterOrder())->rows($old), $context) as $row) {
                 $number++;
                 $store = new Store($context, $number, '#sql-1_' . dechex($this->session->id), true);
                 $values = [];
                 foreach ($definition->columns as $position => $column) {
                     $origin = $origins[$position] ?? null;
-                    $values[] = $origin === null ? $this->fresh($column, $writer, $frame) : $this->kept($row[$origin], $old->definition->columns[$origin]->domain, $column, $store, $writer, $number);
+                    $values[] = $origin === null ? null : $this->kept($row[$origin], $old->definition->columns[$origin]->domain, $column, $store, $writer, $number);
                 }
-                [$values, $generated] = $writer->autoIncrement($values, $context->modes->has('NO_AUTO_VALUE_ON_ZERO'));
+                foreach ($definition->columns as $position => $column) {
+                    if (($origins[$position] ?? null) === null) {
+                        $frame->row = $values;
+                        array_splice($values, $position, 1, [$this->fresh($column, $writer, $frame)]);
+                    }
+                }
+                [$values, $generated] = $writer->autoIncrement($writer->generate($values, $store), $context->modes->has('NO_AUTO_VALUE_ON_ZERO'));
+                $check = $writer->violated($values);
+                if ($check !== null) {
+                    throw DataError::CheckConstraintViolated->error($check->name);
+                }
+                if ($definition->partitioning !== null) {
+                    (new \MySqlMemory\Storage\Partitions($definition, $definition->partitioning, $context))->place($values, null);
+                }
                 $resequenced[$heap->insert($values)] = $generated !== null && $automatic !== null && $origins[$automatic] !== null;
             }
             $this->unique($writer, $resequenced);
+            $this->referenced($old, $target);
 
             return $heap;
         } finally {
@@ -173,6 +202,28 @@ final class TableRebuild
                 }
 
                 throw $writer->duplicate($row, $key);
+            }
+        }
+    }
+
+    /**
+     * Refuses rows a foreign key the change adds finds no referenced row for, while foreign_key_checks is on; the error names the copy of the table the server fills.
+     *
+     * @throws SqlError When a row has no referenced row
+     */
+    public function referenced(StoredTable $old, StoredTable $target): void
+    {
+        $kept = array_map(static fn ($key): string => mb_strtolower($key->name), $old->definition->foreignKeys);
+        $added = array_values(array_filter($target->definition->foreignKeys, static fn ($key): bool => !in_array(mb_strtolower($key->name), $kept, true)));
+        if ($added === []) {
+            return;
+        }
+        $references = new References($this->session, $this->context);
+        $checked = new StoredTable($target->definition->withConstraints([], $added), $target->data);
+        foreach ($target->data->rows as $row) {
+            $key = $references->orphan($checked, $row);
+            if ($key !== null) {
+                throw ConstraintError::NoReferencedRow->error('`' . $target->definition->schema . '`.`#sql-1_' . dechex($this->session->id) . '`, ' . $key->text($target->definition));
             }
         }
     }

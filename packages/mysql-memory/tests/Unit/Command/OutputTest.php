@@ -234,4 +234,11 @@ final class OutputTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame(["\xC3\xA9", "\xC3\xA9"], array_map(static fn (ResultColumn $column): string => $column->name, $result->columns));
     }
+
+    public function testColumnReportsTheExactFlagsOfASystemColumn(): void
+    {
+        $column = (new Output())->column('x', Domain::integer(), new ColumnOrigin('', 't', 't', 'x', 36864, true));
+
+        self::assertSame(36865, $column->flags);
+    }
 }

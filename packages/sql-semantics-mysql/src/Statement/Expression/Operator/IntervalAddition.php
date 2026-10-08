@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
@@ -57,11 +58,11 @@ final class IntervalAddition implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $operands = new Operands();
-        $operands->single($derivation->scalar($this->interval->quantity, $environment), $derivation);
+        $quantity = $operands->single($derivation->scalar($this->interval->quantity, $environment), $derivation);
         $operand = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
 
         $domain = (new Precision())->domain($operand->type);
-        $type = $domain === null ? (new TemporalResult())->interval($operand->type, $this->interval->unit, $derivation->context->profile->grammar) : new Known((new Moments(Settings::of($derivation->context)))->shifted($domain, $this->interval->unit));
+        $type = $domain === null ? (new TemporalResult())->interval($operand->type, $this->interval->unit, $derivation->context->profile->grammar) : new Known(($moments = new Moments(Settings::of($derivation->context)))->shifted($domain, $this->interval->unit, $moments->quantity((new Precision())->domain($quantity->type)), in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)));
 
         return new ScalarFact($type, Nullability::Nullable);
     }

@@ -78,4 +78,23 @@ final class DatesTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([[null]], $result->rows);
     }
+
+    public function testTimestampCompilesTimestampaddAndTimestampdiff(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET timestamp = 1700000000');
+
+        $reply = $session->query("SELECT TIMESTAMPADD(DAY, 1, TIME'10:00:00'), TIMESTAMPDIFF(QUARTER, '2024-01-01', '2024-07-01')")[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['2023-11-15 10:00:00', '2']], $reply->rows);
+    }
+
+    public function testFormatCompilesGetFormat(): void
+    {
+        $session = (new Instance())->connect();
+
+        $reply = $session->query("SELECT GET_FORMAT(TIME, 'USA'), GET_FORMAT(DATE, 'x')")[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['%h:%i:%s %p', null]], $reply->rows);
+    }
 }

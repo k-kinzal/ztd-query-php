@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Error;
 
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\ProgramError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem;
 use SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramRule;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\KindRefusal;

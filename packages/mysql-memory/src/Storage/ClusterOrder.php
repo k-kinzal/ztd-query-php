@@ -15,13 +15,14 @@ use MySqlMemory\Value\Order;
 final class ClusterOrder
 {
     /**
-     * Answers the rows of a table by row number, in clustered index order.
+     * Answers the rows of a table by row number, in clustered index order: the rows it holds, or those a read sees of it.
      *
+     * @param array<int, list<int|float|string|null>>|null $rows The rows a read sees, by row number in row number order, or null for those the table holds
      * @return array<int, list<int|float|string|null>>
      */
-    public function rows(StoredTable $table): array
+    public function rows(StoredTable $table, ?array $rows = null): array
     {
-        $rows = $table->data->rows;
+        $rows ??= $table->data->rows;
         $columns = $table->definition->clusterColumns();
         if ($columns === []) {
             return $rows;

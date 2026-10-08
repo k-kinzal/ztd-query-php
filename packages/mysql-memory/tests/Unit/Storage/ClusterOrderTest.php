@@ -49,4 +49,13 @@ final class ClusterOrderTest extends TestCase
         self::assertNotNull($table);
         self::assertSame([1 => [3, 1], 2 => [1, 2]], (new ClusterOrder())->rows($table));
     }
+    public function testRowsOrdersTheRowsAReadSees(): void
+    {
+        $instance = new Instance('8.4.7', [], ['d']);
+        $instance->connect()->query('CREATE TABLE d.t (a INT PRIMARY KEY)');
+        $table = $instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+
+        self::assertSame([2 => [1], 1 => [5]], (new ClusterOrder())->rows($table, [1 => [5], 2 => [1]]));
+    }
 }

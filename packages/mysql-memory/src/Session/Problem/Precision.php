@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Problem;
 
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;

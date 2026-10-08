@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Function;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Encoding;
+use MySqlMemory\Value\Integer;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -326,6 +329,12 @@ final class Strings
     /**
      * HEX: the hexadecimal digits of a number, or of the bytes of a string.
      *
+     * A number is read as a signed BIGINT: a double rounded half to even and a decimal half away
+     * from zero, either one beyond the range taking the nearest bound, the decimal with a warning
+     * (verified on a live 8.4 server).
+     *
+     * @throws SqlError When the statement raises warnings as errors
+     *
      * @param list<Evaluable> $arguments
      */
     public function hex(Frame $frame, array $arguments, Domain $result): ?string
@@ -335,8 +344,14 @@ final class Strings
             return null;
         }
         $domain = $arguments[0]->domain();
+        if ($domain->kind->numeric() && in_array($frame->context->modes->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && in_array($domain->kind, [Kind::Decimal, Kind::Double], true)) {
+            $number = $domain->kind === Kind::Double ? sprintf('%.0f', round((float) $value)) : Decimal::round((string) $value, 0);
+            $integer = bccomp(Decimal::numeric($number), '-9223372036854775808') < 0 || bccomp(Decimal::numeric($number), '18446744073709551615') > 0 ? -1 : (bccomp(Decimal::numeric($number), '0') < 0 ? (int) $number : Integer::fromUnsignedText($number));
+
+            return strtoupper(sprintf('%X', $integer));
+        }
         if ($domain->kind->numeric()) {
-            $integer = Convert::toInteger($value, $domain, $frame->context, true);
+            $integer = $domain->kind === Kind::Decimal ? Convert::decimalInteger((string) $value, $frame->context, false) : Convert::toInteger($value, $domain, $frame->context);
 
             return strtoupper(sprintf('%X', (int) $integer));
         }
@@ -347,12 +362,23 @@ final class Strings
     /**
      * UNHEX: the bytes hexadecimal digits write; NULL for a string that is not hexadecimal.
      *
+     * A string that is not hexadecimal warns (ER_WRONG_VALUE_FOR_TYPE), quoting the argument as
+     * the call writes it (verified on a live 8.4 server).
+     *
      * @param list<Evaluable> $arguments
+     * @param string $call The call as the server prints it
+     *
+     * @throws SqlError When the statement raises warnings as errors
      */
-    public function unhex(Frame $frame, array $arguments, Domain $result): ?string
+    public function unhex(Frame $frame, array $arguments, Domain $result, string $call = ''): ?string
     {
         $texts = $this->texts($frame, $arguments, $result);
-        if ($texts === null || preg_match('/\A[0-9a-fA-F]*\z/', $texts[0]) !== 1) {
+        if ($texts === null) {
+            return null;
+        }
+        if (preg_match('/\A[0-9a-fA-F]*\z/', $texts[0]) !== 1) {
+            $frame->context->warning(DataError::WrongValueForType, 'string', preg_replace('/\A[^(]*\((.*)\)\z/s', '$1', $call) ?? $call, 'unhex');
+
             return null;
         }
         $digits = strlen($texts[0]) % 2 === 1 ? '0' . $texts[0] : $texts[0];

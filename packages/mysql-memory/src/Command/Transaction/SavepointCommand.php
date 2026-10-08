@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Transaction;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Error\Family\TransactionError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -22,6 +23,8 @@ use SqlSemantics\Statement\Operation;
  * Executes SAVEPOINT, ROLLBACK TO SAVEPOINT and RELEASE SAVEPOINT.
  *
  * A savepoint the transaction lacks is ER_SP_DOES_NOT_EXIST, naming it as the statement wrote it.
+ * ROLLBACK TO SAVEPOINT warns with ER_WARNING_NOT_COMPLETE_ROLLBACK when a table that is not
+ * transactional changed after the savepoint (verified on a live 8.4 server).
  * The statements fail with XAER_RMFAIL while an XA transaction is idle.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/savepoint.html.
  *
@@ -50,13 +53,13 @@ final class SavepointCommand implements Command
             throw StatementError::XaWrongState->error($transaction->xa->value);
         }
         if ($statement instanceof Savepoint) {
-            $transaction->savepoint($statement->savepoint->value);
-        } elseif ($statement instanceof RollbackToSavepoint) {
-            $transaction->rollbackTo($statement->savepoint->value);
+            $transaction->savepoints->set($statement->savepoint->value);
+        } elseif ($statement instanceof RollbackToSavepoint && $transaction->savepoints->rollbackTo($statement->savepoint->value)) {
+            $context->diagnostics->warning(TransactionError::NotCompleteRollback, TransactionError::NotCompleteRollback->message());
         } elseif ($statement instanceof ReleaseSavepoint) {
-            $transaction->release($statement->savepoint->value);
+            $transaction->savepoints->release($statement->savepoint->value);
         }
 
-        return new Completion();
+        return new Completion(0, 0, $context->diagnostics->count());
     }
 }

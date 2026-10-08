@@ -42,4 +42,21 @@ final class DeprecatedTest extends TestCase
         self::assertSame([false, true, true], [Deprecated::Cache->warnedIn(GrammarRelease::MySql5651), Deprecated::Cache->warnedIn(GrammarRelease::MySql5744), Deprecated::DotTable->warnedIn(GrammarRelease::MySql5744)]);
         self::assertSame([1681, 1287, 1287], [Deprecated::ProcedureAnalyse->code(), Deprecated::GroupByDirection->code(), Deprecated::DelayedReplace->code()]);
     }
+
+    public function testWarnedInKeysTheLegacyEncryptionFunctionsOnTheirRelease(): void
+    {
+        self::assertSame([true, false, false, true, false], [Deprecated::OldPassword->warnedIn(GrammarRelease::MySql5651), Deprecated::OldPassword->warnedIn(GrammarRelease::MySql5744), Deprecated::DesEncrypt->warnedIn(GrammarRelease::MySql5651), Deprecated::DesEncrypt->warnedIn(GrammarRelease::MySql5744), Deprecated::Encrypt->warnedIn(GrammarRelease::MySql847)]);
+        self::assertSame([1287, 1287], [Deprecated::DesDecrypt->code(), Deprecated::OldPassword->code()]);
+    }
+
+    public function testWarnedInKeysTheReplicaWaitsOnTheirRelease(): void
+    {
+        self::assertSame([false, true, true, true, false], [Deprecated::MasterPosWait->warnedIn(GrammarRelease::MySql5744), Deprecated::MasterPosWait->warnedIn(GrammarRelease::MySql8044), Deprecated::MasterPosWait->warnedIn(GrammarRelease::MySql847), Deprecated::WaitUntilSqlThreadAfterGtids->warnedIn(GrammarRelease::MySql8044), Deprecated::WaitUntilSqlThreadAfterGtids->warnedIn(GrammarRelease::MySql847)]);
+        self::assertSame(1287, Deprecated::MasterPosWait->code());
+    }
+
+    public function testWarnedInWarnsOfJsonMergeFrom57(): void
+    {
+        self::assertSame([false, true, true, 1287], [Deprecated::JsonMerge->warnedIn(GrammarRelease::MySql5651), Deprecated::JsonMerge->warnedIn(GrammarRelease::MySql5744), Deprecated::JsonMerge->warnedIn(GrammarRelease::MySql847), Deprecated::JsonMerge->code()]);
+    }
 }

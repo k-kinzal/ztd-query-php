@@ -95,4 +95,11 @@ final class ShowKeysCommandTest extends TestCase
         self::assertSame(['Table', 'Non_unique', 'Key_name'], array_map(static fn (Heading $heading): string => $heading->name, array_slice($headings, 0, 3)));
         self::assertSame('SHOW_STATISTICS', $headings[0]->table);
     }
+
+    public function testTemporaryReadsTheIndexesOfATemporaryTableApart(): void
+    {
+        $headings = (new ShowKeysCommand())->temporary();
+
+        self::assertSame(['TMP_TABLE_KEYS', \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong], [$headings[0]->table, $headings[1]->field]);
+    }
 }

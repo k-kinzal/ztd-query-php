@@ -66,6 +66,16 @@ final class LocationsTest extends TestCase
         self::assertSame("Unknown column 'nope2' in 'field list'", $subquery[0]->getMessage());
     }
 
+    public function testUndefaultedAcceptsDefaultOfAnAutoIncrementColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY)');
+        $result = $session->query('SELECT DEFAULT(id) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+    }
+
     public function testUndefaultedRefusesDefaultOfAColumnWithoutADefaultWhereItIsResolved(): void
     {
         $session = (new Instance())->connect();
@@ -233,5 +243,17 @@ final class LocationsTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1']], $result->rows);
+    }
+
+    public function testMisplacedRefusesAWindowFunctionWhereTheServerResolvesIt(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE TABLE u (id INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3593);
+        $this->expectExceptionMessage("You cannot use the window function 'rank' in this context.'");
+
+        $session->query('SELECT id FROM u WHERE RANK() OVER () > 0 HAVING RANK() OVER zz > 0');
     }
 }

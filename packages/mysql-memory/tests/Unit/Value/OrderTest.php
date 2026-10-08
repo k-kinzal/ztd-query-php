@@ -72,4 +72,12 @@ final class OrderTest extends TestCase
     {
         self::assertSame([-5400500000.0, 3020399000000.0, 0.0], [Order::time('-01:30:00.5'), Order::time('838:59:59'), Order::time('00:00:00')]);
     }
+
+    public function testJsonOrdersByTheJsonOrderAndContainersBySize(): void
+    {
+        $json = new Domain(Kind::Json, Field::Json, 4294967295, 31, false, Collation::known('utf8mb4_bin'));
+
+        self::assertSame([-1, 0, -1, 1], [Order::json('null', '1'), Order::json('1', '1.0'), Order::json('[1]', '[0, 5]'), Order::compare('"a"', '2', $json)]);
+        self::assertSame(Order::key('1', $json), Order::key('1.0', $json));
+    }
 }

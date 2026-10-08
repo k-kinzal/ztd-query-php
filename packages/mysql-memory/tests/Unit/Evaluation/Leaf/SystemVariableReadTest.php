@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\SystemVariableRead;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Scope;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -80,5 +81,15 @@ final class SystemVariableReadTest extends TestCase
         $session->variables->set($definition, null);
 
         self::assertNull((new SystemVariableRead($definition, Scope::Session, Domain::of($definition->domain, true)))->evaluate(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0))));
+    }
+
+    public function testEvaluateReadsTheTimestampOfTheStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET timestamp = 1.9999999');
+
+        $reply = $session->query('SELECT @@timestamp')[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertEquals([[1.999999]], $reply->rows);
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile\Family;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Operator\Conversion;
@@ -40,7 +40,7 @@ final class Casts
      */
     public function cast(Evaluable $operand, CastTarget $target, Scalar $node): Evaluable
     {
-        return new Conversion($operand, $this->compiler->domain($node), $target->length !== null && in_array($target->kind, [CastKind::Char, CastKind::NationalChar, CastKind::Binary], true) ? (int) $target->length : null, $target->kind->value);
+        return new Conversion($operand, $this->compiler->domain($node)->withSource($target->kind === CastKind::Json ? 'cast_as_json' : ''), $target->length !== null && in_array($target->kind, [CastKind::Char, CastKind::NationalChar, CastKind::Binary], true) ? (int) $target->length : null, $target->kind->value);
     }
 
     /**

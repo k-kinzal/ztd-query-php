@@ -108,4 +108,16 @@ final class StagesTest extends TestCase
     {
         self::assertTrue(Stages::parsed(new UnknownSystemVariable('nosuch')));
     }
+
+    public function testAnsweredLeavesTheMissingColumnsOfCreateTableToItsCommand(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(1824);
+        $this->expectExceptionMessage("Failed to open the referenced table 'nope'");
+
+        $session->query('CREATE TABLE c (a INT, FOREIGN KEY (a) REFERENCES nope(id))');
+    }
 }

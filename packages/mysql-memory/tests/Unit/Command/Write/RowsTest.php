@@ -174,21 +174,6 @@ final class RowsTest extends TestCase
         self::assertSame([['1', '2', '9']], $result->rows);
     }
 
-    public function testLastUniqueAnswersTheLastUniqueKeyOfTheTable(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT PRIMARY KEY, u INT UNIQUE, v INT, KEY (v))');
-        $table = $session->instance->dictionary->table('d', 't');
-        $operation = $session->analyze('INSERT INTO t VALUES (1, 1, 1)');
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $statement = $operation->statement;
-
-        self::assertNotNull($table);
-        self::assertInstanceOf(InsertRows::class, $statement);
-        self::assertSame('u', (new Rows($table, $context, $planner, $statement->into, [], $session))->lastUnique()?->name);
-    }
-
     public function testUpdateAppliesOnDuplicateKeyUpdateCountingTwoAffectedRows(): void
     {
         $session = (new Instance())->connect();
@@ -351,5 +336,99 @@ final class RowsTest extends TestCase
         $session->query('INSERT IGNORE INTO d.t VALUES (1)');
 
         self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testPartitionedLeavesOutARowNoPartitionHoldsWithIgnore(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE r (a INT) PARTITION BY RANGE (a) (PARTITION p0 VALUES LESS THAN (10)); INSERT IGNORE INTO r VALUES (25), (1)');
+
+        $result1 = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $result1);
+        $result2 = $session->query('SELECT * FROM r')[0];
+        self::assertInstanceOf(ResultSet::class, $result2);
+        self::assertSame([[['Warning', '1526', 'Table has no partition for value 25']], [['1']]], [$result1->rows, $result2->rows]);
+    }
+
+    public function testCompletedComputesTheGeneratedColumnsAndDefaultsInColumnOrder(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE d (a INT, g INT AS (a * 2), b INT DEFAULT (g + 1)); INSERT INTO d (a) VALUES (1)');
+
+        $result3 = $session->query('SELECT * FROM d')[0];
+        self::assertInstanceOf(ResultSet::class, $result3);
+        self::assertSame([['1', '2', '3']], $result3->rows);
+    }
+
+    public function testReferencesRefusesAChildRowWithoutParentRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE p (id INT PRIMARY KEY); CREATE TABLE c (pid INT, FOREIGN KEY (pid) REFERENCES p(id)); INSERT IGNORE INTO c VALUES (3)');
+
+        $result4 = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $result4);
+        $result5 = $session->query('SELECT * FROM c')[0];
+        self::assertInstanceOf(ResultSet::class, $result5);
+        self::assertSame([[['Warning', '1452', 'Cannot add or update a child row: a foreign key constraint fails (`d`.`c`, CONSTRAINT `c_ibfk_1` FOREIGN KEY (`pid`) REFERENCES `p` (`id`))']], []], [$result4->rows, $result5->rows]);
+    }
+
+    public function testUpdateScopeReadsTheRowAliasOfInsert(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY, b INT, c INT); INSERT INTO t VALUES (1, 1, 1); INSERT INTO t VALUES (1, 5, 6) AS n ON DUPLICATE KEY UPDATE b = n.b + t.b; INSERT INTO t (c, a) VALUES (9, 1) AS m(x, y) ON DUPLICATE KEY UPDATE c = x + y');
+
+        $result6 = $session->query('SELECT * FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result6);
+        self::assertSame([['1', '6', '10']], $result6->rows);
+    }
+
+    public function testWriteRefusesARowACheckConstraintRefuses(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE c (a INT CHECK (a > 0))');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3819);
+        $this->expectExceptionMessage("Check constraint 'c_chk_1' is violated.");
+
+        $session->query('INSERT INTO c VALUES (0)');
+    }
+
+    public function testTriggersFireBeforeAndAfterTheRowsOfReplace(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, a INT)');
+        $session->query('CREATE TABLE log (m VARCHAR(20))');
+        $session->query('INSERT INTO t VALUES (2, 1)');
+        $session->query("CREATE TRIGGER bi BEFORE INSERT ON t FOR EACH ROW INSERT INTO log VALUES (CONCAT('bi ', NEW.id))");
+        $session->query("CREATE TRIGGER ai AFTER INSERT ON t FOR EACH ROW INSERT INTO log VALUES (CONCAT('ai ', NEW.id))");
+        $session->query("CREATE TRIGGER bd BEFORE DELETE ON t FOR EACH ROW INSERT INTO log VALUES (CONCAT('bd ', OLD.id))");
+        $session->query("CREATE TRIGGER ad AFTER DELETE ON t FOR EACH ROW INSERT INTO log VALUES (CONCAT('ad ', OLD.id))");
+
+        $affected = $session->query('REPLACE INTO t VALUES (2, 7)')[0];
+
+        self::assertInstanceOf(Completion::class, $affected);
+        $result1 = $session->query('SELECT * FROM log')[0];
+        self::assertInstanceOf(ResultSet::class, $result1);
+        self::assertSame([2, [['bi 2'], ['bd 2'], ['ad 2'], ['ai 2']]], [$affected->affectedRows, $result1->rows]);
+    }
+
+    public function testTriggersFireTheUpdateTriggersOfARowOnDuplicateKeyUpdateLeavesAsItWas(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, a INT)');
+        $session->query('INSERT INTO t VALUES (1, 1)');
+        $session->query("CREATE TRIGGER bi BEFORE INSERT ON t FOR EACH ROW SET @m = CONCAT(IFNULL(@m, ''), 'bi;')");
+        $session->query("CREATE TRIGGER au AFTER UPDATE ON t FOR EACH ROW SET @m = CONCAT(IFNULL(@m, ''), 'au ', OLD.a, '>', NEW.a, ';')");
+
+        $session->query('INSERT INTO t VALUES (1, 5) ON DUPLICATE KEY UPDATE a = a');
+
+        $result2 = $session->query('SELECT @m')[0];
+        self::assertInstanceOf(ResultSet::class, $result2);
+        self::assertSame([['bi;au 1>1;']], $result2->rows);
     }
 }

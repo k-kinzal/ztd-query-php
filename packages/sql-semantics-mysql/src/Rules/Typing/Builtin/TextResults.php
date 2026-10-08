@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Rules\Typing\Builtin;
 use Closure;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Resolves the results of string functions: a string in the collation the string arguments aggregate to, as long as the longest text the function can return.
@@ -49,10 +48,8 @@ final class TextResults
             'LPAD' => static fn (Invocation $call): ?Domain => $call->text([$call->domain(0), $call->domain(2)], max(0, $call->constant(1) ?? $call->length($call->domain(0))), 'lpad'),
             'RPAD' => static fn (Invocation $call): ?Domain => $call->text([$call->domain(0), $call->domain(2)], max(0, $call->constant(1) ?? $call->length($call->domain(0))), 'rpad'),
             'SPACE' => static fn (Invocation $call): ?Domain => $call->text([], max(0, $call->constant(0) ?? 64), 'space'),
-            'HEX' => static fn (Invocation $call): ?Domain => $call->text([], $call->domain(0)->kind === Kind::String ? $call->domain(0)->byteLength() * 2 : 16, 'hex'),
-            'UNHEX' => static fn (Invocation $call): Domain => Domain::string(intdiv(($call->domain(0)->kind === Kind::String ? $call->domain(0)->byteLength() : $call->length($call->domain(0))) + 1, 2), Collation::binary()),
             'SUBSTRING_INDEX' => static fn (Invocation $call): ?Domain => $call->text([$call->domain(0), $call->domain(1)], $call->length($call->domain(0)), 'substring_index'),
-            'INSERT' => static fn (Invocation $call): ?Domain => $call->text([$call->domain(0), $call->domain(3)], $call->length($call->domain(0)) + $call->length($call->domain(3)), 'insert'),
+            'INSERT' => static fn (Invocation $call): Domain => (new FormatResults())->inserted($call),
         ];
     }
 

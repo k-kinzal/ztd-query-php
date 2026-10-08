@@ -48,6 +48,7 @@ final class Domain
      * @param bool $numericBytes Whether the bytes of a binary string read as the integer they spell in a numeric context, as for a hexadecimal or bit literal
      * @param int|null $display The display width a column of an integer type reports for itself, when it is narrower than the length
      * @param bool $quiet Whether a string reads as a number without warning when more than a number is written in it, as the result of a string function of MySQL 5.6 and 5.7 does
+     * @param string $source The name a warning about a JSON value read as another type gives where it came from: the JSON column, or the function in lower case; empty when unknown
      */
     public function __construct(
         public readonly Kind $kind,
@@ -62,6 +63,7 @@ final class Domain
         public readonly bool $numericBytes = false,
         public readonly ?int $display = null,
         public readonly bool $quiet = false,
+        public readonly string $source = '',
     ) {
         $this->collation = $collation ?? Collation::binary();
     }
@@ -71,7 +73,15 @@ final class Domain
      */
     public function withNumericBytes(bool $numericBytes = true): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $numericBytes, $this->display, $this->quiet);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $numericBytes, $this->display, $this->quiet, $this->source);
+    }
+
+    /**
+     * Answers the same domain, its values coming from a named JSON column or function.
+     */
+    public function withSource(string $source): self
+    {
+        return $source === $this->source ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $this->quiet, $source);
     }
 
     /**
@@ -79,7 +89,7 @@ final class Domain
      */
     public function withQuiet(bool $quiet = true): self
     {
-        return $quiet === $this->quiet ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $quiet);
+        return $quiet === $this->quiet ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $quiet, $this->source);
     }
 
     /**
@@ -143,7 +153,7 @@ final class Domain
      */
     public function withNullable(bool $nullable): self
     {
-        return $nullable === $this->nullable ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $this->quiet);
+        return $nullable === $this->nullable ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $this->quiet, $this->source);
     }
 
     /**
@@ -151,7 +161,7 @@ final class Domain
      */
     public function withCollation(Collation $collation, Coercibility $coercibility): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->nullable, $this->members, $coercibility, $this->numericBytes, $this->display, $this->quiet);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->nullable, $this->members, $coercibility, $this->numericBytes, $this->display, $this->quiet, $this->source);
     }
 
     /**

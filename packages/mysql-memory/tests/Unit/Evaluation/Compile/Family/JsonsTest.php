@@ -118,4 +118,81 @@ final class JsonsTest extends TestCase
             ],
         );
     }
+
+    public function testJsonValueReadsThePathWhenTheStatementIsCompiled(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT JSON_VALUE('{\"a\":\"2020-01-01\"}', '$.a' RETURNING DATE), JSON_VALUE(NULL, '$.a')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2020-01-01', null]], $result->rows);
+        $this->expectExceptionMessage('Invalid JSON path expression. The error is around character position 1.');
+        $session->query("SELECT JSON_VALUE(NULL, 'x')");
+    }
+
+    public function testParseNamesTheFunctionAndThePosition(): void
+    {
+        self::assertSame('[1]', Jsons::parse('[ 1 ]', 1, 'f')->text());
+        $this->expectExceptionMessage('Invalid JSON text in argument 2 to function json_set: "Invalid value." at position 1.');
+        Jsons::parse('[x]', 2, 'json_set');
+    }
+
+    public function testReadReadsTheDocumentOfAnArgument(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new \MySqlMemory\Evaluation\Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        self::assertSame(['DECIMAL', null], [Jsons::read(new \MySqlMemory\Evaluation\Leaf\Constant(new Domain(Kind::Json, Field::Json, 4294967295, 31, false, Collation::known('utf8mb4_bin')), "1.50\0`d1.50"), $frame, 1, 'f')?->name(), Jsons::read(new \MySqlMemory\Evaluation\Leaf\Constant(Domain::null(), null), $frame, 1, 'f')]);
+    }
+
+    public function testPathRefusesABinaryString(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new \MySqlMemory\Evaluation\Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        self::assertNull(Jsons::path(new \MySqlMemory\Evaluation\Leaf\Constant(Domain::null(), null), $frame));
+        $this->expectExceptionMessage("Cannot create a JSON value from a string with CHARACTER SET 'binary'.");
+        Jsons::path(new \MySqlMemory\Evaluation\Leaf\Constant(Domain::string(3, Collation::binary()), '$.a'), $frame);
+    }
+
+    public function testArgumentMakesNullTheJsonNullAndAPredicateABoolean(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new \MySqlMemory\Evaluation\Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        self::assertSame(['null', 'true', '1'], [Jsons::argument(new \MySqlMemory\Evaluation\Leaf\Constant(Domain::null(), null), $frame)->text(), Jsons::argument(new \MySqlMemory\Evaluation\Function\Json\Predicate(new \MySqlMemory\Evaluation\Leaf\Constant(Domain::integer(), 1)), $frame)->text(), Jsons::argument(new \MySqlMemory\Evaluation\Leaf\Constant(Domain::integer(), 1), $frame)->text()]);
+    }
+
+    public function testCastReadsAStringButNotAnEnumValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE o (e ENUM('x','y'), c VARCHAR(10))");
+        $session->query("INSERT INTO o VALUES ('y', '[1, 2]')");
+        $result = $session->query('SELECT CAST(e AS JSON), CAST(c AS JSON) FROM o')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['"y"', '[1, 2]']], $result->rows);
+        $this->expectExceptionMessage('Invalid JSON text in argument 1 to function cast_as_json: "Invalid value." at position 0.');
+        $session->query("SELECT CAST('abc' AS JSON)");
+    }
+
+    public function testStoredNamesTheBlobTypeByLength(): void
+    {
+        self::assertSame([Field::TinyBlob, Field::MediumBlob, Field::VarString], [Jsons::stored(new Domain(Kind::String, Field::Blob, 255)), Jsons::stored(new Domain(Kind::String, Field::Blob, 16777215)), Jsons::stored(new Domain(Kind::String, Field::VarString, 3))]);
+    }
+
+    public function testOpaqueWritesTheBytesInBase64OverLines(): void
+    {
+        self::assertSame(['"base64:type16:BQ=="', 76], [Jsons::opaque("\x05", Field::Bit)->text(), strlen(explode("\n", substr(Jsons::opaque(str_repeat("\x01", 100), Field::VarString)->scalar(), strlen('base64:type15:')))[0])]);
+    }
+
+    public function testDateTimeWritesSixDecimals(): void
+    {
+        self::assertSame(['2020-01-01 10:00:00.120000', 'x'], [Jsons::dateTime('2020-01-01 10:00:00.12'), Jsons::dateTime('x')]);
+    }
+
+    public function testTimeWritesSixDecimals(): void
+    {
+        self::assertSame(['-10:00:00.500000', 'x'], [Jsons::time('-10:00:00.5'), Jsons::time('x')]);
+    }
 }

@@ -5,17 +5,13 @@ declare(strict_types=1);
 namespace MySqlMemory\Session;
 
 use MySqlMemory\Command\Dispatcher;
-use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Settings;
-use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
-use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
-use MySqlMemory\Session\Problem\Errors;
-use MySqlMemory\Session\Problem\Stages;
 use SqlParser\Lexer\SourceException;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Contract\SearchPath;
@@ -24,12 +20,11 @@ use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
-use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
-use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings as Resolution;
 use SqlSemantics\Statement\Operation;
+use WeakReference;
 
 /**
  * A client session of the server: its current database, variables, diagnostics area and transaction.
@@ -62,6 +57,21 @@ final class Session
     public array $dots = [];
 
     /**
+     * @var list<array{string, bool}> The warnings about the problems of the hint comments of the statement last parsed, in written order, each with whether its comment follows the first keyword of the statement
+     */
+    public array $hinted = [];
+
+    /**
+     * Whether the text of the statement last parsed holds a hint comment.
+     */
+    public bool $commented = false;
+
+    /**
+     * Whether the statement runs a prepared statement, whose hints warned when it was prepared.
+     */
+    public bool $replayed = false;
+
+    /**
      * The open transaction and the rows a failing statement restores.
      */
     public readonly Transaction $transaction;
@@ -87,6 +97,21 @@ final class Session
     public array $prepared = [];
 
     /**
+     * The activation of the stored program the session runs a statement of, or null outside a program.
+     */
+    public ?\MySqlMemory\Program\Activation $program = null;
+
+    /**
+     * The statements the session runs, as its stored programs see them.
+     */
+    public readonly \MySqlMemory\Program\Running $running;
+
+    /**
+     * The temporary tables of the session.
+     */
+    public readonly \MySqlMemory\Dictionary\Temporaries $temporaries;
+
+    /**
      * @var array<string, Semantics> The analyzers of each lexical mode, by mode
      */
     private array $semantics = [];
@@ -102,16 +127,47 @@ final class Session
      */
     public function __construct(public readonly Instance $instance, public readonly int $id, public readonly string $user = 'root', public readonly string $host = 'localhost', ?string $database = null)
     {
-        $this->variables = new Variables($instance->catalog, $instance->globals);
+        $this->variables = new Variables($instance->catalog, $instance->globals, $instance);
         $this->variables->connection = $id;
         $this->variables->account = $user . '@' . $host;
         $this->variables->definer = $user . '@%';
         $this->variables->roles = array_values($instance->accounts->defaults[(new \MySqlMemory\Account\Identity($user, '%'))->key()] ?? []);
         $this->diagnostics = new Diagnostics();
-        $this->transaction = new Transaction($instance->dictionary);
+        $this->temporaries = new \MySqlMemory\Dictionary\Temporaries();
+        $this->transaction = new Transaction($instance->dictionary, $id, $this->variables, $instance->transactions, $this->diagnostics);
+        $instance->transactions->sessions[$id] = $this->transaction;
+        $session = WeakReference::create($this);
+        $this->transaction->access->resumed = static function () use ($session): void {
+            $resumed = $session->get();
+            if ($resumed !== null) {
+                $resumed->instance->dictionary->temporaries = $resumed->temporaries;
+            }
+        };
+        $this->running = new \MySqlMemory\Program\Running();
         if ($database !== null) {
             $this->use($database);
         }
+        $instance->registry->threads->connect($id);
+    }
+
+    /**
+     * Ends the session, as the client disconnecting does: the user-level locks it holds are released, and its open transaction is rolled back, releasing its row locks.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/locking-functions.html,
+     * https://dev.mysql.com/doc/refman/8.4/en/innodb-autocommit-commit-rollback.html.
+     */
+    public function close(): void
+    {
+        $this->instance->registry->threads->disconnect($this->id);
+        $this->transaction->disconnect();
+    }
+
+    /**
+     * Ends the session when nothing refers to it any longer.
+     */
+    public function __destruct()
+    {
+        $this->close();
     }
 
     /**
@@ -161,13 +217,19 @@ final class Session
                 $reply = $this->execute($statement, $parameters, $prepared);
                 array_push($answers, ...($reply instanceof \MySqlMemory\Result\Batch ? $reply->replies : [$reply]));
             } catch (SqlError $error) {
-                $this->transaction->abortStatement();
+                $this->transaction->statements->abort();
                 $this->variables->rowCount = -1;
+                array_push($answers, ...$this->running->replies);
+                $this->running->replies = [];
                 if (!$error->recorded) {
                     $this->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
                 }
                 foreach ($error->following as [$code, $message]) {
                     $this->diagnostics->error($code, $message);
+                }
+                if ($this->transaction->unrestored) {
+                    $this->transaction->unrestored = false;
+                    $this->diagnostics->warning(\MySqlMemory\Error\Family\TransactionError::NotCompleteRollback, \MySqlMemory\Error\Family\TransactionError::NotCompleteRollback->message());
                 }
                 $answers[] = $error;
                 break;
@@ -214,89 +276,17 @@ final class Session
     public function execute(string $statement, array $parameters = [], bool $prepared = false): Reply
     {
         $this->text = $statement;
+        $this->replayed = $prepared;
         try {
             $operation = $this->analyze($statement, $prepared, $parameters);
+            $this->hinted = $prepared ? [] : $this->hinted;
             $command = (new Dispatcher())->command($operation->statement);
         } catch (SqlError $error) {
             $this->diagnostics->clear();
             throw (new CacheOptions())->reported($error, $statement, $this);
         }
-        $context = new Context($this->modes(), $this->diagnostics, $this->variables, microtime(true));
-        if ($command->clearsDiagnostics() && $this->retains($operation->statement, $command)) {
-            $this->diagnostics->retain();
-        } elseif ($command->clearsDiagnostics()) {
-            $this->diagnostics->clear();
-        }
-        $late = array_filter($operation->facts->warnings, Stages::afterReading(...));
-        $this->parsing($operation, array_diff_key($operation->facts->warnings, $late));
-        (new Problems())->read($operation, $this);
-        foreach ($late as $warning) {
-            $this->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
-        }
-        try {
-            (new Problems())->raise($operation, $this);
-        } catch (SqlError $error) {
-            throw (new Problem\ValueRows())->extended($error, $operation->statement, $this->settings()->release());
-        }
-        if ($this->locks !== []) {
-            (new \MySqlMemory\Command\Access\Locks())->check($operation->statement, $this);
-        }
-        $this->transaction->beginStatement();
-        $reply = $command->execute($operation, $this, $context, new Connection($this->variables, $context, $this->user, $this->host, $this->id, $parameters));
-        $this->transaction->endStatement();
-        $this->variables->rowCount = $reply instanceof Completion ? $reply->affectedRows : -1;
 
-        return $reply;
-    }
-
-    /**
-     * Records the conditions the server raises while it parses a statement, in order: the
-     * warnings, the names after a leading dot once a warning that is not raised at the head of
-     * the statement comes, and the error of each problem found while parsing, up to one that
-     * stops the parse; the first of those errors then fails the statement.
-     *
-     * @param array<int, \SqlSemantics\Statement\Fact\Warning> $warnings The warnings raised while the statement is read
-     *
-     * @throws SqlError When a problem is found while the statement is parsed
-     */
-    public function parsing(Operation $operation, array $warnings): void
-    {
-        $dots = $this->dots;
-        $failure = null;
-        foreach ($warnings as $warning) {
-            if (!$warning instanceof Deprecation || !in_array($warning->construct, Syntax::HEAD, true)) {
-                foreach ($dots as $construct) {
-                    $this->diagnostics->warning($construct->code(), $construct->value);
-                }
-                $dots = [];
-            }
-            if ($warning instanceof ParseFailure) {
-                $error = (new CacheOptions())->placed($warning->problem, $operation->statement, $this) ?? (new Errors())->error($warning->problem, $this, 'field list', $operation->statement);
-                $this->diagnostics->error($error->getCode(), $error->getMessage());
-                $failure ??= $error;
-                if ($warning->aborts) {
-                    break;
-                }
-                continue;
-            }
-            $this->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
-        }
-        foreach ($dots as $construct) {
-            $this->diagnostics->warning($construct->code(), $construct->value);
-        }
-        if ($failure !== null) {
-            throw new SqlError($failure->error, $failure->getMessage(), $failure, [], null, null, true);
-        }
-    }
-
-    /**
-     * Tells whether a statement keeps the diagnostics of the statement before it until it raises a condition: in MySQL 5.6, a query, SET or DO that uses no table.
-     */
-    public function retains(\SqlSemantics\Statement\Node $statement, \MySqlMemory\Command\Command $command): bool
-    {
-        return $this->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651
-            && ($command instanceof \MySqlMemory\Command\QueryCommand || $command instanceof \MySqlMemory\Command\SetCommand || $command instanceof \MySqlMemory\Command\DoCommand)
-            && (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class) === [];
+        return (new Execution($this))->perform($operation, $command, $parameters);
     }
 
     /**
@@ -308,6 +298,7 @@ final class Session
     public function analyze(string $statement, bool $prepared = false, array $parameters = []): Operation
     {
         $semantics = $this->semantics();
+        $this->instance->dictionary->temporaries = $this->temporaries;
         $this->dots = [];
         try {
             $tree = $semantics->parser()->parse($statement);
@@ -319,15 +310,20 @@ final class Session
         }
         (new Syntax())->temporals($tree, $this->modes());
         $this->dots = $this->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? (new Syntax())->dots($tree) : [];
+        $this->hinted = (new \MySqlMemory\Hint\Hints())->syntax($tree, $statement, $this);
+        $this->commented = str_contains($statement, '/*+');
         (new Syntax())->debugOnly($tree, $statement);
         $database = $this->variables->database;
         \MySqlMemory\Plan\Views::refreshAll($this->instance->dictionary, $this->settings());
+        $typing = (new \MySqlMemory\Hint\Hints())->typing($tree, $statement, $this);
         try {
             $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($this->bound($tree, $parameters, $prepared))));
         } catch (ImplementationGap $gap) {
             throw new SqlError(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message($gap->getMessage()), $gap);
         } catch (AnalysisException $error) {
             throw (new Syntax())->error($error, $statement);
+        } finally {
+            $typing->restore($this);
         }
         (new Syntax())->internal($operation->statement, $statement);
 
@@ -381,7 +377,7 @@ final class Session
 
         $client = $this->variables->read('character_set_client');
 
-        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, (int) $this->variables->read('group_concat_max_len'), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), is_string($client) ? Charset::named($client) : null);
+        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, (int) $this->variables->read('group_concat_max_len'), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), is_string($client) ? Charset::named($client) : null, program: $this->program?->rows() ?? [], functions: $this->instance->dictionary->functions(), blockEncryptionMode: (string) $this->variables->read('block_encryption_mode'), timeNames: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::named((string) $this->variables->read('lc_time_names')));
     }
 
     /**
@@ -422,9 +418,10 @@ final class Session
      */
     public function use(string $database): void
     {
-        if ($this->instance->dictionary->schema($database) === null) {
+        $schema = $this->instance->dictionary->schema($database);
+        if ($schema === null) {
             throw QueryError::BadDatabase->error($database);
         }
-        $this->variables->database = $database;
+        $this->variables->database = $schema->name;
     }
 }

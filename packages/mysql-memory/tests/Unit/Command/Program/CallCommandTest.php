@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Command\Program;
 
 use MySqlMemory\Command\Program\CallCommand;
-use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
@@ -80,45 +79,118 @@ final class CallCommandTest extends TestCase
         $session->query('CALL p(1, 2)');
     }
 
-    public function testArgumentsStoresEachArgumentAsIntoAColumn(): void
+    public function testExecuteGivesTheVariablesTheValuesOfOutAndInoutParameters(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
-        $session->query('CREATE PROCEDURE p(x INT, s VARCHAR(5)) SELECT x, s');
-        $routine = $session->instance->dictionary->schema('d')?->procedures['p'];
-        self::assertNotNull($routine);
-        $operation = $session->analyze("CALL p(1.7, 'abcdefg')");
-        $statement = $operation->statement;
+        $session->query('CREATE PROCEDURE p(OUT x INT, INOUT y INT) BEGIN SET x = 5; SET y = y + 1; END');
+        $session->query('SET @y = 1');
+        $session->query('CALL p(@x, @y)');
+
+        $result1 = $session->query('SELECT @x, @y')[0];
+        self::assertInstanceOf(ResultSet::class, $result1);
+        self::assertSame([['5', '2']], $result1->rows);
+    }
+
+    public function testExecuteRefusesRecursionBeyondMaxSpRecursionDepth(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE PROCEDURE p(n INT) BEGIN IF n > 0 THEN CALL p(n - 1); END IF; END');
+
+        $this->expectExceptionCode(1456);
+        $this->expectExceptionMessage('Recursive limit 0 (as set by the max_sp_recursion_depth variable) was exceeded for routine p');
+
+        $session->query('CALL p(1)');
+    }
+
+    public function testExecuteAnswersTheResultSetsBeforeTheErrorThatEndsTheProcedure(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query("CREATE PROCEDURE p() BEGIN SELECT 1; SIGNAL SQLSTATE '45000'; END");
+
+        $answers = $session->run('CALL p()');
+
+        self::assertSame([ResultSet::class, \MySqlMemory\Error\SqlError::class], array_map(static fn (object $answer): string => $answer::class, $answers));
+    }
+
+    public function testRoutineFindsTheProcedureACallNames(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE PROCEDURE p() SELECT 1');
+        $statement = $session->analyze('CALL p()')->statement;
         self::assertInstanceOf(ProcedureCall::class, $statement);
+
+        self::assertSame('p', (new CallCommand())->routine($statement, $session)->name);
+    }
+
+    public function testTargetsRefusesAnOutArgumentThatIsNoVariable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE PROCEDURE p(OUT x INT, INOUT y INT) SET x = 1');
+
+        $this->expectExceptionCode(1414);
+        $this->expectExceptionMessage('OUT or INOUT argument 2 for routine d.p is not a variable or NEW pseudo-variable in BEFORE trigger');
+
+        $session->query('CALL p(@x, 2)');
+    }
+
+    public function testFieldFindsAColumnOfTheNewRowOfABeforeTrigger(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('CREATE PROCEDURE p(OUT x INT) SET x = 42');
+        $session->query('CREATE TRIGGER b BEFORE INSERT ON t FOR EACH ROW CALL p(NEW.a)');
+        $session->query('INSERT INTO t VALUES (1)');
+
+        $result2 = $session->query('SELECT a FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result2);
+        self::assertSame([['42']], $result2->rows);
+    }
+
+    public function testArgumentsStartsAnOutParameterNull(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE PROCEDURE p(OUT x INT) SELECT x');
+        $session->query('SET @x = 5');
+
+        $result3 = $session->query('CALL p(@x)')[0];
+        self::assertInstanceOf(ResultSet::class, $result3);
+        self::assertSame([[null]], $result3->rows);
+    }
+
+    public function testEvaluatedAnswersTheValueAndTypeOfAnArgument(): void
+    {
+        $session = (new Instance())->connect();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
 
-        $this->expectExceptionCode(1406);
-        $this->expectExceptionMessage("Data too long for column 's' at row 1");
+        [$value, $domain] = (new CallCommand())->evaluated(new \MySqlMemory\Evaluation\Leaf\Constant(\MySqlMemory\Typing\Domain::integer(), 7), $context);
 
-        (new CallCommand())->arguments($statement, $routine, $operation, $session, $context, new Connection($session->variables, $context, 'root', 'localhost', 1, []));
+        self::assertSame([7, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer], [$value, $domain->kind]);
     }
 
-    public function testStatementsRefusesABodyWithDeclarations(): void
+    public function testWriteGivesTheVariablesOfTheCallingProgramTheirValuesInOrder(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d');
         $session->query('USE d');
-        $session->query('CREATE PROCEDURE q(x INT) BEGIN DECLARE y INT; SET y = x; SELECT y; END');
-        $routine = $session->instance->dictionary->schema('d')?->procedures['q'];
-        self::assertNotNull($routine);
+        $session->query('CREATE PROCEDURE op(OUT x INT, INOUT y INT) BEGIN SET x = 5; SET y = y + 1; END');
+        $session->query('CREATE PROCEDURE p() BEGIN DECLARE v INT; CALL op(v, v); SELECT v; END');
 
-        $this->expectExceptionCode(1235);
-
-        (new CallCommand())->statements($routine, $session);
-    }
-
-    public function testStatementWritesTheParametersAsMarkersAndKeepsTheNames(): void
-    {
-        $session = (new Instance())->connect();
-        $text = 'CREATE PROCEDURE p(x INT) SELECT x, x + 1 AS y, a FROM t LIMIT x';
-        $member = $session->semantics()->parser()->parse($text)->find('sp_proc_stmt')[0];
-
-        self::assertSame(['SELECT ? AS `x`, ? + 1 AS y, a FROM t LIMIT ?', [0, 0, 0]], (new CallCommand())->statement($member, $text, ['x']));
+        $result4 = $session->query('CALL p()')[0];
+        self::assertInstanceOf(ResultSet::class, $result4);
+        self::assertSame([[null]], $result4->rows);
     }
 }

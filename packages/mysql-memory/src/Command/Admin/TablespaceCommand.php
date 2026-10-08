@@ -6,10 +6,10 @@ namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Server\ServerCatalog;
-use MySqlMemory\Error\AdministrationError;
-use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\Family\AdministrationError;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Registry\Registry;

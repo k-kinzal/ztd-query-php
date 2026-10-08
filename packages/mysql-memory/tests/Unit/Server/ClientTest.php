@@ -21,6 +21,19 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ClientTest extends TestCase
 {
+    public function testCloseReleasesTheLocksOfTheSession(): void
+    {
+        $instance = new Instance();
+        $client = new Client($instance, 7, static function (string $bytes): void {
+        });
+        $client->close();
+        $client->receive("\x26\x00\x00\x01" . "\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        $client->session()->query("SELECT GET_LOCK('a', 0)");
+        $client->close();
+
+        self::assertSame([[], []], [$instance->registry->threads->locks, $instance->registry->threads->connected]);
+    }
+
     public function testGreetSendsTheInitialHandshake(): void
     {
         $sent = new ArrayObject();
@@ -417,5 +430,16 @@ final class ClientTest extends TestCase
         $client->greet();
 
         self::assertSame(["\x08"], $sent->getArrayCopy());
+    }
+    public function testStatusReportsATransactionOnceItIsActive(): void
+    {
+        $client = new Client(new Instance(), 1, static function (string $bytes): void {
+        });
+        $client->receive("\x26\x00\x00\x01" . "\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        $client->session()->query('CREATE DATABASE d; CREATE TABLE d.t (a INT); SET autocommit = 0; SELECT 1');
+        $idle = $client->status();
+        $client->session()->query('SELECT * FROM d.t');
+
+        self::assertSame([0, 1], [$idle, $client->status()]);
     }
 }

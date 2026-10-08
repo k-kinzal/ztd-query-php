@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation;
 
-use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Evaluation\Function\Json\Coercions;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Leaf\Constant;
 use MySqlMemory\Evaluation\Leaf\Outer;
@@ -14,10 +15,12 @@ use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Encoding;
 use MySqlMemory\Value\Integer;
+use MySqlMemory\Value\Json\Json;
 use MySqlMemory\Value\NumericText;
 use MySqlMemory\Value\Real;
 use MySqlMemory\Value\Temporal;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
@@ -39,6 +42,10 @@ final class Convert
         if ($value === null) {
             return null;
         }
+        $ordinal = self::ordinal($value, $domain);
+        if ($ordinal !== null) {
+            return (float) $ordinal;
+        }
 
         if ($domain->numericBytes && $domain->kind === Kind::String) {
             $domain = new Domain(Kind::Bit, $domain->field, $domain->length, 0, true);
@@ -50,7 +57,8 @@ final class Convert
             Kind::Decimal => (float) $value,
             Kind::Date, Kind::Time, Kind::DateTime => (float) Temporal::number((string) $value),
             Kind::Bit => Integer::real(self::bits((string) $value), true),
-            Kind::String, Kind::Json => (float) self::stringNumber(self::readable((string) $value, $domain), 'DOUBLE', $context, false, self::readableCharset($domain), $domain->quiet),
+            Kind::Json => Coercions::toDouble((string) $value, $domain, $context),
+            Kind::String => self::stringReal(self::readable((string) $value, $domain), $context, self::readableCharset($domain), $domain->quiet),
             Kind::Null => null,
         };
     }
@@ -63,6 +71,10 @@ final class Convert
         if ($value === null) {
             return null;
         }
+        $ordinal = self::ordinal($value, $domain);
+        if ($ordinal !== null) {
+            return $ordinal;
+        }
 
         if ($domain->numericBytes && $domain->kind === Kind::String) {
             $domain = new Domain(Kind::Bit, $domain->field, $domain->length, 0, true);
@@ -74,9 +86,37 @@ final class Convert
             Kind::Decimal => self::exactInteger(Decimal::round((string) $value, 0), $unsigned),
             Kind::Date, Kind::Time, Kind::DateTime => self::exactInteger(Decimal::round(Temporal::number((string) $value), 0), $unsigned),
             Kind::Bit => self::bits((string) $value),
-            Kind::String, Kind::Json => self::stringInteger(self::readable((string) $value, $domain), $context, $unsigned, self::readableCharset($domain), $domain->quiet),
+            Kind::Json => Coercions::toInteger((string) $value, $domain, $context),
+            Kind::String => self::stringInteger(self::readable((string) $value, $domain), $context, $unsigned, self::readableCharset($domain), $domain->quiet),
             Kind::Null => null,
         };
+    }
+
+    /**
+     * Answers the number an ENUM or SET value reads as, or null for any other value.
+     *
+     * An ENUM value is the position of its member from 1, the empty string 0; a SET value has the
+     * bit of the position of each of its members set.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/enum.html,
+     * https://dev.mysql.com/doc/refman/8.4/en/set.html.
+     */
+    public static function ordinal(int|float|string $value, Domain $domain): ?int
+    {
+        if ($domain->kind !== Kind::String || $domain->members === [] || ($domain->field !== Field::Enum && $domain->field !== Field::Set)) {
+            return null;
+        }
+        if ($domain->field === Field::Enum) {
+            $position = array_search((string) $value, $domain->members, true);
+
+            return $position === false ? 0 : $position + 1;
+        }
+        $bits = 0;
+        foreach (explode(',', (string) $value) as $member) {
+            $position = array_search($member, $domain->members, true);
+            $bits |= $position === false ? 0 : 1 << $position;
+        }
+
+        return $bits;
     }
 
     /**
@@ -86,6 +126,10 @@ final class Convert
     {
         if ($value === null) {
             return null;
+        }
+        $ordinal = self::ordinal($value, $domain);
+        if ($ordinal !== null) {
+            return (string) $ordinal;
         }
 
         if ($domain->numericBytes && $domain->kind === Kind::String) {
@@ -98,7 +142,8 @@ final class Convert
             Kind::Decimal => (string) $value,
             Kind::Date, Kind::Time, Kind::DateTime => Temporal::number((string) $value),
             Kind::Bit => Integer::text(self::bits((string) $value), true),
-            Kind::String, Kind::Json => self::stringNumber(self::readable((string) $value, $domain), 'DECIMAL', $context, true, self::readableCharset($domain), $domain->quiet),
+            Kind::Json => Coercions::toDecimal((string) $value, $domain, $context),
+            Kind::String => self::stringNumber(self::readable((string) $value, $domain), 'DECIMAL', $context, true, self::readableCharset($domain), $domain->quiet),
             Kind::Null => null,
         };
     }
@@ -118,7 +163,7 @@ final class Convert
     public static function operandDecimal(int|float|string|null $value, Evaluable $operand, Context $context): ?string
     {
         $domain = $operand->domain();
-        if ($value === null || ($domain->kind !== Kind::String && $domain->kind !== Kind::Json) || $domain->numericBytes) {
+        if ($value === null || $domain->kind !== Kind::String || $domain->numericBytes) {
             return self::toDecimal($value, $domain, $context);
         }
         $text = self::readable((string) $value, $domain);
@@ -151,7 +196,8 @@ final class Convert
         return match ($domain->kind) {
             Kind::Integer, Kind::Year => Integer::text((int) $value, $domain->unsigned),
             Kind::Double => $domain->decimals < Domain::NOT_FIXED ? Real::fixed((float) $value, $domain->decimals) : Real::format((float) $value),
-            Kind::Decimal, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json, Kind::Bit, Kind::Null => (string) $value,
+            Kind::Json => Json::visible((string) $value),
+            Kind::Decimal, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Bit, Kind::Null => (string) $value,
         };
     }
 
@@ -170,6 +216,30 @@ final class Convert
             Kind::Decimal => Decimal::compare((string) $value, '0') !== 0,
             Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json, Kind::Null => self::toDouble($value, $domain, $context) !== 0.0,
         };
+    }
+
+    /**
+     * Reads the number at the start of a string as a double and warns when more follows or it overflows.
+     *
+     * A number beyond the range of a double reads as the largest double of its sign, as
+     * CAST('1e400' AS DOUBLE) does.
+     *
+     * @param Charset|null $charset The character set of the string, which the warning quotes it from
+     * @param bool $quiet Whether the string reads without warning, as a string function result of MySQL 5.6 and 5.7 does
+     */
+    public static function stringReal(string $text, Context $context, ?Charset $charset = null, bool $quiet = false): float
+    {
+        $read = NumericText::real($text);
+        $real = (float) $read->number;
+        $finite = is_finite($real);
+        if (!$quiet && (!$read->complete || !$finite)) {
+            $context->warning(DataError::TruncatedWrongValue, 'DOUBLE', self::shown($text, $charset));
+        }
+        if ($finite) {
+            return $real;
+        }
+
+        return $real < 0 ? -PHP_FLOAT_MAX : PHP_FLOAT_MAX;
     }
 
     /**

@@ -266,4 +266,21 @@ final class ConversionTest extends TestCase
 
         self::assertSame([], $session->diagnostics->conditions);
     }
+
+    public function testMomentReadsAJsonValueAsAStringOrATemporalValue(): void
+    {
+        $result = (new Instance())->connect()->query("SELECT CAST(CAST('\"2020-01-02\"' AS JSON) AS DATE), CAST(CAST(DATE'2020-01-02' AS JSON) AS DATETIME), CAST(CAST('[1]' AS JSON) AS DATE)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2020-01-02', '2020-01-02 00:00:00', null]], $result->rows);
+        self::assertSame(1, $result->warnings);
+    }
+
+    public function testEvaluateNormalizesACastToJson(): void
+    {
+        $result = (new Instance())->connect()->query("SELECT CAST('{\"b\":1,\"a\":2}' AS JSON), CAST(1.50 AS JSON), CAST(x'01' AS JSON), CAST(1=1 AS JSON), JSON_TYPE(CAST(TIMESTAMP'2020-01-01 00:00:00' AS JSON))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['{"a": 2, "b": 1}', '1.50', '"base64:type15:AQ=="', 'true', 'DATETIME']], $result->rows);
+    }
 }

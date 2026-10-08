@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
-use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\StatementError;
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Compile\Family\Jsons;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
@@ -15,21 +19,37 @@ use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Path\AccessPath;
 use MySqlMemory\Plan\Path\Combine\NestedLoopJoin;
 use MySqlMemory\Plan\Path\JoinKind;
+use MySqlMemory\Plan\Path\Source\JsonColumn;
+use MySqlMemory\Plan\Path\Source\JsonTableScan;
 use MySqlMemory\Plan\Path\Source\SingleRow;
 use MySqlMemory\Plan\Path\Source\TableScan;
 use MySqlMemory\Plan\Path\Transform\Materialize;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Value\Json\JsonKind;
+use MySqlMemory\Value\Json\JsonPath;
+use MySqlMemory\Value\Json\JsonSyntax;
 use ReflectionClass;
+use SqlSemantics\Platform\MySql\Rules\Typing\Declared;
+use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse;
+use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponseKind;
+use SqlSemantics\Platform\MySql\Statement\Call\Json\NestedColumns;
+use SqlSemantics\Platform\MySql\Statement\Call\Json\OrdinalityColumn;
+use SqlSemantics\Platform\MySql\Statement\Call\Json\PathColumn;
+use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
+use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
+use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Relation;
@@ -55,7 +75,7 @@ final class Relations
     /**
      * Plans a relation and places its occurrences in the scope of the block.
      *
-     * @throws \MySqlMemory\Error\SqlError When a relation cannot be read
+     * @throws SqlError When a relation cannot be read
      */
     public function plan(Relation $relation, Scope $scope): AccessPath
     {
@@ -66,14 +86,15 @@ final class Relations
             $relation instanceof TableList => $this->list($relation, $scope),
             $relation instanceof NestedRelation, $relation instanceof OdbcJoin, $relation instanceof EscapedRelation => $this->plan($relation->relation, $scope),
             $relation instanceof Dual => new SingleRow(),
+            $relation instanceof JsonTable => $this->jsonTable($relation, $scope),
             default => throw StatementError::NotSupportedYet->error('relation ' . (new ReflectionClass($relation))->getShortName()),
         };
     }
 
     /**
-     * Plans a table reference: a stored table, or a common table expression.
+     * Plans a table reference: a stored table, a system table with the rows it holds now, or a common table expression.
      *
-     * @throws \MySqlMemory\Error\SqlError When the table does not exist
+     * @throws SqlError When the table does not exist
      */
     public function table(TableReference $reference, Scope $scope): AccessPath
     {
@@ -96,16 +117,22 @@ final class Relations
         if ($view !== null && $resolution->table === $view->declaration) {
             return (new Views($this->planner))->plan($reference, $view, $scope, $this);
         }
-        $stored = $this->planner->dictionary->table($name->schema->value ?? $this->planner->settings->database, $name->name->value);
+        $system = $this->planner->dictionary->system;
+        $read = $system?->table($resolution->table);
+        $stored = $system !== null && $read !== null ? $system->read($read, $this->planner->compiler->connection) : $this->planner->dictionary->table($name->schema->value ?? $this->planner->settings->database, $name->name->value);
         if ($stored === null) {
             throw QueryError::NoSuchTable->error($name->schema->value ?? $this->planner->settings->database, $name->name->value);
         }
-        if ($reference->partitions !== []) {
-            throw StatementError::NotSupportedYet->error('partition selection');
-        }
         $definition = $stored->definition;
+        $selected = null;
+        if ($reference->partitions !== []) {
+            if ($definition->partitioning === null) {
+                throw SchemaError::PartitionClauseOnNonpartitioned->error();
+            }
+            $selected = (new \MySqlMemory\Storage\Partitions($definition, $definition->partitioning, $this->planner->compiler->connection->context))->selected($reference->partitions);
+        }
         $scope->place($reference, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
-        $scan = new TableScan($stored);
+        $scan = new TableScan($stored, $selected);
         $scope->scans[spl_object_id($reference)] = $scan;
 
         return $scan;
@@ -125,6 +152,109 @@ final class Relations
         $scope->derived[spl_object_id($derived)] = $derived->alias->value ?? '';
 
         return new Materialize($plan, $derived->lateral);
+    }
+
+    /**
+     * Plans JSON_TABLE: its document sees the tables before it, and its columns take their declared types.
+     *
+     * A counter is an unsigned BIGINT of ten digits. ON ERROR written before ON EMPTY is deprecated
+     * with a warning. A DEFAULT value of ON EMPTY or ON ERROR is read as
+     * a JSON text when the statement is resolved, and may be an array or an object only for a JSON
+     * column (ER_INVALID_DEFAULT) (verified on a live 8.4 server).
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/json-table-functions.html.
+     *
+     * @throws SqlError When the document, a path or a DEFAULT value is not valid
+     */
+    public function jsonTable(JsonTable $table, Scope $scope): AccessPath
+    {
+        $document = $this->planner->compiler->compile($table->document, $scope);
+        $declared = new Declared($this->planner->settings->connectionCollation, $this->planner->settings->release());
+        $columns = array_map(fn (JsonTableColumn $column): JsonColumn => $this->jsonColumn($column, $declared), $table->columns);
+        [$domains, $names] = self::flattened($columns);
+        $scope->place($table, $domains, $names);
+        $scope->merged[spl_object_id($table)] = $this->planner->materialized($domains);
+        $scope->derived[spl_object_id($table)] = $table->alias->value ?? '';
+
+        return new JsonTableScan($document, self::jsonPath($table->path->value()), $columns);
+    }
+
+    /**
+     * Answers the types and names of the columns of JSON_TABLE, nested columns flattened in order.
+     *
+     * @param list<JsonColumn> $columns
+     * @return array{list<Domain>, list<string>}
+     */
+    public static function flattened(array $columns): array
+    {
+        $domains = [];
+        $names = [];
+        foreach ($columns as $column) {
+            if ($column->kind === 'nested') {
+                [$innerDomains, $innerNames] = self::flattened($column->columns);
+                array_push($domains, ...$innerDomains);
+                array_push($names, ...$innerNames);
+                continue;
+            }
+            $domains[] = $column->domain;
+            $names[] = $column->name;
+        }
+
+        return [$domains, $names];
+    }
+
+    /**
+     * Prepares one column of JSON_TABLE.
+     *
+     * @throws SqlError When a path or a DEFAULT value is not valid
+     */
+    public function jsonColumn(JsonTableColumn $column, Declared $declared): JsonColumn
+    {
+        if ($column instanceof OrdinalityColumn) {
+            return new JsonColumn('ordinality', $column->name->value, Domain::integer(Field::LongLong, 10, true)->withNullable(true));
+        }
+        if ($column instanceof NestedColumns) {
+            return new JsonColumn('nested', '', Domain::null(), self::jsonPath($column->path->value()), [JsonResponseKind::Null, null], [JsonResponseKind::Null, null], array_map(fn (JsonTableColumn $inner): JsonColumn => $this->jsonColumn($inner, $declared), $column->columns));
+        }
+        if (!$column instanceof PathColumn) {
+            throw StatementError::NotSupportedYet->error('a JSON_TABLE column');
+        }
+        if ($column->errorFirst) {
+            $this->planner->compiler->connection->context->diagnostics->warning(StatementError::DeprecatedSyntax, 'Specifying an ON EMPTY clause after the ON ERROR clause in a JSON_TABLE column definition is deprecated syntax and will be removed in a future release. Specify ON EMPTY before ON ERROR instead.');
+        }
+        $domain = Domain::of($declared->tableFunction($column->type), true);
+        $name = $column->name->value;
+        $response = static function (?JsonResponse $response) use ($domain, $name): array {
+            $default = $response?->default;
+            if ($default === null) {
+                return [$response->kind ?? JsonResponseKind::Null, null];
+            }
+            try {
+                $value = Jsons::parse($default instanceof StringLiteral ? $default->value() : '', 1, 'JSON_TABLE');
+            } catch (SqlError $failure) {
+                throw new SqlError($failure->error, $failure->getMessage(), $failure, [[SchemaError::InvalidDefault->value, SchemaError::InvalidDefault->message($name)]]);
+            }
+            if ($domain->kind !== Kind::Json && ($value->type === JsonKind::Array || $value->type === JsonKind::Object)) {
+                throw SchemaError::InvalidDefault->error($name);
+            }
+
+            return [JsonResponseKind::Default, $value];
+        };
+
+        return new JsonColumn($column->exists ? 'exists' : 'path', $name, $domain, self::jsonPath($column->path->value()), $response($column->onEmpty), $response($column->onError));
+    }
+
+    /**
+     * Reads a path of JSON_TABLE.
+     *
+     * @throws SqlError When the path is not valid
+     */
+    public static function jsonPath(string $text): JsonPath
+    {
+        try {
+            return JsonPath::parse($text);
+        } catch (JsonSyntax $failure) {
+            throw new SqlError(DataError::InvalidJsonPath, DataError::InvalidJsonPath->message($failure->position), $failure);
+        }
     }
 
     /**
@@ -171,17 +301,17 @@ final class Relations
     }
 
     /**
-     * Tells whether a relation reads the columns of the relations before it.
+     * Tells whether a relation reads the columns of the relations before it: a LATERAL derived table, or JSON_TABLE.
      */
     public function lateral(Relation $relation): bool
     {
-        return $relation instanceof DerivedTable && $relation->lateral;
+        return ($relation instanceof DerivedTable && $relation->lateral) || $relation instanceof JsonTable;
     }
 
     /**
      * Plans a join.
      *
-     * @throws \MySqlMemory\Error\SqlError When a condition cannot be compiled
+     * @throws SqlError When a condition cannot be compiled
      */
     public function join(JoinedTable $join, Scope $scope): AccessPath
     {
