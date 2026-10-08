@@ -269,4 +269,29 @@ final class NamesTest extends TestCase
 
         $session->query('SELECT DEFAULT(c) FROM t');
     }
+
+    public function testDefaultReadsTheDefaultCurrentTimestampAsNullOrTheZeroValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (c TIMESTAMP DEFAULT CURRENT_TIMESTAMP, d DATETIME(3) NOT NULL DEFAULT NOW(3)); INSERT INTO t () VALUES ()');
+
+        $result = $session->query('SELECT DEFAULT(c), DEFAULT(d) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, '0000-00-00 00:00:00.000']], $result->rows);
+    }
+
+    public function testColumnReadsAnInvisibleColumnByName(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE v (a INT, e INT INVISIBLE); CREATE TABLE u (e INT, b INT); INSERT INTO v (a, e) VALUES (1, 2); INSERT INTO u VALUES (2, 7)');
+
+        $result = $session->query('SELECT * FROM v JOIN u USING (e)')[0];
+        $named = $session->query('SELECT e, v.e, u.e FROM v JOIN u USING (e)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', '1', '7']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $named);
+        self::assertSame([['2', '2', '2']], $named->rows);
+    }
 }

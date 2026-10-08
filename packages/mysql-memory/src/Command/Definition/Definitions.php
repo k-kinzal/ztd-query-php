@@ -12,11 +12,14 @@ use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\Clock;
+use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Storage\Store;
 use MySqlMemory\Typing\Declared;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Value\Encoding;
+use SqlSemantics\Platform\MySql\Statement\Query\Direction;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CommentAttribute;
@@ -79,7 +82,7 @@ final class Definitions
         $columns = [];
         $keys = [];
         foreach ($elements as $position => $element) {
-            $columns[] = $this->column($element, $declaration->columns[$position] ?? null, $declared, $scope, $create);
+            $columns[] = $this->column($element, $this->declared($declaration, $element->name->column->value), $declared, $scope, $create);
             foreach ($this->inlineKeys($element, $position) as $key) {
                 $keys[] = $key;
             }
@@ -94,6 +97,28 @@ final class Definitions
         usort($keys, static fn (Key $left, Key $right): int => ($right->kind === KeyKind::Primary) <=> ($left->kind === KeyKind::Primary));
 
         return new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0);
+    }
+
+    /**
+     * Answers the column of a declaration a column definition declares: a visible column, or the implicit column an INVISIBLE one is.
+     *
+     * The declaration holds the visible columns apart from the invisible ones, so a column is found
+     * by its name, not by its position among the definitions.
+     */
+    public function declared(Table $declaration, string $name): ?\SqlSemantics\Statement\Declaration\Column
+    {
+        foreach ($declaration->columns as $column) {
+            if (strcasecmp($column->name->value, $name) === 0) {
+                return $column;
+            }
+        }
+        foreach ($declaration->implicit as $implicit) {
+            if (strcasecmp($implicit->column->name->value, $name) === 0) {
+                return $implicit->column;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -135,7 +160,7 @@ final class Definitions
             $collation = Collation::named($specification->collation->name->value);
         }
         $resolved = $declaration?->type;
-        $domain = $resolved instanceof Resolved ? Domain::of($resolved, true) : $declared->domain($specification->dataType(), $collation);
+        $domain = $resolved instanceof Resolved ? $this->members(Domain::of($resolved, true)) : $declared->domain($specification->dataType(), $collation);
         $nullable = $declaration === null ? true : $declaration->nullability !== Nullability::NotNull;
         $serial = $specification->dataType() instanceof Elementary && $specification->dataType()->kind === ElementaryKind::Serial;
         $domain = $domain->withNullable($nullable && !$serial);
@@ -147,7 +172,28 @@ final class Definitions
     }
 
     /**
+     * Answers the domain of an ENUM or SET column with its members in the character set of the column, the length counted in it.
+     */
+    public function members(Domain $domain): Domain
+    {
+        $charset = $domain->collation->charset;
+        if ($domain->members === [] || Encoding::utf8($charset)) {
+            return $domain;
+        }
+        $members = array_map(static fn (string $member): string => Encoding::convert($member, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'), $charset), $domain->members);
+        $lengths = array_map(static fn (string $member): int => Encoding::length($member, $charset), $members);
+        $length = $domain->field === Field::Enum ? max([0, ...$lengths]) : array_sum($lengths) + count($members) - 1;
+
+        return new Domain($domain->kind, $domain->field, $length, $domain->decimals, $domain->unsigned, $domain->collation, $domain->nullable, $members, $domain->coercibility, $domain->numericBytes, $domain->display);
+    }
+
+    /**
      * Answers the default of a column from its attributes.
+     *
+     * CURRENT_TIMESTAMP and its synonyms are the time of each statement that stores the
+     * default, not of the CREATE TABLE: the default keeps the clock, typed as SQL Semantics
+     * resolved it, and evaluates it per row.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/timestamp-initialization.html.
      *
      * @param list<object> $attributes
      *
@@ -162,8 +208,8 @@ final class Definitions
                     throw ErrorCode::BlobCantHaveDefault->error($column->name);
                 }
                 $evaluable = $this->planner->compiler->compile($value, new Scope());
-                if ($evaluable instanceof Clock) {
-                    return new Fill(true, null, $evaluable, true, 'CURRENT_TIMESTAMP');
+                if (($evaluable instanceof Retyped ? $evaluable->evaluable : $evaluable) instanceof Clock) {
+                    return new Fill(true, null, $evaluable, true, 'CURRENT_TIMESTAMP' . ($column->domain->decimals > 0 ? '(' . $column->domain->decimals . ')' : ''));
                 }
                 if ($attribute instanceof DefaultExpression) {
                     return new Fill(true, null, $evaluable, false, null);
@@ -242,6 +288,7 @@ final class Definitions
     {
         $positions = [];
         $prefixes = [];
+        $descending = [];
         foreach ($index->parts as $part) {
             if (!$part instanceof ColumnPart) {
                 throw ErrorCode::NotSupportedYet->error('functional key parts');
@@ -257,6 +304,7 @@ final class Definitions
             }
             $positions[] = $position;
             $prefixes[] = $part->length === null ? null : (int) $part->length->text;
+            $descending[] = $part->direction === Direction::Descending;
         }
         $kind = match ($index->kind) {
             IndexKind::Primary => KeyKind::Primary,
@@ -266,7 +314,7 @@ final class Definitions
             IndexKind::Index => KeyKind::Index,
         };
 
-        return new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes);
+        return new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes, $descending);
     }
 
     /**
@@ -296,7 +344,7 @@ final class Definitions
                     $name = $base . '_' . $suffix;
                 }
                 $used[strtolower($name)] = true;
-                $key = new Key($name, $key->kind, $key->columns, $key->prefixes);
+                $key = new Key($name, $key->kind, $key->columns, $key->prefixes, $key->descending);
             }
             $named[] = $key;
         }
@@ -305,7 +353,9 @@ final class Definitions
     }
 
     /**
-     * Checks the rules a whole definition must keep.
+     * Checks the rules a whole definition must keep: a visible column, one AUTO_INCREMENT column that leads a key, one primary key.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/invisible-columns.html.
      *
      * @param list<ColumnDefinition> $columns
      * @param list<Key> $keys
@@ -314,6 +364,9 @@ final class Definitions
      */
     public function check(array $columns, array $keys): void
     {
+        if (array_filter($columns, static fn (ColumnDefinition $column): bool => !$column->invisible) === []) {
+            throw ErrorCode::NoVisibleColumn->error();
+        }
         $automatic = array_keys(array_filter($columns, static fn (ColumnDefinition $column): bool => $column->autoIncrement));
         if (count($automatic) > 1) {
             throw ErrorCode::WrongAutoKey->error();

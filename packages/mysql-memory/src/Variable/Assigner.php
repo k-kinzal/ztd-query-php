@@ -22,8 +22,10 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
  *
  * A read-only variable is refused (ER_INCORRECT_GLOBAL_LOCAL_VAR); a global-only one set for
  * the session and a session-only one set globally are refused. A boolean takes ON, OFF, 1 and
- * 0; an integer is clipped to its bounds with a warning; DEFAULT restores the global value, or
- * the compiled default for a global assignment.
+ * 0; an integer is clipped to its bounds with a warning; NULL is taken by character_set_results,
+ * session_track_system_variables, innodb_tmpdir and innodb_ft_user_stopword_table only, and
+ * refused by any other variable; DEFAULT restores the global value, or the compiled default for
+ * a global assignment.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-variable.html.
  *
  * @visibility MySqlMemory
@@ -74,7 +76,7 @@ final class Assigner
      *
      * @throws \MySqlMemory\Error\SqlError When the value is refused
      */
-    public function check(Definition $definition, int|float|string|null $value, Domain $domain): string|int
+    public function check(Definition $definition, int|float|string|null $value, Domain $domain): string|int|null
     {
         $text = $value === null ? 'NULL' : (string) Convert::toText($value, $domain);
         return match ($definition->shape) {
@@ -138,12 +140,16 @@ final class Assigner
     /**
      * Checks a text value; sql_mode and the collation and character set variables are checked by name.
      *
-     * @throws \MySqlMemory\Error\SqlError When the value is NULL, or not a mode, collation or character set the variable takes
+     * @throws \MySqlMemory\Error\SqlError When the value is NULL for a variable that does not take it, or not a mode, collation or character set the variable takes
      */
-    public function text(Definition $definition, int|float|string|null $value, string $text): string
+    public function text(Definition $definition, int|float|string|null $value, string $text): ?string
     {
-        if ($value === null && !in_array($definition->name, ['character_set_client', 'character_set_results', 'character_set_connection'], true)) {
-            throw ErrorCode::WrongValueForVariable->error($definition->name, 'NULL');
+        if ($value === null) {
+            if (!in_array($definition->name, ['character_set_results', 'session_track_system_variables', 'innodb_tmpdir', 'innodb_ft_user_stopword_table'], true)) {
+                throw ErrorCode::WrongValueForVariable->error($definition->name, 'NULL');
+            }
+
+            return null;
         }
         if ($definition->name === 'sql_mode') {
             $modes = SqlModes::parse($text);

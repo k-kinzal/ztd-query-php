@@ -50,8 +50,8 @@ final class StringsTest extends TestCase
         $text = Domain::string(4, Collation::known('utf8mb4_0900_ai_ci'));
         $integer = new Domain(Kind::Integer, Field::LongLong, 20);
 
-        self::assertSame(['ab', '12'], (new Strings())->texts($frame, [new Constant($text, 'ab'), new Constant($integer, 12)]));
-        self::assertSame([], (new Strings())->texts($frame, []));
+        self::assertSame(['ab', '12'], (new Strings())->texts($frame, [new Constant($text, 'ab'), new Constant($integer, 12)], $text));
+        self::assertSame([], (new Strings())->texts($frame, [], $text));
     }
 
     public function testTextsAnswersNullWhenAnArgumentIsNull(): void
@@ -60,7 +60,7 @@ final class StringsTest extends TestCase
         $frame = new Frame(new Context(new SqlModes([]), new Diagnostics(), new Variables($instance->catalog, $instance->globals), 0.0));
         $text = Domain::string(4, Collation::known('utf8mb4_0900_ai_ci'));
 
-        self::assertNull((new Strings())->texts($frame, [new Constant($text, 'ab'), new Constant($text, null)]));
+        self::assertNull((new Strings())->texts($frame, [new Constant($text, 'ab'), new Constant($text, null)], $text));
     }
 
     public function testNumberReadsAnArgumentAsAnInteger(): void
@@ -71,15 +71,6 @@ final class StringsTest extends TestCase
 
         self::assertSame(5, (new Strings())->number($frame, new Constant($text, '5')));
         self::assertNull((new Strings())->number($frame, new Constant($text, null)));
-    }
-
-    public function testBytesTellsWhetherTheCharacterSetHasSingleByteCharacters(): void
-    {
-        $strings = new Strings();
-
-        self::assertTrue($strings->bytes(Domain::string(4, Collation::known('latin1_swedish_ci'))));
-        self::assertTrue($strings->bytes(Domain::string(4, Collation::binary())));
-        self::assertFalse($strings->bytes(Domain::string(4, Collation::known('utf8mb4_0900_ai_ci'))));
     }
 
     public function testCharactersSplitsTheTextByTheCharacterSet(): void
@@ -238,10 +229,16 @@ final class StringsTest extends TestCase
     public function testRepeatAnswersNullForAResultLongerThanTheMaximumPacket(): void
     {
         $session = (new Instance())->connect();
-        $result = $session->query("SELECT REPEAT('a', 67108865)")[0];
+        $result = $session->query("SELECT LENGTH(REPEAT('a', 67108865)), REPEAT('a', 18446744073709551615)")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([[null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([[null, null]], $result->rows);
+        self::assertSame([
+            ['Warning', '1301', 'Result of repeat() was larger than max_allowed_packet (67108864) - truncated'],
+            ['Warning', '1301', 'Result of repeat() was larger than max_allowed_packet (67108864) - truncated'],
+        ], $warnings->rows);
     }
 
     public function testPadPadsTheTextToALength(): void
@@ -360,5 +357,129 @@ final class StringsTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([[null, null, null]], $result->rows);
+    }
+
+    public function testFitsWarnsForEachResultPastMaxAllowedPacket(): void
+    {
+        $instance = new Instance();
+        $instance->connect()->query('SET GLOBAL max_allowed_packet = 1024');
+        $session = $instance->connect();
+        $result = $session->query("SELECT CONCAT(REPEAT('a', 1000), REPEAT('b', 25)), LENGTH(CONCAT(REPEAT('a', 1000), REPEAT('b', 24))), CONCAT_WS(',', REPEAT('a', 1024)), LENGTH(CONCAT_WS('', REPEAT('a', 1024), NULL)), LPAD('a', 257, 'b'), LENGTH(LPAD(_latin1'a', 1024, _latin1'b')), RPAD('a', 257, 'b'), SPACE(1025), INSERT(REPEAT('a', 1024), 2, 0, 'b'), REPLACE(REPEAT('a', 1000), 'a', 'bb'), LENGTH(REPLACE(REPEAT('a', 1024), 'b', 'cc'))")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([[null, '1024', null, '1024', null, '1024', null, null, null, null, '1024']], $result->rows);
+        self::assertSame([
+            ['Warning', '1301', 'Result of concat() was larger than max_allowed_packet (1024) - truncated'],
+            ['Warning', '1301', 'Result of concat_ws() was larger than max_allowed_packet (1024) - truncated'],
+            ['Warning', '1301', 'Result of lpad() was larger than max_allowed_packet (1024) - truncated'],
+            ['Warning', '1301', 'Result of rpad() was larger than max_allowed_packet (1024) - truncated'],
+            ['Warning', '1301', 'Result of space() was larger than max_allowed_packet (1024) - truncated'],
+            ['Warning', '1301', 'Result of insert() was larger than max_allowed_packet (1024) - truncated'],
+            ['Warning', '1301', 'Result of replace() was larger than max_allowed_packet (1024) - truncated'],
+        ], $warnings->rows);
+    }
+
+    public function testFitsComparesTheBytesWithMaxAllowedPacket(): void
+    {
+        $instance = new Instance();
+        $frame = new Frame(new Context(new SqlModes([]), new Diagnostics(), new Variables($instance->catalog, $instance->globals), 0.0));
+
+        self::assertSame([true, false], [(new Strings())->fits($frame, 67108864, 'repeat'), (new Strings())->fits($frame, 67108865.0, 'repeat')]);
+        self::assertSame(1, $frame->context->diagnostics->count());
+    }
+
+    public function testNumberReadsAnUnsignedBigintBeyondTheSignedRangeAsTheLargestInt(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT LEFT('abc', 18446744073709551615), RIGHT('abc', 18446744073709551615), SUBSTRING('abc', 1, 18446744073709551615), SUBSTRING('abc', 18446744073709551615), INSERT('abc', 1, 18446744073709551615, 'x'), SUBSTRING_INDEX('a,b,c', ',', 18446744073709551615)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['abc', 'abc', 'abc', '', 'x', 'a,b,c']], $result->rows);
+    }
+
+    public function testUpperMapsEachCharacterToOneCharacter(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT UPPER('straße'), LOWER('İ'), UPPER('ς'), LOWER('ΣΑΣ')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['STRAßE', 'i', 'Σ', 'σασ']], $result->rows);
+    }
+
+    public function testCasedFollowsTheUnicodeVersionOfTheCollation(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(UPPER(_utf8mb4'ა' COLLATE utf8mb4_0900_ai_ci)), HEX(UPPER(_utf8mb4'ꞵ' COLLATE utf8mb4_unicode_520_ci)), HEX(UPPER(_utf8mb4'ꞵ' COLLATE utf8mb4_0900_ai_ci)), HEX(UPPER(_utf8mb4'ϲ' COLLATE utf8mb4_general_ci)), HEX(UPPER(_utf8mb4'iı' COLLATE utf8mb4_turkish_ci)), HEX(LOWER(_utf8mb4'Iİ' COLLATE utf8mb4_turkish_ci)), HEX(UPPER(_utf8mb4'𐐨' COLLATE utf8mb4_general_ci)), HEX(UPPER(_utf8mb4'𐐨' COLLATE utf8mb4_0900_ai_ci))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['E18390', 'EA9EB5', 'EA9EB4', 'CEA3', 'C4B049', 'C4B169', 'F09090A8', 'F0909080']], $result->rows);
+    }
+
+    public function testCasedMapsUtf8InPlace(): void
+    {
+        $strings = new Strings();
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+
+        self::assertSame(["A\u{2C6F}", '', "\u{2C6F}", "a\u{2C66}"], [$strings->cased('aɐb', $collation, true), $strings->cased('ɐ', $collation, true), $strings->cased('ɐɐɐ', $collation, true), $strings->cased('AȾBȺC', $collation, false)]);
+    }
+
+    public function testCasedMapsTheCharactersOfASingleByteCharacterSet(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(UPPER(CONVERT('éÿšµ' USING latin1))), HEX(LOWER(CONVERT('ÉŠ' USING latin1))), HEX(UPPER(CONVERT('aé' USING ucs2)))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['C9FF9AB5', 'E98A', '004100C9']], $result->rows);
+    }
+
+    public function testMappedAppliesTheSimpleCaseMappingOfAVersion(): void
+    {
+        $strings = new Strings();
+
+        self::assertSame([0x1C90, 0x10D0, 0x3A3, 0x130, 0xDF, 0x10400, 0x10428], [
+            $strings->mapped(0x10D0, true, 99.0, false, false),
+            $strings->mapped(0x10D0, true, 9.0, false, false),
+            $strings->mapped(0x3F2, true, 3.0, true, false),
+            $strings->mapped(0x69, true, 3.0, true, true),
+            $strings->mapped(0xDF, true, 9.0, false, false),
+            $strings->mapped(0x10428, true, 5.2, false, false),
+            $strings->mapped(0x10428, true, 3.0, true, false),
+        ]);
+    }
+
+    public function testTextConvertsAnArgumentIntoTheCharacterSetOfTheResult(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(CONCAT(CONVERT('é' USING latin1), 'é')), HEX(CONCAT(CONVERT('é' USING ucs2), 1)), HEX(LPAD(CONVERT('é' USING latin1), 3, 'ü'))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['E9E9', '00E90031', 'FCFCE9']], $result->rows);
+    }
+
+    public function testCharsetAnswersTheCharacterSetOfTheTextOfAValue(): void
+    {
+        self::assertSame(['latin1', 'utf8mb4'], [(new Strings())->charset(Domain::string(1, Collation::known('latin1_swedish_ci')))->name, (new Strings())->charset(Domain::integer())->name]);
+    }
+
+    public function testCountCountsTheCharactersInTheCharacterSetOfADomain(): void
+    {
+        self::assertSame([2, 1, 2], [(new Strings())->count('hé', Domain::string(4, Collation::known('utf8mb4_0900_ai_ci'))), (new Strings())->count("\x00\xE9", Domain::string(4, Collation::known('ucs2_general_ci'))), (new Strings())->count('é', Domain::string(4, Collation::known('latin1_swedish_ci')))]);
+    }
+
+    public function testSliceTakesCharactersInTheCharacterSetOfADomain(): void
+    {
+        self::assertSame(['é', "\x00b"], [(new Strings())->slice('héb', 1, 1, Domain::string(4, Collation::known('utf8mb4_0900_ai_ci'))), (new Strings())->slice("\x00a\x00b", 1, null, Domain::string(4, Collation::known('ucs2_general_ci')))]);
+    }
+
+    public function testInPlaceStopsAtACharacterThatWouldPassTheEnd(): void
+    {
+        self::assertSame(['XYZ', "\u{2C6F}", 'ABC'], [(new Strings())->inPlace('xyzɐ', true, 9.0), (new Strings())->inPlace('ɐıı', true, 9.0), (new Strings())->inPlace('abc', true, 3.0)]);
+    }
+
+    public function testPointAnswersTheCodePointOfACharacter(): void
+    {
+        self::assertSame([0xE9, null, null, 0xE9], [(new Strings())->point('é', 'UTF-8'), (new Strings())->point("\xC3", 'UTF-8'), (new Strings())->point('', 'UTF-8'), (new Strings())->point("\x00\xE9", 'UCS-2BE')]);
     }
 }

@@ -117,23 +117,18 @@ final class Literals
     public function temporal(TemporalLiteral $literal): Constant
     {
         $domain = $this->typed($literal, $this->rules()->temporal($literal));
-        if ($literal->form === TemporalForm::Time) {
-            $parts = Temporal::parseTime($literal->text);
-            if ($parts === null) {
-                throw ErrorCode::WrongValue->error('TIME', $literal->text);
-            }
-
-            return new Constant($domain, Temporal::time($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $domain->decimals));
-        }
-        $parts = Temporal::parseDateTime($literal->text);
-        if ($parts === null || !Temporal::valid($parts[0], $parts[1], $parts[2])) {
-            throw ErrorCode::WrongValue->error($literal->form === TemporalForm::Date ? 'DATE' : 'DATETIME', $literal->text);
-        }
-        if ($literal->form === TemporalForm::Date) {
-            return new Constant($domain, Temporal::date($parts[0], $parts[1], $parts[2]));
+        $form = match ($literal->form) {
+            TemporalForm::Date => 'DATE',
+            TemporalForm::Time => 'TIME',
+            TemporalForm::Timestamp => 'DATETIME',
+        };
+        $modes = $this->compiler->settings->modes;
+        $value = Temporal::literal($form, $literal->text, $domain->decimals, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'));
+        if ($value === null) {
+            throw ErrorCode::WrongValue->error($form, $literal->text);
         }
 
-        return new Constant($domain, Temporal::dateTime($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], $parts[6], $domain->decimals));
+        return new Constant($domain, $value);
     }
 
     /**

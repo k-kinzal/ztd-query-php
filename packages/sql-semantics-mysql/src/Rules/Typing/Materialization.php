@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
-use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
+use SqlSemantics\Platform\MySql\Rules\Query\Aggregation as Aggregates;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
+use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
-use SqlSemantics\Platform\MySql\Rules\Query\Aggregation as Aggregates;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
@@ -24,11 +24,14 @@ use SqlSemantics\Statement\Query;
  *
  * A derived table merges into the query that reads it when it is a single query block that
  * reads tables without grouping, aggregating, removing duplicates, limiting or windowing; its
- * columns keep the types of their expressions. Otherwise it is materialized: a BIGINT narrower
- * than 11 digits becomes an INT, a string loses its decimals, and NULL becomes an empty binary
- * string. The rows of a set operation are materialized too, and a TEXT or BLOB column counts its
+ * columns keep the types of their expressions. Otherwise it is materialized: a column keeps the
+ * type of a column it copies; a BIGINT narrower than 10 characters becomes an INT, a string loses
+ * its decimals, and NULL becomes an empty binary string. An integer column reports the length of
+ * its expression as its display width, while an expression over it sees the length of its whole
+ * type. The rows of a set operation are materialized too, and a TEXT or BLOB column counts its
  * length in bytes.
- * Source: https://dev.mysql.com/doc/refman/8.4/en/derived-table-optimization.html.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/derived-table-optimization.html,
+ * https://dev.mysql.com/doc/refman/8.4/en/numeric-type-attributes.html.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -70,8 +73,10 @@ final class Materialization
      */
     public function column(Domain $domain, bool $narrows = true): Domain
     {
-        if ($narrows && $domain->kind === Kind::Integer && $domain->field === Field::LongLong && $domain->length < 11) {
-            return new Domain(Kind::Integer, Field::Long, $domain->length, 0, $domain->unsigned, null, [], $domain->coercibility);
+        if ($domain->kind === Kind::Integer && $domain->display === null) {
+            $narrowed = $narrows && $domain->field === Field::LongLong && $domain->length < 10;
+
+            return Domain::column($narrowed ? Field::Long : $domain->field, $domain->length, $domain->unsigned);
         }
 
         return $domain->kind === Kind::String ? $this->text($domain, $domain->length) : $this->nothing($domain);

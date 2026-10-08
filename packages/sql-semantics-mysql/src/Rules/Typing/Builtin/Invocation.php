@@ -47,7 +47,8 @@ final class Invocation
     /**
      * Answers the integer an argument writes as a literal, or null when it writes none.
      *
-     * A string literal counts by the digits it starts with, as the server reads it as a number.
+     * A string literal counts by the digits it starts with, as the server reads it as a number. An
+     * integer beyond the range of an int counts as the largest int of its sign.
      */
     public function constant(int $index): ?int
     {
@@ -63,7 +64,13 @@ final class Invocation
             default => null,
         };
 
-        return $text === null ? null : ($negative ? -1 : 1) * (int) min((float) $text, (float) PHP_INT_MAX);
+        if ($text === null) {
+            return null;
+        }
+        $magnitude = filter_var(ltrim($text, '0') === '' ? '0' : ltrim($text, '0'), FILTER_VALIDATE_INT);
+        $magnitude = is_int($magnitude) ? $magnitude : PHP_INT_MAX;
+
+        return $negative ? -$magnitude : $magnitude;
     }
 
     /**

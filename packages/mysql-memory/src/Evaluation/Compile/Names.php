@@ -254,6 +254,8 @@ final class Names
     /**
      * Compiles DEFAULT(column): the default of the column.
      *
+     * The default CURRENT_TIMESTAMP reads as NULL, or as the zero value when the column is NOT NULL.
+     *
      * @throws \MySqlMemory\Error\SqlError When the column has no default
      */
     public function default(\SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn $node, Scope $scope): Evaluable
@@ -270,6 +272,9 @@ final class Names
         $column = $definition->columns[$this->position($located[1], $resolution)];
         if (!$column->default->declared) {
             throw ErrorCode::NoDefaultForField->error($column->name);
+        }
+        if ($column->default->now) {
+            return new Constant($column->domain, $column->nullable() ? null : '0000-00-00 00:00:00' . ($column->domain->decimals > 0 ? '.' . str_repeat('0', $column->domain->decimals) : ''));
         }
         if ($column->default->expression !== null) {
             return $column->default->expression;

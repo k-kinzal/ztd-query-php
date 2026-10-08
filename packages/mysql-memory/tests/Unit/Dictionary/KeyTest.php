@@ -30,4 +30,16 @@ final class KeyTest extends TestCase
 
         self::assertSame([false, false, false], [$index->unique(), $text->unique(), $spatial->unique()]);
     }
+
+    public function testDuplicatesHoldsForAKeyOfTheSameKindOverTheSameColumnsInTheSameWay(): void
+    {
+        $key = new Key('a', KeyKind::Index, [0, 1], [null, 3], [false, true]);
+
+        self::assertTrue($key->duplicates(new Key('b', KeyKind::Index, [0, 1], [null, 3], [false, true])));
+        self::assertTrue((new Key('a', KeyKind::Unique, [0]))->duplicates(new Key('b', KeyKind::Unique, [0], [null], [false])));
+        self::assertFalse($key->duplicates(new Key('b', KeyKind::Unique, [0, 1], [null, 3], [false, true])));
+        self::assertFalse($key->duplicates(new Key('b', KeyKind::Index, [0, 1], [null, 4], [false, true])));
+        self::assertFalse($key->duplicates(new Key('b', KeyKind::Index, [0, 1], [null, 3])));
+        self::assertFalse($key->duplicates(new Key('b', KeyKind::Index, [1, 0], [null, 3], [false, true])));
+    }
 }

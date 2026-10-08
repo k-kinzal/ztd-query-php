@@ -63,4 +63,13 @@ final class CollationsTest extends TestCase
         self::assertEquals([Collation::known('utf8mb4_bin'), Coercibility::Implicit], $rules->tie(Collation::known('latin1_swedish_ci'), Collation::known('utf8mb4_bin'), Coercibility::Implicit));
         self::assertNull($rules->tie(Collation::known('latin1_swedish_ci'), Collation::known('ascii_general_ci'), Coercibility::Implicit));
     }
+
+    public function testTieLetsUtf8mb4WinOverTheOtherUnicodeSets(): void
+    {
+        $rules = new Collations(Collation::known('utf8mb4_0900_ai_ci'));
+
+        self::assertEquals([Collation::known('utf8mb4_0900_ai_ci'), Coercibility::Coercible], $rules->tie(Collation::known('utf8mb3_general_ci'), Collation::known('utf8mb4_0900_ai_ci'), Coercibility::Coercible));
+        self::assertEquals([Collation::known('utf8mb4_0900_ai_ci'), Coercibility::Implicit], $rules->tie(Collation::known('utf8mb4_0900_ai_ci'), Collation::known('utf16_general_ci'), Coercibility::Implicit));
+        self::assertNull($rules->tie(Collation::known('utf8mb3_general_ci'), Collation::known('utf16_general_ci'), Coercibility::Implicit));
+    }
 }

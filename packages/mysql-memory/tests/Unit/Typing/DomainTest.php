@@ -36,6 +36,13 @@ final class DomainTest extends TestCase
         self::assertSame([Kind::String, Field::VarString, 10, 31, $collation, true, Coercibility::Coercible], [$domain->kind, $domain->field, $domain->length, $domain->decimals, $domain->collation, $domain->nullable, $domain->coercibility]);
     }
 
+    public function testOfKeepsTheDisplayWidthOfAColumn(): void
+    {
+        $domain = Domain::of(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::column(Field::Long, 2), false);
+
+        self::assertSame([11, 2, 2, 2], [$domain->length, $domain->display, $domain->byteLength(), $domain->withNullable(true)->resolved()->display]);
+    }
+
     public function testResolvedDropsTheNullability(): void
     {
         $resolved = Domain::decimal(10, 2, true)->resolved();
@@ -100,6 +107,11 @@ final class DomainTest extends TestCase
     public function testByteLengthMultipliesTheLengthOfAStringByItsWidestCharacter(): void
     {
         self::assertSame([40, 10, 10, 7], [Domain::string(10, Collation::known('utf8mb4_0900_ai_ci'))->byteLength(), Domain::string(10, Collation::known('latin1_swedish_ci'))->byteLength(), (new Domain(Kind::Date, Field::Date, 10))->byteLength(), Domain::decimal(5, 2)->byteLength()]);
+    }
+
+    public function testByteLengthReportsTheDisplayWidthOfAnIntegerColumn(): void
+    {
+        self::assertSame([5, 11], [(new Domain(Kind::Integer, Field::Long, 11, 0, false, null, true, [], Coercibility::Numeric, false, 5))->byteLength(), Domain::integer(Field::Long, 11)->byteLength()]);
     }
 
     public function testFlagsDescribeTheColumnDefinition(): void

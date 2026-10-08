@@ -18,7 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * equally strongly settle as follows: explicit collations conflict; the binary collation wins;
  * within one character set a `_bin` collation wins over the others, and two others give the
  * `_bin` collation of the set with no coercibility (NONE); across character sets a Unicode set
- * wins over a non-Unicode one, and otherwise they conflict. A comparison needs a determinate
+ * wins over a non-Unicode one, utf8mb4 wins over the other Unicode sets as it holds every
+ * character they do, and otherwise they conflict. A comparison needs a determinate
  * collation: a result of no coercibility conflicts there.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-collation-coercibility.html.
  *
@@ -122,6 +123,9 @@ final class Collations
         }
         $leftUnicode = in_array($left->charset->name, self::UNICODE, true);
         $rightUnicode = in_array($right->charset->name, self::UNICODE, true);
+        if ($leftUnicode && $rightUnicode && ($left->charset->name === 'utf8mb4' || $right->charset->name === 'utf8mb4')) {
+            return [$left->charset->name === 'utf8mb4' ? $left : $right, $level];
+        }
         if ($leftUnicode === $rightUnicode) {
             return null;
         }

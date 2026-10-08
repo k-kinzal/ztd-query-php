@@ -4,23 +4,35 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
+use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
+use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
+use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Scalar;
 
 /**
- * Finds where in a statement each column name is read, and in which order the server resolves it.
+ * Finds where in a statement each column name, select list position, function call and clock call is read, and in which order the server resolves it.
  *
  * The server resolves a query block in this order: the derived tables of its FROM clause, its
  * select list, WHERE, the ON conditions, GROUP BY, HAVING and ORDER BY; it names the clause it
  * resolves in the message of a name it cannot resolve. A subquery is resolved in the place it is
- * written.
+ * written. An UPDATE resolves WHERE, every assigned column, every value, then ORDER BY; an INSERT
+ * resolves its column list or the columns of SET, the rows or the values of SET, then the
+ * columns and the values of ON DUPLICATE KEY UPDATE, except that an INSERT ... SELECT resolves
+ * the columns of ON DUPLICATE KEY UPDATE before the query (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
  *
  * @visibility MySqlMemory
@@ -28,14 +40,19 @@ use SqlSemantics\Statement\Query;
 final class Locator
 {
     /**
-     * @var array<int, array{string, list<int>}> The clause and resolution order of each column name, by object id
+     * @var array<int, array{string, list<int>}> The clause and resolution order of each located node, by object id
      */
     public array $places = [];
 
     /**
-     * @var list<ColumnUse> Keeps the located nodes alive
+     * @var list<ColumnUse|OutputOrdinal|FunctionCall> Keeps the located nodes alive
      */
     private array $nodes = [];
+
+    /**
+     * @var list<ClockCall> Keeps the located clock calls alive
+     */
+    private array $clocks = [];
 
     /**
      * Locates the column names of a statement.
@@ -43,11 +60,29 @@ final class Locator
     public function statement(Node $statement): self
     {
         if ($statement instanceof Update) {
-            foreach ($statement->assignments as $index => $assignment) {
-                $this->visit($assignment, 'field list', [1, $index]);
-            }
-            $this->visit($statement->where, 'where clause', [2]);
+            $this->visit($statement->where, 'where clause', [1]);
+            $this->assignments($statement->assignments, [2]);
             $this->visit($statement->orderBy, 'order clause', [6]);
+
+            return $this;
+        }
+        if ($statement instanceof InsertRows || $statement instanceof InsertSet) {
+            $this->visit($statement->into, 'field list', [0]);
+            if ($statement instanceof InsertRows) {
+                $this->visit($statement->rows, 'field list', [1]);
+            } else {
+                $this->assignments($statement->assignments, [1]);
+            }
+            $this->visit($statement->alias, 'field list', [2]);
+            $this->assignments($statement->onDuplicate, [3]);
+
+            return $this;
+        }
+        if ($statement instanceof InsertQuery) {
+            $this->visit($statement->into, 'field list', [0]);
+            $this->visit(array_map(static fn (Assignment $assignment): ColumnUse => $assignment->column, $statement->onDuplicate), 'field list', [1]);
+            $this->visit($statement->source, 'field list', [2]);
+            $this->visit(array_map(static fn (Assignment $assignment): Scalar => $assignment->value, $statement->onDuplicate), 'field list', [3]);
 
             return $this;
         }
@@ -60,6 +95,18 @@ final class Locator
         $this->visit($statement, 'field list', []);
 
         return $this;
+    }
+
+    /**
+     * Locates the names of assignments as the server resolves them: every assigned column, then every value.
+     *
+     * @param list<Assignment> $assignments
+     * @param list<int> $order
+     */
+    public function assignments(array $assignments, array $order): void
+    {
+        $this->visit(array_map(static fn (Assignment $assignment): ColumnUse => $assignment->column, $assignments), 'field list', [...$order, 0]);
+        $this->visit(array_map(static fn (Assignment $assignment): Scalar => $assignment->value, $assignments), 'field list', [...$order, 1]);
     }
 
     /**
@@ -83,13 +130,23 @@ final class Locator
     }
 
     /**
-     * Answers the located column names.
+     * Answers the located column names, select list positions and function calls.
      *
-     * @return list<ColumnUse>
+     * @return list<ColumnUse|OutputOrdinal|FunctionCall>
      */
     public function nodes(): array
     {
         return $this->nodes;
+    }
+
+    /**
+     * Answers the located calls of the clock functions, whose precision the server checks where it resolves them.
+     *
+     * @return list<ClockCall>
+     */
+    public function clocks(): array
+    {
+        return $this->clocks;
     }
 
     /**
@@ -126,10 +183,16 @@ final class Locator
                 }
             } elseif ($current instanceof Select) {
                 $this->select($current, $at);
+            } elseif ($current instanceof QueryExpression) {
+                $this->expression($current, $clause, $at);
             } elseif ($current instanceof Node) {
-                if ($current instanceof ColumnUse) {
+                if ($current instanceof ColumnUse || $current instanceof OutputOrdinal || $current instanceof FunctionCall) {
                     $this->places[spl_object_id($current)] = [$clause, $at];
                     $this->nodes[] = $current;
+                }
+                if ($current instanceof ClockCall) {
+                    $this->places[spl_object_id($current)] = [$clause, $at];
+                    $this->clocks[] = $current;
                 }
                 $index = 0;
                 foreach (get_object_vars($current) as $property) {
@@ -140,6 +203,19 @@ final class Locator
             array_push($values, ...array_reverse($children));
             array_push($orders, ...array_reverse($positions));
         }
+    }
+
+    /**
+     * Locates the column names of a query with a WITH clause, an ORDER BY or a LIMIT around its body: the ORDER BY is read in the order clause.
+     *
+     * @param list<int> $order
+     */
+    public function expression(QueryExpression $expression, string $clause, array $order): void
+    {
+        $this->visit($expression->with, $clause, [...$order, 0]);
+        $this->visit($expression->body, $clause, [...$order, 1]);
+        $this->visit($expression->orderBy, 'order clause', [...$order, 2]);
+        $this->visit($expression->limit, $clause, [...$order, 3]);
     }
 
     /**

@@ -32,7 +32,9 @@ final class Precision
     }
 
     /**
-     * Answers the resolved types of every fact, or null when one has none.
+     * Answers the resolved types of every fact as operands of an expression, or null when one has none.
+     *
+     * An operand is a value: the display width a column reports for itself is not part of it.
      *
      * @param list<TypeFact> $types
      * @return list<Domain>|null
@@ -45,7 +47,7 @@ final class Precision
             if ($domain === null) {
                 return null;
             }
-            $domains[] = $domain;
+            $domains[] = $domain->value();
         }
 
         return $domains;

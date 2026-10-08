@@ -36,7 +36,7 @@ final class DoCommand implements Command
     }
 
     /**
-     * Evaluates each expression.
+     * Evaluates each expression; like a SELECT of one row, it leaves FOUND_ROWS() at 1.
      */
     #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
@@ -50,6 +50,7 @@ final class DoCommand implements Command
                 $planner->compiler->compile($item->expression, new Scope())->evaluate($frame);
             }
         }
+        $session->variables->foundRows = 1;
 
         return new Completion(0, 0, $context->diagnostics->count());
     }

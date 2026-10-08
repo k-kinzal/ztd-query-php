@@ -31,6 +31,10 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  * digits and signs for numbers; the result metadata reports it in bytes. Decimals is the number
  * of fractional digits, or NOT_FIXED when a floating-point number or string has none fixed.
  * Strings carry a collation and its coercibility; other values carry the binary collation.
+ * A column of an integer type can declare a display width narrower than its type: the result
+ * metadata reports that width for the column itself, while an expression over the column sees
+ * the length of the whole type.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/numeric-type-attributes.html.
  *
  * @visibility public
  * @example Reading the display length of DECIMAL(5,2)
@@ -65,6 +69,7 @@ final class Domain implements TypeDescriptor
      * @param Collation|null $collation The collation of a string; binary when null
      * @param list<string> $members The members of an ENUM or SET, in declared order
      * @param Coercibility $coercibility How strongly the collation holds
+     * @param int|null $display The display width a column of an integer type reports for itself, when it is narrower than the length
      */
     public function __construct(
         public readonly Kind $kind,
@@ -75,6 +80,7 @@ final class Domain implements TypeDescriptor
         ?Collation $collation = null,
         public readonly array $members = [],
         public readonly Coercibility $coercibility = Coercibility::Implicit,
+        public readonly ?int $display = null,
     ) {
         $this->collation = $collation ?? Collation::binary();
     }
@@ -117,6 +123,35 @@ final class Domain implements TypeDescriptor
     public static function null(): self
     {
         return new self(Kind::Null, Field::Null, 0, 0, false, null, [], Coercibility::Ignorable);
+    }
+
+    /**
+     * Creates the type of a column of an integer type: as long as the type, reporting its display width for itself when that is narrower.
+     *
+     * The type is as long as its widest value with its sign: 4, 6, 9, 11 and 20 for TINYINT,
+     * SMALLINT, MEDIUMINT, INT and BIGINT, one fewer when unsigned except for BIGINT.
+     */
+    public static function column(Field $field, int $width, bool $unsigned = false): self
+    {
+        $length = match ($field) {
+            Field::Tiny => $unsigned ? 3 : 4,
+            Field::Short => $unsigned ? 5 : 6,
+            Field::Int24 => $unsigned ? 8 : 9,
+            Field::Long => $unsigned ? 10 : 11,
+            Field::LongLong, Field::Decimal, Field::Float, Field::Double, Field::Null, Field::Timestamp, Field::Date, Field::Time, Field::DateTime, Field::Year, Field::NewDate,
+            Field::VarChar, Field::Bit, Field::Vector, Field::Json, Field::NewDecimal, Field::Enum, Field::Set, Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Blob,
+            Field::VarString, Field::String, Field::Geometry => 20,
+        };
+
+        return new self(Kind::Integer, $field, max($width, $length), 0, $unsigned, null, [], Coercibility::Numeric, $width < $length ? $width : null);
+    }
+
+    /**
+     * Answers the type of the value a column holds, as an expression over it sees it: without the display width of the column.
+     */
+    public function value(): self
+    {
+        return $this->display === null ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility);
     }
 
     /**

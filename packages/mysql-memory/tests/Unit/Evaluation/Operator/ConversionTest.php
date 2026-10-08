@@ -7,6 +7,7 @@ namespace Tests\Unit\Evaluation\Operator;
 use MySqlMemory\Evaluation\Leaf\Constant;
 use MySqlMemory\Evaluation\Operator\Conversion;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -147,10 +148,41 @@ final class ConversionTest extends TestCase
     {
         $session = (new Instance())->connect();
         $result = $session->query("SELECT CAST('é日本語' AS CHAR(2))")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['é日']], $result->rows);
         self::assertSame(1, $result->warnings);
+        self::assertSame(0, $result->columns[0]->flags & ColumnFlag::NotNull->value);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect CHAR(5) value: 'é日本語'"]], $warnings->rows);
+    }
+
+    public function testTextNamesANationalTargetCharByTheBytesItKeeps(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SELECT CAST('日本語x' AS NCHAR(2))");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertContains(['Warning', '1292', "Truncated incorrect CHAR(6) value: '日本語x'"], $warnings->rows);
+    }
+
+    public function testTextPadsABinaryTargetWithZeroBytes(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CAST('ab' AS BINARY(5)), CAST(1 AS CHAR(3) CHARSET binary)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([["ab\0\0\0", "1\0\0"]], $result->rows);
+        self::assertSame(0, $result->warnings);
+    }
+
+    public function testQuotedWritesTheBytesOfABinaryValueAndTheCharactersOfAText(): void
+    {
+        $conversion = new Conversion(new Constant(Domain::integer(), 1), Domain::integer(), null, 'CHAR');
+
+        self::assertSame(['\x00A\x0A\x7F\xC3\xA9', 'é?abc', str_repeat('a', 128)], [$conversion->quoted("\x00A\n\x7Fé", true), $conversion->quoted('é😀abc', false), $conversion->quoted(str_repeat('a', 300), false)]);
     }
 
     public function testTextKeepsAStringWithinTheTarget(): void
@@ -169,5 +201,49 @@ final class ConversionTest extends TestCase
         $conversion = new Conversion(new Constant(Domain::integer(), 1), $domain, null, 'UNSIGNED');
 
         self::assertSame($domain, $conversion->domain());
+    }
+
+    public function testTranscodeConvertsATextIntoACharacterSet(): void
+    {
+        $instance = new Instance();
+        $context = new \MySqlMemory\Evaluation\Context(new \MySqlMemory\Session\SqlModes([]), new \MySqlMemory\Session\Diagnostics(), new \MySqlMemory\Session\Variables($instance->catalog, $instance->globals), 0.0);
+        $utf8 = Domain::string(4, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'));
+        $binary = Domain::string(4, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary());
+
+        self::assertSame(
+            ["\xE9", "\x00\x41", "\x00\x41\x42\x43", 'é', "\x00\x31"],
+            [
+                Conversion::transcode('é', $utf8, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1'), $context),
+                Conversion::transcode('A', $binary, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('ucs2'), $context),
+                Conversion::transcode('ABC', $binary, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('ucs2'), $context),
+                Conversion::transcode('é', $binary, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('utf8mb4'), $context),
+                Conversion::transcode('1', Domain::integer(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('ucs2'), $context),
+            ],
+        );
+    }
+
+    public function testTranscodeAnswersNullWithAWarningForBytesThatAreNoCharacter(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CONVERT(X'4142FF434445464748494A4B4C' USING utf8mb4), HEX(CAST(X'41FF' AS CHAR CHARACTER SET ascii)), CONVERT(X'D800' USING utf16), HEX(CAST(X'41FF' AS CHAR CHARACTER SET latin1))")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([[null, '41FF', null, '41FF']], $result->rows);
+        self::assertSame([
+            ['Warning', '1300', "Invalid utf8mb4 character string: 'FF4344'"],
+            ['Warning', '1300', "Invalid ascii character string: 'FF'"],
+            ['Warning', '1300', "Invalid utf16 character string: 'D800'"],
+        ], $warnings->rows);
+    }
+
+    public function testEvaluateCastsIntoTheCharacterSetOfTheTarget(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(CAST('é' AS CHAR CHARACTER SET latin1)), HEX(CAST('é' AS CHAR CHARACTER SET binary)), HEX(CAST(CONVERT('é' USING latin1) AS CHAR))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['E9', 'C3A9', 'C3A9']], $result->rows);
     }
 }

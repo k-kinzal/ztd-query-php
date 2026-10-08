@@ -23,7 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  */
 final class MathResults
 {
-    private const REAL = ['SQRT', 'EXP', 'LN', 'LOG2', 'LOG10', 'SIN', 'COS', 'TAN', 'ASIN', 'ACOS', 'ATAN', 'COT', 'DEGREES', 'RADIANS', 'POW', 'POWER'];
+    private const REAL = ['SQRT', 'EXP', 'LN', 'LOG', 'LOG2', 'LOG10', 'SIN', 'COS', 'TAN', 'ASIN', 'ACOS', 'ATAN', 'COT', 'DEGREES', 'RADIANS', 'POW', 'POWER'];
 
     /**
      * Answers the rule of each function, by name.

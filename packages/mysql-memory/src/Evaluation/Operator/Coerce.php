@@ -8,10 +8,14 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Decimal;
+use MySqlMemory\Value\Encoding;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Converts a value of one domain to the run-time kind of another, for results that aggregate several domains.
+ *
+ * A string converts into the character set of the result.
  *
  * @visibility MySqlMemory
  */
@@ -22,7 +26,7 @@ final class Coerce
      */
     public static function to(int|float|string|null $value, Domain $from, Domain $to, Context $context): int|float|string|null
     {
-        if ($value === null || $from->kind === $to->kind && ($to->kind !== Kind::Decimal || $from->decimals === $to->decimals)) {
+        if ($value === null || $from->kind === $to->kind && ($to->kind !== Kind::Decimal || $from->decimals === $to->decimals) && ($to->kind !== Kind::String || $from->collation->charset === $to->collation->charset)) {
             return $value;
         }
 
@@ -30,7 +34,8 @@ final class Coerce
             Kind::Integer => Convert::toInteger($value, $from, $context, $to->unsigned),
             Kind::Decimal => Decimal::round((string) Convert::toDecimal($value, $from, $context), $to->decimals),
             Kind::Double => Convert::toDouble($value, $from, $context),
-            Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Convert::toText($value, $from),
+            Kind::String => Encoding::convert((string) Convert::toText($value, $from), $from->kind === Kind::String ? $from->collation->charset : Charset::known('utf8mb4'), $to->collation->charset),
+            Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Convert::toText($value, $from),
         };
     }
 

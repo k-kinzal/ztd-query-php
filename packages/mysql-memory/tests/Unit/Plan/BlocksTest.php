@@ -19,6 +19,7 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
@@ -101,6 +102,54 @@ final class BlocksTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1'], ['2']], $result->rows);
+    }
+
+    public function testSelectDistinctOverJoinedTablesDropsTheKeyFlags(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY)');
+        $joined = $session->query('SELECT DISTINCT x.a, t.a FROM t AS x, t')[0];
+        $constant = $session->query('SELECT DISTINCT x.a FROM t AS x, t WHERE t.a = 1')[0];
+
+        self::assertInstanceOf(ResultSet::class, $joined);
+        self::assertInstanceOf(ResultSet::class, $constant);
+        self::assertSame([0, 2], [$joined->columns[0]->flags & 2, $constant->columns[0]->flags & 2]);
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerEmptyHoldsForABlockTheServerFindsReadsNoRow(): iterable
+    {
+        yield 'unknown WHERE' => ['SELECT a FROM t WHERE a = 1 AND NULL', true];
+        yield 'false HAVING' => ['SELECT a FROM t HAVING 0', true];
+        yield 'no row to send' => ['SELECT a FROM t LIMIT 0', true];
+        yield 'false comparison that warns' => ["SELECT a FROM t WHERE 'x' = 1", true];
+        yield 'condition on a column' => ['SELECT a FROM t WHERE a = 1', false];
+    }
+
+    #[DataProvider('providerEmptyHoldsForABlockTheServerFindsReadsNoRow')]
+    public function testEmptyHoldsForABlockTheServerFindsReadsNoRow(string $sql, bool $empty): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY)');
+        $operation = $session->analyze($sql);
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+
+        self::assertSame($empty, (new Blocks($planner))->empty($operation->statement, null));
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testSelectBufferedResultOfNoRowKeepsTheKeyFlags(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY)');
+        $buffered = $session->query('SELECT SQL_BUFFER_RESULT a FROM t WHERE 0')[0];
+
+        self::assertInstanceOf(ResultSet::class, $buffered);
+        self::assertSame(2, $buffered->columns[0]->flags & 2);
     }
 
     public function testTableReadsEveryVisibleColumnOfTheTable(): void
@@ -207,6 +256,30 @@ final class BlocksTest extends TestCase
         self::assertSame(['c', 'a  +  1', 'a'], [$planner->blocks->name($fields[0]), $planner->blocks->name($fields[1]), $planner->blocks->name($fields[2])]);
     }
 
+    public function testNameReadsALatin1LiteralInTheSystemCharacterSet(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT _latin1'é', (_latin1'  x€')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['Ã©', 'xâ‚¬'], [$result->columns[0]->name, $result->columns[1]->name]);
+    }
+
+    public function testSelectReportsNoBaseColumnForARollupItem(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT, b VARCHAR(10) NOT NULL, x TEXT)');
+        $result = $session->query('SET sql_mode = ""; SELECT a, b, COUNT(*) FROM t GROUP BY a WITH ROLLUP')[1];
+        $ordered = $session->query('SELECT x FROM t GROUP BY x WITH ROLLUP ORDER BY x')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['', '', true], ['b', 't', false]], [[$result->columns[0]->originalName, $result->columns[0]->table, ($result->columns[0]->flags & 1) === 0], [$result->columns[1]->originalName, $result->columns[1]->table, ($result->columns[1]->flags & 1) === 0]]);
+        self::assertInstanceOf(ResultSet::class, $ordered);
+        self::assertSame(['', 16], [$ordered->columns[0]->table, $ordered->columns[0]->flags & 16]);
+    }
+
     public function testOriginReportsTheBaseColumnThroughTheAliasOfItsTable(): void
     {
         $session = (new Instance())->connect();
@@ -230,5 +303,59 @@ final class BlocksTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame(['a', 'x'], [$result->columns[0]->name, $result->columns[0]->table]);
+    }
+
+    public function testWhereEvaluatesAConstantConjunctOnceBeforeAnyRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('CREATE TABLE e (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2), (3)');
+        $empty = $session->query("SELECT a FROM e WHERE 'x' + 0 = 0")[0];
+        $once = $session->query('SHOW WARNINGS')[0];
+        $result = $session->query("SELECT a FROM t WHERE a > 1 AND ('y' + 0 = 0)")[0];
+        $conjunct = $session->query('SHOW WARNINGS')[0];
+        $impossible = $session->query("SELECT 'z' + 0 FROM t WHERE 'w' + 0 = 1")[0];
+        $unread = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $empty);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $impossible);
+        self::assertSame([[], [['2'], ['3']], []], [$empty->rows, $result->rows, $impossible->rows]);
+        self::assertInstanceOf(ResultSet::class, $once);
+        self::assertInstanceOf(ResultSet::class, $conjunct);
+        self::assertInstanceOf(ResultSet::class, $unread);
+        self::assertSame([["Truncated incorrect DOUBLE value: 'x'"], ["Truncated incorrect DOUBLE value: 'y'"], ["Truncated incorrect DOUBLE value: 'w'"]], [array_column($once->rows, 2), array_column($conjunct->rows, 2), array_column($unread->rows, 2)]);
+    }
+
+    public function testConjunctsSplitsTheTopLevelAnds(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('SELECT 1 FROM DUAL WHERE (1 AND (2 && 3)) AND (4 OR 5)');
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        self::assertNotNull($statement->where);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+
+        self::assertCount(4, $planner->blocks->conjuncts($statement->where));
+    }
+
+    public function testSelectSortsByASelectItemAndIgnoresAConstantKey(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (2), (1), (3)');
+        $result = $session->query("SELECT a, 'x' + 0 AS z FROM t ORDER BY 'y' + 0, z, a DESC")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['3', '0'], ['2', '0'], ['1', '0']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(["Truncated incorrect DOUBLE value: 'x'", "Truncated incorrect DOUBLE value: 'x'", "Truncated incorrect DOUBLE value: 'x'"], array_column($warnings->rows, 2));
     }
 }

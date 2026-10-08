@@ -10,6 +10,8 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
 use SqlSemantics\Platform\MySql\Rules\Query\From\JoinedInput;
 use SqlSemantics\Platform\MySql\Rules\Query\From\Joining;
+use SqlSemantics\Platform\MySql\Rules\Query\Grouping\GroupedColumns;
+use SqlSemantics\Platform\MySql\Rules\Query\Grouping\RollupItems;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -40,7 +42,8 @@ use SqlSemantics\Statement\Shape\RowShape;
  * see the FROM tables. In a block that aggregates without GROUP BY
  * (MYSQL-AGGREGATE-QUERY-001; HAVING alone filters rows like WHERE) or groups WITH ROLLUP, ROLLUP or CUBE, every
  * column of the FROM tables read by the select list, HAVING, the windows,
- * QUALIFY and ORDER BY can be NULL. LIMIT, PROCEDURE ANALYSE, INTO and the
+ * QUALIFY and ORDER BY can be NULL; the output fields of a block WITH
+ * ROLLUP follow MYSQL-ROLLUP-ITEMS-001. LIMIT, PROCEDURE ANALYSE, INTO and the
  * locking clauses follow MYSQL-TAIL-FACTS-001; a late ordering is derived
  * like the ORDER BY and LIMIT of the block. A window name defined twice
  * is reported, and so is a window name the block does not define
@@ -90,14 +93,14 @@ final class SelectFacts
             $derivation->scalar($select->qualify, $results);
         }
         (new SortScopes())->derive([...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)], $derivation, $results, $items, true);
-        (new GroupedColumns())->check($select, $visible, $derivation);
+        (new GroupedColumns())->check($select, $visible, $items, $derivation);
         (new TailFacts())->limit($select->limit, $derivation, $outer);
         (new TailFacts())->limit($select->late?->limit, $derivation, $outer);
         foreach ($select->procedure === null ? [] : $select->procedure->arguments as $argument) {
             $derivation->scalar($argument, new Environment($context, $outer));
         }
-        $fact = new QueryFact($items, $context->columnNames);
-        (new TailFacts())->derive($derivation, $outer, $fact, $select->into, $select->locking, $visible);
+        $fact = new QueryFact((new RollupItems())->fields($select, $items, $visible, $output, $derivation), $context->columnNames);
+        (new TailFacts())->derive($derivation, $outer, $fact, $select);
 
         return $fact;
     }
@@ -112,9 +115,9 @@ final class SelectFacts
             $window->specification->deriveWindow($derivation, $environment);
             $key = $derivation->context->columnNames->fold($window->name->value);
             if (isset($seen[$key])) {
-                $derivation->report(new Misuse(MisuseRule::DuplicateWindow));
+                $derivation->report(new Misuse(MisuseRule::DuplicateWindow, $seen[$key]));
             }
-            $seen[$key] = true;
+            $seen[$key] ??= $window->name;
         }
     }
 

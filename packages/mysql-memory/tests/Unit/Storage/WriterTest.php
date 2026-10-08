@@ -191,4 +191,28 @@ final class WriterTest extends TestCase
 
         self::assertSame([0, 0.0, '0.00', '0000-00-00', '0000-00-00 00:00:00.000', '00:00:00', 0, '', 'x', "\0\0\0", "\0\0", 'null'], array_map($writer->implicit(...), $table->definition->columns));
     }
+
+    public function testRefreshSetsTheColumnsOnUpdateCurrentTimestampThatNoAssignmentWrote(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('CREATE TABLE d.t (id INT, d DATETIME(3) ON UPDATE CURRENT_TIMESTAMP(3), e TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $writer = new Writer($table, new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 1100000000.25));
+
+        self::assertSame([2, date('Y-m-d H:i:s', 1100000000) . '.250', '2001-01-01 00:00:00'], $writer->refresh([2, null, '2001-01-01 00:00:00'], [0 => true, 2 => true]));
+    }
+
+    public function testEntryQuotesAValueOfAnotherCharacterSetInUtf8(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('CREATE TABLE d.t (c VARCHAR(10) CHARACTER SET latin1 PRIMARY KEY)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $writer = new Writer($table, new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0));
+
+        self::assertSame(['é€', 't.PRIMARY'], $writer->entry(["\xE9\x80"], $table->definition->keys[0]));
+    }
 }

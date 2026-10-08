@@ -140,6 +140,18 @@ final class SessionTest extends TestCase
         self::assertSame([], $session->diagnostics->conditions);
     }
 
+    public function testExecuteWarnsAboutIntoBeforeALockingClauseAfterReadingTheStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+        $session->run("TABLE t INTO DUMPFILE '/tmp/out' LOCK IN SHARE MODE");
+        $warned = $session->diagnostics->conditions;
+        $session->run("TABLE t INTO DUMPFILE '/tmp/out' LOCK IN SHARE MODE LOCK IN SHARE MODE");
+
+        self::assertSame([3962, 1290], array_column($warned, 1));
+        self::assertSame([['Error', 3569, 'Table t appears in multiple locking clauses.']], $session->diagnostics->conditions);
+    }
+
     public function testExecuteRaisesTheProblemOfTheStatement(): void
     {
         $session = (new Instance())->connect();
@@ -223,6 +235,19 @@ final class SessionTest extends TestCase
         self::assertSame([], $resolution->parameters);
     }
 
+    public function testResolutionNamesTheCharacterSetStatementsAreReadIn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET character_set_client = latin1');
+        $latin1 = $session->resolution()->client?->name;
+        $session->query('SET character_set_client = utf8mb4');
+        $result = $session->query("SELECT UPPER('straße'), CONCAT('😀', 'a')")[0];
+
+        self::assertSame('latin1', $latin1);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(["UPPER('straße')", "CONCAT('?', 'a')"], [$result->columns[0]->name, $result->columns[1]->name]);
+    }
+
     public function testResolutionTypesTheUserVariables(): void
     {
         $session = (new Instance())->connect();
@@ -299,5 +324,47 @@ final class SessionTest extends TestCase
         $this->expectExceptionMessage("Unknown database 'shop'");
 
         $session->use('shop');
+    }
+
+    public function testExecuteResetsTheDiagnosticsAreaWhenTheStatementIsNotAnalyzed(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->run('SELECT 1 FROM nope');
+        $session->run('SELECT /*+ BKA(w) */ 1');
+
+        self::assertSame([1235], array_map(static fn (array $condition): int => $condition[1], $session->diagnostics->conditions));
+    }
+
+    public function testExecuteSetsTheRowCountOfEachStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $start = $session->query('SELECT ROW_COUNT()')[0];
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2), (3)');
+        $inserted = $session->query('SELECT ROW_COUNT()')[0];
+        $selected = $session->query('SELECT ROW_COUNT()')[0];
+        $session->query('UPDATE t SET a = a + 1 WHERE a > 1');
+        $session->query('SET @x = 1');
+        $set = $session->query('SELECT ROW_COUNT()')[0];
+        $session->run('SELECT * FROM nosuch');
+        $failed = $session->query('SELECT ROW_COUNT()')[0];
+        $session->query('CREATE DATABASE e');
+        $created = $session->query('SELECT ROW_COUNT()')[0];
+
+        self::assertInstanceOf(ResultSet::class, $start);
+        self::assertInstanceOf(ResultSet::class, $inserted);
+        self::assertInstanceOf(ResultSet::class, $selected);
+        self::assertInstanceOf(ResultSet::class, $set);
+        self::assertInstanceOf(ResultSet::class, $failed);
+        self::assertInstanceOf(ResultSet::class, $created);
+        self::assertSame([[['0']], [['3']], [['-1']], [['0']], [['-1']], [['1']]], [$start->rows, $inserted->rows, $selected->rows, $set->rows, $failed->rows, $created->rows]);
+    }
+
+    public function testRunSetsTheRowCountOfAStatementThatDoesNotParse(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->run('SELEC 1');
+
+        self::assertSame(-1, $session->variables->rowCount);
     }
 }

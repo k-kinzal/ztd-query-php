@@ -31,4 +31,12 @@ final class LoadFactsTest extends TestCase
 
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
     }
+
+    public function testDeriveFindsTheInvisibleColumnsOfTheTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE)')->declarations();
+
+        self::assertSame([], $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE v (a, e)", $tables)->facts->diagnostics);
+    }
 }

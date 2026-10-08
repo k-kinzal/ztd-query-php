@@ -17,6 +17,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Shape\OutputSlot;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\TypeFact;
 
 #[CoversClass(Materialization::class)]
 #[Small]
@@ -58,9 +61,25 @@ final class MaterializationTest extends TestCase
 
     public function testColumnNarrowsShortBigIntsAndDropsStringDecimals(): void
     {
-        self::assertEquals(new Domain(Kind::Integer, Field::Long, 2, 0, false, null, [], Coercibility::Numeric), (new Materialization())->column(Domain::integer(Field::LongLong, 2)));
-        self::assertEquals(Domain::integer(Field::LongLong, 2), (new Materialization())->column(Domain::integer(Field::LongLong, 2), false));
+        self::assertEquals(new Domain(Kind::Integer, Field::Long, 11, 0, false, null, [], Coercibility::Numeric, 2), (new Materialization())->column(Domain::integer(Field::LongLong, 2)));
+        self::assertEquals(new Domain(Kind::Integer, Field::LongLong, 20, 0, false, null, [], Coercibility::Numeric, 2), (new Materialization())->column(Domain::integer(Field::LongLong, 2), false));
         self::assertSame(0, (new Materialization())->column(Domain::string(3, Collation::known('utf8mb4_bin')))->decimals);
+    }
+
+    public function testColumnNarrowsBelowTenCharactersAndKeepsACopiedColumn(): void
+    {
+        self::assertEquals(new Domain(Kind::Integer, Field::LongLong, 20, 0, false, null, [], Coercibility::Numeric, 10), (new Materialization())->column(Domain::integer(Field::LongLong, 10)));
+        self::assertEquals(new Domain(Kind::Integer, Field::Long, 11, 0, false, null, [], Coercibility::Numeric, 9), (new Materialization())->column(Domain::integer(Field::LongLong, 9)));
+        self::assertEquals(Domain::integer(Field::LongLong, 21, true), (new Materialization())->column(Domain::integer(Field::LongLong, 21, true)));
+        self::assertEquals(Domain::column(Field::Long, 5), (new Materialization())->column(Domain::column(Field::Long, 5)));
+    }
+
+    public function testColumnLetsAnExpressionSeeTheWholeTypeOfADerivedColumn(): void
+    {
+        $output = (new Semantics(Dialect::MySql))->analyze('SELECT a, -a, a + 0 FROM (SELECT 3 AS a) d')->facts->output;
+
+        self::assertNotNull($output);
+        self::assertEquals([new Known(new Domain(Kind::Integer, Field::Long, 11, 0, false, null, [], Coercibility::Numeric, 2)), new Known(Domain::integer(Field::LongLong, 11)), new Known(Domain::integer(Field::LongLong, 12))], array_map(static fn (OutputSlot $slot): TypeFact => $slot->type, $output->shape->slots));
     }
 
     public function testSetCountsBlobLengthsInBytes(): void

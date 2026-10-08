@@ -71,4 +71,14 @@ final class SystemVariableReadTest extends TestCase
 
         self::assertSame('SYSTEM', (new SystemVariableRead($definition, Scope::Session, Domain::of($definition->domain, true)))->evaluate(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0))));
     }
+
+    public function testEvaluateReadsNullFromAVariableThatHoldsIt(): void
+    {
+        $session = (new Instance())->connect();
+        $definition = $session->variables->catalog->find('character_set_results');
+        self::assertInstanceOf(Definition::class, $definition);
+        $session->variables->set($definition, null);
+
+        self::assertNull((new SystemVariableRead($definition, Scope::Session, Domain::of($definition->domain, true)))->evaluate(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0))));
+    }
 }

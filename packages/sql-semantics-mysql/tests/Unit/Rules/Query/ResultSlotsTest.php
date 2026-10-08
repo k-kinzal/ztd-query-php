@@ -59,6 +59,41 @@ final class ResultSlotsTest extends TestCase
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
+    public function testValuesNumbersTheRowOfAnotherLengthAndReportsAnEmptyRow(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $longer = $semantics->analyze('VALUES ROW(1), ROW(2), ROW(3, 4)')->facts->diagnostics;
+        $empty = $semantics->analyze('VALUES ROW(), ROW(1)')->facts->diagnostics;
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch::class, $longer[0]);
+        self::assertSame(3, $longer[0]->row);
+        self::assertSame(['Each row of a VALUES clause must have at least one column, unless when used as source in an INSERT statement.', "Column count doesn't match value count (0 and 1)."], array_map(static fn ($diagnostic): string => $diagnostic->message(), $empty));
+    }
+
+    public function testValuesAcceptsAnEmptyRowAndDefaultInTheRowsAStatementWrites(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $derivation = new Derivation($semantics->context());
+        $values = new ValuesQuery([new ValueRow([]), new ValueRow([])]);
+        $derivation->writes($values, [], true);
+        (new ResultSlots())->values($values, $derivation, $derivation->environment());
+        $t = $semantics->analyze('CREATE TABLE t (a INT, b INT)');
+
+        self::assertSame([], $derivation->facts()->diagnostics);
+        self::assertSame([], $semantics->analyze('INSERT INTO t (a, b) (VALUES ROW(DEFAULT, 1))', [$t])->facts->diagnostics);
+    }
+
+    public function testSettledCountsTheBytesOfATextOnce(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $t = $semantics->analyze('CREATE TABLE t (b TEXT)');
+        $once = $semantics->analyze('SELECT b FROM t UNION SELECT b FROM t', [$t])->facts->output?->fields()?->at(0)->type;
+        $nested = $semantics->analyze('SELECT b FROM t UNION SELECT b FROM t EXCEPT SELECT b FROM t', [$t])->facts->output?->fields()?->at(0)->type;
+
+        self::assertInstanceOf(Known::class, $once);
+        self::assertEquals($once, $nested);
+    }
+
     public function testValuesNamesTheColumnsByPosition(): void
     {
         $semantics = new Semantics(Dialect::MySql);

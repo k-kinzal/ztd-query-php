@@ -278,4 +278,14 @@ final class AccumulatorTest extends TestCase
 
         self::assertNull((new Accumulator(new Accumulation(null, [new ColumnRead($text, 0)], false, $text)))->concatenation(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0))));
     }
+
+    public function testConcatenationJoinsInTheCharacterSetOfTheResult(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (u VARCHAR(4) CHARACTER SET utf16, k INT); INSERT INTO t VALUES ('é12', 1), ('34', 2)");
+        $result = $session->query("SELECT GROUP_CONCAT(u ORDER BY k SEPARATOR 'ü'), HEX(GROUP_CONCAT(u ORDER BY k)) FROM t")[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['é12ü34', '00E900310032002C00330034']], $result->rows);
+    }
 }

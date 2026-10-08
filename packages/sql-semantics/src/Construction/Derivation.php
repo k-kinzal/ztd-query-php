@@ -23,6 +23,7 @@ use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Reference\Table\TableResolution;
 use SqlSemantics\Statement\Relation;
 use SqlSemantics\Statement\Scalar;
+use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -76,6 +77,11 @@ final class Derivation
     private ?Environment $base = null;
 
     private int $programs = 0;
+
+    /**
+     * @var array<int, array{list<Field>, bool}> The columns a statement writes the rows of a query into, and whether an empty row writes the defaults, by the object id of the query
+     */
+    private array $targets = [];
 
     /**
      * @param AnalysisContext $context The fixed declaration context every part is derived against
@@ -200,6 +206,31 @@ final class Derivation
     public function inProgram(): bool
     {
         return $this->programs > 0;
+    }
+
+    /**
+     * Records that the statement writes the rows of a query into the given columns, as an INSERT writes the rows of its source.
+     *
+     * The query is derived later as any other; written() lets its rules
+     * accept what the database accepts only in rows that are written, such
+     * as a value that stands for the default of its column.
+     *
+     * @param list<Field> $columns The written columns in row order
+     * @param bool $defaults Whether an empty row writes the defaults of every column
+     */
+    public function writes(Query $node, array $columns, bool $defaults): void
+    {
+        $this->targets[spl_object_id($node)] = [$columns, $defaults];
+    }
+
+    /**
+     * Answers the columns the statement writes the rows of a query into and whether an empty row writes the defaults, or null when it does not write them.
+     *
+     * @return array{list<Field>, bool}|null
+     */
+    public function written(Query $node): ?array
+    {
+        return $this->targets[spl_object_id($node)] ?? null;
     }
 
     /**

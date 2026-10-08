@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Dictionary;
 
 use MySqlMemory\Result\ColumnFlag;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Statement\Declaration\Table;
 
 /**
@@ -104,7 +105,7 @@ final class TableDefinition
     }
 
     /**
-     * Answers the column definition flags a column of the table carries: its keys, AUTO_INCREMENT and default.
+     * Answers the column definition flags a column of the table carries: its keys, AUTO_INCREMENT and default, and ZEROFILL for a YEAR column.
      */
     public function flags(int $position): int
     {
@@ -129,6 +130,9 @@ final class TableDefinition
         }
         if ($column->domain->field->blob()) {
             $flags |= ColumnFlag::Blob->value;
+        }
+        if ($column->domain->field === Field::Year) {
+            $flags |= ColumnFlag::ZeroFill->value;
         }
 
         return $flags;

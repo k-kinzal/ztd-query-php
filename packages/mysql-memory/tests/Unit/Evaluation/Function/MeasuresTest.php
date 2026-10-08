@@ -161,4 +161,14 @@ final class MeasuresTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([[null, null]], $result->rows);
     }
+
+    public function testLocateSearchesInTheCharacterSetOfTheCollation(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (c VARCHAR(10) CHARACTER SET latin1, u VARCHAR(10) CHARACTER SET utf16); INSERT INTO t VALUES ('é€', 'a2é2')");
+        $result = $session->query("SELECT LOCATE('2', u), LOCATE('é', u, 3), INSTR(u, 'é2'), POSITION('€' IN c), FIND_IN_SET('x', CONVERT('a,x' USING latin1)), CHAR_LENGTH(u), LENGTH(u) FROM t")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', '3', '3', '2', '2', '4', '8']], $result->rows);
+    }
 }

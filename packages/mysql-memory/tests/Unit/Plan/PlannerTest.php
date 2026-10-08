@@ -28,6 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Query;
 
 #[CoversClass(Planner::class)]
@@ -83,6 +84,30 @@ final class PlannerTest extends TestCase
         self::assertInstanceOf(Sort::class, $plan->root->input);
         self::assertSame(['a'], $plan->names);
         self::assertSame([['3'], ['2']], (new Output())->result($plan, $context)->rows);
+    }
+
+    public function testExpressionLeavesOutAKeyConstantForTheStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (2), (1)');
+        $result = $session->query('TABLE t ORDER BY DATABASE() + 1')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2'], ['1']], $result->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testExpressionLeavesTheRowsOfAValuesStatementInWrittenOrder(): void
+    {
+        $session = (new Instance())->connect();
+
+        $result = $session->query('VALUES ROW(1), ROW(3), ROW(2) ORDER BY column_0 DESC LIMIT 2')[0];
+        $union = $session->query('(VALUES ROW(1), ROW(2)) UNION ALL (VALUES ROW(3)) ORDER BY column_0 DESC')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $union);
+        self::assertSame([['1'], ['3']], $result->rows);
+        self::assertSame([['3'], ['2'], ['1']], $union->rows);
     }
 
     public function testExpressionAnswersThePlanOfItsBodyWithoutOrderOrLimit(): void
@@ -180,7 +205,7 @@ final class PlannerTest extends TestCase
         self::assertSame([['1', 'a'], ['2', 'b']], (new Output())->result($plan, $context)->rows);
     }
 
-    public function testMaterializedFlagsOnlyTheBlobColumns(): void
+    public function testMaterializedFlagsTheBlobColumnsAndYearColumnsZerofill(): void
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('SELECT 1');
@@ -189,9 +214,9 @@ final class PlannerTest extends TestCase
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
 
-        $origins = $planner->materialized([Domain::integer(), Domain::string(65535, Collation::known('utf8mb4_0900_ai_ci'), Field::Blob)]);
+        $origins = $planner->materialized([Domain::integer(), Domain::string(65535, Collation::known('utf8mb4_0900_ai_ci'), Field::Blob), new Domain(Kind::Year, Field::Year, 4, 0, true)]);
 
-        self::assertEquals([null, new ColumnOrigin('', '', '', '', 16)], $origins);
+        self::assertEquals([null, new ColumnOrigin('', '', '', '', 16), new ColumnOrigin('', '', '', '', 64)], $origins);
     }
 
     public function testOutputsAnswersTheTypesOfTheColumnsOfASetOperation(): void

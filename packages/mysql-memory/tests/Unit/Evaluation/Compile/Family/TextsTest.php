@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Evaluation\Compile;
+namespace Tests\Unit\Evaluation\Compile\Family;
 
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Evaluation\Compile\Texts;
+use MySqlMemory\Evaluation\Compile\Family\Texts;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -156,5 +156,23 @@ final class TextsTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['0', '1']], $result->rows);
+    }
+
+    public function testConvertHoldsTheBytesOfTheTargetCharacterSet(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(CONVERT('é' USING latin1)), LENGTH(CONVERT('é' USING latin1)), CHAR_LENGTH(CONVERT('é' USING latin1)), HEX(CONVERT('€' USING latin1)), HEX(CONVERT('中' USING latin1)), HEX(CONVERT(_latin1 X'E9' USING utf8mb4)), HEX(CONVERT('é' USING utf16)), HEX(CONVERT('é' USING binary)), HEX(_latin1'é')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['E9', '1', '1', '80', '3F', 'C3A9', '00E9', 'C3A9', 'C3A9']], $result->rows);
+    }
+
+    public function testTrimAndRegexpReadTheCharacterSetOfTheirArguments(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(TRIM(CONVERT(' é ' USING latin1))), HEX(TRIM(LEADING 'é' FROM CONVERT('ééa' USING latin1))), CONVERT('éa' USING latin1) REGEXP '^éa$', HEX(TRIM(CONVERT(' é ' USING utf16)))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['E9', '61', '1', '00E9']], $result->rows);
     }
 }

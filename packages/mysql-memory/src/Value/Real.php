@@ -18,14 +18,19 @@ final class Real
 {
     /**
      * Writes a number in the text the server returns for a DOUBLE.
+     *
+     * An infinity, which ROUND past the largest double produces, is written as 0, as the server writes it.
      */
     public static function format(float $value): string
     {
-        if (is_nan($value) || is_infinite($value)) {
-            return $value > 0 ? 'inf' : ($value < 0 ? '-inf' : 'nan');
+        if (is_infinite($value)) {
+            return '0';
+        }
+        if (is_nan($value)) {
+            return 'nan';
         }
         if ($value === 0.0) {
-            return str_starts_with(sprintf('%F', $value), '-') ? '-0' : '0';
+            return fdiv(1, $value) < 0 ? '-0' : '0';
         }
         [$digits, $point] = self::digits(abs($value));
         $sign = $value < 0 ? '-' : '';

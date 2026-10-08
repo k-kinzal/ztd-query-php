@@ -9,16 +9,26 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Diagnostics;
 use MySqlMemory\Session\SqlModes;
 use MySqlMemory\Session\Variables;
+use WeakMap;
 
 /**
  * What one statement is evaluated in: the session's modes and variables, the clock of the statement, and its diagnostics area.
  *
- * Every NOW() of a statement reads the same instant, the instant the statement started.
+ * Every NOW() of a statement reads the same instant, the instant the statement started. A value
+ * the server computes once for the statement, such as a constant operand a comparison converts,
+ * is kept here the first time it is computed.
  *
  * @visibility MySqlMemory
  */
 final class Context
 {
+    /**
+     * The values computed once for the statement, by what computes them.
+     *
+     * @var WeakMap<object, list<int|float|string|null>>
+     */
+    public readonly WeakMap $kept;
+
     /**
      * @param SqlModes $modes The sql_mode of the session
      * @param Diagnostics $diagnostics Where warnings of the statement are recorded
@@ -33,6 +43,7 @@ final class Context
         public readonly float $started,
         public bool $strict = false,
     ) {
+        $this->kept = new WeakMap();
     }
 
     /**
@@ -46,6 +57,19 @@ final class Context
             throw $code->error(...$arguments);
         }
         $this->diagnostics->warning($code, $code->message(...$arguments));
+    }
+
+    /**
+     * Records a warning whose message is not the format of its code, or raises it as an error when the statement writes data under a strict mode.
+     *
+     * @throws SqlError When the warning is an error in this statement
+     */
+    public function warnMessage(ErrorCode $code, string $message): void
+    {
+        if ($this->strict) {
+            throw new SqlError($code, $message);
+        }
+        $this->diagnostics->warning($code, $message);
     }
 
     /**

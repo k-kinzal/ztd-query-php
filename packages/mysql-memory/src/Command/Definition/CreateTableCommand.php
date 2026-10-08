@@ -6,6 +6,7 @@ namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\ColumnDefinition;
+use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\TableDefinition;
@@ -72,6 +73,9 @@ final class CreateTableCommand implements Command
         }
         $planner = new Planner($create, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $definition = (new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schemaName);
+        foreach ($this->duplicates($definition->keys) as $duplicate) {
+            $context->warning(ErrorCode::DuplicateIndex, $duplicate->name, $schemaName . '.' . $name);
+        }
         $schema->tables[$name] = new StoredTable($this->primaryNotNull($definition), new Heap());
 
         return new Completion(0, 0, $context->diagnostics->count());
@@ -93,6 +97,30 @@ final class CreateTableCommand implements Command
         }
 
         return new TableDefinition($definition->schema, $definition->name, $columns, $definition->keys, $definition->declaration, $definition->engine, $definition->collation, $definition->temporary, $definition->comment);
+    }
+
+    /**
+     * Answers each key, other than the primary key, that indexes the same columns in the same way as a key before it.
+     *
+     * The server keeps such a key and warns that defining it is deprecated.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html.
+     *
+     * @param list<Key> $keys The keys in the order the table holds them
+     * @return list<Key>
+     */
+    public function duplicates(array $keys): array
+    {
+        $duplicates = [];
+        foreach ($keys as $position => $key) {
+            foreach (array_slice($keys, 0, $position) as $earlier) {
+                if ($key->kind !== KeyKind::Primary && $key->duplicates($earlier)) {
+                    $duplicates[] = $key;
+                    break;
+                }
+            }
+        }
+
+        return $duplicates;
     }
 
     /**

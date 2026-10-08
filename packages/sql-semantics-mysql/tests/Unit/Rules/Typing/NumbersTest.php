@@ -66,6 +66,26 @@ final class NumbersTest extends TestCase
         self::assertEquals(Domain::double(23), $numbers->negated(Domain::string(1, Collation::binary())));
     }
 
+    public function testNegatedMakesANegativeIntegerConstantADecimal(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertEquals(Domain::decimal(1, 0), $numbers->negated(Domain::integer(Field::LongLong, 2), true));
+        self::assertEquals(Domain::decimal(21, 0), $numbers->negated(Domain::integer(Field::LongLong, 21, true), true));
+        self::assertEquals(Domain::decimal(5, 2), $numbers->negated(Domain::decimal(5, 2), true));
+    }
+
+    public function testBinaryCountsTheDigitsOfAProductAndAnUnsignedRemainder(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame(42, $numbers->binary(ArithmeticOperator::Multiply, Domain::integer(Field::LongLong, 21, true), Domain::integer(Field::LongLong, 21, true))->length);
+        self::assertSame(41, $numbers->binary(ArithmeticOperator::Multiply, Domain::integer(), Domain::integer())->length);
+        self::assertSame(66, $numbers->binary(ArithmeticOperator::Multiply, Domain::integer(Field::LongLong, 61), Domain::integer())->length);
+        self::assertSame(22, $numbers->binary(ArithmeticOperator::Modulo, Domain::integer(Field::LongLong, 21, true), Domain::integer(Field::LongLong, 2))->length);
+        self::assertSame(22, $numbers->binary(ArithmeticOperator::Plus, Domain::integer(), Domain::integer(Field::LongLong, 2))->length);
+    }
+
     public function testBitsAndTruthAreIntegers(): void
     {
         self::assertEquals(Domain::integer(Field::LongLong, 21, true), (new Numbers())->bits());

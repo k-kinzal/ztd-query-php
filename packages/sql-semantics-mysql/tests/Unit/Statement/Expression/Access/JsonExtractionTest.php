@@ -15,10 +15,11 @@ use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -36,7 +37,7 @@ final class JsonExtractionTest extends TestCase
         $json = $derivation->scalar(new JsonExtraction(new ColumnUse(new Name('a')), new Text('$.b')), $derivation->environment());
         $text = $derivation->scalar(new JsonExtraction(new ColumnUse(new Name('a')), new Text('$.b'), true), $derivation->environment());
 
-        self::assertEquals([new Known(new Elementary(ElementaryKind::Json)), new Known(new Character(CharacterKind::LongText))], [$json->type, $text->type]);
+        self::assertEquals([new Known(new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'))), new Known(Domain::string(4294967295, Collation::known('utf8mb4_bin'), Field::LongBlob, Coercibility::Coercible))], [$json->type, $text->type]);
         self::assertSame(Nullability::Nullable, $text->nullability);
     }
 

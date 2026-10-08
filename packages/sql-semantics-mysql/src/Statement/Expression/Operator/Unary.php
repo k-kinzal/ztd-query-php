@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Rules\Expression\NumericResult;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Typing\Constants;
 use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
@@ -29,7 +30,8 @@ use SqlSemantics\Statement\Type\Known;
  * COLLATE, so `-a COLLATE c` negates the collated value (MYSQL-PRECEDENCE-001).
  *
  * Rule: MYSQL-UNARY-001. Facts: unary plus has the facts of its operand
- * (the server drops it); unary minus follows MYSQL-NUMERIC-RESULT-001; `~`
+ * (the server drops it); unary minus follows MYSQL-NUMERIC-RESULT-001, and is a DECIMAL over an
+ * integer constant that is negative; `~`
  * is a bit operator; `!` is a truth value. Each is NULL when the operand
  * is, and takes a single value. Terminates: the operand is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/arithmetic-functions.html#operator_unary-minus,
@@ -71,7 +73,7 @@ final class Unary implements Scalar
 
         return match ($this->operator) {
             UnaryOperator::Plus => new ScalarFact($fact->type, $fact->nullability),
-            UnaryOperator::Minus => new ScalarFact($operand === null ? $numbers->negation($this->operand, $fact) : new Known($precise->negated($operand)), $fact->nullability),
+            UnaryOperator::Minus => new ScalarFact($operand === null ? $numbers->negation($this->operand, $fact) : new Known($precise->negated($operand, (new Constants())->negative($this->operand) || $numbers->beyond($this->operand))), $fact->nullability),
             UnaryOperator::Invert => new ScalarFact($operand === null || !$bits instanceof Known ? $bits : new Known(TypeClass::of($bits->descriptor) === TypeClass::Unsigned ? $precise->bits() : $precise->binaryBits(null, [$operand])), $fact->nullability),
             UnaryOperator::Not => $operands->truth($fact->nullability),
         };

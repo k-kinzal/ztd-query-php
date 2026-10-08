@@ -86,7 +86,7 @@ final class RowAlias implements Relation
             $name = $this->columns[$position] ?? $field->name;
             $key = $name === null ? '' : $derivation->context->columnNames->fold($name->value);
             if (isset($seen[$key])) {
-                $derivation->report(new Misuse(MisuseRule::DuplicateColumn));
+                $derivation->report(new Misuse(MisuseRule::DuplicateColumn, $name));
             }
             $seen[$key] = true;
             $slots[] = new OutputSlot($name, $field->type, $field->nullability, null, $field->slot);

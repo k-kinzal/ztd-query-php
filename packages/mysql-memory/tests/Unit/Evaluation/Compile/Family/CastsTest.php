@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Evaluation\Compile;
+namespace Tests\Unit\Evaluation\Compile\Family;
 
-use MySqlMemory\Evaluation\Compile\Casts;
+use MySqlMemory\Evaluation\Compile\Family\Casts;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;

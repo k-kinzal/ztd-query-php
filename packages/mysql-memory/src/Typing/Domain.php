@@ -46,6 +46,7 @@ final class Domain
      * @param list<string> $members The members of an ENUM or SET, in declared order
      * @param Coercibility $coercibility How strongly the collation of a string holds against another
      * @param bool $numericBytes Whether the bytes of a binary string read as the integer they spell in a numeric context, as for a hexadecimal or bit literal
+     * @param int|null $display The display width a column of an integer type reports for itself, when it is narrower than the length
      */
     public function __construct(
         public readonly Kind $kind,
@@ -58,6 +59,7 @@ final class Domain
         public readonly array $members = [],
         public readonly Coercibility $coercibility = Coercibility::Implicit,
         public readonly bool $numericBytes = false,
+        public readonly ?int $display = null,
     ) {
         $this->collation = $collation ?? Collation::binary();
     }
@@ -67,7 +69,7 @@ final class Domain
      */
     public function withNumericBytes(bool $numericBytes = true): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $numericBytes);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $numericBytes, $this->display);
     }
 
     /**
@@ -75,7 +77,7 @@ final class Domain
      */
     public static function of(Resolved $type, bool $nullable): self
     {
-        return new self($type->kind, $type->field, $type->length, $type->decimals, $type->unsigned, $type->collation, $nullable, $type->members, $type->coercibility);
+        return new self($type->kind, $type->field, $type->length, $type->decimals, $type->unsigned, $type->collation, $nullable, $type->members, $type->coercibility, false, $type->display);
     }
 
     /**
@@ -83,7 +85,7 @@ final class Domain
      */
     public function resolved(): Resolved
     {
-        return new Resolved($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility);
+        return new Resolved($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, $this->display);
     }
 
     /**
@@ -131,7 +133,7 @@ final class Domain
      */
     public function withNullable(bool $nullable): self
     {
-        return $nullable === $this->nullable ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $nullable, $this->members, $this->coercibility, $this->numericBytes);
+        return $nullable === $this->nullable ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display);
     }
 
     /**
@@ -139,7 +141,7 @@ final class Domain
      */
     public function withCollation(Collation $collation, Coercibility $coercibility): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->nullable, $this->members, $coercibility, $this->numericBytes);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->nullable, $this->members, $coercibility, $this->numericBytes, $this->display);
     }
 
     /**
@@ -151,11 +153,11 @@ final class Domain
     }
 
     /**
-     * Answers the display length in bytes, as the column definition reports it.
+     * Answers the display length in bytes, as the column definition reports it: the display width of a column of an integer type that declares one.
      */
     public function byteLength(): int
     {
-        return $this->kind === Kind::String || $this->kind->temporal() ? $this->length * $this->collation->charset->maxLength : $this->length;
+        return $this->kind === Kind::String || $this->kind->temporal() ? $this->length * $this->collation->charset->maxLength : $this->display ?? $this->length;
     }
 
     /**

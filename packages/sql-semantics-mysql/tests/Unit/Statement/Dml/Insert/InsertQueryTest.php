@@ -50,6 +50,18 @@ final class InsertQueryTest extends TestCase
         self::assertSame('INSERT INTO t TABLE u', (new Semantics(Dialect::MySql))->analyze('insert t table u')->toString());
     }
 
+    public function testValuesSeesThroughParenthesesWithOrderByAndLimit(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $wrapped = $semantics->analyze('INSERT INTO t WITH x AS (SELECT 1) (VALUES ROW(1), ROW(2)) ORDER BY 1 LIMIT 1')->statement;
+        $union = $semantics->analyze('INSERT INTO t VALUES ROW(1) UNION VALUES ROW(2)')->statement;
+        self::assertInstanceOf(InsertQuery::class, $wrapped);
+        self::assertInstanceOf(InsertQuery::class, $union);
+
+        self::assertCount(2, $wrapped->values()->rows ?? []);
+        self::assertNull($union->values());
+    }
+
     public function testValuesSeesThroughALockingClause(): void
     {
         $semantics = new Semantics(Dialect::MySql);

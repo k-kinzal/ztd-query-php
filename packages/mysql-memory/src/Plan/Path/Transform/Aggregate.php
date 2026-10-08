@@ -14,7 +14,11 @@ use Override;
  *
  * Each output row is the first row of a group followed by the value of each aggregate. Without
  * grouping expressions the whole input is one group, which exists even when the input is empty.
- * With ROLLUP, super-aggregate rows follow each group, with NULL in the rolled-up grouping columns.
+ * With ROLLUP, a super-aggregate row follows the last group of each run of groups that agree on
+ * the leading grouping values, from the last grouping expression to the first; its rolled-up
+ * grouping values are NULL. A row with ROLLUP also holds the value of each grouping expression,
+ * NULL where it is rolled up, and the number of grouping expressions rolled up in it.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/group-by-modifiers.html.
  *
  * @visibility MySqlMemory
  */
@@ -25,7 +29,7 @@ final class Aggregate implements AccessPath
      * @param list<Evaluable> $groups The grouping expressions, evaluated over each input row
      * @param list<Accumulation> $aggregates The aggregates computed for each group
      * @param bool $rollup Whether super-aggregate rows are added
-     * @param list<int> $rollupColumns The input positions the grouping expressions read, set to NULL in super-aggregate rows
+     * @param list<int|null> $rollupColumns The input position each grouping expression reads when it is a column of the block, set to NULL in the super-aggregate rows that roll it up
      */
     public function __construct(
         public readonly AccessPath $input,
@@ -37,11 +41,11 @@ final class Aggregate implements AccessPath
     }
 
     /**
-     * Answers the width of the input and one value per aggregate.
+     * Answers the width of the input and one value per aggregate, and with ROLLUP one value per grouping expression and the number rolled up.
      */
     #[Override]
     public function width(): int
     {
-        return $this->input->width() + count($this->aggregates);
+        return $this->input->width() + count($this->aggregates) + ($this->rollup ? count($this->groups) + 1 : 0);
     }
 }

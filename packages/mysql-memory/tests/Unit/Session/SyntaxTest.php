@@ -7,6 +7,7 @@ namespace Tests\Unit\Session;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Session\SqlModes;
 use MySqlMemory\Session\Syntax;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -80,5 +81,32 @@ final class SyntaxTest extends TestCase
         self::assertSame(1064, $error->getCode());
         self::assertSame('42000', $error->sqlState());
         self::assertSame($failure, $error->getPrevious());
+    }
+
+    public function testTemporalsRefusesATemporalLiteralBeforeNamesAreResolved(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1525);
+        $this->expectExceptionMessage("Incorrect TIME value: '25:61:00'");
+
+        $session->query("SELECT TIME '25:61:00' FROM nowhere");
+    }
+
+    public function testTemporalsFollowsTheZeroDateModes(): void
+    {
+        $session = (new Instance())->connect();
+        $tree = $session->semantics()->parser()->parse("SELECT DATE '0000-00-00'");
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Incorrect DATE value: '0000-00-00'");
+
+        (new Syntax())->temporals($tree, new SqlModes(['NO_ZERO_DATE']));
+    }
+
+    public function testUnquoteReadsDoubledQuotesAndEscapeSequences(): void
+    {
+        self::assertSame(["it's", 'a\\tb', 'a\\%', 'x'], [(new Syntax())->unquote("'it''s'", true), (new Syntax())->unquote('"a\\tb"', false), (new Syntax())->unquote("'a\\\\%'", true), (new Syntax())->unquote('x', true)]);
     }
 }

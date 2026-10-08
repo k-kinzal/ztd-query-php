@@ -28,7 +28,7 @@ final class NumbersTest extends TestCase
     {
         $names = array_map(static fn ($routine): string => $routine->name, (new Numbers())->routines());
 
-        self::assertSame(['ABS', 'SIGN', 'CEILING', 'CEIL', 'FLOOR', 'ROUND', 'TRUNCATE', 'PI', 'SQRT', 'EXP', 'LN', 'LOG2', 'LOG10', 'SIN', 'COS', 'TAN', 'ASIN', 'ACOS', 'ATAN', 'COT', 'DEGREES', 'RADIANS', 'POW', 'POWER'], $names);
+        self::assertSame(['ABS', 'SIGN', 'CEILING', 'CEIL', 'FLOOR', 'ROUND', 'TRUNCATE', 'PI', 'SQRT', 'EXP', 'SIN', 'COS', 'TAN', 'ASIN', 'ACOS', 'ATAN', 'COT', 'DEGREES', 'RADIANS', 'LN', 'LOG2', 'LOG10', 'LOG', 'POW', 'POWER'], $names);
     }
 
     public function testAbsKeepsTheTypeOfTheArgument(): void
@@ -71,7 +71,7 @@ final class NumbersTest extends TestCase
         $session = (new Instance())->connect();
 
         $this->expectException(SqlError::class);
-        $this->expectExceptionMessage("BIGINT value is out of range in 'abs(-9223372036854775808)'");
+        $this->expectExceptionMessage("BIGINT value is out of range in 'abs(-(9223372036854775808))'");
 
         $session->query('SELECT ABS(-9223372036854775808)');
     }
@@ -85,9 +85,9 @@ final class NumbersTest extends TestCase
     {
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1690);
-        $this->expectExceptionMessage("BIGINT value is out of range in 'abs(-9223372036854775808)'");
+        $this->expectExceptionMessage("BIGINT value is out of range in 'abs(-(9223372036854775808))'");
 
-        (new Numbers())->absolute(PHP_INT_MIN);
+        (new Numbers())->absolute(PHP_INT_MIN, 'abs(-(9223372036854775808))');
     }
 
     public function testSignAnswersMinusOneZeroOrOne(): void
@@ -232,9 +232,9 @@ final class NumbersTest extends TestCase
         $instance = new Instance();
         $frame = new Frame(new Context(new SqlModes([]), new Diagnostics(), new Variables($instance->catalog, $instance->globals), 0.0));
 
-        self::assertNull((new Numbers())->real($frame, [new Constant(Domain::double(), -1.0)], static fn (float $x): float => sqrt($x)));
-        self::assertSame(3.0, (new Numbers())->real($frame, [new Constant(Domain::double(), 9.0)], static fn (float $x): float => sqrt($x)));
-        self::assertNull((new Numbers())->real($frame, [new Constant(Domain::double(), null)], static fn (float $x): float => $x));
+        self::assertNull((new Numbers())->real($frame, [new Constant(Domain::double(), -1.0)], static fn (float $x): float => sqrt($x), 'sqrt(-1)'));
+        self::assertSame(3.0, (new Numbers())->real($frame, [new Constant(Domain::double(), 9.0)], static fn (float $x): float => sqrt($x), 'sqrt(9)'));
+        self::assertNull((new Numbers())->real($frame, [new Constant(Domain::double(), null)], static fn (float $x): float => $x, 'f(NULL)'));
     }
 
     public function testPowerRaisesTheBaseToTheExponent(): void
@@ -255,5 +255,142 @@ final class NumbersTest extends TestCase
         $this->expectExceptionMessage("DOUBLE value is out of range in 'pow(10,400)'");
 
         $session->query('SELECT POW(10, 400)');
+    }
+
+    public function testRealRefusesAnInfiniteResult(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1690);
+        $this->expectExceptionMessage("DOUBLE value is out of range in 'cot(0)'");
+
+        $session->query('SELECT COT(0)');
+    }
+
+    public function testRealRefusesAnOverflowingExponential(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("DOUBLE value is out of range in 'exp(1000)'");
+
+        $session->query('SELECT EXP(1000)');
+    }
+
+    public function testLogarithmWarnsForEachArgumentOutsideItsDomain(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT LN(0), LOG2(-1), LOG10(0), LOG(0), LOG(1, 2), LOG(-1, NULL), LOG(NULL, 0), LOG(2, 8), LOG(8), LN('x')")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([[null, null, null, null, null, null, null, '3', '2.0794415416798357', null]], $result->rows);
+        self::assertSame(Field::Double, $result->columns[4]->type);
+        self::assertSame([
+            ['Warning', '3020', 'Invalid argument for logarithm'],
+            ['Warning', '3020', 'Invalid argument for logarithm'],
+            ['Warning', '3020', 'Invalid argument for logarithm'],
+            ['Warning', '3020', 'Invalid argument for logarithm'],
+            ['Warning', '3020', 'Invalid argument for logarithm'],
+            ['Warning', '3020', 'Invalid argument for logarithm'],
+            ['Warning', '1292', "Truncated incorrect DOUBLE value: 'x'"],
+            ['Warning', '3020', 'Invalid argument for logarithm'],
+        ], $warnings->rows);
+    }
+
+    public function testLogarithmRefusesAnInvalidArgumentWrittenUnderAStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (d DOUBLE)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3020);
+
+        $session->query('INSERT INTO t SELECT LN(0)');
+    }
+
+    public function testRoundRefusesAnUnsignedResultOutOfRange(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (u BIGINT UNSIGNED)');
+        $session->query('INSERT INTO t VALUES (18446744073709551615)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1690);
+        $this->expectExceptionMessageMatches("/\\ABIGINT UNSIGNED value is out of range in 'round\\(.*u`,-\\(1\\)\\)'\\z/");
+
+        $session->query('SELECT ROUND(u, -1) FROM t');
+    }
+
+    public function testRoundRefusesASignedResultOutOfRange(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("BIGINT value is out of range in 'round(9223372036854775807,-(1))'");
+
+        $session->query('SELECT ROUND(9223372036854775807, -1)');
+    }
+
+    public function testRoundKeepsAnIntegerThatRoundsWithinRange(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (u BIGINT UNSIGNED, s BIGINT)');
+        $session->query('INSERT INTO t VALUES (18446744073709551615, -9223372036854775808)');
+        $result = $session->query('SELECT ROUND(u, -2), ROUND(u, -20), TRUNCATE(u, -1), TRUNCATE(s, -1) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['18446744073709551600', '0', '18446744073709551610', '-9223372036854775800']], $result->rows);
+    }
+
+    public function testRoundRealHandlesScalesBeyondTheRangeOfADouble(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT ROUND(1.7e308, 2), ROUND(1e300, -309), ROUND(1.5e308, -308), ROUND(1e-320, 330), ROUND(1.5e0, 400), TRUNCATE(-1.5e308, -308), ROUND(-0.4e0), ROUND(2.5e0)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1.7e308', '0', '0', '1e-320', '1.5', '-1e308', '-0', '2']], $result->rows);
+    }
+
+    public function testRoundRealRoundsHalfToEvenOrTruncates(): void
+    {
+        self::assertSame([2.0, 4.0, 0.12, 1.7e308, 0.0, -1.0e308, 1.5], [
+            (new Numbers())->roundReal(2.5, 0, false),
+            (new Numbers())->roundReal(3.5, 0, false),
+            (new Numbers())->roundReal(0.125, 2, false),
+            (new Numbers())->roundReal(1.7e308, 2, false),
+            (new Numbers())->roundReal(1.5, -400, false),
+            (new Numbers())->roundReal(-1.5e308, -308, true),
+            (new Numbers())->roundReal(1.5, 400, true),
+        ]);
+    }
+
+    public function testSignReadsAStringAsADouble(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT SIGN('abc'), SIGN('-1e-400'), SIGN(-0e0), SIGN(-0.0)")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['0', '0', '0', '0']], $result->rows);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'abc'"]], $warnings->rows);
+    }
+
+    public function testRealConvertsUnitsWithoutANegativeZero(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT DEGREES(-0e0), RADIANS(-0e0), DEGREES(-1e-320), RADIANS(-1e-320), DEGREES(PI()), RADIANS(180)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '0', '-5.72953e-319', '-1.73e-322', '180', '3.141592653589793']], $result->rows);
     }
 }

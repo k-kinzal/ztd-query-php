@@ -131,7 +131,32 @@ final class VariablesTest extends TestCase
         self::assertSame('app@example.com', $session->variables->account);
         self::assertSame('app@%', $session->variables->definer);
         self::assertSame(1, $session->variables->connection);
-        self::assertSame(-1, $session->variables->rowCount);
+        self::assertSame(0, $session->variables->rowCount);
         self::assertSame(0, $session->variables->lastInsertId);
+    }
+
+    public function testSystemKeepsTheGlobalValueTheConnectionStartedWith(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $session->query('SET GLOBAL div_precision_increment = 6');
+        $result = $session->query('SELECT @@div_precision_increment, @@global.div_precision_increment, 1/3')[0];
+        $later = $instance->connect()->query('SELECT @@div_precision_increment')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $later);
+        self::assertSame([['4', '6', '0.3333']], $result->rows);
+        self::assertSame([['6']], $later->rows);
+    }
+
+    public function testSetKeepsANullValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET character_set_results = NULL');
+        $result = $session->query('SELECT @@character_set_results, @@global.character_set_results')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, 'utf8mb4']], $result->rows);
+        self::assertNull($session->variables->read('character_set_results'));
     }
 }

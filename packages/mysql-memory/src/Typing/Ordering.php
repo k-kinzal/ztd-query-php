@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace MySqlMemory\Typing;
 
 use Collator;
+use MySqlMemory\Value\Encoding;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 /**
  * The order of one collation: the comparison and the equality key of its strings.
  *
  * The Unicode collations use the root collator of ICU at the strength of the collation; a
- * string that is not valid UTF-8 is compared by its bytes.
+ * string that is not valid UTF-8 is compared by its bytes. A string of a multibyte character set
+ * other than UTF-8 is read in UTF-8.
  *
  * @visibility MySqlMemory
  */
@@ -62,8 +65,8 @@ final class Ordering
      */
     public function compare(string $left, string $right): int
     {
-        $left = $this->padded($left);
-        $right = $this->padded($right);
+        $left = $this->padded($this->unicode($left));
+        $right = $this->padded($this->unicode($right));
         if ($this->collator !== null && mb_check_encoding($left, 'UTF-8') && mb_check_encoding($right, 'UTF-8')) {
             $order = $this->collator->compare($left, $right);
             if ($order !== false) {
@@ -82,7 +85,7 @@ final class Ordering
      */
     public function key(string $text): string
     {
-        $text = $this->padded($text);
+        $text = $this->padded($this->unicode($text));
         if ($this->collator !== null && mb_check_encoding($text, 'UTF-8')) {
             $key = collator_get_sort_key($this->collator, $text);
             if ($key !== false) {
@@ -91,6 +94,17 @@ final class Ordering
         }
 
         return $this->collation->binaryOrder() || $this->collator !== null ? $text : $this->folded($text);
+    }
+
+    /**
+     * Answers a string of the collation in UTF-8 when its order reads characters of a multibyte set
+     * other than UTF-8; a binary order and a single-byte set keep their bytes.
+     */
+    public function unicode(string $text): string
+    {
+        $charset = $this->collation->charset;
+
+        return $this->collation->binaryOrder() || $charset->maxLength === 1 || Encoding::utf8($charset) ? $text : Encoding::convert($text, $charset, Charset::known('utf8mb4'));
     }
 
     /**

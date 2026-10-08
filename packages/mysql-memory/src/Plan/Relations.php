@@ -23,8 +23,10 @@ use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
+use SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
+use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
@@ -61,7 +63,7 @@ final class Relations
             $relation instanceof DerivedTable => $this->derived($relation, $scope),
             $relation instanceof JoinedTable => $this->join($relation, $scope),
             $relation instanceof TableList => $this->list($relation, $scope),
-            $relation instanceof NestedRelation => $this->plan($relation->relation, $scope),
+            $relation instanceof NestedRelation, $relation instanceof OdbcJoin, $relation instanceof EscapedRelation => $this->plan($relation->relation, $scope),
             $relation instanceof Dual => new SingleRow(),
             default => throw ErrorCode::NotSupportedYet->error('relation ' . (new ReflectionClass($relation))->getShortName()),
         };

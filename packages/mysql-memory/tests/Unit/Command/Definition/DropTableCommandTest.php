@@ -92,4 +92,17 @@ final class DropTableCommandTest extends TestCase
 
         $session->query('TRUNCATE TABLE nope');
     }
+
+    public function testExecuteNamesEveryMissingTableAndDropsNone(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE TABLE w (a INT)');
+        $error = $session->run('DROP TABLE nope, w, nodb.x')[0];
+        $tables = $session->query('SHOW TABLES')[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame([1051, '42S02', "Unknown table 'p.nope,nodb.x'"], [$error->getCode(), $error->sqlState(), $error->getMessage()]);
+        self::assertInstanceOf(ResultSet::class, $tables);
+        self::assertSame([['w']], $tables->rows);
+    }
 }

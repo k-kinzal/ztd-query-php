@@ -11,6 +11,7 @@ use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use SqlParser\Lexer\SourceException;
 use SqlSemantics\Contract\ParameterStyle;
@@ -21,6 +22,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings as Resolution;
 use SqlSemantics\Statement\Operation;
@@ -116,6 +118,7 @@ final class Session
         } catch (SqlError $error) {
             $this->diagnostics->clear();
             $this->diagnostics->error($error->getCode(), $error->getMessage());
+            $this->variables->rowCount = -1;
 
             return [$error];
         }
@@ -125,7 +128,11 @@ final class Session
                 $answers[] = $this->execute($statement, $parameters, $prepared);
             } catch (SqlError $error) {
                 $this->transaction->abortStatement();
+                $this->variables->rowCount = -1;
                 $this->diagnostics->error($error->getCode(), $error->getMessage());
+                foreach ($error->following as [$code, $message]) {
+                    $this->diagnostics->error($code, $message);
+                }
                 $answers[] = $error;
                 break;
             }
@@ -158,25 +165,39 @@ final class Session
     /**
      * Executes one statement.
      *
+     * ROW_COUNT() then answers the rows the statement affected, or -1 when it answered rows or failed.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_row-count.
+     *
      * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters
      *
      * @throws SqlError When the statement fails
      */
     public function execute(string $statement, array $parameters = [], bool $prepared = false): Reply
     {
-        $operation = $this->analyze($statement, $prepared, $parameters);
+        try {
+            $operation = $this->analyze($statement, $prepared, $parameters);
+            $command = (new Dispatcher())->command($operation->statement);
+        } catch (SqlError $error) {
+            $this->diagnostics->clear();
+            throw $error;
+        }
         $context = new Context($this->modes(), $this->diagnostics, $this->variables, microtime(true));
-        $command = (new Dispatcher())->command($operation->statement);
         if ($command->clearsDiagnostics()) {
             $this->diagnostics->clear();
         }
-        foreach ($operation->facts->warnings as $warning) {
+        $late = array_filter($operation->facts->warnings, Problems::afterReading(...));
+        foreach (array_diff_key($operation->facts->warnings, $late) as $warning) {
+            $this->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
+        }
+        (new Problems())->read($operation, $this);
+        foreach ($late as $warning) {
             $this->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
         }
         (new Problems())->raise($operation, $this);
         $this->transaction->beginStatement();
         $reply = $command->execute($operation, $this, $context, new Connection($this->variables, $context, $this->user, $this->host, $this->id, $parameters));
         $this->transaction->endStatement();
+        $this->variables->rowCount = $reply instanceof Completion ? $reply->affectedRows : -1;
 
         return $reply;
     }
@@ -198,6 +219,7 @@ final class Session
         if (!$prepared) {
             (new Syntax())->markers($tree, $statement);
         }
+        (new Syntax())->temporals($tree, $this->modes());
         $database = $this->variables->database;
         try {
             $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($this->bound($tree, $parameters, $prepared))));
@@ -254,7 +276,9 @@ final class Session
 
         $users = array_map(static fn (array $variable) => $variable[1]->resolved(), $this->variables->user);
 
-        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, (int) $this->variables->read('group_concat_max_len'), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'));
+        $client = $this->variables->read('character_set_client');
+
+        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, (int) $this->variables->read('group_concat_max_len'), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), is_string($client) ? Charset::named($client) : null);
     }
 
     /**

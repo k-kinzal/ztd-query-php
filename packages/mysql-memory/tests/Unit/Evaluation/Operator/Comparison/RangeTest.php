@@ -83,4 +83,20 @@ final class RangeTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1', '0'], ['2', '0', '1'], ['3', null, null], ['4', '0', '1']], $result->rows);
     }
+
+    public function testEvaluateReadsTheValueOnceAndSkipsTheBoundsOfANullValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT, s VARCHAR(5))');
+        $session->query("INSERT INTO t VALUES (1, 'a'), (2, 'b'), (3, NULL)");
+        $result = $session->query("SELECT s BETWEEN ('c' + id) AND 1, 'a' BETWEEN s AND id FROM t")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1'], ['0', '1'], [null, null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(["'a'", "'c'", "'a'", "'a'", "'b'", "'c'", "'a'", "'b'", "'a'"], array_map(static fn (array $row): string => (string) strstr((string) $row[2], "'"), $warnings->rows));
+    }
 }

@@ -42,4 +42,14 @@ final class RealTest extends TestCase
     {
         self::assertSame(['3.14', '0.00', '12.500', '-3'], [Real::fixed(3.14159, 2), Real::fixed(-0.001, 2), Real::fixed(12.5, 3), Real::fixed(-3.0, 0)]);
     }
+
+    public function testFormatWritesAnInfinityAsZero(): void
+    {
+        self::assertSame(['0', '0'], [Real::format(INF), Real::format(-INF)]);
+    }
+
+    public function testFormatWritesNegativeZero(): void
+    {
+        self::assertSame('-0', Real::format(-0.0));
+    }
 }

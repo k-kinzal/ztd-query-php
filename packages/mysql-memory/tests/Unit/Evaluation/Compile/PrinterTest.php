@@ -18,6 +18,12 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Shape\Field;
 
 #[CoversClass(Printer::class)]
 #[Small]
@@ -80,5 +86,78 @@ final class PrinterTest extends TestCase
         $this->expectExceptionMessage("BIGINT UNSIGNED value is out of range in '(~(0) * 2)'");
 
         $session->query('SELECT ~0 * 2');
+    }
+
+    public function testExpressionPrintsTheColumnsTheServerReads(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE TABLE tt (a INT UNSIGNED); INSERT INTO tt VALUES (5)');
+
+        $session->run('SELECT a - 9 FROM tt');
+        self::assertSame([['Error', 1690, "BIGINT UNSIGNED value is out of range in '(`p`.`tt`.`a` - 9)'"]], $session->diagnostics->conditions);
+        $session->run('SELECT a - 9 FROM (SELECT a + 0 AS a FROM tt x) d');
+        self::assertSame([['Error', 1690, "BIGINT UNSIGNED value is out of range in '((`p`.`x`.`a` + 0) - 9)'"]], $session->diagnostics->conditions);
+        $session->run('WITH c AS (SELECT DISTINCT a FROM tt) SELECT a - 9 FROM c z');
+        self::assertSame([['Error', 1690, "BIGINT UNSIGNED value is out of range in '(`z`.`a` - 9)'"]], $session->diagnostics->conditions);
+        $session->run('SELECT (SELECT tt.a - 9) FROM tt');
+        self::assertSame([['Error', 1690, "BIGINT UNSIGNED value is out of range in '(`p`.`tt`.`a` - 9)'"]], $session->diagnostics->conditions);
+    }
+
+    public function testColumnPrintsTheColumnOfATableWithItsDatabaseAndCorrelationName(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE TABLE tt (a INT)');
+        $operation = $session->analyze('SELECT x.A FROM tt x');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
+        self::assertInstanceOf(ColumnUse::class, $operation->statement->items[0]->expression);
+
+        self::assertSame('`p`.`x`.`a`', (new Printer($operation->facts, 'p'))->column($operation->statement->items[0]->expression));
+        self::assertSame('`x`.`A`', (new Printer())->column($operation->statement->items[0]->expression));
+    }
+
+    public function testFieldPrintsTheExpressionOfAnOutputField(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE TABLE tt (a INT)');
+        $operation = $session->analyze('SELECT a + 0 AS b FROM tt');
+        self::assertInstanceOf(Query::class, $operation->statement);
+        $field = $operation->facts->query($operation->statement)->projection[0];
+        self::assertInstanceOf(Field::class, $field);
+
+        self::assertSame('(`p`.`tt`.`a` + 0)', (new Printer($operation->facts, 'p'))->field($field));
+    }
+
+    public function testResolvedPrintsAMergedDerivedColumnAsItsExpressionAndAMaterializedOneByItsAlias(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE TABLE tt (a INT)');
+        $merged = $session->analyze('SELECT a FROM (SELECT a + 0 AS a FROM tt) d');
+        $materialized = $session->analyze('SELECT a FROM (SELECT DISTINCT a FROM tt) d');
+        self::assertInstanceOf(Select::class, $merged->statement);
+        self::assertInstanceOf(Select::class, $materialized->statement);
+        self::assertInstanceOf(SelectExpression::class, $merged->statement->items[0]);
+        self::assertInstanceOf(SelectExpression::class, $materialized->statement->items[0]);
+        $first = $merged->facts->scalar($merged->statement->items[0]->expression)->resolution;
+        $second = $materialized->facts->scalar($materialized->statement->items[0]->expression)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $first);
+        self::assertInstanceOf(ResolvedColumn::class, $second);
+
+        self::assertSame('(`p`.`tt`.`a` + 0)', (new Printer($merged->facts, 'p'))->resolved($first));
+        self::assertSame('`d`.`a`', (new Printer($materialized->facts, 'p'))->resolved($second));
+    }
+
+    public function testPositionAnswersThePlaceOfAColumnInItsRelation(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE TABLE tt (a INT)');
+        $operation = $session->analyze('SELECT b FROM (SELECT a, a + 1 AS b FROM tt) d');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
+        $resolution = $operation->facts->scalar($operation->statement->items[0]->expression)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+
+        self::assertSame(1, (new Printer($operation->facts))->position($resolution));
+        self::assertSame(-1, (new Printer())->position($resolution));
     }
 }

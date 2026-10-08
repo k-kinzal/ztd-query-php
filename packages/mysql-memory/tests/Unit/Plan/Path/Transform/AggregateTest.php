@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Plan\Path\Transform;
 
 use MySqlMemory\Evaluation\Aggregate\Accumulation;
+use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Plan\Path\Source\ZeroRows;
 use MySqlMemory\Plan\Path\Transform\Aggregate;
 use MySqlMemory\Typing\Domain;
@@ -25,5 +26,13 @@ final class AggregateTest extends TestCase
         self::assertSame(5, $aggregate->width());
         self::assertFalse($aggregate->rollup);
         self::assertSame([], $aggregate->rollupColumns);
+    }
+
+    public function testWidthAddsTheGroupingValuesAndTheRolledUpCountWithRollup(): void
+    {
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $aggregate = new Aggregate(new ZeroRows(3), [new ColumnRead(Domain::integer(), 0), new ColumnRead(Domain::integer(), 1)], [$count], true, [0, 1]);
+
+        self::assertSame(7, $aggregate->width());
     }
 }

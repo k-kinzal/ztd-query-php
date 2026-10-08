@@ -52,4 +52,11 @@ final class MathResultsTest extends TestCase
         self::assertEquals(Domain::decimal(4, 3), (new MathResults())->rounded(new Invocation([Domain::decimal(4, 3), Domain::integer()], [$number, new StringLiteral(['x'])], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
         self::assertEquals(Domain::double(23), (new MathResults())->rounded(new Invocation([Domain::double()], [new NumberLiteral('1e0')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
     }
+
+    public function testRulesTypeLogAsADouble(): void
+    {
+        $rules = (new MathResults())->rules();
+
+        self::assertEquals(Domain::double(23), $rules['LOG'](new Invocation([Domain::integer(), Domain::integer()], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+    }
 }

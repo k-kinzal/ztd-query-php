@@ -24,6 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -60,9 +61,11 @@ use SqlSemantics\Statement\Scalar;
  * byte). A text of ASCII characters is therefore its own name when it is
  * short enough, assuming an ASCII-compatible `character_set_client`; a text
  * read in `character_set_client` with other characters, or longer than 255
- * bytes, depends on the session state `character_set_client`. Binary text
+ * bytes, depends on the session state `character_set_client` unless the
+ * session settings name it, when it is read as text in that character set. Binary text
  * keeps its bytes; utf8mb4 text keeps whole characters up to 255 bytes,
- * each character outside utf8mb3 written `?`. The name of text with other
+ * each character outside utf8mb3 written `?`, and so does latin1 text,
+ * read as cp1252 whose unassigned bytes are the C1 controls. The name of text with other
  * characters in another introduced character set, and of any text in
  * ucs2, utf16, utf16le or utf32, depends on the server's conversion
  * (NameConversion). Verified on live servers of each release. Source: sql/parse_tree_items.cc
@@ -88,8 +91,9 @@ final class ItemNaming
 
     /**
      * @param LanguageProfile $profile The profile whose release and codec the name follows
+     * @param Charset|null $client The character set of the session's character_set_client; null when it is not known
      */
-    public function __construct(private readonly LanguageProfile $profile)
+    public function __construct(private readonly LanguageProfile $profile, private readonly ?Charset $client = null)
     {
     }
 
@@ -207,10 +211,14 @@ final class ItemNaming
      * Answers the name the server stores for a text read in a character set, or the input it depends on.
      *
      * The character set is client for `character_set_client`, national for
-     * a national string, else the introduced character set in lower case.
+     * a national string, else the introduced character set in lower case;
+     * a known `character_set_client` names the character set of client.
      */
     public function stored(string $text, string $charset): Name|MissingInput
     {
+        if ($charset === 'client' && $this->client !== null) {
+            $charset = strtolower($this->client->name);
+        }
         if (in_array($charset, self::WIDE, true)) {
             return new NameConversion($charset);
         }
@@ -222,12 +230,33 @@ final class ItemNaming
         if ($charset === 'utf8mb4' && !$ascii) {
             return $this->narrowed($text);
         }
+        if ($charset === 'latin1' && !$ascii) {
+            return $this->narrowed($this->latin1($text));
+        }
         if (!$ascii && !in_array($charset, ['binary', 'utf8mb3', 'utf8', 'national'], true)) {
             return new NameConversion($charset);
         }
         $same = in_array($charset, ['utf8mb3', 'utf8', 'national'], true);
 
         return new Name(substr($text, 0, self::LIMITS[$same ? 'same' : 'convert']));
+    }
+
+    /**
+     * Answers a latin1 text in UTF-8: latin1 is cp1252, whose five unassigned bytes stand for the C1 controls of the same code.
+     */
+    public function latin1(string $text): string
+    {
+        $converted = '';
+        foreach (str_split($text) as $byte) {
+            $code = ord($byte);
+            $converted .= match (true) {
+                $code < 0x80 => $byte,
+                in_array($code, [0x81, 0x8D, 0x8F, 0x90, 0x9D], true) => mb_chr($code, 'UTF-8'),
+                default => mb_convert_encoding($byte, 'UTF-8', 'Windows-1252'),
+            };
+        }
+
+        return $converted;
     }
 
     /**

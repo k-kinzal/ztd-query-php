@@ -104,4 +104,15 @@ final class TableDefinitionTest extends TestCase
         self::assertNotNull($table);
         self::assertSame([514, 4100, 8, 16, 8192], [$table->definition->flags(0), $table->definition->flags(1), $table->definition->flags(2), $table->definition->flags(3), $table->definition->flags(4)]);
     }
+
+    public function testFlagsMarkAYearColumnZerofill(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('CREATE TABLE d.t (y YEAR, z YEAR NOT NULL)');
+        $table = $session->instance->dictionary->table('d', 't');
+
+        self::assertNotNull($table);
+        self::assertSame([64, 4160], [$table->definition->flags(0), $table->definition->flags(1)]);
+    }
 }

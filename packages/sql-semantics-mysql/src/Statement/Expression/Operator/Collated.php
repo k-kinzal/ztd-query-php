@@ -11,6 +11,8 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -30,8 +32,11 @@ use SqlSemantics\Statement\Type\Nullability;
  * Rule: MYSQL-COLLATE-001. Facts: the type and NULL fact of the operand;
  * the collation is part of the comparison semantics the server applies, and
  * the character set of the operand must admit it, which needs the
- * collation catalog of the server and is not checked. Terminates: the
- * operand is a strict part.
+ * collation catalog of the server and is not checked. A collation the
+ * server does not know is reported before the operand is derived, whatever
+ * the operand is, as the server looks the name up while it parses the
+ * statement (verified on a live 8.4 server). Terminates: the operand is a
+ * strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-collate.html.
  * Status: Implemented.
  *
@@ -58,9 +63,13 @@ final class Collated implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        $known = Collation::named($this->collation->value) !== null;
+        if (!$known) {
+            $derivation->report(new UnknownCollation($this->collation->value));
+        }
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
         $operand = (new Precision())->domain($fact->type);
-        $domain = $operand === null ? null : (new Texts(Settings::of($derivation->context)))->collated($operand, $this->collation->value, $derivation);
+        $domain = $operand === null || !$known ? null : (new Texts(Settings::of($derivation->context)))->collated($operand, $this->collation->value, $derivation);
 
         return new ScalarFact($domain === null ? $fact->type : new Known($domain), Nullability::Nullable);
     }

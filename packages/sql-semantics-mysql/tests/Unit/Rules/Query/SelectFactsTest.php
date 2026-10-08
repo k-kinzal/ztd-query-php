@@ -11,6 +11,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\SelectFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -83,5 +84,12 @@ final class SelectFactsTest extends TestCase
 
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(AliasTarget::class, $operation->facts->scalar($select->orderBy[0]->expression)->resolution);
+    }
+
+    public function testWindowsNamesTheFirstDefinitionOfAWindowDefinedTwice(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 WINDOW X AS (), x AS (), x AS ()');
+
+        self::assertEquals([new Misuse(MisuseRule::DuplicateWindow, new Name('X')), new Misuse(MisuseRule::DuplicateWindow, new Name('X'))], $operation->facts->diagnostics);
     }
 }

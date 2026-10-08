@@ -9,6 +9,7 @@ use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Settings;
+use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Path\Combine\SetOperation as SetPath;
@@ -31,6 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetQuantifier;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
@@ -111,6 +113,11 @@ final class Planner
 
     /**
      * Plans a query with a WITH clause, an ORDER BY or a LIMIT around its body.
+     *
+     * The server leaves the rows of a VALUES statement in written order:
+     * it resolves an ORDER BY of one but does not sort by it, and like the
+     * ORDER BY of a query block it leaves out a key constant for the
+     * statement without evaluating it (verified on a live 8.4 server).
      */
     public function expression(QueryExpression $query, ?Scope $outer): QueryPlan
     {
@@ -128,8 +135,15 @@ final class Planner
         $scope->output = true;
         $expressions = array_map(static fn ($domain, int $position) => new ColumnRead($domain, $position), $plan->domains, array_keys($plan->domains));
         $keys = [];
-        foreach ($query->orderBy as $item) {
+        $body = $query->body;
+        while ($body instanceof ParenthesizedQuery) {
+            $body = $body->query;
+        }
+        foreach ($body instanceof ValuesQuery ? [] : $query->orderBy as $item) {
             $key = $this->compiler->compile($item->expression, $scope);
+            if ($this->compiler->constancy($item->expression)->constant() && (new Walker())->find($item->expression, Query::class) === []) {
+                continue;
+            }
             $keys[] = [count($expressions), $key->domain(), $item->direction?->value === 'DESC'];
             $expressions[] = $key;
         }
@@ -210,14 +224,14 @@ final class Planner
     }
 
     /**
-     * Answers the origins of the columns of a temporary table: none, but a blob column is flagged as one.
+     * Answers the origins of the columns of a temporary table: none, but a blob column is flagged as one and a YEAR column as ZEROFILL.
      *
      * @param list<Domain> $domains
      * @return list<ColumnOrigin|null>
      */
     public function materialized(array $domains): array
     {
-        return array_map(static fn ($domain): ?ColumnOrigin => $domain->field->blob() ? new ColumnOrigin('', '', '', '', ColumnFlag::Blob->value) : null, $domains);
+        return array_map(static fn ($domain): ?ColumnOrigin => $domain->field->blob() || $domain->field === Field::Year ? new ColumnOrigin('', '', '', '', $domain->field->blob() ? ColumnFlag::Blob->value : ColumnFlag::ZeroFill->value) : null, $domains);
     }
 
 

@@ -63,4 +63,13 @@ final class CallTest extends TestCase
         self::assertSame([['MySQL', '5']], $result->rows);
         self::assertSame([Field::VarString, Field::LongLong], [$result->columns[0]->type, $result->columns[1]->type]);
     }
+
+    public function testEvaluatePassesTheTextOfTheCallToTheRoutine(): void
+    {
+        $instance = new Instance();
+        $frame = new Frame(new Context(new SqlModes([]), new Diagnostics(), new Variables($instance->catalog, $instance->globals), 0.0));
+        $call = new Call(new Routine('F', 0, 0, static fn (Frame $f, array $a, Domain $r, string $text): string => $text), [], Domain::string(4, Collation::known('utf8mb4_0900_ai_ci')), 'f()');
+
+        self::assertSame('f()', $call->evaluate($frame));
+    }
 }

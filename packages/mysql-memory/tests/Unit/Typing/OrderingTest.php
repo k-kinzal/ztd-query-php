@@ -85,4 +85,14 @@ final class OrderingTest extends TestCase
     {
         self::assertSame(['EA', 'AB'], [Ordering::of(Collation::known('utf8mb4_general_ci'))->folded('éa'), Ordering::of(Collation::known('latin1_swedish_ci'))->folded('ab')]);
     }
+
+    public function testUnicodeReadsAWideCharacterSetInUtf8(): void
+    {
+        self::assertSame(['é', "\xE9", "\x00\xE9"], [Ordering::of(Collation::known('ucs2_general_ci'))->unicode("\x00\xE9"), Ordering::of(Collation::known('latin1_swedish_ci'))->unicode("\xE9"), Ordering::of(Collation::known('ucs2_bin'))->unicode("\x00\xE9")]);
+    }
+
+    public function testCompareComparesAWideCharacterSetByItsCharacters(): void
+    {
+        self::assertSame([0, -1], [Ordering::of(Collation::known('utf16_unicode_ci'))->compare("\x00\xE9", "\x00\xC9"), Ordering::of(Collation::known('utf16_unicode_ci'))->compare("\x00a", "\x00b")]);
+    }
 }

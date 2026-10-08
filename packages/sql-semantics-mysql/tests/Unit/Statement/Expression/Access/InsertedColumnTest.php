@@ -29,6 +29,15 @@ final class InsertedColumnTest extends TestCase
         self::assertSame(Nullability::Nullable, $derivation->scalar(new InsertedColumn(new ColumnUse(new Name('a'))), $derivation->environment())->nullability);
     }
 
+    public function testDeriveScalarRaisesTheDeprecationOnlyOnceTheColumnResolves(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $t = $semantics->analyze('CREATE TABLE t (a INT)');
+
+        self::assertCount(0, $semantics->analyze('SELECT VALUES(nosuch) FROM t', [$t])->facts->warnings);
+        self::assertCount(1, $semantics->analyze('SELECT VALUES(a) FROM t', [$t])->facts->warnings);
+    }
+
     public function testRenderGluesTheParenthesis(): void
     {
         $platform = new Platform();

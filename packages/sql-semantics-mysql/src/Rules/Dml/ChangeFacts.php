@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Dml;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
 use SqlSemantics\Platform\MySql\Rules\Query\Projection;
+use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Rules\Query\TailFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
@@ -21,6 +22,8 @@ use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\NamedRelation;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Relation;
@@ -42,7 +45,8 @@ use SqlSemantics\Statement\Scalar;
  * name a table of its references. A column an UPDATE assigns, and a table
  * a multiple-table DELETE deletes from, must belong to a table or view; a
  * derived table, a table function or a common table is not updatable
- * (ER_NON_UPDATABLE_TABLE); a generated column takes only DEFAULT
+ * (ER_NON_UPDATABLE_TABLE), which an UPDATE of that one table reports
+ * before it resolves its assignments (verified on a live 8.4 server); a generated column takes only DEFAULT
  * (MYSQL-GENERATED-WRITE-001). The statements return no rows.
  * Terminates: one pass over the finite parts. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/update.html,
@@ -61,11 +65,15 @@ final class ChangeFacts
         $base = $this->base($update->with, $derivation, $outer);
         $visible = $this->references($update->tables, $derivation, $base);
         $environment = new Environment($derivation->context, $base, $visible);
+        $single = count($visible) === 1 && !$this->updatable($visible[0]->relation, $derivation);
+        if ($single) {
+            $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($visible[0]->relation)));
+        }
         $fields = (new WriteScope())->assign($update->assignments, $derivation, $environment, $environment, false);
         (new GeneratedWrites())->assignments($update->assignments, $fields, $derivation);
-        foreach ($fields as $field) {
+        foreach ($single ? [] : $fields as $field) {
             if ($field->resolution instanceof ResolvedColumn && !$this->updatable($field->resolution->relation, $derivation)) {
-                $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget));
+                $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($field->resolution->relation)));
             }
         }
         $this->clauses($update->where, $update->orderBy, $update->limit, $derivation, $base, $environment);
@@ -84,7 +92,7 @@ final class ChangeFacts
     {
         $base = $this->base($delete->with, $derivation, $outer);
         $fact = $derivation->relation($delete->table, $base);
-        $environment = new Environment($derivation->context, $base, [new VisibleRelation($delete->table, $fact->shape, $delete->table->alias, $delete->table->name)]);
+        $environment = new Environment($derivation->context, $base, [new VisibleRelation($delete->table, $fact->shape, $delete->table->alias, $delete->table->name, [], (new TableShapes())->implicit($fact))]);
         $this->clauses($delete->where, $delete->orderBy, $delete->limit, $derivation, $base, $environment);
     }
 
@@ -104,7 +112,7 @@ final class ChangeFacts
             if ($found === null) {
                 $derivation->report(new UnknownDeleteTable($target));
             } elseif (!$this->updatable($found->relation, $derivation)) {
-                $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget));
+                $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($found->relation)));
             }
         }
         $this->clauses($delete->where, [], null, $derivation, $base, new Environment($derivation->context, $base, $visible));
@@ -120,6 +128,18 @@ final class ChangeFacts
         }
 
         return !$derivation->facts()->relation($relation)->table instanceof CommonTable;
+    }
+
+    /**
+     * Answers the name the server gives a relation occurrence in its messages: its correlation name, or its table name when it has none.
+     */
+    public function label(Relation $relation): ?Name
+    {
+        return match (true) {
+            $relation instanceof NamedRelation => $relation->alias() ?? $relation->name()->name,
+            $relation instanceof DerivedTable, $relation instanceof JsonTable => $relation->alias,
+            default => null,
+        };
     }
 
     /**

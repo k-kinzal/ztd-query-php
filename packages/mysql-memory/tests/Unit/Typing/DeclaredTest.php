@@ -170,4 +170,13 @@ final class DeclaredTest extends TestCase
 
         self::assertSame([[Field::Tiny, 1, false], [Field::LongLong, 20, true], [Field::Json, 4294967295, false], [Field::Bit, 9, true], [Field::Vector, 12, false]], [[$bool->field, $bool->length, $bool->unsigned], [$serial->field, $serial->length, $serial->unsigned], [$json->field, $json->length, $json->unsigned], [$bit->field, $bit->length, $bit->unsigned], [$vector->field, $vector->length, $vector->unsigned]]);
     }
+
+    public function testEnumerationHoldsTheMembersInTheCharacterSetOfTheColumn(): void
+    {
+        $declared = new Declared(Collation::known('utf8mb4_0900_ai_ci'));
+
+        $enum = $declared->enumeration(new Enumeration(EnumerationKind::Enum, [new Text('é'), new Text('b')]), Collation::known('latin1_swedish_ci'));
+
+        self::assertSame([1, ["\xE9", 'b']], [$enum->length, $enum->members]);
+    }
 }

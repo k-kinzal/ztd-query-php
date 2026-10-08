@@ -87,4 +87,22 @@ final class CoerceTest extends TestCase
 
         self::assertSame([3.0, '4'], [Coerce::branch(3, Domain::integer(), Domain::double(), $context), Coerce::branch(4, Domain::integer(), Domain::string(2, Collation::known('utf8mb4_0900_ai_ci')), $context)]);
     }
+
+    public function testToConvertsAStringIntoTheCharacterSetOfTheResult(): void
+    {
+        $instance = new Instance();
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables($instance->catalog, $instance->globals), 0.0);
+
+        self::assertSame(["\xFC", 'ü', '1'], [Coerce::to('ü', Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')), Domain::string(1, Collation::known('latin1_swedish_ci')), $context), Coerce::to('ü', Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')), Domain::string(1, Collation::known('utf8mb4_bin')), $context), Coerce::to(1, Domain::integer(), Domain::string(1, Collation::known('latin1_swedish_ci')), $context)]);
+    }
+
+    public function testBranchConvertsTheChosenStringInAQuery(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (c VARCHAR(4) CHARACTER SET latin1); INSERT INTO t VALUES ('é€')");
+        $result = $session->query("SELECT HEX(IF(1, c, 'ü')), HEX(CASE WHEN 0 THEN c ELSE 'ü' END), HEX(COALESCE(NULL, c)), IFNULL(c, 'x') FROM t")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['E980', 'FC', 'E980', 'é€']], $result->rows);
+    }
 }

@@ -94,4 +94,36 @@ final class MembershipTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1', '0'], ['2', '0', '1'], ['3', null, null]], $result->rows);
     }
+
+    public function testValuesEvaluatesConstantElementsOnceBeforeTheFirstValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT, s VARCHAR(5))');
+        $session->query("INSERT INTO t VALUES (1, 'a'), (2, 'b'), (3, NULL)");
+        $result = $session->query("SELECT 'x' IN (0, CONCAT('y', 1) IS FALSE) FROM t")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1'], ['1'], ['1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'y1'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'x'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'x'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'x'"]], $warnings->rows);
+    }
+
+    public function testEvaluateEvaluatesEveryElementForANullValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT, s VARCHAR(5))');
+        $session->query("INSERT INTO t VALUES (1, 'a'), (2, 'b'), (3, NULL)");
+        $result = $session->query("SELECT s IN ('c' + id, 1) FROM t")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0'], ['0'], [null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'c'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'c'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'c'"]], $warnings->rows);
+    }
 }

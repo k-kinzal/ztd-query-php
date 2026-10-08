@@ -13,6 +13,7 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -22,7 +23,9 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * Rule: MYSQL-INSERTED-COLUMN-001. Facts: the type of the column; the
  * value is NULL outside `ON DUPLICATE KEY UPDATE`, so it can always be
- * NULL. Terminates: the column is a strict part.
+ * NULL. The deprecation is raised once the column resolves, so a column
+ * that does not resolve raises only its error (verified on a live 8.4
+ * server). Terminates: the column is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/miscellaneous-functions.html#function_values.
  * Status: Implemented.
  *
@@ -48,7 +51,9 @@ final class InsertedColumn implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $fact = $derivation->scalar($this->column, $environment);
-        Deprecation::raise(Deprecated::ValuesFunction, $derivation);
+        if (!$fact->type instanceof Invalid) {
+            Deprecation::raise(Deprecated::ValuesFunction, $derivation);
+        }
 
         return new ScalarFact($fact->type, Nullability::Nullable);
     }

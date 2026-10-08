@@ -12,7 +12,10 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Leaf\Clock;
+use MySqlMemory\Value\Encoding;
 use MySqlMemory\Value\Order;
+use SqlSemantics\Platform\MySql\Statement\Call\Clock as ClockKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
@@ -78,7 +81,7 @@ final class Writer
             $domain = $this->table->definition->columns[$position]->domain;
             $prefix = $key->prefixes[$index] ?? null;
             if ($prefix !== null && $domain->kind === Kind::String) {
-                $value = mb_substr((string) $value, 0, $prefix, 'UTF-8');
+                $value = Encoding::slice((string) $value, 0, $prefix, $domain->collation->charset);
             }
             $text .= Order::key($value, $domain) . "\0";
         }
@@ -106,7 +109,8 @@ final class Writer
     {
         $values = [];
         foreach ($key->columns as $position) {
-            $values[] = (string) Convert::toText($row[$position], $this->table->definition->columns[$position]->domain);
+            $domain = $this->table->definition->columns[$position]->domain;
+            $values[] = Convert::shown((string) Convert::toText($row[$position], $domain), $domain->kind === Kind::String && $domain->collation->charset !== \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::binary() ? $domain->collation->charset : null);
         }
 
         return [mb_strcut(implode('-', $values), 0, 64, 'UTF-8'), $this->table->definition->name . '.' . $key->name];
@@ -155,10 +159,33 @@ final class Writer
         if ($default->expression !== null) {
             $value = $default->expression->evaluate($frame);
 
-            return [true, (new Store($this->context))->value($value, $default->expression->domain(), $column)];
+            return [true, (new Store($this->context, 1, $this->table->definition->name))->value($value, $default->expression->domain(), $column)];
         }
 
         return [true, $default->value];
+    }
+
+    /**
+     * Sets the columns declared ON UPDATE CURRENT_TIMESTAMP that no assignment wrote to the time of the statement, in a row an update changes.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/timestamp-initialization.html.
+     *
+     * @param list<int|float|string|null> $row The changed row
+     * @param array<int, true> $assigned The positions of the columns the assignments wrote
+     * @return list<int|float|string|null>
+     *
+     * @throws SqlError When the time cannot be stored
+     */
+    public function refresh(array $row, array $assigned): array
+    {
+        foreach ($this->table->definition->columns as $position => $column) {
+            if ($column->onUpdateNow && !isset($assigned[$position])) {
+                $clock = new Clock(ClockKind::Now, $column->domain);
+                array_splice($row, $position, 1, [(new Store($this->context, 1, $this->table->definition->name))->value($clock->evaluate(new Frame($this->context)), $clock->domain(), $column)]);
+            }
+        }
+
+        return $row;
     }
 
     /**

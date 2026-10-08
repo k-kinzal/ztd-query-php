@@ -89,4 +89,56 @@ final class IsTestTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1', '1', '0'], ['2', '0', '0', '0'], ['3', '0', '1', '1']], $result->rows);
     }
+
+    public function testIsNullDoesNotEvaluateAnOperandThatCannotBeNull(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT, s VARCHAR(5))');
+        $session->query("INSERT INTO t VALUES (1, 'a'), (2, 'b'), (3, NULL)");
+        $result = $session->query("SELECT (s IS TRUE) IS NULL, ISNULL('a' + 0), (s IS TRUE) IS UNKNOWN FROM t")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '0', '0'], ['0', '0', '0'], ['0', '0', '0']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
+    public function testEvaluateIsNotNullEvaluatesAnOperandThatCannotBeNull(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT, s VARCHAR(5))');
+        $session->query("INSERT INTO t VALUES (1, 'a'), (2, 'b'), (3, NULL)");
+        $result = $session->query('SELECT (s IS TRUE) IS NOT NULL FROM t')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1'], ['1'], ['1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $warnings->rows);
+    }
+
+    public function testAbsentEvaluatesOnlyTheNullnessOfTheOperandsOfAComparison(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT, s VARCHAR(5))');
+        $session->query("INSERT INTO t VALUES (1, 'a'), (2, 'b'), (3, NULL)");
+        $result = $session->query("SELECT (s < 0) IS NULL, (NOT s) IS NULL, (s LIKE 0) IS NULL, (s XOR id) IS NULL, ((s <=> id) = 1) IS NULL, ('a' = id) IS NULL FROM t")[0];
+        $quiet = $session->query('SHOW WARNINGS')[0];
+        $session->query('SELECT (s = id) IS NULL FROM t');
+        $whole = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '0', '0', '0', '0', '0'], ['0', '0', '0', '0', '0', '0'], ['1', '1', '1', '1', '0', '0']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $quiet);
+        self::assertSame([], $quiet->rows);
+        self::assertInstanceOf(ResultSet::class, $whole);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $whole->rows);
+    }
 }

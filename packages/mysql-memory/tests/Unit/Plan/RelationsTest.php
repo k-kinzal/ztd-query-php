@@ -82,6 +82,16 @@ final class RelationsTest extends TestCase
         self::assertSame([['2']], $result->rows);
     }
 
+    public function testPlanReadsTheRelationsOfAnOdbcJoin(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE TABLE u (a INT); INSERT INTO t VALUES (1), (2); INSERT INTO u VALUES (2)');
+        $result = $session->query('SELECT t.a, u.a FROM { OJ t LEFT JOIN u ON t.a = u.a } ORDER BY t.a')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', null], ['2', '2']], $result->rows);
+    }
+
     public function testTableRaisesForATableThatDoesNotExist(): void
     {
         $session = (new Instance())->connect();

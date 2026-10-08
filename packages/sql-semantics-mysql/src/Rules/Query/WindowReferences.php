@@ -49,7 +49,7 @@ final class WindowReferences
         $parts = [...$select->items, ...$select->orderBy, ...$select->windows, ...array_values(array_filter([$select->having, $select->qualify, $select->late]))];
         foreach ($this->names($parts) as $name) {
             if (!isset($defined[$names->fold($name->value)])) {
-                $derivation->report(new Misuse(MisuseRule::UnknownWindow));
+                $derivation->report(new Misuse(MisuseRule::UnknownWindow, $name));
             }
         }
     }

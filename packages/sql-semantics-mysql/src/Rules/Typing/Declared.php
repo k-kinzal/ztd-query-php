@@ -121,7 +121,7 @@ final class Declared
     }
 
     /**
-     * Resolves an integer type.
+     * Resolves an integer type, which reports a declared display width for itself.
      */
     public function integral(Integral $type): Domain
     {
@@ -134,7 +134,7 @@ final class Declared
             IntegralKind::BigInt => [Field::LongLong, 20],
         };
 
-        return Domain::integer($field, $type->width === null ? $length : (int) $type->width, $unsigned);
+        return Domain::column($field, $type->width === null ? $length : (int) $type->width, $unsigned);
     }
 
     /**
@@ -231,13 +231,13 @@ final class Declared
     }
 
     /**
-     * Resolves ENUM and SET.
+     * Resolves ENUM and SET, whose length counts the characters of the members as the statement writes them.
      */
     public function enumeration(Enumeration $type, ?Collation $collation): Domain
     {
         $collation ??= $this->charset($type->charset, $this->collation);
         $members = array_map(static fn ($member): string => $member->value, $type->members);
-        $lengths = array_map(static fn (string $member): int => $collation->charset->length($member), $members);
+        $lengths = array_map(static fn (string $member): int => Charset::known('utf8mb4')->length($member), $members);
         $length = $type->kind === EnumerationKind::Enum ? max([0, ...$lengths]) : array_sum($lengths) + max(0, count($members) - 1);
 
         return new Domain(Kind::String, $type->kind === EnumerationKind::Enum ? Field::Enum : Field::Set, $length, Domain::NOT_FIXED, false, $collation, $members);

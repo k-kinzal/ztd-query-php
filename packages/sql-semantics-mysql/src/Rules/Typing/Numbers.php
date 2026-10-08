@@ -22,7 +22,7 @@ use SqlSemantics\Statement\Scalar;
  * yields a BIGINT as wide as its operands allow; when an operand is a decimal or the operator
  * divides, the result is a DECIMAL whose precision and scale follow from the operands, a
  * division adding div_precision_increment digits to the scale of its dividend; any double makes
- * the result a DOUBLE.
+ * the result a DOUBLE. An integer product has the digits of both operands, at most 65.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/arithmetic-functions.html,
  * https://dev.mysql.com/doc/refman/8.4/en/precision-math-expressions.html.
  *
@@ -86,16 +86,15 @@ final class Numbers
         if ($operator === ArithmeticOperator::Divide || in_array(Kind::Decimal, $kinds, true)) {
             return $this->decimal($operator, $this->digits($left), $this->digits($right));
         }
+        $unsigned = ($left->unsigned || $right->unsigned) && ($operator !== ArithmeticOperator::Minus || $this->unsignedSubtraction);
         $length = match ($operator) {
-            ArithmeticOperator::Multiply => $left->length + $right->length - 1,
-            ArithmeticOperator::Modulo => max($left->length, $right->length),
-            ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::Divide, ArithmeticOperator::IntegerDivide,
-            ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::BitXor, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight => max($left->length, $right->length) + 1,
+            ArithmeticOperator::Multiply => min(65, $this->digits($left)[0] + $this->digits($right)[0]) + ($unsigned ? 0 : 1),
+            ArithmeticOperator::Modulo => max($left->length, $right->length) + ($unsigned ? 1 : 0),
+            ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::BitXor,
+            ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight => max($left->length, $right->length) + 1,
         };
 
-        $unsigned = ($left->unsigned || $right->unsigned) && ($operator !== ArithmeticOperator::Minus || $this->unsignedSubtraction);
-
-        return Domain::integer(Field::LongLong, min(21, $length), $unsigned);
+        return Domain::integer(Field::LongLong, min(66, $length), $unsigned);
     }
 
     /**
@@ -122,12 +121,14 @@ final class Numbers
     }
 
     /**
-     * Resolves the negation of an operand.
+     * Resolves the negation of an operand: a DECIMAL of its digits for an integer constant that is negative read as a signed BIGINT.
+     *
+     * @param bool $negative Whether the operand is an integer constant that is negative read as a signed BIGINT
      */
-    public function negated(Domain $domain): Domain
+    public function negated(Domain $domain, bool $negative = false): Domain
     {
         return match ($this->operand($domain)) {
-            Kind::Integer => Domain::integer(Field::LongLong, $domain->length + ($domain->unsigned ? 1 : 0)),
+            Kind::Integer => $negative && $domain->kind === Kind::Integer ? Domain::decimal(...$this->digits($domain)) : Domain::integer(Field::LongLong, $domain->length + ($domain->unsigned ? 1 : 0)),
             Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(...$this->digits($domain)),
             Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Domain::double(23, $domain->kind === Kind::Double ? $domain->decimals : Domain::NOT_FIXED),
         };

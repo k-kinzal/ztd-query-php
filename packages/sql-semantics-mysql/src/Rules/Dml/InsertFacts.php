@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertInto;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertPriority;
@@ -42,7 +43,11 @@ use SqlSemantics\Statement\Type\Nullability;
  * empty row without a column list, which writes the defaults; rows also
  * agree with each other, an empty row included. A query source whose width
  * differs from the written columns is the mismatch of its first row. A query source is derived where
- * the table is not visible and must return one column per written column.
+ * the table is not visible and must return one column per written column;
+ * a source that is a VALUES statement, also in parentheses, after WITH or
+ * under ORDER BY and LIMIT, writes every row as VALUES does, each row
+ * checked against the written columns as it is derived
+ * (MYSQL-RESULT-SLOTS-001, verified on a live 8.4 server).
  * ON DUPLICATE KEY UPDATE assigns columns of the written table; its values
  * see the written table, the row alias (MYSQL-DML-ROW-ALIAS-001), whose
  * name may not be the table name, and, for a query source that is one query
@@ -111,43 +116,21 @@ final class InsertFacts
     public function query(InsertQuery $insert, Derivation $derivation, Environment $outer): void
     {
         [$target, $written] = $this->open($insert->into, $derivation, $outer);
+        $values = $insert->values();
+        if ($values !== null) {
+            $derivation->writes($values, $written ?? [], $insert->into->columns === null || $insert->into->columns->columns === []);
+        }
         $rows = $derivation->query($insert->source, $outer);
-        $mismatch = $this->mismatchedRow($insert, $written);
-        if ($mismatch !== null) {
-            $derivation->report($mismatch);
-        } elseif ($written !== null && $rows->shape->complete() && count($rows->shape->slots) !== count($written) && !$this->defaulted($insert)) {
-            $derivation->report(new ValueCountMismatch(count($written), count($rows->shape->slots), 1));
+        if ($written !== null && $rows->shape->complete() && count($rows->shape->slots) !== count($written) && !$this->defaulted($insert)) {
+            if ($values === null) {
+                $derivation->report(new ValueCountMismatch(count($written), count($rows->shape->slots), 1));
+            }
         } elseif ($written !== null && !$this->defaulted($insert)) {
             $generated = new GeneratedWrites();
             $generated->query($written, $insert->source, $rows, $generated->table($insert->into->table, $derivation), $derivation);
         }
         $sources = $insert->onDuplicate === [] ? [] : (new SourceRelations())->visible($insert->source, $derivation);
         $this->duplicates($insert->onDuplicate, null, $insert->into, $target, $written, $sources, $derivation, $outer);
-    }
-
-    /**
-     * Answers the count mismatch of the first row of a VALUES ROW(...) source that does not fit the written columns.
-     *
-     * VALUES ROW(...) writes rows as VALUES (...) does: each row has one value
-     * per written column, except an empty row without a column list.
-     *
-     * @param list<Field>|null $written
-     */
-    public function mismatchedRow(InsertQuery $insert, ?array $written): ?ValueCountMismatch
-    {
-        $values = $insert->values();
-        if ($values === null || $written === null) {
-            return null;
-        }
-        $listed = $insert->into->columns !== null && $insert->into->columns->columns !== [];
-        foreach ($values->rows as $index => $row) {
-            $count = count($row->values);
-            if ($count !== count($written) && ($count !== 0 || $listed)) {
-                return new ValueCountMismatch(count($written), $count, $index + 1);
-            }
-        }
-
-        return null;
     }
 
     /**
@@ -179,7 +162,7 @@ final class InsertFacts
             Deprecation::raise($into->replace ? Deprecated::ReplaceDelayed : Deprecated::InsertDelayed, $derivation);
         }
         $fact = $derivation->relation($into->table, $outer);
-        $target = new VisibleRelation($into->table, $fact->shape, null, $into->table->name);
+        $target = new VisibleRelation($into->table, $fact->shape, null, $into->table->name, [], (new TableShapes())->implicit($fact));
         if ($into->columns === null || $into->columns->columns === []) {
             if (!$fact->shape->complete()) {
                 return [$target, null];
@@ -238,7 +221,7 @@ final class InsertFacts
         $visible = [$target];
         if ($alias !== null) {
             if ($derivation->context->relationNames->equal($alias->name->value, $into->table->name->name->value)) {
-                $derivation->report(new Misuse(MisuseRule::DuplicateAlias));
+                $derivation->report(new Misuse(MisuseRule::DuplicateAlias, $alias->name));
             }
             $environment = $written === null ? new Environment($derivation->context, $outer, [$target]) : new Environment($derivation->context, $outer, [], [], $written);
             $visible[] = new VisibleRelation($alias, $derivation->relation($alias, $environment)->shape, $alias->name);

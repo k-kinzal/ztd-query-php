@@ -122,6 +122,53 @@ final class QueryCommandTest extends TestCase
         $session->query("SELECT 1 INTO OUTFILE '/tmp/out'");
     }
 
+    public function testIntoAssignsTheFirstRowBeforeRefusingMoreRows(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2)');
+        $session->run('SELECT a FROM t ORDER BY a INTO @x');
+        $value = $session->query('SELECT @x')[0];
+
+        self::assertInstanceOf(ResultSet::class, $value);
+        self::assertSame([['1']], $value->rows);
+    }
+
+    public function testDestinationFindsTheIntoOfTheLastOperandOfASetOperation(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('SELECT 1 UNION (SELECT 2 INTO @z)')->statement;
+
+        self::assertInstanceOf(Query::class, $statement);
+        self::assertInstanceOf(IntoVariables::class, (new QueryCommand())->destination($statement));
+    }
+
+    public function testFileRefusesAnEnclosingStringOfMoreThanOneCharacter(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1083);
+        $this->expectExceptionMessage('Field separator argument is not what is expected; check the manual');
+
+        $session->query("SELECT 1 INTO OUTFILE '/tmp/out' FIELDS ENCLOSED BY 0b01 ESCAPED BY 'ab'");
+    }
+
+    public function testFileWarnsAboutASeparatorOutsideAsciiBeforeRefusingTheFile(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run("SELECT 1 INTO OUTFILE '/tmp/out' FIELDS TERMINATED BY 0xC3A9 ENCLOSED BY 'é'");
+
+        self::assertSame([['Warning', 1638, 'Non-ASCII separator arguments are not fully supported'], ['Error', 1290, 'The MySQL server is running with the --secure-file-priv option so it cannot execute this statement']], $session->diagnostics->conditions);
+    }
+
+    public function testFileRefusesTheFileBeforeTheQueryRuns(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run("SELECT CAST('x' AS SIGNED) INTO DUMPFILE '/tmp/out'");
+
+        self::assertSame([['Error', 1290, 'The MySQL server is running with the --secure-file-priv option so it cannot execute this statement']], $session->diagnostics->conditions);
+    }
+
     public function testDomainHoldsAnIntegerAsABigint(): void
     {
         $domain = (new QueryCommand())->domain(new ResultColumn('a', Field::Long, 11, 0, ColumnFlag::Unsigned->value, 63));
@@ -148,5 +195,16 @@ final class QueryCommandTest extends TestCase
         $domain = (new QueryCommand())->domain(new ResultColumn('a', Field::VarString, 20, 0, 0, 255));
 
         self::assertSame([Kind::String, Field::MediumBlob, 16777216, 'binary'], [$domain->kind, $domain->field, $domain->length, $domain->collation->name]);
+    }
+
+    public function testCalculatesReadsTheOptionOfTheFirstSelect(): void
+    {
+        $session = (new Instance())->connect();
+        $first = $session->analyze('SELECT SQL_CALC_FOUND_ROWS 1 UNION SELECT 2')->statement;
+        $plain = $session->analyze('(SELECT 1 LIMIT 1)')->statement;
+
+        self::assertInstanceOf(Query::class, $first);
+        self::assertInstanceOf(Query::class, $plain);
+        self::assertSame([true, false], [(new QueryCommand())->calculates($first), (new QueryCommand())->calculates($plain)]);
     }
 }

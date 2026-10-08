@@ -37,6 +37,13 @@ final class InvocationTest extends TestCase
         self::assertSame([12, -3, 4, null], [$call->constant(0), $call->constant(1), $call->constant(2), $call->constant(3)]);
     }
 
+    public function testConstantClampsIntegersBeyondTheRangeOfAnInt(): void
+    {
+        $call = new Invocation([], [new NumberLiteral('18446744073709551615'), new Unary(UnaryOperator::Minus, new NumberLiteral('9223372036854775808')), new NumberLiteral('0009'), new StringLiteral(['99999999999999999999x'])], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])));
+
+        self::assertSame([PHP_INT_MAX, -PHP_INT_MAX, 9, PHP_INT_MAX], [$call->constant(0), $call->constant(1), $call->constant(2), $call->constant(3)]);
+    }
+
     public function testLengthWritesNumbersAsText(): void
     {
         self::assertSame([22, 0, 4], [new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->length(Domain::double()), new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->length(Domain::null()), new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->length(Domain::integer(Field::LongLong, 4))]);

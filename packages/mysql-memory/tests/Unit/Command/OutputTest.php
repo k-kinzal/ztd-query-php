@@ -64,6 +64,27 @@ final class OutputTest extends TestCase
         );
     }
 
+    public function testColumnsReportTheDisplayWidthOfADerivedColumnThatExpressionsDoNotSee(): void
+    {
+        $session = (new Instance())->connect();
+
+        $result = $session->query('SELECT a, -a, a + 0, CONCAT(a) FROM (SELECT 3 AS a) d')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[Field::Long, 2], [Field::LongLong, 11], [Field::LongLong, 12], [Field::VarString, 44]], array_map(static fn ($column): array => [$column->type, $column->length], $result->columns));
+    }
+
+    public function testColumnsReportTheDisplayWidthOfATableColumnThatExpressionsDoNotSee(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (i INT(5), b BIGINT(3)); INSERT INTO t VALUES (1, 1)');
+
+        $result = $session->query('SELECT i, -i, b, -b, COALESCE(i) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[Field::Long, 5], [Field::LongLong, 11], [Field::LongLong, 3], [Field::LongLong, 20], [Field::Long, 11]], array_map(static fn ($column): array => [$column->type, $column->length], $result->columns));
+    }
+
     public function testColumnKeepsTheCharacterSetOfAStringWithoutResultsCharacterSet(): void
     {
         $column = (new Output())->column('a', Domain::string(5, Collation::known('latin1_swedish_ci')), null);
@@ -85,6 +106,14 @@ final class OutputTest extends TestCase
         $number = $output->column('b', Domain::integer(), null, Charset::known('utf8mb4'));
 
         self::assertSame([[5, 63], [21, 63]], [[$binary->length, $binary->charset], [$number->length, $number->charset]]);
+    }
+
+    public function testColumnSendsATemporalValueInACharacterSetAsAString(): void
+    {
+        $domain = new Domain(Kind::Date, Field::Date, 10, 0, false, Collation::known('utf8mb4_0900_ai_ci'));
+        $output = new Output();
+
+        self::assertSame([[40, 255], [10, 8]], [[$output->column('d', $domain, null, Charset::known('utf8mb4'))->length, $output->column('d', $domain, null, Charset::known('utf8mb4'))->charset], [$output->column('d', $domain, null, Charset::known('latin1'))->length, $output->column('d', $domain, null, Charset::known('latin1'))->charset]]);
     }
 
     public function testColumnSendsAnEnumAsAString(): void
@@ -109,6 +138,8 @@ final class OutputTest extends TestCase
     public function testConvertedHoldsTheLengthWithinALengthField(): void
     {
         self::assertSame(4294967295, (new Output())->converted(2000000000, 3));
+        self::assertSame(4294967292, (new Output())->converted(4294967295, 4));
+        self::assertSame(4294967295, (new Output())->converted(4294967295, 4, true));
     }
 
     public function testTextWritesNullAsNull(): void
@@ -131,5 +162,65 @@ final class OutputTest extends TestCase
     public function testTextWritesAnIntegerInDecimal(): void
     {
         self::assertSame('-42', (new Output())->text(-42, Domain::integer()));
+    }
+
+    public function testColumnDropsTheBinaryFlagOfAZerofillColumn(): void
+    {
+        $column = (new Output())->column('y', new Domain(Kind::Year, Field::Year, 4, 0, true), new ColumnOrigin('d', 't', 't', 'y', 64));
+
+        self::assertSame([64, 0, 32], [$column->flags & 64, $column->flags & 128, $column->flags & 32]);
+    }
+
+    public function testTextWritesFourDigitsForAZerofillYear(): void
+    {
+        $domain = new Domain(Kind::Year, Field::Year, 4, 0, true);
+
+        self::assertSame(['0000', '2024', '0'], [(new Output())->text(0, $domain, true), (new Output())->text(2024, $domain, true), (new Output())->text(0, $domain)]);
+    }
+
+    public function testResultWritesAYearColumnWithFourDigits(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (y YEAR)');
+        $session->query("INSERT INTO t VALUES (0), ('0')");
+        $result = $session->query('SELECT y, CAST(0 AS YEAR) FROM t UNION ALL SELECT y, 5 FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0000', '0'], ['2000', '0'], ['0000', '5'], ['2000', '5']], $result->rows);
+    }
+
+    public function testResultCountsTheRowsBeforeTheLimitForSqlCalcFoundRows(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2), (3), (4), (5)');
+        $session->query('SELECT SQL_CALC_FOUND_ROWS * FROM t WHERE a > 1 LIMIT 1, 2');
+        $calculated = $session->query('SELECT FOUND_ROWS()')[0];
+        $session->query('SELECT * FROM t LIMIT 2');
+        $sent = $session->query('SELECT FOUND_ROWS()')[0];
+        $session->query('SELECT SQL_CALC_FOUND_ROWS a FROM t UNION SELECT 9 LIMIT 1');
+        $union = $session->query('SELECT FOUND_ROWS()')[0];
+
+        self::assertInstanceOf(ResultSet::class, $calculated);
+        self::assertInstanceOf(ResultSet::class, $sent);
+        self::assertInstanceOf(ResultSet::class, $union);
+        self::assertSame([[['4']], [['2']], [['6']]], [$calculated->rows, $sent->rows, $union->rows]);
+    }
+
+    public function testSentConvertsAStringIntoTheCharacterSetOfTheResults(): void
+    {
+        $latin1 = Domain::string(1, Collation::known('latin1_swedish_ci'));
+
+        self::assertSame(['é', "\xE9", '5', null], [(new Output())->sent("\xE9", $latin1, Charset::known('utf8mb4')), (new Output())->sent("\xE9", $latin1, null), (new Output())->sent('5', Domain::integer(), Charset::known('latin1')), (new Output())->sent(null, $latin1, Charset::known('utf8mb4'))]);
+    }
+
+    public function testResultSendsAStringOfAnotherCharacterSetConverted(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CONVERT('é' USING latin1), _latin1'é', CONVERT('é' USING ucs2)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['é', 'Ã©', 'é']], $result->rows);
     }
 }

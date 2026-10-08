@@ -46,4 +46,12 @@ final class ErrorCodeTest extends TestCase
         self::assertSame("Table 'shop.items' doesn't exist", $error->getMessage());
         self::assertSame(ErrorCode::NoSuchTable, $error->error);
     }
+
+    public function testMessageFormatsTheCharacterSetAndPacketErrors(): void
+    {
+        self::assertSame(
+            ["Invalid utf8mb4 character string: 'FF41'", 'Result of repeat() was larger than max_allowed_packet (67108864) - truncated', 'Invalid argument for logarithm', '2201E'],
+            [ErrorCode::InvalidCharacterString->message('utf8mb4', 'FF41'), ErrorCode::AllowedPacketOverflowed->message('repeat', 67108864), ErrorCode::InvalidLogarithmArgument->message(), ErrorCode::InvalidLogarithmArgument->sqlState()],
+        );
+    }
 }

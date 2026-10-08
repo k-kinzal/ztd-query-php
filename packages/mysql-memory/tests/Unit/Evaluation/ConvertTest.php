@@ -7,10 +7,12 @@ namespace Tests\Unit\Evaluation;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -244,5 +246,37 @@ final class ConvertTest extends TestCase
     public function testBitsReadsOnlyTheLastEightBytes(): void
     {
         self::assertSame(1, Convert::bits("\x05\x00\x00\x00\x00\x00\x00\x00\x01"));
+    }
+
+    public function testShownQuotesABinaryStringByItsBytesAndAnotherInUtf8(): void
+    {
+        self::assertSame(['\x00\xFFa\x0A', 'é', 'é', "\xE9"], [Convert::shown("\x00\xFFa\n", Charset::binary()), Convert::shown("\xE9", Charset::known('latin1')), Convert::shown('é', Charset::known('utf8mb4')), Convert::shown("\xE9", null)]);
+    }
+
+    public function testToDoubleQuotesTheValueOfAStringInItsWarning(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SELECT _binary X'41FF42' + 0, CONVERT('é' USING latin1) + 0, CAST(CONVERT('é12' USING utf16) AS UNSIGNED), CONVERT('12' USING utf16) + 0");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([
+            ['Warning', '1292', "Truncated incorrect DOUBLE value: 'A\\xFFB'"],
+            ['Warning', '1292', "Truncated incorrect DOUBLE value: 'é'"],
+            ['Warning', '1292', "Truncated incorrect INTEGER value: 'é12'"],
+        ], $warnings->rows);
+    }
+
+    public function testReadableReadsAWideCharacterSetInUtf8(): void
+    {
+        $ucs2 = Domain::string(2, Collation::known('ucs2_general_ci'));
+        $latin1 = Domain::string(2, Collation::known('latin1_swedish_ci'));
+
+        self::assertSame(['12', "\xE9"], [Convert::readable("\x001\x002", $ucs2), Convert::readable("\xE9", $latin1)]);
+    }
+
+    public function testReadableCharsetAnswersUtf8ForAWideCharacterSet(): void
+    {
+        self::assertSame(['utf8mb4', 'latin1', 'binary'], [Convert::readableCharset(Domain::string(2, Collation::known('utf16_general_ci')))->name, Convert::readableCharset(Domain::string(2, Collation::known('latin1_swedish_ci')))->name, Convert::readableCharset(Domain::integer())->name]);
     }
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
 
 use SqlSemantics\Statement\Fact\Diagnostic;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -21,8 +23,9 @@ final class Misuse implements Diagnostic
 
     /**
      * @param MisuseRule $rule The broken rule
+     * @param Name|QualifiedName|null $name The name the rule is broken for, as the server names it: the alias, common table, column, window or locked table
      */
-    public function __construct(public readonly MisuseRule $rule)
+    public function __construct(public readonly MisuseRule $rule, public readonly Name|QualifiedName|null $name = null)
     {
     }
 

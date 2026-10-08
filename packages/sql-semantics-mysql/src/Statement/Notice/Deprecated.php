@@ -35,6 +35,7 @@ enum Deprecated: string
     case UnsignedFraction = 'UNSIGNED for decimal and floating point data types is deprecated and support for it will be removed in a future release.';
     case YearWidth = "'YEAR(4)' is deprecated and will be removed in a future release. Please use YEAR instead";
     case NoCache = "'SQL_NO_CACHE' is deprecated and will be removed in a future release.";
+    case IntoInsideQuery = 'The INTO clause is deprecated inside query blocks of query expressions and will be removed in a future release. Please move the INTO clause to the end of statement instead.';
     case Utf8Alias = "'utf8' is currently an alias for the character set UTF8MB3, but will be an alias for UTF8MB4 in a future release. Please consider using UTF8MB4 in order to be unambiguous.";
 
     /**
@@ -49,7 +50,8 @@ enum Deprecated: string
             self::InsertDelayed, self::ReplaceDelayed => 3005,
             self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache => 1681,
             self::Utf8Alias => 3719,
-            default => 1287,
+            self::IntoInsideQuery => 3962,
+            self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth => 1287,
         };
     }
 

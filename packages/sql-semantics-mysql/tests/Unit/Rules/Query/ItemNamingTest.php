@@ -23,6 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
@@ -134,8 +135,24 @@ final class ItemNamingTest extends TestCase
         self::assertEquals(new Name(''), $naming->stored('é', 'binary'));
         self::assertEquals(new Name('aé'), $naming->stored('aé', 'binary'));
         self::assertEquals(new NameConversion('utf16'), $naming->stored('ab', 'utf16'));
-        self::assertEquals(new NameConversion('latin1'), $naming->stored('é', 'latin1'));
+        self::assertEquals(new Name('Ã©'), $naming->stored('é', 'latin1'));
+        self::assertEquals(new NameConversion('cp1251'), $naming->stored('é', 'cp1251'));
         self::assertEquals(new Name('é?'), $naming->stored('é😀', 'utf8mb4'));
+    }
+
+    public function testStoredReadsATextOfTheClientInTheCharacterSetTheSessionNames(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('utf8mb4'));
+
+        self::assertEquals(new Name("UPPER('straße')"), $naming->stored("UPPER('straße')", 'client'));
+        self::assertEquals(new Name("CONCAT('?', 'a')"), $naming->stored("CONCAT('😀', 'a')", 'client'));
+        self::assertEquals(new Name(str_repeat('a', 255)), $naming->stored(str_repeat('a', 300), 'client'));
+        self::assertEquals(new Name("CONCAT('Ã©')"), (new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('latin1')))->stored("CONCAT('é')", 'client'));
+    }
+
+    public function testLatin1ReadsTheBytesAsCp1252WithTheControlsOfItsUnassignedBytes(): void
+    {
+        self::assertSame("aÃ©\u{20AC}\u{81}\u{9D}", (new ItemNaming((new Semantics(Dialect::MySql))->context()->profile))->latin1("aé\x80\x81\x9D"));
     }
 
     public function testNarrowedKeepsWholeCharactersOfUtf8mb3(): void

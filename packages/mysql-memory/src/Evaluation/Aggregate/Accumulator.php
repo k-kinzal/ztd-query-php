@@ -8,8 +8,10 @@ use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Value\Decimal;
+use MySqlMemory\Value\Encoding;
 use MySqlMemory\Value\Order;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
@@ -134,7 +136,7 @@ final class Accumulator
     {
         $text = '';
         foreach ($this->accumulation->arguments as $index => $argument) {
-            $text .= (string) Convert::toText($values[$index], $argument->domain());
+            $text .= Encoding::convert((string) Convert::toText($values[$index], $argument->domain()), $argument->domain()->kind === Kind::String ? $argument->domain()->collation->charset : Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset);
         }
         $keys = [];
         foreach ($this->accumulation->order as [$key]) {
@@ -212,9 +214,9 @@ final class Accumulator
                 return 0;
             });
         }
-        $text = implode($this->accumulation->separator, array_column($this->parts, 0));
+        $text = implode(Encoding::convert($this->accumulation->separator, Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset), array_column($this->parts, 0));
         if (strlen($text) > $this->accumulation->limit) {
-            $text = mb_strcut($text, 0, $this->accumulation->limit, 'UTF-8');
+            $text = mb_strcut($text, 0, $this->accumulation->limit, Encoding::name($this->accumulation->domain->collation->charset) ?? '8bit');
             $frame->context->warning(ErrorCode::CutByGroupConcat, count($this->parts));
         }
 

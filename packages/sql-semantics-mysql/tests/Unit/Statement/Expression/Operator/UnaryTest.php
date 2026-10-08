@@ -41,6 +41,17 @@ final class UnaryTest extends TestCase
         self::assertEquals([new Known(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)), new Known(Domain::double(23)), new Known(Domain::integer(Field::LongLong, 21, true)), new Known(Domain::integer(Field::LongLong, 1))], [$plus->type, $minus->type, $invert->type, $not->type]);
     }
 
+    public function testDeriveScalarMakesTheNegationOfANegativeIntegerConstantADecimal(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+        $twice = $derivation->scalar(new Unary(UnaryOperator::Minus, new Unary(UnaryOperator::Minus, new NumberLiteral('3'))), $derivation->environment());
+        $once = $derivation->scalar(new Unary(UnaryOperator::Minus, new NumberLiteral('3')), $derivation->environment());
+        $smallest = $derivation->scalar(new Unary(UnaryOperator::Minus, new NumberLiteral('9223372036854775808')), $derivation->environment());
+
+        self::assertEquals([new Known(Domain::decimal(1, 0)), new Known(Domain::integer(Field::LongLong, 2)), new Known(Domain::integer(Field::LongLong, 20))], [$twice->type, $once->type, $smallest->type]);
+    }
+
     public function testRenderNegatesACollatedOperandWithoutParentheses(): void
     {
         $platform = new Platform();

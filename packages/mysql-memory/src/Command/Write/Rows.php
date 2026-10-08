@@ -6,6 +6,7 @@ namespace MySqlMemory\Command\Write;
 
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -68,19 +69,24 @@ final class Rows
     /**
      * Writes one row from the values named for some of its columns.
      *
+     * A value an INSERT ... SELECT cannot store fails the statement, and the server then also
+     * reports ER_NO_DEFAULT_FOR_FIELD for each NOT NULL column without a default that the row
+     * had not received a value for yet, in the order of the table.
+     *
      * @param list<int> $positions
      * @param list<Evaluable|DefaultRequest|array{int|float|string|null, Domain}> $values
+     * @param bool $queried Whether the row is a row of the query of INSERT ... SELECT
      *
-     * @throws \MySqlMemory\Error\SqlError When the row is refused
+     * @throws SqlError When the row is refused
      */
-    public function write(array $positions, array $values, int $number, bool $single): void
+    public function write(array $positions, array $values, int $number, bool $single, bool $queried = false): void
     {
         $definition = $this->table->definition;
         if (count($values) !== count($positions)) {
             throw $single ? ErrorCode::WrongValueCount->error() : ErrorCode::WrongValueCountOnRow->error($number);
         }
         $frame = new Frame($this->context);
-        $store = new Store($this->context, $number);
+        $store = new Store($this->context, $number, $this->into->table->name->name->value);
         $row = array_fill(0, count($definition->columns), null);
         $named = [];
         foreach ($positions as $index => $position) {
@@ -92,7 +98,11 @@ final class Rows
                 continue;
             }
             [$raw, $domain] = $value instanceof Evaluable ? [$value->evaluate($frame), $value->domain()] : $value;
-            array_splice($row, $position, 1, [$this->notNull($store->value($raw, $domain, $column), $position, $store, $number, $single)]);
+            try {
+                array_splice($row, $position, 1, [$this->notNull($store->value($raw, $domain, $column), $position, $store, $number, $single)]);
+            } catch (SqlError $error) {
+                throw $queried ? $this->unfilled($error, $named) : $error;
+            }
         }
         foreach ($definition->columns as $position => $column) {
             if (!isset($named[$position])) {
@@ -103,7 +113,24 @@ final class Rows
         if ($generated !== null) {
             $this->generated ??= $generated;
         }
-        $this->place($row, $number);
+        $this->place($row, $number, $single);
+    }
+
+    /**
+     * Answers an error of INSERT ... SELECT followed by ER_NO_DEFAULT_FOR_FIELD for each NOT NULL column without a default that the row has no value for yet.
+     *
+     * @param array<int, true> $named The positions of the columns the row has reached
+     */
+    public function unfilled(SqlError $error, array $named): SqlError
+    {
+        $following = $error->following;
+        foreach ($this->table->definition->columns as $position => $column) {
+            if (!isset($named[$position]) && !$column->default->declared && !$column->nullable() && !$column->autoIncrement) {
+                $following[] = [ErrorCode::NoDefaultForField->value, ErrorCode::NoDefaultForField->message($column->name)];
+            }
+        }
+
+        return new SqlError($error->error, $error->getMessage(), $error->getPrevious(), $following);
     }
 
     /**
@@ -122,7 +149,15 @@ final class Rows
     }
 
     /**
-     * Refuses NULL for a NOT NULL column, or replaces it by the implicit default.
+     * Refuses NULL for a NOT NULL column, or replaces it by the implicit default with a warning.
+     *
+     * A strict mode refuses it, and so does a single-row INSERT without IGNORE; IGNORE, and a
+     * statement of several rows or a query under a non-strict mode, store the implicit default.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/constraint-invalid-data.html.
+     *
+     * @param bool $single Whether the statement writes a single row of values
+     *
+     * @throws SqlError When NULL is refused
      */
     public function notNull(int|float|string|null $value, int $position, Store $store, int $number, bool $single): int|float|string|null
     {
@@ -130,7 +165,7 @@ final class Rows
         if ($value !== null || $column->nullable() || $column->autoIncrement) {
             return $value;
         }
-        if ($single || $this->context->strict) {
+        if (($single && !$this->into->ignore) || $this->context->strict) {
             throw ErrorCode::BadNull->error($column->name);
         }
         $this->context->warning(ErrorCode::BadNull, $column->name);
@@ -142,10 +177,11 @@ final class Rows
      * Places a complete row: inserts it, or resolves its conflict with a unique key.
      *
      * @param list<int|float|string|null> $row
+     * @param bool $single Whether the statement writes a single row of values
      *
-     * @throws \MySqlMemory\Error\SqlError When the row conflicts and the statement does not resolve conflicts
+     * @throws SqlError When the row conflicts and the statement does not resolve conflicts
      */
-    public function place(array $row, int $number): void
+    public function place(array $row, int $number, bool $single = false): void
     {
         $data = $this->table->data;
         while (($conflict = $this->writer->conflict($row)) !== null) {
@@ -164,7 +200,7 @@ final class Rows
                 continue;
             }
             if ($this->onDuplicate !== []) {
-                $this->update($existing, $row, $number);
+                $this->update($existing, $row, $number, $single);
 
                 return;
             }
@@ -197,20 +233,26 @@ final class Rows
     /**
      * Applies ON DUPLICATE KEY UPDATE to the row a new row conflicts with.
      *
+     * An assignment of NULL to a NOT NULL column is refused or stored as the implicit default
+     * as in the row inserted.
+     *
      * @param list<int|float|string|null> $new
+     * @param bool $single Whether the statement writes a single row of values
      */
-    public function update(int $existing, array $new, int $number): void
+    public function update(int $existing, array $new, int $number, bool $single = false): void
     {
         $data = $this->table->data;
         $old = $data->rows[$existing];
         $scope = $this->updateScope();
         $frame = new Frame($this->context, [...$old, ...$new]);
         $row = $old;
-        $store = new Store($this->context, $number);
+        $store = new Store($this->context, $number, $this->into->table->name->name->value);
+        $assigned = [];
         foreach ($this->onDuplicate as $assignment) {
             $position = (new Assignments($this->planner, $this->table))->position($assignment->column);
+            $assigned[$position] = true;
             $value = $this->planner->compiler->compile($assignment->value, $scope);
-            $stored = $store->value($value->evaluate($frame), $value->domain(), $this->table->definition->columns[$position]);
+            $stored = $this->notNull($store->value($value->evaluate($frame), $value->domain(), $this->table->definition->columns[$position]), $position, $store, $number, $single);
             array_splice($row, $position, 1, [$stored]);
             array_splice($frame->row, $position, 1, [$stored]);
         }
@@ -221,6 +263,7 @@ final class Rows
         if (!$changed) {
             return;
         }
+        $row = $this->writer->refresh($row, $assigned);
         $conflict = $this->writer->conflict($row, $existing);
         if ($conflict !== null) {
             throw $this->writer->duplicate($row, $conflict[1]);

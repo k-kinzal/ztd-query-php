@@ -55,4 +55,16 @@ final class DoCommandTest extends TestCase
 
         $session->query('DO (SELECT 1 UNION SELECT 2)');
     }
+
+    public function testExecuteLeavesOneFoundRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2), (3)');
+        $session->query('SELECT SQL_CALC_FOUND_ROWS * FROM t LIMIT 1');
+        $session->query('DO 1, 2');
+        $result = $session->query('SELECT FOUND_ROWS()')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
 }

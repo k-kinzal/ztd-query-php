@@ -119,7 +119,12 @@ final class ComparatorTest extends TestCase
 
     public function testTextWritesNumbersAsTheirText(): void
     {
-        self::assertSame(['5', '1.5', 'x'], [Comparator::text(5, Domain::integer()), Comparator::text(1.5, Domain::double()), Comparator::text('x', Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')))]);
+        self::assertSame(['5', '1.5', 'x'], [Comparator::text(5, Domain::integer(), Collation::known('utf8mb4_0900_ai_ci')), Comparator::text(1.5, Domain::double(), Collation::known('utf8mb4_0900_ai_ci')), Comparator::text('x', Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')), Collation::known('utf8mb4_0900_ai_ci'))]);
+    }
+
+    public function testTextConvertsAStringIntoTheCharacterSetOfTheCollation(): void
+    {
+        self::assertSame(["\xE9", "\x00\xE9"], [Comparator::text('é', Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')), Collation::known('latin1_swedish_ci')), Comparator::text("\xE9", Domain::string(1, Collation::known('latin1_swedish_ci')), Collation::known('ucs2_general_ci'))]);
     }
 
     public function testCompareOrdersIntegersAsUnsigned(): void
@@ -206,5 +211,23 @@ final class ComparatorTest extends TestCase
         self::assertSame([['0', '1', '1']], $result->rows);
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'abc'"]], $warnings->rows);
+    }
+
+    public function testCompareReadsABitValueAsAnUnsignedInteger(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (b BIT(8), w BIT(64), u BIGINT UNSIGNED); INSERT INTO t VALUES (b'101', b'1111111111111111111111111111111111111111111111111111111111111111', 18446744073709551615)");
+        $result = $session->query('SELECT b = 5, 5 = b, b > 4, b <> 5, b IN (5, 6), b BETWEEN 4 AND 6, w = u, w > 9223372036854775807, w = -1 FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1', '1', '0', '1', '1', '1', '1', '0']], $result->rows);
+    }
+
+    public function testIntegerReadsTheBytesOfABitValue(): void
+    {
+        $instance = new Instance();
+        $context = new Context(new \MySqlMemory\Session\SqlModes([]), new \MySqlMemory\Session\Diagnostics(), new \MySqlMemory\Session\Variables($instance->catalog, $instance->globals), 0.0);
+
+        self::assertSame([5, -1, 7], [Comparator::integer("\x05", new Domain(Kind::Bit, Field::Bit, 8, 0, true), $context), Comparator::integer(str_repeat("\xFF", 8), new Domain(Kind::Bit, Field::Bit, 64, 0, true), $context), Comparator::integer(7, Domain::integer(), $context)]);
     }
 }

@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace MySqlMemory\Evaluation\Compile;
 
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Evaluation\Compile\Family\Calls;
+use MySqlMemory\Evaluation\Compile\Family\Dates;
+use MySqlMemory\Evaluation\Compile\Family\Jsons;
+use MySqlMemory\Evaluation\Compile\Family\Texts;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Evaluation\Scope;
@@ -23,6 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
 use SqlSemantics\Platform\MySql\Statement\Call\Trim;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\JsonExtraction;
 use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
@@ -41,6 +46,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
+use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\MemberOf;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Regexp;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\SoundsLike;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists;
@@ -121,9 +127,19 @@ final class Compiler
     public readonly Rows $rows;
 
     /**
+     * Compiles the JSON operators of the statement.
+     */
+    public readonly Jsons $jsons;
+
+    /**
      * @var array<int, int>|null The index of each parameter marker of the statement, by object id
      */
     private ?array $parameters = null;
+
+    /**
+     * @var list<string>|null The lower-case names of the user variables the statement assigns
+     */
+    private ?array $assigned = null;
 
     /**
      * @param Facts $facts The facts of the bound statement
@@ -141,6 +157,23 @@ final class Compiler
         $this->dates = new Dates($this);
         $this->texts = new Texts($this);
         $this->rows = new Rows($this);
+        $this->jsons = new Jsons($this);
+    }
+
+    /**
+     * Answers how long the value of an expression of the statement stays the same.
+     *
+     * A user variable the statement assigns anywhere varies by row.
+     *
+     * @param bool $correlation Whether a correlated subquery varies by row
+     */
+    public function constancy(Scalar $node, bool $correlation = true): Constancy
+    {
+        if ($this->assigned === null) {
+            $this->assigned = array_values(array_unique(array_map(static fn (VariableAssignment $assignment): string => strtolower($assignment->target->name->value), (new Walker())->find($this->planner->statement, VariableAssignment::class))));
+        }
+
+        return Constancy::of($node, $this->facts, $correlation, $this->assigned);
     }
 
     /**
@@ -263,6 +296,8 @@ final class Compiler
             $node instanceof CharCall => $this->texts->char($node, $scope),
             $node instanceof SoundsLike => $this->texts->soundsLike($node, $scope),
             $node instanceof Regexp => $this->texts->regexp($node, $scope),
+            $node instanceof JsonExtraction => $this->jsons->extraction($node, $scope),
+            $node instanceof MemberOf => $this->jsons->member($node, $scope),
             $node instanceof Concatenation => $this->calls->named('CONCAT', [$node->left, $node->right], $scope, $node),
             $node instanceof Extract => $this->dates->extract($node, $scope),
             $node instanceof DefaultOfColumn => $this->names->default($node, $scope),

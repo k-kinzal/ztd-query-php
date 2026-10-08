@@ -12,6 +12,8 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
@@ -118,16 +120,19 @@ final class InsertFactsTest extends TestCase
         self::assertSame('Not unique table/alias', $operation->facts->diagnostics[0]->message());
     }
 
-    public function testMismatchedRowIsTheFirstRowOfAnotherWidth(): void
+    public function testQueryChecksEachRowOfAValuesSourceAgainstTheWrittenColumns(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $insert = $semantics->analyze('INSERT INTO t VALUES ROW(1, 2), ROW(3)')->statement;
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery::class, $insert);
-        $slot = new \SqlSemantics\Statement\Shape\OutputSlot(new Name('a'), new \SqlSemantics\Statement\Type\NullOnly(), Nullability::Nullable);
-        $written = [new \SqlSemantics\Statement\Shape\Field(0, $slot), new \SqlSemantics\Statement\Shape\Field(1, $slot)];
+        $t = $semantics->analyze('CREATE TABLE t (a INT, b INT NOT NULL DEFAULT 0)');
+        $second = $semantics->analyze('INSERT INTO t (a, b) (VALUES ROW(1, 2), ROW(3)) LIMIT 1', [$t])->facts->diagnostics;
+        $empty = $semantics->analyze('INSERT INTO t () WITH x AS (SELECT 1) VALUES ROW(), ROW()', [$t])->facts->diagnostics;
+        $listed = $semantics->analyze('INSERT INTO t (a) (VALUES ROW())', [$t])->facts->diagnostics;
+        $default = $semantics->analyze('INSERT INTO t (a, b) (VALUES ROW(1, DEFAULT))', [$t]);
 
-        self::assertSame([2, 1, 2], [(new InsertFacts())->mismatchedRow($insert, $written)?->expected, (new InsertFacts())->mismatchedRow($insert, $written)?->actual, (new InsertFacts())->mismatchedRow($insert, $written)?->row]);
-        self::assertNull((new InsertFacts())->mismatchedRow($insert, null));
+        self::assertSame(["Column count doesn't match value count at row 2"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $second));
+        self::assertSame([], $empty);
+        self::assertSame(["Column count doesn't match value count at row 1"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $listed));
+        self::assertSame([], $default->facts->diagnostics);
     }
 
     public function testDefaultedHoldsForEmptyRowsWithoutAColumnList(): void
@@ -142,4 +147,22 @@ final class InsertFactsTest extends TestCase
         self::assertFalse((new InsertFacts())->defaulted($listed));
     }
 
+    public function testDuplicatesNamesARowAliasThatIsTheTableName(): void
+    {
+        $diagnostics = (new Semantics(Dialect::MySql))->analyze('INSERT INTO w VALUES (1) AS w ON DUPLICATE KEY UPDATE a = 1')->facts->diagnostics;
+
+        self::assertContainsEquals(new Misuse(MisuseRule::DuplicateAlias, new Name('w')), $diagnostics);
+    }
+
+    public function testOpenFindsTheInvisibleColumnsOfTheTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE, f INT)')->declarations();
+        $messages = static fn (string $sql): array => array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze($sql, $tables)->facts->diagnostics);
+
+        self::assertSame([], $messages('INSERT INTO v (a, e, f) VALUES (1, 2, 3)'));
+        self::assertSame([], $messages('INSERT INTO v SET e = 3'));
+        self::assertSame([], $messages('INSERT INTO v VALUES (1, 3)'));
+        self::assertSame(["Column count doesn't match value count at row 1"], $messages('INSERT INTO v VALUES (1, 2, 3)'));
+    }
 }

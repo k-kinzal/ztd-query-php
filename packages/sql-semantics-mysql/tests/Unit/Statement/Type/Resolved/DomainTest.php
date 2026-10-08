@@ -58,6 +58,21 @@ final class DomainTest extends TestCase
         self::assertSame(21, Domain::integer()->byteLength());
     }
 
+    public function testColumnReportsADisplayWidthNarrowerThanItsType(): void
+    {
+        self::assertSame([11, 5], [Domain::column(Field::Long, 5)->length, Domain::column(Field::Long, 5)->display]);
+        self::assertSame([10, null], [Domain::column(Field::Long, 10, true)->length, Domain::column(Field::Long, 10, true)->display]);
+        self::assertSame([20, 3], [Domain::column(Field::LongLong, 3, true)->length, Domain::column(Field::LongLong, 3, true)->display]);
+        self::assertSame([4, 2], [Domain::column(Field::Tiny, 2)->length, Domain::column(Field::Tiny, 2)->display]);
+        self::assertSame([21, null], [Domain::column(Field::LongLong, 21)->length, Domain::column(Field::LongLong, 21)->display]);
+    }
+
+    public function testValueDropsTheDisplayWidth(): void
+    {
+        self::assertEquals(Domain::integer(Field::Short, 6), Domain::column(Field::Short, 2)->value());
+        self::assertSame(Domain::integer()->kind, Domain::integer()->value()->kind);
+    }
+
     public function testNullIsIgnorable(): void
     {
         self::assertSame([Kind::Null, Field::Null, Coercibility::Ignorable], [Domain::null()->kind, Domain::null()->field, Domain::null()->coercibility]);

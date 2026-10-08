@@ -44,4 +44,12 @@ final class SourceRelationsTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
         self::assertNull((new SourceRelations())->members(new WriteTarget(new QualifiedName(new Name('t')))));
     }
+
+    public function testVisibleOffersTheInvisibleColumnsOfASourceTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = [...$semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE)')->declarations(), ...$semantics->analyze('CREATE TABLE w (a INT, b INT)')->declarations()];
+
+        self::assertSame([], $semantics->analyze('INSERT INTO w SELECT a, 1 FROM v ON DUPLICATE KEY UPDATE b = v.e', $tables)->facts->diagnostics);
+    }
 }

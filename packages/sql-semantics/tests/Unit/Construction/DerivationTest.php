@@ -343,4 +343,20 @@ final class DerivationTest extends TestCase
         self::assertFalse($derivation->inProgram());
     }
 
+    public function testWritesRecordsTheColumnsTheRowsOfAQueryAreWrittenTo(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $query = new Select([new Star()]);
+        $derivation->writes($query, [], true);
+
+        self::assertSame([[], true], $derivation->written($query));
+    }
+
+    public function testWrittenIsNullForAQueryWhoseRowsAreNotWritten(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+
+        self::assertNull($derivation->written(new Select([new Star()])));
+    }
+
 }

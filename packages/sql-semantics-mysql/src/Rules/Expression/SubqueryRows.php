@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -16,7 +17,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * Derives the value of a subquery used as an expression and the NULL fact of a test against its rows.
  *
  * Rule: MYSQL-SUBQUERY-ROWS-001. A subquery used as a value yields the value
- * of its one column, or a row of its columns, and NULL when it returns no
+ * of its one column, without the display width of the column, or a row of its columns, and NULL when it returns no
  * row; a subquery with an unexpandable star depends on the inputs it
  * misses. A membership or quantified test is NULL when the operand or a
  * column of the subquery can be NULL; a subquery whose columns are not known
@@ -41,7 +42,9 @@ final class SubqueryRows
         }
         $slots = $query->shape->slots;
         if (count($slots) === 1) {
-            return new ScalarFact($slots[0]->type, Nullability::Nullable);
+            $domain = (new Precision())->domain($slots[0]->type);
+
+            return new ScalarFact($domain === null || $domain->display === null ? $slots[0]->type : new Known($domain->value()), Nullability::Nullable);
         }
 
         return new ScalarFact(new Known(new Tuple(max(2, count($slots)))), Nullability::Nullable);

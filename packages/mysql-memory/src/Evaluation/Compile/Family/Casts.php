@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace MySqlMemory\Evaluation\Compile;
+namespace MySqlMemory\Evaluation\Compile\Family;
 
+use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Operator\Conversion;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;

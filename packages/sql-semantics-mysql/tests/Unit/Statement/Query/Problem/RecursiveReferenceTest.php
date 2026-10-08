@@ -29,6 +29,6 @@ final class RecursiveReferenceTest extends TestCase
 
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(Misuse::class, $operation->facts->diagnostics[0]);
-        self::assertSame(MisuseRule::RecursiveWithoutAnchor, $operation->facts->diagnostics[0]->rule);
+        self::assertSame(MisuseRule::RecursiveWithoutUnion, $operation->facts->diagnostics[0]->rule);
     }
 }

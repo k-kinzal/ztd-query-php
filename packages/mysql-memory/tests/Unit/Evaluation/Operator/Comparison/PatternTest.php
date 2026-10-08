@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation\Operator\Comparison;
 
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\Constant;
@@ -149,5 +150,62 @@ final class PatternTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1', '0'], ['2', '0', '1'], ['3', null, null]], $result->rows);
+    }
+
+    public function testEvaluateMatchesInTheCharacterSetOfTheCollation(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (c VARCHAR(4) CHARACTER SET latin1, u VARCHAR(4) CHARACTER SET utf16); INSERT INTO t VALUES ('é€', 'é')");
+        $result = $session->query("SELECT c LIKE 'é%', c LIKE '_€', u LIKE '_', u LIKE '%', u LIKE 'é', u LIKE '|é' ESCAPE '|', u LIKE '\\\\_' FROM t")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1', '1', '1', '1', '1', '0']], $result->rows);
+    }
+
+    public function testSymbolWritesAnAsciiSymbolInTheCharacterSetOfTheCollation(): void
+    {
+        $domain = Domain::integer();
+        $pattern = new Pattern(new Constant($domain, 1), new Constant($domain, 1), null, Collation::known('utf16_general_ci'), false, $domain);
+
+        self::assertSame(["\x00%", "\x00_"], [$pattern->symbol('%'), $pattern->symbol('_')]);
+    }
+
+    public function testTextReadsAnOperandInTheCharacterSetOfTheCollation(): void
+    {
+        $instance = new Instance();
+        $frame = new Frame(new Context(new \MySqlMemory\Session\SqlModes([]), new \MySqlMemory\Session\Diagnostics(), new \MySqlMemory\Session\Variables($instance->catalog, $instance->globals), 0.0));
+        $utf8 = Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'));
+        $pattern = new Pattern(new Constant($utf8, 'é'), new Constant($utf8, null), null, Collation::known('latin1_swedish_ci'), false, Domain::integer());
+
+        self::assertSame(["\xE9", null, '5'], [$pattern->text($pattern->operand, $frame), $pattern->text($pattern->pattern, $frame), $pattern->text(new Constant(Domain::integer(), 5), $frame)]);
+    }
+
+    public function testEscapeTextRefusesALongDeferredEscapeOnlyWhenARowIsMatched(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT, s VARCHAR(5))');
+        $session->query("INSERT INTO t VALUES (1, 'a'), (2, 'b'), (3, NULL)");
+        $none = $session->query("SELECT s LIKE 'a' ESCAPE USER() FROM t WHERE id > 9")[0];
+        $untested = $session->query("SELECT (s LIKE 'a' ESCAPE USER()) IS NULL FROM t")[0];
+
+        self::assertInstanceOf(ResultSet::class, $none);
+        self::assertSame([], $none->rows);
+        self::assertInstanceOf(ResultSet::class, $untested);
+        self::assertSame([['0'], ['0'], ['1']], $untested->rows);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage('Incorrect arguments to ESCAPE');
+        $session->query("SELECT s LIKE 'a' ESCAPE USER() FROM t WHERE id = 3");
+    }
+
+    public function testEscapeTextReadsTheEscapeOnce(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+        $pattern = new Pattern(new Constant(Domain::string(5, $collation), 'a|%'), new Constant(Domain::string(5, $collation), 'a||%'), new Constant(Domain::string(5, $collation), '|'), $collation, false, Domain::integer(), true);
+
+        self::assertSame(['|', '|'], [$pattern->escapeText($frame), $pattern->escapeText($frame)]);
     }
 }

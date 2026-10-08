@@ -75,12 +75,10 @@ final class ChangeCommand implements Command
             foreach ($matched as $number) {
                 $table->data->delete($number);
             }
-            $session->variables->rowCount = count($matched);
 
             return new Completion(count($matched), 0, $context->diagnostics->count());
         }
         $changed = $this->update($statement, $planner, $scope, $table, $context, $matched);
-        $session->variables->rowCount = $changed;
 
         return new Completion($changed, 0, $context->diagnostics->count(), sprintf('Rows matched: %d  Changed: %d  Warnings: %d', count($matched), $changed, $context->diagnostics->count()));
     }
@@ -161,10 +159,12 @@ final class ChangeCommand implements Command
         $definition = $table->definition;
         $frame = new Frame($context);
         $changed = 0;
+        $reference = $statement->tables[0];
+        $target = $reference instanceof TableReference ? $reference->alias->value ?? $reference->name->name->value : $definition->name;
         foreach ($matched as $index => $number) {
             $old = $table->data->rows[$number];
             $row = $old;
-            $store = new Store($context, $index + 1);
+            $store = new Store($context, $index + 1, $target);
             $assigned = [];
             foreach ($compiled as [$position, $value]) {
                 $frame->row = $row;
@@ -182,6 +182,7 @@ final class ChangeCommand implements Command
             if (!$this->differs($old, $row, $table)) {
                 continue;
             }
+            $row = $writer->refresh($row, $assigned);
             $conflict = $writer->conflict($row, $number);
             if ($conflict !== null) {
                 if ($statement->ignore) {

@@ -15,7 +15,9 @@ use Override;
  * Groups the rows of its input and answers one row per group: its first row and its aggregates.
  *
  * Groups are answered in the order of their grouping values, as the server returns them when it
- * groups by sorting; without grouping expressions there is exactly one group.
+ * groups by sorting; without grouping expressions there is exactly one group. WITH ROLLUP the
+ * super-aggregate rows follow the groups they fold.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/group-by-modifiers.html.
  *
  * @visibility MySqlMemory
  */
@@ -54,24 +56,29 @@ final class AggregateIterator implements RowIterator
                 $key .= Order::key($value, $group->domain()) . "\0";
             }
             if (!isset($groups[$key])) {
-                $groups[$key] = [$row, $values, array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates)];
+                $groups[$key] = [$row, $values, array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates), []];
             }
             foreach ($groups[$key][2] as $accumulator) {
                 $accumulator->add($frame);
             }
+            if ($this->path->rollup) {
+                $groups[$key][3][] = $row;
+            }
         }
         if ($groups === [] && $this->path->groups === []) {
-            $groups[''] = [array_fill(0, $this->path->input->width(), null), [], array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates)];
+            $groups[''] = [array_fill(0, $this->path->input->width(), null), [], array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates), []];
         }
-        $this->rows = $this->emit($this->sorted(array_values($groups)), $frame);
+        $sorted = $this->sorted(array_values($groups));
+        $this->rows = $this->path->rollup ? $this->rollup($sorted, $frame) : $this->emit($sorted, $frame);
         $this->next = 0;
     }
 
     /**
      * Orders groups by their grouping values.
      *
-     * @param list<array{list<int|float|string|null>, list<int|float|string|null>, list<Accumulator>}> $groups
-     * @return list<array{list<int|float|string|null>, list<int|float|string|null>, list<Accumulator>}>
+     * @template T of array{list<int|float|string|null>, list<int|float|string|null>, list<Accumulator>, ...}
+     * @param list<T> $groups
+     * @return list<T>
      */
     public function sorted(array $groups): array
     {
@@ -93,7 +100,7 @@ final class AggregateIterator implements RowIterator
     /**
      * Answers the output row of each group.
      *
-     * @param list<array{list<int|float|string|null>, list<int|float|string|null>, list<Accumulator>}> $groups
+     * @param list<array{list<int|float|string|null>, list<int|float|string|null>, list<Accumulator>, ...}> $groups
      * @return list<list<int|float|string|null>>
      */
     public function emit(array $groups, Frame $frame): array
@@ -109,6 +116,96 @@ final class AggregateIterator implements RowIterator
         }
 
         return $rows;
+    }
+
+    /**
+     * Answers the output rows of the groups and of their super-aggregates, in the order the server answers them WITH ROLLUP.
+     *
+     * After each group come the super-aggregate rows of the runs of groups it ends, from the run
+     * that agrees on all but the last grouping value to the run of every group. A super-aggregate
+     * row folds every row of its run and reads the other columns from the first row of the last
+     * group of the run, with NULL in the columns of the grouping expressions it rolls up unless a
+     * grouping expression it keeps is the same column.
+     *
+     * @param list<array{list<int|float|string|null>, list<int|float|string|null>, list<Accumulator>, list<list<int|float|string|null>>}> $groups
+     * @return list<list<int|float|string|null>>
+     */
+    public function rollup(array $groups, Frame $frame): array
+    {
+        $expressions = $this->path->groups;
+        $count = count($expressions);
+        $runs = [];
+        $rows = [];
+        foreach ($groups as $index => [$first, $values, $accumulators, $members]) {
+            for ($prefix = 0; $prefix < $count; $prefix++) {
+                $runs[$prefix] ??= array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates);
+            }
+            foreach ($members as $member) {
+                $frame->row = $member;
+                foreach ($runs as $run) {
+                    foreach ($run as $accumulator) {
+                        $accumulator->add($frame);
+                    }
+                }
+            }
+            $rows[] = $this->row($first, $accumulators, $values, 0, $frame);
+            $next = $groups[$index + 1][1] ?? null;
+            for ($prefix = $count - 1; $prefix >= 0; $prefix--) {
+                if ($next !== null && $this->agree($values, $next, $prefix)) {
+                    break;
+                }
+                $rolled = $first;
+                $kept = [];
+                $grouped = array_slice($this->path->rollupColumns, 0, $prefix);
+                foreach ($values as $position => $value) {
+                    $kept[] = $position < $prefix ? $value : null;
+                    $column = $this->path->rollupColumns[$position] ?? null;
+                    if ($position >= $prefix && $column !== null && !in_array($column, $grouped, true)) {
+                        $rolled[$column] = null;
+                    }
+                }
+                $rows[] = $this->row(array_values($rolled), $runs[$prefix] ?? [], $kept, $count - $prefix, $frame);
+                unset($runs[$prefix]);
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Tells whether two groups agree on their leading grouping values.
+     *
+     * @param list<int|float|string|null> $left
+     * @param list<int|float|string|null> $right
+     */
+    public function agree(array $left, array $right, int $prefix): bool
+    {
+        for ($position = 0; $position < $prefix; $position++) {
+            if (Order::compare($left[$position], $right[$position], $this->path->groups[$position]->domain()) !== 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Answers one output row WITH ROLLUP: the row, the aggregates, the grouping values and the number of grouping expressions rolled up.
+     *
+     * @param list<int|float|string|null> $row
+     * @param list<Accumulator> $accumulators
+     * @param list<int|float|string|null> $values
+     * @return list<int|float|string|null>
+     */
+    public function row(array $row, array $accumulators, array $values, int $level, Frame $frame): array
+    {
+        $frame->row = $row;
+        $results = [];
+        foreach ($accumulators as $accumulator) {
+            $results[] = $accumulator->result($frame);
+        }
+
+        return [...$row, ...$results, ...$values, $level];
     }
 
     /**

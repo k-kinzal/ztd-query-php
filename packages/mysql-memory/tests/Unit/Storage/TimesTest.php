@@ -6,8 +6,11 @@ namespace Tests\Unit\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Fill;
+use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Diagnostics;
 use MySqlMemory\Session\Globals;
 use MySqlMemory\Session\SqlModes;
@@ -67,7 +70,7 @@ final class TimesTest extends TestCase
 
         $value = (new Times(new Store($context, 3)))->value('2024-02-30', Domain::string(10, Collation::known('utf8mb4_0900_ai_ci')), $column);
 
-        self::assertSame(['0000-00-00', 'Warning', "Incorrect date value: '2024-02-30' for column 'c' at row 3"], [$value, $context->diagnostics->conditions[0][0], $context->diagnostics->conditions[0][2]]);
+        self::assertSame(['0000-00-00', 'Warning', 1264, "Out of range value for column 'c' at row 3"], [$value, $context->diagnostics->conditions[0][0], $context->diagnostics->conditions[0][1], $context->diagnostics->conditions[0][2]]);
     }
 
     public function testValueWritesATimeFromAString(): void
@@ -76,13 +79,6 @@ final class TimesTest extends TestCase
         $column = new ColumnDefinition('c', new Domain(Kind::Time, Field::Time, 10), Fill::none());
 
         self::assertSame('26:03:04', (new Times(new Store($context)))->value('1 02:03:04', Domain::string(10, Collation::known('utf8mb4_0900_ai_ci')), $column));
-    }
-
-    public function testRoundRoundsMicrosecondsToTheDecimals(): void
-    {
-        $times = new Times(new Store(new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0)));
-
-        self::assertSame([123000, 123500, 1000000, 5], [$times->round(123456, 3), $times->round(123456, 4), $times->round(999999, 0), $times->round(5, 6)]);
     }
 
     public function testTimeTakesTheTimeOfADatetime(): void
@@ -112,31 +108,171 @@ final class TimesTest extends TestCase
         self::assertSame(['838:59:59', 1], [$value, count($context->diagnostics->conditions)]);
     }
 
-    public function testInvalidStoresTheZeroValueOfTheColumn(): void
+    public function testProblemStoresTheZeroValueOfTheColumn(): void
     {
         $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
         $store = new Store($context);
 
-        self::assertSame(['0000-00-00', '00:00:00.0', '0000-00-00 00:00:00.000'], [(new Times($store))->invalid('x', new ColumnDefinition('c', new Domain(Kind::Date, Field::Date, 10), Fill::none())), (new Times($store))->invalid('x', new ColumnDefinition('c', new Domain(Kind::Time, Field::Time, 12, 1), Fill::none())), (new Times($store))->invalid('x', new ColumnDefinition('c', new Domain(Kind::DateTime, Field::DateTime, 23, 3), Fill::none()))]);
+        self::assertSame(['0000-00-00', '00:00:00.0', '0000-00-00 00:00:00.000'], [(new Times($store))->problem(ErrorCode::DataTruncated, 'x', new ColumnDefinition('c', new Domain(Kind::Date, Field::Date, 10), Fill::none())), (new Times($store))->problem(ErrorCode::DataTruncated, 'x', new ColumnDefinition('c', new Domain(Kind::Time, Field::Time, 12, 1), Fill::none())), (new Times($store))->problem(ErrorCode::OutOfRange, 'x', new ColumnDefinition('c', new Domain(Kind::DateTime, Field::DateTime, 23, 3), Fill::none()))]);
     }
 
-    public function testInvalidNamesTheTypeOfTheColumnInTheWarning(): void
+    public function testProblemWarnsOfTheConditionWithoutAStrictMode(): void
     {
         $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
 
-        (new Times(new Store($context, 2)))->invalid('nope', new ColumnDefinition('c', new Domain(Kind::DateTime, Field::Timestamp, 19), Fill::none()));
+        (new Times(new Store($context, 2)))->problem(ErrorCode::DataTruncated, 'nope', new ColumnDefinition('c', new Domain(Kind::DateTime, Field::Timestamp, 19), Fill::none()));
 
-        self::assertSame(['Warning', "Incorrect datetime value: 'nope' for column 'c' at row 2"], [$context->diagnostics->conditions[0][0], $context->diagnostics->conditions[0][2]]);
+        self::assertSame([['Warning', 1265, "Data truncated for column 'c' at row 2"]], $context->diagnostics->conditions);
     }
 
-    public function testInvalidRaisesAnErrorUnderAStrictMode(): void
+    public function testProblemRaisesAnErrorNamingTheValueUnderAStrictMode(): void
     {
         $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0, true);
 
         $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1292);
         $this->expectExceptionMessage("Incorrect time value: '12:61:00' for column 'c' at row 1");
 
-        (new Times(new Store($context)))->invalid('12:61:00', new ColumnDefinition('c', new Domain(Kind::Time, Field::Time, 10), Fill::none()));
+        (new Times(new Store($context)))->problem(ErrorCode::OutOfRange, '12:61:00', new ColumnDefinition('c', new Domain(Kind::Time, Field::Time, 10), Fill::none()));
+    }
+
+    public function testDroppedNotesTheValueUnderAStrictModeAndTheTruncationOtherwise(): void
+    {
+        $strict = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0, true);
+        $loose = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('d', new Domain(Kind::Date, Field::Date, 10), Fill::none());
+
+        (new Times(new Store($strict)))->dropped('2024-12-31 10:00:00', $column);
+        (new Times(new Store($loose)))->dropped('2024-12-31 10:00:00', $column);
+
+        self::assertSame([['Note', 1292, "Incorrect date value: '2024-12-31 10:00:00' for column 'd' at row 1"], ['Note', 1265, "Data truncated for column 'd' at row 1"]], [$strict->diagnostics->conditions[0], $loose->diagnostics->conditions[0]]);
+    }
+
+    public function testKindNamesTheTypeOfTheColumn(): void
+    {
+        $times = new Times(new Store(new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0)));
+
+        self::assertSame(['date', 'time', 'datetime', 'datetime'], [$times->kind(new ColumnDefinition('c', new Domain(Kind::Date, Field::Date, 10), Fill::none())), $times->kind(new ColumnDefinition('c', new Domain(Kind::Time, Field::Time, 10), Fill::none())), $times->kind(new ColumnDefinition('c', new Domain(Kind::DateTime, Field::DateTime, 19), Fill::none())), $times->kind(new ColumnDefinition('c', new Domain(Kind::DateTime, Field::Timestamp, 19), Fill::none()))]);
+    }
+
+    public function testValueRefusesAnInvalidDateWithTheValueAndTheColumnUnderAStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (d DATE)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1292);
+        $this->expectExceptionMessage("Incorrect date value: '2024-02-30' for column 'd' at row 1");
+
+        $session->query("INSERT INTO t (d) VALUES ('2024-02-30')");
+    }
+
+    public function testValueWarnsOfOutOfRangeAndTruncatedValuesUnderInsertIgnore(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (d DATE, e TIME)');
+        $session->query("INSERT IGNORE INTO t VALUES ('2024-02-30', '900:00:00'), ('2024-01-01x', 'xx')");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        $rows = $session->query('SELECT * FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([['Warning', '1264', "Out of range value for column 'd' at row 1"], ['Warning', '1264', "Out of range value for column 'e' at row 1"], ['Warning', '1265', "Data truncated for column 'd' at row 2"], ['Warning', '1265', "Data truncated for column 'e' at row 2"]], $warnings->rows);
+        self::assertSame([['0000-00-00', '838:59:59'], ['2024-01-01', '00:00:00']], $rows->rows);
+    }
+
+    public function testValueRefusesATimeOutOfRangeUnderAStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (e TIME)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1292);
+        $this->expectExceptionMessage("Incorrect time value: '900:00:00' for column 'e' at row 1");
+
+        $session->query("INSERT INTO t (e) VALUES ('900:00:00')");
+    }
+
+    public function testValueStoresZeroDatesOnlyWhereTheModeAllowsThem(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (d DATETIME)');
+        $session->query("SET sql_mode = ''");
+        $session->query("INSERT INTO t VALUES ('2024-00-01'), ('0000-00-00')");
+        $session->query("SET sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE'");
+        $session->query("INSERT INTO t VALUES ('2024-00-01'), (0)");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        $rows = $session->query('SELECT * FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([['Warning', '1264', "Out of range value for column 'd' at row 1"], ['Warning', '1264', "Out of range value for column 'd' at row 2"]], $warnings->rows);
+        self::assertSame([['2024-00-01 00:00:00'], ['0000-00-00 00:00:00'], ['0000-00-00 00:00:00'], ['0000-00-00 00:00:00']], $rows->rows);
+    }
+
+    public function testMomentRoundsFractionalSecondsWithTheCarryIntoTheDate(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a DATETIME(1), b TIME(1), c TIMESTAMP(1) NULL, d DATETIME, f DATE)');
+        $session->query("INSERT INTO t VALUES ('2024-12-31 23:59:59.96', '-10:59:59.96', '2024-12-31 23:59:59.96', '2024-01-01 10:00:00.99999995', '2024-12-31 23:59:59.5')");
+        $session->query("SET sql_mode = CONCAT(@@sql_mode, ',TIME_TRUNCATE_FRACTIONAL')");
+        $session->query("INSERT INTO t VALUES ('2024-12-31 23:59:59.96', '-10:59:59.96', '2024-12-31 23:59:59.96', '2024-01-01 10:00:00.99999995', '2024-12-31 23:59:59.5')");
+        $result = $session->query('SELECT * FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2025-01-01 00:00:00.0', '-11:00:00.0', '2025-01-01 00:00:00.0', '2024-01-01 10:00:01', '2025-01-01'], ['2024-12-31 23:59:59.9', '-10:59:59.9', '2024-12-31 23:59:59.9', '2024-01-01 10:00:00', '2024-12-31']], $result->rows);
+    }
+
+    public function testMomentRefusesATimestampOutsideItsRange(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (s TIMESTAMP NULL)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Incorrect datetime value: '2038-01-19 03:14:07.5' for column 's' at row 1");
+
+        $session->query("INSERT INTO t VALUES ('2038-01-19 03:14:07.5')");
+    }
+
+    public function testMomentReportsAnOverflowOfTheLastDatetime(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (d DATETIME)');
+        $session->query("INSERT IGNORE INTO t VALUES ('9999-12-31 23:59:59.5')");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1441', 'Datetime function: datetime field overflow'], ['Warning', '1264', "Out of range value for column 'd' at row 1"]], $warnings->rows);
+    }
+
+    public function testTimeTakesTheTimeOfADatetimeStringWithANote(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (e TIME)');
+        $session->query("INSERT INTO t VALUES ('2024-02-29 10:11:12.5')");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        $rows = $session->query('SELECT * FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([['Note', '1292', "Incorrect time value: '2024-02-29 10:11:12.5' for column 'e' at row 1"]], $warnings->rows);
+        self::assertSame([['10:11:13']], $rows->rows);
     }
 
     public function testYearReadsTwoDigitYears(): void
@@ -166,12 +302,85 @@ final class TimesTest extends TestCase
         self::assertSame([0, 0, [['Warning', 1264, "Out of range value for column 'c' at row 3"], ['Warning', 1264, "Out of range value for column 'c' at row 3"]]], [$times->year(1900, Domain::integer(), $column), $times->year(2156, Domain::integer(), $column), $context->diagnostics->conditions]);
     }
 
-    public function testJsonWritesTheTextOfANumber(): void
+    public function testYearReadsTheStringZeroAs2000UnlessItHasFourCharacters(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('c', new Domain(Kind::Year, Field::Year, 4, 0, true), Fill::none());
+        $times = new Times(new Store($context));
+        $text = Domain::string(8, Collation::known('utf8mb4_0900_ai_ci'));
+
+        self::assertSame([2000, 2000, 2000, 0, 0, 2000, 2025, 2001, 2024], [$times->year('0', $text, $column), $times->year('000', $text, $column), $times->year('0.0', $text, $column), $times->year('0000', $text, $column), $times->year('00.0', $text, $column), $times->year('0000 ', $text, $column), $times->year('2024.5', $text, $column), $times->year(0.5, Domain::decimal(2, 1), $column), $times->year(' 024', $text, $column)]);
+    }
+
+    public function testYearReportsAStringThatIsNoNumber(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('y', new Domain(Kind::Year, Field::Year, 4, 0, true), Fill::none());
+        $times = new Times(new Store($context));
+        $text = Domain::string(8, Collation::known('utf8mb4_0900_ai_ci'));
+
+        self::assertSame([0, 2024, [['Warning', 1366, "Incorrect integer value: 'x' for column 'y' at row 1"], ['Warning', 1265, "Data truncated for column 'y' at row 1"]]], [$times->year('x', $text, $column), $times->year('24x', $text, $column), $context->diagnostics->conditions]);
+    }
+
+    public function testYearTakesTheYearOfADate(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('y', new Domain(Kind::Year, Field::Year, 4, 0, true), Fill::none());
+
+        self::assertSame(2024, (new Times(new Store($context)))->year('2024-03-01', new Domain(Kind::Date, Field::Date, 10), $column));
+    }
+
+    public function testJsonWritesTheTextTheServerReturnsForTheDocument(): void
     {
         $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
         $column = new ColumnDefinition('c', new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin')), Fill::none());
 
-        self::assertSame('5', (new Times(new Store($context)))->json(5, Domain::integer(), $column));
+        self::assertSame('{"a": [1.0, "x/y"], "b": 1}', (new Times(new Store($context)))->json('{"b":1,"a":[1.0,"x\\/y"]}', Domain::string(20, Collation::known('utf8mb4_0900_ai_ci')), $column));
+    }
+
+    public function testJsonRefusesANumberAsNoJsonText(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('j', new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin')), Fill::none());
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage('Invalid JSON text: "not a JSON text, may need CAST" at position 0 in value for column \'t.j\'.');
+
+        (new Times(new Store($context, 1, 't')))->json(5, Domain::integer(), $column);
+    }
+
+    public function testJsonRefusesABinaryString(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('j', new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin')), Fill::none());
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Cannot create a JSON value from a string with CHARACTER SET 'binary'.");
+
+        (new Times(new Store($context, 1, 't')))->json('{}', Domain::string(2, Collation::binary()), $column);
+    }
+
+    public function testJsonNamesTheParserMessageThePositionAndTheColumn(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('j', new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin')), Fill::none());
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage('Invalid JSON text: "Missing a name for object member." at position 1 in value for column \'t.j\'.');
+
+        (new Times(new Store($context, 1, 't')))->json('{bad', Domain::string(4, Collation::known('utf8mb4_0900_ai_ci')), $column);
+    }
+
+    public function testJsonRefusesADocumentTooDeepFollowedByTheParserError(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (j JSON)');
+
+        $session->run("INSERT INTO t VALUES ('" . str_repeat('[', 101) . str_repeat(']', 101) . "')");
+
+        self::assertSame([['Error', 3157, 'The JSON document exceeds the maximum depth.'], ['Error', 3140, 'Invalid JSON text: "Terminate parsing due to Handler error." at position 101 in value for column \'t.j\'.']], $session->diagnostics->conditions);
     }
 
     public function testJsonRefusesATextThatIsNoDocument(): void

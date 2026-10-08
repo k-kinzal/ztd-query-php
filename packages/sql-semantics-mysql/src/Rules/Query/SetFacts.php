@@ -7,7 +7,10 @@ namespace SqlSemantics\Platform\MySql\Rules\Query;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Resolution\Environment;
@@ -26,6 +29,7 @@ use SqlSemantics\Statement\Query;
  * operands of a leading union (MYSQL-LEADING-UNION-001) are derived the
  * same way and combined for the operation that continues it; the form
  * needs MySQL 5.6 or 5.7, and the own LIMIT of its last SELECT needs 5.6.
+ * INTO in the last operand follows MYSQL-TAIL-FACTS-001.
  * Terminates: both operands are strict parts. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/set-operations.html,
  * https://dev.mysql.com/doc/refman/8.4/en/with.html.
@@ -40,7 +44,10 @@ final class SetFacts
      */
     public function derive(SetOperation $operation, Derivation $derivation, Environment $outer): QueryFact
     {
-        return $this->operands($operation->left, $operation->operator, $operation->right, $derivation, $outer);
+        $fact = $this->operands($operation->left, $operation->operator, $operation->right, $derivation, $outer);
+        (new TailFacts())->operand($operation, $derivation);
+
+        return $fact;
     }
 
     /**
@@ -52,9 +59,21 @@ final class SetFacts
         $tables = new CommonTables();
         $pending = $tables->pending($outer, $rightQuery, $derivation);
         $right = $derivation->query($rightQuery, $pending === null ? $outer : $tables->anchored($outer, $pending, $left, $derivation));
-        $fact = new QueryFact((new ResultSlots())->combine($left, $right, $operator, $derivation), $derivation->context->columnNames);
+        $fact = new QueryFact((new ResultSlots())->combine($left, $right, $operator, $derivation, [$this->combined($leftQuery), $this->combined($rightQuery)]), $derivation->context->columnNames);
 
         return $pending === null ? $fact : $tables->nullable($left, $derivation);
+    }
+
+    /**
+     * Tells whether an operand is itself a set operation, also in parentheses or with its own ORDER BY or LIMIT.
+     */
+    public function combined(Query|LeadingUnion $operand): bool
+    {
+        while ($operand instanceof ParenthesizedQuery || $operand instanceof QueryExpression) {
+            $operand = $operand instanceof ParenthesizedQuery ? $operand->query : $operand->body;
+        }
+
+        return $operand instanceof SetOperation || $operand instanceof OrderedSetOperation || $operand instanceof LeadingUnion;
     }
 
     /**

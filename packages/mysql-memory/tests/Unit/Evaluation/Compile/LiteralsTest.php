@@ -127,4 +127,23 @@ final class LiteralsTest extends TestCase
         self::assertSame([[null]], $result->rows);
         self::assertSame('Null', $result->columns[0]->type->name);
     }
+
+    public function testTemporalRoundsTheSeventhFractionalDigitAndRefusesValuesOutOfRange(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT TIME '10:00:00.1234567', TIMESTAMP '2024-12-31 23:59:59.9999995', TIME '-0:00:00', DATE '5-1-1'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['10:00:00.123457', '2025-01-01 00:00:00.000000', '-00:00:00', '0005-01-01']], $result->rows);
+    }
+
+    public function testTemporalAcceptsZeroDatesWhereTheModeAllowsThem(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET sql_mode = ''");
+        $result = $session->query("SELECT DATE '0000-00-00', DATE '2024-00-00', TIMESTAMP '2024-01-00 00:00:00'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0000-00-00', '2024-00-00', '2024-01-00 00:00:00']], $result->rows);
+    }
 }

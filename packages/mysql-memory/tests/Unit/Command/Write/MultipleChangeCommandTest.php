@@ -29,11 +29,12 @@ final class MultipleChangeCommandTest extends TestCase
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE a (id INT PRIMARY KEY, v INT); CREATE TABLE b (id INT PRIMARY KEY, a_id INT); INSERT INTO a VALUES (1, 10), (2, 20), (3, 30); INSERT INTO b VALUES (1, 1), (2, 1), (3, 2)');
 
         $reply = $session->query('UPDATE a JOIN b ON b.a_id = a.id SET a.v = a.v + 1')[0];
+        $count = $session->variables->rowCount;
         $result = $session->query('SELECT id, v FROM a')[0];
 
         self::assertInstanceOf(Completion::class, $reply);
         self::assertSame([2, 0, 'Rows matched: 2  Changed: 2  Warnings: 0'], [$reply->affectedRows, $reply->warnings, $reply->info]);
-        self::assertSame(2, $session->variables->rowCount);
+        self::assertSame(2, $count);
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '11'], ['2', '21'], ['3', '30']], $result->rows);
     }
@@ -136,5 +137,56 @@ final class MultipleChangeCommandTest extends TestCase
         self::assertInstanceOf(Update::class, $list);
         self::assertInstanceOf(Update::class, $join);
         self::assertSame([false, true, true], [MultipleChangeCommand::joined($single), MultipleChangeCommand::joined($list), MultipleChangeCommand::joined($join)]);
+    }
+
+    public function testApplyStoresTheImplicitDefaultForNullOutsideStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET sql_mode = ''; CREATE DATABASE d; USE d; CREATE TABLE w (id INT PRIMARY KEY, a INT NOT NULL); CREATE TABLE u (b INT); INSERT INTO w VALUES (1, 5); INSERT INTO u VALUES (1)");
+
+        $session->query('UPDATE w, u SET w.a = NULL');
+        $conditions = $session->diagnostics->conditions;
+        $result = $session->query('SELECT id, a FROM w')[0];
+
+        self::assertSame([['Warning', 1048, "Column 'a' cannot be null"]], $conditions);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0']], $result->rows);
+    }
+
+    public function testApplyRefusesNullForANotNullColumnUnderAStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE w (id INT PRIMARY KEY, a INT NOT NULL); CREATE TABLE u (b INT); INSERT INTO w VALUES (1, 5); INSERT INTO u VALUES (1)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1048);
+
+        $session->query('UPDATE w, u SET w.a = NULL');
+    }
+
+    public function testDirectNamesTheFirstTableOfAJoinOfTablesThatReadsItOnce(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (j JSON); CREATE TABLE u (j JSON); INSERT INTO t VALUES ('[]'); INSERT INTO u VALUES ('[]')");
+
+        $session->run("UPDATE t AS x, u SET x.j = '['");
+        $first = $session->diagnostics->conditions;
+        $session->run("UPDATE t, u SET u.j = '['");
+        $second = $session->diagnostics->conditions;
+        $session->run("UPDATE t AS x, t AS y SET x.j = '['");
+
+        self::assertSame([[['Error', 3140, 'Invalid JSON text: "Invalid value." at position 1 in value for column \'x.j\'.']], [['Error', 3140, 'Invalid JSON text: "Invalid value." at position 1 in value for column \'.j\'.']], [['Error', 3140, 'Invalid JSON text: "Invalid value." at position 1 in value for column \'.j\'.']]], [$first, $second, $session->diagnostics->conditions]);
+    }
+
+    public function testApplyRefreshesTheColumnsOnUpdateCurrentTimestamp(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE w (id INT, e TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP); CREATE TABLE u (b INT); INSERT INTO w (id) VALUES (1); INSERT INTO u VALUES (1)');
+
+        $session->query('UPDATE w, u SET w.id = 2');
+        $result = $session->query('SELECT id, e IS NULL FROM w')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', '0']], $result->rows);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
+use MySqlMemory\Value\Encoding;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
@@ -176,12 +177,12 @@ final class Declared
     }
 
     /**
-     * Resolves ENUM and SET.
+     * Resolves ENUM and SET, whose members are held in the character set of the column.
      */
     public function enumeration(Enumeration $type, ?Collation $collation): Domain
     {
         $collation = $this->charset($type->charset, $collation ?? $this->collation);
-        $members = array_map(static fn ($member): string => $member->value, $type->members);
+        $members = array_map(static fn ($member): string => Encoding::convert($member->value, Charset::known('utf8mb4'), $collation->charset), $type->members);
         $lengths = array_map(static fn (string $member): int => $collation->charset->length($member), $members);
         $length = $type->kind === EnumerationKind::Enum ? max([0, ...$lengths]) : array_sum($lengths) + max(0, count($members) - 1);
 

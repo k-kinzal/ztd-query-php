@@ -84,7 +84,7 @@ final class WriteTarget implements NamedRelation
         $fact = (new TableShapes())->named($this->name, $derivation, $environment);
         (new PartitionSelection())->check($this->partitions, $fact, $derivation);
         if ($fact->table instanceof CommonTable) {
-            $derivation->report(new WriteMisuse(WriteRule::CommonTableTarget));
+            $derivation->report(new WriteMisuse(WriteRule::CommonTableTarget, $this->alias ?? $this->name->name));
         }
 
         return $fact;

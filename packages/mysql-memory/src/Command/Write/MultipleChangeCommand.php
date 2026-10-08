@@ -103,7 +103,6 @@ final class MultipleChangeCommand implements Command
                 }
             }
         }
-        $session->variables->rowCount = $deleted;
 
         return new Completion($deleted, 0, $context->diagnostics->count());
     }
@@ -143,15 +142,15 @@ final class MultipleChangeCommand implements Command
         $frame = new Frame($context);
         $done = [];
         $changed = 0;
+        $direct = $this->direct($scope);
         foreach ($matches as $index => [$row, $numbers]) {
             $frame->row = $row;
             $values = [];
             foreach ($assignments as [$id, $position, $value]) {
                 $values[] = [$id, $position, $value->evaluate($frame), $value];
             }
-            $changed += $this->apply($values, $numbers, $scope, $done, $session, $context, $index + 1, $statement->ignore);
+            $changed += $this->apply($values, $numbers, $scope, $done, $session, $context, $index + 1, $statement->ignore, $direct);
         }
-        $session->variables->rowCount = $changed;
 
         return new Completion($changed, 0, $context->diagnostics->count(), sprintf('Rows matched: %d  Changed: %d  Warnings: %d', count($done), $changed, $context->diagnostics->count()));
     }
@@ -159,13 +158,18 @@ final class MultipleChangeCommand implements Command
     /**
      * Writes the assigned values of one joined row to the rows of their tables; answers how many rows changed.
      *
+     * NULL for a NOT NULL column is refused under a strict mode and stored as the implicit
+     * default of the column with a warning otherwise.
+     *
      * @param list<array{int, int, int|float|string|null, \MySqlMemory\Evaluation\Evaluable}> $values
      * @param array<int, int|null> $numbers
      * @param array<string, true> $done
+     * @param array{int, string}|null $direct The occurrence updated while the join is read, and the name it is written under
      */
-    public function apply(array $values, array $numbers, Scope $scope, array &$done, Session $session, Context $context, int $line, bool $ignore): int
+    public function apply(array $values, array $numbers, Scope $scope, array &$done, Session $session, Context $context, int $line, bool $ignore, ?array $direct = null): int
     {
         $rows = [];
+        $assigned = [];
         foreach ($values as [$id, $position, $value, $expression]) {
             $number = $numbers[$id] ?? null;
             if ($number === null || isset($done[$id . ':' . $number])) {
@@ -176,7 +180,17 @@ final class MultipleChangeCommand implements Command
             if ($rows[$id][2] === null) {
                 continue;
             }
-            $rows[$id][2][$position] = (new Store($context, $line))->value($value, $expression->domain(), $table->definition->columns[$position]);
+            $column = $table->definition->columns[$position];
+            $stored = (new Store($context, $line, $direct !== null && $direct[0] === $id ? $direct[1] : ''))->value($value, $expression->domain(), $column);
+            if ($stored === null && !$column->nullable()) {
+                if ($context->strict) {
+                    throw ErrorCode::BadNull->error($column->name);
+                }
+                $context->warning(ErrorCode::BadNull, $column->name);
+                $stored = (new Writer($table, $context))->implicit($column);
+            }
+            $rows[$id][2][$position] = $stored;
+            $assigned[$id][$position] = true;
         }
         $changed = 0;
         foreach ($rows as $id => [$table, $number, $row]) {
@@ -186,6 +200,7 @@ final class MultipleChangeCommand implements Command
             }
             $session->transaction->touch($table);
             $writer = new Writer($table, $context);
+            $row = $writer->refresh($row, $assigned[$id] ?? []);
             $conflict = $writer->conflict($row, $number);
             if ($conflict !== null) {
                 if ($ignore) {
@@ -199,6 +214,37 @@ final class MultipleChangeCommand implements Command
         }
 
         return $changed;
+    }
+
+    /**
+     * Answers the occurrence the server updates while it reads the join, and the name it writes it under; null when there is none.
+     *
+     * It is the first table of the join when every relation of the join is a table and no other
+     * occurrence reads that table; the server writes the other tables after the join is read, and
+     * names no table when it reports a value refused for one of them.
+     *
+     * @return array{int, string}|null
+     */
+    public function direct(Scope $scope): ?array
+    {
+        $first = null;
+        $tables = [];
+        foreach ($scope->nodes as $node) {
+            $id = spl_object_id($node);
+            if (!isset($scope->offsets[$id])) {
+                continue;
+            }
+            if (!$node instanceof TableReference || !isset($scope->scans[$id])) {
+                return null;
+            }
+            $first ??= [$id, $node->alias->value ?? $node->name->name->value];
+            $tables[] = $scope->scans[$id]->table;
+        }
+        if ($first === null || count(array_filter($tables, static fn ($table): bool => $table === $scope->scans[$first[0]]->table)) > 1) {
+            return null;
+        }
+
+        return $first;
     }
 
     /**

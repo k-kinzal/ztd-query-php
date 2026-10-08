@@ -12,6 +12,7 @@ use Override;
 /**
  * [NOT] BETWEEN: whether a value lies between two bounds, both included.
  *
+ * A NULL value is NULL without the bounds being evaluated.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_between.
  *
  * @visibility MySqlMemory
@@ -54,6 +55,9 @@ final class Range implements Evaluable
     public function evaluate(Frame $frame): ?int
     {
         $value = $this->operand->evaluate($frame);
+        if ($value === null) {
+            return null;
+        }
         $low = $this->lowComparator->compare($value, $this->low->evaluate($frame), $frame->context);
         $high = $this->highComparator->compare($value, $this->high->evaluate($frame), $frame->context);
         $above = $low === null ? null : $low >= 0;

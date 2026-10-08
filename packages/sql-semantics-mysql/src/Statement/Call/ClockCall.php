@@ -22,9 +22,10 @@ use SqlSemantics\Statement\Type\Nullability;
  * A call of a function that reads the current date or time, with its optional fractional seconds precision.
  *
  * Rule: MYSQL-CLOCK-CALL-001. The result is a DATETIME, TIME or DATE with
- * the written precision and is never NULL. A precision above 6 is the error
- * ER_TOO_BIG_PRECISION, which the server reports when it resolves the call;
- * the precision is kept as written. The function is written with
+ * the written precision and is never NULL. The server keeps the written
+ * precision in one byte, so it is read modulo 256: a precision of 256 is 0.
+ * A precision above 6 is then the error ER_TOO_BIG_PRECISION, which the
+ * server reports when it resolves the call; the precision is kept as written. The function is written with
  * parentheses, which are optional and change nothing (`NOW` alone would be
  * a column name).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_now,
@@ -58,9 +59,17 @@ final class ClockCall implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $decimals = $this->precision === null ? 0 : (int) $this->precision->text;
+        $decimals = $this->decimals();
 
         return new ScalarFact(new Known((new Moments(Settings::of($derivation->context)))->clock($this->clock, $decimals)), Nullability::NotNull);
+    }
+
+    /**
+     * Answers the fractional seconds precision the server reads: the written one modulo 256, or 0 when none is written.
+     */
+    public function decimals(): int
+    {
+        return $this->precision === null ? 0 : (int) $this->precision->text % 256;
     }
 
     /**

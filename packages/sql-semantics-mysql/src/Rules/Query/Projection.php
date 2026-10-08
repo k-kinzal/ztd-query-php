@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
@@ -56,7 +57,7 @@ final class Projection
             if ($item instanceof SelectExpression) {
                 $fact = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
                 $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
-                $name = (new ItemNaming($derivation->context->profile))->name($item);
+                $name = (new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client))->name($item);
                 $slot = $name instanceof Name ? new OutputSlot($name, $fact->type, $fact->nullability, null, $origin) : new OutputSlot(null, $fact->type, $fact->nullability, null, $origin, [$name]);
                 $fields[] = new Field(count($fields), $slot, $item->expression, $fact->resolution);
             } elseif ($item instanceof Star) {
@@ -93,7 +94,7 @@ final class Projection
         }
         foreach ($from->star as [$index, $position]) {
             $relation = $environment->relations[$index];
-            $fields[] = $this->field(count($fields), $relation, $relation->shape->slots[$position]);
+            $fields[] = $this->field(count($fields), $relation, JoinedInput::member($relation, $position));
         }
 
         return $fields;

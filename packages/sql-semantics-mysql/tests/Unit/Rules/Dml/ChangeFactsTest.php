@@ -15,12 +15,16 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
+use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
+use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Nullability;
@@ -57,6 +61,14 @@ final class ChangeFactsTest extends TestCase
         self::assertInstanceOf(UnknownDeleteTable::class, $operation->facts->diagnostics[0]);
     }
 
+    public function testUpdateReportsItsOneTableThatIsNotUpdatableBeforeTheAssignments(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $operation = $semantics->analyze('UPDATE (SELECT 1 AS a) AS d SET nosuch = 1');
+
+        self::assertSame([WriteRule::NonUpdatableTarget, null], array_map(static fn ($diagnostic) => $diagnostic instanceof WriteMisuse ? $diagnostic->rule : null, $operation->facts->diagnostics));
+    }
+
     public function testUpdatableRefusesDerivedAndCommonTables(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -91,5 +103,31 @@ final class ChangeFactsTest extends TestCase
         self::assertInstanceOf(RowLimit::class, $operation->statement->limit);
 
         self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->limit->count)->type);
+    }
+
+    public function testLabelAnswersTheCorrelationNameOrTheTableName(): void
+    {
+        $query = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
+        self::assertInstanceOf(Query::class, $query);
+
+        self::assertSame('x', (new ChangeFacts())->label(new TableReference(new QualifiedName(new Name('t')), new Name('x')))?->value);
+        self::assertSame('t', (new ChangeFacts())->label(new TableReference(new QualifiedName(new Name('t'))))?->value);
+        self::assertSame('d', (new ChangeFacts())->label(new DerivedTable($query, new Name('d')))?->value);
+        self::assertNull((new ChangeFacts())->label(new Dual()));
+    }
+
+    public function testDeleteMultipleNamesATargetThatIsNotUpdatable(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('WITH c AS (SELECT 1 AS k) DELETE z FROM c AS z');
+
+        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('z'))], $operation->facts->diagnostics);
+    }
+
+    public function testDeleteFindsTheInvisibleColumnsOfTheTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE)')->declarations();
+
+        self::assertSame([], $semantics->analyze('DELETE FROM v WHERE e = 1 ORDER BY e', $tables)->facts->diagnostics);
     }
 }

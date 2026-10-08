@@ -18,7 +18,8 @@ use SqlSemantics\Statement\Snapshot;
  * A membership test in a list of expressions: `x [NOT] IN (e1, e2 …)` (`Item_func_in`).
  *
  * A list of one element is kept as written; the server evaluates it as the
- * equality (or inequality) with that element, which has the same facts.
+ * equality (or inequality) with that element, which has the same facts and
+ * names its operation `=` (or `<>`) in an illegal mix of collations.
  * The operand is a bit_expr (MYSQL-PRECEDENCE-001).
  *
  * Rule: MYSQL-IN-LIST-001. Facts: 1, 0 or NULL, an integer; it can be NULL
@@ -68,7 +69,7 @@ final class InList implements Scalar
         }
         $operands = new Operands();
         $operands->comparable($facts, $derivation);
-        $operands->collated($facts, ' IN ', $derivation);
+        $operands->collated($facts, count($this->elements) > 1 ? ' IN ' : ($this->negated ? '<>' : '='), $derivation);
 
         return $operands->truth($nullability);
     }

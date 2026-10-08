@@ -20,4 +20,12 @@ final class FilterTest extends TestCase
     {
         self::assertSame(4, (new Filter(new ZeroRows(4), new ColumnRead(Domain::integer(), 0)))->width());
     }
+
+    public function testWidthIgnoresThePrecondition(): void
+    {
+        $precondition = new ColumnRead(Domain::integer(), 1);
+        $filter = new Filter(new ZeroRows(2), new ColumnRead(Domain::integer(), 0), $precondition);
+
+        self::assertSame([2, $precondition, null], [$filter->width(), $filter->precondition, (new Filter(new ZeroRows(2), new ColumnRead(Domain::integer(), 0)))->precondition]);
+    }
 }

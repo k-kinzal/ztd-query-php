@@ -30,7 +30,9 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Explain\UseDatabase;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrorCount;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowErrors;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarningCount;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Statement;
@@ -61,7 +63,7 @@ final class Dispatcher
             $statement instanceof CreateDatabase, $statement instanceof DropDatabase, $statement instanceof UseDatabase => new DatabaseCommand(),
             $statement instanceof SetVariables => new SetCommand(),
             $statement instanceof Begin, $statement instanceof StartTransaction, $statement instanceof Commit, $statement instanceof Rollback => new TransactionCommand(),
-            $statement instanceof ShowWarnings, $statement instanceof ShowErrors => new WarningsCommand(),
+            $statement instanceof ShowWarnings, $statement instanceof ShowErrors, $statement instanceof ShowWarningCount, $statement instanceof ShowErrorCount => new WarningsCommand(),
             $statement instanceof Evaluation => new DoCommand(),
             $statement instanceof ShowTables => new ShowTablesCommand(),
             default => throw ErrorCode::NotSupportedYet->error((new ReflectionClass($statement))->getShortName()),

@@ -13,6 +13,8 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\CommonTables;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\RecursiveReference;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
@@ -163,5 +165,17 @@ final class CommonTablesTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT 1 FROM c) SELECT * FROM c");
 
         self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);
+    }
+
+    public function testBindNamesTheProblemsOfTheExpressions(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $twice = $semantics->analyze('WITH c AS (SELECT 1), C AS (SELECT 2) SELECT 1')->facts->diagnostics;
+        $alone = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c) SELECT 1')->facts->diagnostics;
+        $late = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c UNION SELECT 1) SELECT 1')->facts->diagnostics;
+
+        self::assertEquals([new Misuse(MisuseRule::DuplicateCommonTable, new Name('C'))], $twice);
+        self::assertEquals([new Misuse(MisuseRule::RecursiveWithoutUnion, new Name('c'))], $alone);
+        self::assertEquals([new Misuse(MisuseRule::RecursiveWithoutAnchor, new Name('c'))], $late);
     }
 }

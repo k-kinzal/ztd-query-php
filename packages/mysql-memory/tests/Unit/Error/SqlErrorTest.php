@@ -44,4 +44,15 @@ final class SqlErrorTest extends TestCase
 
         $session->query('SELECT * FROM nowhere');
     }
+
+    public function testSqlStateOfAnErrorFollowedByOtherErrors(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE w (p INT NOT NULL, q INT NOT NULL)');
+
+        $session->run('INSERT INTO w (p) SELECT NULL');
+
+        self::assertSame([[1048, "Column 'p' cannot be null"], [1364, "Field 'q' doesn't have a default value"]], array_map(static fn (array $condition): array => [$condition[1], $condition[2]], $session->diagnostics->conditions));
+        self::assertSame(['22032', [[3140, 'x']]], [(new SqlError(ErrorCode::JsonDocumentTooDeep, 'y', null, [[3140, 'x']]))->sqlState(), (new SqlError(ErrorCode::JsonDocumentTooDeep, 'y', null, [[3140, 'x']]))->following]);
+    }
 }

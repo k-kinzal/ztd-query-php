@@ -113,4 +113,20 @@ final class CompilerTest extends TestCase
 
         $session->query('SELECT a FROM t WHERE COUNT(*) > 0');
     }
+
+    public function testConstancyMakesAUserVariableTheStatementAssignsVary(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT)');
+        $session->query('INSERT INTO t VALUES (1), (2)');
+        $session->query("SET @w = 'a', @x = 'c'");
+        $session->query("SELECT @w = 0, @w := 'b', @x = 0 FROM t");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(['1287', '1292', '1292', '1292'], array_column($warnings->rows, 1));
+        self::assertSame(["Truncated incorrect DOUBLE value: 'a'", "Truncated incorrect DOUBLE value: 'c'", "Truncated incorrect DOUBLE value: 'b'"], array_slice(array_column($warnings->rows, 2), 1));
+    }
 }

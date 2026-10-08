@@ -326,4 +326,45 @@ final class StoreTest extends TestCase
 
         (new Store($context, 3))->bit(16, Domain::integer(), $column);
     }
+
+    public function testEncodedConvertsATextIntoTheCharacterSetOfTheColumn(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('c', Domain::string(10, Collation::known('latin1_swedish_ci')), Fill::none());
+
+        $value = (new Store($context, 2))->encoded('ab中cdefghij中', Domain::string(20, Collation::known('utf8mb4_0900_ai_ci')), $column);
+
+        self::assertSame(['ab?cdefghij?', [['Warning', 1366, "Incorrect string value: '\\xE4\\xB8\\xADcde...' for column 'c' at row 2"]]], [$value, $context->diagnostics->conditions]);
+    }
+
+    public function testEncodedEndsABinaryStringAtTheFirstByteThatIsNoCharacter(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('u', Domain::string(20, Collation::known('utf8mb4_0900_ai_ci')), Fill::none());
+
+        $value = (new Store($context))->encoded("\x41\xFF\x42", Domain::string(3, Collation::binary()), $column);
+
+        self::assertSame(['A', [['Warning', 1366, "Incorrect string value: '\\xFFB' for column 'u' at row 1"]]], [$value, $context->diagnostics->conditions]);
+    }
+
+    public function testEncodedRefusesACharacterTheColumnCannotHoldUnderAStrictMode(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0, true);
+        $column = new ColumnDefinition('c', Domain::string(10, Collation::known('latin1_swedish_ci')), Fill::none());
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1366);
+        $this->expectExceptionMessage("Incorrect string value: '\\xE4\\xB8\\xAD' for column 'c' at row 1");
+
+        (new Store($context))->value('中', Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')), $column);
+    }
+
+    public function testValueStoresTheBytesOfTheCharacterSetOfTheColumn(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $latin1 = new ColumnDefinition('c', Domain::string(2, Collation::known('latin1_swedish_ci')), Fill::none());
+        $ucs2 = new ColumnDefinition('u', Domain::string(2, Collation::known('ucs2_general_ci')), Fill::none());
+
+        self::assertSame(["\xE9\x80", "\x00\xE9"], [(new Store($context))->value('é€', Domain::string(2, Collation::known('utf8mb4_0900_ai_ci')), $latin1), (new Store($context))->value('é', Domain::string(2, Collation::known('utf8mb4_0900_ai_ci')), $ucs2)]);
+    }
 }

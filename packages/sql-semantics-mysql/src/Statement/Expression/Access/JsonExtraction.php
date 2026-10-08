@@ -9,10 +9,11 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -25,7 +26,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * A JSON path extraction from a column: `col->'path'`, which is `JSON_EXTRACT(col, 'path')`, or `col->>'path'`, which is `JSON_UNQUOTE(JSON_EXTRACT(col, 'path'))` (MySQL 5.7 and later).
  *
  * Rule: MYSQL-JSON-EXTRACTION-001. Facts: `->` yields a JSON value and
- * `->>` a LONGTEXT; both are NULL when the path selects nothing, so they
+ * `->>` a coercible LONGTEXT, both of collation utf8mb4_bin (verified on a
+ * live 8.4 server); both are NULL when the path selects nothing, so they
  * can always be NULL. Terminates: the column is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/json-search-functions.html#operator_json-column-path,
  * https://dev.mysql.com/doc/refman/8.4/en/json-search-functions.html#operator_json-inline-path.
@@ -57,7 +59,9 @@ final class JsonExtraction implements Scalar
     {
         (new Operands())->single($derivation->scalar($this->column, $environment), $derivation);
 
-        return new ScalarFact(new Known($this->unquote ? new Character(CharacterKind::LongText) : new Elementary(ElementaryKind::Json)), Nullability::Nullable);
+        $collation = Collation::known('utf8mb4_bin');
+
+        return new ScalarFact(new Known($this->unquote ? Domain::string(4294967295, $collation, Field::LongBlob, Coercibility::Coercible) : new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, $collation)), Nullability::Nullable);
     }
 
     /**

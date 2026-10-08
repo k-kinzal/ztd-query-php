@@ -137,4 +137,16 @@ final class DatesTest extends TestCase
 
         self::assertSame([1, 1, 2, 2, 3, 3, 4, 4], $quarters);
     }
+
+    public function testPartReadsATimeAsADatetimeOnTheCurrentDate(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT DAY(TIME '25:00:00') = DAY(CURDATE() + INTERVAL 1 DAY), DATE(TIME '25:00:00') = CURDATE() + INTERVAL 1 DAY, MONTH(TIME '-25:00:00') = MONTH(CURDATE() - INTERVAL 2 DAY), YEAR(TIME '00:00:00') = YEAR(CURDATE())")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['1', '1', '1', '1']], $result->rows);
+        self::assertSame([], $warnings->rows);
+    }
 }

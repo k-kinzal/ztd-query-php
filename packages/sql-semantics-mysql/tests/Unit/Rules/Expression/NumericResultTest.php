@@ -11,6 +11,8 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Expression\NumericClass;
 use SqlSemantics\Platform\MySql\Rules\Expression\NumericResult;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
@@ -77,6 +79,23 @@ final class NumericResultTest extends TestCase
         self::assertEquals(new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned])), (new NumericResult())->bits([[new \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, '01'), $bytes]], GrammarRelease::MySql847));
     }
 
+    public function testBitsAreBinaryWhenOneBinaryStringMeetsLiterals(): void
+    {
+        $bytes = new ScalarFact(new Known(new Binary(BinaryKind::VarBinary)), Nullability::NotNull);
+        $integer = new ScalarFact(new Known(new Integral(IntegralKind::BigInt)), Nullability::NotNull);
+        $introduced = new \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, '40', new \SqlSemantics\Statement\Identifier\Name('binary'));
+        $hexadecimal = new \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, '01');
+
+        self::assertEquals(
+            [new Known(new Binary(BinaryKind::VarBinary)), new Known(new Binary(BinaryKind::VarBinary)), new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned]))],
+            [
+                (new NumericResult())->bits([[$introduced, $bytes], [$hexadecimal, $bytes]], GrammarRelease::MySql847),
+                (new NumericResult())->bits([[new StringLiteral(['a']), $bytes], [new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral(), $bytes]], GrammarRelease::MySql847),
+                (new NumericResult())->bits([[$introduced, $bytes], [new NumberLiteral('1'), $integer]], GrammarRelease::MySql847),
+            ],
+        );
+    }
+
     public function testNegationMakesALiteralBeyondTheRangeADecimal(): void
     {
         $fact = new ScalarFact(new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned])), Nullability::NotNull);
@@ -84,6 +103,14 @@ final class NumericResultTest extends TestCase
 
         self::assertEquals(new Known(new Decimal()), $results->negation(new NumberLiteral('9223372036854775809'), $fact));
         self::assertEquals(new Known(new Integral(IntegralKind::BigInt)), $results->negation(new NumberLiteral('9223372036854775808'), $fact));
+    }
+
+    public function testNegationMakesANegativeIntegerConstantADecimal(): void
+    {
+        $fact = new ScalarFact(new Known(new Integral(IntegralKind::BigInt)), Nullability::NotNull);
+
+        self::assertEquals(new Known(new Decimal()), (new NumericResult())->negation(new Unary(UnaryOperator::Minus, new NumberLiteral('3')), $fact));
+        self::assertEquals(new Known(new Integral(IntegralKind::BigInt)), (new NumericResult())->negation(new NumberLiteral('3'), $fact));
     }
 
     public function testBeyondComparesWithTheNegatedRange(): void

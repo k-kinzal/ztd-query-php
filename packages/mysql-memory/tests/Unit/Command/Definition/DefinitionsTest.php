@@ -263,4 +263,51 @@ final class DefinitionsTest extends TestCase
 
         $session->query('CREATE TABLE t (a INT PRIMARY KEY, b INT, PRIMARY KEY (b))');
     }
+
+    public function testDeclaredFindsTheDeclarationOfAnInvisibleColumnByName(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE v (a INT, e INT INVISIBLE, f DECIMAL(5,2))');
+        $definition = $session->instance->dictionary->table('d', 'v')?->definition;
+
+        self::assertNotNull($definition);
+        self::assertSame([true, Field::Long, Field::NewDecimal, 2], [$definition->columns[1]->invisible, $definition->columns[1]->domain->field, $definition->columns[2]->domain->field, $definition->columns[2]->domain->decimals]);
+        self::assertSame([$definition->declaration->implicit[0]->column, $definition->declaration->columns[1]], [$definition->columns[1]->declaration, $definition->columns[2]->declaration]);
+    }
+
+    public function testDefaultKeepsTheClockOfCurrentTimestampForEachStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (c TIMESTAMP DEFAULT CURRENT_TIMESTAMP, d DATETIME(3) DEFAULT NOW(3), e DATETIME DEFAULT LOCALTIMESTAMP)');
+        $columns = $session->instance->dictionary->table('d', 't')?->definition->columns ?? [];
+
+        self::assertSame([[true, null, 'CURRENT_TIMESTAMP'], [true, null, 'CURRENT_TIMESTAMP(3)'], [true, null, 'CURRENT_TIMESTAMP']], array_map(static fn ($column): array => [$column->default->now, $column->default->value, $column->default->text], $columns));
+        self::assertNotNull($columns[1]->default->expression);
+    }
+
+    public function testCheckRefusesATableWithoutAVisibleColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(4028);
+        $this->expectExceptionMessage('A table must have at least one visible column.');
+
+        $session->query('CREATE TABLE t (a INT INVISIBLE)');
+    }
+
+    public function testMembersHoldsTheMembersInTheCharacterSetOfTheColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (e ENUM('é','b') CHARACTER SET latin1, s SET('é','x') CHARACTER SET latin1)");
+        $session->query("INSERT INTO t VALUES ('é', 'é,x')");
+        $table = $session->instance->dictionary->table('d', 't');
+        $result = $session->query("SELECT e, s, HEX(e), HEX(s), e = 'é' FROM t")[0];
+
+        self::assertNotNull($table);
+        self::assertSame([["\xE9", 'b'], 1, 3], [$table->definition->columns[0]->domain->members, $table->definition->columns[0]->domain->length, $table->definition->columns[1]->domain->length]);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['é', 'é,x', 'E9', 'E92C78', '1']], $result->rows);
+    }
 }

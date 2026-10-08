@@ -2,19 +2,22 @@
 
 declare(strict_types=1);
 
-namespace MySqlMemory\Evaluation\Compile;
+namespace MySqlMemory\Evaluation\Compile\Family;
 
 use Closure;
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Function\Call;
 use MySqlMemory\Evaluation\Function\Routine;
 use MySqlMemory\Evaluation\Function\Strings;
+use MySqlMemory\Evaluation\Operator\Conversion;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Value\Encoding;
 use SqlSemantics\Platform\MySql\Statement\Call\CharCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Position;
 use SqlSemantics\Platform\MySql\Statement\Call\Trim;
@@ -111,12 +114,8 @@ final class Texts
 
         return $this->call('CONVERT', [$operand], $result, static function (Frame $f, array $a) use ($charset): ?string {
             $text = Convert::toText($a[0]->evaluate($f), $a[0]->domain());
-            if ($text === null || $charset === Charset::binary() || $charset === Charset::known('utf8mb4') || !mb_check_encoding($text, 'UTF-8')) {
-                return $text;
-            }
-            $converted = @mb_convert_encoding($text, $charset === Charset::known('latin1') ? 'Windows-1252' : 'ASCII', 'UTF-8');
 
-            return mb_convert_encoding($converted, 'UTF-8', $charset === Charset::known('latin1') ? 'Windows-1252' : 'ASCII');
+            return $text === null ? null : Conversion::transcode($text, $a[0]->domain(), $charset, $f->context);
         });
     }
 
@@ -131,9 +130,10 @@ final class Texts
         $result = $this->compiler->domain($node);
         $side = $node->side ?? TrimSide::Both;
 
-        return $this->call('TRIM', $arguments, $result, static function (Frame $f, array $a) use ($side): ?string {
-            $text = Convert::toText($a[0]->evaluate($f), $a[0]->domain());
-            $cut = isset($a[1]) ? Convert::toText($a[1]->evaluate($f), $a[1]->domain()) : ' ';
+        return $this->call('TRIM', $arguments, $result, static function (Frame $f, array $a, Domain $r) use ($side): ?string {
+            $strings = new Strings();
+            $text = $strings->text($f, $a[0], $r);
+            $cut = isset($a[1]) ? $strings->text($f, $a[1], $r) : Encoding::convert(' ', Charset::known('ascii'), $r->collation->charset);
             if ($text === null || $cut === null) {
                 return null;
             }
@@ -251,6 +251,9 @@ final class Texts
             if ($text === null || $expression === null) {
                 return null;
             }
+            $strings = new Strings();
+            $text = Encoding::convert($text, $strings->charset($a[0]->domain()), Charset::known('utf8mb4'));
+            $expression = Encoding::convert($expression, $strings->charset($a[1]->domain()), Charset::known('utf8mb4'));
             $flags = $collation->binaryOrder() || str_ends_with($collation->name, '_cs') ? 'u' : 'ui';
             $matched = @preg_match('/' . str_replace('/', '\\/', $expression) . '/' . $flags, $text);
             if ($matched === false) {

@@ -121,4 +121,12 @@ final class ProjectionTest extends TestCase
 
         self::assertSame([$missing], (new Projection())->missing([new VisibleRelation(new Dual(), new RowShape([], [$missing])), new VisibleRelation(new Dual(), new RowShape([]))]));
     }
+
+    public function testStarSelectsAnInvisibleColumnAUsingListMerged(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = [...$semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE)')->declarations(), ...$semantics->analyze('CREATE TABLE u (e INT, b INT)')->declarations()];
+
+        self::assertSame(['e', 'a', 'b'], array_map(static fn (Field $field): ?string => $field->name?->value, $semantics->analyze('SELECT * FROM u RIGHT JOIN v USING (e)', $tables)->fields()->items ?? []));
+    }
 }

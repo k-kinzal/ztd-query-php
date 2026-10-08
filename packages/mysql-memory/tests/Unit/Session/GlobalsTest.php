@@ -54,4 +54,13 @@ final class GlobalsTest extends TestCase
         self::assertSame([['6', '6']], $result->rows);
         self::assertSame(['div_precision_increment' => 6], $instance->globals->values);
     }
+
+    public function testValueAnswersANullValue(): void
+    {
+        $definition = new Definition('character_set_results', Reach::Both, ValueShape::Text, 'utf8mb4', Writability::Writable, null, null, Domain::integer());
+        $globals = new Globals();
+        $globals->set($definition, null);
+
+        self::assertNull($globals->value($definition));
+    }
 }

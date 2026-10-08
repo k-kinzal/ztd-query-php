@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace MySqlMemory\Evaluation\Compile;
+namespace MySqlMemory\Evaluation\Compile\Family;
 
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Evaluation\Compile\Compiler;
+use MySqlMemory\Evaluation\Compile\Printer;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Function\Call;
 use MySqlMemory\Evaluation\Function\Library;
@@ -13,13 +15,15 @@ use MySqlMemory\Evaluation\Scope;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
+use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Statement\Scalar;
 
 /**
  * Compiles calls of built-in functions, written by name or as keywords.
  *
  * A function the emulator does not evaluate is refused with ER_NOT_SUPPORTED_YET; a stored
- * function, which no statement can create here, does not exist (ER_SP_DOES_NOT_EXIST).
+ * function, which no statement can create here, does not exist (ER_SP_DOES_NOT_EXIST). ISNULL()
+ * is the test IS NULL.
  *
  * @visibility MySqlMemory\Evaluation
  */
@@ -50,10 +54,16 @@ final class Calls
     /**
      * Compiles a call of a function whose name is a keyword.
      *
-     * @throws \MySqlMemory\Error\SqlError When the function is not evaluated here
+     * GROUPING() is bound where a block groups WITH ROLLUP, so it is misused wherever it is compiled.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the function is not evaluated here, or is GROUPING()
      */
     public function keyword(KeywordCall $call, Scope $scope): Evaluable
     {
+        if ($call->function === KeywordFunction::Grouping) {
+            throw ErrorCode::InvalidGroupFunctionUse->error();
+        }
+
         return $this->named($call->function->value, $call->arguments, $scope, $call);
     }
 
@@ -73,9 +83,12 @@ final class Calls
         if (!$routine->accepts(count($arguments))) {
             throw ErrorCode::WrongParameterCountToNativeFunction->error(strtoupper($name));
         }
+        if (strtoupper($name) === 'ISNULL') {
+            return $this->compiler->operators->nullness($arguments[0], false, $scope, $node);
+        }
         $compiled = array_map(fn (Scalar $argument): Evaluable => $this->compiler->compile($argument, $scope), $arguments);
 
-        return new Call($routine, $compiled, $this->compiler->domain($node));
+        return new Call($routine, $compiled, $this->compiler->domain($node), (new Printer($this->compiler->facts, $this->compiler->settings->database))->expression($node));
     }
 
     /**

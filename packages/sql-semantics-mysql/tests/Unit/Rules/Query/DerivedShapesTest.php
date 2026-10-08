@@ -16,6 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as ResolvedField;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Shape\Field;
@@ -43,6 +45,15 @@ final class DerivedShapesTest extends TestCase
         self::assertSame([], $derivation->facts()->diagnostics);
     }
 
+    public function testMaterializedGivesARollupItemTheColumnOfATemporaryTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT, f TINYINT UNSIGNED)');
+        $operation = $semantics->analyze('SELECT * FROM (SELECT a, f, COUNT(*) FROM t GROUP BY a, f WITH ROLLUP) x', [$table]);
+
+        self::assertEquals([new Known(Domain::integer(ResolvedField::LongLong, 11)), new Known(Domain::integer(ResolvedField::Long, 3, true))], [$operation->field(0)->type, $operation->field(1)->type]);
+    }
+
     public function testUniqueReportsADuplicateName(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -52,5 +63,13 @@ final class DerivedShapesTest extends TestCase
         self::assertCount(1, $derivation->facts()->diagnostics);
         self::assertInstanceOf(Misuse::class, $derivation->facts()->diagnostics[0]);
         self::assertSame(MisuseRule::DuplicateColumn, $derivation->facts()->diagnostics[0]->rule);
+    }
+
+    public function testUniqueNamesTheSecondColumnOfTheName(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertEquals([new Misuse(MisuseRule::DuplicateColumn, new Name('a'))], $semantics->analyze('SELECT * FROM (SELECT 1 A, 2 a) d')->facts->diagnostics);
+        self::assertEquals([new Misuse(MisuseRule::DuplicateColumn, new Name('x'))], $semantics->analyze('SELECT * FROM (SELECT 1, 2) d (x, x)')->facts->diagnostics);
     }
 }

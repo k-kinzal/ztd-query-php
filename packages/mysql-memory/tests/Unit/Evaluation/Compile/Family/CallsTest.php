@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Evaluation\Compile;
+namespace Tests\Unit\Evaluation\Compile\Family;
 
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Evaluation\Compile\Calls;
+use MySqlMemory\Evaluation\Compile\Family\Calls;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -47,6 +47,20 @@ final class CallsTest extends TestCase
         self::assertSame([['ab', 'cd', 'abab', 'aXcd']], $result->rows);
     }
 
+    public function testKeywordRefusesGroupingOutsideABlockWithRollup(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1111);
+        $this->expectExceptionMessage('Invalid use of group function');
+
+        $session->query('SELECT a, GROUPING(a) FROM t GROUP BY a');
+    }
+
     public function testNamedRefusesAWrongNumberOfArguments(): void
     {
         $session = (new Instance())->connect();
@@ -83,5 +97,28 @@ final class CallsTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1']], $result->rows);
+    }
+
+    public function testNamedPrintsTheCallForMessages(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("DOUBLE value is out of range in 'cot(-(0e0))'");
+
+        $session->query('SELECT COT(-0e0)');
+    }
+
+    public function testNamedCompilesIsnullAsATestOfNull(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (s CHAR(2)); INSERT INTO t VALUES ('a'), (NULL)");
+        $result = $session->query("SELECT ISNULL(s < 0), ISNULL('a' + 0), ISNULL(s) FROM t")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '0', '0'], ['1', '0', '1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
     }
 }

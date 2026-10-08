@@ -148,4 +148,28 @@ final class BitsTest extends TestCase
 
         self::assertSame($domain, $bits->domain());
     }
+
+    public function testEvaluateWorksOnBytesWhenABinaryStringMeetsLiterals(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(_binary X'00FF' << 8), _binary X'40' | X'01', HEX(~_binary X'0F'), HEX(_binary X'0F' & b'00001111'), _binary X'40' | 1")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['FF00', 'A', 'F0', '0F', '1']], $result->rows);
+        self::assertSame([Field::VarString, 1, 63], [$result->columns[1]->type, $result->columns[1]->length, $result->columns[1]->charset]);
+        self::assertSame([['Warning', '1292', "Truncated incorrect INTEGER value: '@'"]], $warnings->rows);
+    }
+
+    public function testEvaluateRefusesBinaryOperandsOfDifferentLengthsWithAHexadecimalLiteral(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (b VARBINARY(4)); INSERT INTO t VALUES (X'0F0F')");
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3513);
+
+        $session->query("SELECT b | X'010203' FROM t");
+    }
 }

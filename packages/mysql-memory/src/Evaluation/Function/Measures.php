@@ -11,6 +11,7 @@ use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Typing\Ordering;
+use MySqlMemory\Value\Encoding;
 
 /**
  * The string functions that answer numbers: LENGTH, CHAR_LENGTH, ASCII, LOCATE, INSTR, STRCMP, FIELD and FIND_IN_SET.
@@ -62,7 +63,7 @@ final class Measures
     {
         $text = Convert::toText($argument->evaluate($frame), $argument->domain());
 
-        return $text === null ? null : count($strings->characters($text, $argument->domain()));
+        return $text === null ? null : $strings->count($text, $argument->domain());
     }
 
     /**
@@ -78,8 +79,9 @@ final class Measures
         }
         [$collation] = Collations::aggregate([$needle->domain(), $haystack->domain()], 'locate', $haystack->domain()->collation, true);
         $strings = new Strings();
-        $characters = $strings->characters($text, $haystack->domain());
-        $pattern = $strings->characters($search, $needle->domain());
+        $search = Encoding::convert($search, $strings->charset($needle->domain()), $collation->charset);
+        $characters = Encoding::characters(Encoding::convert($text, $strings->charset($haystack->domain()), $collation->charset), $collation->charset);
+        $pattern = Encoding::characters($search, $collation->charset);
         if ($from < 1 || $from > count($characters) + 1) {
             return 0;
         }
@@ -143,6 +145,9 @@ final class Measures
             return 0;
         }
         [$collation] = Collations::aggregate([$arguments[0]->domain(), $arguments[1]->domain()], 'find_in_set', $arguments[1]->domain()->collation, true);
+        $strings = new Strings();
+        $value = Encoding::convert($value, $strings->charset($arguments[0]->domain()), $collation->charset);
+        $list = Encoding::convert($list, $strings->charset($arguments[1]->domain()), $collation->charset);
         foreach (explode(',', $list) as $index => $member) {
             if (Ordering::of($collation)->compare($member, $value) === 0) {
                 return $index + 1;

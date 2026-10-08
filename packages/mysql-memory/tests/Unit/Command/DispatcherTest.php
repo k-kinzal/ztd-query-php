@@ -56,7 +56,7 @@ final class DispatcherTest extends TestCase
         $dispatcher = new Dispatcher();
 
         self::assertSame(
-            [CreateTableCommand::class, DropTableCommand::class, DropTableCommand::class, DatabaseCommand::class, DatabaseCommand::class, DatabaseCommand::class, SetCommand::class, TransactionCommand::class, TransactionCommand::class, TransactionCommand::class, TransactionCommand::class, WarningsCommand::class, WarningsCommand::class, DoCommand::class, ShowTablesCommand::class],
+            [CreateTableCommand::class, DropTableCommand::class, DropTableCommand::class, DatabaseCommand::class, DatabaseCommand::class, DatabaseCommand::class, SetCommand::class, TransactionCommand::class, TransactionCommand::class, TransactionCommand::class, TransactionCommand::class, WarningsCommand::class, WarningsCommand::class, WarningsCommand::class, WarningsCommand::class, DoCommand::class, ShowTablesCommand::class],
             [
                 $dispatcher->command($session->analyze('CREATE TABLE v (a INT)')->statement)::class,
                 $dispatcher->command($session->analyze('DROP TABLE t')->statement)::class,
@@ -71,6 +71,8 @@ final class DispatcherTest extends TestCase
                 $dispatcher->command($session->analyze('ROLLBACK')->statement)::class,
                 $dispatcher->command($session->analyze('SHOW WARNINGS')->statement)::class,
                 $dispatcher->command($session->analyze('SHOW ERRORS')->statement)::class,
+                $dispatcher->command($session->analyze('SHOW COUNT(*) WARNINGS')->statement)::class,
+                $dispatcher->command($session->analyze('SHOW COUNT(*) ERRORS')->statement)::class,
                 $dispatcher->command($session->analyze('DO 1')->statement)::class,
                 $dispatcher->command($session->analyze('SHOW TABLES')->statement)::class,
             ],

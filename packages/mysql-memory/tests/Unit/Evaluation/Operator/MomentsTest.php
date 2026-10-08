@@ -134,10 +134,109 @@ final class MomentsTest extends TestCase
         self::assertSame(['20240115', '1.5'], [$moments->digits(20240115, Domain::integer(), $context), $moments->digits(1.5, Domain::double(), $context)]);
     }
 
-    public function testRoundedKeepsTheDigitsOfTheScale(): void
+    public function testConvertRoundsFractionalSecondsHalfUp(): void
     {
-        $moments = new Moments();
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CAST('2024-01-15 10:20:30.123789' AS DATETIME(3)), CAST('2024-12-31 23:59:59.5' AS DATETIME), CAST('2024-12-31 23:59:59.9999995' AS DATETIME(6)), CAST('2024-12-31 23:59:59.5' AS DATE), CAST('2024-01-01 10:00:00.04999995' AS DATETIME(1))")[0];
 
-        self::assertSame([123000, 123456, 0], [$moments->rounded(123400, 3), $moments->rounded(123456, 6), $moments->rounded(0, 0)]);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2024-01-15 10:20:30.124', '2025-01-01 00:00:00', '2025-01-01 00:00:00.000000', '2024-12-31', '2024-01-01 10:00:00.1']], $result->rows);
+    }
+
+    public function testConvertTruncatesFractionalSecondsUnderTimeTruncateFractional(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET sql_mode = CONCAT(@@sql_mode, ',TIME_TRUNCATE_FRACTIONAL')");
+        $result = $session->query("SELECT CAST('2024-01-15 10:20:30.123789' AS DATETIME(3)), CAST('10:20:30.987' AS TIME(1)), CAST('2024-12-31 23:59:59.9999995' AS DATETIME(6))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2024-01-15 10:20:30.123', '10:20:30.9', '2024-12-31 23:59:59.999999']], $result->rows);
+    }
+
+    public function testConvertWarnsForAnOverflowPastTheLastDatetime(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CAST('9999-12-31 23:59:59.5' AS DATETIME)")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1441', 'Datetime function: datetime field overflow']], $warnings->rows);
+    }
+
+    public function testConvertKeepsTheValueBeforeTrailingText(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CAST('2024-01-01x' AS DATE), CAST('2024-1-1 1:2:3.5x' AS DATETIME(1)), CAST('xx' AS DATE)")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2024-01-01', '2024-01-01 01:02:03.5', null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect date value: '2024-01-01x'"], ['Warning', '1292', "Truncated incorrect datetime value: '2024-1-1 1:2:3.5x'"], ['Warning', '1292', "Incorrect datetime value: 'xx'"]], $warnings->rows);
+    }
+
+    public function testTimeRoundsFractionalSecondsWithTheCarry(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CAST('10:20:30.987' AS TIME(1)), CAST('23:59:59.9' AS TIME), CAST('-10:20:30.5' AS TIME), CAST(TIME '10:00:00.56' AS TIME(1)), CAST('-0:00:00' AS TIME)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['10:20:31.0', '24:00:00', '-10:20:31', '10:00:00.6', '-00:00:00']], $result->rows);
+    }
+
+    public function testTimeTakesTheTimeOfADatetimeString(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CAST('2024-02-29 10:11:12' AS TIME), CAST('24-02-29 10:11' AS TIME), CAST('20240229101112' AS TIME), CAST(20240229101112.5 AS TIME(1)), CAST('2024-02-30 10:11:12' AS TIME), CAST('2024-02-29' AS TIME)")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['10:11:12', '10:11:00', '10:11:12', '10:11:12.5', null, '00:20:24']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect time value: '2024-02-30 10:11:12'"], ['Warning', '1292', "Truncated incorrect time value: '2024-02-29'"]], $warnings->rows);
+    }
+
+    public function testTimeClampsAStringBeyondTheRangeWithAWarning(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CAST('900:00:00' AS TIME), CAST('838:59:59.5' AS TIME), CAST('838:59:58.5' AS TIME), CAST(8390000 AS TIME), CAST(8385959.5 AS TIME)")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['838:59:59', '838:59:59', '838:59:59', null, '838:59:59']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect time value: '900:00:00'"], ['Warning', '1292', "Truncated incorrect time value: '838:59:59.5'"], ['Warning', '1292', "Truncated incorrect time value: '8390000'"]], $warnings->rows);
+    }
+
+    public function testYearReadsOneAndTwoDigitStringsAsYearsOfTheCentury(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CAST('24' AS YEAR), CAST('0' AS YEAR), CAST('0000' AS YEAR), CAST('5' AS YEAR), CAST('70' AS YEAR), CAST(' +024' AS YEAR), CAST(0.5 AS YEAR)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2024', '2000', '2000', '2005', '1970', '2024', '2001']], $result->rows);
+    }
+
+    public function testYearWarnsForAStringWithoutAYearOrOutsideTheRange(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CAST('x' AS YEAR), CAST('-1' AS YEAR), CAST('24x' AS YEAR), CAST('100x' AS YEAR), CAST(2156.5 AS YEAR)")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, null, '2024', null, null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1525', "Incorrect YEAR value: 'x'"], ['Warning', '1525', "Incorrect YEAR value: '-1'"], ['Warning', '1292', "Truncated incorrect YEAR value: '24x'"], ['Warning', '1292', "Truncated incorrect YEAR value: '100x'"], ['Warning', '1292', "Truncated incorrect YEAR value: '100'"], ['Warning', '1292', "Truncated incorrect YEAR value: '2157'"]], $warnings->rows);
+    }
+
+    public function testYearTakesTheYearOfADate(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT CAST(DATE '2024-03-01' AS YEAR), CAST(TIMESTAMP '1999-03-01 10:00:00' AS YEAR)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2024', '1999']], $result->rows);
     }
 }

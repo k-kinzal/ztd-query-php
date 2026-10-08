@@ -78,7 +78,7 @@ final class QueryStatement implements Statement, Query
     public function deriveQuery(Derivation $derivation, Environment $outer): QueryFact
     {
         $fact = $derivation->query($this->query, $outer);
-        (new TailFacts())->derive($derivation, $outer, $fact, $this->into, $this->locking, null);
+        (new TailFacts())->derive($derivation, $outer, $fact, $this);
 
         return $fact;
     }

@@ -34,6 +34,14 @@ final class CollatedTest extends TestCase
         self::assertEquals(new Known(Domain::string(1, Collation::known('utf8mb4_bin'), Field::VarString, Coercibility::Explicit)), $derivation->scalar(new Collated(new StringLiteral(['a']), new Name('utf8mb4_bin')), $derivation->environment())->type);
     }
 
+    public function testDeriveScalarReportsAnUnknownCollationBeforeTheOperand(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT ROW(1, 2) COLLATE zz');
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $operation->facts->diagnostics[0]);
+        self::assertCount(2, $operation->facts->diagnostics);
+    }
+
     public function testRenderChainsCollationsFromTheLeft(): void
     {
         $platform = new Platform();

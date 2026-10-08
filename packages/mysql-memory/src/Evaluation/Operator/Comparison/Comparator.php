@@ -10,16 +10,19 @@ use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Typing\Ordering;
 use MySqlMemory\Value\Decimal;
+use MySqlMemory\Value\Encoding;
 use MySqlMemory\Value\Integer;
 use MySqlMemory\Value\Order;
 use MySqlMemory\Value\Temporal;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * Compares two values of known domains as the server decides to compare them.
  *
- * Two strings compare as strings in their aggregated collation; two integers as integers; a
+ * Two strings compare as strings in their aggregated collation, converted into its character set; two integers as integers, a BIT
+ * value as the unsigned integer of its bits; a
  * date or time and a string or another temporal value as datetimes; a decimal and a decimal or
  * integer as decimals; anything else as doubles.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/type-conversion.html.
@@ -86,12 +89,20 @@ final class Comparator
         }
 
         return match ($this->mode) {
-            Kind::String, Kind::Json => Ordering::of($this->collation)->compare(self::text($left, $this->left), self::text($right, $this->right)),
-            Kind::Integer => Integer::compare((int) $left, $this->left->unsigned, (int) $right, $this->right->unsigned),
+            Kind::String, Kind::Json => Ordering::of($this->collation)->compare(self::text($left, $this->left, $this->collation), self::text($right, $this->right, $this->collation)),
+            Kind::Integer => Integer::compare(self::integer($left, $this->left, $context), $this->left->unsigned || $this->left->kind === Kind::Bit, self::integer($right, $this->right, $context), $this->right->unsigned || $this->right->kind === Kind::Bit),
             Kind::Decimal => Decimal::compare((string) Convert::toDecimal($left, $this->left, $context), (string) Convert::toDecimal($right, $this->right, $context)),
             Kind::DateTime, Kind::Time, Kind::Date => $this->temporalOrder($left, $right, $context),
             Kind::Double, Kind::Year, Kind::Bit, Kind::Null => (float) Convert::toDouble($left, $this->left, $context) <=> (float) Convert::toDouble($right, $this->right, $context),
         };
+    }
+
+    /**
+     * Answers the 64 bits of a value compared as an integer: a BIT value is held as its bytes.
+     */
+    public static function integer(int|float|string $value, Domain $domain, Context $context): int
+    {
+        return $domain->kind === Kind::Bit ? (int) Convert::toInteger($value, $domain, $context, true) : (int) $value;
     }
 
     /**
@@ -102,7 +113,7 @@ final class Comparator
         $leftValue = self::moment($left, $this->left, $this->mode);
         $rightValue = self::moment($right, $this->right, $this->mode);
         if ($leftValue === null || $rightValue === null) {
-            return Ordering::of($this->collation)->compare(self::text($left, $this->left), self::text($right, $this->right));
+            return Ordering::of($this->collation)->compare(self::text($left, $this->left, $this->collation), self::text($right, $this->right, $this->collation));
         }
 
         return $this->mode === Kind::Time ? Order::time($leftValue) <=> Order::time($rightValue) : $leftValue <=> $rightValue;
@@ -127,10 +138,10 @@ final class Comparator
     }
 
     /**
-     * Answers the text of a value compared as a string.
+     * Answers the text of a value compared as a string, in the character set of the collation it is compared in.
      */
-    public static function text(int|float|string $value, Domain $domain): string
+    public static function text(int|float|string $value, Domain $domain, Collation $collation): string
     {
-        return (string) Convert::toText($value, $domain);
+        return Encoding::convert((string) Convert::toText($value, $domain), $domain->kind === Kind::String ? $domain->collation->charset : Charset::known('utf8mb4'), $collation->charset);
     }
 }

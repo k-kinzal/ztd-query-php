@@ -119,6 +119,18 @@ final class InsertCommandTest extends TestCase
         self::assertSame([['1', '2'], ['1', '2'], ['1', '3']], $result->rows);
     }
 
+    public function testSourcesWritesEveryRowOfAValuesSourceWithDefaults(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT DEFAULT 1, b INT DEFAULT 2)');
+
+        $session->query('INSERT INTO t (a, b) (VALUES ROW(DEFAULT, 5), ROW(6, 7)) LIMIT 1; INSERT INTO t () WITH x AS (SELECT 1) VALUES ROW()');
+        $result = $session->query('SELECT a, b FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '5'], ['6', '7'], ['1', '2']], $result->rows);
+    }
+
     public function testSourcesRefusesAColumnTheTableDoesNotHave(): void
     {
         $session = (new Instance())->connect();
@@ -155,5 +167,34 @@ final class InsertCommandTest extends TestCase
         $this->expectExceptionMessage("Column count doesn't match value count at row 1");
 
         $session->query('INSERT INTO t (a, b) SELECT 1, 2, 3');
+    }
+
+    public function testExecuteStoresTheImplicitDefaultForNullFromAQueryOutsideStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET sql_mode = ''; CREATE DATABASE d; USE d; CREATE TABLE w (a INT NOT NULL)");
+
+        $session->query('INSERT INTO w SELECT NULL');
+        $conditions = $session->diagnostics->conditions;
+        $result = $session->query('SELECT a FROM w')[0];
+
+        self::assertSame([['Warning', 1048, "Column 'a' cannot be null"]], $conditions);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0']], $result->rows);
+    }
+
+    public function testSourcesWritesTheInvisibleColumnsAColumnListNames(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE v (a INT, e INT INVISIBLE, f DECIMAL(5,2))');
+
+        $session->query('INSERT INTO v (a, e, f) VALUES (1, 2, 3.5); INSERT INTO v VALUES (4, 5.5); INSERT INTO v SET e = 3');
+        $result = $session->query('SELECT a, e, f FROM v')[0];
+        $star = $session->query('SELECT * FROM v')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '2', '3.50'], ['4', null, '5.50'], [null, '3', null]], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $star);
+        self::assertSame([['1', '3.50'], ['4', '5.50'], [null, null]], $star->rows);
     }
 }

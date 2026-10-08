@@ -39,9 +39,10 @@ use SqlSemantics\Statement\Type\TypeFact;
  * otherwise: the profile does not hold the mode, so the type is the known
  * choice of FLOAT and DOUBLE; the spatial targets are their
  * geometry types. A cast to a temporal type or YEAR yields NULL for a value
- * that is not a valid date or time, and the server marks a cast to JSON as
- * nullable too, so both can always be NULL; every other cast is NULL only when
- * its operand is. Terminates: no recursion.
+ * that is not a valid date or time, and the server marks a cast to a
+ * string, JSON or a geometry as nullable too, so all of them can always be
+ * NULL; a cast to a number is NULL only when its operand is (verified on a
+ * live 8.4 server for every target and operands that are not NULL). Terminates: no recursion.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html#function_cast.
  * Status: Implemented.
  *
@@ -88,8 +89,8 @@ final class CastResult
      */
     public function nullability(CastTarget $target, Nullability $operand): Nullability
     {
-        $nullable = in_array($target->kind, [CastKind::Date, CastKind::Time, CastKind::DateTime, CastKind::Year, CastKind::Json], true);
+        $numeric = in_array($target->kind, [CastKind::Signed, CastKind::Unsigned, CastKind::Decimal, CastKind::Real, CastKind::Double, CastKind::Float], true);
 
-        return $nullable ? Nullability::Nullable : $operand;
+        return $numeric ? $operand : Nullability::Nullable;
     }
 }

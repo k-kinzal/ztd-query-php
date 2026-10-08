@@ -242,4 +242,74 @@ final class RowsTest extends TestCase
         self::assertSame($rows->updateScope(), $rows->updateScope());
         self::assertSame($table->definition, $rows->updateScope()->inserted);
     }
+
+    public function testNotNullStoresTheImplicitDefaultWithAWarningUnderIgnore(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE w (a INT NOT NULL, b VARCHAR(3) NOT NULL)');
+
+        $reply = $session->query('INSERT IGNORE INTO w VALUES (NULL, NULL)')[0];
+        $conditions = $session->diagnostics->conditions;
+        $result = $session->query('SELECT a, b FROM w')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame([1, [['Warning', 1048, "Column 'a' cannot be null"], ['Warning', 1048, "Column 'b' cannot be null"]]], [$reply->affectedRows, $conditions]);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '']], $result->rows);
+    }
+
+    public function testNotNullRefusesNullInASingleRowOutsideStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET sql_mode = ''; CREATE DATABASE d; USE d; CREATE TABLE w (a INT NOT NULL)");
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1048);
+        $this->expectExceptionMessage("Column 'a' cannot be null");
+
+        $session->query('INSERT INTO w VALUES (NULL)');
+    }
+
+    public function testUpdateStoresNullForANotNullColumnAsTheRowWouldBe(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET sql_mode = ''; CREATE DATABASE d; USE d; CREATE TABLE w (id INT PRIMARY KEY, a INT NOT NULL); INSERT INTO w VALUES (1, 5)");
+
+        $session->query('INSERT INTO w VALUES (1, 1), (3, 3) ON DUPLICATE KEY UPDATE a = NULL');
+        $conditions = $session->diagnostics->conditions;
+        $session->run('INSERT INTO w VALUES (1, 1) ON DUPLICATE KEY UPDATE a = NULL');
+        $refused = $session->diagnostics->conditions;
+        $result = $session->query('SELECT id, a FROM w')[0];
+
+        self::assertSame([['Warning', 1048, "Column 'a' cannot be null"]], $conditions);
+        self::assertSame([['Error', 1048, "Column 'a' cannot be null"]], $refused);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0'], ['3', '3']], $result->rows);
+    }
+
+    public function testUnfilledReportsTheColumnsWithoutDefaultThatAFailedQueryRowHadNotReached(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE w (p INT NOT NULL, q INT NOT NULL, r INT NOT NULL, s INT NOT NULL DEFAULT 1, t INT NOT NULL AUTO_INCREMENT KEY, u INT)');
+
+        $session->run('INSERT INTO w (r, p) SELECT 1, NULL');
+        $first = $session->diagnostics->conditions;
+        $session->run('INSERT INTO w (p, r, q) VALUES (NULL, 1, 1), (1, 1, 1)');
+
+        self::assertSame([['Error', 1048, "Column 'p' cannot be null"], ['Error', 1364, "Field 'q' doesn't have a default value"]], $first);
+        self::assertSame([['Error', 1048, "Column 'p' cannot be null"]], $session->diagnostics->conditions);
+    }
+
+    public function testPlaceRefreshesTheColumnsOnUpdateCurrentTimestampOfAChangedRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE w (id INT PRIMARY KEY, v INT, e TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP)');
+        $session->query('INSERT INTO w (id, v) VALUES (1, 1), (2, 2)');
+
+        $session->query('INSERT INTO w (id, v) VALUES (1, 1), (2, 2) ON DUPLICATE KEY UPDATE v = VALUES(v) + (id = 2)');
+        $result = $session->query('SELECT id, e IS NULL FROM w')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1'], ['2', '0']], $result->rows);
+    }
 }

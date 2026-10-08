@@ -11,6 +11,7 @@ use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\NullOnly;
 
@@ -33,5 +34,10 @@ final class PrecisionTest extends TestCase
 
         self::assertSame([$domain, $domain], (new Precision())->all([new Known($domain), new Known($domain)]));
         self::assertNull((new Precision())->all([new Known($domain), new Known(new Integral(IntegralKind::Int))]));
+    }
+
+    public function testAllReadsOperandsWithoutTheDisplayWidthOfAColumn(): void
+    {
+        self::assertEquals([Domain::integer(Field::Long, 11)], (new Precision())->all([new Known(Domain::column(Field::Long, 5))]));
     }
 }

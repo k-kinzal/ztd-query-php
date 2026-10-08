@@ -11,8 +11,10 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Decimal;
+use MySqlMemory\Value\Encoding;
 use MySqlMemory\Value\Integer;
 use MySqlMemory\Value\NumericText;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -34,8 +36,9 @@ final class Store
     /**
      * @param Context $context The statement writing, whose mode decides between warnings and errors
      * @param int $row The number of the row being written, counted from 1, for messages
+     * @param string $table The name the statement writes the table under, which qualifies the column an invalid JSON text is reported for; empty when it writes several tables
      */
-    public function __construct(public readonly Context $context, public int $row = 1)
+    public function __construct(public readonly Context $context, public int $row = 1, public readonly string $table = '')
     {
     }
 
@@ -201,14 +204,14 @@ final class Store
     public function string(int|float|string $value, Domain $from, ColumnDefinition $column): string
     {
         $to = $column->domain;
-        $text = (string) Convert::toText($value, $from);
+        $text = $this->encoded((string) Convert::toText($value, $from), $from, $column);
         if ($to->field === Field::Enum || $to->field === Field::Set) {
             return (new Members($this))->value($text, $from, $column);
         }
         $charset = $to->collation->charset;
         $limit = $to->length;
-        if ($charset->length($text) > $limit) {
-            $kept = $charset->maxLength === 1 || !mb_check_encoding($text, 'UTF-8') ? substr($text, 0, $limit) : mb_substr($text, 0, $limit, 'UTF-8');
+        if (Encoding::length($text, $charset) > $limit) {
+            $kept = Encoding::slice($text, 0, $limit, $charset);
             $rest = substr($text, strlen($kept));
             if (trim($rest, ' ') === '' && $to->collation !== Collation::binary()) {
                 $this->context->note(ErrorCode::DataTruncated, $column->name, $this->row);
@@ -222,6 +225,36 @@ final class Store
         }
 
         return $text;
+    }
+
+    /**
+     * Converts a text into the character set of a column.
+     *
+     * A character the set cannot hold is stored as `?`; bytes of a binary string that are no
+     * character of the set end the text. Either is ER_TRUNCATED_WRONG_VALUE_FOR_FIELD, quoting the
+     * bytes from the first such character.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-conversion.html.
+     *
+     * @throws SqlError When the value is refused
+     */
+    public function encoded(string $text, Domain $from, ColumnDefinition $column): string
+    {
+        $source = $from->kind === Kind::String ? $from->collation->charset : Charset::known('utf8mb4');
+        $target = $column->domain->collation->charset;
+        if ($source === Charset::binary()) {
+            $valid = Encoding::valid($text, $target) ? strlen($text) : Encoding::prefix($text, $target);
+            $converted = substr($text, 0, $valid);
+        } else {
+            $converted = Encoding::convert($text, $source, $target);
+            $valid = $target === Charset::binary() || Encoding::convert($converted, $target, $source) === $text ? strlen($text) : Encoding::convertible($text, $source, $target);
+        }
+        if ($valid < strlen($text)) {
+            $rest = substr($text, $valid);
+            $quoted = (string) preg_replace_callback('/[^\x20-\x7E]/', static fn (array $byte): string => sprintf('\\x%02X', ord($byte[0])), substr($rest, 0, 6));
+            $this->adjust(ErrorCode::TruncatedWrongValueForField, 'string', $quoted . (strlen($rest) > 6 ? '...' : ''), $column->name, $this->row);
+        }
+
+        return $converted;
     }
 
     /**

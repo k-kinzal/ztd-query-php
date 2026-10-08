@@ -36,6 +36,11 @@ final class ClockCallTest extends TestCase
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
+    public function testDecimalsReadsThePrecisionModulo256(): void
+    {
+        self::assertSame([0, 0, 2, 19], [(new ClockCall(Clock::Now))->decimals(), (new ClockCall(Clock::Now, new Numeral('256')))->decimals(), (new ClockCall(Clock::UtcTimestamp, new Numeral('258')))->decimals(), (new ClockCall(Clock::CurrentTime, new Numeral('00000000058387')))->decimals()]);
+    }
+
     public function testRenderWritesEmptyParenthesesWithoutAPrecision(): void
     {
         $platform = new Platform();

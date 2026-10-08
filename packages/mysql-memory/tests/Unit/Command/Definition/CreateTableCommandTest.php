@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Command\Definition;
 
 use MySqlMemory\Command\Definition\CreateTableCommand;
+use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
@@ -140,5 +141,22 @@ final class CreateTableCommandTest extends TestCase
             [true, true, false, false, false],
             [$command->unique(KeyKind::Primary), $command->unique(KeyKind::Unique), $command->unique(KeyKind::Index), $command->unique(KeyKind::FullText), $command->unique(KeyKind::Spatial)],
         );
+    }
+
+    public function testDuplicatesAnswersEachKeyThatRepeatsAnEarlierOne(): void
+    {
+        $keys = [new Key('PRIMARY', KeyKind::Primary, [0]), new Key('a', KeyKind::Unique, [0]), new Key('a_2', KeyKind::Unique, [0]), new Key('a_3', KeyKind::Unique, [0]), new Key('b', KeyKind::Index, [0])];
+
+        self::assertSame(['a_2', 'a_3'], array_map(static fn (Key $key): string => $key->name, (new CreateTableCommand())->duplicates($keys)));
+    }
+
+    public function testExecuteWarnsOfADuplicateIndex(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE TABLE u (a INT, UNIQUE (a), UNIQUE (a), KEY (a), KEY (a DESC))');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1831', "Duplicate index 'a_2' defined on the table 'p.u'. This is deprecated and will be disallowed in a future release."]], $warnings->rows);
     }
 }

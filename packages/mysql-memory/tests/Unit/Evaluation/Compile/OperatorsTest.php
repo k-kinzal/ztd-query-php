@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace Tests\Unit\Evaluation\Compile;
 
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Operators;
+use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
+use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Statement\Scalar;
 
 #[CoversClass(Operators::class)]
 #[Small]
@@ -149,5 +154,171 @@ final class OperatorsTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['8', '1.5']], $result->rows);
+    }
+
+    public function testLikeRefusesAnEscapeOfMoreThanOneCharacter(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1210);
+        $this->expectExceptionMessage('Incorrect arguments to ESCAPE');
+
+        $session->query("SELECT 'a' LIKE 'a' ESCAPE 'ab'");
+    }
+
+    public function testLikeRefusesAnEscapeBeforeAnyRowIsRead(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (c CHAR(2))');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1210);
+
+        $session->query("SELECT NULL LIKE 'a' ESCAPE 'ab' FROM t WHERE 0");
+    }
+
+    public function testEscapeRefusesAnEscapeThatReadsAColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (c CHAR(2)); INSERT INTO t VALUES ('|')");
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1210);
+
+        $session->query("SELECT 'a' LIKE 'a' ESCAPE c FROM t");
+    }
+
+    public function testEscapeAcceptsOneConstantCharacter(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (c CHAR(2)); INSERT INTO t VALUES ('|')");
+        $session->query("SET @v = '|'");
+        $result = $session->query("SELECT 'x%' LIKE 'x|%' ESCAPE (SELECT c FROM t), 'x_y' LIKE 'x|_y' ESCAPE @v, 'a%' LIKE 'a|%' ESCAPE '', 'a%' LIKE 'aé%' ESCAPE 'é', 'a1' LIKE 'a11' ESCAPE 1")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1', '0', '1', '1']], $result->rows);
+    }
+
+    public function testLikeChecksAnEscapeKnownOnlyWhenTheStatementRunsAtTheFirstRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (c CHAR(2)); INSERT INTO t VALUES ('|')");
+        $result = $session->query("SELECT c LIKE 'a' ESCAPE CONCAT('a', USER()) FROM t WHERE 0")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1210);
+        $session->query("SELECT c LIKE 'a' ESCAPE ROW_COUNT() FROM t WHERE 0");
+    }
+
+    public function testCompareReadsAConstantOperandComparedAsANumberOnce(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT); INSERT INTO t VALUES (1), (2), (3)');
+        $session->query("SELECT 'a' = id, id IN ('b'), DATABASE() < id, 'c' = 'd' + 0 FROM t");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(["'a'", "'b'", "'d'", "'c'", "'d'", "'d'", "'d'"], array_map(static fn (array $row): string => (string) strstr((string) $row[2], "'"), $warnings->rows));
+    }
+
+    public function testNumericReadsAVaryingOperandWhenItIsEvaluated(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (s CHAR(2)); INSERT INTO t VALUES ('a'), ('b')");
+        $session->query("SELECT s = ('c' + 0) FROM t");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(["'a'", "'c'", "'b'", "'c'"], array_map(static fn (array $row): string => (string) strstr((string) $row[2], "'"), $warnings->rows));
+    }
+
+    public function testTruthOperandReadsAConstantStringOnce(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT); INSERT INTO t VALUES (1), (2), (3)');
+        $session->query("SELECT NOT 'a', 'b' AND id, 'c' IS TRUE, IF('d', 1, 2) FROM t");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(["'a'", "'b'", "'c'", "'d'", "'d'", "'d'"], array_map(static fn (array $row): string => (string) strstr((string) $row[2], "'"), $warnings->rows));
+    }
+
+    public function testVariesTellsWhetherAComparisonOfAStringIsEvaluatedWholeForIsNull(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (id INT, s CHAR(2)); INSERT INTO t VALUES (1, 'a'), (2, NULL)");
+        $session->query('SELECT (s = id) IS NULL, (s = (SELECT u.id FROM t AS u WHERE u.id = t.id)) IS NULL, (s = 0) IS NULL FROM t');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"]], $warnings->rows);
+    }
+
+    public function testNegationOfATestOfNullIsTheOppositeTest(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (s CHAR(2)); INSERT INTO t VALUES ('a'), (NULL)");
+        $result = $session->query('SELECT NOT ((s IS TRUE) IS NULL), NOT ((s IS TRUE) IS NOT NULL), NOT ISNULL(s) FROM t')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0', '1'], ['1', '0', '0']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"]], $warnings->rows);
+    }
+
+    public function testInListOfOneValueIsAComparison(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (id INT, s CHAR(2)); INSERT INTO t VALUES (1, 'a'), (2, NULL)");
+        $result = $session->query("SELECT id IN ('a'), (s NOT IN (0)) IS NULL FROM t")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '0'], ['0', '1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"]], $warnings->rows);
+    }
+
+    public function testTestedAnswersTheOperandOfATestOfNull(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('SELECT ((1 IS NULL)), ISNULL(2), 3 IS NOT UNKNOWN, 4 IS TRUE');
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $isNull = $operation->field(0)->expression;
+        $function = $operation->field(1)->expression;
+        $isNotUnknown = $operation->field(2)->expression;
+        $isTrue = $operation->field(3)->expression;
+        self::assertNotNull($isNull);
+        self::assertNotNull($function);
+        self::assertNotNull($isNotUnknown);
+        self::assertNotNull($isTrue);
+        $operators = $planner->compiler->operators;
+
+        self::assertSame([NumberLiteral::class, false], array_map(static fn (Scalar|bool $part): string|bool => is_bool($part) ? $part : $part::class, $operators->tested($isNull) ?? []));
+        self::assertSame([NumberLiteral::class, false], array_map(static fn (Scalar|bool $part): string|bool => is_bool($part) ? $part : $part::class, $operators->tested($function) ?? []));
+        self::assertSame([NumberLiteral::class, true], array_map(static fn (Scalar|bool $part): string|bool => is_bool($part) ? $part : $part::class, $operators->tested($isNotUnknown) ?? []));
+        self::assertNull($operators->tested($isTrue));
+    }
+
+    public function testNullnessEvaluatesIsNullOfAResolvedOperandWhenTheStatementIsResolved(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT); INSERT INTO t VALUES (1), (2)');
+        $none = $session->query("SELECT CONCAT('a', 1/0) IS NULL FROM t WHERE 0")[0];
+        $once = $session->query('SHOW WARNINGS')[0];
+        $session->query("SELECT NOT (CONCAT('a', 1/0) IS NULL), CONCAT('a', USER() / 0) IS NULL FROM t");
+        $each = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $none);
+        self::assertSame([], $none->rows);
+        self::assertInstanceOf(ResultSet::class, $once);
+        self::assertSame([['Warning', '1365', 'Division by 0']], $once->rows);
+        self::assertInstanceOf(ResultSet::class, $each);
+        self::assertSame(['1365', '1292', '1365', '1365', '1292', '1365'], array_column($each->rows, 1));
     }
 }

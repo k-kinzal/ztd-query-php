@@ -29,6 +29,16 @@ final class MinusTest extends TestCase
         self::assertSame([Field::LongLong, Field::NewDecimal, Field::Double, Field::Double], [$result->columns[0]->type, $result->columns[1]->type, $result->columns[2]->type, $result->columns[3]->type]);
     }
 
+    public function testEvaluateNegatesANegativeIntegerConstantAsADecimal(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT -(-(3)), -(1-4), -(CAST(-3 AS UNSIGNED)), -(-9223372036854775808), -(-0), -(9223372036854775808)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['3', '3', '-18446744073709551613', '9223372036854775808', '0', '-9223372036854775808']], $result->rows);
+        self::assertSame([[Field::NewDecimal, 2], [Field::NewDecimal, 3], [Field::NewDecimal, 22], [Field::NewDecimal, 20], [Field::LongLong, 2], [Field::LongLong, 20]], array_map(static fn ($column): array => [$column->type, $column->length], $result->columns));
+    }
+
     public function testEvaluateReturnsNullForNull(): void
     {
         $session = (new Instance())->connect();

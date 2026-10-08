@@ -69,4 +69,35 @@ final class ContextTest extends TestCase
 
         self::assertSame([['Note', 1292, "Truncated incorrect INTEGER value: '7 '"]], $session->diagnostics->conditions);
     }
+
+    public function testWarnMessageRecordsAMessageOfItsOwn(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+
+        $context->warnMessage(ErrorCode::TruncatedWrongValue, "Incorrect datetime value: 'xx'");
+
+        self::assertSame([['Warning', 1292, "Incorrect datetime value: 'xx'"]], $session->diagnostics->conditions);
+    }
+
+    public function testWarnMessageRaisesTheMessageAsAnErrorInAStrictWrite(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0, true);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1292);
+        $this->expectExceptionMessage("Incorrect datetime value: 'xx'");
+
+        $context->warnMessage(ErrorCode::TruncatedWrongValue, "Incorrect datetime value: 'xx'");
+    }
+
+    public function testWarningLeavesTheKeptValuesAlone(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $context->warning(ErrorCode::DivisionByZero);
+
+        self::assertCount(0, $context->kept);
+    }
 }

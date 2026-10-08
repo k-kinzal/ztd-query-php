@@ -12,8 +12,8 @@ use MySqlMemory\Typing\Domain;
 /**
  * A built-in function: its name, how many arguments it takes, and its body.
  *
- * The body computes the value from the frame, the argument evaluables and the type SQL Semantics
- * resolved for the call.
+ * The body computes the value from the frame, the argument evaluables, the type SQL Semantics
+ * resolved for the call and the text of the call, which messages quote.
  *
  * @visibility MySqlMemory
  */
@@ -23,7 +23,7 @@ final class Routine
      * @param string $name The function name, in upper case
      * @param int $minimum The fewest arguments
      * @param int $maximum The most arguments, or -1 for no bound
-     * @param Closure(Frame, list<Evaluable>, Domain): (int|float|string|null) $body Computes the result
+     * @param Closure(Frame, list<Evaluable>, Domain, string): (int|float|string|null) $body Computes the result
      */
     public function __construct(public readonly string $name, public readonly int $minimum, public readonly int $maximum, public readonly Closure $body)
     {

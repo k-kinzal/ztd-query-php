@@ -14,7 +14,8 @@ use SqlSemantics\Statement\Snapshot;
  *
  * The connection collation types string literals; div_precision_increment widens the scale of a
  * division; the collations of the schemas give a table its default; group_concat_max_len bounds
- * GROUP_CONCAT. A context without settings resolves as a new session with the server defaults.
+ * GROUP_CONCAT; character_set_client names the select items named after their text. A context
+ * without settings resolves as a new session with the server defaults.
  *
  * @visibility public
  * @example Reading the collation string literals take in a new 8.4 session
@@ -43,6 +44,7 @@ final class Settings implements Session
      * @param array<string, Domain>|null $userVariables The type of the value each user variable holds, by name; null when the session does not say
      * @param array<int, Domain> $parameters The type of the value bound to each parameter marker, by the position of the marker among the markers
      * @param bool $unsignedSubtraction Whether subtracting from an unsigned integer gives an unsigned integer, as it does unless sql_mode has NO_UNSIGNED_SUBTRACTION
+     * @param Charset|null $client The character set statements are read in (character_set_client); null when the session does not say
      */
     public function __construct(
         public readonly Collation $connection,
@@ -53,6 +55,7 @@ final class Settings implements Session
         ?array $userVariables = null,
         public readonly array $parameters = [],
         public readonly bool $unsignedSubtraction = true,
+        public readonly ?Charset $client = null,
     ) {
         $lower = [];
         foreach ($schemas as $name => $collation) {

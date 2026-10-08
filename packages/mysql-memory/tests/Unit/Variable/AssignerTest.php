@@ -292,4 +292,21 @@ final class AssignerTest extends TestCase
 
         $session->query("SET character_set_client = 'nope'");
     }
+
+    public function testTextTakesNullForTheVariablesThatAcceptIt(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $results = $session->variables->catalog->find('character_set_results');
+        $client = $session->variables->catalog->find('character_set_client');
+        self::assertNotNull($results);
+        self::assertNotNull($client);
+
+        self::assertNull($assigner->text($results, null, 'NULL'));
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1231);
+        $this->expectExceptionMessage("Variable 'character_set_client' can't be set to the value of 'NULL'");
+
+        $assigner->text($client, null, 'NULL');
+    }
 }

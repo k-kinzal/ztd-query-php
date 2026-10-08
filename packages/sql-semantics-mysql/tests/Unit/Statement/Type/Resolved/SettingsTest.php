@@ -42,6 +42,12 @@ final class SettingsTest extends TestCase
         self::assertSame('latin1_bin', (new Settings(Collation::known('latin1_bin')))->schema('other')->name);
     }
 
+    public function testClientIsTheCharacterSetStatementsAreReadIn(): void
+    {
+        self::assertSame('latin1', (new Settings(Collation::known('utf8mb4_0900_ai_ci'), 4, null, [], 1024, null, [], true, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1')))->client?->name);
+        self::assertNull(Settings::defaults(GrammarRelease::MySql847)->client);
+    }
+
     public function testUserVariablesAreKeyedByLowerCaseName(): void
     {
         self::assertSame(['a'], array_keys((new Settings(Collation::known('latin1_bin'), 4, null, [], 1024, ['A' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]))->userVariables ?? []));

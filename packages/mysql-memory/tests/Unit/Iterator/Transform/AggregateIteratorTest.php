@@ -108,4 +108,52 @@ final class AggregateIteratorTest extends TestCase
 
         self::assertSame([[1], null], [$iterator->read(), $iterator->read()]);
     }
+
+    public function testInitAddsTheSuperAggregateRowsWithRollup(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(2);
+        $working->rows = [[2, 'x'], [1, 'y'], [1, 'x'], [2, 'x']];
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $groups = [new ColumnRead(Domain::integer(), 0), new ColumnRead(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')), 1)];
+        $iterator = new AggregateIterator(new Aggregate($working, $groups, [$count], true, [0, 1]), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame(
+            [[1, 'x', 1, 1, 'x', 0], [1, 'y', 1, 1, 'y', 0], [1, null, 2, 1, null, 1], [2, 'x', 2, 2, 'x', 0], [2, null, 2, 2, null, 1], [null, null, 4, null, null, 2], null],
+            [$iterator->read(), $iterator->read(), $iterator->read(), $iterator->read(), $iterator->read(), $iterator->read(), $iterator->read()],
+        );
+    }
+
+    public function testRollupKeepsAColumnThatAKeptGroupingExpressionReads(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $working = new WorkingTable(1);
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::integer(), 0), new ColumnRead(Domain::integer(), 0)], [$count], true, [0, 0]), new WorkingTableIterator($working));
+        $started = $count->start();
+        $started->add($frame);
+
+        self::assertSame([[5, 1, 5, 5, 0], [5, 1, 5, null, 1], [null, 1, null, null, 2]], $iterator->rollup([[[5], [5, 5], [$started], [[5]]]], $frame));
+    }
+
+    public function testAgreeComparesTheLeadingGroupingValues(): void
+    {
+        $working = new WorkingTable(2);
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::integer(), 0), new ColumnRead(Domain::integer(), 1)], [], true, [0, 1]), new WorkingTableIterator($working));
+
+        self::assertSame([true, true, false], [$iterator->agree([1, 2], [1, 3], 0), $iterator->agree([1, 2], [1, 3], 1), $iterator->agree([1, 2], [1, 3], 2)]);
+    }
+
+    public function testRowAppendsTheAggregatesTheGroupingValuesAndTheRolledUpCount(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $working = new WorkingTable(1);
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::integer(), 0)], [$count], true, [0]), new WorkingTableIterator($working));
+
+        self::assertSame([null, 0, null, 1], $iterator->row([null], [$count->start()], [null], 1, $frame));
+    }
 }

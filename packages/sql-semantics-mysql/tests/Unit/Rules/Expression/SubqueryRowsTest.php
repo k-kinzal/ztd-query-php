@@ -14,6 +14,8 @@ use SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as ResolvedField;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Comparison;
@@ -41,6 +43,13 @@ final class SubqueryRowsTest extends TestCase
         self::assertEquals(new ScalarFact($integer, Nullability::Nullable), $rows->value($one));
         self::assertEquals(new Known(new Tuple(2)), $rows->value($two)->type);
         self::assertInstanceOf(Dependent::class, $rows->value($open)->type);
+    }
+
+    public function testValueDropsTheDisplayWidthOfTheColumn(): void
+    {
+        $column = new QueryFact([new Field(0, new OutputSlot(new Name('a'), new Known(Domain::column(ResolvedField::Long, 2)), Nullability::NotNull))], Comparison::AsciiInsensitive);
+
+        self::assertEquals(new Known(Domain::integer(ResolvedField::Long, 11)), (new SubqueryRows())->value($column)->type);
     }
 
     public function testTestCombinesTheColumnsAndReportsAWidthMismatch(): void

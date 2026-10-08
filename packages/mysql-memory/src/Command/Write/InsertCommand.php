@@ -68,10 +68,10 @@ final class InsertCommand implements Command
         $session->transaction->touch($table);
         [$positions, $sources] = $this->sources($statement, $planner, $table, $context);
         $rows = new Rows($table, $context, $planner, $into, $statement instanceof InsertQuery ? [] : $statement->onDuplicate, $session);
+        $queried = $statement instanceof InsertQuery && $statement->values() === null;
         foreach ($sources as $index => $values) {
-            $rows->write($positions, $values, $index + 1, count($sources) === 1);
+            $rows->write($positions, $values, $index + 1, count($sources) === 1 && !$queried, $queried);
         }
-        $session->variables->rowCount = $rows->affected;
         if ($rows->generated !== null && !$session->variables->setByFunction) {
             $session->variables->lastInsertId = $rows->generated;
         }

@@ -33,6 +33,8 @@ use SqlSemantics\Statement\Fact\QueryFact;
  * attribute is still in force (ER_PRIMARY_CANT_HAVE_NULL; 5.6 makes it NOT
  * NULL silently); a key part or foreign key column that names no column of
  * the table, when its column list is complete (ER_KEY_COLUMN_DOES_NOT_EXITS);
+ * an index that names one column twice, reported at the second part that
+ * names it (ER_DUP_FIELDNAME);
  * a table without columns and without a query (ER_TABLE_MUST_HAVE_COLUMNS);
  * a column name that is not valid, among them the name a selected column
  * gets after its text (ER_WRONG_COLUMN_NAME, MYSQL-COLUMN-NAME-001); a
@@ -70,7 +72,7 @@ final class TableProblems
                 }
             }
             $keys += $element instanceof IndexDefinition && $element->kind === IndexKind::Primary ? 1 : 0;
-            $this->keyColumns($element instanceof IndexDefinition ? $element->parts : ($element instanceof ForeignKey ? $element->columns : []), $table, $derivation);
+            $this->keyColumns($element instanceof IndexDefinition ? $element->parts : ($element instanceof ForeignKey ? $element->columns : []), $table, $derivation, $element instanceof IndexDefinition);
         }
         if ($keys > 1) {
             $derivation->report(new MultiplePrimaryKeys());
@@ -127,19 +129,26 @@ final class TableProblems
     }
 
     /**
-     * Reports the key parts that name no column of a complete table.
+     * Reports the key parts that name no column of a complete table, and the first column an index names twice.
      *
      * @param list<object> $parts The key parts
+     * @param bool $index Whether the parts are those of an index, which names each column once
      */
-    public function keyColumns(array $parts, Table $table, Derivation $derivation): void
+    public function keyColumns(array $parts, Table $table, Derivation $derivation, bool $index = false): void
     {
-        if (!$table->complete) {
-            return;
-        }
+        $seen = [];
         foreach ($parts as $part) {
-            if ($part instanceof ColumnPart && $table->matchingColumns($part->column->value, $derivation->context->columnNames) === []) {
-                $derivation->report(new UnknownKeyColumn($part->column));
+            if (!$part instanceof ColumnPart) {
+                continue;
             }
+            if ($table->complete && $table->matchingColumns($part->column->value, $derivation->context->columnNames) === []) {
+                $derivation->report(new UnknownKeyColumn($part->column));
+            } elseif ($index && (new TableDeclaration())->named($part->column, $seen, $derivation->context->columnNames)) {
+                $derivation->report(new DuplicateColumn($part->column));
+
+                return;
+            }
+            $seen[] = $part->column;
         }
     }
 }

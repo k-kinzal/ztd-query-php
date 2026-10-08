@@ -25,7 +25,7 @@ final class LibraryTest extends TestCase
         $names = array_map(static fn (string $name): ?string => $library->find($name)?->name, ['CONCAT', 'LENGTH', 'ABS', 'IFNULL', 'DATABASE', 'YEAR']);
 
         self::assertSame(['CONCAT', 'LENGTH', 'ABS', 'IFNULL', 'DATABASE', 'YEAR'], $names);
-        self::assertCount(90, $library->routines);
+        self::assertCount(91, $library->routines);
     }
 
     public function testFindIgnoresTheCaseOfTheName(): void

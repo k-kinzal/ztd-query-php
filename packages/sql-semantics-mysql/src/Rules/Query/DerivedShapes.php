@@ -4,21 +4,22 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
-use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Query\Grouping\RollupItems;
 use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
-use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Invalid;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -48,7 +49,7 @@ final class DerivedShapes
      */
     public function shape(QueryFact $fact, array $columns, Derivation $derivation, ?Query $materialized = null): RowShape
     {
-        $shape = $materialized === null ? $fact->shape : $this->materialized($fact->shape, (new Materialization())->narrows($materialized));
+        $shape = $materialized === null ? $fact->shape : $this->materialized($fact->shape, (new Materialization())->narrows($materialized), $materialized, $derivation);
         if ($columns === []) {
             $slots = [];
             foreach ($shape->slots as $slot) {
@@ -80,13 +81,18 @@ final class DerivedShapes
     }
 
     /**
-     * Answers a shape with the types a temporary table gives its columns.
+     * Answers a shape with the types a temporary table gives its columns; a rollup item of the query takes the column MYSQL-ROLLUP-ITEMS-001 gives it.
      */
-    public function materialized(RowShape $shape, bool $narrows): RowShape
+    public function materialized(RowShape $shape, bool $narrows, ?Query $query = null, ?Derivation $derivation = null): RowShape
     {
         $slots = [];
-        foreach ($shape->slots as $slot) {
+        foreach ($shape->slots as $position => $slot) {
             $domain = (new Precision())->domain($slot->type);
+            if ($domain !== null && $query !== null && $derivation !== null && (new RollupItems())->rolledAt($query, $position, $derivation)) {
+                $domain = (new RollupItems())->materialized($domain);
+                $slots[] = new OutputSlot($slot->name, new Known($domain), $slot->nullability, $slot->column, $slot->origin, $slot->unnamed);
+                continue;
+            }
             $slots[] = $domain === null ? $slot : new OutputSlot($slot->name, new Known((new Materialization())->column($domain, $narrows)), $slot->nullability, $slot->column, $slot->origin, $slot->unnamed);
         }
 
@@ -107,7 +113,7 @@ final class DerivedShapes
             }
             $key = $derivation->context->columnNames->fold($slot->name->value);
             if (isset($seen[$key])) {
-                $derivation->report(new Misuse(MisuseRule::DuplicateColumn));
+                $derivation->report(new Misuse(MisuseRule::DuplicateColumn, $slot->name));
 
                 return;
             }

@@ -28,6 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\EnumerationKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -81,7 +82,8 @@ final class DeclaredTest extends TestCase
 
     public function testIntegralKeepsAWrittenWidth(): void
     {
-        self::assertEquals(Domain::integer(Field::Long, 5), (new Declared(Collation::binary()))->integral(new Integral(IntegralKind::Int, '5')));
+        self::assertEquals(new Domain(Kind::Integer, Field::Long, 11, 0, false, null, [], Coercibility::Numeric, 5), (new Declared(Collation::binary()))->integral(new Integral(IntegralKind::Int, '5')));
+        self::assertEquals(Domain::integer(Field::Long, 11), (new Declared(Collation::binary()))->integral(new Integral(IntegralKind::Int)));
     }
 
     public function testFloatingIsSingleUpToTwentyFourDigits(): void
@@ -140,4 +142,12 @@ final class DeclaredTest extends TestCase
         self::assertSame(8, $declared->elementary(new Elementary(ElementaryKind::Bit, '8'))->length);
     }
 
+    public function testEnumerationCountsTheCharactersOfTheMembersAsWritten(): void
+    {
+        $enum = new Enumeration(EnumerationKind::Enum, [new Text('é'), new Text('b')]);
+        $set = new Enumeration(EnumerationKind::Set, [new Text('é'), new Text('x')]);
+        $declared = new Declared(Collation::known('utf8mb4_bin'));
+
+        self::assertSame([1, 3], [$declared->enumeration($enum, Collation::known('latin1_swedish_ci'))->length, $declared->enumeration($set, Collation::known('latin1_swedish_ci'))->length]);
+    }
 }

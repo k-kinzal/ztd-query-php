@@ -7,14 +7,18 @@ namespace MySqlMemory\Session;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Scope;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Reach;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 
 /**
  * The variables of a session: its user variables, and the session values of the system variables.
  *
  * A user variable holds a value with the domain of what was assigned; one never assigned is
- * NULL. A system variable without a session value of its own reads the global value.
- * Source: https://dev.mysql.com/doc/refman/8.4/en/user-variables.html.
+ * NULL. A connection starts with the session value of each system variable that has both scopes
+ * set to its global value, so a later SET GLOBAL does not change it; a variable with a global
+ * value only reads the global value.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/user-variables.html,
+ * https://dev.mysql.com/doc/refman/8.4/en/using-system-variables.html.
  *
  * @visibility MySqlMemory
  */
@@ -26,9 +30,14 @@ final class Variables
     public array $user = [];
 
     /**
-     * @var array<string, string|int> The session values, by lower-case name
+     * @var array<string, string|int|null> The session values, by lower-case name
      */
     public array $session = [];
+
+    /**
+     * @var array<string, string|int|null> The global values set when the connection started, by lower-case name; a variable with both scopes that has no session value of its own reads them
+     */
+    public array $connected = [];
 
     /**
      * The current database, or the empty string for none.
@@ -61,9 +70,9 @@ final class Variables
     public bool $setByFunction = false;
 
     /**
-     * The rows the last statement changed (ROW_COUNT()).
+     * The rows the last statement affected, or -1 after one that answered rows or failed (ROW_COUNT()).
      */
-    public int $rowCount = -1;
+    public int $rowCount = 0;
 
     /**
      * The rows the last SELECT found (FOUND_ROWS()).
@@ -76,6 +85,7 @@ final class Variables
      */
     public function __construct(public readonly SystemVariables $catalog, public readonly Globals $globals)
     {
+        $this->connected = $globals->values;
     }
 
     /**
@@ -97,13 +107,16 @@ final class Variables
     }
 
     /**
-     * Answers the value of a system variable in a scope: the session value, or the global one.
+     * Answers the value of a system variable in a scope: the session value, the global value the connection started with, or the global one.
      */
-    public function system(Definition $definition, Scope $scope): string|int
+    public function system(Definition $definition, Scope $scope): string|int|null
     {
         $name = $definition->name;
         if ($scope !== Scope::Global && array_key_exists($name, $this->session)) {
             return $this->session[$name];
+        }
+        if ($scope !== Scope::Global && $definition->reach === Reach::Both) {
+            return array_key_exists($name, $this->connected) ? $this->connected[$name] : $definition->default;
         }
 
         return $this->globals->value($definition);
@@ -112,13 +125,13 @@ final class Variables
     /**
      * Sets the session value of a system variable.
      */
-    public function set(Definition $definition, string|int $value): void
+    public function set(Definition $definition, string|int|null $value): void
     {
         $this->session[$definition->name] = $value;
     }
 
     /**
-     * Reads a system variable of the session by name, or null when the server has none of that name.
+     * Reads a system variable of the session by name, or null when the server has none of that name or the variable holds NULL.
      */
     public function read(string $name): string|int|null
     {

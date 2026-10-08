@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\NullablePrimaryKey;
 use SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn;
+use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(TableProblems::class)]
 #[Medium]
@@ -59,5 +60,13 @@ final class TableProblemsTest extends TestCase
         self::assertCount(1, $operation->facts->diagnostics);
         self::assertInstanceOf(IncorrectColumnName::class, $operation->facts->diagnostics[0]);
         self::assertSame("Incorrect column name 'a '.", $operation->facts->diagnostics[0]->message());
+    }
+
+    public function testKeyColumnsReportsTheFirstColumnAnIndexNamesTwice(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertEquals([new DuplicateColumn(new Name('A'))], $semantics->analyze('CREATE TABLE t (a INT, KEY (a, A, zz))')->facts->diagnostics);
+        self::assertEquals([new UnknownKeyColumn(new Name('zz')), new DuplicateColumn(new Name('a'))], $semantics->analyze('CREATE TABLE t (a INT, KEY (zz, a, a))')->facts->diagnostics);
     }
 }

@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Snapshot;
  * Rule: MYSQL-KEYWORD-CALL-001. The function decides the argument counts
  * the grammar accepts and the result (MYSQL-CALL-RESULT-001); ADDDATE and
  * SUBDATE with a number of days are typed as a date plus or minus days.
- * GROUPING() yields 1 or 0 and is never NULL. The keyword is written against
+ * GROUPING() yields a bit per argument and its column can be NULL, as a live 8.4 server reports. The keyword is written against
  * its parenthesis, and the niladic functions are written with empty
  * parentheses, which the grammar accepts for every one of them; CURRENT_USER
  * keeps whether its optional parentheses are written.

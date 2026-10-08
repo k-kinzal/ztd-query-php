@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Typing\Constants;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
@@ -41,8 +42,9 @@ use SqlSemantics\Statement\Type\TypeFact;
  * when an operand is. `%` follows `+` but its integer result takes the
  * sign of the dividend. The bit operators and `~` yield BIGINT UNSIGNED;
  * from MySQL 8.0 they yield VARBINARY when their operands (for the shifts
- * and `~`, the shifted operand) are binary strings other than hexadecimal,
- * bit and NULL literals. Unary minus keeps DECIMAL and DOUBLE, makes an
+ * and `~`, the shifted operand) are binary strings or hexadecimal, bit and
+ * NULL literals, and one of them is not such a literal; a literal written
+ * with an introducer is a string, not a literal of this kind. Unary minus keeps DECIMAL and DOUBLE, makes an
  * integer a signed BIGINT, and makes an integer literal beyond the negated
  * BIGINT range a DECIMAL. Terminates: no recursion.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/arithmetic-functions.html,
@@ -114,13 +116,18 @@ final class NumericResult
         if ($release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744) {
             return new Known($this->integer(true));
         }
-        $binary = true;
+        $binary = false;
         foreach ($operands as [$expression, $fact]) {
             while ($expression instanceof Grouped) {
                 $expression = $expression->operand;
             }
-            $binary = $binary && !$expression instanceof RadixLiteral && !$expression instanceof NullLiteral
-                && $fact->type instanceof Known && ($fact->type->descriptor instanceof Binary || ($fact->type->descriptor instanceof Domain && $fact->type->descriptor->kind === Kind::String && $fact->type->descriptor->collation->bytes()));
+            if (($expression instanceof RadixLiteral && $expression->introducer === null) || $expression instanceof NullLiteral) {
+                continue;
+            }
+            if (!$fact->type instanceof Known || !($fact->type->descriptor instanceof Binary || ($fact->type->descriptor instanceof Domain && $fact->type->descriptor->kind === Kind::String && $fact->type->descriptor->collation->bytes()))) {
+                return new Known($this->integer(true));
+            }
+            $binary = true;
         }
 
         return new Known($binary ? new Binary(BinaryKind::VarBinary) : $this->integer(true));
@@ -139,7 +146,7 @@ final class NumericResult
         $results = [];
         foreach ($alternatives->of($fact->type) as $type) {
             $results[] = match ((new NumericContext())->classify($operand, $type)) {
-                NumericClass::Signed, NumericClass::Unsigned => $this->beyond($operand) ? new Decimal() : $this->integer(false),
+                NumericClass::Signed, NumericClass::Unsigned => $this->beyond($operand) || (new Constants())->negative($operand) ? new Decimal() : $this->integer(false),
                 NumericClass::Decimal => new Decimal(),
                 NumericClass::Double => new Floating(FloatingKind::Double),
             };

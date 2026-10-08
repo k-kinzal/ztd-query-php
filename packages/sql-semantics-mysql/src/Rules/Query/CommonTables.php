@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
-use SqlSemantics\Statement\Type\TypeFact;
-use SqlSemantics\Statement\Type\Known;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
-use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
-use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
-use SqlSemantics\Platform\MySql\Rules\Typing\Aggregation;
-use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
@@ -22,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -30,7 +28,9 @@ use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Statement\Type\TypeFact;
 use SqlSemantics\Validation\ValueGraph;
 
 /**
@@ -70,16 +70,18 @@ final class CommonTables
         foreach ($with->tables as $table) {
             $key = $derivation->context->relationNames->fold($table->name->value);
             if (isset($seen[$key])) {
-                $derivation->report(new Misuse(MisuseRule::DuplicateCommonTable));
+                $derivation->report(new Misuse(MisuseRule::DuplicateCommonTable, $table->name));
             }
             $seen[$key] = true;
             $scope = $this->extended($outer, $bindings);
             $recursive = $with->recursive && $this->refers($table->query, $table->name, $derivation);
-            $materialized = $recursive || (new Materialization())->mergeable($table->query) ? null : $table->query;
+            $materialized = !$recursive && (new Materialization())->mergeable($table->query) ? null : $table->query;
             if ($recursive) {
                 $operands = $this->operands($table->query);
-                if (count($operands) < 2 || $this->refers($operands[0], $table->name, $derivation)) {
-                    $derivation->report(new Misuse(MisuseRule::RecursiveWithoutAnchor));
+                if (count($operands) < 2) {
+                    $derivation->report(new Misuse(MisuseRule::RecursiveWithoutUnion, $table->name));
+                } elseif ($this->refers($operands[0], $table->name, $derivation)) {
+                    $derivation->report(new Misuse(MisuseRule::RecursiveWithoutAnchor, $table->name));
                 }
                 $scope = $this->extended($outer, [...$bindings, new CommonBinding($table->name, $table, new RowShape([], [new RecursiveReference($table->name)]))]);
             }

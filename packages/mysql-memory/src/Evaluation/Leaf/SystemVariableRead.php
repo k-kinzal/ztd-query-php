@@ -38,12 +38,15 @@ final class SystemVariableRead implements Evaluable
     }
 
     /**
-     * Reads the value of the variable now.
+     * Reads the value of the variable now; a variable that holds NULL reads NULL.
      */
     #[Override]
-    public function evaluate(Frame $frame): int|float|string
+    public function evaluate(Frame $frame): int|float|string|null
     {
         $value = $frame->context->variables->system($this->definition, $this->scope);
+        if ($value === null) {
+            return null;
+        }
         if ($this->domain->kind === Kind::Integer) {
             return is_int($value) ? $value : (in_array(strtoupper($value), ['ON', 'TRUE'], true) ? 1 : (int) $value);
         }

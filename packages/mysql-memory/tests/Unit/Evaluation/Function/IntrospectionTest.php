@@ -125,6 +125,16 @@ final class IntrospectionTest extends TestCase
         self::assertSame([['binary', 'binary']], $result->rows);
     }
 
+    public function testRoutinesAnswerTheMetadataNamesInUtf8mb3(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $result = $session->query("SELECT COLLATION(VERSION()), COLLATION(USER()), COLLATION(DATABASE()), COERCIBILITY(DATABASE()), COLLATION(CHARSET('a')), COERCIBILITY(CHARSET('a')), VERSION() = @@version, CHARSET('a') = 'utf8mb4'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['utf8mb3_general_ci', 'utf8mb3_general_ci', 'utf8mb3_general_ci', '3', 'utf8mb3_general_ci', '4', '1', '1']], $result->rows);
+    }
+
     public function testRoutinesAnswerTheCoercibilityOfEachKindOfValue(): void
     {
         $session = (new Instance())->connect();
@@ -183,5 +193,16 @@ final class IntrospectionTest extends TestCase
         self::assertSame(9, $variables->lastInsertId);
         self::assertTrue($variables->setByFunction);
         self::assertSame(9, (new Introspection())->lastInsertId($frame, [], $integer));
+    }
+
+    public function testRoutinesReadTheRowCountAndFoundRowsOfThePreviousStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2), (3)');
+        $session->query('SELECT SQL_CALC_FOUND_ROWS * FROM t LIMIT 1');
+        $result = $session->query('SELECT FOUND_ROWS(), ROW_COUNT()')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['3', '-1']], $result->rows);
     }
 }
