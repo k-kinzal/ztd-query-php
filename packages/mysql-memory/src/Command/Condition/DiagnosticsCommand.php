@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Condition;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\ProgramError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
@@ -59,7 +59,7 @@ final class DiagnosticsCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof GetDiagnostics);
         if ($statement->area === DiagnosticsArea::Stacked) {
-            throw ErrorCode::StackedWithoutHandler->error();
+            throw ProgramError::StackedWithoutHandler->error();
         }
         $diagnostics = $session->diagnostics;
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
@@ -71,7 +71,7 @@ final class DiagnosticsCommand implements Command
             $number = $planner->compiler->compile($information->number, new Scope());
             $position = $this->position($number->evaluate(new Frame(new Context($context->modes, new Diagnostics(), $context->variables, $context->started))), $number->domain(), $context, $diagnostics->count());
             if ($position === null) {
-                $diagnostics->error(ErrorCode::InvalidConditionNumber->value, ErrorCode::InvalidConditionNumber->message());
+                $diagnostics->error(ProgramError::InvalidConditionNumber->value, ProgramError::InvalidConditionNumber->message());
 
                 return new Completion(0, 0, $diagnostics->count());
             }
@@ -89,7 +89,7 @@ final class DiagnosticsCommand implements Command
         }
         foreach ($assignments as [$target, $value, $domain]) {
             if (!$target instanceof UserVariable) {
-                throw ErrorCode::UndeclaredVariable->error($target->value);
+                throw ProgramError::UndeclaredVariable->error($target->value);
             }
             $session->variables->assign($target->name->value, $value, $domain);
         }

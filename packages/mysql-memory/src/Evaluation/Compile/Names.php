@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Assignment;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
@@ -64,7 +67,7 @@ final class Names
             return $this->field($resolution->field, $scope);
         }
         if (!$resolution instanceof ResolvedColumn) {
-            throw ErrorCode::BadField->error($use->name->value, 'field list');
+            throw QueryError::BadField->error($use->name->value, 'field list');
         }
 
         return $this->resolved($resolution, $scope, $fact->nullability !== Nullability::NotNull);
@@ -77,7 +80,7 @@ final class Names
     {
         $located = $scope->locate($resolution->relation);
         if ($located === null) {
-            throw ErrorCode::NotSupportedYet->error('a column of a relation outside the statement');
+            throw StatementError::NotSupportedYet->error('a column of a relation outside the statement');
         }
         [$depth, $holder] = $located;
         $id = spl_object_id($resolution->relation);
@@ -109,7 +112,7 @@ final class Names
             }
         }
 
-        throw ErrorCode::NotSupportedYet->error('a column outside the shape of its relation');
+        throw StatementError::NotSupportedYet->error('a column outside the shape of its relation');
     }
 
     /**
@@ -127,7 +130,7 @@ final class Names
             return $this->resolved($field->resolution, $scope, $field->nullability !== Nullability::NotNull);
         }
 
-        throw ErrorCode::NotSupportedYet->error('a select item without an expression');
+        throw StatementError::NotSupportedYet->error('a select item without an expression');
     }
 
     /**
@@ -147,7 +150,7 @@ final class Names
             }
         }
 
-        throw ErrorCode::BadField->error($node->column->name->value, 'field list');
+        throw QueryError::BadField->error($node->column->name->value, 'field list');
     }
 
     /**
@@ -157,7 +160,7 @@ final class Names
     {
         $resolution = $this->compiler->facts->scalar($ordinal)->resolution;
         if (!$resolution instanceof AliasTarget) {
-            throw ErrorCode::BadField->error($ordinal->literal->text, 'order clause');
+            throw QueryError::BadField->error($ordinal->literal->text, 'order clause');
         }
 
         return $this->field($resolution->field, $scope);
@@ -232,7 +235,7 @@ final class Names
         $name = strtolower($variable->name->value);
         $definition = $this->compiler->connection->variables->catalog->find($name);
         if ($definition === null) {
-            throw ErrorCode::UnknownSystemVariable->error($variable->name->value);
+            throw AdministrationError::UnknownSystemVariable->error($variable->name->value);
         }
         $scope = match ($variable->scope) {
             Written::Global => VariableScope::Global,
@@ -241,10 +244,10 @@ final class Names
             Written::Persist, Written::PersistOnly => VariableScope::Global,
         };
         if ($scope === VariableScope::Global && !$definition->reach->global()) {
-            throw ErrorCode::IncorrectGlobalLocalVariable->error($variable->name->value, 'SESSION');
+            throw AdministrationError::IncorrectGlobalLocalVariable->error($variable->name->value, 'SESSION');
         }
         if ($scope === VariableScope::Session && !$definition->reach->session()) {
-            throw ErrorCode::IncorrectGlobalLocalVariable->error($variable->name->value, 'GLOBAL');
+            throw AdministrationError::IncorrectGlobalLocalVariable->error($variable->name->value, 'GLOBAL');
         }
         $domain = Domain::of($definition->domain, true);
 
@@ -262,16 +265,16 @@ final class Names
     {
         $resolution = $this->compiler->facts->scalar($node->column)->resolution;
         if (!$resolution instanceof ResolvedColumn) {
-            throw ErrorCode::BadField->error($node->column->name->value, 'field list');
+            throw QueryError::BadField->error($node->column->name->value, 'field list');
         }
         $located = $scope->locate($resolution->relation);
         $definition = $located === null ? null : ($located[1]->tables[spl_object_id($resolution->relation)] ?? null);
         if ($definition === null) {
-            throw ErrorCode::NotSupportedYet->error('DEFAULT of a column of a derived table');
+            throw StatementError::NotSupportedYet->error('DEFAULT of a column of a derived table');
         }
         $column = $definition->columns[$this->position($located[1], $resolution)];
         if (!$column->default->declared) {
-            throw ErrorCode::NoDefaultForField->error($column->name);
+            throw DataError::NoDefaultForField->error($column->name);
         }
         if ($column->default->now) {
             return new Constant($column->domain, $column->nullable() ? null : '0000-00-00 00:00:00' . ($column->domain->decimals > 0 ? '.' . str_repeat('0', $column->domain->decimals) : ''));

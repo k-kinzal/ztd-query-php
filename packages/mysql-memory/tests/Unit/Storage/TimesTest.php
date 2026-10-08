@@ -6,7 +6,7 @@ namespace Tests\Unit\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Fill;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
@@ -113,14 +113,14 @@ final class TimesTest extends TestCase
         $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
         $store = new Store($context);
 
-        self::assertSame(['0000-00-00', '00:00:00.0', '0000-00-00 00:00:00.000'], [(new Times($store))->problem(ErrorCode::DataTruncated, 'x', new ColumnDefinition('c', new Domain(Kind::Date, Field::Date, 10), Fill::none())), (new Times($store))->problem(ErrorCode::DataTruncated, 'x', new ColumnDefinition('c', new Domain(Kind::Time, Field::Time, 12, 1), Fill::none())), (new Times($store))->problem(ErrorCode::OutOfRange, 'x', new ColumnDefinition('c', new Domain(Kind::DateTime, Field::DateTime, 23, 3), Fill::none()))]);
+        self::assertSame(['0000-00-00', '00:00:00.0', '0000-00-00 00:00:00.000'], [(new Times($store))->problem(DataError::DataTruncated, 'x', new ColumnDefinition('c', new Domain(Kind::Date, Field::Date, 10), Fill::none())), (new Times($store))->problem(DataError::DataTruncated, 'x', new ColumnDefinition('c', new Domain(Kind::Time, Field::Time, 12, 1), Fill::none())), (new Times($store))->problem(DataError::OutOfRange, 'x', new ColumnDefinition('c', new Domain(Kind::DateTime, Field::DateTime, 23, 3), Fill::none()))]);
     }
 
     public function testProblemWarnsOfTheConditionWithoutAStrictMode(): void
     {
         $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
 
-        (new Times(new Store($context, 2)))->problem(ErrorCode::DataTruncated, 'nope', new ColumnDefinition('c', new Domain(Kind::DateTime, Field::Timestamp, 19), Fill::none()));
+        (new Times(new Store($context, 2)))->problem(DataError::DataTruncated, 'nope', new ColumnDefinition('c', new Domain(Kind::DateTime, Field::Timestamp, 19), Fill::none()));
 
         self::assertSame([['Warning', 1265, "Data truncated for column 'c' at row 2"]], $context->diagnostics->conditions);
     }
@@ -133,7 +133,7 @@ final class TimesTest extends TestCase
         $this->expectExceptionCode(1292);
         $this->expectExceptionMessage("Incorrect time value: '12:61:00' for column 'c' at row 1");
 
-        (new Times(new Store($context)))->problem(ErrorCode::OutOfRange, '12:61:00', new ColumnDefinition('c', new Domain(Kind::Time, Field::Time, 10), Fill::none()));
+        (new Times(new Store($context)))->problem(DataError::OutOfRange, '12:61:00', new ColumnDefinition('c', new Domain(Kind::Time, Field::Time, 10), Fill::none()));
     }
 
     public function testDroppedNotesTheValueUnderAStrictModeAndTheTruncationOtherwise(): void
@@ -257,6 +257,44 @@ final class TimesTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['Warning', '1441', 'Datetime function: datetime field overflow'], ['Warning', '1264', "Out of range value for column 'd' at row 1"]], $warnings->rows);
+    }
+
+    public function testScanReadsTheDateAndTheMicrosecondsOfAText(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $times = new Times(new Store($context));
+
+        self::assertSame([[2024, 3, 1, 10, 11, 12, '5', true, 'x'], 500000], $times->scan('2024-03-01 10:11:12.5x', Domain::string(22, Collation::known('utf8mb4_0900_ai_ci')), false));
+        self::assertSame([[0, 0, 0, 0, 0, 0, '', false, ''], 0], $times->scan('0.0', Domain::decimal(2, 1), true));
+        self::assertSame([null, 0], $times->scan('none', Domain::string(4, Collation::known('utf8mb4_0900_ai_ci')), false));
+    }
+
+    public function testOverflowsHoldsForAFieldBeyondItsRange(): void
+    {
+        self::assertSame([false, true, true, true], [Times::overflows([2024, 12, 31, 23, 59, 59, '', true, '']), Times::overflows([2024, 13, 1, 0, 0, 0, '', false, '']), Times::overflows([2024, 1, 32, 0, 0, 0, '', false, '']), Times::overflows([2024, 1, 1, 0, 0, 60, '', true, ''])]);
+    }
+
+    public function testLeftoverReportsTheTextAfterTheValueBeforeADroppedTime(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('d', new Domain(Kind::Date, Field::Date, 10), Fill::none());
+        $times = new Times(new Store($context));
+
+        $times->leftover('2024-01-01 10:00:00x', 'x', [2024, 1, 1, 10, 0, 0, 0], $column);
+        $times->leftover('2024-01-01 10:00:00', '', [2024, 1, 1, 10, 0, 0, 0], $column);
+        $times->leftover('2024-01-01', '', [2024, 1, 1, 0, 0, 0, 0], $column);
+
+        self::assertSame([['Warning', 1265, "Data truncated for column 'd' at row 1"], ['Note', 1265, "Data truncated for column 'd' at row 1"]], $context->diagnostics->conditions);
+    }
+
+    public function testFitClampsATimeBeyondTheRangeAfterReportingTheTextAfterIt(): void
+    {
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
+        $column = new ColumnDefinition('e', new Domain(Kind::Time, Field::Time, 12, 1), Fill::none());
+        $times = new Times(new Store($context));
+
+        self::assertSame(['838:59:59.0', '-00:00:01.0', '00:00:00.0'], [$times->fit('900:00:00x', [false, 900, 0, 0, '', 'x'], false, $column), $times->fit('-00:00:00.96', [true, 0, 0, 0, '96', ''], false, $column), $times->fit('-00:00:00.01', [true, 0, 0, 0, '01', ''], false, $column)]);
+        self::assertSame([[1265, "Data truncated for column 'e' at row 1"], [1264, "Out of range value for column 'e' at row 1"]], array_map(static fn (array $condition): array => [$condition[1], $condition[2]], $context->diagnostics->conditions));
     }
 
     public function testTimeTakesTheTimeOfADatetimeStringWithANote(): void

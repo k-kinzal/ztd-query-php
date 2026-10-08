@@ -86,6 +86,11 @@ final class IntervalTest extends TestCase
         self::assertNull(Interval::compound('1 2 3', IntervalUnit::DayHour));
     }
 
+    public function testPartsAnswersThePartsOfACompoundUnitFromTheLargest(): void
+    {
+        self::assertSame([['year', 'month'], ['day', 'hour', 'minute', 'second', 'micro'], ['second', 'micro'], ['second', 'micro']], [Interval::parts(IntervalUnit::YearMonth), Interval::parts(IntervalUnit::DayMicrosecond), Interval::parts(IntervalUnit::SecondMicrosecond), Interval::parts(IntervalUnit::Day)]);
+    }
+
     public function testDatedHoldsForUnitsOfWholeDays(): void
     {
         self::assertSame([true, true, true, false, false, false], [Interval::dated(IntervalUnit::Day), Interval::dated(IntervalUnit::Week), Interval::dated(IntervalUnit::YearMonth), Interval::dated(IntervalUnit::Hour), Interval::dated(IntervalUnit::DayHour), Interval::dated(IntervalUnit::Second)]);

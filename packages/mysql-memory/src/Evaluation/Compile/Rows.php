@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Evaluation\Operator\Comparison\RowCompare;
@@ -54,7 +54,7 @@ final class Rows
         $one = $this->elements($left) ?? [$left];
         $two = $this->elements($right) ?? [$right];
         if (count($one) !== count($two)) {
-            throw ErrorCode::OperandColumns->error(count($one));
+            throw QueryError::OperandColumns->error(count($one));
         }
         $pairs = [];
         $nullable = false;

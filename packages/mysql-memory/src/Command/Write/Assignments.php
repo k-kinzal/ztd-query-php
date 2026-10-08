@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Write;
 
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Plan\Planner;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
@@ -40,6 +40,6 @@ final class Assignments
             }
         }
 
-        throw ErrorCode::BadField->error($use->name->value, 'field list');
+        throw QueryError::BadField->error($use->name->value, 'field list');
     }
 }

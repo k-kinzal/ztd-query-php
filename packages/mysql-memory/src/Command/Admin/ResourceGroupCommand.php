@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Registry\ResourceGroup;
@@ -88,11 +89,11 @@ final class ResourceGroupCommand implements Command
     {
         $name = $statement->name->value;
         if (mb_strlen($name) > 64) {
-            throw ErrorCode::TooLongIdentifier->error($name);
+            throw SchemaError::TooLongIdentifier->error($name);
         }
         $cpus = $this->cpus($statement->cpus, $groups->processors);
         if ($groups->find($name) !== null) {
-            throw ErrorCode::ResourceGroupExists->error($name);
+            throw AdministrationError::ResourceGroupExists->error($name);
         }
         $groups->add(new ResourceGroup($name, $statement->kind === ResourceGroupKind::System, $cpus, $this->priority($statement->priority), $statement->enabled ?? true));
     }
@@ -106,17 +107,17 @@ final class ResourceGroupCommand implements Command
     {
         $name = $statement->name->value;
         $cpus = $this->cpus($statement->cpus, $groups->processors);
-        $group = $groups->find($name) ?? throw ErrorCode::ResourceGroupMissing->error($name);
+        $group = $groups->find($name) ?? throw AdministrationError::ResourceGroupMissing->error($name);
         if ($groups->predefined($name)) {
-            throw ErrorCode::OperationDisallowed->error('Alter', 'default resource groups.');
+            throw AdministrationError::OperationDisallowed->error('Alter', 'default resource groups.');
         }
         $priority = $this->priority($statement->priority);
         [$low, $high] = $group->system ? [-20, 0] : [0, 19];
         if ($priority < $low || $priority > $high) {
-            throw ErrorCode::InvalidThreadPriority->error((string) $priority, $group->system ? 'System' : 'User', $name, (string) $low, (string) $high);
+            throw AdministrationError::InvalidThreadPriority->error((string) $priority, $group->system ? 'System' : 'User', $name, (string) $low, (string) $high);
         }
         if ($statement->force && $statement->enabled !== false) {
-            throw ErrorCode::ForceWithoutDisable->error();
+            throw AdministrationError::ForceWithoutDisable->error();
         }
         if ($statement->cpus !== []) {
             $group->cpus = $cpus;
@@ -138,13 +139,13 @@ final class ResourceGroupCommand implements Command
     {
         $name = $statement->name->value;
         if ($groups->find($name) === null) {
-            throw ErrorCode::ResourceGroupMissing->error($name);
+            throw AdministrationError::ResourceGroupMissing->error($name);
         }
         if ($groups->predefined($name)) {
-            throw ErrorCode::OperationDisallowed->error('Drop operation ', 'default resource groups.');
+            throw AdministrationError::OperationDisallowed->error('Drop operation ', 'default resource groups.');
         }
         if (!$statement->force && $groups->busy($name)) {
-            throw ErrorCode::ResourceGroupBusy->error($name);
+            throw AdministrationError::ResourceGroupBusy->error($name);
         }
         $groups->remove($name);
     }
@@ -157,18 +158,18 @@ final class ResourceGroupCommand implements Command
     public function assign(SetResourceGroup $statement, Session $session, ResourceGroups $groups): void
     {
         $name = $statement->name->value;
-        $group = $groups->find($name) ?? throw ErrorCode::ResourceGroupMissing->error($name);
+        $group = $groups->find($name) ?? throw AdministrationError::ResourceGroupMissing->error($name);
         if (!$group->enabled) {
-            throw ErrorCode::ResourceGroupDisabled->error($name);
+            throw AdministrationError::ResourceGroupDisabled->error($name);
         }
         if (count($statement->threads) === 1) {
-            throw ErrorCode::InvalidThreadId->error((new Literals())->number($statement->threads[0]));
+            throw AdministrationError::InvalidThreadId->error((new Literals())->number($statement->threads[0]));
         }
         if ($statement->threads !== []) {
             return;
         }
         if ($group->system) {
-            throw ErrorCode::ResourceGroupBindFailed->error($name, (string) $session->id, "System resource group can't be applied to user thread.");
+            throw AdministrationError::ResourceGroupBindFailed->error($name, (string) $session->id, "System resource group can't be applied to user thread.");
         }
         $groups->bind($session->id, $name);
     }
@@ -193,7 +194,7 @@ final class ResourceGroupCommand implements Command
             $last = $range->last === null ? $first : $literals->number($range->last);
             foreach ([$first, $last] as $cpu) {
                 if (bccomp($cpu, (string) ($processors - 1)) > 0) {
-                    throw ErrorCode::InvalidCpuId->error($cpu);
+                    throw AdministrationError::InvalidCpuId->error($cpu);
                 }
             }
             $bounds[] = [(int) $first, (int) $last];
@@ -201,7 +202,7 @@ final class ResourceGroupCommand implements Command
         $cpus = [];
         foreach ($bounds as [$first, $last]) {
             if ($first > $last) {
-                throw ErrorCode::InvalidCpuRange->error((string) $first, (string) $last);
+                throw AdministrationError::InvalidCpuRange->error((string) $first, (string) $last);
             }
             array_push($cpus, ...range($first, $last));
         }

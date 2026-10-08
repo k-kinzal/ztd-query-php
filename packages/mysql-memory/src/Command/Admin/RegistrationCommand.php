@@ -7,7 +7,9 @@ namespace MySqlMemory\Command\Admin;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Account\Names;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
@@ -48,20 +50,20 @@ final class RegistrationCommand implements Command
     {
         $statement = $operation->statement;
         if (!$statement instanceof AlterRegistration) {
-            throw ErrorCode::NotSupportedYet->error('this registration statement');
+            throw StatementError::NotSupportedYet->error('this registration statement');
         }
         $session->transaction->commit();
         $names = new Names();
         $names->check([$statement->user]);
         if ($statement->step === RegistrationStep::Unregister) {
-            throw ErrorCode::PluginIsNotLoaded->error('');
+            throw AdministrationError::PluginIsNotLoaded->error('');
         }
         $current = new Identity($session->user, '%');
         if ($names->identity($statement->user, $session)->key() !== $current->key()) {
-            throw ErrorCode::RegistrationNotAllowed->error($current->user, $current->host);
+            throw AccountError::RegistrationNotAllowed->error($current->user, $current->host);
         }
         $factor = (new Literals())->number($statement->factor);
 
-        throw ErrorCode::FactorMissing->error($factor, $factor);
+        throw AccountError::FactorMissing->error($factor, $factor);
     }
 }

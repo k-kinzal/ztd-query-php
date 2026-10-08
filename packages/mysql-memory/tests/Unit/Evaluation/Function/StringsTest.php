@@ -29,7 +29,7 @@ final class StringsTest extends TestCase
     {
         $names = array_map(static fn ($routine): string => $routine->name, (new Strings())->routines());
 
-        self::assertSame(['CONCAT', 'CONCAT_WS', 'UPPER', 'UCASE', 'LOWER', 'LCASE', 'LEFT', 'RIGHT', 'SUBSTRING', 'SUBSTR', 'MID', 'REPLACE', 'REVERSE', 'REPEAT', 'LPAD', 'RPAD', 'LTRIM', 'RTRIM', 'SPACE', 'HEX', 'UNHEX', 'SUBSTRING_INDEX', 'INSERT'], $names);
+        self::assertSame(['CONCAT', 'CONCAT_WS', 'REPLACE', 'REVERSE', 'REPEAT', 'LPAD', 'RPAD', 'LTRIM', 'RTRIM', 'SPACE', 'HEX', 'UNHEX'], $names);
     }
 
     public function testLengthAnswersTheDisplayLengthOfADomain(): void
@@ -115,88 +115,6 @@ final class StringsTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([[null]], $result->rows);
-    }
-
-    public function testUpperConvertsTheTextToUpperCase(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT UPPER('Hej'), UCASE('abc'), UPPER('é'), UPPER(_latin1 'abc'), UPPER(NULL)")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['HEJ', 'ABC', 'É', 'ABC', null]], $result->rows);
-    }
-
-    public function testUpperLeavesABinaryStringUnchanged(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT UPPER(BINARY 'abc')")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['abc']], $result->rows);
-        self::assertTrue($result->columns[0]->binary());
-    }
-
-    public function testLowerConvertsTheTextToLowerCase(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT LOWER('QUADRATICALLY'), LCASE('ABC'), LOWER('ÀBC'), LOWER(_latin1 'ABC'), LOWER(NULL)")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['quadratically', 'abc', 'àbc', 'abc', null]], $result->rows);
-    }
-
-    public function testLowerLeavesABinaryStringUnchanged(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT LOWER(BINARY 'ABC')")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['ABC']], $result->rows);
-    }
-
-    public function testLeftTakesTheLeftmostCharacters(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT LEFT('foobarbar', 5), LEFT('héllo', 2), LEFT('abc', 9), LEFT('abc', 0), LEFT('abc', -1), LEFT(NULL, 1), LEFT('abc', NULL)")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['fooba', 'hé', 'abc', '', '', null, null]], $result->rows);
-    }
-
-    public function testRightTakesTheRightmostCharacters(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT RIGHT('foobarbar', 4), RIGHT('héllo', 4), RIGHT('abc', 9), RIGHT('abc', 0), RIGHT('abc', -1), RIGHT(NULL, 1)")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['rbar', 'éllo', 'abc', '', '', null]], $result->rows);
-    }
-
-    public function testSubstringTakesCharactersFromAPosition(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT SUBSTRING('Quadratically', 5), SUBSTRING('foobarbar' FROM 4), SUBSTRING('Quadratically', 5, 6), SUBSTR('héllo', 2, 2), MID('abcdef', 2, 3)")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['ratically', 'barbar', 'ratica', 'él', 'bcd']], $result->rows);
-    }
-
-    public function testSubstringCountsANegativePositionFromTheEnd(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT SUBSTRING('Sakila', -3), SUBSTRING('Sakila', -5, 3), SUBSTRING('Sakila' FROM -4 FOR 2), SUBSTRING('abc', -4)")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['ila', 'aki', 'ki', '']], $result->rows);
-    }
-
-    public function testSubstringAnswersAnEmptyStringOutsideTheText(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT SUBSTRING('abc', 0), SUBSTRING('abc', 5), SUBSTRING('abc', 1, 0), SUBSTRING('abc', 1, -1), SUBSTRING(NULL, 1), SUBSTRING('abc', NULL)")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['', '', '', '', null, null]], $result->rows);
     }
 
     public function testReplaceReplacesEveryOccurrenceCaseSensitively(): void
@@ -323,42 +241,6 @@ final class StringsTest extends TestCase
         self::assertSame([[null, null, null]], $result->rows);
     }
 
-    public function testSubstringIndexTakesTheTextAroundADelimiter(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT SUBSTRING_INDEX('www.mysql.com', '.', 2), SUBSTRING_INDEX('www.mysql.com', '.', -2), SUBSTRING_INDEX('a.b', '.', 5), SUBSTRING_INDEX('a.b', '.', -5)")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['www.mysql', 'mysql.com', 'a.b', 'a.b']], $result->rows);
-    }
-
-    public function testSubstringIndexAnswersAnEmptyStringForAZeroCountOrAnEmptyDelimiter(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT SUBSTRING_INDEX('a.b', '.', 0), SUBSTRING_INDEX('a.b', '', 1), SUBSTRING_INDEX(NULL, '.', 1)")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['', '', null]], $result->rows);
-    }
-
-    public function testInsertReplacesCharactersFromAPosition(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT INSERT('Quadratic', 3, 4, 'What'), INSERT('Quadratic', -1, 4, 'What'), INSERT('Quadratic', 3, 100, 'What'), INSERT('Quadratic', 3, -1, 'What'), INSERT('héllo', 2, 1, 'e')")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['QuWhattic', 'Quadratic', 'QuWhat', 'QuWhat', 'hello']], $result->rows);
-    }
-
-    public function testInsertAnswersNullForANullArgument(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT INSERT(NULL, 1, 1, 'x'), INSERT('abc', NULL, 1, 'x'), INSERT('abc', 1, 1, NULL)")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([[null, null, null]], $result->rows);
-    }
-
     public function testFitsWarnsForEachResultPastMaxAllowedPacket(): void
     {
         $instance = new Instance();
@@ -399,56 +281,6 @@ final class StringsTest extends TestCase
         self::assertSame([['abc', 'abc', 'abc', '', 'x', 'a,b,c']], $result->rows);
     }
 
-    public function testUpperMapsEachCharacterToOneCharacter(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT UPPER('straße'), LOWER('İ'), UPPER('ς'), LOWER('ΣΑΣ')")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['STRAßE', 'i', 'Σ', 'σασ']], $result->rows);
-    }
-
-    public function testCasedFollowsTheUnicodeVersionOfTheCollation(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT HEX(UPPER(_utf8mb4'ა' COLLATE utf8mb4_0900_ai_ci)), HEX(UPPER(_utf8mb4'ꞵ' COLLATE utf8mb4_unicode_520_ci)), HEX(UPPER(_utf8mb4'ꞵ' COLLATE utf8mb4_0900_ai_ci)), HEX(UPPER(_utf8mb4'ϲ' COLLATE utf8mb4_general_ci)), HEX(UPPER(_utf8mb4'iı' COLLATE utf8mb4_turkish_ci)), HEX(LOWER(_utf8mb4'Iİ' COLLATE utf8mb4_turkish_ci)), HEX(UPPER(_utf8mb4'𐐨' COLLATE utf8mb4_general_ci)), HEX(UPPER(_utf8mb4'𐐨' COLLATE utf8mb4_0900_ai_ci))")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['E18390', 'EA9EB5', 'EA9EB4', 'CEA3', 'C4B049', 'C4B169', 'F09090A8', 'F0909080']], $result->rows);
-    }
-
-    public function testCasedMapsUtf8InPlace(): void
-    {
-        $strings = new Strings();
-        $collation = Collation::known('utf8mb4_0900_ai_ci');
-
-        self::assertSame(["A\u{2C6F}", '', "\u{2C6F}", "a\u{2C66}"], [$strings->cased('aɐb', $collation, true), $strings->cased('ɐ', $collation, true), $strings->cased('ɐɐɐ', $collation, true), $strings->cased('AȾBȺC', $collation, false)]);
-    }
-
-    public function testCasedMapsTheCharactersOfASingleByteCharacterSet(): void
-    {
-        $session = (new Instance())->connect();
-        $result = $session->query("SELECT HEX(UPPER(CONVERT('éÿšµ' USING latin1))), HEX(LOWER(CONVERT('ÉŠ' USING latin1))), HEX(UPPER(CONVERT('aé' USING ucs2)))")[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['C9FF9AB5', 'E98A', '004100C9']], $result->rows);
-    }
-
-    public function testMappedAppliesTheSimpleCaseMappingOfAVersion(): void
-    {
-        $strings = new Strings();
-
-        self::assertSame([0x1C90, 0x10D0, 0x3A3, 0x130, 0xDF, 0x10400, 0x10428], [
-            $strings->mapped(0x10D0, true, 99.0, false, false),
-            $strings->mapped(0x10D0, true, 9.0, false, false),
-            $strings->mapped(0x3F2, true, 3.0, true, false),
-            $strings->mapped(0x69, true, 3.0, true, true),
-            $strings->mapped(0xDF, true, 9.0, false, false),
-            $strings->mapped(0x10428, true, 5.2, false, false),
-            $strings->mapped(0x10428, true, 3.0, true, false),
-        ]);
-    }
-
     public function testTextConvertsAnArgumentIntoTheCharacterSetOfTheResult(): void
     {
         $session = (new Instance())->connect();
@@ -473,13 +305,4 @@ final class StringsTest extends TestCase
         self::assertSame(['é', "\x00b"], [(new Strings())->slice('héb', 1, 1, Domain::string(4, Collation::known('utf8mb4_0900_ai_ci'))), (new Strings())->slice("\x00a\x00b", 1, null, Domain::string(4, Collation::known('ucs2_general_ci')))]);
     }
 
-    public function testInPlaceStopsAtACharacterThatWouldPassTheEnd(): void
-    {
-        self::assertSame(['XYZ', "\u{2C6F}", 'ABC'], [(new Strings())->inPlace('xyzɐ', true, 9.0), (new Strings())->inPlace('ɐıı', true, 9.0), (new Strings())->inPlace('abc', true, 3.0)]);
-    }
-
-    public function testPointAnswersTheCodePointOfACharacter(): void
-    {
-        self::assertSame([0xE9, null, null, 0xE9], [(new Strings())->point('é', 'UTF-8'), (new Strings())->point("\xC3", 'UTF-8'), (new Strings())->point('', 'UTF-8'), (new Strings())->point("\x00\xE9", 'UCS-2BE')]);
-    }
 }

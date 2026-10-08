@@ -20,7 +20,7 @@ use Override;
  *
  * @visibility MySqlMemory
  */
-final class Numeric implements Evaluable
+final class DoubleOperand implements Evaluable
 {
     /**
      * The domain of the double: nullable as the operand is.

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Show;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
@@ -50,7 +50,7 @@ final class ShowCreateDatabaseCommand implements Command
         $name = $statement->name->value;
         $schema = $session->instance->dictionary->schema($name);
         if ($schema === null) {
-            throw ErrorCode::BadDatabase->error($name);
+            throw QueryError::BadDatabase->error($name);
         }
         $collation = $name === 'information_schema' ? Collation::known('utf8mb3_general_ci') : (Collation::named($schema->collation) ?? Collation::known('utf8mb4_0900_ai_ci'));
         $charset = $collation->charset;

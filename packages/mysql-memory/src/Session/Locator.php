@@ -220,24 +220,7 @@ final class Locator
                 $children[] = $current->query;
                 $positions[] = [...$at, 0];
             } elseif ($current instanceof Node) {
-                if ($current instanceof ExpressionPart) {
-                    $keyed = $current->expression;
-                    while ($keyed instanceof Grouped) {
-                        $keyed = $keyed->operand;
-                    }
-                    $this->keyed[spl_object_id($keyed)] = true;
-                }
-                if ($current instanceof Cast && $current->array && $current->arrayRefusal() === null && !isset($this->keyed[spl_object_id($current)])) {
-                    $this->arrays[] = [$current, $clause, $at];
-                }
-                if ($current instanceof ColumnUse || $current instanceof OutputOrdinal || $current instanceof FunctionCall) {
-                    $this->places[spl_object_id($current)] = [$clause, $at];
-                    $this->nodes[] = $current;
-                }
-                if ($current instanceof ClockCall) {
-                    $this->places[spl_object_id($current)] = [$clause, $at];
-                    $this->clocks[] = $current;
-                }
+                $this->record($current, $clause, $at);
                 $index = 0;
                 foreach (get_object_vars($current) as $property) {
                     $children[] = $property;
@@ -246,6 +229,37 @@ final class Locator
             }
             array_push($values, ...array_reverse($children));
             array_push($orders, ...array_reverse($positions));
+        }
+    }
+
+    /**
+     * Records what a node read in a clause at an order tells, before its children are visited.
+     *
+     * A functional key part marks its cast, ungrouped, as keyed; a cast to an array of a type a
+     * multi-valued index takes, outside a key part, is recorded with its place; a column name,
+     * select list position or function call is located, and so is a clock call.
+     *
+     * @param list<int> $order
+     */
+    public function record(Node $node, string $clause, array $order): void
+    {
+        if ($node instanceof ExpressionPart) {
+            $keyed = $node->expression;
+            while ($keyed instanceof Grouped) {
+                $keyed = $keyed->operand;
+            }
+            $this->keyed[spl_object_id($keyed)] = true;
+        }
+        if ($node instanceof Cast && $node->array && $node->arrayRefusal() === null && !isset($this->keyed[spl_object_id($node)])) {
+            $this->arrays[] = [$node, $clause, $order];
+        }
+        if ($node instanceof ColumnUse || $node instanceof OutputOrdinal || $node instanceof FunctionCall) {
+            $this->places[spl_object_id($node)] = [$clause, $order];
+            $this->nodes[] = $node;
+        }
+        if ($node instanceof ClockCall) {
+            $this->places[spl_object_id($node)] = [$clause, $order];
+            $this->clocks[] = $node;
         }
     }
 

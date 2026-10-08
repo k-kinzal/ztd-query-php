@@ -6,8 +6,10 @@ namespace MySqlMemory\Command\Account;
 
 use LogicException;
 use MySqlMemory\Account\Identity;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Session\Diagnostics;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole;
@@ -82,14 +84,14 @@ final class Names
             }
             $user = $name->user->value;
             if (mb_strlen($user, 'UTF-8') > 32) {
-                throw ErrorCode::WrongStringLength->error($this->cut($user), 'user name', 32);
+                throw DataError::WrongStringLength->error($this->cut($user), 'user name', 32);
             }
             $host = $name->host->value ?? '%';
             if (strlen($host) > 255) {
-                throw ErrorCode::WrongStringLength->error($this->cut($host), 'host name', 255);
+                throw DataError::WrongStringLength->error($this->cut($host), 'host name', 255);
             }
             if (str_contains($host, '@')) {
-                throw new SqlError(ErrorCode::UnknownError, "Malformed hostname (illegal symbol: '@')");
+                throw new SqlError(StatementError::UnknownError, "Malformed hostname (illegal symbol: '@')");
             }
         }
     }
@@ -146,7 +148,7 @@ final class Names
         $rest = substr($identity->host, $match[0][1]);
         $quoted = (string) preg_replace_callback('/[^\x20-\x7E]/', static fn (array $byte): string => sprintf('\\x%02X', ord($byte[0])), substr($rest, 0, 6));
         for ($i = 0; $i < $tables; $i++) {
-            $diagnostics->warning(ErrorCode::TruncatedWrongValueForField, ErrorCode::TruncatedWrongValueForField->message('string', $quoted . (strlen($rest) > 6 ? '...' : ''), 'Host', 1));
+            $diagnostics->warning(DataError::TruncatedWrongValueForField, DataError::TruncatedWrongValueForField->message('string', $quoted . (strlen($rest) > 6 ? '...' : ''), 'Host', 1));
         }
     }
 
@@ -159,6 +161,6 @@ final class Names
         if ($host === '' || strpbrk($host, '%_:') !== false || preg_match('/\A[0-9.\/]+\z/', $host) === 1) {
             return;
         }
-        $diagnostics->warning(ErrorCode::HostnameWontWork, ErrorCode::HostnameWontWork->message());
+        $diagnostics->warning(AccountError::HostnameWontWork, AccountError::HostnameWontWork->message());
     }
 }

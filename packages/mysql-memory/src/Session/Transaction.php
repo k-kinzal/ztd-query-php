@@ -6,8 +6,9 @@ namespace MySqlMemory\Session;
 
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\ProgramError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Registry\Registry;
 use MySqlMemory\Storage\Heap;
 
@@ -156,7 +157,7 @@ final class Transaction
     public function guard(): void
     {
         if ($this->xa !== XaState::NonExisting) {
-            throw ErrorCode::XaWrongState->error($this->xa->value);
+            throw StatementError::XaWrongState->error($this->xa->value);
         }
     }
 
@@ -234,7 +235,7 @@ final class Transaction
      */
     public function rollbackTo(string $name): void
     {
-        $index = $this->find($name) ?? throw ErrorCode::RoutineMissing->error('SAVEPOINT', $name);
+        $index = $this->find($name) ?? throw ProgramError::RoutineMissing->error('SAVEPOINT', $name);
         foreach ($this->savepoints[$index][2] as [$table, $data]) {
             $table->data = $data;
         }
@@ -249,7 +250,7 @@ final class Transaction
      */
     public function release(string $name): void
     {
-        $index = $this->find($name) ?? throw ErrorCode::RoutineMissing->error('SAVEPOINT', $name);
+        $index = $this->find($name) ?? throw ProgramError::RoutineMissing->error('SAVEPOINT', $name);
         $this->savepoints = array_slice($this->savepoints, 0, $index);
     }
 }

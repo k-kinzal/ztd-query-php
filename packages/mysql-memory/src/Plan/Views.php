@@ -6,7 +6,8 @@ namespace MySqlMemory\Plan;
 
 use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Dictionary\View;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Evaluation\Compile\Walker;
@@ -85,8 +86,8 @@ final class Views
         try {
             $plan = $planner->query($view->query, null);
         } catch (SqlError $error) {
-            if ($error->error === ErrorCode::NoSuchTable || $error->error === ErrorCode::BadField || $error->error === ErrorCode::ViewInvalid) {
-                throw new SqlError(ErrorCode::ViewInvalid, ErrorCode::ViewInvalid->message($view->schema, $view->name), $error);
+            if ($error->error === QueryError::NoSuchTable || $error->error === QueryError::BadField || $error->error === SchemaError::ViewInvalid) {
+                throw new SqlError(SchemaError::ViewInvalid, SchemaError::ViewInvalid->message($view->schema, $view->name), $error);
             }
             throw $error;
         }
@@ -125,36 +126,54 @@ final class Views
      */
     public static function stored(View $view, Dictionary $dictionary): \MySqlMemory\Dictionary\StoredTable
     {
-        $projection = $view->operation->facts->query($view->query)->projection;
         $columns = [];
         foreach ($view->declaration->columns as $index => $column) {
             $type = $column->type;
             $nullable = $column->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull;
             $domain = $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain && $type->kind !== Kind::Null ? Domain::of($type, $nullable) : new Domain(Kind::String, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, 0, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), true);
-            $field = $projection[$view->positions[$index] ?? $index] ?? null;
-            $resolution = $field instanceof \SqlSemantics\Statement\Shape\Field && ($field->expression === null || $field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) ? ($field->expression === null ? $field->resolution : $view->operation->facts->scalar($field->expression)->resolution) : null;
-            $base = null;
-            if ($resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn && $resolution->relation instanceof TableReference && $resolution->slot->name !== null) {
-                $read = $resolution->relation->name;
-                $table = $dictionary->table($read->schema->value ?? $view->database, $read->name->value);
-                $position = $table?->definition->position($resolution->slot->name->value);
-                $base = $table !== null && $position !== null ? $table->definition->columns[$position]->default : null;
-            }
-            $zero = match ($domain->kind) {
-                Kind::Integer, Kind::Year, Kind::Bit => 0,
-                Kind::Decimal => $domain->decimals > 0 ? '0.' . str_repeat('0', $domain->decimals) : '0',
-                Kind::Double => 0.0,
-                Kind::Date => '0000-00-00',
-                Kind::DateTime => '0000-00-00 00:00:00',
-                Kind::Time => '00:00:00',
-                Kind::String, Kind::Json => '',
-                Kind::Null => null,
-            };
-            $default = $base ?? ($nullable ? \MySqlMemory\Dictionary\Fill::none() : \MySqlMemory\Dictionary\Fill::constant($zero, null));
+            $base = self::baseDefault($view, $dictionary, $view->positions[$index] ?? $index);
+            $default = $base ?? ($nullable ? \MySqlMemory\Dictionary\Fill::none() : \MySqlMemory\Dictionary\Fill::constant(self::zero($domain), null));
             $columns[] = new \MySqlMemory\Dictionary\ColumnDefinition($column->name->value, $domain, $default, false, false, null, false, $column);
         }
 
         return new \MySqlMemory\Dictionary\StoredTable(new \MySqlMemory\Dictionary\TableDefinition($view->schema, $view->name, $columns, [], $view->declaration, ''), new \MySqlMemory\Storage\Heap());
+    }
+
+    /**
+     * Answers the default of the table column an output column of the query of a view reads
+     * directly, or null for a computed column.
+     *
+     * @param int $position The position of the column in the output of the query
+     */
+    public static function baseDefault(View $view, Dictionary $dictionary, int $position): ?\MySqlMemory\Dictionary\Fill
+    {
+        $field = $view->operation->facts->query($view->query)->projection[$position] ?? null;
+        $resolution = $field instanceof \SqlSemantics\Statement\Shape\Field && ($field->expression === null || $field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) ? ($field->expression === null ? $field->resolution : $view->operation->facts->scalar($field->expression)->resolution) : null;
+        if (!$resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn || !$resolution->relation instanceof TableReference || $resolution->slot->name === null) {
+            return null;
+        }
+        $read = $resolution->relation->name;
+        $table = $dictionary->table($read->schema->value ?? $view->database, $read->name->value);
+        $column = $table?->definition->position($resolution->slot->name->value);
+
+        return $table !== null && $column !== null ? $table->definition->columns[$column]->default : null;
+    }
+
+    /**
+     * Answers the zero value of a type: what a computed column that is never NULL defaults to.
+     */
+    public static function zero(Domain $domain): int|float|string|null
+    {
+        return match ($domain->kind) {
+            Kind::Integer, Kind::Year, Kind::Bit => 0,
+            Kind::Decimal => $domain->decimals > 0 ? '0.' . str_repeat('0', $domain->decimals) : '0',
+            Kind::Double => 0.0,
+            Kind::Date => '0000-00-00',
+            Kind::DateTime => '0000-00-00 00:00:00',
+            Kind::Time => '00:00:00',
+            Kind::String, Kind::Json => '',
+            Kind::Null => null,
+        };
     }
 
     /**
@@ -182,18 +201,18 @@ final class Views
         try {
             $operation = $semantics->analyze($semantics->parser()->parse($view->select), $semantics->context($dictionary->declarations(), true, new SearchPath($view->database), $settings->resolution()));
         } catch (AnalysisException|SourceException $failure) {
-            throw new SqlError(ErrorCode::ViewInvalid, ErrorCode::ViewInvalid->message($view->schema, $view->name), $failure);
+            throw new SqlError(SchemaError::ViewInvalid, SchemaError::ViewInvalid->message($view->schema, $view->name), $failure);
         }
         $query = $operation->statement;
         if ($operation->facts->diagnostics !== [] || !$query instanceof Query) {
-            throw ErrorCode::ViewInvalid->error($view->schema, $view->name);
+            throw SchemaError::ViewInvalid->error($view->schema, $view->name);
         }
         $names = self::outputs($operation, $query);
         $positions = [];
         foreach ($outputs as $output) {
             $position = array_search($output, $names, true);
             if (!is_int($position)) {
-                throw ErrorCode::ViewInvalid->error($view->schema, $view->name);
+                throw SchemaError::ViewInvalid->error($view->schema, $view->name);
             }
             $positions[] = $position;
         }

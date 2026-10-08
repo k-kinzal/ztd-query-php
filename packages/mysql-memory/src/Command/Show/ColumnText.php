@@ -46,6 +46,14 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 final class ColumnText
 {
     /**
+     * The name of each type whose name does not depend on the column, by the name of the field
+     * of the column.
+     *
+     * @var array<string, string>
+     */
+    public const NAMES = ['Tiny' => 'tinyint', 'Short' => 'smallint', 'Int24' => 'mediumint', 'Long' => 'int', 'LongLong' => 'bigint', 'Float' => 'float', 'Double' => 'double', 'Date' => 'date', 'NewDate' => 'date', 'Time' => 'time', 'DateTime' => 'datetime', 'Timestamp' => 'timestamp', 'Year' => 'year', 'Json' => 'json', 'Geometry' => 'geometry', 'Null' => 'null'];
+
+    /**
      * Answers the type a column of a table was declared with, or null when the declaration is not known.
      */
     public function written(TableDefinition $table, ColumnDefinition $column): ?TypeName
@@ -100,39 +108,58 @@ final class ColumnText
         if ($written instanceof Spatial) {
             return $written->kind === SpatialKind::GeometryCollection ? 'geomcollection' : strtolower($written->kind->value);
         }
-        $zeroFill = ($written instanceof Integral || $written instanceof Decimal || $written instanceof Floating) && in_array(NumericModifier::Zerofill, $written->modifiers, true);
-        $unsigned = ($domain->unsigned || $zeroFill) && $domain->kind !== Kind::Bit && $domain->kind !== Kind::Year ? ' unsigned' . ($zeroFill ? ' zerofill' : '') : '';
+        $unsigned = $this->unsigned($domain, $written);
         $fraction = $domain->decimals > 0 ? '(' . $domain->decimals . ')' : '';
         $binary = $domain->collation->bytes();
-        $boolean = $written instanceof Elementary && $written->kind === ElementaryKind::Boolean;
-        $width = match (true) {
-            $zeroFill => '(' . ($domain->display ?? $domain->length) . ')',
-            $boolean || ($domain->field === Field::Tiny && $domain->display === 1 && !$domain->unsigned) => '(1)',
-            default => '',
-        };
 
         return match ($domain->field) {
-            Field::Tiny => 'tinyint' . $width . $unsigned,
-            Field::Short => 'smallint' . $width . $unsigned,
-            Field::Int24 => 'mediumint' . $width . $unsigned,
-            Field::Long => 'int' . $width . $unsigned,
-            Field::LongLong => 'bigint' . $width . $unsigned,
-            Field::Float, Field::Double => ($domain->field === Field::Float ? 'float' : 'double') . ($domain->decimals < Domain::NOT_FIXED ? '(' . $domain->length . ',' . $domain->decimals . ')' : '') . $unsigned,
+            Field::Tiny, Field::Short, Field::Int24, Field::Long, Field::LongLong => self::NAMES[$domain->field->name] . $this->width($domain, $written) . $unsigned,
+            Field::Float, Field::Double => self::NAMES[$domain->field->name] . ($domain->decimals < Domain::NOT_FIXED ? '(' . $domain->length . ',' . $domain->decimals . ')' : '') . $unsigned,
             Field::Decimal, Field::NewDecimal => 'decimal(' . $domain->precision() . ',' . $domain->decimals . ')' . $unsigned,
             Field::Bit => 'bit(' . $domain->length . ')',
-            Field::Date, Field::NewDate => 'date',
-            Field::Time => 'time' . $fraction,
-            Field::DateTime => 'datetime' . $fraction,
-            Field::Timestamp => 'timestamp' . $fraction,
-            Field::Year => 'year',
+            Field::Time, Field::DateTime, Field::Timestamp => self::NAMES[$domain->field->name] . $fraction,
+            Field::Date, Field::NewDate, Field::Year, Field::Json, Field::Geometry, Field::Null => self::NAMES[$domain->field->name],
             Field::String => ($binary ? 'binary(' : 'char(') . $domain->length . ')',
             Field::VarChar, Field::VarString => ($binary ? 'varbinary(' : 'varchar(') . $domain->length . ')',
             Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob => $this->blob($domain),
             Field::Enum, Field::Set => ($domain->field === Field::Enum ? 'enum(' : 'set(') . implode(',', array_map(fn (string $member): string => $this->quoted($this->utf8($member, $domain)), $domain->members)) . ')',
-            Field::Json => 'json',
-            Field::Geometry => 'geometry',
             Field::Vector => 'vector(' . $domain->length . ')',
-            Field::Null => 'null',
+        };
+    }
+
+    /**
+     * Tells whether a column was declared with a numeric type that is ZEROFILL.
+     */
+    public function zeroFill(?TypeName $written): bool
+    {
+        return ($written instanceof Integral || $written instanceof Decimal || $written instanceof Floating) && in_array(NumericModifier::Zerofill, $written->modifiers, true);
+    }
+
+    /**
+     * Writes the sign attributes of a numeric column: unsigned, and zerofill, which implies
+     * unsigned; a BIT or YEAR column has none.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/numeric-type-attributes.html.
+     */
+    public function unsigned(Domain $domain, ?TypeName $written): string
+    {
+        $zeroFill = $this->zeroFill($written);
+
+        return ($domain->unsigned || $zeroFill) && $domain->kind !== Kind::Bit && $domain->kind !== Kind::Year ? ' unsigned' . ($zeroFill ? ' zerofill' : '') : '';
+    }
+
+    /**
+     * Writes the display width of an integer column: only for a ZEROFILL column, and (1) for a
+     * boolean or a signed TINYINT(1).
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/numeric-type-attributes.html.
+     */
+    public function width(Domain $domain, ?TypeName $written): string
+    {
+        $boolean = $written instanceof Elementary && $written->kind === ElementaryKind::Boolean;
+
+        return match (true) {
+            $this->zeroFill($written) => '(' . ($domain->display ?? $domain->length) . ')',
+            $boolean || ($domain->field === Field::Tiny && $domain->display === 1 && !$domain->unsigned) => '(1)',
+            default => '',
         };
     }
 

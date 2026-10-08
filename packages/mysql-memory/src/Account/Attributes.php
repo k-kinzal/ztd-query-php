@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Account;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Value\Json\Json;
 use MySqlMemory\Value\Json\JsonKind;
@@ -37,10 +37,10 @@ final class Attributes
         try {
             $node = JsonNode::parse($patch);
         } catch (JsonSyntax $failure) {
-            throw new SqlError(ErrorCode::InvalidUserAttributeJson, ErrorCode::InvalidUserAttributeJson->message(), $failure);
+            throw new SqlError(AccountError::InvalidUserAttributeJson, AccountError::InvalidUserAttributeJson->message(), $failure);
         }
         if ($node->type !== JsonKind::Object) {
-            throw ErrorCode::InvalidUserAttributeJson->error();
+            throw AccountError::InvalidUserAttributeJson->error();
         }
 
         return $this->text($this->patch($current === null ? new JsonNode(JsonKind::Object, []) : JsonNode::parse($current), $node));

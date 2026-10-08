@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Function;
 
+use MySqlMemory\Evaluation\Function\Text\Cases;
+use MySqlMemory\Evaluation\Function\Text\Substrings;
+
 /**
  * The built-in functions the emulator evaluates, by name.
  *
@@ -27,7 +30,7 @@ final class Library
     {
         if (self::$instance === null) {
             $routines = [];
-            foreach ([new Strings(), new Measures(), new Numbers(), new Control(), new Introspection(), new Dates()] as $family) {
+            foreach ([new Strings(), new Cases(), new Substrings(), new Measures(), new Numbers(), new Control(), new Introspection(), new Dates()] as $family) {
                 foreach ($family->routines() as $routine) {
                     $routines[$routine->name] = $routine;
                 }

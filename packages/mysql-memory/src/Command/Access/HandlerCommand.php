@@ -9,10 +9,11 @@ use MySqlMemory\Command\Output;
 use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
-use MySqlMemory\Evaluation\Convert;
+use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Path\Source\SingleRow;
@@ -22,19 +23,16 @@ use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Result\ResultSet;
-use MySqlMemory\Session\Problems;
+use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Storage\ClusterOrder;
-use MySqlMemory\Value\Order;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexRead;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerOpen;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan;
-use SqlSemantics\Platform\MySql\Statement\Dml\Handler\IndexDirection;
 use SqlSemantics\Platform\MySql\Statement\Dml\Handler\KeyComparison;
-use SqlSemantics\Platform\MySql\Statement\Dml\Handler\ScanDirection;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Statement\Operation;
@@ -76,77 +74,120 @@ final class HandlerCommand implements Command
             return $this->open($statement, $session);
         }
         if ($statement instanceof HandlerClose) {
-            $this->handler($session, $statement->handler->value);
-            unset($session->handlers[mb_strtolower($statement->handler->value)]);
-
-            return new Completion();
+            return $this->close($statement, $session);
         }
         assert($statement instanceof HandlerScan || $statement instanceof HandlerIndexRead || $statement instanceof HandlerIndexSeek);
+
+        return $this->read($statement, $operation, $session, $context, $connection);
+    }
+
+    /**
+     * Closes a handler.
+     *
+     * @throws \MySqlMemory\Error\SqlError When no handler of the name is open
+     */
+    public function close(HandlerClose $statement, Session $session): Completion
+    {
+        $this->handler($session, $statement->handler->value);
+        unset($session->handlers[mb_strtolower($statement->handler->value)]);
+
+        return new Completion();
+    }
+
+    /**
+     * Reads rows through a handler, from where its cursor stands in the order of the read, and moves the cursor.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the handler is not open, the index does not exist, a seek has more values than the index has parts, or the condition or LIMIT fails
+     */
+    public function read(HandlerScan|HandlerIndexRead|HandlerIndexSeek $statement, Operation $operation, Session $session, Context $context, Connection $connection): ResultSet
+    {
         $handler = $this->handler($session, $statement->handler->name->value);
         $table = $session->instance->dictionary->table($handler->schema, $handler->table);
         assert($table !== null);
         $key = $statement instanceof HandlerScan ? null : $this->key($table, $statement->index->value, $handler);
         if ($statement instanceof HandlerIndexSeek && $key !== null && count($statement->values) > count($key->columns)) {
-            throw ErrorCode::TooManyKeyParts->error(count($key->columns));
+            throw SchemaError::TooManyKeyParts->error(count($key->columns));
         }
-        $select = $session->analyze('SELECT * FROM `' . str_replace('`', '``', $handler->schema) . '`.`' . str_replace('`', '``', $handler->table) . '` AS `' . str_replace('`', '``', $handler->name) . '`' . ($statement->where === null ? '' : ' WHERE ' . $this->condition($operation->toString(), $statement->limit !== null)));
+        $select = $session->analyze($this->select($handler, $statement->where === null ? null : $this->condition($operation->toString(), $statement->limit !== null)));
         $query = $select->statement;
         foreach ($select->facts->diagnostics as $diagnostic) {
-            throw (new Problems())->error($diagnostic, $session, 'field list', $query);
+            throw (new Errors())->error($diagnostic, $session, 'field list', $query);
         }
         assert($query instanceof Select && $query->from !== null);
         $planner = new Planner($query, $select->facts, $session->settings(), $connection, $session->instance->dictionary);
         $plan = $planner->query($query, null);
-        $definition = $table->definition;
-        $scope = new Scope();
-        $scope->place($query->from, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
-        $condition = $query->where === null ? null : $planner->compiler->compile($query->where, $scope);
+        $condition = $this->filter($planner, $query, $table);
         $rows = (new ClusterOrder())->rows($table);
-        $numbers = $this->ordered($rows, $key, $table);
-        $values = [];
-        if ($statement instanceof HandlerIndexSeek) {
-            $own = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
-            foreach ($statement->values as $value) {
-                $values[] = $own->compiler->compile($value, new Scope())->evaluate(new Frame($context));
-            }
-        }
+        $cursor = new HandlerCursor();
+        $numbers = $cursor->ordered($rows, $key, $table);
+        $values = $statement instanceof HandlerIndexSeek ? $this->values($statement, $operation, $session, $context, $connection) : [];
         $limit = $planner->blocks->limit(new SingleRow(), $statement->limit, null);
         $count = $limit instanceof Limit ? $limit->count : 1;
-        $offset = $limit instanceof Limit ? $limit->offset : 0;
         $order = $key === null ? null : strtolower($key->name);
-        $continues = $handler->placed && $handler->order === $order;
-        [$start, $step] = $this->start($statement, $numbers, $rows, $key, $table, $values, $continues ? $handler->position : null);
-        $found = [];
-        $matched = 0;
-        $position = null;
-        $frame = new Frame($context);
+        [$start, $step] = $cursor->start($statement, $numbers, $rows, $key, $table, $values, $handler->placed && $handler->order === $order ? $handler->position : null);
         $equal = $statement instanceof HandlerIndexSeek && $statement->comparison === KeyComparison::Equal ? $key : null;
-        for ($index = $start; $count !== 0 && $index >= 0 && $index < count($numbers); $index += $step) {
-            $row = $rows[$numbers[$index]];
-            if ($equal !== null && $this->compare($row, $equal, $table, $values) !== 0) {
-                $position = $index - $step;
-                break;
-            }
-            $frame->row = $row;
-            if ($condition !== null && Convert::toBool($condition->evaluate($frame), $condition->domain(), $context) !== true) {
-                continue;
-            }
-            $matched++;
-            if ($matched > $offset) {
-                $found[] = $row;
-                if (count($found) === $count) {
-                    $position = $index;
-                    break;
-                }
-            }
-        }
+        [$found, $position] = $cursor->walk($rows, $numbers, $start, $step, $count, $limit instanceof Limit ? $limit->offset : 0, $equal, $table, $values, $condition, $context);
         if ($count !== 0) {
-            $handler->order = $order;
-            $handler->placed = true;
-            $handler->position = $position ?? ($step > 0 ? count($numbers) : -1);
+            $this->place($handler, $order, $position ?? ($step > 0 ? count($numbers) : -1));
         }
 
         return $this->result($plan, $found, $table, $session, $context);
+    }
+
+    /**
+     * Answers the SELECT a read evaluates its condition and its columns with: every column of the table under the name of the handler.
+     *
+     * @param string|null $condition The WHERE condition of the read, or null when it has none
+     */
+    public function select(Handler $handler, ?string $condition): string
+    {
+        $from = '`' . str_replace('`', '``', $handler->schema) . '`.`' . str_replace('`', '``', $handler->table) . '` AS `' . str_replace('`', '``', $handler->name) . '`';
+
+        return 'SELECT * FROM ' . $from . ($condition === null ? '' : ' WHERE ' . $condition);
+    }
+
+    /**
+     * Answers the WHERE condition of the SELECT of a read, compiled against the columns of the table, or null when it has none.
+     */
+    public function filter(Planner $planner, Select $query, StoredTable $table): ?Evaluable
+    {
+        if ($query->where === null) {
+            return null;
+        }
+        assert($query->from !== null);
+        $definition = $table->definition;
+        $scope = new Scope();
+        $scope->place($query->from, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
+
+        return $planner->compiler->compile($query->where, $scope);
+    }
+
+    /**
+     * Answers the values a key seek compares the index with.
+     *
+     * @return list<int|float|string|null>
+     */
+    public function values(HandlerIndexSeek $statement, Operation $operation, Session $session, Context $context, Connection $connection): array
+    {
+        $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
+        $values = [];
+        foreach ($statement->values as $value) {
+            $values[] = $planner->compiler->compile($value, new Scope())->evaluate(new Frame($context));
+        }
+
+        return $values;
+    }
+
+    /**
+     * Places the cursor of a handler in an order.
+     *
+     * @param string|null $order Null for the natural order, else the lowercase index name
+     */
+    public function place(Handler $handler, ?string $order, int $position): void
+    {
+        $handler->order = $order;
+        $handler->placed = true;
+        $handler->position = $position;
     }
 
     /**
@@ -158,20 +199,20 @@ final class HandlerCommand implements Command
     {
         $schema = $statement->table->schema->value ?? $session->variables->database;
         if ($schema === '') {
-            throw ErrorCode::NoDatabase->error();
+            throw QueryError::NoDatabase->error();
         }
         if ($session->instance->dictionary->schema($schema) === null) {
-            throw ErrorCode::BadDatabase->error($schema);
+            throw QueryError::BadDatabase->error($schema);
         }
         if (isset($session->instance->dictionary->schema($schema)?->views[$statement->table->name->value])) {
-            throw ErrorCode::WrongObject->error($schema, $statement->table->name->value, 'BASE TABLE');
+            throw SchemaError::WrongObject->error($schema, $statement->table->name->value, 'BASE TABLE');
         }
         if ($session->instance->dictionary->table($schema, $statement->table->name->value) === null) {
-            throw ErrorCode::NoSuchTable->error($schema, $statement->table->name->value);
+            throw QueryError::NoSuchTable->error($schema, $statement->table->name->value);
         }
         $name = $statement->alias->value ?? $statement->table->name->value;
         if (isset($session->handlers[mb_strtolower($name)])) {
-            throw ErrorCode::NonUniqueTable->error($name);
+            throw QueryError::NonUniqueTable->error($name);
         }
         $session->handlers[mb_strtolower($name)] = new Handler($schema, $statement->table->name->value, $name);
 
@@ -191,7 +232,7 @@ final class HandlerCommand implements Command
             $handler = null;
         }
         if ($handler === null) {
-            throw ErrorCode::UnknownTable->error($name, 'HANDLER');
+            throw QueryError::UnknownTable->error($name, 'HANDLER');
         }
 
         return $handler;
@@ -210,7 +251,7 @@ final class HandlerCommand implements Command
             }
         }
 
-        throw ErrorCode::KeyMissing->error($name, $handler->name);
+        throw SchemaError::KeyMissing->error($name, $handler->name);
     }
 
     /**
@@ -222,88 +263,6 @@ final class HandlerCommand implements Command
         $end = strrpos($condition, ' LIMIT ');
 
         return $limited && $end !== false ? substr($condition, 0, $end) : $condition;
-    }
-
-    /**
-     * Answers the numbers of the rows in the order a read follows: the natural order, or the order of an index after it.
-     *
-     * @param array<int, list<int|float|string|null>> $rows The rows in their natural order
-     * @return list<int>
-     */
-    public function ordered(array $rows, ?Key $key, StoredTable $table): array
-    {
-        $numbers = array_keys($rows);
-        if ($key !== null) {
-            usort($numbers, fn (int $left, int $right): int => $this->compare($rows[$left], $key, $table, array_map(static fn (int $column) => $rows[$right][$column], $key->columns)));
-        }
-
-        return $numbers;
-    }
-
-    /**
-     * Compares the leading columns of an index in a row with values, as many columns as there are values.
-     *
-     * @param list<int|float|string|null> $row
-     * @param list<int|float|string|null> $values
-     */
-    public function compare(array $row, Key $key, StoredTable $table, array $values): int
-    {
-        foreach ($values as $index => $value) {
-            $column = $key->columns[$index];
-            $order = Order::compare($row[$column], $value, $table->definition->columns[$column]->domain);
-            if ($order !== 0) {
-                return $order;
-            }
-        }
-
-        return 0;
-    }
-
-    /**
-     * Answers where a read starts in its order and the direction it moves in.
-     *
-     * @param list<int> $numbers
-     * @param array<int, list<int|float|string|null>> $rows
-     * @param list<int|float|string|null> $values
-     * @param int|null $position Where the cursor stands in the order, or null when the read starts the order afresh
-     * @return array{int, int}
-     */
-    public function start(HandlerScan|HandlerIndexRead|HandlerIndexSeek $statement, array $numbers, array $rows, ?Key $key, StoredTable $table, array $values, ?int $position): array
-    {
-        $last = count($numbers) - 1;
-        if ($statement instanceof HandlerScan) {
-            return [$statement->direction === ScanDirection::Next && $position !== null ? $position + 1 : 0, 1];
-        }
-        if ($statement instanceof HandlerIndexRead) {
-            return match ($statement->direction) {
-                IndexDirection::First => [0, 1],
-                IndexDirection::Last => [$last, -1],
-                IndexDirection::Next => [$position === null ? 0 : $position + 1, 1],
-                IndexDirection::Previous => [$position === null ? $last : $position - 1, -1],
-            };
-        }
-        assert($key !== null);
-        $comparisons = array_map(fn (int $number): int => $this->compare($rows[$number], $key, $table, $values), $numbers);
-        $forward = match ($statement->comparison) {
-            KeyComparison::Equal, KeyComparison::GreaterOrEqual => static fn (int $order): bool => $order >= 0,
-            KeyComparison::Greater => static fn (int $order): bool => $order > 0,
-            KeyComparison::LessOrEqual => static fn (int $order): bool => $order <= 0,
-            KeyComparison::Less => static fn (int $order): bool => $order < 0,
-        };
-        if ($statement->comparison === KeyComparison::LessOrEqual || $statement->comparison === KeyComparison::Less) {
-            $index = $last;
-            while ($index >= 0 && !$forward($comparisons[$index])) {
-                $index--;
-            }
-
-            return [$index, -1];
-        }
-        $index = 0;
-        while ($index <= $last && !$forward($comparisons[$index])) {
-            $index++;
-        }
-
-        return [$index, 1];
     }
 
     /**

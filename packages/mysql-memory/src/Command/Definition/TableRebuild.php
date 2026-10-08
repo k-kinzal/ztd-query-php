@@ -8,7 +8,9 @@ use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Fill;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -71,7 +73,7 @@ final class TableRebuild
         $schemaName = $layout->name->schema->value ?? $this->session->variables->database;
         $schema = $this->session->instance->dictionary->schema($schemaName);
         if ($schema === null) {
-            throw ErrorCode::BadDatabase->error($schemaName);
+            throw QueryError::BadDatabase->error($schemaName);
         }
         $database = $this->session->variables->database;
         $operation = new Operation($this->session->semantics()->context($declarations, true, $database === '' ? null : new SearchPath($database), $this->session->resolution()), $create);
@@ -79,7 +81,7 @@ final class TableRebuild
         $command = new CreateTableCommand();
         $definition = $command->primaryNotNull((new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schemaName));
         foreach ($warn ? $command->duplicates($definition->keys) : [] as $duplicate) {
-            $this->context->warning(ErrorCode::DuplicateIndex, $duplicate->name, $schemaName . '.' . $definition->name);
+            $this->context->warning(SchemaError::DuplicateIndex, $duplicate->name, $schemaName . '.' . $definition->name);
         }
         $columns = [];
         foreach ($definition->columns as $column) {
@@ -167,7 +169,7 @@ final class TableRebuild
                 if (($resequenced[$first] ?? false) || ($resequenced[$entries[$index][1]] ?? false)) {
                     [$value, $name] = $writer->entry($row, $key);
 
-                    throw new SqlError(ErrorCode::DuplicateEntry, "ALTER TABLE causes auto_increment resequencing, resulting in duplicate entry '" . $value . "' for key '" . $name . "'");
+                    throw new SqlError(DataError::DuplicateEntry, "ALTER TABLE causes auto_increment resequencing, resulting in duplicate entry '" . $value . "' for key '" . $name . "'");
                 }
 
                 throw $writer->duplicate($row, $key);
@@ -200,9 +202,9 @@ final class TableRebuild
             return $stored;
         }
         if ($this->context->strict) {
-            throw ErrorCode::InvalidUseOfNull->error();
+            throw DataError::InvalidUseOfNull->error();
         }
-        $this->context->diagnostics->warning(ErrorCode::DataTruncated, ErrorCode::DataTruncated->message($column->name, $number));
+        $this->context->diagnostics->warning(DataError::DataTruncated, DataError::DataTruncated->message($column->name, $number));
 
         return $writer->implicit($column);
     }

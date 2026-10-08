@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Write;
 
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Evaluable;
@@ -83,7 +84,7 @@ final class Rows
     {
         $definition = $this->table->definition;
         if (count($values) !== count($positions)) {
-            throw $single ? ErrorCode::WrongValueCount->error() : ErrorCode::WrongValueCountOnRow->error($number);
+            throw $single ? QueryError::WrongValueCount->error() : QueryError::WrongValueCountOnRow->error($number);
         }
         $frame = new Frame($this->context);
         $store = new Store($this->context, $number, $this->into->table->name->name->value);
@@ -126,7 +127,7 @@ final class Rows
         $following = $error->following;
         foreach ($this->table->definition->columns as $position => $column) {
             if (!isset($named[$position]) && !$column->default->declared && !$column->nullable() && !$column->autoIncrement) {
-                $following[] = [ErrorCode::NoDefaultForField->value, ErrorCode::NoDefaultForField->message($column->name)];
+                $following[] = [DataError::NoDefaultForField->value, DataError::NoDefaultForField->message($column->name)];
             }
         }
 
@@ -147,7 +148,7 @@ final class Rows
         if ($has || $column->autoIncrement) {
             return $value;
         }
-        $store->adjust(ErrorCode::NoDefaultForField, $column->name);
+        $store->adjust(DataError::NoDefaultForField, $column->name);
 
         return $column->nullable() ? null : $this->writer->implicit($column);
     }
@@ -170,9 +171,9 @@ final class Rows
             return $value;
         }
         if (($single && !$this->into->ignore) || $this->context->strict) {
-            throw ErrorCode::BadNull->error($column->name);
+            throw DataError::BadNull->error($column->name);
         }
-        $this->context->warning(ErrorCode::BadNull, $column->name);
+        $this->context->warning(DataError::BadNull, $column->name);
 
         return $this->writer->implicit($column);
     }
@@ -209,7 +210,7 @@ final class Rows
                 return;
             }
             if ($this->into->ignore) {
-                $this->context->warning(ErrorCode::DuplicateEntry, ...$this->writer->entry($row, $key));
+                $this->context->warning(DataError::DuplicateEntry, ...$this->writer->entry($row, $key));
 
                 return;
             }

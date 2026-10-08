@@ -7,7 +7,7 @@ namespace MySqlMemory\Command\Account;
 use MySqlMemory\Account\Credentials;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -54,7 +54,7 @@ final class SetPasswordCommand implements Command
         $identity = $statement->user === null ? new Identity($session->user, '%') : $names->identity($statement->user, $session);
         $account = $session->instance->accounts->find($identity);
         if ($account === null) {
-            throw ErrorCode::PasswordNoMatch->error();
+            throw AccountError::PasswordNoMatch->error();
         }
         if ($statement->replace !== null) {
             (new AlterUserCommand())->replace($account, $statement->replace->value, $session);

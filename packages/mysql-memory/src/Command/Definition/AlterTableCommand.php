@@ -5,15 +5,20 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Command;
+use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
-use MySqlMemory\Session\Problems;
+use MySqlMemory\Session\Problem\Errors;
+use MySqlMemory\Session\Problem\Locations;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
@@ -87,26 +92,11 @@ final class AlterTableCommand implements Command
         $database = $session->variables->database;
         $schema = $name->schema->value ?? $database;
         if ($schema === '') {
-            throw ErrorCode::NoDatabase->error();
+            throw QueryError::NoDatabase->error();
         }
         $session->transaction->commit();
-        $table = $session->instance->dictionary->table($schema, $name->name->value);
-        if ($table === null && isset($session->instance->dictionary->schema($schema)?->views[$name->name->value])) {
-            throw ErrorCode::WrongObject->error($schema, $name->name->value, 'BASE TABLE');
-        }
-        if ($table === null) {
-            throw $session->instance->dictionary->schema($schema) === null ? ErrorCode::BadDatabase->error($schema) : ErrorCode::NoSuchTable->error($schema, $name->name->value);
-        }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
-            if (!$diagnostic instanceof MissingTable && !$diagnostic instanceof UnknownColumn && !$diagnostic instanceof DuplicateColumn && !$diagnostic instanceof TableExists && !$diagnostic instanceof UnknownKeyColumn && !$diagnostic instanceof UnknownAlterChoice) {
-                throw (new Problems())->error($diagnostic, $session, 'field list', $statement);
-            }
-        }
-        foreach ((new Walker())->find($statement, FunctionCall::class) as $call) {
-            if (Problems::undeclared($call, $operation)) {
-                throw (new Problems())->routine($call, $session);
-            }
-        }
+        $table = $this->table($session, $schema, $name->name->value);
+        $this->resolve($operation, $session);
         $layout = TableLayout::of($table->definition);
         $change = new TableChange($layout, $table->definition->name, $database, $session->settings()->release());
         $change->apply($commands);
@@ -116,7 +106,7 @@ final class AlterTableCommand implements Command
             (new RenameTableCommand())->vacant($session, $target, $layout->name->name->value);
         }
         if ($change->toggled) {
-            $context->note(ErrorCode::IllegalHa, $table->definition->name);
+            $context->note(SchemaError::IllegalHa, $table->definition->name);
         }
         if (!$change->changes && $change->algorithm !== 'copy') {
             if ($renamed) {
@@ -126,21 +116,75 @@ final class AlterTableCommand implements Command
 
             return new Completion(0, 0, $context->diagnostics->count());
         }
-        $rebuild = new TableRebuild($session, $context, $connection);
-        $definition = $rebuild->definition($layout, $this->others($session, $table));
+        $completion = $this->rebuild(new TableRebuild($session, $context, $connection), $table, $layout, $change);
+        if ($renamed) {
+            $this->move($session, $table, $schema, $name->name->value);
+        }
+
+        return $completion;
+    }
+
+    /**
+     * Answers the base table a statement changes.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the name is a view, the database does not exist, or the table does not exist
+     */
+    public function table(Session $session, string $schema, string $name): StoredTable
+    {
+        $table = $session->instance->dictionary->table($schema, $name);
+        if ($table === null && isset($session->instance->dictionary->schema($schema)?->views[$name])) {
+            throw SchemaError::WrongObject->error($schema, $name, 'BASE TABLE');
+        }
+        if ($table === null) {
+            throw $session->instance->dictionary->schema($schema) === null ? QueryError::BadDatabase->error($schema) : QueryError::NoSuchTable->error($schema, $name);
+        }
+
+        return $table;
+    }
+
+    /**
+     * Raises the first problem the analysis found that the change itself does not settle, then a
+     * call of a function that is not declared.
+     *
+     * A missing table, an unknown or duplicate column, an existing table, an unknown key column
+     * and an unknown ALGORITHM or LOCK are left to the change.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the statement has such a problem
+     */
+    public function resolve(Operation $operation, Session $session): void
+    {
+        foreach ($operation->facts->diagnostics as $diagnostic) {
+            if (!$diagnostic instanceof MissingTable && !$diagnostic instanceof UnknownColumn && !$diagnostic instanceof DuplicateColumn && !$diagnostic instanceof TableExists && !$diagnostic instanceof UnknownKeyColumn && !$diagnostic instanceof UnknownAlterChoice) {
+                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+            }
+        }
+        foreach ((new Walker())->find($operation->statement, FunctionCall::class) as $call) {
+            if (Locations::undeclared($call, $operation)) {
+                throw (new Errors())->routine($call, $session);
+            }
+        }
+    }
+
+    /**
+     * Declares the changed layout again and fills the table with its rows converted, and answers
+     * the completion: the records count the rows when the server copies the table.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the layout cannot be declared or a row cannot be converted
+     */
+    public function rebuild(TableRebuild $rebuild, StoredTable $table, TableLayout $layout, TableChange $change): Completion
+    {
+        $context = $rebuild->context;
+        $definition = $rebuild->definition($layout, $this->others($rebuild->session, $table));
         $origins = array_map(static fn (array $column): ?int => $column[1], $layout->columns);
         $copies = $this->copies($table->definition, $definition, $origins, $change, $context);
         $data = $rebuild->rows($table, $definition, $origins);
         if ($change->ordered && $definition->primaryKey() !== null) {
-            $context->warning(ErrorCode::UnknownError, 'ORDER BY ignored as there is a user-defined clustered index in the table \'' . $definition->name . '\'');
+            $context->warning(StatementError::UnknownError, 'ORDER BY ignored as there is a user-defined clustered index in the table \'' . $definition->name . '\'');
         }
         $records = $copies ? count($data->rows) : 0;
         $table->definition = $definition;
         $table->data = $data;
         $table->histograms = array_intersect_key($table->histograms, array_flip(array_map(static fn ($column): string => strtolower($column->name), $definition->columns)));
-        if ($renamed) {
-            $this->move($session, $table, $schema, $name->name->value);
-        }
         $warnings = $context->diagnostics->count();
 
         return new Completion($records, 0, $warnings, 'Records: ' . $records . '  Duplicates: 0  Warnings: ' . $warnings);
@@ -160,6 +204,45 @@ final class AlterTableCommand implements Command
      */
     public function read(array $commands, Operation $operation): void
     {
+        $indexes = $this->indexes($commands);
+        foreach ($indexes as $index) {
+            foreach ($index->options as $option) {
+                if ($option instanceof IndexParser && strcasecmp($option->parser->value, 'ngram') !== 0) {
+                    throw AdministrationError::FunctionNotDefined->error($option->parser->value);
+                }
+            }
+        }
+        foreach ($operation->facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof UnknownAlterChoice) {
+                throw ($diagnostic->lock ? SchemaError::UnknownAlterLock : SchemaError::UnknownAlterAlgorithm)->error($diagnostic->name->value);
+            }
+        }
+        foreach ($commands as $command) {
+            if ($command instanceof RenameTo) {
+                (new RenameTableCommand())->valid($command->table->name->value);
+            }
+        }
+        foreach ($indexes as $index) {
+            if ($this->misordered($index)) {
+                throw StatementError::WrongUsage->error('spatial/fulltext/hash index', 'explicit index order');
+            }
+        }
+        $validated = array_filter($commands, static fn (AlterCommand $command): bool => $command instanceof ValidationOption) !== [];
+        $exchanged = array_filter($commands, static fn (AlterCommand $command): bool => $command instanceof ExchangePartition) !== [];
+        if ($validated && !$exchanged) {
+            throw StatementError::WrongUsage->error('ALTER', 'WITH VALIDATION');
+        }
+    }
+
+    /**
+     * Answers the indexes the actions add, in the order they are written.
+     *
+     * @param list<AlterCommand> $commands
+     *
+     * @return list<IndexDefinition>
+     */
+    public function indexes(array $commands): array
+    {
         $indexes = [];
         foreach ($commands as $command) {
             $elements = $command instanceof AddColumns ? $command->elements : ($command instanceof AddConstraint ? [$command->element] : []);
@@ -169,35 +252,20 @@ final class AlterTableCommand implements Command
                 }
             }
         }
-        foreach ($indexes as $index) {
-            foreach ($index->options as $option) {
-                if ($option instanceof IndexParser && strcasecmp($option->parser->value, 'ngram') !== 0) {
-                    throw ErrorCode::FunctionNotDefined->error($option->parser->value);
-                }
-            }
-        }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
-            if ($diagnostic instanceof UnknownAlterChoice) {
-                throw ($diagnostic->lock ? ErrorCode::UnknownAlterLock : ErrorCode::UnknownAlterAlgorithm)->error($diagnostic->name->value);
-            }
-        }
-        foreach ($commands as $command) {
-            if ($command instanceof RenameTo) {
-                (new RenameTableCommand())->valid($command->table->name->value);
-            }
-        }
-        foreach ($indexes as $index) {
-            $hashed = $index->algorithm === IndexAlgorithm::Hash || array_filter($index->options, static fn ($option): bool => $option instanceof IndexUsing && $option->algorithm === IndexAlgorithm::Hash) !== [];
-            $ordered = array_filter($index->parts, static fn ($part): bool => ($part instanceof ColumnPart || $part instanceof ExpressionPart) && $part->direction !== null) !== [];
-            if ($ordered && ($hashed || $index->kind === IndexKind::FullText || $index->kind === IndexKind::Spatial)) {
-                throw ErrorCode::WrongUsage->error('spatial/fulltext/hash index', 'explicit index order');
-            }
-        }
-        $validated = array_filter($commands, static fn (AlterCommand $command): bool => $command instanceof ValidationOption) !== [];
-        $exchanged = array_filter($commands, static fn (AlterCommand $command): bool => $command instanceof ExchangePartition) !== [];
-        if ($validated && !$exchanged) {
-            throw ErrorCode::WrongUsage->error('ALTER', 'WITH VALIDATION');
-        }
+
+        return $indexes;
+    }
+
+    /**
+     * Tells whether an index writes an order for a key part although it is a full-text, spatial
+     * or hash index, which cannot order its key parts.
+     */
+    public function misordered(IndexDefinition $index): bool
+    {
+        $hashed = $index->algorithm === IndexAlgorithm::Hash || array_filter($index->options, static fn ($option): bool => $option instanceof IndexUsing && $option->algorithm === IndexAlgorithm::Hash) !== [];
+        $ordered = array_filter($index->parts, static fn ($part): bool => ($part instanceof ColumnPart || $part instanceof ExpressionPart) && $part->direction !== null) !== [];
+
+        return $ordered && ($hashed || $index->kind === IndexKind::FullText || $index->kind === IndexKind::Spatial);
     }
 
     /**
@@ -262,20 +330,30 @@ final class AlterTableCommand implements Command
             }
             $before = $old->columns[$origin];
             $retyped = $retyped || !TableRebuild::inPlace($before->domain, $column->domain);
-            $copies = $copies || ($column->autoIncrement && !$before->autoIncrement) || ($before->nullable() && !$column->nullable() && !$context->modes->strict());
+            $copies = $copies || $this->copiesColumn($before, $column, $context);
         }
         if ($retyped && $change->algorithm === 'inplace') {
-            throw ErrorCode::AlterOperationNotSupportedReason->error('ALGORITHM=INPLACE', 'Cannot change column type INPLACE', 'ALGORITHM=COPY');
+            throw SchemaError::AlterOperationNotSupportedReason->error('ALGORITHM=INPLACE', 'Cannot change column type INPLACE', 'ALGORITHM=COPY');
         }
         if ($retyped && $change->lock === 'none') {
-            throw ErrorCode::AlterOperationNotSupportedReason->error('LOCK=NONE', 'Cannot change column type INPLACE', 'LOCK=SHARED');
+            throw SchemaError::AlterOperationNotSupportedReason->error('LOCK=NONE', 'Cannot change column type INPLACE', 'LOCK=SHARED');
         }
         $rekeyed = array_map(static fn ($key): array => [$key->name, $key->kind, $key->columns], $old->keys) !== array_map(static fn ($key): array => [$key->name, $key->kind, $key->columns], $new->keys);
         if ($change->algorithm === 'instant' && ($retyped || $copies || $rekeyed)) {
-            throw ErrorCode::AlterOperationNotSupported->error('ALGORITHM=INSTANT', 'ALGORITHM=COPY/INPLACE');
+            throw SchemaError::AlterOperationNotSupported->error('ALGORITHM=INSTANT', 'ALGORITHM=COPY/INPLACE');
         }
 
         return $copies || $retyped;
+    }
+
+    /**
+     * Tells whether the change of one column copies the table: the column becomes AUTO_INCREMENT,
+     * or becomes NOT NULL outside a strict mode.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/innodb-online-ddl-operations.html.
+     */
+    public function copiesColumn(ColumnDefinition $before, ColumnDefinition $after, Context $context): bool
+    {
+        return ($after->autoIncrement && !$before->autoIncrement) || ($before->nullable() && !$after->nullable() && !$context->modes->strict());
     }
 
     /**

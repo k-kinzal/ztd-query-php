@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Transaction;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -47,7 +47,7 @@ final class SavepointCommand implements Command
         $statement = $operation->statement;
         $transaction = $session->transaction;
         if ($transaction->xa === XaState::Idle) {
-            throw ErrorCode::XaWrongState->error($transaction->xa->value);
+            throw StatementError::XaWrongState->error($transaction->xa->value);
         }
         if ($statement instanceof Savepoint) {
             $transaction->savepoint($statement->savepoint->value);

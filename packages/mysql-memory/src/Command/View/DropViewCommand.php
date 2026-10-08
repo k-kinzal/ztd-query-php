@@ -6,7 +6,8 @@ namespace MySqlMemory\Command\View;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Program\ProgramSource;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -53,7 +54,7 @@ final class DropViewCommand implements Command
             $schema = ProgramSource::database($view->schema, $session);
             $key = $schema . '.' . $view->name->value;
             if (isset($seen[$key])) {
-                throw ErrorCode::NonUniqueTable->error($view->name->value);
+                throw QueryError::NonUniqueTable->error($view->name->value);
             }
             $seen[$key] = true;
             $targets[] = [$schema, $view->name->value];
@@ -64,20 +65,20 @@ final class DropViewCommand implements Command
             $holder = $dictionary->schema($schema);
             if ($holder?->table($name) !== null) {
                 if (!$statement->ifExists) {
-                    throw ErrorCode::WrongObject->error($schema, $name, 'VIEW');
+                    throw SchemaError::WrongObject->error($schema, $name, 'VIEW');
                 }
-                $context->note(ErrorCode::WrongObject, $schema, $name, 'VIEW');
+                $context->note(SchemaError::WrongObject, $schema, $name, 'VIEW');
             } elseif ($holder === null || !isset($holder->views[$name])) {
                 $missing[] = $schema . '.' . $name;
                 if ($statement->ifExists) {
-                    $context->note(ErrorCode::BadTable, $schema . '.' . $name);
+                    $context->note(SchemaError::BadTable, $schema . '.' . $name);
                 }
             } else {
                 $found[] = [$holder, $name];
             }
         }
         if ($missing !== [] && !$statement->ifExists) {
-            throw ErrorCode::BadTable->error(implode(',', $missing));
+            throw SchemaError::BadTable->error(implode(',', $missing));
         }
         foreach ($found as [$holder, $name]) {
             unset($holder->views[$name]);

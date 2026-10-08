@@ -114,10 +114,10 @@ final class RollupItems
      */
     public function groups(Select $select, Facts $facts): array
     {
-        $columns = new GroupedColumns();
+        $matching = new Matching();
         $groups = [];
         foreach ($select->groupBy->items ?? [] as $item) {
-            $groups[] = $columns->unwrap($columns->target($item->expression, $facts));
+            $groups[] = $matching->unwrap($matching->target($item->expression, $facts));
         }
 
         return $groups;
@@ -130,18 +130,18 @@ final class RollupItems
      */
     public function rolled(Field $field, array $groups, Facts $facts): bool
     {
-        $columns = new GroupedColumns();
+        $reads = new ColumnReads();
         if ($field->expression !== null) {
-            return $columns->listed($field->expression, $groups, $facts);
+            return (new Matching())->listed($field->expression, $groups, $facts);
         }
         if (!$field->resolution instanceof ResolvedColumn) {
             return false;
         }
-        $key = $columns->key($field->resolution);
+        $key = $reads->key($field->resolution);
         foreach ($groups as $group) {
             if ($group instanceof ColumnUse && $facts->covers($group)) {
                 $resolution = $facts->scalar($group)->resolution;
-                if ($resolution instanceof ResolvedColumn && $columns->key($resolution) === $key) {
+                if ($resolution instanceof ResolvedColumn && $reads->key($resolution) === $key) {
                     return true;
                 }
             }
@@ -160,7 +160,7 @@ final class RollupItems
         if ($node instanceof Query || $node instanceof Aggregate && $node->over === null || $node instanceof GroupConcat && $node->over === null || $node instanceof JsonObjectAggregate || $node instanceof KeywordCall && $node->function === KeywordFunction::Grouping) {
             return false;
         }
-        if ($node instanceof Scalar && (new GroupedColumns())->listed($node, $groups, $facts)) {
+        if ($node instanceof Scalar && (new Matching())->listed($node, $groups, $facts)) {
             return true;
         }
         $properties = get_object_vars($node);
@@ -188,7 +188,7 @@ final class RollupItems
     public function before(Field $field, array $visible, array $output, Facts $facts): Nullability
     {
         $resolution = $field->resolution;
-        $expression = $field->expression === null ? null : (new GroupedColumns())->unwrap($field->expression);
+        $expression = $field->expression === null ? null : (new Matching())->unwrap($field->expression);
         if ($expression instanceof ColumnUse && $facts->covers($expression)) {
             $resolution = $facts->scalar($expression)->resolution;
         }

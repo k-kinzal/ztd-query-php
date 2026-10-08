@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -113,7 +113,7 @@ final class Arithmetic implements Evaluable
             ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight, ArithmeticOperator::Modulo, ArithmeticOperator::IntegerDivide, ArithmeticOperator::BitXor => fmod($left, $right),
         };
         if (is_infinite($result) || is_nan($result)) {
-            throw ErrorCode::DataOutOfRange->error('DOUBLE', $this->text);
+            throw DataError::DataOutOfRange->error('DOUBLE', $this->text);
         }
 
         return $result;
@@ -135,7 +135,7 @@ final class Arithmetic implements Evaluable
             return $this->byZero($frame);
         }
         if (Decimal::integerDigits($result) > Decimal::MAX_PRECISION - $this->domain->decimals) {
-            throw ErrorCode::DataOutOfRange->error('DECIMAL', $this->text);
+            throw DataError::DataOutOfRange->error('DECIMAL', $this->text);
         }
 
         return Decimal::round($result, $this->domain->decimals);
@@ -190,7 +190,7 @@ final class Arithmetic implements Evaluable
     public function bounded(string $result): int
     {
         if ($this->domain->unsigned ? !Integer::unsignedRange($result) : !Integer::signedRange($result)) {
-            throw ErrorCode::DataOutOfRange->error($this->domain->unsigned ? 'BIGINT UNSIGNED' : 'BIGINT', $this->text);
+            throw DataError::DataOutOfRange->error($this->domain->unsigned ? 'BIGINT UNSIGNED' : 'BIGINT', $this->text);
         }
 
         return $this->domain->unsigned ? Integer::fromUnsignedText($result) : (int) $result;
@@ -198,12 +198,14 @@ final class Arithmetic implements Evaluable
 
     /**
      * Answers the result of a division by zero: NULL with a warning, or an error in a strict write.
+     *
+     * @return null
      */
-    public function byZero(Frame $frame): null
+    public function byZero(Frame $frame): mixed
     {
         $context = $frame->context;
         if ($context->modes->has('ERROR_FOR_DIVISION_BY_ZERO')) {
-            $context->warn(ErrorCode::DivisionByZero);
+            $context->warn(DataError::DivisionByZero);
         }
 
         return null;

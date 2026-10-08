@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Access;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
-use MySqlMemory\Session\Problems;
+use MySqlMemory\Session\Problem\Errors;
+use MySqlMemory\Session\Problem\Stages;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LoadSource;
@@ -58,30 +61,30 @@ final class LoadDataCommand implements Command
         $input = $statement->input;
         $bulk = $statement->bulk !== null && $statement->bulk->bulk;
         if ($input->count !== null && !$bulk) {
-            throw ErrorCode::WrongUsage->error('LOAD DATA without BULK Algorithm', 'multiple files');
+            throw StatementError::WrongUsage->error('LOAD DATA without BULK Algorithm', 'multiple files');
         }
         if ($input->source === LoadSource::Url && !$bulk) {
-            throw ErrorCode::WrongUsage->error('LOAD DATA without BULK Algorithm', 'URL source');
+            throw StatementError::WrongUsage->error('LOAD DATA without BULK Algorithm', 'URL source');
         }
         if ($bulk) {
-            throw ErrorCode::NotSupportedYet->error('Bulk Load');
+            throw StatementError::NotSupportedYet->error('Bulk Load');
         }
         if ($input->local) {
-            throw ErrorCode::LocalInfileDisabled->error();
+            throw StatementError::LocalInfileDisabled->error();
         }
         foreach ($operation->facts->diagnostics as $diagnostic) {
             $schema = $diagnostic instanceof MissingTable ? ($diagnostic->name->schema->value ?? $session->variables->database) : '';
             if ($schema !== '' && $session->instance->dictionary->schema($schema) === null) {
-                throw ErrorCode::BadDatabase->error($schema);
+                throw QueryError::BadDatabase->error($schema);
             }
-            if (Problems::answered($statement, $diagnostic)) {
-                throw (new Problems())->error($diagnostic, $session, 'field list', $statement);
+            if (Stages::answered($statement, $diagnostic)) {
+                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
             }
         }
         if (str_starts_with($input->file->value, self::SECURE_DIRECTORY)) {
-            throw ErrorCode::FileStat->error($input->file->value, 2, 'No such file or directory');
+            throw AdministrationError::FileStat->error($input->file->value, 2, 'No such file or directory');
         }
 
-        throw ErrorCode::OptionPreventsStatement->error('--secure-file-priv');
+        throw StatementError::OptionPreventsStatement->error('--secure-file-priv');
     }
 }

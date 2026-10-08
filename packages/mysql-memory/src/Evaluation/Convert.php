@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Leaf\Constant;
 use MySqlMemory\Evaluation\Leaf\Outer;
@@ -128,10 +128,10 @@ final class Convert
         }
         $literal = $origin instanceof Constant || $origin instanceof Bits;
         if (!$literal && preg_match('/\A[ \t\n\r\v\f]*[+-]?\.?[0-9]/', $text) !== 1) {
-            $context->warnMessage(ErrorCode::TruncatedWrongValueForField, ErrorCode::TruncatedWrongValueForField->message('DECIMAL', '0', '', -1));
+            $context->warnMessage(DataError::TruncatedWrongValueForField, DataError::TruncatedWrongValueForField->message('DECIMAL', '0', '', -1));
         }
         if (($literal || $origin instanceof ColumnRead || $origin instanceof Outer) && (!$read->complete || trim($text, " \t\n\r\v\f") === '')) {
-            $context->warning(ErrorCode::TruncatedWrongValue, 'DECIMAL', self::shown($text, self::readableCharset($domain)));
+            $context->warning(DataError::TruncatedWrongValue, 'DECIMAL', self::shown($text, self::readableCharset($domain)));
         }
 
         return $read->number;
@@ -179,7 +179,7 @@ final class Convert
     {
         $read = $exact ? NumericText::exact($text) : NumericText::real($text);
         if (!$read->complete || ($exact && trim($text, " \t\n\r\v\f") === '')) {
-            $context->warning(ErrorCode::TruncatedWrongValue, $kind, self::shown($text, $charset));
+            $context->warning(DataError::TruncatedWrongValue, $kind, self::shown($text, $charset));
         }
 
         return $read->number;
@@ -228,7 +228,7 @@ final class Convert
         $number = Decimal::numeric($read->number);
         $inRange = $unsigned ? Integer::unsignedRange($number) || Integer::signedRange($number) : Integer::signedRange($number);
         if (!$read->complete || !$inRange || trim($text, " \t\n\r\v\f") === '') {
-            $context->warning(ErrorCode::TruncatedWrongValue, 'INTEGER', self::shown($text, $charset));
+            $context->warning(DataError::TruncatedWrongValue, 'INTEGER', self::shown($text, $charset));
         }
         if (!$inRange) {
             return str_starts_with($number, '-') ? PHP_INT_MIN : ($unsigned || bccomp($number, Integer::UNSIGNED_MAX, 0) >= 0 ? -1 : PHP_INT_MAX);
@@ -250,12 +250,12 @@ final class Convert
     {
         $number = Decimal::numeric(Decimal::round($value, 0));
         if (bccomp($number, (string) PHP_INT_MIN, 0) < 0) {
-            $context->warning(ErrorCode::TruncatedWrongValue, 'DECIMAL', $value);
+            $context->warning(DataError::TruncatedWrongValue, 'DECIMAL', $value);
 
             return PHP_INT_MIN;
         }
         if (bccomp($number, $unsigned ? Integer::UNSIGNED_MAX : (string) PHP_INT_MAX, 0) > 0) {
-            $context->warning(ErrorCode::TruncatedWrongValue, 'DECIMAL', $value);
+            $context->warning(DataError::TruncatedWrongValue, 'DECIMAL', $value);
 
             return $unsigned ? -1 : PHP_INT_MAX;
         }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -68,7 +68,7 @@ final class Minus implements Evaluable
         $text = Integer::text($value, $unsigned);
         $negated = Decimal::canonical(str_starts_with($text, '-') ? substr($text, 1) : '-' . $text);
         if (!Integer::signedRange($negated)) {
-            throw ErrorCode::DataOutOfRange->error('BIGINT', $this->text);
+            throw DataError::DataOutOfRange->error('BIGINT', $this->text);
         }
 
         return (int) $negated;

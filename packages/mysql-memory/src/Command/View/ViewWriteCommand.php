@@ -6,7 +6,8 @@ namespace MySqlMemory\Command\View;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Program\ProgramSource;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -24,6 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Statement\Declaration\RelationKind;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Statement\Statement;
 
 /**
  * Executes INSERT, UPDATE and DELETE of one table, through a view when the table is one.
@@ -62,15 +64,8 @@ final class ViewWriteCommand implements Command
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;
-        $target = match (true) {
-            $statement instanceof InsertRows, $statement instanceof InsertSet, $statement instanceof InsertQuery => $statement->into->table,
-            $statement instanceof Update => count($statement->tables) === 1 ? $statement->tables[0] : null,
-            $statement instanceof Delete => $statement->table,
-            default => null,
-        };
-        $named = $target instanceof TableReference || $target instanceof WriteTarget;
-        $resolution = $named && $operation->facts->covers($target) ? $operation->facts->relation($target)->table : null;
-        if (!$named || !$resolution instanceof DeclaredTable || $resolution->table->kind !== RelationKind::View) {
+        $target = self::viewTarget($operation);
+        if ($target === null) {
             return $this->command->execute($operation, $session, $context, $connection);
         }
         $schema = $target->name->schema->value ?? $session->variables->database;
@@ -81,12 +76,55 @@ final class ViewWriteCommand implements Command
         $insert = !$statement instanceof Update && !$statement instanceof Delete;
         $writes = ViewWrites::of($view, $session);
         if ($writes === null) {
-            throw $insert ? ErrorCode::NonInsertableTable->error($view->name, 'INSERT') : ErrorCode::NonUpdatableTable->error($view->name, $statement instanceof Update ? 'UPDATE' : 'DELETE');
+            throw $insert ? QueryError::NonInsertableTable->error($view->name, 'INSERT') : QueryError::NonUpdatableTable->error($view->name, $statement instanceof Update ? 'UPDATE' : 'DELETE');
+        }
+        if (!$insert && $statement->limit !== null && !$writes->keyed && !self::limitable($session)) {
+            throw QueryError::NonUpdatableTable->error($view->name, $statement instanceof Update ? 'UPDATE' : 'DELETE');
         }
         $source = ProgramSource::of($session);
         $reply = $session->execute($insert ? $this->insert($source, $writes, $view->name) : $this->change($source, $writes, [$view->name, $target->alias->value ?? $view->name], $session));
+
+        return self::noted($statement, $writes, $reply, $session);
+    }
+
+    /**
+     * Answers the one table a statement writes when it resolves to a view, or null: for a base
+     * table, or a statement that writes several tables or none.
+     */
+    public static function viewTarget(Operation $operation): TableReference|WriteTarget|null
+    {
+        $statement = $operation->statement;
+        $target = match (true) {
+            $statement instanceof InsertRows, $statement instanceof InsertSet, $statement instanceof InsertQuery => $statement->into->table,
+            $statement instanceof Update => count($statement->tables) === 1 ? $statement->tables[0] : null,
+            $statement instanceof Delete => $statement->table,
+            default => null,
+        };
+        $named = $target instanceof TableReference || $target instanceof WriteTarget;
+        $resolution = $named && $operation->facts->covers($target) ? $operation->facts->relation($target)->table : null;
+        if (!$named || !$resolution instanceof DeclaredTable || $resolution->table->kind !== RelationKind::View) {
+            return null;
+        }
+
+        return $target;
+    }
+
+    /**
+     * Answers whether the session lets a LIMIT write through a view that lacks a key of its table (updatable_views_with_limit).
+     */
+    public static function limitable(Session $session): bool
+    {
+        return !in_array(strtoupper((string) $session->variables->read('updatable_views_with_limit')), ['NO', '0', 'OFF'], true);
+    }
+
+    /**
+     * Notes an UPDATE or a DELETE with a LIMIT through a view that lacks a unique key of its
+     * table (ER_VIEW_WITHOUT_KEY), and answers the reply with the note counted.
+     */
+    public static function noted(Statement $statement, ViewWrites $writes, Reply $reply, Session $session): Reply
+    {
         if (($statement instanceof Update || $statement instanceof Delete) && $statement->limit !== null && !$writes->keyed && $reply instanceof Completion) {
-            $session->diagnostics->note(ErrorCode::IncompleteViewKey, ErrorCode::IncompleteViewKey->message());
+            $session->diagnostics->note(QueryError::IncompleteViewKey, QueryError::IncompleteViewKey->message());
 
             return new Completion($reply->affectedRows, $reply->lastInsertId, $session->diagnostics->count(), $reply->info);
         }
@@ -105,7 +143,7 @@ final class ViewWriteCommand implements Command
         $table = $tree->find('table_ident')[0] ?? null;
         $span = $table?->span();
         if ($span === null) {
-            throw ErrorCode::NotSupportedYet->error('this INSERT through a view');
+            throw StatementError::NotSupportedYet->error('this INSERT through a view');
         }
         $edits = [];
         $columns = $tree->find('insert_columns');
@@ -122,7 +160,7 @@ final class ViewWriteCommand implements Command
         }
         foreach ($writes->columns as $column) {
             if ($column[1] === null) {
-                throw ErrorCode::NonInsertableTable->error($view, 'INSERT');
+                throw QueryError::NonInsertableTable->error($view, 'INSERT');
             }
         }
         $partition = $tree->find('opt_use_partition')[0] ?? null;
@@ -144,12 +182,30 @@ final class ViewWriteCommand implements Command
      */
     public function change(ProgramSource $source, ViewWrites $writes, array $names, Session $session): string
     {
+        $text = $this->retarget($source, $writes, $names);
+        if ($writes->where === null) {
+            return $text;
+        }
+
+        return self::restricted($text, $writes->where, $session);
+    }
+
+    /**
+     * Rewrites an UPDATE or a DELETE against the base table of a view: the table, the columns it
+     * assigns, and the columns of the view its values, condition, order and limit read.
+     *
+     * @param list<string> $names The names that qualify a column of the view: its name and its alias
+     *
+     * @throws \MySqlMemory\Error\SqlError When a column assigned is computed
+     */
+    public function retarget(ProgramSource $source, ViewWrites $writes, array $names): string
+    {
         $tree = $source->tree;
         $table = $tree->find('table_ident')[0] ?? null;
         $span = $table?->span();
         $statement = $tree->find('update_stmt')[0] ?? $tree->find('delete_stmt')[0] ?? null;
         if ($span === null || !$statement instanceof Node) {
-            throw ErrorCode::NotSupportedYet->error('this statement through a view');
+            throw StatementError::NotSupportedYet->error('this statement through a view');
         }
         $alias = $tree->find('opt_table_alias')[0] ?? null;
         $edits = [$span[0] => [$span[0], $alias?->span()[1] ?? $span[1], $writes->table . $writes->alias]];
@@ -172,18 +228,27 @@ final class ViewWriteCommand implements Command
         foreach ([...$tree->find('order_clause'), ...$tree->find('opt_simple_limit')] as $clause) {
             $edits = $writes->reads($clause, $source->text, $names, $edits);
         }
-        $text = ViewWrites::apply($source->text, $edits);
-        if ($writes->where === null) {
-            return $text;
-        }
+
+        return ViewWrites::apply($source->text, $edits);
+    }
+
+    /**
+     * Adds the condition of a view to an UPDATE or a DELETE: ANDed with the statement's own
+     * condition, or as the WHERE clause of a statement without one.
+     */
+    public static function restricted(string $text, string $where, Session $session): string
+    {
         $rewritten = $session->semantics()->parser()->parse($text);
         $condition = ($rewritten->find('where_clause')[0] ?? null)?->children[1] ?? null;
         $span = $condition instanceof Node ? $condition->span() : null;
         if ($span !== null) {
-            return substr($text, 0, $span[0]) . '(' . substr($text, $span[0], $span[1] - $span[0]) . ') AND (' . $writes->where . ')' . substr($text, $span[1]);
+            return substr($text, 0, $span[0]) . '(' . substr($text, $span[0], $span[1] - $span[0]) . ') AND (' . $where . ')' . substr($text, $span[1]);
         }
-        $anchor = ($rewritten->find('update_list')[0] ?? $rewritten->find('opt_use_partition')[0] ?? $rewritten->find('table_ident')[0] ?? null)?->span()[1] ?? strlen(rtrim($text));
+        $anchor = strlen(rtrim($text));
+        foreach (['table_ident', 'opt_table_alias', 'opt_use_partition', 'update_list'] as $rule) {
+            $anchor = ($rewritten->find($rule)[0] ?? null)?->span()[1] ?? $anchor;
+        }
 
-        return substr($text, 0, $anchor) . ' WHERE (' . $writes->where . ')' . substr($text, $anchor);
+        return substr($text, 0, $anchor) . ' WHERE (' . $where . ')' . substr($text, $anchor);
     }
 }

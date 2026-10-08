@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Account;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\AdministrationError;
 use MySqlMemory\Error\SqlError;
 
 /**
@@ -39,7 +40,7 @@ final class Credentials
     {
         $plugin = strtolower($name);
         if ($plugin !== 'caching_sha2_password' && $plugin !== 'sha256_password') {
-            throw ErrorCode::PluginIsNotLoaded->error($name);
+            throw AdministrationError::PluginIsNotLoaded->error($name);
         }
 
         return $plugin;
@@ -75,7 +76,7 @@ final class Credentials
     {
         $valid = $hash === '' || ($plugin === 'sha256_password' ? strlen($hash) === 67 && str_starts_with($hash, '$5$') : strlen($hash) === 70 && str_starts_with($hash, '$A$'));
         if (!$valid) {
-            throw ErrorCode::PasswordFormat->error();
+            throw AccountError::PasswordFormat->error();
         }
     }
 

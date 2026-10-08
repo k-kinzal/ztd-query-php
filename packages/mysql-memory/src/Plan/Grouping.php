@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Aggregate\Accumulation;
 use MySqlMemory\Evaluation\Aggregate\GroupingFlags;
 use MySqlMemory\Evaluation\Compile\Walker;
@@ -75,7 +76,7 @@ final class Grouping
     public function plan(Select $select, AccessPath $input, Scope $scope): array
     {
         if ($select->groupBy?->modifier === GroupingModifier::Cube) {
-            throw ErrorCode::SecondaryEngineFailed->error('No secondary engine defined for at least one of the query tables');
+            throw SchemaError::SecondaryEngineFailed->error('No secondary engine defined for at least one of the query tables');
         }
         $aggregates = $this->collect($select);
         if ($select->groupBy === null && $aggregates === []) {
@@ -218,7 +219,7 @@ final class Grouping
                     break;
                 }
             }
-            $positions[] = $found ?? throw ErrorCode::GroupingArgumentNotGrouped->error($number + 1);
+            $positions[] = $found ?? throw QueryError::GroupingArgumentNotGrouped->error($number + 1);
         }
 
         return $positions;
@@ -286,6 +287,16 @@ final class Grouping
         if ($left instanceof Name && $right instanceof Name) {
             return strcasecmp($left->value, $right->value) === 0;
         }
+
+        return $this->sameProperties($left, $right);
+    }
+
+    /**
+     * Tells whether two parts of a statement of the same class hold the same expressions: the
+     * same properties, in the same order, each the same expression.
+     */
+    public function sameProperties(object $left, object $right): bool
+    {
         $values = [[], []];
         foreach ([$left, $right] as $side => $object) {
             $properties = get_object_vars($object);

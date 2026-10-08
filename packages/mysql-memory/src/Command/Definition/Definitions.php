@@ -9,7 +9,8 @@ use MySqlMemory\Dictionary\Fill;
 use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\Clock;
 use MySqlMemory\Evaluation\Leaf\Retyped;
@@ -205,7 +206,7 @@ final class Definitions
             if ($attribute instanceof DefaultLiteral || $attribute instanceof DefaultExpression) {
                 $value = $attribute instanceof DefaultLiteral ? $attribute->value : $attribute->expression;
                 if (in_array($column->domain->field, [Field::Blob, Field::Json], true) && $attribute instanceof DefaultLiteral) {
-                    throw ErrorCode::BlobCantHaveDefault->error($column->name);
+                    throw SchemaError::BlobCantHaveDefault->error($column->name);
                 }
                 $evaluable = $this->planner->compiler->compile($value, new Scope());
                 if (($evaluable instanceof Retyped ? $evaluable->evaluable : $evaluable) instanceof Clock) {
@@ -217,7 +218,7 @@ final class Definitions
                 $frame = new Frame($this->planner->compiler->connection->context);
                 $raw = $evaluable->evaluate($frame);
                 if ($raw === null && !$column->nullable()) {
-                    throw ErrorCode::InvalidDefault->error($column->name);
+                    throw SchemaError::InvalidDefault->error($column->name);
                 }
                 $context = $frame->context;
                 $strict = $context->strict;
@@ -225,7 +226,7 @@ final class Definitions
                 try {
                     $stored = (new Store($context))->value($raw, $evaluable->domain(), $column);
                 } catch (\MySqlMemory\Error\SqlError $error) {
-                    throw new \MySqlMemory\Error\SqlError(ErrorCode::InvalidDefault, ErrorCode::InvalidDefault->message($column->name), $error);
+                    throw new \MySqlMemory\Error\SqlError(SchemaError::InvalidDefault, SchemaError::InvalidDefault->message($column->name), $error);
                 } finally {
                     $context->strict = $strict;
                 }
@@ -291,7 +292,7 @@ final class Definitions
         $descending = [];
         foreach ($index->parts as $part) {
             if (!$part instanceof ColumnPart) {
-                throw ErrorCode::NotSupportedYet->error('functional key parts');
+                throw StatementError::NotSupportedYet->error('functional key parts');
             }
             $position = null;
             foreach ($columns as $candidate => $column) {
@@ -300,7 +301,7 @@ final class Definitions
                 }
             }
             if ($position === null) {
-                throw ErrorCode::KeyColumnMissing->error($part->column->value);
+                throw SchemaError::KeyColumnMissing->error($part->column->value);
             }
             $positions[] = $position;
             $prefixes[] = $part->length === null ? null : (int) $part->length->text;
@@ -330,7 +331,7 @@ final class Definitions
         foreach ($keys as $key) {
             if ($key->name !== '') {
                 if (isset($used[strtolower($key->name)]) && $key->kind !== KeyKind::Primary) {
-                    throw ErrorCode::DuplicateKeyName->error($key->name);
+                    throw SchemaError::DuplicateKeyName->error($key->name);
                 }
                 $used[strtolower($key->name)] = true;
             }
@@ -365,11 +366,11 @@ final class Definitions
     public function check(array $columns, array $keys): void
     {
         if (array_filter($columns, static fn (ColumnDefinition $column): bool => !$column->invisible) === []) {
-            throw ErrorCode::NoVisibleColumn->error();
+            throw SchemaError::NoVisibleColumn->error();
         }
         $automatic = array_keys(array_filter($columns, static fn (ColumnDefinition $column): bool => $column->autoIncrement));
         if (count($automatic) > 1) {
-            throw ErrorCode::WrongAutoKey->error();
+            throw SchemaError::WrongAutoKey->error();
         }
         if (count($automatic) === 1) {
             $leading = false;
@@ -377,11 +378,11 @@ final class Definitions
                 $leading = $leading || ($key->columns[0] === $automatic[0] && $key->kind !== KeyKind::FullText);
             }
             if (!$leading) {
-                throw ErrorCode::WrongAutoKey->error();
+                throw SchemaError::WrongAutoKey->error();
             }
         }
         if (count(array_filter($keys, static fn (Key $key): bool => $key->kind === KeyKind::Primary)) > 1) {
-            throw ErrorCode::MultiplePrimaryKey->error();
+            throw SchemaError::MultiplePrimaryKey->error();
         }
     }
 }

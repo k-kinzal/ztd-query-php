@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
@@ -92,9 +93,9 @@ final class Store
             $read = NumericText::exact((string) $value);
             if (!$read->complete) {
                 if (NumericText::real((string) $value)->number === '0' && preg_match('/\A\s*[+-]?\.?[0-9]/', (string) $value) !== 1) {
-                    $this->adjust(ErrorCode::TruncatedWrongValueForField, 'integer', (string) $value, $column->name, $this->row);
+                    $this->adjust(DataError::TruncatedWrongValueForField, 'integer', (string) $value, $column->name, $this->row);
                 } else {
-                    $this->adjust(ErrorCode::DataTruncated, $column->name, $this->row);
+                    $this->adjust(DataError::DataTruncated, $column->name, $this->row);
                 }
             }
             $number = Decimal::round($read->number, 0);
@@ -106,7 +107,7 @@ final class Store
         $number = Decimal::numeric($number);
         [$low, $high] = $this->range($to);
         if (bccomp($number, $low, 0) < 0 || bccomp($number, $high, 0) > 0) {
-            $this->adjust(ErrorCode::OutOfRange, $column->name, $this->row);
+            $this->adjust(DataError::OutOfRange, $column->name, $this->row);
             $number = bccomp($number, $low, 0) < 0 ? $low : $high;
         }
 
@@ -145,7 +146,7 @@ final class Store
         if ($from->kind === Kind::String) {
             $read = NumericText::exact((string) $value);
             if (!$read->complete) {
-                $this->adjust(preg_match('/\A\s*[+-]?\.?[0-9]/', (string) $value) === 1 ? ErrorCode::DataTruncated : ErrorCode::TruncatedWrongValueForField, ...(preg_match('/\A\s*[+-]?\.?[0-9]/', (string) $value) === 1 ? [$column->name, $this->row] : ['decimal', (string) $value, $column->name, $this->row]));
+                $this->adjust(preg_match('/\A\s*[+-]?\.?[0-9]/', (string) $value) === 1 ? DataError::DataTruncated : DataError::TruncatedWrongValueForField, ...(preg_match('/\A\s*[+-]?\.?[0-9]/', (string) $value) === 1 ? [$column->name, $this->row] : ['decimal', (string) $value, $column->name, $this->row]));
             }
             $number = $read->number;
         } else {
@@ -153,12 +154,12 @@ final class Store
         }
         $rounded = Decimal::round($number, $to->decimals);
         if (Decimal::compare($rounded, $number) !== 0) {
-            $this->context->note(ErrorCode::DataTruncated, $column->name, $this->row);
+            $this->context->note(DataError::DataTruncated, $column->name, $this->row);
         }
         $digits = $to->precision() - $to->decimals;
         $largest = ($digits > 0 ? str_repeat('9', $digits) : '0') . ($to->decimals > 0 ? '.' . str_repeat('9', $to->decimals) : '');
         if (Decimal::compare(ltrim($rounded, '-'), $largest) > 0 || ($to->unsigned && Decimal::compare($rounded, '0') < 0)) {
-            $this->adjust(ErrorCode::OutOfRange, $column->name, $this->row);
+            $this->adjust(DataError::OutOfRange, $column->name, $this->row);
 
             return $to->unsigned && Decimal::compare($rounded, '0') < 0 ? Decimal::round('0', $to->decimals) : (str_starts_with($rounded, '-') ? '-' . $largest : $largest);
         }
@@ -176,7 +177,7 @@ final class Store
         if ($from->kind === Kind::String) {
             $read = NumericText::real((string) $value);
             if (!$read->complete) {
-                $this->adjust(preg_match('/\A\s*[+-]?\.?[0-9]/', (string) $value) === 1 ? ErrorCode::DataTruncated : ErrorCode::TruncatedWrongValueForField, ...(preg_match('/\A\s*[+-]?\.?[0-9]/', (string) $value) === 1 ? [$column->name, $this->row] : ['double', (string) $value, $column->name, $this->row]));
+                $this->adjust(preg_match('/\A\s*[+-]?\.?[0-9]/', (string) $value) === 1 ? DataError::DataTruncated : DataError::TruncatedWrongValueForField, ...(preg_match('/\A\s*[+-]?\.?[0-9]/', (string) $value) === 1 ? [$column->name, $this->row] : ['double', (string) $value, $column->name, $this->row]));
             }
             $number = (float) $read->number;
         } else {
@@ -189,7 +190,7 @@ final class Store
             $single = unpack('g', pack('g', $number));
             $number = is_array($single) && is_float($single[1]) ? $single[1] : $number;
             if (is_infinite($number)) {
-                $this->adjust(ErrorCode::OutOfRange, $column->name, $this->row);
+                $this->adjust(DataError::OutOfRange, $column->name, $this->row);
                 $number = $number > 0 ? 3.4028234663852886e38 : -3.4028234663852886e38;
             }
         }
@@ -215,9 +216,9 @@ final class Store
             $kept = Encoding::slice($text, 0, $limit, $charset);
             $rest = substr($text, strlen($kept));
             if (trim($rest, ' ') === '' && $to->collation !== Collation::binary()) {
-                $this->context->note(ErrorCode::DataTruncated, $column->name, $this->row);
+                $this->context->note(DataError::DataTruncated, $column->name, $this->row);
             } else {
-                $this->adjust($this->context->strict && !$this->copying ? ErrorCode::DataTooLong : ErrorCode::DataTruncated, $column->name, $this->row);
+                $this->adjust($this->context->strict && !$this->copying ? DataError::DataTooLong : DataError::DataTruncated, $column->name, $this->row);
             }
             $text = $kept;
         }
@@ -252,7 +253,7 @@ final class Store
         if ($valid < strlen($text)) {
             $rest = substr($text, $valid);
             $quoted = (string) preg_replace_callback('/[^\x20-\x7E]/', static fn (array $byte): string => sprintf('\\x%02X', ord($byte[0])), substr($rest, 0, 6));
-            $this->adjust(ErrorCode::TruncatedWrongValueForField, 'string', $quoted . (strlen($rest) > 6 ? '...' : ''), $column->name, $this->row);
+            $this->adjust(DataError::TruncatedWrongValueForField, 'string', $quoted . (strlen($rest) > 6 ? '...' : ''), $column->name, $this->row);
         }
 
         return $converted;
@@ -268,7 +269,7 @@ final class Store
         $bits = $column->domain->length;
         $number = $from->kind === Kind::String ? Convert::bits((string) $value) : (int) Convert::toInteger($value, $from, $this->context, true);
         if ($bits < 64 && ($number < 0 || $number >= (1 << $bits))) {
-            $this->adjust($this->context->strict ? ErrorCode::DataTooLong : ErrorCode::OutOfRange, $column->name, $this->row);
+            $this->adjust($this->context->strict ? DataError::DataTooLong : DataError::OutOfRange, $column->name, $this->row);
             $number = $bits >= 63 ? -1 : (1 << $bits) - 1;
         }
         $bytes = '';

@@ -8,7 +8,7 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Leaf\Constant;
-use MySqlMemory\Evaluation\Operator\Numeric;
+use MySqlMemory\Evaluation\Operator\DoubleOperand;
 use MySqlMemory\Instance;
 use MySqlMemory\Iterator\Source\WorkingTableIterator;
 use MySqlMemory\Iterator\Transform\FilterIterator;
@@ -58,7 +58,7 @@ final class FilterIteratorTest extends TestCase
         $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
         $working = new WorkingTable(1);
         $working->rows = [[1], [2]];
-        $iterator = new FilterIterator(new Filter($working, new ColumnRead(Domain::integer(), 0), new Numeric(new Constant(Domain::string(2, Collation::known('utf8mb4_0900_ai_ci')), '1x'), false)), new WorkingTableIterator($working));
+        $iterator = new FilterIterator(new Filter($working, new ColumnRead(Domain::integer(), 0), new DoubleOperand(new Constant(Domain::string(2, Collation::known('utf8mb4_0900_ai_ci')), '1x'), false)), new WorkingTableIterator($working));
         $iterator->init($frame);
         $rows = [$iterator->read(), $iterator->read(), $iterator->read()];
         $iterator->init($frame);

@@ -12,6 +12,8 @@ use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference;
+use SqlSemantics\Platform\MySql\Statement\Server\Spatial\DropSpatialReference;
 
 #[CoversClass(SpatialReferenceCommand::class)]
 #[Small]
@@ -126,6 +128,29 @@ final class SpatialReferenceCommandTest extends TestCase
         $this->expectExceptionMessage('Missing mandatory attribute NAME.');
 
         $session->query("CREATE SPATIAL REFERENCE SYSTEM 2 ORGANIZATION 'a''b' IDENTIFIED BY 04111845221216");
+    }
+
+    public function testCreateDefinesTheSystemUnderItsName(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $statement = $session->analyze("CREATE SPATIAL REFERENCE SYSTEM 1000000202 NAME 'b' DEFINITION '" . 'GEOGCS["x",DATUM["d",SPHEROID["s",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.017453292519943278],AXIS["Lat",NORTH],AXIS["Lon",EAST]]' . "'")->statement;
+        self::assertInstanceOf(CreateSpatialReference::class, $statement);
+
+        (new SpatialReferenceCommand())->create($statement, $session);
+
+        self::assertSame(['b', []], [$instance->registry->spatialCatalog->name(1000000202), $session->diagnostics->conditions]);
+    }
+
+    public function testDropWarnsOfAnSridWithoutSystemUnderIfExists(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('DROP SPATIAL REFERENCE SYSTEM IF EXISTS 1000000203')->statement;
+        self::assertInstanceOf(DropSpatialReference::class, $statement);
+
+        (new SpatialReferenceCommand())->drop($statement, $session);
+
+        self::assertSame([['Warning', 3519, "There's no spatial reference system with SRID 1000000203."]], $session->diagnostics->conditions);
     }
 
     public function testReservedWarnsOfTheReservedRanges(): void

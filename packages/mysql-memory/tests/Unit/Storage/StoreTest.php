@@ -6,7 +6,7 @@ namespace Tests\Unit\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Fill;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Session\Diagnostics;
@@ -61,7 +61,7 @@ final class StoreTest extends TestCase
     {
         $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);
 
-        (new Store($context))->adjust(ErrorCode::DataTruncated, 'c', 4);
+        (new Store($context))->adjust(DataError::DataTruncated, 'c', 4);
 
         self::assertSame([['Warning', 1265, "Data truncated for column 'c' at row 4"]], $context->diagnostics->conditions);
     }
@@ -74,7 +74,7 @@ final class StoreTest extends TestCase
         $this->expectExceptionCode(1265);
         $this->expectExceptionMessage("Data truncated for column 'c' at row 4");
 
-        (new Store($context))->adjust(ErrorCode::DataTruncated, 'c', 4);
+        (new Store($context))->adjust(DataError::DataTruncated, 'c', 4);
     }
 
     public function testIntegerReadsTheLeadingNumberOfAStringWithAWarning(): void

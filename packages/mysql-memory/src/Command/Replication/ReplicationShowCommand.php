@@ -8,7 +8,9 @@ use MySqlMemory\Command\Admin\Literals;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Registry\BinaryLog;
@@ -131,7 +133,7 @@ final class ReplicationShowCommand implements Command
             $this->limit($statement->limit);
             $file = $statement->file === null ? $log->files[0] : $log->find((new Literals())->bytes($statement->file));
             if ($file === null) {
-                throw ErrorCode::CommandFailed->error('SHOW BINLOG EVENTS', 'Could not find target log');
+                throw AdministrationError::CommandFailed->error('SHOW BINLOG EVENTS', 'Could not find target log');
             }
             $events = array_map(static fn (array $event): array => [BinaryLog::name($file), ...$event], $log->events($file, $version));
 
@@ -142,7 +144,7 @@ final class ReplicationShowCommand implements Command
             (new ReplicaCommand())->channel($statement->channel);
             $name = $session->variables->read('relay_log') . '.000001';
             if ($statement->file !== null && (new Literals())->bytes($statement->file) !== $name) {
-                throw ErrorCode::CommandFailed->error('SHOW RELAYLOG EVENTS', 'Could not find target log');
+                throw AdministrationError::CommandFailed->error('SHOW RELAYLOG EVENTS', 'Could not find target log');
             }
             $events = array_map(static fn (array $event): array => [$name, ...$event], array_slice((new BinaryLog())->events(1, $version), 0, 2));
 
@@ -151,7 +153,7 @@ final class ReplicationShowCommand implements Command
         if ($statement instanceof ShowReplicas) {
             return $this->listing(self::REPLICAS, [], $context);
         }
-        throw ErrorCode::NotSupportedYet->error('this replication statement');
+        throw StatementError::NotSupportedYet->error('this replication statement');
     }
 
     /**
@@ -168,7 +170,7 @@ final class ReplicationShowCommand implements Command
         if (bccomp($position, self::LAST_POSITION) > 0) {
             $shown = bccomp($position, '18446744073709551615') > 0 ? '18446744073709551615' : $position;
 
-            throw ErrorCode::CommandFailed->error($command, 'Error reading Log_event at position ' . $shown . ': Failed decoding event: I/O error reading log event');
+            throw AdministrationError::CommandFailed->error($command, 'Error reading Log_event at position ' . $shown . ': Failed decoding event: I/O error reading log event');
         }
         $from = max(4, (int) $position);
         $events = array_values(array_filter($events, static fn (array $event): bool => (int) $event[1] >= $from));
@@ -193,7 +195,7 @@ final class ReplicationShowCommand implements Command
         }
         foreach ([$limit->offset, $limit->count] as $operand) {
             if ($operand instanceof ProgramVariable) {
-                throw ErrorCode::UndeclaredVariable->error($operand->name->value);
+                throw ProgramError::UndeclaredVariable->error($operand->name->value);
             }
         }
     }

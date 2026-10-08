@@ -7,7 +7,10 @@ namespace MySqlMemory\Command\Program;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Dictionary\Schema;
+use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
@@ -54,54 +57,95 @@ final class ShowCreateProgramCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof ShowCreateProcedure || $statement instanceof ShowCreateFunction || $statement instanceof ShowCreateTrigger || $statement instanceof ShowCreateEvent);
         $name = $statement->name->name->value;
-        $key = strtolower($name);
         $database = ProgramSource::database($statement->name->schema, $session);
         $schema = $session->instance->dictionary->schema($database);
-        $flag = ColumnFlag::NotNull->value;
         if ($statement instanceof ShowCreateTrigger) {
-            if ($schema === null) {
-                throw ErrorCode::BadDatabase->error($database);
-            }
-            foreach ($schema->triggers as $trigger) {
-                if (strtolower($trigger->name) === $key) {
-                    return (new Listing([
-                        Heading::text('Trigger', Field::VarString, 192, $flag, 31),
-                        Heading::text('sql_mode', Field::VarString, strlen($trigger->mode), $flag, 31),
-                        Heading::text('SQL Original Statement', Field::VarString, 1024, 0, 31),
-                        Heading::text('character_set_client', Field::VarString, 32, $flag, 31),
-                        Heading::text('collation_connection', Field::VarString, 32, $flag, 31),
-                        Heading::text('Database Collation', Field::VarString, 32, $flag, 31),
-                        new Heading('Created', Field::Timestamp, 0, $flag | ColumnFlag::Binary->value),
-                    ]))->sent([[$trigger->name, $trigger->mode, $trigger->create(), ...$trigger->charsets, ...[$trigger->created]]], $context);
-                }
-            }
-
-            throw ErrorCode::TriggerMissing->error();
+            return $this->trigger($schema, $database, $name, $context);
         }
         if ($statement instanceof ShowCreateEvent) {
-            $event = $schema === null ? null : ($schema->events[$key] ?? null);
-            if ($event === null) {
-                throw ErrorCode::EventMissing->error($name);
-            }
-            $text = $event->create();
-
-            return (new Listing([
-                Heading::text('Event', Field::VarString, 64, $flag, 31),
-                Heading::text('sql_mode', Field::VarString, strlen($event->mode), $flag, 31),
-                Heading::text('time_zone', Field::VarString, strlen($event->zone), $flag, 31),
-                Heading::text('Create Event', Field::VarString, mb_strlen($text), $flag, 31),
-                Heading::text('character_set_client', Field::VarString, 32, $flag, 31),
-                Heading::text('collation_connection', Field::VarString, 32, $flag, 31),
-                Heading::text('Database Collation', Field::VarString, 32, $flag, 31),
-            ]))->sent([[$event->name, $event->mode, $event->zone, $text, ...$event->charsets]], $context);
+            return $this->event($schema, $name, $context);
         }
-        $function = $statement instanceof ShowCreateFunction;
-        $kind = $function ? 'FUNCTION' : 'PROCEDURE';
-        $routine = $schema === null ? null : (RoutineCommand::routines($schema, $function)[$key] ?? null);
+
+        return $this->routine($statement instanceof ShowCreateFunction, $schema, $name, $context);
+    }
+
+    /**
+     * Writes the statement that creates a trigger.
+     *
+     * @param Schema|null $schema The database of the trigger, null when it does not exist
+     * @param string $database The name of the database of the trigger
+     * @param string $name The name of the trigger as written
+     *
+     * @throws SqlError When the database or the trigger does not exist
+     */
+    public function trigger(?Schema $schema, string $database, string $name, Context $context): Reply
+    {
+        if ($schema === null) {
+            throw QueryError::BadDatabase->error($database);
+        }
+        $flag = ColumnFlag::NotNull->value;
+        foreach ($schema->triggers as $trigger) {
+            if (strtolower($trigger->name) === strtolower($name)) {
+                return (new Listing([
+                    Heading::text('Trigger', Field::VarString, 192, $flag, 31),
+                    Heading::text('sql_mode', Field::VarString, strlen($trigger->mode), $flag, 31),
+                    Heading::text('SQL Original Statement', Field::VarString, 1024, 0, 31),
+                    Heading::text('character_set_client', Field::VarString, 32, $flag, 31),
+                    Heading::text('collation_connection', Field::VarString, 32, $flag, 31),
+                    Heading::text('Database Collation', Field::VarString, 32, $flag, 31),
+                    new Heading('Created', Field::Timestamp, 0, $flag | ColumnFlag::Binary->value),
+                ]))->sent([[$trigger->name, $trigger->mode, $trigger->create(), ...$trigger->charsets, ...[$trigger->created]]], $context);
+            }
+        }
+
+        throw ProgramError::TriggerMissing->error();
+    }
+
+    /**
+     * Writes the statement that creates an event.
+     *
+     * @param Schema|null $schema The database of the event, null when it does not exist
+     * @param string $name The name of the event as written
+     *
+     * @throws SqlError When the event does not exist
+     */
+    public function event(?Schema $schema, string $name, Context $context): Reply
+    {
+        $event = $schema === null ? null : ($schema->events[strtolower($name)] ?? null);
+        if ($event === null) {
+            throw ProgramError::EventMissing->error($name);
+        }
+        $text = $event->create();
+        $flag = ColumnFlag::NotNull->value;
+
+        return (new Listing([
+            Heading::text('Event', Field::VarString, 64, $flag, 31),
+            Heading::text('sql_mode', Field::VarString, strlen($event->mode), $flag, 31),
+            Heading::text('time_zone', Field::VarString, strlen($event->zone), $flag, 31),
+            Heading::text('Create Event', Field::VarString, mb_strlen($text), $flag, 31),
+            Heading::text('character_set_client', Field::VarString, 32, $flag, 31),
+            Heading::text('collation_connection', Field::VarString, 32, $flag, 31),
+            Heading::text('Database Collation', Field::VarString, 32, $flag, 31),
+        ]))->sent([[$event->name, $event->mode, $event->zone, $text, ...$event->charsets]], $context);
+    }
+
+    /**
+     * Writes the statement that creates a stored procedure or function.
+     *
+     * @param bool $function Whether the routine is a function
+     * @param Schema|null $schema The database of the routine, null when it does not exist
+     * @param string $name The name of the routine as written
+     *
+     * @throws SqlError When the routine does not exist
+     */
+    public function routine(bool $function, ?Schema $schema, string $name, Context $context): Reply
+    {
+        $routine = $schema === null ? null : (RoutineCommand::routines($schema, $function)[strtolower($name)] ?? null);
         if ($routine === null) {
-            throw ErrorCode::RoutineMissing->error($kind, $name);
+            throw ProgramError::RoutineMissing->error($function ? 'FUNCTION' : 'PROCEDURE', $name);
         }
         $title = $function ? 'Function' : 'Procedure';
+        $flag = ColumnFlag::NotNull->value;
 
         return (new Listing([
             Heading::text($title, Field::VarString, 64, $flag, 31),

@@ -119,6 +119,36 @@ final class TableQueriesTest extends TestCase
         ]);
     }
 
+    public function testIntegerAnswersTheIntegerTypeWithItsDisplayWidth(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
+
+        self::assertSame(['TINYINT(4) UNSIGNED', 'MEDIUMINT(9)', 'BIGINT(11)', 'INT(3)'], [
+            $queries->integer(new Domain(Kind::Integer, Field::Tiny, 4, 0, true), 'TINYINT'),
+            $queries->integer(new Domain(Kind::Integer, Field::Int24, 9), 'MEDIUMINT'),
+            $queries->integer(new Domain(Kind::Integer, Field::LongLong, 11), 'INT'),
+            $queries->integer(new Domain(Kind::Integer, Field::LongLong, 10, display: 3), 'INT'),
+        ]);
+    }
+
+    public function testCharacterAnswersTheStringTypeWithItsCollation(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
+        $collation = Collation::known('latin1_swedish_ci');
+        $binary = Collation::known('binary');
+
+        self::assertSame(["ENUM('a','b''c') CHARACTER SET latin1 COLLATE latin1_swedish_ci", 'VARBINARY(10)', 'BLOB', 'MEDIUMTEXT CHARACTER SET latin1 COLLATE latin1_swedish_ci'], [
+            $queries->character(new Domain(Kind::String, Field::Enum, 3, Domain::NOT_FIXED, false, $collation, true, ['a', "b'c"])),
+            $queries->character(new Domain(Kind::String, Field::VarString, 10, Domain::NOT_FIXED, false, $binary)),
+            $queries->character(new Domain(Kind::String, Field::Blob, 65535, Domain::NOT_FIXED, false, $binary)),
+            $queries->character(new Domain(Kind::String, Field::Blob, 65536, Domain::NOT_FIXED, false, $collation)),
+        ]);
+    }
+
     public function testTextAnswersTheTypeThatHoldsTheBytes(): void
     {
         $session = (new Instance())->connect();

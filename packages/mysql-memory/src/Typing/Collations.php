@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Typing;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
 use SqlSemantics\Platform\MySql\Rules\Typing\Collations as Rules;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix;
@@ -46,9 +46,9 @@ final class Collations
         $mix = new IllegalCollationMix(array_map(static fn ($domain): array => [$rules->operand($domain)[0]->name, $rules->operand($domain)[1]], $resolved), $operation);
 
         return throw new SqlError(match (count($domains)) {
-            2 => ErrorCode::CantAggregateTwoCollations,
-            3 => ErrorCode::CantAggregateThreeCollations,
-            default => ErrorCode::CantAggregateCollations,
+            2 => DataError::CantAggregateTwoCollations,
+            3 => DataError::CantAggregateThreeCollations,
+            default => DataError::CantAggregateCollations,
         }, $mix->message());
     }
 }

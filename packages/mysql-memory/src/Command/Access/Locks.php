@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Access;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
@@ -91,13 +91,13 @@ final class Locks
         foreach ($session->locks as [$lockedSchema, $table, $alias, $exclusive]) {
             if ($lockedSchema === $schema && $table === $name->name->value && strcasecmp($alias, $used) === 0) {
                 if ($write && !$exclusive) {
-                    throw ErrorCode::TableNotLockedForWrite->error($used);
+                    throw StatementError::TableNotLockedForWrite->error($used);
                 }
 
                 return;
             }
         }
 
-        throw ErrorCode::TableNotLocked->error($used);
+        throw StatementError::TableNotLocked->error($used);
     }
 }

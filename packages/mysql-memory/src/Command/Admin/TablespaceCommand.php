@@ -6,8 +6,10 @@ namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Server\ServerCatalog;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Registry\Registry;
@@ -86,11 +88,11 @@ final class TablespaceCommand implements Command
             $statement instanceof RenameTablespace => $this->rename($statement, $registry),
             $statement instanceof AlterTablespace => $this->alter($statement->name->value, $statement->options, $registry),
             $statement instanceof AlterTablespaceDatafile => $this->datafile($statement, $registry),
-            $statement instanceof AlterTablespaceAccess => throw ErrorCode::SyntaxError->error(),
+            $statement instanceof AlterTablespaceAccess => throw StatementError::SyntaxError->error(),
             $statement instanceof AlterUndoTablespace => $this->activate($statement, $registry),
             $statement instanceof DropTablespace => $this->drop($statement, $registry),
             $statement instanceof DropUndoTablespace => $this->dropUndo($statement, $registry),
-            default => throw ErrorCode::NotSupportedYet->error('this tablespace statement'),
+            default => throw StatementError::NotSupportedYet->error('this tablespace statement'),
         };
 
         return new Completion();
@@ -107,7 +109,7 @@ final class TablespaceCommand implements Command
         $this->engine($statement->options, 'CREATE TABLESPACE');
         $this->reserved($name);
         if ($this->exists($name, $registry)) {
-            throw ErrorCode::TablespaceExists->error($name);
+            throw SchemaError::TablespaceExists->error($name);
         }
         $failed = 'TABLESPACE ' . $name;
         $file = $statement->datafile === null ? '' : (new Literals())->bytes($statement->datafile);
@@ -116,10 +118,10 @@ final class TablespaceCommand implements Command
         }
         foreach ($statement->options as $option) {
             if ($option instanceof SizeOption && $option->kind === SizeOptionKind::FileBlock && !in_array($this->size($option), ['1024', '2048', '4096', '8192', '16384'], true)) {
-                throw new SqlError(ErrorCode::IllegalCreateOption, 'InnoDB does not support FILE_BLOCK_SIZE=' . $this->size($option), null, [[ErrorCode::CreateFilegroupFailed->value, ErrorCode::CreateFilegroupFailed->message($failed)], [ErrorCode::IllegalHa->value, ErrorCode::IllegalHa->message($name)]]);
+                throw new SqlError(SchemaError::IllegalCreateOption, 'InnoDB does not support FILE_BLOCK_SIZE=' . $this->size($option), null, [[SchemaError::CreateFilegroupFailed->value, SchemaError::CreateFilegroupFailed->message($failed)], [SchemaError::IllegalHa->value, SchemaError::IllegalHa->message($name)]]);
             }
         }
-        $this->options($statement->options, [ErrorCode::CreateFilegroupFailed->value, ErrorCode::CreateFilegroupFailed->message($failed)], $name, true);
+        $this->options($statement->options, [SchemaError::CreateFilegroupFailed->value, SchemaError::CreateFilegroupFailed->message($failed)], $name, true);
         $registry->tablespaces[$name] = new Tablespace($name, false, $file);
     }
 
@@ -134,7 +136,7 @@ final class TablespaceCommand implements Command
         $this->engine($statement->options, 'CREATE UNDO TABLESPACE');
         $this->reserved($name);
         if ($this->exists($name, $registry)) {
-            throw ErrorCode::TablespaceExists->error($name);
+            throw SchemaError::TablespaceExists->error($name);
         }
         $file = (new Literals())->bytes($statement->datafile);
         $this->file($file, '.ibu', 'UNDO TABLESPACE ' . $name, $name, $registry);
@@ -153,7 +155,7 @@ final class TablespaceCommand implements Command
         $this->reserved($name);
         $tablespace = $this->find($name, $registry);
         if ($this->exists($target, $registry)) {
-            throw ErrorCode::TablespaceExists->error($target);
+            throw SchemaError::TablespaceExists->error($target);
         }
         $this->reserved($target);
         unset($registry->tablespaces[$name]);
@@ -174,10 +176,10 @@ final class TablespaceCommand implements Command
         $this->find($name, $registry);
         foreach ($options as $option) {
             if ($option instanceof EngineOption) {
-                throw ErrorCode::SyntaxError->error();
+                throw StatementError::SyntaxError->error();
             }
         }
-        $this->options($options, [ErrorCode::AlterFilegroupFailed->value, ErrorCode::AlterFilegroupFailed->message('TABLESPACE ' . $name)], $name, false);
+        $this->options($options, [SchemaError::AlterFilegroupFailed->value, SchemaError::AlterFilegroupFailed->message('TABLESPACE ' . $name)], $name, false);
     }
 
     /**
@@ -192,14 +194,14 @@ final class TablespaceCommand implements Command
         $tablespace = $this->find($name, $registry);
         $file = (new Literals())->bytes($statement->datafile);
         if ($statement->action === DatafileAction::Drop && $file !== $tablespace->file) {
-            throw ErrorCode::TablespaceFileMissing->error($name, $file);
+            throw SchemaError::TablespaceFileMissing->error($name, $file);
         }
         if ($statement->action === DatafileAction::Change) {
-            throw ErrorCode::SyntaxError->error();
+            throw StatementError::SyntaxError->error();
         }
         $operation = 'ALTER TABLESPACE ... ' . $statement->action->value . ' DATAFILE';
 
-        throw new SqlError(ErrorCode::AlterFilegroupFailed, ErrorCode::AlterFilegroupFailed->message('TABLESPACE ' . $name), null, [[ErrorCode::EngineUnsupportedOperation->value, ErrorCode::EngineUnsupportedOperation->message($operation)]]);
+        throw new SqlError(SchemaError::AlterFilegroupFailed, SchemaError::AlterFilegroupFailed->message('TABLESPACE ' . $name), null, [[SchemaError::EngineUnsupportedOperation->value, SchemaError::EngineUnsupportedOperation->message($operation)]]);
     }
 
     /**
@@ -215,7 +217,7 @@ final class TablespaceCommand implements Command
         }
         $tablespace = $this->find($name, $registry);
         if (!$tablespace->undo) {
-            throw new SqlError(ErrorCode::WrongTablespaceName, 'Cannot ALTER UNDO TABLESPACE `' . $name . '` because it is a general tablespace.  Please use ALTER TABLESPACE.', null, [[ErrorCode::AlterFilegroupFailed->value, ErrorCode::AlterFilegroupFailed->message('UNDO TABLESPACE ' . $name)], [ErrorCode::OperationDisallowed->value, ErrorCode::OperationDisallowed->message('ALTER UNDO TABLEPSPACE', $name)]]);
+            throw new SqlError(SchemaError::WrongTablespaceName, 'Cannot ALTER UNDO TABLESPACE `' . $name . '` because it is a general tablespace.  Please use ALTER TABLESPACE.', null, [[SchemaError::AlterFilegroupFailed->value, SchemaError::AlterFilegroupFailed->message('UNDO TABLESPACE ' . $name)], [AdministrationError::OperationDisallowed->value, AdministrationError::OperationDisallowed->message('ALTER UNDO TABLEPSPACE', $name)]]);
         }
         $tablespace->active = $statement->active;
     }
@@ -232,11 +234,11 @@ final class TablespaceCommand implements Command
         $tablespace = $this->find($name, $registry);
         foreach ($statement->options as $option) {
             if ($option instanceof EngineOption) {
-                throw ErrorCode::SyntaxError->error();
+                throw StatementError::SyntaxError->error();
             }
         }
         if ($tablespace->undo) {
-            throw new SqlError(ErrorCode::WrongTablespaceName, 'Cannot DROP TABLESPACE `' . $name . '` because it is an undo tablespace.  Please use DROP UNDO TABLESPACE.', null, [[ErrorCode::DropFilegroupFailed->value, ErrorCode::DropFilegroupFailed->message('TABLESPACE ' . $name)], [ErrorCode::OperationDisallowed->value, ErrorCode::OperationDisallowed->message('DROP TABLEPSPACE', $name)]]);
+            throw new SqlError(SchemaError::WrongTablespaceName, 'Cannot DROP TABLESPACE `' . $name . '` because it is an undo tablespace.  Please use DROP UNDO TABLESPACE.', null, [[SchemaError::DropFilegroupFailed->value, SchemaError::DropFilegroupFailed->message('TABLESPACE ' . $name)], [AdministrationError::OperationDisallowed->value, AdministrationError::OperationDisallowed->message('DROP TABLEPSPACE', $name)]]);
         }
         unset($registry->tablespaces[$name]);
     }
@@ -253,10 +255,10 @@ final class TablespaceCommand implements Command
         $this->reserved($name);
         $tablespace = $this->find($name, $registry);
         if (!$tablespace->undo) {
-            throw new SqlError(ErrorCode::WrongTablespaceName, 'Cannot DROP UNDO TABLESPACE `' . $name . '` because it is a general tablespace.  Please use DROP TABLESPACE.', null, [[ErrorCode::DropFilegroupFailed->value, ErrorCode::DropFilegroupFailed->message('UNDO TABLESPACE ' . $name)], [ErrorCode::OperationDisallowed->value, ErrorCode::OperationDisallowed->message('DROP UNDO TABLEPSPACE', $name)]]);
+            throw new SqlError(SchemaError::WrongTablespaceName, 'Cannot DROP UNDO TABLESPACE `' . $name . '` because it is a general tablespace.  Please use DROP TABLESPACE.', null, [[SchemaError::DropFilegroupFailed->value, SchemaError::DropFilegroupFailed->message('UNDO TABLESPACE ' . $name)], [AdministrationError::OperationDisallowed->value, AdministrationError::OperationDisallowed->message('DROP UNDO TABLEPSPACE', $name)]]);
         }
         if ($tablespace->active) {
-            throw new SqlError(ErrorCode::DropFilegroupFailed, ErrorCode::DropFilegroupFailed->message('UNDO TABLESPACE ' . $name), null, [[ErrorCode::TablespaceNotEmpty->value, ErrorCode::TablespaceNotEmpty->message($name)]]);
+            throw new SqlError(SchemaError::DropFilegroupFailed, SchemaError::DropFilegroupFailed->message('UNDO TABLESPACE ' . $name), null, [[SchemaError::TablespaceNotEmpty->value, SchemaError::TablespaceNotEmpty->message($name)]]);
         }
         unset($registry->tablespaces[$name]);
     }
@@ -279,9 +281,9 @@ final class TablespaceCommand implements Command
         if ($named === null) {
             return;
         }
-        $engine = ServerCatalog::shared()->engine($named) ?? throw ErrorCode::UnknownStorageEngine->error($named);
+        $engine = ServerCatalog::shared()->engine($named) ?? throw SchemaError::UnknownStorageEngine->error($named);
         if ($engine !== 'InnoDB') {
-            throw ErrorCode::IllegalCreateOption->error($engine, $operation);
+            throw SchemaError::IllegalCreateOption->error($engine, $operation);
         }
     }
 
@@ -301,9 +303,9 @@ final class TablespaceCommand implements Command
         if ($reason === false) {
             return;
         }
-        $incorrect = ErrorCode::WrongTablespaceName->message($name);
+        $incorrect = SchemaError::WrongTablespaceName->message($name);
 
-        throw new SqlError(ErrorCode::WrongTablespaceName, $reason ?? $incorrect, null, [[ErrorCode::WrongTablespaceName->value, $incorrect]]);
+        throw new SqlError(SchemaError::WrongTablespaceName, $reason ?? $incorrect, null, [[SchemaError::WrongTablespaceName->value, $incorrect]]);
     }
 
     /**
@@ -321,7 +323,7 @@ final class TablespaceCommand implements Command
      */
     public function find(string $name, Registry $registry): Tablespace
     {
-        return $registry->tablespaces[$name] ?? throw ErrorCode::TablespaceMissing->error($name);
+        return $registry->tablespaces[$name] ?? throw SchemaError::TablespaceMissing->error($name);
     }
 
     /**
@@ -344,15 +346,15 @@ final class TablespaceCommand implements Command
             }
         }
         if ($reasons !== []) {
-            $following = array_map(static fn (string $reason): array => [ErrorCode::WrongFileName->value, $reason], array_slice($reasons, 1));
-            $following[] = [ErrorCode::CreateFilegroupFailed->value, ErrorCode::CreateFilegroupFailed->message($failed)];
-            $following[] = [ErrorCode::WrongFileName->value, ErrorCode::WrongFileName->message($file)];
+            $following = array_map(static fn (string $reason): array => [SchemaError::WrongFileName->value, $reason], array_slice($reasons, 1));
+            $following[] = [SchemaError::CreateFilegroupFailed->value, SchemaError::CreateFilegroupFailed->message($failed)];
+            $following[] = [SchemaError::WrongFileName->value, SchemaError::WrongFileName->message($file)];
 
-            throw new SqlError(ErrorCode::WrongFileName, $reasons[0], null, $following);
+            throw new SqlError(SchemaError::WrongFileName, $reasons[0], null, $following);
         }
         foreach ($registry->tablespaces as $tablespace) {
             if ($tablespace->file === $file) {
-                throw ErrorCode::DuplicateTablespaceFile->error($name);
+                throw SchemaError::DuplicateTablespaceFile->error($name);
             }
         }
     }
@@ -370,26 +372,26 @@ final class TablespaceCommand implements Command
         foreach ($options as $option) {
             if ($option instanceof EncryptionOption) {
                 $value = strtoupper((new Literals())->bytes($option->encryption));
-                $engine = $creating ? [ErrorCode::GetErrno->value, ErrorCode::GetErrno->message('138', 'Unsupported extension used for table')] : [ErrorCode::GetErrno->value, ErrorCode::GetErrno->message('168', 'Unknown (generic) error from engine')];
+                $engine = $creating ? [AdministrationError::GetErrno->value, AdministrationError::GetErrno->message('138', 'Unsupported extension used for table')] : [AdministrationError::GetErrno->value, AdministrationError::GetErrno->message('168', 'Unknown (generic) error from engine')];
                 if ($creating && !in_array($value, ['Y', 'N'], true)) {
-                    throw new SqlError(ErrorCode::InvalidEncryption, ErrorCode::InvalidEncryption->message(), null, [$failed, $engine]);
+                    throw new SqlError(SchemaError::InvalidEncryption, SchemaError::InvalidEncryption->message(), null, [$failed, $engine]);
                 }
                 if ($value === 'Y' || !$creating) {
-                    throw new SqlError(ErrorCode::KeyringMissing, ErrorCode::KeyringMissing->message(), null, [$failed, $engine]);
+                    throw new SqlError(AdministrationError::KeyringMissing, AdministrationError::KeyringMissing->message(), null, [$failed, $engine]);
                 }
             }
             if ($option instanceof SizeOption && $option->kind === SizeOptionKind::Autoextend) {
                 $size = $this->size($option);
                 $mega = '4194304';
                 $code = match (true) {
-                    $size !== '0' && (bccomp($size, $mega) < 0 || bccomp($size, bcmul($mega, '1024')) > 0) => ErrorCode::AutoextendSize,
-                    bcmod($size, $mega) !== '0' => ErrorCode::AutoextendMultiple,
+                    $size !== '0' && (bccomp($size, $mega) < 0 || bccomp($size, bcmul($mega, '1024')) > 0) => SchemaError::AutoextendSize,
+                    bcmod($size, $mega) !== '0' => SchemaError::AutoextendMultiple,
                     default => null,
                 };
                 if ($code !== null) {
-                    $engine = $creating ? [ErrorCode::IllegalHa->value, ErrorCode::IllegalHa->message($name)] : [ErrorCode::GetErrno->value, ErrorCode::GetErrno->message((string) $code->value, 'Unknown error ' . $code->value)];
+                    $engine = $creating ? [SchemaError::IllegalHa->value, SchemaError::IllegalHa->message($name)] : [AdministrationError::GetErrno->value, AdministrationError::GetErrno->message((string) $code->value, 'Unknown error ' . $code->value)];
 
-                    throw new SqlError($code, $code === ErrorCode::AutoextendMultiple ? $code->message('4M') : $code->message(), null, [$failed, $engine]);
+                    throw new SqlError($code, $code === SchemaError::AutoextendMultiple ? $code->message('4M') : $code->message(), null, [$failed, $engine]);
                 }
             }
         }

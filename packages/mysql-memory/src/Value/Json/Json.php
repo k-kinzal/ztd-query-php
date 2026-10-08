@@ -322,23 +322,11 @@ final class Json
             $this->at += $fraction;
         }
         if (in_array($this->text[$this->at] ?? '', ['e', 'E'], true)) {
-            $this->at++;
-            $sign = in_array($this->text[$this->at] ?? '', ['+', '-'], true) ? $this->text[$this->at++] : '+';
-            $digits = strspn($this->text, '0123456789', $this->at);
-            if ($digits === 0) {
-                throw new JsonSyntax('Miss exponent in number.', $this->at);
-            }
-            $magnitude = ltrim(substr($this->text, $this->at, $digits), '0');
-            $exponent = (strlen($magnitude) > 9 ? 999999999 : (int) $magnitude) * ($sign === '-' ? -1 : 1);
-            $this->at += $digits;
+            $exponent = $this->exponent();
         }
         $written = substr($this->text, $start, $this->at - $start);
-        if ($fraction === 0 && $exponent === null) {
-            $magnitude = ltrim($written, '-');
-            $limit = $written[0] === '-' ? '9223372036854775808' : '18446744073709551615';
-            if (strlen($magnitude) < strlen($limit) || (strlen($magnitude) === strlen($limit) && strcmp($magnitude, $limit) <= 0)) {
-                return $written === '-0' ? '0' : $written;
-            }
+        if ($fraction === 0 && $exponent === null && self::integral($written)) {
+            return $written === '-0' ? '0' : $written;
         }
         $value = (float) $written;
         if (($exponent !== null && $exponent > 308 + $fraction) || is_infinite($value)) {
@@ -346,6 +334,38 @@ final class Json
         }
 
         return self::double($value);
+    }
+
+    /**
+     * Reads the exponent of a number from its `e` or `E`, and answers its value.
+     *
+     * An exponent of more than nine significant digits reads as 999999999, with its sign.
+     *
+     * @throws JsonSyntax When no digit follows the `e` and its sign
+     */
+    public function exponent(): int
+    {
+        $this->at++;
+        $sign = in_array($this->text[$this->at] ?? '', ['+', '-'], true) ? $this->text[$this->at++] : '+';
+        $digits = strspn($this->text, '0123456789', $this->at);
+        if ($digits === 0) {
+            throw new JsonSyntax('Miss exponent in number.', $this->at);
+        }
+        $magnitude = ltrim(substr($this->text, $this->at, $digits), '0');
+        $this->at += $digits;
+
+        return (strlen($magnitude) > 9 ? 999999999 : (int) $magnitude) * ($sign === '-' ? -1 : 1);
+    }
+
+    /**
+     * Tells whether an integer, as written, fits a signed 64-bit integer when negative or an unsigned one otherwise.
+     */
+    public static function integral(string $written): bool
+    {
+        $magnitude = ltrim($written, '-');
+        $limit = $written[0] === '-' ? '9223372036854775808' : '18446744073709551615';
+
+        return strlen($magnitude) < strlen($limit) || (strlen($magnitude) === strlen($limit) && strcmp($magnitude, $limit) <= 0);
     }
 
     /**

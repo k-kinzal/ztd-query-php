@@ -5,31 +5,6 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\View;
 
 use MySqlMemory\Dictionary\Routine;
-use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
-use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
-use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
-use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
-use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
-use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
-use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
-use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
-use SqlSemantics\Platform\MySql\Statement\Expression\Not;
-use SqlSemantics\Platform\MySql\Statement\Expression\NullTest;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
-use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
-use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between;
-use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
-use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
-use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists;
-use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
-use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
-use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
-use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\OrderItem;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
@@ -69,12 +44,18 @@ use SqlSemantics\Statement\Shape\Field;
 final class ViewText
 {
     /**
+     * The writer of the expressions of the query.
+     */
+    public readonly ExpressionText $expressions;
+
+    /**
      * @param Facts $facts The facts the query was resolved with
      * @param string $current The current database, which the names of its tables are written without
      * @param string $database The database the unqualified names of the query are in
      */
     public function __construct(public readonly Facts $facts, public readonly string $current, public readonly string $database)
     {
+        $this->expressions = new ExpressionText($this);
     }
 
     /**
@@ -129,7 +110,7 @@ final class ViewText
             if (!$field instanceof Field) {
                 return null;
             }
-            $value = $field->expression === null ? $this->column($field->resolution) : $this->scalar($field->expression);
+            $value = $field->expression === null ? $this->column($field->resolution) : $this->expressions->scalar($field->expression);
             if ($value === null) {
                 return null;
             }
@@ -144,7 +125,7 @@ final class ViewText
             $text .= ' from ' . $from;
         }
         if ($select->where !== null) {
-            $where = $this->scalar($select->where);
+            $where = $this->expressions->scalar($select->where);
             if ($where === null) {
                 return null;
             }
@@ -154,14 +135,14 @@ final class ViewText
             if ($select->groupBy->modifier !== null) {
                 return null;
             }
-            $groups = $this->scalars(array_map(static fn (OrderItem $item): Scalar => $item->expression, $select->groupBy->items));
+            $groups = $this->expressions->scalars(array_map(static fn (OrderItem $item): Scalar => $item->expression, $select->groupBy->items));
             if ($groups === null) {
                 return null;
             }
             $text .= ' group by ' . implode(',', $groups);
         }
         if ($select->having !== null) {
-            $having = $this->scalar($select->having);
+            $having = $this->expressions->scalar($select->having);
             if ($having === null) {
                 return null;
             }
@@ -183,7 +164,7 @@ final class ViewText
         if ($order !== []) {
             $keys = [];
             foreach ($order as $item) {
-                $key = $this->scalar($item->expression);
+                $key = $this->expressions->scalar($item->expression);
                 if ($key === null) {
                     return null;
                 }
@@ -197,8 +178,8 @@ final class ViewText
         if (!$limit instanceof RowLimit) {
             return null;
         }
-        $count = $this->scalar($limit->count);
-        $offset = $limit->offset === null ? null : $this->scalar($limit->offset);
+        $count = $this->expressions->scalar($limit->count);
+        $offset = $limit->offset === null ? null : $this->expressions->scalar($limit->offset);
         if ($count === null || ($limit->offset !== null && $offset === null)) {
             return null;
         }
@@ -225,31 +206,51 @@ final class ViewText
             return $this->relation($relation->relation);
         }
         if ($relation instanceof TableList) {
-            $text = null;
-            foreach ($relation->members as $member) {
-                $written = $this->relation($member);
-                if ($written === null) {
-                    return null;
-                }
-                $text = $text === null ? $written : '(' . $text . ' join ' . $written . ')';
-            }
-
-            return $text;
+            return $this->members($relation);
         }
-        if ($relation instanceof JoinedTable && !$relation->operator->natural() && $relation->using === []) {
-            $swapped = $relation->operator->keepsRight();
-            $left = $this->relation($swapped ? $relation->right : $relation->left);
-            $right = $this->relation($swapped ? $relation->left : $relation->right);
-            $on = $relation->on === null ? '' : $this->scalar($relation->on);
-            if ($left === null || $right === null || $on === null) {
-                return null;
-            }
-            $keyword = $relation->operator->keepsLeft() || $swapped ? 'left join' : 'join';
-
-            return '(' . $left . ' ' . $keyword . ' ' . $right . ($on === '' ? '' : ' on(' . $on . ')') . ')';
+        if ($relation instanceof JoinedTable) {
+            return $this->join($relation);
         }
 
         return null;
+    }
+
+    /**
+     * Writes the members of a comma-separated table list as joins nested from the left.
+     */
+    public function members(TableList $list): ?string
+    {
+        $text = null;
+        foreach ($list->members as $member) {
+            $written = $this->relation($member);
+            if ($written === null) {
+                return null;
+            }
+            $text = $text === null ? $written : '(' . $text . ' join ' . $written . ')';
+        }
+
+        return $text;
+    }
+
+    /**
+     * Writes a join in parentheses: a right join as the left join of its operands swapped; a
+     * natural join or a join with USING is not written.
+     */
+    public function join(JoinedTable $join): ?string
+    {
+        if ($join->operator->natural() || $join->using !== []) {
+            return null;
+        }
+        $swapped = $join->operator->keepsRight();
+        $left = $this->relation($swapped ? $join->right : $join->left);
+        $right = $this->relation($swapped ? $join->left : $join->right);
+        $on = $join->on === null ? '' : $this->expressions->scalar($join->on);
+        if ($left === null || $right === null || $on === null) {
+            return null;
+        }
+        $keyword = $join->operator->keepsLeft() || $swapped ? 'left join' : 'join';
+
+        return '(' . $left . ' ' . $keyword . ' ' . $right . ($on === '' ? '' : ' on(' . $on . ')') . ')';
     }
 
     /**
@@ -284,208 +285,5 @@ final class ViewText
         }
 
         return null;
-    }
-
-    /**
-     * Writes a list of expressions, or answers null when one cannot be written.
-     *
-     * @param list<Scalar> $scalars
-     * @return list<string>|null
-     */
-    public function scalars(array $scalars): ?array
-    {
-        $written = [];
-        foreach ($scalars as $scalar) {
-            $text = $this->scalar($scalar);
-            if ($text === null) {
-                return null;
-            }
-            $written[] = $text;
-        }
-
-        return $written;
-    }
-
-    /**
-     * Writes an expression.
-     */
-    public function scalar(Scalar $scalar): ?string
-    {
-        return match (true) {
-            $scalar instanceof ColumnUse => $this->facts->covers($scalar) ? $this->column($this->facts->scalar($scalar)->resolution) : null,
-            $scalar instanceof Grouped => $this->scalar($scalar->operand),
-            $scalar instanceof NumberLiteral => $scalar->text,
-            $scalar instanceof SignedLiteral => $scalar->negative ? '-(' . $scalar->number->text . ')' : $scalar->number->text,
-            $scalar instanceof StringLiteral => ($scalar->introducer === null ? '' : '_' . strtolower($scalar->introducer->value)) . "'" . strtr($scalar->value(), ['\\' => '\\\\', "'" => "\\'"]) . "'",
-            $scalar instanceof NullLiteral => 'NULL',
-            $scalar instanceof BooleanLiteral => $scalar->value ? 'true' : 'false',
-            $scalar instanceof Comparison => $this->binary($scalar->left, $scalar->operator->value, $scalar->right),
-            $scalar instanceof Arithmetic => $this->binary($scalar->left, $scalar->operator->value, $scalar->right),
-            $scalar instanceof Logical => $this->binary($scalar->left, strtolower($scalar->operator->value), $scalar->right),
-            $scalar instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated => $this->wrap($scalar->operand, '(', ' collate ' . $scalar->collation->value . ')'),
-            $scalar instanceof NullTest => $this->wrap($scalar->operand, '(', $scalar->negated ? ' is not null)' : ' is null)'),
-            $scalar instanceof Not => $this->not($scalar->operand),
-            $scalar instanceof Unary => $scalar->operator === UnaryOperator::Plus ? $this->scalar($scalar->operand) : ($scalar->operator === UnaryOperator::Not ? $this->not($scalar->operand) : $this->wrap($scalar->operand, $scalar->operator->value . '(', ')')),
-            $scalar instanceof Between => $this->between($scalar),
-            $scalar instanceof InList => $this->in($scalar),
-            $scalar instanceof Like => $scalar->escape !== null ? null : ($scalar->negated ? $this->wrap(new Like($scalar->operand, $scalar->pattern), '(not(', '))') : $this->binary($scalar->operand, 'like', $scalar->pattern)),
-            $scalar instanceof FunctionCall => $this->call(strtolower($scalar->name->value), array_map(static fn ($argument): Scalar => $argument->expression, $scalar->arguments), $scalar->schema === null ? '' : Routine::quoted($scalar->schema->value) . '.'),
-            $scalar instanceof Aggregate => $this->aggregate($scalar),
-            $scalar instanceof CaseExpression => $this->branches($scalar),
-            $scalar instanceof ScalarSubquery => $this->subquery('(', $scalar->query, ')'),
-            $scalar instanceof Exists => $this->subquery('exists(', $scalar->query, ')'),
-            $scalar instanceof InQuery => $this->wrap($scalar->operand, '', ($scalar->negated ? ' not in (' : ' in (') . $this->query($scalar->query, false) . ')', $this->query($scalar->query, false) === null),
-            default => null,
-        };
-    }
-
-    /**
-     * Writes a binary operation in parentheses.
-     */
-    public function binary(Scalar $left, string $operator, Scalar $right): ?string
-    {
-        $first = $this->scalar($left);
-        $second = $this->scalar($right);
-
-        return $first === null || $second === null ? null : '(' . $first . ' ' . $operator . ' ' . $second . ')';
-    }
-
-    /**
-     * Writes an expression between a prefix and a suffix.
-     */
-    public function wrap(Scalar $operand, string $before, string $after, bool $refused = false): ?string
-    {
-        $text = $this->scalar($operand);
-
-        return $text === null || $refused ? null : $before . $text . $after;
-    }
-
-    /**
-     * Writes a negation: a comparison negated, or a comparison of the operand with 0.
-     */
-    public function not(Scalar $operand): ?string
-    {
-        while ($operand instanceof Grouped) {
-            $operand = $operand->operand;
-        }
-        $negated = $operand instanceof Comparison ? match ($operand->operator) {
-            ComparisonOperator::Equal => '<>',
-            ComparisonOperator::NotEqual => '=',
-            ComparisonOperator::Less => '>=',
-            ComparisonOperator::LessOrEqual => '>',
-            ComparisonOperator::Greater => '<=',
-            ComparisonOperator::GreaterOrEqual => '<',
-            ComparisonOperator::NullSafeEqual => null,
-        } : null;
-        if ($operand instanceof Comparison && $negated !== null) {
-            return $this->binary($operand->left, $negated, $operand->right);
-        }
-        if ($operand instanceof NullTest) {
-            return $this->wrap($operand->operand, '(', $operand->negated ? ' is null)' : ' is not null)');
-        }
-        if ($operand instanceof ColumnUse || $operand instanceof Arithmetic || $operand instanceof NumberLiteral || $operand instanceof FunctionCall) {
-            return $this->wrap($operand, '(0 = ', ')');
-        }
-        $text = $this->scalar($operand);
-
-        return $text === null ? null : '(not(' . $text . '))';
-    }
-
-    /**
-     * Writes BETWEEN.
-     */
-    public function between(Between $between): ?string
-    {
-        $operand = $this->scalar($between->operand);
-        $low = $this->scalar($between->low);
-        $high = $this->scalar($between->high);
-
-        return $operand === null || $low === null || $high === null ? null : '(' . $operand . ($between->negated ? ' not between ' : ' between ') . $low . ' and ' . $high . ')';
-    }
-
-    /**
-     * Writes IN over a list; over one element, it is a comparison with it.
-     */
-    public function in(InList $in): ?string
-    {
-        if (count($in->elements) === 1) {
-            return $this->binary($in->operand, $in->negated ? '<>' : '=', $in->elements[0]);
-        }
-        $operand = $this->scalar($in->operand);
-        $elements = $this->scalars($in->elements);
-
-        return $operand === null || $elements === null ? null : '(' . $operand . ($in->negated ? ' not in (' : ' in (') . implode(',', $elements) . '))';
-    }
-
-    /**
-     * Writes a function call with its arguments.
-     *
-     * @param list<Scalar> $arguments
-     */
-    public function call(string $name, array $arguments, string $schema = ''): ?string
-    {
-        $written = $this->scalars($arguments);
-
-        return $written === null ? null : $schema . $name . '(' . implode(',', $written) . ')';
-    }
-
-    /**
-     * Writes an aggregate: COUNT(*) as count(0).
-     */
-    public function aggregate(Aggregate $aggregate): ?string
-    {
-        if ($aggregate->over !== null || $aggregate->function === AggregateFunction::JsonArray || $aggregate->function === AggregateFunction::Collect) {
-            return null;
-        }
-        $name = strtolower($aggregate->function->value);
-        $arguments = $aggregate->arguments;
-        if ($arguments === []) {
-            return $name . '(0)';
-        }
-        $written = $this->scalars($arguments);
-
-        return $written === null ? null : $name . '(' . ($aggregate->distinct ? 'distinct ' : '') . implode(',', $written) . ')';
-    }
-
-    /**
-     * Writes a CASE expression.
-     */
-    public function branches(CaseExpression $case): ?string
-    {
-        $text = '(case';
-        if ($case->operand !== null) {
-            $operand = $this->scalar($case->operand);
-            if ($operand === null) {
-                return null;
-            }
-            $text .= ' ' . $operand;
-        }
-        foreach ($case->branches as $branch) {
-            $condition = $this->scalar($branch->condition);
-            $result = $this->scalar($branch->result);
-            if ($condition === null || $result === null) {
-                return null;
-            }
-            $text .= ' when ' . $condition . ' then ' . $result;
-        }
-        if ($case->else !== null) {
-            $else = $this->scalar($case->else);
-            if ($else === null) {
-                return null;
-            }
-            $text .= ' else ' . $else;
-        }
-
-        return $text . ' end)';
-    }
-
-    /**
-     * Writes a subquery between a prefix and a suffix.
-     */
-    public function subquery(string $before, Query $query, string $after): ?string
-    {
-        $text = $this->query($query, false);
-
-        return $text === null ? null : $before . $text . $after;
     }
 }

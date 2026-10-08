@@ -6,7 +6,10 @@ namespace MySqlMemory\Command\Replication;
 
 use MySqlMemory\Command\Admin\Literals;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Registry\Registry;
@@ -71,16 +74,16 @@ final class ReplicaCommand implements Command
         $statement = $operation->statement;
         $registry = $session->instance->registry;
         if ($statement instanceof StartGroupReplication || $statement instanceof StopGroupReplication) {
-            throw $session->transaction->open ? ErrorCode::LockedOrActiveTransaction->error() : ErrorCode::GroupReplicationNotConfigured->error();
+            throw $session->transaction->open ? StatementError::LockedOrActiveTransaction->error() : AdministrationError::GroupReplicationNotConfigured->error();
         }
         $session->transaction->commit();
         if ($statement instanceof StartReplica) {
             $this->channel($statement->channel);
             if ($statement->password !== null) {
-                $session->diagnostics->note(ErrorCode::InsecurePlainText, ErrorCode::InsecurePlainText->message());
+                $session->diagnostics->note(AccountError::InsecurePlainText, AccountError::InsecurePlainText->message());
             }
             if ($statement->threads === [] || in_array(ReplicaThread::Receiver, $statement->threads, true)) {
-                throw ErrorCode::ReplicaNotConfigured->error();
+                throw AdministrationError::ReplicaNotConfigured->error();
             }
             $registry->applying = true;
         } elseif ($statement instanceof StopReplica) {
@@ -88,11 +91,11 @@ final class ReplicaCommand implements Command
             if ($registry->applying && ($statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true))) {
                 $registry->applying = false;
             } else {
-                $session->diagnostics->note(ErrorCode::ReplicaThreadsStopped, ErrorCode::ReplicaThreadsStopped->message(''));
+                $session->diagnostics->note(AdministrationError::ReplicaThreadsStopped, AdministrationError::ReplicaThreadsStopped->message(''));
             }
         } elseif ($statement instanceof ChangeReplicationFilter) {
             if ($statement->channel !== null) {
-                throw ErrorCode::ReplicaNotInitialized->error();
+                throw AdministrationError::ReplicaNotInitialized->error();
             }
         } elseif ($statement instanceof Reset) {
             foreach ($statement->targets as $target) {
@@ -118,7 +121,7 @@ final class ReplicaCommand implements Command
         if ($target instanceof ResetReplica) {
             $this->channel($target->channel);
             if ($registry->applying) {
-                throw ErrorCode::ReplicaChannelRunning->error('');
+                throw AdministrationError::ReplicaChannelRunning->error('');
             }
         }
     }
@@ -135,10 +138,10 @@ final class ReplicaCommand implements Command
         }
         $name = (new Literals())->bytes($channel);
         if (str_contains($name, "\n")) {
-            throw ErrorCode::WrongValue->error('argument contains not-allowed LF', $name);
+            throw DataError::WrongValue->error('argument contains not-allowed LF', $name);
         }
         if ($name !== '') {
-            throw ErrorCode::ReplicaChannelMissing->error(strtolower($name));
+            throw AdministrationError::ReplicaChannelMissing->error(strtolower($name));
         }
     }
 }

@@ -174,6 +174,34 @@ final class LocatorTest extends TestCase
         self::assertSame([['order clause', [0, 0]], ['order clause', [1, 0]]], array_values($locator->places));
     }
 
+    public function testRecordLocatesANameWithoutItsChildren(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT, b INT)');
+        $statement = $session->analyze('SELECT a FROM t WHERE b')->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        self::assertInstanceOf(ColumnUse::class, $statement->where);
+        $locator = new Locator();
+        $locator->record($statement->where, 'having clause', [5]);
+
+        self::assertSame([['having clause', [5]]], array_values($locator->places));
+        self::assertSame([$statement->where], $locator->nodes());
+        self::assertSame([], $locator->arrays);
+    }
+
+    public function testRecordKeepsACastToAnArray(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $statement = $session->analyze('SELECT 1 FROM DUAL WHERE CAST(1 AS SIGNED ARRAY)')->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast::class, $statement->where);
+        $locator = new Locator();
+        $locator->record($statement->where, 'where clause', [2]);
+
+        self::assertSame([[$statement->where, 'where clause', [2]]], $locator->arrays);
+        self::assertSame([], $locator->places);
+    }
+
     public function testSelectPrefixesTheOrderOfTheBlock(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

@@ -20,6 +20,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -372,4 +373,25 @@ final class GroupingTest extends TestCase
         self::assertSame([], $empty->rows);
     }
 
+    public function testSamePropertiesComparesEachPropertyAsAnExpression(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT, b INT)');
+        $operation = $session->analyze('SELECT t.a + 1, (A + 1), a + 2 FROM t');
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $grouping = new Grouping($planner);
+        $first = $operation->field(0)->expression;
+        $second = $operation->field(1)->expression;
+        $third = $operation->field(2)->expression;
+        self::assertInstanceOf(Grouped::class, $second);
+        self::assertNotNull($first);
+        self::assertNotNull($third);
+
+        self::assertSame([true, false], [$grouping->sameProperties($first, $second->operand), $grouping->sameProperties($first, $third)]);
+    }
 }

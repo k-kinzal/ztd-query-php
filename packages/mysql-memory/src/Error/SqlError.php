@@ -28,7 +28,7 @@ final class SqlError extends RuntimeException
      */
     public function __construct(public readonly ErrorCode $error, string $text, ?Throwable $previous = null, public readonly array $following = [], public readonly ?array $signalled = null, ?int $number = null, public readonly bool $recorded = false)
     {
-        parent::__construct($text, $number ?? $error->value, $previous);
+        parent::__construct($text, $number ?? $error->number(), $previous);
     }
 
     /**

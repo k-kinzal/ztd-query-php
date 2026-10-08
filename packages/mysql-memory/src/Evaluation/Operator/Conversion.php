@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
@@ -98,7 +99,7 @@ final class Conversion implements Evaluable
         if (Encoding::valid($text, $to)) {
             return $text;
         }
-        $context->warning(ErrorCode::InvalidCharacterString, $to->name, strtoupper(bin2hex(substr($text, Encoding::prefix($text, $to), 3))));
+        $context->warning(DataError::InvalidCharacterString, $to->name, strtoupper(bin2hex(substr($text, Encoding::prefix($text, $to), 3))));
 
         return $to->maxLength === 1 ? $text : null;
     }
@@ -113,7 +114,7 @@ final class Conversion implements Evaluable
         }
         $result = (int) Convert::toInteger($value, $from, $context, $this->domain->unsigned);
         if ($this->domain->unsigned && $from->kind === Kind::Integer && !$from->unsigned && $result < 0) {
-            $context->warning(ErrorCode::UnknownError, 'Cast to unsigned converted negative integer to its positive complement');
+            $context->warning(StatementError::UnknownError, 'Cast to unsigned converted negative integer to its positive complement');
         }
 
         return $result;
@@ -127,7 +128,7 @@ final class Conversion implements Evaluable
         $rounded = Decimal::round($value, $this->domain->decimals);
         $digits = $this->domain->precision() - $this->domain->decimals;
         if (Decimal::integerDigits($rounded) > $digits && trim(explode('.', ltrim($rounded, '-'))[0], '0') !== '') {
-            $context->warning(ErrorCode::DataOutOfRange, 'DECIMAL', '');
+            $context->warning(DataError::DataOutOfRange, 'DECIMAL', '');
             $largest = str_repeat('9', max(1, $digits)) . ($this->domain->decimals > 0 ? '.' . str_repeat('9', $this->domain->decimals) : '');
 
             return str_starts_with($rounded, '-') ? '-' . $largest : $largest;
@@ -153,7 +154,7 @@ final class Conversion implements Evaluable
             return $binary ? str_pad($value, $this->limit, "\0") : $value;
         }
         $kept = $characters->maxLength === 1 || !mb_check_encoding($value, 'UTF-8') ? substr($value, 0, $this->limit) : mb_substr($value, 0, $this->limit, 'UTF-8');
-        $context->warning(ErrorCode::TruncatedWrongValue, ($this->target === 'BINARY' ? 'BINARY' : 'CHAR') . '(' . strlen($kept) . ')', $this->quoted($value, $binary));
+        $context->warning(DataError::TruncatedWrongValue, ($this->target === 'BINARY' ? 'BINARY' : 'CHAR') . '(' . strlen($kept) . ')', $this->quoted($value, $binary));
 
         return $kept;
     }

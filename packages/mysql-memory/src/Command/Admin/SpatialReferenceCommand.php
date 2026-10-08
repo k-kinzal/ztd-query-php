@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -54,56 +55,74 @@ final class SpatialReferenceCommand implements Command
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;
-        $systems = $session->instance->registry->spatialCatalog;
         $session->transaction->commit();
         if ($statement instanceof CreateSpatialReference) {
-            $srid = (int) (new Literals())->number($statement->srid);
-            if (!$statement->orReplace && $systems->name($srid) !== null) {
-                if (!$statement->ifNotExists) {
-                    throw ErrorCode::SrsExists->error((string) $srid);
-                }
-                $session->diagnostics->warning(ErrorCode::SrsExistsWarning, ErrorCode::SrsExistsWarning->message((string) $srid));
-
-                return new Completion(0, 0, $session->diagnostics->count());
-            }
-            $name = '';
-            $definition = '';
-            foreach ($statement->attributes as $attribute) {
-                if ($attribute->kind === SpatialAttributeKind::Name) {
-                    $name = (new Literals())->bytes($attribute->value);
-                }
-                if ($attribute->kind === SpatialAttributeKind::Definition) {
-                    $definition = (new Literals())->bytes($attribute->value);
-                }
-            }
-            if (!(new SpatialDefinition())->valid($definition)) {
-                throw ErrorCode::SrsParseError->error((string) $srid);
-            }
-            if ($systems->named($name, $srid) !== null) {
-                throw ErrorCode::DuplicateEntry->error('1-' . $name, 'st_spatial_reference_systems.SRS_NAME');
-            }
-            $systems->define($srid, $name);
-            $this->reserved($srid, $session);
-
-            return new Completion(0, 0, $session->diagnostics->count());
+            $this->create($statement, $session);
         }
         if ($statement instanceof DropSpatialReference) {
-            $srid = (int) (new Literals())->number($statement->srid);
-            if ($systems->name($srid) === null) {
-                if (!$statement->ifExists) {
-                    throw ErrorCode::SrsNotFound->error((string) $srid);
-                }
-                $session->diagnostics->warning(ErrorCode::SrsNotFoundWarning, ErrorCode::SrsNotFoundWarning->message((string) $srid));
-
-                return new Completion(0, 0, $session->diagnostics->count());
-            }
-            $systems->drop($srid);
-            $this->reserved($srid, $session);
+            $this->drop($statement, $session);
         }
 
         return new Completion(0, 0, $session->diagnostics->count());
     }
 
+    /**
+     * Creates or replaces a system; under IF NOT EXISTS an SRID in use only warns.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the SRID is in use, the definition does not parse, or another system has the name
+     */
+    public function create(CreateSpatialReference $statement, Session $session): void
+    {
+        $systems = $session->instance->registry->spatialCatalog;
+        $srid = (int) (new Literals())->number($statement->srid);
+        if (!$statement->orReplace && $systems->name($srid) !== null) {
+            if (!$statement->ifNotExists) {
+                throw SchemaError::SrsExists->error((string) $srid);
+            }
+            $session->diagnostics->warning(SchemaError::SrsExistsWarning, SchemaError::SrsExistsWarning->message((string) $srid));
+
+            return;
+        }
+        $name = '';
+        $definition = '';
+        foreach ($statement->attributes as $attribute) {
+            if ($attribute->kind === SpatialAttributeKind::Name) {
+                $name = (new Literals())->bytes($attribute->value);
+            }
+            if ($attribute->kind === SpatialAttributeKind::Definition) {
+                $definition = (new Literals())->bytes($attribute->value);
+            }
+        }
+        if (!(new SpatialDefinition())->valid($definition)) {
+            throw SchemaError::SrsParseError->error((string) $srid);
+        }
+        if ($systems->named($name, $srid) !== null) {
+            throw DataError::DuplicateEntry->error('1-' . $name, 'st_spatial_reference_systems.SRS_NAME');
+        }
+        $systems->define($srid, $name);
+        $this->reserved($srid, $session);
+    }
+
+    /**
+     * Drops a system; under IF EXISTS an SRID no system has only warns.
+     *
+     * @throws \MySqlMemory\Error\SqlError When no system has the SRID
+     */
+    public function drop(DropSpatialReference $statement, Session $session): void
+    {
+        $systems = $session->instance->registry->spatialCatalog;
+        $srid = (int) (new Literals())->number($statement->srid);
+        if ($systems->name($srid) === null) {
+            if (!$statement->ifExists) {
+                throw SchemaError::SrsNotFound->error((string) $srid);
+            }
+            $session->diagnostics->warning(SchemaError::SrsNotFoundWarning, SchemaError::SrsNotFoundWarning->message((string) $srid));
+
+            return;
+        }
+        $systems->drop($srid);
+        $this->reserved($srid, $session);
+    }
     /**
      * Warns that an SRID lies in a reserved range.
      */
@@ -111,7 +130,7 @@ final class SpatialReferenceCommand implements Command
     {
         foreach (self::RESERVED as [$low, $high]) {
             if ($srid >= $low && $srid <= $high) {
-                $session->diagnostics->warning(ErrorCode::SrsReservedRange, ErrorCode::SrsReservedRange->message((string) $low, (string) $high));
+                $session->diagnostics->warning(SchemaError::SrsReservedRange, SchemaError::SrsReservedRange->message((string) $low, (string) $high));
             }
         }
     }

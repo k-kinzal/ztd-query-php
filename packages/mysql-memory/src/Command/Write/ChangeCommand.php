@@ -6,7 +6,10 @@ namespace MySqlMemory\Command\Write;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
@@ -60,7 +63,7 @@ final class ChangeCommand implements Command
         assert($statement instanceof Update || $statement instanceof Delete);
         $relation = $statement instanceof Delete ? $statement->table : ($statement->tables[0] ?? null);
         if ($statement instanceof Update && (count($statement->tables) !== 1 || !$relation instanceof TableReference)) {
-            throw ErrorCode::NotSupportedYet->error('multiple-table UPDATE');
+            throw StatementError::NotSupportedYet->error('multiple-table UPDATE');
         }
         assert($relation instanceof TableReference || $relation instanceof WriteTarget);
         $table = $this->table($operation, $relation, $session);
@@ -97,10 +100,10 @@ final class ChangeCommand implements Command
         }
         $table = $session->instance->dictionary->table($schema, $relation->name->name->value);
         if ($table === null) {
-            throw ErrorCode::NoSuchTable->error($schema, $relation->name->name->value);
+            throw QueryError::NoSuchTable->error($schema, $relation->name->name->value);
         }
         if ($relation->partitions !== []) {
-            throw ErrorCode::PartitionClauseOnNonpartitioned->error();
+            throw SchemaError::PartitionClauseOnNonpartitioned->error();
         }
 
         return $table;
@@ -171,9 +174,9 @@ final class ChangeCommand implements Command
                 $stored = $store->value($value->evaluate($frame), $value->domain(), $definition->columns[$position]);
                 if ($stored === null && !$definition->columns[$position]->nullable()) {
                     if ($context->strict) {
-                        throw ErrorCode::BadNull->error($definition->columns[$position]->name);
+                        throw DataError::BadNull->error($definition->columns[$position]->name);
                     }
-                    $context->warning(ErrorCode::BadNull, $definition->columns[$position]->name);
+                    $context->warning(DataError::BadNull, $definition->columns[$position]->name);
                     $stored = $writer->implicit($definition->columns[$position]);
                 }
                 array_splice($row, $position, 1, [$stored]);
@@ -186,7 +189,7 @@ final class ChangeCommand implements Command
             $conflict = $writer->conflict($row, $number);
             if ($conflict !== null) {
                 if ($statement->ignore) {
-                    $context->warning(ErrorCode::DuplicateEntry, ...$writer->entry($row, $conflict[1]));
+                    $context->warning(DataError::DuplicateEntry, ...$writer->entry($row, $conflict[1]));
                     continue;
                 }
                 throw $writer->duplicate($row, $conflict[1]);

@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Condition;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\ProgramError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
+use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
@@ -77,46 +80,22 @@ final class SignalCommand implements Command
     {
         $statement = $operation->statement;
         if ($statement instanceof Resignal) {
-            throw ErrorCode::ResignalWithoutHandler->error();
+            throw ProgramError::ResignalWithoutHandler->error();
         }
         assert($statement instanceof Signal && $statement->condition instanceof SqlState);
         $state = $statement->condition->state->value;
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
-        $frame = new Frame($context);
         $values = [];
         foreach ($statement->items as $item) {
             $values[$item->name->value] = $planner->compiler->compile($item->value, new Scope());
         }
-        $signalled = ['RETURNED_SQLSTATE' => $state];
-        $message = null;
-        $number = null;
-        foreach (ConditionItemName::cases() as $name) {
-            if (!isset($values[$name->value])) {
-                continue;
-            }
-            $evaluable = $values[$name->value];
-            $value = $evaluable->evaluate($frame);
-            if ($value === null) {
-                throw ErrorCode::WrongValueForVariable->error($name->value, 'NULL');
-            }
-            if ($name === ConditionItemName::MysqlErrno) {
-                $number = $this->number($value, $evaluable->domain(), $context);
-                continue;
-            }
-            $text = (string) Convert::toText($value, $evaluable->domain());
-            if (mb_strlen($text) > ($name === ConditionItemName::MessageText ? 128 : 64)) {
-                throw ErrorCode::ConditionItemTooLong->error($name->value);
-            }
-            $signalled[$name->value] = $text;
-            if ($name === ConditionItemName::MessageText) {
-                $message = $text;
-            }
-        }
+        [$signalled, $number] = $this->items($state, $values, $context);
+        $message = $signalled[ConditionItemName::MessageText->value] ?? null;
         $class = substr($state, 0, 2);
         $code = match ($class) {
-            '01' => ErrorCode::SignalWarning,
-            '02' => ErrorCode::SignalNotFound,
-            default => ErrorCode::SignalException,
+            '01' => ProgramError::SignalWarning,
+            '02' => ProgramError::SignalNotFound,
+            default => ProgramError::SignalException,
         };
         if ($class === '01') {
             $context->diagnostics->signal($number ?? $code->value, $message ?? $code->message(), $signalled);
@@ -128,6 +107,42 @@ final class SignalCommand implements Command
     }
 
     /**
+     * Evaluates the condition information items in the order of their names: a NULL is refused,
+     * MESSAGE_TEXT holds at most 128 characters and the other text items 64, and MYSQL_ERRNO is read as a number.
+     *
+     * @param array<string, Evaluable> $values The compiled value of each item the statement sets, by item name
+     * @return array{array<string, string>, int|null} The text items signalled, RETURNED_SQLSTATE first, and the MYSQL_ERRNO or null when it is not set
+     * @throws SqlError When an item is NULL, too long, or MYSQL_ERRNO is no valid number
+     */
+    public function items(string $state, array $values, Context $context): array
+    {
+        $frame = new Frame($context);
+        $signalled = ['RETURNED_SQLSTATE' => $state];
+        $number = null;
+        foreach (ConditionItemName::cases() as $name) {
+            if (!isset($values[$name->value])) {
+                continue;
+            }
+            $evaluable = $values[$name->value];
+            $value = $evaluable->evaluate($frame);
+            if ($value === null) {
+                throw AdministrationError::WrongValueForVariable->error($name->value, 'NULL');
+            }
+            if ($name === ConditionItemName::MysqlErrno) {
+                $number = $this->number($value, $evaluable->domain(), $context);
+                continue;
+            }
+            $text = (string) Convert::toText($value, $evaluable->domain());
+            if (mb_strlen($text) > ($name === ConditionItemName::MessageText ? 128 : 64)) {
+                throw ProgramError::ConditionItemTooLong->error($name->value);
+            }
+            $signalled[$name->value] = $text;
+        }
+
+        return [$signalled, $number];
+    }
+
+    /**
      * Reads the value of MYSQL_ERRNO: an integer from 1 to 65535.
      *
      * @throws SqlError When the value is no such integer
@@ -136,11 +151,11 @@ final class SignalCommand implements Command
     {
         $decimal = (string) $value;
         if ($domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal && is_numeric($decimal) && (bccomp($decimal, '18446744073709551615', 0) > 0 || bccomp($decimal, '-9223372036854775808', 0) < 0)) {
-            $context->warning(ErrorCode::TruncatedWrongValue, 'DECIMAL', $decimal);
+            $context->warning(DataError::TruncatedWrongValue, 'DECIMAL', $decimal);
         }
         $number = Convert::toInteger($value, $domain, $context);
         if ($number === null || $number < 1 || $number > 65535) {
-            throw ErrorCode::WrongValueForVariable->error(ConditionItemName::MysqlErrno->value, (string) Convert::toText($value, $domain));
+            throw AdministrationError::WrongValueForVariable->error(ConditionItemName::MysqlErrno->value, (string) Convert::toText($value, $domain));
         }
 
         return $number;

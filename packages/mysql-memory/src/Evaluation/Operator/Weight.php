@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -69,14 +69,14 @@ final class Weight implements Evaluable
             return pack('J', $domain->unsigned ? (int) $value : (int) $value ^ PHP_INT_MIN);
         }
         if ($domain->kind !== Kind::String || $this->cast !== null) {
-            throw ErrorCode::NotSupportedYet->error('WEIGHT_STRING of this value');
+            throw StatementError::NotSupportedYet->error('WEIGHT_STRING of this value');
         }
         $collation = $domain->collation;
         if ($collation->charset === Charset::binary()) {
             return (string) $value;
         }
         if (!str_ends_with($collation->name, '_bin') || !in_array($collation->charset->name, ['utf8mb4', 'utf8mb3'], true)) {
-            throw ErrorCode::NotSupportedYet->error('WEIGHT_STRING of the collation ' . $collation->name);
+            throw StatementError::NotSupportedYet->error('WEIGHT_STRING of the collation ' . $collation->name);
         }
         $weight = '';
         foreach (mb_str_split(Encoding::convert((string) $value, $collation->charset, Charset::known('utf8mb4')), 1, 'UTF-8') as $character) {

@@ -6,7 +6,9 @@ namespace MySqlMemory\Command\Maintenance;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
@@ -21,6 +23,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\LoadIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\PreloadedTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\AnalyzeTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable;
+use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\Histogram;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\OptimizeTable;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
@@ -68,58 +71,83 @@ final class AdministrationCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof CheckTable || $statement instanceof OptimizeTable || $statement instanceof RepairTable || $statement instanceof AnalyzeTable || $statement instanceof CacheIndex || $statement instanceof LoadIndex);
-        if ($statement instanceof CacheIndex && $statement->cache !== null && strcasecmp($statement->cache->value, 'default') !== 0) {
-            throw ErrorCode::UnknownKeyCache->error($statement->cache->value);
-        }
-        $histograms = new Histograms();
-        if ($statement instanceof AnalyzeTable && $statement->histogram !== null) {
-            $histograms->check($statement->histogram);
-        }
+        $histogram = $statement instanceof AnalyzeTable ? $statement->histogram : null;
         $names = $this->names($statement);
-        $database = $session->variables->database;
-        foreach ($names as [$name]) {
-            if ($name->schema === null && $database === '') {
-                throw ErrorCode::NoDatabase->error();
-            }
-        }
+        $this->validate($statement, $names, $session);
         $session->transaction->commit();
-        if ($statement instanceof AnalyzeTable && $statement->histogram !== null && count($names) > 1) {
+        if ($histogram !== null && count($names) > 1) {
             return new ResultSet(self::columns($session), [['', 'histogram', 'Error', 'Only one table can be specified while modifying histogram statistics.']]);
         }
         $operation = $this->operation($statement);
         $rows = [];
         foreach ($names as [$name, $partitioned]) {
-            $schema = $name->schema->value ?? $database;
-            $label = $schema . '.' . $name->name->value;
-            $table = $session->instance->dictionary->table($schema, $name->name->value);
-            $failure = $this->failure($session, $schema, $name, $table);
-            $view = $table === null && isset($session->instance->dictionary->schema($schema)?->views[$name->name->value]);
-            if ($view) {
-                foreach ($this->view($operation, $label, $statement instanceof AnalyzeTable && $statement->histogram !== null) as [$type, $text]) {
-                    $rows[] = [$label, $statement instanceof AnalyzeTable && $statement->histogram !== null ? 'histogram' : $operation, $type, $text];
-                }
-
-                continue;
-            }
-            if ($statement instanceof AnalyzeTable && $statement->histogram !== null) {
-                $found = $failure === null && $table !== null ? $histograms->rows($statement->histogram, $table) : [['Error', $failure ?? '']];
-                foreach ($found as [$type, $text]) {
-                    $rows[] = [$label, 'histogram', $type, $text];
-                }
-
-                continue;
-            }
-            if ($failure === null && $partitioned) {
-                $failure = 'Partition management on a not partitioned table is not possible';
-            }
-            foreach ($failure === null ? $this->outcome($operation) : [['Error', $failure], $session->instance->dictionary->schema($schema) === null ? ['error', 'Corrupt'] : ['status', 'Operation failed']] as [$type, $text]) {
-                $rows[] = [$label, $operation, $type, $text];
-            }
+            array_push($rows, ...$this->report($operation, $histogram, $name, $partitioned, $session));
         }
 
         return new ResultSet(self::columns($session), $rows);
     }
 
+    /**
+     * Refuses a statement before it commits: a key cache other than DEFAULT, a histogram that names
+     * a column twice, then a table without database when no database is selected, in that order.
+     *
+     * @param list<array{QualifiedName, bool}> $names The tables the statement names
+     * @throws \MySqlMemory\Error\SqlError When the statement is refused
+     */
+    public function validate(CheckTable|OptimizeTable|RepairTable|AnalyzeTable|CacheIndex|LoadIndex $statement, array $names, Session $session): void
+    {
+        if ($statement instanceof CacheIndex && $statement->cache !== null && strcasecmp($statement->cache->value, 'default') !== 0) {
+            throw AdministrationError::UnknownKeyCache->error($statement->cache->value);
+        }
+        if ($statement instanceof AnalyzeTable && $statement->histogram !== null) {
+            (new Histograms())->check($statement->histogram);
+        }
+        foreach ($names as [$name]) {
+            if ($name->schema === null && $session->variables->database === '') {
+                throw QueryError::NoDatabase->error();
+            }
+        }
+    }
+
+    /**
+     * Runs the operation, or the histogram request, on one table and answers its rows.
+     *
+     * @return list<array{string, string, string, string}>
+     */
+    public function report(string $operation, ?Histogram $histogram, QualifiedName $name, bool $partitioned, Session $session): array
+    {
+        $schema = $name->schema->value ?? $session->variables->database;
+        $label = $schema . '.' . $name->name->value;
+        $table = $session->instance->dictionary->table($schema, $name->name->value);
+        $failure = $this->failure($session, $schema, $name, $table);
+        if ($table === null && isset($session->instance->dictionary->schema($schema)?->views[$name->name->value])) {
+            return $this->rows($label, $histogram !== null ? 'histogram' : $operation, $this->view($operation, $label, $histogram !== null));
+        }
+        if ($histogram !== null) {
+            return $this->rows($label, 'histogram', $failure === null && $table !== null ? (new Histograms())->rows($histogram, $table) : [['Error', $failure ?? '']]);
+        }
+        if ($failure === null && $partitioned) {
+            $failure = 'Partition management on a not partitioned table is not possible';
+        }
+
+        return $this->rows($label, $operation, $failure === null ? $this->outcome($operation) : [['Error', $failure], $session->instance->dictionary->schema($schema) === null ? ['error', 'Corrupt'] : ['status', 'Operation failed']]);
+    }
+
+    /**
+     * Answers the rows of a table: its label and the Op column before each Msg_type and Msg_text.
+     *
+     * @param list<array{string, string}> $messages
+     * @return list<array{string, string, string, string}>
+     */
+    public function rows(string $label, string $operation, array $messages): array
+    {
+        $rows = [];
+        foreach ($messages as [$type, $text]) {
+            $rows[] = [$label, $operation, $type, $text];
+        }
+
+        return $rows;
+    }
     /**
      * Answers the tables a statement names, each with whether it selects partitions.
      *
@@ -156,10 +184,10 @@ final class AdministrationCommand implements Command
     public function failure(Session $session, string $schema, QualifiedName $name, ?StoredTable $table): ?string
     {
         if ($session->instance->dictionary->schema($schema) === null) {
-            return ErrorCode::BadDatabase->message($schema);
+            return QueryError::BadDatabase->message($schema);
         }
 
-        return $table === null ? ErrorCode::NoSuchTable->message($schema, $name->name->value) : null;
+        return $table === null ? QueryError::NoSuchTable->message($schema, $name->name->value) : null;
     }
 
     /**
@@ -177,7 +205,7 @@ final class AdministrationCommand implements Command
         }
         [$schema, $name] = explode('.', $label, 2);
 
-        return [['Error', ErrorCode::WrongObject->message($schema, $name, 'BASE TABLE')], ['status', 'Operation failed']];
+        return [['Error', SchemaError::WrongObject->message($schema, $name, 'BASE TABLE')], ['status', 'Operation failed']];
     }
 
     /**

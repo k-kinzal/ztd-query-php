@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Program;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
@@ -39,6 +39,6 @@ final class ProgramCodeCommand implements Command
     #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
-        throw ErrorCode::FeatureDisabled->error('SHOW PROCEDURE|FUNCTION CODE', '--with-debug');
+        throw StatementError::FeatureDisabled->error('SHOW PROCEDURE|FUNCTION CODE', '--with-debug');
     }
 }

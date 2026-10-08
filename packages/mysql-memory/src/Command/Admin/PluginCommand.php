@@ -6,8 +6,10 @@ namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Server\ServerCatalog;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\ProgramError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
@@ -60,16 +62,16 @@ final class PluginCommand implements Command
         $directory = (string) $session->variables->read('plugin_dir');
         if ($statement instanceof InstallPlugin) {
             if ($this->builtIn($statement->plugin->value)) {
-                throw ErrorCode::FunctionExists->error($statement->plugin->value);
+                throw AdministrationError::FunctionExists->error($statement->plugin->value);
             }
             $library = (new Literals())->bytes($statement->library);
             if (str_contains($library, '/') || mb_strlen($library) > 64) {
-                throw ErrorCode::PathsForbidden->error();
+                throw AdministrationError::PathsForbidden->error();
             }
             throw $this->unopened($directory, $library);
         }
         if ($statement instanceof UninstallPlugin) {
-            throw $this->builtIn($statement->plugin->value) ? ErrorCode::PermanentPlugin->error() : ErrorCode::RoutineMissing->error('PLUGIN', $statement->plugin->value);
+            throw $this->builtIn($statement->plugin->value) ? AdministrationError::PermanentPlugin->error() : ProgramError::RoutineMissing->error('PLUGIN', $statement->plugin->value);
         }
         if ($statement instanceof InstallComponent) {
             foreach ($statement->components as $component) {
@@ -79,11 +81,11 @@ final class PluginCommand implements Command
         if ($statement instanceof UninstallComponent) {
             $urns = array_map(static fn ($component): string => (new Literals())->bytes($component), $statement->components);
             foreach ($urns as $urn) {
-                $session->diagnostics->warning(ErrorCode::ComponentNotPersisted, ErrorCode::ComponentNotPersisted->message($urn));
+                $session->diagnostics->warning(AdministrationError::ComponentNotPersisted, AdministrationError::ComponentNotPersisted->message($urn));
             }
-            throw ErrorCode::ComponentNotLoaded->error($urns[0] ?? '');
+            throw AdministrationError::ComponentNotLoaded->error($urns[0] ?? '');
         }
-        throw ErrorCode::NotSupportedYet->error('this plugin statement');
+        throw StatementError::NotSupportedYet->error('this plugin statement');
     }
 
     /**
@@ -109,19 +111,19 @@ final class PluginCommand implements Command
     {
         $separator = strpos($urn, '://');
         if ($separator === false) {
-            throw ErrorCode::ComponentSchemeMissing->error($urn);
+            throw AdministrationError::ComponentSchemeMissing->error($urn);
         }
         $scheme = substr($urn, 0, $separator);
         if ($scheme !== 'file') {
-            throw ErrorCode::ComponentSchemeUnserviced->error($scheme, $urn);
+            throw AdministrationError::ComponentSchemeUnserviced->error($scheme, $urn);
         }
         $path = substr($urn, $separator + 3);
         if (str_contains($path, '/')) {
-            throw ErrorCode::ComponentCantLoad->error($urn);
+            throw AdministrationError::ComponentCantLoad->error($urn);
         }
         $unopened = $this->unopened($directory, $path . '.so');
 
-        throw new SqlError($unopened->error, $unopened->getMessage(), null, [[ErrorCode::ComponentCantLoad->value, ErrorCode::ComponentCantLoad->message($urn)]]);
+        throw new SqlError($unopened->error, $unopened->getMessage(), null, [[AdministrationError::ComponentCantLoad->value, AdministrationError::ComponentCantLoad->message($urn)]]);
     }
 
     /**
@@ -132,6 +134,6 @@ final class PluginCommand implements Command
         $path = $directory . $library;
         $reason = in_array($library, ['', '.', '..'], true) ? 'cannot read file data: Is a directory' : 'cannot open shared object file: No such file or directory';
 
-        return ErrorCode::CantOpenLibrary->error($path, '11', $path . ': ' . $reason);
+        return AdministrationError::CantOpenLibrary->error($path, '11', $path . ': ' . $reason);
     }
 }

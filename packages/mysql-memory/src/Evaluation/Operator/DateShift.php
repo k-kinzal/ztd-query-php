@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -80,7 +80,7 @@ final class DateShift implements Evaluable
         if ($months !== 0) {
             $moved = Calendar::addMonths($year, $month, $day, $months);
             if ($moved === null) {
-                $frame->context->warning(ErrorCode::DatetimeFunctionOverflow, 'datetime');
+                $frame->context->warning(DataError::DatetimeFunctionOverflow, 'datetime');
 
                 return null;
             }
@@ -88,7 +88,7 @@ final class DateShift implements Evaluable
         }
         $moved = Calendar::addMicroseconds($year, $month, $day, $hour, $minute, $second, $fraction, $micro);
         if ($moved === null) {
-            $frame->context->warning(ErrorCode::DatetimeFunctionOverflow, 'datetime');
+            $frame->context->warning(DataError::DatetimeFunctionOverflow, 'datetime');
 
             return null;
         }
@@ -121,12 +121,12 @@ final class DateShift implements Evaluable
         $parts = Temporal::parseDateTime($text);
         $scanned = $parts === null ? Temporal::scanDateTime($text) : null;
         if ($scanned !== null && $scanned[8] !== '' && Temporal::valid($scanned[0], $scanned[1], $scanned[2]) && $scanned[1] !== 0 && $scanned[2] !== 0) {
-            $frame->context->warning(ErrorCode::TruncatedWrongValue, $scanned[7] ? 'datetime' : 'date', $shown);
+            $frame->context->warning(DataError::TruncatedWrongValue, $scanned[7] ? 'datetime' : 'date', $shown);
 
             return [$scanned[0], $scanned[1], $scanned[2], $scanned[3], $scanned[4], $scanned[5], (int) substr(str_pad($scanned[6], 6, '0'), 0, 6), $scanned[7]];
         }
         if ($parts === null || !Temporal::valid($parts[0], $parts[1], $parts[2]) || $parts[1] === 0 || $parts[2] === 0) {
-            $frame->context->warnMessage(ErrorCode::TruncatedWrongValue, ErrorCode::WrongValue->message('datetime', $shown));
+            $frame->context->warnMessage(DataError::TruncatedWrongValue, DataError::WrongValue->message('datetime', $shown));
 
             return null;
         }
@@ -158,7 +158,7 @@ final class DateShift implements Evaluable
 
         $interval = Interval::read($text, $this->unit);
         if ($interval === null) {
-            $frame->context->warning(ErrorCode::DatetimeFunctionOverflow, 'date_add_interval');
+            $frame->context->warning(DataError::DatetimeFunctionOverflow, 'date_add_interval');
         }
 
         return $interval;

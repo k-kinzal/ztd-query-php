@@ -9,7 +9,7 @@ use MySqlMemory\Account\Catalog;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Account\Privileges;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -100,7 +100,7 @@ final class RevokeCommand implements Command
         [$static, $columns, $dynamic, $option, $all] = $levels->read($statement->privileges, $target[0]);
         foreach ($dynamic as $name) {
             if (!(new Catalog())->registered($name)) {
-                $session->diagnostics->warning(ErrorCode::UnregisteredDynamicPrivilege, ErrorCode::UnregisteredDynamicPrivilege->message($name));
+                $session->diagnostics->warning(AccountError::UnregisteredDynamicPrivilege, AccountError::UnregisteredDynamicPrivilege->message($name));
             }
         }
         foreach ($found as $account) {
@@ -186,9 +186,9 @@ final class RevokeCommand implements Command
     public function missing(Identity $identity, array $target): SqlError
     {
         return match ($target[0]) {
-            'DATABASE', 'GLOBAL' => ErrorCode::NonexistingGrant->error($identity->user, $identity->host),
-            'TABLE' => ErrorCode::NonexistingTableGrant->error($identity->user, $identity->host, $target[2]),
-            default => ErrorCode::NonexistingRoutineGrant->error($identity->user, $identity->host, mb_strtolower($target[2], 'UTF-8')),
+            'DATABASE', 'GLOBAL' => AccountError::NonexistingGrant->error($identity->user, $identity->host),
+            'TABLE' => AccountError::NonexistingTableGrant->error($identity->user, $identity->host, $target[2]),
+            default => AccountError::NonexistingRoutineGrant->error($identity->user, $identity->host, mb_strtolower($target[2], 'UTF-8')),
         };
     }
 
@@ -218,11 +218,11 @@ final class RevokeCommand implements Command
             } elseif ($ignore) {
                 $ignored[] = $identity;
             } else {
-                throw $unknown ?? ErrorCode::NonexistingGrant->error($identity->user, $identity->host);
+                throw $unknown ?? AccountError::NonexistingGrant->error($identity->user, $identity->host);
             }
         }
         foreach ($ignored as $identity) {
-            $session->diagnostics->warning(ErrorCode::UserDoesNotExist, ErrorCode::UserDoesNotExist->message($identity->user));
+            $session->diagnostics->warning(AccountError::UserDoesNotExist, AccountError::UserDoesNotExist->message($identity->user));
         }
 
         return $found;
@@ -243,7 +243,7 @@ final class RevokeCommand implements Command
         foreach ($statement->users as $user) {
             $identity = $names->identity($user, $session);
             if ($accounts->find($identity) === null && !$statement->ignoreUnknownUser) {
-                throw ErrorCode::UnknownAuthorizationId->error($identity->backquoted());
+                throw AccountError::UnknownAuthorizationId->error($identity->backquoted());
             }
         }
         $roles = [];
@@ -251,9 +251,9 @@ final class RevokeCommand implements Command
             $identity = $role === null ? null : $names->identity($role, $session);
             if ($identity !== null && $accounts->find($identity) === null) {
                 if (!$statement->ifExists) {
-                    throw ErrorCode::UnknownAuthorizationId->error($identity->backquoted());
+                    throw AccountError::UnknownAuthorizationId->error($identity->backquoted());
                 }
-                $session->diagnostics->warning(ErrorCode::UnknownAuthorizationId, ErrorCode::UnknownAuthorizationId->message($identity->backquoted()));
+                $session->diagnostics->warning(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($identity->backquoted()));
                 continue;
             }
             $roles[] = $identity;
@@ -279,7 +279,7 @@ final class RevokeCommand implements Command
         $names->check([$statement->proxied, ...$names->users($statement->users)]);
         $names->resolve($names->identity($statement->proxied, $session), $session->diagnostics);
         [$user, $host] = explode('@', $session->variables->account, 2) + [1 => ''];
-        $denied = ErrorCode::AccessDeniedNoPassword->error($user, $host);
+        $denied = AccountError::AccessDeniedNoPassword->error($user, $host);
         if ($this->found($names->users($statement->users), $statement->ignoreUnknownUser, $session, true, $denied) !== []) {
             throw $denied;
         }
@@ -295,7 +295,7 @@ final class RevokeCommand implements Command
         $names = new Names();
         $users = $names->users($statement->users);
         $names->check($users);
-        foreach ($this->found($users, $statement->ignoreUnknownUser, $session, false, ErrorCode::RevokeGrants->error()) as $account) {
+        foreach ($this->found($users, $statement->ignoreUnknownUser, $session, false, AccountError::RevokeGrants->error()) as $account) {
             $account->grants->clear();
         }
     }

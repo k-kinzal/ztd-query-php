@@ -7,9 +7,12 @@ namespace Tests\Unit\Plan;
 use MySqlMemory\Instance;
 use MySqlMemory\Plan\Views;
 use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Query;
 
 #[CoversClass(Views::class)]
@@ -161,5 +164,33 @@ final class ViewsTest extends TestCase
         $dictionary = $session->instance->dictionary;
 
         self::assertSame([$dictionary->table('d', 't')?->definition->declaration, $dictionary->schema('d')?->views['v']->declaration, null], [Views::declaration($dictionary, 'd', 't'), Views::declaration($dictionary, 'd', 'v'), Views::declaration($dictionary, 'e', 't')]);
+    }
+
+    public function testBaseDefaultAnswersTheDefaultOfTheColumnAnOutputReads(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT NOT NULL DEFAULT 5)');
+        $session->query('CREATE VIEW v AS SELECT a, a + 1 AS b FROM t');
+        $view = $session->instance->dictionary->schema('d')?->views['v'];
+        self::assertNotNull($view);
+
+        self::assertSame([5, null], [Views::baseDefault($view, $session->instance->dictionary, 0)?->value, Views::baseDefault($view, $session->instance->dictionary, 1)]);
+    }
+
+    public function testZeroAnswersTheZeroValueOfEachType(): void
+    {
+        self::assertSame([0, '0.00', '0', 0.0, '0000-00-00', '0000-00-00 00:00:00', '00:00:00', '', null], [
+            Views::zero(new Domain(Kind::Integer, Field::Long)),
+            Views::zero(new Domain(Kind::Decimal, Field::NewDecimal, 5, 2)),
+            Views::zero(new Domain(Kind::Decimal, Field::NewDecimal, 5)),
+            Views::zero(new Domain(Kind::Double, Field::Double)),
+            Views::zero(new Domain(Kind::Date, Field::Date)),
+            Views::zero(new Domain(Kind::DateTime, Field::DateTime)),
+            Views::zero(new Domain(Kind::Time, Field::Time)),
+            Views::zero(new Domain(Kind::String, Field::VarString)),
+            Views::zero(new Domain(Kind::Null, Field::Null)),
+        ]);
     }
 }

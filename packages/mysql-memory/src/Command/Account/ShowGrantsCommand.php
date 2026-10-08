@@ -9,7 +9,7 @@ use MySqlMemory\Account\Grants;
 use MySqlMemory\Account\GrantText;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
@@ -62,14 +62,14 @@ final class ShowGrantsCommand implements Command
         $accounts = $session->instance->accounts;
         $account = $accounts->find($identity);
         if ($account === null) {
-            throw ErrorCode::NonexistingGrant->error($identity->user, $identity->host);
+            throw AccountError::NonexistingGrant->error($identity->user, $identity->host);
         }
         $granted = $accounts->roles($identity);
         $roles = $current ? $session->variables->roles : [];
         foreach ($statement->using as $role) {
             $using = $names->identity($role, $session);
             if (!isset($granted[$using->key()])) {
-                throw ErrorCode::RoleNotGranted->error($using->backquoted(), $identity->backquoted());
+                throw AccountError::RoleNotGranted->error($using->backquoted(), $identity->backquoted());
             }
             $roles[] = $using;
         }

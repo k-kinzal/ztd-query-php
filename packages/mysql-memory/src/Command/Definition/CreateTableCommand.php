@@ -10,7 +10,8 @@ use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Plan\Planner;
@@ -53,18 +54,18 @@ final class CreateTableCommand implements Command
         $session->transaction->commit();
         $schemaName = $create->name->schema->value ?? $session->variables->database;
         if ($schemaName === '') {
-            throw ErrorCode::NoDatabase->error();
+            throw QueryError::NoDatabase->error();
         }
         $schema = $session->instance->dictionary->schema($schemaName);
         if ($schema === null) {
-            throw ErrorCode::BadDatabase->error($schemaName);
+            throw QueryError::BadDatabase->error($schemaName);
         }
         $name = $create->name->name->value;
         if ($schema->table($name) !== null || isset($schema->views[$name])) {
             if (!$create->ifNotExists) {
-                throw ErrorCode::TableExists->error($name);
+                throw SchemaError::TableExists->error($name);
             }
-            $context->note(ErrorCode::TableExists, $name);
+            $context->note(SchemaError::TableExists, $name);
 
             return new Completion(0, 0, $context->diagnostics->count());
         }
@@ -74,7 +75,7 @@ final class CreateTableCommand implements Command
         $planner = new Planner($create, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $definition = (new Definitions($planner, $schema->collation))->table($create, $operation->declarations()[0], $schemaName);
         foreach ($this->duplicates($definition->keys) as $duplicate) {
-            $context->warning(ErrorCode::DuplicateIndex, $duplicate->name, $schemaName . '.' . $name);
+            $context->warning(SchemaError::DuplicateIndex, $duplicate->name, $schemaName . '.' . $name);
         }
         $schema->tables[$name] = new StoredTable($this->primaryNotNull($definition), new Heap());
 

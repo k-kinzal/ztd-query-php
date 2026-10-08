@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Diagnostics;
@@ -19,7 +21,7 @@ final class DiagnosticsTest extends TestCase
     public function testWarningRecordsTheNumberAndMessage(): void
     {
         $diagnostics = new Diagnostics();
-        $diagnostics->warning(ErrorCode::TruncatedWrongValue, "Truncated incorrect DOUBLE value: 'x'");
+        $diagnostics->warning(DataError::TruncatedWrongValue, "Truncated incorrect DOUBLE value: 'x'");
         $diagnostics->warning(1105, 'Unknown error');
 
         self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'x'"], ['Warning', 1105, 'Unknown error']], $diagnostics->conditions);
@@ -30,7 +32,7 @@ final class DiagnosticsTest extends TestCase
         $diagnostics = new Diagnostics();
         $diagnostics->conditions = array_fill(0, 64, ['Note', 1, 'n']);
         $diagnostics->warning(1105, 'dropped');
-        $diagnostics->note(ErrorCode::UnknownError, 'dropped');
+        $diagnostics->note(StatementError::UnknownError, 'dropped');
 
         self::assertSame(64, $diagnostics->count());
         self::assertSame(['Note', 1, 'n'], $diagnostics->conditions[63]);
@@ -49,7 +51,7 @@ final class DiagnosticsTest extends TestCase
     public function testNoteRecordsANote(): void
     {
         $diagnostics = new Diagnostics();
-        $diagnostics->note(ErrorCode::DatabaseExists, "Can't create database 'd'; database exists");
+        $diagnostics->note(SchemaError::DatabaseExists, "Can't create database 'd'; database exists");
 
         self::assertSame([['Note', 1007, "Can't create database 'd'; database exists"]], $diagnostics->conditions);
     }
@@ -117,7 +119,7 @@ final class DiagnosticsTest extends TestCase
     {
         $diagnostics = new Diagnostics();
         $diagnostics->warning(1105, 'w');
-        $diagnostics->note(ErrorCode::UnknownError, 'n');
+        $diagnostics->note(StatementError::UnknownError, 'n');
 
         self::assertSame(2, $diagnostics->count());
     }

@@ -6,7 +6,7 @@ namespace MySqlMemory\Command\Account;
 
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -63,7 +63,7 @@ final class RenameUserCommand implements Command
         }
         foreach ($pairs as [$from, $to]) {
             if ($accounts->granted($from) || $accounts->granted($to)) {
-                throw ErrorCode::RenameRole->error();
+                throw AccountError::RenameRole->error();
             }
         }
         $saved = $accounts->copy();
@@ -77,7 +77,7 @@ final class RenameUserCommand implements Command
         }
         if ($failed !== []) {
             $accounts->restore($saved);
-            throw ErrorCode::CannotUser->error('RENAME USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
+            throw AccountError::CannotUser->error('RENAME USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
 
         return new Completion(0, 0, $context->diagnostics->count());

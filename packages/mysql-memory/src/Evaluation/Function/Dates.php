@@ -9,6 +9,7 @@ use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Operator\Moments;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Temporal;
+use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
@@ -22,6 +23,39 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  */
 final class Dates
 {
+    /**
+     * The parts each unit of EXTRACT other than QUARTER and WEEK reads, by the unit keyword.
+     *
+     * Each part is its position among the year, month, day, hour, minute, second and microsecond
+     * of a moment; the parts are written together, two digits for each part after the first, six
+     * for microseconds.
+     */
+    public const UNIT_PARTS = [
+        'YEAR' => [0],
+        'MONTH' => [1],
+        'DAY' => [2],
+        'HOUR' => [3],
+        'MINUTE' => [4],
+        'SECOND' => [5],
+        'MICROSECOND' => [6],
+        'YEAR_MONTH' => [0, 1],
+        'DAY_HOUR' => [2, 3],
+        'DAY_MINUTE' => [2, 3, 4],
+        'DAY_SECOND' => [2, 3, 4, 5],
+        'DAY_MICROSECOND' => [2, 3, 4, 5, 6],
+        'HOUR_MINUTE' => [3, 4],
+        'HOUR_SECOND' => [3, 4, 5],
+        'HOUR_MICROSECOND' => [3, 4, 5, 6],
+        'MINUTE_SECOND' => [4, 5],
+        'MINUTE_MICROSECOND' => [4, 5, 6],
+        'SECOND_MICROSECOND' => [5, 6],
+    ];
+
+    /**
+     * The units of EXTRACT that read only the time of a value.
+     */
+    public const TIME_UNITS = [IntervalUnit::Hour, IntervalUnit::Minute, IntervalUnit::Second, IntervalUnit::Microsecond, IntervalUnit::HourMinute, IntervalUnit::HourSecond, IntervalUnit::MinuteSecond, IntervalUnit::HourMicrosecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::SecondMicrosecond];
+
     /**
      * Answers the functions of the family.
      *
@@ -102,5 +136,52 @@ final class Dates
             'MICROSECOND' => $parts[6],
             default => $parts[2],
         };
+    }
+
+    /**
+     * Reads the parts of a unit of the date or time of an argument, written together as one integer: EXTRACT(unit FROM value).
+     *
+     * A TIME, and a string that holds no datetime read for a unit of the time alone, is read as a
+     * time, its parts negative when the time is.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_extract.
+     */
+    public function extract(Frame $frame, Evaluable $argument, IntervalUnit $unit): ?int
+    {
+        $value = $argument->evaluate($frame);
+        if ($value === null) {
+            return null;
+        }
+        $domain = $argument->domain();
+        if ($domain->kind === Kind::Time || (in_array($unit, self::TIME_UNITS, true) && $domain->kind === Kind::String && Temporal::parseDateTime((string) $value) === null)) {
+            $time = (new Moments())->time($value, $domain, 6, $frame->context);
+            $parts = $time === null ? null : Temporal::parseTime($time);
+
+            return $parts === null ? null : ($parts[0] ? -1 : 1) * $this->unit($unit, [0, 0, 0, $parts[1], $parts[2], $parts[3], $parts[4]]);
+        }
+        $moment = (new Moments())->convert($value, $domain, new Domain(Kind::DateTime, Field::DateTime, 26, 6), $frame->context);
+        $parts = $moment === null ? null : Temporal::parseDateTime($moment);
+
+        return $parts === null ? null : $this->unit($unit, $parts);
+    }
+
+    /**
+     * Writes the parts of a unit from the year, month, day, hour, minute, second and microsecond of a moment together as one integer.
+     *
+     * @param array{int, int, int, int, int, int, int, 7?: bool} $parts
+     */
+    public function unit(IntervalUnit $unit, array $parts): int
+    {
+        if ($unit === IntervalUnit::Quarter) {
+            return intdiv($parts[1] + 2, 3);
+        }
+        if ($unit === IntervalUnit::Week) {
+            return (int) gmdate('W', (int) gmmktime(0, 0, 0, max(1, $parts[1]), max(1, $parts[2]), max(1970, $parts[0])));
+        }
+        $value = 0;
+        foreach (self::UNIT_PARTS[$unit->value] as $index) {
+            $value = $value * ($index === 6 ? 1000000 : 100) + $parts[$index];
+        }
+
+        return $value;
     }
 }

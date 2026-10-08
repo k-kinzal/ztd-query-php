@@ -6,7 +6,8 @@ namespace MySqlMemory\Command\Show;
 
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Value\Encoding;
@@ -74,7 +75,7 @@ final class Inspection
         $pattern = $this->pattern($statement->column);
         $utf8 = Charset::known('utf8mb4');
         if (!Encoding::valid($pattern, $utf8)) {
-            $session->diagnostics->warning(ErrorCode::InvalidCharacterString, ErrorCode::InvalidCharacterString->message('utf8mb4', strtoupper(bin2hex(substr($pattern, Encoding::prefix($pattern, $utf8), 3)))));
+            $session->diagnostics->warning(DataError::InvalidCharacterString, DataError::InvalidCharacterString->message('utf8mb4', strtoupper(bin2hex(substr($pattern, Encoding::prefix($pattern, $utf8), 3)))));
         }
     }
 
@@ -109,11 +110,11 @@ final class Inspection
     {
         $name = $written->value ?? $session->variables->database;
         if ($name === '') {
-            throw ErrorCode::NoDatabase->error();
+            throw QueryError::NoDatabase->error();
         }
         $schema = $session->instance->dictionary->schema($name);
         if ($schema === null) {
-            throw ErrorCode::BadDatabase->error($name);
+            throw QueryError::BadDatabase->error($name);
         }
 
         return $schema;
@@ -135,7 +136,7 @@ final class Inspection
             return \MySqlMemory\Plan\Views::stored($schema->views[$name], $session->instance->dictionary);
         }
         if ($stored === null) {
-            throw ErrorCode::NoSuchTable->error($schema->name, $name);
+            throw QueryError::NoSuchTable->error($schema->name, $name);
         }
 
         return $stored;

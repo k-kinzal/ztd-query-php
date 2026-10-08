@@ -6,7 +6,7 @@ namespace MySqlMemory\Command\Account;
 
 use MySqlMemory\Account\CreateText;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
@@ -54,7 +54,7 @@ final class ShowCreateUserCommand implements Command
         $accounts = $session->instance->accounts;
         $account = $accounts->find($identity);
         if ($account === null) {
-            throw ErrorCode::CannotUser->error('SHOW CREATE USER', $identity->quoted());
+            throw AccountError::CannotUser->error('SHOW CREATE USER', $identity->quoted());
         }
         $column = new ResultColumn('CREATE USER for ' . $identity->text(), Field::VarString, 1024, 31, ColumnFlag::NotNull->value, 255);
         $text = (new CreateText())->statement($account, array_values($accounts->defaults[$identity->key()] ?? []));

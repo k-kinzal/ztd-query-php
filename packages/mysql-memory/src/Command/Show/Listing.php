@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Show;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
@@ -82,7 +82,7 @@ final class Listing
             return;
         }
 
-        throw ErrorCode::CantAggregateTwoCollations->error($collation, $derivation, $connection->name, 'COERCIBLE', 'like');
+        throw DataError::CantAggregateTwoCollations->error($collation, $derivation, $connection->name, 'COERCIBLE', 'like');
     }
 
     /**

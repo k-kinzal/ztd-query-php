@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Subquery;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
@@ -69,7 +69,7 @@ final class ScalarRead implements Evaluable
             return null;
         }
         if ($iterator->read() !== null) {
-            throw ErrorCode::SubqueryNotOneRow->error();
+            throw QueryError::SubqueryNotOneRow->error();
         }
 
         return $row[0];

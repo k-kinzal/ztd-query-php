@@ -128,7 +128,7 @@ final class Numbers
     public function negated(Domain $domain, bool $negative = false): Domain
     {
         return match ($this->operand($domain)) {
-            Kind::Integer => $negative && $domain->kind === Kind::Integer ? Domain::decimal(...$this->digits($domain)) : Domain::integer(Field::LongLong, $domain->length + ($domain->unsigned ? 1 : 0)),
+            Kind::Integer => $negative && $domain->kind === Kind::Integer ? Domain::decimal(...$this->digits($domain)) : Domain::integer(Field::LongLong, $domain->length + (int) $domain->unsigned),
             Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(...$this->digits($domain)),
             Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Domain::double(23, $domain->kind === Kind::Double ? $domain->decimals : Domain::NOT_FIXED),
         };

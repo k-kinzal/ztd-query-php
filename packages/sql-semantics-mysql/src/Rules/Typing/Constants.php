@@ -154,11 +154,27 @@ final class Constants
         if ($left === null || $right === null) {
             return null;
         }
-        [$a, $leftUnsigned] = $left;
-        [$b, $rightUnsigned] = $right;
-        $unsigned = $leftUnsigned || $rightUnsigned;
+        $bits = $this->bits($operator, $left[0], $right[0]);
+        if ($bits !== null) {
+            return [$bits, true];
+        }
+        if (($left[1] && $left[0] < 0) || ($right[1] && $right[0] < 0)) {
+            return $this->beyond($operator, $left, $right);
+        }
+
+        return $this->integer($operator, $left[0], $right[0], $left[1] || $right[1]);
+    }
+
+    /**
+     * Answers the 64 bits of a bit operator over two constants, or null for an arithmetic operator.
+     *
+     * A shift by a negative count or by more than 63 bits shifts every bit out, and a right shift fills with zeros.
+     */
+    public function bits(ArithmeticOperator $operator, int $a, int $b): ?int
+    {
         $shift = $b < 0 || $b > 63 ? 64 : $b;
-        $bits = match ($operator) {
+
+        return match ($operator) {
             ArithmeticOperator::BitOr => $a | $b,
             ArithmeticOperator::BitAnd => $a & $b,
             ArithmeticOperator::BitXor => $a ^ $b,
@@ -166,12 +182,19 @@ final class Constants
             ArithmeticOperator::ShiftRight => $shift === 64 ? 0 : ($shift === 0 ? $a : ($a >> $shift) & (PHP_INT_MAX >> ($shift - 1))),
             ArithmeticOperator::Divide, ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::Multiply, ArithmeticOperator::IntegerDivide, ArithmeticOperator::Modulo => null,
         };
-        if ($bits !== null) {
-            return [$bits, true];
-        }
-        if (($leftUnsigned && $a < 0) || ($rightUnsigned && $b < 0)) {
-            return $this->beyond($operator, $left, $right);
-        }
+    }
+
+    /**
+     * Answers the value of integer arithmetic over two constants within the signed range.
+     *
+     * An unsigned result fails below zero; a result that overflows, a division by zero and the
+     * division that yields a decimal evaluate to nothing.
+     *
+     * @param bool $unsigned Whether an operand is unsigned
+     * @return array{int, bool}|null
+     */
+    public function integer(ArithmeticOperator $operator, int $a, int $b, bool $unsigned): ?array
+    {
         if ((($operator === ArithmeticOperator::IntegerDivide || $operator === ArithmeticOperator::Modulo) && $b === 0)) {
             return null;
         }
@@ -181,7 +204,7 @@ final class Constants
             ArithmeticOperator::Multiply => $a * $b,
             ArithmeticOperator::IntegerDivide => $a === PHP_INT_MIN && $b === -1 ? null : intdiv($a, $b),
             ArithmeticOperator::Modulo => $b === -1 ? 0 : $a % $b,
-            ArithmeticOperator::Divide => null,
+            ArithmeticOperator::Divide, ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::BitXor, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight => null,
         };
 
         return is_int($result) && (!$unsigned || $result >= 0) ? [$result, $unsigned] : null;

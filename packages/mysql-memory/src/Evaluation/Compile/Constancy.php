@@ -98,6 +98,17 @@ enum Constancy: int
             return $inner === self::Row && $correlation ? self::Row : self::Statement;
         }
 
+        return self::form($node, $facts, $correlation, $assigned, $assignmentsVary);
+    }
+
+    /**
+     * Answers how long the value of a node of the expression itself, outside any subquery, stays the same by its form.
+     *
+     * @param list<string> $assigned The lower-case names of the user variables the statement assigns
+     * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
+     */
+    public static function form(Node $node, Facts $facts, bool $correlation, array $assigned, bool $assignmentsVary): self
+    {
         return match (true) {
             $node instanceof VariableAssignment && !$assignmentsVary => self::Statement->join(self::within($node->value, $facts, 0, $correlation, $assigned, $assignmentsVary)),
             $node instanceof OutputOrdinal, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof VariableAssignment, $node instanceof DefaultOfColumn, $node instanceof InsertedColumn => self::Row,

@@ -8,7 +8,7 @@ use MySqlMemory\Account\Account;
 use MySqlMemory\Account\Credentials;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -69,7 +69,7 @@ final class AlterUserCommand implements Command
             }
             foreach ($user instanceof FactorChange && $user->action === FactorAction::Add ? $user->steps : [] as $step) {
                 $name = (new Credentials())->plugin($step->identification->plugin->value ?? $plugin);
-                throw ErrorCode::InvalidFactorPlugin->error($name, $step->factor->text, 'ALTER USER');
+                throw AccountError::InvalidFactorPlugin->error($name, $step->factor->text, 'ALTER USER');
             }
         }
         $missing = [];
@@ -80,14 +80,14 @@ final class AlterUserCommand implements Command
             if ($account === null) {
                 $missing[] = $identity;
                 if ($statement->ifExists) {
-                    $context->diagnostics->note(ErrorCode::UserDoesNotExist, ErrorCode::UserDoesNotExist->message($identity->quoted()));
+                    $context->diagnostics->note(AccountError::UserDoesNotExist, AccountError::UserDoesNotExist->message($identity->quoted()));
                 }
                 continue;
             }
             $changed[] = [$account, $user];
         }
         if ($missing !== [] && !$statement->ifExists) {
-            throw ErrorCode::CannotUser->error('ALTER USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
+            throw AccountError::CannotUser->error('ALTER USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
         }
         $saved = $accounts->copy();
         try {
@@ -117,7 +117,7 @@ final class AlterUserCommand implements Command
         foreach ($changed as [$account, $user]) {
             if ($user instanceof FactorChange) {
                 $factor = $user->steps[0]->factor->text;
-                throw ErrorCode::FactorMissing->error($factor, $factor);
+                throw AccountError::FactorMissing->error($factor, $factor);
             }
             assert($user instanceof UserSpecification);
             if ($user->replace !== null) {
@@ -143,10 +143,10 @@ final class AlterUserCommand implements Command
     public function replace(Account $account, string $current, Session $session): void
     {
         if ($account->identity->key() !== (new Identity($session->user, '%'))->key()) {
-            throw ErrorCode::CurrentPasswordNotRequired->error();
+            throw AccountError::CurrentPasswordNotRequired->error();
         }
         if ($account->password !== $current) {
-            throw ErrorCode::IncorrectCurrentPassword->error();
+            throw AccountError::IncorrectCurrentPassword->error();
         }
     }
 }

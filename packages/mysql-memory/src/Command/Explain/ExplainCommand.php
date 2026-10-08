@@ -7,7 +7,9 @@ namespace MySqlMemory\Command\Explain;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Context;
@@ -79,26 +81,26 @@ final class ExplainCommand implements Command
         }
         $format = $statement->format === null ? null : strtoupper($statement->format->value);
         if ($statement->format !== null && !in_array($format, self::FORMATS, true)) {
-            throw ErrorCode::UnknownExplainFormat->error($statement->format->value);
+            throw StatementError::UnknownExplainFormat->error($statement->format->value);
         }
         if ($statement->analyze && $statement instanceof Explain && $format !== null && $format !== 'TREE') {
-            throw ErrorCode::NotSupportedYet->error('EXPLAIN ANALYZE with ' . $format . ' format');
+            throw StatementError::NotSupportedYet->error('EXPLAIN ANALYZE with ' . $format . ' format');
         }
         if ($statement->into !== null && $format !== 'JSON') {
-            throw $format === null ? ErrorCode::ExplainIntoImplicitFormat->error() : ErrorCode::ExplainIntoFormat->error($format);
+            throw $format === null ? StatementError::ExplainIntoImplicitFormat->error() : StatementError::ExplainIntoFormat->error($format);
         }
         if ($statement instanceof ExplainConnection) {
             if ($statement->into !== null) {
-                throw ErrorCode::ExplainIntoForConnection->error();
+                throw StatementError::ExplainIntoForConnection->error();
             }
             if ($statement->analyze) {
-                throw ErrorCode::NotSupportedYet->error('EXPLAIN ANALYZE FOR CONNECTION');
+                throw StatementError::NotSupportedYet->error('EXPLAIN ANALYZE FOR CONNECTION');
             }
 
             return;
         }
         if ($statement->database !== null && $session->instance->dictionary->schema($statement->database->value) === null) {
-            throw ErrorCode::BadDatabase->error($statement->database->value);
+            throw QueryError::BadDatabase->error($statement->database->value);
         }
     }
 
@@ -141,10 +143,10 @@ final class ExplainCommand implements Command
     {
         $id = $statement->connection->hexadecimal ? (int) hexdec($statement->connection->text) : (int) $statement->connection->text;
         if ($id === $session->id) {
-            throw ErrorCode::ExplainNotSupported->error();
+            throw StatementError::ExplainNotSupported->error();
         }
         if ($id < 1 || $id > $session->instance->connections()) {
-            throw ErrorCode::NoSuchThread->error($statement->connection->text);
+            throw AdministrationError::NoSuchThread->error($statement->connection->text);
         }
 
         return new Completion(0, 0, $context->diagnostics->count());

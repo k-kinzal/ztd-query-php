@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan;
 
 use MySqlMemory\Dictionary\Dictionary;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Settings;
@@ -107,7 +108,7 @@ final class Planner
             $query instanceof SetOperation => $this->set($query, $outer),
             $query instanceof ValuesQuery => $this->values($query, $outer),
             $query instanceof ExplicitTable => $this->blocks->table($query, $outer),
-            default => throw ErrorCode::NotSupportedYet->error('query ' . (new ReflectionClass($query))->getShortName()),
+            default => throw StatementError::NotSupportedYet->error('query ' . (new ReflectionClass($query))->getShortName()),
         };
     }
 
@@ -167,7 +168,7 @@ final class Planner
         }
         if (!isset($this->commonTables[$id])) {
             if (!isset($this->definitions[$id]) || !$definition instanceof CommonTableExpression) {
-                throw ErrorCode::NotSupportedYet->error('this common table expression');
+                throw StatementError::NotSupportedYet->error('this common table expression');
             }
             $plan = (new Recursion($this))->plan($definition, $this->definitions[$id][1]) ?? $this->query($definition->query, $this->definitions[$id][1]);
             $names = $definition->columns === [] ? $plan->names : array_map(static fn ($name): string => $name->value, $definition->columns);
@@ -183,12 +184,12 @@ final class Planner
     public function set(SetOperation $operation, ?Scope $outer): QueryPlan
     {
         if (!$operation->left instanceof Query) {
-            throw ErrorCode::NotSupportedYet->error('a leading UNION');
+            throw StatementError::NotSupportedYet->error('a leading UNION');
         }
         $left = $this->query($operation->left, $outer);
         $right = $this->query($operation->right, $outer);
         if (count($left->domains) !== count($right->domains)) {
-            throw ErrorCode::WrongNumberOfColumnsInSelect->error();
+            throw QueryError::WrongNumberOfColumnsInSelect->error();
         }
         $domains = $this->outputs($operation);
         $kind = match ($operation->operator) {
@@ -248,7 +249,7 @@ final class Planner
         foreach ($this->compiler->facts->query($query)->shape->slots as $slot) {
             $type = $slot->type;
             if (!$type instanceof \SqlSemantics\Statement\Type\Known || !$type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
-                throw ErrorCode::NotSupportedYet->error('the type of a set operation column');
+                throw StatementError::NotSupportedYet->error('the type of a set operation column');
             }
             $domains[] = Domain::of($type->descriptor, $slot->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull);
         }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -103,10 +103,10 @@ final class Bits implements Evaluable
                     $origin = $origin->evaluable;
                 }
                 if ($origin instanceof Arithmetic || $origin instanceof Minus) {
-                    throw ErrorCode::DataOutOfRange->error('BIGINT', $origin->text);
+                    throw DataError::DataOutOfRange->error('BIGINT', $origin->text);
                 }
                 if ($origin instanceof ColumnRead || $origin instanceof Outer) {
-                    $frame->context->warning(ErrorCode::TruncatedWrongValue, 'INTEGER', Real::format($real));
+                    $frame->context->warning(DataError::TruncatedWrongValue, 'INTEGER', Real::format($real));
                 }
             }
 
@@ -140,7 +140,7 @@ final class Bits implements Evaluable
         }
         $right = (string) Convert::toText($right, $this->right->domain());
         if (strlen($left) !== strlen($right)) {
-            throw ErrorCode::BitwiseOperandsSize->error();
+            throw DataError::BitwiseOperandsSize->error();
         }
 
         return match ($this->operator) {

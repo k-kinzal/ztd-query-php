@@ -113,6 +113,51 @@ final class AccumulatorTest extends TestCase
         self::assertSame([2, 7, 5], [$and->result(new Frame($context)), $or->result(new Frame($context)), $xor->result(new Frame($context))]);
     }
 
+    public function testExtremeKeepsAValueOrderedBeforeTheKeptOneForMinimum(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $accumulator = new Accumulator(new Accumulation(AggregateFunction::Minimum, [new ColumnRead(Domain::integer(), 0)], false, Domain::integer()));
+        $accumulator->add(new Frame($context, [5]));
+        $accumulator->add(new Frame($context, [-2]));
+        $accumulator->add(new Frame($context, [9]));
+
+        self::assertSame(-2, $accumulator->result(new Frame($context)));
+    }
+
+    public function testTotalAddsInExactDecimalArithmeticForADecimalSum(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $accumulator = new Accumulator(new Accumulation(AggregateFunction::Sum, [new ColumnRead(Domain::integer(), 0)], false, Domain::decimal(65, 0)));
+        $accumulator->add(new Frame($context, [3]));
+        $accumulator->add(new Frame($context, [4]));
+
+        self::assertSame('7', $accumulator->result(new Frame($context)));
+    }
+
+    public function testBitsCombinesAnOperandWithTheBitsFoldedSoFar(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $accumulator = new Accumulator(new Accumulation(AggregateFunction::BitAnd, [new ColumnRead(Domain::integer(), 0)], false, Domain::integer(Field::LongLong, 21, true)));
+        $accumulator->add(new Frame($context, [12]));
+        $accumulator->add(new Frame($context, [10]));
+
+        self::assertSame(8, $accumulator->result(new Frame($context)));
+    }
+
+    public function testMomentFoldsTheSquaredDeviationsFromTheRunningMean(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $accumulator = new Accumulator(new Accumulation(AggregateFunction::Variance, [new ColumnRead(Domain::integer(), 0)], false, Domain::double()));
+        $accumulator->add(new Frame($context, [2]));
+        $accumulator->add(new Frame($context, [6]));
+
+        self::assertSame(4.0, $accumulator->spread(false));
+    }
+
     public function testConcatenateCollectsTheTextOfTheArgumentsOfARow(): void
     {
         $session = (new Instance())->connect();

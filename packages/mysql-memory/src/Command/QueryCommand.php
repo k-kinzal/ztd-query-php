@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Plan\Planner;
@@ -125,22 +128,22 @@ final class QueryCommand implements Command
             $this->file($into, $context);
         }
         if (count($into->targets) !== count($result->columns)) {
-            throw ErrorCode::WrongNumberOfColumnsInSelect->error();
+            throw QueryError::WrongNumberOfColumnsInSelect->error();
         }
         if ($result->rows === []) {
-            $context->warning(ErrorCode::NoData);
+            $context->warning(ProgramError::NoData);
 
             return new Completion(0, 0, $context->diagnostics->count());
         }
         foreach ($into->targets as $index => $target) {
             if (!$target instanceof UserVariable) {
-                throw ErrorCode::UndeclaredVariable->error($target->name->value);
+                throw ProgramError::UndeclaredVariable->error($target->name->value);
             }
             $column = $result->columns[$index];
             $session->variables->assign($target->name->value, $result->rows[0][$index], $this->domain($column));
         }
         if (count($result->rows) > 1) {
-            throw ErrorCode::TooManyRows->error();
+            throw QueryError::TooManyRows->error();
         }
 
         return new Completion(1, 0, $context->diagnostics->count());
@@ -170,14 +173,14 @@ final class QueryCommand implements Command
         foreach ($texts as $index => $option) {
             $single = $option instanceof FieldOption && $option->kind !== FieldOptionKind::Terminated;
             if ($single && ($option->text->radix === null ? mb_strlen($bytes[$index], 'UTF-8') : strlen($bytes[$index])) > 1) {
-                throw ErrorCode::WrongFieldTerminators->error();
+                throw StatementError::WrongFieldTerminators->error();
             }
         }
         if (preg_match('/[\x80-\xff]/', implode('', $bytes)) === 1) {
-            $context->warning(ErrorCode::NonAsciiSeparator);
+            $context->warning(DataError::NonAsciiSeparator);
         }
 
-        throw ErrorCode::OptionPreventsStatement->error('--secure-file-priv');
+        throw StatementError::OptionPreventsStatement->error('--secure-file-priv');
     }
 
     /**

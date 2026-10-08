@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
@@ -43,14 +43,14 @@ final class Placement
         $first = $this->first($statement);
         foreach ((new Walker())->find($statement, Select::class) as $select) {
             if (in_array(SelectOption::All, $select->options, true) && in_array(SelectOption::Distinct, $select->options, true)) {
-                throw ErrorCode::WrongUsage->error('ALL', 'DISTINCT');
+                throw StatementError::WrongUsage->error('ALL', 'DISTINCT');
             }
             if ($select === $first) {
                 continue;
             }
             foreach ([SelectOption::HighPriority, SelectOption::BufferResult, SelectOption::CalcFoundRows] as $option) {
                 if (in_array($option, $select->options, true)) {
-                    throw ErrorCode::CantUseOptionHere->error($option->value);
+                    throw StatementError::CantUseOptionHere->error($option->value);
                 }
             }
         }

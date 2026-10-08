@@ -171,6 +171,34 @@ final class JsonTest extends TestCase
         (new Json('0e400'))->number();
     }
 
+    public function testExponentReadsTheSignedExponentAfterTheE(): void
+    {
+        $json = new Json('1e-0012x');
+        $json->at = 1;
+        $large = new Json('E+12345678901');
+        $plain = new Json('e7');
+
+        self::assertSame([-12, 7, 999999999], [$json->exponent(), $plain->exponent(), $large->exponent()]);
+        self::assertSame(7, $json->at);
+    }
+
+    public function testExponentRefusesAMissingExponent(): void
+    {
+        $this->expectExceptionObject(new JsonSyntax('Miss exponent in number.', 2));
+
+        (new Json('e-'))->exponent();
+    }
+
+    public function testIntegralHoldsForIntegersThatFitSixtyFourBits(): void
+    {
+        self::assertSame([true, true, false, true, false, true], [Json::integral('18446744073709551615'), Json::integral('-9223372036854775808'), Json::integral('18446744073709551616'), Json::integral('-0'), Json::integral('-9223372036854775809'), Json::integral('12')]);
+    }
+
+    public function testNumberWritesAnIntegerBeyondSixtyFourBitsAsADouble(): void
+    {
+        self::assertSame(['18446744073709551615', '1.8446744073709552e19', '0', '1e15'], [(new Json('18446744073709551615'))->number(), (new Json('18446744073709551616'))->number(), (new Json('-0'))->number(), (new Json('1e15'))->number()]);
+    }
+
     public function testDoubleWritesAnExponentPastFifteenIntegerDigitsOrFourteenLeadingZeros(): void
     {
         self::assertSame(['100000000000000.0', '1e15', '1.5e16', '1234567890123456.8', '0.000000000000001', '1.5e-16', '1e308', '-0.0'], [Json::double(1e14), Json::double(1e15), Json::double(1.5e16), Json::double(1234567890123456.7), Json::double(1e-15), Json::double(1.5e-16), Json::double(1e308), Json::double(-0.0)]);

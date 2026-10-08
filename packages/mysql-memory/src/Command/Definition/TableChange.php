@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Definition;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterCommand;
 use SqlSemantics\Platform\MySql\Statement\Alter\Column\AddColumn;
@@ -39,11 +40,6 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultExpression;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\DefaultLiteral;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\KeywordAttribute;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\Kind\ColumnKeyword;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\CheckConstraint;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ForeignKey;
@@ -109,6 +105,11 @@ final class TableChange
     public bool $toggled = false;
 
     /**
+     * The actions on single columns, applied to the same layout.
+     */
+    public readonly ColumnChange $columns;
+
+    /**
      * @param TableLayout $layout The layout the actions change
      * @param string $table The name of the table, for messages
      * @param string $database The current database, which a new name without a database names
@@ -116,6 +117,7 @@ final class TableChange
      */
     public function __construct(public readonly TableLayout $layout, public readonly string $table, public readonly string $database, public readonly GrammarRelease $release)
     {
+        $this->columns = new ColumnChange($layout, $table);
     }
 
     /**
@@ -155,16 +157,16 @@ final class TableChange
         }
         $this->layout->keys = [...$this->layout->keys, ...$added];
         foreach ($placed as [$element, $position, $origin]) {
-            $this->place($element, $position, $origin);
+            $this->columns->place($element, $position, $origin);
         }
         if ($this->layout->columns === []) {
-            throw ErrorCode::CantRemoveAllFields->error();
+            throw SchemaError::CantRemoveAllFields->error();
         }
         $seen = [];
         foreach ($this->layout->columns as [$element]) {
             $name = mb_strtolower($element->name->column->value);
             if (isset($seen[$name])) {
-                throw ErrorCode::DuplicateFieldName->error($element->name->column->value);
+                throw SchemaError::DuplicateFieldName->error($element->name->column->value);
             }
             $seen[$name] = true;
         }
@@ -179,138 +181,85 @@ final class TableChange
      */
     public function command(AlterCommand $command): array
     {
-        $layout = $this->layout;
         if ($command instanceof AddColumn) {
             return [[$command->column, $command->position, null]];
         }
         if ($command instanceof ChangeColumn) {
-            $index = $this->existing(($command->column ?? $command->definition->name)->column->value);
-            $origin = $layout->columns[$index][1];
-            unset($this->layout->undefaulted[mb_strtolower($layout->columns[$index][0]->name->column->value)]);
-            if ($command->position === null) {
-                $layout->columns[$index] = [$command->definition, $origin];
-
-                return [];
-            }
-            array_splice($layout->columns, $index, 1);
-
-            return [[$command->definition, $command->position, $origin]];
+            return $this->columns->change($command);
         }
         if ($command instanceof DefaultSetting) {
-            $index = $this->existing($command->column->column->value);
-            [$element, $origin] = $layout->columns[$index];
-            $attributes = array_values(array_filter($this->attributes($element), static fn (ColumnAttribute $attribute): bool => !$attribute instanceof DefaultLiteral && !$attribute instanceof DefaultExpression));
-            if ($command->value !== null) {
-                $attributes[] = $command->expression ? new DefaultExpression($command->value) : new DefaultLiteral($command->value);
-                unset($this->layout->undefaulted[mb_strtolower($element->name->column->value)]);
-            } else {
-                $this->layout->undefaulted[mb_strtolower($element->name->column->value)] = true;
-            }
-            $layout->columns[$index] = [$this->attributed($element, $attributes), $origin];
-
-            return [];
+            $this->columns->alterDefault($command);
+        } elseif ($command instanceof ColumnVisibility) {
+            $this->columns->alterVisibility($command);
+        } else {
+            $this->act($command);
         }
-        if ($command instanceof ColumnVisibility) {
-            $index = $this->existing($command->column->column->value);
-            [$element, $origin] = $layout->columns[$index];
-            $attributes = array_values(array_filter($this->attributes($element), static fn (ColumnAttribute $attribute): bool => !$attribute instanceof KeywordAttribute || ($attribute->keyword !== ColumnKeyword::Visible && $attribute->keyword !== ColumnKeyword::Invisible)));
-            if (!$command->visible) {
-                $attributes[] = new KeywordAttribute(ColumnKeyword::Invisible);
-            }
-            $layout->columns[$index] = [$this->attributed($element, $attributes), $origin];
-
-            return [];
-        }
-        if ($command instanceof DropElement) {
-            $this->drop($command);
-
-            return [];
-        }
-        if ($command instanceof RenameElement) {
-            $this->rename($command);
-
-            return [];
-        }
-        if ($command instanceof IndexVisibility) {
-            $index = $layout->key($command->index->value);
-            if ($index === null) {
-                throw ErrorCode::KeyMissing->error($command->index->value, $this->table);
-            }
-            $key = $layout->keys[$index][0];
-            if ($key instanceof IndexDefinition && $key->kind === IndexKind::Primary && !$command->visible) {
-                throw ErrorCode::PrimaryKeyInvisible->error();
-            }
-
-            return [];
-        }
-        if ($command instanceof ConstraintEnforcement) {
-            if ($this->constraint($command->constraint->value, $command->kind === ElementKind::Check) === null) {
-                throw $command->kind === ElementKind::Check ? ErrorCode::CheckConstraintNotFound->error($command->constraint->value) : ErrorCode::ConstraintNotFound->error($command->constraint->value);
-            }
-
-            return [];
-        }
-        if ($command instanceof SetTableOptions) {
-            $this->options($command->options);
-
-            return [];
-        }
-        if ($command instanceof ConvertCharset) {
-            $this->convert($command);
-
-            return [];
-        }
-        if ($command instanceof RenameTo) {
-            $layout->name = new QualifiedName($command->table->name, $command->table->schema ?? new Name($this->database));
-
-            return [];
-        }
-        if ($command instanceof AlgorithmOption) {
-            $this->algorithm = $command->algorithm === null || strcasecmp($command->algorithm->value, 'default') === 0 ? null : strtolower($command->algorithm->value);
-
-            return [];
-        }
-        if ($command instanceof LockOption) {
-            $this->lock = $command->lock === null || strcasecmp($command->lock->value, 'default') === 0 ? null : strtolower($command->lock->value);
-
-            return [];
-        }
-        if ($command instanceof ToggleKeys) {
-            $this->toggled = true;
-
-            return [];
-        }
-        if ($command instanceof SecondaryLoad) {
-            throw new SqlError(ErrorCode::SecondaryEngineFailed, 'Secondary engine operation failed. No secondary engine defined.');
-        }
-        if ($command instanceof TablespaceCommand || $command instanceof PartitionBy) {
-            throw ErrorCode::NotSupportedYet->error('ALTER TABLE ' . ($command instanceof PartitionBy ? 'PARTITION BY' : 'TABLESPACE'));
-        }
-        if ($command instanceof StandaloneCommand || $command instanceof TrailingCommand) {
-            throw ErrorCode::PartitionManagementOnNonpartitioned->error();
-        }
-        if ($command instanceof ValidationOption) {
-            return [];
-        }
-        $this->ordered = $command instanceof Reorder || $this->ordered;
-        $this->copies = $this->copies || $this->ordered;
 
         return [];
     }
 
     /**
-     * Answers the index in the layout of a column the table has, or raises ER_BAD_FIELD_ERROR.
+     * Applies an action that places no column: a drop, a rename, a change of the visibility of an
+     * index or of the enforcement of a constraint, table options, CONVERT TO CHARACTER SET or
+     * RENAME TO, and otherwise an action that chooses how the table is changed.
      *
-     * @throws SqlError When the table has no such column
+     * @throws SqlError When the action names what the table lacks, or the server refuses it
      */
-    public function existing(string $name): int
+    public function act(AlterCommand $command): void
     {
-        $index = $this->layout->column($name);
-        if ($index === null) {
-            throw ErrorCode::BadField->error($name, $this->table);
+        if ($command instanceof DropElement) {
+            $this->drop($command);
+        } elseif ($command instanceof RenameElement) {
+            $this->rename($command);
+        } elseif ($command instanceof IndexVisibility) {
+            $index = $this->layout->key($command->index->value);
+            if ($index === null) {
+                throw SchemaError::KeyMissing->error($command->index->value, $this->table);
+            }
+            $key = $this->layout->keys[$index][0];
+            if ($key instanceof IndexDefinition && $key->kind === IndexKind::Primary && !$command->visible) {
+                throw SchemaError::PrimaryKeyInvisible->error();
+            }
+        } elseif ($command instanceof ConstraintEnforcement) {
+            if ($this->constraint($command->constraint->value, $command->kind === ElementKind::Check) === null) {
+                throw $command->kind === ElementKind::Check ? SchemaError::CheckConstraintNotFound->error($command->constraint->value) : SchemaError::ConstraintNotFound->error($command->constraint->value);
+            }
+        } elseif ($command instanceof SetTableOptions) {
+            $this->options($command->options);
+        } elseif ($command instanceof ConvertCharset) {
+            $this->convert($command);
+        } elseif ($command instanceof RenameTo) {
+            $this->layout->name = new QualifiedName($command->table->name, $command->table->schema ?? new Name($this->database));
+        } else {
+            $this->manner($command);
         }
+    }
 
-        return $index;
+    /**
+     * Applies an action that chooses how the server changes the table: ALGORITHM, LOCK, ENABLE or
+     * DISABLE KEYS, WITH or WITHOUT VALIDATION and ORDER BY; a partition operation, or a secondary
+     * engine load, is refused.
+     *
+     * @throws SqlError When the action is a partition operation or a secondary engine load
+     */
+    public function manner(AlterCommand $command): void
+    {
+        if ($command instanceof AlgorithmOption) {
+            $this->algorithm = $command->algorithm === null || strcasecmp($command->algorithm->value, 'default') === 0 ? null : strtolower($command->algorithm->value);
+        } elseif ($command instanceof LockOption) {
+            $this->lock = $command->lock === null || strcasecmp($command->lock->value, 'default') === 0 ? null : strtolower($command->lock->value);
+        } elseif ($command instanceof ToggleKeys) {
+            $this->toggled = true;
+        } elseif ($command instanceof SecondaryLoad) {
+            throw new SqlError(SchemaError::SecondaryEngineFailed, 'Secondary engine operation failed. No secondary engine defined.');
+        } elseif ($command instanceof TablespaceCommand || $command instanceof PartitionBy) {
+            throw StatementError::NotSupportedYet->error('ALTER TABLE ' . ($command instanceof PartitionBy ? 'PARTITION BY' : 'TABLESPACE'));
+        } elseif ($command instanceof StandaloneCommand || $command instanceof TrailingCommand) {
+            throw SchemaError::PartitionManagementOnNonpartitioned->error();
+        } elseif (!$command instanceof ValidationOption) {
+            $this->ordered = $command instanceof Reorder || $this->ordered;
+            $this->copies = $this->copies || $this->ordered;
+        }
     }
 
     /**
@@ -325,7 +274,7 @@ final class TableChange
         if ($command->kind === ElementKind::Column) {
             $index = $layout->column($name);
             if ($index === null) {
-                throw ErrorCode::CantDropFieldOrKey->error($name);
+                throw SchemaError::CantDropFieldOrKey->error($name);
             }
             array_splice($layout->columns, $index, 1);
 
@@ -334,7 +283,7 @@ final class TableChange
         if ($command->kind === ElementKind::Index || $command->kind === ElementKind::PrimaryKey) {
             $index = $layout->key($name);
             if ($index === null) {
-                throw ErrorCode::CantDropFieldOrKey->error($name);
+                throw SchemaError::CantDropFieldOrKey->error($name);
             }
             array_splice($layout->keys, $index, 1);
 
@@ -343,10 +292,10 @@ final class TableChange
         $index = $this->constraint($name, $command->kind === ElementKind::Check);
         if ($index === null) {
             if ($command->kind === ElementKind::Check) {
-                throw ErrorCode::CheckConstraintNotFound->error($name);
+                throw SchemaError::CheckConstraintNotFound->error($name);
             }
 
-            throw $command->kind === ElementKind::ForeignKey ? ErrorCode::CantDropFieldOrKey->error($name) : ErrorCode::ConstraintNotFound->error($name);
+            throw $command->kind === ElementKind::ForeignKey ? SchemaError::CantDropFieldOrKey->error($name) : SchemaError::ConstraintNotFound->error($name);
         }
         array_splice($layout->keys, $index, 1);
     }
@@ -360,19 +309,13 @@ final class TableChange
     {
         $layout = $this->layout;
         if ($command->kind === ElementKind::Column) {
-            $index = $this->existing($command->from->column->value);
-            [$element, $origin] = $layout->columns[$index];
-            if (isset($this->layout->undefaulted[mb_strtolower($element->name->column->value)])) {
-                unset($this->layout->undefaulted[mb_strtolower($element->name->column->value)]);
-                $this->layout->undefaulted[mb_strtolower($command->to->column->value)] = true;
-            }
-            $layout->columns[$index] = [new ColumnElement(new ColumnName($command->to->column), $element->specification), $origin];
+            $this->columns->rename($command);
 
             return;
         }
         $index = $layout->key($command->from->column->value);
         if ($index === null) {
-            throw ErrorCode::KeyMissing->error($command->from->column->value, $this->table);
+            throw SchemaError::KeyMissing->error($command->from->column->value, $this->table);
         }
         [$key, $origin] = $layout->keys[$index];
         assert($key instanceof IndexDefinition);
@@ -399,28 +342,6 @@ final class TableChange
         }
 
         return null;
-    }
-
-    /**
-     * Places a new or moved column: at the end, first, or after a column of the new table.
-     *
-     * @throws SqlError When the column to follow does not exist
-     */
-    public function place(ColumnElement $element, ?ColumnPosition $position, ?int $origin): void
-    {
-        $columns = $this->layout->columns;
-        if ($position === null) {
-            $columns[] = [$element, $origin];
-        } elseif ($position->after === null) {
-            array_unshift($columns, [$element, $origin]);
-        } else {
-            $after = $this->layout->column($position->after->value);
-            if ($after === null) {
-                throw ErrorCode::BadField->error($position->after->value, $this->table);
-            }
-            array_splice($columns, $after + 1, 0, [[$element, $origin]]);
-        }
-        $this->layout->columns = $columns;
     }
 
     /**
@@ -475,32 +396,5 @@ final class TableChange
             $attributes[] = new CollateAttribute(new CollationName(new Name($collation->name)));
             $this->layout->columns[$index] = [new ColumnElement($element->name, new OrdinaryColumn($type, $attributes, $specification->references)), $origin];
         }
-    }
-
-    /**
-     * Answers the attributes of a column definition.
-     *
-     * @return list<ColumnAttribute>
-     */
-    public function attributes(ColumnElement $element): array
-    {
-        $specification = $element->specification;
-
-        return $specification instanceof OrdinaryColumn || $specification instanceof GeneratedColumn ? $specification->attributes : [];
-    }
-
-    /**
-     * Answers a column definition with other attributes.
-     *
-     * @param list<ColumnAttribute> $attributes
-     */
-    public function attributed(ColumnElement $element, array $attributes): ColumnElement
-    {
-        $specification = $element->specification;
-        if (!$specification instanceof OrdinaryColumn && !$specification instanceof GeneratedColumn) {
-            return $element;
-        }
-
-        return new ColumnElement($element->name, TableLayout::specified($specification, $attributes));
     }
 }

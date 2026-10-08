@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Command;
+use MySqlMemory\Dictionary\Dictionary;
 use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -58,34 +60,27 @@ final class RenameTableCommand implements Command
         $database = $session->variables->database;
         foreach ($statement->renamings as $renaming) {
             if (($renaming->from->schema === null || $renaming->to->schema === null) && $database === '') {
-                throw ErrorCode::NoDatabase->error();
+                throw QueryError::NoDatabase->error();
             }
         }
         $session->transaction->commit();
         $dictionary = $session->instance->dictionary;
-        $names = [];
-        foreach ($dictionary->schemas as $schema) {
-            foreach ($schema->tables as $name => $table) {
-                if (!$table->definition->temporary) {
-                    $names[$schema->name . "\0" . $name] = $table;
-                }
-            }
-        }
+        $names = $this->names($dictionary);
         $moves = [];
         foreach ($statement->renamings as $renaming) {
             $from = [$renaming->from->schema->value ?? $database, $renaming->from->name->value];
             $to = [$renaming->to->schema->value ?? $database, $renaming->to->name->value];
             foreach ([$from[0], $to[0]] as $schema) {
                 if ($dictionary->schema($schema) === null) {
-                    throw ErrorCode::BadDatabase->error($schema);
+                    throw QueryError::BadDatabase->error($schema);
                 }
             }
             if (isset($names[$to[0] . "\0" . $to[1]])) {
-                throw ErrorCode::TableExists->error($to[1]);
+                throw SchemaError::TableExists->error($to[1]);
             }
             $table = $names[$from[0] . "\0" . $from[1]] ?? null;
             if ($table === null) {
-                throw ErrorCode::NoSuchTable->error($from[0], $from[1]);
+                throw QueryError::NoSuchTable->error($from[0], $from[1]);
             }
             unset($names[$from[0] . "\0" . $from[1]]);
             $names[$to[0] . "\0" . $to[1]] = $table;
@@ -105,6 +100,26 @@ final class RenameTableCommand implements Command
     }
 
     /**
+     * Answers the tables a rename can see, keyed by their database and name joined by a NUL
+     * character; temporary tables are left out.
+     *
+     * @return array<string, StoredTable>
+     */
+    public function names(Dictionary $dictionary): array
+    {
+        $names = [];
+        foreach ($dictionary->schemas as $schema) {
+            foreach ($schema->tables as $name => $table) {
+                if (!$table->definition->temporary) {
+                    $names[$schema->name . "\0" . $name] = $table;
+                }
+            }
+        }
+
+        return $names;
+    }
+
+    /**
      * Refuses a name no table can have.
      *
      * @throws \MySqlMemory\Error\SqlError When the name is empty, ends with a space or is too long
@@ -112,10 +127,10 @@ final class RenameTableCommand implements Command
     public function valid(string $name): void
     {
         if ($name === '' || str_ends_with($name, ' ')) {
-            throw ErrorCode::WrongTableName->error($name);
+            throw SchemaError::WrongTableName->error($name);
         }
         if (mb_strlen($name) > 64) {
-            throw ErrorCode::TooLongIdentifier->error($name);
+            throw SchemaError::TooLongIdentifier->error($name);
         }
     }
 
@@ -128,10 +143,10 @@ final class RenameTableCommand implements Command
     {
         $this->valid($name);
         if ($session->instance->dictionary->schema($schema) === null) {
-            throw ErrorCode::BadDatabase->error($schema);
+            throw QueryError::BadDatabase->error($schema);
         }
         if ($session->instance->dictionary->table($schema, $name) !== null) {
-            throw ErrorCode::TableExists->error($name);
+            throw SchemaError::TableExists->error($name);
         }
     }
 

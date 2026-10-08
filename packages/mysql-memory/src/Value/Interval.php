@@ -66,7 +66,30 @@ final class Interval
             return new self(0, 0);
         }
         $numbers = array_map('intval', $matches[0]);
-        $parts = match ($unit) {
+        $parts = self::parts($unit);
+        if (count($numbers) > count($parts)) {
+            return null;
+        }
+        $values = array_combine(array_slice($parts, count($parts) - count($numbers)), $numbers);
+        if (isset($values['micro']) && preg_match('/[.]([0-9]+)\s*\z/', $text, $fraction) === 1) {
+            $values['micro'] = (int) substr(str_pad($fraction[1], 6, '0'), 0, 6);
+        }
+        $months = ($values['year'] ?? 0) * 12 + ($values['month'] ?? 0);
+        $micro = ((($values['day'] ?? 0) * 24 + ($values['hour'] ?? 0)) * 60 + ($values['minute'] ?? 0)) * 60000000 + ($values['second'] ?? 0) * 1000000 + ($values['micro'] ?? 0);
+
+        return $negative ? new self(-$months, -$micro) : new self($months, $micro);
+    }
+
+    /**
+     * Answers the parts a compound unit writes, from the largest to the smallest.
+     *
+     * A unit that is not compound reads as SECOND_MICROSECOND.
+     *
+     * @return non-empty-list<string>
+     */
+    public static function parts(IntervalUnit $unit): array
+    {
+        return match ($unit) {
             IntervalUnit::YearMonth => ['year', 'month'],
             IntervalUnit::DayHour => ['day', 'hour'],
             IntervalUnit::DayMinute => ['day', 'hour', 'minute'],
@@ -79,17 +102,6 @@ final class Interval
             IntervalUnit::MinuteMicrosecond => ['minute', 'second', 'micro'],
             IntervalUnit::Microsecond, IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year, IntervalUnit::SecondMicrosecond => ['second', 'micro'],
         };
-        if (count($numbers) > count($parts)) {
-            return null;
-        }
-        $values = array_combine(array_slice($parts, count($parts) - count($numbers)), $numbers);
-        if (isset($values['micro']) && preg_match('/[.]([0-9]+)\s*\z/', $text, $fraction) === 1) {
-            $values['micro'] = (int) substr(str_pad($fraction[1], 6, '0'), 0, 6);
-        }
-        $months = ($values['year'] ?? 0) * 12 + ($values['month'] ?? 0);
-        $micro = ((($values['day'] ?? 0) * 24 + ($values['hour'] ?? 0)) * 60 + ($values['minute'] ?? 0)) * 60000000 + ($values['second'] ?? 0) * 1000000 + ($values['micro'] ?? 0);
-
-        return $negative ? new self(-$months, -$micro) : new self($months, $micro);
     }
 
     /**

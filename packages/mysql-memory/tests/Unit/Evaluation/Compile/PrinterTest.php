@@ -21,8 +21,10 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Statement\NamedRelation;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Reference\Table\DeclaredTable;
 use SqlSemantics\Statement\Shape\Field;
 
 #[CoversClass(Printer::class)]
@@ -145,6 +147,57 @@ final class PrinterTest extends TestCase
 
         self::assertSame('(`p`.`tt`.`a` + 0)', (new Printer($merged->facts, 'p'))->resolved($first));
         self::assertSame('`d`.`a`', (new Printer($materialized->facts, 'p'))->resolved($second));
+    }
+
+    public function testTableColumnPrintsTheDatabaseTheCorrelationNameAndTheDeclaredName(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE TABLE tt (a INT)');
+        $operation = $session->analyze('SELECT x.A FROM tt x');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
+        $resolution = $operation->facts->scalar($operation->statement->items[0]->expression)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+        $relation = $resolution->relation;
+        self::assertInstanceOf(NamedRelation::class, $relation);
+        $table = $operation->facts->relation($relation)->table;
+        self::assertInstanceOf(DeclaredTable::class, $table);
+
+        self::assertSame('`p`.`x`.`a`', (new Printer($operation->facts, 'p'))->tableColumn($resolution, $table, $relation));
+        self::assertSame('`x`.`a`', (new Printer($operation->facts))->tableColumn($resolution, $table, $relation));
+    }
+
+    public function testMergedPrintsTheFieldOfAMergedDerivedTableAndNothingForAMaterializedOne(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE TABLE tt (a INT)');
+        $merged = $session->analyze('SELECT a FROM (SELECT a + 0 AS a FROM tt) d');
+        $materialized = $session->analyze('SELECT a FROM (SELECT DISTINCT a FROM tt) d');
+        self::assertInstanceOf(Select::class, $merged->statement);
+        self::assertInstanceOf(Select::class, $materialized->statement);
+        self::assertInstanceOf(SelectExpression::class, $merged->statement->items[0]);
+        self::assertInstanceOf(SelectExpression::class, $materialized->statement->items[0]);
+        $first = $merged->facts->scalar($merged->statement->items[0]->expression)->resolution;
+        $second = $materialized->facts->scalar($materialized->statement->items[0]->expression)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $first);
+        self::assertInstanceOf(ResolvedColumn::class, $second);
+
+        self::assertSame('(`p`.`tt`.`a` + 0)', (new Printer($merged->facts, 'p'))->merged($first, null));
+        self::assertNull((new Printer($materialized->facts, 'p'))->merged($second, null));
+        self::assertNull((new Printer())->merged($first, null));
+    }
+
+    public function testMaterializedPrintsTheCorrelationNameAndTheColumnName(): void
+    {
+        $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');
+        $session->query('CREATE TABLE tt (a INT)');
+        $operation = $session->analyze('SELECT a FROM (SELECT DISTINCT a FROM tt) d');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        self::assertInstanceOf(SelectExpression::class, $operation->statement->items[0]);
+        $resolution = $operation->facts->scalar($operation->statement->items[0]->expression)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $resolution);
+
+        self::assertSame('`d`.`a`', (new Printer())->materialized($resolution));
     }
 
     public function testPositionAnswersThePlaceOfAColumnInItsRelation(): void

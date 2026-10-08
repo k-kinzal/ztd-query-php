@@ -12,6 +12,7 @@ use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Server\Database\CreateDatabase;
 
 #[CoversClass(DatabaseCommand::class)]
 #[Small]
@@ -49,6 +50,19 @@ final class DatabaseCommandTest extends TestCase
         $session->query('CREATE DATABASE l CHARACTER SET latin1; CREATE DATABASE b COLLATE latin1_bin CHARACTER SET latin1');
 
         self::assertSame(['latin1_swedish_ci', 'latin1_bin'], [$session->instance->dictionary->schema('l')?->collation, $session->instance->dictionary->schema('b')?->collation]);
+    }
+
+    public function testCollationPrefersTheCollationItNamesToTheCharacterSet(): void
+    {
+        $session = (new Instance())->connect();
+        $named = $session->analyze('CREATE DATABASE b COLLATE latin1_bin CHARACTER SET latin1')->statement;
+        $charset = $session->analyze('CREATE DATABASE l CHARACTER SET latin1')->statement;
+        $plain = $session->analyze('CREATE DATABASE p')->statement;
+        self::assertInstanceOf(CreateDatabase::class, $named);
+        self::assertInstanceOf(CreateDatabase::class, $charset);
+        self::assertInstanceOf(CreateDatabase::class, $plain);
+
+        self::assertSame(['latin1_bin', 'latin1_swedish_ci', 'utf8mb4_0900_ai_ci'], [(new DatabaseCommand())->collation($named, $session), (new DatabaseCommand())->collation($charset, $session), (new DatabaseCommand())->collation($plain, $session)]);
     }
 
     public function testExecuteRefusesToCreateAnExistingDatabase(): void

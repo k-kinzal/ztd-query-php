@@ -7,7 +7,8 @@ namespace MySqlMemory\Command\Definition;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -52,6 +53,14 @@ use SqlSemantics\Statement\Operation;
 final class TableQueries
 {
     /**
+     * The name of each integer type, by the name of the field of the column; a LONGLONG of 11 or
+     * more display characters is a BIGINT instead.
+     *
+     * @var array<string, string>
+     */
+    public const INTEGERS = ['Tiny' => 'TINYINT', 'Short' => 'SMALLINT', 'Int24' => 'MEDIUMINT', 'Long' => 'INT', 'LongLong' => 'INT'];
+
+    /**
      * @param Session $session The session creating the table
      * @param Context $context The statement
      * @param Connection $connection The connection
@@ -73,7 +82,7 @@ final class TableQueries
         $seen = [];
         foreach ($plan->names as $name) {
             if (isset($seen[mb_strtolower($name)])) {
-                throw ErrorCode::DuplicateFieldName->error($name);
+                throw SchemaError::DuplicateFieldName->error($name);
             }
             $seen[mb_strtolower($name)] = true;
         }
@@ -162,20 +171,11 @@ final class TableQueries
      */
     public function type(Domain $domain): string
     {
-        $bytes = $domain->collation->bytes();
-        $collation = $bytes ? '' : ' CHARACTER SET ' . $domain->collation->charset->name . ' COLLATE ' . $domain->collation->name;
         $unsigned = $domain->unsigned ? ' UNSIGNED' : '';
         $fraction = $domain->decimals > 0 && $domain->decimals < Domain::NOT_FIXED ? '(' . $domain->decimals . ')' : '';
-        $members = implode(',', array_map(static fn (string $member): string => "'" . str_replace(['\\', "'"], ['\\\\', "''"], $member) . "'", $domain->members));
-        $text = $domain->length * $domain->collation->charset->maxLength;
-        $width = '(' . ($domain->display ?? $domain->length) . ')';
 
         return match ($domain->field) {
-            Field::Tiny => 'TINYINT' . $width . $unsigned,
-            Field::Short => 'SMALLINT' . $width . $unsigned,
-            Field::Int24 => 'MEDIUMINT' . $width . $unsigned,
-            Field::Long => 'INT' . $width . $unsigned,
-            Field::LongLong => ($domain->length >= 11 ? 'BIGINT' : 'INT') . $width . $unsigned,
+            Field::Tiny, Field::Short, Field::Int24, Field::Long, Field::LongLong => $this->integer($domain, self::INTEGERS[$domain->field->name]),
             Field::Decimal, Field::NewDecimal => 'DECIMAL(' . $domain->precision() . ',' . $domain->decimals . ')' . $unsigned,
             Field::Float => 'FLOAT' . $unsigned,
             Field::Double => 'DOUBLE' . $unsigned,
@@ -189,11 +189,44 @@ final class TableQueries
             Field::Json => 'JSON',
             Field::Vector => 'VECTOR(' . max(1, intdiv($domain->length, 4)) . ')',
             Field::Geometry => 'GEOMETRY',
-            Field::Enum => 'ENUM(' . $members . ')' . $collation,
-            Field::Set => 'SET(' . $members . ')' . $collation,
-            Field::VarChar, Field::VarString, Field::String => $domain->length > 512 ? $this->text($text, $bytes) . $collation : ($bytes ? 'VARBINARY' : 'VARCHAR') . '(' . $domain->length . ')' . $collation,
-            Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob => $this->text($bytes ? $domain->length : $text, $bytes) . $collation,
+            Field::Enum, Field::Set, Field::VarChar, Field::VarString, Field::String, Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob => $this->character($domain),
         };
+    }
+
+    /**
+     * Answers the type an integer column of a query takes in the table, as SQL: it keeps the
+     * display width of the expression, and a LONGLONG is a BIGINT from 11 display characters on.
+     *
+     * @param string $name The name of the integer type of the field
+     */
+    public function integer(Domain $domain, string $name): string
+    {
+        $name = $domain->field === Field::LongLong && $domain->length >= 11 ? 'BIGINT' : $name;
+
+        return $name . '(' . ($domain->display ?? $domain->length) . ')' . ($domain->unsigned ? ' UNSIGNED' : '');
+    }
+
+    /**
+     * Answers the type a string, ENUM or SET column of a query takes in the table, as SQL: a
+     * string of more than 512 characters, and a large object, is the TEXT or BLOB type that holds
+     * it, and a type that is not binary states its character set and collation.
+     */
+    public function character(Domain $domain): string
+    {
+        $bytes = $domain->collation->bytes();
+        $collation = $bytes ? '' : ' CHARACTER SET ' . $domain->collation->charset->name . ' COLLATE ' . $domain->collation->name;
+        if ($domain->field === Field::Enum || $domain->field === Field::Set) {
+            $members = implode(',', array_map(static fn (string $member): string => "'" . str_replace(['\\', "'"], ['\\\\', "''"], $member) . "'", $domain->members));
+
+            return ($domain->field === Field::Enum ? 'ENUM' : 'SET') . '(' . $members . ')' . $collation;
+        }
+        $text = $domain->length * $domain->collation->charset->maxLength;
+        $blob = in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
+        if (!$blob && $domain->length <= 512) {
+            return ($bytes ? 'VARBINARY' : 'VARCHAR') . '(' . $domain->length . ')' . $collation;
+        }
+
+        return $this->text($blob && $bytes ? $domain->length : $text, $bytes) . $collation;
     }
 
     /**
@@ -264,7 +297,7 @@ final class TableQueries
                 [$row] = $writer->autoIncrement($row, $context->modes->has('NO_AUTO_VALUE_ON_ZERO'));
                 $conflict = $writer->conflict($row);
                 if ($conflict !== null && $duplicate === DuplicateHandling::Ignore) {
-                    $context->diagnostics->warning(ErrorCode::DuplicateEntry, ErrorCode::DuplicateEntry->message(...$writer->entry($row, $conflict[1])));
+                    $context->diagnostics->warning(DataError::DuplicateEntry, DataError::DuplicateEntry->message(...$writer->entry($row, $conflict[1])));
                     $duplicates++;
 
                     continue;
@@ -297,7 +330,7 @@ final class TableQueries
         if ($has || $column->nullable() || $column->autoIncrement) {
             return $value;
         }
-        $store->adjust(ErrorCode::NoDefaultForField, $column->name);
+        $store->adjust(DataError::NoDefaultForField, $column->name);
 
         return $writer->implicit($column);
     }
@@ -313,7 +346,7 @@ final class TableQueries
         if ($stored !== null || $column->nullable() || $column->autoIncrement) {
             return $stored;
         }
-        $store->adjust(ErrorCode::BadNull, $column->name);
+        $store->adjust(DataError::BadNull, $column->name);
 
         return $writer->implicit($column);
     }

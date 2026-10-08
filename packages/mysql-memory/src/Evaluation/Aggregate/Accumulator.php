@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Aggregate;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Encoding;
 use MySqlMemory\Value\Order;
@@ -93,38 +94,71 @@ final class Accumulator
         switch ($this->accumulation->function) {
             case AggregateFunction::Minimum:
             case AggregateFunction::Maximum:
-                $order = $this->value === null ? 0 : Order::compare($value, $this->value, $domain);
-                if ($this->count === 1 || ($this->accumulation->function === AggregateFunction::Minimum ? $order < 0 : $order > 0)) {
-                    $this->value = $value;
-                }
+                $this->extreme($value, $domain);
                 break;
             case AggregateFunction::Sum:
             case AggregateFunction::Average:
-                $this->value = $this->accumulation->domain->kind === Kind::Double || ($this->accumulation->function === AggregateFunction::Average && $domain->kind === Kind::Double)
-                    ? (float) $this->value + (float) Convert::toDouble($value, $domain, $context)
-                    : Decimal::add((string) ($this->value ?? '0'), (string) Convert::toDecimal($value, $domain, $context));
+                $this->total($frame, $value);
                 break;
             case AggregateFunction::BitAnd:
-                $this->value = ($this->count === 1 ? -1 : (int) $this->value) & (int) Convert::toInteger($value, $domain, $context, true);
-                break;
             case AggregateFunction::BitOr:
-                $this->value = (int) $this->value | (int) Convert::toInteger($value, $domain, $context, true);
-                break;
             case AggregateFunction::BitXor:
-                $this->value = (int) $this->value ^ (int) Convert::toInteger($value, $domain, $context, true);
+                $this->bits((int) Convert::toInteger($value, $domain, $context, true));
                 break;
             case AggregateFunction::StandardDeviation:
             case AggregateFunction::Variance:
             case AggregateFunction::SampleStandardDeviation:
             case AggregateFunction::SampleVariance:
-                $number = (float) Convert::toDouble($value, $domain, $context);
-                $delta = $number - $this->mean;
-                $this->mean += $delta / $this->count;
-                $this->squares += $delta * ($number - $this->mean);
+                $this->moment((float) Convert::toDouble($value, $domain, $context));
                 break;
             default:
                 break;
         }
+    }
+
+    /**
+     * Folds one value into a MIN or MAX: the first value, then any value ordered before (MIN) or after (MAX) the kept one.
+     */
+    public function extreme(int|float|string $value, Domain $domain): void
+    {
+        $order = $this->value === null ? 0 : Order::compare($value, $this->value, $domain);
+        if ($this->count === 1 || ($this->accumulation->function === AggregateFunction::Minimum ? $order < 0 : $order > 0)) {
+            $this->value = $value;
+        }
+    }
+
+    /**
+     * Folds one value into a SUM or AVG, in double arithmetic for a double result or a double argument of AVG, else in exact decimal arithmetic.
+     */
+    public function total(Frame $frame, int|float|string $value): void
+    {
+        $domain = $this->accumulation->arguments[0]->domain();
+        $this->value = $this->accumulation->domain->kind === Kind::Double || ($this->accumulation->function === AggregateFunction::Average && $domain->kind === Kind::Double)
+            ? (float) $this->value + (float) Convert::toDouble($value, $domain, $frame->context)
+            : Decimal::add((string) ($this->value ?? '0'), (string) Convert::toDecimal($value, $domain, $frame->context));
+    }
+
+    /**
+     * Folds one integer operand into BIT_AND, BIT_OR or BIT_XOR; BIT_AND starts from all bits set.
+     */
+    public function bits(int $operand): void
+    {
+        if ($this->accumulation->function === AggregateFunction::BitAnd) {
+            $this->value = ($this->count === 1 ? -1 : (int) $this->value) & $operand;
+
+            return;
+        }
+        $this->value = $this->accumulation->function === AggregateFunction::BitOr ? (int) $this->value | $operand : (int) $this->value ^ $operand;
+    }
+
+    /**
+     * Folds one number into the running mean and sum of squared deviations (Welford's method) of STD, VARIANCE and their sample forms.
+     */
+    public function moment(float $number): void
+    {
+        $delta = $number - $this->mean;
+        $this->mean += $delta / $this->count;
+        $this->squares += $delta * ($number - $this->mean);
     }
 
     /**
@@ -217,7 +251,7 @@ final class Accumulator
         $text = implode(Encoding::convert($this->accumulation->separator, Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset), array_column($this->parts, 0));
         if (strlen($text) > $this->accumulation->limit) {
             $text = mb_strcut($text, 0, $this->accumulation->limit, Encoding::name($this->accumulation->domain->collation->charset) ?? '8bit');
-            $frame->context->warning(ErrorCode::CutByGroupConcat, count($this->parts));
+            $frame->context->warning(DataError::CutByGroupConcat, count($this->parts));
         }
 
         return $text;

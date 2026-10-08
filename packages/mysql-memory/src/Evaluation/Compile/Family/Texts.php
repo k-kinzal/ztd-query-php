@@ -6,7 +6,9 @@ namespace MySqlMemory\Evaluation\Compile\Family;
 
 use Closure;
 use MySqlMemory\Dictionary\KeyKind;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Compile\Constancy;
 use MySqlMemory\Evaluation\Convert;
@@ -74,12 +76,12 @@ final class Texts
         $operand = $this->compiler->compile($node->operand, $scope);
         $collation = Collation::named($node->collation->value);
         if ($collation === null) {
-            throw ErrorCode::UnknownCollation->error($node->collation->value);
+            throw SchemaError::UnknownCollation->error($node->collation->value);
         }
         $domain = $operand->domain();
         $charset = $domain->kind === Kind::String ? $domain->collation->charset : $this->compiler->settings->connectionCollation->charset;
         if ($collation->charset !== $charset) {
-            throw ErrorCode::CollationCharsetMismatch->error($collation->name, $charset->name);
+            throw SchemaError::CollationCharsetMismatch->error($collation->name, $charset->name);
         }
         $length = $domain->kind === Kind::String ? $domain->length : (new Strings())->length($domain);
         $result = $this->compiler->domain($node);
@@ -111,7 +113,7 @@ final class Texts
         $name = $node->charset->name->value ?? 'binary';
         $charset = Charset::named($name);
         if ($charset === null) {
-            throw ErrorCode::UnknownCharacterSet->error($name);
+            throw SchemaError::UnknownCharacterSet->error($name);
         }
         $domain = $operand->domain();
         $length = $domain->kind === Kind::String ? $domain->length : (new Strings())->length($domain);
@@ -253,7 +255,7 @@ final class Texts
         $pattern = $this->compiler->compile($node->pattern, $scope);
         $sides = array_map(static fn (Domain $domain): ?string => $domain->kind !== Kind::String ? null : ($domain->collation->charset === Charset::binary() ? 'binary' : $domain->collation->name), [$subject->domain(), $pattern->domain()]);
         if ($sides[0] !== null && $sides[1] !== null && ($sides[0] === 'binary') !== ($sides[1] === 'binary')) {
-            throw ErrorCode::CharacterSetMismatch->error($sides[0], $sides[1], 'regexp_like');
+            throw DataError::CharacterSetMismatch->error($sides[0], $sides[1], 'regexp_like');
         }
         [$collation] = Collations::aggregate([$subject->domain(), $pattern->domain()], 'regexp_like', $this->compiler->settings->connectionCollation, true);
         $negated = $node->negated;
@@ -271,7 +273,7 @@ final class Texts
             $flags = $collation->binaryOrder() || str_ends_with($collation->name, '_cs') ? 'u' : 'ui';
             $matched = @preg_match('/' . str_replace('/', '\\/', $expression) . '/' . $flags, $text);
             if ($matched === false) {
-                throw ErrorCode::RegexpError->error('The regular expression is not valid.');
+                throw DataError::RegexpError->error('The regular expression is not valid.');
             }
 
             return ($matched === 1) !== $negated ? 1 : 0;
@@ -286,7 +288,7 @@ final class Texts
     public function weight(WeightString $node, Scope $scope): Evaluable
     {
         if ($node->levels !== [] || $node->range !== null) {
-            throw ErrorCode::NotSupportedYet->error('WEIGHT_STRING with LEVEL');
+            throw StatementError::NotSupportedYet->error('WEIGHT_STRING with LEVEL');
         }
 
         return new Weight($this->compiler->compile($node->subject, $scope), $node->cast, $node->length === null ? null : (int) $node->length->text, $this->compiler->domain($node));
@@ -306,19 +308,19 @@ final class Texts
     public function match(FullTextSearch $node, Scope $scope): Evaluable
     {
         if ($this->compiler->constancy($node->against) === Constancy::Row) {
-            throw ErrorCode::WrongArguments->error('AGAINST');
+            throw StatementError::WrongArguments->error('AGAINST');
         }
         $table = null;
         $positions = [];
         foreach ($node->columns as $column) {
             $resolution = $this->compiler->facts->scalar($column)->resolution;
             if (!$resolution instanceof ResolvedColumn) {
-                throw ErrorCode::WrongArguments->error('MATCH');
+                throw StatementError::WrongArguments->error('MATCH');
             }
             $located = $scope->locate($resolution->relation);
             $definition = $located === null ? null : ($located[1]->tables[spl_object_id($resolution->relation)] ?? null);
             if ($located === null || $definition === null || ($table !== null && $table !== $definition)) {
-                throw ErrorCode::WrongArguments->error('MATCH');
+                throw StatementError::WrongArguments->error('MATCH');
             }
             $table = $definition;
             $positions[] = $this->compiler->names->position($located[1], $resolution);
@@ -328,10 +330,10 @@ final class Texts
             $indexed = $key->columns;
             sort($indexed);
             if ($key->kind === KeyKind::FullText && $indexed === $positions) {
-                throw ErrorCode::NotSupportedYet->error('MATCH ... AGAINST');
+                throw StatementError::NotSupportedYet->error('MATCH ... AGAINST');
             }
         }
 
-        throw ErrorCode::FullTextIndexNotFound->error();
+        throw SchemaError::FullTextIndexNotFound->error();
     }
 }

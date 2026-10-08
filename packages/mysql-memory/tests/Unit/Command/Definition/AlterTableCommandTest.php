@@ -7,7 +7,9 @@ namespace Tests\Unit\Command\Definition;
 use MySqlMemory\Command\Definition\AlterTableCommand;
 use MySqlMemory\Command\Definition\TableChange;
 use MySqlMemory\Command\Definition\TableLayout;
+use MySqlMemory\Command\Definition\TableRebuild;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
@@ -237,5 +239,122 @@ final class AlterTableCommandTest extends TestCase
         (new AlterTableCommand())->move($session, $table, 'd', 't');
 
         self::assertSame(['u'], array_keys($session->instance->dictionary->schemas['d']->tables));
+    }
+
+    public function testTableAnswersTheBaseTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+
+        self::assertSame($session->instance->dictionary->table('d', 't'), (new AlterTableCommand())->table($session, 'd', 't'));
+    }
+
+    public function testTableRefusesAView(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE VIEW v AS SELECT 1 AS a');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1347);
+        $this->expectExceptionMessage("'d.v' is not BASE TABLE");
+
+        (new AlterTableCommand())->table($session, 'd', 'v');
+    }
+
+    public function testTableRefusesAnUnknownDatabase(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1049);
+        $this->expectExceptionMessage("Unknown database 'nope'");
+
+        (new AlterTableCommand())->table($session, 'nope', 't');
+    }
+
+    public function testResolveRefusesAFunctionThatIsNotDeclared(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+        $operation = $session->analyze('ALTER TABLE t ADD COLUMN b INT DEFAULT (zz())');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1305);
+        $this->expectExceptionMessage('FUNCTION d.zz does not exist');
+
+        (new AlterTableCommand())->resolve($operation, $session);
+    }
+
+    public function testRebuildCountsTheCopiedRows(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $statement = $session->analyze('ALTER TABLE t MODIFY a BIGINT')->statement;
+        self::assertInstanceOf(AlterTable::class, $statement);
+        $layout = TableLayout::of($table->definition);
+        $change = new TableChange($layout, 't', 'd', GrammarRelease::MySql847);
+        $change->apply($statement->commands);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $rebuild = new TableRebuild($session, $context, new Connection($session->variables, $context));
+
+        $completion = (new AlterTableCommand())->rebuild($rebuild, $table, $layout, $change);
+
+        self::assertSame([2, 'Records: 2  Duplicates: 0  Warnings: 0'], [$completion->affectedRows, $completion->info]);
+        self::assertCount(2, $table->data->rows);
+    }
+
+    public function testIndexesAnswersTheAddedIndexesInOrder(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('ALTER TABLE t ADD COLUMN b INT, ADD INDEX i (a), ADD UNIQUE KEY j (b)')->statement;
+        self::assertInstanceOf(AlterTable::class, $statement);
+
+        $indexes = (new AlterTableCommand())->indexes($statement->commands);
+
+        self::assertSame(['i', 'j'], array_map(static fn ($index): ?string => $index->name?->column->value, $indexes));
+    }
+
+    public function testMisorderedAnswersTrueForAnOrderedFullTextKeyPart(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('CREATE FULLTEXT INDEX i ON t (a ASC)')->statement;
+        self::assertInstanceOf(CreateIndex::class, $statement);
+        $index = (new AlterTableCommand())->indexes((new AlterTableCommand())->request($statement)[1])[0];
+
+        self::assertTrue((new AlterTableCommand())->misordered($index));
+    }
+
+    public function testMisorderedAnswersFalseForAnOrderedBTreeKeyPart(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('CREATE INDEX i ON t (a DESC)')->statement;
+        self::assertInstanceOf(CreateIndex::class, $statement);
+        $index = (new AlterTableCommand())->indexes((new AlterTableCommand())->request($statement)[1])[0];
+
+        self::assertFalse((new AlterTableCommand())->misordered($index));
+    }
+
+    public function testCopiesColumnAnswersTrueForAColumnBecomingNotNullOutsideAStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; SET sql_mode = ''; CREATE TABLE t (a INT, b INT NOT NULL)");
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+
+        self::assertTrue((new AlterTableCommand())->copiesColumn($table->definition->columns[0], $table->definition->columns[1], $context));
+    }
+
+    public function testCopiesColumnAnswersFalseForAColumnBecomingNotNullUnderAStrictMode(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT NOT NULL)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+
+        self::assertFalse((new AlterTableCommand())->copiesColumn($table->definition->columns[0], $table->definition->columns[1], $context));
     }
 }

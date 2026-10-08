@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Evaluation\Scope;
@@ -52,7 +52,7 @@ final class Subqueries
     {
         $plan = $this->compiler->planner->query($node->query, $scope);
         if (count($plan->domains) !== 1) {
-            throw ErrorCode::OperandColumns->error(1);
+            throw QueryError::OperandColumns->error(1);
         }
 
         $once = Constancy::of($node->query, $this->compiler->facts) !== Constancy::Row && !$this->substituted($node->query) && (new Walker())->find($node->query, VariableAssignment::class) === [];
@@ -102,7 +102,7 @@ final class Subqueries
         $value = $this->compiler->compile($operand, $scope);
         $plan = $this->compiler->planner->query($query, $scope);
         if (count($plan->domains) !== 1) {
-            throw ErrorCode::OperandColumns->error(1);
+            throw QueryError::OperandColumns->error(1);
         }
         $single = $operator === ComparisonOperator::Equal || $operator === ComparisonOperator::NotEqual ? $this->single($query) : null;
         if ($single !== null) {
@@ -126,7 +126,7 @@ final class Subqueries
         }
         $item = $query->items[0];
 
-        return $item instanceof SelectExpression && (new Walker())->find($item->expression, Aggregate::class, false) === [] && (new Walker())->find($item->expression, GroupConcat::class, false) === [] && (new Walker())->find($item->expression, JsonObjectAggregate::class, false) === [];
+        return $item instanceof SelectExpression && !$this->aggregated($item->expression);
     }
 
     /**
@@ -137,20 +137,44 @@ final class Subqueries
      */
     public function single(\SqlSemantics\Statement\Query $query): ?\SqlSemantics\Statement\Scalar
     {
-        while ($query instanceof ParenthesizedQuery || ($query instanceof QueryExpression && $query->with === null && $query->limit === null)) {
-            $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
-        }
+        $query = $this->innermost($query);
         if ($query instanceof ValuesQuery) {
             return count($query->rows) === 1 && count($query->rows[0]->values) === 1 ? $query->rows[0]->values[0] : null;
         }
-        if (!$query instanceof Select || ($query->from !== null && !$query->from instanceof Dual) || $query->where !== null || $query->having !== null || $query->windows !== [] || $query->qualify !== null || $query->limit !== null || $query->into !== null || count($query->items) !== 1) {
+
+        return $query instanceof Select ? $this->selected($query) : null;
+    }
+
+    /**
+     * Answers the query a subquery evaluates once the parentheses and the query expressions without a WITH or LIMIT clause around it are removed.
+     */
+    public function innermost(\SqlSemantics\Statement\Query $query): \SqlSemantics\Statement\Query
+    {
+        while ($query instanceof ParenthesizedQuery || ($query instanceof QueryExpression && $query->with === null && $query->limit === null)) {
+            $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
+        }
+
+        return $query;
+    }
+
+    /**
+     * Answers the expression of a SELECT of one expression without a table, an aggregate, a WHERE or HAVING clause, a window or a LIMIT, or null for any other SELECT.
+     */
+    public function selected(Select $query): ?\SqlSemantics\Statement\Scalar
+    {
+        if (($query->from !== null && !$query->from instanceof Dual) || $query->where !== null || $query->having !== null || $query->windows !== [] || $query->qualify !== null || $query->limit !== null || $query->into !== null || count($query->items) !== 1) {
             return null;
         }
         $item = $query->items[0];
-        if (!$item instanceof SelectExpression || (new Walker())->find($item->expression, Aggregate::class, false) !== [] || (new Walker())->find($item->expression, GroupConcat::class, false) !== [] || (new Walker())->find($item->expression, JsonObjectAggregate::class, false) !== []) {
-            return null;
-        }
 
-        return $item->expression;
+        return $item instanceof SelectExpression && !$this->aggregated($item->expression) ? $item->expression : null;
+    }
+
+    /**
+     * Tells whether an expression holds an aggregate of its own block: a set function, GROUP_CONCAT or JSON_OBJECTAGG.
+     */
+    public function aggregated(\SqlSemantics\Statement\Scalar $expression): bool
+    {
+        return (new Walker())->find($expression, Aggregate::class, false) !== [] || (new Walker())->find($expression, GroupConcat::class, false) !== [] || (new Walker())->find($expression, JsonObjectAggregate::class, false) !== [];
     }
 }

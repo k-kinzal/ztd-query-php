@@ -9,7 +9,8 @@ use MySqlMemory\Command\Program\ProgramSource;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
 use MySqlMemory\Dictionary\Routine;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -57,14 +58,14 @@ final class ShowCreateViewCommand implements Command
         $database = ProgramSource::database($name->schema, $session);
         $schema = $session->instance->dictionary->schema($database);
         if ($schema === null) {
-            throw ErrorCode::BadDatabase->error($database);
+            throw QueryError::BadDatabase->error($database);
         }
         if ($schema->table($name->name->value) !== null) {
-            throw ErrorCode::WrongObject->error($database, $name->name->value, 'VIEW');
+            throw SchemaError::WrongObject->error($database, $name->name->value, 'VIEW');
         }
         $view = $schema->views[$name->name->value] ?? null;
         if ($view === null) {
-            throw ErrorCode::NoSuchTable->error($database, $name->name->value);
+            throw QueryError::NoSuchTable->error($database, $name->name->value);
         }
 
         return $this->write($view, $session, $context);

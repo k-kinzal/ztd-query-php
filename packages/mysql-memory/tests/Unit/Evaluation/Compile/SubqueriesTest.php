@@ -16,6 +16,8 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
 
 #[CoversClass(Subqueries::class)]
 #[Small]
@@ -161,4 +163,57 @@ final class SubqueriesTest extends TestCase
         self::assertSame([true, false, false], [$subqueries->substituted($where->query), $subqueries->substituted($aggregate->query), $subqueries->substituted($having->query)]);
     }
 
+    public function testInnermostRemovesTheParenthesesAndTheQueryExpressionsWithoutAWithClause(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('SELECT ((SELECT 1)), (WITH c AS (SELECT 1) SELECT 2)');
+        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $parenthesized = $operation->field(0)->expression;
+        $with = $operation->field(1)->expression;
+        self::assertInstanceOf(ScalarSubquery::class, $parenthesized);
+        self::assertInstanceOf(ScalarSubquery::class, $with);
+        $subqueries = $planner->compiler->subqueries;
+
+        self::assertInstanceOf(Select::class, $subqueries->innermost($parenthesized->query));
+        self::assertInstanceOf(QueryExpression::class, $subqueries->innermost($with->query));
+    }
+
+    public function testSelectedAnswersTheExpressionOfASelectWithoutATableOrAnAggregate(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('SELECT (SELECT 1), (SELECT 1 FROM DUAL WHERE 1), (SELECT MAX(3))');
+        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $plain = $operation->field(0)->expression;
+        $where = $operation->field(1)->expression;
+        $aggregate = $operation->field(2)->expression;
+        self::assertInstanceOf(ScalarSubquery::class, $plain);
+        self::assertInstanceOf(ScalarSubquery::class, $where);
+        self::assertInstanceOf(ScalarSubquery::class, $aggregate);
+        self::assertInstanceOf(Select::class, $plain->query);
+        self::assertInstanceOf(Select::class, $where->query);
+        self::assertInstanceOf(Select::class, $aggregate->query);
+        $subqueries = $planner->compiler->subqueries;
+
+        self::assertInstanceOf(NumberLiteral::class, $subqueries->selected($plain->query));
+        self::assertNull($subqueries->selected($where->query));
+        self::assertNull($subqueries->selected($aggregate->query));
+    }
+
+    public function testAggregatedTellsWhetherAnExpressionHoldsAnAggregateOfItsBlock(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze("SELECT 1 + MAX(2), GROUP_CONCAT('a'), JSON_OBJECTAGG('k', 1), 1 + (SELECT MAX(2))");
+        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $maximum = $operation->field(0)->expression;
+        $concatenation = $operation->field(1)->expression;
+        $object = $operation->field(2)->expression;
+        $nested = $operation->field(3)->expression;
+        self::assertNotNull($maximum);
+        self::assertNotNull($concatenation);
+        self::assertNotNull($object);
+        self::assertNotNull($nested);
+        $subqueries = $planner->compiler->subqueries;
+
+        self::assertSame([true, true, true, false], [$subqueries->aggregated($maximum), $subqueries->aggregated($concatenation), $subqueries->aggregated($object), $subqueries->aggregated($nested)]);
+    }
 }

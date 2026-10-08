@@ -36,6 +36,28 @@ final class CastsTest extends TestCase
         self::assertNull($casts->cast(Domain::integer(), new CastTarget(CastKind::Point)));
     }
 
+    public function testDecimalTakesTheWrittenPrecisionAndScaleOrTenAndZero(): void
+    {
+        $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
+
+        self::assertEquals([Domain::decimal(10, 0), Domain::decimal(7, 0), Domain::decimal(7, 3)], [$casts->decimal(new CastTarget(CastKind::Decimal)), $casts->decimal(new CastTarget(CastKind::Decimal, '7')), $casts->decimal(new CastTarget(CastKind::Decimal, '7', '3'))]);
+    }
+
+    public function testFloatIsADoubleAboveTwentyFourDigits(): void
+    {
+        $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
+        $single = new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED);
+
+        self::assertEquals([$single, $single, Domain::double(22)], [$casts->float(new CastTarget(CastKind::Float)), $casts->float(new CastTarget(CastKind::Float, '24')), $casts->float(new CastTarget(CastKind::Float, '25'))]);
+    }
+
+    public function testStringIsAsLongAsWrittenOrAsTheOperandAsText(): void
+    {
+        $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
+
+        self::assertEquals([Domain::string(22, Collation::binary()), Domain::string(5, Collation::binary())], [$casts->string(Domain::double(), new CastTarget(CastKind::Binary), Collation::binary()), $casts->string(Domain::double(), new CastTarget(CastKind::Binary, '5'), Collation::binary())]);
+    }
+
     public function testCollationFollowsTheWrittenCharacterSet(): void
     {
         $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);

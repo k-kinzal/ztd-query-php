@@ -27,4 +27,17 @@ final class FieldTest extends TestCase
     {
         self::assertSame([Field::Json, Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Blob], array_values(array_filter(Field::cases(), static fn (Field $field): bool => $field->blob())));
     }
+
+    public function testTypeNameNamesEveryCode(): void
+    {
+        self::assertSame(
+            ['DECIMAL', 'TINYINT', 'SMALLINT', 'INT', 'FLOAT', 'DOUBLE', 'NULL', 'TIMESTAMP', 'BIGINT', 'MEDIUMINT', 'DATE', 'TIME', 'DATETIME', 'YEAR', 'DATE', 'VARCHAR', 'BIT', 'VECTOR', 'JSON', 'DECIMAL', 'ENUM', 'SET', 'TEXT', 'TEXT', 'TEXT', 'TEXT', 'VARCHAR', 'CHAR', 'GEOMETRY'],
+            array_map(static fn (Field $field): string => $field->typeName(false), Field::cases()),
+        );
+    }
+
+    public function testTypeNameNamesTheBinaryFormOfAStringCode(): void
+    {
+        self::assertSame(['VARBINARY', 'VARBINARY', 'BINARY', 'BLOB', 'BLOB', 'INT'], [Field::VarChar->typeName(true), Field::VarString->typeName(true), Field::String->typeName(true), Field::TinyBlob->typeName(true), Field::LongBlob->typeName(true), Field::Long->typeName(true)]);
+    }
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Command\Program;
 
 use MySqlMemory\Command\Program\ShowCreateProgramCommand;
+use MySqlMemory\Dictionary\Schema;
+use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -106,5 +108,38 @@ final class ShowCreateProgramCommandTest extends TestCase
         $this->expectExceptionMessage("Unknown event 'name'");
 
         $session->query('SHOW CREATE EVENT UNKNOWN .`name`');
+    }
+
+    public function testTriggerRefusesADatabaseThatDoesNotExist(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectExceptionCode(1049);
+        $this->expectExceptionMessage("Unknown database 'x'");
+
+        (new ShowCreateProgramCommand())->trigger(null, 'x', 't', new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+    }
+
+    public function testEventRefusesAMissingEventWithItsNameAsWritten(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectExceptionCode(1539);
+        $this->expectExceptionMessage("Unknown event 'E'");
+
+        (new ShowCreateProgramCommand())->event(new Schema('d'), 'E', new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+    }
+
+    public function testRoutineWritesAFunctionWithoutCase(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE FUNCTION f() RETURNS INT DETERMINISTIC RETURN 1');
+
+        $result = (new ShowCreateProgramCommand())->routine(true, $session->instance->dictionary->schema('d'), 'F', new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        self::assertInstanceOf(ResultSet::class, $result);
+
+        self::assertSame(['Function', 'Create Function', 'f'], [$result->columns[0]->name, $result->columns[2]->name, $result->rows[0][0]]);
     }
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Typing\Ordering;
@@ -54,7 +54,7 @@ final class Members
             if ($number !== null && ($number === '0' && !$numeric || bccomp($number, '1', 0) >= 0 && bccomp($number, (string) count($members), 0) <= 0)) {
                 return $number === '0' ? '' : $members[(int) $number - 1];
             }
-            $this->store->adjust(ErrorCode::DataTruncated, $column->name, $this->store->row);
+            $this->store->adjust(DataError::DataTruncated, $column->name, $this->store->row);
 
             return '';
         }
@@ -77,7 +77,7 @@ final class Members
             return $this->bits($number, $members, $column, false);
         }
         if ($missing) {
-            $this->store->adjust(ErrorCode::DataTruncated, $column->name, $this->store->row);
+            $this->store->adjust(DataError::DataTruncated, $column->name, $this->store->row);
         }
 
         return implode(',', array_values(array_filter($members, static fn (string $member): bool => isset($chosen[$member]))));
@@ -153,7 +153,7 @@ final class Members
         $limit = bcpow('2', (string) count($members), 0);
         $kept = bcmod($number, $limit, 0);
         if (bccomp($kept, $number, 0) !== 0) {
-            $this->store->adjust(ErrorCode::DataTruncated, $column->name, $this->store->row);
+            $this->store->adjust(DataError::DataTruncated, $column->name, $this->store->row);
             if (!$computed) {
                 return '';
             }

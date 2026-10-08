@@ -104,4 +104,34 @@ final class DropProgramCommandTest extends TestCase
         self::assertNotNull($missing);
         self::assertSame('PROCEDURE d.p does not exist', $missing[0]->getMessage());
     }
+
+    public function testRoutineDropsAFunction(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE FUNCTION f() RETURNS INT DETERMINISTIC RETURN 1');
+        $schema = $session->instance->dictionary->schema('d');
+        self::assertNotNull($schema);
+
+        $missing = (new DropProgramCommand())->routine(new DropProgram(ProgramKind::Function, new QualifiedName(new Name('F'))), $session, $schema, 'd');
+
+        self::assertSame([null, []], [$missing, $schema->functions]);
+    }
+
+    public function testTriggerAnswersTheUnfilledNoteOfAMissingDatabase(): void
+    {
+        $missing = (new DropProgramCommand())->trigger(null, 'x', 't');
+
+        self::assertNotNull($missing);
+        self::assertSame(["Unknown database 'x'", "Unknown database '%-.192s'"], [$missing[0]->getMessage(), $missing[1]->getMessage()]);
+    }
+
+    public function testEventAnswersAnEventErrorAndARoutineNote(): void
+    {
+        $missing = (new DropProgramCommand())->event(null, 'E');
+
+        self::assertNotNull($missing);
+        self::assertSame([[1539, "Unknown event 'E'"], [1305, 'Event E does not exist']], [[$missing[0]->getCode(), $missing[0]->getMessage()], [$missing[1]->getCode(), $missing[1]->getMessage()]]);
+    }
 }

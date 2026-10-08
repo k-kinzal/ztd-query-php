@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Typing\Domain;
@@ -52,7 +52,7 @@ final class Moments
             $scanned = Temporal::scanDateTime($from->kind->temporal() || $from->kind === Kind::String ? (string) $value : $this->digits($value, $from, $context));
             $modes = $context->modes;
             if ($scanned === null || !Temporal::accepted($scanned[0], $scanned[1], $scanned[2], $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE')) || $scanned[3] > 23 || $scanned[4] > 59 || $scanned[5] > 59) {
-                $context->warnMessage(ErrorCode::TruncatedWrongValue, ErrorCode::WrongValue->message('datetime', $shown));
+                $context->warnMessage(DataError::TruncatedWrongValue, DataError::WrongValue->message('datetime', $shown));
 
                 return null;
             }
@@ -61,7 +61,7 @@ final class Moments
         if ($to->kind === Kind::Date) {
             $date = Temporal::carry($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], intdiv($parts[6], 1000000) * 1000000);
             if ($date === null) {
-                $context->warning(ErrorCode::DatetimeFunctionOverflow, 'datetime');
+                $context->warning(DataError::DatetimeFunctionOverflow, 'datetime');
 
                 return null;
             }
@@ -69,14 +69,14 @@ final class Moments
         } else {
             $moment = Temporal::carry($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], Temporal::scale($parts[6] % 1000000, $to->decimals, $truncate) + intdiv($parts[6], 1000000) * 1000000);
             if ($moment === null) {
-                $context->warning(ErrorCode::DatetimeFunctionOverflow, 'datetime');
+                $context->warning(DataError::DatetimeFunctionOverflow, 'datetime');
 
                 return null;
             }
             $result = Temporal::dateTime($moment[0], $moment[1], $moment[2], $moment[3], $moment[4], $moment[5], $moment[6], $to->decimals);
         }
         if ($parts[8] !== '') {
-            $context->warning(ErrorCode::TruncatedWrongValue, $parts[7] ? 'datetime' : 'date', $shown);
+            $context->warning(DataError::TruncatedWrongValue, $parts[7] ? 'datetime' : 'date', $shown);
         }
 
         return $result;
@@ -93,44 +93,61 @@ final class Moments
         $truncate = $context->modes->has('TIME_TRUNCATE_FRACTIONAL');
         $shown = (string) Convert::toText($value, $from);
         $numeric = !$from->kind->temporal() && $from->kind !== Kind::String;
-        $text = $numeric ? $this->digits($value, $from, $context) : (string) $value;
-        $moment = $from->kind === Kind::Time ? null : Temporal::scanDateTime($text, $from->kind !== Kind::Date && $from->kind !== Kind::DateTime);
-        if ($moment !== null && ($moment[7] || $from->kind->temporal())) {
-            if (!Temporal::accepted($moment[0], $moment[1], $moment[2], false, false) || $moment[3] > 23 || $moment[4] > 59 || $moment[5] > 59) {
-                $context->warning(ErrorCode::TruncatedWrongValue, 'time', $shown);
-
-                return null;
-            }
-            $time = [false, $moment[3], $moment[4], $moment[5], $moment[6], $moment[8]];
-        } else {
-            $time = Temporal::scanTime($text);
-            if ($time === null || $time[2] > 59 || $time[3] > 59) {
-                $context->warning(ErrorCode::TruncatedWrongValue, 'time', $shown);
-
-                return null;
-            }
+        $time = $this->clock($value, $from, $numeric, $shown, $context);
+        if ($time === null) {
+            return null;
         }
         [$negative, $hours, $minute, $second, $digits, $rest] = $time;
         $micro = Temporal::micro($digits, $truncate);
         if ($hours > 838 || ($hours === 838 && $minute === 59 && $second === 59 && $micro > 0)) {
             if ($numeric && $hours > 838) {
-                $context->warning(ErrorCode::TruncatedWrongValue, 'time', $shown);
+                $context->warning(DataError::TruncatedWrongValue, 'time', $shown);
 
                 return null;
             }
             if (!$numeric) {
-                $context->warning(ErrorCode::TruncatedWrongValue, 'time', $shown);
+                $context->warning(DataError::TruncatedWrongValue, 'time', $shown);
             }
 
             return Temporal::time($negative, 838, 59, 59, 0, $decimals);
         }
         if ($rest !== '') {
-            $context->warning(ErrorCode::TruncatedWrongValue, 'time', $shown);
+            $context->warning(DataError::TruncatedWrongValue, 'time', $shown);
         }
         $micro = Temporal::scale($micro % 1000000, $decimals, $truncate) + intdiv($micro, 1000000) * 1000000;
         $seconds = $hours * 3600 + $minute * 60 + $second + intdiv($micro, 1000000);
 
         return Temporal::time($negative, intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60, $micro % 1000000, $decimals);
+    }
+
+    /**
+     * Reads the time of a value before it is clamped and rounded, or null with a warning: the time of a datetime, else the time the text or digits write.
+     *
+     * @param bool $numeric Whether the value is a number, read as the digits of its decimal value
+     * @param string $shown The value as the warning shows it
+     * @return array{bool, int, int, int, string, string}|null Negative, hours, minute, second, fractional digits, and the text after the value
+     */
+    public function clock(int|float|string $value, Domain $from, bool $numeric, string $shown, Context $context): ?array
+    {
+        $text = $numeric ? $this->digits($value, $from, $context) : (string) $value;
+        $moment = $from->kind === Kind::Time ? null : Temporal::scanDateTime($text, $from->kind !== Kind::Date && $from->kind !== Kind::DateTime);
+        if ($moment !== null && ($moment[7] || $from->kind->temporal())) {
+            if (!Temporal::accepted($moment[0], $moment[1], $moment[2], false, false) || $moment[3] > 23 || $moment[4] > 59 || $moment[5] > 59) {
+                $context->warning(DataError::TruncatedWrongValue, 'time', $shown);
+
+                return null;
+            }
+
+            return [false, $moment[3], $moment[4], $moment[5], $moment[6], $moment[8]];
+        }
+        $time = Temporal::scanTime($text);
+        if ($time === null || $time[2] > 59 || $time[3] > 59) {
+            $context->warning(DataError::TruncatedWrongValue, 'time', $shown);
+
+            return null;
+        }
+
+        return $time;
     }
 
     /**
@@ -151,12 +168,12 @@ final class Moments
         if ($from->kind === Kind::String) {
             $text = (string) $value;
             if (preg_match('/\A[ \t\n\r\v\f]*\+?([0-9]+)/', $text, $match) !== 1) {
-                $context->warning(ErrorCode::WrongValue, 'YEAR', $text);
+                $context->warning(DataError::WrongValue, 'YEAR', $text);
 
                 return null;
             }
             if (strlen($match[0]) < strlen($text)) {
-                $context->warning(ErrorCode::TruncatedWrongValue, 'YEAR', $text);
+                $context->warning(DataError::TruncatedWrongValue, 'YEAR', $text);
             }
             $number = Decimal::canonical($match[1]);
             if (Decimal::compare($number, '99') <= 0) {
@@ -176,7 +193,7 @@ final class Moments
             }
         }
         if (Decimal::compare($number, '1901') < 0 || Decimal::compare($number, '2155') > 0) {
-            $context->warning(ErrorCode::TruncatedWrongValue, 'YEAR', $number);
+            $context->warning(DataError::TruncatedWrongValue, 'YEAR', $number);
 
             return null;
         }

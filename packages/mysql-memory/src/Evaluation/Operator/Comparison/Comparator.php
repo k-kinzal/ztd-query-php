@@ -48,20 +48,50 @@ final class Comparator
      */
     public static function of(Domain $left, Domain $right, string $operation, Collation $connection): self
     {
-        $string = static fn (Domain $domain): bool => $domain->kind === Kind::String || $domain->kind === Kind::Null;
-        $integer = static fn (Domain $domain): bool => $domain->kind === Kind::Integer || $domain->kind === Kind::Year || $domain->kind === Kind::Bit;
-        $mode = match (true) {
-            $left->kind === Kind::Null && $right->kind === Kind::Null => Kind::String,
-            $string($left) && $string($right) => Kind::String,
-            $left->kind === Kind::Json || $right->kind === Kind::Json => Kind::Json,
-            $integer($left) && $integer($right), $integer($left) && $right->kind === Kind::Null, $left->kind === Kind::Null && $integer($right) => Kind::Integer,
-            $left->kind->temporal() && ($right->kind->temporal() || $string($right)), $right->kind->temporal() && $string($left) => self::temporal($left, $right),
-            ($left->kind === Kind::Decimal || $integer($left)) && ($right->kind === Kind::Decimal || $integer($right)) => Kind::Decimal,
-            default => Kind::Double,
-        };
+        $mode = self::mode($left, $right);
         $collation = $mode === Kind::String || $mode->temporal() ? Collations::aggregate([$left, $right], $operation, $connection, true)[0] : Collation::binary();
 
         return new self($mode, $left, $right, $collation);
+    }
+
+    /**
+     * Answers the kind two domains compare as.
+     */
+    public static function mode(Domain $left, Domain $right): Kind
+    {
+        return match (true) {
+            $left->kind === Kind::Null && $right->kind === Kind::Null => Kind::String,
+            self::textual($left) && self::textual($right) => Kind::String,
+            $left->kind === Kind::Json || $right->kind === Kind::Json => Kind::Json,
+            self::integers($left, $right) => Kind::Integer,
+            $left->kind->temporal() && ($right->kind->temporal() || self::textual($right)), $right->kind->temporal() && self::textual($left) => self::temporal($left, $right),
+            ($left->kind === Kind::Decimal || self::integral($left)) && ($right->kind === Kind::Decimal || self::integral($right)) => Kind::Decimal,
+            default => Kind::Double,
+        };
+    }
+
+    /**
+     * Tells whether a domain compares as a string: a string, or NULL.
+     */
+    public static function textual(Domain $domain): bool
+    {
+        return $domain->kind === Kind::String || $domain->kind === Kind::Null;
+    }
+
+    /**
+     * Tells whether a domain holds integers: an integer, a YEAR or a BIT value.
+     */
+    public static function integral(Domain $domain): bool
+    {
+        return $domain->kind === Kind::Integer || $domain->kind === Kind::Year || $domain->kind === Kind::Bit;
+    }
+
+    /**
+     * Tells whether two domains compare as integers: both hold integers, or one does and the other is NULL.
+     */
+    public static function integers(Domain $left, Domain $right): bool
+    {
+        return (self::integral($left) && self::integral($right)) || (self::integral($left) && $right->kind === Kind::Null) || ($left->kind === Kind::Null && self::integral($right));
     }
 
     /**

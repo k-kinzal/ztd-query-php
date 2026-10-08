@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Write;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
@@ -91,7 +92,7 @@ final class MultipleChangeCommand implements Command
         foreach ($statement->targets as $target) {
             $id = $this->occurrence($scope, $target->name->value);
             if ($id === null) {
-                throw ErrorCode::UnknownTable->error($target->name->value, 'MULTI DELETE');
+                throw QueryError::UnknownTable->error($target->name->value, 'MULTI DELETE');
             }
             $table = $scope->scans[$id]->table;
             $session->transaction->touch($table);
@@ -133,7 +134,7 @@ final class MultipleChangeCommand implements Command
         foreach ($statement->assignments as $assignment) {
             $resolution = $planner->compiler->facts->scalar($assignment->column)->resolution;
             if (!$resolution instanceof ResolvedColumn || !isset($scope->scans[spl_object_id($resolution->relation)])) {
-                throw ErrorCode::BadField->error($assignment->column->name->value, 'field list');
+                throw QueryError::BadField->error($assignment->column->name->value, 'field list');
             }
             $id = spl_object_id($resolution->relation);
             $position = $planner->compiler->names->position($scope, $resolution);
@@ -184,9 +185,9 @@ final class MultipleChangeCommand implements Command
             $stored = (new Store($context, $line, $direct !== null && $direct[0] === $id ? $direct[1] : ''))->value($value, $expression->domain(), $column);
             if ($stored === null && !$column->nullable()) {
                 if ($context->strict) {
-                    throw ErrorCode::BadNull->error($column->name);
+                    throw DataError::BadNull->error($column->name);
                 }
-                $context->warning(ErrorCode::BadNull, $column->name);
+                $context->warning(DataError::BadNull, $column->name);
                 $stored = (new Writer($table, $context))->implicit($column);
             }
             $rows[$id][2][$position] = $stored;
@@ -204,7 +205,7 @@ final class MultipleChangeCommand implements Command
             $conflict = $writer->conflict($row, $number);
             if ($conflict !== null) {
                 if ($ignore) {
-                    $context->warning(ErrorCode::DuplicateEntry, ...$writer->entry($row, $conflict[1]));
+                    $context->warning(DataError::DuplicateEntry, ...$writer->entry($row, $conflict[1]));
                     continue;
                 }
                 throw $writer->duplicate($row, $conflict[1]);

@@ -17,6 +17,7 @@ use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -148,5 +149,25 @@ final class DatesTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['1', '1', '1', '1']], $result->rows);
         self::assertSame([], $warnings->rows);
+    }
+
+    public function testExtractReadsAStringThatHoldsNoDatetimeAsATimeForAUnitOfTheTime(): void
+    {
+        $instance = new Instance();
+        $frame = new Frame(new Context(new SqlModes([]), new Diagnostics(), new Variables($instance->catalog, $instance->globals), 0.0));
+        $text = Domain::string(19, Collation::known('utf8mb4_0900_ai_ci'));
+
+        self::assertSame(-10203, (new Dates())->extract($frame, new Constant($text, '-01:02:03'), IntervalUnit::HourSecond));
+        self::assertSame(20102, (new Dates())->extract($frame, new Constant($text, '2019-07-02 01:02:03'), IntervalUnit::DayMinute));
+        self::assertNull((new Dates())->extract($frame, new Constant($text, null), IntervalUnit::Year));
+    }
+
+    public function testUnitWritesThePartsOfEachUnitTogether(): void
+    {
+        $dates = new Dates();
+        $parts = [2024, 2, 29, 13, 14, 15, 16];
+        $units = array_map(static fn (IntervalUnit $unit): int => $dates->unit($unit, $parts), IntervalUnit::cases());
+
+        self::assertSame([16, 15, 14, 13, 29, 9, 2, 1, 2024, 15000016, 1415000016, 1415, 131415000016, 131415, 1314, 29131415000016, 29131415, 291314, 2913, 202402], $units);
     }
 }

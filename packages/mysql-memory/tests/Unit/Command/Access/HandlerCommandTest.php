@@ -12,7 +12,7 @@ use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
-use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerScan;
+use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose;
 
 #[CoversClass(HandlerCommand::class)]
 #[Small]
@@ -148,36 +148,63 @@ final class HandlerCommandTest extends TestCase
         self::assertSame('a IN (SELECT 1 LIMIT 1)', (new HandlerCommand())->condition('HANDLER h READ FIRST WHERE a IN (SELECT 1 LIMIT 1) LIMIT 5', true));
     }
 
-    public function testOrderedAnswersTheRowsInTheOrderOfAnIndex(): void
+    public function testCloseClosesTheHandler(): void
     {
         $session = (new Instance())->connect();
-        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY, b VARCHAR(5), KEY ib (b)); INSERT INTO t VALUES (1,'b'),(2,'a'),(3,NULL)");
-        $table = $session->instance->dictionary->table('d', 't');
-        self::assertNotNull($table);
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); HANDLER t OPEN AS h');
+        $statement = $session->analyze('HANDLER H CLOSE')->statement;
+        self::assertInstanceOf(HandlerClose::class, $statement);
 
-        self::assertSame([3, 2, 1], (new HandlerCommand())->ordered($table->data->rows, $table->definition->keys[1], $table));
+        (new HandlerCommand())->close($statement, $session);
+
+        self::assertSame([], $session->handlers);
     }
 
-    public function testCompareComparesTheLeadingColumnsOfAnIndex(): void
+    public function testReadMovesTheCursorPastTheEndWhenTheRowsRunOut(): void
     {
         $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, b INT, KEY i (a, b))');
-        $table = $session->instance->dictionary->table('d', 't');
-        self::assertNotNull($table);
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY); INSERT INTO t VALUES (1),(2); HANDLER t OPEN; HANDLER t READ `PRIMARY` FIRST LIMIT 5');
 
-        self::assertSame([0, 1, -1], [(new HandlerCommand())->compare([1, 5], $table->definition->keys[0], $table, [1]), (new HandlerCommand())->compare([1, 5], $table->definition->keys[0], $table, [1, 4]), (new HandlerCommand())->compare([1, 5], $table->definition->keys[0], $table, [2])]);
+        self::assertSame(['primary', true, 2], [$session->handlers['t']->order, $session->handlers['t']->placed, $session->handlers['t']->position]);
     }
 
-    public function testStartStartsAReadOfAnotherOrderAfresh(): void
+    public function testSelectReadsEveryColumnOfTheTableUnderTheNameOfTheHandler(): void
+    {
+        self::assertSame(
+            ['SELECT * FROM `d``x`.`t` AS `h` WHERE a > 1', 'SELECT * FROM `d``x`.`t` AS `h`'],
+            [(new HandlerCommand())->select(new Handler('d`x', 't', 'h'), 'a > 1'), (new HandlerCommand())->select(new Handler('d`x', 't', 'h'), null)],
+        );
+    }
+
+    public function testFilterSkipsTheRowsTheConditionRejects(): void
     {
         $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $statement = $session->analyze('HANDLER h READ NEXT')->statement;
-        $table = $session->instance->dictionary->table('d', 't');
-        self::assertNotNull($table);
-        self::assertInstanceOf(HandlerScan::class, $statement);
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1),(2),(3),(NULL); HANDLER t OPEN');
 
-        self::assertSame([0, 1], (new HandlerCommand())->start($statement, [1, 2], [], null, $table, [], null));
+        $result = $session->query('HANDLER t READ FIRST WHERE a <> 2 LIMIT 5')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1'], ['3']], $result->rows);
+    }
+
+    public function testValuesEvaluatesTheValuesOfAKeySeek(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, KEY ia (a)); INSERT INTO t VALUES (1),(2),(3); HANDLER t OPEN');
+
+        $result = $session->query('HANDLER t READ ia = (1 + 1)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2']], $result->rows);
+    }
+
+    public function testPlacePlacesTheCursorInAnOrder(): void
+    {
+        $handler = new Handler('d', 't', 'h');
+
+        (new HandlerCommand())->place($handler, 'ia', 3);
+
+        self::assertSame(['ia', true, 3], [$handler->order, $handler->placed, $handler->position]);
     }
 
     public function testResultAnswersTheVisibleColumns(): void

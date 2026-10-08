@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace MySqlMemory\Session;
 
 use MySqlMemory\Command\Dispatcher;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
+use MySqlMemory\Session\Problem\Errors;
+use MySqlMemory\Session\Problem\Stages;
 use SqlParser\Lexer\SourceException;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Contract\SearchPath;
@@ -176,7 +179,7 @@ final class Session
     public function split(string $sql): array
     {
         if (trim($sql) === '') {
-            throw ErrorCode::EmptyQuery->error();
+            throw StatementError::EmptyQuery->error();
         }
         try {
             $statements = $this->semantics()->split($sql);
@@ -214,11 +217,11 @@ final class Session
         if ($command->clearsDiagnostics()) {
             $this->diagnostics->clear();
         }
-        $late = array_filter($operation->facts->warnings, Problems::afterReading(...));
+        $late = array_filter($operation->facts->warnings, Stages::afterReading(...));
         $failure = null;
         foreach (array_diff_key($operation->facts->warnings, $late) as $warning) {
             if ($warning instanceof ParseFailure) {
-                $error = (new Problems())->error($warning->problem, $this, 'field list', $operation->statement);
+                $error = (new Errors())->error($warning->problem, $this, 'field list', $operation->statement);
                 $this->diagnostics->error($error->getCode(), $error->getMessage());
                 $failure ??= $error;
                 if ($warning->aborts) {
@@ -271,7 +274,7 @@ final class Session
         try {
             $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($this->bound($tree, $parameters, $prepared))));
         } catch (ImplementationGap $gap) {
-            throw new SqlError(ErrorCode::NotSupportedYet, ErrorCode::NotSupportedYet->message($gap->getMessage()), $gap);
+            throw new SqlError(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message($gap->getMessage()), $gap);
         } catch (AnalysisException $error) {
             throw (new Syntax())->error($error, $statement);
         }
@@ -365,7 +368,7 @@ final class Session
     public function use(string $database): void
     {
         if ($this->instance->dictionary->schema($database) === null) {
-            throw ErrorCode::BadDatabase->error($database);
+            throw QueryError::BadDatabase->error($database);
         }
         $this->variables->database = $database;
     }

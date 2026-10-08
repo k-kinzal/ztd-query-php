@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Iterator\Combine;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Plan\Path\Combine\RecursiveUnion;
@@ -46,7 +46,7 @@ final class RecursiveUnionIterator implements RowIterator
         for ($iteration = 0; $fresh !== []; $iteration++) {
             array_push($this->rows, ...$fresh);
             if ($iteration >= $this->path->limit) {
-                throw ErrorCode::RecursionLimit->error($iteration + 1);
+                throw QueryError::RecursionLimit->error($iteration + 1);
             }
             $this->path->working->rows = $fresh;
             $fresh = $this->collect($this->recursive, $frame, $seen);

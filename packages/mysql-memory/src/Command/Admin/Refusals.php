@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Admin;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\NumberOutOfRange;
 use SqlSemantics\Platform\MySql\Statement\Account\Problem\PriorityOutOfRange;
@@ -58,15 +61,15 @@ final class Refusals
     {
         return match (true) {
             $diagnostic instanceof StorageProblem => match ($diagnostic->rule) {
-                StorageRule::RepeatedOption => ErrorCode::FilegroupOptionOnlyOnce->error($diagnostic->option === 'ENGINE' ? 'STORAGE ENGINE' : $diagnostic->option),
-                StorageRule::WrongSize => ErrorCode::WrongSizeNumber->error(),
-                StorageRule::SizeOverflow => ErrorCode::SizeOverflow->error(),
+                StorageRule::RepeatedOption => SchemaError::FilegroupOptionOnlyOnce->error($diagnostic->option === 'ENGINE' ? 'STORAGE ENGINE' : $diagnostic->option),
+                StorageRule::WrongSize => SchemaError::WrongSizeNumber->error(),
+                StorageRule::SizeOverflow => SchemaError::SizeOverflow->error(),
             },
             $diagnostic instanceof SpatialProblem => $this->spatial($diagnostic, $statement),
             $diagnostic instanceof PriorityOutOfRange => $this->priority($diagnostic, $statement),
             $diagnostic instanceof RefusedSetting => $this->replication($diagnostic->error, $statement, $text),
-            $diagnostic instanceof NumberOutOfRange => $diagnostic->error === 'ER_WRONG_VALUE' ? ErrorCode::WrongValue->error($diagnostic->option, $diagnostic->number) : new SqlError(ErrorCode::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number, '/') . '/') . "' at line 1"),
-            default => new SqlError(ErrorCode::UnknownError, $diagnostic->message()),
+            $diagnostic instanceof NumberOutOfRange => $diagnostic->error === 'ER_WRONG_VALUE' ? DataError::WrongValue->error($diagnostic->option, $diagnostic->number) : new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number, '/') . '/') . "' at line 1"),
+            default => new SqlError(StatementError::UnknownError, $diagnostic->message()),
         };
     }
 
@@ -78,14 +81,14 @@ final class Refusals
         $attribute = $problem->attribute === null ? 'SRID' : $problem->attribute->value;
 
         return match ($problem->rule) {
-            SpatialRule::IdentifierOutOfRange => ErrorCode::DataOutOfRange->error($problem->attribute === SpatialAttributeKind::Organization ? 'IDENTIFIED BY' : 'SRID', ($statement instanceof DropSpatialReference ? 'DROP' : 'CREATE') . ' SPATIAL REFERENCE SYSTEM'),
-            SpatialRule::IdentifierZero => ErrorCode::SrsZeroUnmodifiable->error(),
-            SpatialRule::RepeatedAttribute => ErrorCode::SrsRepeatedAttribute->error($attribute),
-            SpatialRule::MissingAttribute => ErrorCode::SrsMissingAttribute->error($attribute),
-            SpatialRule::BlankName => ErrorCode::SrsBlankName->error(),
-            SpatialRule::BlankOrganization => ErrorCode::SrsBlankOrganization->error(),
-            SpatialRule::ControlCharacter => ErrorCode::SrsInvalidCharacter->error($attribute),
-            SpatialRule::TooLong => ErrorCode::SrsAttributeTooLong->error($attribute, (string) (self::LIMITS[$attribute] ?? 0)),
+            SpatialRule::IdentifierOutOfRange => DataError::DataOutOfRange->error($problem->attribute === SpatialAttributeKind::Organization ? 'IDENTIFIED BY' : 'SRID', ($statement instanceof DropSpatialReference ? 'DROP' : 'CREATE') . ' SPATIAL REFERENCE SYSTEM'),
+            SpatialRule::IdentifierZero => SchemaError::SrsZeroUnmodifiable->error(),
+            SpatialRule::RepeatedAttribute => SchemaError::SrsRepeatedAttribute->error($attribute),
+            SpatialRule::MissingAttribute => SchemaError::SrsMissingAttribute->error($attribute),
+            SpatialRule::BlankName => SchemaError::SrsBlankName->error(),
+            SpatialRule::BlankOrganization => SchemaError::SrsBlankOrganization->error(),
+            SpatialRule::ControlCharacter => SchemaError::SrsInvalidCharacter->error($attribute),
+            SpatialRule::TooLong => SchemaError::SrsAttributeTooLong->error($attribute, (string) (self::LIMITS[$attribute] ?? 0)),
         };
     }
 
@@ -98,7 +101,7 @@ final class Refusals
         $name = $statement instanceof CreateResourceGroup ? $statement->name->value : '';
         $value = $statement instanceof CreateResourceGroup ? (string) (new ResourceGroupCommand())->priority($statement->priority) : $problem->priority;
 
-        return ErrorCode::InvalidThreadPriority->error($value, $system ? 'System' : 'User', $name, $system ? '-20' : '0', $system ? '0' : '19');
+        return AdministrationError::InvalidThreadPriority->error($value, $system ? 'System' : 'User', $name, $system ? '-20' : '0', $system ? '0' : '19');
     }
 
     /**
@@ -107,19 +110,19 @@ final class Refusals
     public function replication(ReplicationError $error, ?Node $statement, string $text): SqlError
     {
         return match ($error) {
-            ReplicationError::LineFeed => ErrorCode::WrongValue->error('argument contains not-allowed LF', $this->lineFeed($statement)),
-            ReplicationError::PasswordTooLong => ErrorCode::SourcePasswordTooLong->error(),
-            ReplicationError::GroupPasswordTooLong => ErrorCode::GroupPasswordTooLong->error(),
-            ReplicationError::DelayOutOfRange => ErrorCode::SourceDelayOutOfRange->error($this->option($statement, SourceOptionKind::Delay), '2147483647'),
-            ReplicationError::HeartbeatOutOfRange => ErrorCode::HeartbeatOutOfRange->error('4294967'),
-            ReplicationError::RowFormatValue => ErrorCode::RowFormatValue->error($this->option($statement, SourceOptionKind::RequireRowFormat)),
+            ReplicationError::LineFeed => DataError::WrongValue->error('argument contains not-allowed LF', $this->lineFeed($statement)),
+            ReplicationError::PasswordTooLong => AdministrationError::SourcePasswordTooLong->error(),
+            ReplicationError::GroupPasswordTooLong => AdministrationError::GroupPasswordTooLong->error(),
+            ReplicationError::DelayOutOfRange => AdministrationError::SourceDelayOutOfRange->error($this->option($statement, SourceOptionKind::Delay), '2147483647'),
+            ReplicationError::HeartbeatOutOfRange => AdministrationError::HeartbeatOutOfRange->error('4294967'),
+            ReplicationError::RowFormatValue => AdministrationError::RowFormatValue->error($this->option($statement, SourceOptionKind::RequireRowFormat)),
             ReplicationError::SwitchValue => $this->switch($statement, $text),
-            ReplicationError::FractionalNumber => new SqlError(ErrorCode::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/[0-9]*\.[0-9]/') . "' at line 1"),
-            ReplicationError::InvalidUuid => ErrorCode::WrongValue->error('UUID', $this->option($statement, SourceOptionKind::AssignGtidsToAnonymousTransactions)),
-            ReplicationError::UntilCondition => ErrorCode::BadReplicaUntil->error(),
-            ReplicationError::ApplierWithCredentials => ErrorCode::SqlThreadWithCredentials->error(),
-            ReplicationError::FileNumberOutOfRange => ErrorCode::BinlogIndexOutOfRange->error($this->first($statement)),
-            ReplicationError::WildPattern => ErrorCode::WildTableFilterPattern->error(),
+            ReplicationError::FractionalNumber => new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/[0-9]*\.[0-9]/') . "' at line 1"),
+            ReplicationError::InvalidUuid => DataError::WrongValue->error('UUID', $this->option($statement, SourceOptionKind::AssignGtidsToAnonymousTransactions)),
+            ReplicationError::UntilCondition => AdministrationError::BadReplicaUntil->error(),
+            ReplicationError::ApplierWithCredentials => AdministrationError::SqlThreadWithCredentials->error(),
+            ReplicationError::FileNumberOutOfRange => AdministrationError::BinlogIndexOutOfRange->error($this->first($statement)),
+            ReplicationError::WildPattern => AdministrationError::WildTableFilterPattern->error(),
         };
     }
 
@@ -138,7 +141,7 @@ final class Refusals
         }
         $near = $this->near($text, '/\b' . $kind->value . '\s*=\s*/i', true);
 
-        return new SqlError(ErrorCode::ParseError, 'You have an error in your CHANGE REPLICATION SOURCE syntax; ' . $kind->value . " only accepts values 0 or 1 near '" . $near . "' at line 1");
+        return new SqlError(StatementError::ParseError, 'You have an error in your CHANGE REPLICATION SOURCE syntax; ' . $kind->value . " only accepts values 0 or 1 near '" . $near . "' at line 1");
     }
 
     /**

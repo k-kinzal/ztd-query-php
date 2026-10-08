@@ -13,15 +13,14 @@ use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\Grouping\GroupedColumns;
-use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
-use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
-use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\GroupingRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Resolution\VisibleRelation;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(GroupedColumns::class)]
 #[Medium]
@@ -111,127 +110,6 @@ final class GroupedColumnsTest extends TestCase
         self::assertSame(4, $diagnostics[0]->position);
     }
 
-    public function testLeavesAnswersTheTablesOfAFromClauseThroughJoinsListsAndParentheses(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $select = $semantics->analyze('SELECT 1 FROM (t1 JOIN t2 ON 1), { OJ t3 LEFT JOIN (SELECT 1) AS d ON 1 }')->statement;
-        self::assertInstanceOf(Select::class, $select);
-
-        self::assertCount(4, (new GroupedColumns())->leaves($select->from));
-    }
-
-    public function testJoinsAnswersTheJoinsOfAFromClause(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $select = $semantics->analyze('SELECT 1 FROM (t1 JOIN t2 ON 1), { OJ t3 LEFT JOIN (SELECT 1) AS d ON 1 }')->statement;
-        self::assertInstanceOf(Select::class, $select);
-
-        self::assertCount(2, (new GroupedColumns())->joins($select->from));
-    }
-
-    public function testPartsAnswersWhatAListGroupsAndNullForATable(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $select = $semantics->analyze('SELECT 1 FROM t1, t2')->statement;
-        self::assertInstanceOf(Select::class, $select);
-        $columns = new GroupedColumns();
-
-        self::assertCount(2, $columns->parts($select->from) ?? []);
-        self::assertNull($columns->parts($columns->leaves($select->from)[0]));
-    }
-
-    public function testEqualityAValueAndNotAnExpressionDetermineAColumn(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))'), $semantics->analyze('CREATE TABLE fz.t2 (id INT PRIMARY KEY, name VARCHAR(20) NOT NULL, a INT, UNIQUE KEY uk (name))')], true, new SearchPath('fz'));
-
-        self::assertSame(0, count($semantics->analyze("SELECT a, b FROM t1 WHERE b = 'x' GROUP BY a", $context)->facts->diagnostics));
-        self::assertSame(1, count($semantics->analyze('SELECT a, b FROM t1 WHERE b = a + 1 GROUP BY a', $context)->facts->diagnostics));
-    }
-
-    public function testJoinedAnOuterJoinDeterminesOnlyItsInnerSide(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))'), $semantics->analyze('CREATE TABLE fz.t2 (id INT PRIMARY KEY, name VARCHAR(20) NOT NULL, a INT, UNIQUE KEY uk (name))')], true, new SearchPath('fz'));
-
-        self::assertSame(0, count($semantics->analyze('SELECT t2.name FROM t1 LEFT JOIN t2 ON t1.id = t2.id GROUP BY t1.id', $context)->facts->diagnostics));
-        self::assertSame(1, count($semantics->analyze('SELECT t1.b FROM t1 LEFT JOIN t2 ON t1.id = t2.id GROUP BY t2.id', $context)->facts->diagnostics));
-    }
-
-    public function testNamedFindsTheColumnsUsingAndNaturalCompare(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))'), $semantics->analyze('CREATE TABLE fz.t2 (id INT PRIMARY KEY, name VARCHAR(20) NOT NULL, a INT, UNIQUE KEY uk (name))')], true, new SearchPath('fz'));
-
-        self::assertSame(0, count($semantics->analyze('SELECT t2.name FROM t1 JOIN t2 USING (id) GROUP BY t1.id', $context)->facts->diagnostics));
-        self::assertSame(0, count($semantics->analyze('SELECT t2.name FROM t1 NATURAL JOIN t2 GROUP BY t1.id', $context)->facts->diagnostics));
-    }
-
-    public function testMembersKeepsTheInnerSideOfAnOuterJoin(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))'), $semantics->analyze('CREATE TABLE fz.t2 (id INT PRIMARY KEY, name VARCHAR(20) NOT NULL, a INT, UNIQUE KEY uk (name))')], true, new SearchPath('fz'));
-
-        self::assertSame(0, count($semantics->analyze('SELECT t2.name FROM t1 LEFT JOIN t2 ON t2.id = 1 GROUP BY t1.a', $context)->facts->diagnostics));
-        self::assertSame(1, count($semantics->analyze('SELECT t1.b FROM t1 RIGHT JOIN t2 ON t2.id = 1 GROUP BY t2.name', $context)->facts->diagnostics));
-    }
-
-    public function testDerivedCarriesTheDependenciesOfTheQueryBlock(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))'), $semantics->analyze('CREATE TABLE fz.t2 (id INT PRIMARY KEY, name VARCHAR(20) NOT NULL, a INT, UNIQUE KEY uk (name))')], true, new SearchPath('fz'));
-
-        self::assertSame(0, count($semantics->analyze('SELECT d.c FROM (SELECT id, 5 AS c FROM t1) AS d GROUP BY d.id', $context)->facts->diagnostics));
-        self::assertSame(1, count($semantics->analyze('SELECT d.p FROM (SELECT a AS p, b FROM t1) AS d GROUP BY d.b', $context)->facts->diagnostics));
-    }
-
-    public function testDependsRefusesAnAggregate(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))'), $semantics->analyze('CREATE TABLE fz.t2 (id INT PRIMARY KEY, name VARCHAR(20) NOT NULL, a INT, UNIQUE KEY uk (name))')], true, new SearchPath('fz'));
-
-        self::assertSame(1, count($semantics->analyze('SELECT d.m FROM (SELECT MAX(a) AS m FROM t1) AS d, t1 GROUP BY t1.id', $context)->facts->diagnostics));
-        self::assertSame(0, count($semantics->analyze('SELECT d.s FROM (SELECT id, (SELECT MAX(a) FROM t2) AS s FROM t1) AS d GROUP BY d.id', $context)->facts->diagnostics));
-    }
-
-    public function testClosureDeterminesTheColumnsOfAKeyBoundByWhere(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $table = $semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))');
-        $operation = $semantics->analyze('SELECT a FROM t1 WHERE id = 1', $semantics->context([$table], true, new SearchPath('fz')));
-        $select = $operation->statement;
-        self::assertInstanceOf(Select::class, $select);
-        self::assertNotNull($select->from);
-        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape)];
-
-        self::assertCount(3, (new GroupedColumns())->closure($select, $relations, $operation->facts, []));
-    }
-
-    public function testKeyedDeterminesNothingWithoutABoundKey(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $table = $semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))');
-        $operation = $semantics->analyze('SELECT a FROM t1 WHERE id = 1', $semantics->context([$table], true, new SearchPath('fz')));
-        $select = $operation->statement;
-        self::assertInstanceOf(Select::class, $select);
-        self::assertNotNull($select->from);
-        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape)];
-
-        self::assertCount(0, (new GroupedColumns())->keyed($relations, $operation->facts, []));
-    }
-
-    public function testBlockAnswersTheQueryBlockOfADerivedTable(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze('SELECT 1 FROM ((SELECT 1 AS a) ORDER BY a) AS d, (SELECT 1 UNION SELECT 2) AS e');
-        $select = $operation->statement;
-        self::assertInstanceOf(Select::class, $select);
-        [$derived, $union] = (new GroupedColumns())->leaves($select->from);
-
-        self::assertInstanceOf(Select::class, (new GroupedColumns())->block($derived, $operation->facts));
-        self::assertNull((new GroupedColumns())->block($union, $operation->facts));
-    }
-
     public function testCheckLeavesAStatementWithAProblemAlone(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -298,124 +176,22 @@ final class GroupedColumnsTest extends TestCase
         self::assertNull((new GroupedColumns())->distinct($select, $relations, $operation->facts, new Derivation($context)));
     }
 
-    public function testUndeterminedAnswersTheFirstColumnOutsideTheDeterminedSet(): void
+    public function testNameWritesTheDatabaseTheTableAndTheColumn(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
-        $operation = $semantics->analyze('SELECT a + b, a + 1 FROM t1 GROUP BY a + 1', $context);
+        $operation = $semantics->analyze('SELECT a FROM t1', $context);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
-        self::assertNotNull($select->from);
-        self::assertNotNull($select->groupBy);
+        self::assertInstanceOf(TableReference::class, $select->from);
         self::assertInstanceOf(SelectExpression::class, $select->items[0]);
-        self::assertInstanceOf(SelectExpression::class, $select->items[1]);
-        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape)];
-        $columns = new GroupedColumns();
-        $groups = [$select->groupBy->items[0]->expression];
-        $a = $columns->columns($select->items[0]->expression, $relations, $operation->facts, false)[0][0];
-
-        self::assertSame('a', $columns->undetermined($select->items[0]->expression, $groups, [], $relations, $operation->facts)?->slot->name?->value);
-        self::assertSame('b', $columns->undetermined($select->items[0]->expression, $groups, [$a => true], $relations, $operation->facts)?->slot->name?->value);
-        self::assertNull($columns->undetermined($select->items[1]->expression, $groups, [], $relations, $operation->facts));
-    }
-
-    public function testListedFindsAnExpressionWrittenAsAListedOne(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
-        $operation = $semantics->analyze('SELECT (A), t1.a, b FROM t1', $context);
-        $select = $operation->statement;
-        self::assertInstanceOf(Select::class, $select);
-        self::assertInstanceOf(SelectExpression::class, $select->items[0]);
-        self::assertInstanceOf(SelectExpression::class, $select->items[1]);
-        self::assertInstanceOf(SelectExpression::class, $select->items[2]);
+        $column = $operation->facts->scalar($select->items[0]->expression)->resolution;
+        self::assertInstanceOf(ResolvedColumn::class, $column);
+        $shape = $operation->facts->relation($select->from)->shape;
         $columns = new GroupedColumns();
 
-        self::assertTrue($columns->listed($select->items[1]->expression, [$select->items[2]->expression, $select->items[0]->expression], $operation->facts));
-        self::assertFalse($columns->listed($select->items[1]->expression, [$select->items[0]->expression]));
-        self::assertFalse($columns->listed($select->items[2]->expression, [$select->items[0]->expression], $operation->facts));
-        self::assertFalse($columns->listed($select->items[0]->expression, []));
-    }
-
-    public function testTargetAnswersTheSelectItemAnAliasNames(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
-        $operation = $semantics->analyze('SELECT a + 1 AS x FROM t1 ORDER BY (x), b', $context);
-        $select = $operation->statement;
-        self::assertInstanceOf(Select::class, $select);
-        self::assertInstanceOf(SelectExpression::class, $select->items[0]);
-        $columns = new GroupedColumns();
-
-        self::assertSame($select->items[0]->expression, $columns->target($select->orderBy[0]->expression, $operation->facts));
-        self::assertSame($select->orderBy[1]->expression, $columns->target($select->orderBy[1]->expression, $operation->facts));
-    }
-
-    public function testUnwrapRemovesEveryPairOfParentheses(): void
-    {
-        $select = (new Semantics(Dialect::MySql))->analyze('SELECT ((a)), b FROM t1')->statement;
-        self::assertInstanceOf(Select::class, $select);
-        self::assertInstanceOf(SelectExpression::class, $select->items[0]);
-        self::assertInstanceOf(SelectExpression::class, $select->items[1]);
-        $columns = new GroupedColumns();
-
-        $unwrapped = $columns->unwrap($select->items[0]->expression);
-        self::assertInstanceOf(ColumnUse::class, $unwrapped);
-        self::assertSame('a', $unwrapped->name->value);
-        self::assertSame($select->items[1]->expression, $columns->unwrap($select->items[1]->expression));
-    }
-
-    public function testColumnsLooksIntoAggregatesOnlyWhenAsked(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
-        $operation = $semantics->analyze('SELECT a + COUNT(b) + GROUPING(id) FROM t1 GROUP BY id WITH ROLLUP', $context);
-        $select = $operation->statement;
-        self::assertInstanceOf(Select::class, $select);
-        self::assertNotNull($select->from);
-        self::assertInstanceOf(SelectExpression::class, $select->items[0]);
-        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape)];
-        $columns = new GroupedColumns();
-
-        self::assertSame(['a'], array_map(static fn (array $found): ?string => $found[1]->slot->name?->value, $columns->columns($select->items[0]->expression, $relations, $operation->facts, false)));
-        self::assertSame(['a', 'b', 'id'], array_map(static fn (array $found): ?string => $found[1]->slot->name?->value, $columns->columns($select->items[0]->expression, $relations, $operation->facts, true)));
-        self::assertSame([], $columns->columns($select->items[0]->expression, [], $operation->facts, true));
-    }
-
-    public function testConjunctsAnswersTheAndOperandsOfACondition(): void
-    {
-        $select = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t1 WHERE (a = 1 AND b = 2) AND (id = 3 OR a = 4)')->statement;
-        self::assertInstanceOf(Select::class, $select);
-        $columns = new GroupedColumns();
-
-        self::assertSame([Comparison::class, Comparison::class, Logical::class], array_map(static fn (object $conjunct): string => $conjunct::class, $columns->conjuncts($select->where)));
-        self::assertSame([], $columns->conjuncts(null));
-    }
-
-    public function testSameComparesTwoColumnsOfOneOccurrenceAsOneWithFacts(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT, b VARCHAR(20))')], true, new SearchPath('fz'));
-        $operation = $semantics->analyze('SELECT t1.a + 1, a + 1, a + 2 FROM t1', $context);
-        $select = $operation->statement;
-        self::assertInstanceOf(Select::class, $select);
-        self::assertInstanceOf(SelectExpression::class, $select->items[0]);
-        self::assertInstanceOf(SelectExpression::class, $select->items[1]);
-        self::assertInstanceOf(SelectExpression::class, $select->items[2]);
-        $columns = new GroupedColumns();
-
-        self::assertTrue($columns->same($select->items[0]->expression, $select->items[1]->expression, $operation->facts));
-        self::assertFalse($columns->same($select->items[0]->expression, $select->items[1]->expression));
-        self::assertFalse($columns->same($select->items[1]->expression, $select->items[2]->expression, $operation->facts));
-    }
-
-    public function testSameComparesNamesWithoutRegardToCase(): void
-    {
-        $semantics = new Semantics(Dialect::MySql);
-        $left = $semantics->analyze('SELECT A FROM t')->statement;
-        $right = $semantics->analyze('SELECT a FROM t')->statement;
-
-        self::assertTrue((new GroupedColumns())->same($left, $right));
-        self::assertFalse((new GroupedColumns())->same($left, $semantics->analyze('SELECT b FROM t')->statement));
+        self::assertSame('fz.t1.a', $columns->name($column, [spl_object_id($select->from) => new VisibleRelation($select->from, $shape, null, $select->from->name)], new Derivation($context)));
+        self::assertSame('x.a', $columns->name($column, [spl_object_id($select->from) => new VisibleRelation($select->from, $shape, new Name('x'))], new Derivation($context)));
+        self::assertSame('.a', $columns->name($column, [], new Derivation($context)));
     }
 }

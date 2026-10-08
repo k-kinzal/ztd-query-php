@@ -114,6 +114,65 @@ final class CompilerTest extends TestCase
         $session->query('SELECT a FROM t WHERE COUNT(*) > 0');
     }
 
+    public function testCompileLiteralCompilesEachLiteralForm(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT 12, -3, 'x', X'41', DATE '2024-01-02', TRUE, NULL, {d '2024-03-04'}")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['12', '-3', 'x', 'A', '2024-01-02', '1', null, '2024-03-04']], $result->rows);
+    }
+
+    public function testCompileNameReadsColumnsSelectItemsAndVariables(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT DEFAULT 7)');
+        $session->query('INSERT INTO t VALUES (2), (1)');
+        $session->query('SET @v = 5');
+        $result = $session->query('SELECT (a), DEFAULT(a), @v, @@max_allowed_packet > 0, @w := a FROM t ORDER BY 1')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '7', '5', '1', '1'], ['2', '7', '5', '1', '2']], $result->rows);
+    }
+
+    public function testCompileOperatorCompilesOperatorsPredicatesAndJsonOperators(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT 1 + 2, 3 BETWEEN 1 AND 5, 2 IN (1, 2), 'ab' LIKE 'a%', CASE WHEN 1 THEN 'y' END, CAST(1.6 AS SIGNED), 1 MEMBER OF ('[1, 2]')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['3', '1', '1', '1', 'y', '2', '1']], $result->rows);
+    }
+
+    public function testCompileTextCompilesTheStringFormsWrittenWithKeywords(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT TRIM(LEADING 'x' FROM 'xxab'), POSITION('b' IN 'abc'), CHAR(65, 66), 'a' SOUNDS LIKE 'a', 'abc' REGEXP 'b'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['ab', '2', 'AB', '1', '1']], $result->rows);
+    }
+
+    public function testCompileCallCompilesFunctionCallsAndDateArithmetic(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT EXTRACT(YEAR FROM '2024-05-06'), DATE '2024-01-31' + INTERVAL 1 DAY, DATE_ADD('2024-01-01', INTERVAL 2 MONTH), ABS(-4)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2024', '2024-02-01', '2024-03-01', '4']], $result->rows);
+    }
+
+    public function testCompileSubqueryCompilesTheSubqueriesUsedAsValuesAndInPredicates(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT (SELECT 4), EXISTS (SELECT 1), 2 IN (SELECT 2), 3 > ALL (SELECT 1)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['4', '1', '1', '1']], $result->rows);
+    }
+
     public function testConstancyMakesAUserVariableTheStatementAssignsVary(): void
     {
         $session = (new Instance())->connect();

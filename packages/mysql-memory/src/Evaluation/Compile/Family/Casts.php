@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile\Family;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Operator\Conversion;
@@ -58,10 +58,10 @@ final class Casts
         $operand = $this->compiler->compile($node->operand, $scope);
         $domain = $operand->domain();
         if ($domain->field !== Field::Timestamp && $domain->kind !== Kind::Null) {
-            throw ErrorCode::TimeZoneCast->error();
+            throw DataError::TimeZoneCast->error();
         }
         if ($node->zone->value !== 'UTC' && $node->zone->value !== '+00:00') {
-            throw ErrorCode::UnknownTimeZone->error($node->zone->value);
+            throw DataError::UnknownTimeZone->error($node->zone->value);
         }
 
         return new Zoned($operand, $this->compiler->domain($node));

@@ -14,6 +14,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CacheIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\LoadIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\CheckTable;
+use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
 
 #[CoversClass(AdministrationCommand::class)]
 #[Small]
@@ -172,6 +173,39 @@ final class AdministrationCommandTest extends TestCase
         self::assertSame([['d.v', 'check', 'status', 'OK']], $check->rows);
         self::assertInstanceOf(ResultSet::class, $repair);
         self::assertSame([['d.v', 'repair', 'Error', "'d.v' is not BASE TABLE"], ['d.v', 'repair', 'status', 'Operation failed']], $repair->rows);
+    }
+
+    public function testValidateRefusesAnUnknownKeyCacheBeforeAMissingDatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('CACHE INDEX t IN other')->statement;
+        self::assertInstanceOf(CacheIndex::class, $statement);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1284);
+
+        (new AdministrationCommand())->validate($statement, (new AdministrationCommand())->names($statement), $session);
+    }
+
+    public function testReportAnswersTheRowsOfAMissingTableAndOfAMissingDatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $statement = $session->analyze('REPAIR TABLE nope, x.nope')->statement;
+        self::assertInstanceOf(RepairTable::class, $statement);
+
+        self::assertSame(
+            [
+                [['d.nope', 'repair', 'Error', "Table 'd.nope' doesn't exist"], ['d.nope', 'repair', 'status', 'Operation failed']],
+                [['x.nope', 'repair', 'Error', "Unknown database 'x'"], ['x.nope', 'repair', 'error', 'Corrupt']],
+            ],
+            [(new AdministrationCommand())->report('repair', null, $statement->tables[0]->name, false, $session), (new AdministrationCommand())->report('repair', null, $statement->tables[1]->name, false, $session)],
+        );
+    }
+
+    public function testRowsPutsTheLabelAndTheOpColumnBeforeEachMessage(): void
+    {
+        self::assertSame([['d.t', 'check', 'status', 'OK'], ['d.t', 'check', 'note', 'n']], (new AdministrationCommand())->rows('d.t', 'check', [['status', 'OK'], ['note', 'n']]));
     }
 
     public function testOutcomeAnswersOkForCheck(): void

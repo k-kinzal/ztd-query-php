@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Program;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Session\Session;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
@@ -100,7 +101,7 @@ final class ProgramSource
         if ($definer instanceof AccountName) {
             $host = $definer->host->value ?? '%';
             if ($context !== null && $session->instance->accounts->find(new \MySqlMemory\Account\Identity($definer->user->value, $host)) === null) {
-                $context->note(ErrorCode::NoSuchUser, $definer->user->value, $host);
+                $context->note(AccountError::NoSuchUser, $definer->user->value, $host);
             }
 
             return [$definer->user->value, $host];
@@ -128,7 +129,7 @@ final class ProgramSource
     {
         $database = $schema->value ?? $session->variables->database;
         if ($database === '') {
-            throw ErrorCode::NoDatabase->error();
+            throw QueryError::NoDatabase->error();
         }
 
         return $database;

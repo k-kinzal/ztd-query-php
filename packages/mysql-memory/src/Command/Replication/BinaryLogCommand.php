@@ -6,7 +6,9 @@ namespace MySqlMemory\Command\Replication;
 
 use MySqlMemory\Command\Admin\Literals;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
@@ -78,7 +80,7 @@ final class BinaryLogCommand implements Command
         $statement = $operation->statement;
         $log = $session->instance->registry->binaryLog;
         if ($statement instanceof PurgeLogsTo) {
-            $number = $log->find((new Literals())->bytes($statement->file)) ?? throw ErrorCode::UnknownTargetBinlog->error();
+            $number = $log->find((new Literals())->bytes($statement->file)) ?? throw AdministrationError::UnknownTargetBinlog->error();
             $log->purge($number);
         } elseif ($statement instanceof PurgeLogsBefore) {
             $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
@@ -87,7 +89,7 @@ final class BinaryLogCommand implements Command
             if ($value !== null && !(is_int($value) && $value === 0)) {
                 (new Moments())->convert($value, $moment->domain(), new Domain(Kind::DateTime, Field::DateTime, 19, 0, false), $context);
             }
-            $session->diagnostics->warning(ErrorCode::ActiveLogNotPurged, ErrorCode::ActiveLogNotPurged->message('./' . $log->active()));
+            $session->diagnostics->warning(AdministrationError::ActiveLogNotPurged, AdministrationError::ActiveLogNotPurged->message('./' . $log->active()));
         } elseif ($statement instanceof BinlogEvent) {
             $this->event((new Literals())->bytes($statement->events));
         }
@@ -105,20 +107,20 @@ final class BinaryLogCommand implements Command
         $compact = (string) preg_replace('/\s+/', '', $text);
         $bytes = strlen($compact) % 4 === 0 ? base64_decode($compact, true) : false;
         if ($bytes === false) {
-            throw ErrorCode::Base64DecodeFailed->error();
+            throw DataError::Base64DecodeFailed->error();
         }
         if (strlen($bytes) < 13) {
-            throw ErrorCode::SyntaxError->error();
+            throw StatementError::SyntaxError->error();
         }
         $length = unpack('V', substr($bytes, 9, 4));
         $type = ord($bytes[4]);
         if (!is_array($length) || $length[1] > strlen($bytes) || in_array($type, self::DECODED, true)) {
-            throw ErrorCode::SyntaxError->error();
+            throw StatementError::SyntaxError->error();
         }
         if ($type === 29) {
-            throw ErrorCode::NoFormatDescriptionEvent->error('Rows_query');
+            throw AdministrationError::NoFormatDescriptionEvent->error('Rows_query');
         }
 
-        throw ErrorCode::BinlogEventRefused->error(self::EVENTS[$type] ?? 'Unknown');
+        throw AdministrationError::BinlogEventRefused->error(self::EVENTS[$type] ?? 'Unknown');
     }
 }

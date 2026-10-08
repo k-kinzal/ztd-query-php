@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Operator\Comparison;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -89,7 +89,7 @@ final class Pattern implements Evaluable
         if (!isset($kept[$this])) {
             $escape = $this->escape === null ? null : $this->text($this->escape, $frame);
             if ($this->escapeDeferred && $escape !== null && count($this->characters($escape)) > 1) {
-                throw ErrorCode::WrongArguments->error('ESCAPE');
+                throw StatementError::WrongArguments->error('ESCAPE');
             }
             $kept[$this] = [$escape];
         }

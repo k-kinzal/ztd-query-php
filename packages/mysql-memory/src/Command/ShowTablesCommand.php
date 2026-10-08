@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
@@ -46,11 +46,11 @@ final class ShowTablesCommand implements Command
         assert($statement instanceof ShowTables);
         $name = $statement->database->value ?? $session->variables->database;
         if ($name === '') {
-            throw ErrorCode::NoDatabase->error();
+            throw QueryError::NoDatabase->error();
         }
         $schema = $session->instance->dictionary->schema($name);
         if ($schema === null) {
-            throw ErrorCode::BadDatabase->error($name);
+            throw QueryError::BadDatabase->error($name);
         }
         $rows = [];
         foreach ($schema->tables as $stored) {

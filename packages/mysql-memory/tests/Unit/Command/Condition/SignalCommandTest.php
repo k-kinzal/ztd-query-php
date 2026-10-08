@@ -6,6 +6,7 @@ namespace Tests\Unit\Command\Condition;
 
 use MySqlMemory\Command\Condition\SignalCommand;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Leaf\Constant;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
@@ -106,6 +107,17 @@ final class SignalCommandTest extends TestCase
         $this->expectExceptionMessage('RESIGNAL when handler not active');
 
         $session->query('RESIGNAL');
+    }
+
+    public function testItemsReadsTheItemsInTheOrderOfTheirNames(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+
+        self::assertSame(
+            [['RETURNED_SQLSTATE' => '45000', 'CLASS_ORIGIN' => '7', 'MESSAGE_TEXT' => '8'], 1001],
+            (new SignalCommand())->items('45000', ['MYSQL_ERRNO' => new Constant(Domain::integer(), 1001), 'MESSAGE_TEXT' => new Constant(Domain::integer(), 8), 'CLASS_ORIGIN' => new Constant(Domain::integer(), 7)], $context),
+        );
     }
 
     public function testNumberRoundsADecimal(): void

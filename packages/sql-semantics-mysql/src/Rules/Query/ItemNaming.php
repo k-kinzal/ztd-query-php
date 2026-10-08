@@ -136,9 +136,7 @@ final class ItemNaming
      */
     public function own(Scalar $expression): ColumnUse|Name|array|null
     {
-        while ($expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus) || ($expression instanceof OdbcEscape && $expression->literal() === null)) {
-            $expression = $expression->operand;
-        }
+        $expression = $this->unwrapped($expression);
 
         return match (true) {
             $expression instanceof ColumnUse => $expression,
@@ -150,6 +148,19 @@ final class ItemNaming
             $expression instanceof FunctionCall && $expression->schema === null && strcasecmp($expression->name->value, 'NAME_CONST') === 0 && $expression->arguments !== [] => [$this->constant($expression->arguments[0]->expression), 'utf8mb3'],
             default => null,
         };
+    }
+
+    /**
+     * Answers the expression an item is named by: the operand of the parentheses, unary plus and
+     * ODBC escapes that stand for their operand around it, which create no item in the server.
+     */
+    public function unwrapped(Scalar $expression): Scalar
+    {
+        while ($expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus) || ($expression instanceof OdbcEscape && $expression->literal() === null)) {
+            $expression = $expression->operand;
+        }
+
+        return $expression;
     }
 
     /**

@@ -7,7 +7,7 @@ namespace MySqlMemory\Command\Show\Server;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
@@ -52,7 +52,7 @@ final class ShowProfilesCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof ShowProfiles || $statement instanceof ShowProfile);
         $name = $statement instanceof ShowProfiles ? 'SHOW PROFILES' : 'SHOW PROFILE';
-        $context->warning(ErrorCode::DeprecatedSyntax, $name, 'Performance Schema');
+        $context->warning(StatementError::DeprecatedSyntax, $name, 'Performance Schema');
         if ($statement instanceof ShowProfiles) {
             $flags = ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::Binary->value | ColumnFlag::Numeric->value;
             $headings = [

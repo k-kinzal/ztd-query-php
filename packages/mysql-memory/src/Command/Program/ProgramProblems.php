@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Program;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\ProgramError;
 use MySqlMemory\Error\ProgramErrors;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Walker;
+use MySqlMemory\Session\Problem\Errors;
+use MySqlMemory\Session\Problem\Locations;
 use MySqlMemory\Session\Problems;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
@@ -86,13 +92,45 @@ final class ProgramProblems
             return true;
         }
         if ($statement instanceof ShowTriggers) {
-            $database = ProgramSource::database($statement->database, $session);
-            if ($session->instance->dictionary->schema($database) === null) {
-                throw ErrorCode::BadDatabase->error($database);
-            }
+            $this->triggers($statement, $session);
 
             return false;
         }
+        $this->definer($statement);
+        if ($statement instanceof CreateView || $statement instanceof AlterView) {
+            $this->view($statement, $operation, $session, $problems);
+        }
+        if (!self::stores($statement)) {
+            return false;
+        }
+        if ($statement instanceof CreateEvent || $statement instanceof AlterEvent) {
+            $this->schedule($statement, $operation);
+        }
+        $this->body($statement, $operation, $session, $problems);
+
+        return true;
+    }
+
+    /**
+     * Refuses SHOW TRIGGERS of a database that does not exist, before its condition is read.
+     *
+     * @throws SqlError When the database does not exist (ER_BAD_DB_ERROR)
+     */
+    public function triggers(ShowTriggers $statement, Session $session): void
+    {
+        $database = ProgramSource::database($statement->database, $session);
+        if ($session->instance->dictionary->schema($database) === null) {
+            throw QueryError::BadDatabase->error($database);
+        }
+    }
+
+    /**
+     * Refuses the DEFINER account of a view or a stored program when a name of it is too long.
+     *
+     * @throws SqlError When a name of the account is too long
+     */
+    public function definer(\SqlSemantics\Statement\Statement $statement): void
+    {
         $definer = match (true) {
             $statement instanceof CreateView, $statement instanceof AlterView => $statement->definition->definer,
             $statement instanceof CreateProcedure, $statement instanceof CreateFunction, $statement instanceof CreateTrigger, $statement instanceof CreateEvent, $statement instanceof AlterEvent => $statement->definer,
@@ -101,36 +139,59 @@ final class ProgramProblems
         if ($definer instanceof AccountName) {
             $this->account($definer);
         }
-        if ($statement instanceof CreateView || $statement instanceof AlterView) {
-            $name = $statement->definition->name;
-            $named = static fn (Diagnostic $diagnostic): bool => ($diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $diagnostic->name->name->value === $name->name->value && $diagnostic->name->schema?->value === $name->schema?->value)
-                || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
-            $others = array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => !$named($diagnostic) && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount
-                && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName));
-            $walker = new Walker();
-            foreach ([\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable::class, \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable::class, \SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class] as $class) {
-                if ($walker->find($statement->definition->query, $class) !== []) {
-                    throw ErrorCode::ViewSelectVariable->error();
-                }
-            }
-            if ($others !== [] && count($others) !== count($operation->facts->diagnostics) && array_filter($operation->facts->diagnostics, $named) !== []) {
-                $query = ProgramSource::of($session)->text('query_expression_with_opt_locking_clauses');
-                $problems->raise($session->analyze($query), $session);
+    }
 
-                throw $problems->error($others[0], $session, 'field list', $statement);
+    /**
+     * Raises the problems of the query of a view the server finds before it looks up the name of the view: a variable or a parameter in the query, and a problem of the query besides the name and the columns of the view.
+     *
+     * @throws SqlError When the query has such a problem
+     */
+    public function view(CreateView|AlterView $statement, Operation $operation, Session $session, Problems $problems): void
+    {
+        $name = $statement->definition->name;
+        $named = static fn (Diagnostic $diagnostic): bool => ($diagnostic instanceof \SqlSemantics\Statement\Reference\Table\MissingTable && $diagnostic->name->name->value === $name->name->value && $diagnostic->name->schema?->value === $name->schema?->value)
+            || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
+        $others = array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => !$named($diagnostic) && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount
+            && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName));
+        $walker = new Walker();
+        foreach ([\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable::class, \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable::class, \SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class] as $class) {
+            if ($walker->find($statement->definition->query, $class) !== []) {
+                throw SchemaError::ViewSelectVariable->error();
             }
         }
-        if (!self::stores($statement)) {
-            return false;
+        if ($others !== [] && count($others) !== count($operation->facts->diagnostics) && array_filter($operation->facts->diagnostics, $named) !== []) {
+            $query = ProgramSource::of($session)->text('query_expression_with_opt_locking_clauses');
+            $problems->raise($session->analyze($query), $session);
+
+            throw (new Errors())->error($others[0], $session, 'field list', $statement);
         }
-        $schedule = $statement instanceof CreateEvent || $statement instanceof AlterEvent ? $statement->schedule : null;
-        if ($schedule !== null) {
-            $walker = new Walker();
-            $calls = array_filter($walker->find($schedule, FunctionCall::class), static fn (FunctionCall $call): bool => Problems::undeclared($call, $operation));
-            if ($walker->find($schedule, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class) !== [] || $walker->find($schedule, \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable::class) !== [] || $calls !== []) {
-                throw ErrorCode::NotSupportedYet->error('Usage of subqueries or stored function calls as part of this statement');
-            }
+    }
+
+    /**
+     * Refuses the schedule of an event that reads a table or calls a stored function.
+     *
+     * @throws SqlError When the schedule reads a table or calls a stored function (ER_NOT_SUPPORTED_YET)
+     */
+    public function schedule(CreateEvent|AlterEvent $statement, Operation $operation): void
+    {
+        $schedule = $statement->schedule;
+        if ($schedule === null) {
+            return;
         }
+        $walker = new Walker();
+        $calls = array_filter($walker->find($schedule, FunctionCall::class), static fn (FunctionCall $call): bool => Locations::undeclared($call, $operation));
+        if ($walker->find($schedule, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class) !== [] || $walker->find($schedule, \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable::class) !== [] || $calls !== []) {
+            throw StatementError::NotSupportedYet->error('Usage of subqueries or stored function calls as part of this statement');
+        }
+    }
+
+    /**
+     * Raises the first problem the server finds while it parses the body of a stored program, the rules of stored programs first.
+     *
+     * @throws SqlError When the body has such a problem
+     */
+    public function body(\SqlSemantics\Statement\Statement $statement, Operation $operation, Session $session, Problems $problems): void
+    {
         $diagnostics = $operation->facts->diagnostics;
         usort($diagnostics, static fn (Diagnostic $left, Diagnostic $right): int => ($left instanceof ProgramProblem ? 0 : 1) <=> ($right instanceof ProgramProblem ? 0 : 1));
         foreach ($diagnostics as $diagnostic) {
@@ -140,22 +201,20 @@ final class ProgramProblems
             if ($diagnostic instanceof ProgramProblem && $diagnostic->rule === ProgramRule::MissingReturn && $statement instanceof CreateFunction) {
                 $database = $statement->name->schema->value ?? $session->variables->database;
 
-                throw new SqlError(ErrorCode::MissingReturn, ErrorCode::MissingReturn->message($database . '.' . $statement->name->name->value));
+                throw new SqlError(ProgramError::MissingReturn, ProgramError::MissingReturn->message($database . '.' . $statement->name->name->value));
             }
             if ($diagnostic instanceof MissingColumn) {
                 $row = strtoupper((string) $diagnostic->qualifier?->name->value);
                 $event = $statement instanceof CreateTrigger ? $statement->event->value : '';
                 if (($row === 'NEW' && $event === 'DELETE') || ($row === 'OLD' && $event === 'INSERT')) {
-                    throw ErrorCode::TriggerRowMissing->error($row, 'on ' . $event);
+                    throw ProgramError::TriggerRowMissing->error($row, 'on ' . $event);
                 }
 
-                throw ErrorCode::BadField->error($diagnostic->name->value, $row);
+                throw QueryError::BadField->error($diagnostic->name->value, $row);
             }
 
-            throw $diagnostic instanceof ProgramProblem ? (new ProgramErrors())->error($diagnostic) : $problems->error($diagnostic, $session, 'field list', $statement);
+            throw $diagnostic instanceof ProgramProblem ? (new ProgramErrors())->error($diagnostic) : (new Errors())->error($diagnostic, $session, 'field list', $statement);
         }
-
-        return true;
     }
 
     /**
@@ -166,10 +225,10 @@ final class ProgramProblems
     public function account(AccountName $account): void
     {
         if (mb_strlen($account->user->value) > 32) {
-            throw ErrorCode::WrongStringLength->error($account->user->value, 'user name', 32);
+            throw DataError::WrongStringLength->error($account->user->value, 'user name', 32);
         }
         if ($account->host !== null && mb_strlen($account->host->value) > 255) {
-            throw ErrorCode::WrongStringLength->error($account->host->value, 'host name', 255);
+            throw DataError::WrongStringLength->error($account->host->value, 'host name', 255);
         }
     }
 

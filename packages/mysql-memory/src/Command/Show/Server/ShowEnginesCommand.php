@@ -7,7 +7,7 @@ namespace MySqlMemory\Command\Show\Server;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
@@ -57,7 +57,7 @@ final class ShowEnginesCommand implements Command
             return (new Listing($this->catalogHeadings()))->sent(ServerCatalog::shared()->engines, $context);
         }
         if ($statement->engine !== null && ServerCatalog::shared()->engine($statement->engine->value) === null) {
-            throw ErrorCode::UnknownStorageEngine->error($statement->engine->value);
+            throw SchemaError::UnknownStorageEngine->error($statement->engine->value);
         }
         $headings = [
             Heading::text('Type', Field::VarString, 10, ColumnFlag::NotNull->value, 31),

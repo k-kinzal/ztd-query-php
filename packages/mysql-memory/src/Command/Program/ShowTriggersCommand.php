@@ -8,7 +8,7 @@ use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
 use MySqlMemory\Dictionary\Trigger;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
@@ -48,7 +48,7 @@ final class ShowTriggersCommand implements Command
         $database = ProgramSource::database($statement->database, $session);
         $schema = $session->instance->dictionary->schema($database);
         if ($schema === null) {
-            throw ErrorCode::BadDatabase->error($database);
+            throw QueryError::BadDatabase->error($database);
         }
         $triggers = $schema->triggers;
         $events = ['INSERT' => 0, 'UPDATE' => 1, 'DELETE' => 2];

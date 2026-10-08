@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Session;
 
 use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\ErrorNumbers;
 
 /**
  * The diagnostics area of a session: the warnings and notes of the last statement that raised any.
@@ -32,7 +33,7 @@ final class Diagnostics
     public function warning(ErrorCode|int $code, string $message): void
     {
         if (count($this->conditions) < 64) {
-            $this->conditions[] = ['Warning', $code instanceof ErrorCode ? $code->value : $code, $message];
+            $this->conditions[] = ['Warning', $code instanceof ErrorCode ? $code->number() : $code, $message];
         }
     }
 
@@ -42,7 +43,7 @@ final class Diagnostics
     public function note(ErrorCode $code, string $message): void
     {
         if (count($this->conditions) < 64) {
-            $this->conditions[] = ['Note', $code->value, $message];
+            $this->conditions[] = ['Note', $code->number(), $message];
         }
     }
 
@@ -87,7 +88,7 @@ final class Diagnostics
         }
 
         return match ($name) {
-            'RETURNED_SQLSTATE' => ErrorCode::tryFrom($this->conditions[$position][1] ?? 0)?->sqlState() ?? 'HY000',
+            'RETURNED_SQLSTATE' => ErrorNumbers::tryFrom($this->conditions[$position][1] ?? 0)?->sqlState() ?? 'HY000',
             'CLASS_ORIGIN', 'SUBCLASS_ORIGIN' => 'ISO 9075',
             default => '',
         };

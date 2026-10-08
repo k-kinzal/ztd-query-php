@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Program;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Dictionary\Schema;
+use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -75,52 +77,89 @@ final class DropProgramCommand implements Command
     public function drop(DropProgram $statement, Session $session): ?array
     {
         $name = $statement->name->name->value;
-        $key = strtolower($name);
         if ($statement->kind === ProgramKind::Function && $statement->name->schema === null && $session->variables->database === '') {
-            $error = ErrorCode::RoutineMissing->error('FUNCTION (UDF)', $name);
+            $error = ProgramError::RoutineMissing->error('FUNCTION (UDF)', $name);
 
             return [$error, $error];
         }
         $database = ProgramSource::database($statement->name->schema, $session);
         $schema = $session->instance->dictionary->schema($database);
-        switch ($statement->kind) {
-            case ProgramKind::Procedure:
-            case ProgramKind::Function:
-                $function = $statement->kind === ProgramKind::Function;
-                if ($schema === null || !isset(RoutineCommand::routines($schema, $function)[$key])) {
-                    $error = ErrorCode::RoutineMissing->error($statement->kind->value, $database . '.' . $name);
 
-                    return [$error, $error];
-                }
-                if ($function) {
-                    unset($schema->functions[$key]);
-                } else {
-                    unset($schema->procedures[$key]);
-                }
-                $session->instance->accounts->forget($function ? 'FUNCTION' : 'PROCEDURE', $database, $name);
+        return match ($statement->kind) {
+            ProgramKind::Procedure, ProgramKind::Function => $this->routine($statement, $session, $schema, $database),
+            ProgramKind::Trigger => $this->trigger($schema, $database, $name),
+            ProgramKind::Event => $this->event($schema, $name),
+        };
+    }
 
-                return null;
-            case ProgramKind::Trigger:
-                if ($schema === null) {
-                    return [ErrorCode::BadDatabase->error($database), new SqlError(ErrorCode::BadDatabase, "Unknown database '%-.192s'")];
-                }
-                foreach ($schema->triggers as $position => $trigger) {
-                    if (strtolower($trigger->name) === $key) {
-                        array_splice($schema->triggers, $position, 1);
+    /**
+     * Drops a stored procedure or function, and forgets the privileges granted on it, or answers the error and the note of a missing one.
+     *
+     * @param Schema|null $schema The database of the routine, null when it does not exist
+     * @param string $database The name of the database of the routine
+     * @return array{SqlError, SqlError}|null
+     */
+    public function routine(DropProgram $statement, Session $session, ?Schema $schema, string $database): ?array
+    {
+        $name = $statement->name->name->value;
+        $key = strtolower($name);
+        $function = $statement->kind === ProgramKind::Function;
+        if ($schema === null || !isset(RoutineCommand::routines($schema, $function)[$key])) {
+            $error = ProgramError::RoutineMissing->error($statement->kind->value, $database . '.' . $name);
 
-                        return null;
-                    }
-                }
-                $error = ErrorCode::TriggerMissing->error();
-
-                return [$error, $error];
-            case ProgramKind::Event:
-                if ($schema === null || !isset($schema->events[$key])) {
-                    return [ErrorCode::EventMissing->error($name), ErrorCode::RoutineMissing->error('Event', $name)];
-                }
-                unset($schema->events[$key]);
-
-                return null;
+            return [$error, $error];
         }
+        if ($function) {
+            unset($schema->functions[$key]);
+        } else {
+            unset($schema->procedures[$key]);
+        }
+        $session->instance->accounts->forget($function ? 'FUNCTION' : 'PROCEDURE', $database, $name);
+
+        return null;
+    }
+
+    /**
+     * Drops a trigger, or answers the error and the note of a missing one or of a database that does not exist.
+     *
+     * @param Schema|null $schema The database of the trigger, null when it does not exist
+     * @param string $database The name of the database of the trigger
+     * @param string $name The name of the trigger as written
+     * @return array{SqlError, SqlError}|null
+     */
+    public function trigger(?Schema $schema, string $database, string $name): ?array
+    {
+        $key = strtolower($name);
+        if ($schema === null) {
+            return [QueryError::BadDatabase->error($database), new SqlError(QueryError::BadDatabase, "Unknown database '%-.192s'")];
+        }
+        foreach ($schema->triggers as $position => $trigger) {
+            if (strtolower($trigger->name) === $key) {
+                array_splice($schema->triggers, $position, 1);
+
+                return null;
+            }
+        }
+        $error = ProgramError::TriggerMissing->error();
+
+        return [$error, $error];
+    }
+
+    /**
+     * Drops an event, or answers the error and the note of a missing one: ER_EVENT_DOES_NOT_EXIST, but the note ER_SP_DOES_NOT_EXIST.
+     *
+     * @param Schema|null $schema The database of the event, null when it does not exist
+     * @param string $name The name of the event as written
+     * @return array{SqlError, SqlError}|null
+     */
+    public function event(?Schema $schema, string $name): ?array
+    {
+        $key = strtolower($name);
+        if ($schema === null || !isset($schema->events[$key])) {
+            return [ProgramError::EventMissing->error($name), ProgramError::RoutineMissing->error('Event', $name)];
+        }
+        unset($schema->events[$key]);
+
+        return null;
     }
 }

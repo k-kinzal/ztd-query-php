@@ -8,8 +8,9 @@ use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Fill;
 use MySqlMemory\Dictionary\Routine;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\ProgramError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
@@ -67,11 +68,11 @@ final class CallCommand implements Command
         $database = ProgramSource::database($statement->procedure->schema, $session);
         $routine = $session->instance->dictionary->schema($database)->procedures[strtolower($name)] ?? null;
         if ($routine === null) {
-            throw ErrorCode::RoutineMissing->error('PROCEDURE', $database . '.' . $name);
+            throw ProgramError::RoutineMissing->error('PROCEDURE', $database . '.' . $name);
         }
         $parameters = $routine->statement->parameters->parameters;
         if (count($parameters) !== count($statement->arguments)) {
-            throw ErrorCode::RoutineArgumentCount->error('PROCEDURE', $database . '.' . $name, count($parameters), count($statement->arguments));
+            throw ProgramError::RoutineArgumentCount->error('PROCEDURE', $database . '.' . $name, count($parameters), count($statement->arguments));
         }
         $bound = $this->arguments($statement, $routine, $operation, $session, $context, $connection);
         $statements = $this->statements($routine, $session);
@@ -107,7 +108,7 @@ final class CallCommand implements Command
         $bound = [];
         foreach ($routine->statement->parameters->parameters as $index => $parameter) {
             if ($parameter->mode === ParameterMode::Out || $parameter->mode === ParameterMode::InOut) {
-                throw ErrorCode::NotSupportedYet->error('OUT and INOUT parameters of a procedure');
+                throw StatementError::NotSupportedYet->error('OUT and INOUT parameters of a procedure');
             }
             $collation = $parameter->collation?->name === null ? null : Collation::named($parameter->collation->name->value);
             $domain = $declared->domain($parameter->type, $collation)->withNullable(true);
@@ -140,13 +141,13 @@ final class CallCommand implements Command
         $declarations = $block?->find('sp_decls')[0] ?? null;
         $statements = $body !== null && $body->ordinal === 0 ? [$body] : array_slice($members, 1);
         if ($body === null || ($body->ordinal !== 0 && ($block === null || ($declarations !== null && !$declarations->isEmpty()) || $tree->find('sp_labeled_block') !== []))) {
-            throw ErrorCode::NotSupportedYet->error('CALL of a procedure with declarations or flow control');
+            throw StatementError::NotSupportedYet->error('CALL of a procedure with declarations or flow control');
         }
         $names = array_map(static fn ($parameter): string => strtolower($parameter->name->value), $routine->statement->parameters->parameters);
         $written = [];
         foreach ($statements as $member) {
             if ($member->ordinal !== 0) {
-                throw ErrorCode::NotSupportedYet->error('CALL of a procedure with declarations or flow control');
+                throw StatementError::NotSupportedYet->error('CALL of a procedure with declarations or flow control');
             }
             $written[] = $this->statement($member, $text, $names);
         }

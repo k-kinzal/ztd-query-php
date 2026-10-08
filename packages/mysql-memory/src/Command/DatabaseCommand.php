@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command;
 
 use MySqlMemory\Dictionary\Schema;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -56,24 +56,13 @@ final class DatabaseCommand implements Command
             $name = $statement->name->value;
             if ($dictionary->schema($name) !== null) {
                 if (!$statement->ifNotExists) {
-                    throw ErrorCode::DatabaseExists->error($name);
+                    throw SchemaError::DatabaseExists->error($name);
                 }
-                $context->diagnostics->note(ErrorCode::DatabaseExists, ErrorCode::DatabaseExists->message($name));
+                $context->diagnostics->note(SchemaError::DatabaseExists, SchemaError::DatabaseExists->message($name));
 
                 return new Completion(0, 0, 1);
             }
-            $collation = 'utf8mb4_0900_ai_ci';
-            foreach ($statement->options as $option) {
-                if ($option instanceof DatabaseCharset && $option->charset->name !== null) {
-                    $collation = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($option->charset->name->value)?->defaultCollation($session->settings()->release())->name ?? $collation;
-                }
-            }
-            foreach ($statement->options as $option) {
-                if ($option instanceof DatabaseCollation && $option->collation->name !== null) {
-                    $collation = strtolower($option->collation->name->value);
-                }
-            }
-            $dictionary->schemas[$name] = new Schema($name, $collation);
+            $dictionary->schemas[$name] = new Schema($name, $this->collation($statement, $session));
 
             return new Completion(1);
         }
@@ -82,9 +71,9 @@ final class DatabaseCommand implements Command
         $schema = $dictionary->schema($name);
         if ($schema === null) {
             if (!$statement->ifExists) {
-                throw ErrorCode::DatabaseMissing->error($name);
+                throw SchemaError::DatabaseMissing->error($name);
             }
-            $context->diagnostics->note(ErrorCode::DatabaseMissing, ErrorCode::DatabaseMissing->message($name));
+            $context->diagnostics->note(SchemaError::DatabaseMissing, SchemaError::DatabaseMissing->message($name));
 
             return new Completion(0, 0, 1);
         }
@@ -94,5 +83,26 @@ final class DatabaseCommand implements Command
         }
 
         return new Completion(count($schema->tables));
+    }
+
+    /**
+     * Answers the default collation of a new database: the collation it names, else the default
+     * collation of the character set it names, else utf8mb4_0900_ai_ci.
+     */
+    public function collation(CreateDatabase $statement, Session $session): string
+    {
+        $collation = 'utf8mb4_0900_ai_ci';
+        foreach ($statement->options as $option) {
+            if ($option instanceof DatabaseCharset && $option->charset->name !== null) {
+                $collation = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($option->charset->name->value)?->defaultCollation($session->settings()->release())->name ?? $collation;
+            }
+        }
+        foreach ($statement->options as $option) {
+            if ($option instanceof DatabaseCollation && $option->collation->name !== null) {
+                $collation = strtolower($option->collation->name->value);
+            }
+        }
+
+        return $collation;
     }
 }

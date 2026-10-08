@@ -48,19 +48,43 @@ final class Casts
         return match ($target->kind) {
             CastKind::Signed => Domain::integer(Field::LongLong, 21),
             CastKind::Unsigned => Domain::integer(Field::LongLong, 21, true),
-            CastKind::Decimal => Domain::decimal($target->length === null ? 10 : (int) $target->length, $target->scale === null ? 0 : (int) $target->scale),
+            CastKind::Decimal => $this->decimal($target),
             CastKind::Double, CastKind::Real => Domain::double(22),
-            CastKind::Float => $target->length !== null && (int) $target->length > 24 ? Domain::double(22) : new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED),
+            CastKind::Float => $this->float($target),
             CastKind::Date => new Domain(Kind::Date, Field::Date, 10),
             CastKind::Time => new Domain(Kind::Time, Field::Time, 10 + $fraction, $decimals),
             CastKind::DateTime => new Domain(Kind::DateTime, Field::DateTime, 19 + $fraction, $decimals),
             CastKind::Year => new Domain(Kind::Year, Field::Year, 4, 0, true),
-            CastKind::Char, CastKind::NationalChar => Domain::string($target->length === null ? $this->length($operand) : (int) $target->length, $this->collation($target)),
-            CastKind::Binary => Domain::string($target->length === null ? $this->length($operand) : (int) $target->length, Collation::binary()),
+            CastKind::Char, CastKind::NationalChar => $this->string($operand, $target, $this->collation($target)),
+            CastKind::Binary => $this->string($operand, $target, Collation::binary()),
             CastKind::Json => new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin')),
             CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiLineString,
             CastKind::MultiPolygon, CastKind::GeometryCollection => null,
         };
+    }
+
+    /**
+     * Resolves DECIMAL: the precision and scale written, 10 and 0 by default.
+     */
+    public function decimal(CastTarget $target): Domain
+    {
+        return Domain::decimal($target->length === null ? 10 : (int) $target->length, $target->scale === null ? 0 : (int) $target->scale);
+    }
+
+    /**
+     * Resolves FLOAT: a single, or a double when the precision written exceeds 24.
+     */
+    public function float(CastTarget $target): Domain
+    {
+        return $target->length !== null && (int) $target->length > 24 ? Domain::double(22) : new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED);
+    }
+
+    /**
+     * Resolves CHAR or BINARY in a collation: a string as long as written, or as the operand written as text.
+     */
+    public function string(Domain $operand, CastTarget $target, Collation $collation): Domain
+    {
+        return Domain::string($target->length === null ? $this->length($operand) : (int) $target->length, $collation);
     }
 
     /**

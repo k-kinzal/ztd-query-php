@@ -7,9 +7,12 @@ namespace MySqlMemory\Command\Account;
 use MySqlMemory\Account\Catalog;
 use MySqlMemory\Account\Grants;
 use MySqlMemory\Account\Privileges;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Session\Problems;
+use MySqlMemory\Error\StatementError;
+use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege;
@@ -63,7 +66,7 @@ final class Levels
             default => $session->variables->database,
         };
         if ($database === '') {
-            throw ErrorCode::NoDatabase->error();
+            throw QueryError::NoDatabase->error();
         }
         if (!$level instanceof ObjectLevel) {
             return ['DATABASE', $database, ''];
@@ -87,15 +90,15 @@ final class Levels
             if ($diagnostic instanceof RoleOrPrivilegeMismatch) {
                 $near = $this->near($session->text, $diagnostic->item);
 
-                throw new SqlError(ErrorCode::ParseError, ($diagnostic->roleExpected ? 'Illegal authorization identifier' : 'Illegal privilege identifier') . " near '" . mb_strcut($near, 0, 80, 'UTF-8') . "' at line 1");
+                throw new SqlError(StatementError::ParseError, ($diagnostic->roleExpected ? 'Illegal authorization identifier' : 'Illegal privilege identifier') . " near '" . mb_strcut($near, 0, 80, 'UTF-8') . "' at line 1");
             }
         }
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof MisplacedPrivilege && $diagnostic->error === 'ER_ILLEGAL_GRANT_FOR_TABLE') {
-                throw ErrorCode::IllegalGrantForTable->error();
+                throw AccountError::IllegalGrantForTable->error();
             }
             if ($diagnostic instanceof MisplacedPrivilege && $diagnostic->error === 'ER_PARSE_ERROR') {
-                throw ErrorCode::ParseError->error('', 1);
+                throw StatementError::ParseError->error('', 1);
             }
         }
     }
@@ -127,20 +130,20 @@ final class Levels
     {
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof MissingTable) {
-                throw (new Problems())->error($diagnostic, $session);
+                throw (new Errors())->error($diagnostic, $session);
             }
         }
         if ($target[0] === 'PROCEDURE' || $target[0] === 'FUNCTION') {
             $schema = $session->instance->dictionary->schema($target[1]);
             $routines = $target[0] === 'PROCEDURE' ? $schema->procedures ?? [] : $schema->functions ?? [];
             if (!isset($routines[mb_strtolower($target[2], 'UTF-8')])) {
-                throw ErrorCode::RoutineMissing->error($target[0], $target[2]);
+                throw ProgramError::RoutineMissing->error($target[0], $target[2]);
             }
         }
         $this->dynamic($privileges, $target, $session, false);
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof UnknownGrantColumn) {
-                throw ErrorCode::BadField->error($diagnostic->column->value, $target[2]);
+                throw QueryError::BadField->error($diagnostic->column->value, $target[2]);
             }
         }
     }
@@ -164,9 +167,9 @@ final class Levels
             }
             $name = $target[0] === 'DATABASE' ? strtoupper($privilege->name->value) : $target[2];
             if (!$lenient) {
-                throw ErrorCode::IllegalPrivilegeLevel->error($name);
+                throw AccountError::IllegalPrivilegeLevel->error($name);
             }
-            $session->diagnostics->warning(ErrorCode::IllegalPrivilegeLevel, ErrorCode::IllegalPrivilegeLevel->message($name));
+            $session->diagnostics->warning(AccountError::IllegalPrivilegeLevel, AccountError::IllegalPrivilegeLevel->message($name));
         }
     }
 
@@ -179,7 +182,7 @@ final class Levels
     {
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof MisplacedPrivilege && $diagnostic->error === 'ER_WRONG_USAGE') {
-                throw ErrorCode::WrongUsage->error('DB GRANT', 'GLOBAL PRIVILEGES');
+                throw StatementError::WrongUsage->error('DB GRANT', 'GLOBAL PRIVILEGES');
             }
         }
     }

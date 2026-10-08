@@ -8,6 +8,7 @@ use MySqlMemory\Command\Output;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Instance;
 use MySqlMemory\Plan\Blocks;
 use MySqlMemory\Plan\Path\Source\ZeroRows;
@@ -391,4 +392,57 @@ final class BlocksTest extends TestCase
         self::assertSame([['2']], $warnings->rows);
     }
 
+    public function testFieldsAnswersTheFieldsOfTheSelectList(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT, b INT)');
+        $operation = $session->analyze('SELECT b, a + 1 AS c FROM t');
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+
+        $fields = $planner->blocks->fields($statement);
+
+        self::assertSame(['b', 'c'], [$fields[0]->name?->value, $fields[1]->name?->value]);
+    }
+
+    public function testSortKeysPlacesAKeyOutsideTheSelectListAfterItAndLeavesOutAConstantKey(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT, b INT)');
+        $operation = $session->analyze('SELECT a AS x FROM t ORDER BY x DESC, b, 1 + 1');
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        self::assertNotNull($statement->from);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $scope = new Scope(null);
+        $planner->relations->plan($statement->from, $scope);
+        $fields = $planner->blocks->fields($statement);
+        $expression = $planner->compiler->names->field($fields[0], $scope);
+
+        [$keys, $expressions] = $planner->blocks->sortKeys($statement, $fields, [$expression->domain()], [$expression], $scope);
+
+        self::assertSame([[0, true], [1, false], 2], [[$keys[0][0], $keys[0][2]], [$keys[1][0], $keys[1][2]], count($expressions)]);
+        self::assertCount(2, $keys);
+    }
+
+    public function testOriginsDropTheKeyFlagsOfABufferedResult(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT PRIMARY KEY)');
+        $buffered = $session->query('SELECT SQL_BUFFER_RESULT a FROM t')[0];
+        $direct = $session->query('SELECT a FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $buffered);
+        self::assertInstanceOf(ResultSet::class, $direct);
+        self::assertSame([0, 2, 't', 't'], [$buffered->columns[0]->flags & 2, $direct->columns[0]->flags & 2, $buffered->columns[0]->originalTable, $direct->columns[0]->originalTable]);
+    }
 }

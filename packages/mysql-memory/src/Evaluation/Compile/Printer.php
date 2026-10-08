@@ -22,6 +22,7 @@ use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Reference\Table\DeclaredTable;
+use SqlSemantics\Statement\Reference\Table\TableResolution;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
@@ -102,26 +103,50 @@ final class Printer
     public function resolved(ResolvedColumn $resolution): string
     {
         $relation = $resolution->relation;
-        $facts = $this->facts;
-        $table = $facts !== null && $facts->covers($relation) ? $facts->relation($relation)->table : null;
-        $declared = $resolution->slot->declaration();
+        $table = $this->facts !== null && $this->facts->covers($relation) ? $this->facts->relation($relation)->table : null;
         if ($table instanceof DeclaredTable && $relation instanceof NamedRelation) {
-            $schema = $table->table->name->schema->value ?? $relation->name()->schema->value ?? $this->database;
-
-            return ($schema === '' ? '' : '`' . $schema . '`.') . '`' . ($relation->alias() ?? $relation->name()->name)->value . '`.`' . ($declared->name->value ?? $resolution->slot->name->value ?? '') . '`';
+            return $this->tableColumn($resolution, $table, $relation);
         }
+
+        return $this->merged($resolution, $table) ?? $this->materialized($resolution);
+    }
+
+    /**
+     * Prints a column of a table: its database, unless the table has none, the correlation name of the table and the declared name of the column.
+     */
+    public function tableColumn(ResolvedColumn $resolution, DeclaredTable $table, NamedRelation $relation): string
+    {
+        $declared = $resolution->slot->declaration();
+        $schema = $table->table->name->schema->value ?? $relation->name()->schema->value ?? $this->database;
+
+        return ($schema === '' ? '' : '`' . $schema . '`.') . '`' . ($relation->alias() ?? $relation->name()->name)->value . '`.`' . ($declared->name->value ?? $resolution->slot->name->value ?? '') . '`';
+    }
+
+    /**
+     * Prints a column of a derived table or common table expression that merges into the query as the field that defines it; null when it does not merge or the field prints as nothing.
+     */
+    public function merged(ResolvedColumn $resolution, ?TableResolution $table): ?string
+    {
+        $relation = $resolution->relation;
         $query = match (true) {
             $relation instanceof DerivedTable => $relation->query,
             $table instanceof CommonTable && $table->definition instanceof CommonTableExpression => $table->definition->query,
             default => null,
         };
-        if ($query !== null && $facts !== null && (new Materialization())->mergeable($query)) {
-            $field = $facts->query($query)->projection[$this->position($resolution)] ?? null;
-            $printed = $field instanceof Field ? $this->field($field) : null;
-            if ($printed !== null) {
-                return $printed;
-            }
+        if ($query === null || $this->facts === null || !(new Materialization())->mergeable($query)) {
+            return null;
         }
+        $field = $this->facts->query($query)->projection[$this->position($resolution)] ?? null;
+
+        return $field instanceof Field ? $this->field($field) : null;
+    }
+
+    /**
+     * Prints a column of a materialized relation: the correlation name of the relation, when it has one, and the column name.
+     */
+    public function materialized(ResolvedColumn $resolution): string
+    {
+        $relation = $resolution->relation;
         $alias = match (true) {
             $relation instanceof DerivedTable => $relation->alias,
             $relation instanceof NamedRelation => $relation->alias() ?? $relation->name()->name,

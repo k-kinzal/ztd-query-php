@@ -13,13 +13,10 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
-use SqlSemantics\Platform\MySql\Statement\Alter\Column\AddColumn;
 use SqlSemantics\Platform\MySql\Statement\Alter\Command\ConvertCharset;
 use SqlSemantics\Platform\MySql\Statement\Alter\Command\DropElement;
 use SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement;
 use SqlSemantics\Platform\MySql\Statement\Alter\Command\SetTableOptions;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
-use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Statement\Operation;
 
 #[CoversClass(TableChange::class)]
@@ -110,19 +107,6 @@ final class TableChangeTest extends TestCase
         $session->query('ALTER TABLE t REMOVE PARTITIONING');
     }
 
-    public function testExistingRefusesAnUnknownColumn(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $table = $session->instance->dictionary->table('d', 't');
-        self::assertNotNull($table);
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionMessage("Unknown column 'zz' in 't'");
-
-        (new TableChange(TableLayout::of($table->definition), 't', 'd', GrammarRelease::MySql847))->existing('zz');
-    }
-
     public function testDropRefusesACheckConstraintTheTableLacks(): void
     {
         $session = (new Instance())->connect();
@@ -165,23 +149,6 @@ final class TableChangeTest extends TestCase
         self::assertNotNull($table);
 
         self::assertSame(0, (new TableChange(TableLayout::of($table->definition), 't', 'd', GrammarRelease::MySql847))->constraint('t_chk_1', true));
-    }
-
-    public function testPlaceRefusesAnUnknownColumnToFollow(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $table = $session->instance->dictionary->table('d', 't');
-        $alter = $session->analyze('ALTER TABLE t ADD b INT AFTER zz')->statement;
-        self::assertNotNull($table);
-        self::assertInstanceOf(AlterTable::class, $alter);
-        $command = $alter->commands[0];
-        self::assertInstanceOf(AddColumn::class, $command);
-
-        $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1054);
-
-        (new TableChange(TableLayout::of($table->definition), 't', 'd', GrammarRelease::MySql847))->place($command->column, $command->position, null);
     }
 
     public function testOptionsReplacesTheCollationByACharacterSet(): void
@@ -234,30 +201,64 @@ final class TableChangeTest extends TestCase
         self::assertTrue($change->copies);
     }
 
-    public function testAttributesAnswersTheAttributesOfAColumn(): void
+    public function testActRefusesToHideThePrimaryKey(): void
     {
         $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT PRIMARY KEY)');
         $table = $session->instance->dictionary->table('d', 't');
-        $create = $session->analyze('CREATE TABLE u (a INT NOT NULL DEFAULT 1)')->statement;
+        $alter = $session->analyze('ALTER TABLE t ALTER INDEX `PRIMARY` INVISIBLE')->statement;
         self::assertNotNull($table);
-        self::assertInstanceOf(CreateTable::class, $create);
-        self::assertInstanceOf(ColumnDefinition::class, $create->elements[0]);
+        self::assertInstanceOf(AlterTable::class, $alter);
 
-        self::assertCount(2, (new TableChange(TableLayout::of($table->definition), 't', 'd', GrammarRelease::MySql847))->attributes($create->elements[0]));
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3522);
+        $this->expectExceptionMessage('A primary key index cannot be invisible');
+
+        (new TableChange(TableLayout::of($table->definition), 't', 'd', GrammarRelease::MySql847))->act($alter->commands[0]);
     }
 
-    public function testAttributedAnswersAColumnWithOtherAttributes(): void
+    public function testActRenamesTheTableIntoTheCurrentDatabase(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
         $table = $session->instance->dictionary->table('d', 't');
-        $create = $session->analyze('CREATE TABLE u (a INT NOT NULL)')->statement;
+        $alter = $session->analyze('ALTER TABLE t RENAME TO u')->statement;
         self::assertNotNull($table);
-        self::assertInstanceOf(CreateTable::class, $create);
-        self::assertInstanceOf(ColumnDefinition::class, $create->elements[0]);
+        self::assertInstanceOf(AlterTable::class, $alter);
+        $change = new TableChange(TableLayout::of($table->definition), 't', 'e', GrammarRelease::MySql847);
+
+        $change->act($alter->commands[0]);
+
+        self::assertSame(['e', 'u'], [$change->layout->name->schema?->value, $change->layout->name->name->value]);
+    }
+
+    public function testMannerRemembersAnOrderAsACopy(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+        $table = $session->instance->dictionary->table('d', 't');
+        $alter = $session->analyze('ALTER TABLE t ORDER BY a')->statement;
+        self::assertNotNull($table);
+        self::assertInstanceOf(AlterTable::class, $alter);
         $change = new TableChange(TableLayout::of($table->definition), 't', 'd', GrammarRelease::MySql847);
 
-        self::assertSame([], $change->attributes($change->attributed($create->elements[0], [])));
+        $change->manner($alter->commands[0]);
+
+        self::assertSame([true, true], [$change->ordered, $change->copies]);
+    }
+
+    public function testMannerRefusesASecondaryLoad(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+        $table = $session->instance->dictionary->table('d', 't');
+        $alter = $session->analyze('ALTER TABLE t SECONDARY_LOAD')->statement;
+        self::assertNotNull($table);
+        self::assertInstanceOf(AlterTable::class, $alter);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage('Secondary engine operation failed. No secondary engine defined.');
+
+        (new TableChange(TableLayout::of($table->definition), 't', 'd', GrammarRelease::MySql847))->manner($alter->commands[0]);
     }
 }

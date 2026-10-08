@@ -183,31 +183,7 @@ final class Domain implements TypeDescriptor
      */
     public function name(): string
     {
-        return match ($this->field) {
-            Field::Tiny => 'TINYINT',
-            Field::Short => 'SMALLINT',
-            Field::Int24 => 'MEDIUMINT',
-            Field::Long => 'INT',
-            Field::LongLong => 'BIGINT',
-            Field::Decimal, Field::NewDecimal => 'DECIMAL',
-            Field::Float => 'FLOAT',
-            Field::Double => 'DOUBLE',
-            Field::Null => 'NULL',
-            Field::Timestamp => 'TIMESTAMP',
-            Field::Date, Field::NewDate => 'DATE',
-            Field::Time => 'TIME',
-            Field::DateTime => 'DATETIME',
-            Field::Year => 'YEAR',
-            Field::Bit => 'BIT',
-            Field::Vector => 'VECTOR',
-            Field::Json => 'JSON',
-            Field::Enum => 'ENUM',
-            Field::Set => 'SET',
-            Field::Geometry => 'GEOMETRY',
-            Field::VarChar, Field::VarString => $this->collation->bytes() ? 'VARBINARY' : 'VARCHAR',
-            Field::String => $this->collation->bytes() ? 'BINARY' : 'CHAR',
-            Field::TinyBlob, Field::MediumBlob, Field::LongBlob, Field::Blob => $this->collation->bytes() ? 'BLOB' : 'TEXT',
-        };
+        return $this->field->typeName($this->collation->bytes());
     }
 
     /**

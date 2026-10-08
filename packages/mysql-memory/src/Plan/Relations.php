@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
@@ -65,7 +66,7 @@ final class Relations
             $relation instanceof TableList => $this->list($relation, $scope),
             $relation instanceof NestedRelation, $relation instanceof OdbcJoin, $relation instanceof EscapedRelation => $this->plan($relation->relation, $scope),
             $relation instanceof Dual => new SingleRow(),
-            default => throw ErrorCode::NotSupportedYet->error('relation ' . (new ReflectionClass($relation))->getShortName()),
+            default => throw StatementError::NotSupportedYet->error('relation ' . (new ReflectionClass($relation))->getShortName()),
         };
     }
 
@@ -88,7 +89,7 @@ final class Relations
             return new Materialize($plan);
         }
         if (!$resolution instanceof DeclaredTable) {
-            throw ErrorCode::NoSuchTable->error($reference->name->schema->value ?? $this->planner->settings->database, $reference->name->name->value);
+            throw QueryError::NoSuchTable->error($reference->name->schema->value ?? $this->planner->settings->database, $reference->name->name->value);
         }
         $name = $resolution->table->name;
         $view = $this->planner->dictionary->schema($name->schema->value ?? $this->planner->settings->database)->views[$name->name->value] ?? null;
@@ -97,10 +98,10 @@ final class Relations
         }
         $stored = $this->planner->dictionary->table($name->schema->value ?? $this->planner->settings->database, $name->name->value);
         if ($stored === null) {
-            throw ErrorCode::NoSuchTable->error($name->schema->value ?? $this->planner->settings->database, $name->name->value);
+            throw QueryError::NoSuchTable->error($name->schema->value ?? $this->planner->settings->database, $name->name->value);
         }
         if ($reference->partitions !== []) {
-            throw ErrorCode::NotSupportedYet->error('partition selection');
+            throw StatementError::NotSupportedYet->error('partition selection');
         }
         $definition = $stored->definition;
         $scope->place($reference, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
@@ -261,7 +262,7 @@ final class Relations
             $leftColumn = $this->find($scope, $left, $name);
             $rightColumn = $this->find($scope, $right, $name);
             if ($leftColumn === null || $rightColumn === null) {
-                throw ErrorCode::BadField->error($name, 'from clause');
+                throw QueryError::BadField->error($name, 'from clause');
             }
             $comparator = Comparator::of($leftColumn->domain(), $rightColumn->domain(), '=', $this->planner->settings->connectionCollation);
             $equality = new Compare(ComparisonOperator::Equal, $leftColumn, $rightColumn, $comparator, $this->planner->compiler->operators->truth(true));

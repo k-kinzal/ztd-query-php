@@ -12,9 +12,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 #[CoversClass(ColumnText::class)]
 #[Small]
@@ -66,6 +68,35 @@ final class ColumnTextTest extends TestCase
             ['tinyint(1)', 'tinyint unsigned', 'mediumint', 'smallint(5) unsigned zerofill', 'float(7,3)', 'decimal(10,0)', 'char(5)', 'varbinary(9)', 'mediumtext', "enum('a','b''c')", 'datetime(3)', 'point', 'tinyint(1)'],
             array_map(static fn (ColumnDefinition $column): string => $text->type($column->domain, $text->written($table->definition, $column)), $table->definition->columns),
         );
+    }
+
+    public function testZeroFillTellsWhetherANumericTypeIsZerofill(): void
+    {
+        self::assertSame([true, false, false], [
+            (new ColumnText())->zeroFill(new Integral(IntegralKind::Int, null, [NumericModifier::Zerofill])),
+            (new ColumnText())->zeroFill(new Integral(IntegralKind::Int, null, [NumericModifier::Unsigned])),
+            (new ColumnText())->zeroFill(null),
+        ]);
+    }
+
+    public function testUnsignedWritesTheSignAttributes(): void
+    {
+        self::assertSame([' unsigned zerofill', ' unsigned', '', ''], [
+            (new ColumnText())->unsigned(new Domain(Kind::Integer, Field::Long, 10), new Integral(IntegralKind::Int, null, [NumericModifier::Zerofill])),
+            (new ColumnText())->unsigned(new Domain(Kind::Integer, Field::Long, 10, 0, true), null),
+            (new ColumnText())->unsigned(new Domain(Kind::Year, Field::Year, 4, 0, true), null),
+            (new ColumnText())->unsigned(new Domain(Kind::Integer, Field::Long, 11), null),
+        ]);
+    }
+
+    public function testWidthWritesTheDisplayWidthOfAnIntegerType(): void
+    {
+        self::assertSame(['(10)', '(1)', '', ''], [
+            (new ColumnText())->width(new Domain(Kind::Integer, Field::Long, 10), new Integral(IntegralKind::Int, null, [NumericModifier::Zerofill])),
+            (new ColumnText())->width(new Domain(Kind::Integer, Field::Tiny, 4, display: 1), null),
+            (new ColumnText())->width(new Domain(Kind::Integer, Field::Tiny, 3, 0, true, display: 1), null),
+            (new ColumnText())->width(new Domain(Kind::Integer, Field::Long, 11), null),
+        ]);
     }
 
     public function testBlobNamesTheSizeFromTheLength(): void

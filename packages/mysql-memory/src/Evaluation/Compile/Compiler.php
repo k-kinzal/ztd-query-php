@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Family\Calls;
 use MySqlMemory\Evaluation\Compile\Family\Casts;
 use MySqlMemory\Evaluation\Compile\Family\Dates;
@@ -239,7 +241,7 @@ final class Compiler
      */
     public function domain(Scalar $node): Domain
     {
-        return $this->resolved($node) ?? throw ErrorCode::NotSupportedYet->error('the type of ' . (new ReflectionClass($node))->getShortName());
+        return $this->resolved($node) ?? throw StatementError::NotSupportedYet->error('the type of ' . (new ReflectionClass($node))->getShortName());
     }
 
     /**
@@ -269,10 +271,23 @@ final class Compiler
      */
     public function dispatch(Scalar $node, Scope $scope): Evaluable
     {
+        return $this->compileLiteral($node, $scope)
+            ?? $this->compileName($node, $scope)
+            ?? $this->compileOperator($node, $scope)
+            ?? $this->compileText($node, $scope)
+            ?? $this->compileCall($node, $scope)
+            ?? $this->compileSubquery($node, $scope)
+            ?? throw StatementError::NotSupportedYet->error('expression ' . (new ReflectionClass($node))->getShortName());
+    }
+
+    /**
+     * Compiles a literal, an ODBC escape or a parameter marker, or answers null for a node of another form.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the literal is not valid
+     */
+    public function compileLiteral(Scalar $node, Scope $scope): ?Evaluable
+    {
         return match (true) {
-            $node instanceof Grouped => $this->compile($node->operand, $scope),
-            $node instanceof ColumnUse => $this->names->column($node, $scope),
-            $node instanceof OutputOrdinal => $this->names->ordinal($node, $scope),
             $node instanceof NumberLiteral => $this->literals->number($node),
             $node instanceof SignedLiteral => $this->literals->signed($node),
             $node instanceof StringLiteral => $this->literals->string($node),
@@ -280,7 +295,41 @@ final class Compiler
             $node instanceof TemporalLiteral => $this->literals->temporal($node),
             $node instanceof BooleanLiteral => $this->literals->boolean($node),
             $node instanceof NullLiteral => $this->literals->null($node),
+            $node instanceof OdbcEscape => $this->literals->odbc($node, $scope),
             $node instanceof Parameter => $this->names->parameter($node),
+            default => null,
+        };
+    }
+
+    /**
+     * Compiles a grouped expression, a column, select item, column default or variable, or answers null for a node of another form.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the name does not resolve, or a stored program variable is read outside a program
+     */
+    public function compileName(Scalar $node, Scope $scope): ?Evaluable
+    {
+        return match (true) {
+            $node instanceof Grouped => $this->compile($node->operand, $scope),
+            $node instanceof ColumnUse => $this->names->column($node, $scope),
+            $node instanceof OutputOrdinal => $this->names->ordinal($node, $scope),
+            $node instanceof DefaultOfColumn => $this->names->default($node, $scope),
+            $node instanceof InsertedColumn => $this->names->inserted($node, $scope),
+            $node instanceof UserVariable => $this->names->userVariable($node),
+            $node instanceof ProgramVariable => throw ProgramError::UndeclaredVariable->error($node->name->value),
+            $node instanceof SystemVariable => $this->names->systemVariable($node),
+            $node instanceof VariableAssignment => $this->names->assignment($node, $scope),
+            default => null,
+        };
+    }
+
+    /**
+     * Compiles an operator, predicate, CASE, cast or JSON operator, or answers null for a node of another form.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the operator is refused
+     */
+    public function compileOperator(Scalar $node, Scope $scope): ?Evaluable
+    {
+        return match (true) {
             $node instanceof Arithmetic => $this->operators->arithmetic($node, $scope),
             $node instanceof Unary => $this->operators->unary($node, $scope),
             $node instanceof Comparison => $this->operators->comparison($node, $scope),
@@ -294,7 +343,20 @@ final class Compiler
             $node instanceof CaseExpression => $this->operators->caseOf($node, $scope),
             $node instanceof Cast => $this->operators->cast($node, $scope),
             $node instanceof AtTimeZone => (new Casts($this))->atTimeZone($node, $scope),
-            $node instanceof IntervalArithmetic => $this->dates->arithmetic($node, $scope),
+            $node instanceof JsonExtraction => $this->jsons->extraction($node, $scope),
+            $node instanceof MemberOf => $this->jsons->member($node, $scope),
+            default => null,
+        };
+    }
+
+    /**
+     * Compiles a string form written with keywords or operators, or answers null for a node of another form.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the string form is refused
+     */
+    public function compileText(Scalar $node, Scope $scope): ?Evaluable
+    {
+        return match (true) {
             $node instanceof Collated => $this->texts->collated($node, $scope),
             $node instanceof BinaryCast => $this->texts->binary($node, $scope),
             $node instanceof CharsetConversion => $this->texts->convert($node, $scope),
@@ -305,28 +367,46 @@ final class Compiler
             $node instanceof Regexp => $this->texts->regexp($node, $scope),
             $node instanceof WeightString => $this->texts->weight($node, $scope),
             $node instanceof FullTextSearch => $this->texts->match($node, $scope),
-            $node instanceof JsonExtraction => $this->jsons->extraction($node, $scope),
-            $node instanceof MemberOf => $this->jsons->member($node, $scope),
             $node instanceof Concatenation => $this->calls->named('CONCAT', [$node->left, $node->right], $scope, $node),
+            default => null,
+        };
+    }
+
+    /**
+     * Compiles a function call or date arithmetic, or answers null for a node of another form.
+     *
+     * An aggregate reaches here only outside the grouped output, where it is refused with ER_INVALID_GROUP_FUNC_USE.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the call is refused
+     */
+    public function compileCall(Scalar $node, Scope $scope): ?Evaluable
+    {
+        return match (true) {
+            $node instanceof IntervalArithmetic => $this->dates->arithmetic($node, $scope),
             $node instanceof Extract => $this->dates->extract($node, $scope),
-            $node instanceof DefaultOfColumn => $this->names->default($node, $scope),
-            $node instanceof OdbcEscape => $this->literals->odbc($node, $scope),
             $node instanceof IntervalAddition => $this->dates->addition($node, $scope),
             $node instanceof DateArithmetic => $this->dates->call($node, $scope),
             $node instanceof FunctionCall => $this->calls->function($node, $scope),
             $node instanceof KeywordCall => $this->calls->keyword($node, $scope),
             $node instanceof ClockCall => $this->calls->clock($node, $scope),
-            $node instanceof Aggregate, $node instanceof GroupConcat => throw ErrorCode::InvalidGroupFunctionUse->error(),
+            $node instanceof Aggregate, $node instanceof GroupConcat => throw QueryError::InvalidGroupFunctionUse->error(),
+            default => null,
+        };
+    }
+
+    /**
+     * Compiles a subquery used as a value or in a predicate, or answers null for a node of another form.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the subquery is refused
+     */
+    public function compileSubquery(Scalar $node, Scope $scope): ?Evaluable
+    {
+        return match (true) {
             $node instanceof ScalarSubquery => $this->subqueries->scalar($node, $scope),
             $node instanceof Exists => $this->subqueries->exists($node, $scope),
             $node instanceof InQuery => $this->subqueries->in($node, $scope),
             $node instanceof QuantifiedComparison => $this->subqueries->quantifiedComparison($node, $scope),
-            $node instanceof InsertedColumn => $this->names->inserted($node, $scope),
-            $node instanceof UserVariable => $this->names->userVariable($node),
-            $node instanceof ProgramVariable => throw ErrorCode::UndeclaredVariable->error($node->name->value),
-            $node instanceof SystemVariable => $this->names->systemVariable($node),
-            $node instanceof VariableAssignment => $this->names->assignment($node, $scope),
-            default => throw ErrorCode::NotSupportedYet->error('expression ' . (new ReflectionClass($node))->getShortName()),
+            default => null,
         };
     }
 }

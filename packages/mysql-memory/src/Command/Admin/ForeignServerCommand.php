@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Registry\ForeignServer;
@@ -58,16 +58,16 @@ final class ForeignServerCommand implements Command
         $name = $statement instanceof CreateServer || $statement instanceof AlterServer || $statement instanceof DropServer ? mb_strcut($statement->name->value, 0, 64, 'UTF-8') : '';
         if ($statement instanceof CreateServer) {
             if (isset($registry->servers[Registry::key($name)])) {
-                throw ErrorCode::ForeignServerExists->error($name);
+                throw AdministrationError::ForeignServerExists->error($name);
             }
             $registry->servers[Registry::key($name)] = new ForeignServer($name, $statement->wrapper->value, $this->options($statement->options));
         } elseif ($statement instanceof AlterServer) {
-            $server = $registry->servers[Registry::key($name)] ?? throw ErrorCode::ForeignServerMissing->error($name);
+            $server = $registry->servers[Registry::key($name)] ?? throw AdministrationError::ForeignServerMissing->error($name);
             $server->options = [...$server->options, ...$this->options($statement->options)];
         } elseif ($statement instanceof DropServer) {
             $key = Registry::key($name);
             if (!isset($registry->servers[$key]) && !$statement->ifExists) {
-                throw ErrorCode::ForeignServerMissing->error($name);
+                throw AdministrationError::ForeignServerMissing->error($name);
             }
             unset($registry->servers[$key]);
         }

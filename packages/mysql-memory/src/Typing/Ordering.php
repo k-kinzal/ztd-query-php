@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace MySqlMemory\Typing;
 
 use Collator;
-use Transliterator;
 use MySqlMemory\Value\Encoding;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use Transliterator;
 
 /**
  * The order of one collation: the comparison and the equality key of its strings.

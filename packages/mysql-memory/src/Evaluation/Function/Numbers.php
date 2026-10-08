@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Function;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
@@ -104,7 +104,7 @@ final class Numbers
     public function absolute(int $value, string $text = ''): int
     {
         if ($value === PHP_INT_MIN) {
-            throw ErrorCode::DataOutOfRange->error('BIGINT', $text);
+            throw DataError::DataOutOfRange->error('BIGINT', $text);
         }
 
         return abs($value);
@@ -180,7 +180,7 @@ final class Numbers
         $rounded = $truncate ? Decimal::truncate($decimal, $places) : Decimal::round($decimal, $places);
         if ($result->kind === Kind::Integer) {
             if (!($result->unsigned ? Integer::unsignedRange($rounded) : Integer::signedRange($rounded))) {
-                throw ErrorCode::DataOutOfRange->error($result->unsigned ? 'BIGINT UNSIGNED' : 'BIGINT', $text);
+                throw DataError::DataOutOfRange->error($result->unsigned ? 'BIGINT UNSIGNED' : 'BIGINT', $text);
             }
 
             return $result->unsigned ? Integer::fromUnsignedText($rounded) : (int) $rounded;
@@ -230,7 +230,7 @@ final class Numbers
         }
         $result = $function($value);
         if ($result !== null && is_infinite($result)) {
-            throw ErrorCode::DataOutOfRange->error('DOUBLE', $text);
+            throw DataError::DataOutOfRange->error('DOUBLE', $text);
         }
 
         return $result === null || is_nan($result) ? null : $result;
@@ -257,7 +257,7 @@ final class Numbers
                 return null;
             }
             if ($value <= 0) {
-                $frame->context->warning(ErrorCode::InvalidLogarithmArgument);
+                $frame->context->warning(DataError::InvalidLogarithmArgument);
 
                 return null;
             }
@@ -269,7 +269,7 @@ final class Numbers
             return $base === null ? log($number) : ($base === 10.0 ? log10($number) : log($number, $base));
         }
         if ($values[0] === 1.0) {
-            $frame->context->warning(ErrorCode::InvalidLogarithmArgument);
+            $frame->context->warning(DataError::InvalidLogarithmArgument);
 
             return null;
         }
@@ -293,7 +293,7 @@ final class Numbers
         }
         $result = $base === 0.0 && $exponent < 0 ? INF : $base ** $exponent;
         if (is_infinite($result) || is_nan($result)) {
-            throw ErrorCode::DataOutOfRange->error('DOUBLE', $text);
+            throw DataError::DataOutOfRange->error('DOUBLE', $text);
         }
 
         return $result;

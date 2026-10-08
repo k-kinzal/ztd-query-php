@@ -96,6 +96,26 @@ final class ConstantsTest extends TestCase
         self::assertSame([PHP_INT_MIN + 2, true], $constants->arithmetic(ArithmeticOperator::Plus, [1, false], [PHP_INT_MIN + 1, true]));
     }
 
+    public function testBitsShiftsEveryBitOutBeyondSixtyThree(): void
+    {
+        $constants = new Constants();
+
+        self::assertSame([6, 0, -1, 0, 0, 1 << 62], [$constants->bits(ArithmeticOperator::BitXor, 5, 3), $constants->bits(ArithmeticOperator::ShiftLeft, 1, 64), $constants->bits(ArithmeticOperator::ShiftRight, -1, 0), $constants->bits(ArithmeticOperator::ShiftRight, -1, -1), $constants->bits(ArithmeticOperator::ShiftLeft, 1, -3), $constants->bits(ArithmeticOperator::ShiftRight, PHP_INT_MIN, 1)]);
+        self::assertNull($constants->bits(ArithmeticOperator::Plus, 1, 1));
+    }
+
+    public function testIntegerFailsOnOverflowDivisionByZeroAndBelowZeroWhenUnsigned(): void
+    {
+        $constants = new Constants();
+
+        self::assertSame([[7, false], [7, true], [0, false]], [$constants->integer(ArithmeticOperator::Multiply, 7, 1, false), $constants->integer(ArithmeticOperator::Plus, 3, 4, true), $constants->integer(ArithmeticOperator::Modulo, PHP_INT_MIN, -1, false)]);
+        self::assertNull($constants->integer(ArithmeticOperator::Minus, 3, 4, true));
+        self::assertNull($constants->integer(ArithmeticOperator::Modulo, 3, 0, false));
+        self::assertNull($constants->integer(ArithmeticOperator::IntegerDivide, PHP_INT_MIN, -1, false));
+        self::assertNull($constants->integer(ArithmeticOperator::Multiply, PHP_INT_MAX, 2, false));
+        self::assertNull($constants->integer(ArithmeticOperator::Divide, 4, 2, false));
+    }
+
     public function testBeyondKeepsAnUnsignedValueAboveTheSignedLimit(): void
     {
         $constants = new Constants();

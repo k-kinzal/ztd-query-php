@@ -5,13 +5,18 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Dictionary\Schema;
+use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\AlterDatabase;
 use SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseCharset;
@@ -55,53 +60,90 @@ final class AlterDatabaseCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof AlterDatabase);
-        $release = $session->settings()->release();
-        $charset = null;
-        $collation = null;
-        foreach ($statement->options as $option) {
-            if ($option instanceof DatabaseCharset && $option->charset->name !== null) {
-                $named = Charset::named($option->charset->name->value);
-                if ($named === null) {
-                    throw ErrorCode::UnknownCharacterSet->error($option->charset->name->value);
-                }
-                if ($charset !== null && $charset->name !== $named->name) {
-                    throw ErrorCode::ConflictingDeclarations->error('CHARACTER SET ', $charset->name, 'CHARACTER SET ', $named->name);
-                }
-                $charset = $named;
-                if (strcasecmp($option->charset->name->value, 'utf8') === 0) {
-                    $context->diagnostics->warning(Deprecated::Utf8Alias->code(), Deprecated::Utf8Alias->value);
-                }
-            }
-            if ($option instanceof DatabaseCollation && $option->collation->name !== null) {
-                $collation = Collation::named($option->collation->name->value);
-                if ($collation === null) {
-                    throw ErrorCode::UnknownCollation->error($option->collation->name->value);
-                }
-            }
-            if ($option instanceof DatabaseEncryption && !in_array(strtoupper($option->encryption->value), ['Y', 'N'], true)) {
-                throw ErrorCode::WrongValue->error('argument (should be Y or N)', $option->encryption->value);
-            }
-        }
-        if ($charset !== null && $collation !== null && $collation->charset->name !== $charset->name) {
-            throw ErrorCode::CollationCharsetMismatch->error($collation->name, $charset->name);
-        }
-        $name = $statement->name->value ?? $session->variables->database;
-        if ($name === '') {
-            throw $statement->name === null ? ErrorCode::NoDatabase->error() : ErrorCode::WrongDatabaseName->error($name);
-        }
-        if (in_array(strtolower($name), ['information_schema', 'performance_schema'], true)) {
-            throw ErrorCode::DatabaseAccessDenied->error($session->user, explode('@', $session->variables->definer)[1] ?? '%', $name);
-        }
-        $schema = $session->instance->dictionary->schema($name);
-        if ($schema === null) {
-            throw ErrorCode::SchemaMissing->error($name);
-        }
+        $chosen = $this->collation($statement, $session->settings()->release(), $context);
+        $schema = $this->schema($statement, $session);
         $session->transaction->commit();
-        $chosen = $collation ?? $charset?->defaultCollation($release);
         if ($chosen !== null) {
             $schema->collation = $chosen->name;
         }
 
         return new Completion(1, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Checks the options in order and answers the collation they choose, or null when they name
+     * neither a character set nor a collation. A character set alone takes its default collation
+     * in the release.
+     *
+     * @throws \MySqlMemory\Error\SqlError When an option is unknown, two options conflict, or the encryption is not Y or N
+     */
+    public function collation(AlterDatabase $statement, GrammarRelease $release, Context $context): ?Collation
+    {
+        $charset = null;
+        $collation = null;
+        foreach ($statement->options as $option) {
+            if ($option instanceof DatabaseCharset && $option->charset->name !== null) {
+                $charset = $this->charset($option, $charset, $context);
+            }
+            if ($option instanceof DatabaseCollation && $option->collation->name !== null) {
+                $collation = Collation::named($option->collation->name->value);
+                if ($collation === null) {
+                    throw SchemaError::UnknownCollation->error($option->collation->name->value);
+                }
+            }
+            if ($option instanceof DatabaseEncryption && !in_array(strtoupper($option->encryption->value), ['Y', 'N'], true)) {
+                throw DataError::WrongValue->error('argument (should be Y or N)', $option->encryption->value);
+            }
+        }
+        if ($charset !== null && $collation !== null && $collation->charset->name !== $charset->name) {
+            throw SchemaError::CollationCharsetMismatch->error($collation->name, $charset->name);
+        }
+
+        return $collation ?? $charset?->defaultCollation($release);
+    }
+
+    /**
+     * Answers the character set a CHARACTER SET option names, given the one an earlier option
+     * named, and warns of utf8 as an alias of utf8mb3.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the character set is unknown or differs from the earlier one
+     */
+    public function charset(DatabaseCharset $option, ?Charset $earlier, Context $context): Charset
+    {
+        $name = $option->charset->name->value ?? '';
+        $named = Charset::named($name);
+        if ($named === null) {
+            throw SchemaError::UnknownCharacterSet->error($name);
+        }
+        if ($earlier !== null && $earlier->name !== $named->name) {
+            throw SchemaError::ConflictingDeclarations->error('CHARACTER SET ', $earlier->name, 'CHARACTER SET ', $named->name);
+        }
+        if (strcasecmp($name, 'utf8') === 0) {
+            $context->diagnostics->warning(Deprecated::Utf8Alias->code(), Deprecated::Utf8Alias->value);
+        }
+
+        return $named;
+    }
+
+    /**
+     * Answers the database the statement changes: the named one, or the current one.
+     *
+     * @throws \MySqlMemory\Error\SqlError When no database is named or current, the name is empty, the database is a system database, or it does not exist
+     */
+    public function schema(AlterDatabase $statement, Session $session): Schema
+    {
+        $name = $statement->name->value ?? $session->variables->database;
+        if ($name === '') {
+            throw $statement->name === null ? QueryError::NoDatabase->error() : SchemaError::WrongDatabaseName->error($name);
+        }
+        if (in_array(strtolower($name), ['information_schema', 'performance_schema'], true)) {
+            throw AccountError::DatabaseAccessDenied->error($session->user, explode('@', $session->variables->definer)[1] ?? '%', $name);
+        }
+        $schema = $session->instance->dictionary->schema($name);
+        if ($schema === null) {
+            throw SchemaError::SchemaMissing->error($name);
+        }
+
+        return $schema;
     }
 }

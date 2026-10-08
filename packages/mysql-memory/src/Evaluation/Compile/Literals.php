@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Constant;
 use MySqlMemory\Evaluation\Scope;
@@ -128,7 +128,7 @@ final class Literals
         $modes = $this->compiler->settings->modes;
         $value = Temporal::literal($form, $literal->text, $domain->decimals, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'));
         if ($value === null) {
-            throw ErrorCode::WrongValue->error($form, $literal->text);
+            throw DataError::WrongValue->error($form, $literal->text);
         }
 
         return new Constant($domain, $value);

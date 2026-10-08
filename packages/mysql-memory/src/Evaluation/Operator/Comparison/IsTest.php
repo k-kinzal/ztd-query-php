@@ -8,9 +8,9 @@ use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\Retyped;
+use MySqlMemory\Evaluation\Operator\DoubleOperand;
 use MySqlMemory\Evaluation\Operator\Logic;
 use MySqlMemory\Evaluation\Operator\Negation;
-use MySqlMemory\Evaluation\Operator\Numeric;
 use MySqlMemory\Typing\Domain;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
@@ -85,7 +85,7 @@ final class IsTest implements Evaluable
         if ($value instanceof Retyped) {
             return self::absent($value->evaluable, $frame);
         }
-        if ($value instanceof Numeric) {
+        if ($value instanceof DoubleOperand) {
             return self::absent($value->operand, $frame);
         }
         if ($value instanceof Compare && $value->operator === ComparisonOperator::NullSafeEqual) {

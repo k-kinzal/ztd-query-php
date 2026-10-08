@@ -20,6 +20,44 @@ use SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
 final class ProgramErrors
 {
     /**
+     * The error number of each program rule, by the name of the rule.
+     *
+     * It holds every case of ProgramRule.
+     */
+    public const CODES = [
+        'DuplicateParameter' => ProgramError::DuplicateParameter,
+        'DuplicateVariable' => ProgramError::DuplicateVariable,
+        'DuplicateCondition' => ProgramError::DuplicateCondition,
+        'DuplicateCursor' => ProgramError::DuplicateCursor,
+        'RedefinedLabel' => ProgramError::LabelRedefined,
+        'EndLabelMismatch' => ProgramError::EndLabelMismatch,
+        'LeaveWithoutLabel' => ProgramError::LabelMissing,
+        'IterateWithoutLabel' => ProgramError::LabelMissing,
+        'UndefinedCondition' => ProgramError::UndefinedCondition,
+        'UndefinedCursor' => ProgramError::UndefinedCursor,
+        'UndeclaredVariable' => ProgramError::UndeclaredVariable,
+        'ReturnOutsideFunction' => ProgramError::ReturnOutsideFunction,
+        'MissingReturn' => ProgramError::MissingReturn,
+        'DeclarationAfterCursorOrHandler' => ProgramError::DeclarationAfterHandler,
+        'CursorAfterHandler' => ProgramError::CursorAfterHandler,
+        'BadSqlState' => ProgramError::BadSqlState,
+        'ZeroErrorCode' => DataError::WrongValue,
+        'DuplicateHandler' => ProgramError::DuplicateHandler,
+        'SignalConditionKind' => ProgramError::SignalConditionKind,
+        'DuplicateSignalItem' => ProgramError::DuplicateSignalItem,
+        'BadStatement' => ProgramError::ProgramStatement,
+        'RecursiveCreate' => ProgramError::RecursiveCreate,
+        'NestedAlterOrDrop' => ProgramError::NestedProgramChange,
+        'EventRecursion' => ProgramError::EventRecursion,
+        'ResultSet' => ProgramError::ResultSetFromProgram,
+        'CommitInFunction' => ProgramError::CommitInFunction,
+        'FunctionStatement' => ProgramError::FunctionStatement,
+        'OldRowUpdate' => ProgramError::TriggerRowChange,
+        'AfterRowUpdate' => ProgramError::TriggerRowChange,
+        'NoNewRow' => ProgramError::TriggerRowMissing,
+    ];
+
+    /**
      * Answers the error of a program problem, with the message SQL Semantics wrote for it.
      */
     public function error(ProgramProblem $problem): SqlError
@@ -40,10 +78,10 @@ final class ProgramErrors
         $name = $problem->name->name->value;
 
         return match ($problem->refusal) {
-            KindRefusal::NotView => ErrorCode::WrongObject->error($schema, $name, 'VIEW'),
-            KindRefusal::NotBaseTable => ErrorCode::WrongObject->error($schema, $name, 'BASE TABLE'),
-            KindRefusal::UnknownTable => ErrorCode::BadTable->error($schema . '.' . $name),
-            KindRefusal::NoSuchTable => ErrorCode::NoSuchTable->error($schema, $name),
+            KindRefusal::NotView => SchemaError::WrongObject->error($schema, $name, 'VIEW'),
+            KindRefusal::NotBaseTable => SchemaError::WrongObject->error($schema, $name, 'BASE TABLE'),
+            KindRefusal::UnknownTable => SchemaError::BadTable->error($schema . '.' . $name),
+            KindRefusal::NoSuchTable => QueryError::NoSuchTable->error($schema, $name),
         };
     }
 
@@ -52,35 +90,6 @@ final class ProgramErrors
      */
     public function code(ProgramRule $rule): ErrorCode
     {
-        return match ($rule) {
-            ProgramRule::DuplicateParameter => ErrorCode::DuplicateParameter,
-            ProgramRule::DuplicateVariable => ErrorCode::DuplicateVariable,
-            ProgramRule::DuplicateCondition => ErrorCode::DuplicateCondition,
-            ProgramRule::DuplicateCursor => ErrorCode::DuplicateCursor,
-            ProgramRule::RedefinedLabel => ErrorCode::LabelRedefined,
-            ProgramRule::EndLabelMismatch => ErrorCode::EndLabelMismatch,
-            ProgramRule::LeaveWithoutLabel, ProgramRule::IterateWithoutLabel => ErrorCode::LabelMissing,
-            ProgramRule::UndefinedCondition => ErrorCode::UndefinedCondition,
-            ProgramRule::UndefinedCursor => ErrorCode::UndefinedCursor,
-            ProgramRule::UndeclaredVariable => ErrorCode::UndeclaredVariable,
-            ProgramRule::ReturnOutsideFunction => ErrorCode::ReturnOutsideFunction,
-            ProgramRule::MissingReturn => ErrorCode::MissingReturn,
-            ProgramRule::DeclarationAfterCursorOrHandler => ErrorCode::DeclarationAfterHandler,
-            ProgramRule::CursorAfterHandler => ErrorCode::CursorAfterHandler,
-            ProgramRule::BadSqlState => ErrorCode::BadSqlState,
-            ProgramRule::ZeroErrorCode => ErrorCode::WrongValue,
-            ProgramRule::DuplicateHandler => ErrorCode::DuplicateHandler,
-            ProgramRule::SignalConditionKind => ErrorCode::SignalConditionKind,
-            ProgramRule::DuplicateSignalItem => ErrorCode::DuplicateSignalItem,
-            ProgramRule::BadStatement => ErrorCode::ProgramStatement,
-            ProgramRule::RecursiveCreate => ErrorCode::RecursiveCreate,
-            ProgramRule::NestedAlterOrDrop => ErrorCode::NestedProgramChange,
-            ProgramRule::EventRecursion => ErrorCode::EventRecursion,
-            ProgramRule::ResultSet => ErrorCode::ResultSetFromProgram,
-            ProgramRule::CommitInFunction => ErrorCode::CommitInFunction,
-            ProgramRule::FunctionStatement => ErrorCode::FunctionStatement,
-            ProgramRule::OldRowUpdate, ProgramRule::AfterRowUpdate => ErrorCode::TriggerRowChange,
-            ProgramRule::NoNewRow => ErrorCode::TriggerRowMissing,
-        };
+        return self::CODES[$rule->name];
     }
 }

@@ -6,7 +6,7 @@ namespace MySqlMemory\Command\Account;
 
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -69,7 +69,7 @@ final class RoleCommand implements Command
         foreach ($users as $user) {
             $identity = $names->identity($user, $session);
             if ($statement->roles->set === RoleSet::All && $accounts->find($identity) === null) {
-                throw new SqlError(ErrorCode::UnknownAuthorizationId, ErrorCode::UnknownAuthorizationId->message($identity->backquoted()), null, [[ErrorCode::FailedDefaultRoles->value, ErrorCode::FailedDefaultRoles->message()]]);
+                throw new SqlError(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($identity->backquoted()), null, [[AccountError::FailedDefaultRoles->value, AccountError::FailedDefaultRoles->message()]]);
             }
             $chosen[] = [$identity, $this->selected($statement->roles, $identity, $session)];
         }
@@ -103,7 +103,7 @@ final class RoleCommand implements Command
         };
         foreach ($selection->set === RoleSet::Named ? $roles : [] as $role) {
             if (!isset($granted[$role->key()])) {
-                throw ErrorCode::RoleNotGranted->error($role->backquoted(), $account->backquoted());
+                throw AccountError::RoleNotGranted->error($role->backquoted(), $account->backquoted());
             }
         }
         usort($roles, static fn (Identity $a, Identity $b): int => strcmp($a->backquoted(), $b->backquoted()));

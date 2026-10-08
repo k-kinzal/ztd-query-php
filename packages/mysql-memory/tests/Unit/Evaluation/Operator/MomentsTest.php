@@ -15,6 +15,7 @@ use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 #[CoversClass(Moments::class)]
 #[Small]
@@ -123,6 +124,28 @@ final class MomentsTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['2024', '1975', '1999', '2155', '0']], $result->rows);
+    }
+
+    public function testClockReadsTheTimeOfADatetimeTheTimeOfTextAndTheDigitsOfANumber(): void
+    {
+        $instance = new Instance();
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables($instance->catalog, $instance->globals), 0.0);
+        $text = Domain::string(30, Collation::known('utf8mb4_0900_ai_ci'));
+        $moments = new Moments();
+
+        self::assertSame([false, 10, 20, 30, '5', ''], $moments->clock('2024-01-02 10:20:30.5', $text, false, '2024-01-02 10:20:30.5', $context));
+        self::assertSame([true, 1, 2, 3, '', 'x'], $moments->clock('-01:02:03x', $text, false, '-01:02:03x', $context));
+        self::assertSame([false, 1, 2, 3, '', ''], $moments->clock(10203, Domain::integer(), true, '10203', $context));
+        self::assertSame([], $context->diagnostics->conditions);
+    }
+
+    public function testClockAnswersNullWithAWarningForMinutesOutOfRange(): void
+    {
+        $instance = new Instance();
+        $context = new Context(new SqlModes([]), new Diagnostics(), new Variables($instance->catalog, $instance->globals), 0.0);
+
+        self::assertNull((new Moments())->clock('10:61:00', Domain::string(8, Collation::known('utf8mb4_0900_ai_ci')), false, '10:61:00', $context));
+        self::assertSame([['Warning', 1292, "Truncated incorrect time value: '10:61:00'"]], $context->diagnostics->conditions);
     }
 
     public function testDigitsWritesANumberAsDecimalText(): void

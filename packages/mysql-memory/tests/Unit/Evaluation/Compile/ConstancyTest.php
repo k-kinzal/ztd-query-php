@@ -52,6 +52,23 @@ final class ConstancyTest extends TestCase
         self::assertSame([Constancy::Resolved, Constancy::Row], [Constancy::within($call, $operation->facts, 1, true, []), Constancy::within($call, $operation->facts, 0, true, [])]);
     }
 
+    public function testFormTellsHowLongANodeStaysTheSameByItsForm(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @v, @@sql_mode, CURRENT_USER, RAND(), (@v := 1)');
+        $variable = $operation->field(0)->expression;
+        $system = $operation->field(1)->expression;
+        $keyword = $operation->field(2)->expression;
+        $call = $operation->field(3)->expression;
+        $assignment = $operation->field(4)->expression;
+        self::assertNotNull($variable);
+        self::assertNotNull($system);
+        self::assertNotNull($keyword);
+        self::assertNotNull($call);
+        self::assertNotNull($assignment);
+
+        self::assertSame([Constancy::Row, Constancy::Statement, Constancy::Statement, Constancy::Row, Constancy::Row], [Constancy::form($variable, $operation->facts, true, ['v'], true), Constancy::form($system, $operation->facts, true, [], true), Constancy::form($keyword, $operation->facts, true, [], true), Constancy::form($call, $operation->facts, true, [], true), Constancy::form($assignment, $operation->facts, true, [], true)]);
+    }
+
     public function testColumnMakesAColumnOfTheBlockVary(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT a');

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Prepared;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
@@ -56,7 +56,7 @@ final class PreparedCommand implements Command
         $statement = $operation->statement;
         if ($statement instanceof Deallocate) {
             if (!isset($session->prepared[strtolower($statement->name->value)])) {
-                throw ErrorCode::UnknownStatementHandler->error($statement->name->value, 'DEALLOCATE PREPARE');
+                throw StatementError::UnknownStatementHandler->error($statement->name->value, 'DEALLOCATE PREPARE');
             }
             unset($session->prepared[strtolower($statement->name->value)]);
 
@@ -78,11 +78,11 @@ final class PreparedCommand implements Command
         if (count($statements) > 1) {
             $offset = (int) strpos($text, ltrim($statements[1]), strlen($statements[0]));
 
-            throw ErrorCode::ParseError->error(mb_strcut(substr($text, $offset), 0, 80, 'UTF-8'), substr_count(substr($text, 0, $offset), "\n") + 1);
+            throw StatementError::ParseError->error(mb_strcut(substr($text, $offset), 0, 80, 'UTF-8'), substr_count(substr($text, 0, $offset), "\n") + 1);
         }
         $prepared = $session->analyze($text, true);
         if ($prepared->statement instanceof Prepare || $prepared->statement instanceof Execute || $prepared->statement instanceof Deallocate) {
-            throw ErrorCode::UnsupportedPreparedStatement->error();
+            throw StatementError::UnsupportedPreparedStatement->error();
         }
         (new Problems())->raise($prepared, $session);
         $parameters = count(array_filter($session->semantics()->parser()->tokenize($text), static fn ($token): bool => $token->name === 'PARAM_MARKER'));
@@ -100,11 +100,11 @@ final class PreparedCommand implements Command
     {
         $prepared = $session->prepared[strtolower($statement->name->value)] ?? null;
         if ($prepared === null) {
-            throw ErrorCode::UnknownStatementHandler->error($statement->name->value, 'EXECUTE');
+            throw StatementError::UnknownStatementHandler->error($statement->name->value, 'EXECUTE');
         }
         [$text, $count] = $prepared;
         if (count($statement->variables) !== $count) {
-            throw ErrorCode::WrongArguments->error('EXECUTE');
+            throw StatementError::WrongArguments->error('EXECUTE');
         }
         $parameters = [];
         foreach ($statement->variables as $variable) {

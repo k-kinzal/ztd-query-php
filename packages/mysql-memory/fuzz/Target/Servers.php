@@ -39,6 +39,7 @@ final class Servers
             $password = $endpoint->password;
         }
         $native = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $this->clean($native);
         $globals = [];
         $statement = $native->query('SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.global_variables');
         foreach ($statement === false ? [] : $statement->fetchAll(PDO::FETCH_KEY_PAIR) as $name => $value) {
@@ -50,6 +51,60 @@ final class Servers
         $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1));
 
         return [new Differential($dsn, $user, $password, $server->dsn(), $emulate), 'mysql-' . $version, $server];
+    }
+
+    /**
+     * Removes what statements of earlier runs left on the MySQL server outside the fixture database.
+     *
+     * Accounts and roles other than root and the server's own, foreign servers, resource groups
+     * other than the defaults, and the database, table and column grants of root are dropped,
+     * so that the MySQL server starts a run in the state mysql-memory starts in.
+     */
+    public function clean(PDO $native): void
+    {
+        $statements = [];
+        foreach ($this->rows($native, 'SELECT User, Host FROM mysql.user') as [$name, $host]) {
+            if (!in_array($name, ['root', 'healthchecker', 'mysql.infoschema', 'mysql.session', 'mysql.sys'], true)) {
+                $statements[] = 'DROP USER IF EXISTS ' . $native->quote($name) . '@' . $native->quote($host);
+            }
+        }
+        foreach ($this->rows($native, 'SELECT Server_name FROM mysql.servers') as [$name]) {
+            $statements[] = 'DROP SERVER IF EXISTS `' . str_replace('`', '``', $name) . '`';
+        }
+        foreach ($this->rows($native, 'SELECT RESOURCE_GROUP_NAME FROM information_schema.RESOURCE_GROUPS') as [$name]) {
+            if (!in_array($name, ['SYS_default', 'USR_default'], true)) {
+                $statements[] = 'DROP RESOURCE GROUP `' . str_replace('`', '``', $name) . '` FORCE';
+            }
+        }
+        foreach (['db' => 'Db', 'tables_priv' => 'Db', 'columns_priv' => 'Db', 'procs_priv' => 'Db'] as $table => $column) {
+            if ($this->rows($native, "SELECT 1 FROM mysql.{$table} WHERE User = 'root'") !== []) {
+                $statements[] = "DELETE FROM mysql.{$table} WHERE User = 'root'";
+            }
+        }
+        $statements[] = 'FLUSH PRIVILEGES';
+        foreach ($statements as $statement) {
+            $native->exec($statement);
+        }
+    }
+
+    /**
+     * Answers the rows of a query as lists of strings.
+     *
+     * @return list<list<string>>
+     */
+    public function rows(PDO $native, string $sql): array
+    {
+        $statement = $native->query($sql);
+        $rows = [];
+        foreach ($statement === false ? [] : $statement->fetchAll(PDO::FETCH_NUM) as $row) {
+            $values = [];
+            foreach (is_array($row) ? $row : [] as $value) {
+                $values[] = is_scalar($value) ? (string) $value : '';
+            }
+            $rows[] = $values;
+        }
+
+        return $rows;
     }
 
     /**

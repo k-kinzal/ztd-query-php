@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
@@ -81,19 +82,58 @@ final class Blocks
         if ($select->having !== null) {
             $input = new Filter($input, $compiler->compile($select->having, $evaluation));
         }
-        $fields = [];
-        foreach ($compiler->facts->query($select)->projection as $field) {
-            if (!$field instanceof Field) {
-                throw ErrorCode::NotSupportedYet->error('a star over an open relation');
-            }
-            $fields[] = $field;
-        }
+        $fields = $this->fields($select);
         $expressions = array_map(fn (Field $field): Evaluable => $compiler->names->field($field, $evaluation), $fields);
         $rolled = array_map(static fn (Field $field): bool => $grouping->rolls($select, $field), $fields);
         if ($select->groupBy?->modifier !== null) {
             $expressions = array_map(static fn (Field $field, Evaluable $expression): Evaluable => $grouping->output($field, $expression), $fields, $expressions);
         }
         $domains = array_map(static fn (Evaluable $expression) => $expression->domain(), $expressions);
+        [$keys, $expressions] = $this->sortKeys($select, $fields, $domains, $expressions, $evaluation);
+        $root = $this->distinct($select, $fields, $input, $expressions, $domains);
+        if ($keys !== []) {
+            $root = new Sort($root, $keys);
+        }
+        $root = $this->limit($root, $select->limit, $outer);
+        $root = $this->limit($root, $select->late?->limit, $outer);
+
+        return new QueryPlan($root, $domains, array_map(fn (Field $field): string => $this->name($field), $fields), $this->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== []));
+    }
+
+    /**
+     * Answers the fields of the select list of a block.
+     *
+     * @return list<Field>
+     * @throws SqlError When the select list holds a star over a relation of unknown columns
+     */
+    public function fields(Select $select): array
+    {
+        $fields = [];
+        foreach ($this->planner->compiler->facts->query($select)->projection as $field) {
+            if (!$field instanceof Field) {
+                throw StatementError::NotSupportedYet->error('a star over an open relation');
+            }
+            $fields[] = $field;
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Answers the sort keys of a block and its select list followed by the keys that are not in it.
+     *
+     * A key that names a select item sorts by that item; another is compiled after the select
+     * list, but for a key constant for the statement, which does not sort.
+     *
+     * @param list<Field> $fields The fields of the select list
+     * @param list<Domain> $domains The domains of the select list
+     * @param list<Evaluable> $expressions The select list
+     * @return array{list<array{int, Domain, bool}>, list<Evaluable>}
+     * @throws SqlError When a key cannot be compiled
+     */
+    public function sortKeys(Select $select, array $fields, array $domains, array $expressions, Scope $evaluation): array
+    {
+        $compiler = $this->planner->compiler;
         $keys = [];
         foreach ([...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)] as $item) {
             $resolution = ($item->expression instanceof ColumnUse || $item->expression instanceof OutputOrdinal) && $compiler->facts->covers($item->expression) ? $compiler->facts->scalar($item->expression)->resolution : null;
@@ -109,18 +149,27 @@ final class Blocks
             $keys[] = [count($expressions), $key->domain(), $item->direction?->value === 'DESC'];
             $expressions[] = $key;
         }
-        $root = $this->distinct($select, $fields, $input, $expressions, $domains);
-        if ($keys !== []) {
-            $root = new Sort($root, $keys);
-        }
-        $root = $this->limit($root, $select->limit, $outer);
-        $root = $this->limit($root, $select->late?->limit, $outer);
 
-        $buffered = (in_array(SelectOption::BufferResult, $select->options, true) || (in_array(SelectOption::Distinct, $select->options, true) && (new ConstantTables($compiler->facts))->joined($select) > 1)) && !$this->empty($select, $outer);
-        $materialized = $keys !== [] || in_array(SelectOption::Distinct, $select->options, true);
+        return [$keys, $expressions];
+    }
+
+    /**
+     * Answers the base column each output column of a block reads: none for a rolled-up item,
+     * unless the rows pass through a temporary table, and of no key when the result is buffered.
+     *
+     * @param list<Field> $fields The fields of the select list
+     * @param list<bool> $rolled Whether each item is a grouping expression of a block WITH ROLLUP
+     * @param list<Domain> $domains The domains of the select list
+     * @param bool $sorted Whether the block sorts its rows
+     * @return list<ColumnOrigin|null>
+     */
+    public function origins(Select $select, ?Scope $outer, Scope $scope, array $fields, array $rolled, array $domains, bool $sorted): array
+    {
+        $buffered = (in_array(SelectOption::BufferResult, $select->options, true) || (in_array(SelectOption::Distinct, $select->options, true) && (new ConstantTables($this->planner->compiler->facts))->joined($select) > 1)) && !$this->empty($select, $outer);
+        $materialized = $sorted || in_array(SelectOption::Distinct, $select->options, true);
         $origins = array_map(fn (Field $field, bool $rolled, Domain $domain): ?ColumnOrigin => $rolled ? ($materialized ? $this->planner->materialized([$domain])[0] : null) : $this->origin($field, $scope), $fields, $rolled, $domains);
 
-        return new QueryPlan($root, $domains, array_map(fn (Field $field): string => $this->name($field), $fields), $buffered ? array_map(static fn (?ColumnOrigin $origin): ?ColumnOrigin => $origin?->unkeyed(), $origins) : $origins);
+        return $buffered ? array_map(static fn (?ColumnOrigin $origin): ?ColumnOrigin => $origin?->unkeyed(), $origins) : $origins;
     }
 
     /**
@@ -246,7 +295,7 @@ final class Blocks
             return (new Views($this->planner))->table($view);
         }
         if ($stored === null) {
-            throw ErrorCode::NoSuchTable->error($schema, $table->table->name->value);
+            throw QueryError::NoSuchTable->error($schema, $table->table->name->value);
         }
         $columns = $stored->definition->columns;
         $visible = array_values(array_filter(array_keys($columns), static fn (int $position): bool => !$columns[$position]->invisible));
@@ -285,7 +334,7 @@ final class Blocks
         $frame = new Frame($this->planner->compiler->connection->context);
         $number = Convert::toInteger($evaluable->evaluate($frame), $evaluable->domain(), $frame->context, true);
         if ($number === null) {
-            throw ErrorCode::WrongArguments->error('LIMIT');
+            throw StatementError::WrongArguments->error('LIMIT');
         }
 
         return $number < 0 ? PHP_INT_MAX : $number;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Family\Casts;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
@@ -21,10 +21,10 @@ use MySqlMemory\Evaluation\Operator\Comparison\IsTest;
 use MySqlMemory\Evaluation\Operator\Comparison\Membership;
 use MySqlMemory\Evaluation\Operator\Comparison\Pattern;
 use MySqlMemory\Evaluation\Operator\Comparison\Range;
+use MySqlMemory\Evaluation\Operator\DoubleOperand;
 use MySqlMemory\Evaluation\Operator\Logic;
 use MySqlMemory\Evaluation\Operator\Minus;
 use MySqlMemory\Evaluation\Operator\Negation;
-use MySqlMemory\Evaluation\Operator\Numeric;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Typing\Collations;
 use MySqlMemory\Typing\Domain;
@@ -155,7 +155,7 @@ final class Operators
      */
     public function numeric(Evaluable $operand, Scalar $node): Evaluable
     {
-        return $operand->domain()->kind === Kind::Double ? $operand : new Numeric($operand, $this->compiler->constancy($node, true, false)->constant());
+        return $operand->domain()->kind === Kind::Double ? $operand : new DoubleOperand($operand, $this->compiler->constancy($node, true, false)->constant());
     }
 
     /**
@@ -166,7 +166,7 @@ final class Operators
         $kind = $operand->domain()->kind;
         $converted = in_array($kind, [Kind::String, Kind::Json, Kind::Date, Kind::Time, Kind::DateTime], true);
 
-        return $converted && $this->compiler->constancy($node, true, false)->constant() ? new Numeric($operand, true) : $operand;
+        return $converted && $this->compiler->constancy($node, true, false)->constant() ? new DoubleOperand($operand, true) : $operand;
     }
 
     /**
@@ -330,9 +330,9 @@ final class Operators
         $modes = [Comparator::of($operand->domain(), $low->domain(), 'between', $connection)->mode, Comparator::of($operand->domain(), $high->domain(), 'between', $connection)->mode];
         $numeric = static fn (Kind $mode): bool => in_array($mode, [Kind::Double, Kind::Decimal, Kind::Integer], true);
         if ($modes === [Kind::Double, Kind::Double] || (in_array(Kind::String, $modes, true) && ($numeric($modes[0]) || $numeric($modes[1])))) {
-            $operand = $operand->domain()->kind === Kind::Double ? $operand : new Numeric($operand, false);
-            $low = $low->domain()->kind === Kind::Double ? $low : new Numeric($low, false);
-            $high = $high->domain()->kind === Kind::Double ? $high : new Numeric($high, false);
+            $operand = $operand->domain()->kind === Kind::Double ? $operand : new DoubleOperand($operand, false);
+            $low = $low->domain()->kind === Kind::Double ? $low : new DoubleOperand($low, false);
+            $high = $high->domain()->kind === Kind::Double ? $high : new DoubleOperand($high, false);
         }
 
         return new Range($operand, $low, $high, Comparator::of($operand->domain(), $low->domain(), 'between', $connection), Comparator::of($operand->domain(), $high->domain(), 'between', $connection), $node->negated, $this->compiler->domain($node));
@@ -364,8 +364,8 @@ final class Operators
         }
         $fixed = $fixed && count(array_unique(array_map(static fn (Kind $mode): string => $mode->name, $modes))) === 1;
         if (array_unique(array_map(static fn (Kind $mode): string => $mode->name, $modes)) === [Kind::Double->name]) {
-            $operand = $operand->domain()->kind === Kind::Double ? $operand : new Numeric($operand, false);
-            $compiled = array_map(static fn (Evaluable $element): Evaluable => $element->domain()->kind === Kind::Double ? $element : new Numeric($element, false), $compiled);
+            $operand = $operand->domain()->kind === Kind::Double ? $operand : new DoubleOperand($operand, false);
+            $compiled = array_map(static fn (Evaluable $element): Evaluable => $element->domain()->kind === Kind::Double ? $element : new DoubleOperand($element, false), $compiled);
         }
         $elements = array_map(static fn (Evaluable $element): array => [$element, Comparator::of($operand->domain(), $element->domain(), 'in', $connection)], $compiled);
 
@@ -388,7 +388,7 @@ final class Operators
         $pattern = $this->compiler->compile($node->pattern, $scope);
         $constancy = $node->escape === null ? Constancy::Resolved : $this->compiler->constancy($node->escape);
         if ($constancy === Constancy::Row) {
-            throw ErrorCode::WrongArguments->error('ESCAPE');
+            throw StatementError::WrongArguments->error('ESCAPE');
         }
         $escape = match (true) {
             $node->escape === null => null,
@@ -411,7 +411,7 @@ final class Operators
         $value = $compiled->evaluate(new Frame($this->compiler->connection->context));
         $text = Convert::toText($value, $compiled->domain());
         if ($text !== null && (new Strings())->count($text, $compiled->domain()) > 1) {
-            throw ErrorCode::WrongArguments->error('ESCAPE');
+            throw StatementError::WrongArguments->error('ESCAPE');
         }
 
         return new Constant($compiled->domain(), $value);

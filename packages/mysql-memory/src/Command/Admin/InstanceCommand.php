@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -56,13 +57,13 @@ final class InstanceCommand implements Command
         $session->transaction->commit();
         $action = $statement->action;
         if ($action instanceof ReloadTls && $action->channel !== null && !in_array(strtolower($action->channel->value), ['mysql_main', 'mysql_admin'], true)) {
-            throw ErrorCode::SyntaxError->error();
+            throw StatementError::SyntaxError->error();
         }
         if ($action instanceof RotateMasterKey) {
-            throw strtoupper($action->keyring->value) === 'BINLOG' ? ErrorCode::BinlogEncryptionOff->error() : ErrorCode::KeyringMissing->error();
+            throw strtoupper($action->keyring->value) === 'BINLOG' ? AdministrationError::BinlogEncryptionOff->error() : AdministrationError::KeyringMissing->error();
         }
         if ($action instanceof ReloadKeyring) {
-            throw ErrorCode::KeyringReloadFailed->error();
+            throw AdministrationError::KeyringReloadFailed->error();
         }
 
         return new Completion();

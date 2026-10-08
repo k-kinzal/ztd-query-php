@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -56,13 +57,13 @@ final class FlushCommand implements Command
             foreach ($statement->tables as $table) {
                 $schema = $table->name->schema->value ?? $session->variables->database;
                 if ($schema === '') {
-                    throw ErrorCode::NoDatabase->error();
+                    throw QueryError::NoDatabase->error();
                 }
                 if ($session->instance->dictionary->schema($schema) === null) {
-                    throw ErrorCode::BadDatabase->error($schema);
+                    throw QueryError::BadDatabase->error($schema);
                 }
                 if ($session->instance->dictionary->table($schema, $table->name->name->value) === null) {
-                    throw ErrorCode::NoSuchTable->error($schema, $table->name->name->value);
+                    throw QueryError::NoSuchTable->error($schema, $table->name->name->value);
                 }
                 $locks[] = [$schema, $table->name->name->value, $table->name->name->value, false];
             }
@@ -73,7 +74,7 @@ final class FlushCommand implements Command
         if ($statement instanceof Flush) {
             foreach ($statement->items as $item) {
                 if ($item->option === FlushOption::RelayLogs && $item->channel !== null && $item->channel->value !== '') {
-                    throw ErrorCode::ReplicaChannelMissing->error($item->channel->value);
+                    throw AdministrationError::ReplicaChannelMissing->error($item->channel->value);
                 }
                 if ($item->option === FlushOption::BinaryLogs || $item->option === FlushOption::Logs) {
                     $session->instance->registry->binaryLog->rotate();

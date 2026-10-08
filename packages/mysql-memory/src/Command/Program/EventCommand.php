@@ -6,8 +6,11 @@ namespace MySqlMemory\Command\Program;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\Event;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
@@ -74,20 +77,20 @@ final class EventCommand implements Command
         if ($statement instanceof AlterEvent) {
             $event = $schema === null ? null : ($schema->events[$key] ?? null);
             if ($event === null) {
-                throw ErrorCode::EventMissing->error($statement->name->name->value);
+                throw ProgramError::EventMissing->error($statement->name->name->value);
             }
             $this->alter($statement, $event, $session, $schedule);
         } else {
             if ($schema !== null && isset($schema->events[$key])) {
                 if (!$statement->ifNotExists) {
-                    throw ErrorCode::EventExists->error($statement->name->name->value);
+                    throw ProgramError::EventExists->error($statement->name->name->value);
                 }
-                $context->note(ErrorCode::EventExists, $statement->name->name->value);
+                $context->note(ProgramError::EventExists, $statement->name->name->value);
 
                 return new Completion(0, 0, $context->diagnostics->count());
             }
             if ($schema === null) {
-                throw ErrorCode::BadDatabase->error($database);
+                throw QueryError::BadDatabase->error($database);
             }
             assert($schedule !== null);
             $now = ProgramSource::now();
@@ -97,10 +100,10 @@ final class EventCommand implements Command
         if ($event->at !== null && $event->at < ProgramSource::now() && $schedule !== null) {
             if (!$event->preserve && $statement instanceof CreateEvent) {
                 unset($dictionary->schemas[$event->schema]->events[strtolower($event->name)]);
-                $context->note(ErrorCode::EventDroppedInPast);
+                $context->note(ProgramError::EventDroppedInPast);
             } else {
                 $event->status = 'DISABLED';
-                $context->note(ErrorCode::EventDisabledInPast);
+                $context->note(ProgramError::EventDisabledInPast);
             }
         }
 
@@ -123,14 +126,14 @@ final class EventCommand implements Command
             $database = $renamed->schema->value ?? $session->variables->database;
             $target = $dictionary->schema($database);
             if ($target === null) {
-                throw ErrorCode::BadDatabase->error($database);
+                throw QueryError::BadDatabase->error($database);
             }
             $key = strtolower($renamed->name->value);
             if ($database === $event->schema && $key === strtolower($event->name)) {
-                throw ErrorCode::SameEventName->error();
+                throw ProgramError::SameEventName->error();
             }
             if (isset($target->events[$key])) {
-                throw ErrorCode::EventExists->error($renamed->name->value);
+                throw ProgramError::EventExists->error($renamed->name->value);
             }
             $move = [$target, $renamed->name->value];
         }
@@ -190,21 +193,21 @@ final class EventCommand implements Command
         $quantity = $planner->compiler->compile($schedule->quantity, new Scope());
         $value = $quantity->evaluate(new Frame($context));
         if ($value === null) {
-            throw ErrorCode::WrongValue->error('INTERVAL', 'NULL');
+            throw DataError::WrongValue->error('INTERVAL', 'NULL');
         }
         if (in_array($schedule->unit, [IntervalUnit::Microsecond, IntervalUnit::SecondMicrosecond, IntervalUnit::MinuteMicrosecond, IntervalUnit::HourMicrosecond, IntervalUnit::DayMicrosecond], true)) {
-            throw ErrorCode::NotSupportedYet->error('MICROSECOND');
+            throw StatementError::NotSupportedYet->error('MICROSECOND');
         }
         $simple = in_array($schedule->unit, [IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year], true);
         $text = (string) Convert::toText($value, $quantity->domain());
         $number = $simple ? (string) Convert::toInteger($value, $quantity->domain(), $context) : $this->composite($text, $schedule->unit);
         if ((int) $number <= 0 && !str_contains($number, "'")) {
-            throw ErrorCode::IntervalNotPositive->error();
+            throw ProgramError::IntervalNotPositive->error();
         }
         $starts = $schedule->starts === null ? ProgramSource::now() : $this->time($schedule->starts, 'STARTS', $planner, $context);
         $ends = $schedule->ends === null ? null : $this->time($schedule->ends, 'ENDS', $planner, $context);
         if ($ends !== null && ($ends < $starts || $ends < ProgramSource::now())) {
-            throw ErrorCode::EndsBeforeStarts->error();
+            throw ProgramError::EndsBeforeStarts->error();
         }
 
         return [null, [$number, $schedule->unit->value], $starts, $ends];
@@ -230,12 +233,12 @@ final class EventCommand implements Command
         [$sizes, $separators] = $formats;
         $trimmed = ltrim($text);
         if (str_starts_with($trimmed, '-')) {
-            throw ErrorCode::IntervalNotPositive->error();
+            throw ProgramError::IntervalNotPositive->error();
         }
         preg_match_all('/[0-9]+/', $trimmed, $groups);
         $parts = array_map('intval', $groups[0]);
         if (count($parts) > count($sizes)) {
-            throw ErrorCode::WrongValue->error('INTERVAL', $text);
+            throw DataError::WrongValue->error('INTERVAL', $text);
         }
         $parts = array_pad($parts, -count($sizes), 0);
         $total = 0;
@@ -243,7 +246,7 @@ final class EventCommand implements Command
             $total = $total * ($sizes[$position] ?? 1) + $part;
         }
         if ($total <= 0) {
-            throw ErrorCode::IntervalNotPositive->error();
+            throw ProgramError::IntervalNotPositive->error();
         }
         $written = [];
         for ($position = count($sizes) - 1; $position > 0; $position--) {
@@ -273,10 +276,10 @@ final class EventCommand implements Command
         $parts = $value === null ? null : Temporal::parseDateTime($text);
         if ($parts === null || !Temporal::valid($parts[0], $parts[1], $parts[2]) || $parts[1] === 0 || $parts[2] === 0 || $parts[3] > 23 || $parts[4] > 59 || $parts[5] > 59) {
             if ($value !== null) {
-                $context->warnMessage(ErrorCode::TruncatedWrongValue, ErrorCode::WrongValue->message('datetime', $text));
+                $context->warnMessage(DataError::TruncatedWrongValue, DataError::WrongValue->message('datetime', $text));
             }
 
-            throw ErrorCode::WrongValue->error($clause, $text);
+            throw DataError::WrongValue->error($clause, $text);
         }
 
         return Temporal::dateTime($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], 0, 0);

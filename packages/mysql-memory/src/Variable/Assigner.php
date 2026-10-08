@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Variable;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Session\SqlModes;
@@ -49,19 +51,19 @@ final class Assigner
     {
         $definition = $this->variables->catalog->find($name);
         if ($definition === null) {
-            throw ErrorCode::UnknownSystemVariable->error($name);
+            throw AdministrationError::UnknownSystemVariable->error($name);
         }
         if ($definition->writability === Writability::ReadOnly) {
-            throw ErrorCode::IncorrectGlobalLocalVariable->error($definition->name, 'read only');
+            throw AdministrationError::IncorrectGlobalLocalVariable->error($definition->name, 'read only');
         }
         if ($scope === Scope::Session && !$definition->reach->session()) {
-            throw ErrorCode::GlobalVariable->error($definition->name);
+            throw AdministrationError::GlobalVariable->error($definition->name);
         }
         if ($scope === Scope::Global && !$definition->reach->global()) {
-            throw ErrorCode::LocalVariable->error($definition->name);
+            throw AdministrationError::LocalVariable->error($definition->name);
         }
         if ($scope === Scope::Session && $definition->writability === Writability::GlobalOnly) {
-            throw ErrorCode::VariableIsReadonly->error('SESSION', $definition->name, 'GLOBAL');
+            throw AdministrationError::VariableIsReadonly->error('SESSION', $definition->name, 'GLOBAL');
         }
         $checked = $domain === null ? ($scope === Scope::Global ? $definition->default : $this->variables->globals->value($definition)) : $this->check($definition, $value, $domain);
         if ($scope === Scope::Global) {
@@ -98,9 +100,9 @@ final class Assigner
         }
         if ($value !== null && $domain->kind === Kind::Integer || $domain->kind === Kind::Decimal || $domain->kind === Kind::Double) {
             if ($domain->kind !== Kind::Integer) {
-                throw ErrorCode::WrongTypeForVariable->error($definition->name);
+                throw AdministrationError::WrongTypeForVariable->error($definition->name);
             }
-            throw ErrorCode::WrongValueForVariable->error($definition->name, $text);
+            throw AdministrationError::WrongValueForVariable->error($definition->name, $text);
         }
         $word = strtoupper($text);
         if (in_array($word, ['ON', 'TRUE', '1'], true)) {
@@ -110,7 +112,7 @@ final class Assigner
             return 'OFF';
         }
 
-        throw ErrorCode::WrongValueForVariable->error($definition->name, $text);
+        throw AdministrationError::WrongValueForVariable->error($definition->name, $text);
     }
 
     /**
@@ -121,16 +123,16 @@ final class Assigner
     public function integer(Definition $definition, int|float|string|null $value, Domain $domain, string $text): int
     {
         if ($value === null) {
-            throw ErrorCode::WrongValueForVariable->error($definition->name, 'NULL');
+            throw AdministrationError::WrongValueForVariable->error($definition->name, 'NULL');
         }
         if ($domain->kind !== Kind::Integer && $domain->kind !== Kind::Year) {
-            throw ErrorCode::WrongTypeForVariable->error($definition->name);
+            throw AdministrationError::WrongTypeForVariable->error($definition->name);
         }
         $number = (int) $value;
         $minimum = $definition->minimum ?? PHP_INT_MIN;
         $maximum = $definition->maximum ?? PHP_INT_MAX;
         if ($number < $minimum || $number > $maximum || ($domain->unsigned && $number < 0)) {
-            $this->context->warning(ErrorCode::TruncatedWrongValue, $definition->name, $text);
+            $this->context->warning(DataError::TruncatedWrongValue, $definition->name, $text);
             $number = $number < $minimum && !($domain->unsigned && $number < 0) ? $minimum : $maximum;
         }
 
@@ -146,7 +148,7 @@ final class Assigner
     {
         if ($value === null) {
             if (!in_array($definition->name, ['character_set_results', 'session_track_system_variables', 'innodb_tmpdir', 'innodb_ft_user_stopword_table'], true)) {
-                throw ErrorCode::WrongValueForVariable->error($definition->name, 'NULL');
+                throw AdministrationError::WrongValueForVariable->error($definition->name, 'NULL');
             }
 
             return null;
@@ -154,7 +156,7 @@ final class Assigner
         if ($definition->name === 'sql_mode') {
             $modes = SqlModes::parse($text);
             if ($modes === null) {
-                throw ErrorCode::WrongValueForVariable->error($definition->name, $text);
+                throw AdministrationError::WrongValueForVariable->error($definition->name, $text);
             }
 
             return $modes->toString();
@@ -162,7 +164,7 @@ final class Assigner
         if (str_starts_with($definition->name, 'collation_')) {
             $collation = Collation::named($text);
             if ($collation === null) {
-                throw ErrorCode::UnknownCollation->error($text);
+                throw SchemaError::UnknownCollation->error($text);
             }
 
             return $collation->name;
@@ -170,7 +172,7 @@ final class Assigner
         if (str_starts_with($definition->name, 'character_set_')) {
             $charset = Charset::named($text);
             if ($charset === null) {
-                throw ErrorCode::UnknownCharacterSet->error($text);
+                throw SchemaError::UnknownCharacterSet->error($text);
             }
 
             return $charset->name;

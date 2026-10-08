@@ -6,7 +6,9 @@ namespace MySqlMemory\Command\Write;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Evaluable;
@@ -94,10 +96,10 @@ final class InsertCommand implements Command
         }
         $table = $session->instance->dictionary->table($schema, $into->table->name->name->value);
         if ($table === null) {
-            throw ErrorCode::NoSuchTable->error($schema, $into->table->name->name->value);
+            throw QueryError::NoSuchTable->error($schema, $into->table->name->name->value);
         }
         if ($into->table->partitions !== []) {
-            throw ErrorCode::PartitionClauseOnNonpartitioned->error();
+            throw SchemaError::PartitionClauseOnNonpartitioned->error();
         }
 
         return $table;
@@ -114,7 +116,7 @@ final class InsertCommand implements Command
         $facts = $planner->compiler->facts;
         $position = static function (ColumnUse|TableWildcard $use) use ($facts, $definition): int {
             if ($use instanceof TableWildcard) {
-                throw ErrorCode::NotSupportedYet->error('a table wildcard in the column list of INSERT');
+                throw StatementError::NotSupportedYet->error('a table wildcard in the column list of INSERT');
             }
             $resolution = $facts->scalar($use)->resolution;
             $declaration = $resolution instanceof ResolvedColumn ? $resolution->slot->declaration() : null;
@@ -123,7 +125,7 @@ final class InsertCommand implements Command
                     return $index;
                 }
             }
-            throw ErrorCode::BadField->error($use->name->value, 'field list');
+            throw QueryError::BadField->error($use->name->value, 'field list');
         };
         if ($statement instanceof InsertSet) {
             $positions = array_map(static fn ($assignment): int => $position($assignment->column), $statement->assignments);
@@ -156,7 +158,7 @@ final class InsertCommand implements Command
     {
         $plan = $planner->query($statement->source, null);
         if (count($plan->domains) !== $width) {
-            throw ErrorCode::WrongValueCountOnRow->error(1);
+            throw QueryError::WrongValueCountOnRow->error(1);
         }
         $iterator = (new Builder())->build($plan->root);
         $iterator->init(new Frame($context));

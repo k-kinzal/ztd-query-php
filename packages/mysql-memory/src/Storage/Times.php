@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Storage;
 
 use MySqlMemory\Dictionary\ColumnDefinition;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Convert;
@@ -74,46 +75,82 @@ final class Times
     {
         $to = $column->domain;
         $context = $this->store->context;
-        $truncate = $context->modes->has('TIME_TRUNCATE_FRACTIONAL');
         $numeric = !$from->kind->temporal() && $from->kind !== Kind::String;
-        if ($from->kind === Kind::Time) {
-            $time = Temporal::scanTime($text);
-            $moment = $time === null ? null : Temporal::onDay($context->started, $time[0], $time[1], $time[2], $time[3], Temporal::micro($time[4], $truncate));
-            $parts = $moment === null ? null : [$moment[0], $moment[1], $moment[2], $moment[3], $moment[4], $moment[5], '', true, ''];
-            $micro = $moment === null ? 0 : $moment[6];
-        } else {
-            $parts = $numeric && Decimal::compare($text, '0') === 0 ? [0, 0, 0, 0, 0, 0, '', false, ''] : Temporal::scanDateTime($text);
-            $micro = $parts === null ? 0 : Temporal::micro($parts[6], $truncate);
-        }
-        if ($parts === null || $parts[1] > 12 || $parts[2] > 31 || $parts[3] > 23 || $parts[4] > 59 || $parts[5] > 59) {
-            return $this->problem(ErrorCode::DataTruncated, $text, $column);
+        [$parts, $micro] = $this->scan($text, $from, $numeric);
+        if ($parts === null || self::overflows($parts)) {
+            return $this->problem(DataError::DataTruncated, $text, $column);
         }
         $modes = $context->modes;
         $zero = $parts[0] === 0 && $parts[1] === 0 && $parts[2] === 0;
         if (!Temporal::accepted($parts[0], $parts[1], $parts[2], $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'))) {
-            return $this->problem($numeric && !$zero ? ErrorCode::DataTruncated : ErrorCode::OutOfRange, $text, $column);
+            return $this->problem($numeric && !$zero ? DataError::DataTruncated : DataError::OutOfRange, $text, $column);
         }
         $decimals = $to->kind === Kind::Date ? 0 : $to->decimals;
-        $moment = Temporal::carry($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], Temporal::scale($micro % 1000000, $decimals, $truncate) + intdiv($micro, 1000000) * 1000000);
+        $moment = Temporal::carry($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], Temporal::scale($micro % 1000000, $decimals, $modes->has('TIME_TRUNCATE_FRACTIONAL')) + intdiv($micro, 1000000) * 1000000);
         if ($moment === null) {
             if ($context->strict) {
-                throw new SqlError(ErrorCode::DatetimeFunctionOverflow, ErrorCode::DatetimeFunctionOverflow->message('datetime'), null, [[ErrorCode::TruncatedWrongValue->value, ErrorCode::TruncatedWrongValueForField->message($this->kind($column), $text, $column->name, $this->store->row)]]);
+                throw new SqlError(DataError::DatetimeFunctionOverflow, DataError::DatetimeFunctionOverflow->message('datetime'), null, [[DataError::TruncatedWrongValue->value, DataError::TruncatedWrongValueForField->message($this->kind($column), $text, $column->name, $this->store->row)]]);
             }
-            $context->warning(ErrorCode::DatetimeFunctionOverflow, 'datetime');
+            $context->warning(DataError::DatetimeFunctionOverflow, 'datetime');
 
-            return $this->problem(ErrorCode::OutOfRange, $text, $column);
+            return $this->problem(DataError::OutOfRange, $text, $column);
         }
         $result = $to->kind === Kind::Date ? Temporal::date($moment[0], $moment[1], $moment[2]) : Temporal::dateTime($moment[0], $moment[1], $moment[2], $moment[3], $moment[4], $moment[5], $moment[6], $decimals);
         if ($to->field === Field::Timestamp && !$zero && (strcmp($result, '1970-01-01 00:00:01') < 0 || strcmp($result, '2038-01-19 03:14:08') >= 0)) {
-            return $this->problem(ErrorCode::OutOfRange, $text, $column);
+            return $this->problem(DataError::OutOfRange, $text, $column);
         }
-        if ($parts[8] !== '') {
-            $this->problem(ErrorCode::DataTruncated, $text, $column);
-        } elseif ($to->kind === Kind::Date && ($moment[3] !== 0 || $moment[4] !== 0 || $moment[5] !== 0 || $moment[6] !== 0)) {
-            $this->dropped($text, $column);
-        }
+        $this->leftover($text, $parts[8], $moment, $column);
 
         return $result;
+    }
+
+    /**
+     * Reads the date and time a value holds for a DATE, DATETIME or TIMESTAMP column, with its fractional seconds in microseconds.
+     *
+     * A time is taken on the day the statement started; a number equal to zero is the zero date.
+     * The parts are null when the value holds no date.
+     *
+     * @return array{array{int, int, int, int, int, int, string, bool, string}|null, int} Year, month, day, hour, minute, second, fractional digits, whether a time part was present and the text after the value; then the microseconds
+     */
+    public function scan(string $text, Domain $from, bool $numeric): array
+    {
+        $context = $this->store->context;
+        $truncate = $context->modes->has('TIME_TRUNCATE_FRACTIONAL');
+        if ($from->kind === Kind::Time) {
+            $time = Temporal::scanTime($text);
+            $moment = $time === null ? null : Temporal::onDay($context->started, $time[0], $time[1], $time[2], $time[3], Temporal::micro($time[4], $truncate));
+
+            return $moment === null ? [null, 0] : [[$moment[0], $moment[1], $moment[2], $moment[3], $moment[4], $moment[5], '', true, ''], $moment[6]];
+        }
+        $parts = $numeric && Decimal::compare($text, '0') === 0 ? [0, 0, 0, 0, 0, 0, '', false, ''] : Temporal::scanDateTime($text);
+
+        return [$parts, $parts === null ? 0 : Temporal::micro($parts[6], $truncate)];
+    }
+
+    /**
+     * Tells whether a date and time read from a text has a month, day, hour, minute or second beyond what its field holds.
+     *
+     * @param array{int, int, int, int, int, int, string, bool, string} $parts
+     */
+    public static function overflows(array $parts): bool
+    {
+        return $parts[1] > 12 || $parts[2] > 31 || $parts[3] > 23 || $parts[4] > 59 || $parts[5] > 59;
+    }
+
+    /**
+     * Reports what a stored date or datetime left out: the text after the value (WARN_DATA_TRUNCATED), or else the time part a DATE column drops.
+     *
+     * @param array{int, int, int, int, int, int, int} $moment The stored year, month, day, hour, minute, second and microseconds
+     *
+     * @throws SqlError When the text after the value is refused under a strict mode
+     */
+    public function leftover(string $text, string $rest, array $moment, ColumnDefinition $column): void
+    {
+        if ($rest !== '') {
+            $this->problem(DataError::DataTruncated, $text, $column);
+        } elseif ($column->domain->kind === Kind::Date && ($moment[3] !== 0 || $moment[4] !== 0 || $moment[5] !== 0 || $moment[6] !== 0)) {
+            $this->dropped($text, $column);
+        }
     }
 
     /**
@@ -126,44 +163,61 @@ final class Times
      */
     public function time(string $text, Domain $from, ColumnDefinition $column): string
     {
-        $decimals = $column->domain->decimals;
-        $truncate = $this->store->context->modes->has('TIME_TRUNCATE_FRACTIONAL');
         $dated = $from->kind === Kind::Date || $from->kind === Kind::DateTime;
         if ($from->kind === Kind::String && preg_match('/\A\s*-?\s*\z/', $text) === 1) {
-            return Temporal::time(false, 0, 0, 0, 0, $decimals);
+            return Temporal::time(false, 0, 0, 0, 0, $column->domain->decimals);
         }
         $dropped = false;
         $moment = $from->kind === Kind::Time ? null : Temporal::scanDateTime($text, !$dated);
         if ($moment !== null && ($moment[7] || $dated)) {
-            if ($moment[1] > 12 || $moment[2] > 31 || $moment[3] > 23 || $moment[4] > 59 || $moment[5] > 59) {
-                return $this->problem(ErrorCode::DataTruncated, $text, $column);
+            if (self::overflows($moment)) {
+                return $this->problem(DataError::DataTruncated, $text, $column);
             }
             if (!Temporal::accepted($moment[0], $moment[1], $moment[2], false, false)) {
-                return $this->problem(ErrorCode::OutOfRange, $text, $column);
+                return $this->problem(DataError::OutOfRange, $text, $column);
             }
             $dropped = !$dated && ($moment[0] !== 0 || $moment[1] !== 0 || $moment[2] !== 0);
             $time = [false, $moment[3], $moment[4], $moment[5], $moment[6], $moment[8]];
         } else {
             $time = Temporal::scanTime($text);
             if ($time === null) {
-                return $this->problem(ErrorCode::DataTruncated, $text, $column);
+                return $this->problem(DataError::DataTruncated, $text, $column);
             }
             if ($time[2] > 59 || $time[3] > 59) {
-                return $this->problem(ErrorCode::OutOfRange, $text, $column);
+                return $this->problem(DataError::OutOfRange, $text, $column);
             }
         }
+
+        return $this->fit($text, $time, $dropped, $column);
+    }
+
+    /**
+     * Fits a time read from a value into a TIME column.
+     *
+     * A time beyond 838:59:59 is clamped with ER_WARN_DATA_OUT_OF_RANGE, after WARN_DATA_TRUNCATED
+     * for any text after it. Otherwise the text after it, or else a dropped date, is reported, and
+     * the fractional seconds are rounded, or cut, to the precision of the column.
+     *
+     * @param array{bool, int, int, int, string, string} $time Negative, hours, minute, second, fractional digits, and the text after the value
+     *
+     * @throws SqlError When the value is refused under a strict mode
+     */
+    public function fit(string $text, array $time, bool $dropped, ColumnDefinition $column): string
+    {
+        $decimals = $column->domain->decimals;
+        $truncate = $this->store->context->modes->has('TIME_TRUNCATE_FRACTIONAL');
         [$negative, $hours, $minute, $second, $digits, $rest] = $time;
         $micro = Temporal::micro($digits, $truncate);
         if ($hours > 838 || ($hours === 838 && $minute === 59 && $second === 59 && $micro > 0)) {
             if ($rest !== '') {
-                $this->problem(ErrorCode::DataTruncated, $text, $column);
+                $this->problem(DataError::DataTruncated, $text, $column);
             }
-            $this->problem(ErrorCode::OutOfRange, $text, $column);
+            $this->problem(DataError::OutOfRange, $text, $column);
 
             return Temporal::time($negative, 838, 59, 59, 0, $decimals);
         }
         if ($rest !== '') {
-            $this->problem(ErrorCode::DataTruncated, $text, $column);
+            $this->problem(DataError::DataTruncated, $text, $column);
         } elseif ($dropped) {
             $this->dropped($text, $column);
         }
@@ -185,7 +239,7 @@ final class Times
     {
         $context = $this->store->context;
         if ($context->strict) {
-            throw new SqlError(ErrorCode::TruncatedWrongValue, ErrorCode::TruncatedWrongValueForField->message($this->kind($column), $text, $column->name, $this->store->row));
+            throw new SqlError(DataError::TruncatedWrongValue, DataError::TruncatedWrongValueForField->message($this->kind($column), $text, $column->name, $this->store->row));
         }
         $context->diagnostics->warning($condition, $condition->message($column->name, $this->store->row));
 
@@ -203,11 +257,11 @@ final class Times
     {
         $context = $this->store->context;
         if ($context->strict) {
-            $context->diagnostics->note(ErrorCode::TruncatedWrongValue, ErrorCode::TruncatedWrongValueForField->message($this->kind($column), $text, $column->name, $this->store->row));
+            $context->diagnostics->note(DataError::TruncatedWrongValue, DataError::TruncatedWrongValueForField->message($this->kind($column), $text, $column->name, $this->store->row));
 
             return;
         }
-        $context->note(ErrorCode::DataTruncated, $column->name, $this->store->row);
+        $context->note(DataError::DataTruncated, $column->name, $this->store->row);
     }
 
     /**
@@ -238,13 +292,13 @@ final class Times
         if ($from->kind === Kind::String) {
             $text = (string) $value;
             if (preg_match('/\A\s*[+-]?\.?[0-9]/', $text) !== 1) {
-                $this->store->adjust(ErrorCode::TruncatedWrongValueForField, 'integer', $text, $column->name, $this->store->row);
+                $this->store->adjust(DataError::TruncatedWrongValueForField, 'integer', $text, $column->name, $this->store->row);
 
                 return 0;
             }
             $read = NumericText::exact($text);
             if (!$read->complete) {
-                $this->store->adjust(ErrorCode::DataTruncated, $column->name, $this->store->row);
+                $this->store->adjust(DataError::DataTruncated, $column->name, $this->store->row);
             }
             $number = Decimal::numeric(Decimal::round($read->number, 0));
             if (Decimal::compare($number, '0') === 0) {
@@ -262,7 +316,7 @@ final class Times
             return $year < 70 ? $year + 2000 : $year + 1900;
         }
         if (Decimal::compare($number, '1901') < 0 || Decimal::compare($number, '2155') > 0) {
-            $this->store->adjust(ErrorCode::OutOfRange, $column->name, $this->store->row);
+            $this->store->adjust(DataError::OutOfRange, $column->name, $this->store->row);
 
             return 0;
         }
@@ -288,20 +342,20 @@ final class Times
             return (string) $value;
         }
         if ($from->kind !== Kind::String) {
-            throw ErrorCode::InvalidJsonText->error('not a JSON text, may need CAST', 0, $name);
+            throw DataError::InvalidJsonText->error('not a JSON text, may need CAST', 0, $name);
         }
         if ($from->collation === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary()) {
-            throw ErrorCode::InvalidJsonCharset->error('binary');
+            throw DataError::InvalidJsonCharset->error('binary');
         }
         try {
             return Json::canonical((string) $value);
         } catch (JsonSyntax $failure) {
-            $error = ErrorCode::InvalidJsonText->message($failure->reason, $failure->position, $name);
+            $error = DataError::InvalidJsonText->message($failure->reason, $failure->position, $name);
             if ($failure->deep) {
-                throw new SqlError(ErrorCode::JsonDocumentTooDeep, ErrorCode::JsonDocumentTooDeep->message(), $failure, [[ErrorCode::InvalidJsonText->value, $error]]);
+                throw new SqlError(DataError::JsonDocumentTooDeep, DataError::JsonDocumentTooDeep->message(), $failure, [[DataError::InvalidJsonText->value, $error]]);
             }
 
-            throw new SqlError(ErrorCode::InvalidJsonText, $error, $failure);
+            throw new SqlError(DataError::InvalidJsonText, $error, $failure);
         }
     }
 }

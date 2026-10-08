@@ -7,7 +7,7 @@ namespace MySqlMemory\Command\Definition;
 use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\TableDefinition;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
@@ -79,7 +79,7 @@ final class TableLayout
     {
         $statement = $definition->statement;
         if ($statement === null) {
-            throw ErrorCode::NotSupportedYet->error('ALTER TABLE of a table created by a query');
+            throw StatementError::NotSupportedYet->error('ALTER TABLE of a table created by a query');
         }
         $elements = [];
         foreach ($statement->elements as $element) {
@@ -92,7 +92,7 @@ final class TableLayout
         foreach ($definition->columns as $position => $column) {
             $element = $elements[strtolower($column->name)] ?? null;
             if ($element === null) {
-                throw ErrorCode::NotSupportedYet->error('ALTER TABLE of a table created by a query');
+                throw StatementError::NotSupportedYet->error('ALTER TABLE of a table created by a query');
             }
             $collation = $column->domain->kind === Kind::String && !$column->domain->collation->bytes() ? $column->domain->collation->name : null;
             $columns[] = [self::unkeyed($element, $collation, !$column->nullable()), $position];

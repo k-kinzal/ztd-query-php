@@ -6,7 +6,8 @@ namespace MySqlMemory\Command\Maintenance;
 
 use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Value\Json\Json;
 use MySqlMemory\Value\Json\JsonSyntax;
 use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\DropHistogram;
@@ -42,7 +43,7 @@ final class Histograms
         $seen = [];
         foreach ($histogram->columns as $column) {
             if (isset($seen[mb_strtolower($column->value)])) {
-                throw ErrorCode::DuplicateFieldName->error($column->value);
+                throw SchemaError::DuplicateFieldName->error($column->value);
             }
             $seen[mb_strtolower($column->value)] = true;
         }
@@ -141,7 +142,7 @@ final class Histograms
         try {
             Json::canonical($data);
         } catch (JsonSyntax $failure) {
-            return [['Error', ErrorCode::InvalidJsonTextInParameter->message(1, 'UPDATE HISTOGRAM', $failure->reason, $failure->position)], $failed, ['Error', 'JSON format error.']];
+            return [['Error', DataError::InvalidJsonTextInParameter->message(1, 'UPDATE HISTOGRAM', $failure->reason, $failure->position)], $failed, ['Error', 'JSON format error.']];
         }
         $document = json_decode($data, true);
         if (!is_array($document) || array_is_list($document) && $document !== [] || ltrim($data)[0] !== '{') {

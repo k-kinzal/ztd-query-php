@@ -6,7 +6,7 @@ namespace MySqlMemory\Command\Account;
 
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -62,7 +62,7 @@ final class DropUserCommand implements Command
             if ($accounts->find($identity) === null || isset($dropped[$identity->key()])) {
                 $missing[] = $identity;
                 if ($statement->ifExists) {
-                    $context->diagnostics->note(ErrorCode::UserDoesNotExist, ErrorCode::UserDoesNotExist->message($identity->quoted()));
+                    $context->diagnostics->note(AccountError::UserDoesNotExist, AccountError::UserDoesNotExist->message($identity->quoted()));
                 }
                 continue;
             }
@@ -70,7 +70,7 @@ final class DropUserCommand implements Command
         }
         if ($missing !== [] && !$statement->ifExists) {
             $operation = $statement instanceof DropUser ? 'DROP USER' : 'DROP ROLE';
-            throw ErrorCode::CannotUser->error($operation, implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
+            throw AccountError::CannotUser->error($operation, implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
         }
         foreach ($dropped as $identity) {
             $accounts->drop($identity);

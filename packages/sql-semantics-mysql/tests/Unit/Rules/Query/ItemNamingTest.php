@@ -12,9 +12,12 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\ItemNaming;
 use SqlSemantics\Platform\MySql\Statement\Call\CallArgument;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
@@ -82,6 +85,17 @@ final class ItemNamingTest extends TestCase
         self::assertEquals(new Name('TRUE'), $legacy->own(new BooleanLiteral(true)));
         self::assertNull($modern->own(new BooleanLiteral(true)));
         self::assertNull($modern->own(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('1'))));
+    }
+
+    public function testUnwrappedStripsTheWrappersThatCreateNoItem(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+        $column = new ColumnUse(new Name('a'));
+        $date = new OdbcEscape(new Name('d'), new StringLiteral(['2024-01-31']));
+        $minus = new Unary(UnaryOperator::Minus, $column);
+
+        self::assertSame($column, $naming->unwrapped(new Grouped(new Unary(UnaryOperator::Plus, new OdbcEscape(new Name('fn'), $column)))));
+        self::assertSame([$date, $minus], [$naming->unwrapped($date), $naming->unwrapped(new Grouped($minus))]);
     }
 
     public function testConstantSpellsTheNameArgumentOfNameConst(): void
@@ -174,8 +188,8 @@ final class ItemNamingTest extends TestCase
     {
         $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
 
-        self::assertEquals(new Name('a'), $naming->name(new SelectExpression(new \SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape(new Name('fn'), new ColumnUse(new Name('a'))))));
-        self::assertNull($naming->own(new \SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape(new Name('d'), new StringLiteral(['2024-01-31']))));
+        self::assertEquals(new Name('a'), $naming->name(new SelectExpression(new OdbcEscape(new Name('fn'), new ColumnUse(new Name('a'))))));
+        self::assertNull($naming->own(new OdbcEscape(new Name('d'), new StringLiteral(['2024-01-31']))));
     }
 
 }

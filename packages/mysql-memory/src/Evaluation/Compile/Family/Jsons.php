@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile\Family;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Convert;
@@ -85,7 +85,7 @@ final class Jsons
             try {
                 $found = JsonPath::parse($path)->extract($document);
             } catch (JsonSyntax $failure) {
-                throw ErrorCode::InvalidJsonPath->error($failure->position);
+                throw DataError::InvalidJsonPath->error($failure->position);
             }
             if ($found === null) {
                 return null;
@@ -154,7 +154,7 @@ final class Jsons
     public static function document(int|float|string|null $value, Domain $domain, int $position, string $function): ?JsonNode
     {
         if ($domain->kind !== Kind::String && $domain->kind !== Kind::Json && $domain->kind !== Kind::Null) {
-            throw ErrorCode::InvalidJsonType->error($position, $function);
+            throw DataError::InvalidJsonType->error($position, $function);
         }
         if ($value === null) {
             return null;
@@ -163,19 +163,19 @@ final class Jsons
         if ($domain->kind === Kind::String) {
             $charset = $domain->collation->charset;
             if ($charset === Charset::binary()) {
-                throw new SqlError(ErrorCode::InvalidJsonCharset, ErrorCode::InvalidJsonCharset->message('binary'), null, [[ErrorCode::InvalidJsonType->value, ErrorCode::InvalidJsonType->message($position, $function)]]);
+                throw new SqlError(DataError::InvalidJsonCharset, DataError::InvalidJsonCharset->message('binary'), null, [[DataError::InvalidJsonType->value, DataError::InvalidJsonType->message($position, $function)]]);
             }
             $text = Encoding::convert($text, $charset, Charset::known('utf8mb4'));
         }
         try {
             return JsonNode::parse($text);
         } catch (JsonSyntax $failure) {
-            $error = ErrorCode::InvalidJsonTextInParameter->message($position, $function, $failure->reason, $failure->position);
+            $error = DataError::InvalidJsonTextInParameter->message($position, $function, $failure->reason, $failure->position);
             if ($failure->deep) {
-                throw new SqlError(ErrorCode::JsonDocumentTooDeep, ErrorCode::JsonDocumentTooDeep->message(), $failure, [[ErrorCode::InvalidJsonTextInParameter->value, $error]]);
+                throw new SqlError(DataError::JsonDocumentTooDeep, DataError::JsonDocumentTooDeep->message(), $failure, [[DataError::InvalidJsonTextInParameter->value, $error]]);
             }
 
-            throw new SqlError(ErrorCode::InvalidJsonTextInParameter, $error, $failure);
+            throw new SqlError(DataError::InvalidJsonTextInParameter, $error, $failure);
         }
     }
 

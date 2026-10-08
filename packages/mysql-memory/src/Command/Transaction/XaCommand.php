@@ -8,7 +8,7 @@ use MySqlMemory\Command\Admin\Literals;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Registry\PreparedBranch;
@@ -86,16 +86,16 @@ final class XaCommand implements Command
     public function start(XaStart $statement, Session $session): void
     {
         if ($statement->option !== null) {
-            throw ErrorCode::XaInvalidArguments->error();
+            throw StatementError::XaInvalidArguments->error();
         }
         $transaction = $session->transaction;
         $transaction->guard();
         if ($transaction->open) {
-            throw ErrorCode::XaWorkOutside->error();
+            throw StatementError::XaWorkOutside->error();
         }
         $key = $this->key($statement->xid);
         if (isset($session->instance->registry->prepared[$key])) {
-            throw ErrorCode::XaDuplicateXid->error();
+            throw StatementError::XaDuplicateXid->error();
         }
         $transaction->begin();
         $transaction->xa = XaState::Active;
@@ -110,14 +110,14 @@ final class XaCommand implements Command
     public function end(XaEnd $statement, Session $session): void
     {
         if ($statement->option !== null) {
-            throw ErrorCode::XaInvalidArguments->error();
+            throw StatementError::XaInvalidArguments->error();
         }
         $transaction = $session->transaction;
         if ($transaction->xa !== XaState::Active) {
-            throw ErrorCode::XaWrongState->error($transaction->xa->value);
+            throw StatementError::XaWrongState->error($transaction->xa->value);
         }
         if ($transaction->xid !== $this->key($statement->xid)) {
-            throw ErrorCode::XaUnknownXid->error();
+            throw StatementError::XaUnknownXid->error();
         }
         $transaction->xa = XaState::Idle;
     }
@@ -131,11 +131,11 @@ final class XaCommand implements Command
     {
         $transaction = $session->transaction;
         if ($transaction->xa !== XaState::Idle) {
-            throw ErrorCode::XaWrongState->error($transaction->xa->value);
+            throw StatementError::XaWrongState->error($transaction->xa->value);
         }
         $key = $this->key($xid);
         if ($transaction->xid !== $key) {
-            throw ErrorCode::XaUnknownXid->error();
+            throw StatementError::XaUnknownXid->error();
         }
         [$format, $global, $branch] = $this->parts($xid);
         $session->instance->registry->prepared[$key] = new PreparedBranch($format, $global, $branch, $transaction->detach());
@@ -151,11 +151,11 @@ final class XaCommand implements Command
         $transaction = $session->transaction;
         $key = $this->key($xid);
         if ($transaction->xa === XaState::Active) {
-            throw ErrorCode::XaWrongState->error($transaction->xa->value);
+            throw StatementError::XaWrongState->error($transaction->xa->value);
         }
         if ($transaction->xa === XaState::Idle) {
             if ($transaction->xid !== $key || ($commit && !$onePhase)) {
-                throw ErrorCode::XaWrongState->error($transaction->xa->value);
+                throw StatementError::XaWrongState->error($transaction->xa->value);
             }
             if (!$commit) {
                 $transaction->restore();
@@ -165,10 +165,10 @@ final class XaCommand implements Command
             return;
         }
         if ($transaction->open) {
-            throw ErrorCode::XaWrongState->error(XaState::NonExisting->value);
+            throw StatementError::XaWrongState->error(XaState::NonExisting->value);
         }
         $registry = $session->instance->registry;
-        $prepared = $registry->prepared[$key] ?? throw ErrorCode::XaUnknownXid->error();
+        $prepared = $registry->prepared[$key] ?? throw StatementError::XaUnknownXid->error();
         if ($commit) {
             foreach ($prepared->changes as [$table, $data]) {
                 $table->data = $data;

@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Maintenance;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
@@ -55,7 +56,7 @@ final class ChecksumCommand implements Command
         $database = $session->variables->database;
         foreach ($statement->tables as $table) {
             if ($table->name->schema === null && $database === '') {
-                throw ErrorCode::NoDatabase->error();
+                throw QueryError::NoDatabase->error();
             }
         }
         $rows = [];
@@ -66,9 +67,9 @@ final class ChecksumCommand implements Command
             if ($stored === null) {
                 $owner = $session->instance->dictionary->schema($schema);
                 $error = match (true) {
-                    $owner === null => ErrorCode::BadDatabase->error($schema),
-                    isset($owner->views[$table->name->name->value]) => ErrorCode::WrongObject->error($schema, $table->name->name->value, 'BASE TABLE'),
-                    default => ErrorCode::NoSuchTable->error($schema, $table->name->name->value),
+                    $owner === null => QueryError::BadDatabase->error($schema),
+                    isset($owner->views[$table->name->name->value]) => SchemaError::WrongObject->error($schema, $table->name->name->value, 'BASE TABLE'),
+                    default => QueryError::NoSuchTable->error($schema, $table->name->name->value),
                 };
                 $session->diagnostics->error($error->getCode(), $error->getMessage());
                 $rows[] = [$label, null];

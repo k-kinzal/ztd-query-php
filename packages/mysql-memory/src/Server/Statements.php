@@ -118,7 +118,7 @@ final class Statements
         $reader->integer(1);
         $reader->integer(4);
         if (!isset($this->prepared[$id])) {
-            return $this->client->send($this->client->messages->error(1243, 'HY000', \MySqlMemory\Error\ErrorCode::UnknownStatementHandler->message((string) $id, 'mysqld_stmt_execute')));
+            return $this->client->send($this->client->messages->error(1243, 'HY000', \MySqlMemory\Error\StatementError::UnknownStatementHandler->message((string) $id, 'mysqld_stmt_execute')));
         }
         [$sql, $count, $types, $long] = $this->prepared[$id];
         $session = $this->client->session();

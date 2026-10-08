@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Value\Json\JsonPath;
 use MySqlMemory\Value\Json\JsonSyntax;
@@ -51,7 +51,7 @@ final class JsonTables
                     try {
                         JsonPath::parse($path);
                     } catch (JsonSyntax $failure) {
-                        return new SqlError(ErrorCode::InvalidJsonPath, ErrorCode::InvalidJsonPath->message($failure->position), $failure);
+                        return new SqlError(DataError::InvalidJsonPath, DataError::InvalidJsonPath->message($failure->position), $failure);
                     }
                 }
             }

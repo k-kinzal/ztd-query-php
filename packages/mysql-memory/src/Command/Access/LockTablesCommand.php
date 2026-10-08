@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Access;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -61,13 +61,13 @@ final class LockTablesCommand implements Command
         foreach ($statement->locks as $lock) {
             $schema = $lock->table->schema->value ?? $database;
             if ($schema === '') {
-                throw ErrorCode::NoDatabase->error();
+                throw QueryError::NoDatabase->error();
             }
             if ($session->instance->dictionary->schema($schema) === null) {
-                throw ErrorCode::BadDatabase->error($schema);
+                throw QueryError::BadDatabase->error($schema);
             }
             if ($session->instance->dictionary->table($schema, $lock->table->name->value) === null && !isset($session->instance->dictionary->schema($schema)?->views[$lock->table->name->value])) {
-                throw ErrorCode::NoSuchTable->error($schema, $lock->table->name->value);
+                throw QueryError::NoSuchTable->error($schema, $lock->table->name->value);
             }
             $locks[] = [$schema, $lock->table->name->value, $lock->alias->value ?? $lock->table->name->value, $lock->mode === LockMode::Write || $lock->mode === LockMode::LowPriorityWrite];
         }

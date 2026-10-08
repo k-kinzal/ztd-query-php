@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile\Family;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Compile\Printer;
 use MySqlMemory\Evaluation\Evaluable;
@@ -44,7 +46,7 @@ final class Calls
     public function function(FunctionCall $call, Scope $scope): Evaluable
     {
         if ($call->schema !== null) {
-            throw ErrorCode::RoutineMissing->error('FUNCTION', $call->schema->value . '.' . $call->name->value);
+            throw ProgramError::RoutineMissing->error('FUNCTION', $call->schema->value . '.' . $call->name->value);
         }
         $arguments = array_map(static fn ($argument): Scalar => $argument->expression, $call->arguments);
 
@@ -61,7 +63,7 @@ final class Calls
     public function keyword(KeywordCall $call, Scope $scope): Evaluable
     {
         if ($call->function === KeywordFunction::Grouping) {
-            throw ErrorCode::InvalidGroupFunctionUse->error();
+            throw QueryError::InvalidGroupFunctionUse->error();
         }
 
         return $this->named($call->function->value, $call->arguments, $scope, $call);
@@ -78,10 +80,10 @@ final class Calls
     {
         $routine = Library::instance()->find($name);
         if ($routine === null) {
-            throw ErrorCode::NotSupportedYet->error('function ' . strtoupper($name));
+            throw StatementError::NotSupportedYet->error('function ' . strtoupper($name));
         }
         if (!$routine->accepts(count($arguments))) {
-            throw ErrorCode::WrongParameterCountToNativeFunction->error(strtoupper($name));
+            throw QueryError::WrongParameterCountToNativeFunction->error(strtoupper($name));
         }
         if (strtoupper($name) === 'ISNULL') {
             return $this->compiler->operators->nullness($arguments[0], false, $scope, $node);

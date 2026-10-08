@@ -7,7 +7,7 @@ namespace Tests\Unit\Evaluation\Operator;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\Constant;
-use MySqlMemory\Evaluation\Operator\Numeric;
+use MySqlMemory\Evaluation\Operator\DoubleOperand;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
@@ -17,15 +17,15 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
-#[CoversClass(Numeric::class)]
+#[CoversClass(DoubleOperand::class)]
 #[Small]
-final class NumericTest extends TestCase
+final class DoubleOperandTest extends TestCase
 {
     public function testEvaluateReadsAConstantOperandOnceForTheStatement(): void
     {
         $session = (new Instance())->connect();
         $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
-        $numeric = new Numeric(new Constant(Domain::string(5, Collation::known('utf8mb4_0900_ai_ci')), '1x'), true);
+        $numeric = new DoubleOperand(new Constant(Domain::string(5, Collation::known('utf8mb4_0900_ai_ci')), '1x'), true);
 
         self::assertSame([1.0, 1.0], [$numeric->evaluate($frame), $numeric->evaluate($frame)]);
         self::assertSame(1, $session->diagnostics->count());
@@ -35,7 +35,7 @@ final class NumericTest extends TestCase
     {
         $session = (new Instance())->connect();
         $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
-        $numeric = new Numeric(new Constant(Domain::string(5, Collation::known('utf8mb4_0900_ai_ci')), '1x'), false);
+        $numeric = new DoubleOperand(new Constant(Domain::string(5, Collation::known('utf8mb4_0900_ai_ci')), '1x'), false);
 
         self::assertSame([1.0, 1.0], [$numeric->evaluate($frame), $numeric->evaluate($frame)]);
         self::assertSame(2, $session->diagnostics->count());
@@ -59,7 +59,7 @@ final class NumericTest extends TestCase
 
     public function testDomainAnswersADoubleAsNullableAsTheOperand(): void
     {
-        $numeric = new Numeric(new Constant(Domain::integer()->withNullable(false), 1), true);
+        $numeric = new DoubleOperand(new Constant(Domain::integer()->withNullable(false), 1), true);
 
         self::assertSame([Kind::Double, false], [$numeric->domain()->kind, $numeric->domain()->nullable]);
     }

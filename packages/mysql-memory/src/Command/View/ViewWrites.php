@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\View;
 
+use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Routine;
+use MySqlMemory\Dictionary\StoredTable;
 use MySqlMemory\Dictionary\View;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Plan\Views;
 use MySqlMemory\Session\Session;
 use SqlParser\Lexer\Token;
@@ -55,6 +58,35 @@ final class ViewWrites
     public static function of(View $view, Session $session): ?self
     {
         Views::refresh($view, $session->instance->dictionary, $session->settings());
+        $query = self::block($view);
+        if ($query === null || !$query->from instanceof TableReference) {
+            return null;
+        }
+        $from = $query->from;
+        $schema = $from->name->schema->value ?? $view->database;
+        $base = $session->instance->dictionary->table($schema, $from->name->name->value);
+        if ($base === null) {
+            throw StatementError::NotSupportedYet->error('writing through a view of a view');
+        }
+        $qualifier = Routine::quoted($from->alias->value ?? $from->name->name->value);
+        $tree = $session->semantics()->parser()->parse($view->select);
+        $columns = self::columns($view, $query, $from, $qualifier, $tree);
+        if ($columns === null) {
+            return null;
+        }
+        $where = $tree->find('where_clause')[0] ?? null;
+        $condition = $where?->children[1] ?? null;
+
+        return new self(Routine::quoted($schema) . '.' . Routine::quoted($from->name->name->value), $qualifier, $from->alias === null ? '' : ' AS ' . $qualifier, $columns, $condition instanceof Node ? $condition->text($view->select) : null, self::keyed($base, $columns));
+    }
+
+    /**
+     * Answers the query block of a view that the server can merge into a statement writing
+     * through it, or null: one without a common table expression, LIMIT, set operation or
+     * ALGORITHM=TEMPTABLE, which reads one table and is mergeable.
+     */
+    public static function block(View $view): ?Select
+    {
         $query = $view->query;
         while ($query instanceof QueryExpression && $query->with === null && $query->limit === null) {
             $query = $query->body;
@@ -62,14 +94,22 @@ final class ViewWrites
         if ($view->algorithm === 'TEMPTABLE' || !$query instanceof Select || !$query->from instanceof TableReference || !(new Materialization())->mergeable($view->query)) {
             return null;
         }
-        $from = $query->from;
-        $schema = $from->name->schema->value ?? $view->database;
-        $base = $session->instance->dictionary->table($schema, $from->name->name->value);
-        if ($base === null) {
-            throw ErrorCode::NotSupportedYet->error('writing through a view of a view');
-        }
-        $qualifier = Routine::quoted($from->alias->value ?? $from->name->name->value);
-        $tree = $session->semantics()->parser()->parse($view->select);
+
+        return $query;
+    }
+
+    /**
+     * Answers each column of a view with the base column it writes, or null for a computed one,
+     * and the text it is read as; null when the query returns a column that is not a field.
+     *
+     * @param Select $query The query block of the view
+     * @param TableReference $from The table the block reads
+     * @param string $qualifier The name the columns of the table are read through
+     * @param Node $tree The syntax tree of the query of the view as written
+     * @return list<array{string, string|null, string}>|null
+     */
+    public static function columns(View $view, Select $query, TableReference $from, string $qualifier, Node $tree): ?array
+    {
         $items = array_values(array_filter($tree->find('select_item'), static fn (Node $item): bool => $item->ordinal === 1));
         $columns = [];
         $index = 0;
@@ -88,16 +128,33 @@ final class ViewWrites
             $expression = $item?->children[0] ?? null;
             $columns[] = [$name, null, '(' . ($expression instanceof Node ? $expression->text($view->select) : 'NULL') . ')'];
         }
-        $where = $tree->find('where_clause')[0] ?? null;
-        $condition = $where?->children[1] ?? null;
+
+        return $columns;
+    }
+
+    /**
+     * Answers whether the columns of a view write every column of a primary or unique key of
+     * its base table, or every column of a base table that has no such key.
+     *
+     * @param list<array{string, string|null, string}> $columns The columns of the view
+     */
+    public static function keyed(StoredTable $base, array $columns): bool
+    {
         $written = array_map('strtolower', array_filter(array_column($columns, 1), static fn (?string $column): bool => $column !== null));
         $keyed = false;
+        $unique = false;
         foreach ($base->definition->keys as $key) {
             $names = array_map(static fn (int $position): string => strtolower(Routine::quoted($base->definition->columns[$position]->name ?? '')), $key->columns);
+            $unique = $unique || $key->unique();
             $keyed = $keyed || ($key->unique() && array_diff($names, $written) === []);
         }
+        if (!$unique) {
+            $all = array_map(static fn (ColumnDefinition $column): string => strtolower(Routine::quoted($column->name)), $base->definition->columns);
 
-        return new self(Routine::quoted($schema) . '.' . Routine::quoted($from->name->name->value), $qualifier, $from->alias === null ? '' : ' AS ' . $qualifier, $columns, $condition instanceof Node ? $condition->text($view->select) : null, $keyed);
+            return array_diff($all, $written) === [];
+        }
+
+        return $keyed;
     }
 
     /**
@@ -125,10 +182,10 @@ final class ViewWrites
     {
         $column = $this->column($name);
         if ($column === null) {
-            throw ErrorCode::BadField->error($name, 'field list');
+            throw QueryError::BadField->error($name, 'field list');
         }
         if ($column[1] === null) {
-            throw ErrorCode::NonUpdatableColumn->error($column[0]);
+            throw QueryError::NonUpdatableColumn->error($column[0]);
         }
 
         return $column[1];

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Value\Json;
 
-
 /**
  * One leg of a JSON path and the values it selects from a value.
  *

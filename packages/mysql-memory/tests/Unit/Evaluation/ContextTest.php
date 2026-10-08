@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
@@ -21,7 +21,7 @@ final class ContextTest extends TestCase
         $session = (new Instance())->connect();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
 
-        $context->warn(ErrorCode::TruncatedWrongValue, 'INTEGER', '12abc');
+        $context->warn(DataError::TruncatedWrongValue, 'INTEGER', '12abc');
 
         self::assertSame([['Warning', 1292, "Truncated incorrect INTEGER value: '12abc'"]], $session->diagnostics->conditions);
     }
@@ -35,7 +35,7 @@ final class ContextTest extends TestCase
         $this->expectExceptionCode(1292);
         $this->expectExceptionMessage("Truncated incorrect INTEGER value: '12abc'");
 
-        $context->warn(ErrorCode::TruncatedWrongValue, 'INTEGER', '12abc');
+        $context->warn(DataError::TruncatedWrongValue, 'INTEGER', '12abc');
     }
 
     public function testWarningRecordsAWarningInAStatementThatIsNotAStrictWrite(): void
@@ -43,7 +43,7 @@ final class ContextTest extends TestCase
         $session = (new Instance())->connect();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
 
-        $context->warning(ErrorCode::TruncatedWrongValue, 'DOUBLE', '1.5x');
+        $context->warning(DataError::TruncatedWrongValue, 'DOUBLE', '1.5x');
 
         self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: '1.5x'"]], $session->diagnostics->conditions);
     }
@@ -57,7 +57,7 @@ final class ContextTest extends TestCase
         $this->expectExceptionCode(1292);
         $this->expectExceptionMessage("Truncated incorrect DOUBLE value: '1.5x'");
 
-        $context->warning(ErrorCode::TruncatedWrongValue, 'DOUBLE', '1.5x');
+        $context->warning(DataError::TruncatedWrongValue, 'DOUBLE', '1.5x');
     }
 
     public function testNoteRecordsANoteEvenInAStrictWrite(): void
@@ -65,7 +65,7 @@ final class ContextTest extends TestCase
         $session = (new Instance())->connect();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0, true);
 
-        $context->note(ErrorCode::TruncatedWrongValue, 'INTEGER', '7 ');
+        $context->note(DataError::TruncatedWrongValue, 'INTEGER', '7 ');
 
         self::assertSame([['Note', 1292, "Truncated incorrect INTEGER value: '7 '"]], $session->diagnostics->conditions);
     }
@@ -75,7 +75,7 @@ final class ContextTest extends TestCase
         $session = (new Instance())->connect();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
 
-        $context->warnMessage(ErrorCode::TruncatedWrongValue, "Incorrect datetime value: 'xx'");
+        $context->warnMessage(DataError::TruncatedWrongValue, "Incorrect datetime value: 'xx'");
 
         self::assertSame([['Warning', 1292, "Incorrect datetime value: 'xx'"]], $session->diagnostics->conditions);
     }
@@ -89,14 +89,14 @@ final class ContextTest extends TestCase
         $this->expectExceptionCode(1292);
         $this->expectExceptionMessage("Incorrect datetime value: 'xx'");
 
-        $context->warnMessage(ErrorCode::TruncatedWrongValue, "Incorrect datetime value: 'xx'");
+        $context->warnMessage(DataError::TruncatedWrongValue, "Incorrect datetime value: 'xx'");
     }
 
     public function testWarningLeavesTheKeptValuesAlone(): void
     {
         $session = (new Instance())->connect();
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $context->warning(ErrorCode::DivisionByZero);
+        $context->warning(DataError::DivisionByZero);
 
         self::assertCount(0, $context->kept);
     }

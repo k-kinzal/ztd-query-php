@@ -46,6 +46,50 @@ enum Field: int
     case String = 254;
     case Geometry = 255;
 
+    private const NAMES = [
+        0 => ['DECIMAL', 'DECIMAL'],
+        1 => ['TINYINT', 'TINYINT'],
+        2 => ['SMALLINT', 'SMALLINT'],
+        3 => ['INT', 'INT'],
+        4 => ['FLOAT', 'FLOAT'],
+        5 => ['DOUBLE', 'DOUBLE'],
+        6 => ['NULL', 'NULL'],
+        7 => ['TIMESTAMP', 'TIMESTAMP'],
+        8 => ['BIGINT', 'BIGINT'],
+        9 => ['MEDIUMINT', 'MEDIUMINT'],
+        10 => ['DATE', 'DATE'],
+        11 => ['TIME', 'TIME'],
+        12 => ['DATETIME', 'DATETIME'],
+        13 => ['YEAR', 'YEAR'],
+        14 => ['DATE', 'DATE'],
+        15 => ['VARCHAR', 'VARBINARY'],
+        16 => ['BIT', 'BIT'],
+        242 => ['VECTOR', 'VECTOR'],
+        245 => ['JSON', 'JSON'],
+        246 => ['DECIMAL', 'DECIMAL'],
+        247 => ['ENUM', 'ENUM'],
+        248 => ['SET', 'SET'],
+        249 => ['TEXT', 'BLOB'],
+        250 => ['TEXT', 'BLOB'],
+        251 => ['TEXT', 'BLOB'],
+        252 => ['TEXT', 'BLOB'],
+        253 => ['VARCHAR', 'VARBINARY'],
+        254 => ['CHAR', 'BINARY'],
+        255 => ['GEOMETRY', 'GEOMETRY'],
+    ];
+
+    /**
+     * Names the type of the code as the server lists it, without its attributes.
+     *
+     * A string code names its binary form when the value holds bytes, such as VARBINARY for VARCHAR.
+     *
+     * @param bool $bytes Whether the value holds bytes rather than characters
+     */
+    public function typeName(bool $bytes): string
+    {
+        return self::NAMES[$this->value][$bytes ? 1 : 0];
+    }
+
     /**
      * Answers whether the code is an integer type, YEAR included.
      */

@@ -112,4 +112,12 @@ final class RenameTableCommandTest extends TestCase
 
         self::assertSame(['d', 'u', 'u'], [$definition->schema, $definition->name, $definition->declaration->name->name->value]);
     }
+
+    public function testNamesLeavesTemporaryTablesOut(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE TEMPORARY TABLE u (a INT)');
+
+        self::assertSame(["d\0t"], array_keys((new RenameTableCommand())->names($session->instance->dictionary)));
+    }
 }

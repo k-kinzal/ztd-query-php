@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -49,9 +49,9 @@ final class PersistCommand implements Command
         }
         $name = ($statement->component === null ? '' : $statement->component->value . '.') . $statement->variable->value;
         if (!$statement->ifExists) {
-            throw ErrorCode::VariableNotPersisted->error($name);
+            throw AdministrationError::VariableNotPersisted->error($name);
         }
-        $session->diagnostics->warning(ErrorCode::VariableNotPersisted, ErrorCode::VariableNotPersisted->message($name));
+        $session->diagnostics->warning(AdministrationError::VariableNotPersisted, AdministrationError::VariableNotPersisted->message($name));
 
         return new Completion(0, 0, $session->diagnostics->count());
     }

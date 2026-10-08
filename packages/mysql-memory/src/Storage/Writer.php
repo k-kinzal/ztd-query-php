@@ -7,7 +7,7 @@ namespace MySqlMemory\Storage;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
@@ -96,7 +96,7 @@ final class Writer
      */
     public function duplicate(array $row, Key $key): SqlError
     {
-        return ErrorCode::DuplicateEntry->error(...$this->entry($row, $key));
+        return DataError::DuplicateEntry->error(...$this->entry($row, $key));
     }
 
     /**

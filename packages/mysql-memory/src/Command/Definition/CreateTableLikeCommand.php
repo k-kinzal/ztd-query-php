@@ -6,7 +6,8 @@ namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Dictionary\StoredTable;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -56,37 +57,37 @@ final class CreateTableLikeCommand implements Command
         assert($create instanceof CreateTableLike);
         $database = $session->variables->database;
         if (($create->name->schema === null || $create->source->schema === null) && $database === '') {
-            throw ErrorCode::NoDatabase->error();
+            throw QueryError::NoDatabase->error();
         }
         $dictionary = $session->instance->dictionary;
         $schema = $create->name->schema->value ?? $database;
         $name = $create->name->name->value;
         $sourceSchema = $create->source->schema->value ?? $database;
         if ($schema === $sourceSchema && $name === $create->source->name->value) {
-            throw ErrorCode::NonUniqueTable->error($name);
+            throw QueryError::NonUniqueTable->error($name);
         }
         if ($dictionary->schema($sourceSchema) === null) {
-            throw ErrorCode::BadDatabase->error($sourceSchema);
+            throw QueryError::BadDatabase->error($sourceSchema);
         }
         $source = $dictionary->table($sourceSchema, $create->source->name->value);
         if ($source === null && isset($dictionary->schema($sourceSchema)?->views[$create->source->name->value])) {
-            throw ErrorCode::WrongObject->error($sourceSchema, $create->source->name->value, 'BASE TABLE');
+            throw SchemaError::WrongObject->error($sourceSchema, $create->source->name->value, 'BASE TABLE');
         }
         if ($source === null) {
-            throw ErrorCode::NoSuchTable->error($sourceSchema, $create->source->name->value);
+            throw QueryError::NoSuchTable->error($sourceSchema, $create->source->name->value);
         }
         if ($create->temporaryWords === 0) {
             $session->transaction->commit();
         }
         $target = $dictionary->schema($schema);
         if ($target === null) {
-            throw ErrorCode::BadDatabase->error($schema);
+            throw QueryError::BadDatabase->error($schema);
         }
         if ($target->table($name) !== null) {
             if (!$create->ifNotExists) {
-                throw ErrorCode::TableExists->error($name);
+                throw SchemaError::TableExists->error($name);
             }
-            $context->note(ErrorCode::TableExists, $name);
+            $context->note(SchemaError::TableExists, $name);
 
             return new Completion(0, 0, $context->diagnostics->count());
         }

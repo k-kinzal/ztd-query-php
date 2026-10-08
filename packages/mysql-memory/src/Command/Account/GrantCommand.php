@@ -8,8 +8,9 @@ use MySqlMemory\Account\Account;
 use MySqlMemory\Account\Catalog;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -74,7 +75,7 @@ final class GrantCommand implements Command
             }
             [$user, $host] = explode('@', $session->variables->account, 2) + [1 => ''];
 
-            throw ErrorCode::AccessDeniedNoPassword->error($user, $host);
+            throw AccountError::AccessDeniedNoPassword->error($user, $host);
         } else {
             assert($statement instanceof GrantPrivileges);
             $this->privileges($statement, $operation, $session, $context);
@@ -108,13 +109,13 @@ final class GrantCommand implements Command
         }
         $found = [];
         foreach ($grantees as $identity) {
-            $found[] = $accounts->find($identity) ?? throw ErrorCode::CantCreateUserWithGrant->error();
+            $found[] = $accounts->find($identity) ?? throw AccountError::CantCreateUserWithGrant->error();
         }
         $levels->usage($operation);
         [$static, $columns, $dynamic, $option, $all] = $levels->read($statement->privileges, $target[0]);
         foreach ($dynamic as $name) {
             if (!(new Catalog())->registered($name)) {
-                throw ErrorCode::SyntaxError->error();
+                throw StatementError::SyntaxError->error();
             }
         }
         $named = $static !== [] || $columns !== [] || $all || $option || ($dynamic === [] && array_filter($statement->privileges, static fn ($privilege): bool => $privilege instanceof StaticPrivilege) !== []);
@@ -162,9 +163,9 @@ final class GrantCommand implements Command
         $identity = $names->identity($as->user, $session);
         $accounts = $session->instance->accounts;
         if ($accounts->find($identity) === null) {
-            $session->diagnostics->error(ErrorCode::NoSuchUser->value, ErrorCode::NoSuchUser->message($identity->user, $identity->host));
+            $session->diagnostics->error(AccountError::NoSuchUser->value, AccountError::NoSuchUser->message($identity->user, $identity->host));
 
-            throw ErrorCode::InvalidGrantAs->error();
+            throw AccountError::InvalidGrantAs->error();
         }
         if ($as->roles?->set !== RoleSet::Named) {
             return;
@@ -172,7 +173,7 @@ final class GrantCommand implements Command
         $granted = $accounts->roles($identity);
         foreach ($as->roles->roles as $role) {
             if (!isset($granted[$names->identity($role, $session)->key()])) {
-                throw ErrorCode::InvalidGrantAs->error();
+                throw AccountError::InvalidGrantAs->error();
             }
         }
     }
@@ -193,7 +194,7 @@ final class GrantCommand implements Command
         $roles = array_map(static fn (AccountName $role): Identity => $names->identity($role, $session), array_values(array_filter($listed, static fn (?AccountName $role): bool => $role !== null)));
         foreach ([...$users, ...$roles] as $identity) {
             if ($accounts->find($identity) === null) {
-                throw ErrorCode::UnknownAuthorizationId->error($identity->backquoted());
+                throw AccountError::UnknownAuthorizationId->error($identity->backquoted());
             }
         }
         $saved = $accounts->copy();
@@ -202,7 +203,7 @@ final class GrantCommand implements Command
                 if ($role->key() === $user->key() || $accounts->reaches($role, $user)) {
                     $accounts->restore($saved);
 
-                    throw ErrorCode::RoleGrantedToItself->error($user->backquoted(), $role->backquoted());
+                    throw AccountError::RoleGrantedToItself->error($user->backquoted(), $role->backquoted());
                 }
                 $accounts->grant($role, $user, $statement->withAdminOption);
             }

@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Access;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\SchemaError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
@@ -45,9 +46,9 @@ final class ImportTableCommand implements Command
         assert($statement instanceof ImportTable);
         $file = $statement->files[0]->value;
         if (str_starts_with($file, LoadDataCommand::SECURE_DIRECTORY)) {
-            throw ErrorCode::NoSdiFiles->error(substr($file, strlen(LoadDataCommand::SECURE_DIRECTORY)));
+            throw SchemaError::NoSdiFiles->error(substr($file, strlen(LoadDataCommand::SECURE_DIRECTORY)));
         }
 
-        throw ErrorCode::OptionPreventsStatement->error("--secure-file-priv='" . LoadDataCommand::SECURE_DIRECTORY . "'");
+        throw StatementError::OptionPreventsStatement->error("--secure-file-priv='" . LoadDataCommand::SECURE_DIRECTORY . "'");
     }
 }

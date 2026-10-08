@@ -86,6 +86,39 @@ final class ComparatorTest extends TestCase
         );
     }
 
+    public function testModeAnswersTheKindTwoDomainsCompareAs(): void
+    {
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+
+        self::assertSame(
+            [Kind::String, Kind::String, Kind::Json, Kind::Integer, Kind::DateTime, Kind::Decimal, Kind::Double],
+            [
+                Comparator::mode(Domain::null(), Domain::null()),
+                Comparator::mode(Domain::string(1, $collation), Domain::null()),
+                Comparator::mode(new Domain(Kind::Json, Field::Json, 4294967295), Domain::integer()),
+                Comparator::mode(new Domain(Kind::Year, Field::Year, 4), Domain::integer()),
+                Comparator::mode(Domain::string(10, $collation), new Domain(Kind::Date, Field::Date, 10)),
+                Comparator::mode(Domain::decimal(5, 2), Domain::integer()),
+                Comparator::mode(Domain::double(), Domain::integer()),
+            ],
+        );
+    }
+
+    public function testTextualHoldsForAStringAndNull(): void
+    {
+        self::assertSame([true, true, false], [Comparator::textual(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'))), Comparator::textual(Domain::null()), Comparator::textual(Domain::integer())]);
+    }
+
+    public function testIntegralHoldsForAnIntegerAYearAndABitValue(): void
+    {
+        self::assertSame([true, true, true, false], [Comparator::integral(Domain::integer()), Comparator::integral(new Domain(Kind::Year, Field::Year, 4)), Comparator::integral(new Domain(Kind::Bit, Field::Bit, 8)), Comparator::integral(Domain::decimal(5, 2))]);
+    }
+
+    public function testIntegersHoldsForTwoIntegersAndForAnIntegerAndNull(): void
+    {
+        self::assertSame([true, true, true, false], [Comparator::integers(Domain::integer(), Domain::integer()), Comparator::integers(Domain::integer(), Domain::null()), Comparator::integers(Domain::null(), Domain::integer()), Comparator::integers(Domain::null(), Domain::null())]);
+    }
+
     public function testTemporalComparesTimesWithTimesAndStringsAsTimes(): void
     {
         $time = new Domain(Kind::Time, Field::Time, 10);

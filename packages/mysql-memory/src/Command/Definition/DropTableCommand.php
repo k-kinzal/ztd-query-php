@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -51,7 +52,7 @@ final class DropTableCommand implements Command
             $schema = $statement->table->schema->value ?? $database;
             $table = $dictionary->table($schema, $statement->table->name->value);
             if ($table === null) {
-                throw ErrorCode::NoSuchTable->error($schema, $statement->table->name->value);
+                throw QueryError::NoSuchTable->error($schema, $statement->table->name->value);
             }
             $table->data = new Heap();
 
@@ -70,10 +71,10 @@ final class DropTableCommand implements Command
             }
         }
         if ($missing !== [] && !$statement->ifExists) {
-            throw ErrorCode::BadTable->error(implode(',', $missing));
+            throw SchemaError::BadTable->error(implode(',', $missing));
         }
         foreach ($missing as $name) {
-            $context->note(ErrorCode::BadTable, $name);
+            $context->note(SchemaError::BadTable, $name);
         }
         foreach ($found as [$schema, $name]) {
             unset($dictionary->schemas[$schema]->tables[$name]);

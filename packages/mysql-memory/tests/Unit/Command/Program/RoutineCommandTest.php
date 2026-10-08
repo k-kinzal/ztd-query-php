@@ -6,6 +6,7 @@ namespace Tests\Unit\Command\Program;
 
 use MySqlMemory\Command\Program\RoutineCommand;
 use MySqlMemory\Dictionary\Schema;
+use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -16,6 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\AccessLevel;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\DataAccess;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\Determinism;
 use SqlSemantics\Platform\MySql\Statement\Routine\Characteristic\RoutineComment;
+use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Routine\ProgramKind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -163,5 +165,21 @@ final class RoutineCommandTest extends TestCase
         self::assertNotNull($schema);
 
         self::assertSame(['varchar(5) CHARSET latin1 COLLATE latin1_bin', 'tinyint(1)'], [$schema->functions['f']->returns, $schema->functions['g']->returns]);
+    }
+
+    public function testRoutineBuildsTheRoutineWithItsTextAndCharacteristics(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->text = "CREATE FUNCTION f(a INT) RETURNS CHAR(2) NO SQL RETURN 'x'";
+        $statement = $session->analyze($session->text)->statement;
+        self::assertInstanceOf(CreateFunction::class, $statement);
+        $schema = $session->instance->dictionary->schema('d');
+        self::assertNotNull($schema);
+
+        $routine = (new RoutineCommand())->routine($statement, $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0), $schema, ['NO SQL', true, 'INVOKER', 'c']);
+
+        self::assertSame(['d', 'f', ['root', '%'], 'a INT', 'char(2) CHARSET utf8mb4', "RETURN 'x'", 'NO SQL', true, 'INVOKER', 'c'], [$routine->schema, $routine->name, $routine->definer, $routine->parameters, $routine->returns, $routine->body, $routine->access, $routine->deterministic, $routine->security, $routine->comment]);
     }
 }

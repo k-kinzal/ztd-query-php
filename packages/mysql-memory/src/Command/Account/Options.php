@@ -7,8 +7,10 @@ namespace MySqlMemory\Command\Account;
 use MySqlMemory\Account\Account;
 use MySqlMemory\Account\Attributes;
 use MySqlMemory\Account\Credentials;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use SqlSemantics\Platform\MySql\Rules\Account\NumberChecks;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOption;
 use SqlSemantics\Platform\MySql\Statement\Account\Option\AccountOptionKind;
@@ -51,13 +53,13 @@ final class Options
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof NumberOutOfRange) {
                 $at = strpos($text, $diagnostic->number);
-                throw $diagnostic->error === 'ER_WRONG_VALUE' ? ErrorCode::WrongValue->error($diagnostic->option, $diagnostic->number) : new SqlError(ErrorCode::ParseError, "Only integers allowed as number here near '" . mb_strcut($at === false ? '' : substr($text, $at), 0, 80, 'UTF-8') . "' at line 1");
+                throw $diagnostic->error === 'ER_WRONG_VALUE' ? DataError::WrongValue->error($diagnostic->option, $diagnostic->number) : new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . mb_strcut($at === false ? '' : substr($text, $at), 0, 80, 'UTF-8') . "' at line 1");
             }
             if ($diagnostic instanceof RepeatedTlsAttribute) {
-                throw ErrorCode::DuplicateArgument->error($diagnostic->attribute->value);
+                throw StatementError::DuplicateArgument->error($diagnostic->attribute->value);
             }
             if ($diagnostic instanceof InvalidFactorPair) {
-                throw $diagnostic->identical ? ErrorCode::FactorIdentical->error() : ErrorCode::FactorOrder->error(2, 3);
+                throw $diagnostic->identical ? AccountError::FactorIdentical->error() : AccountError::FactorOrder->error(2, 3);
             }
         }
     }

@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Program;
 
 use MySqlMemory\Command\Command;
+use MySqlMemory\Dictionary\Schema;
 use MySqlMemory\Dictionary\Trigger;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -54,17 +57,17 @@ final class TriggerCommand implements Command
         $located = $statement->table->name->schema->value ?? $database;
         $schema = $session->instance->dictionary->schema($located);
         if ($schema === null) {
-            throw ErrorCode::BadDatabase->error($located);
+            throw QueryError::BadDatabase->error($located);
         }
         $table = $statement->table->name->name->value;
         if (isset($schema->views[$table])) {
-            throw ErrorCode::WrongObject->error($located, $table, 'BASE TABLE');
+            throw SchemaError::WrongObject->error($located, $table, 'BASE TABLE');
         }
         if ($schema->table($table) === null) {
-            throw ErrorCode::NoSuchTable->error($located, $table);
+            throw QueryError::NoSuchTable->error($located, $table);
         }
         if ($located !== $database) {
-            throw ErrorCode::TriggerInWrongSchema->error();
+            throw ProgramError::TriggerInWrongSchema->error();
         }
         $name = $statement->name->name->value;
         foreach ($schema->triggers as $trigger) {
@@ -72,30 +75,42 @@ final class TriggerCommand implements Command
                 continue;
             }
             if (!$statement->ifNotExists) {
-                throw ErrorCode::TriggerExists->error();
+                throw ProgramError::TriggerExists->error();
             }
             if ($trigger->table !== $table) {
-                throw ErrorCode::TriggerExistsElsewhere->error($database, $name);
+                throw ProgramError::TriggerExistsElsewhere->error($database, $name);
             }
-            $context->note(ErrorCode::TriggerExistsOnTable, $name, $database, $table);
+            $context->note(ProgramError::TriggerExistsOnTable, $name, $database, $table);
 
             return new Completion(0, 0, $context->diagnostics->count());
         }
-        $position = count($schema->triggers);
-        if ($statement->order !== null) {
-            $position = null;
-            foreach ($schema->triggers as $index => $trigger) {
-                if ($trigger->table === $table && $trigger->time === $statement->time->value && $trigger->event === $statement->event->value && strtolower($trigger->name) === strtolower($statement->order->other->value)) {
-                    $position = $statement->order->placement === OrderPlacement::Follows ? $index + 1 : $index;
-                }
-            }
-            if ($position === null) {
-                throw ErrorCode::ReferencedTriggerMissing->error($statement->order->other->value);
-            }
-        }
+        $position = $this->position($statement, $schema, $table);
         $trigger = new Trigger($database, $name, $table, $statement->time->value, $statement->event->value, ProgramSource::definer($statement->definer, $session, $context), ProgramSource::of($session)->body('sp_proc_stmt'), (string) $session->variables->read('sql_mode'), ProgramSource::now(2), ProgramSource::charsets($session, $database), $statement);
         array_splice($schema->triggers, $position, 0, [$trigger]);
 
         return new Completion();
+    }
+
+    /**
+     * Answers the position of a new trigger among the triggers of its database: after or before the trigger FOLLOWS or PRECEDES names, of the same table, time and event, or after all of them without one.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the trigger FOLLOWS or PRECEDES names does not exist (ER_REFERENCED_TRG_DOES_NOT_EXIST)
+     */
+    public function position(CreateTrigger $statement, Schema $schema, string $table): int
+    {
+        if ($statement->order === null) {
+            return count($schema->triggers);
+        }
+        $position = null;
+        foreach ($schema->triggers as $index => $trigger) {
+            if ($trigger->table === $table && $trigger->time === $statement->time->value && $trigger->event === $statement->event->value && strtolower($trigger->name) === strtolower($statement->order->other->value)) {
+                $position = $statement->order->placement === OrderPlacement::Follows ? $index + 1 : $index;
+            }
+        }
+        if ($position === null) {
+            throw ProgramError::ReferencedTriggerMissing->error($statement->order->other->value);
+        }
+
+        return $position;
     }
 }

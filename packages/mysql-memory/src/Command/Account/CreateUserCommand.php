@@ -7,7 +7,7 @@ namespace MySqlMemory\Command\Account;
 use MySqlMemory\Account\Account;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AccountError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -80,10 +80,10 @@ final class CreateUserCommand implements Command
             $created[$identity->key()] = [$identity, $user];
         }
         if ($failed !== [] && !$statement->ifNotExists) {
-            throw ErrorCode::CannotUser->error('CREATE USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
+            throw AccountError::CannotUser->error('CREATE USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
         foreach ($failed as $identity) {
-            $context->diagnostics->note(ErrorCode::UserAlreadyExists, ErrorCode::UserAlreadyExists->message($identity->quoted()));
+            $context->diagnostics->note(AccountError::UserAlreadyExists, AccountError::UserAlreadyExists->message($identity->quoted()));
         }
         $defaults = $this->defaults($statement, $session);
         $saved = $accounts->copy();
@@ -114,7 +114,7 @@ final class CreateUserCommand implements Command
         foreach ($statement->defaultRoles as $role) {
             $identity = $names->identity($role, $session);
             if ($session->instance->accounts->find($identity) === null) {
-                throw ErrorCode::UserDoesNotExist->error($identity->backquoted());
+                throw AccountError::UserDoesNotExist->error($identity->backquoted());
             }
             $defaults[] = $identity;
         }
@@ -169,7 +169,7 @@ final class CreateUserCommand implements Command
         $created = [];
         foreach ($roles as $role) {
             if ($role->user === '') {
-                throw ErrorCode::CannotUser->error('CREATE ROLE', 'anonymous user');
+                throw AccountError::CannotUser->error('CREATE ROLE', 'anonymous user');
             }
             if ($accounts->find($role) !== null || isset($created[$role->key()])) {
                 $failed[] = $role;
@@ -178,10 +178,10 @@ final class CreateUserCommand implements Command
             $created[$role->key()] = $role;
         }
         if ($failed !== [] && !$ifNotExists) {
-            throw ErrorCode::CannotUser->error('CREATE ROLE', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
+            throw AccountError::CannotUser->error('CREATE ROLE', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
         foreach ($failed as $identity) {
-            $context->diagnostics->note(ErrorCode::UserAlreadyExists, ErrorCode::UserAlreadyExists->message($identity->quoted()));
+            $context->diagnostics->note(AccountError::UserAlreadyExists, AccountError::UserAlreadyExists->message($identity->quoted()));
         }
         foreach ($created as $role) {
             $accounts->add(Account::role($role));

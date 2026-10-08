@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Admin;
 
 use MySqlMemory\Command\Command;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\AdministrationError;
+use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -51,6 +52,6 @@ final class LogfileGroupCommand implements Command
             (new TablespaceCommand())->engine($statement->options, $operationName);
         }
 
-        throw new SqlError(ErrorCode::FeatureUnsupported, ErrorCode::FeatureUnsupported->message('LOGFILE GROUP', 'by InnoDB'), null, [[ErrorCode::EngineUnsupportedOperation->value, ErrorCode::EngineUnsupportedOperation->message($operationName)]]);
+        throw new SqlError(AdministrationError::FeatureUnsupported, AdministrationError::FeatureUnsupported->message('LOGFILE GROUP', 'by InnoDB'), null, [[SchemaError::EngineUnsupportedOperation->value, SchemaError::EngineUnsupportedOperation->message($operationName)]]);
     }
 }

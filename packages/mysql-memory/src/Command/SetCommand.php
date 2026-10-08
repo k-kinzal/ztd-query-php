@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command;
 
 use Closure;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Frame;
@@ -124,7 +124,7 @@ final class SetCommand implements Command
             };
         }
 
-        throw ErrorCode::NotSupportedYet->error('SET ' . (new ReflectionClass($item))->getShortName());
+        throw StatementError::NotSupportedYet->error('SET ' . (new ReflectionClass($item))->getShortName());
     }
 
     /**

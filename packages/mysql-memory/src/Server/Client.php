@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Server;
 
 use Closure;
-use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Instance;
 use MySqlMemory\Protocol\Capability;
 use MySqlMemory\Protocol\MalformedPacket;
@@ -87,7 +87,7 @@ final class Client
                     return false;
                 }
             } catch (MalformedPacket $failure) {
-                $this->packet($this->messages->error(1047, '08S01', ErrorCode::UnknownCommand->message()));
+                $this->packet($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message()));
 
                 return false;
             } catch (Throwable $failure) {
@@ -120,7 +120,7 @@ final class Client
             0x1B => $this->send($this->messages->eof(0, $this->status())),
             0x09 => $this->send('Uptime: 1  Threads: 1  Questions: 0  Slow queries: 0  Opens: 0  Flush tables: 0  Open tables: 0  Queries per second avg: 0.000'),
             0x16, 0x17, 0x18, 0x19, 0x1A, 0x1C => $this->statements->handle($command, $reader),
-            default => $this->send($this->messages->error(1047, '08S01', ErrorCode::UnknownCommand->message())),
+            default => $this->send($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message())),
         };
     }
 

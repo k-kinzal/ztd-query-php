@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Value\Temporal;
 use SqlParser\Parser\Node;
 use SqlParser\Parser\SyntaxException;
@@ -32,7 +33,7 @@ final class Syntax
                 $offset = $token->offset;
                 $line = substr_count(substr($statement, 0, $offset), "\n") + 1;
 
-                throw new SqlError(ErrorCode::ParseError, ErrorCode::ParseError->message(mb_strcut(substr($statement, $offset), 0, 80, 'UTF-8'), $line));
+                throw new SqlError(StatementError::ParseError, StatementError::ParseError->message(mb_strcut(substr($statement, $offset), 0, 80, 'UTF-8'), $line));
             }
         }
     }
@@ -55,7 +56,7 @@ final class Syntax
                 $offset = $token->offset;
                 $line = substr_count(substr($statement, 0, $offset), "\n") + 1;
 
-                throw new SqlError(ErrorCode::ParseError, ErrorCode::ParseError->message(mb_strcut(substr($statement, $offset), 0, 80, 'UTF-8'), $line));
+                throw new SqlError(StatementError::ParseError, StatementError::ParseError->message(mb_strcut(substr($statement, $offset), 0, 80, 'UTF-8'), $line));
             }
         }
     }
@@ -83,7 +84,7 @@ final class Syntax
             };
             $text = $this->unquote($tokens[1]->text, !$modes->has('NO_BACKSLASH_ESCAPES'));
             if (Temporal::literal($form, $text, 6, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE')) === null) {
-                throw ErrorCode::WrongValue->error($form, $text);
+                throw DataError::WrongValue->error($form, $text);
             }
         }
     }
@@ -118,12 +119,12 @@ final class Syntax
             $cause = $cause->getPrevious();
         }
         if (!$cause instanceof SyntaxException) {
-            return new SqlError(ErrorCode::ParseError, ErrorCode::ParseError->message('', 1), $failure);
+            return new SqlError(StatementError::ParseError, StatementError::ParseError->message('', 1), $failure);
         }
         $offset = $cause->token->offset;
         $line = substr_count(substr($statement, 0, $offset), "\n") + 1;
         $near = substr($statement, $offset);
 
-        return new SqlError(ErrorCode::ParseError, ErrorCode::ParseError->message(mb_strcut($near, 0, 80, 'UTF-8'), $line), $failure);
+        return new SqlError(StatementError::ParseError, StatementError::ParseError->message(mb_strcut($near, 0, 80, 'UTF-8'), $line), $failure);
     }
 }

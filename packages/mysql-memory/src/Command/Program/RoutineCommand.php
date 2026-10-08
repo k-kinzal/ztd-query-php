@@ -8,7 +8,8 @@ use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\ColumnText;
 use MySqlMemory\Dictionary\Routine;
 use MySqlMemory\Dictionary\Schema;
-use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\QueryError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
@@ -73,23 +74,43 @@ final class RoutineCommand implements Command
         $schema = $session->instance->dictionary->schema($database);
         if ($schema !== null && isset(self::routines($schema, $function)[$key])) {
             if (!$statement->ifNotExists) {
-                throw ErrorCode::RoutineExists->error($kind, $statement->name->name->value);
+                throw ProgramError::RoutineExists->error($kind, $statement->name->name->value);
             }
-            $context->note(ErrorCode::RoutineExists, $kind, $statement->name->name->value);
+            $context->note(ProgramError::RoutineExists, $kind, $statement->name->name->value);
 
             return new Completion(0, 0, $context->diagnostics->count());
         }
         [$access, $deterministic, $security, $comment] = $this->characteristics($statement->characteristics, ['CONTAINS SQL', false, 'DEFINER', '']);
         if ($function && !$deterministic && $access !== 'NO SQL' && $access !== 'READS SQL DATA' && ProgramSource::enabled($session->variables->read('log_bin')) && !ProgramSource::enabled($session->variables->read('log_bin_trust_function_creators'))) {
-            throw ErrorCode::UnsafeRoutine->error();
+            throw ProgramError::UnsafeRoutine->error();
         }
         if ($schema === null) {
-            throw ErrorCode::BadDatabase->error($database);
+            throw QueryError::BadDatabase->error($database);
         }
+        $routine = $this->routine($statement, $session, $context, $schema, [$access, $deterministic, $security, $comment]);
+        if ($function) {
+            $schema->functions[$key] = $routine;
+        } else {
+            $schema->procedures[$key] = $routine;
+        }
+
+        return new Completion(0, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Builds the routine a CREATE PROCEDURE or CREATE FUNCTION stores in a database, with its text as written.
+     *
+     * @param array{string, bool, string, string} $characteristics The data access, determinism, security context and comment of the routine
+     */
+    public function routine(CreateProcedure|CreateFunction $statement, Session $session, Context $context, Schema $schema, array $characteristics): Routine
+    {
+        [$access, $deterministic, $security, $comment] = $characteristics;
+        $function = $statement instanceof CreateFunction;
         $source = ProgramSource::of($session);
         $now = ProgramSource::now();
-        $routine = new Routine(
-            $database,
+
+        return new Routine(
+            $schema->name,
             $statement->name->name->value,
             ProgramSource::definer($statement->definer, $session, $context),
             $source->between($function ? 'sf_tail' : 'sp_tail'),
@@ -102,16 +123,9 @@ final class RoutineCommand implements Command
             (string) $session->variables->read('sql_mode'),
             $now,
             $now,
-            ProgramSource::charsets($session, $database),
+            ProgramSource::charsets($session, $schema->name),
             $statement,
         );
-        if ($function) {
-            $schema->functions[$key] = $routine;
-        } else {
-            $schema->procedures[$key] = $routine;
-        }
-
-        return new Completion(0, 0, $context->diagnostics->count());
     }
 
     /**
@@ -126,7 +140,7 @@ final class RoutineCommand implements Command
         $schema = $session->instance->dictionary->schema($database);
         $routine = $schema === null ? null : (self::routines($schema, $function)[strtolower($statement->name->name->value)] ?? null);
         if ($routine === null) {
-            throw ErrorCode::RoutineMissing->error($statement->kind->value, $database . '.' . $statement->name->name->value);
+            throw ProgramError::RoutineMissing->error($statement->kind->value, $database . '.' . $statement->name->name->value);
         }
         [$routine->access, , $routine->security, $routine->comment] = $this->characteristics($statement->characteristics, [$routine->access, $routine->deterministic, $routine->security, $routine->comment]);
         $routine->modified = ProgramSource::now();
