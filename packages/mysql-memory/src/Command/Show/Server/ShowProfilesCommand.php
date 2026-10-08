@@ -7,6 +7,7 @@ namespace MySqlMemory\Command\Show\Server;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Listing;
+use MySqlMemory\Error\ProgramError;
 use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
@@ -14,6 +15,8 @@ use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ProfileSection;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowProfile;
@@ -23,7 +26,8 @@ use SqlSemantics\Statement\Operation;
 /**
  * Executes SHOW PROFILES and SHOW PROFILE: the statements the session profiled, and the stages of one of them.
  *
- * Both are deprecated and warn so. The emulator does not profile statements, as a session that
+ * Both are deprecated and warn so, but for a LIMIT operand of SHOW PROFILE naming a variable,
+ * ER_SP_UNDECLARED_VAR, found first (verified on live 8.0, 8.4 and 9.1 servers). The emulator does not profile statements, as a session that
  * has not set profiling does not, so they list none. SHOW PROFILE answers the status and
  * duration of each stage and the columns of the sections it names, read from
  * INFORMATION_SCHEMA.PROFILING (verified on a live 8.4 server).
@@ -51,6 +55,12 @@ final class ShowProfilesCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof ShowProfiles || $statement instanceof ShowProfile);
+        $limit = $statement instanceof ShowProfile ? $statement->limit : null;
+        foreach ($limit instanceof RowLimit ? [$limit->offset, $limit->count] : [] as $operand) {
+            if ($operand instanceof ProgramVariable) {
+                throw ProgramError::UndeclaredVariable->error($operand->name->value);
+            }
+        }
         $name = $statement instanceof ShowProfiles ? 'SHOW PROFILES' : 'SHOW PROFILE';
         $context->warning(StatementError::DeprecatedSyntax, $name, 'Performance Schema');
         if ($statement instanceof ShowProfiles) {

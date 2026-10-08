@@ -256,4 +256,20 @@ final class ResourceGroupCommandTest extends TestCase
 
         self::assertSame([-5, 0], [(new ResourceGroupCommand())->priority($statement->priority), (new ResourceGroupCommand())->priority(null)]);
     }
+
+    public function testAlterRefusesAMissingGroupBeforeAReversedRange(): void
+    {
+        $session = (new Instance())->connect();
+        $missing = $session->run('ALTER RESOURCE GROUP g VCPU 2-1')[0];
+        $cpu = $session->run('ALTER RESOURCE GROUP g VCPU 999')[0];
+        $predefined = $session->run('ALTER RESOURCE GROUP USR_default VCPU 1-0')[0];
+        $session->query('CREATE RESOURCE GROUP g TYPE = USER');
+        $reversed = $session->run('ALTER RESOURCE GROUP g VCPU 1-0')[0];
+
+        self::assertInstanceOf(SqlError::class, $missing);
+        self::assertInstanceOf(SqlError::class, $cpu);
+        self::assertInstanceOf(SqlError::class, $predefined);
+        self::assertInstanceOf(SqlError::class, $reversed);
+        self::assertSame([3651, 3652, 3655, 3653], [$missing->getCode(), $cpu->getCode(), $predefined->getCode(), $reversed->getCode()]);
+    }
 }

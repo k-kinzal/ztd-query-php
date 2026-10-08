@@ -53,6 +53,6 @@ final class ShowPluginsCommand implements Command
             Heading::text('License', Field::VarString, 80, 0, 0, 'PLUGIN_LICENSE', $table, $table, $schema),
         ];
 
-        return (new Listing($headings))->sent(ServerCatalog::shared()->plugins, $context);
+        return (new Listing($headings))->sent(ServerCatalog::of($session->instance->version)->plugins, $context);
     }
 }

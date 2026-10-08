@@ -226,7 +226,7 @@ final class Names
     }
 
     /**
-     * Compiles a system variable read.
+     * Compiles a system variable read; in MySQL 5.6 and 5.7 a string is as long as the value it holds (verified on live 5.6.51 and 5.7.44 servers).
      *
      * @throws \MySqlMemory\Error\SqlError When the server has no such variable, or not in the scope read
      */
@@ -235,7 +235,7 @@ final class Names
         $name = strtolower($variable->name->value);
         $definition = $this->compiler->connection->variables->catalog->find($name);
         if ($definition === null) {
-            throw AdministrationError::UnknownSystemVariable->error($variable->name->value);
+            throw AdministrationError::UnknownSystemVariable->error(($variable->instance === null ? '' : $variable->instance->value . '.') . $variable->name->value);
         }
         $scope = match ($variable->scope) {
             Written::Global => VariableScope::Global,
@@ -250,6 +250,10 @@ final class Names
             throw AdministrationError::IncorrectGlobalLocalVariable->error($variable->name->value, 'GLOBAL');
         }
         $domain = Domain::of($definition->domain, true);
+        if ($domain->kind === Kind::String && $this->compiler->settings->legacy()) {
+            $value = $this->compiler->connection->variables->system($definition, $scope === VariableScope::Global ? VariableScope::Global : VariableScope::Session);
+            $domain = new Domain(Kind::String, $domain->field, mb_strlen((string) $value, 'UTF-8'), $domain->decimals, false, $domain->collation, true, [], $domain->coercibility);
+        }
 
         return new SystemVariableRead($definition, $scope === VariableScope::Global ? VariableScope::Global : VariableScope::Session, $domain->withNullable(true));
     }

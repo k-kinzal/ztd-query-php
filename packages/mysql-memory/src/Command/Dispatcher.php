@@ -69,6 +69,7 @@ final class Dispatcher
         MySql\Utility\Show\Session\ShowErrorCount::class => WarningsCommand::class,
         MySql\Dml\Evaluation::class => DoCommand::class,
         MySql\Utility\Show\Schema\ShowTables::class => ShowTablesCommand::class,
+        MySql\Utility\Show\Schema\ShowDatabases::class => Show\ShowDatabasesCommand::class,
         MySql\Routine\Condition\Signal::class => Condition\SignalCommand::class,
         MySql\Routine\Condition\Diagnostics\GetDiagnostics::class => Condition\DiagnosticsCommand::class,
         MySql\Dml\Prepared\Prepare::class => Prepared\PreparedCommand::class,

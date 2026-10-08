@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -23,8 +24,10 @@ use SqlSemantics\Statement\Snapshot;
  * assignment, is rejected (MYSQL-PRECEDENCE-001).
  *
  * Rule: MYSQL-BETWEEN-001. Facts: 1, 0 or NULL, an integer; it can be NULL
- * when an operand can. The three operands must have the same number of
- * columns (MYSQL-OPERAND-COLUMNS-001). Terminates: the operands are strict parts.
+ * when an operand can. Each of the three operands must be a single value
+ * (MYSQL-OPERAND-COLUMNS-001); the first row among them is reported, rows of
+ * equal width included (verified on a live 8.4 server). Terminates: the
+ * operands are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_between.
  * Status: Implemented.
  *
@@ -60,7 +63,13 @@ final class Between implements Scalar
         $low = $derivation->scalar($this->low, $environment);
         $high = $derivation->scalar($this->high, $environment);
         $operands = new Operands();
-        $operands->comparable([$operand, $low, $high], $derivation);
+        foreach ([$operand, $low, $high] as $fact) {
+            $width = $operands->width($fact);
+            if ($width !== null && $width !== 1) {
+                $derivation->report(new OperandColumns(1, $width));
+                break;
+            }
+        }
         $operands->collated([$operand, $low, $high], 'between', $derivation);
 
         return $operands->truth($operand->nullability->propagate($low->nullability)->propagate($high->nullability));

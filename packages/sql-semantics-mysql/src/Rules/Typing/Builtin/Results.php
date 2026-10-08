@@ -6,12 +6,14 @@ namespace SqlSemantics\Platform\MySql\Rules\Typing\Builtin;
 
 use Closure;
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\Nullability;
 use SqlSemantics\Statement\Type\TypeFact;
 
 /**
@@ -49,14 +51,17 @@ final class Results
     /**
      * Refines the fact of a call with the type its rule resolves, when it resolves one.
      *
+     * MySQL 5.6 answers the account functions as NOT NULL (verified on a live 5.6.51 server).
+     *
      * @param list<Scalar> $arguments The arguments
      * @param list<ScalarFact> $facts The fact of each argument
      */
     public function refine(string $name, array $arguments, array $facts, ScalarFact $fact, Derivation $derivation): ScalarFact
     {
         $type = $this->type($name, $arguments, array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts), $derivation);
+        $nullability = $derivation->context->profile->grammar === GrammarRelease::MySql5651 && in_array(strtoupper($name), ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER'], true) ? Nullability::NotNull : $fact->nullability;
 
-        return $type === null ? $fact : new ScalarFact(new Known($type), $fact->nullability, $fact->resolution);
+        return $type === null ? $fact : new ScalarFact(new Known($type), $nullability, $fact->resolution);
     }
 
     /**

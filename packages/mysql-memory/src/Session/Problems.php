@@ -6,7 +6,6 @@ namespace MySqlMemory\Session;
 
 use MySqlMemory\Error\ProgramError;
 use MySqlMemory\Error\QueryError;
-use MySqlMemory\Error\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Walker;
@@ -15,9 +14,9 @@ use MySqlMemory\Session\Problem\Locations;
 use MySqlMemory\Session\Problem\Stages;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable;
-use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\AtTimeZone;
-use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
+use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
@@ -33,7 +32,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
@@ -83,6 +82,8 @@ final class Problems
             }
         }
         $this->paths($operation, $session, $diagnostics);
+        $this->opened($operation, $session, $diagnostics);
+        (new Problem\Delayed())->check($operation->statement, $session);
         [$located, $matched] = (new Locations())->located($operation, $calls, $diagnostics, $session);
         $this->unlocated($diagnostics, $located, $session, $operation->statement);
         $first = Locations::first($located);
@@ -124,10 +125,50 @@ final class Problems
     {
         $grouping = $session->modes()->has('ONLY_FULL_GROUP_BY');
         $database = $session->variables->database;
+        $tested = $this->tested($operation);
 
         return array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => ($grouping || !$diagnostic instanceof NonGroupedColumn)
+            && !($tested && $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables)
             && !Stages::answered($operation->statement, $diagnostic)
             && !($operation->statement instanceof DropTable && $diagnostic instanceof MissingTable && ($diagnostic->name->schema !== null || $database !== ''))));
+    }
+
+    /**
+     * Raises the refusals of a write MySQL 5.6 and 5.7 find before they resolve any table: a target that is not updatable, and in 5.6 the ORDER BY or LIMIT of a multiple-table UPDATE, which it refuses while it parses (verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @throws SqlError When the operation has such a problem
+     */
+    public function legacyWrites(Operation $operation, Session $session): void
+    {
+        $release = $session->settings()->release();
+        if ($release !== \SqlSemantics\Contract\GrammarRelease::MySql5651 && $release !== \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            return;
+        }
+        $early = [\SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::NonUpdatableTarget, ...($release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? [\SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::LimitedMultipleUpdate, \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::OrderedMultipleUpdate] : [])];
+        foreach ($operation->facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse && in_array($diagnostic->rule, $early, true)) {
+                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+            }
+        }
+    }
+
+    /**
+     * Tells whether every block that writes `*` without tables is a query EXISTS tests, which takes it (verified on live 5.6.51 and 8.4.7 servers).
+     */
+    public function tested(Operation $operation): bool
+    {
+        $existing = Locations::existing($operation);
+        if ($existing === []) {
+            return false;
+        }
+        foreach ((new Walker())->find($operation->statement, Select::class) as $select) {
+            $starred = array_filter($select->items, static fn ($item): bool => $item instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star) !== [];
+            if ($starred && ($select->from === null || $select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual) && !in_array($select, $existing, true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -172,6 +213,36 @@ final class Problems
     }
 
     /**
+     * Raises the error of the first table the statement reads that does not exist, as the server opens every table of the statement before it resolves any name.
+     *
+     * The table a statement writes is opened first, and the tables of subqueries in any clause
+     * with those of FROM; the tables of a common table expression no table reference names are
+     * not (verified on live 8.0, 8.4 and 9.1 servers).
+     *
+     * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
+     *
+     * @throws SqlError When a table the statement reads does not exist
+     */
+    public function opened(Operation $operation, Session $session, array $diagnostics): void
+    {
+        $missing = array_values(array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof MissingTable));
+        if ($missing === []) {
+            return;
+        }
+        $read = [];
+        foreach ($this->reached($operation->statement) as $node) {
+            if ($node instanceof TableReference || $node instanceof ExplicitTable || $node instanceof WriteTarget) {
+                $read[spl_object_id($node->name())] = true;
+            }
+        }
+        foreach ($missing as $diagnostic) {
+            if (isset($read[spl_object_id($diagnostic->name)])) {
+                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+            }
+        }
+    }
+
+    /**
      * Raises the problems the server reports before the names it resolves: each problem before the first located one, but a window defined twice, and then a window a query names but does not define.
      *
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
@@ -190,7 +261,7 @@ final class Problems
             }
         }
         foreach ($diagnostics as $diagnostic) {
-            if ($diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::UnknownWindow) {
+            if ($diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::UnknownWindow && !isset($located[spl_object_id($diagnostic)])) {
                 throw (new Errors())->misuse($diagnostic);
             }
         }
@@ -199,7 +270,8 @@ final class Problems
     /**
      * Raises the error of the first problem the server finds while it reads an operation, before it checks the INTO variables and opens any table.
      *
-     * A CAST or CONVERT to TIME or DATETIME with a precision above 6 is one of them. An unknown
+     * A CAST or CONVERT to TIME or DATETIME with a precision above 6 is one of them, found before
+     * a wrong call of a native function or a system variable the server does not know. An unknown
      * collation after COLLATE comes first of all, as the server looks it up while it parses the
      * statement, and a table of a multiple-table DELETE that its FROM clause lacks comes after the
      * tables the FROM clause names twice, before any table is opened (verified on a live 8.4
@@ -214,17 +286,23 @@ final class Problems
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
         }
-        (new Placement())->check($operation->statement);
+        $this->legacyWrites($operation, $session);
+        (new Placement())->check($operation->statement, $session->settings()->release());
         $repeated = $this->repeated($operation->statement);
         if ($repeated !== null) {
             throw QueryError::NonUniqueTable->error($repeated->value);
         }
+        $this->targets($operation->statement, $session);
+        (new Problem\Precision())->check($operation->statement);
         $alias = null;
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if (\MySqlMemory\Command\Program\ProgramProblems::parameter($operation->statement, $diagnostic)) {
                 continue;
             }
-            if (Stages::parsed($diagnostic)) {
+            if (Stages::parsed($diagnostic) && !($diagnostic instanceof UnknownSystemVariable && Stages::selfChecked($operation->statement))) {
+                if ($diagnostic instanceof UnknownSystemVariable) {
+                    (new \MySqlMemory\Command\Program\ProgramProblems())->variables($operation->statement);
+                }
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
             if (Stages::closing($diagnostic)) {
@@ -240,30 +318,31 @@ final class Problems
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
         }
-        $this->precise($operation->statement);
         (new \MySqlMemory\Command\Show\Inspection())->check($operation->statement, $session);
         (new \MySqlMemory\Command\Explain\ExplainCommand())->check($operation->statement, $session);
     }
 
     /**
-     * Raises the error of a CAST or CONVERT to TIME or DATETIME, or of AT TIME ZONE, with a precision above 6 (ER_TOO_BIG_PRECISION), in the order of the casts and then of AT TIME ZONE.
+     * Raises the error of a table a multiple-table DELETE names twice in the list of the tables it deletes from (ER_NONUNIQ_TABLE).
      *
-     * Source: https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html.
+     * The server reads the list before the tables of FROM or USING, so the error comes before
+     * theirs. Two names are the same table when they name the same database, the current one
+     * when none is written (verified on a live 8.4 server).
      *
-     * @throws SqlError When such a precision is found
+     * @throws SqlError When the list names a table twice
      */
-    public function precise(Node $statement): void
+    public function targets(Node $statement, Session $session): void
     {
-        foreach ((new Walker())->find($statement, Cast::class) as $cast) {
-            $target = $cast->target;
-            if (($target->kind === CastKind::Time || $target->kind === CastKind::DateTime) && $target->length !== null && (int) $target->length > 6) {
-                throw SchemaError::TooBigPrecision->error((int) $target->length, 'CAST', 6);
-            }
+        if (!$statement instanceof MultipleDelete) {
+            return;
         }
-        foreach ((new Walker())->find($statement, AtTimeZone::class) as $zoned) {
-            if ($zoned->precision !== null && (int) $zoned->precision > 6) {
-                throw SchemaError::TooBigPrecision->error((int) $zoned->precision, 'CAST', 6);
+        $seen = [];
+        foreach ($statement->targets as $target) {
+            $key = ($target->schema->value ?? $session->variables->database) . "\0" . $target->name->value;
+            if (isset($seen[$key])) {
+                throw QueryError::NonUniqueTable->error($target->name->value);
             }
+            $seen[$key] = true;
         }
     }
 

@@ -9,7 +9,7 @@ namespace MySqlMemory\Registry;
  *
  * The files are named binlog.NNNNNN after their number. The emulator writes no event for the
  * statements it runs, so each file holds the two events every binary log starts with: the format
- * description (positions 4 to 127) and the previous GTIDs (127 to 158). A file rotated away from
+ * description (positions 4 to 127, see described()) and the previous GTIDs (127 to 158). A file rotated away from
  * ends with a rotate event naming the next one.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/binary-log.html,
  * https://dev.mysql.com/doc/refman/8.4/en/reset-binary-logs-and-gtids.html.
@@ -18,11 +18,6 @@ namespace MySqlMemory\Registry;
  */
 final class BinaryLog
 {
-    /**
-     * The position after the events every binary log file starts with.
-     */
-    public const START = 158;
-
     /**
      * @var list<int> The numbers of the files in the index; the last is the active file
      */
@@ -45,17 +40,32 @@ final class BinaryLog
     }
 
     /**
+     * Answers the position after the format description event of a release.
+     *
+     * The event lists the header length of each event type, so it grew by a byte when MySQL 8.3
+     * added the event of tagged GTIDs: it ends at 126 in MySQL 8.0 to 8.2 (verified on a live 8.0
+     * server) and at 127 from 8.3.
+     * Source: https://dev.mysql.com/doc/relnotes/mysql/8.3/en/news-8-3-0.html.
+     */
+    public static function described(string $version): int
+    {
+        return str_starts_with($version, '8.0.') || str_starts_with($version, '8.1.') || str_starts_with($version, '8.2.') ? 126 : 127;
+    }
+
+    /**
      * Answers the events of a file, each a list of the position, type, server id, end position and information.
      *
      * @return list<array{int, string, int, int, string}>
      */
     public function events(int $number, string $version): array
     {
-        $events = [[4, 'Format_desc', 1, 127, 'Server ver: ' . $version . ', Binlog ver: 4'], [127, 'Previous_gtids', 1, self::START, '']];
+        $described = self::described($version);
+        $start = $described + 31;
+        $events = [[4, 'Format_desc', 1, $described, 'Server ver: ' . $version . ', Binlog ver: 4'], [$described, 'Previous_gtids', 1, $start, '']];
         $index = array_search($number, $this->files, true);
         if (is_int($index) && $index < count($this->files) - 1) {
             $next = self::name($this->files[$index + 1]);
-            $events[] = [self::START, 'Rotate', 1, self::START + 31 + strlen($next), $next . ';pos=4'];
+            $events[] = [$start, 'Rotate', 1, $start + 31 + strlen($next), $next . ';pos=4'];
         }
 
         return $events;

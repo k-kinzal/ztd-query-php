@@ -13,6 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
+use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -141,5 +142,19 @@ final class NumbersTest extends TestCase
 
         self::assertEquals(Domain::string(3, Collation::binary()), $numbers->binaryBits(ArithmeticOperator::ShiftLeft, Domain::string(3, Collation::binary()), Domain::string(5, Collation::binary())));
         self::assertEquals(Domain::string(3, Collation::binary()), $numbers->binaryBits(ArithmeticOperator::ShiftRight, Domain::string(3, Collation::binary()), Domain::string(5, Collation::binary())));
+    }
+
+    public function testLegacyNegatedCountsTheSignOfAnExactResult(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame([12, 5, 23], [$numbers->legacyNegated(Domain::integer(Field::LongLong, 11))->length, $numbers->legacyNegated(Domain::decimal(2, 1))->length, $numbers->legacyNegated(Domain::double(23))->length]);
+    }
+
+    public function testSignedCountsTheSignOfAnIntegerLiteralOperand(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame([2, 2, 11], [$numbers->signed(new NumberLiteral('1'), Domain::integer(Field::LongLong, 1))->length, $numbers->signed(new Grouped(new NumberLiteral('1')), Domain::integer(Field::LongLong, 1))->length, $numbers->signed(new StringLiteral(['1']), Domain::integer(Field::Long, 11))->length]);
     }
 }

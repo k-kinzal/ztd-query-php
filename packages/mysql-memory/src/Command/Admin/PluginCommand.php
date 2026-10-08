@@ -68,7 +68,7 @@ final class PluginCommand implements Command
             if (str_contains($library, '/') || mb_strlen($library) > 64) {
                 throw AdministrationError::PathsForbidden->error();
             }
-            throw $this->unopened($directory, $library);
+            throw $this->unopened($directory, $library, $session->settings()->legacy() ? '2' : '11');
         }
         if ($statement instanceof UninstallPlugin) {
             throw $this->builtIn($statement->plugin->value) ? AdministrationError::PermanentPlugin->error() : ProgramError::RoutineMissing->error('PLUGIN', $statement->plugin->value);
@@ -128,12 +128,14 @@ final class PluginCommand implements Command
 
     /**
      * Answers the error of a library the plugin directory does not hold; an empty name, `.` and `..` name a directory.
+     *
+     * @param string $errno The error number the server reports for the failed open: 11 from 8.0 on, 2 in 5.6 and 5.7 (verified on live 5.7.44 and 8.4.7 servers)
      */
-    public function unopened(string $directory, string $library): SqlError
+    public function unopened(string $directory, string $library, string $errno = '11'): SqlError
     {
         $path = $directory . $library;
         $reason = in_array($library, ['', '.', '..'], true) ? 'cannot read file data: Is a directory' : 'cannot open shared object file: No such file or directory';
 
-        return AdministrationError::CantOpenLibrary->error($path, '11', $path . ': ' . $reason);
+        return AdministrationError::CantOpenLibrary->error($path, $errno, $path . ': ' . $reason);
     }
 }

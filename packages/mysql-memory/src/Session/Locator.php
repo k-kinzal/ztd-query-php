@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session;
 
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
@@ -19,13 +24,17 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
+use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ExpressionPart;
+use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
@@ -33,8 +42,8 @@ use SqlSemantics\Statement\Scalar;
 /**
  * Finds where in a statement each column name, select list position, function call and clock call is read, and in which order the server resolves it.
  *
- * The server resolves a query block in this order: the derived tables of its FROM clause, its
- * select list, WHERE, the ON conditions, GROUP BY, HAVING and ORDER BY; it names the clause it
+ * The server resolves a query block in this order: the derived tables of its FROM clause, the
+ * qualifiers of its `t.*` items, its select list, WHERE, the ON conditions, GROUP BY, HAVING and ORDER BY; it names the clause it
  * resolves in the message of a name it cannot resolve. A subquery is resolved in the place it is
  * written. An UPDATE resolves WHERE, every assigned column, every value, then ORDER BY; an INSERT
  * resolves its column list or the columns of SET, the rows or the values of SET, then the
@@ -67,6 +76,31 @@ final class Locator
     public array $predicates = [];
 
     /**
+     * @var list<array{TableWildcard, list<int>}> Each `t.*` of a select list, with the resolution order its qualifier is checked at: before the items of its block
+     */
+    public array $wildcards = [];
+
+    /**
+     * @var list<array{Select, list<int>}> Each block whose select list writes `*` without a FROM clause, with the resolution order the star is expanded at: before the qualified stars and the items of its block
+     */
+    public array $stars = [];
+
+    /**
+     * @var list<array{Name, list<int>}> Each window name a query block uses, with the resolution order it is checked at: OVER name where the call is resolved, the window a specification refines after ORDER BY
+     */
+    public array $windows = [];
+
+    /**
+     * @var list<array{SetOperation|OrderedSetOperation, list<int>}> Each set operation, with the resolution order its operands are compared at: once its right operand is resolved
+     */
+    public array $sets = [];
+
+    /**
+     * @var list<int> The resolution order of the query block being located
+     */
+    private array $block = [];
+
+    /**
      * @var list<array{Cast, string, list<int>}> Each cast to an array outside a functional index, of a type a multi-valued index takes, with the clause and the resolution order it is read at
      */
     public array $arrays = [];
@@ -75,6 +109,13 @@ final class Locator
      * @var array<int, true> The casts that are the expression of a functional key part, by object id
      */
     public array $keyed = [];
+
+    /**
+     * @param bool $operandFirst Whether the operand of IN, ANY and ALL over a subquery is resolved before the subquery, and the width of the subquery checked after both, as MySQL 8.0 does
+     */
+    public function __construct(public readonly bool $operandFirst = false)
+    {
+    }
 
     /**
      * Locates the column names of a statement.
@@ -216,9 +257,9 @@ final class Locator
             } elseif ($current instanceof InQuery || $current instanceof QuantifiedComparison) {
                 $this->predicates[] = [$current, $clause, $at];
                 $early = self::early($current);
-                $this->visit($current->operand, 'IN/ALL/ANY subquery', [...$at, $early ? 2 : 1]);
+                $this->visit($current->operand, 'IN/ALL/ANY subquery', [...$at, $this->operandFirst ? 0 : ($early ? 2 : 1)]);
                 $children[] = $current->query;
-                $positions[] = [...$at, 0];
+                $positions[] = [...$at, $this->operandFirst ? 1 : 0];
             } elseif ($current instanceof Node) {
                 $this->record($current, $clause, $at);
                 $index = 0;
@@ -261,6 +302,16 @@ final class Locator
             $this->places[spl_object_id($node)] = [$clause, $order];
             $this->clocks[] = $node;
         }
+        if ($node instanceof SetOperation || $node instanceof OrderedSetOperation) {
+            $this->sets[] = [$node, [...$order, (int) array_search('right', array_keys(get_object_vars($node)), true), PHP_INT_MAX]];
+        }
+        $over = $node instanceof WindowFunction || $node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate ? $node->over : null;
+        if ($over instanceof Name) {
+            $this->windows[] = [$over, $order];
+        }
+        if ($node instanceof WindowSpec && $node->base !== null) {
+            $this->windows[] = [$node->base, [...$this->block, 6, PHP_INT_MAX]];
+        }
     }
 
     /**
@@ -296,7 +347,17 @@ final class Locator
      */
     public function select(Select $select, array $order): void
     {
+        $outer = $this->block;
+        $this->block = $order;
         $this->from($select->from, $order);
+        foreach ($select->items as $item) {
+            if ($item instanceof TableWildcard) {
+                $this->wildcards[] = [$item, [...$order, 1, -1]];
+            }
+            if ($item instanceof \SqlSemantics\Platform\MySql\Statement\Query\Star && ($select->from === null || $select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual)) {
+                $this->stars[] = [$select, [...$order, 1, -2]];
+            }
+        }
         foreach ($select->items as $index => $item) {
             $this->visit($item instanceof SelectExpression ? $item->expression : $item, 'field list', [...$order, 1, $index]);
         }
@@ -306,6 +367,20 @@ final class Locator
         $this->visit($select->having, 'having clause', [...$order, 5]);
         $this->visit($select->orderBy, 'order clause', [...$order, 6]);
         $this->visit($select->limit, 'field list', [...$order, 7]);
+        $pending = $select->windows;
+        while (($node = array_pop($pending)) !== null) {
+            if ($node instanceof WindowSpec && $node->base !== null) {
+                $this->windows[] = [$node->base, [...$order, 6, PHP_INT_MAX]];
+            }
+            foreach (get_object_vars($node) as $value) {
+                foreach (is_array($value) ? $value : [$value] as $member) {
+                    if ($member instanceof Node && !$member instanceof Query) {
+                        $pending[] = $member;
+                    }
+                }
+            }
+        }
+        $this->block = $outer;
     }
 
     /**

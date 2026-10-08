@@ -11,6 +11,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Statement\Identifier\Name;
@@ -111,5 +112,16 @@ final class SystemVariableTest extends TestCase
     {
         self::assertSame('SELECT @@GLOBAL.x AS v', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('select @@global.x as v')->toString());
         self::assertSame('SELECT @@GLOBAL.x AS v', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('select @@global.x as v')->toString());
+    }
+
+    public function testDeriveScalarReportsAStructuredVariableThatIsNoKeyCacheVariable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $unknown = $semantics->analyze('SELECT @@hot.sort_buffer_size')->facts->diagnostics;
+
+        self::assertCount(1, $unknown);
+        self::assertInstanceOf(UnknownSystemVariable::class, $unknown[0]);
+        self::assertSame('hot.sort_buffer_size', $unknown[0]->name);
+        self::assertSame([], $semantics->analyze('SELECT @@hot.key_buffer_size, @@hot.KEY_CACHE_BLOCK_SIZE')->facts->diagnostics);
     }
 }

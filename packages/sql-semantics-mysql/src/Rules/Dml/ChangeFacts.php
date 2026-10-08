@@ -8,7 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Query\From\FromScope;
 use SqlSemantics\Platform\MySql\Rules\Query\Projection;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
-use SqlSemantics\Platform\MySql\Rules\Query\TailFacts;
+use SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable;

@@ -20,6 +20,7 @@ use MySqlMemory\Session\Session;
 use MySqlMemory\Storage\Store;
 use MySqlMemory\Storage\Writer;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption;
 use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
@@ -55,7 +56,7 @@ final class MultipleChangeCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof Update || $statement instanceof MultipleDelete);
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
-        $context->strict = $context->modes->strict() && !($statement instanceof Update && $statement->ignore);
+        $context->strict = $context->modes->strict() && !($statement instanceof Update ? $statement->ignore : in_array(DeleteOption::Ignore, $statement->options, true));
         $scope = new Scope();
         $relation = count($statement->tables) === 1 ? $statement->tables[0] : new TableList($statement->tables);
         $path = $planner->relations->plan($relation, $scope);
@@ -205,7 +206,7 @@ final class MultipleChangeCommand implements Command
             $conflict = $writer->conflict($row, $number);
             if ($conflict !== null) {
                 if ($ignore) {
-                    $context->warning(DataError::DuplicateEntry, ...$writer->entry($row, $conflict[1]));
+                    $writer->ignored($row, $conflict[1]);
                     continue;
                 }
                 throw $writer->duplicate($row, $conflict[1]);

@@ -14,6 +14,8 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 
 #[CoversClass(Constancy::class)]
 #[Small]
@@ -138,4 +140,16 @@ final class ConstancyTest extends TestCase
         self::assertSame([Constancy::Statement, Constancy::Row, Constancy::Row], [Constancy::of($constant, $operation->facts, true, ['v', 'w'], false), Constancy::of($varying, $operation->facts, true, ['v', 'w'], false), Constancy::of($constant, $operation->facts, true, ['v', 'w'])]);
     }
 
+    public function testOfKnowsTheAccountFunctionsWhenItResolvesA57Statement(): void
+    {
+        $operation = (new Instance())->connect()->analyze('SELECT USER(), SESSION_USER()');
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $user = $statement->items[0];
+        $session = $statement->items[1];
+        self::assertInstanceOf(SelectExpression::class, $user);
+        self::assertInstanceOf(SelectExpression::class, $session);
+
+        self::assertSame([Constancy::Statement, Constancy::Resolved, Constancy::Statement, Constancy::Resolved], [Constancy::of($user->expression, $operation->facts), Constancy::of($user->expression, $operation->facts, true, [], true, true), Constancy::of($session->expression, $operation->facts), Constancy::of($session->expression, $operation->facts, true, [], true, true)]);
+    }
 }

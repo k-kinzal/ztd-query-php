@@ -51,6 +51,41 @@ final class ServerCatalog
     }
 
     /**
+     * Answers the catalog of a release: that of 8.4.7, with the plugins and privileges the release has.
+     *
+     * The mysql_native_password plugin is active, and listed second, before MySQL 8.4, which disables it by default, and
+     * gone from 9.0, which removed it; a MySQL 8.0 server lists the privileges
+     * resources/privileges-8.0.php holds (verified on live 8.0, 8.4 and 9.1 servers).
+     * Source: https://dev.mysql.com/doc/relnotes/mysql/8.4/en/news-8-4-0.html,
+     * https://dev.mysql.com/doc/relnotes/mysql/9.0/en/news-9-0-0.html.
+     *
+     * @param string $version The release, as `8.0.44`
+     */
+    public static function of(string $version): self
+    {
+        $shared = self::shared();
+        $before = static fn (string $first): bool => version_compare($version, $first, '<');
+        if (!$before('8.4.0') && $before('9.0.0')) {
+            return $shared;
+        }
+        $plugins = [];
+        foreach ($shared->plugins as $plugin) {
+            if ($plugin[0] !== 'mysql_native_password') {
+                $plugins[] = $plugin;
+            } elseif ($before('8.4.0')) {
+                array_splice($plugins, 1, 0, [[$plugin[0], 'ACTIVE', $plugin[2], $plugin[3], $plugin[4]]]);
+            }
+        }
+        $privileges = $shared->privileges;
+        if (str_starts_with($version, '8.0.')) {
+            /** @var list<array{string, string, string}> $privileges */
+            $privileges = require dirname(__DIR__, 4) . '/resources/privileges-8.0.php';
+        }
+
+        return new self($shared->engines, $plugins, $privileges, $shared->charsets, $shared->collations);
+    }
+
+    /**
      * Answers the name of the enabled storage engine a name or alias names, or null when none is.
      */
     public function engine(string $name): ?string

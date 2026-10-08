@@ -24,7 +24,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 /**
  * Resolves the types of literals.
  *
- * An integer literal is a BIGINT whose display length counts its digits and a sign, a BIGINT
+ * An integer literal is a BIGINT whose display length counts its digits and a sign (no sign in
+ * MySQL 5.6 and 5.7 unless one is written, verified on live 5.6.51 and 5.7.44 servers), a BIGINT
  * UNSIGNED above the signed range, and a DECIMAL above the unsigned range; a decimal literal is a
  * DECIMAL of its digits, where leading zeros count as one; a literal with an exponent is a DOUBLE
  * as long as its text. A string is
@@ -69,7 +70,7 @@ final class Literals
         $digits = ltrim($literal->text, '0');
         if ($literal->form === NumberForm::Integer) {
             if ($this->within($digits, $negative ? '9223372036854775808' : self::SIGNED_MAX)) {
-                return Domain::integer(Field::LongLong, strlen($literal->text) + 1);
+                return Domain::integer(Field::LongLong, strlen($literal->text) + ($negative || !$this->legacy() ? 1 : 0));
             }
             if (!$negative && $this->within($digits, self::UNSIGNED_MAX)) {
                 return Domain::integer(Field::LongLong, strlen($literal->text), true);
@@ -82,6 +83,14 @@ final class Literals
         $integral = $whole === '' ? 0 : strlen($significant) + ($significant === $whole ? 0 : 1);
 
         return Domain::decimal(max(1, $integral + $scale), $scale);
+    }
+
+    /**
+     * Tells whether the release is 5.6 or 5.7, whose integer literals count no sign in their length.
+     */
+    public function legacy(): bool
+    {
+        return $this->release === GrammarRelease::MySql5651 || $this->release === GrammarRelease::MySql5744;
     }
 
     /**

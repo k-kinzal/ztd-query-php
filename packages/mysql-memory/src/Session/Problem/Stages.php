@@ -33,6 +33,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Problem\HistogramTables;
 use SqlSemantics\Platform\MySql\Statement\Server\Problem\UnknownHistogramColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateIndex;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTableLike;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Node;
@@ -96,10 +97,14 @@ final class Stages
 
     /**
      * Tells whether the server reports a problem while it parses the statement, before it opens any table.
+     *
+     * A system variable the server does not know is one of them (verified on live 8.0, 8.4 and 9.1
+     * servers).
      */
     public static function parsed(Diagnostic $diagnostic): bool
     {
         return $diagnostic instanceof WrongArgumentCount || $diagnostic instanceof NamedArgument || $diagnostic instanceof ReservedFunction
+            || $diagnostic instanceof UnknownSystemVariable
             || ($diagnostic instanceof NotSupportedYet && $diagnostic->feature === 'AT LOCAL');
     }
 

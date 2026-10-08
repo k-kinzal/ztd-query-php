@@ -78,7 +78,7 @@ final class Output
     }
 
     /**
-     * Answers the column definitions of a plan.
+     * Answers the column definitions of a plan, their names converted into the character set of the results.
      *
      * @return list<ResultColumn>
      */
@@ -87,7 +87,8 @@ final class Output
         $columns = [];
         foreach ($plan->domains as $position => $domain) {
             $origin = $plan->origins[$position] ?? null;
-            $columns[] = $this->column($plan->names[$position] ?? '', $domain, $origin, $results);
+            $name = $plan->names[$position] ?? '';
+            $columns[] = $this->column($results === null || Encoding::utf8($results) ? $name : Encoding::convert($name, Charset::known('utf8mb4'), $results), $domain, $origin, $results);
         }
 
         return $columns;

@@ -82,11 +82,13 @@ final class ChangeRule
         }
         $terminology = self::SOURCES[$form->signature] ?? throw ImplementationGap::production($form);
         $position = 3;
+        $synonym = false;
         if ($form->signature === 'change: CHANGE change_replication_source TO_SYM source_defs opt_channel') {
             $spelling = $this->lowering->form($form->node(1));
             if (!in_array($spelling->signature, self::SPELLINGS, true)) {
                 throw ImplementationGap::production($spelling);
             }
+            $synonym = $spelling->signature === self::SPELLINGS[0];
         } elseif ($form->signature === 'change_replication_stmt: CHANGE REPLICATION SOURCE_SYM TO_SYM source_defs opt_channel') {
             $position = 4;
         }
@@ -96,6 +98,6 @@ final class ChangeRule
             $options[] = $rule->option($item, $terminology);
         }
 
-        return new ChangeReplicationSource($terminology, $options, $channel);
+        return new ChangeReplicationSource($terminology, $options, $channel, $synonym);
     }
 }

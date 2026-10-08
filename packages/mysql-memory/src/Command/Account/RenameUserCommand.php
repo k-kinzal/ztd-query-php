@@ -49,7 +49,7 @@ final class RenameUserCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof RenameUser);
         $session->transaction->commit();
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $listed = [];
         foreach ($statement->renamings as $renaming) {
             $listed[] = $renaming->from;

@@ -26,7 +26,8 @@ final class Plans
      */
     public function plan(string $mode, string $grammar): GenerationPlan
     {
-        $root = in_array($grammar, ['mysql-5.6.51', 'mysql-5.7.44'], true) ? 'statement' : 'simple_statement_or_begin';
+        $legacy = in_array($grammar, ['mysql-5.6.51', 'mysql-5.7.44'], true);
+        $root = $legacy ? 'statement' : 'simple_statement_or_begin';
         if ($mode === 'statement') {
             $lifecycle = ProductionPattern::anyOf(...array_map(static fn (string $rule): ProductionPattern => ProductionPattern::exactly($rule), ['shutdown_stmt', 'restart_server_stmt', 'clone_stmt', 'kill', 'shutdown', 'kill_type']));
 
@@ -35,20 +36,16 @@ final class Plans
         }
         $start = match ($mode) {
             'expression' => 'expr',
-            'query', 'select' => 'select_stmt',
-            default => 'simple_statement',
+            'query', 'select' => $legacy ? 'select' : 'select_stmt',
+            default => $legacy ? 'statement' : 'simple_statement',
         };
-        $plan = $this->named(GenerationPlan::fromRule($start)->requiringNonEmpty());
+        $plan = $this->named(GenerationPlan::fromRule($start)->requiringNonEmpty(), $grammar);
         if ($mode === 'select') {
-            $plan = $this->mainstream($plan, $grammar);
+            $plan = $legacy ? $this->legacy($plan, $grammar) : $this->mainstream($plan, $grammar);
         }
         if ($mode === 'write') {
-            $plan = $plan->withRule('simple_statement', RulePlan::any()->allowing(ProductionPattern::anyOf(
-                ProductionPattern::exactly('insert_stmt'),
-                ProductionPattern::exactly('replace_stmt'),
-                ProductionPattern::exactly('update_stmt'),
-                ProductionPattern::exactly('delete_stmt'),
-            )));
+            $writes = $grammar === 'mysql-5.6.51' ? ['insert', 'replace', 'update', 'delete'] : ['insert_stmt', 'replace_stmt', 'update_stmt', 'delete_stmt'];
+            $plan = $plan->withRule($legacy ? 'statement' : 'simple_statement', RulePlan::any()->allowing(ProductionPattern::anyOf(...array_map(static fn (string $rule): ProductionPattern => ProductionPattern::exactly($rule), $writes))));
         }
 
         return $plan->withExpansionBudget($this->budget());
@@ -99,15 +96,62 @@ final class Plans
     }
 
     /**
-     * Constrains table and column names to the fixture.
+     * Constrains a query of the 5.6 and 5.7 grammars to the common forms, as mainstream() does for the later grammars.
+     *
+     * The 5.x grammars name the select rules differently: a SELECT with a FROM clause, joins and
+     * derived tables, without INTO, locking, PROCEDURE ANALYSE, partitions, index hints or ODBC escapes.
      *
      * @param GenerationPlan<true> $plan
      * @return GenerationPlan<true>
      */
-    public function named(GenerationPlan $plan): GenerationPlan
+    public function legacy(GenerationPlan $plan, string $grammar): GenerationPlan
     {
-        $collations = LexemeConstraint::oneOf('utf8mb4_bin', 'utf8mb4_0900_ai_ci', 'utf8mb4_general_ci', 'utf8mb4_0900_as_cs', 'latin1_swedish_ci', 'binary');
-        $charsets = LexemeConstraint::oneOf('utf8mb4', 'latin1', 'binary', 'ascii', 'utf8mb3');
+        $empty = RulePlan::any()->allowing(ProductionPattern::exactly());
+        if ($grammar === 'mysql-5.6.51') {
+            $plan = $plan
+                ->withRule('select_init', RulePlan::any()->allowing(ProductionPattern::exactly('SELECT_SYM', 'select_init2')))
+                ->withRule('select_into', RulePlan::any()->allowing(ProductionPattern::exactly('select_from')))
+                ->withRule('select_from', RulePlan::any()->allowing(ProductionPattern::containing('join_table_list')))
+                ->withRule('procedure_analyse_clause', $empty)
+                ->withRule('select_lock_type', $empty);
+        } else {
+            $plan = $plan
+                ->withRule('select_init', RulePlan::any()->allowing(ProductionPattern::exactly('SELECT_SYM', 'select_part2', 'opt_union_clause')))
+                ->withRule('select_part2', RulePlan::any()->allowing(ProductionPattern::containing('from_clause')))
+                ->withRule('table_reference_list', RulePlan::any()->allowing(ProductionPattern::exactly('join_table_list')))
+                ->withRule('opt_into', $empty)
+                ->withRule('opt_procedure_analyse_clause', $empty)
+                ->withRule('opt_select_lock_type', $empty);
+        }
+
+        return $plan
+            ->withRule('esc_table_ref', RulePlan::any()->allowing(ProductionPattern::exactly('table_ref')))
+            ->withRule('table_factor', RulePlan::any()->allowing(ProductionPattern::anyOf(ProductionPattern::containing('table_ident'), ProductionPattern::containing('select_derived_union'))))
+            ->withRule('opt_use_partition', $empty)
+            ->withRule('opt_index_hints_list', $empty)
+            ->withRule('table_wild', RulePlan::any()->withLexeme('IDENT', LexemeConstraint::oneOf('t1', 't2', 'x')))
+            ->withRule('select_alias', RulePlan::any()->withLexeme('IDENT', LexemeConstraint::oneOf('x', 'y', 'a')))
+            ->withRule('opt_table_alias', RulePlan::any()->withLexeme('IDENT', LexemeConstraint::oneOf('x', 'y')));
+    }
+
+    /**
+     * Constrains table and column names to the fixture.
+     *
+     * The collations offered are those the release has: the 5.x releases lack the utf8mb4_0900 ones.
+     * Their COLLATE operator names its collation with ident_or_text instead of collation_name.
+     *
+     * @param GenerationPlan<true> $plan
+     * @return GenerationPlan<true>
+     */
+    public function named(GenerationPlan $plan, string $grammar = 'mysql-8.4.7'): GenerationPlan
+    {
+        $collations = in_array($grammar, ['mysql-5.6.51', 'mysql-5.7.44'], true)
+            ? LexemeConstraint::oneOf('utf8mb4_bin', 'utf8mb4_unicode_ci', 'utf8mb4_general_ci', 'utf8_general_ci', 'latin1_swedish_ci', 'binary')
+            : LexemeConstraint::oneOf('utf8mb4_bin', 'utf8mb4_0900_ai_ci', 'utf8mb4_general_ci', 'utf8mb4_0900_as_cs', 'latin1_swedish_ci', 'binary');
+        $charsets = in_array($grammar, ['mysql-5.6.51', 'mysql-5.7.44'], true) ? LexemeConstraint::oneOf('utf8mb4', 'latin1', 'binary', 'ascii', 'utf8') : LexemeConstraint::oneOf('utf8mb4', 'latin1', 'binary', 'ascii', 'utf8mb3');
+        if (in_array($grammar, ['mysql-5.6.51', 'mysql-5.7.44'], true)) {
+            $plan = $plan->withRule('ident_or_text', RulePlan::any()->allowing(ProductionPattern::exactly('ident'))->withLexeme('IDENT', $collations));
+        }
 
         return $plan
             ->withRule('simple_expr', RulePlan::any()->allowing(ProductionPattern::excluding(ProductionPattern::exactly('param_marker'))))

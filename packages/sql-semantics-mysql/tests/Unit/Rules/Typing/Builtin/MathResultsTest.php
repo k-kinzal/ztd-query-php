@@ -14,11 +14,14 @@ use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Invocation;
 use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\MathResults;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Statement\Type\Known;
 
 #[CoversClass(MathResults::class)]
 #[Small]
@@ -58,5 +61,15 @@ final class MathResultsTest extends TestCase
         $rules = (new MathResults())->rules();
 
         self::assertEquals(Domain::double(23), $rules['LOG'](new Invocation([Domain::integer(), Domain::integer()], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+    }
+
+    public function testLegacyMakesAbsOfAnIntegerABigintAndFloorAsLongAsItsArgumentIn57(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT ABS(CAST(1 AS UNSIGNED)), FLOOR(1.5)');
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $items = array_map(static fn ($item) => $item instanceof SelectExpression ? $operation->facts->scalar($item->expression)->type : null, $statement->items);
+
+        self::assertEquals([new Known(Domain::integer(Field::LongLong, 1, true)), new Known(Domain::integer(Field::LongLong, 4))], $items);
     }
 }

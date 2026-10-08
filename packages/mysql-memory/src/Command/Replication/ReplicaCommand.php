@@ -17,6 +17,7 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 use SqlSemantics\Platform\MySql\Statement\Replication\Filter\ChangeReplicationFilter;
 use SqlSemantics\Platform\MySql\Statement\Replication\Group\StartGroupReplication;
@@ -29,6 +30,10 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetTarget;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource;
+use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowReplicas;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowReplicaStatus;
+use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operation;
 
 /**
@@ -73,6 +78,8 @@ final class ReplicaCommand implements Command
     {
         $statement = $operation->statement;
         $registry = $session->instance->registry;
+        $this->deprecated($statement, $session, $context);
+        (new LegacyReplication())->check($statement, $session);
         if ($statement instanceof StartGroupReplication || $statement instanceof StopGroupReplication) {
             throw $session->transaction->open ? StatementError::LockedOrActiveTransaction->error() : AdministrationError::GroupReplicationNotConfigured->error();
         }
@@ -106,6 +113,44 @@ final class ReplicaCommand implements Command
         }
 
         return new Completion(0, 0, $session->diagnostics->count());
+    }
+
+    /**
+     * Warns that a statement written in the legacy vocabulary of replication is deprecated, naming the statement and then each option spelled with MASTER (ER_WARN_DEPRECATED_SYNTAX).
+     *
+     * MySQL 8.0 deprecated START SLAVE, STOP SLAVE, RESET SLAVE, SHOW SLAVE STATUS, SHOW SLAVE
+     * HOSTS and CHANGE MASTER TO with its MASTER_ options, which MySQL 8.4 removed; MySQL 5.6 and
+     * 5.7 know no other vocabulary and do not warn (verified on live 5.7 and 8.0 servers).
+     * Source: https://dev.mysql.com/doc/refman/8.0/en/replication-statements.html,
+     * https://dev.mysql.com/doc/relnotes/mysql/8.4/en/news-8-4-0.html.
+     */
+    public function deprecated(Node $statement, Session $session, Context $context): void
+    {
+        $release = $session->settings()->release();
+        if ($release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744) {
+            return;
+        }
+        $legacy = static fn (Terminology $terminology): bool => $terminology === Terminology::Legacy;
+        $replaced = match (true) {
+            $statement instanceof StartReplica && $legacy($statement->terminology) => ['START SLAVE', 'START REPLICA'],
+            $statement instanceof StopReplica && $legacy($statement->terminology) => ['STOP SLAVE', 'STOP REPLICA'],
+            $statement instanceof ShowReplicaStatus && $legacy($statement->terminology) => ['SHOW SLAVE STATUS', 'SHOW REPLICA STATUS'],
+            $statement instanceof ShowReplicas && $legacy($statement->terminology) => ['SHOW SLAVE HOSTS', 'SHOW REPLICAS'],
+            $statement instanceof ChangeReplicationSource && $statement->synonym => ['CHANGE MASTER', 'CHANGE REPLICATION SOURCE'],
+            $statement instanceof Reset && array_filter($statement->targets, static fn (ResetTarget $target): bool => $target instanceof ResetReplica && $target->synonym) !== [] => ['RESET SLAVE', 'RESET REPLICA'],
+            default => null,
+        };
+        if ($replaced === null) {
+            return;
+        }
+        $context->warning(StatementError::DeprecatedSyntax, ...$replaced);
+        if ($statement instanceof ChangeReplicationSource) {
+            foreach ($statement->options as $option) {
+                if ($option->synonym) {
+                    $context->warning(StatementError::DeprecatedSyntax, $option->kind->keyword(Terminology::Legacy), $option->kind->value);
+                }
+            }
+        }
     }
 
     /**

@@ -155,7 +155,7 @@ final class CommonTables
         $domain = $derivation === null ? null : (new Precision())->domain($type);
         $settled = $domain === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of([$domain], 'UNION', $derivation);
 
-        return $settled === null ? $type : new Known((new Materialization())->set($settled));
+        return $settled === null ? $type : new Known((new Materialization())->set($settled, $derivation->context->profile->grammar));
     }
 
     /**

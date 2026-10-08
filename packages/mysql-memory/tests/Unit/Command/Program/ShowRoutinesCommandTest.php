@@ -59,4 +59,16 @@ final class ShowRoutinesCommandTest extends TestCase
         self::assertSame(['Db', 'Name', 'Type', 'Language', 'Definer', 'Modified', 'Created', 'Security_type', 'Comment', 'character_set_client', 'collation_connection', 'Database Collation'], array_map(static fn (Heading $heading): string => $heading->name, $headings));
         self::assertSame(['ROUTINES', 'schemata', 4225], [$headings[0]->table, $headings[0]->originalTable, $headings[0]->flags]);
     }
+
+    public function testExecuteListsNoLanguageBeforeMySql82(): void
+    {
+        $session = (new Instance('8.0.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE PROCEDURE p() SELECT 1');
+        $result = $session->query("SHOW PROCEDURE STATUS WHERE Db = 'd'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['Db', 'Name', 'Type', 'Definer'], array_map(static fn ($column): string => $column->name, array_slice($result->columns, 0, 4)));
+        self::assertSame(['d', 'p', 'PROCEDURE', 'root@%'], array_slice($result->rows[0], 0, 4));
+        self::assertSame(['Db', 'Name', 'Type', 'Language'], array_map(static fn (Heading $heading): string => $heading->name, array_slice((new ShowRoutinesCommand())->headings(), 0, 4)));
+    }
 }

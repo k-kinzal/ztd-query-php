@@ -188,4 +188,12 @@ final class CompilerTest extends TestCase
         self::assertSame(['1287', '1292', '1292', '1292'], array_column($warnings->rows, 1));
         self::assertSame(["Truncated incorrect DOUBLE value: 'a'", "Truncated incorrect DOUBLE value: 'c'", "Truncated incorrect DOUBLE value: 'b'"], array_slice(array_column($warnings->rows, 2), 1));
     }
+
+    public function testTypedMakesTheStringOfAFunctionQuietIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("SELECT USER() = 0, 'x' = 0");
+
+        self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'x'"]], $session->diagnostics->conditions);
+    }
 }

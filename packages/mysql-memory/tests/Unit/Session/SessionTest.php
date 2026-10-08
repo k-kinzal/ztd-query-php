@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
+use MySqlMemory\Command\QueryCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
@@ -395,4 +396,46 @@ final class SessionTest extends TestCase
         self::assertSame([['Error', '1235', "This version of MySQL doesn't yet support 'CAST-ing data to array of JSON'"]], $array->rows);
     }
 
+    public function testParsingRecordsTheWarningsRaisedWhileTheStatementIsRead(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze("SELECT BINARY 'a'");
+
+        $session->parsing($operation, $operation->facts->warnings);
+
+        self::assertSame([['Warning', 1287, "'BINARY expr' is deprecated and will be removed in a future release. Please use CAST instead"]], $session->diagnostics->conditions);
+    }
+
+    public function testParsingFailsWithTheFirstProblemFoundWhileParsing(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze("SELECT ('a' COLLATE nope) COLLATE nope2");
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1273);
+        $this->expectExceptionMessage("Unknown collation: 'nope'");
+
+        $session->parsing($operation, $operation->facts->warnings);
+    }
+
+    public function testRetainsKeepsTheDiagnosticsOfAStatementWithoutTablesIn56(): void
+    {
+        $legacy = (new Instance('5.6.51'))->connect();
+        $legacy->query("SELECT 'abc' + 0");
+        $legacy->query('SELECT 1');
+        $modern = (new Instance('5.7.44'))->connect();
+
+        self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'abc'"]], $legacy->diagnostics->conditions);
+        self::assertTrue($legacy->retains($legacy->analyze('SELECT 1')->statement, new QueryCommand()));
+        self::assertFalse($modern->retains($modern->analyze('SELECT 1')->statement, new QueryCommand()));
+    }
+
+    public function testModesReadTheModesOfTheRelease(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("SET sql_mode = 'TRADITIONAL'");
+
+        self::assertTrue($session->modes()->has('NO_AUTO_CREATE_USER'));
+        self::assertTrue($session->modes()->strict());
+    }
 }

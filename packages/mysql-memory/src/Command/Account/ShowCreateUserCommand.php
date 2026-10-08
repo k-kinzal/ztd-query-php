@@ -48,7 +48,7 @@ final class ShowCreateUserCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof ShowCreateUser);
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $names->check([$statement->user]);
         $identity = $names->identity($statement->user, $session);
         $accounts = $session->instance->accounts;

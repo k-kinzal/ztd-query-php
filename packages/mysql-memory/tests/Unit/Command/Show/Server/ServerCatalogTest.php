@@ -32,4 +32,16 @@ final class ServerCatalogTest extends TestCase
             ServerCatalog::shared()->engine('nosuch'),
         ]);
     }
+
+    public function testOfAnswersThePluginsAndPrivilegesOfARelease(): void
+    {
+        $native = static fn (ServerCatalog $catalog): array => array_values(array_filter($catalog->plugins, static fn (array $plugin): bool => $plugin[0] === 'mysql_native_password'));
+
+        self::assertSame([['mysql_native_password', 'ACTIVE', 'AUTHENTICATION', null, 'GPL']], $native(ServerCatalog::of('8.0.44')));
+        self::assertSame('mysql_native_password', ServerCatalog::of('8.0.44')->plugins[1][0]);
+        self::assertSame([['mysql_native_password', 'DISABLED', 'AUTHENTICATION', null, 'GPL']], $native(ServerCatalog::of('8.4.7')));
+        self::assertSame([], $native(ServerCatalog::of('9.1.0')));
+        self::assertContains(['SET_USER_ID', 'Server Admin', ''], ServerCatalog::of('8.0.44')->privileges);
+        self::assertNotContains(['SET_USER_ID', 'Server Admin', ''], ServerCatalog::of('8.4.7')->privileges);
+    }
 }

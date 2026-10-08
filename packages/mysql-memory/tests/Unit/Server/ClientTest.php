@@ -407,4 +407,15 @@ final class ClientTest extends TestCase
 
         self::assertSame(["\x00\x00\x00\x00", "\x2C\x01\x00\x01" . str_repeat('x', 300)], $sent->getArrayCopy());
     }
+
+    public function testGreetNamesLatin1ToTheClientsOf57(): void
+    {
+        $sent = new ArrayObject();
+        $client = new Client(new Instance('5.7.44'), 7, static function (string $bytes) use ($sent): void {
+            $sent->append($bytes[27]);
+        });
+        $client->greet();
+
+        self::assertSame(["\x08"], $sent->getArrayCopy());
+    }
 }

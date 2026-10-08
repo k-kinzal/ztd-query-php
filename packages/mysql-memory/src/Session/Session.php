@@ -57,6 +57,11 @@ final class Session
     public readonly Diagnostics $diagnostics;
 
     /**
+     * @var array<int, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated> The deprecations MySQL 5.7 raises for the leading dots of the statement last parsed, by the offset of the dot
+     */
+    public array $dots = [];
+
+    /**
      * The open transaction and the rows a failing statement restores.
      */
     public readonly Transaction $transaction;
@@ -142,7 +147,10 @@ final class Session
             $statements = $this->split($sql);
         } catch (SqlError $error) {
             $this->diagnostics->clear();
-            $this->diagnostics->error($error->getCode(), $error->getMessage());
+            $error = (new CacheOptions())->reported($error, $sql, $this);
+            if (!$error->recorded) {
+                $this->diagnostics->error($error->getCode(), $error->getMessage());
+            }
             $this->variables->rowCount = -1;
 
             return [$error];
@@ -211,34 +219,25 @@ final class Session
             $command = (new Dispatcher())->command($operation->statement);
         } catch (SqlError $error) {
             $this->diagnostics->clear();
-            throw $error;
+            throw (new CacheOptions())->reported($error, $statement, $this);
         }
         $context = new Context($this->modes(), $this->diagnostics, $this->variables, microtime(true));
-        if ($command->clearsDiagnostics()) {
+        if ($command->clearsDiagnostics() && $this->retains($operation->statement, $command)) {
+            $this->diagnostics->retain();
+        } elseif ($command->clearsDiagnostics()) {
             $this->diagnostics->clear();
         }
         $late = array_filter($operation->facts->warnings, Stages::afterReading(...));
-        $failure = null;
-        foreach (array_diff_key($operation->facts->warnings, $late) as $warning) {
-            if ($warning instanceof ParseFailure) {
-                $error = (new Errors())->error($warning->problem, $this, 'field list', $operation->statement);
-                $this->diagnostics->error($error->getCode(), $error->getMessage());
-                $failure ??= $error;
-                if ($warning->aborts) {
-                    break;
-                }
-                continue;
-            }
-            $this->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
-        }
-        if ($failure !== null) {
-            throw new SqlError($failure->error, $failure->getMessage(), $failure, [], null, null, true);
-        }
+        $this->parsing($operation, array_diff_key($operation->facts->warnings, $late));
         (new Problems())->read($operation, $this);
         foreach ($late as $warning) {
             $this->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
         }
-        (new Problems())->raise($operation, $this);
+        try {
+            (new Problems())->raise($operation, $this);
+        } catch (SqlError $error) {
+            throw (new Problem\ValueRows())->extended($error, $operation->statement, $this->settings()->release());
+        }
         if ($this->locks !== []) {
             (new \MySqlMemory\Command\Access\Locks())->check($operation->statement, $this);
         }
@@ -251,6 +250,56 @@ final class Session
     }
 
     /**
+     * Records the conditions the server raises while it parses a statement, in order: the
+     * warnings, the names after a leading dot once a warning that is not raised at the head of
+     * the statement comes, and the error of each problem found while parsing, up to one that
+     * stops the parse; the first of those errors then fails the statement.
+     *
+     * @param array<int, \SqlSemantics\Statement\Fact\Warning> $warnings The warnings raised while the statement is read
+     *
+     * @throws SqlError When a problem is found while the statement is parsed
+     */
+    public function parsing(Operation $operation, array $warnings): void
+    {
+        $dots = $this->dots;
+        $failure = null;
+        foreach ($warnings as $warning) {
+            if (!$warning instanceof Deprecation || !in_array($warning->construct, Syntax::HEAD, true)) {
+                foreach ($dots as $construct) {
+                    $this->diagnostics->warning($construct->code(), $construct->value);
+                }
+                $dots = [];
+            }
+            if ($warning instanceof ParseFailure) {
+                $error = (new CacheOptions())->placed($warning->problem, $operation->statement, $this) ?? (new Errors())->error($warning->problem, $this, 'field list', $operation->statement);
+                $this->diagnostics->error($error->getCode(), $error->getMessage());
+                $failure ??= $error;
+                if ($warning->aborts) {
+                    break;
+                }
+                continue;
+            }
+            $this->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
+        }
+        foreach ($dots as $construct) {
+            $this->diagnostics->warning($construct->code(), $construct->value);
+        }
+        if ($failure !== null) {
+            throw new SqlError($failure->error, $failure->getMessage(), $failure, [], null, null, true);
+        }
+    }
+
+    /**
+     * Tells whether a statement keeps the diagnostics of the statement before it until it raises a condition: in MySQL 5.6, a query, SET or DO that uses no table.
+     */
+    public function retains(\SqlSemantics\Statement\Node $statement, \MySqlMemory\Command\Command $command): bool
+    {
+        return $this->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651
+            && ($command instanceof \MySqlMemory\Command\QueryCommand || $command instanceof \MySqlMemory\Command\SetCommand || $command instanceof \MySqlMemory\Command\DoCommand)
+            && (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class) === [];
+    }
+
+    /**
      * Parses and resolves one statement against the tables of the server.
      *
      * @throws SqlError When the statement does not parse or does not resolve
@@ -259,6 +308,7 @@ final class Session
     public function analyze(string $statement, bool $prepared = false, array $parameters = []): Operation
     {
         $semantics = $this->semantics();
+        $this->dots = [];
         try {
             $tree = $semantics->parser()->parse($statement);
         } catch (SourceException $error) {
@@ -268,6 +318,7 @@ final class Session
             (new Syntax())->markers($tree, $statement);
         }
         (new Syntax())->temporals($tree, $this->modes());
+        $this->dots = $this->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? (new Syntax())->dots($tree) : [];
         (new Syntax())->debugOnly($tree, $statement);
         $database = $this->variables->database;
         \MySqlMemory\Plan\Views::refreshAll($this->instance->dictionary, $this->settings());
@@ -278,6 +329,8 @@ final class Session
         } catch (AnalysisException $error) {
             throw (new Syntax())->error($error, $statement);
         }
+        (new Syntax())->internal($operation->statement, $statement);
+
         return $operation;
     }
 
@@ -347,7 +400,9 @@ final class Session
      */
     public function modes(): SqlModes
     {
-        return SqlModes::parse((string) $this->variables->read('sql_mode')) ?? new SqlModes([]);
+        $release = \SqlSemantics\Contract\GrammarRelease::tryFrom('mysql-' . $this->instance->version) ?? \SqlSemantics\Contract\GrammarRelease::MySql847;
+
+        return SqlModes::parse((string) $this->variables->read('sql_mode'), $release) ?? new SqlModes([], $release);
     }
 
     /**

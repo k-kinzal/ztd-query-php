@@ -47,6 +47,7 @@ final class Domain
      * @param Coercibility $coercibility How strongly the collation of a string holds against another
      * @param bool $numericBytes Whether the bytes of a binary string read as the integer they spell in a numeric context, as for a hexadecimal or bit literal
      * @param int|null $display The display width a column of an integer type reports for itself, when it is narrower than the length
+     * @param bool $quiet Whether a string reads as a number without warning when more than a number is written in it, as the result of a string function of MySQL 5.6 and 5.7 does
      */
     public function __construct(
         public readonly Kind $kind,
@@ -60,6 +61,7 @@ final class Domain
         public readonly Coercibility $coercibility = Coercibility::Implicit,
         public readonly bool $numericBytes = false,
         public readonly ?int $display = null,
+        public readonly bool $quiet = false,
     ) {
         $this->collation = $collation ?? Collation::binary();
     }
@@ -69,7 +71,15 @@ final class Domain
      */
     public function withNumericBytes(bool $numericBytes = true): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $numericBytes, $this->display);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $numericBytes, $this->display, $this->quiet);
+    }
+
+    /**
+     * Answers the same domain, a string of which reads as a number with or without warning.
+     */
+    public function withQuiet(bool $quiet = true): self
+    {
+        return $quiet === $this->quiet ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $quiet);
     }
 
     /**
@@ -133,7 +143,7 @@ final class Domain
      */
     public function withNullable(bool $nullable): self
     {
-        return $nullable === $this->nullable ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display);
+        return $nullable === $this->nullable ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $this->quiet);
     }
 
     /**
@@ -141,7 +151,7 @@ final class Domain
      */
     public function withCollation(Collation $collation, Coercibility $coercibility): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->nullable, $this->members, $coercibility, $this->numericBytes, $this->display);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->nullable, $this->members, $coercibility, $this->numericBytes, $this->display, $this->quiet);
     }
 
     /**

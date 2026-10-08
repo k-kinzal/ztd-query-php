@@ -327,4 +327,29 @@ final class RowsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', null]], $result->rows);
     }
+
+    public function testDefaultedWarnsOnceOfAColumnNoRowNamesAndOfEachDefaultWritten(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT NOT NULL, a INT)');
+        $session->query('INSERT IGNORE t (a) VALUES (1), (2)');
+        $unnamed = $session->query('SHOW WARNINGS')[0];
+        $session->query('INSERT IGNORE t (id) VALUES (DEFAULT), (DEFAULT)');
+        $written = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $unnamed);
+        self::assertInstanceOf(ResultSet::class, $written);
+        self::assertSame([['1364'], ['1364', '1364']], [array_column($unnamed->rows, 1), array_column($written->rows, 1)]);
+    }
+
+    public function testWriteLeavesOutADuplicateSilentlyIn56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('CREATE TABLE d.t (id INT PRIMARY KEY)');
+        $session->query('INSERT INTO d.t VALUES (1)');
+        $session->query('INSERT IGNORE INTO d.t VALUES (1)');
+
+        self::assertSame([], $session->diagnostics->conditions);
+    }
 }

@@ -18,7 +18,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 /**
  * Resolves the type of CAST and CONVERT to a type.
  *
- * SIGNED and UNSIGNED are BIGINTs; DECIMAL takes the written precision and scale, 10 and 0 by
+ * SIGNED and UNSIGNED are BIGINTs, as long as the operand but at most 21 characters in MySQL 5.6
+ * and 5.7 (verified on live 5.6.51 and 5.7.44 servers); DECIMAL takes the written precision and scale, 10 and 0 by
  * default; DOUBLE and REAL are doubles, FLOAT a single unless its precision exceeds 24; the
  * temporal targets keep the fractional digits written; CHAR is a string in the connection
  * collation or the character set written, BINARY a binary string, both as long as written or as
@@ -45,11 +46,14 @@ final class Casts
         $decimals = $target->length === null ? 0 : (int) $target->length;
         $fraction = $decimals > 0 ? $decimals + 1 : 0;
 
+        $legacy = $this->release === GrammarRelease::MySql5651 || $this->release === GrammarRelease::MySql5744;
+        $integral = $legacy ? min($operand->length, 21) : 21;
+
         return match ($target->kind) {
-            CastKind::Signed => Domain::integer(Field::LongLong, 21),
-            CastKind::Unsigned => Domain::integer(Field::LongLong, 21, true),
+            CastKind::Signed => Domain::integer(Field::LongLong, $integral),
+            CastKind::Unsigned => Domain::integer(Field::LongLong, $integral, true),
             CastKind::Decimal => $this->decimal($target),
-            CastKind::Double, CastKind::Real => Domain::double(22),
+            CastKind::Double, CastKind::Real => Domain::double(23),
             CastKind::Float => $this->float($target),
             CastKind::Date => new Domain(Kind::Date, Field::Date, 10),
             CastKind::Time => new Domain(Kind::Time, Field::Time, 10 + $fraction, $decimals),
@@ -72,11 +76,11 @@ final class Casts
     }
 
     /**
-     * Resolves FLOAT: a single, or a double when the precision written exceeds 24.
+     * Resolves FLOAT: a single, or a double when the precision written exceeds 24, both 23 characters wide as DOUBLE and REAL are (verified on live 8.0, 8.4 and 9.1 servers).
      */
     public function float(CastTarget $target): Domain
     {
-        return $target->length !== null && (int) $target->length > 24 ? Domain::double(22) : new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED);
+        return $target->length !== null && (int) $target->length > 24 ? Domain::double(23) : new Domain(Kind::Double, Field::Float, 23, Domain::NOT_FIXED);
     }
 
     /**

@@ -67,7 +67,7 @@ final class GrantCommand implements Command
         if ($statement instanceof GrantRoles) {
             $this->roles($statement, $operation, $session);
         } elseif ($statement instanceof GrantProxy) {
-            $names = new Names();
+            $names = new Names($session->settings()->release());
             $names->check([$statement->proxied, ...$names->users($statement->grantees)]);
             $names->resolve($names->identity($statement->proxied, $session), $context->diagnostics);
             foreach ($statement->grantees as $grantee) {
@@ -91,7 +91,7 @@ final class GrantCommand implements Command
      */
     public function privileges(GrantPrivileges $statement, Operation $operation, Session $session, Context $context): void
     {
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $names->check([...$names->users($statement->grantees), $statement->as?->user, ...$statement->as->roles->roles ?? []]);
         $levels = new Levels();
         $levels->parsed($operation, $session);
@@ -159,7 +159,7 @@ final class GrantCommand implements Command
      */
     public function as(GrantAs $as, Session $session): void
     {
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $identity = $names->identity($as->user, $session);
         $accounts = $session->instance->accounts;
         if ($accounts->find($identity) === null) {
@@ -185,7 +185,7 @@ final class GrantCommand implements Command
      */
     public function roles(GrantRoles $statement, Operation $operation, Session $session): void
     {
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $listed = array_map(static fn ($role): ?AccountName => $role instanceof GrantedRole ? $role->role : null, $statement->roles);
         $names->check([...$listed, ...$statement->users]);
         (new Levels())->parsed($operation, $session);

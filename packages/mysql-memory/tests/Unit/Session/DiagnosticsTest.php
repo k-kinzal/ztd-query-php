@@ -123,4 +123,31 @@ final class DiagnosticsTest extends TestCase
 
         self::assertSame(2, $diagnostics->count());
     }
+
+    public function testRetainKeepsTheConditionsUntilANewOneIsRaised(): void
+    {
+        $diagnostics = new Diagnostics();
+        $diagnostics->warning(1292, 'old');
+        $diagnostics->retain();
+
+        self::assertSame([['Warning', 1292, 'old']], $diagnostics->conditions);
+
+        $diagnostics->note(DataError::DataTruncated, 'new');
+
+        self::assertSame([['Note', 1265, 'new']], $diagnostics->conditions);
+    }
+
+    public function testFreshForgetsRetainedConditionsOnly(): void
+    {
+        $diagnostics = new Diagnostics();
+        $diagnostics->warning(1292, 'kept');
+        $diagnostics->fresh();
+
+        self::assertSame(1, $diagnostics->count());
+
+        $diagnostics->retain();
+        $diagnostics->fresh();
+
+        self::assertSame(0, $diagnostics->count());
+    }
 }

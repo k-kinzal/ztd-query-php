@@ -96,4 +96,9 @@ final class MessagesTest extends TestCase
         self::assertSame("\x011\xFB\x00\x03ink", (new Messages())->textRow(['1', null, '', 'ink']));
         self::assertSame('', (new Messages())->textRow([]));
     }
+
+    public function testHandshakeNamesTheCollationOfTheConnections(): void
+    {
+        self::assertSame("\x08", (new Messages())->handshake('5.7.44', 7, 'abcdefghijklmnopqrst', 2, 8)[23]);
+    }
 }

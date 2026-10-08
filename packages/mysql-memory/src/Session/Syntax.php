@@ -22,6 +22,48 @@ use Throwable;
 final class Syntax
 {
     /**
+     * The deprecated constructs written before the names of a statement, whose warnings come before those of leading dots.
+     */
+    public const HEAD = [
+        \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::InsertDelayed, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::ReplaceDelayed,
+        \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Cache, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::NoCache,
+        \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::CalcFoundRows,
+    ];
+
+    /**
+     * Answers the deprecations MySQL 5.7 raises for names written after a leading dot, `.t` and `.t.c`, by the offset of the dot (verified on a live 5.7.44 server).
+     *
+     * @return array<int, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated>
+     */
+    public function dots(Node $tree): array
+    {
+        $found = [];
+        foreach (['table_ident' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotTable, 'simple_ident_q' => \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DotColumn] as $rule => $construct) {
+            foreach ($tree->find($rule) as $node) {
+                $first = $node->children[0] ?? null;
+                if ($first instanceof \SqlParser\Lexer\Token && $first->text === '.') {
+                    $found[$first->offset] = $construct;
+                }
+            }
+        }
+        ksort($found);
+
+        return $found;
+    }
+
+    /**
+     * Refuses PARSE_GCOL_EXPR, which the 5.7 grammar holds for the server to read generated columns with, as a syntax error at its start when a client sends it (verified on a live 5.7.44 server).
+     *
+     * @throws SqlError When the statement is PARSE_GCOL_EXPR
+     */
+    public function internal(\SqlSemantics\Statement\Statement $statement, string $text): void
+    {
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\ParseGeneratedColumn) {
+            throw new SqlError(StatementError::ParseError, StatementError::ParseError->message(mb_strcut(ltrim($text), 0, 80, 'UTF-8'), 1));
+        }
+    }
+
+    /**
      * Refuses a parameter marker outside a prepared statement, as the parser of the server does.
      *
      * @throws SqlError When the statement holds a parameter marker

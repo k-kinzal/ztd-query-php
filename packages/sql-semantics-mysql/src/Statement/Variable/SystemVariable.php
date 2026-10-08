@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Variable;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -28,7 +30,10 @@ use SqlSemantics\Statement\Type\Nullability;
  *
  * Rule: MYSQL-SYSTEM-VARIABLE-001. Facts: the type and the NULL fact are
  * those of the variable in the running server, which no context holds; the
- * fact names the variable as missing session state. Diagnostics: none.
+ * fact names the variable as missing session state. Diagnostics: a variable
+ * read with an instance name that is neither a key cache variable nor a
+ * variable the release knows by that full name is unknown, named with its
+ * instance (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/using-system-variables.html,
  * https://dev.mysql.com/doc/refman/8.4/en/structured-system-variables.html. Status: Implemented.
  *
@@ -40,6 +45,11 @@ use SqlSemantics\Statement\Type\Nullability;
 final class SystemVariable implements Scalar
 {
     use Snapshot;
+
+    /**
+     * The variables of a key cache, the only structured variables a server without components has.
+     */
+    public const KEY_CACHE = ['key_buffer_size', 'key_cache_block_size', 'key_cache_division_limit', 'key_cache_age_threshold'];
 
     /**
      * @param Name $name The variable name
@@ -58,6 +68,12 @@ final class SystemVariable implements Scalar
     {
         $subject = 'system variable @@' . ($this->scope === null ? '' : $this->scope->value . '.') . ($this->instance === null ? '' : $this->instance->value . '.') . $this->name->value;
         $dependent = new ScalarFact(new Dependent([new SessionState($subject)]), Nullability::Dependent);
+        if ($this->instance !== null && !$this->assigned && !in_array(strtolower($this->name->value), self::KEY_CACHE, true)) {
+            $name = $this->instance->value . '.' . $this->name->value;
+            if (SystemVariables::of($derivation->context->profile->grammar)->find($name) === null) {
+                $derivation->report(new UnknownSystemVariable($name));
+            }
+        }
         if ($this->instance !== null || $this->assigned) {
             return $dependent;
         }

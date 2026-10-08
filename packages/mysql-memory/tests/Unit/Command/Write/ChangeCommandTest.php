@@ -228,4 +228,28 @@ final class ChangeCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '9', '2.50']], $result->rows);
     }
+
+    public function testExecuteWarnsOfABadValueUnderDeleteIgnore(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2)');
+        $deleted = $session->query("DELETE IGNORE FROM t WHERE 'abc' XOR 1")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(Completion::class, $deleted);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(2, $deleted->affectedRows);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'abc'"]], $warnings->rows);
+    }
+
+    public function testExecuteNamesTheKeyAloneIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('CREATE TABLE d.t (id INT PRIMARY KEY)');
+        $session->query('INSERT INTO d.t VALUES (1), (2)');
+        $session->query('UPDATE IGNORE d.t SET id = 1');
+
+        self::assertSame([['Warning', 1062, "Duplicate entry '1' for key 'PRIMARY'"]], $session->diagnostics->conditions);
+    }
 }

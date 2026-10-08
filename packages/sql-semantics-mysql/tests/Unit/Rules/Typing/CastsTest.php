@@ -46,9 +46,9 @@ final class CastsTest extends TestCase
     public function testFloatIsADoubleAboveTwentyFourDigits(): void
     {
         $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
-        $single = new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED);
+        $single = new Domain(Kind::Double, Field::Float, 23, Domain::NOT_FIXED);
 
-        self::assertEquals([$single, $single, Domain::double(22)], [$casts->float(new CastTarget(CastKind::Float)), $casts->float(new CastTarget(CastKind::Float, '24')), $casts->float(new CastTarget(CastKind::Float, '25'))]);
+        self::assertEquals([$single, $single, Domain::double(23)], [$casts->float(new CastTarget(CastKind::Float)), $casts->float(new CastTarget(CastKind::Float, '24')), $casts->float(new CastTarget(CastKind::Float, '25'))]);
     }
 
     public function testStringIsAsLongAsWrittenOrAsTheOperandAsText(): void
@@ -73,5 +73,13 @@ final class CastsTest extends TestCase
         $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
 
         self::assertSame([22, 4], [$casts->length(Domain::double()), $casts->length(Domain::integer(Field::LongLong, 4))]);
+    }
+
+    public function testCastMakesAnIntegerAsLongAsTheOperandUpToTwentyOneIn57(): void
+    {
+        $casts = new Casts(new Settings(Collation::known('latin1_swedish_ci')), GrammarRelease::MySql5744);
+
+        self::assertEquals(Domain::integer(Field::LongLong, 4), $casts->cast(Domain::decimal(2, 1), new CastTarget(CastKind::Signed)));
+        self::assertEquals(Domain::integer(Field::LongLong, 21, true), $casts->cast(Domain::double(), new CastTarget(CastKind::Unsigned)));
     }
 }

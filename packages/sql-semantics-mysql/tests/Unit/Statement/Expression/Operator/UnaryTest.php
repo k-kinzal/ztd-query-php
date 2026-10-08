@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Rules\Expression\NumericResult;
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
@@ -66,5 +68,15 @@ final class UnaryTest extends TestCase
         $this->expectExceptionMessage('The operand of a prefix operator needs a grouping to keep its place.');
 
         new Unary(UnaryOperator::Minus, new Concatenation(new NumberLiteral('1'), new NumberLiteral('2')));
+    }
+
+    public function testNegatedCountsTheSignInTheLengthOfAnExactResultIn57(): void
+    {
+        $platform = new Platform();
+        $legacy = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
+        $modern = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+        $minus = new Unary(UnaryOperator::Minus, new NumberLiteral('1.5'));
+
+        self::assertSame([5, 4], [$minus->negated(new Numbers(), Domain::decimal(2, 1), new NumericResult(), $legacy)->length, $minus->negated(new Numbers(), Domain::decimal(2, 1), new NumericResult(), $modern)->length]);
     }
 }

@@ -10,6 +10,7 @@ use MySqlMemory\Session\Problem\Errors;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
@@ -17,10 +18,15 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\CacheOptionConflict;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
+use SqlSemantics\Statement\Reference\Table\MissingTable;
 
 #[CoversClass(Errors::class)]
 #[Small]
@@ -63,6 +69,7 @@ final class ErrorsTest extends TestCase
     public function testErrorReportsAMissingTableOfAnotherDatabase(): void
     {
         $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE shop');
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1146);
@@ -346,6 +353,23 @@ final class ErrorsTest extends TestCase
         $session->query("SELECT 'a' COLLATE latin1_swedish_ci");
     }
 
+    public function testCountedReportsEachListOfADifferentLength(): void
+    {
+        $errors = array_map(static fn (CountMismatch $diagnostic): array => [(new Errors())->counted($diagnostic)->getCode(), (new Errors())->counted($diagnostic)->getMessage()], [
+            new CountMismatch(CountedList::SetOperands, 1, 2),
+            new CountMismatch(CountedList::IntoVariables, 1, 2),
+            new CountMismatch(CountedList::ValueRows, 1, 2, 3),
+            new CountMismatch(CountedList::DerivedColumns, 1, 2),
+        ]);
+
+        self::assertSame([
+            [1222, 'The used SELECT statements have a different number of columns'],
+            [1222, 'The used SELECT statements have a different number of columns'],
+            [1136, "Column count doesn't match value count at row 3"],
+            [1353, 'In definition of view, derived table or common table expression, SELECT list and column names list have different column counts'],
+        ], $errors);
+    }
+
     public function testMisuseReportsAStarWithoutTables(): void
     {
         $error = (new Errors())->misuse(new Misuse(MisuseRule::StarWithoutTables));
@@ -541,8 +565,8 @@ final class ErrorsTest extends TestCase
     {
         $errors = new Errors();
 
-        self::assertSame(1046, $errors->names(new \SqlSemantics\Statement\Reference\Table\MissingTable(new QualifiedName(new Name('t'))), '', 'field list', null)?->getCode());
-        self::assertSame("Table 'd.t' doesn't exist", $errors->names(new \SqlSemantics\Statement\Reference\Table\MissingTable(new QualifiedName(new Name('t'))), 'd', 'field list', null)?->getMessage());
+        self::assertSame(1046, $errors->names(new MissingTable(new QualifiedName(new Name('t'))), '', 'field list', null)?->getCode());
+        self::assertSame("Table 'd.t' doesn't exist", $errors->names(new MissingTable(new QualifiedName(new Name('t'))), 'd', 'field list', null)?->getMessage());
         self::assertSame("Unknown column 's.t.x' in 'on clause'", $errors->names(new \SqlSemantics\Statement\Reference\Column\MissingColumn(new Name('x'), new QualifiedName(new Name('t'), new Name('s'))), 'd', 'on clause', null)?->getMessage());
         self::assertNull($errors->names(new Misuse(MisuseRule::StarWithoutTables), 'd', 'field list', null));
     }
@@ -623,5 +647,34 @@ final class ErrorsTest extends TestCase
     public function testQuotedQuotesTheTableAfterItsDatabase(): void
     {
         self::assertSame(['`d`.`t`', '`t`', '`t`'], [Errors::quoted(new Misuse(MisuseRule::UnknownLockedTable, new QualifiedName(new Name('t'), new Name('d')))), Errors::quoted(new Misuse(MisuseRule::UnknownLockedTable, new QualifiedName(new Name('t')))), Errors::quoted(new Misuse(MisuseRule::RepeatedLockedTable, new Name('t')))]);
+    }
+
+    public function testUnopenedReportsADatabaseThatDoesNotExistAndATableInformationSchemaLacks(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $errors = new Errors();
+
+        $database = $errors->unopened(new MissingTable(new QualifiedName(new Name('t'), new Name('nodb'))), $session);
+        $information = $errors->unopened(new MissingTable(new QualifiedName(new Name('NoSuch'), new Name('INFORMATION_SCHEMA'))), $session);
+
+        self::assertInstanceOf(SqlError::class, $database);
+        self::assertInstanceOf(SqlError::class, $information);
+        self::assertSame([[1049, "Unknown database 'nodb'"], [1109, "Unknown table 'NOSUCH' in information_schema"]], [[$database->getCode(), $database->getMessage()], [$information->getCode(), $information->getMessage()]]);
+        self::assertNull($errors->unopened(new MissingTable(new QualifiedName(new Name('t'), new Name('d'))), $session));
+    }
+
+    public function testUnknownNamesTheTableIn56And57AndTheDatabaseLater(): void
+    {
+        self::assertSame([1146, "Table 'nodb.t' doesn't exist"], [Errors::unknown('nodb', 't', GrammarRelease::MySql5744)->getCode(), Errors::unknown('nodb', 't', GrammarRelease::MySql5744)->getMessage()]);
+        self::assertSame([1049, "Unknown database 'nodb'"], [Errors::unknown('nodb', 't', GrammarRelease::MySql847)->getCode(), Errors::unknown('nodb', 't', GrammarRelease::MySql847)->getMessage()]);
+    }
+
+    public function testQueryAnswersTheErrorsOfConflictingQueryCacheModifiers(): void
+    {
+        $errors = new Errors();
+        $twice = $errors->query(new CacheOptionConflict(SelectOption::Cache, SelectOption::Cache), 'field list');
+        $both = $errors->query(new CacheOptionConflict(SelectOption::NoCache, SelectOption::Cache), 'field list');
+
+        self::assertSame([1225, 1221, 'Incorrect usage of SQL_NO_CACHE and SQL_CACHE'], [$twice?->getCode(), $both?->getCode(), $both?->getMessage()]);
     }
 }

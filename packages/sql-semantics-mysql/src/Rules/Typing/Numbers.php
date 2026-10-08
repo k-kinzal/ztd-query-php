@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
@@ -132,6 +133,33 @@ final class Numbers
             Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(...$this->digits($domain)),
             Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Domain::double(23, $domain->kind === Kind::Double ? $domain->decimals : Domain::NOT_FIXED),
         };
+    }
+
+    /**
+     * Widens the result of unary minus over an exact number as MySQL 5.6 and 5.7 do: one character more than the operand, for the sign (verified on live 5.6.51 and 5.7.44 servers).
+     */
+    public function legacyNegated(Domain $result): Domain
+    {
+        if ($result->kind !== Kind::Integer && $result->kind !== Kind::Decimal) {
+            return $result;
+        }
+
+        return new Domain($result->kind, $result->field, $result->length + 1, $result->decimals, $result->unsigned, $result->collation, $result->members, $result->coercibility, $result->display);
+    }
+
+    /**
+     * Answers the domain an integer literal operand of addition, subtraction or multiplication has in MySQL 5.6 and 5.7: as long as its digits and a sign, though it is shown without the sign (verified on live 5.6.51 and 5.7.44 servers).
+     */
+    public function signed(Scalar $node, Domain $domain): Domain
+    {
+        while ($node instanceof Grouped) {
+            $node = $node->operand;
+        }
+        if (!$node instanceof NumberLiteral || $domain->kind !== Kind::Integer || $domain->unsigned) {
+            return $domain;
+        }
+
+        return Domain::integer($domain->field, $domain->length + 1);
     }
 
     /**

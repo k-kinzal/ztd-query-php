@@ -64,7 +64,7 @@ final class LockTablesCommand implements Command
                 throw QueryError::NoDatabase->error();
             }
             if ($session->instance->dictionary->schema($schema) === null) {
-                throw QueryError::BadDatabase->error($schema);
+                throw \MySqlMemory\Session\Problem\Errors::unknown($schema, $lock->table->name->value, $session->settings()->release());
             }
             if ($session->instance->dictionary->table($schema, $lock->table->name->value) === null && !isset($session->instance->dictionary->schema($schema)?->views[$lock->table->name->value])) {
                 throw QueryError::NoSuchTable->error($schema, $lock->table->name->value);

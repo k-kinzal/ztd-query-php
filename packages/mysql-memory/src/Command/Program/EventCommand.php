@@ -42,7 +42,9 @@ use SqlSemantics\Statement\Scalar;
  * event starts now unless STARTS says otherwise. A one-time event in the past is dropped at
  * once without ON COMPLETION PRESERVE, and disabled with it, each with a note. An event of the
  * same name is ER_EVENT_ALREADY_EXISTS, a note with IF NOT EXISTS; ALTER EVENT of a missing
- * event is ER_EVENT_DOES_NOT_EXIST. The emulator keeps events but never runs them.
+ * event is ER_EVENT_DOES_NOT_EXIST, found after the note of a DEFINER that does not exist and
+ * the database of RENAME TO (verified on live 8.0 and 8.4 servers). The emulator keeps events
+ * but never runs them.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-event.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-event.html.
  *
@@ -75,10 +77,7 @@ final class EventCommand implements Command
         $schema = $dictionary->schema($database);
         $key = strtolower($statement->name->name->value);
         if ($statement instanceof AlterEvent) {
-            $event = $schema === null ? null : ($schema->events[$key] ?? null);
-            if ($event === null) {
-                throw ProgramError::EventMissing->error($statement->name->name->value);
-            }
+            $event = $this->found($statement, $database, $session, $context);
             $this->alter($statement, $event, $session, $schedule);
         } else {
             if ($schema !== null && isset($schema->events[$key])) {
@@ -97,17 +96,53 @@ final class EventCommand implements Command
             $event = new Event($database, $statement->name->name->value, ProgramSource::definer($statement->definer, $session, $context), (string) $session->variables->read('time_zone'), $schedule[0], $schedule[1], $schedule[2], $schedule[3], $this->status($statement->status), $statement->completion === EventCompletion::Preserve, $statement->comment->value ?? '', ProgramSource::of($session)->body('ev_sql_stmt'), (string) $session->variables->read('sql_mode'), $now, $now, ProgramSource::charsets($session, $database));
             $schema->events[$key] = $event;
         }
-        if ($event->at !== null && $event->at < ProgramSource::now() && $schedule !== null) {
-            if (!$event->preserve && $statement instanceof CreateEvent) {
-                unset($dictionary->schemas[$event->schema]->events[strtolower($event->name)]);
-                $context->note(ProgramError::EventDroppedInPast);
-            } else {
-                $event->status = 'DISABLED';
-                $context->note(ProgramError::EventDisabledInPast);
-            }
+        if ($schedule !== null) {
+            $this->lapse($event, $statement instanceof CreateEvent, $session, $context);
         }
 
         return new Completion(0, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Answers the event ALTER EVENT changes, after the note of a DEFINER that does not exist and
+     * the database of RENAME TO.
+     *
+     * @throws SqlError When the database of the new name or the event does not exist
+     */
+    public function found(AlterEvent $statement, string $database, Session $session, Context $context): Event
+    {
+        if ($statement->definer !== null) {
+            ProgramSource::definer($statement->definer, $session, $context);
+        }
+        $dictionary = $session->instance->dictionary;
+        $renamed = $statement->newName === null ? null : $statement->newName->schema->value ?? $session->variables->database;
+        if ($renamed !== null && $dictionary->schema($renamed) === null) {
+            throw QueryError::BadDatabase->error($renamed);
+        }
+        $event = $dictionary->schema($database)?->events[strtolower($statement->name->name->value)] ?? null;
+        if ($event === null) {
+            throw ProgramError::EventMissing->error($statement->name->name->value);
+        }
+
+        return $event;
+    }
+
+    /**
+     * Ends a one-time event whose time has passed: a created event without ON COMPLETION PRESERVE
+     * is dropped, any other one disabled, each with its note.
+     */
+    public function lapse(Event $event, bool $created, Session $session, Context $context): void
+    {
+        if ($event->at === null || $event->at >= ProgramSource::now()) {
+            return;
+        }
+        if (!$event->preserve && $created) {
+            unset($session->instance->dictionary->schemas[$event->schema]->events[strtolower($event->name)]);
+            $context->note(ProgramError::EventDroppedInPast);
+        } else {
+            $event->status = 'DISABLED';
+            $context->note(ProgramError::EventDisabledInPast);
+        }
     }
 
     /**

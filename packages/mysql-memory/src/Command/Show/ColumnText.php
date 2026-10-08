@@ -9,6 +9,7 @@ use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Encoding;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\GeneratedColumn;
@@ -45,6 +46,13 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  */
 final class ColumnText
 {
+    /**
+     * @param GrammarRelease $release The release whose type names are written
+     */
+    public function __construct(public readonly GrammarRelease $release = GrammarRelease::MySql847)
+    {
+    }
+
     /**
      * The name of each type whose name does not depend on the column, by the name of the field
      * of the column.
@@ -114,17 +122,35 @@ final class ColumnText
 
         return match ($domain->field) {
             Field::Tiny, Field::Short, Field::Int24, Field::Long, Field::LongLong => self::NAMES[$domain->field->name] . $this->width($domain, $written) . $unsigned,
-            Field::Float, Field::Double => self::NAMES[$domain->field->name] . ($domain->decimals < Domain::NOT_FIXED ? '(' . $domain->length . ',' . $domain->decimals . ')' : '') . $unsigned,
+            Field::Float, Field::Double => self::NAMES[$domain->field->name] . $this->digits($domain) . $unsigned,
             Field::Decimal, Field::NewDecimal => 'decimal(' . $domain->precision() . ',' . $domain->decimals . ')' . $unsigned,
             Field::Bit => 'bit(' . $domain->length . ')',
             Field::Time, Field::DateTime, Field::Timestamp => self::NAMES[$domain->field->name] . $fraction,
-            Field::Date, Field::NewDate, Field::Year, Field::Json, Field::Geometry, Field::Null => self::NAMES[$domain->field->name],
+            Field::Year => self::NAMES[$domain->field->name] . ($this->legacy() ? '(4)' : ''),
+            Field::Date, Field::NewDate, Field::Json, Field::Geometry, Field::Null => self::NAMES[$domain->field->name],
             Field::String => ($binary ? 'binary(' : 'char(') . $domain->length . ')',
             Field::VarChar, Field::VarString => ($binary ? 'varbinary(' : 'varchar(') . $domain->length . ')',
             Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob => $this->blob($domain),
-            Field::Enum, Field::Set => ($domain->field === Field::Enum ? 'enum(' : 'set(') . implode(',', array_map(fn (string $member): string => $this->quoted($this->utf8($member, $domain)), $domain->members)) . ')',
+            Field::Enum, Field::Set => ($domain->field === Field::Enum ? 'enum(' : 'set(') . $this->members($domain) . ')',
             Field::Vector => 'vector(' . $domain->length . ')',
         };
+    }
+
+    /**
+     * Writes the digits of a FLOAT or DOUBLE column, written only when the column has a fixed
+     * number of decimals.
+     */
+    public function digits(Domain $domain): string
+    {
+        return $domain->decimals < Domain::NOT_FIXED ? '(' . $domain->length . ',' . $domain->decimals . ')' : '';
+    }
+
+    /**
+     * Writes the members of an ENUM or SET column, quoted and separated by commas.
+     */
+    public function members(Domain $domain): string
+    {
+        return implode(',', array_map(fn (string $member): string => $this->quoted($this->utf8($member, $domain)), $domain->members));
     }
 
     /**
@@ -148,8 +174,17 @@ final class ColumnText
     }
 
     /**
+     * Tells whether the release is 5.6 or 5.7.
+     */
+    public function legacy(): bool
+    {
+        return $this->release === GrammarRelease::MySql5651 || $this->release === GrammarRelease::MySql5744;
+    }
+
+    /**
      * Writes the display width of an integer column: only for a ZEROFILL column, and (1) for a
-     * boolean or a signed TINYINT(1).
+     * boolean or a signed TINYINT(1); MySQL 5.6 and 5.7 write it for every integer column, and
+     * year(4) (verified on a live 5.7.44 server).
      * Source: https://dev.mysql.com/doc/refman/8.4/en/numeric-type-attributes.html.
      */
     public function width(Domain $domain, ?TypeName $written): string
@@ -157,7 +192,7 @@ final class ColumnText
         $boolean = $written instanceof Elementary && $written->kind === ElementaryKind::Boolean;
 
         return match (true) {
-            $this->zeroFill($written) => '(' . ($domain->display ?? $domain->length) . ')',
+            $this->zeroFill($written) || $this->legacy() => '(' . ($boolean ? 1 : $domain->display ?? $domain->length) . ')',
             $boolean || ($domain->field === Field::Tiny && $domain->display === 1 && !$domain->unsigned) => '(1)',
             default => '',
         };

@@ -6,6 +6,7 @@ namespace MySqlMemory\Typing;
 
 use MySqlMemory\Error\DataError;
 use MySqlMemory\Error\SqlError;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Typing\Collations as Rules;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
@@ -31,19 +32,20 @@ final class Collations
      * @param string $operation The operation as the server names it
      * @param Collation $connection The collation a value that is not a string is written in
      * @param bool $comparison Whether the operation compares
+     * @param GrammarRelease $release The release whose rules settle them and whose names the error writes
      * @return array{Collation, Coercibility}
      *
      * @throws SqlError When the collations conflict
      */
-    public static function aggregate(array $domains, string $operation, Collation $connection, bool $comparison = false): array
+    public static function aggregate(array $domains, string $operation, Collation $connection, bool $comparison = false, GrammarRelease $release = GrammarRelease::MySql847): array
     {
         $rules = new Rules($connection);
         $resolved = array_map(static fn (Domain $domain) => $domain->resolved(), $domains);
-        $settled = $rules->settle($resolved, $comparison);
+        $settled = $rules->settle($resolved, $comparison, $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744);
         if ($settled !== null) {
             return $settled;
         }
-        $mix = new IllegalCollationMix(array_map(static fn ($domain): array => [$rules->operand($domain)[0]->name, $rules->operand($domain)[1]], $resolved), $operation);
+        $mix = new IllegalCollationMix(array_map(static fn ($domain): array => [$rules->operand($domain)[0]->nameIn($release), $rules->operand($domain)[1]], $resolved), $operation);
 
         return throw new SqlError(match (count($domains)) {
             2 => DataError::CantAggregateTwoCollations,

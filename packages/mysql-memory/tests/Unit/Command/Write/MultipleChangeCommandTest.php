@@ -189,4 +189,30 @@ final class MultipleChangeCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['2', '0']], $result->rows);
     }
+
+    public function testExecuteWarnsOfABadValueUnderAMultipleTableDeleteIgnore(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT); INSERT INTO t VALUES (1), (2)');
+        $deleted = $session->query("DELETE IGNORE t FROM t WHERE 'abc' XOR 1")[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(Completion::class, $deleted);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(2, $deleted->affectedRows);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'abc'"]], $warnings->rows);
+    }
+
+    public function testExecuteLeavesOutADuplicateSilentlyIn56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('CREATE TABLE d.t (id INT PRIMARY KEY)');
+        $session->query('CREATE TABLE d.u (id INT)');
+        $session->query('INSERT INTO d.t VALUES (1), (2)');
+        $session->query('INSERT INTO d.u VALUES (1)');
+        $session->query('UPDATE IGNORE d.t, d.u SET d.t.id = 1 WHERE d.u.id = 1');
+
+        self::assertSame([], $session->diagnostics->conditions);
+    }
 }

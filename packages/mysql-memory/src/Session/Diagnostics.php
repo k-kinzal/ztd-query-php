@@ -11,7 +11,10 @@ use MySqlMemory\Error\ErrorNumbers;
  * The diagnostics area of a session: the warnings and notes of the last statement that raised any.
  *
  * SHOW WARNINGS reads it; a statement that uses no table and raises nothing leaves it as it was.
- * Source: https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html.
+ * In MySQL 5.6 a query, SET or DO that uses no table keeps it until the statement raises a
+ * condition (verified on a live 5.6.51 server).
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html,
+ * https://dev.mysql.com/doc/refman/5.6/en/show-warnings.html.
  *
  * @visibility MySqlMemory
  */
@@ -28,10 +31,16 @@ final class Diagnostics
     public array $signalled = [];
 
     /**
+     * Whether the conditions are those of an earlier statement, forgotten when the current statement raises one.
+     */
+    public bool $stale = false;
+
+    /**
      * Records a warning.
      */
     public function warning(ErrorCode|int $code, string $message): void
     {
+        $this->fresh();
         if (count($this->conditions) < 64) {
             $this->conditions[] = ['Warning', $code instanceof ErrorCode ? $code->number() : $code, $message];
         }
@@ -42,6 +51,7 @@ final class Diagnostics
      */
     public function note(ErrorCode $code, string $message): void
     {
+        $this->fresh();
         if (count($this->conditions) < 64) {
             $this->conditions[] = ['Note', $code->number(), $message];
         }
@@ -54,6 +64,7 @@ final class Diagnostics
      */
     public function error(int $code, string $message, ?array $signalled = null): void
     {
+        $this->fresh();
         if ($signalled !== null) {
             $this->signalled[count($this->conditions)] = $signalled;
         }
@@ -67,6 +78,7 @@ final class Diagnostics
      */
     public function signal(int $code, string $message, array $signalled): void
     {
+        $this->fresh();
         if (count($this->conditions) < 64) {
             $this->signalled[count($this->conditions)] = $signalled;
             $this->conditions[] = ['Warning', $code, $message];
@@ -101,6 +113,25 @@ final class Diagnostics
     {
         $this->conditions = [];
         $this->signalled = [];
+        $this->stale = false;
+    }
+
+    /**
+     * Keeps the conditions of the earlier statement until the current one raises a condition.
+     */
+    public function retain(): void
+    {
+        $this->stale = true;
+    }
+
+    /**
+     * Forgets the conditions of an earlier statement kept by retain().
+     */
+    public function fresh(): void
+    {
+        if ($this->stale) {
+            $this->clear();
+        }
     }
 
     /**

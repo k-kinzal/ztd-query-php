@@ -197,4 +197,18 @@ final class InsertCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $star);
         self::assertSame([['1', '3.50'], ['4', '5.50'], [null, null]], $star->rows);
     }
+
+    public function testSourcesLetsAnEmptyRowNameNoColumn(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT NOT NULL, a INT DEFAULT 5)');
+        $session->query('INSERT IGNORE t () VALUES (), (), ()');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        $rows = $session->query('SELECT * FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame(['1364'], array_column($warnings->rows, 1));
+        self::assertSame([['0', '5'], ['0', '5'], ['0', '5']], $rows->rows);
+    }
 }

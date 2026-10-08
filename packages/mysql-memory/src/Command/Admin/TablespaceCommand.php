@@ -205,13 +205,14 @@ final class TablespaceCommand implements Command
     }
 
     /**
-     * Makes an undo tablespace active or inactive.
+     * Makes an undo tablespace active or inactive, once its ENGINE option names InnoDB.
      *
-     * @throws SqlError When the tablespace is missing or a general one
+     * @throws SqlError When the engine is refused, or the tablespace is missing or a general one
      */
     public function activate(AlterUndoTablespace $statement, Registry $registry): void
     {
         $name = $statement->name->value;
+        $this->engine($statement->options, 'ALTER UNDO TABLESPACE');
         if (isset(self::SYSTEM[$name]) && self::SYSTEM[$name]) {
             return;
         }

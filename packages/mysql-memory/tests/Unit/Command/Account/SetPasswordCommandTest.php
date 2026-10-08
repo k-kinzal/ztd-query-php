@@ -76,4 +76,13 @@ final class SetPasswordCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $reply);
         self::assertSame([['user', 16], ['host', 16], ['generated password', 72], ['auth_factor', 13]], array_map(static fn ($column): array => [$column->name, $column->length], $reply->columns));
     }
+
+    public function testExecuteWarnsOfThePasswordFunctionIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("CREATE USER 'u'@'h'");
+        $session->query("SET PASSWORD FOR 'u'@'h' = PASSWORD('x')");
+
+        self::assertSame([['Warning', 1287, "'SET PASSWORD FOR <user> = PASSWORD('<plaintext_password>')' is deprecated and will be removed in a future release. Please use SET PASSWORD FOR <user> = '<plaintext_password>' instead"]], $session->diagnostics->conditions);
+    }
 }

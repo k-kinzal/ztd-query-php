@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\SelectFacts;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -17,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
@@ -91,5 +93,13 @@ final class SelectFactsTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 WINDOW X AS (), x AS (), x AS ()');
 
         self::assertEquals([new Misuse(MisuseRule::DuplicateWindow, new Name('X')), new Misuse(MisuseRule::DuplicateWindow, new Name('X'))], $operation->facts->diagnostics);
+    }
+
+    public function testDeriveWarnsOfAGroupingDirectionAndProcedureAnalyseIn57(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT SQL_NO_CACHE 1 FROM t GROUP BY 1 DESC, 1 ASC PROCEDURE ANALYSE()');
+
+        self::assertSame([Deprecated::NoCache->value, Deprecated::GroupByDirection->value, Deprecated::GroupByDirection->value, Deprecated::ProcedureAnalyse->value], array_map(static fn (Warning $warning): string => $warning->message(), $operation->facts->warnings));
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 FROM t GROUP BY 1 DESC PROCEDURE ANALYSE()')->facts->warnings);
     }
 }

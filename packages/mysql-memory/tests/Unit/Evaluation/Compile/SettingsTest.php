@@ -40,4 +40,10 @@ final class SettingsTest extends TestCase
     {
         self::assertSame(GrammarRelease::MySql847, (new Settings(Collation::known('utf8mb4_0900_ai_ci'), new SqlModes([]), 4, '', '1.0.0'))->release());
     }
+
+    public function testLegacyTellsTheReleasesBefore80(): void
+    {
+        self::assertTrue((new Settings(Collation::known('latin1_swedish_ci'), new SqlModes([]), 4, '', '5.6.51'))->legacy());
+        self::assertFalse((new Settings(Collation::known('latin1_swedish_ci'), new SqlModes([]), 4, '', '8.0.44'))->legacy());
+    }
 }

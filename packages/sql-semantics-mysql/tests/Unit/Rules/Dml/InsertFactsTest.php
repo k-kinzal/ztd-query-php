@@ -18,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\MissingColumn;
@@ -164,5 +165,14 @@ final class InsertFactsTest extends TestCase
         self::assertSame([], $messages('INSERT INTO v SET e = 3'));
         self::assertSame([], $messages('INSERT INTO v VALUES (1, 3)'));
         self::assertSame(["Column count doesn't match value count at row 1"], $messages('INSERT INTO v VALUES (1, 2, 3)'));
+    }
+
+    public function testOpenWarnsOfDelayedAsEachReleaseDoes(): void
+    {
+        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('REPLACE DELAYED INTO t VALUES (1)');
+        $modern = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('INSERT DELAYED INTO t VALUES (1)');
+
+        self::assertSame(["'REPLACE DELAYED' is deprecated and will be removed in a future release. Please use REPLACE instead"], array_map(static fn (Warning $warning): string => $warning->message(), $legacy->facts->warnings));
+        self::assertSame(['INSERT DELAYED is no longer supported. The statement was converted to INSERT.'], array_map(static fn (Warning $warning): string => $warning->message(), $modern->facts->warnings));
     }
 }

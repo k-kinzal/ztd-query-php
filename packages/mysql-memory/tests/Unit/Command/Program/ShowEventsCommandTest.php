@@ -53,4 +53,14 @@ final class ShowEventsCommandTest extends TestCase
 
         self::assertSame([[0, 'events', ''], [31, 'evt', 'information_schema']], [[$command->headings(false)[4]->decimals, $command->headings(false)[1]->originalTable, $command->headings(false)[1]->schema], [$command->headings(true)[4]->decimals, $command->headings(true)[1]->originalTable, $command->headings(true)[1]->schema]]);
     }
+
+    public function testExecuteSendsTheStatusAsTheEnumColumnOfTheEventsInMySql80(): void
+    {
+        $session = (new Instance('8.0.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1');
+        $result = $session->query('SHOW EVENTS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['Status', \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::String, 72, 0], [$result->columns[10]->name, $result->columns[10]->type, $result->columns[10]->length, $result->columns[10]->decimals]);
+    }
 }

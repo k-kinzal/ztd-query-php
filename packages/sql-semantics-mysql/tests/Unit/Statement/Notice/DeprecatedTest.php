@@ -29,4 +29,17 @@ final class DeprecatedTest extends TestCase
         self::assertFalse(Deprecated::AmpersandsAnd->warnedIn(GrammarRelease::MySql5651));
         self::assertTrue(Deprecated::AmpersandsAnd->warnedIn(GrammarRelease::MySql847));
     }
+
+    public function testCodeAnswersTheNumberOfTheNationalCharacterSetWarning(): void
+    {
+        self::assertSame(3720, Deprecated::National->code());
+        self::assertSame([false, true], [Deprecated::National->warnedIn(GrammarRelease::MySql5744), Deprecated::National->warnedIn(GrammarRelease::MySql8044)]);
+    }
+
+    public function testWarnedInKeysTheConstructsOf56And57OnTheirRelease(): void
+    {
+        self::assertSame([true, false, false], [Deprecated::DelayedInsert->warnedIn(GrammarRelease::MySql5651), Deprecated::DelayedInsert->warnedIn(GrammarRelease::MySql5744), Deprecated::InsertDelayed->warnedIn(GrammarRelease::MySql5651)]);
+        self::assertSame([false, true, true], [Deprecated::Cache->warnedIn(GrammarRelease::MySql5651), Deprecated::Cache->warnedIn(GrammarRelease::MySql5744), Deprecated::DotTable->warnedIn(GrammarRelease::MySql5744)]);
+        self::assertSame([1681, 1287, 1287], [Deprecated::ProcedureAnalyse->code(), Deprecated::GroupByDirection->code(), Deprecated::DelayedReplace->code()]);
+    }
 }

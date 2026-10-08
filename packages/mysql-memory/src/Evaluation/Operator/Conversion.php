@@ -106,14 +106,17 @@ final class Conversion implements Evaluable
 
     /**
      * Converts to SIGNED or UNSIGNED; a decimal converts as Convert::decimalInteger() reads it.
+     *
+     * The cast warns of a string that is more than a number wherever the string comes from, and of
+     * a negative integer made unsigned except in MySQL 5.6 and 5.7 (verified on a live 5.7.44 server).
      */
     public function integer(int|float|string $value, Domain $from, Context $context): int
     {
         if ($from->kind === Kind::Decimal) {
             return Convert::decimalInteger((string) $value, $context, $this->domain->unsigned);
         }
-        $result = (int) Convert::toInteger($value, $from, $context, $this->domain->unsigned);
-        if ($this->domain->unsigned && $from->kind === Kind::Integer && !$from->unsigned && $result < 0) {
+        $result = (int) Convert::toInteger($value, $from->withQuiet(false), $context, $this->domain->unsigned);
+        if ($this->domain->unsigned && $from->kind === Kind::Integer && !$from->unsigned && $result < 0 && !in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
             $context->warning(StatementError::UnknownError, 'Cast to unsigned converted negative integer to its positive complement');
         }
 

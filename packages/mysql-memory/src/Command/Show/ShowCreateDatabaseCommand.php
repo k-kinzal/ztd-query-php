@@ -23,7 +23,9 @@ use SqlSemantics\Statement\Operation;
  *
  * The collation is written unless it is the default collation of a character set other than
  * utf8mb4; IF NOT EXISTS is written in a versioned comment. INFORMATION_SCHEMA is a utf8mb3
- * database (verified on a live 8.4 server).
+ * database (verified on a live 8.4 server). MySQL 5.6 and 5.7 omit the collation whenever it is the
+ * default of its character set, utf8mb4 included, and write no ENCRYPTION comment (verified on a
+ * live 5.7.44 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-database.html.
  *
  * @visibility MySqlMemory
@@ -54,9 +56,11 @@ final class ShowCreateDatabaseCommand implements Command
         }
         $collation = $name === 'information_schema' ? Collation::known('utf8mb3_general_ci') : (Collation::named($schema->collation) ?? Collation::known('utf8mb4_0900_ai_ci'));
         $charset = $collation->charset;
-        $default = $charset->name !== 'utf8mb4' && $charset->defaultCollation(GrammarRelease::MySql847)->name === $collation->name;
+        $release = $session->settings()->release();
+        $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
+        $default = ($legacy || $charset->name !== 'utf8mb4') && $charset->defaultCollation($legacy ? $release : GrammarRelease::MySql847)->name === $collation->name;
         $text = 'CREATE DATABASE ' . ($statement->ifNotExists ? '/*!32312 IF NOT EXISTS*/ ' : '') . '`' . str_replace('`', '``', $name) . '`'
-            . ' /*!40100 DEFAULT CHARACTER SET ' . $charset->name . ($default ? '' : ' COLLATE ' . $collation->name) . " */ /*!80016 DEFAULT ENCRYPTION='N' */";
+            . ' /*!40100 DEFAULT CHARACTER SET ' . $charset->name . ($default ? '' : ' COLLATE ' . $collation->name) . ' */' . ($legacy ? '' : " /*!80016 DEFAULT ENCRYPTION='N' */");
         $headings = [
             Heading::text('Database', Field::VarString, 64, ColumnFlag::NotNull->value, 31),
             Heading::text('Create Database', Field::VarString, 1024, ColumnFlag::NotNull->value, 31),

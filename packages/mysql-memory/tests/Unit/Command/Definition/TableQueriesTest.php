@@ -207,4 +207,22 @@ final class TableQueriesTest extends TestCase
 
         $session->query('CREATE TABLE k (a INT NOT NULL) SELECT NULL AS a');
     }
+
+    public function testTypeMakesANullColumnABinaryBeforeMySql81(): void
+    {
+        $older = (new Instance('8.0.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $older->query('CREATE TABLE n AS SELECT NULL AS a; CREATE TABLE m AS SELECT NULL AS a UNION SELECT NULL');
+        $newer = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $newer->query('CREATE TABLE n AS SELECT NULL AS a');
+        $plain = $older->query('SHOW CREATE TABLE n')[0];
+        $united = $older->query('SHOW CREATE TABLE m')[0];
+        $current = $newer->query('SHOW CREATE TABLE n')[0];
+
+        self::assertInstanceOf(ResultSet::class, $plain);
+        self::assertInstanceOf(ResultSet::class, $united);
+        self::assertInstanceOf(ResultSet::class, $current);
+        self::assertStringContainsString('`a` binary(0) DEFAULT NULL', (string) $plain->rows[0][1]);
+        self::assertStringContainsString('`a` binary(0) DEFAULT NULL', (string) $united->rows[0][1]);
+        self::assertStringContainsString('`a` varbinary(0) DEFAULT NULL', (string) $current->rows[0][1]);
+    }
 }

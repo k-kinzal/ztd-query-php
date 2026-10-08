@@ -69,4 +69,15 @@ final class ArithmeticTest extends TestCase
 
         new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new Arithmetic(ArithmeticOperator::Multiply, new IntervalAddition(new Interval(new NumberLiteral('2'), IntervalUnit::Day), new TruthTest(new NumberLiteral('3'), Truth::True)), new NumberLiteral('4')));
     }
+
+    public function testDeriveScalarCountsTheSignOfAnIntegerLiteralOperandIn57(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
+        $sum = $derivation->scalar(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('1')), $derivation->environment());
+        $product = $derivation->scalar(new Arithmetic(ArithmeticOperator::Multiply, new NumberLiteral('12'), new NumberLiteral('34')), $derivation->environment());
+        $quotient = $derivation->scalar(new Arithmetic(ArithmeticOperator::IntegerDivide, new NumberLiteral('1'), new NumberLiteral('2')), $derivation->environment());
+
+        self::assertEquals([new Known(Domain::integer(Field::LongLong, 3)), new Known(Domain::integer(Field::LongLong, 5)), new Known(Domain::integer(Field::LongLong, 1))], [$sum->type, $product->type, $quotient->type]);
+    }
 }

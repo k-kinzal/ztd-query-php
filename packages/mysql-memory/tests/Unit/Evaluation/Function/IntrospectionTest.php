@@ -217,4 +217,15 @@ final class IntrospectionTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['3', '-1']], $result->rows);
     }
+
+    public function testRoutinesNameUtf8AsTheReleaseDoes(): void
+    {
+        $legacy = (new Instance('5.7.44'))->connect()->query('SELECT CHARSET(USER()), COLLATION(USER())')[0];
+        $modern = (new Instance())->connect()->query('SELECT CHARSET(USER()), COLLATION(USER())')[0];
+
+        self::assertInstanceOf(ResultSet::class, $legacy);
+        self::assertInstanceOf(ResultSet::class, $modern);
+        self::assertSame([['utf8', 'utf8_general_ci']], $legacy->rows);
+        self::assertSame([['utf8mb3', 'utf8mb3_general_ci']], $modern->rows);
+    }
 }

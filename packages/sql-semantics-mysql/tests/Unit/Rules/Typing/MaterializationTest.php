@@ -7,6 +7,7 @@ namespace Tests\Unit\Rules\Typing;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
@@ -98,5 +99,11 @@ final class MaterializationTest extends TestCase
     {
         self::assertEquals(new Domain(Kind::String, Field::VarString, 0, 0, false, Collation::binary(), [], Coercibility::Ignorable), (new Materialization())->nothing(Domain::null()));
         self::assertEquals(Domain::double(), (new Materialization())->nothing(Domain::double()));
+    }
+
+    public function testSetMakesANullColumnACharBeforeMySql81(): void
+    {
+        self::assertEquals(new Domain(Kind::String, Field::String, 0, 0, false, Collation::binary(), [], Coercibility::Ignorable), (new Materialization())->set(Domain::null(), GrammarRelease::MySql8044));
+        self::assertSame(Field::VarString, (new Materialization())->set(Domain::null(), GrammarRelease::MySql910)->field);
     }
 }

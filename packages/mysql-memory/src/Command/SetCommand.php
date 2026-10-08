@@ -109,7 +109,9 @@ final class SetCommand implements Command
             return static fn () => $assigner->assign($item->name->value, $scope, $value, $domain);
         }
         if ($item instanceof SetNames || $item instanceof SetCharacterSet) {
-            $charset = $item->charset->name->value ?? 'utf8mb4';
+            $server = $session->instance->catalog->find('character_set_server');
+            $default = $server === null ? 'utf8mb4' : (string) $session->instance->globals->value($server);
+            $charset = $item->charset->name->value ?? $default;
             $collation = $item instanceof SetNames && $item->collation?->name !== null ? $item->collation->name->value : (\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($charset)?->defaultCollation($planner->settings->release())->name ?? $charset);
 
             return static function () use ($assigner, $charset, $collation, $item): void {

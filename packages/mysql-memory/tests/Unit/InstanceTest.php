@@ -116,4 +116,12 @@ final class InstanceTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['8.0.44']], $result->rows);
     }
+
+    public function testConnectStartsTheConnectionsOf57InLatin1(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        self::assertSame(['latin1', 'latin1_swedish_ci'], [$session->variables->read('character_set_client'), $session->variables->read('collation_connection')]);
+        self::assertSame('utf8mb4', (new Instance())->connect()->variables->read('character_set_client'));
+    }
 }

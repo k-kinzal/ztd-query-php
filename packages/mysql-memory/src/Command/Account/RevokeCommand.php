@@ -89,7 +89,7 @@ final class RevokeCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof RevokePrivileges);
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $names->check($names->users($statement->users));
         $levels = new Levels();
         $levels->parsed($operation, $session);
@@ -204,7 +204,7 @@ final class RevokeCommand implements Command
      */
     public function found(array $users, bool $ignore, Session $session, bool $hosts, ?SqlError $unknown = null): array
     {
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $identities = array_map(static fn ($user): Identity => $names->identity($user, $session), $users);
         foreach ($hosts ? $identities : [] as $identity) {
             $names->resolve($identity, $session->diagnostics);
@@ -235,7 +235,7 @@ final class RevokeCommand implements Command
      */
     public function roles(RevokeRoles $statement, Operation $operation, Session $session): void
     {
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $listed = array_map(static fn ($role): ?AccountName => $role instanceof GrantedRole ? $role->role : null, $statement->roles);
         $names->check([...$listed, ...$statement->users]);
         (new Levels())->parsed($operation, $session);
@@ -275,7 +275,7 @@ final class RevokeCommand implements Command
      */
     public function proxy(RevokeProxy $statement, Session $session): void
     {
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $names->check([$statement->proxied, ...$names->users($statement->users)]);
         $names->resolve($names->identity($statement->proxied, $session), $session->diagnostics);
         [$user, $host] = explode('@', $session->variables->account, 2) + [1 => ''];
@@ -292,7 +292,7 @@ final class RevokeCommand implements Command
      */
     public function everything(RevokeAll $statement, Session $session): void
     {
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $users = $names->users($statement->users);
         $names->check($users);
         foreach ($this->found($users, $statement->ignoreUnknownUser, $session, false, AccountError::RevokeGrants->error()) as $account) {

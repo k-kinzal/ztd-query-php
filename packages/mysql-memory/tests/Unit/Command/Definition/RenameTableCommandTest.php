@@ -13,6 +13,7 @@ use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Alter\RenameTable;
 
 #[CoversClass(RenameTableCommand::class)]
 #[Small]
@@ -73,6 +74,28 @@ final class RenameTableCommandTest extends TestCase
         $session->query('RENAME TABLE tt TO tt2');
     }
 
+    public function testWrittenChecksEveryNewNameBeforeTheDatabase(): void
+    {
+        $statement = (new Instance())->connect()->analyze('RENAME TABLE t TO u, v TO ` `')->statement;
+        self::assertInstanceOf(RenameTable::class, $statement);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1103);
+
+        (new RenameTableCommand())->written($statement, '');
+    }
+
+    public function testWrittenRefusesAnUnqualifiedNameWithoutADatabase(): void
+    {
+        $statement = (new Instance())->connect()->analyze('RENAME TABLE d.t TO u')->statement;
+        self::assertInstanceOf(RenameTable::class, $statement);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1046);
+
+        (new RenameTableCommand())->written($statement, '');
+    }
+
     public function testValidRefusesANameEndingWithASpace(): void
     {
         $this->expectException(SqlError::class);
@@ -119,5 +142,18 @@ final class RenameTableCommandTest extends TestCase
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE TEMPORARY TABLE u (a INT)');
 
         self::assertSame(["d\0t"], array_keys((new RenameTableCommand())->names($session->instance->dictionary)));
+    }
+
+    public function testExecuteReportsAMissingTableAsAMissingFileIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1017);
+        $this->expectExceptionMessage("Can't find file: './d/nosuch.frm' (errno: 2 - No such file or directory)");
+
+        $session->query('RENAME TABLE nosuch TO other');
     }
 }

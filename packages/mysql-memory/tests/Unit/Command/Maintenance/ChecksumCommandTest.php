@@ -50,4 +50,16 @@ final class ChecksumCommandTest extends TestCase
     {
         self::assertSame('0', (new ChecksumCommand())->checksum([]));
     }
+
+    public function testExecuteSendsAChecksumOf21CharactersIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('CREATE TABLE d.t (a INT)');
+
+        $result = $session->query('CHECKSUM TABLE d.t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(21, $result->columns[1]->length);
+    }
 }

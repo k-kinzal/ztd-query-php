@@ -44,4 +44,13 @@ final class SessionResultsTest extends TestCase
 
         self::assertEquals(Domain::string(50331648, Collation::known('utf8mb3_general_ci'), Field::LongBlob, Coercibility::SystemConstant), $rules['CURRENT_ROLE'](new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
     }
+
+    public function testRulesAnswerTheShorterNamesOf56And57(): void
+    {
+        $rules = (new SessionResults())->rules();
+        $legacy = new Invocation([], [], new Settings(Collation::known('latin1_swedish_ci')), new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([])));
+        $modern = new Invocation([], [], new Settings(Collation::known('latin1_swedish_ci')), new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([])));
+
+        self::assertSame([77, 93, 34, 34], [$rules['USER']($legacy)?->length, $rules['CURRENT_USER']($modern)?->length, $rules['DATABASE']($legacy)?->length, $rules['SCHEMA']($modern)?->length]);
+    }
 }

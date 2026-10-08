@@ -114,7 +114,7 @@ final class ResultSlots
         }
         $domain = $domains === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of($domains, 'UNION', $derivation);
 
-        return $domain === null ? (new TypeAggregation())->aggregate([$left, $right]) : new Known((new Materialization())->set($domain));
+        return $domain === null ? (new TypeAggregation())->aggregate([$left, $right]) : new Known((new Materialization())->set($domain, $derivation->context->profile->grammar));
     }
 
     /**

@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering\Query\Legacy;
 
+use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
+use SqlParser\Parser\SyntaxException;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\AnalysisException;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Lowering\Form;
@@ -64,7 +67,7 @@ final class FactorRule
      * Lowers a 5.x table factor.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws AnalysisException When a SELECT is not the first reference inside parentheses ("we are not in parentheses": ER_SYNTAX_ERROR of the 5.6 `select_derived_init` action and of 5.7 `PT_table_factor_select_sym::contextualize`)
+     * @throws AnalysisException When a SELECT is not the first reference inside parentheses ("we are not in parentheses": ER_SYNTAX_ERROR of the 5.6 `select_derived_init` action and of 5.7 `PT_table_factor_select_sym::contextualize`), caused by the syntax error at the SELECT keyword
      */
     public function factor(Form $form): Relation
     {
@@ -72,7 +75,7 @@ final class FactorRule
             return (new TableRule($this->lowering))->table($form->node);
         }
         if ($form->signature === 'table_factor: select_derived_init get_select_lex select_derived2' || $form->signature === 'table_factor: SELECT_SYM select_options select_item_list table_expression') {
-            throw new AnalysisException('Syntax error: a SELECT among table references is written in parentheses as a derived table.');
+            throw new AnalysisException('Syntax error: a SELECT among table references is written in parentheses as a derived table.', 0, new SyntaxException($form->node->tokens()[0], [], ''));
         }
         $result = $this->parens($form);
 
@@ -80,25 +83,52 @@ final class FactorRule
     }
 
     /**
+     * Answers the syntax error of a nested join that writes an alias, a union, an ORDER BY or a LIMIT, at the token the release reports it near.
+     *
+     * MySQL 5.6 reports the closing parenthesis, or the alias name after a nested join that writes
+     * neither a union nor an ordering; 5.7 reports the first UNION, else the ORDER BY or LIMIT,
+     * else the AS of the alias or the text right after the closing parenthesis (verified on live
+     * 5.6.51 and 5.7.44 servers).
+     */
+    public function refusal(Node|Token|null $closing, Node|Token|null $union, Node $ordering, Node $alias, bool $unioned, bool $ordered): AnalysisException
+    {
+        $legacy = $this->lowering->profile->grammar === GrammarRelease::MySql5651;
+        $words = $alias->tokens();
+        $at = match (true) {
+            $legacy && ($unioned || $ordered) => $closing,
+            $legacy => $words[count($words) - 1] ?? $closing,
+            $unioned => $union,
+            $ordered => $ordering->tokens()[0] ?? $closing,
+            count($words) > 1 => $words[0],
+            $closing instanceof Token => new Token($closing->symbol, $closing->name, '', $closing->end()),
+            default => null,
+        };
+
+        return new AnalysisException('Syntax error: a nested join takes no alias, union, ORDER BY or LIMIT.', 0, $at instanceof Token ? new SyntaxException($at, [], '') : null);
+    }
+
+    /**
      * Lowers a parenthesized 5.x table factor: a query when it is a derived table without alias, else the relation.
      *
      * @throws ImplementationGap When a production has no rule
-     * @throws AnalysisException When a nested join has an alias, a union, an ORDER BY or a LIMIT (ER_SYNTAX_ERROR of the 5.6 `table_factor` and `select_derived_union` actions and of 5.7 `PT_table_factor_parenthesis` and `PT_select_derived_union_*::contextualize`)
+     * @throws AnalysisException When a nested join has an alias, a union, an ORDER BY or a LIMIT (ER_SYNTAX_ERROR of the 5.6 `table_factor` and `select_derived_union` actions and of 5.7 `PT_table_factor_parenthesis` and `PT_select_derived_union_*::contextualize`), caused by the syntax error at its closing parenthesis
      */
     public function parens(Form $form): Query|Relation
     {
         if ($form->signature === 'table_factor: ( get_select_lex select_derived_union ) opt_table_alias') {
             $this->lowering->options->skip($form->node(1));
-            [$union, $alias] = [$form->node(2), $form->node(4)];
+            [$union, $alias, $closing] = [$form->node(2), $form->node(4), $form->node->children[3] ?? null];
         } elseif ($form->signature === 'table_factor: ( select_derived_union ) opt_table_alias') {
-            [$union, $alias] = [$form->node(1), $form->node(3)];
+            [$union, $alias, $closing] = [$form->node(1), $form->node(3), $form->node->children[2] ?? null];
         } else {
             throw ImplementationGap::production($form);
         }
         $name = (new TableRule($this->lowering))->alias($alias);
         $steps = [];
+        $first = null;
         $step = $this->lowering->form($union);
         while (isset(self::UNIONS[$step->signature])) {
+            $first = $step->node->children[1] ?? null;
             $steps[] = [(new ExpressionRule($this->lowering))->quantifier($step->node(2)), (new SubqueryRule($this->lowering))->operand($step->node(3), self::UNIONS[$step->signature] ? $step->node(4) : null)];
             $step = $this->lowering->form($step->node(0));
         }
@@ -109,7 +139,7 @@ final class FactorRule
         $content = $this->content($step->node(0));
         if (is_array($content)) {
             if ($steps !== [] || !$trailer->empty() || $name !== null) {
-                throw new AnalysisException('Syntax error: a nested join takes no alias, union, ORDER BY or LIMIT.');
+                throw $this->refusal($closing, $first, $step->node(1), $alias, $steps !== [], !$trailer->empty());
             }
 
             return new NestedRelation(count($content) === 1 ? $content[0] : new TableList($content));

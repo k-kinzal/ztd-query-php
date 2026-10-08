@@ -178,16 +178,17 @@ final class XaCommand implements Command
     }
 
     /**
-     * Lists the prepared branches.
+     * Lists the prepared branches; MySQL 5.6 and 5.7 report numbers 11 characters long, and 5.6 data of 128 characters (verified on live 5.6.51 and 5.7.44 servers).
      */
     public function recover(XaRecover $statement, Session $session, Context $context): Reply
     {
         $number = ColumnFlag::NotNull->value | ColumnFlag::Binary->value | ColumnFlag::Numeric->value;
+        $width = $session->settings()->legacy() ? 11 : 12;
         $headings = [
-            new Heading('formatID', Field::LongLong, 12, $number),
-            new Heading('gtrid_length', Field::LongLong, 12, $number),
-            new Heading('bqual_length', Field::LongLong, 12, $number),
-            Heading::text('data', Field::VarString, 258, ColumnFlag::NotNull->value, 31),
+            new Heading('formatID', Field::LongLong, $width, $number),
+            new Heading('gtrid_length', Field::LongLong, $width, $number),
+            new Heading('bqual_length', Field::LongLong, $width, $number),
+            Heading::text('data', Field::VarString, $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? 128 : 258, ColumnFlag::NotNull->value, 31),
         ];
         $rows = [];
         foreach ($session->instance->registry->prepared as $branch) {

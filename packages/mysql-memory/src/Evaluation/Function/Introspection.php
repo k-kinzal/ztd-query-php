@@ -39,8 +39,8 @@ final class Introspection
             new Routine('LAST_INSERT_ID', 0, 1, $this->lastInsertId(...)),
             new Routine('ROW_COUNT', 0, 0, fn (Frame $f): int => $f->context->variables->rowCount),
             new Routine('FOUND_ROWS', 0, 0, fn (Frame $f): int => $f->context->variables->foundRows),
-            new Routine('CHARSET', 1, 1, fn (Frame $f, array $a): string => $a[0]->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String ? $a[0]->domain()->collation->charset->name : 'binary'),
-            new Routine('COLLATION', 1, 1, fn (Frame $f, array $a): string => $a[0]->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String ? $a[0]->domain()->collation->name : 'binary'),
+            new Routine('CHARSET', 1, 1, fn (Frame $f, array $a): string => $a[0]->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String ? $a[0]->domain()->collation->charset->nameIn($f->context->modes->release) : 'binary'),
+            new Routine('COLLATION', 1, 1, fn (Frame $f, array $a): string => $a[0]->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String ? $a[0]->domain()->collation->nameIn($f->context->modes->release) : 'binary'),
             new Routine('COERCIBILITY', 1, 1, fn (Frame $f, array $a): int => $a[0]->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null ? 6 : ($a[0]->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String ? $a[0]->domain()->coercibility->value : 5)),
         ];
     }

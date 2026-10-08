@@ -334,4 +334,11 @@ final class ConvertTest extends TestCase
         self::assertSame([['Warning', '1292', "Truncated incorrect DECIMAL value: '18446744073709551616'"], ['Warning', '1292', "Truncated incorrect DECIMAL value: '-18446744073709551616'"]], $warnings->rows);
     }
 
+    public function testToDoubleReadsAQuietStringWithoutWarning(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("SELECT CONCAT('1x') + 0, LOWER('ax') = 0");
+
+        self::assertSame([], $session->diagnostics->conditions);
+    }
 }

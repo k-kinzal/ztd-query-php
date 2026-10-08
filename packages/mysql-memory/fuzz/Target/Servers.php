@@ -40,18 +40,17 @@ final class Servers
             $password = $endpoint->password;
         }
         $native = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        $this->clean($native);
+        $this->clean($native, $version);
         $globals = [];
-        $statement = $native->query('SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.global_variables');
-        foreach ($statement === false ? [] : $statement->fetchAll(PDO::FETCH_KEY_PAIR) as $name => $value) {
-            $globals[strtolower((string) $name)] = is_scalar($value) ? (string) $value : '';
+        foreach ($this->rows($native, str_starts_with($version, '5.6.') ? 'SHOW GLOBAL VARIABLES' : 'SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.global_variables') as [$name, $value]) {
+            $globals[strtolower($name)] = $value;
         }
         $identity = $native->query('SELECT USER()');
         $account = $identity === false ? '' : $identity->fetchColumn();
         $account = is_string($account) ? $account : '';
         $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1));
 
-        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate), 'mysql-' . $version, $server];
+        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version), 'mysql-' . $version, $server];
     }
 
     /**
@@ -59,14 +58,15 @@ final class Servers
      *
      * Accounts and roles other than root and the server's own, foreign servers, resource groups
      * other than the defaults, and the database, table and column grants of root are dropped,
-     * so that the MySQL server starts a run in the state mysql-memory starts in.
+     * so that the MySQL server starts a run in the state mysql-memory starts in. MySQL 5.6 lacks
+     * DROP USER IF EXISTS; the accounts it drops are those it lists, so it drops them without.
      */
-    public function clean(PDO $native): void
+    public function clean(PDO $native, string $version = MySqlRelease::DEFAULT): void
     {
         $statements = [];
         foreach ($this->rows($native, 'SELECT User, Host FROM mysql.user') as [$name, $host]) {
             if (!in_array($name, ['root', 'healthchecker', 'mysql.infoschema', 'mysql.session', 'mysql.sys'], true)) {
-                $statements[] = 'DROP USER IF EXISTS ' . $native->quote($name) . '@' . $native->quote($host);
+                $statements[] = (str_starts_with($version, '5.6.') ? 'DROP USER ' : 'DROP USER IF EXISTS ') . $native->quote($name) . '@' . $native->quote($host);
             }
         }
         foreach ($this->rows($native, 'SELECT Server_name FROM mysql.servers') as [$name]) {

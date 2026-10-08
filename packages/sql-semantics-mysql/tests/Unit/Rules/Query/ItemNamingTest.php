@@ -192,4 +192,11 @@ final class ItemNamingTest extends TestCase
         self::assertNull($naming->own(new OdbcEscape(new Name('d'), new StringLiteral(['2024-01-31']))));
     }
 
+    public function testIdentifierReadsANameALatin1ClientWritesInTheSystemCharacterSet(): void
+    {
+        $latin1 = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('latin1'));
+        $utf8 = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('utf8mb4'));
+
+        self::assertEquals([new Name("\u{C3}\u{A9}"), new Name('x'), new Name('é')], [$latin1->identifier(new Name('é')), $latin1->identifier(new Name('x')), $utf8->identifier(new Name('é'))]);
+    }
 }

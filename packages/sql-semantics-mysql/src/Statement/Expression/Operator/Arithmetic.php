@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Rules\Expression\NumericResult;
@@ -12,6 +13,8 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -71,12 +74,18 @@ final class Arithmetic implements Scalar
         $left = $operands->single($derivation->scalar($this->left, $environment), $derivation);
         $right = $operands->single($derivation->scalar($this->right, $environment), $derivation);
         $type = (new NumericResult())->binary($this->operator, $this->left, $left, $this->right, $right, $derivation->context->profile->grammar);
+        if ($this->operator->bitwise() && (new NumericResult())->binaryOperand($this->left, $left)) {
+            Deprecation::raise(Deprecated::BinaryBitwise, $derivation);
+        }
         $domains = (new Precision())->all([$left->type, $right->type]);
         $settings = Settings::of($derivation->context);
         if ($domains !== null && ($type instanceof Known || !$this->operator->bitwise())) {
             $numbers = new Numbers($settings->divPrecisionIncrement, $settings->unsignedSubtraction);
             $bytes = $domains;
             $domains = [$numbers->numeric($this->left, $domains[0]), $numbers->numeric($this->right, $domains[1])];
+            if (in_array($this->operator, [ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::Multiply], true) && in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+                $domains = [$numbers->signed($this->left, $domains[0]), $numbers->signed($this->right, $domains[1])];
+            }
             $type = new Known($this->operator->bitwise() && $type instanceof Known ? (TypeClass::of($type->descriptor) === TypeClass::Unsigned ? $numbers->bits() : $numbers->binaryBits($this->operator, $bytes[0], $bytes[1])) : $numbers->binary($this->operator, $domains[0], $domains[1]));
         }
         $divides = $this->operator === ArithmeticOperator::Divide || $this->operator === ArithmeticOperator::IntegerDivide || $this->operator === ArithmeticOperator::Modulo;

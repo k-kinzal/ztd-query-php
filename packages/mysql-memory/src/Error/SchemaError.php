@@ -21,6 +21,7 @@ enum SchemaError: int implements ErrorCode
 
     case DatabaseExists = 1007;
     case DatabaseMissing = 1008;
+    case FileNotFound = 1017;
     case IllegalHa = 1031;
     case TableExists = 1050;
     case BadTable = 1051;

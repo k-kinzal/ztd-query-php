@@ -57,7 +57,7 @@ final class ShowColumnsCommand implements Command
         $stored = (new Inspection())->table($statement->table, $statement instanceof ShowColumns ? $statement->database : null, $session);
         $full = $statement instanceof ShowColumns && $statement->listing?->full() === true;
         $definition = $stored->definition;
-        $text = new ColumnText();
+        $text = new ColumnText($session->settings()->release());
         $keys = new Keys();
         $rows = [];
         foreach ($definition->columns as $position => $column) {
@@ -74,7 +74,7 @@ final class ShowColumnsCommand implements Command
         }
         $filter = $statement instanceof ShowColumns ? $statement->filter : ($statement->column === null ? null : new ShowLike(new Text($statement->column instanceof Text ? (new Inspection())->pattern($statement->column) : $statement->column->value)));
 
-        return (new Listing($this->headings($full)))->result($rows, $operation, $session, $context, $connection, $filter, 0, 'utf8mb3_tolower_ci', 'EXPLICIT');
+        return (new Listing($this->headings($full, $text->legacy())))->result($rows, $operation, $session, $context, $connection, $filter, 0, 'utf8mb3_tolower_ci', 'EXPLICIT');
     }
 
     /**
@@ -82,8 +82,11 @@ final class ShowColumnsCommand implements Command
      *
      * @return list<Heading>
      */
-    public function headings(bool $full): array
+    public function headings(bool $full, bool $legacy = false): array
     {
+        if ($legacy) {
+            return $this->legacy($full);
+        }
         $headings = [Heading::text('Field', Field::VarString, 64, 0, 0, 'Field', 'COLUMNS'), Heading::text('Type', Field::Blob, 16777215, ColumnFlag::NotNull->value | ColumnFlag::Blob->value | ColumnFlag::Binary->value | ColumnFlag::NoDefaultValue->value, 0, 'Type', 'COLUMNS', 'columns')];
         if ($full) {
             $headings[] = Heading::text('Collation', Field::VarString, 64, 0, 0, 'Collation', 'COLUMNS');
@@ -97,6 +100,32 @@ final class ShowColumnsCommand implements Command
         );
         if ($full) {
             array_push($headings, Heading::text('Privileges', Field::VarString, 154, 0, 0, 'Privileges', 'COLUMNS'), Heading::text('Comment', Field::Blob, 6144, ColumnFlag::NotNull->value | ColumnFlag::Blob->value | ColumnFlag::Binary->value, 0, 'Comment', 'COLUMNS'));
+        }
+
+        return $headings;
+    }
+
+    /**
+     * Answers the columns of the rows as MySQL 5.6 and 5.7 send them, read from INFORMATION_SCHEMA.COLUMNS (verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @return list<Heading>
+     */
+    public function legacy(bool $full): array
+    {
+        $required = ColumnFlag::NotNull->value;
+        $headings = [Heading::text('Field', Field::VarString, 64, $required, 0, 'Field', 'COLUMNS'), Heading::text('Type', Field::Blob, 196605, $required | ColumnFlag::Blob->value, 0, 'Type', 'COLUMNS')];
+        if ($full) {
+            $headings[] = Heading::text('Collation', Field::VarString, 32, 0, 0, 'Collation', 'COLUMNS');
+        }
+        array_push(
+            $headings,
+            Heading::text('Null', Field::VarString, 3, $required, 0, 'Null', 'COLUMNS'),
+            Heading::text('Key', Field::VarString, 3, $required, 0, 'Key', 'COLUMNS'),
+            Heading::text('Default', Field::Blob, 196605, ColumnFlag::Blob->value, 0, 'Default', 'COLUMNS'),
+            Heading::text('Extra', Field::VarString, 30, $required, 0, 'Extra', 'COLUMNS'),
+        );
+        if ($full) {
+            array_push($headings, Heading::text('Privileges', Field::VarString, 80, $required, 0, 'Privileges', 'COLUMNS'), Heading::text('Comment', Field::VarString, 1024, $required, 0, 'Comment', 'COLUMNS'));
         }
 
         return $headings;

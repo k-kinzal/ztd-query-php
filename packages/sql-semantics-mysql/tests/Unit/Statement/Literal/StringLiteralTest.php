@@ -13,9 +13,11 @@ use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Known;
@@ -182,7 +184,12 @@ final class StringLiteralTest extends TestCase
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _utf8mb3 'a', _utf8 'b'");
 
-        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias)], $operation->facts->warnings);
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(Deprecated::Utf8mb3), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(Deprecated::Utf8Alias)], $operation->facts->warnings);
     }
 
+    public function testDeriveScalarWarnsThatANationalStringIsUtf8mb3FromMySql80(): void
+    {
+        self::assertSame([Deprecated::National->value], array_map(static fn (Warning $warning): string => $warning->message(), (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("SELECT N'a'")->facts->warnings));
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT N'a'")->facts->warnings);
+    }
 }

@@ -45,4 +45,13 @@ final class ResultsTest extends TestCase
 
         self::assertEquals(new ScalarFact(new Known(Domain::double(8, 6)), Nullability::Nullable), (new Results())->refine('PI', [], [], $fact, new Derivation((new Semantics(Dialect::MySql))->context([]))));
     }
+
+    public function testRefineMakesTheAccountFunctionsNotNullIn56(): void
+    {
+        $legacy = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]));
+        $modern = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $fact = new ScalarFact(new Known(Domain::double(23)), Nullability::Nullable);
+
+        self::assertSame([Nullability::NotNull, Nullability::Nullable], [(new Results())->refine('USER', [], [], $fact, $legacy)->nullability, (new Results())->refine('USER', [], [], $fact, $modern)->nullability]);
+    }
 }

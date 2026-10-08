@@ -160,6 +160,7 @@ final class InsertFacts
     {
         if ($into->priority === InsertPriority::Delayed) {
             Deprecation::raise($into->replace ? Deprecated::ReplaceDelayed : Deprecated::InsertDelayed, $derivation);
+            Deprecation::raise($into->replace ? Deprecated::DelayedReplace : Deprecated::DelayedInsert, $derivation);
         }
         $fact = $derivation->relation($into->table, $outer);
         $target = new VisibleRelation($into->table, $fact->shape, null, $into->table->name, [], (new TableShapes())->implicit($fact));

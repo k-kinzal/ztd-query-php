@@ -87,11 +87,14 @@ final class DatabaseCommand implements Command
 
     /**
      * Answers the default collation of a new database: the collation it names, else the default
-     * collation of the character set it names, else utf8mb4_0900_ai_ci.
+     * collation of the character set it names, else collation_server (utf8mb4_0900_ai_ci in 8.0
+     * and later, latin1_swedish_ci in 5.6 and 5.7).
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-database.html.
      */
     public function collation(CreateDatabase $statement, Session $session): string
     {
-        $collation = 'utf8mb4_0900_ai_ci';
+        $server = $session->variables->read('collation_server');
+        $collation = is_string($server) && \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($server) !== null ? $server : 'utf8mb4_0900_ai_ci';
         foreach ($statement->options as $option) {
             if ($option instanceof DatabaseCharset && $option->charset->name !== null) {
                 $collation = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::named($option->charset->name->value)?->defaultCollation($session->settings()->release())->name ?? $collation;

@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\UndeclaredVariable;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 
@@ -101,5 +102,10 @@ final class StagesTest extends TestCase
         $session = (new Instance())->connect();
 
         self::assertSame([true, true, false], [Stages::explains($session->analyze('EXPLAIN SELECT 1')->statement), Stages::explains($session->analyze('EXPLAIN FOR CONNECTION 1')->statement), Stages::explains($session->analyze('SELECT 1')->statement)]);
+    }
+
+    public function testParsedHoldsForASystemVariableTheServerDoesNotKnow(): void
+    {
+        self::assertTrue(Stages::parsed(new UnknownSystemVariable('nosuch')));
     }
 }

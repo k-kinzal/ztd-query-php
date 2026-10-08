@@ -72,4 +72,23 @@ final class CollationsTest extends TestCase
         self::assertEquals([Collation::known('utf8mb4_0900_ai_ci'), Coercibility::Implicit], $rules->tie(Collation::known('utf8mb4_0900_ai_ci'), Collation::known('utf16_general_ci'), Coercibility::Implicit));
         self::assertNull($rules->tie(Collation::known('utf8mb3_general_ci'), Collation::known('utf16_general_ci'), Coercibility::Implicit));
     }
+
+    public function testTieSettlesExplicitCollationsOfDifferentSetsIn56And57(): void
+    {
+        $rules = new Collations(Collation::known('latin1_swedish_ci'));
+
+        self::assertEquals([Collation::known('utf8mb3_bin'), Coercibility::Explicit], $rules->tie(Collation::known('utf8mb3_bin'), Collation::known('latin1_bin'), Coercibility::Explicit, true));
+        self::assertNull($rules->tie(Collation::known('utf8mb3_bin'), Collation::known('latin1_bin'), Coercibility::Explicit));
+        self::assertNull($rules->tie(Collation::known('ascii_bin'), Collation::known('latin1_bin'), Coercibility::Explicit, true));
+        self::assertNull($rules->tie(Collation::known('latin1_bin'), Collation::known('latin1_general_ci'), Coercibility::Explicit, true));
+    }
+
+    public function testSettleSettlesExplicitCollationsOfDifferentSetsIn56And57(): void
+    {
+        $rules = new Collations(Collation::known('latin1_swedish_ci'));
+        $domains = [Domain::string(1, Collation::known('utf8mb3_bin'), Field::VarString, Coercibility::Explicit), Domain::string(1, Collation::known('latin1_bin'), Field::VarString, Coercibility::Explicit)];
+
+        self::assertEquals([Collation::known('utf8mb3_bin'), Coercibility::Explicit], $rules->settle($domains, true, true));
+        self::assertNull($rules->settle($domains, true));
+    }
 }

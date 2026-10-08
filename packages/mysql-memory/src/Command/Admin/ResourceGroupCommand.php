@@ -101,16 +101,20 @@ final class ResourceGroupCommand implements Command
     /**
      * Changes a group.
      *
+     * A CPU the server lacks is refused first, then a group that does not exist or is a default
+     * one, and only then a reversed range (verified on live 8.0, 8.4 and 9.1 servers).
+     *
      * @throws \MySqlMemory\Error\SqlError When the CPUs, the group, the priority or FORCE is wrong
      */
     public function alter(AlterResourceGroup $statement, ResourceGroups $groups): void
     {
         $name = $statement->name->value;
-        $cpus = $this->cpus($statement->cpus, $groups->processors);
+        $this->cpus($statement->cpus, $groups->processors, false);
         $group = $groups->find($name) ?? throw AdministrationError::ResourceGroupMissing->error($name);
         if ($groups->predefined($name)) {
             throw AdministrationError::OperationDisallowed->error('Alter', 'default resource groups.');
         }
+        $cpus = $this->cpus($statement->cpus, $groups->processors);
         $priority = $this->priority($statement->priority);
         [$low, $high] = $group->system ? [-20, 0] : [0, 19];
         if ($priority < $low || $priority > $high) {
@@ -178,11 +182,12 @@ final class ResourceGroupCommand implements Command
      * Answers the CPUs of a VCPU list in ascending order, every CPU of the server for an empty list.
      *
      * @param list<CpuRange> $ranges
+     * @param bool $ordered Whether a reversed range is refused here; otherwise its CPUs are left out
      * @return list<int>
      *
      * @throws \MySqlMemory\Error\SqlError When a CPU is not one of the server or a range is reversed
      */
-    public function cpus(array $ranges, int $processors): array
+    public function cpus(array $ranges, int $processors, bool $ordered = true): array
     {
         if ($ranges === []) {
             return range(0, $processors - 1);
@@ -201,7 +206,7 @@ final class ResourceGroupCommand implements Command
         }
         $cpus = [];
         foreach ($bounds as [$first, $last]) {
-            if ($first > $last) {
+            if ($first > $last && $ordered) {
                 throw AdministrationError::InvalidCpuRange->error((string) $first, (string) $last);
             }
             array_push($cpus, ...range($first, $last));

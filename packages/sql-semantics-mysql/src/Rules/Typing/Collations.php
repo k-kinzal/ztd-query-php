@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\IllegalCollationMix;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
@@ -19,7 +20,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * within one character set a `_bin` collation wins over the others, and two others give the
  * `_bin` collation of the set with no coercibility (NONE); across character sets a Unicode set
  * wins over a non-Unicode one, utf8mb4 wins over the other Unicode sets as it holds every
- * character they do, and otherwise they conflict. A comparison needs a determinate
+ * character they do, and otherwise they conflict. MySQL 5.6 and 5.7 settle explicit collations of
+ * different character sets that way too (verified on live 5.6.51 and 5.7.44 servers). A comparison needs a determinate
  * collation: a result of no coercibility conflicts there.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-collation-coercibility.html.
  *
@@ -50,9 +52,10 @@ final class Collations
      */
     public function aggregate(array $domains, string $operation, Derivation $derivation, bool $comparison = false): ?array
     {
-        $settled = $this->settle($domains, $comparison);
+        $grammar = $derivation->context->profile->grammar;
+        $settled = $this->settle($domains, $comparison, $grammar === GrammarRelease::MySql5651 || $grammar === GrammarRelease::MySql5744);
         if ($settled === null) {
-            $derivation->report(new IllegalCollationMix(array_map(fn (Domain $domain): array => [$this->operand($domain)[0]->name, $this->operand($domain)[1]], $domains), $operation));
+            $derivation->report(new IllegalCollationMix(array_map(fn (Domain $domain): array => [$this->operand($domain)[0]->nameIn($grammar), $this->operand($domain)[1]], $domains), $operation));
         }
 
         return $settled;
@@ -63,9 +66,10 @@ final class Collations
      *
      * @param list<Domain> $domains The operands
      * @param bool $comparison Whether the operation compares, and so needs a determinate collation
+     * @param bool $legacy Whether MySQL 5.6 or 5.7 settles them, where explicit collations of different character sets settle like others
      * @return array{Collation, Coercibility}|null
      */
-    public function settle(array $domains, bool $comparison = false): ?array
+    public function settle(array $domains, bool $comparison = false, bool $legacy = false): ?array
     {
         $collation = null;
         $level = Coercibility::Ignorable;
@@ -78,7 +82,7 @@ final class Collations
             if ($candidateLevel !== $level || $candidate === $collation) {
                 continue;
             }
-            $tie = $this->tie($collation, $candidate, $level);
+            $tie = $this->tie($collation, $candidate, $level, $legacy);
             if ($tie === null) {
                 return null;
             }
@@ -105,9 +109,9 @@ final class Collations
      *
      * @return array{Collation, Coercibility}|null
      */
-    public function tie(Collation $left, Collation $right, Coercibility $level): ?array
+    public function tie(Collation $left, Collation $right, Coercibility $level, bool $legacy = false): ?array
     {
-        if ($level === Coercibility::Explicit) {
+        if ($level === Coercibility::Explicit && (!$legacy || $left->charset === $right->charset || $left->bytes() || $right->bytes())) {
             return null;
         }
         if ($left->bytes() || $right->bytes()) {

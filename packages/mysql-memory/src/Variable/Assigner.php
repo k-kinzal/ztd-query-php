@@ -154,7 +154,7 @@ final class Assigner
             return null;
         }
         if ($definition->name === 'sql_mode') {
-            $modes = SqlModes::parse($text);
+            $modes = SqlModes::parse($text, $this->context->modes->release);
             if ($modes === null) {
                 throw AdministrationError::WrongValueForVariable->error($definition->name, $text);
             }

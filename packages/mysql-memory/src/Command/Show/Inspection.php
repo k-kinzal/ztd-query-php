@@ -19,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\InspectedTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowColumns;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowCreateTable;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys;
+use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTables;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
@@ -52,7 +53,7 @@ final class Inspection
             if ($statement instanceof DescribeTable || $statement instanceof ShowCreateTable) {
                 $this->table($statement->table, null, $session);
             }
-            if ($statement instanceof ShowTableStatus) {
+            if ($statement instanceof ShowTableStatus || $statement instanceof ShowTables) {
                 $this->database($statement->database, $session);
             }
         } catch (SqlError $error) {
@@ -129,8 +130,12 @@ final class Inspection
      */
     public function table(InspectedTable $table, ?Name $database, Session $session): StoredTable
     {
-        $schema = $this->database($database ?? $table->name->schema, $session);
         $name = $table->name->name->value;
+        $written = ($database ?? $table->name->schema)->value ?? $session->variables->database;
+        if ($written !== '' && $session->instance->dictionary->schema($written) === null) {
+            throw \MySqlMemory\Session\Problem\Errors::unknown($written, $name, $session->settings()->release());
+        }
+        $schema = $this->database($database ?? $table->name->schema, $session);
         $stored = $schema->table($name);
         if ($stored === null && isset($schema->views[$name])) {
             return \MySqlMemory\Plan\Views::stored($schema->views[$name], $session->instance->dictionary);

@@ -12,6 +12,7 @@ use MySqlMemory\Session\Diagnostics;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Account\User\SessionUser;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
@@ -93,5 +94,10 @@ final class NamesTest extends TestCase
         (new Names())->resolve(new Identity('u', 'cafe'), $diagnostics);
 
         self::assertCount(1, $diagnostics->conditions);
+    }
+
+    public function testLimitsAnswerTheLongestNamesOfTheRelease(): void
+    {
+        self::assertSame([[16, 60], [32, 60], [32, 255]], [(new Names(GrammarRelease::MySql5651))->limits(), (new Names(GrammarRelease::MySql5744))->limits(), (new Names())->limits()]);
     }
 }

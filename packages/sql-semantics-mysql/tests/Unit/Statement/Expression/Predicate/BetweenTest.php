@@ -9,10 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Between;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
@@ -56,5 +59,14 @@ final class BetweenTest extends TestCase
         $this->expectExceptionMessage('The lower bound of BETWEEN needs a grouping to keep its place.');
 
         new Between(new NumberLiteral('1'), new Between(new NumberLiteral('2'), new NumberLiteral('3'), new NumberLiteral('4')), new NumberLiteral('5'));
+    }
+
+    public function testDeriveScalarRefusesARowAsAnyOperand(): void
+    {
+        $diagnostics = (new Semantics(Dialect::MySql))->analyze('SELECT ROW(1, 2) BETWEEN ROW(1, 2) AND ROW(3, 4)')->facts->diagnostics;
+
+        self::assertCount(1, $diagnostics);
+        self::assertInstanceOf(OperandColumns::class, $diagnostics[0]);
+        self::assertSame([1, 2], [$diagnostics[0]->expected, $diagnostics[0]->actual]);
     }
 }

@@ -132,17 +132,17 @@ final class Operators
         $left = $substituted ?? $this->compiler->compile($leftNode, $scope);
         $right = $this->compiler->compile($rightNode, $scope);
         $connection = $this->compiler->settings->connectionCollation;
-        $comparator = Comparator::of($left->domain(), $right->domain(), $operator->value, $connection);
+        $comparator = Comparator::of($left->domain(), $right->domain(), $operator->value, $connection, $this->compiler->settings->release());
         $converted = $comparator->mode !== Kind::String && $comparator->mode !== Kind::Json && ($left->domain()->kind === Kind::String || $right->domain()->kind === Kind::String);
         $nullFromOperands = !$converted || !$this->varies($leftNode) || !$this->varies($rightNode);
         if ($comparator->mode === Kind::Integer && $right->domain()->kind === Kind::Null) {
             $left = $this->numeric($left, $leftNode);
-            $comparator = Comparator::of($left->domain(), $right->domain(), $operator->value, $connection);
+            $comparator = Comparator::of($left->domain(), $right->domain(), $operator->value, $connection, $this->compiler->settings->release());
         }
         if ($comparator->mode === Kind::Double) {
             $left = $this->numeric($left, $leftNode);
             $right = $this->numeric($right, $rightNode);
-            $comparator = Comparator::of($left->domain(), $right->domain(), $operator->value, $connection);
+            $comparator = Comparator::of($left->domain(), $right->domain(), $operator->value, $connection, $this->compiler->settings->release());
         }
 
         return new Compare($operator, $left, $right, $comparator, $this->compiler->domain($node), $nullFromOperands);
@@ -159,14 +159,14 @@ final class Operators
     }
 
     /**
-     * Reads an operand whose truth value is taken: a constant string or temporal value is read as a double once for the statement.
+     * Reads an operand whose truth value is taken: a constant string or temporal value is read as a double once for the statement; MySQL 5.6 and 5.7 read it for each row (verified on a live 5.7.44 server).
      */
     public function truthOperand(Evaluable $operand, Scalar $node): Evaluable
     {
         $kind = $operand->domain()->kind;
         $converted = in_array($kind, [Kind::String, Kind::Json, Kind::Date, Kind::Time, Kind::DateTime], true);
 
-        return $converted && $this->compiler->constancy($node, true, false)->constant() ? new DoubleOperand($operand, true) : $operand;
+        return $converted && !$this->compiler->settings->legacy() && $this->compiler->constancy($node, true, false)->constant() ? new DoubleOperand($operand, true) : $operand;
     }
 
     /**
@@ -395,7 +395,7 @@ final class Operators
             $constancy === Constancy::Statement => $this->compiler->compile($node->escape, $scope),
             default => $this->escape($node->escape, $scope),
         };
-        [$collation] = Collations::aggregate([$operand->domain(), $pattern->domain()], 'like', $this->compiler->settings->connectionCollation, true);
+        [$collation] = Collations::aggregate([$operand->domain(), $pattern->domain()], 'like', $this->compiler->settings->connectionCollation, true, $this->compiler->settings->release());
 
         return new Pattern($operand, $pattern, $escape, $collation, $node->negated, $this->compiler->domain($node), $constancy === Constancy::Statement);
     }

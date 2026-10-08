@@ -132,4 +132,25 @@ final class InspectionTest extends TestCase
 
         (new Inspection())->table(new InspectedTable(new QualifiedName(new Name('t'), new Name('nodb'))), null, $session);
     }
+
+    public function testCheckRefusesTheMissingDatabaseOfShowTablesBeforeItsCondition(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1049);
+        $this->expectExceptionMessage("Unknown database 'nodb'");
+
+        $session->query('SHOW TABLES IN nodb WHERE zz');
+    }
+
+    public function testTableReportsATableOfAMissingDatabaseAsMissingIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Table 'nodb.t' doesn't exist");
+
+        $session->query('SHOW COLUMNS FROM nodb.t');
+    }
 }

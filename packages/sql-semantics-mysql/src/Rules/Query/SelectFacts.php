@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\Grouping\GroupedColumns;
 use SqlSemantics\Platform\MySql\Rules\Query\Grouping\RollupItems;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
+use SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
@@ -63,11 +64,7 @@ final class SelectFacts
     public function derive(Select $select, Derivation $derivation, Environment $outer): QueryFact
     {
         $context = $derivation->context;
-        foreach ($select->options as $option) {
-            if ($option === SelectOption::CalcFoundRows || $option === SelectOption::NoCache) {
-                Deprecation::raise($option === SelectOption::NoCache ? Deprecated::NoCache : Deprecated::CalcFoundRows, $derivation);
-            }
-        }
+        (new SelectOptions())->raise($select, $derivation);
         $from = $select->from === null ? new JoinedInput(new RelationFact(new RowShape([])), [], []) : (new FromScope())->open($select->from, $derivation, $outer, []);
         $visible = $from->visible;
         (new FromScope())->unique($visible, $derivation);
@@ -79,6 +76,11 @@ final class SelectFacts
         $aliases = $this->aliases($select, $items, $context->profile);
         if ($select->where !== null) {
             (new Operands())->single($derivation->scalar($select->where, new Environment($context, $outer, $visible)), $derivation);
+        }
+        foreach ($select->groupBy === null ? [] : $select->groupBy->items as $item) {
+            if ($item->direction !== null) {
+                Deprecation::raise(Deprecated::GroupByDirection, $derivation);
+            }
         }
         $grouping = $select->groupBy === null ? [] : (new SortScopes())->derive($select->groupBy->items, $derivation, new Environment($context, $outer, $visible, [], $aliases), $items, false);
         $results = new Environment($context, $outer, $output, [], $aliases);
@@ -96,6 +98,9 @@ final class SelectFacts
         (new GroupedColumns())->check($select, $visible, $items, $derivation);
         (new TailFacts())->limit($select->limit, $derivation, $outer);
         (new TailFacts())->limit($select->late?->limit, $derivation, $outer);
+        if ($select->procedure !== null) {
+            Deprecation::raise(Deprecated::ProcedureAnalyse, $derivation);
+        }
         foreach ($select->procedure === null ? [] : $select->procedure->arguments as $argument) {
             $derivation->scalar($argument, new Environment($context, $outer));
         }

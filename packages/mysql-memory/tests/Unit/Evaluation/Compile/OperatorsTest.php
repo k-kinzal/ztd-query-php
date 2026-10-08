@@ -375,4 +375,15 @@ final class OperatorsTest extends TestCase
         self::assertSame(['1287', '1292'], array_column($warnings->rows, 1));
     }
 
+    public function testTruthOperandReadsAConstantStringForEachRowIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2)');
+        $session->query("SELECT 'x' IS TRUE FROM t");
+
+        self::assertSame(2, $session->diagnostics->count());
+    }
 }

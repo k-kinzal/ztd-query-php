@@ -131,4 +131,16 @@ final class ShowCreateTableCommandTest extends TestCase
     {
         self::assertSame('`a``b`', (new ShowCreateTableCommand())->name('a`b'));
     }
+
+    public function testStatementWritesTheTableAs57Does(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('CREATE TABLE d.t (a VARCHAR(3), b VARCHAR(3) CHARACTER SET utf8mb4, c INT)');
+
+        $result = $session->query('SHOW CREATE TABLE d.t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['t', "CREATE TABLE `t` (\n  `a` varchar(3) DEFAULT NULL,\n  `b` varchar(3) CHARACTER SET utf8mb4 DEFAULT NULL,\n  `c` int(11) DEFAULT NULL\n) ENGINE=InnoDB DEFAULT CHARSET=latin1"]], $result->rows);
+    }
 }

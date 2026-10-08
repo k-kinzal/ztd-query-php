@@ -51,4 +51,15 @@ final class ShowCreateDatabaseCommandTest extends TestCase
 
         $session->query('SHOW CREATE SCHEMA IF NOT EXISTS GLOBAL');
     }
+
+    public function testExecuteWritesTheStatementOf57WithoutEncryption(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d CHARACTER SET utf8mb4');
+
+        $result = $session->query('SHOW CREATE DATABASE d')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['d', 'CREATE DATABASE `d` /*!40100 DEFAULT CHARACTER SET utf8mb4 */']], $result->rows);
+    }
 }

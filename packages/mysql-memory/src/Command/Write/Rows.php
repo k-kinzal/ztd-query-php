@@ -49,6 +49,11 @@ final class Rows
     private ?Scope $updateScope = null;
 
     /**
+     * @var array<int, true> The positions of the columns without a default the statement has warned about
+     */
+    private array $undefaulted = [];
+
+    /**
      * @param StoredTable $table The table written
      * @param Context $context The statement
      * @param Planner $planner The planner of the statement
@@ -139,7 +144,8 @@ final class Rows
      *
      * A column without a default, as after ALTER COLUMN ... DROP DEFAULT, is ER_NO_DEFAULT_FOR_FIELD
      * under a strict mode; otherwise it takes NULL when it admits NULL, else the implicit default
-     * of its type (verified on a live 8.4 server).
+     * of its type, with the warning once for a column no row names and for each DEFAULT written
+     * (verified on a live 8.4 server).
      */
     public function defaulted(int $position, Frame $frame, Store $store, int $number, bool $explicit): int|float|string|null
     {
@@ -148,7 +154,10 @@ final class Rows
         if ($has || $column->autoIncrement) {
             return $value;
         }
-        $store->adjust(DataError::NoDefaultForField, $column->name);
+        if ($explicit || !isset($this->undefaulted[$position])) {
+            $store->adjust(DataError::NoDefaultForField, $column->name);
+        }
+        $this->undefaulted[$position] = true;
 
         return $column->nullable() ? null : $this->writer->implicit($column);
     }
@@ -210,7 +219,7 @@ final class Rows
                 return;
             }
             if ($this->into->ignore) {
-                $this->context->warning(DataError::DuplicateEntry, ...$this->writer->entry($row, $key));
+                $this->writer->ignored($row, $key);
 
                 return;
             }

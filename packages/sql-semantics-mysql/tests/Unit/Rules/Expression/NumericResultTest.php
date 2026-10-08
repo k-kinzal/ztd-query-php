@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Expression\NumericClass;
 use SqlSemantics\Platform\MySql\Rules\Expression\NumericResult;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
@@ -24,6 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Statement\Fact\ScalarFact;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Type\Choice;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -122,5 +125,14 @@ final class NumericResultTest extends TestCase
     {
         self::assertTrue((new NumericResult())->integer(true)->unsigned());
         self::assertSame('BIGINT', (new NumericResult())->integer(false)->name());
+    }
+
+    public function testBinaryOperandWarnsOfABinaryStringLeftOperandIn57(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+
+        self::assertSame(["Bitwise operations on BINARY will change behavior in a future version, check the 'Bit functions' section in the manual."], array_map(static fn (Warning $warning): string => $warning->message(), $semantics->analyze("SELECT _binary 'a' | 1")->facts->warnings));
+        self::assertSame([], $semantics->analyze("SELECT 1 | _binary 'a', X'0f' | 1, ~b'1'")->facts->warnings);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze("SELECT _binary 'a' | 1")->facts->warnings);
     }
 }

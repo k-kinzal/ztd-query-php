@@ -11,12 +11,14 @@ use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Plan\Planner;
+use MySqlMemory\Plan\QueryPlan;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Typing\Domain;
 use Override;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOption;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\FieldOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Dml\Load\LineOption;
@@ -63,6 +65,10 @@ final class QueryCommand implements Command
         if ($into !== null && !$into instanceof IntoVariables) {
             $this->file($into, $context);
         }
+        if ($session->settings()->release() === GrammarRelease::MySql910 && $this->unites($statement) && $plan->domains !== []) {
+            $nullable = $plan->domains[0]->nullable;
+            $plan = new QueryPlan($plan->root, array_map(static fn (Domain $domain): Domain => $domain->withNullable($nullable), $plan->domains), $plan->names, $plan->origins);
+        }
         $result = (new Output())->result($plan, $context, $this->calculates($statement));
         if ($into === null) {
             return $result;
@@ -89,6 +95,31 @@ final class QueryCommand implements Command
         }
 
         return $first instanceof Select && in_array(SelectOption::CalcFoundRows, $first->options, true);
+    }
+
+    /**
+     * Tells whether the outermost operation of a query is a UNION.
+     *
+     * MySQL 9.1 sends every column of such a query as NOT NULL exactly when its first column is,
+     * whatever the other columns hold; a derived table, a view or a table it creates keeps the
+     * nullability of each column, and INTERSECT and EXCEPT are not concerned (verified on a live
+     * 9.1 server).
+     */
+    public function unites(Query $query): bool
+    {
+        while (true) {
+            if ($query instanceof QueryStatement || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery) {
+                $query = $query->query;
+                continue;
+            }
+            if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression) {
+                $query = $query->body;
+                continue;
+            }
+
+            return ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation)
+                && $query->operator === \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union;
+        }
     }
 
     /**

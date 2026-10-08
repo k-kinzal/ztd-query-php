@@ -53,7 +53,7 @@ final class RegistrationCommand implements Command
             throw StatementError::NotSupportedYet->error('this registration statement');
         }
         $session->transaction->commit();
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $names->check([$statement->user]);
         if ($statement->step === RegistrationStep::Unregister) {
             throw AdministrationError::PluginIsNotLoaded->error('');

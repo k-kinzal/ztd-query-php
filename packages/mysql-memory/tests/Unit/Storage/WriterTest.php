@@ -215,4 +215,20 @@ final class WriterTest extends TestCase
 
         self::assertSame(['é€', 't.PRIMARY'], $writer->entry(["\xE9\x80"], $table->definition->keys[0]));
     }
+
+    public function testIgnoredWarnsOfADuplicateExceptIn56(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('CREATE TABLE d.t (id INT PRIMARY KEY, code VARCHAR(10), UNIQUE KEY uc (code))');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $modern = new Diagnostics();
+        $legacy = new Diagnostics();
+        (new Writer($table, new Context(new SqlModes([], GrammarRelease::MySql5744), $modern, new Variables(SystemVariables::of(GrammarRelease::MySql5744), new Globals()), 0.0)))->ignored([1, 'ab'], $table->definition->keys[1]);
+        (new Writer($table, new Context(new SqlModes([], GrammarRelease::MySql5651), $legacy, new Variables(SystemVariables::of(GrammarRelease::MySql5651), new Globals()), 0.0)))->ignored([1, 'ab'], $table->definition->keys[1]);
+
+        self::assertSame([['Warning', 1062, "Duplicate entry 'ab' for key 'uc'"]], $modern->conditions);
+        self::assertSame([], $legacy->conditions);
+    }
 }

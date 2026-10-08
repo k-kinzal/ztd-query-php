@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Tests\Unit\Command\Program;
 
 use MySqlMemory\Command\Program\EventCommand;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use MySqlMemory\Plan\Planner;
+use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -105,6 +107,60 @@ final class EventCommandTest extends TestCase
         $session->query('ALTER EVENT e RENAME TO e');
     }
 
+    public function testFoundAnswersTheEventOfTheName(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE EVENT e ON SCHEDULE EVERY 1 DAY DO SELECT 1');
+        $schema = $session->instance->dictionary->schema('d');
+        self::assertNotNull($schema);
+
+        $found = (new EventCommand())->found(new AlterEvent(new QualifiedName(new Name('E'))), 'd', $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        self::assertSame($schema->events['e'], $found);
+    }
+
+    public function testFoundRefusesAnEventOfAMissingDatabase(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectExceptionCode(1539);
+        $this->expectExceptionMessage("Unknown event 'e'");
+
+        (new EventCommand())->found(new AlterEvent(new QualifiedName(new Name('e'))), 'nodb', $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+    }
+
+    public function testLapseDisablesAPreservedEventWhoseTimeHasPassed(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query("CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00' ON COMPLETION PRESERVE DO SELECT 1");
+        $schema = $session->instance->dictionary->schema('d');
+        self::assertNotNull($schema);
+        $event = $schema->events['e'];
+        $event->at = '2000-01-01 00:00:00';
+
+        (new EventCommand())->lapse($event, true, $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        self::assertSame(['DISABLED', [['Note', 1544, 'Event execution time is in the past. Event has been disabled']]], [$schema->events['e']->status, $session->diagnostics->conditions]);
+    }
+
+    public function testLapseKeepsAnEventWhoseTimeIsAhead(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query("CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00' DO SELECT 1");
+        $schema = $session->instance->dictionary->schema('d');
+        self::assertNotNull($schema);
+
+        (new EventCommand())->lapse($schema->events['e'], true, $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        self::assertSame(['ENABLED', []], [$schema->events['e']->status, $session->diagnostics->conditions]);
+    }
+
     public function testStatusAnswersTheStatusShowEventsShows(): void
     {
         $command = new EventCommand();
@@ -174,5 +230,16 @@ final class EventCommandTest extends TestCase
         $schema = $session->instance->dictionary->schema('d');
         self::assertNotNull($schema);
         self::assertSame(['2030-01-01 00:00:00', 'DISABLED', true, 'c'], [$schema->events['e2']->at, $schema->events['e2']->status, $schema->events['e2']->preserve, $schema->events['e2']->comment]);
+    }
+
+    public function testExecuteNotesTheDefinerAndRefusesTheRenamedDatabaseBeforeAMissingEvent(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $error = $session->run('ALTER DEFINER = nobody EVENT e RENAME TO nodb.x')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Note', '1449', "The user specified as a definer ('nobody'@'%') does not exist"], ['Error', '1049', "Unknown database 'nodb'"]], $warnings->rows);
     }
 }

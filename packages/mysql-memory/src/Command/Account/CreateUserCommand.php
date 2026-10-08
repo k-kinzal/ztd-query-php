@@ -53,7 +53,7 @@ final class CreateUserCommand implements Command
     {
         $statement = $operation->statement;
         $session->transaction->commit();
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         if ($statement instanceof CreateRole) {
             $names->check($statement->roles);
             $roles = array_map(static fn ($role): Identity => $names->identity($role, $session), $statement->roles);
@@ -109,7 +109,7 @@ final class CreateUserCommand implements Command
      */
     public function defaults(CreateUser $statement, Session $session): array
     {
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $defaults = [];
         foreach ($statement->defaultRoles as $role) {
             $identity = $names->identity($role, $session);

@@ -7,12 +7,14 @@ namespace MySqlMemory\Command\Admin;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Error\AdministrationError;
 use MySqlMemory\Error\QueryError;
+use MySqlMemory\Error\StatementError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\Flush;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushOption;
 use SqlSemantics\Platform\MySql\Statement\Server\Flush\FlushTables;
@@ -28,8 +30,10 @@ use SqlSemantics\Statement\Operation;
  * and FLUSH TABLES ... FOR EXPORT need each table they name to exist, and lock the tables for
  * reading as LOCK TABLES ... READ does, until UNLOCK TABLES; the global read lock of FLUSH TABLES
  * WITH READ LOCK is not modelled, the session being alone on the server (verified on a live 8.4
- * server).
- * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html.
+ * server). FLUSH HOSTS, deprecated in MySQL 8.0.23 and removed in 8.3, warns once however often
+ * the statement names it (verified on live 5.7 and 8.0 servers).
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html,
+ * https://dev.mysql.com/doc/relnotes/mysql/8.3/en/news-8-3-0.html.
  *
  * @visibility MySqlMemory
  */
@@ -72,6 +76,11 @@ final class FlushCommand implements Command
             }
         }
         if ($statement instanceof Flush) {
+            $hosts = array_filter($statement->items, static fn ($item): bool => $item->option === FlushOption::Hosts);
+            $release = $session->settings()->release();
+            if ($hosts !== [] && $release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744) {
+                $context->warning(StatementError::DeprecatedSyntax, 'FLUSH HOSTS', 'TRUNCATE TABLE performance_schema.host_cache');
+            }
             foreach ($statement->items as $item) {
                 if ($item->option === FlushOption::RelayLogs && $item->channel !== null && $item->channel->value !== '') {
                     throw AdministrationError::ReplicaChannelMissing->error($item->channel->value);

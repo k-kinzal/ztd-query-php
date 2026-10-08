@@ -7,6 +7,7 @@ namespace Tests\Unit\Command;
 use MySqlMemory\Command\Output;
 use MySqlMemory\Instance;
 use MySqlMemory\Plan\ColumnOrigin;
+use MySqlMemory\Result\ResultColumn;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -222,5 +223,15 @@ final class OutputTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['é', 'Ã©', 'é']], $result->rows);
+    }
+
+    public function testColumnsConvertTheNamesIntoTheCharacterSetOfTheResults(): void
+    {
+        $session = (new Instance('5.7.44', ['character_set_client' => 'latin1', 'character_set_connection' => 'latin1', 'character_set_results' => 'latin1', 'collation_connection' => 'latin1_swedish_ci']))->connect();
+
+        $result = $session->query("SELECT '\xC3\xA9', 1 AS '\xC3\xA9'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(["\xC3\xA9", "\xC3\xA9"], array_map(static fn (ResultColumn $column): string => $column->name, $result->columns));
     }
 }

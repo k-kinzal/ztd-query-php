@@ -18,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Problem\RepeatedTable;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\TableExists;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownAlterChoice;
 use SqlSemantics\Platform\MySql\Statement\Alter\Problem\UnknownColumn;
+use SqlSemantics\Platform\MySql\Statement\Alter\TruncateTable;
 use SqlSemantics\Platform\MySql\Statement\Call\Clock;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
@@ -90,7 +91,8 @@ final class Errors
     {
         $database = $session->variables->database;
 
-        return $this->names($diagnostic, $database, $clause, $statement)
+        return $this->unopened($diagnostic, $session, $statement)
+            ?? $this->names($diagnostic, $database, $clause, $statement)
             ?? $this->query($diagnostic, $clause)
             ?? $this->call($diagnostic)
             ?? $this->definition($diagnostic, $database)
@@ -115,6 +117,35 @@ final class Errors
         };
 
         return $matched ? new SqlError($error->error, $error->getMessage(), null, [[StatementError::WrongArguments->value, StatementError::WrongArguments->message('AGAINST')]]) : $error;
+    }
+
+    /**
+     * Answers the server error of a table named in a database it cannot open, or null for another diagnostic.
+     *
+     * A database that does not exist is ER_BAD_DB_ERROR, and a table INFORMATION_SCHEMA lacks is
+     * ER_UNKNOWN_TABLE naming the table in upper case (verified on live 8.0, 8.4 and 9.1 servers).
+     * MySQL 5.6 and 5.7 report the table as missing instead (unknown()), and so does TRUNCATE
+     * TABLE in every release.
+     */
+    public function unopened(Diagnostic $diagnostic, Session $session, ?Node $statement = null): ?SqlError
+    {
+        $schema = $diagnostic instanceof MissingTable && !$statement instanceof TruncateTable ? $diagnostic->name->schema : null;
+        if ($schema === null) {
+            return null;
+        }
+        if (strcasecmp($schema->value, 'information_schema') === 0) {
+            return QueryError::UnknownTable->error(strtoupper($diagnostic->name->name->value), 'information_schema');
+        }
+
+        return $session->instance->dictionary->schema($schema->value) === null ? self::unknown($schema->value, $diagnostic->name->name->value, $session->settings()->release()) : null;
+    }
+
+    /**
+     * Answers the error of a table named in a database that does not exist: ER_BAD_DB_ERROR, or in MySQL 5.6 and 5.7 ER_NO_SUCH_TABLE (verified on live 5.6.51 and 5.7.44 servers).
+     */
+    public static function unknown(string $schema, string $table, \SqlSemantics\Contract\GrammarRelease $release): SqlError
+    {
+        return $release === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $release === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? QueryError::NoSuchTable->error($schema, $table) : QueryError::BadDatabase->error($schema);
     }
 
     /**
@@ -146,20 +177,30 @@ final class Errors
             $diagnostic instanceof NonUniqueTable => QueryError::NonUniqueTable->error($diagnostic->alias->value),
             $diagnostic instanceof UndeclaredVariable => ProgramError::UndeclaredVariable->error($diagnostic->name->value),
             $diagnostic instanceof Misuse => $this->misuse($diagnostic),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\CacheOptionConflict => $diagnostic->repeated() ? StatementError::DuplicateArgument->error($diagnostic->first->value) : StatementError::WrongUsage->error($diagnostic->first->value, $diagnostic->second->value),
             $diagnostic instanceof NonGroupedColumn => new SqlError(match ($diagnostic->rule) {
                 GroupingRule::NotDetermined => QueryError::WrongFieldWithGroup,
                 GroupingRule::WithoutGroupBy => QueryError::MixOfGroupFunctionAndFields,
                 GroupingRule::NotSelected => QueryError::FieldInOrderNotSelect,
             }, $diagnostic->message()),
             $diagnostic instanceof UnknownQualifier => SchemaError::BadTable->error(($diagnostic->table->schema === null ? '' : $diagnostic->table->schema->value . '.') . $diagnostic->table->name->value),
-            $diagnostic instanceof CountMismatch => match ($diagnostic->list) {
-                CountedList::SetOperands, CountedList::IntoVariables => QueryError::WrongNumberOfColumnsInSelect->error(),
-                CountedList::ValueRows => QueryError::WrongValueCountOnRow->error($diagnostic->row),
-                CountedList::DerivedColumns => SchemaError::ViewWrongList->error(),
-            },
+            $diagnostic instanceof CountMismatch => $this->counted($diagnostic),
             $diagnostic instanceof UnpartitionedTable => SchemaError::PartitionClauseOnNonpartitioned->error(),
             $diagnostic instanceof UnknownPartition => SchemaError::UnknownPartition->error($diagnostic->partition, $diagnostic->table),
             default => null,
+        };
+    }
+
+    /**
+     * Answers the server error of a list whose length differs from the one it must have: the
+     * columns of set operands and INTO variables, the values of a row, or the columns of a derived table.
+     */
+    public function counted(CountMismatch $diagnostic): SqlError
+    {
+        return match ($diagnostic->list) {
+            CountedList::SetOperands, CountedList::IntoVariables => QueryError::WrongNumberOfColumnsInSelect->error(),
+            CountedList::ValueRows => QueryError::WrongValueCountOnRow->error($diagnostic->row),
+            CountedList::DerivedColumns => SchemaError::ViewWrongList->error(),
         };
     }
 

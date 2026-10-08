@@ -22,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit;
+use SqlSemantics\Platform\MySql\Statement\Replication\Terminology;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogs;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinaryLogStatus;
@@ -116,10 +117,12 @@ final class ReplicationShowCommand implements Command
         $statement = $operation->statement;
         $log = $session->instance->registry->binaryLog;
         $version = $session->instance->version;
+        (new ReplicaCommand())->deprecated($statement, $session, $context);
+        (new LegacyReplication())->check($statement, $session);
         if ($statement instanceof ShowReplicaStatus) {
             (new ReplicaCommand())->channel($statement->channel);
 
-            return $this->listing(self::STATUS, [], $context);
+            return $this->listing($statement->terminology === Terminology::Legacy ? $this->legacy(self::STATUS) : self::STATUS, [], $context);
         }
         if ($statement instanceof ShowBinaryLogs) {
             return $this->listing(self::LOGS, array_map(static fn (int $file): array => [BinaryLog::name($file), $log->size($file, $version), 'No'], $log->files), $context);
@@ -151,9 +154,29 @@ final class ReplicationShowCommand implements Command
             return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->number($statement->position), $statement->limit, 'SHOW RELAYLOG EVENTS'), $context);
         }
         if ($statement instanceof ShowReplicas) {
-            return $this->listing(self::REPLICAS, [], $context);
+            return $this->listing($statement->terminology === Terminology::Legacy ? $this->legacy(self::REPLICAS) : self::REPLICAS, [], $context);
         }
         throw StatementError::NotSupportedYet->error('this replication statement');
+    }
+
+    /**
+     * Answers columns named in the legacy vocabulary, as SHOW SLAVE STATUS and SHOW SLAVE HOSTS name them: MASTER for SOURCE and SLAVE for REPLICA.
+     *
+     * The legacy names keep their own letter case: Server_id, Master_id and Get_master_public_key
+     * (verified on a live 8.0 server).
+     *
+     * @param list<array{string, int}|array{string, Field, int}> $columns
+     * @return list<array{string, int}|array{string, Field, int}>
+     */
+    public function legacy(array $columns): array
+    {
+        $names = ['Server_Id' => 'Server_id', 'Source_Id' => 'Master_id', 'Get_Source_public_key' => 'Get_master_public_key'];
+
+        return array_map(static function (array $column) use ($names): array {
+            $column[0] = $names[$column[0]] ?? (string) preg_replace(['/(^|_)Source(?=_|$)/', '/(^|_)Replica(?=_|$)/'], ['$1Master', '$1Slave'], $column[0]);
+
+            return $column;
+        }, $columns);
     }
 
     /**

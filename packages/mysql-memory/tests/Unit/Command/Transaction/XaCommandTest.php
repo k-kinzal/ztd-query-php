@@ -195,4 +195,20 @@ final class XaCommandTest extends TestCase
 
         self::assertSame(PreparedBranch::key(5, 'g', 'b'), (new XaCommand())->key($statement->xid));
     }
+
+    public function testRecoverSendsNumbersOf11CharactersIn57(): void
+    {
+        $result = (new Instance('5.7.44'))->connect()->query('XA RECOVER')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([11, 11, 11], [$result->columns[0]->length, $result->columns[1]->length, $result->columns[2]->length]);
+    }
+
+    public function testRecoverSendsData128CharactersLongIn56(): void
+    {
+        $result = (new Instance('5.6.51', ['character_set_results' => 'latin1']))->connect()->query('XA RECOVER')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(128, $result->columns[3]->length);
+    }
 }

@@ -134,4 +134,47 @@ final class ReplicaCommandTest extends TestCase
 
         $session->query("SHOW REPLICA STATUS FOR CHANNEL 'a\nb'");
     }
+
+    public function testDeprecatedWarnsOfTheLegacySpellingsOfMySql80(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $session->query('CHANGE MASTER TO MASTER_HOST = \'h\', SOURCE_PORT = 3307, MASTER_LOG_POS = 4');
+        $changed = $session->query('SHOW WARNINGS')[0];
+        $session->run('RESET SLAVE FOR CHANNEL \'c\'');
+        $reset = $session->query('SHOW WARNINGS')[0];
+        $session->query('STOP SLAVE');
+        $stopped = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $changed);
+        self::assertInstanceOf(ResultSet::class, $reset);
+        self::assertInstanceOf(ResultSet::class, $stopped);
+        self::assertSame(["'CHANGE MASTER' is deprecated and will be removed in a future release. Please use CHANGE REPLICATION SOURCE instead", "'MASTER_HOST' is deprecated and will be removed in a future release. Please use SOURCE_HOST instead", "'MASTER_LOG_POS' is deprecated and will be removed in a future release. Please use SOURCE_LOG_POS instead"], array_column($changed->rows, 2));
+        self::assertSame([['Warning', '1287', "'RESET SLAVE' is deprecated and will be removed in a future release. Please use RESET REPLICA instead"], ['Error', '3074', "Replica channel 'c' does not exist."]], $reset->rows);
+        self::assertSame(['Warning', '1287', "'STOP SLAVE' is deprecated and will be removed in a future release. Please use STOP REPLICA instead"], $stopped->rows[0]);
+    }
+
+    public function testDeprecatedLeavesTheCurrentSpellingsAndMySql57Alone(): void
+    {
+        $current = (new Instance('8.0.44'))->connect();
+        $current->query('STOP REPLICA');
+        $currentWarnings = $current->query('SHOW WARNINGS')[0];
+        $legacy = (new Instance('5.7.44'))->connect();
+        $legacy->run('STOP SLAVE');
+        $legacyWarnings = $legacy->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $currentWarnings);
+        self::assertInstanceOf(ResultSet::class, $legacyWarnings);
+        self::assertSame(['3084'], array_column($currentWarnings->rows, 1));
+        self::assertNotContains('1287', array_column($legacyWarnings->rows, 1));
+    }
+
+    public function testExecuteRefusesTheReplicaOfA57ServerWithoutAnId(): void
+    {
+        $session = (new Instance('5.7.44', ['server_id' => '0']))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1794);
+
+        $session->query('START SLAVE');
+    }
 }

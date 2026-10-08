@@ -53,7 +53,7 @@ final class RoleCommand implements Command
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         if ($statement instanceof SetRole) {
             $names->check($statement->roles->roles);
             $session->variables->roles = $this->selected($statement->roles, new Identity($session->user, '%'), $session);
@@ -92,7 +92,7 @@ final class RoleCommand implements Command
      */
     public function selected(RoleSelection $selection, Identity $account, Session $session): array
     {
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $accounts = $session->instance->accounts;
         $granted = array_map(static fn (array $role): Identity => $role[0], $accounts->roles($account));
         $roles = match ($selection->set) {

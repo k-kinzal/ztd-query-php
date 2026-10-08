@@ -12,7 +12,9 @@ use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
+use MySqlMemory\Evaluation\Operator\Conversion;
 use MySqlMemory\Evaluation\Scope;
+use MySqlMemory\Plan\Path\AccessPath;
 use MySqlMemory\Plan\Path\Combine\SetOperation as SetPath;
 use MySqlMemory\Plan\Path\SetKind;
 use MySqlMemory\Plan\Path\Source\Inline;
@@ -34,6 +36,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
@@ -180,25 +183,72 @@ final class Planner
 
     /**
      * Plans UNION, INTERSECT and EXCEPT.
+     *
+     * @param list<Domain>|null $settled The types the rows are held in, those of an operation this one is an operand of; its own when null
      */
-    public function set(SetOperation $operation, ?Scope $outer): QueryPlan
+    public function set(SetOperation $operation, ?Scope $outer, ?array $settled = null): QueryPlan
     {
         if (!$operation->left instanceof Query) {
             throw StatementError::NotSupportedYet->error('a leading UNION');
         }
-        $left = $this->query($operation->left, $outer);
-        $right = $this->query($operation->right, $outer);
+        $domains = $settled ?? $this->outputs($operation);
+        $left = $this->operand($operation->left, $outer, $domains);
+        $right = $this->operand($operation->right, $outer, $domains);
         if (count($left->domains) !== count($right->domains)) {
             throw QueryError::WrongNumberOfColumnsInSelect->error();
         }
-        $domains = $this->outputs($operation);
         $kind = match ($operation->operator) {
             SetOperator::Union => SetKind::Union,
             SetOperator::Intersect => SetKind::Intersect,
             SetOperator::Except => SetKind::Except,
         };
 
-        return new QueryPlan(new SetPath($kind, $operation->quantifier !== SetQuantifier::All, $left->root, $right->root, $domains), $domains, $left->names, $this->materialized($domains));
+        return new QueryPlan(new SetPath($kind, $operation->quantifier !== SetQuantifier::All, $this->settled($left, $domains), $this->settled($right, $domains), $domains), $domains, $left->names, $this->materialized($domains));
+    }
+
+    /**
+     * Plans an operand of a set operation; an operand that is itself a set operation, in parentheses or not, holds its rows in the types of the outermost one.
+     *
+     * The server settles the operands of nested set operations in one temporary table, so
+     * `SELECT 1 UNION SELECT 2.5 UNION SELECT 'x'` converts 1 straight into a string (verified on
+     * live 8.0 and 8.4 servers).
+     *
+     * @param list<Domain> $domains The types of the columns of the outermost operation
+     */
+    public function operand(Query $operand, ?Scope $outer, array $domains): QueryPlan
+    {
+        $inner = $operand;
+        while ($inner instanceof ParenthesizedQuery) {
+            $inner = $inner->query;
+        }
+
+        return $inner instanceof SetOperation ? $this->set($inner, $outer, $domains) : $this->query($operand, $outer);
+    }
+
+    /**
+     * Answers the rows of an operand of a set operation as the temporary table of the operation holds them: each value converted into the type of its column.
+     *
+     * A value whose type already is the type of the column is kept as it is; another is converted
+     * as CAST converts it, so an integer gains the scale of a decimal column, a date the time of a
+     * datetime one, an unsigned integer its digits in a string or decimal one, and a string the
+     * character set of its column (verified on a live 8.4 server).
+     *
+     * @param list<Domain> $domains The types of the columns of the operation
+     */
+    public function settled(QueryPlan $operand, array $domains): AccessPath
+    {
+        $expressions = [];
+        $converted = false;
+        foreach ($domains as $position => $domain) {
+            $from = $operand->domains[$position];
+            $read = new ColumnRead($from, $position);
+            $differs = $from->kind !== $domain->kind || $from->field !== $domain->field || $from->decimals !== $domain->decimals || $from->unsigned !== $domain->unsigned
+                || ($domain->kind === Kind::String && $from->collation->charset !== $domain->collation->charset);
+            $converted = $converted || $differs;
+            $expressions[] = $differs && $from->kind !== Kind::Null ? new Conversion($read, $domain, null, $domain->collation->bytes() ? 'BINARY' : 'CHAR') : $read;
+        }
+
+        return $converted ? new Project($operand->root, $expressions) : $operand->root;
     }
 
     /**

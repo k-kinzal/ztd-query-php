@@ -67,7 +67,7 @@ final class ChecksumCommand implements Command
             if ($stored === null) {
                 $owner = $session->instance->dictionary->schema($schema);
                 $error = match (true) {
-                    $owner === null => QueryError::BadDatabase->error($schema),
+                    $owner === null => \MySqlMemory\Session\Problem\Errors::unknown($schema, $table->name->name->value, $session->settings()->release()),
                     isset($owner->views[$table->name->name->value]) => SchemaError::WrongObject->error($schema, $table->name->name->value, 'BASE TABLE'),
                     default => QueryError::NoSuchTable->error($schema, $table->name->name->value),
                 };
@@ -82,7 +82,7 @@ final class ChecksumCommand implements Command
         $charset = (is_string($results) ? Charset::named($results) : null) ?? Charset::known('utf8mb3');
         $columns = [
             new ResultColumn('Table', Field::VarString, 384 * $charset->maxLength, 31, 0, $charset->defaultCollation(GrammarRelease::MySql847)->id),
-            new ResultColumn('Checksum', Field::LongLong, 22, 0, ColumnFlag::Binary->value | ColumnFlag::Numeric->value, 63),
+            new ResultColumn('Checksum', Field::LongLong, $session->settings()->legacy() ? 21 : 22, 0, ColumnFlag::Binary->value | ColumnFlag::Numeric->value, 63),
         ];
 
         return new ResultSet($columns, $rows, $context->diagnostics->count());

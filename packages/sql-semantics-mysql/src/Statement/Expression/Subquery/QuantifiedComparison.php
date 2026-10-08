@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -25,7 +26,10 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Rule: MYSQL-QUANTIFIED-COMPARISON-001. Facts: 1, 0 or NULL, an integer;
  * NULL fact by MYSQL-SUBQUERY-ROWS-001 (`<=>` with ALL or ANY is still NULL
- * when no row decides). Terminates: the operand and the query are strict parts.
+ * when no row decides). Only `= ANY` and `<> ALL` compare rows, as IN and
+ * NOT IN do; another quantified comparison with a subquery of several columns
+ * is refused as needing one (verified on a live 8.4 server). Terminates: the
+ * operand and the query are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/any-in-some-subqueries.html,
  * https://dev.mysql.com/doc/refman/8.4/en/all-subqueries.html.
  * Status: Implemented.
@@ -57,6 +61,12 @@ final class QuantifiedComparison implements Scalar
     {
         $operand = $derivation->scalar($this->operand, $environment);
         $query = $derivation->query($this->query, $environment);
+        $rows = ($this->quantifier === Quantifier::Any && $this->operator === ComparisonOperator::Equal) || ($this->quantifier === Quantifier::All && $this->operator === ComparisonOperator::NotEqual);
+        if (!$rows && $query->shape->complete() && count($query->shape->slots) > 1) {
+            $derivation->report(new OperandColumns(1, count($query->shape->slots)));
+
+            return (new Operands())->truth($operand->nullability);
+        }
 
         return (new Operands())->truth((new SubqueryRows())->test($operand, $query, $derivation));
     }

@@ -85,4 +85,9 @@ final class ShowColumnsCommandTest extends TestCase
         self::assertSame(['Field', 'Type', 'Null', 'Key', 'Default', 'Extra'], array_map(static fn (Heading $heading): string => $heading->name, (new ShowColumnsCommand())->headings(false)));
         self::assertSame(['Field', 'Type', 'Collation', 'Null', 'Key', 'Default', 'Extra', 'Privileges', 'Comment'], array_map(static fn (Heading $heading): string => $heading->name, (new ShowColumnsCommand())->headings(true)));
     }
+
+    public function testLegacyHeadingsAreThoseOfInformationSchemaIn57(): void
+    {
+        self::assertSame([['Field', 64], ['Type', 196605], ['Collation', 32], ['Null', 3], ['Key', 3], ['Default', 196605], ['Extra', 30], ['Privileges', 80], ['Comment', 1024]], array_map(static fn ($heading): array => [$heading->name, $heading->length], (new ShowColumnsCommand())->legacy(true)));
+    }
 }

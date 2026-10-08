@@ -100,7 +100,24 @@ final class Writer
     }
 
     /**
+     * Warns of a row IGNORE leaves out because it duplicates a unique key; MySQL 5.6 leaves it out silently (verified on a live 5.6.51 server).
+     *
+     * @param list<int|float|string|null> $row
+     *
+     * @throws SqlError When the statement raises warnings as errors
+     */
+    public function ignored(array $row, Key $key): void
+    {
+        if ($this->context->modes->release !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $this->context->warning(DataError::DuplicateEntry, ...$this->entry($row, $key));
+        }
+    }
+
+    /**
      * Answers the entry and key name ER_DUP_ENTRY names for a conflict.
+     *
+     * The key is named after its table from 8.0 on, alone in 5.6 and 5.7 (verified on live 5.6.51
+     * and 5.7.44 servers).
      *
      * @param list<int|float|string|null> $row
      * @return array{string, string}
@@ -113,7 +130,9 @@ final class Writer
             $values[] = Convert::shown((string) Convert::toText($row[$position], $domain), $domain->kind === Kind::String && $domain->collation->charset !== \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::binary() ? $domain->collation->charset : null);
         }
 
-        return [mb_strcut(implode('-', $values), 0, 64, 'UTF-8'), $this->table->definition->name . '.' . $key->name];
+        $legacy = in_array($this->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+
+        return [mb_strcut(implode('-', $values), 0, 64, 'UTF-8'), ($legacy ? '' : $this->table->definition->name . '.') . $key->name];
     }
 
     /**

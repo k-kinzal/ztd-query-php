@@ -14,6 +14,7 @@ use MySqlMemory\Value\Encoding;
 use MySqlMemory\Value\Integer;
 use MySqlMemory\Value\Order;
 use MySqlMemory\Value\Temporal;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -46,10 +47,10 @@ final class Comparator
      *
      * @throws \MySqlMemory\Error\SqlError When two strings have collations that do not mix
      */
-    public static function of(Domain $left, Domain $right, string $operation, Collation $connection): self
+    public static function of(Domain $left, Domain $right, string $operation, Collation $connection, GrammarRelease $release = GrammarRelease::MySql847): self
     {
         $mode = self::mode($left, $right);
-        $collation = $mode === Kind::String || $mode->temporal() ? Collations::aggregate([$left, $right], $operation, $connection, true)[0] : Collation::binary();
+        $collation = $mode === Kind::String || $mode->temporal() ? Collations::aggregate([$left, $right], $operation, $connection, true, $release)[0] : Collation::binary();
 
         return new self($mode, $left, $right, $collation);
     }

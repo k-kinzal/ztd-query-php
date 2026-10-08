@@ -259,4 +259,11 @@ final class ConversionTest extends TestCase
         self::assertSame([], $warnings->rows);
     }
 
+    public function testIntegerMakesANegativeIntegerUnsignedSilentlyIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('SELECT CAST(-1 AS UNSIGNED)');
+
+        self::assertSame([], $session->diagnostics->conditions);
+    }
 }

@@ -23,8 +23,9 @@ final class ResetRuleTest extends TestCase
 
     public function testTargetReadsTheDeprecatedSpellingsAsSynonyms(): void
     {
-        self::assertSame('RESET REPLICA, BINARY LOGS AND GTIDS', (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('reset slave, master')->toString());
-        self::assertSame('RESET REPLICA, MASTER', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('reset slave, master')->toString());
+        self::assertSame('RESET SLAVE, BINARY LOGS AND GTIDS', (new Semantics(Dialect::MySql, 'mysql-8.3.0'))->analyze('reset slave, master')->toString());
+        self::assertSame('RESET SLAVE, MASTER', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('reset slave, master')->toString());
+        self::assertSame('RESET REPLICA', (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze('reset replica')->toString());
     }
 
     public function testFirstLowersTheFileNumber(): void

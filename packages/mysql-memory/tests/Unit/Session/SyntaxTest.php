@@ -13,6 +13,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 
 #[CoversClass(Syntax::class)]
 #[Small]
@@ -130,5 +131,23 @@ final class SyntaxTest extends TestCase
     public function testUnquoteReadsDoubledQuotesAndEscapeSequences(): void
     {
         self::assertSame(["it's", 'a\\tb', 'a\\%', 'x'], [(new Syntax())->unquote("'it''s'", true), (new Syntax())->unquote('"a\\tb"', false), (new Syntax())->unquote("'a\\\\%'", true), (new Syntax())->unquote('x', true)]);
+    }
+
+    public function testDotsAnswerTheLeadingDotsOfAStatementByOffset(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $tree = $session->semantics()->parser()->parse('SELECT .t.a FROM .t');
+
+        self::assertSame([7 => Deprecated::DotColumn, 17 => Deprecated::DotTable], (new Syntax())->dots($tree));
+    }
+
+    public function testInternalRefusesTheGeneratedColumnStatementOf57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("near 'PARSE_GCOL_EXPR (1)' at line 1");
+
+        $session->query('PARSE_GCOL_EXPR (1)');
     }
 }

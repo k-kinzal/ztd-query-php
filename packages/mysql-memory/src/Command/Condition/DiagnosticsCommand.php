@@ -6,6 +6,7 @@ namespace MySqlMemory\Command\Condition;
 
 use MySqlMemory\Command\Command;
 use MySqlMemory\Error\ProgramError;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
@@ -34,7 +35,9 @@ use SqlSemantics\Statement\Operation;
  * row count of the statement before. A condition number that names no condition assigns
  * nothing and adds the error ER_DA_INVALID_CONDITION_NUMBER to the area, and the statement
  * still succeeds. The text items are utf8mb3 strings and the numbers integers. GET STACKED
- * DIAGNOSTICS has no handler to read outside a program (ER_GET_STACKED_DA_WITHOUT_ACTIVE_HANDLER).
+ * DIAGNOSTICS has no handler to read outside a program (ER_GET_STACKED_DA_WITHOUT_ACTIVE_HANDLER),
+ * an error the area does not record: it keeps the conditions of the statement before (verified
+ * on live 8.0, 8.4 and 9.1 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/get-diagnostics.html.
  *
  * @visibility MySqlMemory
@@ -59,7 +62,7 @@ final class DiagnosticsCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof GetDiagnostics);
         if ($statement->area === DiagnosticsArea::Stacked) {
-            throw ProgramError::StackedWithoutHandler->error();
+            throw new SqlError(ProgramError::StackedWithoutHandler, ProgramError::StackedWithoutHandler->message(), null, [], null, null, true);
         }
         $diagnostics = $session->diagnostics;
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);

@@ -11,6 +11,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
@@ -47,5 +48,16 @@ final class NameAssignmentTest extends TestCase
     {
         $this->expectExceptionMessage('A bare name value is known to be text exactly when a scope keyword names a system variable.');
         new NameAssignment(new Name('x'), new BareName(new Name('y')));
+    }
+
+    public function testDeriveItemReportsAQualifiedNameThatIsNoKeyCacheVariable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $unknown = $semantics->analyze('SET SESSION a.b = 1')->facts->diagnostics;
+
+        self::assertCount(1, $unknown);
+        self::assertInstanceOf(UnknownSystemVariable::class, $unknown[0]);
+        self::assertSame('a.b', $unknown[0]->name);
+        self::assertSame([], $semantics->analyze('SET GLOBAL hot.key_buffer_size = 0')->facts->diagnostics);
     }
 }

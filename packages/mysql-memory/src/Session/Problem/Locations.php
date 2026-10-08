@@ -9,6 +9,7 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Session\Locator;
 use MySqlMemory\Session\Session;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
@@ -22,6 +23,11 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Query;
@@ -53,13 +59,17 @@ final class Locations
      */
     public function located(Operation $operation, array $calls, array $diagnostics, Session $session): array
     {
-        $locator = (new Locator())->statement($operation->statement);
+        $locator = (new Locator($session->settings()->release() === GrammarRelease::MySql8044))->statement($operation->statement);
         [$located, $matched] = $this->names($operation, $locator, $calls, $diagnostics);
         foreach ($locator->arrays as [$cast, $clause, $at]) {
             $refusal = new NotSupportedYet(Cast::ARRAY_OUTSIDE_INDEX);
             $located[spl_object_id($refusal)] = [$refusal, [$clause, $at]];
         }
         $located = $this->defaults($operation, $locator, $session, $located);
+        $located = $this->wildcards($locator, $diagnostics, $located);
+        $located = $this->stars($operation, $locator, $diagnostics, $located);
+        $located = $this->windows($locator, $diagnostics, $located);
+        $located = $this->sets($operation, $locator, $diagnostics, $located);
 
         return [$this->widths($operation, $locator, $diagnostics, $located), $matched];
     }
@@ -121,6 +131,129 @@ final class Locations
     }
 
     /**
+     * Adds the problems of `t.*` items whose qualifier names no table of their block, each placed before the items of the block.
+     *
+     * The server expands the stars of a select list before it resolves its items (verified on
+     * live 8.0, 8.4 and 9.1 servers).
+     *
+     * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
+     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     */
+    public function wildcards(Locator $locator, array $diagnostics, array $located): array
+    {
+        foreach ($locator->wildcards as [$wildcard, $at]) {
+            foreach ($diagnostics as $diagnostic) {
+                if ($diagnostic instanceof UnknownQualifier && $diagnostic->table === $wildcard->table) {
+                    $located[spl_object_id($diagnostic)] = [$diagnostic, ['field list', $at]];
+                }
+            }
+        }
+
+        return $located;
+    }
+
+    /**
+     * Adds the refusal of `*` in a block without tables, placed before the items of the block; EXISTS takes such a block.
+     *
+     * The server expands the star while it resolves the select list of the block, so the
+     * subquery of IN, ANY and ALL, resolved before its operand, reports it first; the query of
+     * EXISTS selects nothing and takes it (verified on live 5.6.51 and 8.4.7 servers).
+     *
+     * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
+     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     */
+    public function stars(Operation $operation, Locator $locator, array $diagnostics, array $located): array
+    {
+        $misuses = array_values(array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables));
+        if ($misuses === []) {
+            return $located;
+        }
+        $existing = self::existing($operation);
+        foreach ($locator->stars as [$select, $at]) {
+            if (!in_array($select, $existing, true)) {
+                $refusal = array_shift($misuses) ?? \MySqlMemory\Error\QueryError::NoTablesUsed->error();
+                $located[spl_object_id($refusal)] = [$refusal, ['field list', $at]];
+            }
+        }
+
+        return $located;
+    }
+
+    /**
+     * Answers the query blocks EXISTS tests, through parentheses and set operations.
+     *
+     * @return list<\SqlSemantics\Platform\MySql\Statement\Query\Select>
+     */
+    public static function existing(Operation $operation): array
+    {
+        $blocks = [];
+        foreach ((new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Exists::class) as $exists) {
+            array_push($blocks, ...(new \MySqlMemory\Session\Placement())->blocks($exists->query));
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * Adds the problems of window names no window of their block defines, each placed where the server checks the name.
+     *
+     * A window function or aggregate whose OVER names a window is checked where the call is
+     * resolved; the window a specification refines, written after OVER in parentheses or in the
+     * WINDOW clause, once the windows of the block are resolved, after ORDER BY (verified on a
+     * live 8.4 server).
+     *
+     * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
+     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     */
+    public function windows(Locator $locator, array $diagnostics, array $located): array
+    {
+        foreach ($locator->windows as [$name, $at]) {
+            foreach ($diagnostics as $diagnostic) {
+                if ($diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::UnknownWindow && $diagnostic->name === $name) {
+                    $located[spl_object_id($diagnostic)] = [$diagnostic, ['field list', $at]];
+                }
+            }
+        }
+
+        return $located;
+    }
+
+    /**
+     * Adds the problems of set operations whose operands have different numbers of columns, each placed once its right operand is resolved; a problem of the statement answers one operation only.
+     *
+     * The server compares the columns of the operands of each set operation after it has
+     * resolved them, before it resolves the operand that follows or the ORDER BY of the
+     * operation (verified on a live 8.4 server).
+     *
+     * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
+     * @param array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}> $located
+     * @return array<int, array{Diagnostic|FunctionCall|ClockCall|SqlError, array{string, list<int>}}>
+     */
+    public function sets(Operation $operation, Locator $locator, array $diagnostics, array $located): array
+    {
+        $claimed = [];
+        foreach ($locator->sets as [$set, $at]) {
+            $left = $set->left instanceof Query && $operation->facts->covers($set->left) ? $operation->facts->query($set->left)->shape : null;
+            $right = $operation->facts->covers($set->right) ? $operation->facts->query($set->right)->shape : null;
+            if ($left === null || $right === null || !$left->complete() || !$right->complete()) {
+                continue;
+            }
+            foreach ($diagnostics as $diagnostic) {
+                if ($diagnostic instanceof CountMismatch && $diagnostic->list === CountedList::SetOperands && $diagnostic->expected === count($left->slots) && $diagnostic->actual === count($right->slots) && !in_array($diagnostic, $claimed, true)) {
+                    $claimed[] = $diagnostic;
+                    $located[spl_object_id($diagnostic)] = [$diagnostic, ['field list', $at]];
+                    break;
+                }
+            }
+        }
+
+        return $located;
+    }
+
+    /**
      * Adds the problems of IN, ANY and ALL over a subquery of the wrong width, each placed before or after its operand; a problem of the statement answers one predicate only.
      *
      * @param list<Diagnostic> $diagnostics The problems of the statement the server reports
@@ -134,7 +267,7 @@ final class Locations
             $width = $this->width($predicate, $operation, $diagnostics, $claimed);
             if ($width !== null) {
                 $claimed[] = $width[0];
-                $located[spl_object_id($width[0])] = [$width[0], [$clause, [...$at, $width[1] ? 1 : 2]]];
+                $located[spl_object_id($width[0])] = [$width[0], [$clause, [...$at, $width[1] && !$locator->operandFirst ? 1 : 2]]];
             }
         }
 
@@ -248,7 +381,7 @@ final class Locations
         }
         $shape = $operation->facts->query($predicate->query)->shape;
         $width = count($shape->slots);
-        if (!$shape->complete() || $width === 1) {
+        if (!$shape->complete() || $width < 2) {
             return null;
         }
         $early = Locator::early($predicate);

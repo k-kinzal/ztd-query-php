@@ -446,15 +446,74 @@ final class ProblemsTest extends TestCase
         (new Problems())->unlocated([$twice, new Misuse(MisuseRule::UnknownWindow, new Name('v'))], [], $session, $session->analyze('SELECT 1')->statement);
     }
 
-    public function testPreciseRefusesACastPrecisionAboveSix(): void
+    public function testOpenedRaisesAMissingTableOfASubqueryBeforeAnyName(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $subquery = $session->run('SELECT zz FROM t WHERE a IN (SELECT 1 FROM nosuch)')[0];
+        $quantified = $session->run('SELECT zz = ALL (TABLE nosuch)')[0];
+        $unused = $session->run('WITH c AS (SELECT * FROM nosuch) SELECT zz')[0];
+
+        self::assertInstanceOf(SqlError::class, $subquery);
+        self::assertInstanceOf(SqlError::class, $quantified);
+        self::assertInstanceOf(SqlError::class, $unused);
+        self::assertSame([[1146, "Table 'd.nosuch' doesn't exist"], [1146, "Table 'd.nosuch' doesn't exist"], [1054, "Unknown column 'zz' in 'field list'"]], [[$subquery->getCode(), $subquery->getMessage()], [$quantified->getCode(), $quantified->getMessage()], [$unused->getCode(), $unused->getMessage()]]);
+    }
+
+    public function testReadRaisesAnUnknownSystemVariableBeforeOpeningTablesAndAVariableOfAViewBeforeIt(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+
+        $variable = $session->run('SELECT * FROM nosuch WHERE @@nosuchvar')[0];
+        $view = $session->run('CREATE VIEW v AS SELECT @@nosuchvar')[0];
+        $cast = $session->run('SELECT ABS(1, 2), CAST(1 AS TIME(9))')[0];
+
+        self::assertInstanceOf(SqlError::class, $variable);
+        self::assertInstanceOf(SqlError::class, $view);
+        self::assertInstanceOf(SqlError::class, $cast);
+        self::assertSame([[1193, "Unknown system variable 'nosuchvar'"], [1351, "View's SELECT contains a variable or parameter"], [1426, "Too-big precision 9 specified for 'CAST'. Maximum is 6."]], [[$variable->getCode(), $variable->getMessage()], [$view->getCode(), $view->getMessage()], [$cast->getCode(), $cast->getMessage()]]);
+    }
+
+    public function testOpenedRaisesTheMissingTableAStatementWritesFirst(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $error = $session->run('INSERT INTO target SET a = (SELECT 1 FROM nosuch)')[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame("Table 'd.target' doesn't exist", $error->getMessage());
+    }
+
+    public function testTargetsRefusesATableAMultipleTableDeleteNamesTwice(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT); INSERT INTO t VALUES (1)');
+        $twice = $session->run('DELETE d.t, t FROM t')[0];
+        $others = $session->run('DELETE a.t, b.t FROM t')[0];
+
+        self::assertInstanceOf(SqlError::class, $twice);
+        self::assertInstanceOf(SqlError::class, $others);
+        self::assertSame([[1066, "Not unique table/alias: 't'"], [1109, "Unknown table 't' in MULTI DELETE"]], [[$twice->getCode(), $twice->getMessage()], [$others->getCode(), $others->getMessage()]]);
+    }
+
+    public function testTestedTellsWhetherOnlyExistsReadsAStarWithoutTables(): void
     {
         $session = (new Instance())->connect();
-        (new Problems())->precise($session->analyze('SELECT CAST(1 AS DATETIME(6)), CAST(1 AS DECIMAL(9))')->statement);
+
+        self::assertTrue((new Problems())->tested($session->analyze('SELECT EXISTS (SELECT *)')));
+        self::assertFalse((new Problems())->tested($session->analyze('SELECT EXISTS (SELECT *), (SELECT * FROM DUAL)')));
+        self::assertFalse((new Problems())->tested($session->analyze('SELECT 1')));
+    }
+
+    public function testLegacyWritesRefusesANonUpdatableTargetFirstIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
 
         $this->expectException(SqlError::class);
-        $this->expectExceptionCode(1426);
-        $this->expectExceptionMessage("Too-big precision 7 specified for 'CAST'. Maximum is 6.");
+        $this->expectExceptionCode(1288);
 
-        (new Problems())->precise($session->analyze('SELECT CAST(1 AS TIME(7))')->statement);
+        (new Problems())->legacyWrites($session->analyze('UPDATE (SELECT *) AS x SET a = 1'), $session);
     }
 }

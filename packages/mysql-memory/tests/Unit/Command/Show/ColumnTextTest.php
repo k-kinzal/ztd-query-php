@@ -7,10 +7,12 @@ namespace Tests\Unit\Command\Show;
 use MySqlMemory\Command\Show\ColumnText;
 use MySqlMemory\Dictionary\ColumnDefinition;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
@@ -33,6 +35,21 @@ final class ColumnTextTest extends TestCase
 
         self::assertInstanceOf(Integral::class, $written);
         self::assertSame([NumericModifier::Zerofill], $written->modifiers);
+    }
+
+    public function testDigitsWritesTheLengthAndDecimalsOnlyWhenTheDecimalsAreFixed(): void
+    {
+        self::assertSame(['(7,3)', ''], [(new ColumnText())->digits(Domain::double(7, 3)), (new ColumnText())->digits(Domain::double())]);
+    }
+
+    public function testMembersQuotesEachMember(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t (a SET('x', 'it''s'))");
+        $table = $session->instance->dictionary->table('d', 't');
+
+        self::assertNotNull($table);
+        self::assertSame("'x','it''s'", (new ColumnText())->members($table->definition->columns[0]->domain));
     }
 
     public function testElementAnswersTheColumnDefinition(): void
@@ -163,5 +180,19 @@ final class ColumnTextTest extends TestCase
     {
         self::assertSame('é', (new ColumnText())->utf8("\xE9", Domain::string(1, Collation::known('latin1_swedish_ci'))));
         self::assertSame("\xE9", (new ColumnText())->utf8("\xE9", Domain::string(1, Collation::binary())));
+    }
+
+    public function testLegacyWritesTheDisplayWidthOfEveryIntegerIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('CREATE TABLE d.t (a INT, b TINYINT UNSIGNED, c YEAR, d BOOLEAN)');
+
+        self::assertTrue((new ColumnText(GrammarRelease::MySql5744))->legacy());
+        self::assertFalse((new ColumnText())->legacy());
+        $result = $session->query('SHOW COLUMNS FROM d.t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['int(11)', 'tinyint(3) unsigned', 'year(4)', 'tinyint(1)'], array_column($result->rows, 1));
     }
 }

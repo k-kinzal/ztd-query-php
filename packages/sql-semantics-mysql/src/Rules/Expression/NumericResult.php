@@ -134,6 +134,21 @@ final class NumericResult
     }
 
     /**
+     * Tells whether an operand of a bit operator is a binary string, which MySQL 5.7 warns about: neither a hexadecimal or bit literal without introducer nor NULL (verified on a live 5.7.44 server).
+     */
+    public function binaryOperand(Scalar $expression, ScalarFact $fact): bool
+    {
+        while ($expression instanceof Grouped) {
+            $expression = $expression->operand;
+        }
+        if (($expression instanceof RadixLiteral && $expression->introducer === null) || $expression instanceof NullLiteral || !$fact->type instanceof Known) {
+            return false;
+        }
+
+        return $fact->type->descriptor instanceof Binary || ($fact->type->descriptor instanceof Domain && $fact->type->descriptor->kind === Kind::String && $fact->type->descriptor->collation->bytes());
+    }
+
+    /**
      * Answers the result type of unary minus over an operand and its facts.
      */
     public function negation(Scalar $operand, ScalarFact $fact): TypeFact

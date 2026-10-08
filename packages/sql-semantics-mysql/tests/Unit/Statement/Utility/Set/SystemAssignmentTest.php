@@ -11,6 +11,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Dependent;
@@ -58,4 +59,12 @@ final class SystemAssignmentTest extends TestCase
         self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() SET @@version = 1')->facts->diagnostics);
     }
 
+    public function testDeriveItemReportsAStructuredVariableThatIsNoKeyCacheVariable(): void
+    {
+        $unknown = (new Semantics(Dialect::MySql))->analyze('SET @@a.b = 1')->facts->diagnostics;
+
+        self::assertCount(1, $unknown);
+        self::assertInstanceOf(UnknownSystemVariable::class, $unknown[0]);
+        self::assertSame('a.b', $unknown[0]->name);
+    }
 }

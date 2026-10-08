@@ -42,6 +42,13 @@ use SqlSemantics\Statement\Operation;
 final class ShowCreateTableCommand implements Command
 {
     /**
+     * @param GrammarRelease $release The release whose CREATE TABLE text is written
+     */
+    public function __construct(public readonly GrammarRelease $release = GrammarRelease::MySql847)
+    {
+    }
+
+    /**
      * Answers true.
      */
     #[Override]
@@ -63,7 +70,7 @@ final class ShowCreateTableCommand implements Command
         if ($view !== null && $view->declaration === $stored->definition->declaration) {
             return (new \MySqlMemory\Command\View\ShowCreateViewCommand())->write($view, $session, $context);
         }
-        $text = $this->statement($stored);
+        $text = (new self($session->settings()->release()))->statement($stored);
         $headings = [
             Heading::text('Table', Field::VarString, 64, ColumnFlag::NotNull->value, 31),
             Heading::text('Create Table', Field::VarString, max(1024, mb_strlen($text, 'UTF-8')), ColumnFlag::NotNull->value, 31),
@@ -91,7 +98,7 @@ final class ShowCreateTableCommand implements Command
      */
     public function column(ColumnDefinition $column, TableDefinition $table): string
     {
-        $text = new ColumnText();
+        $text = new ColumnText($this->release);
         $domain = $column->domain;
         $type = $text->written($table, $column);
         $written = $this->name($column->name) . ' ' . $text->type($domain, $type);
@@ -123,14 +130,19 @@ final class ShowCreateTableCommand implements Command
      *
      * A collation the column names, or other than the table's, is written with its character
      * set; the table's collation the column takes is written alone when it is not the default
-     * collation of its character set (verified on a live 8.4 server).
+     * collation of its character set (verified on a live 8.4 server). MySQL 5.6 and 5.7 write
+     * nothing for the table's collation, and the character set alone for the default collation
+     * of another set (verified on a live 5.7.44 server).
      */
     public function collation(ColumnDefinition $column, TableDefinition $table): string
     {
-        $text = new ColumnText();
+        $text = new ColumnText($this->release);
         $collation = $column->domain->collation;
         if (!$text->textual($column->domain)) {
             return '';
+        }
+        if ($text->legacy()) {
+            return $collation->name === $table->collation ? '' : ' CHARACTER SET ' . $collation->charset->nameIn($this->release) . ($collation->charset->defaultCollation($this->release)->name === $collation->name ? '' : ' COLLATE ' . $collation->nameIn($this->release));
         }
         if ($collation->name !== $table->collation || $text->explicit($text->element($table, $column))) {
             return ' CHARACTER SET ' . $collation->charset->name . ' COLLATE ' . $collation->name;
@@ -172,9 +184,10 @@ final class ShowCreateTableCommand implements Command
         if ($stored->data->autoIncrement > 1) {
             $options .= ' AUTO_INCREMENT=' . sprintf('%u', $stored->data->autoIncrement);
         }
-        $options .= ' DEFAULT CHARSET=' . $charset->name;
-        if ($charset->name === 'utf8mb4' || $charset->defaultCollation(GrammarRelease::MySql847)->name !== $collation->name) {
-            $options .= ' COLLATE=' . $collation->name;
+        $legacy = $this->release === GrammarRelease::MySql5651 || $this->release === GrammarRelease::MySql5744;
+        $options .= ' DEFAULT CHARSET=' . $charset->nameIn($this->release);
+        if ((!$legacy && $charset->name === 'utf8mb4') || $charset->defaultCollation($legacy ? $this->release : GrammarRelease::MySql847)->name !== $collation->name) {
+            $options .= ' COLLATE=' . $collation->nameIn($this->release);
         }
         $comment = $this->comment($table);
         if ($comment !== '') {

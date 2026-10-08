@@ -207,4 +207,39 @@ final class QueryCommandTest extends TestCase
         self::assertInstanceOf(Query::class, $plain);
         self::assertSame([true, false], [(new QueryCommand())->calculates($first), (new QueryCommand())->calculates($plain)]);
     }
+
+    public function testExecuteSendsTheColumnsOfAUnionAsNotNullWhenItsFirstColumnIsInMySql91(): void
+    {
+        $session = (new Instance('9.1.0'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT PRIMARY KEY, a INT)');
+        $first = $session->query('SELECT id, a FROM t UNION SELECT id, a FROM t')[0];
+        $second = $session->query('SELECT a, id FROM t UNION SELECT a, id FROM t')[0];
+        $intersected = $session->query('SELECT id, a FROM t INTERSECT SELECT id, a FROM t')[0];
+        $older = (new Instance('8.4.7'))->connect();
+        $older->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT PRIMARY KEY, a INT)');
+        $kept = $older->query('SELECT id, a FROM t UNION SELECT id, a FROM t')[0];
+        $notNull = static fn (ResultSet $result): array => array_map(static fn (ResultColumn $column): bool => ($column->flags & ColumnFlag::NotNull->value) !== 0, $result->columns);
+
+        self::assertInstanceOf(ResultSet::class, $first);
+        self::assertInstanceOf(ResultSet::class, $second);
+        self::assertInstanceOf(ResultSet::class, $intersected);
+        self::assertInstanceOf(ResultSet::class, $kept);
+        self::assertSame([[true, true], [false, false], [true, false], [true, false]], [$notNull($first), $notNull($second), $notNull($intersected), $notNull($kept)]);
+    }
+
+    public function testUnitesTellsWhetherTheOutermostOperationIsAUnion(): void
+    {
+        $session = (new Instance())->connect();
+        $command = new QueryCommand();
+        $ordered = $session->analyze('(SELECT 1 UNION SELECT 2) ORDER BY 1')->statement;
+        $nested = $session->analyze('SELECT 1 UNION SELECT 2 INTERSECT SELECT 2')->statement;
+        $intersected = $session->analyze('(SELECT 1 UNION SELECT 2) INTERSECT SELECT 2')->statement;
+        $single = $session->analyze('SELECT 1')->statement;
+
+        self::assertInstanceOf(Query::class, $ordered);
+        self::assertInstanceOf(Query::class, $nested);
+        self::assertInstanceOf(Query::class, $intersected);
+        self::assertInstanceOf(Query::class, $single);
+        self::assertSame([true, true, false, false], [$command->unites($ordered), $command->unites($nested), $command->unites($intersected), $command->unites($single)]);
+    }
 }

@@ -57,7 +57,7 @@ final class AlterUserCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof AlterUser);
         $session->transaction->commit();
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $names->check($names->users($statement->users));
         $options = new Options();
         $options->parsed($operation, $session->text);

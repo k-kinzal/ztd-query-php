@@ -12,6 +12,7 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowFunctionStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Program\ShowProcedureStatus;
@@ -46,23 +47,25 @@ final class ShowRoutinesCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof ShowProcedureStatus || $statement instanceof ShowFunctionStatus);
         $function = $statement instanceof ShowFunctionStatus;
+        $language = !in_array($session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044, GrammarRelease::MySql810], true);
         $rows = [];
         foreach ($session->instance->dictionary->schemas as $schema) {
             foreach (RoutineCommand::routines($schema, $function) as $routine) {
-                $rows[] = [$routine->schema, $routine->name, $routine->kind(), 'SQL', $routine->definer[0] . '@' . $routine->definer[1], $routine->modified, $routine->created, $routine->security, $routine->comment, ...$routine->charsets];
+                $rows[] = [$routine->schema, $routine->name, $routine->kind(), ...($language ? ['SQL'] : []), $routine->definer[0] . '@' . $routine->definer[1], $routine->modified, $routine->created, $routine->security, $routine->comment, ...$routine->charsets];
             }
         }
         usort($rows, static fn (array $left, array $right): int => [$left[0], strtolower($left[1])] <=> [$right[0], strtolower($right[1])]);
 
-        return (new Listing($this->headings()))->result($rows, $operation, $session, $context, $connection, $statement->filter, 1);
+        return (new Listing($this->headings($language)))->result($rows, $operation, $session, $context, $connection, $statement->filter, 1);
     }
 
     /**
      * Answers the columns of the statement, as the server describes them.
      *
+     * @param bool $language Whether the release lists the language of each routine, as MySQL 8.2 and later do (verified on live 8.0, 8.4 and 9.1 servers)
      * @return list<Heading>
      */
-    public function headings(): array
+    public function headings(bool $language = true): array
     {
         $table = 'ROUTINES';
 
@@ -70,7 +73,7 @@ final class ShowRoutinesCommand implements Command
             Heading::text('Db', Field::VarString, 64, 4225, 0, 'Db', $table, 'schemata'),
             Heading::text('Name', Field::VarString, 64, 4097, 0, 'Name', $table, 'routines'),
             Heading::text('Type', Field::String, 9, 4481, 0, 'Type', $table, 'routines'),
-            Heading::text('Language', Field::VarString, 64, 129, 0, 'Language', $table, 'routines'),
+            ...($language ? [Heading::text('Language', Field::VarString, 64, 129, 0, 'Language', $table, 'routines')] : []),
             Heading::text('Definer', Field::VarString, 288, 4225, 0, 'Definer', $table, 'routines'),
             new Heading('Modified', Field::Timestamp, 19, 4225, 0, false, 'Modified', $table, 'routines'),
             new Heading('Created', Field::Timestamp, 19, 4225, 0, false, 'Created', $table, 'routines'),

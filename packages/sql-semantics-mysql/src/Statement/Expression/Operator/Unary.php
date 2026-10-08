@@ -70,10 +70,13 @@ final class Unary implements Scalar
         $operand = (new Precision())->domain($fact->type);
         $precise = new Numbers(Settings::of($derivation->context)->divPrecisionIncrement);
         $bits = $numbers->bits([[$this->operand, $fact]], $derivation->context->profile->grammar);
+        if ($this->operator === UnaryOperator::Invert && $numbers->binaryOperand($this->operand, $fact)) {
+            Deprecation::raise(Deprecated::BinaryBitwise, $derivation);
+        }
 
         return match ($this->operator) {
             UnaryOperator::Plus => new ScalarFact($fact->type, $fact->nullability),
-            UnaryOperator::Minus => new ScalarFact($operand === null ? $numbers->negation($this->operand, $fact) : new Known($precise->negated($operand, (new Constants())->negative($this->operand) || $numbers->beyond($this->operand))), $fact->nullability),
+            UnaryOperator::Minus => new ScalarFact($operand === null ? $numbers->negation($this->operand, $fact) : new Known($this->negated($precise, $operand, $numbers, $derivation)), $fact->nullability),
             UnaryOperator::Invert => new ScalarFact($operand === null || !$bits instanceof Known ? $bits : new Known(TypeClass::of($bits->descriptor) === TypeClass::Unsigned ? $precise->bits() : $precise->binaryBits(null, $operand)), $fact->nullability),
             UnaryOperator::Not => $operands->truth($fact->nullability),
         };
@@ -85,5 +88,16 @@ final class Unary implements Scalar
     public function render(Output $out): void
     {
         $out->symbol($this->operator->value)->node($this->operand);
+    }
+
+    /**
+     * Resolves unary minus over an operand whose type is resolved; MySQL 5.6 and 5.7 count the sign in the length of an exact result.
+     */
+    public function negated(Numbers $precise, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain $operand, NumericResult $numbers, Derivation $derivation): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain
+    {
+        $result = $precise->negated($operand, (new Constants())->negative($this->operand) || $numbers->beyond($this->operand));
+        $grammar = $derivation->context->profile->grammar;
+
+        return $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? $precise->legacyNegated($result) : $result;
     }
 }

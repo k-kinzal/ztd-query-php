@@ -357,4 +357,14 @@ final class AlterTableCommandTest extends TestCase
 
         self::assertFalse((new AlterTableCommand())->copiesColumn($table->definition->columns[0], $table->definition->columns[1], $context));
     }
+
+    public function testTableReportsATableOfAMissingDatabaseAsMissingIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1146);
+
+        $session->query('ALTER TABLE nodb.t ADD x INT');
+    }
 }

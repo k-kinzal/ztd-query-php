@@ -264,7 +264,7 @@ final class Relations
             if ($leftColumn === null || $rightColumn === null) {
                 throw QueryError::BadField->error($name, 'from clause');
             }
-            $comparator = Comparator::of($leftColumn->domain(), $rightColumn->domain(), '=', $this->planner->settings->connectionCollation);
+            $comparator = Comparator::of($leftColumn->domain(), $rightColumn->domain(), '=', $this->planner->settings->connectionCollation, $this->planner->settings->release());
             $equality = new Compare(ComparisonOperator::Equal, $leftColumn, $rightColumn, $comparator, $this->planner->compiler->operators->truth(true));
             $condition = $condition === null ? $equality : new Logic(LogicalOperator::And, $condition, $equality, $this->planner->compiler->operators->truth(true));
         }

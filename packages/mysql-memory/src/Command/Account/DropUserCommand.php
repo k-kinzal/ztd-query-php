@@ -50,7 +50,7 @@ final class DropUserCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof DropUser || $statement instanceof DropRole);
         $session->transaction->commit();
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $listed = $statement instanceof DropUser ? $statement->users : $statement->roles;
         $names->check($listed);
         $accounts = $session->instance->accounts;

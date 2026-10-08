@@ -235,4 +235,33 @@ final class PlannerTest extends TestCase
         self::assertSame(2, $domains[1]->length);
         self::assertFalse($domains[0]->nullable);
     }
+
+    public function testSettledConvertsTheRowsOfEachOperandIntoTheTypesOfTheOperation(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT, u BIGINT UNSIGNED, e DATE); INSERT INTO t VALUES (1, 18446744073709551615, \'2024-01-31\')');
+        $decimal = $session->query('SELECT a FROM t UNION SELECT 2.5')[0];
+        $text = $session->query("SELECT u FROM t UNION SELECT 'x'")[0];
+        $moment = $session->query('SELECT e FROM t UNION SELECT NOW() - INTERVAL 1 YEAR LIMIT 1')[0];
+
+        self::assertInstanceOf(ResultSet::class, $decimal);
+        self::assertInstanceOf(ResultSet::class, $text);
+        self::assertInstanceOf(ResultSet::class, $moment);
+        self::assertSame([['1.0'], ['2.5']], $decimal->rows);
+        self::assertSame([['18446744073709551615'], ['x']], $text->rows);
+        self::assertSame([['2024-01-31 00:00:00']], $moment->rows);
+    }
+
+    public function testOperandSettlesNestedSetOperationsInTheOutermostTypes(): void
+    {
+        $session = (new Instance())->connect();
+        $nested = $session->query("SELECT 1 UNION SELECT 2.5 UNION SELECT 'x'")[0];
+        $parenthesized = $session->query("(SELECT 1 UNION SELECT 2.5) UNION SELECT 'x'")[0];
+        $derived = $session->query("SELECT * FROM (SELECT 1 UNION SELECT 2.5) AS s UNION SELECT 'x'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $nested);
+        self::assertInstanceOf(ResultSet::class, $parenthesized);
+        self::assertInstanceOf(ResultSet::class, $derived);
+        self::assertSame([[['1'], ['2.5'], ['x']], [['1'], ['2.5'], ['x']], [['1.0'], ['2.5'], ['x']]], [$nested->rows, $parenthesized->rows, $derived->rows]);
+    }
 }

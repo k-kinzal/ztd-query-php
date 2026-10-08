@@ -48,6 +48,7 @@ enum QueryError: int implements ErrorCode
     case NonGroupingFieldUsed = 1463;
     case NonInsertableTable = 1471;
     case WrongParameterCountToNativeFunction = 1582;
+    case DelayedNotSupported = 1616;
     case WrongParametersToNativeFunction = 1583;
     case WrongVariableTypeInLimit = 1691;
     case FieldInOrderNotSelect = 3065;

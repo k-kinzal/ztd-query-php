@@ -143,4 +143,12 @@ final class DatabaseCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['Note', '1008', "Can't drop database 'd'; database doesn't exist"]], $warnings->rows);
     }
+
+    public function testCollationTakesTheCollationOfTheServerByDefault(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+
+        self::assertSame('latin1_swedish_ci', $session->instance->dictionary->schema('d')?->collation);
+    }
 }

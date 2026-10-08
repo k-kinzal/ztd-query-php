@@ -220,4 +220,20 @@ final class AdministrationCommandTest extends TestCase
 
         self::assertSame([128, 10, 10, 393216], array_map(static fn ($column): int => $column->length, AdministrationCommand::columns($session)));
     }
+
+    public function testExecuteReportsParseWarningsAndMissingDatabasesAs57Does(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $dotted = $session->query('CHECK TABLE .t')[0];
+        $missing = $session->query('CHECK TABLE nodb.t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $dotted);
+        self::assertInstanceOf(ResultSet::class, $missing);
+        self::assertSame([['d.t', 'check', 'Warning', "'.<table>' is deprecated and will be removed in a future release. Please use the table name without a dot prefix instead"], ['d.t', 'check', 'status', 'OK']], $dotted->rows);
+        self::assertSame([['nodb.t', 'check', 'Error', "Table 'nodb.t' doesn't exist"], ['nodb.t', 'check', 'status', 'Operation failed']], $missing->rows);
+    }
 }

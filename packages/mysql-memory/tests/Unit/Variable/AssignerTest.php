@@ -7,6 +7,7 @@ namespace Tests\Unit\Variable;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Assigner;
 use MySqlMemory\Variable\Scope;
@@ -308,5 +309,16 @@ final class AssignerTest extends TestCase
         $this->expectExceptionMessage("Variable 'character_set_client' can't be set to the value of 'NULL'");
 
         $assigner->text($client, null, 'NULL');
+    }
+
+    public function testTextReadsTheModesOf57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("SET sql_mode = 'ansi'");
+
+        $result = $session->query('SELECT @@sql_mode')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['REAL_AS_FLOAT,PIPES_AS_CONCAT,ANSI_QUOTES,IGNORE_SPACE,ONLY_FULL_GROUP_BY,ANSI']], $result->rows);
     }
 }

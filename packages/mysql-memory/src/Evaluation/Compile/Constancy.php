@@ -56,6 +56,11 @@ enum Constancy: int
     public const STATEMENT_FUNCTIONS = ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER', 'CONNECTION_ID', 'FOUND_ROWS', 'LAST_INSERT_ID', 'UNIX_TIMESTAMP', 'UTC_DATE', 'UTC_TIME', 'UTC_TIMESTAMP', 'NOW', 'CURDATE', 'CURTIME', 'CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP', 'LOCALTIME', 'LOCALTIMESTAMP'];
 
     /**
+     * The account functions, which MySQL 5.6 and 5.7 know when they resolve the statement (verified on a live 5.7.44 server).
+     */
+    public const ACCOUNT_FUNCTIONS = ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER'];
+
+    /**
      * The functions whose value can differ for each call.
      */
     public const ROW_FUNCTIONS = ['RAND', 'UUID', 'UUID_SHORT', 'SYSDATE', 'SLEEP', 'BENCHMARK', 'GET_LOCK', 'RELEASE_LOCK', 'RELEASE_ALL_LOCKS', 'IS_FREE_LOCK', 'IS_USED_LOCK', 'RANDOM_BYTES', 'VALUES', 'NEXTVAL'];
@@ -66,10 +71,11 @@ enum Constancy: int
      * @param bool $correlation Whether a subquery that reads a column of the enclosing block varies by row; when false, every subquery is fixed for the statement
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns, which vary by row
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row; when false, it stays as long as the value it assigns
+     * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement, which knows the account functions when it resolves it
      */
-    public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true): self
+    public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true, bool $legacy = false): self
     {
-        return self::within($node, $facts, 0, $correlation, $assigned, $assignmentsVary);
+        return self::within($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy);
     }
 
     /**
@@ -79,26 +85,27 @@ enum Constancy: int
      *
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
+     * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement
      */
-    public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true): self
+    public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false): self
     {
         if ($node instanceof ColumnUse) {
             return self::column($node, $facts, $level);
         }
         if ($level > 0) {
-            return self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary);
+            return self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary, $legacy);
         }
         $merged = $node instanceof ScalarSubquery ? self::merged($node->query) : null;
         if ($merged !== null) {
-            return self::within($merged, $facts, 0, $correlation, $assigned, $assignmentsVary);
+            return self::within($merged, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy);
         }
         if ($node instanceof Query) {
-            $inner = self::children($node, $facts, 1, $correlation, $assigned, $assignmentsVary);
+            $inner = self::children($node, $facts, 1, $correlation, $assigned, $assignmentsVary, $legacy);
 
             return $inner === self::Row && $correlation ? self::Row : self::Statement;
         }
 
-        return self::form($node, $facts, $correlation, $assigned, $assignmentsVary);
+        return self::form($node, $facts, $correlation, $assigned, $assignmentsVary, $legacy);
     }
 
     /**
@@ -106,18 +113,19 @@ enum Constancy: int
      *
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
+     * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement
      */
-    public static function form(Node $node, Facts $facts, bool $correlation, array $assigned, bool $assignmentsVary): self
+    public static function form(Node $node, Facts $facts, bool $correlation, array $assigned, bool $assignmentsVary, bool $legacy = false): self
     {
         return match (true) {
-            $node instanceof VariableAssignment && !$assignmentsVary => self::Statement->join(self::within($node->value, $facts, 0, $correlation, $assigned, $assignmentsVary)),
+            $node instanceof VariableAssignment && !$assignmentsVary => self::Statement->join(self::within($node->value, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy)),
             $node instanceof OutputOrdinal, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof VariableAssignment, $node instanceof DefaultOfColumn, $node instanceof InsertedColumn => self::Row,
             $node instanceof UserVariable => in_array(strtolower($node->name->value), $assigned, true) ? self::Row : self::Statement,
             $node instanceof SystemVariable, $node instanceof Parameter => self::Statement,
             $node instanceof ClockCall => $node->clock === Clock::SystemDate ? self::Row : self::Statement,
-            $node instanceof FunctionCall => self::function(strtoupper($node->name->value), count($node->arguments))->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary)),
-            $node instanceof KeywordCall => ($node->function === KeywordFunction::User || $node->function === KeywordFunction::CurrentUser ? self::Statement : self::Resolved)->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary)),
-            default => self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary),
+            $node instanceof FunctionCall => ($legacy && in_array(strtoupper($node->name->value), self::ACCOUNT_FUNCTIONS, true) ? self::Resolved : self::function(strtoupper($node->name->value), count($node->arguments)))->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy)),
+            $node instanceof KeywordCall => (!$legacy && ($node->function === KeywordFunction::User || $node->function === KeywordFunction::CurrentUser) ? self::Statement : self::Resolved)->join(self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy)),
+            default => self::children($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy),
         };
     }
 
@@ -151,8 +159,9 @@ enum Constancy: int
      *
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
+     * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement
      */
-    public static function children(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true): self
+    public static function children(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false): self
     {
         $children = [];
         $properties = get_object_vars($node);
@@ -163,7 +172,7 @@ enum Constancy: int
         });
         $constancy = self::Resolved;
         foreach ($children as $child) {
-            $constancy = $constancy->join(self::within($child, $facts, $level, $correlation, $assigned, $assignmentsVary));
+            $constancy = $constancy->join(self::within($child, $facts, $level, $correlation, $assigned, $assignmentsVary, $legacy));
             if ($constancy === self::Row) {
                 break;
             }

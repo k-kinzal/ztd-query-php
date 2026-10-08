@@ -153,17 +153,30 @@ final class ProgramProblems
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
         $others = array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => !$named($diagnostic) && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount
             && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName));
-        $walker = new Walker();
-        foreach ([\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable::class, \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable::class, \SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class] as $class) {
-            if ($walker->find($statement->definition->query, $class) !== []) {
-                throw SchemaError::ViewSelectVariable->error();
-            }
-        }
+        $this->variables($statement);
         if ($others !== [] && count($others) !== count($operation->facts->diagnostics) && array_filter($operation->facts->diagnostics, $named) !== []) {
             $query = ProgramSource::of($session)->text('query_expression_with_opt_locking_clauses');
             $problems->raise($session->analyze($query), $session);
 
             throw (new Errors())->error($others[0], $session, 'field list', $statement);
+        }
+    }
+
+    /**
+     * Refuses a variable or a parameter in the query of a view (ER_VIEW_SELECT_VARIABLE), which the server finds where it parses the variable, so before a system variable it does not know (verified on a live 8.4 server).
+     *
+     * @throws SqlError When the query of a view reads a variable or a parameter
+     */
+    public function variables(\SqlSemantics\Statement\Statement $statement): void
+    {
+        if (!$statement instanceof CreateView && !$statement instanceof AlterView) {
+            return;
+        }
+        $walker = new Walker();
+        foreach ([\SqlSemantics\Platform\MySql\Statement\Variable\UserVariable::class, \SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable::class, \SqlSemantics\Platform\MySql\Statement\Literal\Parameter::class] as $class) {
+            if ($walker->find($statement->definition->query, $class) !== []) {
+                throw SchemaError::ViewSelectVariable->error();
+            }
         }
     }
 

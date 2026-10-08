@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Command\Condition;
 
 use MySqlMemory\Command\Condition\DiagnosticsCommand;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
@@ -88,5 +89,19 @@ final class DiagnosticsCommandTest extends TestCase
         $command = new DiagnosticsCommand();
 
         self::assertSame([1, null, null], [$command->position('1.6', Domain::decimal(2, 1), $context, 2), $command->position(3, Domain::integer(), $context, 2), $command->position(null, Domain::integer(), $context, 2)]);
+    }
+
+    public function testExecuteKeepsTheAreaWhenStackedDiagnosticsHasNoHandler(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SELECT 1 + 'a'");
+        $error = $session->run('GET STACKED DIAGNOSTICS @n = NUMBER')[0];
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame(3004, $error->getCode());
+        self::assertSame(['1292'], array_column($warnings->rows, 1));
     }
 }

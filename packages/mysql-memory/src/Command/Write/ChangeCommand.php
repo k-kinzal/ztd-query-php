@@ -25,6 +25,7 @@ use MySqlMemory\Storage\Writer;
 use MySqlMemory\Value\Order;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
+use SqlSemantics\Platform\MySql\Statement\Dml\DeleteOption;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
@@ -68,7 +69,7 @@ final class ChangeCommand implements Command
         assert($relation instanceof TableReference || $relation instanceof WriteTarget);
         $table = $this->table($operation, $relation, $session);
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
-        $context->strict = $context->modes->strict() && !($statement instanceof Update && $statement->ignore);
+        $context->strict = $context->modes->strict() && !($statement instanceof Update ? $statement->ignore : in_array(DeleteOption::Ignore, $statement->options, true));
         $scope = new Scope();
         $definition = $table->definition;
         $scope->place($relation, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
@@ -189,7 +190,7 @@ final class ChangeCommand implements Command
             $conflict = $writer->conflict($row, $number);
             if ($conflict !== null) {
                 if ($statement->ignore) {
-                    $context->warning(DataError::DuplicateEntry, ...$writer->entry($row, $conflict[1]));
+                    $writer->ignored($row, $conflict[1]);
                     continue;
                 }
                 throw $writer->duplicate($row, $conflict[1]);

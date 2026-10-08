@@ -294,4 +294,15 @@ final class NamesTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $named);
         self::assertSame([['2', '2', '2']], $named->rows);
     }
+
+    public function testSystemVariableNamesAnUnknownStructuredVariableWithItsInstance(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1193);
+        $this->expectExceptionMessage("Unknown system variable 'hot.sort_buffer_size'");
+
+        $session->query('SELECT @@hot.sort_buffer_size');
+    }
 }

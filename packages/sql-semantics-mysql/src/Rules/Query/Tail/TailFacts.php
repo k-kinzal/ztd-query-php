@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Platform\MySql\Rules\Query;
+namespace SqlSemantics\Platform\MySql\Rules\Query\Tail;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;

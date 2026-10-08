@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Command;
 
 use MySqlMemory\Command\WarningsCommand;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\ResultSet;
@@ -127,5 +128,19 @@ final class WarningsCommandTest extends TestCase
         self::assertInstanceOf(RowLimit::class, $statement->limit);
 
         self::assertSame([3, 2, null], [(new WarningsCommand())->bound($statement->limit->count), (new WarningsCommand())->bound($statement->limit->offset), (new WarningsCommand())->bound(null)]);
+    }
+
+    public function testExecuteRefusesALimitNamingAVariableAndKeepsTheConditions(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SELECT 1 + 'a'");
+        $error = $session->run('SHOW WARNINGS LIMIT abc')[0];
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([1327, 'Undeclared variable: abc'], [$error->getCode(), $error->getMessage()]);
+        self::assertSame(['1292', '1327'], array_column($warnings->rows, 1));
     }
 }

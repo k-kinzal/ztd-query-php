@@ -72,7 +72,7 @@ final class InsertCommand implements Command
         $rows = new Rows($table, $context, $planner, $into, $statement instanceof InsertQuery ? [] : $statement->onDuplicate, $session);
         $queried = $statement instanceof InsertQuery && $statement->values() === null;
         foreach ($sources as $index => $values) {
-            $rows->write($positions, $values, $index + 1, count($sources) === 1 && !$queried, $queried);
+            $rows->write($values === [] ? [] : $positions, $values, $index + 1, count($sources) === 1 && !$queried, $queried);
         }
         if ($rows->generated !== null && !$session->variables->setByFunction) {
             $session->variables->lastInsertId = $rows->generated;
@@ -107,6 +107,10 @@ final class InsertCommand implements Command
 
     /**
      * Answers the positions of the columns written and, for each row, the value of each: an evaluable, DEFAULT, or a computed value with its domain.
+     *
+     * An empty row without a column list names no column: each takes its default as a column no
+     * row names does, and a column without one is warned about once (verified on a live 8.4
+     * server).
      *
      * @return array{list<int>, list<list<Evaluable|DefaultRequest|array{int|float|string|null, Domain}>>}
      */
@@ -143,7 +147,7 @@ final class InsertCommand implements Command
         $rows = [];
         foreach ($values === null ? $statement->rows : $values->rows as $row) {
             $values = array_map(fn ($value) => $value instanceof DefaultRequest ? $value : $planner->compiler->compile($value, new Scope()), $row->values);
-            $rows[] = $values === [] && $columns === null ? array_fill(0, count($positions), new DefaultRequest()) : $values;
+            $rows[] = $values === [] && $columns === null ? [] : $values;
         }
 
         return [$positions, $rows];

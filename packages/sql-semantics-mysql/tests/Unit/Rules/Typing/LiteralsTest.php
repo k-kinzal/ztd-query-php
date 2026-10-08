@@ -107,4 +107,21 @@ final class LiteralsTest extends TestCase
     {
         self::assertEquals(Domain::integer(Field::LongLong, 1), new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->boolean());
     }
+
+    public function testLegacyTellsTheReleasesWhoseIntegerLiteralsCountNoSign(): void
+    {
+        $settings = new Settings(Collation::known('latin1_swedish_ci'));
+
+        self::assertTrue((new Literals($settings, GrammarRelease::MySql5651))->legacy());
+        self::assertTrue((new Literals($settings, GrammarRelease::MySql5744))->legacy());
+        self::assertFalse((new Literals($settings, GrammarRelease::MySql847))->legacy());
+    }
+
+    public function testNumberCountsNoSignInTheLengthOfAnIntegerOf57(): void
+    {
+        $legacy = new Literals(new Settings(Collation::known('latin1_swedish_ci')), GrammarRelease::MySql5744);
+        $modern = new Literals(new Settings(Collation::known('latin1_swedish_ci')), GrammarRelease::MySql847);
+
+        self::assertSame([1, 3, 2, 2], [$legacy->number(new NumberLiteral('1'))->length, $legacy->number(new NumberLiteral('007'))->length, $legacy->number(new NumberLiteral('1'), true)->length, $modern->number(new NumberLiteral('1'))->length]);
+    }
 }

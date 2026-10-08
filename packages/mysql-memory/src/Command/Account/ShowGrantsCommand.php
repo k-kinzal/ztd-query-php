@@ -55,7 +55,7 @@ final class ShowGrantsCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof ShowGrants);
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $names->check([$statement->user, ...$statement->using]);
         $current = !$statement->user instanceof AccountName;
         $identity = $statement->user === null ? new Identity($session->user, '%') : $names->identity($statement->user, $session);

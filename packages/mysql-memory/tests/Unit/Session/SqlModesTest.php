@@ -11,6 +11,7 @@ use MySqlMemory\Session\SqlModes;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 
 #[CoversClass(SqlModes::class)]
 #[Small]
@@ -91,5 +92,26 @@ final class SqlModesTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_ENGINE_SUBSTITUTION']], $result->rows);
+    }
+
+    public function testNamesAnswerTheModesOfTheRelease(): void
+    {
+        self::assertContains('NO_AUTO_CREATE_USER', SqlModes::names(GrammarRelease::MySql5744));
+        self::assertNotContains('NO_AUTO_CREATE_USER', SqlModes::names(GrammarRelease::MySql847));
+        self::assertNotContains('TIME_TRUNCATE_FRACTIONAL', SqlModes::names(GrammarRelease::MySql5651));
+    }
+
+    public function testCombinationsAddOnlyFullGroupByToAnsiFrom57On(): void
+    {
+        self::assertNotContains('ONLY_FULL_GROUP_BY', SqlModes::combinations(GrammarRelease::MySql5651)['ANSI']);
+        self::assertContains('ONLY_FULL_GROUP_BY', SqlModes::combinations(GrammarRelease::MySql5744)['ANSI']);
+        self::assertSame(['HIGH_NOT_PRECEDENCE'], SqlModes::combinations(GrammarRelease::MySql5744)['MYSQL40']);
+    }
+
+    public function testParseReadsTheModesOf57(): void
+    {
+        self::assertSame('STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,TRADITIONAL,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION', SqlModes::parse('traditional', GrammarRelease::MySql5744)?->toString());
+        self::assertNull(SqlModes::parse('NO_AUTO_CREATE_USER'));
+        self::assertTrue(SqlModes::parse('STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER', GrammarRelease::MySql5744)?->strict());
     }
 }

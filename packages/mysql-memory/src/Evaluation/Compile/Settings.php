@@ -49,4 +49,12 @@ final class Settings
     {
         return GrammarRelease::tryFrom('mysql-' . $this->version) ?? GrammarRelease::MySql847;
     }
+
+    /**
+     * Tells whether the session emulates MySQL 5.6 or 5.7.
+     */
+    public function legacy(): bool
+    {
+        return in_array($this->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+    }
 }

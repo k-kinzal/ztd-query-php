@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\Aggregation as Aggregates;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
@@ -84,9 +85,17 @@ final class Materialization
 
     /**
      * Resolves a column of the rows of a set operation.
+     *
+     * A column that is NULL in every operand is an empty binary string: before MySQL 8.1, which
+     * simplified how the type of several values is aggregated (Bug #34847836), a CHAR, from 8.1 a
+     * VARCHAR (verified on live 5.6, 5.7, 8.0, 8.4 and 9.1 servers).
+     * Source: https://dev.mysql.com/doc/relnotes/mysql/8.1/en/news-8-1-0.html.
      */
-    public function set(Domain $domain): Domain
+    public function set(Domain $domain, GrammarRelease $release = GrammarRelease::MySql847): Domain
     {
+        if ($domain->kind === Kind::Null && in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044], true)) {
+            return new Domain(Kind::String, Field::String, 0, 0, false, Collation::binary(), [], Coercibility::Ignorable);
+        }
         if ($domain->kind !== Kind::String) {
             return $this->nothing($domain);
         }

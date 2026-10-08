@@ -10,6 +10,7 @@ use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
@@ -71,5 +72,12 @@ final class CollationsTest extends TestCase
         $this->expectExceptionMessage("Illegal mix of collations for operation 'in'");
 
         Collations::aggregate([$swedish, $german, $german, $german], 'in', Collation::known('utf8mb4_0900_ai_ci'), true);
+    }
+
+    public function testAggregateSettlesExplicitCollationsOfDifferentSetsIn57(): void
+    {
+        $domains = [Domain::string(1, Collation::known('utf8mb3_bin'))->withCollation(Collation::known('utf8mb3_bin'), Coercibility::Explicit), Domain::string(1, Collation::known('latin1_bin'))->withCollation(Collation::known('latin1_bin'), Coercibility::Explicit)];
+
+        self::assertSame('utf8mb3_bin', Collations::aggregate($domains, '=', Collation::known('latin1_swedish_ci'), true, GrammarRelease::MySql5744)[0]->name);
     }
 }

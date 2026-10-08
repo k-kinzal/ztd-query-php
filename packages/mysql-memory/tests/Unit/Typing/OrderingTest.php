@@ -95,4 +95,18 @@ final class OrderingTest extends TestCase
     {
         self::assertSame([0, -1], [Ordering::of(Collation::known('utf16_unicode_ci'))->compare("\x00\xE9", "\x00\xC9"), Ordering::of(Collation::known('utf16_unicode_ci'))->compare("\x00a", "\x00b")]);
     }
+
+    public function testWeightsWeighEachLatin1ByteAsTheServerDoes(): void
+    {
+        $swedish = Ordering::weights()['latin1_swedish_ci'];
+
+        self::assertSame(256, strlen($swedish));
+        self::assertSame('A', $swedish[0xC3]);
+        self::assertSame(-1, Ordering::of(Collation::known('latin1_swedish_ci'))->compare("\xC3\x89clair", 'Banana'));
+    }
+
+    public function testBytesAnswersEveryByteInOrder(): void
+    {
+        self::assertSame([256, "\x00", "\xFF"], [strlen(Ordering::bytes()), Ordering::bytes()[0], Ordering::bytes()[255]]);
+    }
 }

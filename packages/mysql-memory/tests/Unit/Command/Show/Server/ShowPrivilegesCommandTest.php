@@ -29,4 +29,12 @@ final class ShowPrivilegesCommandTest extends TestCase
         self::assertContains(['ROLE_ADMIN', 'Server Admin', ''], $result->rows);
         self::assertSame([40, 31], [$result->columns[0]->length, $result->columns[0]->decimals]);
     }
+
+    public function testExecuteListsThePrivilegesOfTheRelease(): void
+    {
+        $result = (new Instance('8.0.44'))->connect()->query('SHOW PRIVILEGES')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([69, true, false], [count($result->rows), in_array('SET_USER_ID', array_column($result->rows, 0), true), in_array('SET_ANY_DEFINER', array_column($result->rows, 0), true)]);
+    }
 }

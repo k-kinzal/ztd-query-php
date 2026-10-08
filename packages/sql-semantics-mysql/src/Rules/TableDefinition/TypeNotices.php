@@ -39,7 +39,26 @@ final class TypeNotices
      */
     public function type(TypeName $type, Derivation $derivation): void
     {
-        $modifiers = $type instanceof Integral || $type instanceof Decimal || $type instanceof Floating ? $type->modifiers : [];
+        if ($type instanceof Integral || $type instanceof Decimal || $type instanceof Floating) {
+            $this->numeric($type, $derivation);
+        }
+        if ($type instanceof Temporal && $type->kind === TemporalKind::Year && $type->precision === '4') {
+            Deprecation::raise(Deprecated::YearWidth, $derivation);
+        }
+        if ($type instanceof Character && $type->national) {
+            Deprecation::raise(Deprecated::National, $derivation);
+        }
+        if ($type instanceof Character || $type instanceof Enumeration) {
+            $this->charset($type->charset, $derivation);
+        }
+    }
+
+    /**
+     * Raises the warnings of a numeric type: its display width, ZEROFILL, the digits of FLOAT and DOUBLE, and UNSIGNED on a type with a fraction.
+     */
+    public function numeric(Integral|Decimal|Floating $type, Derivation $derivation): void
+    {
+        $modifiers = $type->modifiers;
         if ($type instanceof Integral && $type->width !== null && !($type->kind === IntegralKind::TinyInt && $type->width === '1') && !in_array(NumericModifier::Zerofill, $modifiers, true)) {
             Deprecation::raise(Deprecated::DisplayWidth, $derivation);
         }
@@ -51,12 +70,6 @@ final class TypeNotices
         }
         if (($type instanceof Decimal || $type instanceof Floating) && in_array(NumericModifier::Unsigned, $modifiers, true)) {
             Deprecation::raise(Deprecated::UnsignedFraction, $derivation);
-        }
-        if ($type instanceof Temporal && $type->kind === TemporalKind::Year && $type->precision === '4') {
-            Deprecation::raise(Deprecated::YearWidth, $derivation);
-        }
-        if ($type instanceof Character || $type instanceof Enumeration) {
-            $this->charset($type->charset, $derivation);
         }
     }
 

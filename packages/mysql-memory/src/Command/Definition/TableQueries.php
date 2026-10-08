@@ -23,6 +23,7 @@ use MySqlMemory\Storage\Heap;
 use MySqlMemory\Storage\Store;
 use MySqlMemory\Storage\Writer;
 use MySqlMemory\Typing\Domain;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Dml\DuplicateHandling;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
@@ -168,6 +169,10 @@ final class TableQueries
 
     /**
      * Answers the type a column of a query takes in the table, as SQL.
+     *
+     * A NULL column is a BINARY(0) before MySQL 8.1 and a VARBINARY(0) from 8.1, and so is the
+     * column of a set operation that is NULL in every operand (verified on live 8.0 and 8.4
+     * servers).
      */
     public function type(Domain $domain): string
     {
@@ -179,7 +184,7 @@ final class TableQueries
             Field::Decimal, Field::NewDecimal => 'DECIMAL(' . $domain->precision() . ',' . $domain->decimals . ')' . $unsigned,
             Field::Float => 'FLOAT' . $unsigned,
             Field::Double => 'DOUBLE' . $unsigned,
-            Field::Null => 'VARBINARY(0)',
+            Field::Null => in_array($this->session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044], true) ? 'BINARY(0)' : 'VARBINARY(0)',
             Field::Date, Field::NewDate => 'DATE',
             Field::Time => 'TIME' . $fraction,
             Field::DateTime => 'DATETIME' . $fraction,
@@ -219,6 +224,9 @@ final class TableQueries
             $members = implode(',', array_map(static fn (string $member): string => "'" . str_replace(['\\', "'"], ['\\\\', "''"], $member) . "'", $domain->members));
 
             return ($domain->field === Field::Enum ? 'ENUM' : 'SET') . '(' . $members . ')' . $collation;
+        }
+        if ($bytes && $domain->field === Field::String && $domain->length === 0) {
+            return 'BINARY(0)';
         }
         $text = $domain->length * $domain->collation->charset->maxLength;
         $blob = in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);

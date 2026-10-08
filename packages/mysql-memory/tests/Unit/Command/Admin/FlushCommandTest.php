@@ -8,6 +8,7 @@ use MySqlMemory\Command\Admin\FlushCommand;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
+use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -76,5 +77,15 @@ final class FlushCommandTest extends TestCase
         $this->expectExceptionMessage("Replica channel 'x' does not exist.");
 
         $session->query("FLUSH RELAY LOGS FOR CHANNEL 'x'");
+    }
+
+    public function testExecuteWarnsOnceThatFlushHostsIsDeprecatedInMySql80(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $session->query('FLUSH HOSTS, STATUS, HOSTS');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1287', "'FLUSH HOSTS' is deprecated and will be removed in a future release. Please use TRUNCATE TABLE performance_schema.host_cache instead"]], $warnings->rows);
     }
 }

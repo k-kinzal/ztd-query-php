@@ -9,10 +9,13 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Lowering\Leaves;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Lowering;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier;
 use SqlSemantics\Platform\MySql\Statement\Expression\Truth;
@@ -59,5 +62,16 @@ final class QuantifiedComparisonTest extends TestCase
         $this->expectExceptionMessage('The operand of a quantified comparison needs a grouping to keep its place.');
 
         new QuantifiedComparison(new TruthTest(new NumberLiteral('1'), Truth::True), ComparisonOperator::Equal, Quantifier::All, $comparison->query);
+    }
+
+    public function testDeriveScalarComparesRowsOnlyForEqualAnyAndNotEqualAll(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $refused = $semantics->analyze('SELECT (1, 2) = ALL (SELECT 1, 2, 3)')->facts->diagnostics;
+
+        self::assertCount(1, $refused);
+        self::assertInstanceOf(OperandColumns::class, $refused[0]);
+        self::assertSame([1, 3], [$refused[0]->expected, $refused[0]->actual]);
+        self::assertSame([], $semantics->analyze('SELECT (1, 2) = ANY (SELECT 1, 2)')->facts->diagnostics);
     }
 }

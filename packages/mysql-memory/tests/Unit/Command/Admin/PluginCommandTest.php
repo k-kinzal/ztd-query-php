@@ -142,4 +142,9 @@ final class PluginCommandTest extends TestCase
     {
         self::assertSame("Can't open shared library '/usr/lib64/mysql/plugin/..' (errno: 11 /usr/lib64/mysql/plugin/..: cannot read file data: Is a directory)", (new PluginCommand())->unopened('/usr/lib64/mysql/plugin/', '..')->getMessage());
     }
+
+    public function testUnopenedReportsTheErrorNumberOfTheRelease(): void
+    {
+        self::assertSame("Can't open shared library '/p/x.so' (errno: 2 /p/x.so: cannot open shared object file: No such file or directory)", (new PluginCommand())->unopened('/p/', 'x.so', '2')->getMessage());
+    }
 }

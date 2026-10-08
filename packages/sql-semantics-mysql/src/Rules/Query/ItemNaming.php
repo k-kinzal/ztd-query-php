@@ -111,18 +111,33 @@ final class ItemNaming
     public function name(SelectExpression $item): Name|MissingInput
     {
         if ($item->alias !== null) {
-            return $item->alias;
+            return $this->identifier($item->alias);
         }
         $own = $this->own($item->expression);
         Check::input($item->layout === null || ($own === null && $item->layout->text() !== $this->canonical($item->expression)), 'A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
         if ($own instanceof ColumnUse) {
-            return $own->name;
+            return $this->identifier($own->name);
         }
         if ($own instanceof Name) {
             return $own;
         }
 
         return $own === null ? $this->stored($this->text($item), 'client') : $this->stored($own[0], $own[1]);
+    }
+
+    /**
+     * Answers an alias or a column name as the server stores it: converted from a latin1 character_set_client into the system character set.
+     *
+     * The server reads identifiers in character_set_client; a client of another character set
+     * than latin1 is taken to write UTF-8.
+     */
+    public function identifier(Name $name): Name
+    {
+        if ($this->client?->name !== 'latin1' || preg_match('/[\x80-\xFF]/', $name->value) !== 1) {
+            return $name;
+        }
+
+        return new Name($this->latin1($name->value));
     }
 
     /**

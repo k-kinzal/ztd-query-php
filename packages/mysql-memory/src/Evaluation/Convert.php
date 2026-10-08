@@ -50,7 +50,7 @@ final class Convert
             Kind::Decimal => (float) $value,
             Kind::Date, Kind::Time, Kind::DateTime => (float) Temporal::number((string) $value),
             Kind::Bit => Integer::real(self::bits((string) $value), true),
-            Kind::String, Kind::Json => (float) self::stringNumber(self::readable((string) $value, $domain), 'DOUBLE', $context, false, self::readableCharset($domain)),
+            Kind::String, Kind::Json => (float) self::stringNumber(self::readable((string) $value, $domain), 'DOUBLE', $context, false, self::readableCharset($domain), $domain->quiet),
             Kind::Null => null,
         };
     }
@@ -74,7 +74,7 @@ final class Convert
             Kind::Decimal => self::exactInteger(Decimal::round((string) $value, 0), $unsigned),
             Kind::Date, Kind::Time, Kind::DateTime => self::exactInteger(Decimal::round(Temporal::number((string) $value), 0), $unsigned),
             Kind::Bit => self::bits((string) $value),
-            Kind::String, Kind::Json => self::stringInteger(self::readable((string) $value, $domain), $context, $unsigned, self::readableCharset($domain)),
+            Kind::String, Kind::Json => self::stringInteger(self::readable((string) $value, $domain), $context, $unsigned, self::readableCharset($domain), $domain->quiet),
             Kind::Null => null,
         };
     }
@@ -98,7 +98,7 @@ final class Convert
             Kind::Decimal => (string) $value,
             Kind::Date, Kind::Time, Kind::DateTime => Temporal::number((string) $value),
             Kind::Bit => Integer::text(self::bits((string) $value), true),
-            Kind::String, Kind::Json => self::stringNumber(self::readable((string) $value, $domain), 'DECIMAL', $context, true, self::readableCharset($domain)),
+            Kind::String, Kind::Json => self::stringNumber(self::readable((string) $value, $domain), 'DECIMAL', $context, true, self::readableCharset($domain), $domain->quiet),
             Kind::Null => null,
         };
     }
@@ -108,7 +108,8 @@ final class Convert
      *
      * A string that holds no number at all, read from anything but a literal or the binary string
      * of a bit operator, warns that it is an incorrect DECIMAL value of 0
-     * (ER_TRUNCATED_WRONG_VALUE_FOR_FIELD). A string read from a literal, a bit operator or a
+     * (ER_TRUNCATED_WRONG_VALUE_FOR_FIELD; an incorrect decimal value of '' in MySQL 5.6, verified on a
+     * live 5.6.51 server). A string read from a literal, a bit operator or a
      * column also warns (ER_TRUNCATED_WRONG_VALUE) when it is not wholly a number, an empty
      * string included; a string computed by a function or read from a variable does not.
      *
@@ -128,7 +129,8 @@ final class Convert
         }
         $literal = $origin instanceof Constant || $origin instanceof Bits;
         if (!$literal && preg_match('/\A[ \t\n\r\v\f]*[+-]?\.?[0-9]/', $text) !== 1) {
-            $context->warnMessage(DataError::TruncatedWrongValueForField, DataError::TruncatedWrongValueForField->message('DECIMAL', '0', '', -1));
+            $legacy = $context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+            $context->warnMessage(DataError::TruncatedWrongValueForField, DataError::TruncatedWrongValueForField->message($legacy ? 'decimal' : 'DECIMAL', $legacy ? '' : '0', '', -1));
         }
         if (($literal || $origin instanceof ColumnRead || $origin instanceof Outer) && (!$read->complete || trim($text, " \t\n\r\v\f") === '')) {
             $context->warning(DataError::TruncatedWrongValue, 'DECIMAL', self::shown($text, self::readableCharset($domain)));
@@ -174,11 +176,12 @@ final class Convert
      * Reads the number at the start of a string as a decimal text and warns when more follows.
      *
      * @param Charset|null $charset The character set of the string, which the warning quotes it from
+     * @param bool $quiet Whether the string reads without warning, as a string function result of MySQL 5.6 and 5.7 does
      */
-    public static function stringNumber(string $text, string $kind, Context $context, bool $exact, ?Charset $charset = null): string
+    public static function stringNumber(string $text, string $kind, Context $context, bool $exact, ?Charset $charset = null, bool $quiet = false): string
     {
         $read = $exact ? NumericText::exact($text) : NumericText::real($text);
-        if (!$read->complete || ($exact && trim($text, " \t\n\r\v\f") === '')) {
+        if (!$quiet && (!$read->complete || ($exact && trim($text, " \t\n\r\v\f") === ''))) {
             $context->warning(DataError::TruncatedWrongValue, $kind, self::shown($text, $charset));
         }
 
@@ -221,13 +224,14 @@ final class Convert
      * Reads the integer at the start of a string and warns when more follows or it overflows.
      *
      * @param Charset|null $charset The character set of the string, which the warning quotes it from
+     * @param bool $quiet Whether the string reads without warning, as a string function result of MySQL 5.6 and 5.7 does
      */
-    public static function stringInteger(string $text, Context $context, bool $unsigned, ?Charset $charset = null): int
+    public static function stringInteger(string $text, Context $context, bool $unsigned, ?Charset $charset = null, bool $quiet = false): int
     {
         $read = NumericText::integer($text);
         $number = Decimal::numeric($read->number);
         $inRange = $unsigned ? Integer::unsignedRange($number) || Integer::signedRange($number) : Integer::signedRange($number);
-        if (!$read->complete || !$inRange || trim($text, " \t\n\r\v\f") === '') {
+        if (!$quiet && (!$read->complete || !$inRange || trim($text, " \t\n\r\v\f") === '')) {
             $context->warning(DataError::TruncatedWrongValue, 'INTEGER', self::shown($text, $charset));
         }
         if (!$inRange) {

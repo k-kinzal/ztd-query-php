@@ -78,4 +78,10 @@ final class BinaryLogTest extends TestCase
 
         self::assertSame([2, 3], $log->files);
     }
+
+    public function testDescribedEndsTheFormatDescriptionAByteEarlierBeforeMySql83(): void
+    {
+        self::assertSame([126, 126, 127, 127], [BinaryLog::described('8.0.44'), BinaryLog::described('8.2.0'), BinaryLog::described('8.4.7'), BinaryLog::described('9.1.0')]);
+        self::assertSame(157, (new BinaryLog())->size(1, '8.0.44'));
+    }
 }

@@ -55,4 +55,14 @@ final class LockTablesCommandTest extends TestCase
 
         $session->query('LOCK TABLES nope READ');
     }
+
+    public function testExecuteReportsATableOfAMissingDatabaseAsMissingIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1146);
+
+        $session->query('LOCK TABLES nodb.t READ');
+    }
 }

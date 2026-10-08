@@ -24,7 +24,8 @@ use SqlSemantics\Statement\Operation;
  * or of the account of the session, as its plugin stores it, clearing an expired password. An
  * account that does not exist is ER_PASSWORD_NO_MATCH. REPLACE names the current password,
  * which must match for the account of the session and is refused for another account. TO RANDOM
- * answers the generated password (verified on a live 8.4 server).
+ * answers the generated password (verified on a live 8.4 server). MySQL 5.7 warns that the PASSWORD()
+ * form is deprecated (verified on a live 5.7.44 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-password.html.
  *
  * @visibility MySqlMemory
@@ -48,8 +49,12 @@ final class SetPasswordCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof SetPassword);
+        if ($statement->password?->function === \SqlSemantics\Platform\MySql\Statement\Account\PasswordFunction::Password && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            $for = $statement->user === null ? '' : ' FOR <user>';
+            $session->diagnostics->warning(1287, "'SET PASSWORD{$for} = PASSWORD('<plaintext_password>')' is deprecated and will be removed in a future release. Please use SET PASSWORD{$for} = '<plaintext_password>' instead");
+        }
         $session->transaction->commit();
-        $names = new Names();
+        $names = new Names($session->settings()->release());
         $names->check([$statement->user]);
         $identity = $statement->user === null ? new Identity($session->user, '%') : $names->identity($statement->user, $session);
         $account = $session->instance->accounts->find($identity);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Command\Program;
 
 use MySqlMemory\Command\Program\ProgramProblems;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Session\Problems;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -185,5 +186,16 @@ final class ProgramProblemsTest extends TestCase
         $this->expectExceptionMessage("Unknown column 'zz' in 'NEW'");
 
         (new ProgramProblems())->body($operation->statement, $operation, $session, new Problems());
+    }
+
+    public function testVariablesRefusesAVariableInTheQueryOfAView(): void
+    {
+        $session = (new Instance())->connect();
+        (new ProgramProblems())->variables($session->analyze('SELECT @x')->statement);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1351);
+
+        (new ProgramProblems())->variables($session->analyze('CREATE VIEW v AS SELECT @@nosuch')->statement);
     }
 }

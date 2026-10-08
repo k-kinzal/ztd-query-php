@@ -61,7 +61,7 @@ final class Rows
         foreach ($one as $index => $element) {
             $first = $this->compiler->compile($element, $scope);
             $second = $this->compiler->compile($two[$index], $scope);
-            $pairs[] = [$first, $second, Comparator::of($first->domain(), $second->domain(), $operator->value, $this->compiler->settings->connectionCollation)];
+            $pairs[] = [$first, $second, Comparator::of($first->domain(), $second->domain(), $operator->value, $this->compiler->settings->connectionCollation, $this->compiler->settings->release())];
             $nullable = $nullable || $first->domain()->nullable || $second->domain()->nullable;
         }
 

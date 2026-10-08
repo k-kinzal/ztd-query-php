@@ -24,9 +24,9 @@ final class Messages
         | Capability::PLUGIN_AUTH_LENENC_CLIENT_DATA;
 
     /**
-     * Builds the initial handshake (protocol version 10).
+     * Builds the initial handshake (protocol version 10), naming the collation of the server's connections.
      */
-    public function handshake(string $version, int $connection, string $scramble, int $status): string
+    public function handshake(string $version, int $connection, string $scramble, int $status, int $collation = 255): string
     {
         return (new PayloadWriter())
             ->integer(10, 1)
@@ -35,7 +35,7 @@ final class Messages
             ->bytes(substr($scramble, 0, 8))
             ->integer(0, 1)
             ->integer(self::CAPABILITIES & 0xFFFF, 2)
-            ->integer(255, 1)
+            ->integer($collation & 0xFF, 1)
             ->integer($status, 2)
             ->integer(self::CAPABILITIES >> 16, 2)
             ->integer(21, 1)

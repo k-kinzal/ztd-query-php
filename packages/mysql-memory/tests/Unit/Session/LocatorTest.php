@@ -314,4 +314,48 @@ final class LocatorTest extends TestCase
         self::assertSame('field list', $locator->arrays[0][1]);
     }
 
+    public function testSelectLocatesTheQualifiersOfStarsBeforeTheItems(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+        $locator = (new Locator())->statement($session->analyze('SELECT a, t.* FROM t')->statement);
+
+        self::assertSame([[1, -1]], array_column($locator->wildcards, 1));
+    }
+
+    public function testVisitResolvesTheOperandOfInBeforeItsSubqueryWhenAskedTo(): void
+    {
+        $session = (new Instance('8.0.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT, b INT)');
+        $statement = $session->analyze('SELECT a IN (SELECT b FROM t) FROM t')->statement;
+
+        self::assertSame([['IN/ALL/ANY subquery', [1, 0, 0]], ['field list', [1, 0, 1, 1, 0]]], array_values((new Locator(true))->statement($statement)->places));
+        self::assertSame([['IN/ALL/ANY subquery', [1, 0, 1]], ['field list', [1, 0, 0, 1, 0]]], array_values((new Locator())->statement($statement)->places));
+    }
+
+    public function testSelectLocatesTheWindowsABlockNames(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+        $locator = (new Locator())->statement($session->analyze('SELECT ROW_NUMBER() OVER w FROM t WINDOW w AS (v), v AS ()')->statement);
+
+        self::assertSame([['w', [1, 0]], ['v', [6, PHP_INT_MAX]]], array_map(static fn (array $entry): array => [$entry[0]->value, $entry[1]], $locator->windows));
+    }
+
+    public function testRecordLocatesASetOperationAfterItsRightOperand(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $locator = (new Locator())->statement($session->analyze('SELECT 1 UNION SELECT 2')->statement);
+
+        self::assertCount(1, $locator->sets);
+        self::assertSame(PHP_INT_MAX, $locator->sets[0][1][count($locator->sets[0][1]) - 1]);
+    }
+
+    public function testSelectLocatesAStarWithoutTablesBeforeTheItems(): void
+    {
+        $session = (new Instance())->connect();
+        $locator = (new Locator())->statement($session->analyze('SELECT 1 IN (SELECT *)')->statement);
+
+        self::assertCount(1, $locator->stars);
+    }
 }

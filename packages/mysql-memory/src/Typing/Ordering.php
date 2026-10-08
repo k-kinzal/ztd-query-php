@@ -32,6 +32,11 @@ final class Ordering
     private static ?Transliterator $accents = null;
 
     /**
+     * @var array<string, string>|null The byte weights of the latin1 collations, read on first use
+     */
+    private static ?array $weights = null;
+
+    /**
      * @param Collation $collation The collation
      * @param Collator|null $collator The ICU collator of a Unicode collation, or null for a byte or folding order
      */
@@ -122,10 +127,39 @@ final class Ordering
     }
 
     /**
-     * Folds the case and the accents of Latin letters, as the general_ci collations weigh them.
+     * Answers the weight of each byte in the latin1 collations the server weighs byte by byte, by collation name.
+     *
+     * @return array<string, string>
+     */
+    public static function weights(): array
+    {
+        if (self::$weights === null) {
+            /** @var array<string, string> $table */
+            $table = require dirname(__DIR__, 2) . '/resources/latin1-weights.php';
+            self::$weights = array_map(static fn (string $hex): string => (string) hex2bin($hex), $table);
+        }
+
+        return self::$weights;
+    }
+
+    /**
+     * Answers the 256 bytes in order, which weights() maps.
+     */
+    public static function bytes(): string
+    {
+        return implode('', array_map(chr(...), range(0, 255)));
+    }
+
+    /**
+     * Folds the case and the accents of Latin letters, as the general_ci collations weigh them; a
+     * latin1 collation weighs each byte as the server does (verified on live 5.7.44 and 8.4.7 servers).
      */
     public function folded(string $text): string
     {
+        $weights = self::weights()[$this->collation->name] ?? null;
+        if ($weights !== null) {
+            return strtr($text, self::bytes(), $weights);
+        }
         if ($this->collation->charset->maxLength === 1 || !mb_check_encoding($text, 'UTF-8')) {
             return strtoupper($text);
         }

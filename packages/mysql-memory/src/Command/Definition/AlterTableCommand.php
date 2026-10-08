@@ -136,7 +136,7 @@ final class AlterTableCommand implements Command
             throw SchemaError::WrongObject->error($schema, $name, 'BASE TABLE');
         }
         if ($table === null) {
-            throw $session->instance->dictionary->schema($schema) === null ? QueryError::BadDatabase->error($schema) : QueryError::NoSuchTable->error($schema, $name);
+            throw $session->instance->dictionary->schema($schema) === null ? Errors::unknown($schema, $name, $session->settings()->release()) : QueryError::NoSuchTable->error($schema, $name);
         }
 
         return $table;

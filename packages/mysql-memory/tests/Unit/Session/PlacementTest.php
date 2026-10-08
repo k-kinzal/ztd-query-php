@@ -7,11 +7,13 @@ namespace Tests\Unit\Session;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Placement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 
 #[CoversClass(Placement::class)]
@@ -65,5 +67,43 @@ final class PlacementTest extends TestCase
         self::assertSame((new Walker())->find($query, Select::class)[1], (new Placement())->first($query));
         self::assertSame((new Walker())->find($insert, Select::class)[0], (new Placement())->first($insert));
         self::assertNull((new Placement())->first($session->analyze('UPDATE t SET a = (SELECT 1)')->statement));
+    }
+
+    public function testCachedRefusesAQueryCacheModifierOutsideTheFirstBlockIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1234);
+        $this->expectExceptionMessage("Incorrect usage/placement of 'SQL_NO_CACHE'");
+
+        (new Placement())->cached($session->analyze('SELECT 1 UNION SELECT SQL_NO_CACHE 1')->statement, GrammarRelease::MySql5744);
+    }
+
+    public function testCachedTakesTheModifiersOfTheFirstBlock(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        (new Placement())->cached($session->analyze('SELECT SQL_CACHE 1 UNION SELECT 2')->statement, GrammarRelease::MySql5744);
+        $result = $session->query('SELECT SQL_CACHE 1 UNION SELECT 2')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1'], ['2']], $result->rows);
+    }
+
+    public function testUnitedRefusesIntoInAUnionOperandButTheLastIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage('Incorrect usage of UNION and INTO');
+
+        (new Placement())->united($session->analyze('(SELECT 1 INTO @a) UNION SELECT 2')->statement, GrammarRelease::MySql5744);
+    }
+
+    public function testBlocksAnswersTheBlocksOfAQueryThroughParenthesesAndUnions(): void
+    {
+        $session = (new Instance())->connect();
+
+        self::assertCount(3, (new Placement())->blocks($session->analyze('(SELECT 1) UNION (SELECT 2 UNION SELECT 3)')->statement));
     }
 }

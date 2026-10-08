@@ -59,6 +59,9 @@ final class Instance
     private int $connections = 0;
 
     /**
+     * A server of MySQL 5.6 or 5.7 starts with latin1 connections, as it greets its clients in latin1
+     * (verified on live 5.6.51 and 5.7.44 servers).
+     *
      * @param string $version The MySQL release emulated, as `8.4.7`
      * @param array<string, string|int> $globals Global variable values the server starts with, by name
      * @param list<string> $databases Databases created at start, besides the system ones
@@ -66,8 +69,13 @@ final class Instance
      */
     public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null)
     {
-        $this->catalog = SystemVariables::of(GrammarRelease::tryFrom('mysql-' . $version) ?? GrammarRelease::MySql847);
-        $this->globals = new Globals(array_change_key_case($globals, CASE_LOWER));
+        $release = GrammarRelease::tryFrom('mysql-' . $version) ?? GrammarRelease::MySql847;
+        $this->catalog = SystemVariables::of($release);
+        $globals = array_change_key_case($globals, CASE_LOWER);
+        if ($release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744) {
+            $globals += ['character_set_client' => 'latin1', 'character_set_connection' => 'latin1', 'character_set_results' => 'latin1', 'collation_connection' => 'latin1_swedish_ci'];
+        }
+        $this->globals = new Globals($globals);
         $this->dictionary = new Dictionary();
         $this->accounts = Accounts::installed();
         $this->registry = new Registry();

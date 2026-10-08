@@ -149,4 +149,89 @@ final class LocationsTest extends TestCase
         self::assertSame([$where, ['where clause', [2, 1]]], Locations::first([1 => [$order, ['order clause', [6, 0]]], 2 => [$where, ['where clause', [2, 1]]], 3 => [$again, ['where clause', [2, 1]]]]));
         self::assertNull(Locations::first([]));
     }
+
+    public function testWildcardsPlacesAnUnknownQualifierBeforeTheItemsOfItsBlock(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+        $operation = $session->analyze('SELECT zz, q.* FROM t');
+        $located = array_values((new Locations())->wildcards((new \MySqlMemory\Session\Locator())->statement($operation->statement), $operation->facts->diagnostics, []));
+
+        self::assertCount(1, $located);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier::class, $located[0][0]);
+        self::assertSame(['field list', [1, -1]], $located[0][1]);
+        $error = $session->run('SELECT zz, q.* FROM t')[0];
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame([1051, "Unknown table 'q'"], [$error->getCode(), $error->getMessage()]);
+    }
+
+    public function testWidthsPlacesTheWidthAfterTheOperandAndTheSubqueryInMySql80(): void
+    {
+        $session = (new Instance('8.0.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT, b INT)');
+        $operation = $session->analyze('SELECT 1 = ALL (SELECT a, b FROM t) FROM t');
+        $located = array_values((new Locations())->widths($operation, (new \MySqlMemory\Session\Locator(true))->statement($operation->statement), $operation->facts->diagnostics, []));
+
+        self::assertSame(['field list', [1, 0, 2]], $located[0][1]);
+        $wide = $session->run('SELECT zz = ALL (SELECT a, b FROM t) FROM t')[0];
+        $unknown = $session->run('SELECT zz IN (SELECT yy FROM t) FROM t')[0];
+        self::assertInstanceOf(SqlError::class, $wide);
+        self::assertInstanceOf(SqlError::class, $unknown);
+        self::assertSame([[1054, "Unknown column 'zz' in 'IN/ALL/ANY subquery'"], [1054, "Unknown column 'zz' in 'IN/ALL/ANY subquery'"]], [[$wide->getCode(), $wide->getMessage()], [$unknown->getCode(), $unknown->getMessage()]]);
+    }
+
+    public function testWindowsPlacesAWindowNameWhereTheServerChecksIt(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+        $operation = $session->analyze('SELECT ROW_NUMBER() OVER w2, ROW_NUMBER() OVER (w3) FROM t WINDOW w AS (y)');
+        $located = array_values((new Locations())->windows((new \MySqlMemory\Session\Locator())->statement($operation->statement), $operation->facts->diagnostics, []));
+        $late = $session->run('SELECT zz FROM t WINDOW w AS (y)')[0];
+        $early = $session->run('SELECT ROW_NUMBER() OVER w2, zz FROM t')[0];
+
+        self::assertSame([[1, 0], [6, PHP_INT_MAX], [6, PHP_INT_MAX]], array_map(static fn (array $entry): array => $entry[1][1], $located));
+        self::assertInstanceOf(SqlError::class, $late);
+        self::assertInstanceOf(SqlError::class, $early);
+        self::assertSame([1054, 3579], [$late->getCode(), $early->getCode()]);
+    }
+
+    public function testSetsPlacesAColumnCountMismatchOnceTheRightOperandIsResolved(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $operation = $session->analyze('SELECT nofn() UNION SELECT 1, 2');
+        $located = array_values((new Locations())->sets($operation, (new \MySqlMemory\Session\Locator())->statement($operation->statement), $operation->facts->diagnostics, []));
+        $function = $session->run('SELECT nofn() UNION SELECT 1, 2')[0];
+        $count = $session->run('SELECT 1 UNION SELECT 1, 2 UNION SELECT zz')[0];
+
+        self::assertCount(1, $located);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch::class, $located[0][0]);
+        self::assertSame(PHP_INT_MAX, $located[0][1][1][count($located[0][1][1]) - 1]);
+        self::assertInstanceOf(SqlError::class, $function);
+        self::assertInstanceOf(SqlError::class, $count);
+        self::assertSame([1305, 1222], [$function->getCode(), $count->getCode()]);
+    }
+
+    public function testStarsReportsAStarWithoutTablesBeforeTheOperandOfAnyOrAll(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1096);
+
+        $session->query('SELECT zz = ALL (SELECT *) FROM t');
+    }
+
+    public function testExistingAnswersTheBlocksExistsTests(): void
+    {
+        $session = (new Instance())->connect();
+
+        self::assertCount(2, Locations::existing($session->analyze('SELECT EXISTS (SELECT * UNION SELECT 1)')));
+        $result = $session->query('SELECT EXISTS (SELECT *)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
 }

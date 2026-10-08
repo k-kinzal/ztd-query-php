@@ -48,6 +48,6 @@ final class ShowPrivilegesCommand implements Command
             Heading::text('Comment', Field::VarString, 64, ColumnFlag::NotNull->value, 31),
         ];
 
-        return (new Listing($headings))->sent(ServerCatalog::shared()->privileges, $context);
+        return (new Listing($headings))->sent(ServerCatalog::of($session->instance->version)->privileges, $context);
     }
 }

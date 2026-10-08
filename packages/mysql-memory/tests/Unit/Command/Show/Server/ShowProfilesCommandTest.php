@@ -6,6 +6,7 @@ namespace Tests\Unit\Command\Show\Server;
 
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\Server\ShowProfilesCommand;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -48,5 +49,18 @@ final class ShowProfilesCommandTest extends TestCase
     public function testHeadingsOrderTheColumnsAsTheTable(): void
     {
         self::assertSame(['Status', 'Duration', 'CPU_user', 'CPU_system', 'Source_function', 'Source_file', 'Source_line'], array_map(static fn (Heading $heading): string => $heading->name, (new ShowProfilesCommand())->headings([ProfileSection::Source, ProfileSection::Cpu])));
+    }
+
+    public function testExecuteRefusesALimitNamingAVariableBeforeWarning(): void
+    {
+        $session = (new Instance())->connect();
+        $error = $session->run('SHOW PROFILE FOR QUERY 1 LIMIT abc')[0];
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([1327, 'Undeclared variable: abc'], [$error->getCode(), $error->getMessage()]);
+        self::assertSame([['Error', '1327', 'Undeclared variable: abc']], $warnings->rows);
     }
 }

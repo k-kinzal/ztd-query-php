@@ -144,4 +144,42 @@ final class ReplicationShowCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([[32929, 63], [1, 255]], [[$result->columns[0]->flags, $result->columns[0]->charset], [$result->columns[1]->flags, $result->columns[1]->charset]]);
     }
+
+    public function testExecuteNamesTheColumnsOfShowSlaveStatusAndHostsInTheLegacyVocabularyAndWarns(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $status = $session->query('SHOW SLAVE STATUS')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        $hosts = $session->query('SHOW SLAVE HOSTS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $status);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertInstanceOf(ResultSet::class, $hosts);
+        self::assertSame(['Slave_IO_State', 'Master_Host', 'Replicate_Do_DB', 'Get_master_public_key'], [$status->columns[0]->name, $status->columns[1]->name, $status->columns[12]->name, $status->columns[58]->name]);
+        self::assertSame(['Server_id', 'Host', 'Port', 'Master_id', 'Slave_UUID'], array_map(static fn ($column): string => $column->name, $hosts->columns));
+        self::assertSame([['Warning', '1287', "'SHOW SLAVE STATUS' is deprecated and will be removed in a future release. Please use SHOW REPLICA STATUS instead"]], $warnings->rows);
+    }
+
+    public function testExecuteListsTheShorterFormatDescriptionOfMySql80(): void
+    {
+        $result = (new Instance('8.0.44'))->connect()->query('SHOW BINLOG EVENTS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['binlog.000001', '4', 'Format_desc', '1', '126', 'Server ver: 8.0.44, Binlog ver: 4'], ['binlog.000001', '126', 'Previous_gtids', '1', '157', '']], $result->rows);
+    }
+
+    public function testLegacyNamesColumnsWithMasterAndSlave(): void
+    {
+        self::assertSame([['Read_Master_Log_Pos', Field::LongLong, 11], ['Replicate_Do_DB', 20], ['Server_id', Field::Long, 11]], (new ReplicationShowCommand())->legacy([['Read_Source_Log_Pos', Field::LongLong, 11], ['Replicate_Do_DB', 20], ['Server_Id', Field::Long, 11]]));
+    }
+
+    public function testExecuteRefusesTheRelayLogOfA57ServerWithoutAnId(): void
+    {
+        $session = (new Instance('5.7.44', ['server_id' => '0']))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1794);
+
+        $session->query('SHOW RELAYLOG EVENTS');
+    }
 }

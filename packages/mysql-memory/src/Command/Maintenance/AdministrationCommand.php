@@ -36,7 +36,8 @@ use SqlSemantics\Statement\Operation;
  *
  * Each statement answers rows of Table, Op, Msg_type and Msg_text for each table in written
  * order, after it commits the open transaction. A table that does not exist is an Error row and a
- * failed status; a database that does not exist is an Error row and a "Corrupt" error. The tables
+ * failed status; a database that does not exist is an Error row and a "Corrupt" error (in MySQL 5.6
+ * and 5.7 a missing table, verified on live 5.6.51 and 5.7.44 servers). The tables
  * are InnoDB tables: CHECK and ANALYZE report OK, OPTIMIZE recreates the table, and REPAIR, CACHE
  * INDEX and LOAD INDEX are notes that the engine does not support them. A view is checked, and
  * the other operations refuse it as no base table. CACHE INDEX names DEFAULT,
@@ -65,6 +66,9 @@ final class AdministrationCommand implements Command
 
     /**
      * Runs the operation on each table and answers its rows.
+     *
+     * MySQL 5.6 and 5.7 report the warnings raised while the statement is parsed as rows of the
+     * first table, before its own (verified on a live 5.7.44 server).
      */
     #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
@@ -79,9 +83,17 @@ final class AdministrationCommand implements Command
             return new ResultSet(self::columns($session), [['', 'histogram', 'Error', 'Only one table can be specified while modifying histogram statistics.']]);
         }
         $operation = $this->operation($statement);
+        $parsed = $session->settings()->legacy() ? $session->diagnostics->conditions : [];
+        if ($parsed !== []) {
+            $session->diagnostics->clear();
+        }
         $rows = [];
         foreach ($names as [$name, $partitioned]) {
-            array_push($rows, ...$this->report($operation, $histogram, $name, $partitioned, $session));
+            $report = $this->report($operation, $histogram, $name, $partitioned, $session);
+            $label = $report[0][0] ?? '';
+            $report = [...array_map(static fn (array $condition): array => [$label, $operation, $condition[0], $condition[2]], $parsed), ...$report];
+            $parsed = [];
+            array_push($rows, ...$report);
         }
 
         return new ResultSet(self::columns($session), $rows);
@@ -130,7 +142,7 @@ final class AdministrationCommand implements Command
             $failure = 'Partition management on a not partitioned table is not possible';
         }
 
-        return $this->rows($label, $operation, $failure === null ? $this->outcome($operation) : [['Error', $failure], $session->instance->dictionary->schema($schema) === null ? ['error', 'Corrupt'] : ['status', 'Operation failed']]);
+        return $this->rows($label, $operation, $failure === null ? $this->outcome($operation) : [['Error', $failure], $session->instance->dictionary->schema($schema) === null && !$session->settings()->legacy() ? ['error', 'Corrupt'] : ['status', 'Operation failed']]);
     }
 
     /**
@@ -184,7 +196,7 @@ final class AdministrationCommand implements Command
     public function failure(Session $session, string $schema, QualifiedName $name, ?StoredTable $table): ?string
     {
         if ($session->instance->dictionary->schema($schema) === null) {
-            return QueryError::BadDatabase->message($schema);
+            return \MySqlMemory\Session\Problem\Errors::unknown($schema, $name->name->value, $session->settings()->release())->getMessage();
         }
 
         return $table === null ? QueryError::NoSuchTable->message($schema, $name->name->value) : null;

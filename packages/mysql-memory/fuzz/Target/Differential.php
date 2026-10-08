@@ -33,6 +33,7 @@ final class Differential
      * @param string $nativePassword The password of the MySQL server
      * @param string $memory The PDO DSN of mysql-memory, without a database
      * @param bool $emulate Whether PDO emulates prepared statements
+     * @param string $version The MySQL release of both servers, as `8.4.7`
      */
     public function __construct(
         public readonly string $native,
@@ -40,6 +41,7 @@ final class Differential
         public readonly string $nativePassword,
         public readonly string $memory,
         public readonly bool $emulate = true,
+        public readonly string $version = '8.4.7',
     ) {
     }
 
@@ -110,7 +112,30 @@ final class Differential
         [$user, $host] = explode('@', $current === '' ? $this->nativeUser . '@%' : $current, 2) + [1 => '%'];
         $quoted = $guard->quote($user) . '@' . $guard->quote($host);
         $password = $guard->quote($this->nativePassword);
-        foreach ([
+        foreach ($this->repairs($quoted, $password) as $statement) {
+            $guard->exec($statement);
+        }
+    }
+
+    /**
+     * Answers the statements that restore the account and the global modes on the release under test.
+     *
+     * MySQL 5.6 lacks CREATE USER IF NOT EXISTS, ALTER USER IDENTIFIED BY, roles, offline_mode and
+     * super_read_only: GRANT creates the account there and SET PASSWORD restores its password.
+     * MySQL 5.7 lacks roles.
+     *
+     * @return list<string>
+     */
+    public function repairs(string $quoted, string $password): array
+    {
+        if (str_starts_with($this->version, '5.6.')) {
+            return [
+                "GRANT ALL ON *.* TO {$quoted} IDENTIFIED BY {$password} WITH GRANT OPTION",
+                "SET PASSWORD FOR {$quoted} = PASSWORD({$password})",
+                'SET GLOBAL read_only = OFF',
+            ];
+        }
+        $statements = [
             "CREATE USER IF NOT EXISTS {$quoted} IDENTIFIED BY {$password}",
             "ALTER USER {$quoted} IDENTIFIED BY {$password} ACCOUNT UNLOCK PASSWORD EXPIRE NEVER",
             "GRANT ALL ON *.* TO {$quoted} WITH GRANT OPTION",
@@ -118,9 +143,9 @@ final class Differential
             'SET GLOBAL offline_mode = OFF',
             'SET GLOBAL super_read_only = OFF',
             'SET GLOBAL read_only = OFF',
-        ] as $statement) {
-            $guard->exec($statement);
-        }
+        ];
+
+        return str_starts_with($this->version, '5.7.') ? array_values(array_diff($statements, ["SET DEFAULT ROLE NONE TO {$quoted}"])) : $statements;
     }
 
     /**

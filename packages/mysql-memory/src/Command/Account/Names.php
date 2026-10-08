@@ -12,6 +12,7 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Error\StatementError;
 use MySqlMemory\Session\Diagnostics;
 use MySqlMemory\Session\Session;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterDefaultRole;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
 use SqlSemantics\Platform\MySql\Statement\Account\CreateRole;
@@ -58,6 +59,13 @@ use SqlSemantics\Statement\Statement;
 final class Names
 {
     /**
+     * @param GrammarRelease $release The release whose limits the names follow
+     */
+    public function __construct(public readonly GrammarRelease $release = GrammarRelease::MySql847)
+    {
+    }
+
+    /**
      * Tells whether a statement is executed by an account command, which raises the problems of the statement itself, in the order of the server.
      */
     public static function owns(Statement $statement): bool
@@ -67,6 +75,20 @@ final class Names
             || $statement instanceof GrantPrivileges || $statement instanceof GrantRoles || $statement instanceof GrantProxy || $statement instanceof RevokePrivileges
             || $statement instanceof RevokeRoles || $statement instanceof RevokeProxy || $statement instanceof RevokeAll || $statement instanceof SetRole
             || $statement instanceof SetDefaultRole || $statement instanceof ShowGrants || $statement instanceof ShowCreateUser;
+    }
+
+    /**
+     * Answers the longest user name and host name the release takes: 32 and 255 characters, 16 and 60 in MySQL 5.6, 32 and 60 in 5.7 (verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @return array{int, int}
+     */
+    public function limits(): array
+    {
+        return match (true) {
+            $this->release === GrammarRelease::MySql5651 => [16, 60],
+            $this->release === GrammarRelease::MySql5744 => [32, 60],
+            default => [32, 255],
+        };
     }
 
     /**
@@ -83,12 +105,13 @@ final class Names
                 continue;
             }
             $user = $name->user->value;
-            if (mb_strlen($user, 'UTF-8') > 32) {
-                throw DataError::WrongStringLength->error($this->cut($user), 'user name', 32);
+            [$users, $hosts] = $this->limits();
+            if (mb_strlen($user, 'UTF-8') > $users) {
+                throw DataError::WrongStringLength->error($this->cut($user), 'user name', $users);
             }
             $host = $name->host->value ?? '%';
-            if (strlen($host) > 255) {
-                throw DataError::WrongStringLength->error($this->cut($host), 'host name', 255);
+            if (strlen($host) > $hosts) {
+                throw DataError::WrongStringLength->error($this->cut($host), 'host name', $hosts);
             }
             if (str_contains($host, '@')) {
                 throw new SqlError(StatementError::UnknownError, "Malformed hostname (illegal symbol: '@')");

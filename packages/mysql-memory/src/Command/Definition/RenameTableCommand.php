@@ -29,7 +29,8 @@ use SqlSemantics\Statement\Operation;
  * ER_TOO_LONG_IDENT. Then each rename in order: the databases must exist, the new name must be
  * free, and the table must exist; a temporary table is not renamed by this statement. A later
  * rename sees the names the earlier ones produced. The statement commits the open transaction.
- * Every rule was verified on a live 8.4 server.
+ * Every rule was verified on a live 8.4 server. MySQL 5.6 and 5.7 look for the file of the table
+ * first and report a missing table as a missing .frm file (verified on live 5.6.51 and 5.7.44 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/rename-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/identifier-length.html.
  *
@@ -54,15 +55,8 @@ final class RenameTableCommand implements Command
     {
         $statement = $operation->statement;
         assert($statement instanceof RenameTable);
-        foreach ($statement->renamings as $renaming) {
-            $this->valid($renaming->to->name->value);
-        }
         $database = $session->variables->database;
-        foreach ($statement->renamings as $renaming) {
-            if (($renaming->from->schema === null || $renaming->to->schema === null) && $database === '') {
-                throw QueryError::NoDatabase->error();
-            }
-        }
+        $this->written($statement, $database);
         $session->transaction->commit();
         $dictionary = $session->instance->dictionary;
         $names = $this->names($dictionary);
@@ -70,6 +64,9 @@ final class RenameTableCommand implements Command
         foreach ($statement->renamings as $renaming) {
             $from = [$renaming->from->schema->value ?? $database, $renaming->from->name->value];
             $to = [$renaming->to->schema->value ?? $database, $renaming->to->name->value];
+            if ($session->settings()->legacy() && !isset($names[$from[0] . "\0" . $from[1]])) {
+                throw SchemaError::FileNotFound->error('./' . $from[0] . '/' . $from[1] . '.frm', 2, 'No such file or directory');
+            }
             foreach ([$from[0], $to[0]] as $schema) {
                 if ($dictionary->schema($schema) === null) {
                     throw QueryError::BadDatabase->error($schema);
@@ -117,6 +114,24 @@ final class RenameTableCommand implements Command
         }
 
         return $names;
+    }
+
+    /**
+     * Refuses what the server refuses while it reads the statement: first a new name no table
+     * can have, then an unqualified name when no database is selected.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a new name is invalid or a name needs a database
+     */
+    public function written(RenameTable $statement, string $database): void
+    {
+        foreach ($statement->renamings as $renaming) {
+            $this->valid($renaming->to->name->value);
+        }
+        foreach ($statement->renamings as $renaming) {
+            if (($renaming->from->schema === null || $renaming->to->schema === null) && $database === '') {
+                throw QueryError::NoDatabase->error();
+            }
+        }
     }
 
     /**

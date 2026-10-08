@@ -17,6 +17,7 @@ use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Typing\Domain;
+use MySqlMemory\Typing\Quietness;
 use ReflectionClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
@@ -73,6 +74,7 @@ use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
@@ -181,7 +183,7 @@ final class Compiler
             $this->assigned = array_values(array_unique(array_map(static fn (VariableAssignment $assignment): string => strtolower($assignment->target->name->value), (new Walker())->find($this->planner->statement, VariableAssignment::class))));
         }
 
-        return Constancy::of($node, $this->facts, $correlation, $this->assigned, $assignmentsVary);
+        return Constancy::of($node, $this->facts, $correlation, $this->assigned, $assignmentsVary, $this->settings->legacy());
     }
 
     /**
@@ -260,6 +262,9 @@ final class Compiler
         };
         $type = $fact->type;
         $domain = $type instanceof Known && $type->descriptor instanceof Resolved ? Domain::of($type->descriptor, $nullable)->withNumericBytes($evaluable->domain()->numericBytes && $type->descriptor->kind === $evaluable->domain()->kind) : $evaluable->domain()->withNullable($nullable);
+        if ($domain->kind === Kind::String && $this->settings->legacy()) {
+            $domain = ($node instanceof SystemVariable ? $evaluable->domain()->withNullable($nullable) : $domain)->withQuiet(!(new Quietness())->loud($node));
+        }
 
         return $domain === $evaluable->domain() ? $evaluable : new Retyped($evaluable, $domain);
     }

@@ -331,4 +331,17 @@ final class TablespaceCommandTest extends TestCase
 
         self::assertSame(['16384', '1024'], [(new TablespaceCommand())->size($first), (new TablespaceCommand())->size($second)]);
     }
+
+    public function testActivateRefusesTheEngineBeforeTheTablespace(): void
+    {
+        $session = (new Instance())->connect();
+        $unknown = $session->run('ALTER UNDO TABLESPACE nope SET INACTIVE ENGINE nope')[0];
+        $other = $session->run('ALTER UNDO TABLESPACE nope SET INACTIVE ENGINE MyISAM')[0];
+        $missing = $session->run('ALTER UNDO TABLESPACE nope SET INACTIVE ENGINE InnoDB')[0];
+
+        self::assertInstanceOf(SqlError::class, $unknown);
+        self::assertInstanceOf(SqlError::class, $other);
+        self::assertInstanceOf(SqlError::class, $missing);
+        self::assertSame([[1286, "Unknown storage engine 'nope'"], [1478, "Table storage engine 'MyISAM' does not support the create option 'ALTER UNDO TABLESPACE'"], [3510, "Tablespace nope doesn't exist."]], [[$unknown->getCode(), $unknown->getMessage()], [$other->getCode(), $other->getMessage()], [$missing->getCode(), $missing->getMessage()]]);
+    }
 }
