@@ -166,4 +166,9 @@ final class DeclaredTest extends TestCase
 
         self::assertSame([0, 0, 11], [$declared->tableFunction(new Character(CharacterKind::VarChar, '5'))->decimals, $declared->tableFunction(new Elementary(ElementaryKind::Json))->decimals, $declared->tableFunction(new Integral(IntegralKind::Int))->length]);
     }
+    public function testDomainKeepsTheGeometryFieldOfSpatialColumns(): void
+    {
+        $type = new \SqlSemantics\Platform\MySql\Statement\Type\Spatial(\SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind::Point);
+        self::assertEquals(new Domain(Kind::String, Field::Geometry, 4294967295, 0, false, Collation::binary()), (new Declared(Collation::known('latin1_swedish_ci')))->domain($type));
+    }
 }

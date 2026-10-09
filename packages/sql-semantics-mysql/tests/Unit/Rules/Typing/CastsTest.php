@@ -34,7 +34,7 @@ final class CastsTest extends TestCase
         self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 23, 3), $casts->cast(Domain::integer(), new CastTarget(CastKind::DateTime, '3')));
         self::assertEquals(Domain::string(22, Collation::known('latin1_bin')), $casts->cast(Domain::double(), new CastTarget(CastKind::Char)));
         self::assertEquals(Domain::string(3, Collation::binary()), $casts->cast(Domain::integer(), new CastTarget(CastKind::Binary, '3')));
-        self::assertNull($casts->cast(Domain::integer(), new CastTarget(CastKind::Point)));
+        self::assertEquals(new Domain(Kind::String, Field::Geometry, 4294967295, 0, false, Collation::binary(), [], Coercibility::Coercible), $casts->cast(Domain::integer(), new CastTarget(CastKind::Point)));
     }
 
     public function testDecimalTakesTheWrittenPrecisionAndScaleOrTenAndZero(): void
@@ -105,7 +105,7 @@ final class CastsTest extends TestCase
 
     public function testCastMakesAYearOfFiveDigitsIn80(): void
     {
-        self::assertSame([5, 4], [(new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql8044))->cast(Domain::integer(), new CastTarget(CastKind::Year))?->length, (new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->cast(Domain::integer(), new CastTarget(CastKind::Year))?->length]);
+        self::assertSame([5, 4], [(new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql8044))->cast(Domain::integer(), new CastTarget(CastKind::Year))->length, (new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->cast(Domain::integer(), new CastTarget(CastKind::Year))->length]);
     }
 
     public function testStringIsAMediumBlobBeyond65535Bytes(): void

@@ -138,6 +138,7 @@ final class Calls
         }
         $json = str_starts_with(strtoupper($name), 'JSON_');
         $compiled = array_map(fn (Scalar $argument): Evaluable => $json && $this->compiler->jsons->boolean($argument) ? new Predicate($this->compiler->compile($argument, $scope)) : $this->compiler->compile($argument, $scope), $arguments);
+        \MySqlMemory\Evaluation\Function\Spatial\Constructors::validate($name, $compiled, $arguments);
         if ($routine->resolve !== null) {
             $compiled = ($routine->resolve)(new Frame($this->compiler->connection->context), $compiled, array_map(fn (Scalar $argument): bool => $this->compiler->constancy($argument) === Constancy::Resolved || ($routine->settled && $this->compiler->constancy($argument) === Constancy::Statement), $arguments));
         }

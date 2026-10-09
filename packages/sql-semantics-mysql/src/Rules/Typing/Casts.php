@@ -26,7 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  * temporal targets keep the fractional digits written; CHAR is a string in the connection
  * collation or the character set written, BINARY a binary string, both as long as written or as
  * the operand written as text; JSON is JSON; YEAR is four digits wide, five in MySQL 8.0 (verified
- * on a live 8.0.44 server). The spatial targets have no resolved type.
+ * on a live 8.0.44 server). The spatial targets have the GEOMETRY field type and binary collation.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/cast-functions.html.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -42,9 +42,9 @@ final class Casts
     }
 
     /**
-     * Resolves the conversion of an operand to a target, or answers null for a spatial target.
+     * Resolves the conversion of an operand to a target.
      */
-    public function cast(Domain $operand, CastTarget $target): ?Domain
+    public function cast(Domain $operand, CastTarget $target): Domain
     {
         $decimals = $target->length === null ? 0 : (int) $target->length;
         $fraction = $decimals > 0 ? $decimals + 1 : 0;
@@ -66,7 +66,7 @@ final class Casts
             CastKind::Binary => $this->string($operand, $target, Collation::binary()),
             CastKind::Json => JsonResults::json($this->release),
             CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiLineString,
-            CastKind::MultiPolygon, CastKind::GeometryCollection => null,
+            CastKind::MultiPolygon, CastKind::GeometryCollection => new Domain(Kind::String, Field::Geometry, 4294967295, 0, false, Collation::binary(), [], Coercibility::Coercible),
         };
     }
 
@@ -79,7 +79,7 @@ final class Casts
      * live 8.4 server).
      * Source: https://dev.mysql.com/doc/refman/8.4/en/json-search-functions.html#function_json-value.
      */
-    public function returning(?CastTarget $target): ?Domain
+    public function returning(?CastTarget $target): Domain
     {
         $text = Collation::known('utf8mb4_0900_bin');
         if ($target === null) {
@@ -97,7 +97,7 @@ final class Casts
             return Domain::string($length ?? 4294967295, $collation, $length === null ? Field::LongBlob : Field::VarString, Coercibility::Coercible);
         }
         $domain = $this->cast(Domain::null(), $target);
-        if ($domain === null || !$domain->kind->temporal()) {
+        if (!$domain->kind->temporal()) {
             return $domain;
         }
 

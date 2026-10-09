@@ -115,6 +115,7 @@ final class Declared
             $type instanceof Binary => $this->binary($type),
             $type instanceof Temporal => $this->temporal($type),
             $type instanceof Enumeration => $this->enumeration($type, $collation),
+            $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Spatial => new Domain(Kind::String, Field::Geometry, 4294967295, 0, false, Collation::binary()),
             $type instanceof Elementary => $this->elementary($type),
             default => new Domain(Kind::String, Field::Blob, 4294967295, Domain::NOT_FIXED, false, Collation::binary()),
         };

@@ -184,7 +184,7 @@ final class Jsons
      */
     public static function document(int|float|string|null $value, Domain $domain, int $position, string $function): ?JsonNode
     {
-        if ($domain->kind !== Kind::String && $domain->kind !== Kind::Json && $domain->kind !== Kind::Null) {
+        if ($domain->field === Field::Geometry || ($domain->kind !== Kind::String && $domain->kind !== Kind::Json && $domain->kind !== Kind::Null)) {
             throw DataError::InvalidJsonType->error($position, $function);
         }
         if ($value === null) {
@@ -238,7 +238,7 @@ final class Jsons
      */
     public static function read(Evaluable $argument, Frame $frame, int $position, string $function): ?JsonNode
     {
-        if (!in_array($argument->domain()->kind, [Kind::String, Kind::Json, Kind::Null], true)) {
+        if ($argument->domain()->field === Field::Geometry || !in_array($argument->domain()->kind, [Kind::String, Kind::Json, Kind::Null], true)) {
             throw DataError::InvalidJsonType->error($position, $function);
         }
 

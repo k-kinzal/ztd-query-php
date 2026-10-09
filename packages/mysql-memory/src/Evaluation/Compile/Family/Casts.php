@@ -40,6 +40,10 @@ final class Casts
      */
     public function cast(Evaluable $operand, CastTarget $target, Scalar $node): Evaluable
     {
+        if ($this->compiler->domain($node)->field === Field::Geometry) {
+            return new \MySqlMemory\Evaluation\Function\Spatial\SpatialCast($operand, $this->compiler->domain($node), $target->kind->value);
+        }
+
         return new Conversion($operand, $this->compiler->domain($node)->withSource($target->kind === CastKind::Json ? 'cast_as_json' : ''), $target->length !== null && in_array($target->kind, [CastKind::Char, CastKind::NationalChar, CastKind::Binary], true) ? (int) $target->length : null, $target->kind->value);
     }
 

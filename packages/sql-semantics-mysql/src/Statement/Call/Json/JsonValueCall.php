@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Call\Json;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Typing\Casts;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
@@ -73,7 +72,7 @@ final class JsonValueCall implements Scalar
 
         $domain = (new Casts(Settings::of($derivation->context), $derivation->context->profile->grammar))->returning($this->returning);
 
-        return new ScalarFact(new Known($domain ?? $this->returning ?? TypeClass::Character->descriptor()), Nullability::Nullable);
+        return new ScalarFact(new Known($domain), Nullability::Nullable);
     }
 
     /**

@@ -43,6 +43,10 @@ enum DataError: int implements ErrorCode
     case NoDefaultForField = 1364;
     case DivisionByZero = 1365;
     case TruncatedWrongValueForField = 1366;
+    case IllegalNonGeometric = 1367;
+    case GisInvalidData = 3037;
+    case InvalidSpatialCast = 4032;
+    case PolygonRingDirection = 4033;
     case DataTooLong = 1406;
     case WrongValueForType = 1411;
     case DatetimeFunctionOverflow = 1441;
