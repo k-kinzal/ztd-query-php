@@ -218,7 +218,8 @@ final class Definitions
             $collation = Collation::named($specification->collation->name->value);
         }
         $resolved = $declaration?->type;
-        $domain = $resolved instanceof Resolved ? $this->members(Domain::of($resolved, true)) : $declared->domain($specification->dataType(), $collation);
+        $domain = $resolved instanceof Resolved ? $this->members(Domain::of($resolved, true), $specification->dataType()) : $declared->domain($specification->dataType(), $collation);
+        (new EnumerationMembers())->check($domain, $element->name->column->value, $this->planner->compiler->connection->context);
         $nullable = $declaration === null ? true : $declaration->nullability !== Nullability::NotNull;
         $serial = $specification->dataType() instanceof Elementary && $specification->dataType()->kind === ElementaryKind::Serial;
         $domain = $domain->withNullable($nullable && !$serial);
@@ -232,8 +233,11 @@ final class Definitions
     /**
      * Answers the domain of an ENUM or SET column with its members in the character set of the column, the length counted in it.
      */
-    public function members(Domain $domain): Domain
+    public function members(Domain $domain, ?\SqlSemantics\Statement\Type\TypeDescriptor $type = null): Domain
     {
+        if ($type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Enumeration) {
+            return (new Declared($domain->collation, $this->planner->settings->release()))->enumeration($type, $domain->collation);
+        }
         $charset = $domain->collation->charset;
         if ($domain->members === [] || Encoding::utf8($charset)) {
             return $domain;

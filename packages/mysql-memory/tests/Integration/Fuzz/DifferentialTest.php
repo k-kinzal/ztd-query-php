@@ -90,6 +90,14 @@ final class DifferentialTest extends TestCase
         yield 'window ordering before null treatment' => ['SELECT NTH_VALUE(1,1) IGNORE NULLS OVER (ORDER BY 1)'];
         yield 'null treatment before counting edge' => ['SELECT NTH_VALUE(1,1) FROM LAST IGNORE NULLS OVER ()'];
         yield 'counting edge before row number' => ['SELECT NTH_VALUE(1,0) FROM LAST OVER ()'];
+        yield 'enum radix member character set' => ["CREATE TABLE x(a ENUM(0xe9,'b ') CHARACTER SET latin1); INSERT INTO x VALUES(1),(2); SELECT a,HEX(a),a+0 FROM x"];
+        yield 'enum duplicates by collation' => ["CREATE TABLE x(a ENUM('a','A'))"];
+        yield 'enum duplicates after trimming' => ["CREATE TABLE x(a ENUM('a ','a'))"];
+        yield 'enum duplicates in definition order' => ["SET sql_mode=''; CREATE TABLE x(a ENUM('a','A','a'))"];
+        yield 'enum binary collation' => ["CREATE TABLE x(a ENUM('a','A') CHARACTER SET utf8mb4 COLLATE utf8mb4_bin)"];
+        yield 'set duplicate notes' => ["SET sql_mode=''; CREATE TABLE x(a SET('a','A','a'))"];
+        yield 'enum return duplicates' => ['CREATE FUNCTION f() RETURNS ENUM(0x0f,0x0f) RETURN 1'];
+        yield 'enum parameter duplicates' => ["CREATE PROCEDURE p(a ENUM('a','A')) SELECT a"];
         yield 'loadable function library' => ["CREATE FUNCTION memory_probe RETURNS STRING SONAME 'text'"];
         yield 'loadable aggregate library' => ["CREATE AGGREGATE FUNCTION memory_probe RETURNS REAL SONAME 'text'"];
         yield 'loadable function path' => ["CREATE FUNCTION memory_probe RETURNS STRING SONAME '/tmp/text'"];

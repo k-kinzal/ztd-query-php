@@ -35,6 +35,23 @@ final class RoutineCommandTest extends TestCase
         self::assertSame([['Warning', 6001, 'Language component: Not available.']], $session->diagnostics->conditions);
     }
 
+    public function testTypesChecksTheReturnEnumerationBeforeTheExternalLanguage(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->run('CREATE FUNCTION d.f() RETURNS ENUM(0x0f, 0x0f) LANGUAGE javascript AS $$text$$');
+
+        self::assertSame([['Error', 1291, "Column '' has duplicated value '\x0f' in ENUM"]], $session->diagnostics->conditions);
+    }
+
+    public function testTypesUsesAnExplicitCaseSensitiveParameterCollation(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; CREATE PROCEDURE d.p(a ENUM('a','A') CHARACTER SET utf8mb4 COLLATE utf8mb4_bin) SELECT a");
+
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new RoutineCommand())->clearsDiagnostics());

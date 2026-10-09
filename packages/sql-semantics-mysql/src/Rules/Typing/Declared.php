@@ -249,8 +249,8 @@ final class Declared
     public function enumeration(Enumeration $type, ?Collation $collation): Domain
     {
         $collation ??= $this->charset($type->charset, $this->collation);
-        $members = array_map(static fn ($member): string => $member->value, $type->members);
-        $lengths = array_map(static fn (string $member): int => Charset::known('utf8mb4')->length($member), $members);
+        $members = array_map(static fn ($member): string => rtrim($member->bytes(), ' '), $type->members);
+        $lengths = array_map(static fn ($member): int => ($member->radix === null ? Charset::known('utf8mb4') : $collation->charset)->length(rtrim($member->bytes(), ' ')), $type->members);
         $length = $type->kind === EnumerationKind::Enum ? max([0, ...$lengths]) : array_sum($lengths) + max(0, count($members) - 1);
 
         return new Domain(Kind::String, $type->kind === EnumerationKind::Enum ? Field::Enum : Field::Set, $length, Domain::NOT_FIXED, false, $collation, $members);

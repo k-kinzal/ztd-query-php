@@ -181,8 +181,8 @@ final class Declared
      */
     public function enumeration(Enumeration $type, ?Collation $collation): Domain
     {
-        $collation = $this->charset($type->charset, $collation ?? $this->collation);
-        $members = array_map(static fn ($member): string => Encoding::convert($member->value, Charset::known('utf8mb4'), $collation->charset), $type->members);
+        $collation ??= $this->charset($type->charset, $this->collation);
+        $members = array_map(static fn ($member): string => $member->radix === null ? Encoding::convert(rtrim($member->bytes(), ' '), Charset::known('utf8mb4'), $collation->charset) : rtrim($member->bytes(), ' '), $type->members);
         $lengths = array_map(static fn (string $member): int => $collation->charset->length($member), $members);
         $length = $type->kind === EnumerationKind::Enum ? max([0, ...$lengths]) : array_sum($lengths) + max(0, count($members) - 1);
 

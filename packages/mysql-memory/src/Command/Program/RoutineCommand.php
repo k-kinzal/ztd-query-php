@@ -74,6 +74,7 @@ final class RoutineCommand implements Command
             return $this->alter($statement, $session);
         }
         assert($statement instanceof CreateProcedure || $statement instanceof CreateFunction);
+        $this->types($statement, $session, $context);
         if ($statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody) {
             $context->warning(ProgramError::LanguageComponentUnavailable);
         }
@@ -105,6 +106,29 @@ final class RoutineCommand implements Command
         }
 
         return new Completion(0, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Checks routine ENUM and SET definitions before testing the language component or binary log.
+     *
+     * @throws \MySqlMemory\Error\SqlError When an enumeration repeats a member under strict mode
+     */
+    public function types(CreateProcedure|CreateFunction $statement, Session $session, Context $context): void
+    {
+        $settings = $session->settings();
+        $declared = new Declared($settings->resolution()->schema($statement->name->schema->value ?? $session->variables->database), $settings->release());
+        $types = array_map(static fn ($parameter): array => [$parameter->type, $parameter->collation], $statement->parameters->parameters);
+        if ($statement instanceof CreateFunction) {
+            $types[] = [$statement->returns, $statement->collation];
+        }
+        foreach ($types as [$type, $name]) {
+            $collation = $name?->name === null ? null : Collation::named($name->name->value);
+            $domain = $declared->domain($type, $collation);
+            if ($collation !== null) {
+                $domain = $domain->withCollation($collation, $domain->coercibility);
+            }
+            (new \MySqlMemory\Command\Definition\EnumerationMembers())->check($domain, '', $context);
+        }
     }
 
     /**

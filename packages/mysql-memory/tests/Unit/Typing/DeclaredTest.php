@@ -38,6 +38,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class DeclaredTest extends TestCase
 {
+    public function testEnumerationDecodesRadixMembersAndRemovesTrailingSpaces(): void
+    {
+        $type = new Enumeration(EnumerationKind::Enum, [new Text('e920', \SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule::Backslash, \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal), new Text('b ')]);
+        $domain = (new Declared(Collation::known('latin1_swedish_ci')))->enumeration($type, null);
+
+        self::assertSame(["\xe9", 'b'], $domain->members);
+        self::assertSame(1, $domain->length);
+    }
+
     public function testDomainResolvesADecimalWithItsDefaultPrecision(): void
     {
         $declared = new Declared(Collation::known('utf8mb4_0900_ai_ci'));

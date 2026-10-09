@@ -40,6 +40,15 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 #[Small]
 final class DeclaredTest extends TestCase
 {
+    public function testEnumerationDecodesRadixMembersAndRemovesTrailingSpaces(): void
+    {
+        $type = new Enumeration(EnumerationKind::Enum, [new Text('e920', \SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule::Backslash, \SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal), new Text('b ')]);
+        $domain = (new Declared(Collation::known('latin1_swedish_ci')))->enumeration($type, null);
+
+        self::assertSame(["\xe9", 'b'], $domain->members);
+        self::assertSame(1, $domain->length);
+    }
+
     public function testTableTakesTheCollationOfTheOptionsElseOfTheSchema(): void
     {
         $semantics = new Semantics(Dialect::MySql);
