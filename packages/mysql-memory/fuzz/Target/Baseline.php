@@ -31,10 +31,24 @@ final class Baseline
     public readonly ?string $account;
 
     /**
+     * The quoted account under test, distinct from the administrator restoring it.
+     */
+    public readonly string $identity;
+
+    /**
+     * @var list<string> The original grants of the account under test
+     */
+    public readonly array $grants;
+
+    /**
      * Captures the original global variables and authentication string without generating a new password salt.
      */
     public function __construct(PDO $native, public readonly string $version)
     {
+        $server = new Servers();
+        [$user, $host] = explode('@', $server->rows($native, 'SELECT CURRENT_USER()')[0][0], 2);
+        $this->identity = $native->quote($user) . '@' . $native->quote($host);
+        $this->grants = array_column($server->rows($native, 'SHOW GRANTS FOR CURRENT_USER'), 0);
         foreach ((new Servers())->rows($native, 'SHOW GLOBAL VARIABLES') as [$name, $value]) {
             $this->globals[strtolower($name)] = $value;
         }
@@ -57,8 +71,12 @@ final class Baseline
         foreach ($this->cleanup as $statement => $_) {
             $connection->exec($statement);
         }
-        $connection->exec('REVOKE ALL PRIVILEGES, GRANT OPTION FROM CURRENT_USER');
-        $connection->exec('GRANT ALL ON *.* TO CURRENT_USER WITH GRANT OPTION');
+        $connection->exec('REVOKE ALL PRIVILEGES, GRANT OPTION FROM ' . $this->identity);
+        foreach ($this->grants as $grant) {
+            if ($connection->exec($grant) === false) {
+                throw new RuntimeException('Cannot restore reference grants: ' . json_encode($connection->errorInfo()));
+            }
+        }
         if ($this->account !== null && $connection->exec($this->account) === false) {
             throw new RuntimeException('Cannot restore the reference account: ' . json_encode($connection->errorInfo()));
         }
@@ -88,6 +106,12 @@ final class Baseline
         }
         foreach ($server->rows($native, 'SELECT Server_name FROM mysql.servers') as [$name]) {
             $this->cleanup['DROP SERVER IF EXISTS ' . $this->identifier($name)] = true;
+        }
+        foreach ($server->rows($native, 'SELECT User, Host, Proxied_user, Proxied_host FROM mysql.proxies_priv') as [$user, $host, $proxiedUser, $proxiedHost]) {
+            $identity = $native->quote($user) . '@' . $native->quote($host);
+            if ($identity === $this->identity) {
+                $this->cleanup['REVOKE PROXY ON ' . $native->quote($proxiedUser) . '@' . $native->quote($proxiedHost) . ' FROM ' . $identity] = true;
+            }
         }
         foreach ($server->rows($native, 'SELECT RESOURCE_GROUP_NAME FROM information_schema.RESOURCE_GROUPS') as [$name]) {
             if (!in_array($name, ['SYS_default', 'USR_default'], true)) {

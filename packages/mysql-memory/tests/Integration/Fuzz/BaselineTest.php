@@ -52,4 +52,17 @@ final class BaselineTest extends TestCase
         self::assertNull($read->difference, (string) $read->difference);
         $server->stop();
     }
+
+    public function testRestoreRemovesGrantsFromTheTestAccountRatherThanTheGuard(): void
+    {
+        [$target, , $server] = (new Servers())->start(true, true);
+        $before = $target->run($target->native, $target->nativeUser, $target->nativePassword, 'SHOW GRANTS');
+        $target->compare('GRANT SELECT ON fz.* TO CURRENT_USER');
+        self::assertNotNull($target->baseline);
+        $target->baseline->restore($target->guard(), true);
+        $after = $target->run($target->native, $target->nativeUser, $target->nativePassword, 'SHOW GRANTS');
+
+        self::assertSame($before, $after);
+        $server->stop();
+    }
 }

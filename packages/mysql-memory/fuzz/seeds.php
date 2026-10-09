@@ -17,9 +17,13 @@ use Fuzz\Target\Lifecycle;
 use Fuzz\Target\SeedCorpus;
 use Fuzz\Target\Servers;
 
-[$target, $grammar, $server] = (new Servers())->start(getenv('MYSQL_MEMORY_EMULATE') !== '0', true);
+$grammar = 'mysql-' . ((new Servers())->environment('MYSQL_VERSION', Container\MySqlRelease::DEFAULT));
 $directory = $argv[1] ?? dirname(__DIR__) . '/vendor/k-kinzal/sql-faker/seeds/mysql/' . $grammar;
 $prefix = $argv[2] ?? dirname(__DIR__) . '/build/fuzz/seeds-' . $grammar;
+$files = glob($directory . '/*.txt');
+if (!is_dir($directory) || $files === false || $files === []) {
+    throw new RuntimeException('No sql-faker seeds found in ' . $directory);
+}
 if (!is_dir(dirname($prefix)) && !mkdir(dirname($prefix), 0777, true)) {
     throw new RuntimeException('Cannot create report directory ' . dirname($prefix));
 }
@@ -28,6 +32,7 @@ if ($report === false) {
     throw new RuntimeException('Cannot write report ' . $prefix);
 }
 $corpus = new SeedCorpus($grammar);
+[$target, $grammar, $server] = (new Servers())->start(getenv('MYSQL_MEMORY_EMULATE') !== '0', true);
 foreach ($corpus->inputs($directory) as $index => $seed) {
     $comparison = Lifecycle::handles($seed->sql) ? (new Lifecycle())->compare($seed->sql, $target->version) : $target->compare($seed->sql);
     $status = $corpus->record($seed, $comparison);
