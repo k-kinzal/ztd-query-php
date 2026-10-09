@@ -80,6 +80,15 @@ final class CiphersTest extends TestCase
         self::assertSame("\x02b", (new Ciphers())->folded('abc', 2));
     }
 
+    public function testFoldedAnswersZeroBytesForAnEmptyKey(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(AES_ENCRYPT('a', ''))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([str_repeat("\0", 16), [['8E4A3D4BEB92D54C7E95F67D41DAED59']]], [(new Ciphers())->folded('', 16), $result->rows]);
+    }
+
     public function testDerivedUsesHkdfOrPbkdf2WithSha512(): void
     {
         $session = (new Instance())->connect();

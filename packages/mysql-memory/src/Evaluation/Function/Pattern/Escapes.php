@@ -49,10 +49,10 @@ final class Escapes
             'Z' => [Fragment::empty($this->translator->anchors->end())],
             'G' => [Fragment::empty('\G')],
             'b', 'B' => [Fragment::empty($this->translator->anchors->boundary($character === 'B', $this->translator->mode->words))],
-            'd', 'D', 's', 'S', 'w', 'W', 'h', 'H', 'v', 'V' => [new Fragment($this->translator->properties->escape($character)->source())],
+            'd', 'D', 's', 'S', 'w', 'W', 'h', 'H', 'v', 'V' => [new Fragment($this->translator->properties->escape($character, $this->translator->mode->caseless)->source())],
             'R' => [new Fragment('(?:\r\n|' . Anchors::TERMINATORS . ')', 1, 2)],
             'X' => [$this->cluster()],
-            'p', 'P' => [new Fragment($this->property($character === 'P')->source())],
+            'p', 'P' => [new Fragment($this->property($character === 'P', false)->source())],
             'k' => [$this->reference($this->label(), true)],
             'Q' => $this->quoted(),
             '1', '2', '3', '4', '5', '6', '7', '8', '9' => [$this->reference($this->digits($character), false)],
@@ -206,15 +206,26 @@ final class Escapes
     /**
      * Reads {name} after \p or \P, and answers the set of the property.
      *
+     * Matched without regard to case, the set is closed over case before it is complemented,
+     * except a block named by the In shorthand outside a set in brackets, which ICU matches with
+     * regard to case (verified on a live 8.4 server).
+     *
+     * @param bool $bracketed Whether the property stands in a set in brackets
+     *
      * @throws SqlError When the property is unknown
      */
-    public function property(bool $negated): Members
+    public function property(bool $negated, bool $bracketed): Members
     {
         $name = $this->braced();
         $members = str_starts_with($name, '^') ? null : $this->translator->properties->members($name);
         if ($members === null) {
             throw DataError::RegexpError->error();
         }
+        $members = match (true) {
+            !$this->translator->mode->caseless => $members,
+            $bracketed || !$this->translator->properties->shorthand($name) => $members->closed(),
+            default => $members->exact(),
+        };
 
         return $negated ? $members->complement() : $members;
     }

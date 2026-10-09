@@ -34,6 +34,15 @@ final class BracketsTest extends TestCase
         self::assertSame([1, 0], [preg_match($source, '1'), preg_match($source, 'a')]);
     }
 
+    public function testMemberClosesAPropertyOverCaseBeforeTheSetCombinesIt(): void
+    {
+        $intersection = (new Translator())->translate('[\p{Lu}&&[a-z]]', new Mode(true))->source;
+        $difference = (new Translator())->translate('[\p{L}--\p{Lu}]', new Mode(true))->source;
+        $complement = (new Translator())->translate('[[:^upper:]]', new Mode(true))->source;
+
+        self::assertSame([1, 0, 1, 0, 1], [preg_match($intersection, 'a'), preg_match($difference, 'a'), preg_match($difference, 'ĸ'), preg_match($complement, 'a'), preg_match($complement, '1')]);
+    }
+
     public function testCombineAppliesTheOperator(): void
     {
         $translator = new Translator();

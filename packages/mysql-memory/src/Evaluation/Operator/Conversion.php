@@ -191,7 +191,7 @@ final class Conversion implements Evaluable
     {
         if ($binary || !mb_check_encoding($value, 'UTF-8')) {
             $quoted = '';
-            foreach (str_split(substr($value, 0, 128)) as $byte) {
+            foreach ($value === '' ? [] : str_split(substr($value, 0, 128)) as $byte) {
                 $code = ord($byte);
                 $quoted .= $code < 0x20 || $code >= 0x7F ? sprintf('\\x%02X', $code) : $byte;
             }

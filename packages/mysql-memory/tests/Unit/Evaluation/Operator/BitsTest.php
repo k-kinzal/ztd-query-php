@@ -141,6 +141,15 @@ final class BitsTest extends TestCase
         self::assertSame("\x00\x00", $bits->shifted("\xFF\xFF", -1, false));
     }
 
+    public function testShiftedKeepsAnEmptyBinaryStringEmpty(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(CAST('' AS BINARY) << 1), HEX(CAST('' AS BINARY) >> 3)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['', '']], $result->rows);
+    }
+
     public function testDomainAnswersTheDomainOfTheResult(): void
     {
         $domain = Domain::integer(unsigned: true);

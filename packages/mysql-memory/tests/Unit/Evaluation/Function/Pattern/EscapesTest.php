@@ -82,7 +82,25 @@ final class EscapesTest extends TestCase
         $translator = new Translator();
         $translator->scanner = Scanner::of('{L}');
 
-        self::assertSame('[^\p{L}]', $translator->escapes->property(true)->source());
+        self::assertSame('[^\p{L}]', $translator->escapes->property(true, false)->source());
+    }
+
+    public function testPropertyClosesTheSetOverCaseBeforeItComplementsItWithoutRegardToCase(): void
+    {
+        $upper = (new Translator())->translate('\p{Lu}', new Mode(true))->source;
+        $other = (new Translator())->translate('\P{Lu}', new Mode(true))->source;
+        $title = (new Translator())->translate('\p{Lt}', new Mode(true))->source;
+
+        self::assertSame([1, 1, 0, 0, 1, 0, 1, 1, 0], [preg_match($upper, 'a'), preg_match($upper, 'ß'), preg_match($upper, 'ĸ'), preg_match($other, 'a'), preg_match($other, '1'), preg_match($title, 'a'), preg_match($title, 'ǆ'), preg_match($title, 'Ǆ'), preg_match($title, 'ı')]);
+    }
+
+    public function testPropertyLeavesABlockAfterInOutsideBracketsAsItIs(): void
+    {
+        $bare = (new Translator())->translate('\p{InBasicLatin}', new Mode(true))->source;
+        $bracketed = (new Translator())->translate('[\p{InBasicLatin}]', new Mode(true))->source;
+        $named = (new Translator())->translate('\p{Block=Basic_Latin}', new Mode(true))->source;
+
+        self::assertSame([0, 1, 1, 1], [preg_match($bare, 'ſ'), preg_match($bare, 'S'), preg_match($bracketed, 'ſ'), preg_match($named, "\u{212A}")]);
     }
 
     public function testClusterNotesThatTheLocaleIsRead(): void

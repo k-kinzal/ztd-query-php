@@ -9,6 +9,7 @@ use MySqlMemory\Value\Zone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 
 #[CoversClass(Zone::class)]
 #[Small]
@@ -19,9 +20,19 @@ final class ZoneTest extends TestCase
         self::assertSame(['+05:30', '-00:30', 'SYSTEM', 'Europe/Paris', 'UTC', 'posix/Europe/Paris'], [Zone::named('+5:30')?->name, Zone::named('-0:30')?->name, Zone::named('system')?->name, Zone::named('europe/paris')?->name, Zone::named('utc ')?->name, Zone::named('POSIX/europe/paris')?->name]);
     }
 
+    public function testNamedReadsTheNamesOfTheTablesOfTheRelease(): void
+    {
+        self::assertSame(['Europe/Kyiv', null, null, null], [Zone::named('Europe/Kyiv')?->name, Zone::named('Europe/Kyiv', GrammarRelease::MySql5651)?->name, Zone::named('America/Coyhaique', GrammarRelease::MySql5744)?->name, Zone::named('posix/posixrules')?->name]);
+    }
+
     public function testReadRefusesWhatNamesNoZone(): void
     {
         self::assertSame([null, null, null, null], [Zone::read('+14:01'), Zone::read('-14:00'), Zone::read(' UTC'), Zone::read('+01:00 ')]);
+    }
+
+    public function testCatalogNumbersTheZonesAsTheTablesOfTheReleaseDo(): void
+    {
+        self::assertSame([['Africa/Abidjan', 1, false], ['posixrules', 1197, false], ['right/UTC', 1791, true], 1795, ['posixrules', 1218, false], 1826, 1795], [Zone::catalog(GrammarRelease::MySql847)[0], Zone::catalog(GrammarRelease::MySql847)[1196], Zone::catalog(GrammarRelease::MySql847)[1790], count(Zone::catalog(GrammarRelease::MySql847)), Zone::catalog(GrammarRelease::MySql5651)[1217], count(Zone::catalog(GrammarRelease::MySql5651)), count(Zone::catalog(GrammarRelease::MySql830))]);
     }
 
     public function testUtcIsTheOffsetZero(): void

@@ -143,10 +143,11 @@ final class Brackets
             }
             $scanner->next();
             $scanner->next();
-            $properties = $this->translator->properties;
-            $members = str_starts_with($name, '^') ? $properties->members(substr($name, 1))?->complement() : $properties->members($name);
+            $negated = str_starts_with($name, '^');
+            $members = $this->translator->properties->members($negated ? substr($name, 1) : $name) ?? throw DataError::RegexpError->error();
+            $members = $this->translator->mode->caseless ? $members->closed() : $members;
 
-            return [$members ?? throw DataError::RegexpError->error(), null];
+            return [$negated ? $members->complement() : $members, null];
         }
         if ($character === '[') {
             return [$this->set(), null];
@@ -159,10 +160,10 @@ final class Brackets
             throw DataError::RegexpBadEscapeSequence->error();
         }
         if (in_array($letter, self::CLASSES, true)) {
-            return [$this->translator->properties->escape($letter), null];
+            return [$this->translator->properties->escape($letter, $this->translator->mode->caseless), null];
         }
         if ($letter === 'p' || $letter === 'P') {
-            return [$this->translator->escapes->property($letter === 'P'), null];
+            return [$this->translator->escapes->property($letter === 'P', true), null];
         }
         $code = $this->translator->escapes->code($letter) ?? $letter;
 

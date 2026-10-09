@@ -66,6 +66,11 @@ final class RadixesTest extends TestCase
         self::assertSame([['255', 2], ['0', 0], ['5', 3]], [(new Radixes())->magnitude('ffg1', 16), (new Radixes())->magnitude('z', 10), (new Radixes())->magnitude('1012', 2)]);
     }
 
+    public function testMagnitudeReadsNoDigitOfAnEmptyText(): void
+    {
+        self::assertSame(['0', 0], (new Radixes())->magnitude('', 10));
+    }
+
     public function testWriteUsesUpperCaseDigits(): void
     {
         self::assertSame(['0', 'FF', 'Z'], [(new Radixes())->write('0', 16), (new Radixes())->write('255', 16), (new Radixes())->write('35', 36)]);

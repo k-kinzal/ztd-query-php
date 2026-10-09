@@ -14,9 +14,10 @@ use Transliterator;
  * A property is named as ICU names it, loosely (case, spaces, hyphens and underscores do not
  * count): a general category, a script, a binary property, a block after "In", or `property=value`
  * for a general category, script, block, binary, enumerated, name, age or numeric value property;
- * and Any, ASCII and Assigned. A general category and a script known to PCRE are left to it;
- * another set is listed once for each process from the UnicodeSet ICU names by the same property
- * and value, through the intl extension, as Listing describes. The escapes have the
+ * and Any, ASCII and Assigned. A general category is left to PCRE; another set, a script among
+ * them, is listed once for each process from the UnicodeSet ICU names by the same property and
+ * value, through the intl extension, as Listing describes: ICU matches a script by the Script
+ * property, where PCRE 10.40 and later match its Script_Extensions. The escapes have the
  * ICU definitions: \d is \p{Nd}, \s is [\t\n\f\r\p{Z}], \w is [\p{Alphabetic}\p{M}\p{Nd}\p{Pc}
  * U+200C U+200D], \h is [\t\p{Zs}] and \v the line terminators.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/regexp.html,
@@ -45,9 +46,9 @@ final class Properties
     public static array $listed = [];
 
     /**
-     * Answers the set an escape letter names: d, s, w, h or v, or their complements in upper case.
+     * Answers the set an escape letter names: d, s, w, h or v, or their complements in upper case; matched without regard to case, closed over case before it is complemented.
      */
-    public function escape(string $letter): Members
+    public function escape(string $letter, bool $caseless = false): Members
     {
         $members = match (strtolower($letter)) {
             'd' => new Members(['\p{Nd}']),
@@ -56,6 +57,8 @@ final class Properties
             'h' => new Members(['\t', '\p{Zs}']),
             default => new Members(self::LINE),
         };
+
+        $members = $caseless ? $members->closed() : $members;
 
         return ctype_upper($letter) ? $members->complement() : $members;
     }
@@ -100,6 +103,21 @@ final class Properties
             str_starts_with($loose, 'in') => $this->valued('Block', substr(ltrim($name), 2)),
             default => null,
         };
+    }
+
+    /**
+     * Tells whether a property expression names a block by the In shorthand: a name that is no binary property, general category or script, after "In".
+     */
+    public function shorthand(string $expression): bool
+    {
+        $name = trim($expression);
+        $property = IntlChar::getPropertyEnum($name);
+
+        return !str_contains($name, '=')
+            && str_starts_with(strtolower((string) preg_replace('/[\s_\-]+/', '', $name)), 'in')
+            && !($property >= IntlChar::PROPERTY_BINARY_START && $property < IntlChar::PROPERTY_BINARY_LIMIT)
+            && IntlChar::getPropertyValueEnum(IntlChar::PROPERTY_GENERAL_CATEGORY_MASK, $name) === IntlChar::PROPERTY_INVALID_CODE
+            && IntlChar::getPropertyValueEnum(IntlChar::PROPERTY_SCRIPT, $name) === IntlChar::PROPERTY_INVALID_CODE;
     }
 
     /**
@@ -158,21 +176,8 @@ final class Properties
     public function script(string $name): ?Members
     {
         $script = IntlChar::getPropertyValueEnum(IntlChar::PROPERTY_SCRIPT, $name);
-        if ($script === IntlChar::PROPERTY_INVALID_CODE) {
-            return null;
-        }
-        $long = IntlChar::getPropertyValueName(IntlChar::PROPERTY_SCRIPT, $script, IntlChar::LONG_PROPERTY_NAME);
-        set_error_handler(static fn (): bool => true);
-        try {
-            $known = preg_match('/\p{' . $long . '}/u', '') !== false;
-        } finally {
-            restore_error_handler();
-        }
-        if ($known) {
-            return new Members(['\p{' . $long . '}']);
-        }
 
-        return $this->listed('s' . $script, static fn (int $code): bool => IntlChar::getIntPropertyValue($code, IntlChar::PROPERTY_SCRIPT) === $script, $this->pattern(IntlChar::PROPERTY_SCRIPT, $script));
+        return $script === IntlChar::PROPERTY_INVALID_CODE ? null : $this->listed('s' . $script, static fn (int $code): bool => IntlChar::getIntPropertyValue($code, IntlChar::PROPERTY_SCRIPT) === $script, $this->pattern(IntlChar::PROPERTY_SCRIPT, $script));
     }
 
     /**

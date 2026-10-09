@@ -25,7 +25,7 @@ final class PropertiesTest extends TestCase
     {
         $properties = new Properties();
 
-        self::assertSame(['[\p{Lu}]', '[\p{Greek}]', null], [$properties->members('Uppercase Letter')?->source(), $properties->members('sc = Greek')?->source(), $properties->members('Foo')]);
+        self::assertSame(['[\p{Lu}]', 1, 0, null], [$properties->members('Uppercase Letter')?->source(), preg_match('/\A' . ($properties->members('sc = Greek')?->source() ?? '') . '\z/u', 'Ω'), preg_match('/\A' . ($properties->members('sc = Greek')?->source() ?? '') . '\z/u', 'a'), $properties->members('Foo')]);
     }
 
     public function testNamedKnowsAnyAsciiAssignedWordAndBlocks(): void
@@ -51,9 +51,23 @@ final class PropertiesTest extends TestCase
         self::assertSame(['[\p{L&}]', null], [(new Properties())->category('Cased_Letter')?->source(), (new Properties())->category('Greek')]);
     }
 
-    public function testScriptLeavesAKnownScriptToPcre(): void
+    public function testScriptListsTheScriptPropertyFromIcu(): void
     {
-        self::assertSame(['[\p{Hiragana}]', null], [(new Properties())->script('Hira')?->source(), (new Properties())->script('Letter')]);
+        $greek = '/\A' . ((new Properties())->script('Greek')?->source() ?? '') . '\z/u';
+
+        self::assertSame([1, 0, 1, null], [preg_match($greek, 'Ω'), preg_match($greek, "\u{345}"), preg_match('/\A' . ((new Properties())->script('Hira')?->source() ?? '') . '\z/u', 'あ'), (new Properties())->script('Letter')]);
+    }
+
+    public function testShorthandTellsABlockNamedAfterIn(): void
+    {
+        self::assertSame([true, true, false, false, false], [(new Properties())->shorthand('InBasicLatin'), (new Properties())->shorthand(' in greek '), (new Properties())->shorthand('Inherited'), (new Properties())->shorthand('Block=Basic_Latin'), (new Properties())->shorthand('Lu')]);
+    }
+
+    public function testEscapeClosesAClassOverCaseBeforeItComplementsIt(): void
+    {
+        $word = '/\A' . (new Properties())->escape('W', true)->source() . '\z/iu';
+
+        self::assertSame([0, 1, 0], [preg_match($word, 'a'), preg_match($word, '-'), preg_match($word, 'K')]);
     }
 
     public function testCharacterAnswersTheCharacterOfAName(): void

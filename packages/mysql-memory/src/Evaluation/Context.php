@@ -58,7 +58,7 @@ final class Context
      */
     public function zone(): Zone
     {
-        return Zone::named((string) $this->variables->read('time_zone')) ?? Zone::utc();
+        return Zone::named((string) $this->variables->read('time_zone'), $this->modes->release) ?? Zone::utc();
     }
 
     /**

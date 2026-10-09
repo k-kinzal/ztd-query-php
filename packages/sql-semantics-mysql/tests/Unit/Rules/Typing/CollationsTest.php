@@ -27,7 +27,7 @@ final class CollationsTest extends TestCase
         $left = Domain::string(5, Collation::known('utf8mb4_general_ci'));
         $right = Domain::string(5, Collation::known('utf8mb4_unicode_ci'));
 
-        self::assertNull(new Collations(Collation::known('utf8mb4_0900_ai_ci'))->aggregate([$left, $right], '=', $derivation, true));
+        self::assertNull((new Collations(Collation::known('utf8mb4_0900_ai_ci')))->aggregate([$left, $right], '=', $derivation, true));
         self::assertEquals([new IllegalCollationMix([['utf8mb4_general_ci', Coercibility::Implicit], ['utf8mb4_unicode_ci', Coercibility::Implicit]], '=')], $derivation->facts()->diagnostics);
     }
 
@@ -35,22 +35,22 @@ final class CollationsTest extends TestCase
     {
         $literal = Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible);
 
-        self::assertEquals([Collation::known('latin1_bin'), Coercibility::Implicit], new Collations(Collation::known('utf8mb4_0900_ai_ci'))->settle([$literal, Domain::string(5, Collation::known('latin1_bin'))]));
-        self::assertEquals([Collation::known('utf8mb4_0900_ai_ci'), Coercibility::Numeric], new Collations(Collation::known('utf8mb4_0900_ai_ci'))->settle([Domain::integer()]));
+        self::assertEquals([Collation::known('latin1_bin'), Coercibility::Implicit], (new Collations(Collation::known('utf8mb4_0900_ai_ci')))->settle([$literal, Domain::string(5, Collation::known('latin1_bin'))]));
+        self::assertEquals([Collation::known('utf8mb4_0900_ai_ci'), Coercibility::Numeric], (new Collations(Collation::known('utf8mb4_0900_ai_ci')))->settle([Domain::integer()]));
     }
 
     public function testSettleGivesNoCoercibilityToTwoCollationsOfOneSetOutsideAComparison(): void
     {
         $operands = [Domain::string(5, Collation::known('utf8mb4_general_ci')), Domain::string(5, Collation::known('utf8mb4_unicode_ci'))];
 
-        self::assertEquals([Collation::known('utf8mb4_bin'), Coercibility::None], new Collations(Collation::known('utf8mb4_0900_ai_ci'))->settle($operands));
-        self::assertNull(new Collations(Collation::known('utf8mb4_0900_ai_ci'))->settle($operands, true));
+        self::assertEquals([Collation::known('utf8mb4_bin'), Coercibility::None], (new Collations(Collation::known('utf8mb4_0900_ai_ci')))->settle($operands));
+        self::assertNull((new Collations(Collation::known('utf8mb4_0900_ai_ci')))->settle($operands, true));
     }
 
     public function testOperandWritesNumbersInTheConnectionCollation(): void
     {
-        self::assertEquals([Collation::known('utf8mb4_0900_ai_ci'), Coercibility::Numeric], new Collations(Collation::known('utf8mb4_0900_ai_ci'))->operand(Domain::integer()));
-        self::assertEquals([Collation::known('utf8mb4_0900_ai_ci'), Coercibility::Ignorable], new Collations(Collation::known('utf8mb4_0900_ai_ci'))->operand(Domain::null()));
+        self::assertEquals([Collation::known('utf8mb4_0900_ai_ci'), Coercibility::Numeric], (new Collations(Collation::known('utf8mb4_0900_ai_ci')))->operand(Domain::integer()));
+        self::assertEquals([Collation::known('utf8mb4_0900_ai_ci'), Coercibility::Ignorable], (new Collations(Collation::known('utf8mb4_0900_ai_ci')))->operand(Domain::null()));
     }
 
     public function testTieFollowsTheRulesOfEqualCoercibility(): void

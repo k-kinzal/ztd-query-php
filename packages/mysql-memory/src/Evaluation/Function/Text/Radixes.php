@@ -148,7 +148,7 @@ final class Radixes
     {
         $magnitude = '0';
         $count = 0;
-        foreach (str_split(strtoupper($digits)) as $character) {
+        foreach ($digits === '' ? [] : str_split(strtoupper($digits)) as $character) {
             $digit = strpos(self::DIGITS, $character);
             if ($digit === false || $digit >= $base) {
                 break;

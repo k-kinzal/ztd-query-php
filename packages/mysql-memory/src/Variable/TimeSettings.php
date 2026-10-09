@@ -56,7 +56,7 @@ final class TimeSettings
         if ($domain->kind !== Kind::String) {
             throw AdministrationError::WrongTypeForVariable->error('time_zone');
         }
-        $zone = Zone::named((string) $value);
+        $zone = Zone::named((string) $value, $this->context->modes->release);
         if ($zone === null) {
             throw DataError::UnknownTimeZone->error((string) $value);
         }

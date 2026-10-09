@@ -185,6 +185,13 @@ final class ConversionTest extends TestCase
         self::assertSame(['\x00A\x0A\x7F\xC3\xA9', 'é?abc', str_repeat('a', 128)], [$conversion->quoted("\x00A\n\x7Fé", true), $conversion->quoted('é😀abc', false), $conversion->quoted(str_repeat('a', 300), false)]);
     }
 
+    public function testQuotedWritesNothingForAnEmptyBinaryValue(): void
+    {
+        $conversion = new Conversion(new Constant(Domain::integer(), 1), Domain::integer(), null, 'CHAR');
+
+        self::assertSame('', $conversion->quoted('', true));
+    }
+
     public function testTextKeepsAStringWithinTheTarget(): void
     {
         $session = (new Instance())->connect();

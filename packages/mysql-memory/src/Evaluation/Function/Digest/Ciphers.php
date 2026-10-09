@@ -124,7 +124,7 @@ final class Ciphers
     public function folded(string $key, int $length): string
     {
         $folded = str_repeat("\0", $length);
-        foreach (str_split($key) as $index => $byte) {
+        foreach ($key === '' ? [] : str_split($key) as $index => $byte) {
             $folded[$index % $length] = $folded[$index % $length] ^ $byte;
         }
 

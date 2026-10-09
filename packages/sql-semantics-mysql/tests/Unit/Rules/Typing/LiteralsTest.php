@@ -65,9 +65,9 @@ final class LiteralsTest extends TestCase
 
     public function testWithinComparesDigitsWithABound(): void
     {
-        self::assertTrue(new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->within('99', '100'));
-        self::assertTrue(new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->within('100', '100'));
-        self::assertFalse(new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->within('101', '100'));
+        self::assertTrue((new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->within('99', '100'));
+        self::assertTrue((new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->within('100', '100'));
+        self::assertFalse((new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->within('101', '100'));
     }
 
     public function testStringTakesTheConnectionTheIntroducerOrTheNationalCollation(): void
@@ -81,8 +81,8 @@ final class LiteralsTest extends TestCase
 
     public function testIntroducedFallsBackToBinaryForAnUnknownCharacterSet(): void
     {
-        self::assertSame('latin1_swedish_ci', new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->introduced('latin1')->name);
-        self::assertSame(Collation::binary(), new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->introduced('klingon'));
+        self::assertSame('latin1_swedish_ci', (new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->introduced('latin1')->name);
+        self::assertSame(Collation::binary(), (new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->introduced('klingon'));
     }
 
     public function testRadixCountsBytes(): void
@@ -105,7 +105,7 @@ final class LiteralsTest extends TestCase
 
     public function testBooleanIsABigIntOfOneDigit(): void
     {
-        self::assertEquals(Domain::integer(Field::LongLong, 1), new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847)->boolean());
+        self::assertEquals(Domain::integer(Field::LongLong, 1), (new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847))->boolean());
     }
 
     public function testLegacyTellsTheReleasesWhoseIntegerLiteralsCountNoSign(): void

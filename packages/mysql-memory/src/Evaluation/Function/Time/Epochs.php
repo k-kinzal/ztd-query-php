@@ -120,8 +120,8 @@ final class Epochs
         }
         $from = $arguments[1]->evaluate($frame);
         $to = $arguments[2]->evaluate($frame);
-        $source = $from === null ? null : Zone::named((string) $from);
-        $target = $to === null ? null : Zone::named((string) $to);
+        $source = $from === null ? null : Zone::named((string) $from, $frame->context->modes->release);
+        $target = $to === null ? null : Zone::named((string) $to, $frame->context->modes->release);
         if ($source === null || $target === null) {
             return null;
         }

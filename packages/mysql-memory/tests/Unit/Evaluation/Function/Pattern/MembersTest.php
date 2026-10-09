@@ -33,6 +33,25 @@ final class MembersTest extends TestCase
         self::assertSame(['[ab]', '(?:[a]|[^b])'], [Members::union([Members::character('a'), Members::character('b')])->source(), Members::union([Members::character('a'), Members::character('b')->complement()])->source()]);
     }
 
+    public function testClosedAddsTheCharactersOfTheSameSimpleCaseFolding(): void
+    {
+        $source = '/\A' . (new Members(['A-C', '\p{Lt}']))->closed()->source() . '\z/iu';
+
+        self::assertSame(['(?-i:(?!))', 1, 1, 1, 1, 0, 0], [(new Members([]))->closed()->source(), preg_match($source, 'b'), preg_match($source, 'ǆ'), preg_match($source, 'Ǆ'), preg_match($source, 'B'), preg_match($source, 'd'), preg_match($source, 'ı')]);
+    }
+
+    public function testExactMatchesWithRegardToCase(): void
+    {
+        self::assertSame(['(?-i:[a])', 0], [Members::character('a')->exact()->source(), preg_match('/' . Members::character('a')->exact()->source() . '/iu', 'A')]);
+    }
+
+    public function testCasesGroupTheCharactersOfTheSameSimpleCaseFolding(): void
+    {
+        self::assertContains(['K', 'k', "\u{212A}"], Members::cases());
+        self::assertContains(['S', 's', 'ſ'], Members::cases());
+        self::assertNotContains(['İ', 'i'], Members::cases());
+    }
+
     public function testComplementNegatesTheSet(): void
     {
         self::assertSame(['[^a]', '(?:(?!(?:(?=[a])[b]))(?s:.))', '(?s:.)'], [Members::character('a')->complement()->source(), Members::character('a')->intersect(Members::character('b'))->complement()->source(), (new Members([]))->complement()->source()]);

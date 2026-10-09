@@ -5,17 +5,21 @@ declare(strict_types=1);
 namespace MySqlMemory\Value;
 
 use DateTimeZone;
+use SqlSemantics\Contract\GrammarRelease;
 
 /**
  * A time zone: an offset from UTC, or a named zone of the time zone tables, and the conversion of times between it and UTC.
  *
  * A zone is named as `time_zone` and CONVERT_TZ name it: SYSTEM, the system time zone, which is
  * UTC here; an offset `+h:mm` or `-h:mm` from -13:59 to +14:00, written back as `+hh:mm`; or a
- * name of the time zone tables, compared without regard to case or trailing spaces, with or
- * without a `posix/` or `right/` prefix. The named zones follow the tz database PHP carries. The
- * tables of the server hold transitions up to the end of 2037, so a later time keeps the offset
- * in force then; CET, MET, EET and WET follow Europe/Brussels, Europe/Athens and Europe/Lisbon as
- * the tables do. A local time a change of offset skips is the instant of the change; a local
+ * name of the time zone tables of the release, compared without regard to case or trailing
+ * spaces. The names are those a server of the release loaded with mysql_tzinfo_to_sql holds, as
+ * resources/time-zones holds them; a release without a catalog of its own has that of the latest
+ * series of its major version. The rules of a named zone, with or without its `posix/` or
+ * `right/` prefix, follow the tz database PHP carries, and a name PHP has no rules for is no
+ * zone. The tables of the server hold transitions up to the end of 2037, so a later time keeps
+ * the offset in force then; CET, MET, EET and WET follow Europe/Brussels, Europe/Athens and
+ * Europe/Lisbon as the tables do. A local time a change of offset skips is the instant of the change; a local
  * time it repeats is the earlier instant (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/time-zone-support.html.
  *
@@ -34,12 +38,17 @@ final class Zone
     public const ALIASES = ['cet' => 'Europe/Brussels', 'met' => 'Europe/Brussels', 'eet' => 'Europe/Athens', 'wet' => 'Europe/Lisbon', 'posixrules' => 'America/New_York'];
 
     /**
-     * @var array<string, string>|null The name of each named zone, by its lower-case name
+     * @var array<string, list<array{string, int, bool}>> The named zones of each release read so far, by the release
      */
-    private static ?array $names = null;
+    private static array $catalogs = [];
 
     /**
-     * @var array<string, self> The zones read so far, by the text that named them
+     * @var array<string, array<string, string>> The name of each named zone of each release, by the release and its lower-case name
+     */
+    private static array $names = [];
+
+    /**
+     * @var array<string, array<string, self>> The zones read so far, by the release and the text that named them
      */
     private static array $zones = [];
 
@@ -53,25 +62,25 @@ final class Zone
     }
 
     /**
-     * Answers the zone of a name, or null when the name is no zone.
+     * Answers the zone of a name on a release, or null when the name is no zone.
      */
-    public static function named(string $text): ?self
+    public static function named(string $text, GrammarRelease $release = GrammarRelease::MySql847): ?self
     {
-        if (array_key_exists($text, self::$zones)) {
-            return self::$zones[$text];
+        if (isset(self::$zones[$release->value][$text])) {
+            return self::$zones[$release->value][$text];
         }
-        $zone = self::read($text);
+        $zone = self::read($text, $release);
         if ($zone !== null) {
-            self::$zones[$text] = $zone;
+            self::$zones[$release->value][$text] = $zone;
         }
 
         return $zone;
     }
 
     /**
-     * Reads a zone from its name, or answers null.
+     * Reads a zone from its name on a release, or answers null.
      */
-    public static function read(string $text): ?self
+    public static function read(string $text, GrammarRelease $release = GrammarRelease::MySql847): ?self
     {
         if (preg_match('/\A([+-])([0-9]+):([0-9]+)\z/', $text, $match) === 1) {
             $hours = (int) ltrim($match[2], '0');
@@ -87,23 +96,22 @@ final class Zone
         if (strcasecmp($trimmed, 'SYSTEM') === 0) {
             return new self('SYSTEM');
         }
-        $prefix = '';
-        $base = $trimmed;
-        if (preg_match('/\A(posix|right)\/(.+)\z/i', $trimmed, $match) === 1) {
-            $prefix = strtolower($match[1]) . '/';
-            $base = $match[2];
-        }
-        $names = self::names();
-        $name = $names[strtolower($base)] ?? null;
+        $name = self::names($release)[strtolower($trimmed)] ?? null;
         if ($name === null) {
             return null;
         }
-        $rules = timezone_open(self::ALIASES[strtolower($name)] ?? $name);
+        $base = (string) preg_replace('/\A(posix|right)\//', '', $name);
+        set_error_handler(static fn (): bool => true);
+        try {
+            $rules = timezone_open(self::ALIASES[strtolower($base)] ?? $base);
+        } finally {
+            restore_error_handler();
+        }
         if ($rules === false) {
             return null;
         }
 
-        return new self($prefix . $name, 0, $rules);
+        return new self($name, 0, $rules);
     }
 
     /**
@@ -115,21 +123,41 @@ final class Zone
     }
 
     /**
-     * Answers the names of the named zones, by their lower-case names.
+     * Answers the named zones of the time zone tables of a release, in the order they are numbered: the name, its Time_zone_id and whether it counts leap seconds.
+     *
+     * @return list<array{string, int, bool}>
+     */
+    public static function catalog(GrammarRelease $release): array
+    {
+        if (!isset(self::$catalogs[$release->value])) {
+            $directory = dirname(__DIR__, 2) . '/resources/time-zones/';
+            $files = glob($directory . substr($release->value, 0, 9) . '*.php');
+            $major = glob($directory . substr($release->value, 0, 7) . '*.php');
+            $file = is_array($files) && $files !== [] ? $files[0] : (is_array($major) && $major !== [] ? $major[count($major) - 1] : $directory . GrammarRelease::MySql847->value . '.php');
+            /** @var list<array{string, int, bool}> $zones */
+            $zones = require $file;
+            self::$catalogs[$release->value] = $zones;
+        }
+
+        return self::$catalogs[$release->value];
+    }
+
+    /**
+     * Answers the names of the named zones of a release, by their lower-case names.
      *
      * @return array<string, string>
      */
-    public static function names(): array
+    public static function names(GrammarRelease $release = GrammarRelease::MySql847): array
     {
-        if (self::$names === null) {
-            $names = ['posixrules' => 'posixrules'];
-            foreach (DateTimeZone::listIdentifiers(DateTimeZone::ALL_WITH_BC) as $identifier) {
-                $names[strtolower($identifier)] = $identifier;
+        if (!isset(self::$names[$release->value])) {
+            $names = [];
+            foreach (self::catalog($release) as [$name]) {
+                $names[strtolower($name)] = $name;
             }
-            self::$names = $names;
+            self::$names[$release->value] = $names;
         }
 
-        return self::$names;
+        return self::$names[$release->value];
     }
 
     /**

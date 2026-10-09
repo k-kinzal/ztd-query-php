@@ -27,8 +27,24 @@ final class TimeZonesTest extends TestCase
         self::assertSame([['1', 'N'], ['1197', 'N'], ['1791', 'Y']], $zones->rows);
     }
 
-    public function testNamesAnswersTheZonesInTheOrderTheyAreNumbered(): void
+    public function testRowsAreThoseOfTheTablesOfTheRelease(): void
     {
-        self::assertSame(['Africa/Abidjan', 'posix/Africa/Abidjan', 'posixrules', 'right/Africa/Abidjan'], [TimeZones::names()[0], TimeZones::names()[598], TimeZones::names()[1196], TimeZones::names()[1197]]);
+        $s = (new Instance('5.7.44'))->connect();
+        $names = $s->query("SELECT * FROM mysql.time_zone_name WHERE Name IN ('Africa/Abidjan', 'America/Fort_Nelson', 'America/Fortaleza', 'UTC', 'posixrules', 'right/UTC')")[0];
+        $count = $s->query('SELECT COUNT(*), SUM(Use_leap_seconds = \'Y\') FROM mysql.time_zone')[0];
+
+        self::assertInstanceOf(ResultSet::class, $names);
+        self::assertInstanceOf(ResultSet::class, $count);
+        self::assertSame([['Africa/Abidjan', '1'], ['America/Fortaleza', '115'], ['America/Fort_Nelson', '113'], ['posixrules', '1193'], ['right/UTC', '1785'], ['UTC', '592']], $names->rows);
+        self::assertSame([['1789', '596']], $count->rows);
+    }
+
+    public function testRowsListTheNamesInTheOrderTheyAreNumberedOnMySql56(): void
+    {
+        $s = (new Instance('5.6.51'))->connect();
+        $names = $s->query('SELECT * FROM mysql.time_zone_name WHERE Time_zone_id BETWEEN 111 AND 114')[0];
+
+        self::assertInstanceOf(ResultSet::class, $names);
+        self::assertSame([['America/Ensenada', '111'], ['America/Fort_Nelson', '112'], ['America/Fort_Wayne', '113'], ['America/Fortaleza', '114']], $names->rows);
     }
 }

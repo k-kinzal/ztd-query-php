@@ -156,14 +156,14 @@ final class Bits implements Evaluable
     public function shifted(string $bytes, int $count, bool $left): string
     {
         $bits = '';
-        foreach (str_split($bytes) as $byte) {
+        foreach ($bytes === '' ? [] : str_split($bytes) as $byte) {
             $bits .= str_pad(decbin(ord($byte)), 8, '0', STR_PAD_LEFT);
         }
         $width = strlen($bits);
         $count = $count < 0 || $count > $width ? $width : $count;
         $shifted = $left ? substr($bits, $count) . str_repeat('0', $count) : str_repeat('0', $count) . substr($bits, 0, $width - $count);
         $result = '';
-        foreach (str_split($shifted, 8) as $octet) {
+        foreach ($shifted === '' ? [] : str_split($shifted, 8) as $octet) {
             $result .= chr((int) bindec($octet));
         }
 

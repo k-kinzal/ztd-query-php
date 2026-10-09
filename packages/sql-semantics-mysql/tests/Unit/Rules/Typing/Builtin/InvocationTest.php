@@ -29,7 +29,7 @@ final class InvocationTest extends TestCase
 {
     public function testDomainAnswersNullBeyondTheArguments(): void
     {
-        self::assertEquals(Domain::null(), new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->domain(0));
+        self::assertEquals(Domain::null(), (new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->domain(0));
     }
 
     public function testConstantReadsIntegerAndDigitLiterals(): void
@@ -48,23 +48,23 @@ final class InvocationTest extends TestCase
 
     public function testLengthWritesNumbersAsText(): void
     {
-        self::assertSame([22, 0, 4], [new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->length(Domain::double()), new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->length(Domain::null()), new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->length(Domain::integer(Field::LongLong, 4))]);
+        self::assertSame([22, 0, 4], [(new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->length(Domain::double()), (new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->length(Domain::null()), (new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->length(Domain::integer(Field::LongLong, 4))]);
     }
 
     public function testTextBecomesAMediumBlobBeyondSixteenThousandUtf8mb4Characters(): void
     {
-        self::assertSame(Field::VarString, new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->text([Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)], 16383, 'concat')?->field);
-        self::assertSame(Field::MediumBlob, new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->text([Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)], 16384, 'concat')?->field);
+        self::assertSame(Field::VarString, (new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->text([Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)], 16383, 'concat')?->field);
+        self::assertSame(Field::MediumBlob, (new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->text([Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)], 16384, 'concat')?->field);
     }
 
     public function testCollationsUseTheConnection(): void
     {
-        self::assertSame('utf8mb4_0900_ai_ci', new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->collations()->connection->name);
+        self::assertSame('utf8mb4_0900_ai_ci', (new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->collations()->connection->name);
     }
 
     public function testAggregationUsesTheConnection(): void
     {
-        self::assertSame('utf8mb4_0900_ai_ci', new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))->aggregation()->collations->connection->name);
+        self::assertSame('utf8mb4_0900_ai_ci', (new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->aggregation()->collations->connection->name);
     }
 
     public function testLengthTakesTheDisplayLengthOfAFloat(): void
