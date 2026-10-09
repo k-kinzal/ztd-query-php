@@ -100,7 +100,7 @@
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionCode</span>(<span class="tok-num">1698</span>);</span>
 <span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&quot;Access denied for user &#039;root&#039;@&#039;192.168.65.1&#039;&quot;</span>);</span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a></span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;GRANT PROXY ON root TO root&#039;</span>);</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;GRANT PROXY ON nobody TO root&#039;</span>);</span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    }</span>
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a></span>
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPrivilegesRefusesAnUnregisteredDynamicPrivilege</span>(): <span class="tok-id">void</span></span>
