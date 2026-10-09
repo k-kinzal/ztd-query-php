@@ -12,15 +12,15 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-parser",
-                "reference": "34544537ad7ffaf85f335edf68fcac0438269f30"
+                "reference": "4d4eff099d668b494342ea9420865d8653e6e5ce"
             },
             "require": {
-                "ext-zlib": "*",
                 "php": "^8.1"
             },
             "require-dev": {
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
+                "ext-zlib": "*",
                 "fakerphp/faker": "^1.23",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/bison-parser": "dev-main",
@@ -36,6 +36,7 @@
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
             "suggest": {
+                "ext-zlib": "Read legacy deflated custom parse-table caches; shipped tables do not require it",
                 "k-kinzal/bison-parser": "To rebuild the MySQL and PostgreSQL parse tables with bin/build-mysql.php and bin/build-pg.php",
                 "k-kinzal/lemon-parser": "To rebuild the SQLite parse tables with bin/build-sqlite.php"
             },
@@ -158,7 +159,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "LALR(1) SQL parsers for MySQL, PostgreSQL, and SQLite built from the official grammars",
+            "description": "Lossless LALR(1) SQL parsers for MySQL, PostgreSQL, and SQLite, built from the official grammars",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-parser",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-parser/"
@@ -173,7 +174,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-semantics",
-                "reference": "41b81719091399afb4cf15b5f875c9c0f3afc3ab"
+                "reference": "82ad997d383bfd1617bc0b8c03204b21dd1a03f0"
             },
             "require": {
                 "composer-runtime-api": "^2.2",
@@ -197,9 +198,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/build-models.php"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -285,7 +283,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Typed SQL statement analysis and reconstruction, with schema-dependent binding and value provenance",
+            "description": "Typed statement models, SQL reconstruction, and schema binding for MySQL, PostgreSQL, and SQLite",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/"
@@ -1382,7 +1380,7 @@
             "dist": {
                 "type": "path",
                 "url": "../lemon-parser",
-                "reference": "cbd9866b7fde50756437535ec3485f1d11110953"
+                "reference": "6a7628d97064197a8b3f9c464597b56c4175b939"
             },
             "require": {
                 "php": "^8.1"
@@ -1655,7 +1653,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "3abb12ca287d64843fff42dbb2a31c1e4483be77"
+                "reference": "d074fd59cb7e49dacd352d2c6fc56f6ccca84121"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1801,7 +1799,7 @@
             "license": [
                 "MIT"
             ],
-            "description": "Faker Provider for generating syntactically valid SQL statements",
+            "description": "Grammar-based SQL generator for MySQL, PostgreSQL, and SQLite, with a FakerPHP provider",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/"
@@ -1816,7 +1814,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-formatter",
-                "reference": "80a6e053138960142be443d8f72b74d994c8a2a0"
+                "reference": "cbe33064578040cc540e121eb535f53ff6a8309c"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -2740,11 +2738,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.2.14",
+            "version": "2.3.1",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/9c672e7a8e791dfc3d30e55f683e73fc0b63a3ac",
-                "reference": "9c672e7a8e791dfc3d30e55f683e73fc0b63a3ac",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/6155239b488e95d26d1ebd95c6b4bb294d7f09db",
+                "reference": "6155239b488e95d26d1ebd95c6b4bb294d7f09db",
                 "shasum": ""
             },
             "require": {
@@ -2800,25 +2798,25 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-09-12T21:39:33+00:00"
+            "time": "2026-10-08T21:09:11+00:00"
         },
         {
             "name": "phpstan/phpstan-strict-rules",
-            "version": "2.0.12",
+            "version": "2.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan-strict-rules.git",
-                "reference": "2bc5ae19ae965663b62ac907ee6342c3903ec93b"
+                "reference": "24ec51589f896f048d0d36de373d993b5cf71786"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan-strict-rules/zipball/2bc5ae19ae965663b62ac907ee6342c3903ec93b",
-                "reference": "2bc5ae19ae965663b62ac907ee6342c3903ec93b",
+                "url": "https://api.github.com/repos/phpstan/phpstan-strict-rules/zipball/24ec51589f896f048d0d36de373d993b5cf71786",
+                "reference": "24ec51589f896f048d0d36de373d993b5cf71786",
                 "shasum": ""
             },
             "require": {
                 "php": "^7.4 || ^8.0",
-                "phpstan/phpstan": "^2.1.52"
+                "phpstan/phpstan": "^2.3"
             },
             "require-dev": {
                 "php-parallel-lint/php-parallel-lint": "^1.2",
@@ -2850,9 +2848,9 @@
             ],
             "support": {
                 "issues": "https://github.com/phpstan/phpstan-strict-rules/issues",
-                "source": "https://github.com/phpstan/phpstan-strict-rules/tree/2.0.12"
+                "source": "https://github.com/phpstan/phpstan-strict-rules/tree/2.1.0"
             },
-            "time": "2026-07-19T07:24:06+00:00"
+            "time": "2026-10-01T21:30:37+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
