@@ -21,8 +21,6 @@ use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Typing\Quietness;
 use ReflectionClass;
-use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
-use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Call\CharCall;
 use SqlSemantics\Platform\MySql\Statement\Call\ClockCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Extract;
@@ -30,6 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Position;
+use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\DateArithmetic;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\GetFormat;
 use SqlSemantics\Platform\MySql\Statement\Call\Temporal\TimestampCall;
@@ -411,7 +410,7 @@ final class Compiler
             $node instanceof KeywordCall => $this->calls->keyword($node, $scope),
             $node instanceof ClockCall => $this->calls->clock($node, $scope),
             Windowing::windowed($node) => throw QueryError::WindowFunctionMisplaced->error(Resolution::named($node)),
-            $node instanceof Aggregate, $node instanceof GroupConcat => throw QueryError::InvalidGroupFunctionUse->error(),
+            $node instanceof SetFunction => throw QueryError::InvalidGroupFunctionUse->error(),
             default => null,
         };
     }

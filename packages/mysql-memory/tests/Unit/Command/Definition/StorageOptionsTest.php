@@ -14,6 +14,15 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class StorageOptionsTest extends TestCase
 {
+    public function testCheckReportsLegacyTablespaceAndEngineErrorsInOrder(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->run('CREATE TABLE d.t(a INT) TABLESPACE absent');
+
+        self::assertSame([['Error', 1812, 'InnoDB: A general tablespace named `absent` cannot be found.'], ['Error', 1031, "Table storage engine for 't' doesn't have this option"]], $session->diagnostics->conditions);
+    }
+
     public function testEngineUsesTheConfiguredDefaultAndResolvesAliases(): void
     {
         $session = (new Instance())->connect();

@@ -205,7 +205,7 @@ final class AlterTableCommand implements Command
      *
      * A full-text parser that is not installed comes first, then an unknown ALGORITHM or LOCK, a
      * new table name no table can have, an order written for a key part of a full-text, spatial
-     * or hash index, and WITH VALIDATION outside a partition exchange (verified on a live 8.4
+     * or hash index (verified on a live 8.4
      * server).
      *
      * @param list<AlterCommand> $commands
@@ -237,9 +237,28 @@ final class AlterTableCommand implements Command
                 throw StatementError::WrongUsage->error('spatial/fulltext/hash index', 'explicit index order');
             }
         }
+        $this->validation($commands);
+    }
+
+    /**
+     * Checks whether WITH or WITHOUT VALIDATION accompanies an operation that accepts it.
+     *
+     * Column additions, changes and renames accept validation. Tablespace operations,
+     * partition maintenance other than REBUILD, and partition exchange ignore or own it.
+     * Other operations refuse it before opening their table. Verified on MySQL 8.4.7.
+     *
+     * @param list<AlterCommand> $commands
+     * @throws \MySqlMemory\Error\SqlError When validation has no applicable operation
+     */
+    public function validation(array $commands): void
+    {
         $validated = array_filter($commands, static fn (AlterCommand $command): bool => $command instanceof ValidationOption) !== [];
-        $exchanged = array_filter($commands, static fn (AlterCommand $command): bool => $command instanceof ExchangePartition) !== [];
-        if ($validated && !$exchanged) {
+        $accepted = array_filter($commands, static fn (AlterCommand $command): bool => $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Column\AddColumn || $command instanceof AddColumns
+            || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Column\ChangeColumn || $command instanceof ExchangePartition
+            || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\TablespaceCommand
+            || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Command\RenameElement && $command->kind === ElementKind::Column
+            || $command instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintainPartitions && $command->kind !== \SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintenanceKind::Rebuild) !== [];
+        if ($validated && !$accepted) {
             throw StatementError::WrongUsage->error('ALTER', 'WITH VALIDATION');
         }
     }

@@ -87,6 +87,7 @@ enum SchemaError: int implements ErrorCode
     case PartitionClauseOnNonpartitioned = 1747;
     case UnknownAlterAlgorithm = 1800;
     case UnknownAlterLock = 1801;
+    case TablespaceUnavailable = 1812;
     case TablespaceExists = 1813;
     case DuplicateIndex = 1831;
     case AlterOperationNotSupported = 1845;

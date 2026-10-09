@@ -284,7 +284,7 @@ final class Errors
                 default => DataError::CantAggregateCollations,
             }, $diagnostic->message()),
             $diagnostic instanceof UnknownCollation => SchemaError::UnknownCollation->error(strlen(mb_strcut($diagnostic->name, 0, 64, 'UTF-8')) < min(64, strlen($diagnostic->name)) ? mb_strcut($diagnostic->name, 0, 64, 'UTF-8') . '?' : substr($diagnostic->name, 0, 64)),
-            $diagnostic instanceof TooBigPrecision => SchemaError::TooBigPrecision->error($diagnostic->precision, $diagnostic->function, 6),
+            $diagnostic instanceof TooBigPrecision => SchemaError::TooBigPrecision->error($diagnostic->precision, $diagnostic->function, $diagnostic->maximum),
             $diagnostic instanceof UnknownCharset => SchemaError::UnknownCharacterSet->error($diagnostic->name),
             $diagnostic instanceof CollationMismatch => SchemaError::CollationCharsetMismatch->error($diagnostic->collation, $diagnostic->charset),
             default => null,

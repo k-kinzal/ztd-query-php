@@ -543,4 +543,5 @@ return [
     1112 => ['HY000', "Table '%s' uses an extension that doesn't exist in this MySQL version"],
     1266 => ['HY000', "Using storage engine %s for table '%s'"],
     3981 => ['HY000', "Storage engine '%s' does not support ENGINE_ATTRIBUTE."],
+    1812 => ['HY000', 'Tablespace is missing for table %s.'],
 ];

@@ -74,6 +74,9 @@ final class StorageOptions
                 throw \MySqlMemory\Error\Family\DataError::WrongValue->error('path', $option->value->bytes());
             }
             if ($session->settings()->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 && $engine === 'InnoDB' && $option instanceof TablespaceOption && !in_array($option->tablespace->value, ['innodb_system', 'innodb_file_per_table'], true) && !isset($session->instance->registry->tablespaces[$option->tablespace->value])) {
+                if ($session->settings()->legacy()) {
+                    throw new SqlError(SchemaError::TablespaceUnavailable, 'InnoDB: A general tablespace named `' . $option->tablespace->value . '` cannot be found.', null, [[SchemaError::IllegalHa->value, SchemaError::IllegalHa->message($create->name->name->value)]]);
+                }
                 throw SchemaError::TablespaceMissing->error($option->tablespace->value);
             }
         }

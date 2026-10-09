@@ -165,7 +165,7 @@ final class AlterTableCommandTest extends TestCase
         (new AlterTableCommand())->read((new AlterTableCommand())->request($statement)[1], $operation);
     }
 
-    public function testReadRefusesWithValidationOutsideAnExchange(): void
+    public function testValidationRefusesWithValidationOutsideApplicableOperations(): void
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('ALTER TABLE t WITH VALIDATION, FORCE');
@@ -175,7 +175,7 @@ final class AlterTableCommandTest extends TestCase
         $this->expectException(SqlError::class);
         $this->expectExceptionMessage('Incorrect usage of ALTER and WITH VALIDATION');
 
-        (new AlterTableCommand())->read($statement->commands, $operation);
+        (new AlterTableCommand())->validation($statement->commands);
     }
 
     public function testRequestAnswersDropIndexAsAnAction(): void

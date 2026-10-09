@@ -195,7 +195,7 @@ final class HandlerCommand implements Command
         $column = $table->definition->columns[$key->columns[$position]];
         if (!$column->default->declared) {
             $context->warning(\MySqlMemory\Error\Family\DataError::NoDefaultForField, $column->name);
-            if ($session->settings()->legacy()) {
+            if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
                 return (new \MySqlMemory\Storage\Writer($table, $context))->implicit($column);
             }
             throw \MySqlMemory\Error\Family\StatementError::WrongArguments->error('HANDLER ... READ');

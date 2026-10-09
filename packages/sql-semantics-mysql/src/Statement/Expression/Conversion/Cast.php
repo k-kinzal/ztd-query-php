@@ -73,8 +73,8 @@ final class Cast implements Scalar
         if ($this->target->kind === CastKind::NationalChar) {
             Deprecation::raise(Deprecated::National, $derivation);
         }
-        if (($this->target->kind === CastKind::Time || $this->target->kind === CastKind::DateTime) && $this->target->length !== null && (int) $this->target->length > 6) {
-            $problem = new TooBigPrecision((int) $this->target->length, 'CAST');
+        $problem = $this->precisionProblem();
+        if ($problem !== null) {
             $derivation->report($problem);
             $derivation->warn(new ParseFailure($problem, true));
         }
@@ -98,6 +98,40 @@ final class Cast implements Scalar
         $domain = $operand === null ? null : (new Casts(Settings::of($derivation->context), $grammar))->cast($operand, $this->target);
 
         return new ScalarFact($domain === null ? $result->type($this->target) : new Known($domain), $result->nullability($this->target, $fact->nullability));
+    }
+
+    /**
+     * Answers a precision beyond the cast target's limit, before resolving its operand.
+     *
+     * FLOAT accepts at most 53 bits and reports an overflowing request as a signed 32-bit
+     * integer. Temporal fractions accept at most 6 digits. Verified on MySQL 8.4.7.
+     */
+    public function precisionProblem(): ?TooBigPrecision
+    {
+        $maximum = match ($this->target->kind) {
+            CastKind::Float => 53,
+            CastKind::Time, CastKind::DateTime => 6,
+            CastKind::Signed, CastKind::Unsigned, CastKind::Date, CastKind::Decimal,
+            CastKind::Char, CastKind::Binary, CastKind::NationalChar, CastKind::Json,
+            CastKind::Double, CastKind::Real, CastKind::Year, CastKind::Point,
+            CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint,
+            CastKind::MultiLineString, CastKind::MultiPolygon, CastKind::GeometryCollection => null,
+        };
+        if ($maximum === null || $this->target->length === null || (int) $this->target->length <= $maximum) {
+            return null;
+        }
+        $precision = (int) $this->target->length;
+        if ($this->target->kind === CastKind::Float) {
+            $precision = 0;
+            foreach (str_split(explode('.', $this->target->length)[0]) as $digit) {
+                $precision = ($precision * 10 + (int) $digit) % 4294967296;
+            }
+            if ($precision >= 2147483648) {
+                $precision -= 4294967296;
+            }
+        }
+
+        return new TooBigPrecision($precision, 'CAST', $maximum);
     }
 
     /**

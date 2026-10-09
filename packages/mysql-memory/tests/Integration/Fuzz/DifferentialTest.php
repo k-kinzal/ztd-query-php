@@ -75,6 +75,20 @@ final class DifferentialTest extends TestCase
      */
     public static function providerResolutionErrors(): iterable
     {
+        yield 'cast floating precision before operand' => ['SELECT CAST(missing AS FLOAT(54))'];
+        yield 'cast signed precision overflow' => ['SELECT CAST(1 AS FLOAT(2147483648))'];
+        yield 'cast unsigned precision overflow' => ['SELECT CAST(1 AS FLOAT(4294967295))'];
+        yield 'cast precision wraparound' => ['SELECT CAST(1 AS FLOAT(4294967296))'];
+        yield 'cast maximum unsigned precision' => ['SELECT CAST(1 AS FLOAT(18446744073709551615))'];
+        yield 'json object aggregate in kill' => ['KILL JSON_OBJECTAGG(1,1)'];
+        yield 'json object aggregate in where' => ['SELECT 1 WHERE JSON_OBJECTAGG(1,1)'];
+        yield 'alter force validation before missing table' => ['ALTER TABLE missing WITH VALIDATION, FORCE'];
+        yield 'alter discard after missing table' => ['ALTER TABLE missing WITH VALIDATION, DISCARD TABLESPACE'];
+        yield 'alter add with validation' => ['ALTER TABLE t1 WITH VALIDATION, ADD b INT'];
+        yield 'alter modify with validation' => ['ALTER TABLE t1 WITH VALIDATION, MODIFY a BIGINT'];
+        yield 'alter rename with validation' => ['ALTER TABLE t1 WITH VALIDATION, RENAME COLUMN a TO b'];
+        yield 'alter rebuild validation before missing table' => ['ALTER TABLE missing WITH VALIDATION, REBUILD PARTITION ALL'];
+        yield 'alter validation on existing table' => ['ALTER TABLE t1 WITH VALIDATION, FORCE'];
         yield 'IN operand before list' => ['SELECT missing IN ((1 = ALL (SELECT 1,2)), 3)'];
         yield 'single IN element' => ['SELECT missing NOT IN ((1 = ALL (SELECT 1,2))) FROM t1'];
         yield 'row with scalar quantified operator' => ['SELECT (missing,1) = ALL (SELECT 1,2,3)'];

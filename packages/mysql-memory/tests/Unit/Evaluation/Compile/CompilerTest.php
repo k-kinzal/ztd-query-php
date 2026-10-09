@@ -114,6 +114,15 @@ final class CompilerTest extends TestCase
         $session->query('SELECT a FROM t WHERE COUNT(*) > 0');
     }
 
+    public function testCompileCallRefusesJsonObjectAggregationOutsideGroupedOutput(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1111);
+        $session->query('KILL JSON_OBJECTAGG(1,1)');
+    }
+
     public function testCompileLiteralCompilesEachLiteralForm(): void
     {
         $session = (new Instance())->connect();
