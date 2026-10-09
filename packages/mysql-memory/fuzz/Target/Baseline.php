@@ -121,10 +121,12 @@ final class Baseline
         foreach ($server->rows($native, "SELECT NAME FROM information_schema.INNODB_TABLESPACES WHERE SPACE_TYPE = 'General'") as [$name]) {
             $this->cleanup['DROP TABLESPACE ' . $this->identifier($name)] = true;
         }
-        foreach ($server->rows($native, 'SELECT CHANNEL_NAME FROM performance_schema.replication_connection_configuration') as [$name]) {
-            $command = str_starts_with($this->version, '5.') ? 'SLAVE' : 'REPLICA';
-            $this->cleanup['STOP ' . $command . ' FOR CHANNEL ' . $native->quote($name)] = true;
-            $this->cleanup['RESET ' . $command . ' ALL FOR CHANNEL ' . $native->quote($name)] = true;
+        foreach (['performance_schema.replication_connection_configuration', 'mysql.slave_master_info', 'mysql.slave_relay_log_info'] as $table) {
+            if ($server->rows($native, 'SELECT CHANNEL_NAME FROM ' . $table) !== []) {
+                $command = str_starts_with($this->version, '5.') ? 'SLAVE' : 'REPLICA';
+                $this->cleanup['STOP ' . $command] = true;
+                $this->cleanup['RESET ' . $command . ' ALL'] = true;
+            }
         }
     }
 

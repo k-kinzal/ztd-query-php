@@ -116,7 +116,7 @@ final class Syntax
     {
         $line = substr_count(ltrim(substr($statement, 0, $offset)), "\n") + 1;
 
-        return new SqlError(StatementError::ParseError, StatementError::ParseError->message(mb_strcut(substr($statement, $offset) . $following, 0, 80, 'UTF-8'), $line), $failure);
+        return new SqlError(StatementError::ParseError, StatementError::ParseError->message(mb_strcut(rtrim(substr($statement, $offset) . $following, " \t\n\r\f\v"), 0, 80, 'UTF-8'), $line), $failure);
     }
 
     /**

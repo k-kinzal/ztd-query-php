@@ -24,6 +24,8 @@ enum ReplicationError: string
     case LineFeed = 'The value may not contain a line feed (ER_WRONG_VALUE).';
     case PasswordTooLong = 'A replication password is longer than 32 characters (ER_CHANGE_SOURCE_PASSWORD_LENGTH).';
     case GroupPasswordTooLong = 'A group replication password is longer than 32 characters (ER_GROUP_REPLICATION_PASSWORD_LENGTH).';
+    case GroupUserMissing = 'A group replication password requires a user (ER_GROUP_REPLICATION_USER_MANDATORY).';
+    case GroupUserEmpty = 'A group replication user cannot be empty (ER_GROUP_REPLICATION_USER_EMPTY_MSG).';
     case DelayOutOfRange = 'The replication delay is greater than 2147483647 seconds (ER_SOURCE_DELAY_VALUE_OUT_OF_RANGE).';
     case HeartbeatOutOfRange = 'The heartbeat period is greater than 4294967 seconds (ER_REPLICA_HEARTBEAT_VALUE_OUT_OF_RANGE).';
     case RowFormatValue = 'REQUIRE_ROW_FORMAT accepts only 0 or 1 (ER_REQUIRE_ROW_FORMAT_INVALID_VALUE).';

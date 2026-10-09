@@ -34,6 +34,15 @@ final class CatalogTest extends TestCase
         self::assertSame([], (new Catalog(\SqlSemantics\Contract\GrammarRelease::MySql5651))->dynamics());
     }
 
+    public function testDynamicsKnowsTheDefinerPrivilegeOfMySql80(): void
+    {
+        $catalog = new Catalog(\SqlSemantics\Contract\GrammarRelease::MySql8044);
+
+        self::assertTrue($catalog->registered('SET_USER_ID'));
+        self::assertFalse($catalog->registered('SET_ANY_DEFINER'));
+        self::assertFalse($catalog->registered('TRANSACTION_GTID_TAG'));
+    }
+
     public function testLegacyTellsMySql56And57(): void
     {
         self::assertSame([true, false], [(new Catalog(\SqlSemantics\Contract\GrammarRelease::MySql5651))->legacy(), (new Catalog())->legacy()]);

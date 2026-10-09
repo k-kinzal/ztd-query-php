@@ -42,6 +42,7 @@ final class BaselineTest extends TestCase
         yield 'database' => ['CREATE DATABASE baseline_extra'];
         yield 'account' => ['CREATE USER baseline_extra'];
         yield 'server' => ["CREATE SERVER baseline_extra FOREIGN DATA WRAPPER mysql OPTIONS (USER 'text')"];
+        yield 'named replication channel' => ["CREATE DATABASE baseline_extra; CHANGE REPLICATION SOURCE TO SOURCE_PORT=3306 FOR CHANNEL 'baseline_extra'"];
     }
 
     #[DataProvider('providerObjects')]

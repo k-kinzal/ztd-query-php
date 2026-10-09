@@ -113,7 +113,7 @@ final class ReplicaCommand implements Command
                 $this->reset($target, $registry);
             }
         } elseif ($statement instanceof ChangeReplicationSource) {
-            return new Completion();
+            (new SourceChange())->check($statement, $session, $context);
         }
 
         return new Completion(0, 0, $session->diagnostics->count());

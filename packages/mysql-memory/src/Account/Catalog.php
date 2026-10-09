@@ -81,7 +81,18 @@ final class Catalog
      */
     public function dynamics(): array
     {
-        return $this->legacy() ? [] : self::DYNAMIC;
+        if ($this->legacy()) {
+            return [];
+        }
+        if ($this->release === GrammarRelease::MySql8044) {
+            $names = array_values(array_diff(self::DYNAMIC, ['ALLOW_NONEXISTENT_DEFINER', 'FLUSH_PRIVILEGES', 'OPTIMIZE_LOCAL_TABLE', 'SET_ANY_DEFINER', 'TRANSACTION_GTID_TAG']));
+            $names[] = 'SET_USER_ID';
+            sort($names, SORT_STRING);
+
+            return $names;
+        }
+
+        return self::DYNAMIC;
     }
 
     /**

@@ -114,6 +114,8 @@ final class Refusals
             ReplicationError::LineFeed => DataError::WrongValue->error('argument contains not-allowed LF', $this->lineFeed($statement)),
             ReplicationError::PasswordTooLong => AdministrationError::SourcePasswordTooLong->error(),
             ReplicationError::GroupPasswordTooLong => AdministrationError::GroupPasswordTooLong->error(),
+            ReplicationError::GroupUserMissing => AdministrationError::GroupUserMissing->error(),
+            ReplicationError::GroupUserEmpty => AdministrationError::GroupUserEmpty->error(),
             ReplicationError::DelayOutOfRange => AdministrationError::SourceDelayOutOfRange->error($this->option($statement, SourceOptionKind::Delay), '2147483647'),
             ReplicationError::HeartbeatOutOfRange => AdministrationError::HeartbeatOutOfRange->error('4294967'),
             ReplicationError::RowFormatValue => AdministrationError::RowFormatValue->error($this->option($statement, SourceOptionKind::RequireRowFormat)),

@@ -96,6 +96,13 @@ final class SyntaxTest extends TestCase
         $session->query('SELEC ' . str_repeat('x', 100));
     }
 
+    public function testNearOmitsTrailingWhitespaceButKeepsCommentsAndFollowingStatements(): void
+    {
+        $error = (new Syntax())->near(0, 'SELEC 1 /* comment */; ', "\nSELECT 2 \t\n", new RuntimeException());
+
+        self::assertStringContainsString("near 'SELEC 1 /* comment */; \nSELECT 2' at line 1", $error->getMessage());
+    }
+
     public function testErrorKeepsTheFailureItReports(): void
     {
         $failure = new RuntimeException('not a syntax error');

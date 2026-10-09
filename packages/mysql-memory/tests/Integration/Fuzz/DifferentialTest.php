@@ -75,6 +75,9 @@ final class DifferentialTest extends TestCase
      */
     public static function providerResolutionErrors(): iterable
     {
+        yield 'syntax whitespace' => ["SELEC 1 \t\n"];
+        yield 'syntax whitespace after comment' => ["SELEC 1 /* comment */ \t"];
+        yield 'syntax whitespace after following statement' => ["SELEC 1; \nSELECT 2 \t"];
         yield 'cast floating precision before operand' => ['SELECT CAST(missing AS FLOAT(54))'];
         yield 'cast signed precision overflow' => ['SELECT CAST(1 AS FLOAT(2147483648))'];
         yield 'cast unsigned precision overflow' => ['SELECT CAST(1 AS FLOAT(4294967295))'];

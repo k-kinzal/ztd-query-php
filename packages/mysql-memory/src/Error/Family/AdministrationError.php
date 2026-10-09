@@ -95,4 +95,14 @@ enum AdministrationError: int implements ErrorCode
     case MalformedGtidSet = 1772;
     case GtidModeOff = 3062;
     case ReplicaMultipleChannels = 3079;
+    case HeartbeatBelowMinimum = 1703;
+    case HeartbeatAboveTimeout = 1704;
+    case StoredReplicationCredentials = 1760;
+    case AutoPositionWithoutGtid = 1777;
+    case SourceFileWithoutPosition = 3023;
+    case ReplicationCompression = 3920;
+    case ReplicationUserMissing = 3926;
+    case GroupUserEmpty = 3970;
+    case GroupUserMissing = 3971;
+    case AnonymousAssignmentWithoutGtid = 4015;
 }
