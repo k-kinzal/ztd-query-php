@@ -1,6 +1,15 @@
 name: Fuzz (mysql-memory)
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/mysql-memory-fuzz.yml'
+      - 'packages/mysql-memory/**'
+      - 'packages/sql-parser/**'
+      - 'packages/sql-semantics/**'
+      - 'packages/sql-semantics-mysql/**'
+      - 'packages/sql-faker/**'
+      - 'packages/container/**'
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
@@ -182,7 +191,7 @@ jobs:
           retention-days: 14
 
   canonical-seeds:
-    if: github.event_name == 'workflow_dispatch' && inputs.canonical_seeds == true
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.canonical_seeds == true)
     name: Canonical seed coverage
     runs-on: ubuntu-latest
     timeout-minutes: 45
