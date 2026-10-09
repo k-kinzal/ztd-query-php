@@ -134,7 +134,13 @@
             "Composer\\Config::disableProcessTimeout",
             "@fuzz:expression --max-runs=100",
             "@fuzz:query --max-runs=100",
+            "@fuzz:write --max-runs=100",
             "@fuzz:statement --max-runs=100"
+        ],
+        "fuzz:write": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/write') || mkdir('fuzz/corpus/write', 0777, true);\" --",
+            "@php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_write.php fuzz/corpus/write/ --timeout=60"
         ],
         "fuzz:statement": [
             "Composer\\Config::disableProcessTimeout",

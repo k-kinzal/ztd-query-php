@@ -1,0 +1,122 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+deptrac:
+  paths: [./src]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: Account
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Account\\.*'
+    - name: Command
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Command\\.*'
+    - name: Concurrency
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Concurrency\\.*'
+    - name: Dictionary
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Dictionary\\.*'
+    - name: Error
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Error\\.*'
+    - name: Evaluation
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Evaluation\\.*'
+    - name: Hint
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Hint\\.*'
+    - name: Iterator
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Iterator\\.*'
+    - name: Plan
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Plan\\.*'
+    - name: Program
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Program\\.*'
+    - name: Protocol
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Protocol\\.*'
+    - name: Registry
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Registry\\.*'
+    - name: Result
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Result\\.*'
+    - name: Server
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Server\\.*'
+    - name: Session
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Session\\.*'
+    - name: Storage
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Storage\\.*'
+    - name: System
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\System\\.*'
+    - name: Typing
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Typing\\.*'
+    - name: Value
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Value\\.*'
+    - name: Variable
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Variable\\.*'
+    - name: Instance
+      collectors:
+        - type: classLike
+          value: '^MySqlMemory\\Instance$'
+    - name: Parser
+      collectors:
+        - type: classLike
+          value: '^SqlParser\\.*'
+    - name: Semantics
+      collectors:
+        - type: classLike
+          value: '^SqlSemantics\\.*'
+  ruleset:
+    Account: [Error, Semantics, Value]
+    Command: [Account, Concurrency, Dictionary, Error, Evaluation, Hint, Iterator, Parser, Plan, Program, Registry, Result, Semantics, Session, Storage, System, Typing, Value, Variable]
+    Concurrency: [Dictionary, Error, Semantics, Session, Storage]
+    Dictionary: [Evaluation, Result, Semantics, Storage, System, Typing]
+    Error: [Semantics]
+    Evaluation: [Account, Dictionary, Error, Iterator, Parser, Plan, Program, Registry, Semantics, Session, Storage, Typing, Value, Variable]
+    Hint: [Dictionary, Error, Evaluation, Parser, Semantics, Session, Typing, Variable]
+    Iterator: [Concurrency, Dictionary, Error, Evaluation, Plan, Semantics, Session, Storage, Value]
+    Plan: [Concurrency, Dictionary, Error, Evaluation, Parser, Result, Semantics, Session, Storage, Typing, Value]
+    Program: [Command, Dictionary, Error, Evaluation, Plan, Result, Semantics, Session, Storage, Typing]
+    Protocol: [Result, Semantics, Typing, Value]
+    Registry: [Dictionary, Semantics, Session, Storage, Typing]
+    Result: [Semantics]
+    Server: [Command, Error, Evaluation, Hint, Instance, Plan, Protocol, Result, Semantics, Session]
+    Session: [Account, Command, Concurrency, Dictionary, Error, Evaluation, Hint, Instance, Parser, Plan, Program, Registry, Result, Semantics, Storage, System, Typing, Value, Variable]
+    Storage: [Concurrency, Dictionary, Error, Evaluation, Semantics, Session, Typing, Value]
+    System: [Account, Command, Dictionary, Error, Evaluation, Instance, Plan, Registry, Result, Semantics, Session, Storage, Typing, Value]
+    Typing: [Error, Result, Semantics, Value]
+    Value: [Semantics, Typing]
+    Variable: [Concurrency, Error, Evaluation, Semantics, Session, Typing, Value]
+    Instance: [Account, Concurrency, Dictionary, Error, Registry, Semantics, Session, System]
+    Parser: []
+    Semantics: [Parser]

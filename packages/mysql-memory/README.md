@@ -18,11 +18,16 @@ Nothing is written to disk. A server starts in a fraction of a second, holds onl
 
 ## Supported Releases
 
-> **Placeholder.** The maintainer fills in this table with the releases verified against real MySQL servers.
+Each release below is compared with a real server of that release by the differential campaigns described in [How Correctness Is Checked](#how-correctness-is-checked). The last column is the share of generated statements on which a client still observes a difference, over the five campaign modes; [docs/compatibility.md](docs/compatibility.md) describes the known differences.
 
-| Release | `version` argument | Verified |
-|---------|--------------------|----------|
-| _TBD_ | _TBD_ | _TBD_ |
+| Release | `version` argument | Checked against a server | Differing statements |
+|---------|--------------------|--------------------------|----------------------|
+| MySQL 8.4 | `8.4.7` (default) | Yes | 1.5% (23 of 1,500) |
+| MySQL 8.0 | `8.0.44` | Yes | 1.9% (19 of 1,000) |
+| MySQL 9.1 | `9.1.0` | Yes | 2.3% (23 of 1,000) |
+| MySQL 5.7 | `5.7.44` | Yes | 5.6% (56 of 1,000) |
+| MySQL 5.6 | `5.6.51` | Yes | 3.7% (37 of 1,000) |
+| MySQL 8.1, 8.2, 8.3, 9.0 | `8.1.0`, `8.2.0`, `8.3.0`, `9.0.1` | No | Not measured |
 
 The `version` argument names the release to emulate; it defaults to `8.4.7`. It must be one of the MySQL grammar releases of SQL Parser: `5.6.51`, `5.7.44`, `8.0.44`, `8.1.0`, `8.2.0`, `8.3.0`, `8.4.7`, `9.0.1` or `9.1.0`. Any other value fails at the first statement with an `InvalidArgumentException`. The release decides the grammar, the keywords, the system variables and their defaults (for example the default `sql_mode`), and what `VERSION()` reports.
 

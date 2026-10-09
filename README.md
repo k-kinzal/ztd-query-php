@@ -15,6 +15,7 @@ It is also an experiment with AI agents. ZTD is complex, and this repository tes
 | [container](packages/container/) | Container definitions for testcontainers-php used across the repository |
 | [deriver](packages/deriver/) | Derives PHP values and state from source with explicit models and correlated outcomes |
 | [lemon-parser](packages/lemon-parser/) | Parser for Lemon grammar files, producing a lossless syntax tree |
+| [mysql-memory](packages/mysql-memory/) | In-memory MySQL server for tests, reachable through PDO and mysqli and checked against real MySQL by differential fuzzing |
 | [requirements](packages/requirements/) | Links source text, EARS specifications, and tests for PHP projects |
 | [sql-catalog](packages/sql-catalog/) | Catalogs the SQL an application issues, by static analysis |
 | [sql-faker](packages/sql-faker/) | Grammar-based SQL generator with a Faker provider |
