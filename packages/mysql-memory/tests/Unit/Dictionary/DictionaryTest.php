@@ -15,6 +15,21 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class DictionaryTest extends TestCase
 {
+    public function testDiscardVolatileRowsKeepsDurableRowsAndTableDefinitions(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE m (a INT) ENGINE=MEMORY; CREATE TABLE t (a INT); INSERT INTO m VALUES (1); INSERT INTO t VALUES (2)');
+        $instance->dictionary->discardVolatileRows();
+        $memory = $instance->dictionary->table('d', 'm');
+        $durable = $instance->dictionary->table('d', 't');
+
+        self::assertNotNull($memory);
+        self::assertNotNull($durable);
+        self::assertSame([], $memory->data->rows);
+        self::assertSame([[2]], array_values($durable->data->rows));
+    }
+
     public function testSchemaFindsADatabaseByItsExactName(): void
     {
         $schema = new Schema('Shop');
@@ -67,7 +82,7 @@ final class DictionaryTest extends TestCase
 
         $declarations = $session->instance->dictionary->declarations();
 
-        self::assertSame([['t', null], ['v', 'd']], [[$declarations[0]->name->name->value, $declarations[0]->name->schema?->value], [$declarations[1]->name->name->value, $declarations[1]->name->schema?->value]]);
+        self::assertSame([['t', 'd'], ['v', 'd']], [[$declarations[0]->name->name->value, $declarations[0]->name->schema?->value], [$declarations[1]->name->name->value, $declarations[1]->name->schema?->value]]);
     }
 
     public function testDeclarationsIsEmptyWithoutTables(): void

@@ -86,7 +86,7 @@ final class Jsons
         $path = $node->path->value;
         $unquote = $node->unquote;
         $routine = new Routine($unquote ? '->>' : '->', 1, 1, static function (Frame $f, array $a) use ($path, $unquote): ?string {
-            $document = Jsons::document($a[0]->evaluate($f), $a[0]->domain(), 1, 'json_extract');
+            $document = Jsons::read($a[0], $f, 1, 'json_extract');
             if ($document === null) {
                 return null;
             }
@@ -143,7 +143,7 @@ final class Jsons
             if ($value === null) {
                 return null;
             }
-            $document = Jsons::document($a[1]->evaluate($f), $a[1]->domain(), 2, 'member of');
+            $document = Jsons::read($a[1], $f, 2, 'member of');
             if ($document === null) {
                 return null;
             }
@@ -229,6 +229,7 @@ final class Jsons
 
     /**
      * Reads the JSON document an argument of a function holds for the row of a frame; NULL is null.
+     * A non-document type is refused before evaluating the argument, including its casts and side effects.
      *
      * @param int $position The position of the argument, counted from 1
      * @param string $function The function name the server writes in its messages
@@ -237,6 +238,10 @@ final class Jsons
      */
     public static function read(Evaluable $argument, Frame $frame, int $position, string $function): ?JsonNode
     {
+        if (!in_array($argument->domain()->kind, [Kind::String, Kind::Json, Kind::Null], true)) {
+            throw DataError::InvalidJsonType->error($position, $function);
+        }
+
         return self::document($argument->evaluate($frame), $argument->domain(), $position, $function);
     }
 

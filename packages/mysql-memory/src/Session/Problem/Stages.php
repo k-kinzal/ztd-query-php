@@ -118,6 +118,7 @@ final class Stages
     public static function closing(Diagnostic $diagnostic): bool
     {
         return $diagnostic instanceof UndeclaredVariable
+            || ($diagnostic instanceof NotSupportedYet && $diagnostic->feature === \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill::DEPENDENCIES)
             || ($diagnostic instanceof Misuse && ($diagnostic->rule === MisuseRule::UnknownLockedTable || $diagnostic->rule === MisuseRule::RepeatedLockedTable));
     }
 

@@ -19,6 +19,67 @@ use RuntimeException;
 #[Medium]
 final class ListenerTest extends TestCase
 {
+    public function testReadDispatchesAPacketAndClosesTheDisconnectedPeer(): void
+    {
+        $instance = new Instance();
+        $listener = new Listener($instance, 'tcp://127.0.0.1:0');
+        $client = stream_socket_client($listener->open());
+        self::assertIsResource($client);
+        $id = $listener->accept();
+        self::assertIsInt($id);
+        fread($client, 1024);
+        fwrite($client, "\x26\x00\x00\x01\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        $listener->read($id);
+        $reply = fread($client, 1024);
+        fclose($client);
+        $listener->read($id);
+        $listener->read($id);
+
+        self::assertSame("\x07\x00\x00\x02\x00\x00\x00\x02\x00\x00\x00", $reply);
+        self::assertSame([], $instance->registry->threads->connected);
+    }
+
+    public function testCloseReleasedClosesAnIdleConnectionKilledByAnotherConnection(): void
+    {
+        $server = Server::start();
+        $first = new mysqli($server->host, 'root', '', '', $server->port);
+        $second = new mysqli($server->host, 'root', '', '', $server->port);
+        $second->query('KILL CONNECTION ' . $first->thread_id);
+        usleep(20000);
+
+        $this->expectException(mysqli_sql_exception::class);
+        $this->expectExceptionCode(2006);
+
+        $first->query('SELECT 1');
+    }
+
+    public function testServeInterruptsALockWaitWithoutEndingTheTransactionForKillQuery(): void
+    {
+        $server = Server::start();
+        $holder = new mysqli($server->host, 'root', '', '', $server->port);
+        $waiter = new mysqli($server->host, 'root', '', '', $server->port);
+        $holder->query('CREATE DATABASE d');
+        $holder->query('CREATE TABLE d.t (id INT PRIMARY KEY, v INT)');
+        $holder->query('INSERT INTO d.t VALUES (1, 10), (2, 20)');
+        $holder->query('BEGIN');
+        $holder->query('UPDATE d.t SET v = 11 WHERE id = 1');
+        $waiter->query('BEGIN');
+        $waiter->query('UPDATE d.t SET v = 21 WHERE id = 2');
+        $waiter->query('UPDATE d.t SET v = 12 WHERE id = 1', MYSQLI_ASYNC);
+        usleep(100000);
+        $holder->query('KILL QUERY ' . $waiter->thread_id);
+        mysqli_report(MYSQLI_REPORT_OFF);
+        $completed = $waiter->reap_async_query();
+        $error = $waiter->errno;
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+        $waiter->query('COMMIT');
+        $holder->query('ROLLBACK');
+        $rows = $holder->query('SELECT v FROM d.t ORDER BY id');
+        self::assertInstanceOf(mysqli_result::class, $rows);
+
+        self::assertSame([false, 1317, [['10'], ['21']]], [$completed, $error, $rows->fetch_all()]);
+    }
+
     public function testOpenListensOnAFreeLocalPort(): void
     {
         $listener = new Listener(new Instance(), 'tcp://127.0.0.1:0');

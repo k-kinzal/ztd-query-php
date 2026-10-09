@@ -90,6 +90,22 @@ final class DifferentialTest extends TestCase
         yield 'window ordering before null treatment' => ['SELECT NTH_VALUE(1,1) IGNORE NULLS OVER (ORDER BY 1)'];
         yield 'null treatment before counting edge' => ['SELECT NTH_VALUE(1,1) FROM LAST IGNORE NULLS OVER ()'];
         yield 'counting edge before row number' => ['SELECT NTH_VALUE(1,0) FROM LAST OVER ()'];
+        yield 'kill null' => ['KILL QUERY NULL'];
+        yield 'kill negative' => ['KILL QUERY -1'];
+        yield 'kill user conversion' => ['KILL USER()'];
+        yield 'kill constant subquery' => ['KILL (SELECT 0)'];
+        yield 'kill table dependency' => ['KILL (SELECT 0 FROM missing)'];
+        yield 'kill routine dependency' => ['KILL missing()'];
+        yield 'kill unknown column' => ['KILL missing'];
+        yield 'kill row operand' => ['KILL (1,2)'];
+        yield 'kill aggregate' => ['KILL COUNT(*)'];
+        yield 'kill window function' => ['KILL ROW_NUMBER() OVER ()'];
+        yield 'kill runtime subquery error' => ['KILL (SELECT 1 UNION SELECT 2)'];
+        yield 'clone local without plugin' => ["CLONE LOCAL DATA DIRECTORY 'text'"];
+        yield 'json document type before cast warnings' => ["SELECT JSON_EXTRACT(CAST('bad' AS SIGNED), '$')"];
+        yield 'member document type before cast warnings' => ["SELECT 1 MEMBER OF (CAST('bad' AS DATETIME))"];
+        yield 'member null before document type' => ["SELECT NULL MEMBER OF (CAST('bad' AS SIGNED))"];
+        yield 'table outside the current database' => ['USE information_schema; SELECT * FROM fz.t1 ORDER BY id'];
     }
 
     #[DataProvider('providerResolutionErrors')]
@@ -109,5 +125,17 @@ final class DifferentialTest extends TestCase
 
         self::assertTrue($comparison->volatile);
         self::assertNull($comparison->difference);
+    }
+
+    public function testCompareReleasesTheBackupLockBeforeRepairingTheServer(): void
+    {
+        [$target] = Servers::shared();
+        $target->guard()->exec('SET SESSION lock_wait_timeout = 2');
+        $comparison = $target->compare('LOCK INSTANCE FOR BACKUP');
+        $dropped = $target->guard()->exec('DROP DATABASE fz');
+
+        self::assertFalse($comparison->volatile);
+        self::assertNull($comparison->difference, (string) $comparison->difference);
+        self::assertNotFalse($dropped);
     }
 }

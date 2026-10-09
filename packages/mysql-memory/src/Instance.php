@@ -66,7 +66,17 @@ final class Instance
     /**
      * The time the server started, in seconds since the epoch.
      */
-    public readonly float $started;
+    public float $started;
+
+    /**
+     * Whether SHUTDOWN has stopped the instance.
+     */
+    public bool $stopped = false;
+
+    /**
+     * @var array<string, string|int> The global configuration reloaded by RESTART
+     */
+    private readonly array $startup;
 
     /**
      * The transactions of the sessions, their row locks and the row versions their snapshots read.
@@ -83,8 +93,9 @@ final class Instance
      * @param array<string, string|int> $globals Global variable values the server starts with, by name
      * @param list<string> $databases Databases created at start, besides the system ones
      * @param string|null $clientHost The host every client is seen connecting from, or null for its address
+     * @param bool $supervised Whether a supervisor permits SQL RESTART
      */
-    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null)
+    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null, public readonly bool $supervised = true)
     {
         $release = GrammarRelease::tryFrom('mysql-' . $version) ?? GrammarRelease::MySql847;
         $this->catalog = SystemVariables::of($release);
@@ -92,6 +103,7 @@ final class Instance
         if ($release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744) {
             $globals += ['character_set_client' => 'latin1', 'character_set_connection' => 'latin1', 'character_set_results' => 'latin1', 'collation_connection' => 'latin1_swedish_ci'];
         }
+        $this->startup = $globals;
         $this->globals = new Globals($globals);
         $this->dictionary = new Dictionary();
         $this->accounts = Accounts::installed($release);
@@ -123,10 +135,53 @@ final class Instance
      */
     public function connect(string $user = 'root', string $host = 'localhost', ?string $database = null): Session
     {
+        if ($this->stopped) {
+            throw Error\Family\TransactionError::ServerGone->error();
+        }
         $session = new Session($this, ++$this->connections, $user, $host, $database);
         $this->sessions[$session->id] = WeakReference::create($session);
 
         return $session;
+    }
+
+    /**
+     * Stops accepting sessions and disconnects every session, rolling back open transactions.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/shutdown.html.
+     */
+    public function shutdown(): void
+    {
+        $this->stopped = true;
+        foreach ($this->sessions as $reference) {
+            $session = $reference->get();
+            if ($session !== null) {
+                $session->interrupted = true;
+                $session->release();
+            }
+        }
+    }
+
+    /**
+     * Restarts under a supervisor, retaining durable tables and reloading the startup configuration.
+     *
+     * Open transactions roll back, session state disappears and MEMORY tables lose their rows.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/restart.html,
+     * https://dev.mysql.com/doc/refman/8.4/en/memory-storage-engine.html.
+     *
+     * @throws Error\SqlError When the instance has no supervisor
+     */
+    public function restart(): void
+    {
+        if (!$this->supervised) {
+            $error = Error\Family\AdministrationError::RestartFailed;
+            throw new Error\SqlError($error, $error->message('mysqld is not managed by supervisor process'), following: [[$error->value, $error->message('Restart server failed')]]);
+        }
+        $this->shutdown();
+        $this->globals->values = $this->startup;
+        $this->globals->caches = [];
+        $this->dictionary->discardVolatileRows();
+        $this->started = microtime(true);
+        $this->stopped = false;
     }
 
     /**

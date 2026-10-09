@@ -24,6 +24,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class JsonsTest extends TestCase
 {
+    public function testReadRefusesANumericDocumentBeforeEvaluatingItsConversion(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run("SELECT JSON_EXTRACT(CAST('bad' AS SIGNED), '$')");
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Error', '3146', 'Invalid data type for JSON data in argument 1 to function json_extract; a JSON string or JSON type is required.']], $warnings->rows);
+    }
+
     public function testExtractionSelectsAndUnquotesWhatThePathSelects(): void
     {
         $session = (new Instance())->connect();

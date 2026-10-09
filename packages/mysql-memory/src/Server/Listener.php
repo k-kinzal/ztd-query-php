@@ -94,7 +94,7 @@ final class Listener
         if ($server === null) {
             throw new RuntimeException('The listener is not open.');
         }
-        for (;;) {
+        while (!$this->instance->stopped) {
             $read = [$server];
             foreach ($this->sockets as $id => $socket) {
                 if (!isset($this->fibers[$id])) {
@@ -118,22 +118,52 @@ final class Listener
                     $this->accept();
                     continue;
                 }
-                $id = (int) $socket;
-                set_error_handler(static fn (): bool => true);
-                try {
-                    $bytes = fread($socket, 1048576);
-                } finally {
-                    restore_error_handler();
-                }
-                if ($bytes === false || $bytes === '') {
-                    $this->close($id);
-                    continue;
-                }
-                $client = $this->clients[$id];
-                $this->run($id, static fn (): bool => $client->receive($bytes));
+                $this->read((int) $socket);
             }
             foreach (array_keys($this->fibers) as $id) {
                 $this->run($id);
+            }
+            $this->closeReleased();
+        }
+        fclose($server);
+        $this->server = null;
+    }
+
+    /**
+     * Reads available bytes and dispatches them, closing a socket whose peer disconnected.
+     *
+     * @param int $id The id returned by accept(), whose socket is readable
+     * @throws FiberError When its work cannot start
+     */
+    public function read(int $id): void
+    {
+        $socket = $this->sockets[$id] ?? null;
+        if ($socket === null) {
+            return;
+        }
+        set_error_handler(static fn (): bool => true);
+        try {
+            $bytes = fread($socket, 1048576);
+        } finally {
+            restore_error_handler();
+        }
+        if ($bytes === false || $bytes === '') {
+            $this->close($id);
+
+            return;
+        }
+        $client = $this->clients[$id];
+        $this->run($id, static fn (): bool => $client->receive($bytes));
+    }
+
+    /**
+     * Closes idle connections ended by KILL, after waiting statements have answered their interruption.
+     */
+    public function closeReleased(): void
+    {
+        foreach ($this->clients as $id => $client) {
+            if ($client->ended() && !isset($this->fibers[$id])) {
+                $this->close($id);
             }
         }
     }

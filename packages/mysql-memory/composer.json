@@ -120,6 +120,10 @@
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
         "fuzz": "@fuzz:smoke",
+        "fuzz:seeds": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -d memory_limit=1G -d xdebug.mode=off fuzz/seeds.php"
+        ],
         "fuzz:expression": [
             "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/expression') || mkdir('fuzz/corpus/expression', 0777, true);\" --",
@@ -176,6 +180,7 @@
         "format": "Fix the code style with PHP-CS-Fixer.",
         "format:check": "Check the code style with PHP-CS-Fixer without changing files.",
         "fuzz": "Run every differential fuzz target with the bounded smoke budget.",
+        "fuzz:seeds": "Replay the complete sql-faker seed corpus and require matching results and full reached grammar coverage.",
         "fuzz:expression": "Compare SELECT statements over grammar-generated expressions with a MySQL server.",
         "fuzz:query": "Compare grammar-generated SELECT and DML statements over a fixture schema with a MySQL server.",
         "fuzz:smoke": "Run each differential fuzz target for up to 100 executions; individual fuzz:* commands run continuously.",

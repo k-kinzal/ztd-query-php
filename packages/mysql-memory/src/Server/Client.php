@@ -179,6 +179,14 @@ final class Client
     }
 
     /**
+     * Tells whether another connection or a statement has ended this session.
+     */
+    public function ended(): bool
+    {
+        return $this->session?->released === true;
+    }
+
+    /**
      * Answers the server status flags of the session.
      */
     public function status(): int
@@ -230,7 +238,9 @@ final class Client
         foreach ($answers as $index => $answer) {
             $more = $index < count($answers) - 1 || ($session->released && $session->following !== '') ? 8 : 0;
             if ($answer instanceof SqlError) {
-                return $this->send($this->messages->error($answer->getCode(), $answer->sqlState(), $answer->getMessage()));
+                $this->send($this->messages->error($answer->getCode(), $answer->sqlState(), $answer->getMessage()));
+
+                return !$session->released;
             }
             $this->reply($answer, $more, false);
         }

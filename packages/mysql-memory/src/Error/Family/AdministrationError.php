@@ -85,6 +85,7 @@ enum AdministrationError: int implements ErrorCode
     case InvalidThreadId = 3660;
     case ResourceGroupBindFailed = 3661;
     case ForceWithoutDisable = 3662;
+    case RestartFailed = 3707;
     case BinlogEncryptionOff = 3805;
     case RowFormatValue = 3945;
     case GroupPasswordTooLong = 3972;

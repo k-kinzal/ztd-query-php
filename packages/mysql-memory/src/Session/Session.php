@@ -101,6 +101,11 @@ final class Session
     public bool $released = false;
 
     /**
+     * Whether KILL QUERY interrupted the active statement.
+     */
+    public bool $interrupted = false;
+
+    /**
      * @var array<string, array{string, int}> The text and parameter count of each statement PREPARE named, by lower-case name
      */
     public array $prepared = [];
@@ -167,6 +172,7 @@ final class Session
      */
     public function close(): void
     {
+        $this->released = true;
         $this->instance->registry->threads->disconnect($this->id);
         $this->transaction->disconnect();
     }

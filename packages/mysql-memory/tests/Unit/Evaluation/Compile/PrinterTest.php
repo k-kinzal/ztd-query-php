@@ -167,7 +167,7 @@ final class PrinterTest extends TestCase
         self::assertInstanceOf(DeclaredTable::class, $table);
 
         self::assertSame('`p`.`x`.`a`', (new Printer($operation->facts, 'p'))->tableColumn($resolution, $table, $relation));
-        self::assertSame('`x`.`a`', (new Printer($operation->facts))->tableColumn($resolution, $table, $relation));
+        self::assertSame('`p`.`x`.`a`', (new Printer($operation->facts))->tableColumn($resolution, $table, $relation));
     }
 
     public function testMergedPrintsTheFieldOfAMergedDerivedTableAndNothingForAMaterializedOne(): void

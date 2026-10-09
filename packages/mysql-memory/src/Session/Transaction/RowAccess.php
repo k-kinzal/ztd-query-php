@@ -167,6 +167,9 @@ final class RowAccess
                 ($this->resumed)();
             }
         }
+        if (($transaction->variables?->instance->sessions[$transaction->id] ?? null)?->get()?->interrupted === true) {
+            throw \MySqlMemory\Error\Family\StatementError::QueryInterrupted->error();
+        }
         if (isset($locks->victims[$transaction->id])) {
             unset($locks->victims[$transaction->id]);
             $this->deadlock();

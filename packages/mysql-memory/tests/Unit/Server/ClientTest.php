@@ -21,6 +21,18 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ClientTest extends TestCase
 {
+    public function testEndedReportsOnlyAReleasedAuthenticatedSession(): void
+    {
+        $client = new Client(new Instance(), 1, static function (string $bytes): void {
+        });
+        self::assertFalse($client->ended());
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        self::assertFalse($client->ended());
+        $client->session()->release();
+
+        self::assertTrue($client->ended());
+    }
+
     public function testResetConnectionPreservesFoundRowsNegotiatedInTheHandshake(): void
     {
         $client = new Client(new Instance(), 7, static function (string $bytes): void {

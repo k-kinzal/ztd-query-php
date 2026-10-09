@@ -96,6 +96,7 @@ final class Definitions
      */
     public function table(CreateTable $create, Table $declaration, string $schema): TableDefinition
     {
+        $declaration = new Table(new \SqlSemantics\Statement\Identifier\QualifiedName($declaration->name->name, new \SqlSemantics\Statement\Identifier\Name($schema)), $declaration->profile, $declaration->columns, $declaration->implicit, $declaration->complete, $declaration->kind, $declaration->keys, $declaration->partitions);
         $collation = $this->collation($create);
         $engine = $this->engine($create);
         $elements = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof ColumnElement));

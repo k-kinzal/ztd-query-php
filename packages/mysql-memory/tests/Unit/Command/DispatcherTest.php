@@ -164,13 +164,11 @@ final class DispatcherTest extends TestCase
 
     public function testCommandRefusesAStatementNoCommandExecutes(): void
     {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
-        $statement = $session->analyze("CLONE LOCAL DATA DIRECTORY = '/tmp/x'")->statement;
+        $statement = new \SqlSemantics\Statement\Script([]);
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1235);
-        $this->expectExceptionMessage("This version of MySQL doesn't yet support 'CloneLocal'");
+        $this->expectExceptionMessage("This version of MySQL doesn't yet support 'Script'");
 
         (new Dispatcher())->command($statement);
     }

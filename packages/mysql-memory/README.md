@@ -252,7 +252,7 @@ The emulator is a test double. These differences are known:
 - **System tables are computed from the emulator's state.** Every table of `information_schema`, `mysql` and `performance_schema` exists with the columns and column metadata of the emulated release, and can be read like any table. The tables that describe databases, tables, columns, keys, constraints, views, stored programs, accounts and grants, character sets, collations, engines, plugins, keywords, sessions, variables and time zone names hold what the server holds; the others, which describe its internals (InnoDB, Performance Schema instruments, events and threads, help topics, time zone transitions), are empty. Status counters read 0. System tables cannot be written. The `sys` database holds no table. See [docs/compatibility.md](docs/compatibility.md#system-tables).
 - **No files.** `LOAD DATA`, `SELECT ... INTO OUTFILE` and `IMPORT TABLE` are refused as a server with `--secure-file-priv` and `local_infile` off refuses them. In MySQL 5.6 and 5.7, where `local_infile` is on, `LOAD DATA LOCAL` is checked as the server checks it and then refused with error 3948, where the server would ask the client for the file.
 - **The system time zone is UTC.** `SYSTEM` is UTC; `time_zone` takes offsets and names from the release catalogs in `resources/time-zones`, generated from real servers. Conversion rules use PHP's tz database, which can differ from the server's rules. `SET timestamp = n` pins `NOW()` and the other clocks of the session, as on the server.
-- **Server lifecycle statements** (`SHUTDOWN`, `RESTART`, `KILL`, `CLONE`) and loadable functions (`CREATE FUNCTION ... SONAME`) fail with error 1235.
+- **Server lifecycle.** `KILL QUERY` interrupts a waiting statement; `KILL CONNECTION` also disconnects and rolls back the target session. `SHUTDOWN` stops the instance. `RESTART` disconnects sessions, reloads startup variables and retains regular table contents; `MEMORY` tables lose their rows. Use `supervised: false` with `Instance` or `Server::start()`, or `--unsupervised` with the CLI, to reproduce error 3707 for a server without a restart supervisor. `CLONE` reports that the clone plugin is not loaded. Persisted variable settings are not yet retained across restart.
 - **Optimizer hints are checked, not followed.** Hint comments (`/*+ ... */`) are read in MySQL 5.7 and later with the server's warnings (syntax errors, conflicting and unresolved hints), and `SET_VAR` sets its variable for the statement; the other hints change no plan, `MAX_EXECUTION_TIME` sets no timer and `RESOURCE_GROUP` binds no thread. See [docs/compatibility.md](docs/compatibility.md#optimizer-hints).
 - **Protocol.** The server offers `mysql_native_password` and no TLS, compression, or `CLIENT_DEPRECATE_EOF`. The `CLIENT_FOUND_ROWS` flag (`PDO::MYSQL_ATTR_FOUND_ROWS`) counts matched rows for UPDATE and one row for an unchanged ON DUPLICATE KEY UPDATE; ROW_COUNT() follows that choice. Packets of 16 MiB or more are not supported. The storage engines the statements that name one accept are those of MySQL 8.4.7 for every release.
 - **An error inside the emulator** is reported over the protocol as error 1105 with a message starting `mysql-memory internal error:`, and thrown as is in process.
@@ -270,13 +270,18 @@ The fuzzer is part of the repository, not of the installed package. From `packag
 composer fuzz                                  # each target for 100 inputs
 composer fuzz:expression                       # expressions over the fixture tables, until stopped
 composer fuzz:query                            # queries over the fixture tables
-composer fuzz:statement                        # every statement of the grammar
+composer fuzz:statement                        # statements using the campaign constraints
+composer fuzz:seeds                            # the complete canonical sql-faker seed corpus
 
 php fuzz/campaign.php select 500 7             # MODE COUNT [SEED]: differences grouped by kind
 MYSQL_VERSION=8.0.44 php fuzz/campaign.php statement 1000
 ```
 
 The campaign modes are `expression`, `query`, `select`, `write` and `statement`. Each kind of difference is printed with its count and its shortest statement. Exit code 0 means all compared inputs matched, 1 means a difference was found, and 2 means invalid arguments, a generation failure, or no comparable input. `MYSQL_MEMORY_REPORT=/path/report.json` also saves the seed, counts and every finding, with the exact SQL bytes and generation input in hexadecimal. The parent directory must already exist.
+
+The seed replay uses the same root and byte decoding as SQL Faker's `bin/seeds.php check`, with no excluded statement forms. SHUTDOWN and RESTART each run in a separate Testcontainers database and emulator. Their completion, disconnection and reconnection behavior is checked; a successful restart must preserve the fixture rows. Successful lifecycle statements do not inspect warnings after the connection starts closing.
+
+`php fuzz/seeds.php [SEED_DIRECTORY] [REPORT_PREFIX]` writes per-input JSON Lines, a grammar coverage snapshot and a summary (by default under `build/fuzz/seeds-mysql-VERSION`). It reports reached and emitted productions separately, plus reached productions belonging to successfully compared inputs. Exit 0 requires every input to match and the entire reachable statement grammar to be covered. Differences, volatile observations and incomplete coverage fail the replay. Reaching every production during generation does not mean every production survives SQL Faker's output rewrites; the emitted count makes that distinction visible. This gate currently exposes remaining compatibility gaps and is not yet passing.
 
 | Variable | Meaning |
 |----------|---------|

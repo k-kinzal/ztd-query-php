@@ -15,6 +15,62 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class InstanceTest extends TestCase
 {
+    public function testConnectResolvesQualifiedTablesWithoutACurrentDatabase(): void
+    {
+        $instance = new Instance();
+        $writer = $instance->connect();
+        $writer->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1)');
+        $reader = $instance->connect();
+        $result = $reader->query('SELECT * FROM d.t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
+    public function testShutdownEndsEverySessionAndRefusesNewConnections(): void
+    {
+        $instance = new Instance();
+        $first = $instance->connect();
+        $second = $instance->connect();
+        $instance->shutdown();
+
+        self::assertTrue($first->released);
+        self::assertTrue($second->released);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(2006);
+
+        $instance->connect();
+    }
+
+    public function testRestartPreservesDurableRowsAndRollsBackOpenTransactions(): void
+    {
+        $instance = new Instance(globals: ['max_connections' => 100]);
+        $session = $instance->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); CREATE TABLE m (a INT) ENGINE=MEMORY');
+        $session->query('INSERT INTO t VALUES (1); INSERT INTO m VALUES (2); SET GLOBAL max_connections = 200');
+        $session->query('BEGIN; INSERT INTO t VALUES (3)');
+        $instance->restart();
+        $again = $instance->connect(database: 'd');
+        $rows = $again->query('SELECT a FROM t; SELECT a FROM m; SELECT @@global.max_connections');
+
+        self::assertTrue($session->released);
+        self::assertInstanceOf(ResultSet::class, $rows[0]);
+        self::assertInstanceOf(ResultSet::class, $rows[1]);
+        self::assertInstanceOf(ResultSet::class, $rows[2]);
+        self::assertSame([[['1']], [], [['100']]], [$rows[0]->rows, $rows[1]->rows, $rows[2]->rows]);
+    }
+
+    public function testRestartRefusesAnInstanceWithoutASupervisor(): void
+    {
+        $instance = new Instance(supervised: false);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3707);
+        $this->expectExceptionMessage('Restart server failed (mysqld is not managed by supervisor process).');
+
+        $instance->restart();
+    }
+
     public function testConnectionsCountsTheSessionsOpened(): void
     {
         $instance = new Instance();

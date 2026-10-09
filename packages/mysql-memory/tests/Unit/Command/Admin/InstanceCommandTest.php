@@ -16,6 +16,17 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class InstanceCommandTest extends TestCase
 {
+    public function testExecuteRefusesCloningWhenThePluginIsNotLoaded(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1524);
+        $this->expectExceptionMessage("Plugin 'clone' is not loaded");
+
+        $session->query("CLONE LOCAL DATA DIRECTORY '/unused'");
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new InstanceCommand())->clearsDiagnostics());

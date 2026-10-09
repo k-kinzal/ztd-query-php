@@ -36,6 +36,11 @@ final class Dispatcher
      * @var array<class-string<Statement>, class-string<Command>>
      */
     public const COMMANDS = [
+        MySql\Server\Instance\Kill::class => Admin\KillCommand::class,
+        MySql\Server\Instance\CloneLocal::class => Admin\InstanceCommand::class,
+        MySql\Server\Instance\Shutdown::class => Admin\InstanceCommand::class,
+        MySql\Server\Instance\Restart::class => Admin\InstanceCommand::class,
+        MySql\Server\Instance\CloneInstance::class => Admin\InstanceCommand::class,
         MySql\Dml\MultipleDelete::class => MultipleChangeCommand::class,
         MySql\Table\CreateTable::class => Definition\CreateTableCommand::class,
         MySql\Alter\DropTable::class => Definition\DropTableCommand::class,

@@ -17,6 +17,22 @@ use SqlSemantics\Statement\Declaration\Table;
 final class Dictionary
 {
     /**
+     * Discards MEMORY table rows after sessions end for restart, retaining their definitions.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/memory-storage-engine.html.
+     */
+    public function discardVolatileRows(): void
+    {
+        foreach ($this->schemas as $schema) {
+            foreach ($schema->tables as $table) {
+                if (strcasecmp($table->definition->engine, 'MEMORY') === 0) {
+                    $table->data = new \MySqlMemory\Storage\Heap();
+                }
+            }
+        }
+    }
+
+    /**
      * The tables of the system databases, or null for a dictionary without them.
      */
     public ?SystemSchemas $system = null;

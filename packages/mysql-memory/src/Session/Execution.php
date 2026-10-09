@@ -79,7 +79,6 @@ final class Execution
     public function run(Operation $operation, Command $command, \MySqlMemory\Hint\Application $hints, array $parameters = [], bool $read = true, bool $contained = true): Reply
     {
         $session = $this->session;
-        $session->variables->setByFunction = false;
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $this->area($operation, $command);
         $late = array_filter($operation->facts->warnings, Stages::afterReading(...));
@@ -100,7 +99,7 @@ final class Execution
         try {
             (new Problems())->raise($operation, $session);
         } catch (SqlError $error) {
-            throw (new Problem\Precision())->legacy((new Problem\ValueRows())->extended($error, $operation->statement, $session->settings()->release()), $session->settings()->release());
+            throw (new Problem\Precision())->legacy(\MySqlMemory\Command\Admin\KillCommand::preparation((new Problem\ValueRows())->extended($error, $operation->statement, $session->settings()->release()), $operation->statement), $session->settings()->release());
         }
         if ($session->locks !== []) {
             (new \MySqlMemory\Command\Access\Locks())->check($operation->statement, $session);
@@ -128,7 +127,7 @@ final class Execution
     }
 
     /**
-     * Starts the diagnostics area of a statement.
+     * Starts the diagnostics area and clears the previous statement's interruption and insert-id assignment.
      *
      * The area remembers the conditions of the statement before, for GET DIAGNOSTICS, and takes
      * max_error_count. A command that clears the diagnostics keeps them when the statement
@@ -139,6 +138,8 @@ final class Execution
     public function area(Operation $operation, Command $command): void
     {
         $session = $this->session;
+        $session->variables->setByFunction = false;
+        $session->interrupted = false;
         $session->diagnostics->previous = [$session->diagnostics->raised(), $session->diagnostics->errors()];
         $session->diagnostics->limit = $session->variables->count('max_error_count', 1024);
         if ($command->clearsDiagnostics() && $this->retains($operation->statement, $command)) {

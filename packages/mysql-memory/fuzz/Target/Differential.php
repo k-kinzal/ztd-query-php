@@ -188,6 +188,8 @@ final class Differential
 
     /**
      * Answers the observation of a statement on one server, from a fresh fixture.
+     * Ends its session explicitly after recording it: a PDO statement retained by an exception
+     * can otherwise retain the connection and its server locks until garbage collection.
      *
      * @return array<string, mixed>
      */
@@ -198,6 +200,11 @@ final class Differential
         $ordered = preg_match('/\border\s+by\b/i', $sql) === 1;
         $observation = $observer->observe($pdo, $sql, $ordered);
         $observation['tables'] = $observer->tables($pdo, self::DATABASE);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
+        $pdo->exec('ROLLBACK');
+        $pdo->exec('KILL CONNECTION_ID()');
+        $pdo = null;
+        gc_collect_cycles();
 
         return $observation;
     }

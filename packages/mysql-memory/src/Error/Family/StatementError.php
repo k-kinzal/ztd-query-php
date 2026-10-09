@@ -31,6 +31,7 @@ enum StatementError: int implements ErrorCode
     case UnknownError = 1105;
     case SyntaxError = 1149;
     case LockedOrActiveTransaction = 1192;
+    case SetConstantExpression = 1204;
     case WrongArguments = 1210;
     case WrongUsage = 1221;
     case DuplicateArgument = 1225;
@@ -42,6 +43,7 @@ enum StatementError: int implements ErrorCode
     case UnsupportedPreparedStatement = 1295;
     case FeatureDisabled = 1289;
     case ReservedSyntax = 1382;
+    case QueryInterrupted = 1317;
     case XaUnknownXid = 1397;
     case XaInvalidArguments = 1398;
     case XaWrongState = 1399;

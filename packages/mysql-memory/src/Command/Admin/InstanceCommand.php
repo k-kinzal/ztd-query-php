@@ -20,7 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Server\Instance\RotateMasterKey;
 use SqlSemantics\Statement\Operation;
 
 /**
- * Executes ALTER INSTANCE, LOCK INSTANCE FOR BACKUP and UNLOCK INSTANCE.
+ * Executes ALTER INSTANCE, instance locks, CLONE, SHUTDOWN and RESTART.
  *
  * ALTER INSTANCE commits the open transaction. The emulated server has no keyring and does not
  * encrypt its binary log: ROTATE INNODB MASTER KEY finds no master key, ROTATE BINLOG MASTER KEY
@@ -28,6 +28,8 @@ use SqlSemantics\Statement\Operation;
  * the administrative connection interfaces, mysql_main and mysql_admin, and is a syntax error
  * for another channel; ENABLE and DISABLE INNODB REDO_LOG succeed. The emulated server runs no
  * concurrent DDL, so the backup lock changes nothing (verified on a live 8.4 server).
+ * CLONE requires the absent clone plugin. SHUTDOWN ends all sessions; RESTART also reloads the
+ * startup configuration, retaining durable table contents, when the instance has a supervisor.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-instance.html,
  * https://dev.mysql.com/doc/refman/8.4/en/lock-instance-for-backup.html.
  *
@@ -51,6 +53,19 @@ final class InstanceCommand implements Command
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Shutdown) {
+            $session->instance->shutdown();
+
+            return new Completion();
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Restart) {
+            $session->instance->restart();
+
+            return new Completion();
+        }
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneLocal || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\CloneInstance) {
+            throw AdministrationError::PluginIsNotLoaded->error('clone');
+        }
         if (!$statement instanceof AlterInstance) {
             return new Completion();
         }
