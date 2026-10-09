@@ -54,6 +54,9 @@ final class ReplicationTest extends TestCase
         yield 'group credentials before transaction' => ["BEGIN; START GROUP_REPLICATION PASSWORD='p'"];
         yield 'group default authentication alone' => ["START GROUP_REPLICATION DEFAULT_AUTH='x'"];
         yield 'last group user wins' => ["START GROUP_REPLICATION USER='u',USER='' "];
+        yield 'replica user alone' => ["START REPLICA USER='u'"];
+        yield 'replica empty user' => ["START REPLICA USER=''"];
+        yield 'replica user and password' => ["START REPLICA USER='u' PASSWORD='p'"];
     }
 
     #[DataProvider('providerSettings')]

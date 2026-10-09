@@ -42,7 +42,7 @@ use SqlSemantics\Statement\Operation;
  * The emulated server is no replica: its only channel is the default one, unconfigured, and a
  * statement naming another channel fails (ER_REPLICA_CHANNEL_DOES_NOT_EXIST). Each statement but
  * the group replication ones commits the open transaction. START REPLICA cannot start the
- * receiver thread (ER_REPLICA_CONFIGURATION), noting first that a PASSWORD is sent in plain text;
+ * receiver thread (ER_REPLICA_CONFIGURATION), noting first that USER or PASSWORD credentials are sent in plain text;
  * SQL_THREAD alone starts the applier thread, which STOP REPLICA stops and RESET REPLICA refuses
  * to run beside (ER_REPLICA_CHANNEL_MUST_STOP). STOP REPLICA notes threads that are already
  * stopped. CHANGE REPLICATION SOURCE TO is accepted and kept nowhere; CHANGE REPLICATION FILTER
@@ -86,14 +86,7 @@ final class ReplicaCommand implements Command
         }
         $session->transaction->commit();
         if ($statement instanceof StartReplica) {
-            $this->channel($statement->channel);
-            if ($statement->password !== null) {
-                $session->diagnostics->note(AccountError::InsecurePlainText, AccountError::InsecurePlainText->message());
-            }
-            if ($statement->threads === [] || in_array(ReplicaThread::Receiver, $statement->threads, true)) {
-                throw AdministrationError::ReplicaNotConfigured->error();
-            }
-            $registry->applying = true;
+            $this->start($statement, $session);
         } elseif ($statement instanceof StopReplica) {
             $this->channel($statement->channel);
             if ($registry->applying && ($statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true))) {
@@ -117,6 +110,21 @@ final class ReplicaCommand implements Command
         }
 
         return new Completion(0, 0, $session->diagnostics->count());
+    }
+
+    /**
+     * Starts the requested replica threads, warning about supplied credentials before refusing an unconfigured receiver.
+     */
+    public function start(StartReplica $statement, Session $session): void
+    {
+        $this->channel($statement->channel);
+        if ($statement->user !== null || $statement->password !== null) {
+            $session->diagnostics->note(AccountError::InsecurePlainText, AccountError::InsecurePlainText->message());
+        }
+        if ($statement->threads === [] || in_array(ReplicaThread::Receiver, $statement->threads, true)) {
+            throw AdministrationError::ReplicaNotConfigured->error();
+        }
+        $session->instance->registry->applying = true;
     }
 
     /**

@@ -45,6 +45,14 @@ final class ReplicaCommandTest extends TestCase
         self::assertSame([['Note', '1759', 'Sending passwords in plain text without SSL/TLS is extremely insecure.'], ['Error', '1200', 'The server is not configured as replica; fix in config file or with CHANGE REPLICATION SOURCE TO']], $warnings->rows);
     }
 
+    public function testStartNotesAUserEvenWithoutAPassword(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run("START REPLICA USER = 'u'");
+
+        self::assertSame(['Note', 1759, 'Sending passwords in plain text without SSL/TLS is extremely insecure.'], $session->diagnostics->conditions[0]);
+    }
+
     public function testExecuteRunsTheApplierThreadUntilStopReplica(): void
     {
         $instance = new Instance();
