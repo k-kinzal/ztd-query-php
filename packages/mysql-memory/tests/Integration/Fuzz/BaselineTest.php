@@ -1,0 +1,55 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Integration\Fuzz;
+
+use Fuzz\Target\Servers;
+use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Large;
+use PHPUnit\Framework\TestCase;
+
+#[CoversNothing]
+#[Large]
+final class BaselineTest extends TestCase
+{
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerObjects(): iterable
+    {
+        yield 'database' => ['CREATE DATABASE baseline_extra'];
+        yield 'account' => ['CREATE USER baseline_extra'];
+        yield 'server' => ["CREATE SERVER baseline_extra FOREIGN DATA WRAPPER mysql OPTIONS (USER 'text')"];
+    }
+
+    #[DataProvider('providerObjects')]
+    public function testRestoreIsolatesCatalogObjects(string $sql): void
+    {
+        [$target, , $server] = (new Servers())->start(true, true);
+        $first = $target->compare($sql);
+        $second = $target->compare($sql);
+
+        self::assertFalse($first->volatile, $sql);
+        self::assertNull($first->difference, (string) $first->difference);
+        self::assertFalse($second->volatile, $sql);
+        self::assertNull($second->difference, (string) $second->difference);
+        self::assertNotNull($target->baseline);
+        self::assertNotEmpty($target->baseline->cleanup);
+        $server->stop();
+    }
+
+    public function testRestoreIsolatesGlobalVariables(): void
+    {
+        [$target, , $server] = (new Servers())->start(true, true);
+        $changed = $target->compare('SET GLOBAL max_connections=250');
+        $read = $target->compare('SELECT @@global.max_connections');
+
+        self::assertFalse($changed->volatile);
+        self::assertNull($changed->difference, (string) $changed->difference);
+        self::assertFalse($read->volatile);
+        self::assertNull($read->difference, (string) $read->difference);
+        $server->stop();
+    }
+}

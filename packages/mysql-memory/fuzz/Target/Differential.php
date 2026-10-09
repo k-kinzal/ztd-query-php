@@ -51,6 +51,7 @@ final class Differential
         public readonly string $version = '8.4.7',
         public readonly ?string $guardUser = null,
         public readonly bool $foundRows = false,
+        public readonly ?Baseline $baseline = null,
     ) {
     }
 
@@ -81,14 +82,19 @@ final class Differential
     public function compare(string $sql): Comparison
     {
         $guard = $this->guard();
+        $this->repair($guard);
+        $this->baseline?->restore($guard, true);
         $expected = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql);
         $this->repair($guard);
+        $this->baseline?->restore($guard, true);
         $again = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql);
         $this->repair($guard);
+        $this->baseline?->restore($guard, true);
         if ($expected !== $again) {
             return new Comparison(true);
         }
         $this->repair($this->memoryGuard());
+        $this->baseline?->restore($this->memoryGuard(), false);
         $actual = $this->run($this->memory, 'root', '', $sql);
         if ($expected === $actual) {
             return new Comparison(false);

@@ -17,7 +17,7 @@ use Fuzz\Target\Lifecycle;
 use Fuzz\Target\SeedCorpus;
 use Fuzz\Target\Servers;
 
-[$target, $grammar, $server] = (new Servers())->start(getenv('MYSQL_MEMORY_EMULATE') !== '0');
+[$target, $grammar, $server] = (new Servers())->start(getenv('MYSQL_MEMORY_EMULATE') !== '0', true);
 $directory = $argv[1] ?? dirname(__DIR__) . '/vendor/k-kinzal/sql-faker/seeds/mysql/' . $grammar;
 $prefix = $argv[2] ?? dirname(__DIR__) . '/build/fuzz/seeds-' . $grammar;
 if (!is_dir(dirname($prefix)) && !mkdir(dirname($prefix), 0777, true)) {

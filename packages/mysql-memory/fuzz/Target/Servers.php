@@ -46,7 +46,7 @@ final class Servers
      *
      * @return array{Differential, string, Server}
      */
-    public function start(bool $emulate = true): array
+    public function start(bool $emulate = true, bool $isolate = false): array
     {
         $version = getenv('MYSQL_VERSION') !== false ? (string) getenv('MYSQL_VERSION') : MySqlRelease::DEFAULT;
         $dsn = getenv('MYSQL_MEMORY_NATIVE_DSN');
@@ -72,7 +72,7 @@ final class Servers
         $this->guard($native, $version, $password);
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
-        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1'), 'mysql-' . $version, $server];
+        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $isolate ? new Baseline($native, $version) : null), 'mysql-' . $version, $server];
     }
 
     /**
