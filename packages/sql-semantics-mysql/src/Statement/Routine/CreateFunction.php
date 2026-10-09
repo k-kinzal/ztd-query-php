@@ -80,7 +80,7 @@ final class CreateFunction implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        (new ProgramFacts())->routine($this->parameters, $this->body, ProgramKind::Function, $this->name, $derivation);
+        (new ProgramFacts())->routine($this->parameters, $this->body, ProgramKind::Function, $this->name, $derivation, $this->returns);
     }
 
     /**

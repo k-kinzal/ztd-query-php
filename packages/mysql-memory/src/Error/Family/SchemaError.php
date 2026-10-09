@@ -85,6 +85,7 @@ enum SchemaError: int implements ErrorCode
     case DuplicateIndex = 1831;
     case AlterOperationNotSupported = 1845;
     case AlterOperationNotSupportedReason = 1846;
+    case InvalidFieldSize = 3013;
     case WrongTablespaceName = 3119;
     case TablespaceNotEmpty = 3120;
     case WrongFileName = 3121;

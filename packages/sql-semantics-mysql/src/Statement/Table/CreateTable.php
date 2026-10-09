@@ -132,6 +132,7 @@ final class CreateTable implements Statement, Relation
         foreach ($this->elements as $element) {
             if ($element instanceof ColumnDefinition) {
                 (new TypeNotices())->type($element->specification->dataType(), $derivation);
+                (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($element->specification->dataType(), $element->name->column->value, $derivation);
             }
         }
         $output = $this->query === null ? null : $derivation->query($this->query->query, $derivation->environment());

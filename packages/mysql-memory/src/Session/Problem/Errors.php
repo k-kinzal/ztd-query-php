@@ -263,6 +263,14 @@ final class Errors
     public function expression(Diagnostic $diagnostic): ?SqlError
     {
         return match (true) {
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize => new SqlError(match ($diagnostic->rule) {
+                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Width => SchemaError::TooBigDisplayWidth,
+                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision => SchemaError::TooBigPrecision,
+                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Scale => SchemaError::TooBigScale,
+                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::ScaleExceedsPrecision => SchemaError::MBiggerThanD,
+                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Empty => SchemaError::InvalidFieldSize,
+                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Specifier => SchemaError::WrongFieldSpec,
+            }, $diagnostic->message()),
             $diagnostic instanceof OperandColumns => QueryError::OperandColumns->error($diagnostic->expected),
             $diagnostic instanceof NotSupportedYet => StatementError::NotSupportedYet->error($diagnostic->feature),
             $diagnostic instanceof IllegalCollationMix => new SqlError(match (count($diagnostic->operands)) {

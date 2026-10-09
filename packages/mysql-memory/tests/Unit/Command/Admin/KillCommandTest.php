@@ -60,6 +60,31 @@ final class KillCommandTest extends TestCase
         $session->query('KILL ' . $operand);
     }
 
+    public function testIdentifierPreservesTheMySql56UnsignedWidth(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $this->expectExceptionCode(1094);
+        $this->expectExceptionMessage('Unknown thread id: 18446744073709551615');
+
+        $session->query('KILL -1');
+    }
+
+    public function testIdentifierKeepsTheLegacyQuietStringConversion(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->run('KILL USER()');
+
+        self::assertSame([['Error', 1094, 'Unknown thread id: 0']], $session->diagnostics->conditions);
+    }
+
+    public function testIdentifierRecordsTheUnknownZeroThreadAfterMySql56EvaluationFailure(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->run('KILL (SELECT 1 UNION SELECT 2)');
+
+        self::assertSame([['Error', 1242, 'Subquery returns more than 1 row'], ['Error', 1094, 'Unknown thread id: 0']], $session->diagnostics->conditions);
+    }
+
     public function testExecuteLeavesAnIdleConnectionOpenForQueryOnly(): void
     {
         $instance = new Instance();

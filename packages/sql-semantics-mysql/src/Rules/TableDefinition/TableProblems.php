@@ -29,8 +29,8 @@ use SqlSemantics\Statement\Fact\QueryFact;
  * Rule: MYSQL-TABLE-PROBLEMS-001. Diagnostics: two columns of the declared
  * table with one name (ER_DUP_FIELDNAME); more than one primary key, counting
  * each column with a PRIMARY KEY attribute and each PRIMARY KEY element
- * (ER_MULTIPLE_PRI_KEY); from MySQL 5.7 on, a primary key column whose NULL
- * attribute is still in force (ER_PRIMARY_CANT_HAVE_NULL; 5.6 makes it NOT
+ * (ER_MULTIPLE_PRI_KEY); from MySQL 5.7 on, a primary key column with any explicit NULL
+ * attribute (ER_PRIMARY_CANT_HAVE_NULL; 5.6 makes it NOT
  * NULL silently); a key part or foreign key column that names no column of
  * the table, when its column list is complete (ER_KEY_COLUMN_DOES_NOT_EXITS);
  * an index that names one column twice, reported at the second part that
@@ -64,10 +64,10 @@ final class TableProblems
         foreach ($definition->elements as $element) {
             if ($element instanceof ColumnDefinition) {
                 $columns++;
-                [$notNull, $explicit, $attribute] = (new ColumnFlags())->flags($element->specification);
+                [, $explicit, $attribute] = (new ColumnFlags())->flags($element->specification);
                 $keys += $attribute ? 1 : 0;
                 $keyed = $attribute || $declaration->named($element->name->column, $primary, $derivation->context->columnNames);
-                if ($keyed && $explicit && !$notNull && $derivation->context->profile->grammar !== GrammarRelease::MySql5651) {
+                if ($keyed && $explicit && $derivation->context->profile->grammar !== GrammarRelease::MySql5651) {
                     $derivation->report(new NullablePrimaryKey($element->name->column));
                 }
             }

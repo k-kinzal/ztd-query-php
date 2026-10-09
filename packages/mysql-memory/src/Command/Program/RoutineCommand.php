@@ -74,6 +74,9 @@ final class RoutineCommand implements Command
             return $this->alter($statement, $session);
         }
         assert($statement instanceof CreateProcedure || $statement instanceof CreateFunction);
+        if ($statement->body instanceof \SqlSemantics\Platform\MySql\Statement\Routine\ExternalBody) {
+            $context->warning(ProgramError::LanguageComponentUnavailable);
+        }
         $function = $statement instanceof CreateFunction;
         $kind = $function ? 'FUNCTION' : 'PROCEDURE';
         $database = ProgramSource::database($statement->name->schema, $session);

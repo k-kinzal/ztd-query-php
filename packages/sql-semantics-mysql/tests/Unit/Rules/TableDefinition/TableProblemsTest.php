@@ -29,6 +29,15 @@ final class TableProblemsTest extends TestCase
         self::assertSame([], $legacy->facts->diagnostics);
     }
 
+    public function testReportKeepsExplicitNullForInlinePrimaryKeys(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertInstanceOf(NullablePrimaryKey::class, $semantics->analyze('CREATE TABLE t(a INT NULL KEY)')->facts->diagnostics[0]);
+        self::assertInstanceOf(NullablePrimaryKey::class, $semantics->analyze('CREATE TABLE t(a INT NULL NOT NULL PRIMARY KEY)')->facts->diagnostics[0]);
+        self::assertSame([], $semantics->analyze('CREATE TABLE t(a INT NOT NULL PRIMARY KEY)')->facts->diagnostics);
+    }
+
     public function testDuplicatesReportsARepeatedColumn(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT, A INT)');

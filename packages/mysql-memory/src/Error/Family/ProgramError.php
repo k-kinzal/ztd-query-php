@@ -86,4 +86,5 @@ enum ProgramError: int implements ErrorCode
     case ReferencedTriggerMissing = 3011;
     case TriggerExistsOnTable = 4099;
     case TriggerExistsElsewhere = 4100;
+    case LanguageComponentUnavailable = 6001;
 }

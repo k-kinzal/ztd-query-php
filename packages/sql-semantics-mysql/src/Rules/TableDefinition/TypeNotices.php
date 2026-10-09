@@ -13,6 +13,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
 use SqlSemantics\Platform\MySql\Statement\Type\Enumeration;
 use SqlSemantics\Platform\MySql\Statement\Type\Floating;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryMark;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
@@ -45,11 +47,11 @@ final class TypeNotices
         if ($type instanceof Temporal && $type->kind === TemporalKind::Year && $type->precision === '4') {
             Deprecation::raise(Deprecated::YearWidth, $derivation);
         }
-        if ($type instanceof Character && $type->national) {
-            Deprecation::raise(Deprecated::National, $derivation);
-        }
         if ($type instanceof Character || $type instanceof Enumeration) {
             $this->charset($type->charset, $derivation);
+        }
+        if ($type instanceof Character && $type->national) {
+            Deprecation::raise(Deprecated::National, $derivation);
         }
     }
 
@@ -74,12 +76,24 @@ final class TypeNotices
     }
 
     /**
-     * Raises the warning of the character set name utf8.
+     * Raises the warnings of a deprecated character set name or shorthand.
      */
     public function charset(?CharsetAttribute $charset, Derivation $derivation): void
     {
-        if ($charset !== null && $charset->charset !== null && strtolower($charset->charset->value) === 'utf8') {
-            Deprecation::raise(Deprecated::Utf8Alias, $derivation);
+        if ($charset?->form === CharsetForm::Binary || $charset?->mark === BinaryMark::Leading) {
+            Deprecation::raise(Deprecated::BinaryAttribute, $derivation);
+        }
+        if ($charset?->charset !== null) {
+            Deprecation::charset($charset->charset->value, $derivation);
+        }
+        if ($charset?->form === CharsetForm::Ascii) {
+            Deprecation::raise(Deprecated::AsciiCharset, $derivation);
+        }
+        if ($charset?->form === CharsetForm::Unicode) {
+            Deprecation::raise(Deprecated::UnicodeCharset, $derivation);
+        }
+        if ($charset?->mark === BinaryMark::Trailing) {
+            Deprecation::raise(Deprecated::BinaryAttribute, $derivation);
         }
     }
 }

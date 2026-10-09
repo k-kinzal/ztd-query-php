@@ -56,6 +56,9 @@ enum Deprecated: string
     case Utf8mb3 = "'utf8mb3' is deprecated and will be removed in a future release. Please use utf8mb4 instead";
     case Ucs2 = "'ucs2' is deprecated and will be removed in a future release. Please use utf8mb4 instead";
     case DisableOnSlave = "'<CREATE|ALTER> EVENT ... DISABLE ON SLAVE' is deprecated and will be removed in a future release. Please use <CREATE|ALTER> EVENT ... DISABLE ON REPLICA instead";
+    case BinaryAttribute = "'BINARY as attribute of a type' is deprecated and will be removed in a future release. Please use a CHARACTER SET clause with _bin collation instead";
+    case AsciiCharset = "'ASCII' is deprecated and will be removed in a future release. Please use CHARACTER SET charset_name instead";
+    case UnicodeCharset = "'UNICODE' is deprecated and will be removed in a future release. Please use CHARACTER SET charset_name instead";
     case National = 'NATIONAL/NCHAR/NVARCHAR implies the character set UTF8MB3, which will be replaced by UTF8MB4 in a future release. Please consider using CHAR(x) CHARACTER SET UTF8MB4 in order to be unambiguous.';
     case OldPassword = "'OLD_PASSWORD' is deprecated and will be removed in a future release. Please use PASSWORD instead";
     case DesEncrypt = "'DES_ENCRYPT' is deprecated and will be removed in a future release. Please use AES_ENCRYPT instead";
@@ -82,7 +85,7 @@ enum Deprecated: string
             self::Utf8Alias => 3719,
             self::National => 3720,
             self::IntoInsideQuery => 3962,
-            self::DelayedInsert, self::DelayedReplace, self::GroupByDirection, self::BinaryBitwise, self::DotColumn, self::DotTable, self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth, self::Utf8mb3, self::Ucs2, self::DisableOnSlave, self::OldPassword, self::DesEncrypt, self::DesDecrypt, self::Encrypt, self::MasterPosWait, self::WaitUntilSqlThreadAfterGtids, self::JsonMerge, self::SystemVariable, self::LowPriorityWrite => 1287,
+            self::BinaryAttribute, self::AsciiCharset, self::UnicodeCharset, self::DelayedInsert, self::DelayedReplace, self::GroupByDirection, self::BinaryBitwise, self::DotColumn, self::DotTable, self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth, self::Utf8mb3, self::Ucs2, self::DisableOnSlave, self::OldPassword, self::DesEncrypt, self::DesDecrypt, self::Encrypt, self::MasterPosWait, self::WaitUntilSqlThreadAfterGtids, self::JsonMerge, self::SystemVariable, self::LowPriorityWrite => 1287,
         };
     }
 

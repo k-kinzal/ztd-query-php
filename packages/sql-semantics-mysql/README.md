@@ -203,6 +203,12 @@ $semantics->analyze('INSERT INTO t (a, total) VALUES (1, DEFAULT)', [$table])->f
 $semantics->analyze('UPDATE t SET total = 3', [$table])->facts->diagnostics[0]->message(); // => "The value specified for generated column 'total' in table 't' is not allowed."
 ```
 
+## Declared type checks
+
+`CREATE TABLE` columns, routine parameters and function return types share checks for numeric widths, precision and scale, and temporal fractional precision. Invalid sizes appear as `InvalidTypeSize` diagnostics; an accompanying `ParseFailure` records where the server stops reading, so an executor can preserve warning order. Parameter and return-type errors use an empty column name, as MySQL reports them. MySQL 5.6 accepts `BIT(0)`; later supported releases reject it.
+
+Deprecated type attributes produce warnings in written order, including integer display widths, `ASCII`, `UNICODE`, `BINARY` and national character types. These checks do not establish complete validation of every type or table option.
+
 ## Limitations
 
 - Optimizer hints (`/*+ ... */` after `SELECT`, `INSERT`, `REPLACE`, `UPDATE` or `DELETE`) are not analyzed. The server reads them with a grammar of their own, and the parser this package uses delivers them as a comment, so from 5.7 on a statement with a hint is refused with `ImplementationGap` instead of being read without it. In MySQL 5.6 such a comment is an ordinary comment.

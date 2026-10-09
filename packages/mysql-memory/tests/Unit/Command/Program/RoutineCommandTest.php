@@ -26,6 +26,15 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class RoutineCommandTest extends TestCase
 {
+    public function testExecuteWarnsWhenTheExternalLanguageComponentIsAbsent(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('CREATE FUNCTION d.f() RETURNS INT NO SQL LANGUAGE javascript AS $$ return 1 $$');
+
+        self::assertSame([['Warning', 6001, 'Language component: Not available.']], $session->diagnostics->conditions);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new RoutineCommand())->clearsDiagnostics());

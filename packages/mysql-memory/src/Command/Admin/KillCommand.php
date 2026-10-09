@@ -18,6 +18,7 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill;
 use SqlSemantics\Platform\MySql\Statement\Server\Instance\KillScope;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -27,7 +28,7 @@ use SqlSemantics\Statement\Operation;
 /**
  * Evaluates KILL's process identifier and ends the named connection or its active statement.
  *
- * Identifiers are integers narrowed to 32 bits; NULL is zero. KILL QUERY leaves an idle
+ * Identifiers are integers narrowed to 32 bits from MySQL 5.7 on; NULL is zero. KILL QUERY leaves an idle
  * connection open, while KILL CONNECTION rolls its transaction back. Verified on MySQL 9.1.0.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/kill.html.
  *
@@ -58,13 +59,10 @@ final class KillCommand implements Command
         } catch (SqlError $error) {
             throw self::preparation($error, $statement);
         }
-        $value = $operand->evaluate(new Frame($context));
-        $id = ($value !== null && $operand->domain()->kind === Kind::Decimal
-            ? Convert::decimalInteger((string) $value, $context, false)
-            : (int) Convert::toInteger($value, $operand->domain()->withQuiet(false), $context)) & 0xffffffff;
+        $id = $this->identifier($operand, $context, $session->settings()->release());
         $target = ($session->instance->sessions[$id] ?? null)?->get();
         if ($target === null || $target->released) {
-            throw AdministrationError::NoSuchThread->error($id);
+            throw AdministrationError::NoSuchThread->error(\MySqlMemory\Value\Integer::text($id, true));
         }
         if ($target->transaction->statements->running !== [] || $target === $session) {
             $target->interrupted = true;
@@ -77,6 +75,32 @@ final class KillCommand implements Command
         }
 
         return new Completion(0, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Evaluates an identifier with the release's conversion and failure behavior.
+     * MySQL 5.6 keeps all 64 bits and records an unknown zero thread after an evaluation failure;
+     * later releases narrow identifiers to 32 bits and stop at the evaluation failure.
+     *
+     * @throws SqlError When evaluating the identifier fails
+     */
+    public function identifier(\MySqlMemory\Evaluation\Evaluable $operand, Context $context, GrammarRelease $release): int
+    {
+        try {
+            $value = $operand->evaluate(new Frame($context));
+        } catch (SqlError $error) {
+            if ($release !== GrammarRelease::MySql5651) {
+                throw $error;
+            }
+
+            throw new SqlError($error->error, $error->getMessage(), $error->getPrevious(), [...$error->following, [AdministrationError::NoSuchThread->value, AdministrationError::NoSuchThread->message(0)]], $error->signalled, null, $error->recorded);
+        }
+        $domain = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? $operand->domain() : $operand->domain()->withQuiet(false);
+        $id = $value !== null && $domain->kind === Kind::Decimal
+            ? Convert::decimalInteger((string) $value, $context, false)
+            : (int) Convert::toInteger($value, $domain, $context);
+
+        return $release === GrammarRelease::MySql5651 ? $id : ($id & 0xffffffff);
     }
 
     /**

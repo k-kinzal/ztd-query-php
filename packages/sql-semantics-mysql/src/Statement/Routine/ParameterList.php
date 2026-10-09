@@ -57,6 +57,8 @@ final class ParameterList implements Relation
     {
         $slots = [];
         foreach ($this->parameters as $parameter) {
+            (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices())->type($parameter->type, $derivation);
+            (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($parameter->type, '', $derivation);
             $slots[] = new OutputSlot($parameter->name, new Known($parameter->type), Nullability::Nullable);
         }
 
