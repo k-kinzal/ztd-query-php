@@ -340,4 +340,38 @@ final class OperatorsTest extends TestCase
 
         self::assertSame(2, $session->diagnostics->count());
     }
+
+    public function testInListConvertsAConstantValueOnceInMySql57(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2), (3)');
+
+        $session->query("SELECT ('x' + INTERVAL 1 DAY_HOUR) IN (USER(), 'y') FROM t");
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertCount(1, $warnings->rows);
+    }
+
+    public function testBetweenConvertsAConstantValueOnceInMySql56(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1), (2), (3)');
+
+        $session->query("SELECT ('x' + INTERVAL 1 DAY_HOUR) BETWEEN USER() AND 'y' FROM t");
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertCount(1, $warnings->rows);
+    }
+
+    public function testInListConvertsAConstantValueOnceForAMixedListInMySql56(): void
+    {
+        $result = (new Instance('5.6.51'))->connect()->query('SELECT (TRUE + INTERVAL 1 HOUR_SECOND) IN (1, USER())')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(1, $result->warnings);
+    }
 }

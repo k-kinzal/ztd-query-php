@@ -102,4 +102,25 @@ final class ShowKeysCommandTest extends TestCase
 
         self::assertSame(['TMP_TABLE_KEYS', \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong], [$headings[0]->table, $headings[1]->field]);
     }
+
+    public function testExecuteListsTheColumnsOfMySql56AndCountsWholeValues(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (b VARCHAR(20), KEY kb (b(3)))');
+        $session->query("INSERT INTO t VALUES ('abcdef'), ('abcxyz'), ('zzz')");
+
+        $result = $session->query('SHOW INDEX FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['STATISTICS', 13], [$result->columns[0]->table, count($result->columns)]);
+        self::assertSame('3', (string) $result->rows[0][6]);
+    }
+
+    public function testLegacyAnswersTheThirteenColumnsOfStatistics(): void
+    {
+        $headings = (new ShowKeysCommand())->legacy();
+
+        self::assertSame(['Table', 'Index_comment', 'STATISTICS'], [$headings[0]->name, $headings[12]->name, $headings[0]->table]);
+        self::assertCount(13, $headings);
+    }
 }

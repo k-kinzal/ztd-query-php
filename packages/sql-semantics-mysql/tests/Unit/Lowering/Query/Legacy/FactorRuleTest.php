@@ -76,4 +76,61 @@ final class FactorRuleTest extends TestCase
         self::assertInstanceOf(SyntaxException::class, $new);
         self::assertSame([21, 20], [$old->token->offset, $new->token->offset]);
     }
+
+    public function testRefusalPlacesTheSyntaxErrorOfAUnionAfterANestedJoinAtTheSecondUnionInMySql56(): void
+    {
+        $platform = new Platform();
+        $legacy = $platform->profile('mysql-5.6.51', null, ParameterStyle::Native);
+        $tree = $platform->parser($legacy)->parse('SELECT 1 FROM (t UNION SELECT 1 UNION SELECT 2)');
+        $unions = $tree->find('select_derived_union');
+        $factor = $tree->find('table_factor')[0];
+        $aliases = $tree->find('opt_table_alias');
+        $refusal = (new FactorRule(new Lowering($platform->productions($legacy), new Leaves(), $legacy)))->refusal($factor->children[3], $unions[1]->children[1], $tree->find('opt_union_order_or_limit')[0], $aliases[count($aliases) - 1], true, false, $unions[0]->children[1])->getPrevious();
+
+        self::assertInstanceOf(SyntaxException::class, $refusal);
+        self::assertSame(32, $refusal->token->offset);
+    }
+
+    public function testRefusalPlacesTheSyntaxErrorOfAnOrderedNestedJoinBeforeItsUnionInMySql57(): void
+    {
+        $platform = new Platform();
+        $modern = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $tree = $platform->parser($modern)->parse('SELECT 1 FROM (t ORDER BY 1 UNION SELECT 2)');
+        $unions = $tree->find('select_derived_union');
+        $factor = $tree->find('table_factor')[0];
+        $aliases = $tree->find('opt_table_alias');
+        $refusal = (new FactorRule(new Lowering($platform->productions($modern), new Leaves(), $modern)))->refusal($factor->children[3], $unions[0]->children[1], $tree->find('opt_union_order_or_limit')[0], $aliases[count($aliases) - 1], true, true)->getPrevious();
+
+        self::assertInstanceOf(SyntaxException::class, $refusal);
+        self::assertSame(17, $refusal->token->offset);
+    }
+
+    public function testRefusalPlacesTheSyntaxErrorOfALimitOfTwoValuesAtTheLastValueInMySql56(): void
+    {
+        $platform = new Platform();
+        $legacy = $platform->profile('mysql-5.6.51', null, ParameterStyle::Native);
+        $tree = $platform->parser($legacy)->parse('SELECT 1 FROM (t LIMIT 1, 2)');
+        $factor = $tree->find('table_factor')[0];
+        $aliases = $tree->find('opt_table_alias');
+        $refusal = (new FactorRule(new Lowering($platform->productions($legacy), new Leaves(), $legacy)))->refusal($factor->children[3], null, $tree->find('opt_union_order_or_limit')[0], $aliases[count($aliases) - 1], false, true)->getPrevious();
+
+        self::assertInstanceOf(SyntaxException::class, $refusal);
+        self::assertSame(26, $refusal->token->offset);
+    }
+
+    public function testLeadingPlacesTheSyntaxErrorOfASelectWithoutAliasStartingANestedJoin(): void
+    {
+        $platform = new Platform();
+        $legacy = $platform->profile('mysql-5.6.51', null, ParameterStyle::Native);
+        $modern = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $text = 'SELECT 1 FROM ((SELECT 1) JOIN t ON 1)';
+        $old = $platform->parser($legacy)->parse($text);
+        $new = $platform->parser($modern)->parse($text);
+        $first = (new FactorRule(new Lowering($platform->productions($legacy), new Leaves(), $legacy)))->leading($old->find('select_derived')[0], $old->find('table_factor')[0]->children[3])?->getPrevious();
+        $second = (new FactorRule(new Lowering($platform->productions($modern), new Leaves(), $modern)))->leading($new->find('select_derived')[0], $new->find('table_factor')[0]->children[3])?->getPrevious();
+
+        self::assertInstanceOf(SyntaxException::class, $first);
+        self::assertInstanceOf(SyntaxException::class, $second);
+        self::assertSame([33, 26], [$first->token->offset, $second->token->offset]);
+    }
 }

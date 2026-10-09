@@ -442,4 +442,18 @@ final class ClientTest extends TestCase
 
         self::assertSame([0, 1], [$idle, $client->status()]);
     }
+
+    public function testQueryEndsTheConnectionOnceAStatementReleasesTheSession(): void
+    {
+        $sent = new ArrayObject();
+        $client = new Client(new Instance(), 7, static function (string $bytes) use ($sent): void {
+            $sent->append($bytes);
+        });
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+
+        $open = $client->receive("\x15\x00\x00\x00\x03COMMIT RELEASE; DO 1");
+
+        self::assertFalse($open);
+        self::assertSame(["\x07\x00\x00\x01\x00\x00\x00\x0A\x00\x00\x00"], array_slice($sent->getArrayCopy(), 1));
+    }
 }

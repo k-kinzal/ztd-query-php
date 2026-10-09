@@ -63,4 +63,38 @@ final class GlobalsTest extends TestCase
 
         self::assertNull($globals->value($definition));
     }
+
+    public function testCachedAnswersZeroForAKeyCacheThatDoesNotExist(): void
+    {
+        $definition = new Definition('key_cache_block_size', Reach::Global, ValueShape::Unsigned, 1024, Writability::GlobalOnly, 512, 16384, Domain::integer());
+
+        self::assertSame(0, (new Globals())->cached('x', $definition));
+    }
+
+    public function testCachedAnswersTheGlobalValueForTheDefaultKeyCache(): void
+    {
+        $definition = new Definition('key_cache_block_size', Reach::Global, ValueShape::Unsigned, 1024, Writability::GlobalOnly, 512, 16384, Domain::integer());
+
+        self::assertSame(2048, (new Globals(['key_cache_block_size' => 2048]))->cached('default', $definition));
+    }
+
+    public function testCacheCreatesAKeyCacheWhoseOtherParametersHoldTheirDefaults(): void
+    {
+        $block = new Definition('key_cache_block_size', Reach::Global, ValueShape::Unsigned, 1024, Writability::GlobalOnly, 512, 16384, Domain::integer());
+        $buffer = new Definition('key_buffer_size', Reach::Global, ValueShape::Unsigned, 8388608, Writability::GlobalOnly, 0, null, Domain::integer());
+        $limit = new Definition('key_cache_division_limit', Reach::Global, ValueShape::Unsigned, 100, Writability::GlobalOnly, 1, 100, Domain::integer());
+        $globals = new Globals();
+        $globals->cache('kc', $block, 2048);
+
+        self::assertSame([2048, 0, 100, 0, 1024], [$globals->cached('kc', $block), $globals->cached('kc', $buffer), $globals->cached('kc', $limit), $globals->cached('KC', $block), $globals->value($block)]);
+    }
+
+    public function testCacheSetsTheGlobalValueForTheDefaultKeyCache(): void
+    {
+        $block = new Definition('key_cache_block_size', Reach::Global, ValueShape::Unsigned, 1024, Writability::GlobalOnly, 512, 16384, Domain::integer());
+        $globals = new Globals();
+        $globals->cache('default', $block, 2048);
+
+        self::assertSame(['key_cache_block_size' => 2048], $globals->values);
+    }
 }

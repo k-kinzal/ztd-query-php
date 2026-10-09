@@ -133,4 +133,11 @@ final class LockedTablesTest extends TestCase
 
         self::assertSame([$first, $second], (new LockedTables())->terms(new TableList([$first, $second])));
     }
+
+    public function testCheckLeavesHighPriorityWithALockingClauseAloneInMySql57(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT HIGH_PRIORITY * FROM t1 LOCK IN SHARE MODE');
+
+        self::assertSame([], $operation->facts->diagnostics);
+    }
 }

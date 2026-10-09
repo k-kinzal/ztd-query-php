@@ -221,4 +221,35 @@ final class SetCommandTest extends TestCase
 
         $session->query('SET @@transaction_read_only = 1');
     }
+
+    public function testSystemSetsAParameterOfANamedKeyCache(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET @@GLOBAL.kc.key_cache_division_limit = 50');
+
+        $result = $session->query('SELECT @@GLOBAL.kc.key_cache_division_limit, @@GLOBAL.key_cache_division_limit, @@GLOBAL.kc.key_buffer_size')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['50', '100', '0']], $result->rows);
+    }
+
+    public function testActionGivesLaterAssignmentsTheScopeAnEarlierOneWrote(): void
+    {
+        $session = (new Instance())->connect();
+
+        $session->query('SET GLOBAL kc.key_cache_block_size = 2048, key_cache_division_limit = 50');
+        $result = $session->query('SELECT @@GLOBAL.kc.key_cache_block_size, @@GLOBAL.key_cache_division_limit')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2048', '50']], $result->rows);
+    }
+
+    public function testActionRefusesAKeyCacheParameterWithoutGlobal(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectExceptionCode(1229);
+
+        $session->query('SET kc.key_cache_block_size = 1024');
+    }
 }

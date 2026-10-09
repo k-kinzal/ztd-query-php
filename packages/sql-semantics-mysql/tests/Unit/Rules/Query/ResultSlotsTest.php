@@ -111,4 +111,13 @@ final class ResultSlotsTest extends TestCase
         self::assertSame([], $operation->facts->diagnostics);
         self::assertInstanceOf(Dependent::class, $operation->field(0)->type);
     }
+
+    public function testSettledLeavesOutAColumnNullInEveryRowOfANestedOperation(): void
+    {
+        $type = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION (SELECT NULL INTERSECT SELECT NULL)')->facts->output?->fields()?->at(0)->type;
+
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $type->descriptor);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, $type->descriptor->kind);
+    }
 }

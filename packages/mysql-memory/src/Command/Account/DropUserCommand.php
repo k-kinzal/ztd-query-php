@@ -62,7 +62,7 @@ final class DropUserCommand implements Command
             if ($accounts->find($identity) === null || isset($dropped[$identity->key()])) {
                 $missing[] = $identity;
                 if ($statement->ifExists) {
-                    $context->diagnostics->note(AccountError::UserDoesNotExist, AccountError::UserDoesNotExist->message($identity->quoted()));
+                    $context->diagnostics->note(AccountError::UserDoesNotExist, $names->existence($identity, false));
                 }
                 continue;
             }

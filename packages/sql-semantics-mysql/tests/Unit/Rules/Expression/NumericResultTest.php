@@ -131,8 +131,17 @@ final class NumericResultTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
 
-        self::assertSame(["Bitwise operations on BINARY will change behavior in a future version, check the 'Bit functions' section in the manual."], array_map(static fn (Warning $warning): string => $warning->message(), $semantics->analyze("SELECT _binary 'a' | 1")->facts->warnings));
-        self::assertSame([], $semantics->analyze("SELECT 1 | _binary 'a', X'0f' | 1, ~b'1'")->facts->warnings);
+        self::assertSame(["Bitwise operations on BINARY will change behavior in a future version, check the 'Bit functions' section in the manual."], array_map(static fn (Warning $warning): string => $warning->message(), $semantics->analyze("SELECT _binary 'a' << 1")->facts->warnings));
+        self::assertSame([], $semantics->analyze("SELECT 1 << _binary 'a', X'0f' | 1, ~b'1'")->facts->warnings);
         self::assertSame([], (new Semantics(Dialect::MySql))->analyze("SELECT _binary 'a' | 1")->facts->warnings);
+    }
+
+    public function testBinaryOperationWarnsOfBinaryStringsAmongLiteralsIn57(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+
+        self::assertCount(1, $semantics->analyze("SELECT NULL | BINARY 'a'")->facts->warnings);
+        self::assertCount(1, $semantics->analyze("SELECT X'01' ^ _binary 'a'")->facts->warnings);
+        self::assertSame([], $semantics->analyze("SELECT BINARY 'a' | 1, CAST('a' AS BINARY) & 2.5, X'01' | NULL")->facts->warnings);
     }
 }

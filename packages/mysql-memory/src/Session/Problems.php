@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace MySqlMemory\Session;
 
 use MySqlMemory\Error\Family\ProgramError;
-use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
@@ -14,14 +13,9 @@ use MySqlMemory\Session\Problem\Locations;
 use MySqlMemory\Session\Problem\Stages;
 use SqlSemantics\Platform\MySql\Statement\Alter\DropTable;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
-use SqlSemantics\Platform\MySql\Statement\Dml\MultipleDelete;
-use SqlSemantics\Platform\MySql\Statement\Dml\Problem\UnknownDeleteTable;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
-use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\GroupingModifier;
-use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
-use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
@@ -29,12 +23,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownPartition;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnpartitionedTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
-use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
-use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Fact\Diagnostic;
-use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Reference\Table\MissingTable;
@@ -48,9 +38,9 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
  * query lacks or locking a table twice. Then it checks the INTO variables. It then opens the
  * tables, refuses QUALIFY and a CUBE without tables, checks that each window a query names is
  * defined, resolves the names of each clause in order, which includes finding each stored
- * function a call names, and checks that no window is defined twice last. The stage of each
- * problem is told by Stages, the place of each name by Locations, and the error of each problem
- * by Errors.
+ * function a call names, and checks that no window is defined twice last. The problems found
+ * while the statement is read are raised by Reading, the stage of each problem is told by
+ * Stages, the place of each name by Locations, and the error of each problem by Errors.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/function-resolution.html,
  * https://dev.mysql.com/doc/refman/8.4/en/window-functions-named-windows.html.
  *
@@ -62,19 +52,30 @@ final class Problems
      * Raises the error of the first problem of an operation, if any; an account statement raises its own, in the order its command checks them.
      *
      * A column of MATCH that does not resolve is followed by the error of the AGAINST of the MATCH
-     * (ER_WRONG_ARGUMENTS), as the server goes on to check it (verified on a live 8.4 server).
+     * (ER_WRONG_ARGUMENTS), as the server goes on to check it, and RESIGNAL outside a handler fails
+     * before the values it sets are resolved (verified on a live 8.4 server). GET DIAGNOSTICS
+     * checks its targets here and resolves its condition number when it runs.
      *
      * @throws SqlError When the operation has a problem
      */
     public function raise(Operation $operation, Session $session): void
     {
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Resignal && ($session->program === null || $session->program->stacked === [])) {
+            throw ProgramError::ResignalWithoutHandler->error();
+        }
+        if ($operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Condition\Diagnostics\GetDiagnostics) {
+            (new Problem\Reading())->into($operation->statement, $session);
+
+            return;
+        }
         if (Stages::selfChecked($operation->statement) || (new \MySqlMemory\Command\Program\ProgramProblems())->raise($operation, $session, $this) || Stages::opensTableFirst($operation->statement)) {
             return;
         }
         $calls = $this->calls($operation);
         $diagnostics = $this->pending($operation, $session);
-        $this->read($operation, $session);
-        $this->into($operation->statement, $session);
+        $reading = new Problem\Reading();
+        $reading->read($operation, $session);
+        $reading->into($operation->statement, $session);
         $this->prepared($operation, $session);
         foreach ($calls as $call) {
             if ($call->named()) {
@@ -83,8 +84,14 @@ final class Problems
         }
         $this->paths($operation, $session, $diagnostics);
         $this->opened($operation, $session, $diagnostics);
+        (new Problem\Sampling())->opened($operation->statement, $operation->facts, $session->settings(), $session->instance->dictionary);
         (new \MySqlMemory\Hint\Hints())->resolve($operation->statement, $session);
+        (new Problem\IndexHints())->check($operation->statement, $this->reached($operation->statement), $session);
         (new Problem\Delayed())->check($operation->statement, $session);
+        $starred = array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables) !== [];
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 || ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 && !$starred)) {
+            $this->analysed($operation->statement);
+        }
         [$located, $matched] = (new Locations())->located($operation, $calls, $diagnostics, $session);
         $this->unlocated($diagnostics, $located, $session, $operation->statement);
         $first = Locations::first($located);
@@ -96,6 +103,28 @@ final class Problems
         }
         foreach ($diagnostics as $diagnostic) {
             throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
+        }
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $this->analysed($operation->statement);
+        }
+    }
+
+    /**
+     * Raises the error of PROCEDURE ANALYSE in the query an INSERT, a REPLACE or a CREATE TABLE writes, which MySQL 5.6 and 5.7 refuse (ER_WRONG_USAGE) once they have opened the tables, before they resolve the names; 5.6 refuses a `*` without tables first (verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @throws SqlError When the query writes PROCEDURE ANALYSE
+     */
+    public function analysed(Node $statement): void
+    {
+        $query = match (true) {
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery => $statement->source,
+            $statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable => $statement->query,
+            default => null,
+        };
+        foreach ($query === null ? [] : (new Walker())->find($query, Select::class) as $select) {
+            if ($select->procedure !== null) {
+                throw StatementError::WrongUsage->error('PROCEDURE', 'non-SELECT');
+            }
         }
     }
 
@@ -135,25 +164,6 @@ final class Problems
     }
 
     /**
-     * Raises the refusals of a write MySQL 5.6 and 5.7 find before they resolve any table: a target that is not updatable, and in 5.6 the ORDER BY or LIMIT of a multiple-table UPDATE, which it refuses while it parses (verified on live 5.6.51 and 5.7.44 servers).
-     *
-     * @throws SqlError When the operation has such a problem
-     */
-    public function legacyWrites(Operation $operation, Session $session): void
-    {
-        $release = $session->settings()->release();
-        if ($release !== \SqlSemantics\Contract\GrammarRelease::MySql5651 && $release !== \SqlSemantics\Contract\GrammarRelease::MySql5744) {
-            return;
-        }
-        $early = [\SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::NonUpdatableTarget, ...($release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? [\SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::LimitedMultipleUpdate, \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule::OrderedMultipleUpdate] : [])];
-        foreach ($operation->facts->diagnostics as $diagnostic) {
-            if ($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse && in_array($diagnostic->rule, $early, true)) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
-            }
-        }
-    }
-
-    /**
      * Tells whether every block that writes `*` without tables is a query EXISTS tests, which takes it (verified on live 5.6.51 and 8.4.7 servers).
      */
     public function tested(Operation $operation): bool
@@ -170,22 +180,6 @@ final class Problems
         }
 
         return true;
-    }
-
-    /**
-     * Raises the error of an INTO clause naming a variable no running stored program declares (ER_SP_UNDECLARED_VAR).
-     *
-     * @throws SqlError When an INTO clause names such a variable
-     */
-    public function into(Node $statement, ?Session $session = null): void
-    {
-        foreach ((new Walker())->find($statement, IntoVariables::class) as $into) {
-            foreach ($into->targets as $target) {
-                if ($target instanceof ProgramVariable && $session?->program?->variable($target->name->value) === null) {
-                    throw ProgramError::UndeclaredVariable->error($target->name->value);
-                }
-            }
-        }
     }
 
     /**
@@ -269,85 +263,6 @@ final class Problems
     }
 
     /**
-     * Raises the error of the first problem the server finds while it reads an operation, before it checks the INTO variables and opens any table.
-     *
-     * A CAST or CONVERT to TIME or DATETIME with a precision above 6 is one of them, found before
-     * a wrong call of a native function or a system variable the server does not know. An unknown
-     * collation after COLLATE comes first of all, as the server looks it up while it parses the
-     * statement, and a table of a multiple-table DELETE that its FROM clause lacks comes after the
-     * tables the FROM clause names twice, before any table is opened (verified on a live 8.4
-     * server).
-     *
-     * @throws SqlError When the operation has such a problem
-     */
-    public function read(Operation $operation, Session $session): void
-    {
-        foreach ($operation->facts->diagnostics as $diagnostic) {
-            if ($diagnostic instanceof UnknownCollation) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
-            }
-        }
-        $this->legacyWrites($operation, $session);
-        (new Placement())->check($operation->statement, $session->settings()->release());
-        $repeated = $this->repeated($operation->statement);
-        if ($repeated !== null) {
-            throw QueryError::NonUniqueTable->error($repeated->value);
-        }
-        $this->targets($operation->statement, $session);
-        (new Problem\Precision())->check($operation->statement);
-        $alias = null;
-        foreach ($operation->facts->diagnostics as $diagnostic) {
-            if (\MySqlMemory\Command\Program\ProgramProblems::parameter($operation->statement, $diagnostic)) {
-                continue;
-            }
-            if (Stages::parsed($diagnostic) && !($diagnostic instanceof UnknownSystemVariable && Stages::selfChecked($operation->statement))) {
-                if ($diagnostic instanceof UnknownSystemVariable) {
-                    (new \MySqlMemory\Command\Program\ProgramProblems())->variables($operation->statement);
-                }
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
-            }
-            if (Stages::closing($diagnostic)) {
-                throw (new Errors())->error($alias ?? $diagnostic, $session, 'field list', $operation->statement);
-            }
-            $alias ??= $diagnostic instanceof NonUniqueTable ? $diagnostic : null;
-        }
-        if ($alias !== null) {
-            throw (new Errors())->error($alias, $session, 'field list', $operation->statement);
-        }
-        foreach ($operation->facts->diagnostics as $diagnostic) {
-            if ($diagnostic instanceof UnknownDeleteTable) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
-            }
-        }
-        (new \MySqlMemory\Command\Show\Inspection())->check($operation->statement, $session);
-        (new \MySqlMemory\Command\Explain\ExplainCommand())->check($operation->statement, $session);
-    }
-
-    /**
-     * Raises the error of a table a multiple-table DELETE names twice in the list of the tables it deletes from (ER_NONUNIQ_TABLE).
-     *
-     * The server reads the list before the tables of FROM or USING, so the error comes before
-     * theirs. Two names are the same table when they name the same database, the current one
-     * when none is written (verified on a live 8.4 server).
-     *
-     * @throws SqlError When the list names a table twice
-     */
-    public function targets(Node $statement, Session $session): void
-    {
-        if (!$statement instanceof MultipleDelete) {
-            return;
-        }
-        $seen = [];
-        foreach ($statement->targets as $target) {
-            $key = ($target->schema->value ?? $session->variables->database) . "\0" . $target->name->value;
-            if (isset($seen[$key])) {
-                throw QueryError::NonUniqueTable->error($target->name->value);
-            }
-            $seen[$key] = true;
-        }
-    }
-
-    /**
      * Raises the error of a clause the server refuses once it has opened the tables of the statement, before it resolves any name.
      *
      * GROUP BY CUBE in a statement that reads no table is not supported; with tables, CUBE fails
@@ -407,37 +322,5 @@ final class Problems
         }
 
         return array_values(array_filter((new Walker())->find($statement, Node::class), static fn (Node $node): bool => !isset($skipped[spl_object_id($node)])));
-    }
-
-    /**
-     * Answers the first common table name a WITH clause defines twice, in the order the server parses the definitions: each after the definitions nested in it.
-     *
-     * The server checks the names while it parses the statement, so a WITH clause inside a common
-     * table expression that is never used reports its duplicate too.
-     */
-    public function repeated(Node $node): ?Name
-    {
-        $seen = [];
-        $properties = get_object_vars($node);
-        $children = [];
-        array_walk_recursive($properties, static function ($value) use (&$children): void {
-            if ($value instanceof Node) {
-                $children[] = $value;
-            }
-        });
-        foreach ($children as $child) {
-            $found = $this->repeated($child);
-            if ($found !== null) {
-                return $found;
-            }
-            if ($node instanceof With && $child instanceof CommonTableExpression) {
-                if (isset($seen[$child->name->value])) {
-                    return $child->name;
-                }
-                $seen[$child->name->value] = true;
-            }
-        }
-
-        return null;
     }
 }

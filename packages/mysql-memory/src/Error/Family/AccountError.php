@@ -31,6 +31,7 @@ enum AccountError: int implements ErrorCode
     case SpecificAccessDenied = 1227;
     case RevokeGrants = 1269;
     case HostnameWontWork = 1285;
+    case PasswordLength = 1372;
     case CannotUser = 1396;
     case NonexistingRoutineGrant = 1403;
     case CantCreateUserWithGrant = 1410;

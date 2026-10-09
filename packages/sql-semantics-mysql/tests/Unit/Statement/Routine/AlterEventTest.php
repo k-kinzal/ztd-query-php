@@ -132,4 +132,11 @@ final class AlterEventTest extends TestCase
 
         new AlterEvent(new QualifiedName(new Name('e')), null, null, null, null, null, new Parameter(new Name('x'), new Integral(IntegralKind::Int)));
     }
+
+    public function testDeriveStatementWarnsOfDisableOnSlave(): void
+    {
+        $facts = (new Semantics(Dialect::MySql))->analyze('ALTER EVENT e DISABLE ON SLAVE')->facts;
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings));
+    }
 }

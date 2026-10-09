@@ -118,4 +118,84 @@ final class ExecutionTest extends TestCase
         self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $warnings);
         self::assertSame([['Error', '1146', "Table 'nosuch.t' doesn't exist"]], $warnings->rows);
     }
+
+    public function testRetainsKeepsTheDiagnosticsAcrossTheStatementsThatOpenNoTableIn56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('DROP DATABASE IF EXISTS nosuch');
+        $session->query('CREATE DATABASE d; USE d; CREATE USER u; GRANT SELECT ON *.* TO u; SHOW GRANTS FOR u; FLUSH PRIVILEGES; SELECT @@sql_mode');
+        $kept = $session->query('SHOW WARNINGS')[0];
+        $session->query('CREATE TABLE t (a INT)');
+        $cleared = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $kept);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $cleared);
+        self::assertSame([['Note', '1008', "Can't drop database 'nosuch'; database doesn't exist"]], $kept->rows);
+        self::assertSame([], $cleared->rows);
+    }
+
+    public function testRunKeepsMaxErrorCountConditionsAndCountsTheRest(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET max_error_count = 2');
+        $session->query("SELECT 'a' + 0, 'b' + 0, 'c' + 0");
+        $kept = count($session->diagnostics->conditions);
+        $count = $session->query('SHOW COUNT(*) WARNINGS')[0];
+        $read = $session->query('SELECT @@warning_count')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $count);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $read);
+        self::assertSame([2, [['3']], [['3']]], [$kept, $count->rows, $read->rows]);
+    }
+
+    public function testUndeclaredStopsTheWarningAboutIntoBeforeTheLockingClauses(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+
+        self::assertTrue((new Execution($session))->undeclared($session->analyze('SELECT a FROM t INTO nosuch FOR UPDATE')));
+        self::assertFalse((new Execution($session))->undeclared($session->analyze('SELECT a FROM t INTO @a FOR UPDATE')));
+    }
+
+    public function testRunEmptiesTheAreaBeforeAGetDiagnosticsThatNamesAnUndeclaredVariable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SELECT 1 / 0');
+        $session->run('GET DIAGNOSTICS v = NUMBER');
+
+        self::assertSame([['Error', 1327, 'Undeclared variable: v']], $session->diagnostics->conditions);
+    }
+
+    public function testAreaEmptiesTheAreaAndRemembersTheConditionsBefore(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SELECT 1 / 0');
+        $operation = $session->analyze('SELECT 1');
+
+        (new Execution($session))->area($operation, (new Dispatcher())->command($operation->statement));
+
+        self::assertSame([[], [1, 0]], [$session->diagnostics->conditions, $session->diagnostics->previous]);
+    }
+
+    public function testAreaEmptiesTheAreaForGetDiagnosticsWithAProblemFoundWhileParsing(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run('SELECT nosuch');
+
+        $session->run('GET DIAGNOSTICS CONDITION @@nosuch @v = MESSAGE_TEXT');
+
+        self::assertSame([['Error', 1193, "Unknown system variable 'nosuch'"]], $session->diagnostics->conditions);
+    }
+
+    public function testFailedRecordsTheErrorAndAnswersTheRepliesBeforeIt(): void
+    {
+        $session = (new Instance())->connect();
+        $session->variables->rowCount = 3;
+        $error = \MySqlMemory\Error\Family\QueryError::NoDatabase->error();
+
+        self::assertSame([$error], (new Execution($session))->failed($error));
+        self::assertSame([-1, [['Error', 1046, 'No database selected']]], [$session->variables->rowCount, $session->diagnostics->conditions]);
+    }
 }

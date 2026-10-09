@@ -73,7 +73,8 @@ final class ChangeFacts
         (new GeneratedWrites())->assignments($update->assignments, $fields, $derivation);
         foreach ($single ? [] : $fields as $field) {
             if ($field->resolution instanceof ResolvedColumn && !$this->updatable($field->resolution->relation, $derivation)) {
-                $derivation->report(new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($field->resolution->relation)));
+                $merged = $this->merged($field->resolution->relation, $field->resolution->slot->name->value ?? '', $derivation);
+                $derivation->report($merged ?? new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($field->resolution->relation)));
             }
         }
         $this->clauses($update->where, $update->orderBy, $update->limit, $derivation, $base, $environment);
@@ -128,6 +129,88 @@ final class ChangeFacts
         }
 
         return !$derivation->facts()->relation($relation)->table instanceof CommonTable;
+    }
+
+    /**
+     * Answers the problem MySQL 5.7 finds in assigning a column of a derived table it merges, or null for another relation or release.
+     *
+     * The column is not updatable when its select item is not a column (ER_NONUPDATEABLE_COLUMN);
+     * otherwise the target is the first table of the derived query, through the derived tables it
+     * merges in turn, named by its alias (verified on a live 5.7.44 server).
+     */
+    public function merged(Relation $relation, string $column, Derivation $derivation): ?WriteMisuse
+    {
+        $materialization = new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization();
+        if ($derivation->context->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744 || !$relation instanceof DerivedTable || !$materialization->mergeable($relation->query)) {
+            return null;
+        }
+        $select = $this->block($relation->query);
+        if ($select !== null && $this->computed($select, $column)) {
+            return new WriteMisuse(WriteRule::NonUpdatableColumn, new Name($column));
+        }
+        $first = $this->leading($select?->from);
+
+        return $first === null ? null : new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($first));
+    }
+
+    /**
+     * Tells whether the select item that names a column of a query block is not a column.
+     *
+     * An item is named by its alias, or by the column it is, through parentheses. The name is
+     * compared without regard to case. An item that is a column, or a name no item has, is not
+     * computed.
+     */
+    public function computed(\SqlSemantics\Platform\MySql\Statement\Query\Select $select, string $column): bool
+    {
+        foreach ($select->items as $item) {
+            if (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression) {
+                continue;
+            }
+            $expression = $item->expression;
+            while ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
+                $expression = $expression->operand;
+            }
+            $name = $item->alias->value ?? ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse ? $expression->name->value : null);
+            if ($name !== null && strcasecmp($name, $column) === 0 && !$expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Answers the first table of a FROM clause, or null when it starts with another relation.
+     *
+     * The first table is found through table lists, the left side of joins, parentheses, escaped
+     * references, and the derived tables MySQL 5.7 merges.
+     */
+    public function leading(?Relation $from): ?NamedRelation
+    {
+        $materialization = new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization();
+        while ($from !== null && !$from instanceof NamedRelation) {
+            $from = match (true) {
+                $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList => $from->members[0] ?? null,
+                $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable => $from->left,
+                $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation, $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation => $from->relation,
+                $from instanceof DerivedTable && $materialization->mergeable($from->query) => $this->block($from->query)?->from,
+                default => null,
+            };
+        }
+
+        return $from instanceof NamedRelation ? $from : null;
+    }
+
+    /**
+     * Answers the query block a query is, through parentheses and a query expression without ordering, or null.
+     */
+    public function block(\SqlSemantics\Statement\Query $query): ?\SqlSemantics\Platform\MySql\Statement\Query\Select
+    {
+        while ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression) {
+            $query = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery ? $query->query : $query->body;
+        }
+
+        return $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select ? $query : null;
     }
 
     /**

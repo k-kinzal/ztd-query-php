@@ -69,9 +69,14 @@ final class InsertCommand implements Command
         $context->strict = $context->modes->strict() && !$into->ignore;
         $session->transaction->touch($table);
         [$positions, $sources] = $this->sources($statement, $planner, $table, $context);
-        $rows = new Rows($table, $context, $planner, $into, $statement instanceof InsertQuery ? [] : $statement->onDuplicate, $session, $statement instanceof InsertQuery ? null : $statement->alias);
+        $rows = new Rows($table, $context, $planner, $into, $statement->onDuplicate, $session, $statement instanceof InsertQuery ? null : $statement->alias);
         $queried = $statement instanceof InsertQuery && $statement->values() === null;
+        $rows->sources = $queried ? $planner->carried[1] ?? null : null;
         foreach ($sources as $index => $values) {
+            if ($rows->sources !== null) {
+                $rows->source = array_map(static fn (array|\MySqlMemory\Evaluation\Evaluable|DefaultRequest $value): int|float|string|null => is_array($value) ? $value[0] : null, array_slice($values, count($positions)));
+                $values = array_slice($values, 0, count($positions));
+            }
             $rows->write($values === [] ? [] : $positions, $values, $index + 1, count($sources) === 1 && !$queried, $queried);
         }
         if ($rows->generated !== null && !$session->variables->setByFunction) {
@@ -163,10 +168,16 @@ final class InsertCommand implements Command
      */
     public function queried(InsertQuery $statement, Planner $planner, Context $context, int $width): array
     {
+        $source = $statement->source;
+        while ($source instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery || $source instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryStatement) {
+            $source = $source->query;
+        }
+        $planner->carrying = $statement->onDuplicate !== [] && $source instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select ? $source : null;
         $plan = $planner->query($statement->source, null);
         if (count($plan->domains) !== $width) {
             throw QueryError::WrongValueCountOnRow->error(1);
         }
+        (new \MySqlMemory\Session\Problem\Sampling())->optimized($statement->source, $planner->compiler->facts, $planner->settings, $planner->dictionary);
         $iterator = (new Builder())->build($plan->root);
         $iterator->init(new Frame($context));
         $rows = [];
@@ -174,6 +185,14 @@ final class InsertCommand implements Command
             $values = [];
             foreach ($plan->domains as $index => $domain) {
                 $values[] = [$row[$index], $domain];
+            }
+            if ($planner->carried !== null) {
+                $position = $planner->carried[0];
+                foreach ($planner->carried[1]->columns as $domains) {
+                    foreach ($domains as $domain) {
+                        $values[] = [$row[$position++], $domain];
+                    }
+                }
             }
             $rows[] = $values;
         }

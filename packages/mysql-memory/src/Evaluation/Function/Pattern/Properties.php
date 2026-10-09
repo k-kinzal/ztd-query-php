@@ -15,7 +15,8 @@ use Transliterator;
  * count): a general category, a script, a binary property, a block after "In", or `property=value`
  * for a general category, script, block, binary, enumerated, name, age or numeric value property;
  * and Any, ASCII and Assigned. A general category and a script known to PCRE are left to it;
- * another set is listed from the character database of the intl extension. The escapes have the
+ * another set is listed once for each process from the UnicodeSet ICU names by the same property
+ * and value, through the intl extension, as Listing describes. The escapes have the
  * ICU definitions: \d is \p{Nd}, \s is [\t\n\f\r\p{Z}], \w is [\p{Alphabetic}\p{M}\p{Nd}\p{Pc}
  * U+200C U+200D], \h is [\t\p{Zs}] and \v the line terminators.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/regexp.html,
@@ -80,7 +81,7 @@ final class Properties
         }
         $property = IntlChar::getPropertyEnum($name);
         if ($property >= IntlChar::PROPERTY_BINARY_START && $property < IntlChar::PROPERTY_BINARY_LIMIT) {
-            return $this->listed('b' . $property, static fn (int $code): bool => IntlChar::hasBinaryProperty($code, $property));
+            return $this->listed('b' . $property, static fn (int $code): bool => IntlChar::hasBinaryProperty($code, $property), $this->pattern($property));
         }
         $category = $this->category($name);
         if ($category !== null) {
@@ -115,7 +116,7 @@ final class Properties
         }
         if ($property >= IntlChar::PROPERTY_BINARY_START && $property < IntlChar::PROPERTY_BINARY_LIMIT) {
             $truth = strtolower($value);
-            $set = $this->listed('b' . $property, static fn (int $code): bool => IntlChar::hasBinaryProperty($code, $property));
+            $set = $this->listed('b' . $property, static fn (int $code): bool => IntlChar::hasBinaryProperty($code, $property), $this->pattern($property));
 
             return match (true) {
                 in_array($truth, ['y', 'yes', 't', 'true'], true) => $set,
@@ -126,13 +127,13 @@ final class Properties
         if ($property >= IntlChar::PROPERTY_INT_START && $property < IntlChar::PROPERTY_INT_LIMIT) {
             $wanted = IntlChar::getPropertyValueEnum($property, $value);
 
-            return $wanted === IntlChar::PROPERTY_INVALID_CODE ? null : $this->listed('i' . $property . '=' . $wanted, static fn (int $code): bool => IntlChar::getIntPropertyValue($code, $property) === $wanted);
+            return $wanted === IntlChar::PROPERTY_INVALID_CODE ? null : $this->listed('i' . $property . '=' . $wanted, static fn (int $code): bool => IntlChar::getIntPropertyValue($code, $property) === $wanted, $this->pattern($property, $wanted));
         }
 
         return match ($property) {
             IntlChar::PROPERTY_NAME => $this->character($value),
             IntlChar::PROPERTY_AGE => $this->age($value),
-            IntlChar::PROPERTY_NUMERIC_VALUE => is_numeric($value) ? $this->listed('n' . $value, static fn (int $code): bool => IntlChar::getNumericValue($code) === (float) $value) : null,
+            IntlChar::PROPERTY_NUMERIC_VALUE => is_numeric($value) ? $this->listed('n' . $value, static fn (int $code): bool => IntlChar::getNumericValue($code) === (float) $value, '[:Numeric_Value=' . (float) $value . ':]') : null,
             default => null,
         };
     }
@@ -171,7 +172,7 @@ final class Properties
             return new Members(['\p{' . $long . '}']);
         }
 
-        return $this->listed('s' . $script, static fn (int $code): bool => IntlChar::getIntPropertyValue($code, IntlChar::PROPERTY_SCRIPT) === $script);
+        return $this->listed('s' . $script, static fn (int $code): bool => IntlChar::getIntPropertyValue($code, IntlChar::PROPERTY_SCRIPT) === $script, $this->pattern(IntlChar::PROPERTY_SCRIPT, $script));
     }
 
     /**
@@ -198,6 +199,9 @@ final class Properties
 
     /**
      * Answers the characters assigned by a Unicode version, or null for a value that is not a version.
+     *
+     * A part of a version past 255, which no part of an age reaches, holds every age that agrees
+     * with the version before it, as 255 in that part and those after it does in ICU.
      */
     public function age(string $version): ?Members
     {
@@ -205,36 +209,45 @@ final class Properties
             return null;
         }
         $wanted = array_pad(array_map(intval(...), explode('.', $version)), 4, 0);
-
-        return $this->listed('a' . $version, static function (int $code) use ($wanted): bool {
+        $test = static function (int $code) use ($wanted): bool {
             $age = IntlChar::charAge($code);
 
             return $age !== [0, 0, 0, 0] && $age <= $wanted;
-        });
+        };
+        $parts = [];
+        $past = false;
+        foreach ($wanted as $part) {
+            $past = $past || $part > 255;
+            $parts[] = $past ? 255 : $part;
+        }
+
+        return $this->listed('a' . $version, $test, '[:Age=' . implode('.', $parts) . ':]');
     }
 
     /**
-     * Answers the set of the characters that pass a test, listed once for each key.
+     * Answers the set of the characters that pass a test, listed once for each key, from ICU when a UnicodeSet pattern names the same set.
      *
      * @param Closure(int): bool $test
+     * @param string|null $set The UnicodeSet pattern of the same set
      */
-    public function listed(string $key, Closure $test): Members
+    public function listed(string $key, Closure $test, ?string $set = null): Members
     {
-        if (!isset(self::$listed[$key])) {
-            $items = '';
-            $start = null;
-            for ($code = 0; $code <= 0x110000; $code++) {
-                $inside = $code <= 0x10FFFF && $test($code);
-                if ($inside && $start === null) {
-                    $start = $code;
-                } elseif (!$inside && $start !== null) {
-                    $items .= sprintf($start === $code - 1 ? '\x{%X}' : '\x{%X}-\x{%X}', $start, $code - 1);
-                    $start = null;
-                }
-            }
-            self::$listed[$key] = $items;
-        }
+        self::$listed[$key] ??= (new Listing())->ranges($test, $set);
 
         return self::$listed[$key] === '' ? new Members([]) : new Members([self::$listed[$key]]);
+    }
+
+    /**
+     * Writes the UnicodeSet pattern of a binary property, or of a property and one of its values, in the names ICU gives them, or null when ICU names neither.
+     */
+    public function pattern(int $property, ?int $value = null): ?string
+    {
+        $name = IntlChar::getPropertyName($property);
+        $named = $value === null ? null : IntlChar::getPropertyValueName($property, $value);
+        if ($name === '' || ($value !== null && (!is_string($named) || $named === ''))) {
+            return null;
+        }
+
+        return '[:' . $name . ($named === null ? '' : '=' . $named) . ':]';
     }
 }

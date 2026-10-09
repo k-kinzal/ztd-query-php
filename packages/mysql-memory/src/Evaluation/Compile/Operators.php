@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Evaluation\Compile;
 
-use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Family\Casts;
+use MySqlMemory\Evaluation\Compile\Family\Ranges;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Function\Json\Predicate;
@@ -17,8 +17,6 @@ use MySqlMemory\Evaluation\Operator\Choice;
 use MySqlMemory\Evaluation\Operator\Comparison\Comparator;
 use MySqlMemory\Evaluation\Operator\Comparison\Compare;
 use MySqlMemory\Evaluation\Operator\Comparison\IsTest;
-use MySqlMemory\Evaluation\Operator\Comparison\Membership;
-use MySqlMemory\Evaluation\Operator\Comparison\Range;
 use MySqlMemory\Evaluation\Operator\DoubleOperand;
 use MySqlMemory\Evaluation\Operator\Logic;
 use MySqlMemory\Evaluation\Operator\Minus;
@@ -44,7 +42,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\Like;
 use SqlSemantics\Platform\MySql\Statement\Expression\Truth;
 use SqlSemantics\Platform\MySql\Statement\Expression\TruthTest;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Scalar;
@@ -129,6 +126,13 @@ final class Operators
     {
         $left = $substituted ?? $this->compiler->compile($leftNode, $scope);
         $right = $this->compiler->compile($rightNode, $scope);
+        if ($substituted === null) {
+            $fields = new FieldConstants($this->compiler);
+            $right = $fields->stored($leftNode, $left, $rightNode, $right);
+            $left = $fields->stored($rightNode, $right, $leftNode, $left);
+            $right = (new FieldStrings($this->compiler))->check($leftNode, $left, $rightNode, $right);
+            $left = (new FieldStrings($this->compiler))->check($rightNode, $right, $leftNode, $left);
+        }
         $connection = $this->compiler->settings->connectionCollation;
         $comparator = Comparator::of($left->domain(), $right->domain(), $operator->value, $connection, $this->compiler->settings->release());
         $converted = $comparator->mode !== Kind::String && $comparator->mode !== Kind::Json && ($left->domain()->kind === Kind::String || $right->domain()->kind === Kind::String);
@@ -145,6 +149,10 @@ final class Operators
 
         if ($comparator->mode === Kind::Json) {
             $comparator = $comparator->withBooleans($this->compiler->jsons->boolean($leftNode), $this->compiler->jsons->boolean($rightNode));
+        }
+        if ($comparator->mode === Kind::String) {
+            $left = \MySqlMemory\Evaluation\Operator\Transcoded::of($left, $comparator->collation, $substituted === null && $this->compiler->constancy($leftNode) === Constancy::Resolved, $this->compiler->connection->context);
+            $right = \MySqlMemory\Evaluation\Operator\Transcoded::of($right, $comparator->collation, $this->compiler->constancy($rightNode) === Constancy::Resolved, $this->compiler->connection->context);
         }
 
         return new Compare($operator, $left, $right, $comparator, $this->compiler->domain($node), $nullFromOperands);
@@ -318,72 +326,19 @@ final class Operators
     }
 
     /**
-     * Compiles [NOT] BETWEEN.
-     *
-     * Values compared as doubles are read as doubles once for each row. When one bound compares as
-     * a string and the other as a number, all three compare as doubles. A JSON value is compared
-     * as its text, or as a double read from it, with a warning that the comparison of JSON values is
-     * not supported there (verified on a live 8.4 server).
+     * Compiles [NOT] BETWEEN, as Ranges compiles it.
      */
     public function between(Between $node, Scope $scope): Evaluable
     {
-        $operand = $this->compiler->compile($node->operand, $scope);
-        $low = $this->compiler->compile($node->low, $scope);
-        $high = $this->compiler->compile($node->high, $scope);
-        $connection = $this->compiler->settings->connectionCollation;
-        $json = array_filter([$operand, $low, $high], static fn (Evaluable $value): bool => $value->domain()->kind === Kind::Json) !== [];
-        if ($json) {
-            $this->compiler->connection->context->diagnostics->warning(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message('comparison of JSON in the BETWEEN operator'));
-        }
-        $text = static fn (Evaluable $value): Domain => $value->domain()->kind === Kind::Json ? Domain::string(4294967295, Collation::known('utf8mb4_bin')) : $value->domain();
-        $modes = [Comparator::of($text($operand), $text($low), 'between', $connection)->mode, Comparator::of($text($operand), $text($high), 'between', $connection)->mode];
-        $numeric = static fn (Kind $mode): bool => in_array($mode, [Kind::Double, Kind::Decimal, Kind::Integer], true);
-        if ($modes === [Kind::Double, Kind::Double] || (in_array(Kind::String, $modes, true) && ($numeric($modes[0]) || $numeric($modes[1])))) {
-            $operand = $operand->domain()->kind === Kind::Double ? $operand : new DoubleOperand($operand, false);
-            $low = $low->domain()->kind === Kind::Double ? $low : new DoubleOperand($low, false);
-            $high = $high->domain()->kind === Kind::Double ? $high : new DoubleOperand($high, false);
-        }
-        $comparator = static function (Evaluable $left, Evaluable $right) use ($text, $connection, $json): Comparator {
-            $comparator = Comparator::of($json ? $text($left) : $left->domain(), $json ? $text($right) : $right->domain(), 'between', $connection);
-
-            return $json ? new Comparator($comparator->mode, $left->domain(), $right->domain(), $comparator->collation) : $comparator;
-        };
-
-        return new Range($operand, $low, $high, $comparator($operand, $low), $comparator($operand, $high), $node->negated, $this->compiler->domain($node));
+        return (new Ranges($this->compiler))->between($node, $scope);
     }
 
     /**
-     * Compiles [NOT] IN with a list.
-     *
-     * A list of one value is the comparison `=`, or `<>` for NOT IN, as the server rewrites it. A
-     * value compared with every element as a double is read as a double once for each row.
+     * Compiles [NOT] IN with a list, as Ranges compiles it.
      */
     public function inList(InList $node, Scope $scope): Evaluable
     {
-        if ($this->compiler->rows->elements($node->operand) !== null) {
-            return $this->compiler->rows->in($node->operand, $node->elements, $node->negated, $scope);
-        }
-        if (count($node->elements) === 1 && $this->compiler->rows->elements($node->elements[0]) === null) {
-            return $this->compare($node->negated ? ComparisonOperator::NotEqual : ComparisonOperator::Equal, $node->operand, $node->elements[0], $scope, $node);
-        }
-        $connection = $this->compiler->settings->connectionCollation;
-        $operand = $this->compiler->compile($node->operand, $scope);
-        $compiled = [];
-        $modes = [];
-        $fixed = true;
-        foreach ($node->elements as $element) {
-            $compiled[] = $this->compiler->compile($element, $scope);
-            $modes[] = Comparator::of($operand->domain(), $compiled[count($compiled) - 1]->domain(), 'in', $connection)->mode;
-            $fixed = $fixed && $this->compiler->constancy($element)->constant();
-        }
-        $fixed = $fixed && count(array_unique(array_map(static fn (Kind $mode): string => $mode->name, $modes))) === 1;
-        if (array_unique(array_map(static fn (Kind $mode): string => $mode->name, $modes)) === [Kind::Double->name]) {
-            $operand = $operand->domain()->kind === Kind::Double ? $operand : new DoubleOperand($operand, false);
-            $compiled = array_map(static fn (Evaluable $element): Evaluable => $element->domain()->kind === Kind::Double ? $element : new DoubleOperand($element, false), $compiled);
-        }
-        $elements = array_map(static fn (Evaluable $element): array => [$element, Comparator::of($operand->domain(), $element->domain(), 'in', $connection)], $compiled);
-
-        return new Membership($operand, $elements, $node->negated, $this->compiler->domain($node), $fixed);
+        return (new Ranges($this->compiler))->inList($node, $scope);
     }
 
     /**

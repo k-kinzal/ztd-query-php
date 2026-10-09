@@ -15,9 +15,10 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 /**
  * Groups the rows of its input and answers one row per group: its first row and its aggregates.
  *
- * Groups are answered in the order of their grouping values, as the server returns them when it
- * groups by sorting, except that groups of a JSON value come in the order they first appear, as
- * the server groups them in a temporary table (verified on a live 8.4 server); without grouping
+ * Groups are answered in the order of their grouping values when the path says the server groups
+ * by sorting or reads an index, except that groups of a JSON value come in the order they first
+ * appear, as the server groups them in a temporary table; otherwise in the order they first
+ * appear (verified on a live 8.4 server); without grouping
  * expressions there is exactly one group. WITH ROLLUP the
  * super-aggregate rows follow the groups they fold.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/group-by-modifiers.html.
@@ -86,6 +87,9 @@ final class AggregateIterator implements RowIterator
     public function sorted(array $groups): array
     {
         $expressions = $this->path->groups;
+        if (!$this->path->sorted) {
+            return $groups;
+        }
         foreach ($expressions as $expression) {
             if ($expression->domain()->kind === Kind::Json) {
                 return $groups;

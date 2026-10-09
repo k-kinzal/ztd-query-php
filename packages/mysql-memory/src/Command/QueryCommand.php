@@ -66,12 +66,17 @@ final class QueryCommand implements Command
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $into = $this->destination($statement);
         $plan = $planner->query($statement, null);
+        (new \MySqlMemory\Session\Problem\Sampling())->optimized($statement, $operation->facts, $planner->settings, $planner->dictionary);
         if ($into !== null && !$into instanceof IntoVariables) {
-            $this->file($into, $context);
+            $this->file($into, $context, $session->settings()->legacy());
         }
         if ($session->settings()->release() === GrammarRelease::MySql910 && $this->unites($statement) && $plan->domains !== []) {
             $nullable = $plan->domains[0]->nullable;
             $plan = new QueryPlan($plan->root, array_map(static fn (Domain $domain): Domain => $domain->withNullable($nullable), $plan->domains), $plan->names, $plan->origins);
+        }
+        $restricted = $session->settings()->release() === GrammarRelease::MySql847 ? $this->restricted($statement, $operation->facts) : null;
+        if ($restricted !== null && count($restricted) === count($plan->domains)) {
+            $plan = new QueryPlan($plan->root, array_map(static fn (Domain $domain, bool $nullable): Domain => $domain->withNullable($domain->nullable || $nullable), $plan->domains, $restricted), $plan->names, $plan->origins);
         }
         if ($into instanceof IntoVariables && array_filter($into->targets, static fn ($target): bool => !$target instanceof UserVariable) !== []) {
             $context->strict = $context->modes->strict();
@@ -130,6 +135,57 @@ final class QueryCommand implements Command
     }
 
     /**
+     * Answers the nullability MySQL 8.4 sends for each column of a query whose outermost operation is INTERSECT or EXCEPT: that of any operand, as for UNION; null for another query.
+     *
+     * The rows come from the left operand only, but MySQL 8.4 sends a column NOT NULL only when it
+     * is NOT NULL in every operand. A derived table, a common table expression or a subquery keeps
+     * the nullability of the left operand, as MySQL 8.0 and 9.1 do for the result too (verified
+     * on live 8.0.44, 8.4.7 and 9.1.0 servers).
+     *
+     * @return list<bool>|null
+     */
+    public function restricted(Query $query, \SqlSemantics\Statement\Fact\Facts $facts): ?array
+    {
+        $outermost = $this->outermost($query);
+        if (!($outermost instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation || $outermost instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation)
+            || $outermost->operator === \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator::Union) {
+            return null;
+        }
+
+        return $this->nullables($outermost, $facts);
+    }
+
+    /**
+     * Answers whether each column of a query is nullable in any operand of its set operations, or in the query itself when it has none.
+     *
+     * @return list<bool>
+     */
+    public function nullables(Query|\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion $query, \SqlSemantics\Statement\Fact\Facts $facts): array
+    {
+        $outermost = $query instanceof Query ? $this->outermost($query) : $query;
+        if ($outermost instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation || $outermost instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation || $outermost instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion) {
+            $left = $this->nullables($outermost->left, $facts);
+            $right = $this->nullables($outermost->right, $facts);
+
+            return array_map(static fn (bool $one, ?bool $other): bool => $one || $other === true, $left, array_pad($right, count($left), null));
+        }
+
+        return array_map(static fn ($slot): bool => $slot->nullability !== \SqlSemantics\Statement\Type\Nullability::NotNull, $facts->query($outermost)->shape->slots);
+    }
+
+    /**
+     * Answers the query inside the statement, parentheses and WITH or ORDER BY wrappers around a query.
+     */
+    public function outermost(Query $query): Query
+    {
+        while ($query instanceof QueryStatement || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery || $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression) {
+            $query = $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression ? $query->body : $query->query;
+        }
+
+        return $query;
+    }
+
+    /**
      * Finds the INTO destination of a query, written in the query or in the parentheses around it.
      */
     public function destination(Query $query): ?IntoDestination
@@ -163,7 +219,7 @@ final class QueryCommand implements Command
     public function into(IntoDestination $into, ResultSet $result, Session $session, Context $context): Reply
     {
         if (!$into instanceof IntoVariables) {
-            $this->file($into, $context);
+            $this->file($into, $context, $session->settings()->legacy());
         }
         if (count($into->targets) !== count($result->columns)) {
             throw QueryError::WrongNumberOfColumnsInSelect->error();
@@ -195,14 +251,19 @@ final class QueryCommand implements Command
      * The server checks the FIELDS options of INTO OUTFILE first: ENCLOSED BY and ESCAPED BY take at
      * most one character. It warns once about separators that hold bytes outside ASCII, and then
      * refuses the file, since the server runs with secure_file_priv limiting the files it writes.
+     * MySQL 5.6 and 5.7 refuse the file before they check or warn about the separators (verified on
+     * live 5.6.51 and 5.7.44 servers).
      * Source: https://dev.mysql.com/doc/refman/8.4/en/select-into.html,
      * https://dev.mysql.com/doc/refman/8.4/en/load-data.html,
      * https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_secure_file_priv.
      *
      * @throws \MySqlMemory\Error\SqlError Always: the separators are wrong or the file is refused
      */
-    public function file(IntoDestination $into, Context $context): never
+    public function file(IntoDestination $into, Context $context, bool $legacy = false): never
     {
+        if ($legacy) {
+            throw StatementError::OptionPreventsStatement->error('--secure-file-priv');
+        }
         $format = $into instanceof IntoOutfile ? $into->format : null;
         $texts = $format instanceof TextFileFormat ? [...$format->fields, ...$format->lines] : [];
         $bytes = array_map(static fn (FieldOption|LineOption $option): string => match ($option->text->radix) {

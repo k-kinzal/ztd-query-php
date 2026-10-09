@@ -6,11 +6,11 @@ namespace Tests\Unit\Server;
 
 use MySqlMemory\Server\Server;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Server::class)]
-#[Small]
+#[Medium]
 final class ServerTest extends TestCase
 {
     public function testStartRunsAServerThatGreetsClients(): void

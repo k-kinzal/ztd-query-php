@@ -12,7 +12,6 @@ use MySqlMemory\Evaluation\Compile\Connection;
 use MySqlMemory\Evaluation\Compile\Settings;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\Reply;
-use SqlParser\Lexer\SourceException;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Contract\SearchPath;
 use SqlSemantics\Diagnostic\AnalysisException;
@@ -92,6 +91,16 @@ final class Session
     public string $text = '';
 
     /**
+     * The statements written after the statement being executed in the text the client sent, which the server quotes after it in a syntax error; once RELEASE ended the session, those it did not run.
+     */
+    public string $following = '';
+
+    /**
+     * Whether a COMMIT or ROLLBACK with RELEASE ended the session, as the server closes the connection then.
+     */
+    public bool $released = false;
+
+    /**
      * @var array<string, array{string, int}> The text and parameter count of each statement PREPARE named, by lower-case name
      */
     public array $prepared = [];
@@ -163,6 +172,25 @@ final class Session
     }
 
     /**
+     * Ends the session after a COMMIT or ROLLBACK with RELEASE: the server closes the connection once it answers the statement, so the statements written after it in the same text do not run, and every later statement fails as on a closed connection (CR_SERVER_GONE_ERROR).
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/commit.html.
+     */
+    public function release(): void
+    {
+        $this->released = true;
+        $this->close();
+    }
+
+    /**
+     * Answers the error a statement fails with once RELEASE ended the session, the client error CR_SERVER_GONE_ERROR, or null while the session is open.
+     */
+    public function gone(): ?SqlError
+    {
+        return $this->released ? \MySqlMemory\Error\Family\TransactionError::ServerGone->error() : null;
+    }
+
+    /**
      * Ends the session when nothing refers to it any longer.
      */
     public function __destruct()
@@ -199,42 +227,33 @@ final class Session
      */
     public function run(string $sql, array $parameters = [], bool $prepared = false): array
     {
+        $gone = $this->gone();
+        if ($gone !== null) {
+            return [$gone];
+        }
         try {
             $statements = $this->split($sql);
         } catch (SqlError $error) {
-            $this->diagnostics->clear();
-            $error = (new CacheOptions())->reported($error, $sql, $this);
-            if (!$error->recorded) {
-                $this->diagnostics->error($error->getCode(), $error->getMessage());
+            $statements = (new Problem\Script())->statements($this->semantics(), $sql);
+            if ($statements === []) {
+                return [(new Parse\Reader())->refused($error, $sql, $prepared, $this)];
             }
-            $this->variables->rowCount = -1;
-
-            return [$error];
         }
         $answers = [];
-        foreach ($statements as $statement) {
+        foreach ($statements as $index => $statement) {
+            $this->following = implode('', array_slice($statements, $index + 1));
             try {
                 $reply = $this->execute($statement, $parameters, $prepared);
                 array_push($answers, ...($reply instanceof \MySqlMemory\Result\Batch ? $reply->replies : [$reply]));
+                if ($this->released) {
+                    return $answers;
+                }
             } catch (SqlError $error) {
-                $this->transaction->statements->abort();
-                $this->variables->rowCount = -1;
-                array_push($answers, ...$this->running->replies);
-                $this->running->replies = [];
-                if (!$error->recorded) {
-                    $this->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
-                }
-                foreach ($error->following as [$code, $message]) {
-                    $this->diagnostics->error($code, $message);
-                }
-                if ($this->transaction->unrestored) {
-                    $this->transaction->unrestored = false;
-                    $this->diagnostics->warning(\MySqlMemory\Error\Family\TransactionError::NotCompleteRollback, \MySqlMemory\Error\Family\TransactionError::NotCompleteRollback->message());
-                }
-                $answers[] = $error;
+                array_push($answers, ...(new Execution($this))->failed($error));
                 break;
             }
         }
+        $this->following = '';
 
         return $answers;
     }
@@ -254,7 +273,7 @@ final class Session
         try {
             $statements = $this->semantics()->split($sql);
         } catch (AnalysisException $error) {
-            throw (new Syntax())->error($error, $sql);
+            throw (new Syntax())->error($error, $sql, $this->settings()->release());
         }
 
         return $statements === [] ? [$sql] : $statements;
@@ -282,7 +301,9 @@ final class Session
             $this->hinted = $prepared ? [] : $this->hinted;
             $command = (new Dispatcher())->command($operation->statement);
         } catch (SqlError $error) {
-            $this->diagnostics->clear();
+            if (!$error->recorded) {
+                $this->diagnostics->clear();
+            }
             throw (new CacheOptions())->reported($error, $statement, $this);
         }
 
@@ -300,63 +321,27 @@ final class Session
         $semantics = $this->semantics();
         $this->instance->dictionary->temporaries = $this->temporaries;
         $this->dots = [];
-        try {
-            $tree = $semantics->parser()->parse($statement);
-        } catch (SourceException $error) {
-            throw (new Syntax())->error($error, $statement);
-        }
-        if (!$prepared) {
-            (new Syntax())->markers($tree, $statement);
-        }
-        (new Syntax())->temporals($tree, $this->modes());
-        $this->dots = $this->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? (new Syntax())->dots($tree) : [];
-        $this->hinted = (new \MySqlMemory\Hint\Hints())->syntax($tree, $statement, $this);
-        $this->commented = str_contains($statement, '/*+');
-        (new Syntax())->debugOnly($tree, $statement);
+        $reader = new Parse\Reader();
+        $tree = $reader->read($statement, $prepared, $this);
         $database = $this->variables->database;
         \MySqlMemory\Plan\Views::refreshAll($this->instance->dictionary, $this->settings());
         $typing = (new \MySqlMemory\Hint\Hints())->typing($tree, $statement, $this);
         try {
-            $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($this->bound($tree, $parameters, $prepared))));
+            $operation = $semantics->analyze($tree, $semantics->context($this->instance->dictionary->declarations(), true, $database === '' ? null : new SearchPath($database), $this->resolution($reader->bound($tree, $parameters, $prepared, $this))));
         } catch (ImplementationGap $gap) {
             throw new SqlError(StatementError::NotSupportedYet, StatementError::NotSupportedYet->message($gap->getMessage()), $gap);
         } catch (AnalysisException $error) {
-            throw (new Syntax())->error($error, $statement);
+            throw $reader->refusal($tree, $error, $statement, $database, $this);
         } finally {
             $typing->restore($this);
         }
         (new Syntax())->internal($operation->statement, $statement);
-
-        return $operation;
-    }
-
-    /**
-     * Answers the type of the value bound to each parameter marker of a statement, by the position of the marker.
-     *
-     * A statement prepared before any value is bound types each marker as the server types a lone
-     * marker then: a VARCHAR of 16383 characters in the connection collation.
-     *
-     * @param list<array{int|float|string|null, \MySqlMemory\Typing\Domain}> $parameters The values bound in the order of the markers
-     * @return array<int, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain>
-     */
-    public function bound(\SqlParser\Parser\Node $tree, array $parameters, bool $prepared = false): array
-    {
-        $bound = [];
-        $index = 0;
-        $unbound = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::string(16383, $this->resolution()->connection, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
-        foreach ($tree->tokens() as $token) {
-            if ($token->name !== 'PARAM_MARKER') {
-                continue;
-            }
-            if (isset($parameters[$index])) {
-                $bound[$index] = $parameters[$index][1]->resolved();
-            } elseif ($prepared) {
-                $bound[$index] = $unbound;
-            }
-            $index++;
+        (new Syntax())->purged($tree, $operation->statement, $statement, $this->settings()->release());
+        if ((new \MySqlMemory\Command\Condition\SignalProblems())->signals($tree)) {
+            (new \MySqlMemory\Command\Condition\SignalProblems())->check($operation, $this);
         }
 
-        return $bound;
+        return $operation;
     }
 
     /**
@@ -377,7 +362,7 @@ final class Session
 
         $client = $this->variables->read('character_set_client');
 
-        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, (int) $this->variables->read('group_concat_max_len'), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), is_string($client) ? Charset::named($client) : null, program: $this->program?->rows() ?? [], functions: $this->instance->dictionary->functions(), blockEncryptionMode: (string) $this->variables->read('block_encryption_mode'), timeNames: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::named((string) $this->variables->read('lc_time_names')));
+        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, $this->variables->count('group_concat_max_len', 1024), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), is_string($client) ? Charset::named($client) : null, program: $this->program?->rows() ?? [], functions: $this->instance->dictionary->functions(), blockEncryptionMode: (string) $this->variables->read('block_encryption_mode'), timeNames: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::named((string) $this->variables->read('lc_time_names')));
     }
 
     /**

@@ -174,4 +174,20 @@ final class CallsTest extends TestCase
 
         $session->query('SELECT f(1)');
     }
+
+    public function testNamedReadsAConstantStringOnceOnlyWhereAnotherArgumentSettlesTheCharacterSet(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SELECT CONVERT(X'4142FF4344' USING utf8mb4), HEX(CAST(X'41FF' AS CHAR CHARACTER SET ascii))");
+        $first = $session->query('SHOW WARNINGS')[0];
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query("SELECT CONCAT('x' - INTERVAL 1 DAY, USER()) FROM t");
+        $second = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $first);
+        self::assertInstanceOf(ResultSet::class, $second);
+        self::assertSame([[['Warning', '1300', "Invalid utf8mb4 character string: 'FF4344'"], ['Warning', '1300', "Invalid ascii character string: 'FF'"]], [['Warning', '1292', "Incorrect datetime value: 'x'"]]], [$first->rows, $second->rows]);
+    }
 }

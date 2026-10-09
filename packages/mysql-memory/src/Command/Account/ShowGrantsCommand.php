@@ -27,7 +27,8 @@ use SqlSemantics\Statement\Operation;
  * Executes SHOW GRANTS.
  *
  * The statement writes the GRANT statements of an account (see GrantText), in one text column
- * of 1024 characters named after the account. Without FOR, or FOR CURRENT_USER, it shows the
+ * of 4096 characters named after the account, 1024 in MySQL 5.6 and 5.7 (verified on live
+ * 5.6.51 and 5.7.44 servers). Without FOR, or FOR CURRENT_USER, it shows the
  * account of the session with the privileges of its active roles; USING adds the privileges of
  * roles granted to the account, and of the roles granted to them. An account that does not
  * exist is ER_NONEXISTING_GRANT, and a role USING names that is not granted to the account is
@@ -76,8 +77,10 @@ final class ShowGrantsCommand implements Command
         $grants = $account->grants->copy();
         $grants->merge($this->through($roles, $accounts));
         $grants->prune();
-        $column = new ResultColumn('Grants for ' . $identity->text(), Field::VarString, 4096, 31, ColumnFlag::NotNull->value, 255);
-        $lines = (new GrantText())->lines($identity, $grants, $granted);
+        $release = $session->settings()->release();
+        $legacy = (new \MySqlMemory\Account\Catalog($release))->legacy();
+        $column = new ResultColumn('Grants for ' . $identity->text(), Field::VarString, $legacy ? 1024 : 4096, 31, ColumnFlag::NotNull->value, 255);
+        $lines = (new GrantText())->lines($identity, $grants, $granted, $release, $account);
 
         return new ResultSet([$column], array_map(static fn (string $line): array => [$line], $lines), $context->diagnostics->count());
     }

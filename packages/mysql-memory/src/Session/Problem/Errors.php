@@ -270,7 +270,7 @@ final class Errors
                 3 => DataError::CantAggregateThreeCollations,
                 default => DataError::CantAggregateCollations,
             }, $diagnostic->message()),
-            $diagnostic instanceof UnknownCollation => SchemaError::UnknownCollation->error(mb_substr($diagnostic->name, 0, 64)),
+            $diagnostic instanceof UnknownCollation => SchemaError::UnknownCollation->error(strlen(mb_strcut($diagnostic->name, 0, 64, 'UTF-8')) < min(64, strlen($diagnostic->name)) ? mb_strcut($diagnostic->name, 0, 64, 'UTF-8') . '?' : substr($diagnostic->name, 0, 64)),
             $diagnostic instanceof TooBigPrecision => SchemaError::TooBigPrecision->error($diagnostic->precision, $diagnostic->function, 6),
             $diagnostic instanceof UnknownCharset => SchemaError::UnknownCharacterSet->error($diagnostic->name),
             $diagnostic instanceof CollationMismatch => SchemaError::CollationCharsetMismatch->error($diagnostic->collation, $diagnostic->charset),
@@ -288,6 +288,7 @@ final class Errors
         return match (true) {
             $diagnostic instanceof BucketCountOutOfRange => DataError::DataOutOfRange->error('Number of buckets', 'ANALYZE TABLE'),
             $diagnostic instanceof UnknownSystemVariable => AdministrationError::UnknownSystemVariable->error($diagnostic->name),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable => AdministrationError::VariableIsNotStruct->error($diagnostic->name),
             $diagnostic instanceof VariableMisuse => new SqlError(ErrorNumbers::from($diagnostic->rule->code()), $diagnostic->message()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem => (new \MySqlMemory\Error\ProgramErrors())->error($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly => StatementError::FeatureDisabled->error('SHOW PROCEDURE|FUNCTION CODE', '--with-debug'),
@@ -307,6 +308,7 @@ final class Errors
             WriteRule::LimitedMultipleUpdate => StatementError::WrongUsage->error('UPDATE', 'LIMIT'),
             WriteRule::WildcardColumn => QueryError::BadField->error('*', 'field list'),
             WriteRule::CommonTableTarget, WriteRule::NonUpdatableTarget => QueryError::NonUpdatableTable->error($misuse->table->value ?? '', $statement instanceof Update ? 'UPDATE' : 'DELETE'),
+            WriteRule::NonUpdatableColumn => QueryError::NonUpdatableColumn->error($misuse->table->value ?? ''),
         };
     }
 

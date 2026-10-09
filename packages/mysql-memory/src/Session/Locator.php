@@ -12,11 +12,6 @@ use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowSpec;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
-use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
-use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
-use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows;
-use SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet;
-use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
@@ -40,13 +35,10 @@ use SqlSemantics\Statement\Scalar;
 /**
  * Finds where in a statement each column name, select list position, function call and clock call is read, and in which order the server resolves it.
  *
- * The server resolves a query block in this order: the derived tables of its FROM clause, the
+ * The server resolves a query block in this order: the index hints of its tables, the derived tables of its FROM clause, the
  * qualifiers of its `t.*` items, its select list, WHERE, the ON conditions, GROUP BY, HAVING and ORDER BY; it names the clause it
  * resolves in the message of a name it cannot resolve. A subquery is resolved in the place it is
- * written. An UPDATE resolves WHERE, every assigned column, every value, then ORDER BY; an INSERT
- * resolves its column list or the columns of SET, the rows or the values of SET, then the
- * columns and the values of ON DUPLICATE KEY UPDATE, except that an INSERT ... SELECT resolves
- * the columns of ON DUPLICATE KEY UPDATE before the query (verified on a live 8.4 server).
+ * written. The order of an UPDATE, an INSERT and a DELETE is told by WriteOrder.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html.
  *
  * @visibility MySqlMemory
@@ -104,6 +96,11 @@ final class Locator
     public array $sets = [];
 
     /**
+     * @var list<array{\SqlSemantics\Platform\MySql\Statement\Relation\TableReference, list<int>}> Each table a query block reads, with the resolution order its index hints are checked at: before the derived tables of its block, after them in MySQL 5.6 (verified on live 5.6.51, 5.7.44 and 8.4.7 servers)
+     */
+    public array $hinted = [];
+
+    /**
      * @var list<int> The resolution order of the query block being located
      */
     private array $block = [];
@@ -120,8 +117,9 @@ final class Locator
 
     /**
      * @param bool $operandFirst Whether the operand of IN, ANY and ALL over a subquery is resolved before the subquery, and the width of the subquery checked after both, as MySQL 8.0 does
+     * @param \SqlSemantics\Contract\GrammarRelease $release The release whose order an INSERT is resolved in
      */
-    public function __construct(public readonly bool $operandFirst = false)
+    public function __construct(public readonly bool $operandFirst = false, public readonly \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847)
     {
     }
 
@@ -130,37 +128,7 @@ final class Locator
      */
     public function statement(Node $statement): self
     {
-        if ($statement instanceof Update) {
-            $this->visit($statement->where, 'where clause', [1]);
-            $this->assignments($statement->assignments, [2]);
-            $this->visit($statement->orderBy, 'order clause', [6]);
-
-            return $this;
-        }
-        if ($statement instanceof InsertRows || $statement instanceof InsertSet) {
-            $this->visit($statement->into, 'field list', [0]);
-            if ($statement instanceof InsertRows) {
-                $this->visit($statement->rows, 'field list', [1]);
-            } else {
-                $this->assignments($statement->assignments, [1]);
-            }
-            $this->visit($statement->alias, 'field list', [2]);
-            $this->assignments($statement->onDuplicate, [3]);
-
-            return $this;
-        }
-        if ($statement instanceof InsertQuery) {
-            $this->visit($statement->into, 'field list', [0]);
-            $this->visit(array_map(static fn (Assignment $assignment): ColumnUse => $assignment->column, $statement->onDuplicate), 'field list', [1]);
-            $this->visit($statement->source, 'field list', [2]);
-            $this->visit(array_map(static fn (Assignment $assignment): Scalar => $assignment->value, $statement->onDuplicate), 'field list', [3]);
-
-            return $this;
-        }
-        if ($statement instanceof Delete) {
-            $this->visit($statement->where, 'where clause', [2]);
-            $this->visit($statement->orderBy, 'order clause', [6]);
-
+        if ((new Problem\WriteOrder($this))->locate($statement)) {
             return $this;
         }
         $filters = (new \MySqlMemory\Evaluation\Compile\Walker())->find($statement, \SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere::class);
@@ -376,6 +344,9 @@ final class Locator
         $outerSpecifications = $this->specifications;
         $this->specifications = [];
         $this->block = $order;
+        foreach ($select->from === null ? [] : (new \MySqlMemory\Evaluation\Compile\Walker())->find($select->from, \SqlSemantics\Platform\MySql\Statement\Relation\TableReference::class, false) as $reference) {
+            $this->hinted[] = [$reference, $this->release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? [...$order, 0, PHP_INT_MAX] : [...$order, -1]];
+        }
         $clause = new FromClause($this);
         $clause->derived($select->from, $order);
         foreach ($select->items as $item) {

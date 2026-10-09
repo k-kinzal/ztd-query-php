@@ -53,4 +53,12 @@ final class AlterTableTest extends TestCase
 
         self::assertSame(['v is not BASE TABLE.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('ALTER TABLE v ADD COLUMN b INT', [$table, $view])->facts->diagnostics));
     }
+
+    public function testDeriveStatementWarnsOfIgnoreIn56(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $tables = $semantics->analyze('CREATE TABLE t (a INT)')->declarations();
+
+        self::assertSame(["'IGNORE' is deprecated and will be removed in a future release."], array_map(static fn ($warning): string => $warning->message(), $semantics->analyze('ALTER IGNORE TABLE t ADD b INT', $tables)->facts->warnings));
+    }
 }

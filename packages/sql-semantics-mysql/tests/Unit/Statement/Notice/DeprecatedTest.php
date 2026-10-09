@@ -59,4 +59,14 @@ final class DeprecatedTest extends TestCase
     {
         self::assertSame([false, true, true, 1287], [Deprecated::JsonMerge->warnedIn(GrammarRelease::MySql5651), Deprecated::JsonMerge->warnedIn(GrammarRelease::MySql5744), Deprecated::JsonMerge->warnedIn(GrammarRelease::MySql847), Deprecated::JsonMerge->code()]);
     }
+
+    public function testCodeAnswersTheNumberOfTheValuesFunctionOutsideAnUpdate(): void
+    {
+        self::assertSame([1681, false, true], [Deprecated::ValuesElsewhere->code(), Deprecated::ValuesElsewhere->warnedIn(GrammarRelease::MySql5744), Deprecated::ValuesElsewhere->warnedIn(GrammarRelease::MySql8044)]);
+    }
+
+    public function testWarnedInWarnsOfDisableOnSlaveFromMySql84(): void
+    {
+        self::assertSame([false, true, 1287], [Deprecated::DisableOnSlave->warnedIn(GrammarRelease::MySql8044), Deprecated::DisableOnSlave->warnedIn(GrammarRelease::MySql847), Deprecated::DisableOnSlave->code()]);
+    }
 }

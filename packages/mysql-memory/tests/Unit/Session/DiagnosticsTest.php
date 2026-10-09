@@ -27,9 +27,10 @@ final class DiagnosticsTest extends TestCase
         self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'x'"], ['Warning', 1105, 'Unknown error']], $diagnostics->conditions);
     }
 
-    public function testWarningKeepsAtMost64Conditions(): void
+    public function testWarningKeepsAtMostTheLimitOfConditions(): void
     {
         $diagnostics = new Diagnostics();
+        $diagnostics->limit = 64;
         $diagnostics->conditions = array_fill(0, 64, ['Note', 1, 'n']);
         $diagnostics->warning(1105, 'dropped');
         $diagnostics->note(StatementError::UnknownError, 'dropped');
@@ -149,5 +150,34 @@ final class DiagnosticsTest extends TestCase
         $diagnostics->fresh();
 
         self::assertSame(0, $diagnostics->count());
+    }
+
+    public function testWarningCountsAConditionBeyondTheLimitWithoutKeepingIt(): void
+    {
+        $diagnostics = new Diagnostics();
+        $diagnostics->limit = 1;
+        $diagnostics->warning(1292, 'one');
+        $diagnostics->warning(1292, 'two');
+
+        self::assertSame([1, 2, 1], [$diagnostics->count(), $diagnostics->raised(), $diagnostics->dropped]);
+    }
+
+    public function testRaisedCountsTheConditionsKeptAndDropped(): void
+    {
+        $diagnostics = new Diagnostics();
+        $diagnostics->limit = 0;
+        $diagnostics->warning(1292, 'one');
+        $diagnostics->clear();
+
+        self::assertSame([0, 0], [$diagnostics->raised(), $diagnostics->dropped]);
+    }
+
+    public function testErrorsCountsTheErrorsKept(): void
+    {
+        $diagnostics = new Diagnostics();
+        $diagnostics->warning(1292, 'one');
+        $diagnostics->error(1054, 'two');
+
+        self::assertSame(1, $diagnostics->errors());
     }
 }

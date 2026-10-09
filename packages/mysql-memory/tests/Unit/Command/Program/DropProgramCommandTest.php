@@ -134,4 +134,14 @@ final class DropProgramCommandTest extends TestCase
         self::assertNotNull($missing);
         self::assertSame([[1539, "Unknown event 'E'"], [1305, 'Event E does not exist']], [[$missing[0]->getCode(), $missing[0]->getMessage()], [$missing[1]->getCode(), $missing[1]->getMessage()]]);
     }
+
+    public function testTriggerFindsNoTriggerInADatabaseThatDoesNotExistInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1360);
+
+        $session->query('DROP TRIGGER nodb.x');
+    }
 }

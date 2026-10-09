@@ -21,7 +21,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  *
  * Characters are matched one by one in the collation of the operation, in its character set; the escape character,
  * a backslash unless ESCAPE names another, makes the character after it literal. An empty or
- * NULL escape escapes nothing. An escape fixed for the statement but known only when it runs,
+ * NULL escape escapes nothing, and so does an escape of more than one byte in a binary collation of a multibyte character
+ * set, which compares it with single bytes (verified on a live 8.4 server). An escape fixed for the statement but known only when it runs,
  * such as USER(), is checked when the first row is matched: one of more than one character is
  * ER_WRONG_ARGUMENTS, even for a NULL string.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-comparison-functions.html#operator_like.
@@ -68,6 +69,9 @@ final class Pattern implements Evaluable
     public function evaluate(Frame $frame): ?int
     {
         $escape = $this->escape === null ? $this->symbol('\\') : $this->escapeText($frame);
+        if ($this->collation->binaryOrder() && $this->collation->charset->maxLength > 1 && strlen($escape) > 1) {
+            $escape = '';
+        }
         $subject = $this->text($this->operand, $frame);
         $pattern = $subject === null ? null : $this->text($this->pattern, $frame);
         if ($subject === null || $pattern === null) {

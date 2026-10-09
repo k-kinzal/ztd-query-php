@@ -12,6 +12,9 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Query;
@@ -49,7 +52,7 @@ final class DerivedShapes
      */
     public function shape(QueryFact $fact, array $columns, Derivation $derivation, ?Query $materialized = null): RowShape
     {
-        $shape = $materialized === null ? $fact->shape : $this->materialized($fact->shape, (new Materialization())->narrows($materialized), $materialized, $derivation);
+        $shape = $materialized === null ? $this->merged($fact->shape, Settings::of($derivation->context)->connection) : $this->materialized($fact->shape, (new Materialization())->narrows($materialized), $materialized, $derivation);
         if ($columns === []) {
             $slots = [];
             foreach ($shape->slots as $slot) {
@@ -94,6 +97,29 @@ final class DerivedShapes
                 continue;
             }
             $slots[] = $domain === null ? $slot : new OutputSlot($slot->name, new Known((new Materialization())->column($domain, $narrows)), $slot->nullability, $slot->column, $slot->origin, $slot->unnamed);
+        }
+
+        return new RowShape($slots, $shape->missing);
+    }
+
+    /**
+     * Answers the shape of a merged query as the query that reads it sees it: a temporal value other than YEAR is text in the connection collation.
+     *
+     * The server reads a column of a merged derived table, common table expression or view
+     * through a reference that carries the connection collation, so the column and the
+     * expressions over it are sent as text of that collation (MYSQL-ROLLUP-ITEMS-001 sends a
+     * rollup item alike). Verified on live 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers.
+     */
+    public function merged(RowShape $shape, Collation $connection): RowShape
+    {
+        $slots = [];
+        foreach ($shape->slots as $slot) {
+            $domain = $slot->type instanceof Known && $slot->type->descriptor instanceof Domain ? $slot->type->descriptor : null;
+            if ($domain === null || !$domain->kind->temporal() || !$domain->collation->bytes()) {
+                $slots[] = $slot;
+                continue;
+            }
+            $slots[] = new OutputSlot($slot->name, new Known(new Domain($domain->kind, $domain->field, $domain->length, $domain->decimals, false, $connection, [], $domain->coercibility)), $slot->nullability, $slot->column, $slot->origin, $slot->unnamed);
         }
 
         return new RowShape($slots, $shape->missing);

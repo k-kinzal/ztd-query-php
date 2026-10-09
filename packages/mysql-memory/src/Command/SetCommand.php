@@ -66,12 +66,13 @@ final class SetCommand implements Command
         $frame = new Frame($context);
         $assigner = new Assigner($session->variables, $context);
         $actions = [];
-        foreach ($statement->items as $item) {
-            $actions[] = $this->action($item, $planner, $frame, $assigner, $session);
+        foreach ($statement->items as $position => $item) {
+            $actions[] = $this->action($item, $planner, $frame, $assigner, $session, $statement->scopeOf($position));
         }
         $user = $session->variables->user;
         $values = $session->variables->session;
         $globals = $session->variables->globals->values;
+        $caches = $session->variables->globals->caches;
         try {
             foreach ($actions as $action) {
                 $action();
@@ -80,6 +81,7 @@ final class SetCommand implements Command
             $session->variables->user = $user;
             $session->variables->session = $values;
             $session->variables->globals->values = $globals;
+            $session->variables->globals->caches = $caches;
             throw $error;
         }
 
@@ -88,8 +90,10 @@ final class SetCommand implements Command
 
     /**
      * Computes the value of one assignment and answers the action that assigns it.
+     *
+     * @param Written|null $inherited The scope of the assignment: the one it writes, or the last one an earlier assignment wrote (verified on a live 8.4 server)
      */
-    public function action(object $item, Planner $planner, Frame $frame, Assigner $assigner, Session $session): Closure
+    public function action(object $item, Planner $planner, Frame $frame, Assigner $assigner, Session $session, ?Written $inherited = null): Closure
     {
         if ($item instanceof UserAssignment) {
             $value = $planner->compiler->compile($item->value, new Scope());
@@ -99,16 +103,9 @@ final class SetCommand implements Command
             return static fn () => $session->variables->assign($item->variable->name->value, $result, $stored);
         }
         if ($item instanceof SystemAssignment) {
-            [$value, $domain] = $this->value($item->value, $planner, $frame);
-            $scope = $this->scope($item->variable->scope);
-            $definition = $session->variables->catalog->find($item->variable->name->value);
-            if ($item->variable->scope === null && $domain !== null && $definition !== null && in_array($definition->name, ['transaction_isolation', 'tx_isolation', 'transaction_read_only', 'tx_read_only'], true)) {
-                return static fn () => (new Transaction\SetTransactionCommand())->next($session, $definition->name, (string) $assigner->check($definition, $value, $domain));
-            }
-
-            return static fn () => $assigner->assign($item->variable->name->value, $scope, $value, $domain);
+            return $this->system($item, $planner, $frame, $assigner, $session);
         }
-        $variable = $item instanceof NameAssignment && $item->scope === null ? $this->variable($item, $session) : null;
+        $variable = $item instanceof NameAssignment && $inherited === null ? $this->variable($item, $session) : null;
         if ($variable !== null) {
             $this->local($variable, $item, $planner, $frame, $session);
 
@@ -116,15 +113,43 @@ final class SetCommand implements Command
         }
         if ($item instanceof NameAssignment) {
             [$value, $domain] = $this->value($item->value, $planner, $frame);
-            $scope = $this->scope($item->scope);
+            $scope = $this->scope($inherited);
+            $name = $item->name->value;
+            $cache = $item->qualifier?->value;
 
-            return static fn () => $assigner->assign($item->name->value, $scope, $value, $domain);
+            return static function () use ($assigner, $name, $scope, $value, $domain, $cache): void {
+                $assigner->retired($name);
+                $assigner->assign($name, $scope, $value, $domain, $cache);
+            };
         }
         if ($item instanceof SetNames || $item instanceof SetCharacterSet) {
             return $this->charset($item, $planner, $assigner, $session);
         }
 
         throw StatementError::NotSupportedYet->error('SET ' . (new ReflectionClass($item))->getShortName());
+    }
+
+    /**
+     * Computes the value of an assignment to a variable named with `@@` and answers the action that assigns it; one to the transaction characteristics without a scope sets those of the next transaction.
+     */
+    public function system(SystemAssignment $item, Planner $planner, Frame $frame, Assigner $assigner, Session $session): Closure
+    {
+        [$value, $domain] = $this->value($item->value, $planner, $frame);
+        $scope = $this->scope($item->variable->scope);
+        $definition = $session->variables->catalog->find($item->variable->name->value);
+        $name = $item->variable->name->value;
+        if ($item->variable->scope === null && $domain !== null && $definition !== null && in_array($definition->name, ['transaction_isolation', 'tx_isolation', 'transaction_read_only', 'tx_read_only'], true)) {
+            return static function () use ($session, $definition, $assigner, $value, $domain, $name): void {
+                $assigner->retired($name);
+                (new Transaction\SetTransactionCommand())->next($session, $definition->name, (string) $assigner->check($definition, $value, $domain));
+            };
+        }
+        $cache = $item->variable->instance?->value;
+
+        return static function () use ($assigner, $name, $scope, $value, $domain, $cache): void {
+            $assigner->retired($name);
+            $assigner->assign($name, $scope, $value, $domain, $cache);
+        };
     }
 
     /**

@@ -134,6 +134,26 @@ final class NumericResult
     }
 
     /**
+     * Tells whether MySQL 5.7 warns that a bit operator works on binary strings: a shift whose left operand is a binary string, or another operator with a binary string operand and no operand that is not one, a hexadecimal or bit literal or NULL (verified on a live 5.7.44 server).
+     */
+    public function binaryOperation(ArithmeticOperator $operator, Scalar $left, ScalarFact $leftFact, Scalar $right, ScalarFact $rightFact): bool
+    {
+        if ($operator === ArithmeticOperator::ShiftLeft || $operator === ArithmeticOperator::ShiftRight) {
+            return $this->binaryOperand($left, $leftFact);
+        }
+        foreach ([[$left, $leftFact], [$right, $rightFact]] as [$operand, $fact]) {
+            while ($operand instanceof Grouped) {
+                $operand = $operand->operand;
+            }
+            if (!($operand instanceof RadixLiteral && $operand->introducer === null) && !$operand instanceof NullLiteral && !$this->binaryOperand($operand, $fact)) {
+                return false;
+            }
+        }
+
+        return $this->binaryOperand($left, $leftFact) || $this->binaryOperand($right, $rightFact);
+    }
+
+    /**
      * Tells whether an operand of a bit operator is a binary string, which MySQL 5.7 warns about: neither a hexadecimal or bit literal without introducer nor NULL (verified on a live 5.7.44 server).
      */
     public function binaryOperand(Scalar $expression, ScalarFact $fact): bool

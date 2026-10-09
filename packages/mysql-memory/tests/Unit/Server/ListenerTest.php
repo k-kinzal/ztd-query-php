@@ -11,12 +11,12 @@ use MySqlMemory\Instance;
 use MySqlMemory\Server\Listener;
 use MySqlMemory\Server\Server;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 #[CoversClass(Listener::class)]
-#[Small]
+#[Medium]
 final class ListenerTest extends TestCase
 {
     public function testOpenListensOnAFreeLocalPort(): void

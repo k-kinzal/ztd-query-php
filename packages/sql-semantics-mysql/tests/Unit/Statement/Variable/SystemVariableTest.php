@@ -124,4 +124,30 @@ final class SystemVariableTest extends TestCase
         self::assertSame('hot.sort_buffer_size', $unknown[0]->name);
         self::assertSame([], $semantics->analyze('SELECT @@hot.key_buffer_size, @@hot.KEY_CACHE_BLOCK_SIZE')->facts->diagnostics);
     }
+
+    public function testDeriveScalarLeavesTheWarningOfAnAssignedVariableToTheAssignment(): void
+    {
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SET @@tx_isolation = DEFAULT')->facts->warnings);
+    }
+
+    public function testStructuredReadsTheNameAfterTheInstanceInMySql57(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+
+        self::assertEquals([[new UnknownSystemVariable('y')], [new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable('sql_mode')]], [$semantics->analyze('SELECT @@x.y')->facts->diagnostics, $semantics->analyze("SET x.sql_mode = ''")->facts->diagnostics]);
+    }
+
+    public function testDeriveScalarTypesAParameterOfANamedKeyCacheAsTheVariable(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @@x.key_buffer_size');
+
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $item0 = $operation->statement->items[0];
+        self::assertInstanceOf(SelectExpression::class, $item0);
+        self::assertInstanceOf(SystemVariable::class, $item0->expression);
+        $fact = $operation->facts->scalar($item0->expression);
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame('BIGINT', $fact->type->descriptor->name());
+        self::assertSame([Nullability::Nullable, []], [$fact->nullability, $operation->facts->diagnostics]);
+    }
 }

@@ -23,8 +23,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  *
  * ABS keeps the type of its argument; CEILING and FLOOR make a BIGINT, or a decimal of the integral
  * digits beyond 18 of them (in MySQL 5.6 and 5.7 ABS makes an integer a BIGINT, and the BIGINT of
- * CEILING and FLOOR is as long as the argument, verified on live 5.6.51 and 5.7.44 servers); ROUND and TRUNCATE keep the class of their argument with
- * the decimals a literal second argument asks for, a double keeping no fixed decimals; PI is a double of six decimals; the other
+ * CEILING and FLOOR is as long as the argument, verified on live 5.6.51 and 5.7.44 servers); ROUND and TRUNCATE make an integer a
+ * BIGINT and keep a decimal with at most the decimals a constant second argument asks for, and MySQL 5.6 and 5.7 keep the class of
+ * their argument with the decimals a literal second argument asks for, a double keeping no fixed decimals; PI is a double of six decimals; the other
  * functions return doubles.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/mathematical-functions.html.
  *
@@ -46,7 +47,7 @@ final class MathResults
             'CEILING' => fn (Invocation $call): Domain => $this->integral($call->domain(0), $this->legacy($call)),
             'CEIL' => fn (Invocation $call): Domain => $this->integral($call->domain(0), $this->legacy($call)),
             'FLOOR' => fn (Invocation $call): Domain => $this->integral($call->domain(0), $this->legacy($call)),
-            'ROUND' => $this->rounded(...),
+            'ROUND' => fn (Invocation $call): Domain => $this->legacy($call) ? $this->rounded($call) : $this->nearest($call),
             'TRUNCATE' => fn (Invocation $call): Domain => $this->legacy($call) ? $this->legacyTruncated($call) : $this->truncated($call),
             'PI' => static fn (Invocation $call): Domain => Domain::double(8, 6),
             'MOD' => $this->modulo(...),
@@ -131,6 +132,33 @@ final class MathResults
         }
 
         return Domain::decimal(min(65, $precision - $scale + $newScale + 1), $newScale);
+    }
+
+    /**
+     * Resolves ROUND from MySQL 8.0 on: an integer makes a BIGINT, a double, a string or a temporal value a double, and a decimal keeps its type unless a constant second argument asks for fewer decimals than it has, which round into one more integral digit.
+     *
+     * A second argument that is not constant leaves a decimal its type, and one of no more
+     * decimals than its own too (verified on live 8.0.44, 8.4.7 and 9.1.0 servers).
+     */
+    public function nearest(Invocation $call): Domain
+    {
+        $numbers = new Numbers();
+        $domain = $call->domain(0);
+        $kind = $numbers->operand($domain);
+        if ($kind === Kind::Double || $domain->kind->temporal()) {
+            return Domain::double(23);
+        }
+        if ($kind === Kind::Integer) {
+            return Domain::integer(Field::LongLong, 21, $domain->unsigned || $domain->kind === Kind::Bit);
+        }
+        [$precision, $scale] = $numbers->digits($domain);
+        $places = count($call->domains) === 1 ? 0 : $this->places($call);
+        if ($places === null || $places >= $scale) {
+            return Domain::decimal($precision, $scale);
+        }
+        $kept = max(0, $places);
+
+        return Domain::decimal(min(65, $precision - $scale + $kept + 1), $kept);
     }
 
     /**

@@ -126,4 +126,20 @@ final class AccountsTest extends TestCase
 
         self::assertNotNull($accounts->find(new Identity('root', '%')));
     }
+
+    public function testInstalledHoldsTheRootAccountsOnlyInMySql56(): void
+    {
+        $accounts = Accounts::installed(\SqlSemantics\Contract\GrammarRelease::MySql5651);
+
+        self::assertSame(["root\0localhost", "root\0%"], array_keys($accounts->accounts));
+        self::assertSame('mysql_native_password', $accounts->accounts["root\0%"]->plugin);
+    }
+
+    public function testLegacySystemAddsTheLockedAccountsOfMySql57(): void
+    {
+        $accounts = (new Accounts())->legacySystem();
+
+        self::assertSame(["mysql.session\0localhost", "mysql.sys\0localhost"], array_keys($accounts->accounts));
+        self::assertSame(['*THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE', true], [$accounts->accounts["mysql.sys\0localhost"]->hash, $accounts->accounts["mysql.sys\0localhost"]->locked]);
+    }
 }

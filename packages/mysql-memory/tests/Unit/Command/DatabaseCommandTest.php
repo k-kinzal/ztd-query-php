@@ -151,4 +151,16 @@ final class DatabaseCommandTest extends TestCase
 
         self::assertSame('latin1_swedish_ci', $session->instance->dictionary->schema('d')?->collation);
     }
+
+    public function testExecuteRefusesAnEncryptionOtherThanYOrNBeforeAnExistingDatabase(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1525);
+        $this->expectExceptionMessage("Incorrect argument (should be Y or N) value: 'x'");
+
+        $session->query("CREATE DATABASE IF NOT EXISTS d ENCRYPTION 'x'");
+    }
 }

@@ -176,4 +176,12 @@ final class VariablesTest extends TestCase
 
         self::assertSame(1700000000.5, $session->variables->instant());
     }
+
+    public function testCountReadsAnUnsignedValueBeyondTheSignedRangeAsTheLargestInteger(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET group_concat_max_len = 18446744073709551615');
+
+        self::assertSame([PHP_INT_MAX, 7], [$session->variables->count('group_concat_max_len', 1024), $session->variables->count('nosuch', 7)]);
+    }
 }

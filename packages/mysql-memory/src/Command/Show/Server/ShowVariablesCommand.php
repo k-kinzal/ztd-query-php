@@ -102,7 +102,7 @@ final class ShowVariablesCommand implements Command
                 !$global && $name === 'pseudo_thread_id' => $variables->connection,
                 default => $variables->system($definition, $global ? Scope::Global : Scope::Session),
             };
-            $rows[] = [$definition->name, (string) $value];
+            $rows[] = [$definition->name, is_int($value) && $definition->shape === \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape::Unsigned ? \MySqlMemory\Value\Integer::text($value, true) : (string) $value];
         }
 
         return $rows;

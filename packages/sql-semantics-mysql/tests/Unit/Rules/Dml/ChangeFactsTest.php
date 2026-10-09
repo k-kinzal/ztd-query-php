@@ -130,4 +130,47 @@ final class ChangeFactsTest extends TestCase
 
         self::assertSame([], $semantics->analyze('DELETE FROM v WHERE e = 1 ORDER BY e', $tables)->facts->diagnostics);
     }
+
+    public function testMergedNamesTheFirstTableOfADerivedTableMySql57Merges(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $tables = [...$semantics->analyze('CREATE TABLE t1 (a INT)')->declarations(), ...$semantics->analyze('CREATE TABLE t2 (a INT)')->declarations()];
+        $facts = static fn (string $sql): array => $semantics->analyze($sql, $tables)->facts->diagnostics;
+
+        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('x'))], $facts('UPDATE t1, (SELECT * FROM (SELECT * FROM t2 AS x) e) d SET d.a = 1'));
+        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableColumn, new Name('a'))], $facts('UPDATE t1, (SELECT a + 1 AS a FROM t2) d SET d.a = 1'));
+        self::assertEquals([new WriteMisuse(WriteRule::NonUpdatableTarget, new Name('d'))], $facts('UPDATE t1, (SELECT a FROM t2 GROUP BY a) d SET d.a = 1'));
+    }
+
+    public function testComputedTellsAnItemThatIsNotAColumn(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT a + 1 AS a, b, (c) AS d FROM t')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $statement);
+
+        self::assertSame([true, false, false, false], [(new ChangeFacts())->computed($statement, 'A'), (new ChangeFacts())->computed($statement, 'b'), (new ChangeFacts())->computed($statement, 'd'), (new ChangeFacts())->computed($statement, 'z')]);
+    }
+
+    public function testLeadingFindsTheFirstTableThroughJoinsAndMergedDerivedTables(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $joined = $semantics->analyze('SELECT * FROM (t1 AS x JOIN t2) JOIN t3')->statement;
+        $derived = $semantics->analyze('SELECT * FROM (SELECT * FROM t2 AS y) AS e, t1')->statement;
+        $grouped = $semantics->analyze('SELECT * FROM (SELECT a FROM t2 GROUP BY a) AS e')->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $joined);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $derived);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $grouped);
+
+        self::assertSame('x', (new ChangeFacts())->leading($joined->from)?->alias()?->value);
+        self::assertSame('y', (new ChangeFacts())->leading($derived->from)?->alias()?->value);
+        self::assertNull((new ChangeFacts())->leading($grouped->from));
+        self::assertNull((new ChangeFacts())->leading(null));
+    }
+
+    public function testBlockAnswersTheQueryBlockThroughParentheses(): void
+    {
+        $statement = (new Semantics(Dialect::MySql))->analyze('SELECT 1')->statement;
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $statement);
+        self::assertSame($statement, (new ChangeFacts())->block(new \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery($statement)));
+    }
 }

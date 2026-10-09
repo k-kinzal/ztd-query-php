@@ -49,7 +49,8 @@ use SqlSemantics\Statement\Operation;
  * for a channel fails, the replica not being initialized (ER_REPLICA_CONFIGURATION). RESET
  * BINARY LOGS AND GTIDS deletes every binary log file and starts again from the number TO names,
  * 1 by default. Group replication is not configured, and its statements refuse an open
- * transaction (verified on a live 8.4 server).
+ * transaction (verified on a live 8.4 server). MySQL 5.6 refuses RESET MASTER when log_bin is
+ * off (ER_FLUSH_MASTER_BINLOG_CLOSED; verified on a live 5.6.51 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-replica.html,
  * https://dev.mysql.com/doc/refman/8.4/en/stop-replica.html,
  * https://dev.mysql.com/doc/refman/8.4/en/change-replication-filter.html,
@@ -106,6 +107,9 @@ final class ReplicaCommand implements Command
             }
         } elseif ($statement instanceof Reset) {
             foreach ($statement->targets as $target) {
+                if ($target instanceof ResetBinaryLogs && $session->settings()->release() === GrammarRelease::MySql5651 && !\MySqlMemory\Registry\BinaryLog::enabled($session)) {
+                    throw AdministrationError::BinlogClosed->error('RESET MASTER');
+                }
                 $this->reset($target, $registry);
             }
         } elseif ($statement instanceof ChangeReplicationSource) {

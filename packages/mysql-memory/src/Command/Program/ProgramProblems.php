@@ -153,6 +153,7 @@ final class ProgramProblems
             || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\WrongRelationKind;
         $others = array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => !$named($diagnostic) && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\ViewColumnCount
             && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\DuplicateColumn && !$diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\IncorrectColumnName));
+        $this->clause($statement, $session);
         $this->variables($statement);
         if ($others !== [] && count($others) !== count($operation->facts->diagnostics) && array_filter($operation->facts->diagnostics, $named) !== []) {
             $query = ProgramSource::of($session)->text('query_expression_with_opt_locking_clauses');
@@ -160,6 +161,30 @@ final class ProgramProblems
 
             throw (new Errors())->error($others[0], $session, 'field list', $statement);
         }
+    }
+
+    /**
+     * Refuses INTO in the query of a view of MySQL 5.6 or 5.7 (ER_VIEW_SELECT_CLAUSE), which they find where they parse INTO, keeping the warnings and the refusals of modifiers written before it, and after a variable written before it (ER_VIEW_SELECT_VARIABLE; verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @throws SqlError When the query of a view writes INTO
+     */
+    public function clause(CreateView|AlterView $statement, Session $session): void
+    {
+        if (!$session->settings()->legacy() || array_filter((new Walker())->find($statement->definition->query, \SqlSemantics\Platform\MySql\Statement\Query\Select::class), static fn (\SqlSemantics\Platform\MySql\Statement\Query\Select $select): bool => $select->into !== null) === []) {
+            return;
+        }
+        $source = ProgramSource::of($session);
+        $clauses = new \MySqlMemory\Session\Parse\Clauses();
+        $tokens = $source->tree->tokens();
+        $into = $clauses->viewed($tokens);
+        if ($into === null) {
+            return;
+        }
+        if ($clauses->marked($tokens, $into)) {
+            throw SchemaError::ViewSelectVariable->error();
+        }
+
+        throw (new \MySqlMemory\Session\CacheOptions())->literal(SchemaError::ViewSelectClause->error('INTO'), $into, $source->text, $session);
     }
 
     /**

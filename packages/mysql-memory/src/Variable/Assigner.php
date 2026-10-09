@@ -29,7 +29,8 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
  * session_track_system_variables, innodb_tmpdir and innodb_ft_user_stopword_table only, and
  * refused by any other variable; DEFAULT restores the global value, or the compiled default for
  * a global assignment. block_encryption_mode takes the name of an AES mode, in any case, or its
- * number, and holds the name in lower case.
+ * number, and holds the name in lower case. A variable MySQL 5.6 or 5.7 deprecates warns as its
+ * assignment is checked (see DeprecatedVariables).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-variable.html.
  *
  * @visibility MySqlMemory
@@ -47,9 +48,10 @@ final class Assigner
     /**
      * Assigns a value, or DEFAULT when the value is null and the domain is null.
      *
+     * @param string|null $cache The key cache whose parameter is assigned, or null for the variable
      * @throws \MySqlMemory\Error\SqlError When the variable or the value is refused
      */
-    public function assign(string $name, Scope $scope, int|float|string|null $value, ?Domain $domain): void
+    public function assign(string $name, Scope $scope, int|float|string|null $value, ?Domain $domain, ?string $cache = null): void
     {
         $definition = $this->variables->catalog->find($name);
         if ($definition === null) {
@@ -68,6 +70,11 @@ final class Assigner
             throw AdministrationError::VariableIsReadonly->error('SESSION', $definition->name, 'GLOBAL');
         }
         $checked = $domain === null ? ($scope === Scope::Global ? $definition->default : $this->variables->globals->value($definition)) : $this->check($definition, $value, $domain);
+        if ($cache !== null) {
+            $this->cache($cache, $definition, $checked);
+
+            return;
+        }
         if ($definition->name === 'timestamp' && ($domain === null || $checked === null)) {
             unset($this->variables->session['timestamp']);
 
@@ -79,6 +86,31 @@ final class Assigner
             } else {
                 $this->variables->set($alias, $checked);
             }
+        }
+    }
+
+    /**
+     * Sets a parameter of a key cache, once its value is checked; MySQL 8.0 and later then warn about the syntax as deprecated (ER_WARN_DEPRECATED_SYNTAX_NO_REPLACEMENT; verified on live 5.6.51, 5.7.44 and 8.4.7 servers).
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/structured-system-variables.html.
+     */
+    public function cache(string $cache, Definition $definition, string|int|null $value): void
+    {
+        $this->variables->globals->cache($cache, $definition, $value);
+        if ($this->context->modes->release !== \SqlSemantics\Contract\GrammarRelease::MySql5651 && $this->context->modes->release !== \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            $this->context->diagnostics->warning(1287, $cache . '.' . $definition->name . ' syntax is deprecated and will be removed in a future release');
+        }
+    }
+
+    /**
+     * Records the warning MySQL 5.6 and 5.7 raise as they check the assignment of a variable they deprecate (see DeprecatedVariables), before the value is checked (verified on live 5.6.51 and 5.7.44 servers).
+     */
+    public function retired(string $name): void
+    {
+        $definition = $this->variables->catalog->find($name);
+        $deprecated = $definition === null ? null : (new \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\DeprecatedVariables())->warning($definition->name, $this->context->modes->release);
+        if ($deprecated !== null) {
+            $this->context->diagnostics->warning(1287, $deprecated);
         }
     }
 
@@ -117,6 +149,9 @@ final class Assigner
         }
         if ($definition->name === 'transaction_isolation' || $definition->name === 'tx_isolation') {
             return $this->isolation($definition, $value, $domain, $text);
+        }
+        if ($definition->name === 'sql_mode' && $value !== null && in_array($domain->kind, [Kind::Integer, Kind::Decimal, Kind::Double], true) && in_array($this->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            return $this->modes($definition, $value, $domain, $text);
         }
 
         return match ($definition->shape) {
@@ -171,7 +206,7 @@ final class Assigner
     }
 
     /**
-     * Checks an integer value, clipping it to the bounds of the variable.
+     * Checks an integer value, clipping it to the bounds of the variable; the value and the bounds of an unsigned variable compare as unsigned 64-bit integers, and an unsigned variable without known bounds (the catalogs of MySQL 5.6 and 5.7 have none) takes any unsigned 64-bit integer.
      *
      * @throws \MySqlMemory\Error\SqlError When the value is NULL or not an integer
      */
@@ -184,14 +219,66 @@ final class Assigner
             throw AdministrationError::WrongTypeForVariable->error($definition->name);
         }
         $number = (int) $value;
-        $minimum = $definition->minimum ?? PHP_INT_MIN;
-        $maximum = $definition->maximum ?? PHP_INT_MAX;
-        if ($number < $minimum || $number > $maximum || ($domain->unsigned && $number < 0)) {
+        $unsigned = $definition->shape === ValueShape::Unsigned;
+        $minimum = $definition->minimum ?? ($unsigned ? 0 : PHP_INT_MIN);
+        $maximum = $definition->maximum ?? ($unsigned ? -1 : PHP_INT_MAX);
+        if ($unsigned) {
+            $below = (!$domain->unsigned && $number < 0) || \MySqlMemory\Value\Integer::compare($number, true, $minimum, true) < 0;
+            $above = !$below && \MySqlMemory\Value\Integer::compare($number, true, $maximum, true) > 0;
+        } else {
+            $below = $number < $minimum && !($domain->unsigned && $number < 0);
+            $above = $number > $maximum || ($domain->unsigned && $number < 0);
+        }
+        if ($below || $above) {
             $this->context->warning(DataError::TruncatedWrongValue, $definition->name, $text);
-            $number = $number < $minimum && !($domain->unsigned && $number < 0) ? $minimum : $maximum;
+            $number = $below ? $minimum : $maximum;
         }
 
         return $number;
+    }
+
+    /**
+     * Checks a number assigned to sql_mode in MySQL 5.6 and 5.7: the modes whose bits it sets, each mode the bit of its place in the list of the release; a number that is not an integer is ER_WRONG_TYPE_FOR_VAR, a negative one or one beyond 32 bits ER_WRONG_VALUE_FOR_VAR (verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @throws \MySqlMemory\Error\SqlError When the number does not stand for modes
+     */
+    public function modes(Definition $definition, int|float|string $value, Domain $domain, string $text): string
+    {
+        if ($domain->kind !== Kind::Integer) {
+            throw AdministrationError::WrongTypeForVariable->error($definition->name);
+        }
+        $number = (int) $value;
+        if ($number < 0 || $number > 4294967295 || $text !== (string) $number) {
+            throw AdministrationError::WrongValueForVariable->error($definition->name, $text);
+        }
+        $names = [];
+        foreach (SqlModes::names($this->context->modes->release) as $bit => $name) {
+            if ((($number >> $bit) & 1) === 1 && !str_starts_with($name, 'NOT_USED')) {
+                $names[] = $name;
+            }
+        }
+        $modes = new SqlModes($names, $this->context->modes->release);
+        $this->deprecated($modes);
+
+        return $modes->toString();
+    }
+
+    /**
+     * Records the warnings MySQL 5.7 raises for a new sql_mode: that NO_ZERO_DATE, NO_ZERO_IN_DATE and ERROR_FOR_DIVISION_BY_ZERO belong with a strict mode, unless the modes hold all of them with a strict mode or none of them, then that changing NO_AUTO_CREATE_USER from the mode of the session is deprecated (verified on a live 5.7.44 server).
+     */
+    public function deprecated(SqlModes $modes): void
+    {
+        if ($modes->release !== \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            return;
+        }
+        $held = count(array_filter(['NO_ZERO_DATE', 'NO_ZERO_IN_DATE', 'ERROR_FOR_DIVISION_BY_ZERO'], $modes->has(...)));
+        $strict = $modes->has('STRICT_TRANS_TABLES') || $modes->has('STRICT_ALL_TABLES');
+        if (!($strict && $held === 3) && !(!$strict && $held === 0)) {
+            $this->context->diagnostics->warning(3135, "'NO_ZERO_DATE', 'NO_ZERO_IN_DATE' and 'ERROR_FOR_DIVISION_BY_ZERO' sql modes should be used with strict mode. They will be merged with strict mode in a future release.");
+        }
+        if ($modes->has('NO_AUTO_CREATE_USER') !== $this->context->modes->has('NO_AUTO_CREATE_USER')) {
+            $this->context->diagnostics->warning(3090, "Changing sql mode 'NO_AUTO_CREATE_USER' is deprecated. It will be removed in a future release.");
+        }
     }
 
     /**
@@ -213,6 +300,7 @@ final class Assigner
             if ($modes === null) {
                 throw AdministrationError::WrongValueForVariable->error($definition->name, $text);
             }
+            $this->deprecated($modes);
 
             return $modes->toString();
         }

@@ -51,7 +51,7 @@ final class UserVariable implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $domain = (new Variables(Settings::of($derivation->context)))->read($this->name->value);
+        $domain = (new Variables(Settings::of($derivation->context), $derivation->context->profile->grammar))->read($this->name->value);
 
         return $domain === null ? new ScalarFact(new Dependent([new SessionState('user variable @' . $this->name->value)]), Nullability::Dependent) : new ScalarFact(new Known($domain), Nullability::Nullable);
     }

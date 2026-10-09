@@ -89,4 +89,15 @@ final class ShowGrantsCommandTest extends TestCase
 
         self::assertSame(['SHUTDOWN' => true, 'SUPER' => true], (new ShowGrantsCommand())->through([new Identity('mysql.session', 'localhost')], $accounts)->global->names);
     }
+
+    public function testExecuteWritesTheGrantsOfMySql57InAColumnOf1024Characters(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $grants = $session->query('SHOW GRANTS FOR root@localhost')[0];
+
+        self::assertInstanceOf(ResultSet::class, $grants);
+        self::assertSame(1024, $grants->columns[0]->length);
+        self::assertSame([["GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION"], ["GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION"]], $grants->rows);
+    }
 }

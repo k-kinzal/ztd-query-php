@@ -65,4 +65,19 @@ final class DeprecationTest extends TestCase
         self::assertSame(1287, (new Deprecation(Deprecated::Utf8mb3))->code());
     }
 
+    public function testCharsetWarnsOfUcs2FromMySql80(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertSame([Deprecated::Ucs2->value], array_map(static fn ($warning): string => $warning->message(), $semantics->analyze("SELECT _ucs2'a'", [])->facts->warnings));
+    }
+
+    public function testVariableWarnsOfEachReadOfADeprecatedVariableIn57(): void
+    {
+        $warnings = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT @@tx_isolation, @@GLOBAL.tx_isolation, @@transaction_isolation')->facts->warnings;
+
+        self::assertSame(["'@@tx_isolation' is deprecated and will be removed in a future release. Please use '@@transaction_isolation' instead", "'@@tx_isolation' is deprecated and will be removed in a future release. Please use '@@transaction_isolation' instead"], array_map(static fn ($warning): string => $warning->message(), $warnings));
+        self::assertInstanceOf(Deprecation::class, $warnings[0]);
+        self::assertSame(1287, $warnings[0]->code());
+    }
 }

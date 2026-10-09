@@ -85,10 +85,20 @@ final class Literals
 
     /**
      * Compiles a string literal.
+     *
+     * The bytes of a literal introduced with a character set of wide units, UCS-2, UTF-16 or
+     * UTF-32, are padded with leading zero bytes to whole units (verified on a live 8.4 server).
      */
     public function string(StringLiteral $literal): Constant
     {
-        return new Constant($this->typed($literal, $this->rules()->string($literal)), $literal->value());
+        $domain = $this->typed($literal, $this->rules()->string($literal));
+        $value = $literal->value();
+        $unit = $domain->collation->charset->minLength();
+        if ($literal->introducer !== null && strlen($value) % $unit !== 0) {
+            $value = str_repeat("\0", $unit - strlen($value) % $unit) . $value;
+        }
+
+        return new Constant($domain, $value);
     }
 
     /**
@@ -115,6 +125,9 @@ final class Literals
     /**
      * Compiles a DATE, TIME or TIMESTAMP literal.
      *
+     * A text that is not a value of the form is quoted in the error up to its first 128 bytes
+     * (verified on a live 8.4 server).
+     *
      * @throws \MySqlMemory\Error\SqlError When the text is not a valid value of the form
      */
     public function temporal(TemporalLiteral $literal): Constant
@@ -128,7 +141,7 @@ final class Literals
         $modes = $this->compiler->settings->modes;
         $value = Temporal::literal($form, $literal->text, $domain->decimals, $modes->has('NO_ZERO_DATE'), $modes->has('NO_ZERO_IN_DATE'));
         if ($value === null) {
-            throw DataError::WrongValue->error($form, $literal->text);
+            throw DataError::WrongValue->error($form, substr($literal->text, 0, 128));
         }
 
         return new Constant($domain, $value);

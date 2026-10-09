@@ -33,4 +33,15 @@ final class LegacyReplicationTest extends TestCase
 
         self::assertSame([['Warning', 1681, "'RESET QUERY CACHE' is deprecated and will be removed in a future release."]], $session->diagnostics->conditions);
     }
+
+    public function testCheckFailsAsResetMasterAfterResetSlaveWithoutABinaryLogInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $answers = $session->run('RESET SLAVE, MASTER');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $warnings);
+        self::assertSame([1186, ['1186', '1794']], [$answers[0]->getCode(), array_column($warnings->rows, 1)]);
+    }
 }

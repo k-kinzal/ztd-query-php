@@ -11,6 +11,8 @@ use MySqlMemory\Error\ErrorNumbers;
  * The diagnostics area of a session: the warnings and notes of the last statement that raised any.
  *
  * SHOW WARNINGS reads it; a statement that uses no table and raises nothing leaves it as it was.
+ * It keeps at most max_error_count warnings and notes, and counts those beyond (verified on a
+ * live 8.4 server).
  * In MySQL 5.6 a query, SET or DO that uses no table keeps it until the statement raises a
  * condition (verified on a live 5.6.51 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html,
@@ -36,13 +38,30 @@ final class Diagnostics
     public bool $stale = false;
 
     /**
+     * The most warnings and notes the area keeps: max_error_count.
+     */
+    public int $limit = 1024;
+
+    /**
+     * The warnings and notes raised beyond the limit, which the area counts without keeping.
+     */
+    public int $dropped = 0;
+
+    /**
+     * @var array{int, int} The conditions and the errors the statement before the current one raised, which @@warning_count and @@error_count read
+     */
+    public array $previous = [0, 0];
+
+    /**
      * Records a warning.
      */
     public function warning(ErrorCode|int $code, string $message): void
     {
         $this->fresh();
-        if (count($this->conditions) < 64) {
+        if (count($this->conditions) < $this->limit) {
             $this->conditions[] = ['Warning', $code instanceof ErrorCode ? $code->number() : $code, $message];
+        } else {
+            $this->dropped++;
         }
     }
 
@@ -52,8 +71,10 @@ final class Diagnostics
     public function note(ErrorCode $code, string $message): void
     {
         $this->fresh();
-        if (count($this->conditions) < 64) {
+        if (count($this->conditions) < $this->limit) {
             $this->conditions[] = ['Note', $code->number(), $message];
+        } else {
+            $this->dropped++;
         }
     }
 
@@ -79,9 +100,11 @@ final class Diagnostics
     public function signal(int $code, string $message, array $signalled): void
     {
         $this->fresh();
-        if (count($this->conditions) < 64) {
+        if (count($this->conditions) < $this->limit) {
             $this->signalled[count($this->conditions)] = $signalled;
             $this->conditions[] = ['Warning', $code, $message];
+        } else {
+            $this->dropped++;
         }
     }
 
@@ -114,6 +137,7 @@ final class Diagnostics
         $this->conditions = [];
         $this->signalled = [];
         $this->stale = false;
+        $this->dropped = 0;
     }
 
     /**
@@ -140,5 +164,21 @@ final class Diagnostics
     public function count(): int
     {
         return count($this->conditions);
+    }
+
+    /**
+     * Counts the conditions raised, those beyond the limit included.
+     */
+    public function raised(): int
+    {
+        return count($this->conditions) + $this->dropped;
+    }
+
+    /**
+     * Counts the errors the area keeps.
+     */
+    public function errors(): int
+    {
+        return count(array_filter($this->conditions, static fn (array $condition): bool => $condition[0] === 'Error'));
     }
 }

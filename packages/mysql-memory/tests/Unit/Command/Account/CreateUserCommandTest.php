@@ -98,6 +98,16 @@ final class CreateUserCommandTest extends TestCase
         self::assertSame([8, ['Warning', '1366', "Incorrect string value: '\\xC3\\xA9x' for column 'Host' at row 1"]], [count($warnings->rows), $warnings->rows[0]]);
     }
 
+    public function testAbsentRefusesAnAccountNamedTwice(): void
+    {
+        $session = (new Instance())->connect();
+
+        $error = $session->run('CREATE USER a, b, a')[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame([1396, "Operation CREATE USER failed for 'a'@'%'", null], [$error->getCode(), $error->getMessage(), $session->instance->accounts->find(Identity::of('b', null))]);
+    }
+
     public function testDefaultsAnswersTheRoles(): void
     {
         $session = (new Instance())->connect();
@@ -152,5 +162,40 @@ final class CreateUserCommandTest extends TestCase
         $warnings = $session->query('SHOW WARNINGS')[0];
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['Note', '3163', "Authorization ID 'r'@'%' already exists."]], $warnings->rows);
+    }
+
+    public function testLegacyFollowsARefusedHashWithTheFailureOfMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+
+        $session->run("CREATE USER u IDENTIFIED BY PASSWORD 'abc'");
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([
+            ['Error', '1827', "The password hash doesn't have the expected format. Check if the correct password algorithm is being used with the PASSWORD() function."],
+            ['Error', '1396', "Operation CREATE USER failed for 'u'@'%'"],
+        ], $warnings->rows);
+    }
+
+    public function testDeprecatedWarnsOfIdentifiedByPasswordInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $session->query("CREATE USER u IDENTIFIED BY PASSWORD '*7B9EBEED26AA52ED10C0F549FA863F13C39E0209'");
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1287', "'IDENTIFIED BY PASSWORD' is deprecated and will be removed in a future release. Please use IDENTIFIED WITH <plugin> AS <hash> instead"]], $warnings->rows);
+    }
+
+    public function testLegacyCreatesTheOtherAccountsWhenOneExistsInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE USER b');
+
+        $session->run('CREATE USER a, b, c');
+
+        self::assertSame([true, true], [$session->instance->accounts->find(new Identity('a', '%')) !== null, $session->instance->accounts->find(new Identity('c', '%')) !== null]);
     }
 }

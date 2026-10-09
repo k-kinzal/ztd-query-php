@@ -121,7 +121,7 @@ final class Casts
     }
 
     /**
-     * Resolves CHAR or BINARY in a collation: a string as long as written, or as the operand written as text; a JSON value without a length is a LONGTEXT or LONGBLOB from MySQL 8.0 (verified on live 8.0.44 and 8.4 servers).
+     * Resolves CHAR or BINARY in a collation: a string as long as written, or as the operand written as text, BINARY counting the bytes of a string; a JSON value without a length is a LONGTEXT or LONGBLOB from MySQL 8.0. A string longer than 65535 bytes is a MEDIUMBLOB or LONGBLOB (verified on live 5.7.44, 8.0.44 and 8.4 servers).
      */
     public function string(Domain $operand, CastTarget $target, Collation $collation): Domain
     {
@@ -129,7 +129,15 @@ final class Casts
             return Domain::string(4294967295, $collation, Field::LongBlob);
         }
 
-        return Domain::string($target->length === null ? $this->length($operand) : (int) $target->length, $collation);
+        $length = $target->length === null ? $this->length($operand) : (int) $target->length;
+        if ($operand->kind === Kind::Json) {
+            return Domain::string($length, $collation);
+        }
+        if ($collation->bytes() && $target->length === null && $operand->kind === Kind::String) {
+            $length *= $operand->collation->charset->maxLength;
+        }
+
+        return (new Builtin\FormatResults())->sized($length, $collation, Coercibility::Implicit);
     }
 
     /**

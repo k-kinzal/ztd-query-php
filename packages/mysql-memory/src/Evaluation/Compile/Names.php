@@ -28,6 +28,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
@@ -238,7 +239,7 @@ final class Names
     }
 
     /**
-     * Answers the domain a user variable holds an assigned value in.
+     * Answers the domain a user variable holds an assigned value in; a temporal value is held as a string in latin1, as the server writes numbers and temporal values.
      */
     public function stored(Domain $domain): Domain
     {
@@ -247,7 +248,8 @@ final class Names
             Kind::Decimal => Domain::decimal(65, $domain->decimals),
             Kind::Double => Domain::double(),
             Kind::Null => Domain::string(0, Collation::binary(), Field::MediumBlob),
-            Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json => Domain::string(16777216, $domain->collation, Field::MediumBlob)->withCollation($domain->collation, Coercibility::Implicit),
+            Kind::String, Kind::Json => Domain::string(16777216, $domain->collation, Field::MediumBlob)->withCollation($domain->collation, Coercibility::Implicit),
+            Kind::Date, Kind::Time, Kind::DateTime => Domain::string(16777216, Collation::known('latin1_swedish_ci'), Field::MediumBlob)->withCollation(Collation::known('latin1_swedish_ci'), Coercibility::Implicit),
         };
     }
 
@@ -276,12 +278,33 @@ final class Names
             throw AdministrationError::IncorrectGlobalLocalVariable->error($variable->name->value, 'GLOBAL');
         }
         $domain = Domain::of($definition->domain, true);
+        if ($variable->instance !== null) {
+            return $this->keyCache($variable, $definition, $domain);
+        }
+        if ($name === 'warning_count' || $name === 'error_count') {
+            return new Constant($domain, $this->compiler->connection->context->diagnostics->previous[$name === 'warning_count' ? 0 : 1]);
+        }
         if ($domain->kind === Kind::String && $this->compiler->settings->legacy()) {
             $value = $this->compiler->connection->variables->system($definition, $scope === VariableScope::Global ? VariableScope::Global : VariableScope::Session);
             $domain = new Domain(Kind::String, $domain->field, mb_strlen((string) $value, 'UTF-8'), $domain->decimals, false, $domain->collation, true, [], $domain->coercibility);
         }
 
         return new SystemVariableRead($definition, $scope === VariableScope::Global ? VariableScope::Global : VariableScope::Session, $domain->withNullable(true));
+    }
+
+    /**
+     * Compiles the read of a parameter of a key cache, which MySQL 8.0 and later warn about as deprecated syntax (ER_WARN_DEPRECATED_SYNTAX_NO_REPLACEMENT; verified on live 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers).
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/structured-system-variables.html.
+     */
+    public function keyCache(SystemVariable $variable, Definition $definition, Domain $domain): Evaluable
+    {
+        $cache = (string) $variable->instance?->value;
+        if (!$this->compiler->settings->legacy()) {
+            $this->compiler->connection->context->diagnostics->warning(1287, '@@global.' . $cache . '.' . $definition->name . ' syntax is deprecated and will be removed in a future release');
+        }
+
+        return new SystemVariableRead($definition, VariableScope::Global, $domain->withNullable(true), $cache);
     }
 
     /**

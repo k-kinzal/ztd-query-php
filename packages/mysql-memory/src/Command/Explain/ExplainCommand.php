@@ -68,6 +68,18 @@ final class ExplainCommand implements Command
     }
 
     /**
+     * Raises the error of an EXPLAIN format the server does not know, which it finds before any other problem of the statement it explains, even one it finds while it reads it (verified on a live 8.4 server).
+     *
+     * @throws \MySqlMemory\Error\SqlError When the format is unknown
+     */
+    public function format(Node $statement): void
+    {
+        if (($statement instanceof Explain || $statement instanceof ExplainConnection) && $statement->format !== null && !in_array(strtoupper($statement->format->value), self::FORMATS, true)) {
+            throw StatementError::UnknownExplainFormat->error($statement->format->value);
+        }
+    }
+
+    /**
      * Raises the error of the format and options of an EXPLAIN, before the server prepares the statement it explains.
      *
      * For an EXPLAIN FOR CONNECTION, ANALYZE is refused once the format and INTO are checked.
@@ -118,6 +130,7 @@ final class ExplainCommand implements Command
         $format = $statement->analyze ? 'TREE' : strtoupper($statement->format->value ?? (string) $session->variables->read('explain_format'));
         $database = $statement->database->value ?? $session->variables->database;
         $tables = $this->tables($statement->statement, $database);
+        (new \MySqlMemory\Session\Problem\Sampling())->optimized($statement->statement, $operation->facts, $session->settings(), $session->instance->dictionary);
         if ($statement->into !== null) {
             $session->variables->assign($statement->into->name->value, $this->document($tables), Domain::string(50331645, Collation::known('utf8mb3_general_ci'), Field::MediumBlob));
 

@@ -55,6 +55,8 @@ final class Patterns
             default => $this->escape($node->escape, $scope),
         };
         [$collation] = Collations::aggregate([$operand->domain(), $pattern->domain()], 'like', $this->compiler->settings->connectionCollation, true, $this->compiler->settings->release());
+        $operand = \MySqlMemory\Evaluation\Operator\Transcoded::of($operand, $collation, $this->compiler->constancy($node->operand) === Constancy::Resolved, $this->compiler->connection->context);
+        $pattern = \MySqlMemory\Evaluation\Operator\Transcoded::of($pattern, $collation, $this->compiler->constancy($node->pattern) === Constancy::Resolved, $this->compiler->connection->context);
 
         return new Pattern($operand, $pattern, $escape, $collation, $node->negated, $this->compiler->domain($node), $constancy === Constancy::Statement);
     }

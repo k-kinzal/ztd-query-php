@@ -42,4 +42,16 @@ final class SystemVariablesTest extends TestCase
         self::assertSame(Reach::Session, SystemVariables::of(GrammarRelease::MySql847)->find('TIMESTAMP')?->reach);
         self::assertSame(Writability::GlobalOnly, SystemVariables::of(GrammarRelease::MySql847)->find('max_allowed_packet')?->writability);
     }
+
+    public function testBitsReadsAnUnsignedValueBeyondTheSignedRangeAsTheNegativeIntegerOfItsBits(): void
+    {
+        self::assertSame([-1, -4096, PHP_INT_MIN, 5, 'abc'], [SystemVariables::bits('18446744073709551615'), SystemVariables::bits('18446744073709547520'), SystemVariables::bits('9223372036854775808'), SystemVariables::bits(5), SystemVariables::bits('abc')]);
+    }
+
+    public function testOfReadsTheLargestUnsignedValuesOfTheCatalog(): void
+    {
+        $limit = SystemVariables::of(GrammarRelease::MySql847)->find('sql_select_limit');
+
+        self::assertSame([-1, -1, 0], [$limit?->default, $limit?->maximum, $limit?->minimum]);
+    }
 }

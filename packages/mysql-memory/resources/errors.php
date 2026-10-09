@@ -3,7 +3,9 @@
 /**
  * The SQLSTATE and message format of each server error the emulator raises, keyed by error number.
  *
- * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html.
+ * 2006 is the client error CR_SERVER_GONE_ERROR, which a session ended by RELEASE reports.
+ * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html,
+ * https://dev.mysql.com/doc/mysql-errors/8.4/en/client-error-reference.html.
  */
 
 declare(strict_types=1);
@@ -81,6 +83,7 @@ return [
     1176 => ['42000', "Key '%s' doesn't exist in table '%s'"],
     1137 => ['HY000', "Can't reopen table: '%s'"],
     1178 => ['42000', "The storage engine for the table doesn't support %s"],
+    1186 => ['HY000', 'Binlog closed, cannot %s'],
     1191 => ['HY000', "Can't find FULLTEXT index matching the column list"],
     1192 => ['HY000', "Can't execute the given command because you have active locked tables or an active transaction"],
     1193 => ['HY000', "Unknown system variable '%s'"],
@@ -117,6 +120,7 @@ return [
     1269 => ['HY000', "Can't revoke all privileges for one or more of the requested users"],
     1270 => ['HY000', "Illegal mix of collations (%s,%s), (%s,%s), (%s,%s) for operation '%s'"],
     1271 => ['HY000', "Illegal mix of collations for operation '%s'"],
+    1272 => ['HY000', "Variable '%s' is not a variable component (can't be used as XXXX.variable_name)"],
     1273 => ['HY000', "Unknown collation: '%s'"],
     1277 => ['HY000', 'Incorrect parameter or combination of parameters for START REPLICA UNTIL'],
     1284 => ['HY000', "Unknown key cache '%s'"],
@@ -161,6 +165,7 @@ return [
     1339 => ['20000', 'Case not found for CASE statement'],
     1347 => ['HY000', "'%s.%s' is not %s"],
     1348 => ['HY000', "Column '%s' is not updatable"],
+    1350 => ['HY000', "View's SELECT contains a '%s' clause"],
     1351 => ['HY000', "View's SELECT contains a variable or parameter"],
     1352 => ['HY000', "View's SELECT refers to a temporary table '%s'"],
     1353 => ['HY000', 'In definition of view, derived table or common table expression, SELECT list and column names list have different column counts'],
@@ -176,8 +181,11 @@ return [
     1364 => ['HY000', "Field '%s' doesn't have a default value"],
     1365 => ['22012', 'Division by 0'],
     1366 => ['HY000', "Incorrect %s value: '%s' for column '%s' at row %d"],
+    1372 => ['HY000', 'Password hash should be a %d-digit hexadecimal number'],
     1373 => ['HY000', 'Target log not found in binlog index'],
+    1381 => ['HY000', 'You are not using binary logging'],
     1382 => ['HY000', "The '%s' syntax is reserved for purposes internal to the MySQL server"],
+    1391 => ['HY000', "Key part '%s' length cannot be 0"],
     1396 => ['HY000', 'Operation %s failed for %s'],
     1397 => ['XAE04', 'XAER_NOTA: Unknown XID'],
     1398 => ['XAE05', 'XAER_INVAL: Invalid arguments (or unsupported command)'],
@@ -215,6 +223,7 @@ return [
     1524 => ['HY000', "Plugin '%s' is not loaded"],
     1525 => ['HY000', "Incorrect %s value: '%s'"],
     1772 => ['HY000', "Malformed GTID set specification '%s'."],
+    2006 => ['HY000', 'MySQL server has gone away'],
     3062 => ['HY000', 'Cannot %s when GTID_MODE = OFF.'],
     3079 => ['HY000', 'Multiple channels exist on the replica. Please provide channel name as an argument.'],
     3167 => ['HY000', "The '%s' feature is disabled; see the documentation for '%s'"],
@@ -513,6 +522,8 @@ return [
     6009 => ['0A000', 'EXPLAIN FOR CONNECTION does not support the INTO clause.'],
     6033 => ['HY000', "'%s' is not supported"],
     6037 => ['HY000', "'%s' can be used only if the hypergraph optimizer is enabled."],
+    6107 => ['2202H', 'Tablesample percentage should range between 0 and 100.'],
+    6108 => ['HY000', 'Tablesample can be applied only on base tables.'],
     1196 => ['HY000', "Some non-transactional changed tables couldn't be rolled back"],
     1205 => ['HY000', 'Lock wait timeout exceeded; try restarting transaction'],
     1213 => ['40001', 'Deadlock found when trying to get lock; try restarting transaction'],

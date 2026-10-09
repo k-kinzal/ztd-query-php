@@ -44,4 +44,11 @@ final class VariablesTest extends TestCase
         self::assertSame(Field::LongBlob, $variables->text(Collation::known('utf8mb4_bin'))->field);
         self::assertSame(Field::MediumBlob, $variables->text(Collation::known('latin1_bin'))->field);
     }
+
+    public function testTextCountsTheBytesOfTheMostBytesInTheFewestFromMySql80(): void
+    {
+        $variables = new Variables(new Settings(Collation::known('utf8mb4_0900_ai_ci')));
+
+        self::assertSame([67108860, 16777215, 16777215], [$variables->text(Collation::known('utf8mb4_bin'))->length, $variables->text(Collation::known('ucs2_general_ci'))->length, (new Variables(new Settings(Collation::known('utf8mb4_0900_ai_ci')), \SqlSemantics\Contract\GrammarRelease::MySql5744))->text(Collation::known('utf8mb4_bin'))->length]);
+    }
 }

@@ -42,4 +42,16 @@ final class ShowCreateUserCommandTest extends TestCase
 
         $session->query('SHOW CREATE USER b');
     }
+
+    public function testExecuteWritesTheStatementOfMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("CREATE USER u IDENTIFIED BY 'p'");
+
+        $statement = $session->query('SHOW CREATE USER u')[0];
+
+        self::assertInstanceOf(ResultSet::class, $statement);
+        self::assertSame(256, $statement->columns[0]->length);
+        self::assertSame([["CREATE USER 'u'@'%' IDENTIFIED WITH 'mysql_native_password' AS '*7B9EBEED26AA52ED10C0F549FA863F13C39E0209' REQUIRE NONE PASSWORD EXPIRE DEFAULT ACCOUNT UNLOCK"]], $statement->rows);
+    }
 }

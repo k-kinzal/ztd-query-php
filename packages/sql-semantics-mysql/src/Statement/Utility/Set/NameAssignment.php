@@ -10,8 +10,6 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
-use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
-use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableScope;
 use SqlSemantics\Rendering\Output;
@@ -65,11 +63,8 @@ final class NameAssignment implements SetItem
     {
         if ($this->scope !== null && $this->qualifier === null && !$derivation->inProgram()) {
             (new VariableAccess())->assign($this->name->value, $this->scope, $derivation);
-        } elseif ($this->qualifier !== null && !$derivation->inProgram() && Settings::of($derivation->context)->row($this->qualifier->value) === null && !in_array(strtolower($this->name->value), SystemVariable::KEY_CACHE, true)) {
-            $name = $this->qualifier->value . '.' . $this->name->value;
-            if (SystemVariables::of($derivation->context->profile->grammar)->find($name) === null) {
-                $derivation->report(new UnknownSystemVariable($name));
-            }
+        } elseif ($this->qualifier !== null && !$derivation->inProgram() && Settings::of($derivation->context)->row($this->qualifier->value) === null) {
+            (new SystemVariable($this->name, null, $this->qualifier))->structured($derivation);
         }
         if ($this->value instanceof Scalar) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);

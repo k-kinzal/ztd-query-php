@@ -168,13 +168,22 @@ final class NumbersTest extends TestCase
         self::assertSame([['1.2', '1.9', '1', '-1.9', '1.2', '-2']], $result->rows);
     }
 
-    public function testRoundLimitsTheDecimalsToThirty(): void
+    public function testRoundLimitsTheDecimalsToThirtyIn57(): void
     {
-        $session = (new Instance())->connect();
+        $session = (new Instance('5.7.44'))->connect();
         $result = $session->query('SELECT ROUND(5.5, 50)')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['5.500000000000000000000000000000']], $result->rows);
+    }
+
+    public function testRoundKeepsTheDecimalsOfADecimalFromMySql80(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT ROUND(5.5, 50), ROUND(5.55, 1)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['5.5', '5.6']], $result->rows);
     }
 
     public function testRoundAnswersNullForANullArgument(): void

@@ -8,10 +8,11 @@ use MySqlMemory\Error\CatalogedError;
 use MySqlMemory\Error\ErrorCode;
 
 /**
- * A server error or warning about transactions: their characteristics, read-only transactions, rollbacks that cannot undo everything, transactions that combine storage engines, and row lock waits.
+ * A server error or warning about transactions: their characteristics, read-only transactions, rollbacks that cannot undo everything, transactions that combine storage engines, and row lock waits; and the client error of a session a COMMIT or ROLLBACK with RELEASE ended.
  *
- * The SQLSTATE and message format of each error are those of the server error reference, which resources/errors.php holds.
+ * The SQLSTATE and message format of each error are those of the server error reference, which resources/errors.php holds; ServerGone is CR_SERVER_GONE_ERROR of the client error reference.
  * Source: https://dev.mysql.com/doc/mysql-errors/8.4/en/server-error-reference.html,
+ * https://dev.mysql.com/doc/mysql-errors/8.4/en/client-error-reference.html,
  * https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html.
  *
  * @visibility public
@@ -27,6 +28,7 @@ enum TransactionError: int implements ErrorCode
     case LockDeadlock = 1213;
     case CharacteristicInTransaction = 1568;
     case ReadOnlyTransaction = 1792;
+    case ServerGone = 2006;
     case LockNowait = 3572;
     case CombinedEngines = 6414;
 }

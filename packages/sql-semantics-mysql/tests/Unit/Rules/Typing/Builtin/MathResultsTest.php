@@ -60,6 +60,15 @@ final class MathResultsTest extends TestCase
         self::assertEquals(Domain::double(23), (new MathResults())->rounded(new Invocation([Domain::double()], [new NumberLiteral('1e0')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
     }
 
+    public function testNearestMakesAnIntegerABigintAndKeepsTheDecimalsOfADecimal(): void
+    {
+        $number = new NumberLiteral('1.55');
+
+        self::assertEquals(Domain::integer(Field::LongLong, 21), (new MathResults())->nearest(new Invocation([Domain::integer(Field::Long, 11), Domain::integer()], [new NumberLiteral('15'), new NumberLiteral('1')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+        self::assertEquals(Domain::decimal(3, 1), (new MathResults())->nearest(new Invocation([Domain::decimal(3, 2), Domain::integer()], [$number, new NumberLiteral('1')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+        self::assertEquals(Domain::decimal(3, 2), (new MathResults())->nearest(new Invocation([Domain::decimal(3, 2), Domain::integer()], [$number, new NumberLiteral('5')], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+    }
+
     public function testRulesTypeLogAsADouble(): void
     {
         $rules = (new MathResults())->rules();

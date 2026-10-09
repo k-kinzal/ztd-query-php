@@ -155,7 +155,7 @@ final class ItemNamingTest extends TestCase
         self::assertEquals(new Name('é'), $naming->stored('é', 'national'));
         self::assertEquals(new Name(''), $naming->stored('é', 'binary'));
         self::assertEquals(new Name('aé'), $naming->stored('aé', 'binary'));
-        self::assertEquals(new NameConversion('utf16'), $naming->stored('ab', 'utf16'));
+        self::assertEquals(new Name('慢'), $naming->stored('ab', 'utf16'));
         self::assertEquals(new Name('Ã©'), $naming->stored('é', 'latin1'));
         self::assertEquals(new NameConversion('cp1251'), $naming->stored('é', 'cp1251'));
         self::assertEquals(new Name('é?'), $naming->stored('é😀', 'utf8mb4'));
@@ -205,5 +205,12 @@ final class ItemNamingTest extends TestCase
         $utf8 = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('utf8mb4'));
 
         self::assertEquals([new Name("\u{C3}\u{A9}"), new Name('x'), new Name('é')], [$latin1->identifier(new Name('é')), $latin1->identifier(new Name('x')), $utf8->identifier(new Name('é'))]);
+    }
+
+    public function testWideReadsWholeUnitsAndWritesAQuestionMarkForAUnitThatIsNoCharacter(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertSame(['慢', '', '?', '扡', '😀'], [$naming->wide('abc', 'utf16'), $naming->wide('a', 'utf16'), $naming->wide('abcde', 'utf32'), $naming->wide('ab', 'utf16le'), $naming->wide("\xD8\x3D\xDE\x00", 'utf16')]);
     }
 }

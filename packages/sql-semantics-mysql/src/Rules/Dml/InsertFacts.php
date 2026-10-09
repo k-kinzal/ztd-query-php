@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Dml;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
@@ -25,6 +26,8 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\Diagnostic;
+use SqlSemantics\Statement\Fact\QueryFact;
+use SqlSemantics\Statement\Fact\RelationFact;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Type\Dependent;
@@ -72,23 +75,17 @@ final class InsertFacts
      */
     public function rows(InsertRows $insert, Derivation $derivation, Environment $outer): void
     {
-        [$target, $written] = $this->open($insert->into, $derivation, $outer);
+        [$target, $fact] = $this->target($insert->into, $derivation, $outer);
+        $early = $this->early($insert, $derivation);
+        $written = $this->columns($insert->into, $target, $fact, $derivation, $outer);
         $environment = new Environment($derivation->context, $outer, [$target]);
         $scope = new WriteScope();
         $generated = new GeneratedWrites();
         $table = $generated->table($insert->into->table, $derivation);
         $width = null;
         foreach ($insert->rows as $index => $row) {
-            $count = count($row->values);
-            $expected = $written === null ? $width : count($written);
-            $mismatch = null;
-            $columns = $count === 0 && ($insert->into->columns === null || $insert->into->columns->columns === []) ? null : $expected;
-            $against = $columns !== null && $count !== $columns ? $columns : ($width !== null && $count !== $width ? $width : null);
-            if ($against !== null) {
-                $mismatch = new ValueCountMismatch($against, $count, $index + 1);
-                $derivation->report($mismatch);
-            }
-            $width ??= $count;
+            $mismatch = $this->mismatch($insert, $index, $written === null ? $width : count($written), $width, $early, $derivation);
+            $width ??= count($row->values);
             foreach ($row->values as $position => $value) {
                 $column = $this->column($written, $position, $target, $mismatch);
                 $scope->value($value, $column, $derivation, $environment);
@@ -96,6 +93,52 @@ final class InsertFacts
             }
         }
         $this->duplicates($insert->onDuplicate, $insert->alias, $insert->into, $target, $written, [], $derivation, $outer);
+    }
+
+    /**
+     * Reports and answers the mismatch of the first row of VALUES with the column list, which MySQL 5.6 and 5.7 find before they resolve the columns.
+     *
+     * Other releases, and a statement without a column list or whose first row matches it,
+     * have none.
+     */
+    public function early(InsertRows $insert, Derivation $derivation): ?ValueCountMismatch
+    {
+        $listed = count($insert->into->columns->columns ?? []);
+        if (!$this->late($derivation) || $listed === 0 || count($insert->rows[0]->values) === $listed) {
+            return null;
+        }
+        $early = new ValueCountMismatch($listed, count($insert->rows[0]->values), 1);
+        $derivation->report($early);
+
+        return $early;
+    }
+
+    /**
+     * Checks the count of values of a row of VALUES against the written columns and the first row, and reports a mismatch other than the early one.
+     *
+     * An empty row without a column list writes the defaults, so it is checked against the first
+     * row only. The first row reuses the early mismatch, which is already reported.
+     *
+     * @param int $index The position of the row, from zero
+     * @param int|null $expected The count of the written columns, or the width of the first row when they are not known
+     * @param int|null $width The count of values of the first row, or null while the first row is checked
+     * @param ValueCountMismatch|null $early The mismatch of the first row found before the columns
+     * @return ValueCountMismatch|null The mismatch of the row, or null when its count matches
+     */
+    public function mismatch(InsertRows $insert, int $index, ?int $expected, ?int $width, ?ValueCountMismatch $early, Derivation $derivation): ?ValueCountMismatch
+    {
+        $count = count($insert->rows[$index]->values);
+        $columns = $count === 0 && ($insert->into->columns === null || $insert->into->columns->columns === []) ? null : $expected;
+        $against = $columns !== null && $count !== $columns ? $columns : ($width !== null && $count !== $width ? $width : null);
+        if ($against === null) {
+            return null;
+        }
+        $mismatch = $index === 0 && $early !== null ? $early : new ValueCountMismatch($against, $count, $index + 1);
+        if ($mismatch !== $early) {
+            $derivation->report($mismatch);
+        }
+
+        return $mismatch;
     }
 
     /**
@@ -115,22 +158,52 @@ final class InsertFacts
      */
     public function query(InsertQuery $insert, Derivation $derivation, Environment $outer): void
     {
-        [$target, $written] = $this->open($insert->into, $derivation, $outer);
+        [$target, $fact] = $this->target($insert->into, $derivation, $outer);
         $values = $insert->values();
+        $late = $this->late($derivation) && $values === null;
+        $written = $late ? null : $this->columns($insert->into, $target, $fact, $derivation, $outer);
         if ($values !== null) {
             $derivation->writes($values, $written ?? [], $insert->into->columns === null || $insert->into->columns->columns === []);
         }
         $rows = $derivation->query($insert->source, $outer);
-        if ($written !== null && $rows->shape->complete() && count($rows->shape->slots) !== count($written) && !$this->defaulted($insert)) {
-            if ($values === null) {
-                $derivation->report(new ValueCountMismatch(count($written), count($rows->shape->slots), 1));
-            }
-        } elseif ($written !== null && !$this->defaulted($insert)) {
-            $generated = new GeneratedWrites();
-            $generated->query($written, $insert->source, $rows, $generated->table($insert->into->table, $derivation), $derivation);
+        $listed = count($insert->into->columns->columns ?? []);
+        if ($late && $listed !== 0 && $rows->shape->complete() && count($rows->shape->slots) !== $listed && !$this->defaulted($insert)) {
+            $derivation->report(new ValueCountMismatch($listed, count($rows->shape->slots), 1));
+            $this->columns($insert->into, $target, $fact, $derivation, $outer);
+            $written = null;
+        } elseif ($late) {
+            $written = $this->columns($insert->into, $target, $fact, $derivation, $outer);
+        }
+        if ($written !== null) {
+            $this->source($insert, $written, $rows, $derivation);
         }
         $sources = $insert->onDuplicate === [] ? [] : (new SourceRelations())->visible($insert->source, $derivation);
         $this->duplicates($insert->onDuplicate, null, $insert->into, $target, $written, $sources, $derivation, $outer);
+    }
+
+    /**
+     * Checks a query source against the written columns, or derives the generated columns it writes when it matches them.
+     *
+     * A source whose width differs is the mismatch of its first row; a VALUES source has had each
+     * of its rows checked already. A source of empty rows only writes the defaults and is not
+     * checked.
+     *
+     * @param list<Field> $written
+     */
+    public function source(InsertQuery $insert, array $written, QueryFact $rows, Derivation $derivation): void
+    {
+        if ($this->defaulted($insert)) {
+            return;
+        }
+        if ($rows->shape->complete() && count($rows->shape->slots) !== count($written)) {
+            if ($insert->values() === null) {
+                $derivation->report(new ValueCountMismatch(count($written), count($rows->shape->slots), 1));
+            }
+
+            return;
+        }
+        $generated = new GeneratedWrites();
+        $generated->query($written, $insert->source, $rows, $generated->table($insert->into->table, $derivation), $derivation);
     }
 
     /**
@@ -158,22 +231,52 @@ final class InsertFacts
      */
     public function open(InsertInto $into, Derivation $derivation, Environment $outer): array
     {
+        [$target, $fact] = $this->target($into, $derivation, $outer);
+
+        return [$target, $this->columns($into, $target, $fact, $derivation, $outer)];
+    }
+
+    /**
+     * Derives the written table, raising the deprecation of DELAYED.
+     *
+     * @return array{VisibleRelation, RelationFact} The table as a visible relation, and its fact
+     */
+    public function target(InsertInto $into, Derivation $derivation, Environment $outer): array
+    {
         if ($into->priority === InsertPriority::Delayed) {
             Deprecation::raise($into->replace ? Deprecated::ReplaceDelayed : Deprecated::InsertDelayed, $derivation);
             Deprecation::raise($into->replace ? Deprecated::DelayedReplace : Deprecated::DelayedInsert, $derivation);
         }
         $fact = $derivation->relation($into->table, $outer);
-        $target = new VisibleRelation($into->table, $fact->shape, null, $into->table->name, [], (new TableShapes())->implicit($fact));
+
+        return [new VisibleRelation($into->table, $fact->shape, null, $into->table->name, [], (new TableShapes())->implicit($fact)), $fact];
+    }
+
+    /**
+     * Tells whether the release resolves the column list after it checks the count of values, as MySQL 5.6 and 5.7 do (verified on live 5.6.51 and 5.7.44 servers).
+     */
+    public function late(Derivation $derivation): bool
+    {
+        return in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+    }
+
+    /**
+     * Derives the written columns: those of the column list, or every column of the table when none is written.
+     *
+     * @return list<Field>|null The written columns, or null when the table is not declared completely and no column list is written
+     */
+    public function columns(InsertInto $into, VisibleRelation $target, RelationFact $fact, Derivation $derivation, Environment $outer): ?array
+    {
         if ($into->columns === null || $into->columns->columns === []) {
             if (!$fact->shape->complete()) {
-                return [$target, null];
+                return null;
             }
             $fields = [];
             foreach ($fact->shape->slots as $position => $slot) {
                 $fields[] = new Field($position, new OutputSlot($slot->name, $slot->type, $slot->nullability, null, $slot));
             }
 
-            return [$target, $fields];
+            return $fields;
         }
         $environment = new Environment($derivation->context, $outer, [$target], [], [], true);
         $scope = new WriteScope();
@@ -189,7 +292,7 @@ final class InsertFacts
         }
         $scope->distinct($fields, $derivation);
 
-        return [$target, $fields];
+        return $fields;
     }
 
     /**

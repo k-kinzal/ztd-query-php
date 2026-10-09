@@ -41,13 +41,20 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
  * a database and the object at a table or routine), and a column the table does not have.
  * After the accounts, a privilege a database does not take is ER_WRONG_USAGE. ALL grants every
  * privilege the level takes, at the global level the dynamic ones too (verified on a live 8.4
- * server).
+ * server), of the privileges the release knows (see Catalog).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html#grant-privilege-levels.
  *
  * @visibility MySqlMemory
  */
 final class Levels
 {
+    /**
+     * @param \SqlSemantics\Contract\GrammarRelease $release The release whose privileges ALL names
+     */
+    public function __construct(public readonly \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847)
+    {
+    }
+
     /**
      * Answers the level a statement names: GLOBAL, DATABASE, TABLE, PROCEDURE or FUNCTION, the database and the object.
      *
@@ -204,7 +211,7 @@ final class Levels
             if ($privilege instanceof AllPrivileges) {
                 $all = true;
                 $names = $this->all($level);
-                $dynamic = $level === 'GLOBAL' ? Catalog::DYNAMIC : [];
+                $dynamic = $level === 'GLOBAL' ? (new Catalog($this->release))->dynamics() : [];
             } elseif ($privilege instanceof StaticPrivilege && $privilege->kind === PrivilegeKind::GrantOption) {
                 $option = true;
             } elseif ($privilege instanceof StaticPrivilege && $privilege->columns !== []) {
@@ -227,7 +234,7 @@ final class Levels
     public function all(string $level): array
     {
         return match ($level) {
-            'GLOBAL' => Catalog::STATIC,
+            'GLOBAL' => (new Catalog($this->release))->statics(),
             'DATABASE' => Catalog::DATABASE,
             'TABLE' => Catalog::TABLE,
             default => ['EXECUTE', 'ALTER ROUTINE'],

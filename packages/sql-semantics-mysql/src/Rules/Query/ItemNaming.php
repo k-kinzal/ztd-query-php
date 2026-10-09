@@ -66,10 +66,10 @@ use SqlSemantics\Statement\Scalar;
  * session settings name it, when it is read as text in that character set. Binary text
  * keeps its bytes; utf8mb4 text keeps whole characters up to 255 bytes,
  * each character outside utf8mb3 written `?`, and so does latin1 text,
- * read as cp1252 whose unassigned bytes are the C1 controls. The name of text with other
- * characters in another introduced character set, and of any text in
- * ucs2, utf16, utf16le or utf32, depends on the server's conversion
- * (NameConversion). Verified on live servers of each release. Source: sql/parse_tree_items.cc
+ * read as cp1252 whose unassigned bytes are the C1 controls. Text in ucs2, utf16, utf16le
+ * or utf32 is read in whole units of its bytes, a unit that is no character written `?`.
+ * The name of text with other characters in another introduced character set depends on
+ * the server's conversion (NameConversion). Verified on live servers of each release. Source: sql/parse_tree_items.cc
  * (`PTI_expr_with_alias::itemize`), sql/sql_yacc.yy (`select_item`), sql/item.cc
  * and sql/item.h (the constructors that set `item_name`) of each release,
  * https://dev.mysql.com/doc/refman/8.4/en/select.html,
@@ -253,7 +253,7 @@ final class ItemNaming
             $charset = strtolower($this->client->name);
         }
         if (in_array($charset, self::WIDE, true)) {
-            return new NameConversion($charset);
+            return $this->narrowed(ltrim($this->wide($text, $charset), "\x00..\x20"));
         }
         $text = ltrim($text, $charset === 'binary' ? "\x00..\x20\x7F..\xFF" : "\x00..\x20\x7F");
         $ascii = preg_match('/[\x80-\xFF]/', $text) !== 1;
@@ -272,6 +272,41 @@ final class ItemNaming
         $same = in_array($charset, ['utf8mb3', 'utf8', 'national'], true);
 
         return new Name(substr($text, 0, self::LIMITS[$same ? 'same' : 'convert']));
+    }
+
+    /**
+     * Answers in UTF-8 the bytes of a text written for a character set of wide units, UCS-2, UTF-16, UTF-16LE or UTF-32, as the server names a column after it.
+     *
+     * The bytes are read in whole units, a trailing part of a unit is dropped, and a unit or a
+     * pair of UTF-16 units that is no character becomes `?` (verified on a live 8.4 server).
+     */
+    public function wide(string $text, string $charset): string
+    {
+        $unit = $charset === 'utf32' ? 4 : 2;
+        $codes = [];
+        foreach (str_split(substr($text, 0, strlen($text) - strlen($text) % $unit), $unit) as $bytes) {
+            if ($bytes === '') {
+                continue;
+            }
+            $codes[] = match ($charset) {
+                'utf16le' => ord($bytes[0]) | (ord($bytes[1]) << 8),
+                'utf32' => (ord($bytes[0]) << 24) | (ord($bytes[1]) << 16) | (ord($bytes[2]) << 8) | ord($bytes[3]),
+                default => (ord($bytes[0]) << 8) | ord($bytes[1]),
+            };
+        }
+        $converted = '';
+        for ($index = 0; $index < count($codes); $index++) {
+            $code = $codes[$index];
+            $next = $codes[$index + 1] ?? null;
+            if ($charset !== 'utf32' && $charset !== 'ucs2' && $code >= 0xD800 && $code <= 0xDBFF && $next !== null && $next >= 0xDC00 && $next <= 0xDFFF) {
+                $converted .= mb_chr(0x10000 + (($code - 0xD800) << 10) + ($next - 0xDC00), 'UTF-8');
+                $index++;
+                continue;
+            }
+            $converted .= ($code >= 0xD800 && $code <= 0xDFFF) || $code > 0x10FFFF ? '?' : mb_chr($code, 'UTF-8');
+        }
+
+        return $converted;
     }
 
     /**

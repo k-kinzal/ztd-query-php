@@ -30,6 +30,7 @@ final class Aggregate implements AccessPath
      * @param list<Accumulation> $aggregates The aggregates computed for each group
      * @param bool $rollup Whether super-aggregate rows are added
      * @param list<int|null> $rollupColumns The input position each grouping expression reads when it is a column of the block, set to NULL in the super-aggregate rows that roll it up
+     * @param bool $sorted Whether the groups come in the order of their grouping values, as when the server groups by sorting or reads an index; else in the order they first appear, as when it groups in a temporary table
      */
     public function __construct(
         public readonly AccessPath $input,
@@ -37,6 +38,7 @@ final class Aggregate implements AccessPath
         public readonly array $aggregates,
         public readonly bool $rollup = false,
         public readonly array $rollupColumns = [],
+        public readonly bool $sorted = true,
     ) {
     }
 

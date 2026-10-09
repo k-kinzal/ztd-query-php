@@ -23,8 +23,9 @@ use SqlSemantics\Statement\Operation;
  * Executes SHOW CREATE USER.
  *
  * The statement writes the CREATE USER statement of an account (see CreateText), in one text
- * column of 256 characters named after the account. An account that does not exist is
- * ER_CANNOT_USER (verified on a live 8.4 server).
+ * column of 1024 characters named after the account, 256 in MySQL 5.7, which writes the
+ * statement in its own form. An account that does not exist is ER_CANNOT_USER (verified on live
+ * 8.4 and 5.7.44 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-user.html.
  *
  * @visibility MySqlMemory
@@ -56,8 +57,9 @@ final class ShowCreateUserCommand implements Command
         if ($account === null) {
             throw AccountError::CannotUser->error('SHOW CREATE USER', $identity->quoted());
         }
-        $column = new ResultColumn('CREATE USER for ' . $identity->text(), Field::VarString, 1024, 31, ColumnFlag::NotNull->value, 255);
-        $text = (new CreateText())->statement($account, array_values($accounts->defaults[$identity->key()] ?? []));
+        $legacy = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744;
+        $column = new ResultColumn('CREATE USER for ' . $identity->text(), Field::VarString, $legacy ? 256 : 1024, 31, ColumnFlag::NotNull->value, 255);
+        $text = (new CreateText())->statement($account, array_values($accounts->defaults[$identity->key()] ?? []), $legacy);
 
         return new ResultSet([$column], [[$text]], $context->diagnostics->count());
     }

@@ -20,12 +20,9 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
-use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
-use SqlSemantics\Statement\Identifier\Name;
-use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 #[CoversClass(Grouping::class)]
 #[Small]
@@ -238,46 +235,6 @@ final class GroupingTest extends TestCase
         self::assertSame([true, true, false, true], [$grouping->rolls($statement, $operation->field(0)), $grouping->rolls($statement, $operation->field(1)), $grouping->rolls($statement, $operation->field(2)), $grouping->rolls($statement, $operation->field(3))]);
     }
 
-    public function testSameColumnTellsWhetherANameResolvesToTheColumnOfAResolution(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT, b INT)');
-        $operation = $session->analyze('SELECT t.a, a, b FROM t');
-        $statement = $operation->statement;
-        self::assertInstanceOf(Select::class, $statement);
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $first = $operation->facts->scalar($operation->field(0)->expression ?? new ColumnUse(new Name('a')))->resolution;
-        self::assertInstanceOf(ResolvedColumn::class, $first);
-        $second = $operation->field(1)->expression;
-        $third = $operation->field(2)->expression;
-        self::assertInstanceOf(ColumnUse::class, $second);
-        self::assertInstanceOf(ColumnUse::class, $third);
-
-        self::assertSame([true, false], [(new Grouping($planner))->sameColumn($first, $second), (new Grouping($planner))->sameColumn($first, $third)]);
-    }
-
-    public function testColumnAnswersTheSameColumnForEveryUseOfIt(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT)');
-        $operation = $session->analyze('SELECT a FROM t GROUP BY a WITH ROLLUP');
-        $statement = $operation->statement;
-        self::assertInstanceOf(Select::class, $statement);
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $item = $operation->facts->scalar($operation->field(0)->expression ?? new ColumnUse(new Name('a')))->resolution;
-        $group = $operation->facts->scalar($statement->groupBy->items[0]->expression ?? new ColumnUse(new Name('a')))->resolution;
-        self::assertInstanceOf(ResolvedColumn::class, $item);
-        self::assertInstanceOf(ResolvedColumn::class, $group);
-
-        self::assertSame((new Grouping($planner))->column($group), (new Grouping($planner))->column($item));
-    }
-
     public function testOutputGivesAFieldTheTypeItsRowsHave(): void
     {
         $session = (new Instance())->connect();
@@ -338,22 +295,6 @@ final class GroupingTest extends TestCase
         self::assertInstanceOf(ColumnUse::class, $grouping->target($items[2]->expression));
     }
 
-    public function testSameComparesExpressionsWithoutRegardToParenthesesCaseOrQualifiers(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT, b INT)');
-        $operation = $session->analyze('SELECT ABS(t.a + 1), (abs(a + 1)), ABS(b + 1) FROM t');
-        $statement = $operation->statement;
-        self::assertInstanceOf(Select::class, $statement);
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $grouping = new Grouping($planner);
-
-        self::assertSame([true, false, true], [$grouping->same($operation->field(0)->expression, $operation->field(1)->expression), $grouping->same($operation->field(0)->expression, $operation->field(2)->expression), $grouping->same(1, 1)]);
-    }
-
     public function testPlanLeavesAConstantGroupingExpressionUnevaluated(): void
     {
         $session = (new Instance())->connect();
@@ -371,28 +312,6 @@ final class GroupingTest extends TestCase
         self::assertSame([['0']], $warnings->rows);
         self::assertInstanceOf(ResultSet::class, $empty);
         self::assertSame([], $empty->rows);
-    }
-
-    public function testSamePropertiesComparesEachPropertyAsAnExpression(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT, b INT)');
-        $operation = $session->analyze('SELECT t.a + 1, (A + 1), a + 2 FROM t');
-        $statement = $operation->statement;
-        self::assertInstanceOf(Select::class, $statement);
-        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
-        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
-        $grouping = new Grouping($planner);
-        $first = $operation->field(0)->expression;
-        $second = $operation->field(1)->expression;
-        $third = $operation->field(2)->expression;
-        self::assertInstanceOf(Grouped::class, $second);
-        self::assertNotNull($first);
-        self::assertNotNull($third);
-
-        self::assertSame([true, false], [$grouping->sameProperties($first, $second->operand), $grouping->sameProperties($first, $third)]);
     }
 
     public function testGroupableRefusesAnAliasOfAWindowFunction(): void
@@ -432,5 +351,101 @@ final class GroupingTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['[1, "a", null]', '{"1": false, "2": true, "3": true}', '[1.50, 1.50, 1.50]']], $result->rows);
+    }
+
+    public function testSortsAnswersTheGroupsInTheOrderTheyFirstAppear(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT)');
+        $session->query('INSERT INTO t VALUES (1, 3, 10), (2, NULL, 20), (3, 1, 30), (4, 3, 40)');
+        $plain = $session->query('SELECT a, SUM(b) FROM t GROUP BY a')[0];
+        $concatenated = $session->query('SELECT a, GROUP_CONCAT(b) FROM t GROUP BY a')[0];
+
+        self::assertInstanceOf(ResultSet::class, $plain);
+        self::assertInstanceOf(ResultSet::class, $concatenated);
+        self::assertSame([[['3', '50'], [null, '20'], ['1', '30']], [[null, '20'], ['1', '30'], ['3', '10,40']]], [$plain->rows, $concatenated->rows]);
+    }
+
+    public function testSortsAnswersTheGroupsInOrderInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, a INT)');
+        $session->query('INSERT INTO t VALUES (1, 3), (2, NULL), (3, 1)');
+        $result = $session->query('SELECT a, COUNT(*) FROM t GROUP BY a')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, '1'], ['1', '1'], ['3', '1']], $result->rows);
+    }
+
+    public function testIndexedTellsWhetherTheGroupingColumnsLeadAnIndex(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, a INT, b INT, KEY ia (a))');
+        $session->query('INSERT INTO t VALUES (1, 3, 10), (2, NULL, 20), (3, 1, 30), (4, 3, 10)');
+        $indexed = $session->query('SELECT a, COUNT(*) FROM t GROUP BY a')[0];
+        $other = $session->query('SELECT b, COUNT(*) FROM t GROUP BY b')[0];
+
+        self::assertInstanceOf(ResultSet::class, $indexed);
+        self::assertInstanceOf(ResultSet::class, $other);
+        self::assertSame([[[null, '1'], ['1', '1'], ['3', '2']], [['10', '2'], ['20', '1'], ['30', '1']]], [$indexed->rows, $other->rows]);
+    }
+
+    public function testDeclarationsAnswersTheColumnsTheGroupingExpressionsRead(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT, b INT)');
+        $operation = $session->analyze('SELECT a, b FROM t GROUP BY (b), a');
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $other = $session->analyze('SELECT a FROM t GROUP BY a + 1')->statement;
+        self::assertInstanceOf(Select::class, $other);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $grouping = new Grouping(new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
+        $columns = $session->instance->dictionary->table('d', 't')?->definition->columns ?? [];
+
+        self::assertSame([[$columns[1]->declaration, $columns[0]->declaration], null], [$grouping->declarations($statement), $grouping->declarations($other)]);
+    }
+
+    public function testLeadsTellsWhetherTheColumnsLeadAnIndex(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT, b INT, c VARCHAR(10), KEY iab (a, b), KEY ic (c(2)))');
+        $operation = $session->analyze('SELECT 1');
+        $statement = $operation->statement;
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $grouping = new Grouping(new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary));
+        $definition = $session->instance->dictionary->table('d', 't')?->definition;
+        self::assertNotNull($definition);
+        $columns = $definition->columns;
+
+        self::assertSame([true, true, false, false, false], [
+            $grouping->leads($definition, [$columns[0]->declaration]),
+            $grouping->leads($definition, [$columns[0]->declaration, $columns[1]->declaration]),
+            $grouping->leads($definition, [$columns[1]->declaration]),
+            $grouping->leads($definition, [$columns[2]->declaration]),
+            $grouping->leads($definition, [null]),
+        ]);
+    }
+
+    public function testAccumulationNamesAJsonAggregateAsTheSourceOfItsValue(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $session->query('INSERT INTO t VALUES (1)');
+        $session->query('SELECT JSON_ARRAYAGG(a) + 0 FROM t');
+
+        self::assertSame([['Warning', 3156, 'Invalid JSON value for CAST to DOUBLE from column json_arrayagg at row 1']], $session->diagnostics->conditions);
     }
 }

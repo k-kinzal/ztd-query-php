@@ -242,4 +242,68 @@ final class QueryCommandTest extends TestCase
         self::assertInstanceOf(Query::class, $single);
         self::assertSame([true, true, false, false], [$command->unites($ordered), $command->unites($nested), $command->unites($intersected), $command->unites($single)]);
     }
+
+    public function testExecuteSendsAColumnOfExceptNullableWhenAnyOperandIsIn84(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE a (x INT NOT NULL, y INT NOT NULL); CREATE TABLE b (x INT, y INT NOT NULL)');
+
+        $result = $session->query('SELECT x, y FROM a EXCEPT SELECT x, y FROM b')[0];
+        $derived = $session->query('SELECT * FROM (SELECT x FROM a EXCEPT SELECT x FROM b) AS e')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $derived);
+        self::assertSame([0, ColumnFlag::NotNull->value, ColumnFlag::NotNull->value], [$result->columns[0]->flags & ColumnFlag::NotNull->value, $result->columns[1]->flags & ColumnFlag::NotNull->value, $derived->columns[0]->flags & ColumnFlag::NotNull->value]);
+    }
+
+    public function testExecuteKeepsTheNullabilityOfTheLeftOperandOfIntersectIn91(): void
+    {
+        $session = (new Instance('9.1.0'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE a (x INT NOT NULL); CREATE TABLE b (x INT)');
+
+        $result = $session->query('SELECT x FROM a INTERSECT SELECT x FROM b')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(ColumnFlag::NotNull->value, $result->columns[0]->flags & ColumnFlag::NotNull->value);
+    }
+
+    public function testRestrictedAnswersTheNullabilityOfAnyOperandOfTheOutermostExcept(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE a (x INT NOT NULL); CREATE TABLE b (x INT)');
+        $except = $session->analyze('SELECT x FROM a UNION SELECT x FROM a EXCEPT SELECT x FROM b');
+        $union = $session->analyze('SELECT x FROM a EXCEPT SELECT x FROM b UNION SELECT x FROM a');
+
+        self::assertInstanceOf(Query::class, $except->statement);
+        self::assertInstanceOf(Query::class, $union->statement);
+        self::assertSame([[true], null], [(new QueryCommand())->restricted($except->statement, $except->facts), (new QueryCommand())->restricted($union->statement, $union->facts)]);
+    }
+
+    public function testNullablesAnswersEachColumnOfASingleQuery(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('SELECT 1, NULL');
+
+        self::assertInstanceOf(Query::class, $operation->statement);
+        self::assertSame([false, true], (new QueryCommand())->nullables($operation->statement, $operation->facts));
+    }
+
+    public function testOutermostUnwrapsParenthesesAndOrdering(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('((SELECT 1) EXCEPT (SELECT 2)) ORDER BY 1')->statement;
+
+        self::assertInstanceOf(Query::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation::class, (new QueryCommand())->outermost($statement));
+    }
+
+    public function testFileRefusesTheFileBeforeTheSeparatorsInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1290);
+
+        $session->query("SELECT 1 INTO OUTFILE 'x' FIELDS ESCAPED BY 'ab'");
+    }
 }

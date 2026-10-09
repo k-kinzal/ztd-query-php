@@ -16,7 +16,12 @@ use Override;
  * elements are evaluated in order until one equals the value; for a NULL value every element is
  * evaluated. When every element is constant and compares with the value the same way, the server
  * evaluates them all once, before the value of the first row, and looks the value up in them.
- * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_in.
+ * MySQL 5.6 and 5.7 compare elements of different comparison types each with a copy of the value
+ * of its own type, and evaluate the value again for the first element of each type; MySQL 5.6
+ * stops at a NULL value, and 5.7 evaluates it once for each type then too (verified on live
+ * 5.6.51 and 5.7.44 servers).
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#operator_in,
+ * https://dev.mysql.com/doc/refman/5.7/en/type-conversion.html.
  *
  * @visibility MySqlMemory
  */
@@ -28,8 +33,10 @@ final class Membership implements Evaluable
      * @param bool $negated Whether NOT is written
      * @param Domain $domain The domain of the truth value
      * @param bool $fixed Whether the elements are evaluated once for the statement
+     * @param list<string|null> $types The comparison type of each element, null for a NULL element, when the value is evaluated again for each type; else empty
+     * @param bool $resumes Whether a NULL value is evaluated again for each type
      */
-    public function __construct(public readonly Evaluable $operand, public readonly array $elements, public readonly bool $negated, public readonly Domain $domain, public readonly bool $fixed = false)
+    public function __construct(public readonly Evaluable $operand, public readonly array $elements, public readonly bool $negated, public readonly Domain $domain, public readonly bool $fixed = false, public readonly array $types = [], public readonly bool $resumes = false)
     {
     }
 
@@ -50,7 +57,13 @@ final class Membership implements Evaluable
     {
         $values = $this->fixed ? $this->values($frame) : null;
         $value = $this->operand->evaluate($frame);
+        $seen = [];
         if ($value === null) {
+            foreach ($this->resumes ? array_values(array_unique(array_filter($this->types, static fn (?string $type): bool => $type !== null))) : [] as $index => $type) {
+                if ($index > 0) {
+                    $this->operand->evaluate($frame);
+                }
+            }
             foreach ($values === null ? $this->elements : [] as [$element]) {
                 $element->evaluate($frame);
             }
@@ -59,6 +72,11 @@ final class Membership implements Evaluable
         }
         $unknown = false;
         foreach ($this->elements as $index => [$element, $comparator]) {
+            $type = $this->types[$index] ?? null;
+            if ($type !== null && !isset($seen[$type])) {
+                $value = $seen === [] ? $value : $this->operand->evaluate($frame);
+                $seen[$type] = true;
+            }
             $order = $comparator->compare($value, $values === null ? $element->evaluate($frame) : $values[$index], $frame->context);
             if ($order === 0) {
                 return $this->negated ? 0 : 1;

@@ -144,4 +144,30 @@ final class ExtremeResultsTest extends TestCase
             (new ExtremeResults())->textDecimals([new Domain(Kind::Time, Field::Time, 10), Domain::decimal(10, 3)]),
         ]);
     }
+
+    public function testLegacyExtremeSizesTheComparisonOfMySql57(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $settings = new Settings(Collation::known('latin1_swedish_ci'));
+        $literal = new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('12');
+
+        self::assertEquals(Domain::integer(Field::LongLong, 3), (new ExtremeResults())->legacyExtreme(new Invocation([Domain::integer(Field::LongLong, 2), Domain::integer(Field::LongLong, 1)], [$literal, new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('3')], $settings, $derivation), 'greatest'));
+        self::assertEquals(new Domain(Kind::Decimal, Field::NewDecimal, 19, 2, false, null, [], Coercibility::Numeric), (new ExtremeResults())->legacyExtreme(new Invocation([Domain::null(), Domain::decimal(8, 2)], [], $settings, $derivation), 'greatest'));
+        self::assertSame([23, Domain::NOT_FIXED], [(new ExtremeResults())->legacyExtreme(new Invocation([Domain::integer(Field::Long, 11), Domain::string(10, Collation::known('latin1_swedish_ci'))], [], $settings, $derivation), 'greatest')?->length, Domain::NOT_FIXED]);
+    }
+
+    public function testComparedSizesTheArgumentsAsDecimals(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $settings = new Settings(Collation::known('latin1_swedish_ci'));
+
+        self::assertSame([3, 0, true], (new ExtremeResults())->compared(new Invocation([Domain::integer(Field::LongLong, 2), Domain::integer(Field::LongLong, 1)], [new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('12')], $settings, $derivation)));
+        self::assertSame([19, 2, true], (new ExtremeResults())->compared(new Invocation([Domain::null(), Domain::decimal(8, 2)], [], $settings, $derivation)));
+        self::assertSame([3, 0, false], (new ExtremeResults())->compared(new Invocation([Domain::integer(Field::Tiny, 3, true)], [], $settings, $derivation)));
+    }
+
+    public function testWrittenCountsTheIntegerDigitsOfANumberLiteral(): void
+    {
+        self::assertSame([3, 1, null], [(new ExtremeResults())->written(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('123.45')), (new ExtremeResults())->written(new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('0.5')), (new ExtremeResults())->written(null)]);
+    }
 }

@@ -67,4 +67,13 @@ final class ShowVariablesCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $read1);
         self::assertSame([['Com_select', '0']], $read1->rows);
     }
+
+    public function testVariablesWritesTheDigitsOfAnUnsignedValueBeyondTheSignedRange(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SHOW VARIABLES LIKE 'sql_select_limit'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['sql_select_limit', '18446744073709551615']], $result->rows);
+    }
 }

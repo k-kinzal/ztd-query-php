@@ -92,4 +92,15 @@ final class SystemVariableReadTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $reply);
         self::assertEquals([[1.999999]], $reply->rows);
     }
+
+    public function testEvaluateReadsAParameterOfANamedKeyCache(): void
+    {
+        $session = (new Instance())->connect();
+        $definition = $session->instance->catalog->find('key_cache_block_size');
+        self::assertInstanceOf(Definition::class, $definition);
+        $session->variables->globals->cache('kc', $definition, 2048);
+        $domain = Domain::of($definition->domain, true);
+
+        self::assertSame([2048, 0], [(new SystemVariableRead($definition, Scope::Global, $domain, 'kc'))->evaluate(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0))), (new SystemVariableRead($definition, Scope::Global, $domain, 'other'))->evaluate(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)))]);
+    }
 }

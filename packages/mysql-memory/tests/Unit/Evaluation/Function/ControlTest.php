@@ -66,4 +66,13 @@ final class ControlTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '0', '1']], $result->rows);
     }
+
+    public function testCoalesceConvertsADateToTheDatetimeResult(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT COALESCE(DATE'2020-01-02', TIMESTAMP'2020-01-02 03:04:05.12'), IFNULL(NULL, DATE'2020-01-02')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2020-01-02 00:00:00.00', '2020-01-02']], $result->rows);
+    }
 }

@@ -16,7 +16,9 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsKind;
  * A role is an account created locked with an expired password. The user attributes hold the
  * metadata ATTRIBUTE and COMMENT set and the failed-login tracking, under metadata and
  * Password_locking. The emulator does not record when a password changed, which it reports as
- * the time the server started.
+ * the time the server started. MySQL 5.6 keeps the string of a mysql_native_password account
+ * in its Password column, and its authentication_string empty (verified on a live 5.6.51
+ * server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant-tables.html.
  *
  * @visibility MySqlMemory
@@ -30,7 +32,9 @@ final class Users implements SystemRows
     public function rows(Reading $reading): array
     {
         $rows = [];
+        $legacy = $reading->release === \SqlSemantics\Contract\GrammarRelease::MySql5651;
         foreach (Grantees::stored($reading) as $account) {
+            $password = $legacy && in_array($account->plugin, ['mysql_native_password', 'mysql_old_password'], true);
             $rows[] = ['Host' => $account->identity->host, 'User' => $account->identity->user] + Grantees::flags($account->grants->global, Grantees::global()) + [
                 'ssl_type' => match ($account->tls) {
                     TlsKind::None => '',
@@ -46,7 +50,8 @@ final class Users implements SystemRows
                 'max_connections' => $account->limits['MAX_CONNECTIONS_PER_HOUR'] ?? 0,
                 'max_user_connections' => $account->limits['MAX_USER_CONNECTIONS'] ?? 0,
                 'plugin' => $account->plugin,
-                'authentication_string' => $account->hash,
+                'authentication_string' => $password ? '' : $account->hash,
+                'Password' => $password ? $account->hash : '',
                 'password_expired' => $account->expired ? 'Y' : 'N',
                 'password_last_changed' => Grantees::time($reading),
                 'password_lifetime' => $account->lifetime,

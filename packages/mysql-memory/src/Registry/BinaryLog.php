@@ -24,6 +24,14 @@ final class BinaryLog
     public array $files = [1];
 
     /**
+     * Tells whether the session's server writes a binary log: log_bin is on.
+     */
+    public static function enabled(\MySqlMemory\Session\Session $session): bool
+    {
+        return !in_array(strtoupper((string) $session->variables->read('log_bin')), ['0', 'OFF', ''], true);
+    }
+
+    /**
      * Answers the name of a file.
      */
     public static function name(int $number): string

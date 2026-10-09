@@ -8,8 +8,6 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Utility\VariableAccess;
-use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
-use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
@@ -54,11 +52,8 @@ final class SystemAssignment implements SetItem
         $derivation->scalar($this->variable, $derivation->environment());
         if ($this->variable->instance === null && !$derivation->inProgram()) {
             (new VariableAccess())->assign($this->variable->name->value, $this->variable->scope, $derivation);
-        } elseif ($this->variable->instance !== null && !$derivation->inProgram() && !in_array(strtolower($this->variable->name->value), SystemVariable::KEY_CACHE, true)) {
-            $name = $this->variable->instance->value . '.' . $this->variable->name->value;
-            if (SystemVariables::of($derivation->context->profile->grammar)->find($name) === null) {
-                $derivation->report(new UnknownSystemVariable($name));
-            }
+        } elseif (!$derivation->inProgram()) {
+            $this->variable->structured($derivation);
         }
         if ($this->value instanceof Scalar) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);

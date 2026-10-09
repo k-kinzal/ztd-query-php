@@ -92,6 +92,25 @@ final class ReplicationShowCommandTest extends TestCase
         self::assertSame([[], ['Server_Id', 'Host', 'Port', 'Source_Id', 'Replica_UUID']], [$result->rows, array_map(static fn ($column): string => $column->name, $result->columns)]);
     }
 
+    public function testBinlogEventsStartsAtThePosition(): void
+    {
+        $result = (new Instance())->connect()->query('SHOW BINLOG EVENTS FROM 5')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['binlog.000001', '127', 'Previous_gtids', '1', '158', '']], $result->rows);
+    }
+
+    public function testRelaylogEventsRefusesAnotherFile(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1220);
+        $this->expectExceptionMessage('Error when executing command SHOW RELAYLOG EVENTS: Could not find target log');
+
+        $session->query("SHOW RELAYLOG EVENTS IN 'other'");
+    }
+
     public function testWindowStartsAtTheFirstEventAtOrAfterThePosition(): void
     {
         $events = [['l', 4, 'Format_desc', 1, 127, ''], ['l', 127, 'Previous_gtids', 1, 158, '']];
@@ -181,5 +200,19 @@ final class ReplicationShowCommandTest extends TestCase
         $this->expectExceptionCode(1794);
 
         $session->query('SHOW RELAYLOG EVENTS');
+    }
+
+    public function testExecuteRefusesTheLogsWithoutBinaryLogging(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $events = $session->query('SHOW BINLOG EVENTS')[0];
+        self::assertInstanceOf(ResultSet::class, $events);
+        self::assertSame([[], 11], [$events->rows, $events->columns[1]->length]);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1381);
+        $this->expectExceptionMessage('You are not using binary logging');
+
+        $session->query('SHOW BINARY LOGS');
     }
 }

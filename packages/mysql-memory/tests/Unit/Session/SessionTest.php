@@ -14,10 +14,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 #[CoversClass(Session::class)]
 #[Small]
@@ -200,24 +196,6 @@ final class SessionTest extends TestCase
         $this->expectExceptionMessage("near 'FROM' at line 1");
 
         $session->analyze('SELECT FROM');
-    }
-
-    public function testBoundTypesAMarkerOfAPreparedStatementAsAVarchar(): void
-    {
-        $session = (new Instance())->connect();
-        $tree = $session->semantics()->parser()->parse('SELECT ? + ?');
-        $unbound = Resolved::string(16383, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible);
-
-        self::assertEquals([0 => $unbound, 1 => $unbound], $session->bound($tree, [], true));
-    }
-
-    public function testBoundTypesAMarkerByItsValue(): void
-    {
-        $session = (new Instance())->connect();
-        $tree = $session->semantics()->parser()->parse('SELECT ? + ?');
-
-        self::assertEquals([0 => Domain::integer()->resolved()], $session->bound($tree, [[1, Domain::integer()]]));
-        self::assertSame([], $session->bound($tree, []));
     }
 
     public function testResolutionAnswersTheSessionSettings(): void
@@ -454,5 +432,61 @@ final class SessionTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['11']], $result->rows);
+    }
+
+    public function testReleaseEndsTheSession(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+
+        $session->release();
+
+        self::assertSame([true, []], [$session->released, $instance->registry->threads->connected]);
+    }
+
+    public function testGoneAnswersTheErrorOfAClosedConnectionOnceReleased(): void
+    {
+        $session = (new Instance())->connect();
+        $open = $session->gone();
+        $session->query('ROLLBACK RELEASE');
+        $gone = $session->gone();
+
+        self::assertNull($open);
+        self::assertInstanceOf(SqlError::class, $gone);
+        self::assertSame([2006, 'HY000', 'MySQL server has gone away'], [$gone->getCode(), $gone->sqlState(), $gone->getMessage()]);
+    }
+
+    public function testRunStopsAtAStatementThatReleasesTheSession(): void
+    {
+        $session = (new Instance())->connect();
+
+        $answers = $session->run('DO 1; COMMIT RELEASE; DO 2');
+
+        self::assertCount(2, $answers);
+        self::assertSame(' DO 2', $session->following);
+    }
+
+    public function testRunRunsTheStatementsBeforeOneThatDoesNotParse(): void
+    {
+        $session = (new Instance())->connect();
+
+        $answers = $session->run('CREATE DATABASE d; SELECT 1 FROM; SELECT 2');
+
+        self::assertCount(2, $answers);
+        self::assertInstanceOf(SqlError::class, $answers[1]);
+        self::assertSame("You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '; SELECT 2' at line 1", $answers[1]->getMessage());
+        $result = $session->query("SHOW DATABASES LIKE 'd'")[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['d']], $result->rows);
+    }
+
+    public function testRunQuotesTheStatementsAfterAParameterMarker(): void
+    {
+        $session = (new Instance())->connect();
+
+        $answers = $session->run("SELECT 1;\nSELECT\n?;SELECT 2");
+
+        self::assertInstanceOf(SqlError::class, $answers[1]);
+        self::assertSame("You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?;SELECT 2' at line 2", $answers[1]->getMessage());
     }
 }

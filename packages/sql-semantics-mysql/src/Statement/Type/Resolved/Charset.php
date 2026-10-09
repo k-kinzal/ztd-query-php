@@ -73,6 +73,18 @@ final class Charset
     }
 
     /**
+     * Answers the fewest bytes one character takes: two for UCS-2 and UTF-16, four for UTF-32, one for any other character set.
+     */
+    public function minLength(): int
+    {
+        return match ($this->name) {
+            'utf16', 'utf16le', 'ucs2' => 2,
+            'utf32' => 4,
+            default => 1,
+        };
+    }
+
+    /**
      * Answers the number of characters of a text encoded in the character set.
      *
      * UTF-8 characters are counted by their lead bytes and UTF-16, UTF-32 and UCS-2 by their width;

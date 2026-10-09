@@ -94,7 +94,7 @@ final class Instance
         }
         $this->globals = new Globals($globals);
         $this->dictionary = new Dictionary();
-        $this->accounts = Accounts::installed();
+        $this->accounts = Accounts::installed($release);
         $this->registry = new Registry();
         $this->transactions = new Concurrency\Transactions();
         $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;

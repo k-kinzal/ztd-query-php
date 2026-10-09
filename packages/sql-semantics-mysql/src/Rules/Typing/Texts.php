@@ -82,7 +82,7 @@ final class Texts
     }
 
     /**
-     * Resolves `CONVERT(expr USING charset)`, reporting a character set that is unknown.
+     * Resolves `CONVERT(expr USING charset)`, reporting a character set that is unknown; a string longer than 65535 bytes is a MEDIUMBLOB or LONGBLOB (verified on a live 8.4 server).
      */
     public function converted(Domain $operand, string $name, Derivation $derivation): ?Domain
     {
@@ -94,7 +94,7 @@ final class Texts
         }
         $length = $operand->kind === Kind::String ? $operand->length : $this->length($operand);
 
-        return Domain::string($length, $charset->defaultCollation($derivation->context->profile->grammar));
+        return (new Builtin\FormatResults())->sized($length, $charset->defaultCollation($derivation->context->profile->grammar), Coercibility::Implicit);
     }
 
     /**

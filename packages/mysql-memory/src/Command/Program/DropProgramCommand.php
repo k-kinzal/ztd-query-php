@@ -87,7 +87,7 @@ final class DropProgramCommand implements Command
 
         return match ($statement->kind) {
             ProgramKind::Procedure, ProgramKind::Function => $this->routine($statement, $session, $schema, $database),
-            ProgramKind::Trigger => $this->trigger($schema, $database, $name),
+            ProgramKind::Trigger => $this->trigger($schema, $database, $name, (new \MySqlMemory\Account\Catalog($session->settings()->release()))->legacy()),
             ProgramKind::Event => $this->event($schema, $name),
         };
     }
@@ -125,13 +125,16 @@ final class DropProgramCommand implements Command
      * @param Schema|null $schema The database of the trigger, null when it does not exist
      * @param string $database The name of the database of the trigger
      * @param string $name The name of the trigger as written
+     * @param bool $legacy Whether the release is MySQL 5.6 or 5.7, which find no trigger in a database that does not exist (verified on live 5.6.51 and 5.7.44 servers)
      * @return array{SqlError, SqlError}|null
      */
-    public function trigger(?Schema $schema, string $database, string $name): ?array
+    public function trigger(?Schema $schema, string $database, string $name, bool $legacy = false): ?array
     {
         $key = strtolower($name);
         if ($schema === null) {
-            return [QueryError::BadDatabase->error($database), new SqlError(QueryError::BadDatabase, "Unknown database '%-.192s'")];
+            $missing = ProgramError::TriggerMissing->error();
+
+            return $legacy ? [$missing, $missing] : [QueryError::BadDatabase->error($database), new SqlError(QueryError::BadDatabase, "Unknown database '%-.192s'")];
         }
         foreach ($schema->triggers as $position => $trigger) {
             if (strtolower($trigger->name) === $key) {

@@ -383,4 +383,92 @@ final class AssignerTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1']], $result->rows);
     }
+
+    public function testDeprecatedWarnsOfTheModesOfMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $session->query("SET sql_mode = 'STRICT_ALL_TABLES'");
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([
+            ['Warning', '3135', "'NO_ZERO_DATE', 'NO_ZERO_IN_DATE' and 'ERROR_FOR_DIVISION_BY_ZERO' sql modes should be used with strict mode. They will be merged with strict mode in a future release."],
+            ['Warning', '3090', "Changing sql mode 'NO_AUTO_CREATE_USER' is deprecated. It will be removed in a future release."],
+        ], $warnings->rows);
+    }
+
+    public function testRetiredWarnsOfADeprecatedVariableBeforeItsValueIsChecked(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $session->run("SET @@tx_isolation = 'bogus'");
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([
+            ['Warning', '1287', "'@@tx_isolation' is deprecated and will be removed in a future release. Please use '@@transaction_isolation' instead"],
+            ['Error', '1231', "Variable 'tx_isolation' can't be set to the value of 'bogus'"],
+        ], $warnings->rows);
+    }
+
+    public function testIntegerComparesTheBoundsOfAnUnsignedVariableAsUnsigned(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET sql_select_limit = 18446744073709551614');
+        $kept = $session->diagnostics->conditions;
+        $session->query('SET max_join_size = 0');
+        $clipped = $session->diagnostics->conditions;
+        $result = $session->query('SELECT @@sql_select_limit, @@max_join_size')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[], [['Warning', 1292, "Truncated incorrect max_join_size value: '0'"]], [['18446744073709551614', '1']]], [$kept, $clipped, $result->rows]);
+    }
+
+    public function testModesReadsTheBitsOfANumberInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+
+        $session->query('SET sql_mode = 2147483651');
+
+        $mode = $session->query('SELECT @@sql_mode')[0];
+        self::assertInstanceOf(ResultSet::class, $mode);
+        self::assertSame([['REAL_AS_FLOAT,PIPES_AS_CONCAT,PAD_CHAR_TO_FULL_LENGTH']], $mode->rows);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1232);
+
+        $session->query('SET sql_mode = 1.5');
+    }
+
+    public function testCacheSetsAParameterOfANamedKeyCacheAndWarnsAboutTheSyntaxInMySql84(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $definition = $session->variables->catalog->find('key_cache_block_size');
+
+        self::assertNotNull($definition);
+        $assigner->cache('kc', $definition, 2048);
+        self::assertSame([2048, 1024], [$session->variables->globals->cached('kc', $definition), $session->variables->globals->value($definition)]);
+        self::assertSame([['Warning', 1287, 'kc.key_cache_block_size syntax is deprecated and will be removed in a future release']], $session->diagnostics->conditions);
+    }
+
+    public function testCacheDoesNotWarnInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $definition = $session->variables->catalog->find('key_cache_block_size');
+
+        self::assertNotNull($definition);
+        $assigner->cache('kc', $definition, 2048);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testAssignTakesAnyUnsignedValueOfAVariableWithoutKnownBoundsInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $session->query('SET SESSION group_concat_max_len = 5');
+
+        self::assertSame([5, []], [$session->variables->read('group_concat_max_len'), $session->diagnostics->conditions]);
+    }
 }

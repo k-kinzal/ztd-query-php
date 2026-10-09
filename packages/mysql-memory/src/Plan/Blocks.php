@@ -49,12 +49,8 @@ use SqlSemantics\Statement\Shape\Field;
  *
  * The rows of the block's plan hold the select list followed by the sort keys that are not in it.
  * A select item that is a window function is a column of the temporary table of its window, so a
- * BLOB or JSON one is flagged as a blob.
- * A select item of a block WITH ROLLUP that is a grouping expression reads no base column; when
- * the rows pass through a temporary table, for ORDER BY or DISTINCT, it is a column of that table.
- * The columns of a block with SQL_BUFFER_RESULT, or with DISTINCT over more than one table that is
- * not constant ({@see ConstantTables}), are of no key, unless the server finds at once that the
- * block reads no row (verified on a live 8.4 server).
+ * BLOB or JSON one is flagged as a blob. The base column each output column reads is answered by
+ * {@see Origins}.
  *
  * @visibility MySqlMemory
  */
@@ -91,8 +87,9 @@ final class Blocks
         if ($select->groupBy?->modifier !== null) {
             $expressions = array_map(static fn (Field $field, Evaluable $expression): Evaluable => $grouping->output($field, $expression), $fields, $expressions);
         }
-        $domains = array_map(static fn (Evaluable $expression) => $expression->domain(), $expressions);
+        $domains = array_map(fn (Field $field, Evaluable $expression): Domain => $this->tabled($field, $expression->domain()), $fields, $expressions);
         [$keys, $expressions] = $this->sortKeys($select, $fields, $domains, $expressions, $evaluation);
+        $expressions = $this->carry($select, $scope, $evaluation, $expressions);
         $root = $this->distinct($select, $fields, $input, $expressions, $domains);
         if ($keys !== [] && !$presorted) {
             $root = new Sort($root, $keys);
@@ -100,7 +97,50 @@ final class Blocks
         $root = $this->limit($root, $select->limit, $outer);
         $root = $this->limit($root, $select->late?->limit, $outer);
 
-        return new QueryPlan($root, $domains, array_map(fn (Field $field): string => $this->name($field, $select), $fields), $this->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== []));
+        return new QueryPlan($root, $domains, array_map(fn (Field $field): string => $this->name($field, $select), $fields), (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== []));
+    }
+
+    /**
+     * Answers the domain of a select item, binary again when SQL Semantics types it as a binary temporal value its expression holds in a character set.
+     *
+     * A column of a merged derived table holds a temporal value in the connection collation; a
+     * block that passes its rows through a temporary table, for GROUP BY, DISTINCT or a window,
+     * sends it binary (verified on a live 8.4 server).
+     */
+    public function tabled(Field $field, Domain $domain): Domain
+    {
+        $type = $field->slot->type;
+        if (!$domain->kind->temporal() || $domain->collation->bytes() || !$type instanceof \SqlSemantics\Statement\Type\Known || !$type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain || !$type->descriptor->collation->bytes() || $type->descriptor->kind !== $domain->kind) {
+            return $domain;
+        }
+
+        return $domain->withCollation($type->descriptor->collation, $domain->coercibility);
+    }
+
+    /**
+     * Appends the row of the FROM clause of the block the planner carries to its rows, when the block neither groups nor removes duplicates.
+     *
+     * INSERT ... SELECT reads the columns of the FROM clause of its query in ON DUPLICATE KEY UPDATE
+     * when the query is one block without GROUP BY.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/insert-on-duplicate.html.
+     *
+     * @param list<Evaluable> $expressions The select list, then the ORDER BY keys
+     * @return list<Evaluable>
+     */
+    public function carry(Select $select, Scope $scope, Scope $evaluation, array $expressions): array
+    {
+        if ($this->planner->carrying !== $select || $evaluation !== $scope || in_array(SelectOption::Distinct, $select->options, true)) {
+            return $expressions;
+        }
+        $this->planner->carried = [count($expressions), $scope];
+        $position = 0;
+        foreach ($scope->columns as $domains) {
+            foreach ($domains as $domain) {
+                $expressions[] = new ColumnRead($domain, $position++);
+            }
+        }
+
+        return $expressions;
     }
 
     /**
@@ -154,29 +194,6 @@ final class Blocks
         }
 
         return [$keys, $expressions];
-    }
-
-    /**
-     * Answers the base column each output column of a block reads: none for a rolled-up item,
-     * unless the rows pass through a temporary table, and of no key when the result is buffered.
-     *
-     * @param list<Field> $fields The fields of the select list
-     * @param list<bool> $rolled Whether each item is a grouping expression of a block WITH ROLLUP
-     * @param list<Domain> $domains The domains of the select list
-     * @param bool $sorted Whether the block sorts its rows
-     * @return list<ColumnOrigin|null>
-     */
-    public function origins(Select $select, ?Scope $outer, Scope $scope, array $fields, array $rolled, array $domains, bool $sorted): array
-    {
-        $buffered = (in_array(SelectOption::BufferResult, $select->options, true) || (in_array(SelectOption::Distinct, $select->options, true) && (new ConstantTables($this->planner->compiler->facts))->joined($select) > 1)) && !$this->empty($select, $outer);
-        $materialized = $sorted || in_array(SelectOption::Distinct, $select->options, true);
-        $origins = array_map(fn (Field $field, bool $rolled, Domain $domain): ?ColumnOrigin => match (true) {
-            $field->expression !== null && Windowing::windowed($field->expression) => $this->planner->materialized([$domain])[0],
-            $rolled => $materialized ? $this->planner->materialized([$domain])[0] : null,
-            default => $this->origin($field, $scope),
-        }, $fields, $rolled, $domains);
-
-        return $buffered ? array_map(static fn (?ColumnOrigin $origin): ?ColumnOrigin => $origin?->unkeyed(), $origins) : $origins;
     }
 
     /**
@@ -398,45 +415,5 @@ final class Blocks
         }
 
         return $resolution->slot->name->value;
-    }
-
-    /**
-     * Answers the base column an output column reads directly, if any; DEFAULT(column) reports the column it reads, a variable of a stored program carries the flags of a column of its type, without BINARY unless it is a string, and a BLOB or TEXT result of a stored function is flagged BLOB (verified on a live 8.4 server).
-     */
-    public function origin(Field $field, Scope $scope): ?ColumnOrigin
-    {
-        $resolution = $field->resolution;
-        if ($field->expression instanceof ColumnUse) {
-            $resolution = $this->planner->compiler->facts->scalar($field->expression)->resolution;
-        }
-        if ($field->expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn) {
-            $resolution = $this->planner->compiler->facts->scalar($field->expression->column)->resolution;
-        }
-        if ((new ProgramColumns($this->planner))->called($field)) {
-            return (new ProgramColumns($this->planner))->flagged($field, false);
-        }
-        if (!$resolution instanceof ResolvedColumn) {
-            return null;
-        }
-        $id = spl_object_id($resolution->relation);
-        if (isset($scope->derived[$id])) {
-            $position = $this->planner->compiler->names->position($scope, $resolution);
-
-            $inner = $scope->merged[$id][$position] ?? null;
-
-            return new ColumnOrigin($inner->schema ?? '', $scope->derived[$id], $inner->originalTable ?? '', $scope->names[$id][$position] ?? '', $inner->flags ?? 0);
-        }
-        if (!isset($scope->tables[$id])) {
-            return $field->expression instanceof ColumnUse && $this->planner->compiler->connection->program !== null && $scope->locate($resolution->relation) === null ? (new ProgramColumns($this->planner))->flagged($field, true) : null;
-        }
-        $definition = $scope->tables[$id];
-        $position = $this->planner->compiler->names->position($scope, $resolution);
-        $alias = $resolution->relation instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference && $resolution->relation->alias !== null ? $resolution->relation->alias->value : $definition->name;
-        $system = $this->planner->dictionary->system?->origin($definition, $position, $alias);
-        if ($system !== null) {
-            return $system;
-        }
-
-        return new ColumnOrigin($definition->schema, $alias, $definition->name, $definition->columns[$position]->name, $definition->flags($position));
     }
 }

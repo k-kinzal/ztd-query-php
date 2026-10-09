@@ -131,4 +131,43 @@ final class GrantCommandTest extends TestCase
 
         $session->query('GRANT rx TO nobody');
     }
+
+    public function testAccountsCreatesTheAccountsGrantNamesInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+
+        $session->query("GRANT ALL ON *.* TO 'g'@'%' IDENTIFIED BY 'x' WITH GRANT OPTION");
+
+        $grants = $session->query("SHOW GRANTS FOR 'g'@'%'")[0];
+        self::assertInstanceOf(ResultSet::class, $grants);
+        self::assertSame([["GRANT ALL PRIVILEGES ON *.* TO 'g'@'%' IDENTIFIED BY PASSWORD '*B69027D44F6E5EDC07F1AEAD1477967B16F28227' WITH GRANT OPTION"]], $grants->rows);
+    }
+
+    public function testAccountsRefusesAnAccountWithoutPasswordUnderNoAutoCreateUser(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query("SET sql_mode = 'NO_AUTO_CREATE_USER'");
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1133);
+        $this->expectExceptionMessage("Can't find any matching row in the user table");
+
+        $session->query("GRANT SELECT ON *.* TO 'g'@'%' IDENTIFIED BY ''");
+    }
+
+    public function testAccountsWarnsOfCreatingAndChangingAccountsInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE USER a');
+
+        $session->query("GRANT SELECT ON *.* TO a, b IDENTIFIED BY PASSWORD '*7B9EBEED26AA52ED10C0F549FA863F13C39E0209' REQUIRE SSL");
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([
+            ['Warning', '1287', "'IDENTIFIED BY PASSWORD' is deprecated and will be removed in a future release. Please use IDENTIFIED WITH <plugin> AS <hash> instead"],
+            ['Warning', '1287', "Using GRANT statement to modify existing user's properties other than privileges is deprecated and will be removed in future release. Use ALTER USER statement for this operation."],
+            ['Warning', '1287', 'Using GRANT for creating new user is deprecated and will be removed in future release. Create new user with CREATE USER statement.'],
+        ], $warnings->rows);
+    }
 }

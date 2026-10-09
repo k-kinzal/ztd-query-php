@@ -115,6 +115,11 @@ final class Calls
     /**
      * Compiles a call of a named built-in function over argument nodes.
      *
+     * A function that settles its character set on that of another argument reads a constant
+     * string argument in another character set once, when the statement is resolved (see
+     * Transcoded); a function such as HEX() that reads the bytes of its only string does not
+     * (verified on a live 8.4.7 server).
+     *
      * @param list<Scalar> $arguments
      *
      * @throws \MySqlMemory\Error\SqlError When the function is unknown or the arguments do not fit
@@ -136,8 +141,13 @@ final class Calls
         if ($routine->resolve !== null) {
             $compiled = ($routine->resolve)(new Frame($this->compiler->connection->context), $compiled, array_map(fn (Scalar $argument): bool => $this->compiler->constancy($argument) === Constancy::Resolved || ($routine->settled && $this->compiler->constancy($argument) === Constancy::Statement), $arguments));
         }
+        $domain = $this->compiler->domain($node);
+        if ($domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && count($compiled) === count($arguments)) {
+            $charsets = array_map(static fn (Evaluable $argument): ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset => $argument->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String ? $argument->domain()->collation->charset : null, $compiled);
+            $compiled = array_map(fn (Evaluable $argument, Scalar $written, int $index): Evaluable => \MySqlMemory\Evaluation\Operator\Transcoded::of($argument, $domain->collation, $this->compiler->constancy($written) === Constancy::Resolved && in_array($domain->collation->charset, array_diff_key($charsets, [$index => null]), true), $this->compiler->connection->context), $compiled, $arguments, array_keys($compiled));
+        }
 
-        return new Call($routine, $compiled, $this->compiler->domain($node)->withSource(strtolower($name)), (new Printer($this->compiler->facts, $this->compiler->settings->database))->expression($node));
+        return new Call($routine, $compiled, $domain->withSource(strtolower($name)), (new Printer($this->compiler->facts, $this->compiler->settings->database))->expression($node));
     }
 
     /**

@@ -47,6 +47,16 @@ final class Rows
      */
     public ?int $generated = null;
 
+    /**
+     * The scope that places the relations of the FROM clause of the query of INSERT ... SELECT, which ON DUPLICATE KEY UPDATE reads after the row that was to be inserted; null when it reads none.
+     */
+    public ?Scope $sources = null;
+
+    /**
+     * @var list<int|float|string|null> The row of the FROM clause of the query the row being written comes from
+     */
+    public array $source = [];
+
     private Writer $writer;
 
     private ?Scope $updateScope = null;
@@ -339,7 +349,7 @@ final class Rows
         $old = $data->rows[$existing];
         $scope = $this->updateScope();
         $zones = new TimestampZones();
-        $frame = new Frame($this->context, [...$zones->local($this->table, $old, $this->context), ...$zones->local($this->table, $new, $this->context)]);
+        $frame = new Frame($this->context, [...$zones->local($this->table, $old, $this->context), ...$zones->local($this->table, $new, $this->context), ...$this->source]);
         $row = $old;
         $store = new Store($this->context, $number, $this->into->table->name->name->value);
         $assigned = [];
@@ -383,7 +393,7 @@ final class Rows
     }
 
     /**
-     * Answers the scope ON DUPLICATE KEY UPDATE compiles in: the existing row, then the row that was to be inserted.
+     * Answers the scope ON DUPLICATE KEY UPDATE compiles in: the existing row, then the row that was to be inserted, then the row of the FROM clause of the query of INSERT ... SELECT.
      */
     public function updateScope(): Scope
     {
@@ -395,6 +405,14 @@ final class Rows
             $scope->place($this->into->table, $domains, $names, $definition);
             if ($this->alias !== null) {
                 $scope->place($this->alias, $domains, $names, $definition);
+            } elseif ($this->sources !== null) {
+                $scope->place($this->into, $domains, $names);
+            }
+            foreach ($this->sources === null ? [] : $this->sources->nodes as $node) {
+                $id = spl_object_id($node);
+                if (isset($this->sources->offsets[$id]) && !isset($scope->offsets[$id])) {
+                    $scope->place($node, $this->sources->columns[$id], $this->sources->names[$id] ?? [], $this->sources->tables[$id] ?? null);
+                }
             }
             $scope->inserted = $definition;
             $this->updateScope = $scope;

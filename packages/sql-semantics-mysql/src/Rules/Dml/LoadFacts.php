@@ -34,6 +34,9 @@ final class LoadFacts
     public function derive(LoadTable $load, Derivation $derivation): void
     {
         $base = $derivation->environment();
+        if ($load->charset?->name !== null) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::charset($load->charset->name->value, $derivation);
+        }
         $fact = $derivation->relation($load->table, $base);
         $environment = new Environment($derivation->context, $base, [new VisibleRelation($load->table, $fact->shape, null, $load->table->name, [], (new TableShapes())->implicit($fact))]);
         foreach ($load->columns as $column) {

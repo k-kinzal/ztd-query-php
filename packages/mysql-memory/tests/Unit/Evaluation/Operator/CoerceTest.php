@@ -105,4 +105,13 @@ final class CoerceTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['E980', 'FC', 'E980', 'é€']], $result->rows);
     }
+
+    public function testBranchConvertsATemporalValueToTheTemporalResult(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT IF(1, DATE'2020-01-02', TIMESTAMP'2020-01-02 03:04:05.5'), CASE WHEN 1 THEN TIMESTAMP'2020-01-02 03:04:05' ELSE TIMESTAMP'2020-01-02 03:04:05.123' END")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2020-01-02 00:00:00.0', '2020-01-02 03:04:05.000']], $result->rows);
+    }
 }

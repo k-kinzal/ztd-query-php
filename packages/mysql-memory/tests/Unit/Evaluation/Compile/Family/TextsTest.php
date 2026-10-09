@@ -256,4 +256,29 @@ final class TextsTest extends TestCase
         self::assertSame([1191, "Can't find FULLTEXT index matching the column list"], [$index[0]->getCode(), $index[0]->getMessage()]);
     }
 
+    public function testRegexpMatchesABinaryStringWithAnotherByteByByteInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $result = $session->query("SELECT 'a' REGEXP _binary 'a', 'A' REGEXP _binary 'a', USER() NOT REGEXP 0x0f")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0', '1']], $result->rows);
+    }
+
+    public function testRegexpMatchesABinaryStringByteByByteInMySql56(): void
+    {
+        $result = (new Instance('5.6.51'))->connect()->query("SELECT 0x0bFeb8 REGEXP 'a', 0x41 REGEXP 'a', 'a' REGEXP 0x61")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '0', '1']], $result->rows);
+    }
+
+    public function testUnmatchedFollowsTheValueOfAConstantPatternInMySql57(): void
+    {
+        $result = (new Instance('5.7.44'))->connect()->query("SELECT 'a' REGEXP USER(), 'a' REGEXP NULLIF('a', 'a'), 'a' REGEXP SYSDATE()")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([1, 0, 0], [$result->columns[0]->flags & 1, $result->columns[1]->flags & 1, $result->columns[2]->flags & 1]);
+    }
 }

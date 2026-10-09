@@ -41,9 +41,16 @@ final class Coerce
 
     /**
      * Converts the branch IF or CASE chose to their result: a decimal keeps the scale of the branch, as the server returns it.
+     *
+     * A temporal value becomes a value of the temporal result, with its fractional digits: a date
+     * gains a midnight time, and a time the current date (verified on a live 8.4 server).
      */
     public static function branch(int|float|string|null $value, Domain $from, Domain $to, Context $context): int|float|string|null
     {
+        if ($value !== null && $to->kind->temporal() && $from->kind->temporal() && ($from->kind !== $to->kind || $from->decimals !== $to->decimals)) {
+            return (new Moments())->convert($value, $from, $to, $context);
+        }
+
         return $to->kind === Kind::Decimal ? Convert::toDecimal($value, $from, $context) : self::to($value, $from, $to, $context);
     }
 

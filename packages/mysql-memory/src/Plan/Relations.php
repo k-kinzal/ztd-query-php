@@ -279,12 +279,15 @@ final class Relations
      *
      * A single query block that reads tables merges, unless it groups, aggregates, removes
      * duplicates, limits its rows or has a window; its columns are then the columns and
-     * expressions it reads, with the keys of the columns.
-     * Source: https://dev.mysql.com/doc/refman/8.4/en/derived-table-optimization.html.
+     * expressions it reads, with the keys of the columns. MySQL 5.6 materializes every derived
+     * table, as merging came with 5.7, so their columns carry no keys there (verified on a live
+     * 5.6.51 server).
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/derived-table-optimization.html,
+     * https://dev.mysql.com/doc/refman/5.7/en/derived-table-optimization.html.
      */
     public function mergeable(\SqlSemantics\Statement\Query $query): bool
     {
-        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->mergeable($query);
+        return $this->planner->settings->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 && (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->mergeable($query);
     }
 
     /**

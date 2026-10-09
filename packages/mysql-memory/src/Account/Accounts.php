@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Account;
 
+use SqlSemantics\Contract\GrammarRelease;
+
 /**
  * The accounts and roles of a server, the roles granted to each, and the default roles of each.
  *
  * A server starts with the accounts of a new installation: root at `localhost` and at `%` with
  * every privilege and GRANT OPTION, root at `localhost` also with PROXY on ''@'', and the locked
  * system accounts mysql.infoschema, mysql.session and mysql.sys with their privileges (verified
- * on a live 8.4 server). Roles are accounts; granting one to an account makes it a role of it,
+ * on a live 8.4 server). MySQL 5.6 starts with the two root accounts only, and 5.7 with them and the
+ * locked accounts mysql.session and mysql.sys; their accounts use mysql_native_password
+ * (verified on live 5.6.51 and 5.7.44 servers). Roles are accounts; granting one to an account makes it a role of it,
  * with or without ADMIN OPTION.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/default-privileges.html,
  * https://dev.mysql.com/doc/refman/8.4/en/roles.html.
@@ -31,18 +35,23 @@ final class Accounts
     /**
      * Answers the accounts of a new installation.
      */
-    public static function installed(): self
+    public static function installed(GrammarRelease $release = GrammarRelease::MySql847): self
     {
         $accounts = new self();
+        $catalog = new Catalog($release);
+        $plugin = (new Credentials($release))->default();
         foreach (['localhost', '%'] as $host) {
-            $root = new Account(new Identity('root', $host));
-            $root->grants->global->add(Catalog::STATIC);
+            $root = new Account(new Identity('root', $host), $plugin);
+            $root->grants->global->add($catalog->statics());
             $root->grants->global->grantOption = true;
-            $root->grants->dynamic = array_fill_keys(Catalog::DYNAMIC, true);
+            $root->grants->dynamic = array_fill_keys($catalog->dynamics(), true);
             if ($host === 'localhost') {
                 $root->grants->proxies[(new Identity('', ''))->key()] = [new Identity('', ''), true];
             }
             $accounts->add($root);
+        }
+        if ($catalog->legacy()) {
+            return $release === GrammarRelease::MySql5651 ? $accounts : $accounts->legacySystem();
         }
         $locked = '$A$005$THISISACOMBINATIONOFINVALIDSALTANDPASSWORDTHATMUSTNEVERBRBEUSED';
         $schema = new Account(new Identity('mysql.infoschema', 'localhost'), hash: $locked, password: null, locked: true);
@@ -62,6 +71,25 @@ final class Accounts
         $accounts->add($sys);
 
         return $accounts;
+    }
+
+    /**
+     * Adds the locked system accounts of MySQL 5.7, mysql.session and mysql.sys, and answers the accounts.
+     */
+    public function legacySystem(): self
+    {
+        $locked = '*THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE';
+        $session = new Account(new Identity('mysql.session', 'localhost'), 'mysql_native_password', $locked, null, locked: true);
+        $session->grants->global->add(['SUPER']);
+        $session->grants->database('performance_schema')->add(['SELECT']);
+        $session->grants->table('mysql', 'user')->add(['SELECT']);
+        $this->add($session);
+        $sys = new Account(new Identity('mysql.sys', 'localhost'), 'mysql_native_password', $locked, null, locked: true);
+        $sys->grants->database('sys')->add(['TRIGGER']);
+        $sys->grants->table('sys', 'sys_config')->add(['SELECT']);
+        $this->add($sys);
+
+        return $this;
     }
 
     /**

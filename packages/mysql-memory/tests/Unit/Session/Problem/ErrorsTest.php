@@ -677,4 +677,34 @@ final class ErrorsTest extends TestCase
 
         self::assertSame([1225, 1221, 'Incorrect usage of SQL_NO_CACHE and SQL_CACHE'], [$twice?->getCode(), $both?->getCode(), $both?->getMessage()]);
     }
+
+    public function testWriteRefusesAnExpressionColumnOfAMergedDerivedTable(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1348);
+        $this->expectExceptionMessage("Column 'a' is not updatable");
+
+        $session->query('UPDATE t, (SELECT a + 1 AS a FROM t AS u) d SET d.a = 1');
+    }
+
+    public function testErrorQuotesTheFirst64BytesOfAnUnknownCollation(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Unknown collation: 'a" . str_repeat('é', 31) . "?'");
+
+        $session->query('SELECT 1 COLLATE `a' . str_repeat('é', 70) . '`');
+    }
+
+    public function testErrorRefusesAVariableThatIsNotStructuredInMySql56(): void
+    {
+        $answers = (new Instance('5.6.51'))->connect()->run('SELECT @@x.sql_mode');
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame([1272, "Variable 'sql_mode' is not a variable component (can't be used as XXXX.variable_name)"], [$answers[0]->getCode(), $answers[0]->getMessage()]);
+    }
 }

@@ -91,7 +91,7 @@ final class RevokeCommand implements Command
         assert($statement instanceof RevokePrivileges);
         $names = new Names($session->settings()->release());
         $names->check($names->users($statement->users));
-        $levels = new Levels();
+        $levels = new Levels($session->settings()->release());
         $levels->parsed($operation, $session);
         $target = $levels->target($statement->kind, $statement->level, $session);
         $levels->dynamic($statement->privileges, $target, $session, $statement->ifExists);
@@ -99,7 +99,7 @@ final class RevokeCommand implements Command
         $levels->usage($operation);
         [$static, $columns, $dynamic, $option, $all] = $levels->read($statement->privileges, $target[0]);
         foreach ($dynamic as $name) {
-            if (!(new Catalog())->registered($name)) {
+            if (!(new Catalog($session->settings()->release()))->registered($name)) {
                 $session->diagnostics->warning(AccountError::UnregisteredDynamicPrivilege, AccountError::UnregisteredDynamicPrivilege->message($name));
             }
         }
@@ -129,7 +129,7 @@ final class RevokeCommand implements Command
         if ($static === [] && $columns === [] && !$option && !$all) {
             return;
         }
-        $privileges = (new Levels())->at($account->grants, $target, false);
+        $privileges = (new Levels($session->settings()->release()))->at($account->grants, $target, false);
         if ($target[0] !== 'GLOBAL' && ($privileges === null || !$this->holds($privileges, $static, $columns, $option, $all))) {
             $error = $this->missing($account->identity, $target);
             if (!$ifExists) {
@@ -142,7 +142,7 @@ final class RevokeCommand implements Command
         if ($privileges === null) {
             return;
         }
-        $privileges->remove($all ? (new Levels())->all($target[0]) : $static);
+        $privileges->remove($all ? (new Levels($session->settings()->release()))->all($target[0]) : $static);
         foreach ($columns as $name => $listed) {
             $privileges->removeColumns($name, $listed);
         }
@@ -231,6 +231,10 @@ final class RevokeCommand implements Command
     /**
      * Revokes roles.
      *
+     * IF EXISTS warns of each role that does not exist once for each account the statement names
+     * that exists, as often as it names it; an account that does not exist warns of itself in its
+     * place under IGNORE UNKNOWN USER (verified on a live 8.4 server).
+     *
      * @throws SqlError When an account or a role does not exist
      */
     public function roles(RevokeRoles $statement, Operation $operation, Session $session): void
@@ -238,7 +242,7 @@ final class RevokeCommand implements Command
         $names = new Names($session->settings()->release());
         $listed = array_map(static fn ($role): ?AccountName => $role instanceof GrantedRole ? $role->role : null, $statement->roles);
         $names->check([...$listed, ...$statement->users]);
-        (new Levels())->parsed($operation, $session);
+        (new Levels($session->settings()->release()))->parsed($operation, $session);
         $accounts = $session->instance->accounts;
         foreach ($statement->users as $user) {
             $identity = $names->identity($user, $session);
@@ -247,18 +251,31 @@ final class RevokeCommand implements Command
             }
         }
         $roles = [];
+        $unknown = [];
         foreach ($listed as $role) {
             $identity = $role === null ? null : $names->identity($role, $session);
             if ($identity !== null && $accounts->find($identity) === null) {
                 if (!$statement->ifExists) {
                     throw AccountError::UnknownAuthorizationId->error($identity->backquoted());
                 }
-                $session->diagnostics->warning(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($identity->backquoted()));
+                $unknown[] = $identity;
                 continue;
             }
             $roles[] = $identity;
         }
-        $found = $this->found($statement->users, true, $session, false);
+        $existing = [];
+        foreach ($statement->users as $user) {
+            $identity = $names->identity($user, $session);
+            if ($accounts->find($identity) === null) {
+                $session->diagnostics->warning(AccountError::UserDoesNotExist, AccountError::UserDoesNotExist->message($identity->user));
+                continue;
+            }
+            $existing[] = $user;
+            foreach ($unknown as $role) {
+                $session->diagnostics->warning(AccountError::UnknownAuthorizationId, AccountError::UnknownAuthorizationId->message($role->backquoted()));
+            }
+        }
+        $found = $this->found($existing, true, $session, false);
         foreach ($found as $account) {
             foreach ($roles as $role) {
                 if ($role !== null) {

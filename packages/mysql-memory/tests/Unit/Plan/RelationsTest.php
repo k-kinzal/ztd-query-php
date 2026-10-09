@@ -495,4 +495,16 @@ final class RelationsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $read1);
         self::assertSame([['d'], ['information_schema']], $read1->rows);
     }
+
+    public function testMergeableMaterializesEveryDerivedTableInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY)');
+        $result = $session->query('SELECT x.id FROM (SELECT * FROM t) x')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(\MySqlMemory\Result\ColumnFlag::NotNull->value, $result->columns[0]->flags & (\MySqlMemory\Result\ColumnFlag::NotNull->value | \MySqlMemory\Result\ColumnFlag::PrimaryKey->value));
+    }
 }

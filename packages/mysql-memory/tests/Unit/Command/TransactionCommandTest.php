@@ -122,4 +122,93 @@ final class TransactionCommandTest extends TestCase
 
         self::assertSame([true, \MySqlMemory\Concurrency\Isolation::Serializable, true], [$session->transaction->open, $session->transaction->isolation, $session->transaction->readOnly]);
     }
+
+    public function testExecuteWarnsThatAConsistentSnapshotNeedsRepeatableReadInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED');
+        $session->query('START TRANSACTION WITH CONSISTENT SNAPSHOT');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '138', 'InnoDB: WITH CONSISTENT SNAPSHOT was ignored because this phrase can only be used with REPEATABLE READ isolation level.']], $warnings->rows);
+    }
+
+    public function testExecuteWarnsThatASnapshotIsIgnoredBelowRepeatableReadInMySql84(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED');
+
+        $reply = $session->query('START TRANSACTION WITH CONSISTENT SNAPSHOT')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame([['Warning', 138, 'InnoDB: WITH CONSISTENT SNAPSHOT was ignored because this phrase can only be used with REPEATABLE READ isolation level.']], $session->diagnostics->conditions);
+    }
+
+    public function testEndReleasesTheSessionAfterCommitRelease(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+
+        $replies = $session->query('COMMIT RELEASE; SELECT 1');
+
+        self::assertCount(1, $replies);
+        self::assertTrue($session->released);
+        $this->expectExceptionCode(2006);
+        $this->expectExceptionMessage('MySQL server has gone away');
+
+        $session->query('SELECT 1');
+    }
+
+    public function testEndReleasesTheSessionWhenCompletionTypeIsReleaseWhateverChainIsWritten(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET completion_type = 2');
+
+        $session->query('ROLLBACK AND CHAIN');
+
+        self::assertTrue($session->released);
+    }
+
+    public function testEndKeepsTheSessionForNoRelease(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET completion_type = 2');
+
+        $session->query('COMMIT NO RELEASE');
+
+        self::assertFalse($session->released);
+    }
+
+    public function testEndChainsATransactionWhenCompletionTypeIsChain(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET completion_type = 'CHAIN'");
+        $session->query('BEGIN');
+        $session->query('COMMIT');
+
+        $this->expectExceptionCode(1568);
+
+        $session->query('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
+    }
+
+    public function testEndDoesNotChainForAndNoChain(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET completion_type = 'CHAIN'");
+
+        $session->query('COMMIT AND NO CHAIN');
+
+        self::assertFalse($session->transaction->active());
+    }
+
+    public function testRollbackWarnsAboutATemporaryTableItCannotDrop(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('BEGIN');
+        $session->query('CREATE TEMPORARY TABLE tt (a INT)');
+
+        $session->query('ROLLBACK');
+
+        self::assertSame([['Warning', 1751, 'The creation of some temporary tables could not be rolled back.']], $session->diagnostics->conditions);
+    }
 }

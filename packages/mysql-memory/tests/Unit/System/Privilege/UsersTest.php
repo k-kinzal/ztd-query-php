@@ -38,4 +38,15 @@ final class UsersTest extends TestCase
 
         self::assertSame('{"Password_locking": {"failed_login_attempts": 3, "password_lock_time_days": 2}}', Users::attributes($account));
     }
+
+    public function testRowsKeepsTheStringOfMySqlNativePasswordInThePasswordColumnOfMySql56(): void
+    {
+        $s = (new Instance('5.6.51'))->connect();
+        $s->query("CREATE USER u IDENTIFIED BY 'p'");
+
+        $rows = $s->query("SELECT Password, authentication_string, plugin FROM mysql.user WHERE User = 'u'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $rows);
+        self::assertSame([['*7B9EBEED26AA52ED10C0F549FA863F13C39E0209', '', 'mysql_native_password']], $rows->rows);
+    }
 }

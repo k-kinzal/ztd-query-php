@@ -16,6 +16,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Fact\Warning;
@@ -23,6 +24,7 @@ use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Shape\Field;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 #[CoversClass(SelectFacts::class)]
@@ -101,5 +103,19 @@ final class SelectFactsTest extends TestCase
 
         self::assertSame([Deprecated::NoCache->value, Deprecated::GroupByDirection->value, Deprecated::GroupByDirection->value, Deprecated::ProcedureAnalyse->value], array_map(static fn (Warning $warning): string => $warning->message(), $operation->facts->warnings));
         self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 FROM t GROUP BY 1 DESC PROCEDURE ANALYSE()')->facts->warnings);
+    }
+
+    public function testTabledMakesATemporalValueBinaryInAGroupedBlock(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $t = $semantics->analyze('CREATE TABLE t (e DATE)');
+        $grouped = $semantics->analyze('SELECT IFNULL(e, e) FROM t GROUP BY e', [$t])->facts->output?->fields()?->at(0)->type;
+        $plain = $semantics->analyze('SELECT IFNULL(e, e) FROM t', [$t])->facts->output?->fields()?->at(0)->type;
+
+        self::assertInstanceOf(Known::class, $grouped);
+        self::assertInstanceOf(Domain::class, $grouped->descriptor);
+        self::assertInstanceOf(Known::class, $plain);
+        self::assertInstanceOf(Domain::class, $plain->descriptor);
+        self::assertSame(['binary', 'utf8mb4_0900_ai_ci'], [$grouped->descriptor->collation->name, $plain->descriptor->collation->name]);
     }
 }

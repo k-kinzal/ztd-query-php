@@ -64,4 +64,11 @@ final class ResultsTest extends TestCase
 
         self::assertSame([Nullability::NotNull, Nullability::Nullable], [(new Results())->refine('USER', [], [], $fact, $legacy)->nullability, (new Results())->refine('USER', [], [], $fact, $modern)->nullability]);
     }
+
+    public function testPropagatedAnswersMostStringFunctionsAsNotNullOfNotNullArgumentsInMySql56(): void
+    {
+        $query = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("SELECT CONCAT('a'), REPEAT('a', 2), LOWER(NULL)");
+
+        self::assertSame([Nullability::NotNull, Nullability::NotNull, Nullability::Nullable], [$query->field(0)->nullability, $query->field(1)->nullability, $query->field(2)->nullability]);
+    }
 }

@@ -11,6 +11,7 @@ use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Evaluation\Compile\Compiler;
 use MySqlMemory\Evaluation\Compile\Constancy;
+use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -40,6 +41,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\SoundsLike;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 /**
@@ -270,7 +272,8 @@ final class Texts
      * (ER_CHARACTER_SET_MISMATCH) that names the binary side 'binary' and the other by its
      * collation; a value that is no string mixes with either (verified on a live 8.4 server).
      * MySQL 8.0 and later match as REGEXP_LIKE does, with ICU (see Patterns); MySQL 5.6 and 5.7
-     * match with the Henry Spencer library, approximated here by PCRE.
+     * match with the Henry Spencer library, approximated here by PCRE, and match a binary string
+     * with any other byte by byte (verified on live 5.6.51 and 5.7.44 servers).
      * Source: https://dev.mysql.com/doc/refman/8.4/en/regexp.html#operator_regexp.
      *
      * @throws \MySqlMemory\Error\SqlError When the collations do not mix
@@ -280,7 +283,7 @@ final class Texts
         $subject = $this->compiler->compile($node->operand, $scope);
         $pattern = $this->compiler->compile($node->pattern, $scope);
         $sides = array_map(static fn (Domain $domain): ?string => $domain->kind !== Kind::String ? null : ($domain->collation->charset === Charset::binary() ? 'binary' : $domain->collation->name), [$subject->domain(), $pattern->domain()]);
-        if ($sides[0] !== null && $sides[1] !== null && ($sides[0] === 'binary') !== ($sides[1] === 'binary')) {
+        if ($sides[0] !== null && $sides[1] !== null && ($sides[0] === 'binary') !== ($sides[1] === 'binary') && !$this->compiler->settings->legacy()) {
             throw DataError::CharacterSetMismatch->error($sides[0], $sides[1], 'regexp_like');
         }
         [$collation] = Collations::aggregate([$subject->domain(), $pattern->domain()], 'regexp_like', $this->compiler->settings->connectionCollation, true);
@@ -296,16 +299,20 @@ final class Texts
             });
         }
 
-        return $this->call('REGEXP', [$subject, $pattern], $domain, static function (Frame $f, array $a) use ($collation, $negated): ?int {
+        $binary = $collation->charset === Charset::binary() || in_array('binary', $sides, true);
+        $domain = $domain->withNullable($this->unmatched($node, $subject, $pattern));
+
+        return $this->call('REGEXP', [$subject, $pattern], $domain, static function (Frame $f, array $a) use ($collation, $binary, $negated): ?int {
             $text = Convert::toText($a[0]->evaluate($f), $a[0]->domain());
             $expression = Convert::toText($a[1]->evaluate($f), $a[1]->domain());
             if ($text === null || $expression === null) {
                 return null;
             }
             $strings = new Strings();
-            $text = Encoding::convert($text, $strings->charset($a[0]->domain()), Charset::known('utf8mb4'));
-            $expression = Encoding::convert($expression, $strings->charset($a[1]->domain()), Charset::known('utf8mb4'));
-            $flags = $collation->binaryOrder() || str_ends_with($collation->name, '_cs') ? 'u' : 'ui';
+            $bytes = $binary;
+            $text = $bytes ? $text : Encoding::convert($text, $strings->charset($a[0]->domain()), Charset::known('utf8mb4'));
+            $expression = $bytes ? $expression : Encoding::convert($expression, $strings->charset($a[1]->domain()), Charset::known('utf8mb4'));
+            $flags = $bytes ? '' : ($collation->binaryOrder() || str_ends_with($collation->name, '_cs') ? 'u' : 'ui');
             set_error_handler(static fn (): bool => true);
             try {
                 $matched = preg_match('/' . str_replace('/', '\\/', $expression) . '/' . $flags, $text);
@@ -318,6 +325,32 @@ final class Texts
 
             return ($matched === 1) !== $negated ? 1 : 0;
         });
+    }
+
+    /**
+     * Answers whether a match of MySQL 5.6 or 5.7 can be NULL, which they decide when they resolve the statement.
+     *
+     * The match can be NULL when the matched expression can; when the pattern varies by row, or
+     * holds a subquery that reads a table; or when the value of a constant pattern, which the
+     * server evaluates then, is NULL. A user variable, a system variable, a parameter and an
+     * account function are constant (verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @throws \MySqlMemory\Error\SqlError When evaluating the pattern is an error
+     */
+    public function unmatched(Regexp $node, Evaluable $subject, Evaluable $pattern): bool
+    {
+        $constancy = $this->compiler->constancy($node->pattern);
+        if ($subject->domain()->nullable || $constancy === Constancy::Row) {
+            return true;
+        }
+        if (!$pattern->domain()->nullable) {
+            return false;
+        }
+        if ($constancy === Constancy::Statement && (new Walker())->find($node->pattern, Query::class) !== []) {
+            return true;
+        }
+
+        return $pattern->evaluate(new Frame($this->compiler->connection->context)) === null;
     }
 
     /**

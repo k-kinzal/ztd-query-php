@@ -121,8 +121,8 @@ final class RoutineCommand implements Command
             $statement->name->name->value,
             ProgramSource::definer($statement->definer, $session, $context),
             $source->between($function ? 'sf_tail' : 'sp_tail'),
-            $statement instanceof CreateFunction ? $this->returns($statement, $schema) : '',
-            $source->body('stored_routine_body'),
+            $statement instanceof CreateFunction ? $this->returns($statement, $schema, $session->settings()->release()) : '',
+            $source->tree->find('stored_routine_body') === [] ? rtrim(rtrim($source->body('sp_proc_stmt'), ';')) : $source->body('stored_routine_body'),
             $access,
             $deterministic,
             $security,
@@ -198,9 +198,9 @@ final class RoutineCommand implements Command
     }
 
     /**
-     * Writes the type a function returns as SHOW CREATE writes it: the type of a column, with the character set of a string and a collation that is not its default.
+     * Writes the type a function returns as SHOW CREATE writes it: the type of a column, with the character set of a string and a collation that is not its default, as the release names them (verified on live 5.7.44 and 8.4 servers).
      */
-    public function returns(CreateFunction $statement, Schema $schema): string
+    public function returns(CreateFunction $statement, Schema $schema, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): string
     {
         $default = Collation::named($schema->collation) ?? Collation::known('utf8mb4_0900_ai_ci');
         $collation = $statement->collation?->name === null ? null : Collation::named($statement->collation->name->value);
@@ -208,12 +208,12 @@ final class RoutineCommand implements Command
         if ($collation !== null && $domain->kind === Kind::String && !$domain->collation->bytes()) {
             $domain = $domain->withCollation($collation, $domain->coercibility);
         }
-        $text = (new ColumnText())->type($domain, $statement->returns);
+        $text = (new ColumnText($release))->type($domain, $statement->returns);
         if (($domain->kind !== Kind::String && $domain->kind !== Kind::Json) || $domain->collation->bytes() || $domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Json) {
             return $text;
         }
         $charset = $domain->collation->charset;
 
-        return $text . ' CHARSET ' . $charset->name . ($charset->defaultCollation(\SqlSemantics\Contract\GrammarRelease::MySql847)->name === $domain->collation->name ? '' : ' COLLATE ' . $domain->collation->name);
+        return $text . ' CHARSET ' . $charset->nameIn($release) . ($charset->defaultCollation(\SqlSemantics\Contract\GrammarRelease::MySql847)->name === $domain->collation->name ? '' : ' COLLATE ' . $domain->collation->nameIn($release));
     }
 }

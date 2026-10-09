@@ -64,7 +64,7 @@ final class Locations
      */
     public function located(Operation $operation, array $calls, array $diagnostics, Session $session): array
     {
-        $locator = (new Locator($session->settings()->release() === GrammarRelease::MySql8044))->statement($operation->statement);
+        $locator = (new Locator($session->settings()->release() === GrammarRelease::MySql8044, $session->settings()->release()))->statement($operation->statement);
         [$located, $matched] = $this->names($operation, $locator, $calls, $diagnostics);
         foreach ($locator->arrays as [$cast, $clause, $at]) {
             $refusal = new NotSupportedYet(Cast::ARRAY_OUTSIDE_INDEX);
@@ -76,6 +76,13 @@ final class Locations
         $located = $this->windows($locator, $diagnostics, $located);
         $located = $this->misplaced($locator, $located);
         $located = $this->sets($operation, $locator, $diagnostics, $located);
+        $common = (new IndexHints())->common($operation->statement);
+        foreach ($locator->hinted as [$reference, $order]) {
+            $refusal = (new IndexHints())->refusal($reference, $common, $session);
+            if ($refusal !== null) {
+                $located[spl_object_id($refusal)] = [$refusal, ['field list', $order]];
+            }
+        }
 
         return [$this->widths($operation, $locator, $diagnostics, $located), $matched];
     }

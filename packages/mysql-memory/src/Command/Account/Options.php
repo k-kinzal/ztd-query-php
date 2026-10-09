@@ -35,7 +35,8 @@ use SqlSemantics\Statement\Operation;
  * plugin, which must be loaded, or keeps the plugin of the account; a password is stored as the
  * plugin stores it and clears an expired password, a random password is generated and answered,
  * an authentication string is taken as it is, and a plugin named without a credential empties
- * the password and, in ALTER USER, expires it (verified on a live 8.4 server).
+ * the password and, in ALTER USER, expires it (verified on a live 8.4 server). MySQL 5.6 takes
+ * the string of IDENTIFIED WITH … AS as it is (verified on a live 5.6.51 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html,
  * https://dev.mysql.com/doc/refman/8.4/en/alter-user.html.
  *
@@ -43,6 +44,13 @@ use SqlSemantics\Statement\Operation;
  */
 final class Options
 {
+    /**
+     * @param \SqlSemantics\Contract\GrammarRelease $release The release whose plugins are loaded
+     */
+    public function __construct(public readonly \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847)
+    {
+    }
+
     /**
      * Raises the first problem the server finds while it parses the options of a statement, quoting the text of the statement from a number it refuses.
      *
@@ -74,9 +82,9 @@ final class Options
         if ($identification === null) {
             return;
         }
-        $credentials = new Credentials();
+        $credentials = new Credentials($this->release);
         $name = $identification->plugin === null ? $plugin : $credentials->plugin($identification->plugin->value);
-        if ($identification->credential === Credential::Hash || $identification->credential === Credential::PasswordHash) {
+        if ($identification->credential === Credential::PasswordHash || ($identification->credential === Credential::Hash && $this->release !== \SqlSemantics\Contract\GrammarRelease::MySql5651)) {
             $credentials->check($name, $identification->secret->value ?? '');
         }
     }
@@ -90,7 +98,7 @@ final class Options
      */
     public function identify(Account $account, Identification $identification, bool $altered): ?string
     {
-        $credentials = new Credentials();
+        $credentials = new Credentials($this->release);
         $account->plugin = $identification->plugin === null ? $account->plugin : $credentials->plugin($identification->plugin->value);
         $secret = $identification->secret->value ?? '';
         $generated = null;
@@ -103,7 +111,9 @@ final class Options
                 return null;
             case Credential::Hash:
             case Credential::PasswordHash:
-                $credentials->check($account->plugin, $secret);
+                if ($identification->credential === Credential::PasswordHash || $this->release !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+                    $credentials->check($account->plugin, $secret);
+                }
                 $account->hash = $secret;
                 $account->password = $secret === '' ? '' : null;
                 $account->expired = false;

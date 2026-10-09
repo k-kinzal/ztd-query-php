@@ -31,9 +31,21 @@ final class Deprecation implements Warning
 
     /**
      * @param Deprecated $construct The construct warned about
+     * @param string $text The text of the warning when it names the construct, or an empty string for the text of the construct
      */
-    public function __construct(public readonly Deprecated $construct)
+    public function __construct(public readonly Deprecated $construct, public readonly string $text = '')
     {
+    }
+
+    /**
+     * Records the warning of a system variable the release deprecates, which names the variable and the one to use instead, if any.
+     */
+    public static function variable(string $name, Derivation $derivation): void
+    {
+        $text = (new \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\DeprecatedVariables())->warning($name, $derivation->context->profile->grammar);
+        if ($text !== null) {
+            $derivation->warn(new self(Deprecated::SystemVariable, $text));
+        }
     }
 
     /**
@@ -47,7 +59,7 @@ final class Deprecation implements Warning
     }
 
     /**
-     * Records the warning of a character set name an expression writes: the alias utf8, or utf8mb3.
+     * Records the warning of a character set name an expression writes: the alias utf8, utf8mb3, or ucs2.
      *
      * An introducer, CONVERT ... USING and CAST ... CHARACTER SET warn about the name; a
      * collation name does not (verified on a live 8.4 server).
@@ -57,6 +69,7 @@ final class Deprecation implements Warning
         $construct = match (strtolower($name)) {
             'utf8' => Deprecated::Utf8Alias,
             'utf8mb3' => Deprecated::Utf8mb3,
+            'ucs2' => Deprecated::Ucs2,
             default => null,
         };
         if ($construct !== null) {
@@ -77,6 +90,6 @@ final class Deprecation implements Warning
      */
     public function message(): string
     {
-        return $this->construct->value;
+        return $this->text === '' ? $this->construct->value : $this->text;
     }
 }

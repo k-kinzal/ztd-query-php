@@ -199,4 +199,12 @@ final class ColumnResolverTest extends TestCase
         self::assertSame([$input], $resolution->relations);
         self::assertCount(2, $resolution->missing);
     }
+
+    public function testFindRefusesAQualifierThatNamesAnotherDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, null, null, \SqlSemantics\Contract\ParameterStyle::Native, new \SqlSemantics\Contract\SearchPath('d'));
+        $t = $semantics->analyze('CREATE TABLE t (a INT)');
+
+        self::assertSame([0, 1], [count($semantics->analyze('SELECT d.t.a FROM t', [$t])->facts->diagnostics), count($semantics->analyze('SELECT a FROM t WHERE e.t.a = 1', [$t])->facts->diagnostics)]);
+    }
 }

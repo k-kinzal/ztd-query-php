@@ -176,12 +176,25 @@ final class Names
     }
 
     /**
-     * Records the warning that a host name cannot match when names are not resolved.
+     * Answers the note that an account does not exist (ER_USER_DOES_NOT_EXIST), or with $exists that it exists (ER_USER_ALREADY_EXISTS): MySQL 5.7 names it a user, later releases an authorization ID (verified on live 5.7.44 and 8.4 servers).
+     */
+    public function existence(Identity $identity, bool $exists): string
+    {
+        $error = $exists ? AccountError::UserAlreadyExists : AccountError::UserDoesNotExist;
+        if ($this->release !== GrammarRelease::MySql5744) {
+            return $error->message($identity->quoted());
+        }
+
+        return 'User ' . $identity->quoted() . ($exists ? ' already exists.' : ' does not exist.');
+    }
+
+    /**
+     * Records the warning that a host name cannot match when names are not resolved; MySQL 5.6 does not warn of `localhost` (verified on a live 5.6.51 server).
      */
     public function resolve(Identity $identity, Diagnostics $diagnostics): void
     {
         $host = $identity->host;
-        if ($host === '' || strpbrk($host, '%_:') !== false || preg_match('/\A[0-9.\/]+\z/', $host) === 1) {
+        if ($host === '' || ($this->release === GrammarRelease::MySql5651 && strtolower($host) === 'localhost') || strpbrk($host, '%_:') !== false || preg_match('/\A[0-9.\/]+\z/', $host) === 1) {
             return;
         }
         $diagnostics->warning(AccountError::HostnameWontWork, AccountError::HostnameWontWork->message());

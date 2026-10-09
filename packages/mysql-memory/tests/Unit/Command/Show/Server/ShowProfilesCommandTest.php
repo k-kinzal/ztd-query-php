@@ -63,4 +63,14 @@ final class ShowProfilesCommandTest extends TestCase
         self::assertSame([1327, 'Undeclared variable: abc'], [$error->getCode(), $error->getMessage()]);
         self::assertSame([['Error', '1327', 'Undeclared variable: abc']], $warnings->rows);
     }
+
+    public function testExecuteWritesTheNarrowerNumbersOfMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $result = $session->query('SHOW PROFILES')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([10, 8], [$result->columns[0]->length, $result->columns[1]->length]);
+    }
 }

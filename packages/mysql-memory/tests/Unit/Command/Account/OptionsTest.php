@@ -86,4 +86,13 @@ final class OptionsTest extends TestCase
     {
         self::assertSame([4294967295, 0, 70000, 15], [(new Options())->number(new Numeral('18446744073709551616')), (new Options())->number(new Numeral('4294967296')), (new Options())->number(new Numeral('70000')), (new Options())->number(new Numeral('0f', true))]);
     }
+
+    public function testCheckTakesTheStringOfAsAsItIsInMySql56(): void
+    {
+        $account = new Account(new Identity('u', '%'), 'mysql_native_password');
+
+        (new Options(\SqlSemantics\Contract\GrammarRelease::MySql5651))->identify($account, new Identification(new Name('mysql_native_password'), Credential::Hash, new Text('abc')), false);
+
+        self::assertSame('abc', $account->hash);
+    }
 }

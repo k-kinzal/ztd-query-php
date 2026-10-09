@@ -100,4 +100,19 @@ final class NamesTest extends TestCase
     {
         self::assertSame([[16, 60], [32, 60], [32, 255]], [(new Names(GrammarRelease::MySql5651))->limits(), (new Names(GrammarRelease::MySql5744))->limits(), (new Names())->limits()]);
     }
+
+    public function testResolveDoesNotWarnOfLocalhostInMySql56(): void
+    {
+        $diagnostics = new Diagnostics();
+
+        (new Names(GrammarRelease::MySql5651))->resolve(new Identity('u', 'localhost'), $diagnostics);
+        (new Names(GrammarRelease::MySql5744))->resolve(new Identity('u', 'localhost'), $diagnostics);
+
+        self::assertCount(1, $diagnostics->conditions);
+    }
+
+    public function testExistenceNamesAUserInMySql57(): void
+    {
+        self::assertSame("User 'a'@'%' does not exist.", (new Names(GrammarRelease::MySql5744))->existence(new Identity('a', '%'), false));
+    }
 }

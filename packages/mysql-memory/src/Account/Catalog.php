@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Account;
 
+use SqlSemantics\Contract\GrammarRelease;
+
 /**
  * The privileges the server knows: the static privileges in the order it writes them, the levels each fits, and the dynamic privileges it registers.
  *
  * The dynamic privileges are those a server without plugins or components registers (verified
- * on a live 8.4 server).
- * Source: https://dev.mysql.com/doc/refman/8.4/en/privileges-provided.html.
+ * on a live 8.4 server). MySQL 5.6 and 5.7 have neither CREATE ROLE and DROP ROLE nor dynamic
+ * privileges (verified on live 5.6.51 and 5.7.44 servers).
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/privileges-provided.html,
+ * https://dev.mysql.com/doc/refman/5.7/en/privileges-provided.html.
  *
  * @visibility MySqlMemory
  */
@@ -51,6 +55,44 @@ final class Catalog
     ];
 
     /**
+     * @param GrammarRelease $release The release whose privileges are known
+     */
+    public function __construct(public readonly GrammarRelease $release = GrammarRelease::MySql847)
+    {
+    }
+
+    /**
+     * Answers the static privileges of the release, in the order SHOW GRANTS writes them.
+     *
+     * @return list<string>
+     *
+     * @example MySQL 5.7 has no role privileges
+     *     in_array('CREATE ROLE', (new \MySqlMemory\Account\Catalog(\SqlSemantics\Contract\GrammarRelease::MySql5744))->statics(), true) // => false
+     */
+    public function statics(): array
+    {
+        return $this->legacy() ? array_values(array_diff(self::STATIC, ['CREATE ROLE', 'DROP ROLE'])) : self::STATIC;
+    }
+
+    /**
+     * Answers the dynamic privileges the release registers, in name order.
+     *
+     * @return list<string>
+     */
+    public function dynamics(): array
+    {
+        return $this->legacy() ? [] : self::DYNAMIC;
+    }
+
+    /**
+     * Tells whether the release is MySQL 5.6 or 5.7.
+     */
+    public function legacy(): bool
+    {
+        return $this->release === GrammarRelease::MySql5651 || $this->release === GrammarRelease::MySql5744;
+    }
+
+    /**
      * Tells whether a dynamic privilege is registered, by its name in any case.
      *
      * @example A registered privilege
@@ -58,7 +100,7 @@ final class Catalog
      */
     public function registered(string $name): bool
     {
-        return in_array(strtoupper($name), self::DYNAMIC, true);
+        return in_array(strtoupper($name), $this->dynamics(), true);
     }
 
     /**

@@ -19,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as ResolvedDomain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as ResolvedField;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -102,7 +103,8 @@ final class ResultSlots
      *
      * The server settles the columns of all the operands of nested set operations at once, so a
      * TEXT or BLOB column of an operand that is itself a set operation, which already counts its
-     * length in bytes, is counted in characters again (verified on a live 8.4 server).
+     * length in bytes, is counted in characters again, and a column NULL in every row of such an
+     * operand takes no part (verified on a live 8.4 server).
      *
      * @param array{bool, bool} $combined Whether each operand is itself a set operation
      */
@@ -110,7 +112,11 @@ final class ResultSlots
     {
         $domains = (new Precision())->all([$left, $right]);
         if ($domains !== null) {
-            $domains = array_map(static fn (ResolvedDomain $domain, bool $combined): ResolvedDomain => $combined && $domain->kind === Kind::String && $domain->field === ResolvedField::Blob ? (new Materialization())->text($domain, intdiv($domain->length, $domain->collation->charset->maxLength)) : $domain, $domains, $combined);
+            $domains = array_map(static fn (ResolvedDomain $domain, bool $combined): ResolvedDomain => match (true) {
+                $combined && $domain->kind === Kind::String && $domain->length === 0 && $domain->coercibility === Coercibility::Ignorable && $domain->collation->bytes() => ResolvedDomain::null(),
+                $combined && $domain->kind === Kind::String && $domain->field === ResolvedField::Blob => (new Materialization())->text($domain, intdiv($domain->length, $domain->collation->charset->maxLength)),
+                default => $domain,
+            }, $domains, $combined);
         }
         $domain = $domains === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of($domains, 'UNION', $derivation);
 

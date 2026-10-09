@@ -104,4 +104,34 @@ final class DiagnosticsCommandTest extends TestCase
         self::assertSame(3004, $error->getCode());
         self::assertSame(['1292'], array_column($warnings->rows, 1));
     }
+
+    public function testExecuteAddsTheErrorOfAConditionNumberThatNamesNoColumnAndSucceeds(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('DO 1');
+
+        $reply = $session->query('GET DIAGNOSTICS CONDITION nosuch @v = MESSAGE_TEXT')[0];
+
+        self::assertInstanceOf(Completion::class, $reply);
+        self::assertSame([['Error', 1054, "Unknown column 'nosuch' in 'field list'"]], $session->diagnostics->conditions);
+        self::assertNull($session->variables->user('v')[0]);
+    }
+
+    public function testAssignSetsAUserVariable(): void
+    {
+        $session = (new Instance())->connect();
+
+        (new DiagnosticsCommand())->assign([[new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('v')), 3, Domain::integer()]], $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        self::assertSame(3, $session->variables->user('v')[0]);
+    }
+
+    public function testAssignRefusesAVariableNoProgramDeclares(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectExceptionCode(1327);
+
+        (new DiagnosticsCommand())->assign([[new \SqlSemantics\Statement\Identifier\Name('v'), 3, Domain::integer()]], $session, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+    }
 }

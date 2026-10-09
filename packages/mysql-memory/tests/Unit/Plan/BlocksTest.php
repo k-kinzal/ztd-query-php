@@ -297,42 +297,6 @@ final class BlocksTest extends TestCase
         self::assertSame(['', 16], [$ordered->columns[0]->table, $ordered->columns[0]->flags & 16]);
     }
 
-    public function testOriginReportsTheColumnDefaultReads(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (id INT AUTO_INCREMENT PRIMARY KEY, a INT DEFAULT 5)');
-        $result = $session->query('SELECT DEFAULT(x.a), DEFAULT(id), DEFAULT(a) + 0 FROM t AS x')[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame(['a', 'x', 't', 'd'], [$result->columns[0]->originalName, $result->columns[0]->table, $result->columns[0]->originalTable, $result->columns[0]->schema]);
-        self::assertSame([1, ''], [$result->columns[1]->flags & 1, $result->columns[2]->table]);
-    }
-
-    public function testOriginReportsTheBaseColumnThroughTheAliasOfItsTable(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT)');
-        $result = $session->query('SELECT x.a AS c, a + 1 FROM t AS x')[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame(['c', 'a', 'x', 't', 'd'], [$result->columns[0]->name, $result->columns[0]->originalName, $result->columns[0]->table, $result->columns[0]->originalTable, $result->columns[0]->schema]);
-        self::assertSame(['', '', '', ''], [$result->columns[1]->originalName, $result->columns[1]->table, $result->columns[1]->originalTable, $result->columns[1]->schema]);
-    }
-
-    public function testOriginReportsTheAliasOfADerivedTable(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT)');
-        $result = $session->query('SELECT x.a FROM (SELECT a FROM t) AS x')[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame(['a', 'x'], [$result->columns[0]->name, $result->columns[0]->table]);
-    }
-
     public function testWhereEvaluatesAConstantConjunctOnceBeforeAnyRow(): void
     {
         $session = (new Instance())->connect();
@@ -443,20 +407,6 @@ final class BlocksTest extends TestCase
         self::assertCount(2, $keys);
     }
 
-    public function testOriginsDropTheKeyFlagsOfABufferedResult(): void
-    {
-        $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d');
-        $session->query('USE d');
-        $session->query('CREATE TABLE t (a INT PRIMARY KEY)');
-        $buffered = $session->query('SELECT SQL_BUFFER_RESULT a FROM t')[0];
-        $direct = $session->query('SELECT a FROM t')[0];
-
-        self::assertInstanceOf(ResultSet::class, $buffered);
-        self::assertInstanceOf(ResultSet::class, $direct);
-        self::assertSame([0, 2, 't', 't'], [$buffered->columns[0]->flags & 2, $direct->columns[0]->flags & 2, $buffered->columns[0]->originalTable, $direct->columns[0]->originalTable]);
-    }
-
     public function testSelectComputesWindowsAfterHavingAndFlagsABlobWindowFunction(): void
     {
         $session = (new Instance())->connect();
@@ -504,5 +454,37 @@ final class BlocksTest extends TestCase
         $read4 = $s->query('SELECT table_name FROM information_schema.tables LIMIT 0')[0];
         self::assertInstanceOf(ResultSet::class, $read4);
         self::assertSame(['A1', 'B', 'a1', 'TABLE_NAME'], [$read1->columns[0]->name, $read2->columns[1]->name, $read3->columns[0]->name, $read4->columns[0]->name]);
+    }
+
+    public function testTabledSendsATemporalColumnOfAMergedDerivedTableBinaryAfterGrouping(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (e DATE)');
+        $grouped = $session->query('SELECT e FROM (SELECT e FROM t) AS x GROUP BY e')[0];
+        $merged = $session->query('SELECT e FROM (SELECT e FROM t) AS x')[0];
+
+        self::assertInstanceOf(ResultSet::class, $grouped);
+        self::assertInstanceOf(ResultSet::class, $merged);
+        self::assertSame([[10, 63], [40, 255]], [[$grouped->columns[0]->length, $grouped->columns[0]->charset], [$merged->columns[0]->length, $merged->columns[0]->charset]]);
+    }
+
+    public function testCarryAppendsTheRowOfTheFromClauseOfTheCarriedBlock(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT, b INT)');
+        $operation = $session->analyze('SELECT a FROM t');
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $planner->carrying = $statement;
+        $planner->query($statement, null);
+
+        self::assertSame(1, $planner->carried[0] ?? null);
+        self::assertSame(2, $planner->carried[1]->width());
     }
 }

@@ -99,12 +99,12 @@ final class Stages
      * Tells whether the server reports a problem while it parses the statement, before it opens any table.
      *
      * A system variable the server does not know is one of them (verified on live 8.0, 8.4 and 9.1
-     * servers).
+     * servers), and in MySQL 5.6 and 5.7 one written with an instance that is not structured.
      */
     public static function parsed(Diagnostic $diagnostic): bool
     {
         return $diagnostic instanceof WrongArgumentCount || $diagnostic instanceof NamedArgument || $diagnostic instanceof ReservedFunction
-            || $diagnostic instanceof UnknownSystemVariable
+            || $diagnostic instanceof UnknownSystemVariable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable
             || ($diagnostic instanceof NotSupportedYet && $diagnostic->feature === 'AT LOCAL');
     }
 

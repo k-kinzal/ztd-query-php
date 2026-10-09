@@ -56,6 +56,8 @@ enum StatementError: int implements ErrorCode
     case ExplainIntoForConnection = 6009;
     case FeatureNotSupported = 6033;
     case HypergraphRequired = 6037;
+    case SamplePercentageOutOfRange = 6107;
+    case SampleOnNonBaseTable = 6108;
     case DigestParseFailure = 3676;
     case FeatureDisabledSeeDoc = 3167;
     case HintTimeMisplaced = 3125;

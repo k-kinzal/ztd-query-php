@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Query\Tail;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
+use SqlSemantics\Platform\MySql\Statement\Query\Clause\OffsetSpelling;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\ProgramVariable;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
@@ -48,12 +49,15 @@ use SqlSemantics\Statement\Query;
 final class TailFacts
 {
     /**
-     * Checks the locking clauses, derives the INTO targets and warns about INTO written before the locking clauses.
+     * Checks the locking clauses, derives the INTO targets and warns about INTO written before the locking clauses, and about the character set INTO OUTFILE names (MYSQL-DEPRECATION-001).
      */
     public function derive(Derivation $derivation, Environment $outer, QueryFact $fact, Select|QueryStatement $query): void
     {
         (new LockedTables())->check($derivation, $outer, $query);
         $into = $query->into;
+        if ($into instanceof \SqlSemantics\Platform\MySql\Statement\Query\Into\IntoOutfile && $into->format instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Load\TextFileFormat && $into->format->charset?->name !== null) {
+            Deprecation::charset($into->format->charset->name->value, $derivation);
+        }
         if ($into instanceof IntoVariables) {
             foreach ($into->targets as $target) {
                 $derivation->scalar($target, new Environment($derivation->context, $outer));
@@ -96,14 +100,14 @@ final class TailFacts
     }
 
     /**
-     * Derives the operands of a LIMIT clause, which see no column of their query.
+     * Derives the operands of a LIMIT clause, which see no column of their query; the server checks them in written order, the offset first before a comma (verified on live 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers).
      */
     public function limit(?Limit $limit, Derivation $derivation, Environment $outer): void
     {
         if (!$limit instanceof RowLimit) {
             return;
         }
-        foreach ([$limit->count, $limit->offset] as $operand) {
+        foreach ($limit->spelling === OffsetSpelling::Comma ? [$limit->offset, $limit->count] : [$limit->count, $limit->offset] as $operand) {
             if ($operand === null) {
                 continue;
             }

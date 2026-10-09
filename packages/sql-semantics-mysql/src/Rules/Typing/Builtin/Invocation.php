@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Typing\Builtin;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Typing\Aggregation;
 use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
@@ -76,12 +77,16 @@ final class Invocation
     /**
      * Answers the length in characters of a value written as text.
      *
-     * A double without fixed decimals takes 22 characters, a FLOAT its display length (verified on a live 8.4 server).
+     * A double without fixed decimals takes 22 characters, a FLOAT its display length (verified on a live 8.4 server);
+     * MySQL 5.6 and 5.7 take the display length of every double: the text of a literal, 23 for a
+     * computed value (verified on live 5.6.51 and 5.7.44 servers).
      */
     public function length(Domain $domain): int
     {
+        $legacy = in_array($this->derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+
         return match ($domain->kind) {
-            Kind::Double => $domain->decimals < Domain::NOT_FIXED || $domain->field === Field::Float ? $domain->length : 22,
+            Kind::Double => $legacy || $domain->decimals < Domain::NOT_FIXED || $domain->field === Field::Float ? $domain->length : 22,
             Kind::Null => 0,
             Kind::Integer, Kind::Decimal, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit => $domain->length,
         };
@@ -89,6 +94,9 @@ final class Invocation
 
     /**
      * Resolves a string result of a length in the collation some arguments aggregate to, or null after a conflict.
+     *
+     * A result longer than 65535 bytes is a MEDIUMBLOB or LONGBLOB as long as its bytes
+     * (FormatResults::sized(), verified on live 5.7, 8.0 and 8.4 servers).
      *
      * @param list<Domain> $domains The arguments whose collations take part
      */
@@ -100,7 +108,7 @@ final class Invocation
         }
         [$collation, $coercibility] = $settled;
 
-        return Domain::string(min($length, 4294967295), $collation, $length > 16383 ? Field::Blob : Field::VarString, $coercibility);
+        return (new FormatResults())->sized($length, $collation, $coercibility);
     }
 
     /**

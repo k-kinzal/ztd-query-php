@@ -14,7 +14,9 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsKind;
  * lock, the password history, reuse and current-password settings, the failed-login tracking
  * when it is set, and the attributes when there are any. An expired password writes PASSWORD
  * EXPIRE alone. The authentication string and the attributes are quoted with backslash
- * escapes; the TLS values are quoted as they are (verified on a live 8.4 server).
+ * escapes; the TLS values are quoted as they are (verified on a live 8.4 server). MySQL 5.7
+ * quotes the account as strings and ends the statement with the lock (verified on a live 5.7.44
+ * server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-create-user.html.
  *
  * @visibility MySqlMemory
@@ -25,10 +27,11 @@ final class CreateText
      * Writes the statement of an account.
      *
      * @param list<Identity> $defaults The default roles of the account
+     * @param bool $legacy Whether the statement takes the form of MySQL 5.7, which quotes the account as strings and ends with the account lock
      */
-    public function statement(Account $account, array $defaults): string
+    public function statement(Account $account, array $defaults, bool $legacy = false): string
     {
-        $text = 'CREATE USER ' . $account->identity->backquoted() . " IDENTIFIED WITH '" . $account->plugin . "'";
+        $text = 'CREATE USER ' . ($legacy ? $account->identity->quoted() : $account->identity->backquoted()) . " IDENTIFIED WITH '" . $account->plugin . "'";
         if ($account->hash !== '') {
             $text .= " AS '" . Identity::escape($account->hash) . "'";
         }
@@ -49,6 +52,9 @@ final class CreateText
             default => ' INTERVAL ' . $account->lifetime . ' DAY',
         };
         $text .= $account->locked ? ' ACCOUNT LOCK' : ' ACCOUNT UNLOCK';
+        if ($legacy) {
+            return $text;
+        }
         $text .= ' PASSWORD HISTORY ' . ($account->history ?? 'DEFAULT');
         $text .= ' PASSWORD REUSE INTERVAL ' . ($account->reuse === null ? 'DEFAULT' : $account->reuse . ' DAY');
         $text .= ' PASSWORD REQUIRE CURRENT' . match ($account->requireCurrent) {

@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Filter\ChangeReplicationFi
 use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StartReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Replica\StopReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
+use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetBinaryLogs;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetQueryCache;
 use SqlSemantics\Platform\MySql\Statement\Replication\Reset\ResetReplica;
 use SqlSemantics\Platform\MySql\Statement\Replication\Source\ChangeReplicationSource;
@@ -24,7 +25,9 @@ use SqlSemantics\Statement\Node;
  * Those releases start with server_id 0, which leaves the replica uninitialized: START SLAVE,
  * STOP SLAVE, RESET SLAVE, CHANGE MASTER, CHANGE REPLICATION FILTER and SHOW RELAYLOG EVENTS fail
  * with ER_SLAVE_CONFIGURATION in the terminology of the release (verified on live 5.6.51 and
- * 5.7.44 servers).
+ * 5.7.44 servers). MySQL 5.6 goes on to the other targets of RESET after the failure of RESET
+ * SLAVE, so RESET SLAVE with RESET MASTER on a server without a binary log fails as RESET MASTER
+ * does, followed by the failure of RESET SLAVE (verified on a live 5.6.51 server).
  * Source: https://dev.mysql.com/doc/refman/5.7/en/replication-options.html#sysvar_server_id.
  *
  * @visibility MySqlMemory
@@ -48,13 +51,19 @@ final class LegacyReplication
             return;
         }
         $replica = $statement instanceof StartReplica || $statement instanceof StopReplica || $statement instanceof ChangeReplicationSource || $statement instanceof ChangeReplicationFilter || $statement instanceof ShowRelaylogEvents;
+        $master = false;
         foreach ($statement instanceof Reset ? $statement->targets : [] as $target) {
             $replica = $replica || $target instanceof ResetReplica;
+            $master = $master || $target instanceof ResetBinaryLogs;
             if ($target instanceof ResetQueryCache && $release === GrammarRelease::MySql5744) {
                 $session->diagnostics->warning(1681, "'RESET QUERY CACHE' is deprecated and will be removed in a future release.");
             }
         }
         if ($replica && (int) $session->variables->read('server_id') === 0) {
+            if ($master && $release === GrammarRelease::MySql5651 && !\MySqlMemory\Registry\BinaryLog::enabled($session)) {
+                throw new SqlError(AdministrationError::BinlogClosed, AdministrationError::BinlogClosed->message('RESET MASTER'), null, [[AdministrationError::ReplicaNotInitialized->number(), self::UNCONFIGURED]]);
+            }
+
             throw new SqlError(AdministrationError::ReplicaNotInitialized, self::UNCONFIGURED);
         }
     }

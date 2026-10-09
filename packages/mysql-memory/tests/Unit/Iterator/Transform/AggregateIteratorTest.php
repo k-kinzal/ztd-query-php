@@ -156,4 +156,16 @@ final class AggregateIteratorTest extends TestCase
 
         self::assertSame([null, 0, null, 1], $iterator->row([null], [$count->start()], [null], 1, $frame));
     }
+
+    public function testSortedKeepsTheGroupsInTheOrderTheyFirstAppearForATemporaryTable(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(2);
+        $working->rows = [['b', 1], ['a', 2], ['b', 3], [null, 4]];
+        $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
+        $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')), 0)], [$count], false, [], false), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame([['b', 1, 2], ['a', 2, 1], [null, 4, 1]], [$iterator->read(), $iterator->read(), $iterator->read()]);
+    }
 }

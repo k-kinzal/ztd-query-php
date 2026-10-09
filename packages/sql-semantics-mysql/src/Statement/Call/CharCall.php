@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Call;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
@@ -54,18 +55,19 @@ final class CharCall implements Scalar
     }
 
     /**
-     * Derives the codes; the result is a string that is never NULL.
+     * Derives the codes; the result is a string that can be NULL, and in MySQL 5.6 only when a code can be (verified on a live 5.6.51 server).
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        $nullability = Nullability::NotNull;
         foreach ($this->arguments as $argument) {
-            (new Arguments())->one($argument, $derivation, $environment);
+            $nullability = $nullability->propagate((new Arguments())->one($argument, $derivation, $environment)->nullability);
         }
 
         $name = $this->charset?->name?->value;
         $domain = (new Texts(Settings::of($derivation->context)))->character(count($this->arguments), $name, $derivation);
 
-        return new ScalarFact(new Known($domain ?? ($this->charset === null ? TypeClass::Binary : TypeClass::Character)->descriptor()), Nullability::Nullable);
+        return new ScalarFact(new Known($domain ?? ($this->charset === null ? TypeClass::Binary : TypeClass::Character)->descriptor()), $derivation->context->profile->grammar === GrammarRelease::MySql5651 ? $nullability : Nullability::Nullable);
     }
 
     /**

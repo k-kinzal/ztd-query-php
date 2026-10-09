@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
+use MySqlMemory\Dictionary\KeyKind;
+use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Error\Family\QueryError;
-use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Aggregate\Accumulation;
 use MySqlMemory\Evaluation\Aggregate\GroupingFlags;
 use MySqlMemory\Evaluation\Compile\Walker;
@@ -34,16 +35,14 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain as Resolved;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
-use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
-use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
-use UnitEnum;
 
 /**
  * Plans the grouping of a query block: its GROUP BY expressions and the aggregates of its select list, HAVING and ORDER BY.
@@ -80,7 +79,7 @@ final class Grouping
     public function plan(Select $select, AccessPath $input, Scope $scope): array
     {
         if ($select->groupBy?->modifier === GroupingModifier::Cube) {
-            throw SchemaError::SecondaryEngineFailed->error('No secondary engine defined for at least one of the query tables');
+            throw (new \MySqlMemory\Session\Problem\Sampling())->unengined($this->planner->statement, $this->planner->compiler->facts, $this->planner->settings, $this->planner->dictionary);
         }
         $aggregates = $this->collect($select);
         if ($select->groupBy === null && $aggregates === []) {
@@ -106,7 +105,107 @@ final class Grouping
         $rollup = $select->groupBy?->modifier !== null;
         $columns = $rollup ? $this->rollup($select, $groups, $targets, $grouped, $width + count($aggregates)) : [];
 
-        return [new AggregatePath($input, $groups, $accumulations, $rollup, $columns), $grouped];
+        return [new AggregatePath($input, $groups, $accumulations, $rollup, $columns, $this->sorts($select, $aggregates, $scope)), $grouped];
+    }
+
+    /**
+     * Tells whether the server answers the groups of a block in the order of their grouping values rather than in the order they first appear.
+     *
+     * MySQL 8.0 and later group in a temporary table, which answers the groups in the order they
+     * first appear, unless the block groups WITH ROLLUP, an aggregate needs the rows of each group
+     * together (an aggregate of DISTINCT values but MIN and MAX, GROUP_CONCAT, JSON_ARRAYAGG and
+     * JSON_OBJECTAGG), or the grouping expressions are the leading columns of an index of a table
+     * of the block, whose rows are then read in index order. MySQL 5.6 and 5.7 sort the groups
+     * (verified on live 5.7.44, 8.0.44, 8.4.7 and 9.1.0 servers).
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/group-by-optimization.html.
+     *
+     * @param list<Scalar> $aggregates The aggregates of the block
+     */
+    public function sorts(Select $select, array $aggregates, Scope $scope): bool
+    {
+        if ($this->planner->settings->legacy() || $select->groupBy?->modifier !== null) {
+            return true;
+        }
+        foreach ($aggregates as $aggregate) {
+            if ($aggregate instanceof GroupConcat || $aggregate instanceof JsonObjectAggregate
+                || ($aggregate instanceof Aggregate && ($aggregate->function === AggregateFunction::JsonArray || ($aggregate->distinct && $aggregate->function !== AggregateFunction::Minimum && $aggregate->function !== AggregateFunction::Maximum)))) {
+                return true;
+            }
+        }
+
+        return $this->indexed($select, $scope);
+    }
+
+    /**
+     * Tells whether the grouping expressions of a block are the leading whole columns of an index of one of its tables, in index order.
+     */
+    public function indexed(Select $select, Scope $scope): bool
+    {
+        $declarations = $this->declarations($select);
+        if ($declarations === null || $declarations === []) {
+            return false;
+        }
+        foreach ($scope->tables as $definition) {
+            if ($this->leads($definition, $declarations)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Answers the declared column each grouping expression of a block reads, or null when one is
+     * not a column name.
+     *
+     * @return list<Column|null>|null
+     */
+    public function declarations(Select $select): ?array
+    {
+        $declarations = [];
+        foreach ($select->groupBy === null ? [] : $select->groupBy->items as $item) {
+            $expression = $item->expression;
+            while ($expression instanceof Grouped) {
+                $expression = $expression->operand;
+            }
+            $resolution = $expression instanceof ColumnUse && $this->planner->compiler->facts->covers($expression) ? $this->planner->compiler->facts->scalar($expression)->resolution : null;
+            if (!$resolution instanceof ResolvedColumn) {
+                return null;
+            }
+            $declarations[] = $resolution->slot->declaration();
+        }
+
+        return $declarations;
+    }
+
+    /**
+     * Tells whether declared columns are all columns of a table and the leading whole columns of
+     * one of its primary, unique or plain indexes, in index order.
+     *
+     * @param list<Column|null> $declarations
+     */
+    public function leads(TableDefinition $definition, array $declarations): bool
+    {
+        $positions = [];
+        foreach ($declarations as $declaration) {
+            foreach ($definition->columns as $position => $column) {
+                if ($declaration !== null && $column->declaration === $declaration) {
+                    $positions[] = $position;
+                }
+            }
+        }
+        if (count($positions) !== count($declarations)) {
+            return false;
+        }
+        foreach ($definition->keys as $key) {
+            $leading = array_slice($key->columns, 0, count($positions));
+            $whole = array_filter(array_slice($key->prefixes, 0, count($positions)), static fn (?int $prefix): bool => $prefix !== null) === [];
+            if (($key->kind === KeyKind::Primary || $key->kind === KeyKind::Unique || $key->kind === KeyKind::Index) && $leading === $positions && $whole) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -177,6 +276,7 @@ final class Grouping
             $roots[] = $item->expression;
         }
         $walker = new Walker();
+        $equivalence = new Equivalence($this->planner);
         foreach ($roots as $root) {
             foreach ($walker->find($root, Scalar::class, false) as $node) {
                 if ($node instanceof KeywordCall && $node->function === KeywordFunction::Grouping) {
@@ -184,7 +284,7 @@ final class Grouping
                     continue;
                 }
                 foreach ($targets as $index => $target) {
-                    if ($columns[$index] === null && $this->same($node, $target)) {
+                    if ($columns[$index] === null && $equivalence->same($node, $target)) {
                         $grouped->bind($node, new ColumnRead($groups[$index]->domain()->withNullable(true), $offset + $index));
                         break;
                     }
@@ -203,25 +303,15 @@ final class Grouping
         if ($select->groupBy === null || $select->groupBy->modifier === null) {
             return false;
         }
+        $equivalence = new Equivalence($this->planner);
         foreach ($select->groupBy->items as $item) {
             $target = $this->target($item->expression);
-            if ($field->expression !== null ? $this->same($field->expression, $target) : $field->resolution instanceof ResolvedColumn && $target instanceof ColumnUse && $this->sameColumn($field->resolution, $target)) {
+            if ($field->expression !== null ? $equivalence->same($field->expression, $target) : $field->resolution instanceof ResolvedColumn && $target instanceof ColumnUse && $equivalence->sameColumn($field->resolution, $target)) {
                 return true;
             }
         }
 
         return false;
-    }
-
-    /**
-     * Tells whether a column name resolves to the column a resolution names.
-     */
-    public function sameColumn(ResolvedColumn $resolution, ColumnUse $use): bool
-    {
-        $facts = $this->planner->compiler->facts;
-        $other = $facts->covers($use) ? $facts->scalar($use)->resolution : null;
-
-        return $other instanceof ResolvedColumn && $other->relation === $resolution->relation && $this->column($other) === $this->column($resolution);
     }
 
     /**
@@ -249,10 +339,11 @@ final class Grouping
     public function arguments(KeywordCall $call, array $targets): array
     {
         $positions = [];
+        $equivalence = new Equivalence($this->planner);
         foreach ($call->arguments as $number => $argument) {
             $found = null;
             foreach ($targets as $index => $target) {
-                if ($this->same($argument, $target)) {
+                if ($equivalence->same($argument, $target)) {
                     $found = $index;
                     break;
                 }
@@ -280,79 +371,6 @@ final class Grouping
         }
 
         return $expression;
-    }
-
-    /**
-     * Answers the column a resolution names, the same for every use of one column of a relation, whether or not the use sees the column as one that can be NULL.
-     */
-    public function column(ResolvedColumn $resolution): object
-    {
-        $slot = $resolution->slot;
-        while ($slot->origin instanceof OutputSlot && $slot->column === null) {
-            $slot = $slot->origin;
-        }
-
-        return $slot->declaration() ?? $slot;
-    }
-
-    /**
-     * Tells whether two parts of a statement are the same expression: written alike, without regard to parentheses or to the case of names, with each column name read as the column it resolves to.
-     */
-    public function same(object|int|float|string|bool|null $left, object|int|float|string|bool|null $right): bool
-    {
-        while ($left instanceof Grouped) {
-            $left = $left->operand;
-        }
-        while ($right instanceof Grouped) {
-            $right = $right->operand;
-        }
-        if (!is_object($left) || !is_object($right)) {
-            return $left === $right;
-        }
-        if ($left::class !== $right::class) {
-            return false;
-        }
-        $facts = $this->planner->compiler->facts;
-        if ($left instanceof ColumnUse && $right instanceof ColumnUse && $facts->covers($left) && $facts->covers($right)) {
-            $first = $facts->scalar($left)->resolution;
-            if ($first instanceof ResolvedColumn) {
-                return $this->sameColumn($first, $right);
-            }
-        }
-        if ($left instanceof UnitEnum) {
-            return $left === $right;
-        }
-        if ($left instanceof Name && $right instanceof Name) {
-            return strcasecmp($left->value, $right->value) === 0;
-        }
-
-        return $this->sameProperties($left, $right);
-    }
-
-    /**
-     * Tells whether two parts of a statement of the same class hold the same expressions: the
-     * same properties, in the same order, each the same expression.
-     */
-    public function sameProperties(object $left, object $right): bool
-    {
-        $values = [[], []];
-        foreach ([$left, $right] as $side => $object) {
-            $properties = get_object_vars($object);
-            array_walk_recursive($properties, static function ($value, $key) use (&$values, $side): void {
-                $values[$side][] = [$key, $value];
-            });
-        }
-        if (count($values[0]) !== count($values[1])) {
-            return false;
-        }
-        foreach ($values[0] as $index => [$key, $value]) {
-            [$otherKey, $other] = $values[1][$index];
-            if ($key !== $otherKey || !(is_object($value) || is_scalar($value) || $value === null) || !(is_object($other) || is_scalar($other) || $other === null) || !$this->same($value, $other)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -411,25 +429,27 @@ final class Grouping
 
     /**
      * Compiles an aggregate into the fold of its arguments; JSON_OBJECTAGG folds its name and value.
+     *
+     * A JSON aggregate names itself in lower case as the column a warning about its value read as
+     * another type comes from (verified on a live 8.4 server).
      */
     public function accumulation(Aggregate|GroupConcat|JsonObjectAggregate $node, Scope $scope): Accumulation
     {
         $compiler = $this->planner->compiler;
         if ($node instanceof JsonObjectAggregate) {
-            return new Accumulation(AggregateFunction::JsonArray, [$compiler->compile($node->key, $scope), $this->json($node->value, $scope)], false, $compiler->domain($node), [], ',', 0, true);
+            return new Accumulation(AggregateFunction::JsonArray, [$compiler->compile($node->key, $scope), $this->json($node->value, $scope)], false, $compiler->domain($node)->withSource('json_objectagg'), [], ',', 0, true);
         }
         if ($node instanceof Aggregate && $node->function === AggregateFunction::JsonArray) {
-            return new Accumulation($node->function, array_map(fn (Scalar $argument): Evaluable => $this->json($argument, $scope), $node->arguments), false, $compiler->domain($node), [], ',', 0);
+            return new Accumulation($node->function, array_map(fn (Scalar $argument): Evaluable => $this->json($argument, $scope), $node->arguments), false, $compiler->domain($node)->withSource('json_arrayagg'), [], ',', 0);
         }
         $arguments = array_map(static fn (Scalar $argument): Evaluable => $compiler->compile($argument, $scope), $node->arguments);
         if ($node instanceof GroupConcat) {
             $order = array_map(static fn ($item): array => [$compiler->compile($item->expression, $scope), $item->direction?->value === 'DESC'], $node->order);
-            $limit = (int) ($compiler->connection->variables->read('group_concat_max_len') ?? 1024);
+            $limit = $compiler->connection->variables->count('group_concat_max_len', 1024);
 
             return new Accumulation(null, $arguments, $node->distinct, $compiler->domain($node), $order, $node->separator === null ? ',' : $node->separator->value, $limit);
         }
 
         return new Accumulation($node->function, $arguments, $node->distinct, $compiler->domain($node), [], ',', 0);
     }
-
 }

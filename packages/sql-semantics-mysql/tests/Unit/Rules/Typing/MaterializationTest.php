@@ -123,4 +123,9 @@ final class MaterializationTest extends TestCase
         self::assertSame([Field::Time, 13], [$time->field, $time->length]);
         self::assertSame([Field::VarString, 0], [$materialization->windowed(Domain::null())->field, $materialization->windowed(Domain::null())->length]);
     }
+
+    public function testNothingMakesATemporalValueInACharacterSetBinaryAgain(): void
+    {
+        self::assertEquals(new Domain(Kind::Date, Field::Date, 10), (new Materialization())->nothing(new Domain(Kind::Date, Field::Date, 10, 0, false, Collation::known('utf8mb4_0900_ai_ci'))));
+    }
 }

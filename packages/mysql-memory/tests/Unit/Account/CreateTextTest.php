@@ -40,4 +40,11 @@ final class CreateTextTest extends TestCase
 
         self::assertSame("SUBJECT 'sub' ISSUER 'is's' CIPHER 'ci'", (new CreateText())->tls($account));
     }
+
+    public function testStatementWritesTheFormOfMySql57(): void
+    {
+        $account = new Account(new Identity('u', '%'), 'mysql_native_password', '*7B9EBEED26AA52ED10C0F549FA863F13C39E0209');
+
+        self::assertSame("CREATE USER 'u'@'%' IDENTIFIED WITH 'mysql_native_password' AS '*7B9EBEED26AA52ED10C0F549FA863F13C39E0209' REQUIRE NONE PASSWORD EXPIRE DEFAULT ACCOUNT UNLOCK", (new CreateText())->statement($account, [], true));
+    }
 }

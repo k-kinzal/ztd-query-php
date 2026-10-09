@@ -57,6 +57,8 @@ enum SchemaError: int implements ErrorCode
     case UnknownStorageEngine = 1286;
     case ConflictingDeclarations = 1302;
     case WrongObject = 1347;
+    case KeyPartZeroLength = 1391;
+    case ViewSelectClause = 1350;
     case ViewSelectVariable = 1351;
     case ViewSelectTemporary = 1352;
     case ViewWrongList = 1353;

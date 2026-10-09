@@ -7,6 +7,7 @@ namespace MySqlMemory\Account;
 use MySqlMemory\Error\Family\AccountError;
 use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\SqlError;
+use SqlSemantics\Contract\GrammarRelease;
 
 /**
  * The authentication plugins of the server, the authentication strings they store, and the passwords it generates.
@@ -19,8 +20,15 @@ use MySqlMemory\Error\SqlError;
  * password is set, as on the server, and this emulator writes a random digest of the same form.
  * An authentication string given with AS must be empty or have that form
  * (ER_PASSWORD_FORMAT). A random password has generated_random_password_length (20) characters.
+ *
+ * MySQL 5.6 and 5.7 create accounts with mysql_native_password, which stores `*` and the
+ * upper-case hexadecimal double SHA-1 of the password; they load mysql_native_password and
+ * sha256_password, and 5.6 also mysql_old_password. A mysql_native_password string given there
+ * must be empty or have 41 characters starting with `*`, and the error tells to check the
+ * PASSWORD() function (verified on live 5.6.51 and 5.7.44 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/caching-sha2-pluggable-authentication.html,
- * https://dev.mysql.com/doc/refman/8.4/en/password-management.html#random-password-generation.
+ * https://dev.mysql.com/doc/refman/8.4/en/password-management.html#random-password-generation,
+ * https://dev.mysql.com/doc/refman/5.7/en/native-pluggable-authentication.html.
  *
  * @visibility MySqlMemory
  */
@@ -32,6 +40,32 @@ final class Credentials
     public const DIGITS = './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
     /**
+     * @param GrammarRelease $release The release whose plugins are loaded
+     */
+    public function __construct(public readonly GrammarRelease $release = GrammarRelease::MySql847)
+    {
+    }
+
+    /**
+     * Tells whether the release is MySQL 5.6 or 5.7, whose accounts use mysql_native_password.
+     */
+    public function legacy(): bool
+    {
+        return $this->release === GrammarRelease::MySql5651 || $this->release === GrammarRelease::MySql5744;
+    }
+
+    /**
+     * Answers the plugin an account is created with when the statement names none.
+     *
+     * @example MySQL 5.7
+     *     (new \MySqlMemory\Account\Credentials(\SqlSemantics\Contract\GrammarRelease::MySql5744))->default() // => 'mysql_native_password'
+     */
+    public function default(): string
+    {
+        return $this->legacy() ? 'mysql_native_password' : 'caching_sha2_password';
+    }
+
+    /**
      * Answers the name of a loaded plugin, in lower case.
      *
      * @throws SqlError When the plugin is not loaded
@@ -39,7 +73,11 @@ final class Credentials
     public function plugin(string $name): string
     {
         $plugin = strtolower($name);
-        if ($plugin !== 'caching_sha2_password' && $plugin !== 'sha256_password') {
+        $loaded = $this->legacy() ? ['mysql_native_password', 'sha256_password'] : ['caching_sha2_password', 'sha256_password'];
+        if ($this->release === GrammarRelease::MySql5651) {
+            $loaded[] = 'mysql_old_password';
+        }
+        if (!in_array($plugin, $loaded, true)) {
             throw AdministrationError::PluginIsNotLoaded->error($name);
         }
 
@@ -53,6 +91,9 @@ final class Credentials
     {
         if ($password === '') {
             return '';
+        }
+        if ($plugin === 'mysql_native_password' || $plugin === 'mysql_old_password') {
+            return '*' . strtoupper(sha1(sha1($password, true)));
         }
         $salt = '';
         for ($i = 0; $i < 20; $i++) {
@@ -74,6 +115,13 @@ final class Credentials
      */
     public function check(string $plugin, string $hash): void
     {
+        if ($plugin === 'mysql_native_password' || $plugin === 'mysql_old_password') {
+            if ($hash !== '' && (strlen($hash) !== 41 || $hash[0] !== '*')) {
+                throw AccountError::PasswordFormat->error("The password hash doesn't have the expected format. Check if the correct password algorithm is being used with the PASSWORD() function.");
+            }
+
+            return;
+        }
         $valid = $hash === '' || ($plugin === 'sha256_password' ? strlen($hash) === 67 && str_starts_with($hash, '$5$') : strlen($hash) === 70 && str_starts_with($hash, '$A$'));
         if (!$valid) {
             throw AccountError::PasswordFormat->error();

@@ -37,7 +37,8 @@ use SqlSemantics\Statement\Operation;
  * The statement leaves the area as it is. NUMBER counts its conditions and ROW_COUNT is the
  * row count of the statement before. A condition number that names no condition assigns
  * nothing and adds the error ER_DA_INVALID_CONDITION_NUMBER to the area, and the statement
- * still succeeds. The text items are utf8mb3 strings and the numbers integers. GET STACKED
+ * still succeeds; so does a condition number that names no column or variable, which adds
+ * ER_BAD_FIELD_ERROR instead. The text items are utf8mb3 strings and the numbers integers. GET STACKED
  * DIAGNOSTICS has no handler to read outside a handler (ER_GET_STACKED_DA_WITHOUT_ACTIVE_HANDLER),
  * an error the area does not record: it keeps the conditions of the statement before (verified
  * on live 8.0, 8.4 and 9.1 servers).
@@ -75,7 +76,13 @@ final class DiagnosticsCommand implements Command
         $information = $statement->information;
         $assignments = [];
         if ($information instanceof ConditionDiagnostics) {
-            $number = $planner->compiler->compile($information->number, new Scope());
+            try {
+                $number = $planner->compiler->compile($information->number, new Scope());
+            } catch (SqlError $error) {
+                $session->diagnostics->error($error->getCode(), $error->getMessage());
+
+                return new Completion(0, 0, $session->diagnostics->count());
+            }
             $position = $this->position($number->evaluate(new Frame(new Context($context->modes, new Diagnostics(), $context->variables, $context->started))), $number->domain(), $context, $diagnostics->count());
             if ($position === null) {
                 $diagnostics->error(ProgramError::InvalidConditionNumber->value, ProgramError::InvalidConditionNumber->message());
@@ -94,6 +101,19 @@ final class DiagnosticsCommand implements Command
                 $assignments[] = [$item->target, $item->item === StatementItemName::Number ? $diagnostics->count() : $session->variables->rowCount, $integer];
             }
         }
+        $this->assign($assignments, $session, $context);
+
+        return new Completion(0, 0, $diagnostics->count());
+    }
+
+    /**
+     * Assigns the items read to their targets: user variables, or variables of the running stored program.
+     *
+     * @param list<array{\SqlSemantics\Statement\Identifier\Name|UserVariable, int|string|null, Domain}> $assignments Each target with its value and the domain it is stored in
+     * @throws SqlError When a target names a variable no running stored program declares
+     */
+    public function assign(array $assignments, Session $session, Context $context): void
+    {
         foreach ($assignments as [$target, $value, $domain]) {
             if (!$target instanceof UserVariable) {
                 $variable = $session->program?->variable($target->value) ?? throw ProgramError::UndeclaredVariable->error($target->value);
@@ -102,8 +122,6 @@ final class DiagnosticsCommand implements Command
             }
             $session->variables->assign($target->name->value, $value, $domain);
         }
-
-        return new Completion(0, 0, $diagnostics->count());
     }
 
     /**

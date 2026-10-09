@@ -85,26 +85,72 @@ final class FactorRule
     /**
      * Answers the syntax error of a nested join that writes an alias, a union, an ORDER BY or a LIMIT, at the token the release reports it near.
      *
-     * MySQL 5.6 reports the closing parenthesis, or the alias name after a nested join that writes
-     * neither a union nor an ordering; 5.7 reports the first UNION, else the ORDER BY or LIMIT,
-     * else the AS of the alias or the text right after the closing parenthesis (verified on live
-     * 5.6.51 and 5.7.44 servers).
+     * MySQL 5.6 reports the token after the part it refuses: after the ORDER BY or LIMIT of the
+     * nested join, the first UNION or the closing parenthesis, but the last value of a LIMIT of
+     * two values, which ends the clause without a further token; after the first union operand, the
+     * second UNION or the closing parenthesis; else the alias name. MySQL 5.7 reports the ORDER BY
+     * or LIMIT of the nested join, else the first UNION, else the AS of the alias or the text right after the
+     * closing parenthesis (verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @param Node|Token|null $next The second UNION, or null when the union has one operand after the nested join
      */
-    public function refusal(Node|Token|null $closing, Node|Token|null $union, Node $ordering, Node $alias, bool $unioned, bool $ordered): AnalysisException
+    public function refusal(Node|Token|null $closing, Node|Token|null $union, Node $ordering, Node $alias, bool $unioned, bool $ordered, Node|Token|null $next = null): AnalysisException
     {
         $legacy = $this->lowering->profile->grammar === GrammarRelease::MySql5651;
         $words = $alias->tokens();
+        $order = $ordering->tokens();
+        $limit = array_search('LIMIT', array_map(static fn (Token $token): string => strtoupper($token->text), $order), true);
+        $settled = $limit !== false && count($order) - $limit === 4;
         $at = match (true) {
-            $legacy && ($unioned || $ordered) => $closing,
+            $legacy && $settled => $order[count($order) - 1],
+            $legacy && $ordered => $union ?? $closing,
+            $legacy && $unioned => $next ?? $closing,
             $legacy => $words[count($words) - 1] ?? $closing,
-            $unioned => $union,
             $ordered => $ordering->tokens()[0] ?? $closing,
+            $unioned => $union,
             count($words) > 1 => $words[0],
             $closing instanceof Token => new Token($closing->symbol, $closing->name, '', $closing->end()),
             default => null,
         };
 
         return new AnalysisException('Syntax error: a nested join takes no alias, union, ORDER BY or LIMIT.', 0, $at instanceof Token ? new SyntaxException($at, [], '') : null);
+    }
+
+    /**
+     * Answers the syntax error of a nested join whose first reference is a SELECT in parentheses without an alias, followed by other references, or null.
+     *
+     * MySQL 5.7 reports the join keyword after that SELECT, or its opening parenthesis when a comma
+     * follows it; 5.6 reports the token after the reference the first join or comma adds (verified
+     * on live 5.6.51 and 5.7.44 servers).
+     */
+    public function leading(Node $derived, Node|Token|null $closing): ?AnalysisException
+    {
+        $factors = $derived->find('table_factor');
+        $first = $factors[0] ?? null;
+        $tokens = $first?->tokens() ?? [];
+        $opened = 0;
+        while (($tokens[$opened]->text ?? '') === '(') {
+            $opened++;
+        }
+        if ($first === null || $opened === 0 || strtoupper($tokens[$opened]->text ?? '') !== 'SELECT' || $tokens[count($tokens) - 1]->text !== ')') {
+            return null;
+        }
+        $all = $derived->tokens();
+        $end = $tokens[count($tokens) - 1]->offset;
+        $following = array_values(array_filter($all, static fn (Token $token): bool => $token->offset > $end));
+        if ($following === []) {
+            return null;
+        }
+        $last = $closing instanceof Node ? ($closing->tokens()[0] ?? null) : $closing;
+        if ($this->lowering->profile->grammar !== GrammarRelease::MySql5651) {
+            $at = $following[0]->text === ',' ? $tokens[0] : $following[0];
+        } else {
+            $right = array_values(array_filter($factors, static fn (Node $factor): bool => ($factor->tokens()[0]->offset ?? 0) > $end))[0] ?? null;
+            $stop = $right === null ? null : $right->tokens()[count($right->tokens()) - 1]->offset;
+            $at = $stop === null ? $last : (array_values(array_filter($all, static fn (Token $token): bool => $token->offset > $stop))[0] ?? $last);
+        }
+
+        return new AnalysisException('Syntax error: a SELECT in parentheses without an alias starts a nested join.', 0, $at instanceof Token ? new SyntaxException($at, [], '') : null);
     }
 
     /**
@@ -123,11 +169,17 @@ final class FactorRule
         } else {
             throw ImplementationGap::production($form);
         }
+        $leading = $this->leading($union->find('select_derived')[0] ?? $union, $closing);
+        if ($leading !== null) {
+            throw $leading;
+        }
         $name = (new TableRule($this->lowering))->alias($alias);
         $steps = [];
         $first = null;
+        $next = null;
         $step = $this->lowering->form($union);
         while (isset(self::UNIONS[$step->signature])) {
+            $next = $first;
             $first = $step->node->children[1] ?? null;
             $steps[] = [(new ExpressionRule($this->lowering))->quantifier($step->node(2)), (new SubqueryRule($this->lowering))->operand($step->node(3), self::UNIONS[$step->signature] ? $step->node(4) : null)];
             $step = $this->lowering->form($step->node(0));
@@ -139,7 +191,7 @@ final class FactorRule
         $content = $this->content($step->node(0));
         if (is_array($content)) {
             if ($steps !== [] || !$trailer->empty() || $name !== null) {
-                throw $this->refusal($closing, $first, $step->node(1), $alias, $steps !== [], !$trailer->empty());
+                throw $this->refusal($closing, $first, $step->node(1), $alias, $steps !== [], !$trailer->empty(), $next);
             }
 
             return new NestedRelation(count($content) === 1 ? $content[0] : new TableList($content));

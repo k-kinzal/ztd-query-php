@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -14,8 +15,11 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  * Resolves the type a user variable is read with, from the type of the value it holds.
  *
  * An integer reads as a BIGINT, a decimal as DECIMAL(65,30), a double as a double, and any
- * other value as a long blob of 16777215 characters in its collation; a variable that holds
- * NULL is a binary medium blob, and one never assigned a binary string of 65532 bytes.
+ * other value as a blob in its collation, a temporal value in latin1: of 16777215 characters
+ * in MySQL 5.6 and 5.7, and from MySQL 8.0 as long as 16777215 characters of the most bytes
+ * of the character set count in its fewest, a long blob when that passes 16777215 bytes. A
+ * variable that holds NULL is a binary medium blob, and one never assigned a binary string of
+ * 65532 bytes (verified on live 5.7, 8.0, 8.4 and 9.1 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/user-variables.html.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -24,8 +28,9 @@ final class Variables
 {
     /**
      * @param Settings $settings The session the variables belong to
+     * @param GrammarRelease $release The release the session runs
      */
-    public function __construct(public readonly Settings $settings)
+    public function __construct(public readonly Settings $settings, public readonly GrammarRelease $release = GrammarRelease::MySql847)
     {
     }
 
@@ -63,7 +68,8 @@ final class Variables
     public function text(Collation $collation): Domain
     {
         $field = 16777215 * $collation->charset->maxLength > 16777215 ? Field::LongBlob : Field::MediumBlob;
+        $legacy = in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
 
-        return Domain::string(16777215, $collation, $field);
+        return Domain::string($legacy ? 16777215 : intdiv(16777215 * $collation->charset->maxLength, $collation->charset->minLength()), $collation, $field);
     }
 }

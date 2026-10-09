@@ -105,4 +105,32 @@ final class TailFactsTest extends TestCase
         self::assertInstanceOf(RowLimit::class, $operation->statement->limit);
         self::assertInstanceOf(Dependent::class, $operation->facts->scalar($operation->statement->limit->count)->type);
     }
+
+    public function testDeriveWarnsOfTheCharacterSetIntoOutfileNames(): void
+    {
+        $facts = (new Semantics(Dialect::MySql))->analyze("SELECT 1 INTO OUTFILE 'f' CHARACTER SET utf8mb3")->facts;
+
+        self::assertSame([Deprecated::Utf8mb3->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings));
+    }
+
+    public function testLimitReportsTheOffsetWrittenBeforeACommaFirstInMySql57(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 LIMIT a, b');
+
+        self::assertEquals(new UndeclaredVariable(new Name('a')), $operation->facts->diagnostics[0]);
+    }
+
+    public function testLimitReportsTheOffsetWrittenBeforeACommaFirstInMySql84(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT 1 LIMIT a, b');
+
+        self::assertEquals([new UndeclaredVariable(new Name('a')), new UndeclaredVariable(new Name('b'))], $operation->facts->diagnostics);
+    }
+
+    public function testLimitReportsTheCountFirstWhenTheOffsetIsWrittenAfterIt(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-9.1.0'))->analyze('SELECT 1 LIMIT b OFFSET a');
+
+        self::assertEquals([new UndeclaredVariable(new Name('b')), new UndeclaredVariable(new Name('a'))], $operation->facts->diagnostics);
+    }
 }

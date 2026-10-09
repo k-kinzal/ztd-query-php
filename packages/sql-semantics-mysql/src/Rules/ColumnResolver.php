@@ -38,7 +38,8 @@ use SqlSemantics\Validation\Equivalence;
  * of a trigger (MYSQL-PROGRAM-VARIABLE-LOOKUP-001).
  * Rule: MYSQL-COLUMN-LOOKUP-001. The lookup starts at the innermost query and
  * moves outwards one query at a time. At one query the relation occurrences
- * the qualifier admits are searched as in CORE-COLUMN-LOOKUP-001: one known
+ * the qualifier admits (MYSQL-RELATION-QUALIFIER-001 when it writes a
+ * database) are searched as in CORE-COLUMN-LOOKUP-001: one known
  * slot resolves, several are ambiguous, and an incompletely known occurrence
  * at that or a nearer query makes the outcome conditional. When no slot has
  * the name, an unqualified name is searched among the select list aliases
@@ -96,7 +97,7 @@ final class ColumnResolver
                     continue;
                 }
             }
-            $level = new LookupLevel($scope, $column, $qualifier, $depth);
+            $level = $qualifier?->schema === null ? new LookupLevel($scope, $column, $qualifier, $depth) : new LookupLevel((new RelationQualifiers())->narrowed($scope, $qualifier), $column, new QualifiedName($qualifier->name), $depth);
             $found = $level->found();
             $open = [...$open, ...$level->open()];
             if ($found !== []) {

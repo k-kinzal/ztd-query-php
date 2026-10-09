@@ -162,4 +162,124 @@ final class SyntaxTest extends TestCase
 
         $session->query('CREATE TABLE t1 (a INT, b INT AS (a) DEFAULT 1)');
     }
+
+    public function testUndeclaredRefusesAnIntoVariableBeforeTheUnionInMySql56(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect('root', 'localhost', 'd');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1327);
+        $this->expectExceptionMessage('Undeclared variable: v');
+
+        $session->query('SELECT 1 INTO v FROM DUAL UNION SELECT 2 INTO @w');
+    }
+
+    public function testInternalRefusesAPartitioningClauseSentAloneInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage("Partitioning can not be used stand-alone in query near 'PARTITION BY HASH (a) PARTITIONS 2' at line 1");
+
+        $session->query('PARTITION BY HASH (a) PARTITIONS 2');
+    }
+
+    public function testPurgedRefusesASubqueryInTheMomentOfPurgeInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage("near '  SELECT 1)' at line 1");
+
+        $session->query('PURGE BINARY LOGS BEFORE 1 + (  SELECT 1)');
+    }
+
+    public function testPurgedRefusesASubqueryNearItsParenthesisAfterAllInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("near '( SELECT 1) )' at line 1");
+
+        $session->query('PURGE MASTER LOGS BEFORE (1 = ALL ( SELECT 1) )');
+    }
+
+    public function testIdentifierRemovesTheBackquotes(): void
+    {
+        self::assertSame(['a`b', 'c'], [(new Syntax())->identifier('`a``b`'), (new Syntax())->identifier('c')]);
+    }
+
+    public function testTemporalsQuotesTheFirst128BytesOfTheText(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Incorrect DATE value: '" . str_repeat('x', 128) . "'");
+
+        $session->query("SELECT DATE '" . str_repeat('x', 600) . "'");
+    }
+
+    public function testErrorReportsTheTextAfterWithInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("near 'x' at line 1");
+
+        $session->query('SELECT 1 WITH x');
+    }
+
+    public function testPrematureRefusesAParameterMarkerBeforeASyntaxErrorInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("near '? FROM' at line 1");
+
+        $session->query('SELECT ? FROM');
+    }
+
+    public function testVariableAnswersAnUndeclaredIntoVariableBeforeAnOffset(): void
+    {
+        $tree = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->parser()->parse("SELECT 1 INTO nov FROM t WHERE DATE 'x'");
+
+        self::assertSame(['nov', null], [(new Syntax())->variable($tree, 40, null), (new Syntax())->variable($tree, 10, null)]);
+    }
+
+    public function testNearQuotesTheTextFromAnOffsetWithTheStatementsAfter(): void
+    {
+        $error = (new Syntax())->near(8, "\nSELECT\n?;", ' SELECT 1', new RuntimeException('cause'));
+
+        self::assertSame("You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?; SELECT 1' at line 2", $error->getMessage());
+    }
+
+    public function testMarkersQuotesTheStatementsAfterTheMarker(): void
+    {
+        $session = (new Instance())->connect();
+        $tree = $session->semantics()->parser()->parse('SELECT ?;');
+
+        $this->expectExceptionMessage("near '?; SELECT 1' at line 1");
+
+        (new Syntax())->markers($tree, 'SELECT ?;', ' SELECT 1');
+    }
+
+    public function testErrorQuotesAnUnterminatedStringFromItsQuote(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectExceptionMessage("near ''abc' at line 1");
+
+        $session->query("SELECT 'abc");
+    }
+
+    public function testPrematureRefusesAMarkerBeforeASyntaxErrorInMySql84(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+
+        $this->expectExceptionMessage("near '? FROM' at line 1");
+
+        $session->query('SELECT ? FROM');
+    }
 }

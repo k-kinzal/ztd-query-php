@@ -96,4 +96,16 @@ final class BinaryLogCommandTest extends TestCase
 
         (new BinaryLogCommand())->event(base64_encode("\0\0\0\0\x1d" . str_repeat("\0", 22)));
     }
+
+    public function testExecutePurgesNothingWithoutBinaryLogging(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $session->query("PURGE BINARY LOGS TO 'x'");
+        $session->query("PURGE BINARY LOGS BEFORE '2020-01-01'");
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
 }

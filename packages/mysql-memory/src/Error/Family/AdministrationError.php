@@ -29,6 +29,7 @@ enum AdministrationError: int implements ErrorCode
     case FunctionExists = 1125;
     case CantOpenLibrary = 1126;
     case FunctionNotDefined = 1128;
+    case BinlogClosed = 1186;
     case UnknownSystemVariable = 1193;
     case ReplicaNotConfigured = 1200;
     case CommandFailed = 1220;
@@ -39,9 +40,11 @@ enum AdministrationError: int implements ErrorCode
     case WrongTypeForVariable = 1232;
     case VariableCantBeRead = 1233;
     case IncorrectGlobalLocalVariable = 1238;
+    case VariableIsNotStruct = 1272;
     case BadReplicaUntil = 1277;
     case UnknownKeyCache = 1284;
     case UnknownTargetBinlog = 1373;
+    case NoBinaryLogging = 1381;
     case ForeignServerExists = 1476;
     case ForeignServerMissing = 1477;
     case PluginIsNotLoaded = 1524;

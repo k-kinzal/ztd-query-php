@@ -143,4 +143,15 @@ final class WarningsCommandTest extends TestCase
         self::assertSame([1327, 'Undeclared variable: abc'], [$error->getCode(), $error->getMessage()]);
         self::assertSame(['1292', '1327'], array_column($warnings->rows, 1));
     }
+
+    public function testExecuteCountsTheWarningsBeyondMaxErrorCount(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET max_error_count = 1');
+        $session->query("SELECT 'a' + 0, 'b' + 0");
+        $result = $session->query('SHOW COUNT(*) WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2']], $result->rows);
+    }
 }

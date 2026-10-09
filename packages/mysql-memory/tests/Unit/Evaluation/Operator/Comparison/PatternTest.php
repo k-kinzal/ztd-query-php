@@ -219,4 +219,13 @@ final class PatternTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['Error', '1210', 'Incorrect arguments to ESCAPE']], $warnings->rows);
     }
+
+    public function testEvaluateIgnoresAMultibyteEscapeInABinaryCollation(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT 'aé%' LIKE 'aéé%' COLLATE utf8mb4_bin ESCAPE 'é', 'aéx' LIKE 'aé%' COLLATE utf8mb4_bin ESCAPE 'é', 'aé%' LIKE 'aéé%' ESCAPE 'é'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1', '1']], $result->rows);
+    }
 }

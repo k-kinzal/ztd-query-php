@@ -157,4 +157,18 @@ final class Variables
 
         return $definition === null ? null : $this->system($definition, Scope::Session);
     }
+
+    /**
+     * Reads a system variable of the session as a count: an unsigned value beyond the largest integer, which the variable holds as a negative one, counts as the largest integer.
+     */
+    public function count(string $name, int $default): int
+    {
+        $value = $this->read($name);
+        if ($value === null) {
+            return $default;
+        }
+        $number = (int) $value;
+
+        return $number < 0 && $this->catalog->find($name)?->shape === \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape::Unsigned ? PHP_INT_MAX : $number;
+    }
 }

@@ -72,4 +72,18 @@ final class DerivedShapesTest extends TestCase
         self::assertEquals([new Misuse(MisuseRule::DuplicateColumn, new Name('a'))], $semantics->analyze('SELECT * FROM (SELECT 1 A, 2 a) d')->facts->diagnostics);
         self::assertEquals([new Misuse(MisuseRule::DuplicateColumn, new Name('x'))], $semantics->analyze('SELECT * FROM (SELECT 1, 2) d (x, x)')->facts->diagnostics);
     }
+
+    public function testMergedSendsATemporalValueInTheConnectionCollation(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $t = $semantics->analyze('CREATE TABLE t (e DATE, n INT)');
+        $merged = $semantics->analyze('SELECT e, n FROM (SELECT e, n FROM t) AS d', [$t])->facts->output?->fields();
+        $limited = $semantics->analyze('SELECT e FROM (SELECT e FROM t LIMIT 1) AS d', [$t])->facts->output?->fields()?->at(0)->type;
+
+        self::assertInstanceOf(Known::class, $merged?->at(0)->type);
+        self::assertInstanceOf(Domain::class, $merged->at(0)->type->descriptor);
+        self::assertInstanceOf(Known::class, $limited);
+        self::assertInstanceOf(Domain::class, $limited->descriptor);
+        self::assertSame(['utf8mb4_0900_ai_ci', 'binary'], [$merged->at(0)->type->descriptor->collation->name, $limited->descriptor->collation->name]);
+    }
 }

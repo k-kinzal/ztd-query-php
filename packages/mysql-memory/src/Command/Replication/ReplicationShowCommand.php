@@ -42,7 +42,9 @@ use SqlSemantics\Statement\Scalar;
  * the two events every log starts with. SHOW BINLOG EVENTS reads the first file of the index
  * unless IN names another. FROM starts at the first event at or after the position; a position
  * beyond 17592186040320 cannot be read. LIMIT 0 lists every event. A LIMIT operand naming a
- * variable is ER_SP_UNDECLARED_VAR (verified on a live 8.4 server).
+ * variable is ER_SP_UNDECLARED_VAR (verified on a live 8.4 server). A server whose log_bin is
+ * off refuses SHOW BINARY LOGS (ER_NO_BINARY_LOGGING) and lists no file status and no event; MySQL
+ * 5.6 and 5.7 write some numbers one digit narrower (verified on live 5.6.51 and 5.7.44 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-replica-status.html,
  * https://dev.mysql.com/doc/refman/8.4/en/show-replicas.html,
  * https://dev.mysql.com/doc/refman/8.4/en/show-binary-logs.html,
@@ -95,6 +97,16 @@ final class ReplicationShowCommand implements Command
     public const EVENTS = [['Log_name', 20], ['Pos', Field::LongLong, 12], ['Event_type', 20], ['Server_id', Field::Long, 11], ['End_log_pos', Field::LongLong, 12], ['Info', 20]];
 
     /**
+     * The columns of SHOW MASTER STATUS in MySQL 5.6 and 5.7.
+     */
+    public const LEGACY_LOG_STATUS = [['File', 512], ['Position', Field::LongLong, 20], ['Binlog_Do_DB', 255], ['Binlog_Ignore_DB', 255], ['Executed_Gtid_Set', 0]];
+
+    /**
+     * The columns of SHOW BINLOG EVENTS and SHOW RELAYLOG EVENTS in MySQL 5.6 and 5.7.
+     */
+    public const LEGACY_EVENTS = [['Log_name', 20], ['Pos', Field::LongLong, 11], ['Event_type', 20], ['Server_id', Field::Long, 10], ['End_log_pos', Field::LongLong, 11], ['Info', 20]];
+
+    /**
      * The highest position SHOW BINLOG EVENTS reads from.
      */
     public const LAST_POSITION = '17592186040320';
@@ -124,39 +136,73 @@ final class ReplicationShowCommand implements Command
 
             return $this->listing($statement->terminology === Terminology::Legacy ? $this->legacy(self::STATUS) : self::STATUS, [], $context);
         }
+        $logging = BinaryLog::enabled($session);
+        $legacy = (new \MySqlMemory\Account\Catalog($session->settings()->release()))->legacy();
         if ($statement instanceof ShowBinaryLogs) {
+            if (!$logging) {
+                throw AdministrationError::NoBinaryLogging->error();
+            }
+
             return $this->listing(self::LOGS, array_map(static fn (int $file): array => [BinaryLog::name($file), $log->size($file, $version), 'No'], $log->files), $context);
         }
         if ($statement instanceof ShowBinaryLogStatus) {
             $active = $log->files[count($log->files) - 1];
 
-            return $this->listing(self::LOG_STATUS, [[BinaryLog::name($active), $log->size($active, $version), '', '', '']], $context);
+            return $this->listing($legacy ? self::LEGACY_LOG_STATUS : self::LOG_STATUS, $logging ? [[BinaryLog::name($active), $log->size($active, $version), '', '', '']] : [], $context);
         }
         if ($statement instanceof ShowBinlogEvents) {
-            $this->limit($statement->limit);
-            $file = $statement->file === null ? $log->files[0] : $log->find((new Literals())->bytes($statement->file));
-            if ($file === null) {
-                throw AdministrationError::CommandFailed->error('SHOW BINLOG EVENTS', 'Could not find target log');
-            }
-            $events = array_map(static fn (array $event): array => [BinaryLog::name($file), ...$event], $log->events($file, $version));
-
-            return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->number($statement->position), $statement->limit, 'SHOW BINLOG EVENTS'), $context);
+            return $this->binlogEvents($statement, $session, $context);
         }
         if ($statement instanceof ShowRelaylogEvents) {
-            $this->limit($statement->limit);
-            (new ReplicaCommand())->channel($statement->channel);
-            $name = $session->variables->read('relay_log') . '.000001';
-            if ($statement->file !== null && (new Literals())->bytes($statement->file) !== $name) {
-                throw AdministrationError::CommandFailed->error('SHOW RELAYLOG EVENTS', 'Could not find target log');
-            }
-            $events = array_map(static fn (array $event): array => [$name, ...$event], array_slice((new BinaryLog())->events(1, $version), 0, 2));
-
-            return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->number($statement->position), $statement->limit, 'SHOW RELAYLOG EVENTS'), $context);
+            return $this->relaylogEvents($statement, $session, $context);
         }
         if ($statement instanceof ShowReplicas) {
             return $this->listing($statement->terminology === Terminology::Legacy ? $this->legacy(self::REPLICAS) : self::REPLICAS, [], $context);
         }
         throw StatementError::NotSupportedYet->error('this replication statement');
+    }
+
+    /**
+     * Lists the events of SHOW BINLOG EVENTS.
+     *
+     * The first file of the index is read unless IN names another; a server whose log_bin is off
+     * lists no event.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a LIMIT operand names a variable, the file is not in the index, or the position cannot be read
+     */
+    public function binlogEvents(ShowBinlogEvents $statement, Session $session, Context $context): Reply
+    {
+        $this->limit($statement->limit);
+        if (!BinaryLog::enabled($session)) {
+            return $this->listing((new \MySqlMemory\Account\Catalog($session->settings()->release()))->legacy() ? self::LEGACY_EVENTS : self::EVENTS, [], $context);
+        }
+        $log = $session->instance->registry->binaryLog;
+        $file = $statement->file === null ? $log->files[0] : $log->find((new Literals())->bytes($statement->file));
+        if ($file === null) {
+            throw AdministrationError::CommandFailed->error('SHOW BINLOG EVENTS', 'Could not find target log');
+        }
+        $events = array_map(static fn (array $event): array => [BinaryLog::name($file), ...$event], $log->events($file, $session->instance->version));
+
+        return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->number($statement->position), $statement->limit, 'SHOW BINLOG EVENTS'), $context);
+    }
+
+    /**
+     * Lists the events of SHOW RELAYLOG EVENTS: the two events every log starts with, in the one
+     * relay log file of the default channel, named after relay_log.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a LIMIT operand names a variable, the channel does not exist, the file is not the relay log, or the position cannot be read
+     */
+    public function relaylogEvents(ShowRelaylogEvents $statement, Session $session, Context $context): Reply
+    {
+        $this->limit($statement->limit);
+        (new ReplicaCommand())->channel($statement->channel);
+        $name = $session->variables->read('relay_log') . '.000001';
+        if ($statement->file !== null && (new Literals())->bytes($statement->file) !== $name) {
+            throw AdministrationError::CommandFailed->error('SHOW RELAYLOG EVENTS', 'Could not find target log');
+        }
+        $events = array_map(static fn (array $event): array => [$name, ...$event], array_slice((new BinaryLog())->events(1, $session->instance->version), 0, 2));
+
+        return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->number($statement->position), $statement->limit, 'SHOW RELAYLOG EVENTS'), $context);
     }
 
     /**

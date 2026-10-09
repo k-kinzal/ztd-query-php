@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
+use ArrayObject;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Instance;
@@ -105,5 +106,72 @@ final class PlacementTest extends TestCase
         $session = (new Instance())->connect();
 
         self::assertCount(3, (new Placement())->blocks($session->analyze('(SELECT 1) UNION (SELECT 2 UNION SELECT 3)')->statement));
+    }
+
+    public function testMisplacedRefusesAQueryCacheModifierOfABlockButTheFirstIn56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $statement = $session->analyze('SELECT 1 UNION SELECT SQL_CACHE 2')->statement;
+        $selects = (new Walker())->find($statement, Select::class);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1234);
+
+        (new Placement())->misplaced($selects[1], $selects[0], GrammarRelease::MySql5651);
+    }
+
+    public function testBoundariesAnswerTheBlockAfterAUnionOperandWithInto(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $statement = $session->analyze('(SELECT 1 INTO @a) UNION SELECT 2')->statement;
+        $selects = (new Walker())->find($statement, Select::class);
+
+        self::assertSame([spl_object_id($selects[1])], (new Placement())->boundaries($statement, GrammarRelease::MySql5744));
+    }
+
+    public function testCheckRefusesAllWithDistinctBeforeAQueryCacheModifierThatIsNotLastIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage('Incorrect usage of ALL and DISTINCT');
+
+        (new Placement())->check($session->analyze('SELECT 1 UNION SELECT SQL_CACHE ALL DISTINCT 2')->statement, GrammarRelease::MySql5744);
+    }
+
+    public function testCarrierAnswersTheStatementExplainExplainsInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $statement = $session->analyze('EXPLAIN SELECT SQL_CACHE 1')->statement;
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Explain\Explain::class, $statement);
+        self::assertSame($statement->statement, (new Placement())->carrier($statement, GrammarRelease::MySql5651));
+    }
+
+    public function testCheckEndsEachBlockAfterTheBlocksWrittenInIt(): void
+    {
+        $session = (new Instance())->connect();
+        $events = new ArrayObject();
+        $statement = $session->analyze('SELECT (SELECT 1) FROM (SELECT 2) AS x UNION SELECT 3')->statement;
+        $selects = (new Walker())->find($statement, Select::class);
+
+        (new Placement())->check($statement, GrammarRelease::MySql847, static function (Select $select, bool $ended) use ($events): void {
+            $events->append([$select, $ended]);
+        });
+
+        self::assertSame([[$selects[0], false], [$selects[1], false], [$selects[1], true], [$selects[2], false], [$selects[2], true], [$selects[0], true], [$selects[3], false], [$selects[3], true]], $events->getArrayCopy());
+    }
+
+    public function testClosedEndsTheOpenBlocksThatDoNotHoldTheNextOne(): void
+    {
+        $session = (new Instance())->connect();
+        $selects = (new Walker())->find($session->analyze('SELECT (SELECT 1) UNION SELECT 2')->statement, Select::class);
+        $ended = new ArrayObject();
+
+        $open = (new Placement())->closed([$selects[0], $selects[1]], $selects[2], static function (Select $select) use ($ended): void {
+            $ended->append($select);
+        });
+
+        self::assertSame([[], [$selects[1], $selects[0]]], [$open, $ended->getArrayCopy()]);
     }
 }

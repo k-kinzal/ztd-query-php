@@ -34,8 +34,9 @@ final class Numbers
     /**
      * @param int $divPrecisionIncrement The digits a division adds to the scale of its dividend
      * @param bool $unsignedSubtraction Whether a subtraction with an unsigned operand is unsigned
+     * @param bool $legacyRemainders Whether a remainder and an integer division count a temporal operand by its length, as MySQL 5.6 and 5.7 do
      */
-    public function __construct(public readonly int $divPrecisionIncrement = 4, public readonly bool $unsignedSubtraction = true)
+    public function __construct(public readonly int $divPrecisionIncrement = 4, public readonly bool $unsignedSubtraction = true, public readonly bool $legacyRemainders = false)
     {
     }
 
@@ -62,7 +63,7 @@ final class Numbers
         return match ($domain->kind) {
             Kind::Decimal => [$domain->precision(), $domain->decimals],
             Kind::Date => [8, 0],
-            Kind::Time => [6 + $domain->decimals, $domain->decimals],
+            Kind::Time => [7 + $domain->decimals, $domain->decimals],
             Kind::DateTime => [14 + $domain->decimals, $domain->decimals],
             Kind::Integer, Kind::Double, Kind::String, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => [max(1, $domain->length - ($domain->unsigned ? 0 : 1)), 0],
         };
@@ -73,12 +74,10 @@ final class Numbers
      */
     public function binary(ArithmeticOperator $operator, Domain $left, Domain $right): Domain
     {
-        $kinds = [$this->operand($left), $this->operand($right)];
         if ($operator === ArithmeticOperator::IntegerDivide) {
-            $fraction = $left->decimals > 0 && $left->decimals < Domain::NOT_FIXED ? $left->decimals + 1 : 0;
-
-            return Domain::integer(Field::LongLong, max(1, $left->length - $fraction + ($kinds[1] !== Kind::Integer ? 1 : 0)), $left->unsigned || $right->unsigned);
+            return $this->quotient($left, $right);
         }
+        $kinds = [$this->operand($left), $this->operand($right)];
         if (in_array(Kind::Double, $kinds, true)) {
             $null = $left->kind === Kind::Null || $right->kind === Kind::Null;
 
@@ -90,12 +89,35 @@ final class Numbers
         $unsigned = ($left->unsigned || $right->unsigned) && ($operator !== ArithmeticOperator::Minus || $this->unsignedSubtraction);
         $length = match ($operator) {
             ArithmeticOperator::Multiply => min(65, $this->digits($left)[0] + $this->digits($right)[0]) + ($unsigned ? 0 : 1),
-            ArithmeticOperator::Modulo => max($left->length, $right->length) + ($unsigned ? 1 : 0),
+            ArithmeticOperator::Modulo => ($this->legacyRemainders ? max($left->length, $right->length) : max($this->width($left), $this->width($right))) + ($unsigned ? 1 : 0),
             ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::BitXor,
-            ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight => max($left->length, $right->length) + 1,
+            ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight => max($this->width($left), $this->width($right)) + 1,
         };
 
         return Domain::integer(Field::LongLong, min(66, $length), $unsigned);
+    }
+
+    /**
+     * Resolves an integer division (DIV): a BIGINT as long as its dividend written without its fraction.
+     *
+     * A temporal dividend counts its width, unless remainders count it by its length as MySQL 5.6
+     * and 5.7 do. A divisor that is not an integer adds one character; the result is unsigned
+     * when either operand is.
+     */
+    public function quotient(Domain $left, Domain $right): Domain
+    {
+        $fraction = $left->decimals > 0 && $left->decimals < Domain::NOT_FIXED ? $left->decimals + 1 : 0;
+        $length = $this->legacyRemainders || !$left->kind->temporal() ? $left->length - $fraction : $this->width($left) - $left->decimals;
+
+        return Domain::integer(Field::LongLong, max(1, $length + ($this->operand($right) !== Kind::Integer ? 1 : 0)), $left->unsigned || $right->unsigned);
+    }
+
+    /**
+     * Answers the characters an operand takes in integer arithmetic: a temporal value its digits and a sign, 9 for a DATE, 15 for a DATETIME and 8 for a TIME; any other its length (verified on live 5.6, 5.7, 8.0, 8.4 and 9.1 servers).
+     */
+    public function width(Domain $domain): int
+    {
+        return $domain->kind->temporal() ? $this->digits($domain)[0] + 1 : $domain->length;
     }
 
     /**
@@ -128,6 +150,10 @@ final class Numbers
      */
     public function negated(Domain $domain, bool $negative = false): Domain
     {
+        if ($domain->kind->temporal()) {
+            return Domain::double(17 + $domain->decimals, $domain->decimals);
+        }
+
         return match ($this->operand($domain)) {
             Kind::Integer => $negative && $domain->kind === Kind::Integer ? Domain::decimal(...$this->digits($domain)) : Domain::integer(Field::LongLong, $domain->length + (int) $domain->unsigned),
             Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(...$this->digits($domain)),

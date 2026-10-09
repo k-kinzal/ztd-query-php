@@ -59,16 +59,16 @@ final class AlterUserCommand implements Command
         $session->transaction->commit();
         $names = new Names($session->settings()->release());
         $names->check($names->users($statement->users));
-        $options = new Options();
+        $options = new Options($session->settings()->release());
         $options->parsed($operation, $session->text);
         $accounts = $session->instance->accounts;
         foreach ($statement->users as $user) {
-            $plugin = $accounts->find($names->identity($names->users([$user])[0], $session))->plugin ?? 'caching_sha2_password';
+            $plugin = $accounts->find($names->identity($names->users([$user])[0], $session))->plugin ?? (new Credentials($session->settings()->release()))->default();
             if ($user instanceof UserSpecification) {
                 $options->check($user->identification, $plugin);
             }
             foreach ($user instanceof FactorChange && $user->action === FactorAction::Add ? $user->steps : [] as $step) {
-                $name = (new Credentials())->plugin($step->identification->plugin->value ?? $plugin);
+                $name = (new Credentials($session->settings()->release()))->plugin($step->identification->plugin->value ?? $plugin);
                 throw AccountError::InvalidFactorPlugin->error($name, $step->factor->text, 'ALTER USER');
             }
         }
@@ -80,7 +80,7 @@ final class AlterUserCommand implements Command
             if ($account === null) {
                 $missing[] = $identity;
                 if ($statement->ifExists) {
-                    $context->diagnostics->note(AccountError::UserDoesNotExist, AccountError::UserDoesNotExist->message($identity->quoted()));
+                    $context->diagnostics->note(AccountError::UserDoesNotExist, $names->existence($identity, false));
                 }
                 continue;
             }

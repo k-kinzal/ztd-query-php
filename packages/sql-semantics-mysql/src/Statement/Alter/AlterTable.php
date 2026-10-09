@@ -85,6 +85,9 @@ final class AlterTable implements Statement, Relation
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        if ($this->ignore) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::AlterIgnore, $derivation);
+        }
         $original = (new Targets())->target($derivation, $this->table);
         (new RelationKinds())->require($derivation, $this->table, $original->table, RelationKind::BaseTable);
         $changes = new ColumnChanges();

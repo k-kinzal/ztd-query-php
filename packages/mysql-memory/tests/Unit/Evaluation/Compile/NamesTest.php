@@ -369,4 +369,40 @@ final class NamesTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['2', '2'], ['1', '1']], $result->rows);
     }
+
+    public function testSystemVariableReadsTheCountsOfTheStatementBefore(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SELECT 1 / 0, 'x' + 0");
+        $result = $session->query("SELECT 'y' + 0, @@warning_count, @@error_count")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '2', '0']], $result->rows);
+    }
+
+    public function testKeyCacheReadsZeroForAKeyCacheThatDoesNotExist(): void
+    {
+        $session = (new Instance())->connect();
+
+        $result = $session->query('SELECT @@x.key_buffer_size, @@x.key_buffer_size + 0, @@GLOBAL.default.key_cache_block_size')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '0', '1024']], $result->rows);
+        self::assertSame([
+            ['Warning', 1287, '@@global.x.key_buffer_size syntax is deprecated and will be removed in a future release'],
+            ['Warning', 1287, '@@global.x.key_buffer_size syntax is deprecated and will be removed in a future release'],
+            ['Warning', 1287, '@@global.default.key_cache_block_size syntax is deprecated and will be removed in a future release'],
+        ], $session->diagnostics->conditions);
+    }
+
+    public function testKeyCacheDoesNotWarnInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $result = $session->query('SELECT @@x.key_cache_age_threshold')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0']], $result->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
 }

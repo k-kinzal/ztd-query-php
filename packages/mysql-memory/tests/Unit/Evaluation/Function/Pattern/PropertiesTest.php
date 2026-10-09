@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation\Function\Pattern;
 
+use IntlChar;
 use MySqlMemory\Evaluation\Function\Pattern\Properties;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -72,8 +73,15 @@ final class PropertiesTest extends TestCase
         self::assertSame([1, 0, null], [preg_match($source, 'a'), preg_match($source, '€'), (new Properties())->age('x')]);
     }
 
-    public function testListedListsTheCharactersThatPassATest(): void
+    public function testListedReadsTheSetOfAPatternAndTestsTheSurrogates(): void
     {
-        self::assertSame('[\x{41}-\x{43}\x{45}]', (new Properties())->listed('test-listed', static fn (int $code): bool => in_array($code, [0x41, 0x42, 0x43, 0x45], true))->source());
+        self::assertSame('[\x{41}-\x{43}\x{45}\x{D800}]', (new Properties())->listed('test-listed', static fn (int $code): bool => $code === 0xD800, '[A-CE]')->source());
+    }
+
+    public function testPatternNamesAPropertyAndAValueAsIcuDoes(): void
+    {
+        $properties = new Properties();
+
+        self::assertSame(['[:Hex_Digit:]', '[:Block=Basic_Latin:]', null], [$properties->pattern(IntlChar::PROPERTY_HEX_DIGIT), $properties->pattern(IntlChar::PROPERTY_BLOCK, 1), $properties->pattern(IntlChar::PROPERTY_CANONICAL_COMBINING_CLASS, 2)]);
     }
 }

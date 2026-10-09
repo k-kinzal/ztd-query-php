@@ -45,4 +45,12 @@ final class CharCallTest extends TestCase
 
         self::assertSame('CHAR(1, 1 USING utf8mb4)', (new Lexical())->join($out->pieces()));
     }
+
+    public function testDeriveScalarIsNotNullOfNotNullCodesInMySql56(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.6.51', null, ParameterStyle::Native), null, [], true));
+
+        self::assertSame(Nullability::NotNull, $derivation->scalar(new CharCall([new NumberLiteral('65')]), $derivation->environment())->nullability);
+    }
 }

@@ -19,7 +19,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  *
  * The result is the type that holds every argument that is not NULL: a JSON argument makes a
  * LONGTEXT, temporal values alone settle on their kind, numbers alone on a number, and anything
- * else on a string. MySQL 5.6 and 5.7 settle the arguments as the branches of COALESCE.
+ * else on a string. MySQL 5.6 and 5.7 settle the arguments as the branches of COALESCE, and size
+ * them as their comparison (see legacyExtreme).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/comparison-operators.html#function_greatest.
  *
  * @visibility SqlSemantics\Platform\MySql\Rules\Typing
@@ -66,7 +67,7 @@ final class ExtremeResults
     public function extreme(Invocation $call, string $operation): ?Domain
     {
         if ($this->legacy($call)) {
-            return $call->aggregation()->of($call->domains, $operation, $call->derivation);
+            return $this->legacyExtreme($call, $operation);
         }
         $present = array_values(array_filter($call->domains, static fn (Domain $domain): bool => $domain->kind !== Kind::Null));
         if ($present === []) {
@@ -82,6 +83,97 @@ final class ExtremeResults
             $temporal === 0 && !in_array(Kind::String, $kinds, true) => $this->numericExtreme($present, $modern),
             default => $this->textExtreme($present, $operation, $modern, $call),
         };
+    }
+
+    /**
+     * Resolves GREATEST and LEAST as MySQL 5.6 and 5.7 do: the type of the branches of COALESCE, sized as the comparison of the arguments.
+     *
+     * Without a number among the arguments the type is that of COALESCE. A number with a string,
+     * or a floating-point number, makes a value 23 characters long of no fixed scale. Otherwise the
+     * arguments compare as decimals: the result holds the most integer digits, those an integer
+     * literal writes, and the largest scale, a sign unless every argument is unsigned; a NULL or
+     * TIME argument counts 16 digits, 15 with a scale, a DATE 8 and a DATETIME 14. A temporal argument makes a string of that length, a
+     * decimal one a DECIMAL, and integers an integer of the type of COALESCE, a BIGINT where that
+     * is a DECIMAL (verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @param string $operation The function as the server names it in messages
+     */
+    public function legacyExtreme(Invocation $call, string $operation): ?Domain
+    {
+        $settled = $call->aggregation()->of($call->domains, $operation, $call->derivation);
+        $present = array_values(array_filter($call->domains, static fn (Domain $domain): bool => $domain->kind !== Kind::Null));
+        $numeric = array_filter($present, static fn (Domain $domain): bool => in_array($domain->kind, [Kind::Integer, Kind::Decimal, Kind::Double, Kind::Bit, Kind::Year], true));
+        if ($settled === null || $numeric === []) {
+            return $settled;
+        }
+        $kinds = array_map(static fn (Domain $domain): Kind => $domain->kind, $present);
+        if (in_array(Kind::String, $kinds, true) || in_array(Kind::Json, $kinds, true) || in_array(Kind::Double, $kinds, true)) {
+            return new Domain($settled->kind, $settled->field, 23, Domain::NOT_FIXED, $settled->unsigned, $settled->collation, [], $settled->coercibility);
+        }
+        [$length, $scale, $signed] = $this->compared($call);
+        if (array_filter($kinds, static fn (Kind $kind): bool => $kind->temporal()) !== []) {
+            return new Domain(Kind::String, Field::VarString, $length, $scale, false, $settled->collation, [], $settled->coercibility);
+        }
+        if ($scale > 0 || in_array(Kind::Decimal, $kinds, true)) {
+            return new Domain(Kind::Decimal, Field::NewDecimal, $length, $scale, !$signed, null, [], Coercibility::Numeric);
+        }
+        $field = $settled->kind === Kind::Integer ? $settled->field : Field::LongLong;
+
+        return Domain::integer($field, $length, !$signed);
+    }
+
+    /**
+     * Sizes the arguments of GREATEST and LEAST as MySQL 5.6 and 5.7 compare them: as decimals.
+     *
+     * The result holds the most integer digits, those an integer literal writes, and the largest
+     * scale, with a point when there is a scale and a sign unless every argument is unsigned. A
+     * NULL or TIME argument counts 16 integer digits, 15 with a scale, and is signed; a TIME also
+     * brings its fractional digits (verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @return array{int, int, bool} The length, the scale, and whether the result is signed
+     */
+    public function compared(Invocation $call): array
+    {
+        $numbers = new Numbers();
+        $scale = 0;
+        $integral = 0;
+        $signed = false;
+        $wide = false;
+        foreach ($call->domains as $index => $domain) {
+            if ($domain->kind === Kind::Null || $domain->kind === Kind::Time) {
+                $wide = true;
+                $scale = max($scale, $domain->kind === Kind::Time ? $domain->decimals : 0);
+                $signed = true;
+                continue;
+            }
+            [$precision, $digits] = $numbers->digits($domain);
+            $written = $this->written($call->nodes[$index] ?? null);
+            $precision = $written !== null && ($domain->kind === Kind::Integer || $domain->kind === Kind::Decimal) ? $written + $digits : $precision;
+            $scale = max($scale, $digits);
+            $integral = max($integral, $precision - $digits);
+            $signed = $signed || !$domain->unsigned || $domain->kind->temporal();
+        }
+        if ($wide) {
+            $integral = max($integral, $scale > 0 ? 15 : 16);
+        }
+
+        return [$integral + $scale + ($scale > 0 ? 1 : 0) + ($signed ? 1 : 0), $scale, $signed];
+    }
+
+    /**
+     * Answers the integer digits a number literal writes, under parentheses and a sign, or null for another expression.
+     */
+    public function written(?\SqlSemantics\Statement\Scalar $node): ?int
+    {
+        while ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped || ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary && in_array($node->operator, [\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Minus, \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus], true))) {
+            $node = $node->operand;
+        }
+        if (!$node instanceof \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral) {
+            return null;
+        }
+        $integral = ltrim((string) preg_replace('/[.eE].*\z/', '', $node->text), '0');
+
+        return max(1, strlen($integral));
     }
 
     /**

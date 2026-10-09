@@ -198,4 +198,17 @@ final class ProgramProblemsTest extends TestCase
 
         (new ProgramProblems())->variables($session->analyze('CREATE VIEW v AS SELECT @@nosuch')->statement);
     }
+
+    public function testClauseRefusesIntoInTheQueryOfAViewInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1350);
+        $this->expectExceptionMessage("View's SELECT contains a 'INTO' clause");
+
+        $session->query('CREATE VIEW v AS SELECT 1 INTO @a UNION SELECT SQL_CACHE 2');
+    }
 }

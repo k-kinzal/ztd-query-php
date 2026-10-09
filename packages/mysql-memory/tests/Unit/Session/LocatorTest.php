@@ -330,4 +330,34 @@ final class LocatorTest extends TestCase
 
         self::assertSame([[['field list', [1, 0]]], [['w', [1, 0]]]], [array_map(static fn (array $entry): array => [$entry[1], $entry[2]], $locator->functions), array_map(static fn (array $entry): array => [$entry[0]->value, $entry[1]], $locator->windows)]);
     }
+
+    public function testStatementResolvesTheQueryOfAnInsertBeforeItsColumnsInMySql57(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $this->expectExceptionMessage("Unknown column 'y' in 'field list'");
+
+        $session->query('INSERT INTO t (z) SELECT y FROM t');
+    }
+
+    public function testStatementResolvesTheFirstRowOfAnInsertBeforeItsColumnsInMySql56(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+
+        $this->expectExceptionMessage("Unknown column 'y' in 'field list'");
+
+        $session->query('INSERT INTO t (z) VALUES (y)');
+    }
+
+    public function testSelectChecksTheIndexHintsOfABlockBeforeItsDerivedTables(): void
+    {
+        $session = (new Instance())->connect();
+        $locator = (new Locator())->statement($session->analyze('SELECT * FROM t JOIN (SELECT 1 FROM u) AS x')->statement);
+        $legacy = (new Locator(false, \SqlSemantics\Contract\GrammarRelease::MySql5651))->statement($session->analyze('SELECT * FROM t')->statement);
+
+        self::assertSame([['t', [-1]], ['u', [0, 0, -1]]], array_map(static fn (array $entry): array => [$entry[0]->name->name->value, $entry[1]], $locator->hinted));
+        self::assertSame([0, PHP_INT_MAX], $legacy->hinted[0][1]);
+    }
 }

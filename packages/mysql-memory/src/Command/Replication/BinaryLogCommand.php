@@ -15,6 +15,7 @@ use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Operator\Moments;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
+use MySqlMemory\Registry\BinaryLog;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
@@ -39,7 +40,8 @@ use SqlSemantics\Statement\Operation;
  * description or row event is allowed (ER_ONLY_FD_AND_RBR_EVENTS_ALLOWED_IN_BINLOG_STATEMENT,
  * naming the type of the event). The emulator applies no event, so a format description or
  * row event, which the server would decode, is refused as one it cannot decode (verified on a
- * live 8.4 server). None of the statements commits the open transaction.
+ * live 8.4 server). None of the statements commits the open transaction. A server whose
+ * log_bin is off purges nothing and warns of no file (verified on live 5.6.51 and 5.7.44 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/purge-binary-logs.html,
  * https://dev.mysql.com/doc/refman/8.4/en/binlog.html.
  *
@@ -79,7 +81,8 @@ final class BinaryLogCommand implements Command
     {
         $statement = $operation->statement;
         $log = $session->instance->registry->binaryLog;
-        if ($statement instanceof PurgeLogsTo) {
+        $logging = BinaryLog::enabled($session);
+        if ($statement instanceof PurgeLogsTo && $logging) {
             $number = $log->find((new Literals())->bytes($statement->file)) ?? throw AdministrationError::UnknownTargetBinlog->error();
             $log->purge($number);
         } elseif ($statement instanceof PurgeLogsBefore) {
@@ -89,7 +92,9 @@ final class BinaryLogCommand implements Command
             if ($value !== null && !(is_int($value) && $value === 0)) {
                 (new Moments())->convert($value, $moment->domain(), new Domain(Kind::DateTime, Field::DateTime, 19, 0, false), $context);
             }
-            $session->diagnostics->warning(AdministrationError::ActiveLogNotPurged, AdministrationError::ActiveLogNotPurged->message('./' . $log->active()));
+            if ($logging) {
+                $session->diagnostics->warning(AdministrationError::ActiveLogNotPurged, AdministrationError::ActiveLogNotPurged->message('./' . $log->active()));
+            }
         } elseif ($statement instanceof BinlogEvent) {
             $this->event((new Literals())->bytes($statement->events));
         }

@@ -73,7 +73,7 @@ final class WarningsCommand implements Command
         if ($statement instanceof ShowWarningCount || $statement instanceof ShowErrorCount) {
             $name = $errors ? '@@session.error_count' : '@@session.warning_count';
 
-            return new ResultSet([new ResultColumn($name, Field::LongLong, 21, 0, ColumnFlag::Unsigned->value | ColumnFlag::Binary->value | ColumnFlag::Numeric->value, 63)], [[(string) count($rows)]]);
+            return new ResultSet([new ResultColumn($name, Field::LongLong, 21, 0, ColumnFlag::Unsigned->value | ColumnFlag::Binary->value | ColumnFlag::Numeric->value, 63)], [[(string) (count($rows) + ($errors ? 0 : $session->diagnostics->dropped))]]);
         }
         $limit = $statement instanceof ShowWarnings || $statement instanceof ShowErrors ? $statement->limit : null;
         if ($limit instanceof RowLimit) {

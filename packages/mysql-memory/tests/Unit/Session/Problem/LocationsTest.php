@@ -256,4 +256,17 @@ final class LocationsTest extends TestCase
 
         $session->query('SELECT id FROM u WHERE RANK() OVER () > 0 HAVING RANK() OVER zz > 0');
     }
+
+    public function testLocatedPlacesAnIndexHintWhereTheBlockOfItsTableIsResolved(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (a INT)');
+        $operation = $session->analyze('SELECT nope FROM t USE INDEX (k)');
+        [$located] = (new Locations())->located($operation, [], $operation->facts->diagnostics, $session);
+        $first = Locations::first($located);
+
+        self::assertNotNull($first);
+        self::assertInstanceOf(SqlError::class, $first[0]);
+        self::assertSame([1176, "Key 'k' doesn't exist in table 't'"], [$first[0]->getCode(), $first[0]->getMessage()]);
+    }
 }

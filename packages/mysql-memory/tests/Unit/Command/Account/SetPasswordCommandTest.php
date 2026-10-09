@@ -85,4 +85,21 @@ final class SetPasswordCommandTest extends TestCase
 
         self::assertSame([['Warning', 1287, "'SET PASSWORD FOR <user> = PASSWORD('<plaintext_password>')' is deprecated and will be removed in a future release. Please use SET PASSWORD FOR <user> = '<plaintext_password>' instead"]], $session->diagnostics->conditions);
     }
+
+    public function testLegacyTakesAStringAsTheHashInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE USER u');
+
+        $session->query("SET PASSWORD FOR u = PASSWORD('z')");
+
+        $password = $session->query("SELECT Password FROM mysql.user WHERE User = 'u'")[0];
+        self::assertInstanceOf(ResultSet::class, $password);
+        self::assertSame([['*F24059C44AE7FCD38A595267C522FB133E9F06F1']], $password->rows);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1372);
+        $this->expectExceptionMessage('Password hash should be a 41-digit hexadecimal number');
+
+        $session->query("SET PASSWORD FOR u = 'z'");
+    }
 }

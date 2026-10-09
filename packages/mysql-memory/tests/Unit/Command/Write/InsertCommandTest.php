@@ -222,4 +222,37 @@ final class InsertCommandTest extends TestCase
         self::assertSame(['1364'], array_column($warnings->rows, 1));
         self::assertSame([['0', '5'], ['0', '5'], ['0', '5']], $rows->rows);
     }
+
+    public function testExecuteUpdatesTheDuplicateOfAQueriedRowReadingItsSource(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT PRIMARY KEY, b INT, g INT AS (b * 2))');
+        $session->query('CREATE TABLE s (a INT, b INT)');
+        $session->query('INSERT INTO t (a, b) VALUES (1, 2)');
+        $session->query('INSERT INTO s VALUES (1, 10), (3, 30)');
+        $completion = $session->query('INSERT INTO t (a, b) SELECT a, b FROM s ON DUPLICATE KEY UPDATE b = VALUES(b) + s.b')[0];
+        $result = $session->query('SELECT * FROM t')[0];
+
+        self::assertInstanceOf(Completion::class, $completion);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([3, [['1', '20', '40'], ['3', '30', '60']]], [$completion->affectedRows, $result->rows]);
+    }
+
+    public function testQueriedCarriesTheRowOfTheSourceForOnDuplicateKeyUpdate(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT PRIMARY KEY, b INT)');
+        $session->query('CREATE TABLE s (a INT, b INT)');
+        $session->query('INSERT INTO t VALUES (1, 2)');
+        $session->query('INSERT INTO s VALUES (1, 10)');
+        $session->query('INSERT INTO t SELECT a, SUM(b) FROM s GROUP BY a ON DUPLICATE KEY UPDATE b = VALUES(b) + 1');
+        $result = $session->query('SELECT * FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '11']], $result->rows);
+    }
 }

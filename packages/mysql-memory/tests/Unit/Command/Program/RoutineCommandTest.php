@@ -182,4 +182,19 @@ final class RoutineCommandTest extends TestCase
 
         self::assertSame(['d', 'f', ['root', '%'], 'a INT', 'char(2) CHARSET utf8mb4', "RETURN 'x'", 'NO SQL', true, 'INVOKER', 'c'], [$routine->schema, $routine->name, $routine->definer, $routine->parameters, $routine->returns, $routine->body, $routine->access, $routine->deterministic, $routine->security, $routine->comment]);
     }
+
+    public function testExecuteKeepsTheBodyAndTheReturnTypeAsMySql57WritesThem(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query("CREATE FUNCTION f() RETURNS CHAR(3) CHARSET utf8 COLLATE utf8_bin DETERMINISTIC RETURN 'a'");
+        $session->query('CREATE PROCEDURE q() SELECT 2 /* c */ ;');
+
+        $function = $session->query('SHOW CREATE FUNCTION f')[0];
+        $procedure = $session->query('SHOW CREATE PROCEDURE q')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $function);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $procedure);
+        self::assertSame("CREATE DEFINER=`root`@`%` FUNCTION `f`() RETURNS char(3) CHARSET utf8 COLLATE utf8_bin\n    DETERMINISTIC\nRETURN 'a'", $function->rows[0][2]);
+        self::assertSame("CREATE DEFINER=`root`@`%` PROCEDURE `q`()\nSELECT 2 /* c */", $procedure->rows[0][2]);
+    }
 }

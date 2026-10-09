@@ -78,4 +78,10 @@ final class TextsTest extends TestCase
         self::assertEquals([new UnknownCharset('klingon')], $derivation->facts()->diagnostics);
     }
 
+    public function testConvertedIsAMediumBlobBeyond65535Bytes(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+
+        self::assertEquals(Domain::string(262140, Collation::known('utf8mb4_0900_ai_ci'), Field::MediumBlob), new Texts(new Settings(Collation::known('latin1_bin')))->converted(Domain::string(65535, Collation::known('latin1_bin'), Field::Blob), 'utf8mb4', $derivation));
+    }
 }

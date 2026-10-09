@@ -53,4 +53,9 @@ final class CharsetTest extends TestCase
         self::assertSame(1, Charset::known('utf32')->length("\0\0\0a"));
         self::assertSame(2, Charset::known('latin1')->length("\xe9\xe9"));
     }
+
+    public function testMinLengthIsTheFewestBytesOfACharacter(): void
+    {
+        self::assertSame([2, 4, 1], [Charset::known('ucs2')->minLength(), Charset::known('utf32')->minLength(), Charset::known('utf8mb4')->minLength()]);
+    }
 }

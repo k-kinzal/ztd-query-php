@@ -190,4 +190,14 @@ final class ExplainCommandTest extends TestCase
     {
         self::assertSame(['id', 'select_type', 'table', 'partitions', 'type', 'possible_keys', 'key', 'key_len', 'ref', 'rows', 'filtered', 'Extra'], array_map(static fn (Heading $heading): string => $heading->name, (new ExplainCommand())->headings()));
     }
+
+    public function testFormatRefusesAnUnknownFormatBeforeTheTablesOfTheStatement(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1791);
+
+        $session->query('EXPLAIN FORMAT=xyz SELECT * FROM t AS a, t AS a');
+    }
 }

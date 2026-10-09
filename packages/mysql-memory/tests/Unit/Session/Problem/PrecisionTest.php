@@ -37,4 +37,11 @@ final class PrecisionTest extends TestCase
 
         (new Precision())->check($session->analyze("SELECT CAST(TIMESTAMP '2020-01-01 00:00:00' AT TIME ZONE '+00:00' AS DATETIME(7))")->statement);
     }
+
+    public function testLegacyWritesTheMessageOfMySql56(): void
+    {
+        $error = \MySqlMemory\Error\Family\SchemaError::TooBigPrecision->error(9, 'CAST', 6);
+
+        self::assertSame(["Too big precision 9 specified for column 'CAST'. Maximum is 6.", "Too-big precision 9 specified for 'CAST'. Maximum is 6."], [(new Precision())->legacy($error, \SqlSemantics\Contract\GrammarRelease::MySql5651)->getMessage(), (new Precision())->legacy($error, \SqlSemantics\Contract\GrammarRelease::MySql5744)->getMessage()]);
+    }
 }

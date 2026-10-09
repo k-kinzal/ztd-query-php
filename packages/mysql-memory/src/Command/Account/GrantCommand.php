@@ -6,6 +6,7 @@ namespace MySqlMemory\Command\Account;
 
 use MySqlMemory\Account\Account;
 use MySqlMemory\Account\Catalog;
+use MySqlMemory\Account\Credentials;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Error\Family\AccountError;
@@ -17,6 +18,7 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Account\Option\ResourceLimit;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantAs;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantOptionRight;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantPrivileges;
@@ -24,6 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantProxy;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\GrantRoles;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\GrantedRole;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\StaticPrivilege;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
 use SqlSemantics\Platform\MySql\Statement\Account\User\RoleSet;
 use SqlSemantics\Platform\MySql\Statement\Name\AccountName;
 use SqlSemantics\Statement\Operation;
@@ -35,7 +38,7 @@ use SqlSemantics\Statement\Operation;
  * level (see Levels), then the AS clause, whose account and roles must exist and be granted
  * (ER_INVALID_GRANT_AS, after ER_NO_SUCH_USER for a missing account), then warns of each host
  * name and refuses an account that does not exist, as GRANT never creates one
- * (ER_CANT_CREATE_USER_WITH_GRANT); a dynamic privilege the server does not register is then a
+ * (ER_CANT_CREATE_USER_WITH_GRANT), except in MySQL 5.6 and 5.7, where it creates it; a dynamic privilege the server does not register is then a
  * syntax error. GRANT of roles refuses an account or a role that does not exist
  * (ER_UNKNOWN_AUTHID) and a grant that would make a role reach itself (ER_ROLE_GRANTED_TO_ITSELF).
  * GRANT PROXY is refused, as the account of the session holds no PROXY privilege
@@ -93,7 +96,7 @@ final class GrantCommand implements Command
     {
         $names = new Names($session->settings()->release());
         $names->check([...$names->users($statement->grantees), $statement->as?->user, ...$statement->as->roles->roles ?? []]);
-        $levels = new Levels();
+        $levels = new Levels($session->settings()->release());
         $levels->parsed($operation, $session);
         $target = $levels->target($statement->kind, $statement->level, $session);
         $levels->objects($operation, $session, $statement->privileges, $target);
@@ -101,6 +104,11 @@ final class GrantCommand implements Command
             $this->as($statement->as, $session);
         }
         $accounts = $session->instance->accounts;
+        foreach ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? $statement->grantees : [] as $grantee) {
+            if ($grantee->identification?->credential === Credential::PasswordHash) {
+                $session->diagnostics->warning(1287, "'IDENTIFIED BY PASSWORD' is deprecated and will be removed in a future release. Please use IDENTIFIED WITH <plugin> AS <hash> instead");
+            }
+        }
         $grantees = [];
         foreach ($statement->grantees as $grantee) {
             $identity = $names->identity($grantee->user, $session);
@@ -108,13 +116,16 @@ final class GrantCommand implements Command
             $grantees[] = $identity;
         }
         $found = [];
-        foreach ($grantees as $identity) {
+        if ((new Catalog($session->settings()->release()))->legacy()) {
+            $found = $this->accounts($statement, $grantees, $session);
+        }
+        foreach ($found === [] ? $grantees : [] as $identity) {
             $found[] = $accounts->find($identity) ?? throw AccountError::CantCreateUserWithGrant->error();
         }
         $levels->usage($operation);
         [$static, $columns, $dynamic, $option, $all] = $levels->read($statement->privileges, $target[0]);
         foreach ($dynamic as $name) {
-            if (!(new Catalog())->registered($name)) {
+            if (!(new Catalog($session->settings()->release()))->registered($name)) {
                 throw StatementError::SyntaxError->error();
             }
         }
@@ -123,6 +134,56 @@ final class GrantCommand implements Command
         foreach ($found as $account) {
             $this->grant($account, $target, $static, $columns, $dynamic, $option, $all, $named);
         }
+    }
+
+    /**
+     * Answers the accounts GRANT names in MySQL 5.6 and 5.7, creating those that do not exist and applying the authentication, TLS requirement and resource limits the statement gives.
+     *
+     * Under NO_AUTO_CREATE_USER an account that does not exist is created only with a password
+     * or an authentication string that is not empty (ER_PASSWORD_NO_MATCH otherwise). MySQL 5.7
+     * warns, for each account, that creating it with GRANT or changing more than its privileges is
+     * deprecated (verified on live 5.6.51 and 5.7.44 servers).
+     * Source: https://dev.mysql.com/doc/refman/5.7/en/grant.html.
+     *
+     * @param list<Identity> $grantees The accounts the statement names, in order
+     * @return list<Account>
+     *
+     * @throws SqlError When an account cannot be created, or a plugin or an authentication string is refused
+     */
+    public function accounts(GrantPrivileges $statement, array $grantees, Session $session): array
+    {
+        $release = $session->settings()->release();
+        $warns = $release === \SqlSemantics\Contract\GrammarRelease::MySql5744;
+        $accounts = $session->instance->accounts;
+        $options = new Options($release);
+        $plugin = (new Credentials($release))->default();
+        $limits = array_values(array_filter($statement->options, static fn ($with): bool => $with instanceof ResourceLimit));
+        $found = [];
+        foreach ($statement->grantees as $index => $grantee) {
+            $identity = $grantees[$index];
+            $identification = $grantee->identification;
+            $account = $accounts->find($identity);
+            if ($account === null && $session->modes()->has('NO_AUTO_CREATE_USER') && ($identification === null || $identification->credential === Credential::None || ($identification->secret->value ?? '') === '')) {
+                throw AccountError::PasswordNoMatch->error();
+            }
+            $options->check($identification, $account->plugin ?? $plugin);
+            if ($account === null) {
+                $account = new Account($identity, $plugin);
+                $accounts->add($account);
+                if ($warns) {
+                    $session->diagnostics->warning(1287, 'Using GRANT for creating new user is deprecated and will be removed in future release. Create new user with CREATE USER statement.');
+                }
+            } elseif ($warns && ($identification !== null || $statement->tls !== null || $limits !== [])) {
+                $session->diagnostics->warning(1287, "Using GRANT statement to modify existing user's properties other than privileges is deprecated and will be removed in future release. Use ALTER USER statement for this operation.");
+            }
+            if ($identification !== null) {
+                $options->identify($account, $identification, false);
+            }
+            $options->apply($account, $statement->tls, $limits, [], null);
+            $found[] = $account;
+        }
+
+        return $found;
     }
 
     /**
@@ -188,7 +249,7 @@ final class GrantCommand implements Command
         $names = new Names($session->settings()->release());
         $listed = array_map(static fn ($role): ?AccountName => $role instanceof GrantedRole ? $role->role : null, $statement->roles);
         $names->check([...$listed, ...$statement->users]);
-        (new Levels())->parsed($operation, $session);
+        (new Levels($session->settings()->release()))->parsed($operation, $session);
         $accounts = $session->instance->accounts;
         $users = array_map(static fn ($user): Identity => $names->identity($user, $session), $statement->users);
         $roles = array_map(static fn (AccountName $role): Identity => $names->identity($role, $session), array_values(array_filter($listed, static fn (?AccountName $role): bool => $role !== null)));

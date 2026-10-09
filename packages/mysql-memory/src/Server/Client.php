@@ -219,20 +219,21 @@ final class Client
     }
 
     /**
-     * Answers COM_QUERY.
+     * Answers COM_QUERY; answers false once a statement released the session, as the server then closes the connection.
      */
     public function query(string $sql): bool
     {
-        $answers = $this->session()->run($sql);
+        $session = $this->session();
+        $answers = $session->run($sql);
         foreach ($answers as $index => $answer) {
-            $more = $index < count($answers) - 1 ? 8 : 0;
+            $more = $index < count($answers) - 1 || ($session->released && $session->following !== '') ? 8 : 0;
             if ($answer instanceof SqlError) {
                 return $this->send($this->messages->error($answer->getCode(), $answer->sqlState(), $answer->getMessage()));
             }
             $this->reply($answer, $more, false);
         }
 
-        return true;
+        return !$session->released;
     }
 
     /**

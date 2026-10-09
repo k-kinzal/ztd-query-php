@@ -83,6 +83,16 @@ final class Planner
     public array $recursions = [];
 
     /**
+     * The query block whose rows carry the row of its FROM clause after the select list, for ON DUPLICATE KEY UPDATE of INSERT ... SELECT to read.
+     */
+    public ?Select $carrying = null;
+
+    /**
+     * @var array{int, Scope}|null The position the carried row starts at in each row of the block that carries it, and the scope that places its relations
+     */
+    public ?array $carried = null;
+
+    /**
      * @param Statement $statement The bound statement
      * @param Facts $facts The facts of the statement
      * @param Settings $settings The session settings

@@ -30,7 +30,9 @@ use SqlSemantics\Statement\Operation;
  * ER_SP_UNDECLARED_VAR, found first (verified on live 8.0, 8.4 and 9.1 servers). The emulator does not profile statements, as a session that
  * has not set profiling does not, so they list none. SHOW PROFILE answers the status and
  * duration of each stage and the columns of the sections it names, read from
- * INFORMATION_SCHEMA.PROFILING (verified on a live 8.4 server).
+ * INFORMATION_SCHEMA.PROFILING (verified on a live 8.4 server). MySQL 5.6 and 5.7 write the
+ * Query_ID and Duration of SHOW PROFILES one character narrower (verified on live 5.6.51 and
+ * 5.7.44 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-profile.html,
  * https://dev.mysql.com/doc/refman/8.4/en/show-profiles.html.
  *
@@ -66,8 +68,8 @@ final class ShowProfilesCommand implements Command
         if ($statement instanceof ShowProfiles) {
             $flags = ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::Binary->value | ColumnFlag::Numeric->value;
             $headings = [
-                new Heading('Query_ID', Field::Long, 11, $flags),
-                new Heading('Duration', Field::Double, 9, $flags),
+                new Heading('Query_ID', Field::Long, $session->settings()->legacy() ? 10 : 11, $flags),
+                new Heading('Duration', Field::Double, $session->settings()->legacy() ? 8 : 9, $flags),
                 Heading::text('Query', Field::VarString, 40, ColumnFlag::NotNull->value, 31),
             ];
 

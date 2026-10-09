@@ -128,4 +128,9 @@ final class LevelsTest extends TestCase
 
         self::assertSame([null, true], [(new Levels())->at($grants, ['TABLE', 'd', 't'], false), (new Levels())->at($grants, ['TABLE', 'd', 't'], true)?->empty()]);
     }
+
+    public function testAllNamesTheStaticPrivilegesOfTheRelease(): void
+    {
+        self::assertSame((new Catalog(\SqlSemantics\Contract\GrammarRelease::MySql5744))->statics(), (new Levels(\SqlSemantics\Contract\GrammarRelease::MySql5744))->all('GLOBAL'));
+    }
 }

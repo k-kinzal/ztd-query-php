@@ -60,7 +60,7 @@ final class Control
         foreach ($arguments as $argument) {
             $value = $argument->evaluate($frame);
             if ($value !== null) {
-                return Coerce::to($value, $argument->domain(), $result, $frame->context);
+                return $result->kind->temporal() ? Coerce::branch($value, $argument->domain(), $result, $frame->context) : Coerce::to($value, $argument->domain(), $result, $frame->context);
             }
         }
 

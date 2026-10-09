@@ -47,13 +47,16 @@ final class LockTables implements Statement
     }
 
     /**
-     * Records the resolution of each table and reports a repeated alias.
+     * Records the resolution of each table and reports a repeated alias; each LOW_PRIORITY WRITE warns that it is deprecated.
      */
     public function deriveStatement(Derivation $derivation): void
     {
         $tables = [];
         foreach ($this->locks as $lock) {
             $tables[] = [$lock, $lock->table, $lock->alias];
+            if ($lock->mode === LockMode::LowPriorityWrite) {
+                \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::LowPriorityWrite, $derivation);
+            }
         }
         (new TableNames())->record($derivation, $tables);
     }

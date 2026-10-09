@@ -38,11 +38,11 @@ final class NameConversionTest extends TestCase
 
     public function testAnUnaliasedItemNamedAfterNonAsciiTextHasADependentName(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 'ü', _utf16'ab'", []);
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT 'ü', _latin2'é'", []);
 
         self::assertNull($operation->field(0)->name);
         self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);
-        self::assertEquals([new NameConversion('utf16')], $operation->field(1)->slot->unnamed);
+        self::assertEquals([new NameConversion('latin2')], $operation->field(1)->slot->unnamed);
         self::assertInstanceOf(DependentField::class, $operation->fields()?->lookup('ü'));
     }
 

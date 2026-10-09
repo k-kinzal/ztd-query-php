@@ -23,4 +23,19 @@ final class CatalogTest extends TestCase
     {
         self::assertSame(['SELECT', 'RELOAD', 'DROP ROLE'], (new Catalog())->ordered(['DROP ROLE' => true, 'RELOAD' => true, 'SELECT' => true]));
     }
+
+    public function testStaticsLeavesOutTheRolePrivilegesInMySql57(): void
+    {
+        self::assertSame([28, 30], [count((new Catalog(\SqlSemantics\Contract\GrammarRelease::MySql5744))->statics()), count((new Catalog())->statics())]);
+    }
+
+    public function testDynamicsAnswersNoneInMySql56(): void
+    {
+        self::assertSame([], (new Catalog(\SqlSemantics\Contract\GrammarRelease::MySql5651))->dynamics());
+    }
+
+    public function testLegacyTellsMySql56And57(): void
+    {
+        self::assertSame([true, false], [(new Catalog(\SqlSemantics\Contract\GrammarRelease::MySql5651))->legacy(), (new Catalog())->legacy()]);
+    }
 }

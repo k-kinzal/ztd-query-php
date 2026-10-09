@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Account;
 
 use MySqlMemory\Account\Account;
+use MySqlMemory\Account\Credentials;
 use MySqlMemory\Account\Identity;
 use MySqlMemory\Command\Command;
 use MySqlMemory\Error\Family\AccountError;
@@ -15,8 +16,10 @@ use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Account\CreateRole;
 use SqlSemantics\Platform\MySql\Statement\Account\CreateUser;
+use SqlSemantics\Platform\MySql\Statement\Account\User\Credential;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
 use SqlSemantics\Statement\Operation;
 
@@ -28,7 +31,9 @@ use SqlSemantics\Statement\Operation;
  * statement (ER_CANNOT_USER, naming every such account), or with IF NOT EXISTS draws a note
  * and is left as it is. A default role must exist. Nothing is created when the statement fails.
  * A role is created locked, with an expired password. A random password is answered as a row of
- * the user, the host, the password and the factor (verified on a live 8.4 server).
+ * the user, the host, the password and the factor (verified on a live 8.4 server). MySQL 5.6 and
+ * 5.7 create accounts with mysql_native_password and one at a time (see legacy()), and 5.7 warns
+ * that IDENTIFIED BY PASSWORD is deprecated (verified on live 5.6.51 and 5.7.44 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-user.html,
  * https://dev.mysql.com/doc/refman/8.4/en/create-role.html.
  *
@@ -62,18 +67,52 @@ final class CreateUserCommand implements Command
         }
         assert($statement instanceof CreateUser);
         $names->check([...$names->users($statement->users), ...$statement->defaultRoles]);
-        $options = new Options();
+        $release = $session->settings()->release();
+        $options = new Options($release);
         $options->parsed($operation, $session->text);
-        foreach ($statement->users as $user) {
-            $options->check($user->identification, 'caching_sha2_password');
-            $options->check($user->initial, 'caching_sha2_password');
+        $plugin = (new Credentials($release))->default();
+        $this->deprecated($statement, $session);
+        if ((new Credentials($release))->legacy()) {
+            return $this->legacy($statement, $session, $context, $plugin);
         }
+        foreach ($statement->users as $user) {
+            $options->check($user->identification, $plugin);
+            $options->check($user->initial, $plugin);
+        }
+        $created = $this->absent($statement, $names, $session, $context);
+        $defaults = $this->defaults($statement, $session);
         $accounts = $session->instance->accounts;
+        $saved = $accounts->copy();
+        try {
+            $generated = $this->create($created, $defaults, $statement, $session, $context);
+        } catch (SqlError $error) {
+            $accounts->restore($saved);
+            throw $error;
+        }
+        if ($generated !== []) {
+            return (new Passwords())->result($generated, $context);
+        }
+
+        return new Completion(0, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Answers the accounts of CREATE USER that do not exist yet, each named once.
+     *
+     * An account that exists, or is named a second time, fails the statement (ER_CANNOT_USER,
+     * naming every such account), or with IF NOT EXISTS draws a note.
+     *
+     * @return list<array{Identity, UserSpecification}>
+     *
+     * @throws SqlError When an account exists and the statement has no IF NOT EXISTS
+     */
+    public function absent(CreateUser $statement, Names $names, Session $session, Context $context): array
+    {
         $failed = [];
         $created = [];
         foreach ($statement->users as $user) {
             $identity = $names->identity($user->user, $session);
-            if ($accounts->find($identity) !== null || isset($created[$identity->key()])) {
+            if ($session->instance->accounts->find($identity) !== null || isset($created[$identity->key()])) {
                 $failed[] = $identity;
                 continue;
             }
@@ -83,18 +122,71 @@ final class CreateUserCommand implements Command
             throw AccountError::CannotUser->error('CREATE USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
         foreach ($failed as $identity) {
-            $context->diagnostics->note(AccountError::UserAlreadyExists, AccountError::UserAlreadyExists->message($identity->quoted()));
+            $context->diagnostics->note(AccountError::UserAlreadyExists, $names->existence($identity, true));
         }
-        $defaults = $this->defaults($statement, $session);
-        $saved = $accounts->copy();
-        try {
-            $generated = $this->create(array_values($created), $defaults, $statement, $session, $context);
-        } catch (SqlError $error) {
-            $accounts->restore($saved);
-            throw $error;
+
+        return array_values($created);
+    }
+
+    /**
+     * Records the warning MySQL 5.7 raises for each account IDENTIFIED BY PASSWORD names (verified on a live 5.7.44 server).
+     */
+    public function deprecated(CreateUser $statement, Session $session): void
+    {
+        if ($session->settings()->release() !== GrammarRelease::MySql5744) {
+            return;
         }
-        if ($generated !== []) {
-            return (new Passwords())->result($generated, $context);
+        foreach ($statement->users as $user) {
+            if ($user->identification?->credential === Credential::PasswordHash) {
+                $session->diagnostics->warning(1287, "'IDENTIFIED BY PASSWORD' is deprecated and will be removed in a future release. Please use IDENTIFIED WITH <plugin> AS <hash> instead");
+            }
+        }
+    }
+
+    /**
+     * Creates the accounts as MySQL 5.6 and 5.7 do, one after the other: an account whose plugin or authentication string is refused is recorded as an error, and one that exists is refused or, with IF NOT EXISTS, noted; the others are created all the same. A refusal is followed by ER_CANNOT_USER, which names the refused accounts in 5.6 and none in 5.7 (verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @param string $plugin The plugin an account takes when the statement names none
+     *
+     * @throws SqlError When an account is refused or exists
+     */
+    public function legacy(CreateUser $statement, Session $session, Context $context, string $plugin): Reply
+    {
+        $release = $session->settings()->release();
+        $names = new Names($release);
+        $options = new Options($release);
+        $accounts = $session->instance->accounts;
+        $refusal = null;
+        $refused = [];
+        $failed = [];
+        foreach ($statement->users as $user) {
+            $identity = $names->identity($user->user, $session);
+            try {
+                $options->check($user->identification, $plugin);
+            } catch (SqlError $error) {
+                $refusal ??= $error;
+                $refused[] = $identity;
+                $session->diagnostics->error($error->getCode(), $error->getMessage());
+                continue;
+            }
+            if ($accounts->find($identity) !== null) {
+                if ($statement->ifNotExists) {
+                    $context->diagnostics->note(AccountError::UserAlreadyExists, $names->existence($identity, true));
+                } else {
+                    $failed[] = $identity;
+                }
+                continue;
+            }
+            $this->create([[$identity, $user]], [], $statement, $session, $context);
+        }
+        $quoted = static fn (Identity $identity): string => $identity->quoted();
+        if ($refusal !== null) {
+            $listed = $release === GrammarRelease::MySql5651 ? implode(',', array_map($quoted, [...$refused, ...$failed])) : '';
+
+            throw new SqlError($refusal->error, $refusal->getMessage(), $refusal, [[AccountError::CannotUser->value, AccountError::CannotUser->message('CREATE USER', $listed)]], null, null, true);
+        }
+        if ($failed !== []) {
+            throw AccountError::CannotUser->error('CREATE USER', implode(',', array_map($quoted, $failed)));
         }
 
         return new Completion(0, 0, $context->diagnostics->count());
@@ -134,10 +226,10 @@ final class CreateUserCommand implements Command
     public function create(array $created, array $defaults, CreateUser $statement, Session $session, Context $context): array
     {
         $accounts = $session->instance->accounts;
-        $options = new Options();
+        $options = new Options($session->settings()->release());
         $generated = [];
         foreach ($created as [$identity, $user]) {
-            $account = new Account($identity);
+            $account = new Account($identity, (new Credentials($session->settings()->release()))->default());
             $password = $user->identification === null ? null : $options->identify($account, $user->identification, false);
             $password = $user->initial === null ? $password : $options->identify($account, $user->initial, false);
             $options->apply($account, $statement->tls, $statement->resources, $statement->options, $statement->comment);

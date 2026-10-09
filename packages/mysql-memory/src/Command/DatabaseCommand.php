@@ -41,6 +41,11 @@ final class DatabaseCommand implements Command
 
     /**
      * Executes the statement.
+     *
+     * CREATE DATABASE refuses an ENCRYPTION other than Y or N before it finds that the database
+     * exists (verified on a live 8.4 server).
+     *
+     * @throws \MySqlMemory\Error\SqlError When the statement fails
      */
     #[Override]
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
@@ -54,6 +59,11 @@ final class DatabaseCommand implements Command
         }
         if ($statement instanceof CreateDatabase) {
             $name = $statement->name->value;
+            foreach ($statement->options as $option) {
+                if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Server\Database\DatabaseEncryption && !in_array(strtoupper($option->encryption->value), ['Y', 'N'], true)) {
+                    throw \MySqlMemory\Error\Family\DataError::WrongValue->error('argument (should be Y or N)', $option->encryption->value);
+                }
+            }
             if ($dictionary->schema($name) !== null) {
                 if (!$statement->ifNotExists) {
                     throw SchemaError::DatabaseExists->error($name);

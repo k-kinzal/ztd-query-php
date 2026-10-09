@@ -118,7 +118,7 @@ final class Differential
     }
 
     /**
-     * Restores what a statement may have changed for the account and the server: the account the guard authenticated as, its password and privileges, and the global modes that refuse connections or writes.
+     * Restores what a statement may have changed for the account and the server: the account the guard authenticated as, its password, TLS requirement, resource limits and privileges, and the global modes that refuse connections or writes.
      */
     public function repair(PDO $guard): void
     {
@@ -145,7 +145,7 @@ final class Differential
     {
         if (str_starts_with($this->version, '5.6.')) {
             return [
-                "GRANT ALL ON *.* TO {$quoted} IDENTIFIED BY {$password} WITH GRANT OPTION",
+                "GRANT ALL ON *.* TO {$quoted} IDENTIFIED BY {$password} REQUIRE NONE WITH GRANT OPTION MAX_QUERIES_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_USER_CONNECTIONS 0",
                 "SET PASSWORD FOR {$quoted} = PASSWORD({$password})",
                 'SET GLOBAL read_only = OFF',
                 'SET GLOBAL tx_read_only = OFF',
@@ -153,7 +153,7 @@ final class Differential
         }
         $statements = [
             "CREATE USER IF NOT EXISTS {$quoted} IDENTIFIED BY {$password}",
-            "ALTER USER {$quoted} IDENTIFIED BY {$password} ACCOUNT UNLOCK PASSWORD EXPIRE NEVER",
+            "ALTER USER {$quoted} IDENTIFIED BY {$password} REQUIRE NONE WITH MAX_QUERIES_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_USER_CONNECTIONS 0 ACCOUNT UNLOCK PASSWORD EXPIRE NEVER",
             "GRANT ALL ON *.* TO {$quoted} WITH GRANT OPTION",
             "SET DEFAULT ROLE NONE TO {$quoted}",
             'SET GLOBAL offline_mode = OFF',

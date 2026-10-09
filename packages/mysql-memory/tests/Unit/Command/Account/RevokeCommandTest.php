@@ -130,4 +130,12 @@ final class RevokeCommandTest extends TestCase
 
         $session->query('REVOKE ALL, GRANT OPTION FROM root, nobody');
     }
+
+    public function testRolesWarnsOfAnUnknownRoleOnceForEachAccountNamed(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('REVOKE IF EXISTS r FROM CURRENT_USER, nobody, CURRENT_USER IGNORE UNKNOWN USER');
+
+        self::assertSame([['Warning', 3523, 'Unknown authorization ID `r`@`%`'], ['Warning', 3162, 'Authorization ID nobody does not exist.'], ['Warning', 3523, 'Unknown authorization ID `r`@`%`']], $session->diagnostics->conditions);
+    }
 }

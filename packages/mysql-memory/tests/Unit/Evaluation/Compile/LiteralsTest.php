@@ -157,4 +157,12 @@ final class LiteralsTest extends TestCase
         self::assertSame(['{ d \'2020-1-1\' }', '{ ts \'2020-01-01 10:00:00.5\' }', '{ t \'1 10:00:00\' }', '{ foo 1 + 1 }', '2020-01-01'], array_map(static fn ($column): string => $column->name, $result->columns));
     }
 
+    public function testStringPadsALiteralOfWideUnitsWithLeadingZeroBytes(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(_utf16'a'), HEX(_utf32'a'), HEX(_utf16'ab'), HEX(_latin1'a')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0061', '00000061', '6162', '61']], $result->rows);
+    }
 }

@@ -177,4 +177,15 @@ final class ReplicaCommandTest extends TestCase
 
         $session->query('START SLAVE');
     }
+
+    public function testExecuteRefusesResetMasterWithoutBinaryLoggingInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1186);
+        $this->expectExceptionMessage('Binlog closed, cannot RESET MASTER');
+
+        $session->query('RESET MASTER');
+    }
 }

@@ -29,7 +29,8 @@ use SqlSemantics\Statement\Operation;
  * estimate of the engine, read once and kept as the data dictionary keeps it for
  * information_schema_stats_expiry seconds. Null is YES for a
  * column that can hold NULL. The rows are read from INFORMATION_SCHEMA.SHOW_STATISTICS, which
- * the column metadata names (verified on a live 8.4 server).
+ * the column metadata names (verified on a live 8.4 server); MySQL 5.6 and 5.7 read them from
+ * INFORMATION_SCHEMA.STATISTICS (see legacy()).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-index.html.
  *
  * @visibility MySqlMemory
@@ -56,9 +57,11 @@ final class ShowKeysCommand implements Command
         $stored = (new Inspection())->table($statement->table, $statement->database, $session);
         $definition = $stored->definition;
         $rows = [];
+        $release = $session->settings()->release();
+        $legacy = $session->settings()->legacy();
         foreach ((new Keys())->ordered($definition) as $key) {
             foreach ($key->columns as $sequence => $position) {
-                $stored->statistics['index ' . $key->name . ' ' . $sequence] ??= [$this->cardinality($stored, $key, $sequence)];
+                $stored->statistics['index ' . $key->name . ' ' . $sequence] ??= [$this->cardinality($stored, $key, $sequence, $release !== \SqlSemantics\Contract\GrammarRelease::MySql5651)];
                 $cardinality = $stored->statistics['index ' . $key->name . ' ' . $sequence][0];
                 $column = $definition->columns[$position];
                 $rows[] = [
@@ -75,23 +78,26 @@ final class ShowKeysCommand implements Command
                     $this->type($key->kind, $definition->engine),
                     '',
                     '',
-                    'YES',
-                    null,
+                    ...($legacy ? [] : ['YES', null]),
                 ];
             }
         }
+        $headings = $legacy ? $this->legacy() : ($definition->temporary ? $this->temporary() : $this->headings());
 
-        return (new Listing($definition->temporary && !$session->settings()->legacy() ? $this->temporary() : $this->headings()))->result($rows, $operation, $session, $context, $connection, $statement->filter);
+        return (new Listing($headings))->result($rows, $operation, $session, $context, $connection, $statement->filter);
     }
 
     /**
      * Answers the cardinality of the first columns of a key, up to one of them, as the engine estimates it.
      *
      * InnoDB counts the distinct values of those columns, NULL equal to NULL, as it does exactly
-     * for a table of few pages. MyISAM counts the rows for the whole of a unique key of NOT NULL
+     * for a table of few pages; MySQL 5.6 counts whole values where the key takes a prefix (verified
+     * on a live 5.6.51 server).
+     *
+     * @param bool $prefixed Whether the values are cut to the prefixes of the key MyISAM counts the rows for the whole of a unique key of NOT NULL
      * columns and reports nothing else.
      */
-    public function cardinality(StoredTable $stored, Key $key, int $sequence): ?int
+    public function cardinality(StoredTable $stored, Key $key, int $sequence, bool $prefixed = true): ?int
     {
         $definition = $stored->definition;
         if (strcasecmp($definition->engine, 'MyISAM') === 0) {
@@ -106,7 +112,7 @@ final class ShowKeysCommand implements Command
             foreach (array_slice($key->columns, 0, $sequence + 1) as $index => $position) {
                 $value = $row[$position] ?? null;
                 $domain = $definition->columns[$position]->domain;
-                $prefix = $key->prefixes[$index] ?? null;
+                $prefix = $prefixed ? $key->prefixes[$index] ?? null : null;
                 if ($value !== null && $prefix !== null && $domain->kind === Kind::String) {
                     $value = Encoding::slice((string) $value, 0, $prefix, $domain->collation->charset);
                 }
@@ -157,6 +163,33 @@ final class ShowKeysCommand implements Command
             Heading::text('Index_comment', Field::VarString, 1024, $required, 0, 'Index_comment', $table),
             Heading::text('Visible', Field::VarString, 4, 0, 0, 'Visible', $table),
             Heading::text('Expression', Field::Blob, 4294967295, ColumnFlag::Blob->value | ColumnFlag::Binary->value, 0, 'Expression', $table),
+        ];
+    }
+
+    /**
+     * Answers the columns of the rows in MySQL 5.6 and 5.7, which read them from INFORMATION_SCHEMA.STATISTICS and have no Visible and Expression columns (verified on live 5.6.51 and 5.7.44 servers).
+     *
+     * @return list<Heading>
+     */
+    public function legacy(): array
+    {
+        $table = 'STATISTICS';
+        $required = ColumnFlag::NotNull->value;
+
+        return [
+            Heading::text('Table', Field::VarString, 64, $required, 0, 'Table', $table),
+            new Heading('Non_unique', Field::LongLong, 1, $required, 0, false, 'Non_unique', $table),
+            Heading::text('Key_name', Field::VarString, 64, $required, 0, 'Key_name', $table),
+            new Heading('Seq_in_index', Field::LongLong, 2, $required, 0, false, 'Seq_in_index', $table),
+            Heading::text('Column_name', Field::VarString, 64, $required, 0, 'Column_name', $table),
+            Heading::text('Collation', Field::VarString, 1, 0, 0, 'Collation', $table),
+            new Heading('Cardinality', Field::LongLong, 21, 0, 0, false, 'Cardinality', $table),
+            new Heading('Sub_part', Field::LongLong, 3, 0, 0, false, 'Sub_part', $table),
+            Heading::text('Packed', Field::VarString, 10, 0, 0, 'Packed', $table),
+            Heading::text('Null', Field::VarString, 3, $required, 0, 'Null', $table),
+            Heading::text('Index_type', Field::VarString, 16, $required, 0, 'Index_type', $table),
+            Heading::text('Comment', Field::VarString, 16, 0, 0, 'Comment', $table),
+            Heading::text('Index_comment', Field::VarString, 1024, $required, 0, 'Index_comment', $table),
         ];
     }
 

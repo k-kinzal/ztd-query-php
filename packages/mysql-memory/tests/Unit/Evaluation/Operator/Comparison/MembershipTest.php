@@ -126,4 +126,20 @@ final class MembershipTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'c'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'c'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'c'"]], $warnings->rows);
     }
+
+    public function testEvaluateEvaluatesTheValueAgainForEachComparisonTypeInMySql56(): void
+    {
+        $result = (new Instance('5.6.51'))->connect()->query("SELECT CONCAT(1 + '1x') IN ('a', 2), CONCAT(1 + '1x') IN (2, 'a')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[['1', '1']], 3], [$result->rows, $result->warnings]);
+    }
+
+    public function testEvaluateEvaluatesANullValueForEachComparisonTypeInMySql57(): void
+    {
+        $result = (new Instance('5.7.44'))->connect()->query("SELECT (TRUE + INTERVAL 1 HOUR_SECOND) IN (1, 'a')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[[null]], 2], [$result->rows, $result->warnings]);
+    }
 }

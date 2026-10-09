@@ -74,13 +74,13 @@ final class Arithmetic implements Scalar
         $left = $operands->single($derivation->scalar($this->left, $environment), $derivation);
         $right = $operands->single($derivation->scalar($this->right, $environment), $derivation);
         $type = (new NumericResult())->binary($this->operator, $this->left, $left, $this->right, $right, $derivation->context->profile->grammar);
-        if ($this->operator->bitwise() && (new NumericResult())->binaryOperand($this->left, $left)) {
+        if ($this->operator->bitwise() && (new NumericResult())->binaryOperation($this->operator, $this->left, $left, $this->right, $right)) {
             Deprecation::raise(Deprecated::BinaryBitwise, $derivation);
         }
         $domains = (new Precision())->all([$left->type, $right->type]);
         $settings = Settings::of($derivation->context);
         if ($domains !== null && ($type instanceof Known || !$this->operator->bitwise())) {
-            $numbers = new Numbers($settings->divPrecisionIncrement, $settings->unsignedSubtraction);
+            $numbers = new Numbers($settings->divPrecisionIncrement, $settings->unsignedSubtraction, in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true));
             $bytes = $domains;
             $domains = [$numbers->numeric($this->left, $domains[0]), $numbers->numeric($this->right, $domains[1])];
             if (in_array($this->operator, [ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::Multiply], true) && in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {

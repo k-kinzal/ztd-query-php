@@ -30,7 +30,7 @@ use SqlSemantics\Statement\Shape\OutputSlot;
  * Rule: MYSQL-STAR-001. An expression item is one field named by
  * MYSQL-SELECT-ITEM-NAME-001. `*` contributes the columns the FROM clause
  * selects (MYSQL-JOIN-COLUMNS-001: merged columns once); `t.*` contributes
- * every column of the tables the qualifier names, merged ones included. A
+ * every column of the tables the qualifier names (MYSQL-RELATION-QUALIFIER-001), merged ones included. A
  * relation whose columns are not all known contributes its known columns
  * and an open star that names the missing inputs; columns whose names
  * depend on missing inputs (MYSQL-DERIVED-SHAPES-001) are known columns.
@@ -110,7 +110,7 @@ final class Projection
     {
         $found = false;
         foreach ($environment->relations as $relation) {
-            if ($this->admits($derivation, $relation, $table)) {
+            if ((new \SqlSemantics\Platform\MySql\Rules\RelationQualifiers())->admits($environment, $relation, $table)) {
                 $found = true;
                 $fields = $this->expand($fields, $relation, false);
             }

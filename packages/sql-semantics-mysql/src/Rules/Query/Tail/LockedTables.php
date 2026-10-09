@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Query\Tail;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\Projection;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
@@ -53,7 +54,9 @@ use SqlSemantics\Statement\Shape\RowShape;
  * query block of the query holds HIGH_PRIORITY, by that option, which
  * locks every table. A clause without OF names the table by its
  * correlation name or table name; a clause with OF names it as written.
- * The first problem ends the check. Terminates: the walk follows strictly
+ * The first problem ends the check. MySQL 5.6 and 5.7, whose locking clauses
+ * name no tables, check none of this (verified on live 5.6.51 and 5.7.44
+ * servers). Terminates: the walk follows strictly
  * smaller parts of the query and of the FROM clause. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/select.html ("Locking Read
  * Concurrency with NOWAIT and SKIP LOCKED", "OF tbl_name"),
@@ -71,7 +74,7 @@ final class LockedTables
      */
     public function check(Derivation $derivation, Environment $outer, Select|QueryStatement $query): void
     {
-        if ($query->locking === []) {
+        if ($query->locking === [] || in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
             return;
         }
         [$block, $clauses, $common] = $this->chain($query);

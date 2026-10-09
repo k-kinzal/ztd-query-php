@@ -92,6 +92,14 @@ final class NumbersTest extends TestCase
         self::assertSame(22, $numbers->binary(ArithmeticOperator::Plus, Domain::integer(), Domain::integer(Field::LongLong, 2))->length);
     }
 
+    public function testQuotientIsAsLongAsTheDividendWithoutItsFraction(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertEquals(Domain::integer(Field::LongLong, 5), $numbers->quotient(Domain::decimal(6, 2), Domain::integer(Field::LongLong, 2)));
+        self::assertEquals(Domain::integer(Field::LongLong, 3, true), $numbers->quotient(Domain::integer(Field::LongLong, 2, true), Domain::double()));
+    }
+
     public function testBitsIsAnUnsignedBigint(): void
     {
         self::assertEquals(Domain::integer(Field::LongLong, 21, true), (new Numbers())->bits());
@@ -156,5 +164,26 @@ final class NumbersTest extends TestCase
         $numbers = new Numbers();
 
         self::assertSame([2, 2, 11], [$numbers->signed(new NumberLiteral('1'), Domain::integer(Field::LongLong, 1))->length, $numbers->signed(new Grouped(new NumberLiteral('1')), Domain::integer(Field::LongLong, 1))->length, $numbers->signed(new StringLiteral(['1']), Domain::integer(Field::Long, 11))->length]);
+    }
+
+    public function testWidthCountsTheDigitsAndTheSignOfATemporalValue(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame([9, 15, 8, 11], [$numbers->width(new Domain(Kind::Date, Field::Date, 10)), $numbers->width(new Domain(Kind::DateTime, Field::DateTime, 19)), $numbers->width(new Domain(Kind::Time, Field::Time, 10)), $numbers->width(Domain::integer(Field::Long, 11))]);
+    }
+
+    public function testBinaryCountsATemporalOperandByItsWidth(): void
+    {
+        $date = new Domain(Kind::Date, Field::Date, 10);
+
+        self::assertEquals(Domain::integer(Field::LongLong, 10), (new Numbers())->binary(ArithmeticOperator::Plus, $date, Domain::integer(Field::LongLong, 1)));
+        self::assertEquals(Domain::integer(Field::LongLong, 9), (new Numbers())->binary(ArithmeticOperator::IntegerDivide, $date, Domain::integer(Field::LongLong, 1)));
+        self::assertEquals(Domain::integer(Field::LongLong, 10), (new Numbers(4, true, true))->binary(ArithmeticOperator::Modulo, $date, Domain::integer(Field::LongLong, 1)));
+    }
+
+    public function testNegatedMakesATemporalValueADouble(): void
+    {
+        self::assertEquals(Domain::double(19, 2), (new Numbers())->negated(new Domain(Kind::DateTime, Field::DateTime, 22, 2)));
     }
 }

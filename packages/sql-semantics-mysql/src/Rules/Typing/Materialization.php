@@ -141,10 +141,14 @@ final class Materialization
     }
 
     /**
-     * Answers the empty binary string a NULL column becomes, and any other column as it is.
+     * Answers the empty binary string a NULL column becomes, a temporal value in a character set binary again, and any other column as it is.
      */
     public function nothing(Domain $domain): Domain
     {
+        if ($domain->kind->temporal() && !$domain->collation->bytes()) {
+            return new Domain($domain->kind, $domain->field, $domain->length, $domain->decimals, false, null, [], $domain->coercibility);
+        }
+
         return $domain->kind === Kind::Null ? new Domain(Kind::String, Field::VarString, 0, 0, false, Collation::binary(), [], Coercibility::Ignorable) : $domain;
     }
 }

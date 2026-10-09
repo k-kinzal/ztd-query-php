@@ -13,7 +13,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
 
 /**
- * A system variable read: `@@name`, `@@SESSION.name` or `@@GLOBAL.name`.
+ * A system variable read: `@@name`, `@@SESSION.name`, `@@GLOBAL.name`, or a parameter of a key cache, `@@GLOBAL.cache.name`.
  *
  * `timestamp` reads the instant the statement started at, which is the timestamp the session
  * set, if any.
@@ -26,8 +26,9 @@ final class SystemVariableRead implements Evaluable
      * @param Definition $definition The variable
      * @param Scope $scope The scope read
      * @param Domain $domain The domain of the value
+     * @param string|null $cache The key cache whose parameter is read, or null for the variable
      */
-    public function __construct(public readonly Definition $definition, public readonly Scope $scope, public readonly Domain $domain)
+    public function __construct(public readonly Definition $definition, public readonly Scope $scope, public readonly Domain $domain, public readonly ?string $cache = null)
     {
     }
 
@@ -49,7 +50,7 @@ final class SystemVariableRead implements Evaluable
         if ($this->definition->name === 'timestamp') {
             return round($frame->context->started, 6);
         }
-        $value = $frame->context->variables->system($this->definition, $this->scope);
+        $value = $this->cache === null ? $frame->context->variables->system($this->definition, $this->scope) : $frame->context->variables->globals->cached($this->cache, $this->definition);
         if ($value === null) {
             return null;
         }
