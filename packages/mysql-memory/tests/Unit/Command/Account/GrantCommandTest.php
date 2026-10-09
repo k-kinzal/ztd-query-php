@@ -60,7 +60,7 @@ final class GrantCommandTest extends TestCase
         $this->expectExceptionCode(1698);
         $this->expectExceptionMessage("Access denied for user 'root'@'192.168.65.1'");
 
-        $session->query('GRANT PROXY ON root TO root');
+        $session->query('GRANT PROXY ON nobody TO root');
     }
 
     public function testPrivilegesRefusesAnUnregisteredDynamicPrivilege(): void

@@ -17,6 +17,9 @@ use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintainPartitions;
+use SqlSemantics\Platform\MySql\Statement\Partition\NamedPartitions;
+use SqlSemantics\Platform\MySql\Statement\Partition\PartitionSelection;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CachedTable;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\CacheIndex;
 use SqlSemantics\Platform\MySql\Statement\Server\KeyCache\LoadIndex;
@@ -100,6 +103,21 @@ final class AdministrationCommand implements Command
     }
 
     /**
+     * Answers the administration rows of ALTER TABLE partition maintenance.
+     *
+     * Table and partition failures are result rows, without adding conditions to SHOW WARNINGS.
+     * Verified on MySQL 8.4.7 through SQL.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/partitioning-maintenance.html.
+     */
+    public function partitions(MaintainPartitions $command, QualifiedName $name, Session $session): ResultSet
+    {
+        $operation = strtolower($command->kind->value);
+        $rows = $this->report($operation, null, $name, $command->partitions, $session);
+
+        return new ResultSet(self::columns($session), $rows);
+    }
+
+    /**
      * Refuses a statement before it commits: a key cache other than DEFAULT, a histogram that names
      * a column twice, then a table without database when no database is selected, in that order.
      *
@@ -126,23 +144,29 @@ final class AdministrationCommand implements Command
      *
      * @return list<array{string, string, string, string}>
      */
-    public function report(string $operation, ?Histogram $histogram, QualifiedName $name, bool $partitioned, Session $session): array
+    public function report(string $operation, ?Histogram $histogram, QualifiedName $name, bool|PartitionSelection $partitioned, Session $session): array
     {
         $schema = $name->schema->value ?? $session->variables->database;
         $label = $schema . '.' . $name->name->value;
         $table = $session->instance->dictionary->table($schema, $name->name->value);
         $failure = $this->failure($session, $schema, $name, $table);
         if ($table === null && isset($session->instance->dictionary->schema($schema)?->views[$name->name->value])) {
-            return $this->rows($label, $histogram !== null ? 'histogram' : $operation, $this->view($operation, $label, $histogram !== null));
+            return $this->rows($label, $histogram !== null ? 'histogram' : $operation, $this->view($operation, $label, $histogram !== null, $partitioned !== false));
         }
         if ($histogram !== null) {
             return $this->rows($label, 'histogram', $failure === null && $table !== null ? (new Histograms())->rows($histogram, $table) : [['Error', $failure ?? '']]);
         }
-        if ($failure === null && $partitioned) {
-            $failure = 'Partition management on a not partitioned table is not possible';
+        if ($failure === null && $partitioned !== false && $table !== null) {
+            $failure = $table->definition->partitioning === null ? 'Partition management on a not partitioned table is not possible' : null;
+            foreach ($failure === null && $partitioned instanceof NamedPartitions ? $partitioned->names : [] as $partition) {
+                if ($table->definition->partitioning?->partition($partition->value) === null) {
+                    $failure = \MySqlMemory\Error\Family\PartitionError::PartitionListError->message($label);
+                    break;
+                }
+            }
         }
 
-        return $this->rows($label, $operation, $failure === null ? $this->outcome($operation) : [['Error', $failure], $session->instance->dictionary->schema($schema) === null && !$session->settings()->legacy() ? ['error', 'Corrupt'] : ['status', 'Operation failed']]);
+        return $this->rows($label, $operation, $failure === null ? $this->outcome($operation, $partitioned instanceof PartitionSelection) : [['Error', $failure], $session->instance->dictionary->schema($schema) === null && !$session->settings()->legacy() ? ['error', 'Corrupt'] : ['status', 'Operation failed']]);
     }
 
     /**
@@ -207,12 +231,12 @@ final class AdministrationCommand implements Command
      *
      * @return list<array{string, string}>
      */
-    public function view(string $operation, string $label, bool $histogram): array
+    public function view(string $operation, string $label, bool $histogram, bool $baseTable = false): array
     {
         if ($histogram) {
             return [['Error', 'Cannot create histogram statistics for a view.']];
         }
-        if ($operation === 'check') {
+        if ($operation === 'check' && !$baseTable) {
             return [['status', 'OK']];
         }
         [$schema, $name] = explode('.', $label, 2);
@@ -225,8 +249,15 @@ final class AdministrationCommand implements Command
      *
      * @return list<array{string, string}>
      */
-    public function outcome(string $operation): array
+    public function outcome(string $operation, bool $partitioned = false): array
     {
+        if ($partitioned && $operation === 'repair') {
+            return [['status', 'OK']];
+        }
+        if ($partitioned && $operation === 'optimize') {
+            return [['note', 'Table does not support optimize on partitions. All partitions will be rebuilt and analyzed.'], ['status', 'OK']];
+        }
+
         return match ($operation) {
             'check', 'analyze' => [['status', 'OK']],
             'optimize' => [['note', 'Table does not support optimize, doing recreate + analyze instead'], ['status', 'OK']],

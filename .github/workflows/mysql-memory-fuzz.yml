@@ -5,6 +5,11 @@ on:
     - cron: '0 2 * * *'
   workflow_dispatch:
     inputs:
+      canonical_seeds:
+        description: Replay the complete canonical SQL Faker corpus and require 100 percent matching grammar coverage
+        required: false
+        default: false
+        type: boolean
       max_runs:
         description: Maximum inputs evaluated by each fuzz target after the seed corpus is replayed
         required: true
@@ -29,7 +34,7 @@ env:
 
 jobs:
   fuzz:
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: inputs.canonical_seeds != true && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
     name: Fuzz ${{ matrix.target.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -174,4 +179,46 @@ jobs:
             packages/mysql-memory/build/fuzz/${{ matrix.target.name }}.log
             packages/mysql-memory/${{ matrix.target.corpus }}/
           if-no-files-found: ignore
+          retention-days: 14
+
+  canonical-seeds:
+    if: github.event_name == 'workflow_dispatch' && inputs.canonical_seeds == true
+    name: Canonical seed coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: packages/mysql-memory
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, mbstring, pdo, pdo_mysql, mysqli, dom, filter, hash, iconv, json, libxml, pcntl, pcre, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          coverage: none
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
+        with:
+          working-directory: packages/mysql-memory
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+
+      - name: Replay every canonical seed with Testcontainers
+        run: |
+          set -euo pipefail
+          mkdir -p build/fuzz
+          composer fuzz:seeds 2>&1 | tee build/fuzz/canonical-seeds.log
+
+      - name: Upload complete observations and coverage
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mysql-memory-canonical-seeds-${{ env.MYSQL_VERSION }}
+          path: packages/mysql-memory/build/fuzz/
+          if-no-files-found: error
           retention-days: 14

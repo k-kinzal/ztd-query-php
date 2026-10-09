@@ -34,6 +34,11 @@ final class BaselineTest extends TestCase
      */
     public static function providerObjects(): iterable
     {
+        yield 'self proxy' => ['GRANT PROXY ON CURRENT_USER TO CURRENT_USER; SHOW GRANTS'];
+        yield 'proxy grant option' => ['CREATE USER baseline_extra; GRANT PROXY ON root TO baseline_extra WITH GRANT OPTION; SHOW GRANTS FOR baseline_extra'];
+        yield 'proxy option removal' => ['CREATE USER baseline_extra; GRANT PROXY ON root TO baseline_extra WITH GRANT OPTION; GRANT PROXY ON root TO baseline_extra; SHOW GRANTS FOR baseline_extra'];
+        yield 'proxy survives revoke all' => ['CREATE USER baseline_extra; GRANT PROXY ON root TO baseline_extra WITH GRANT OPTION; REVOKE ALL, GRANT OPTION FROM baseline_extra; SHOW GRANTS FOR baseline_extra'];
+        yield 'proxy revoked' => ['CREATE USER baseline_extra; GRANT PROXY ON root TO baseline_extra WITH GRANT OPTION; REVOKE PROXY ON root FROM baseline_extra; SHOW GRANTS FOR baseline_extra'];
         yield 'database' => ['CREATE DATABASE baseline_extra'];
         yield 'account' => ['CREATE USER baseline_extra'];
         yield 'server' => ["CREATE SERVER baseline_extra FOREIGN DATA WRAPPER mysql OPTIONS (USER 'text')"];

@@ -41,9 +41,8 @@ use SqlSemantics\Statement\Operation;
  * (ER_CANT_CREATE_USER_WITH_GRANT), except in MySQL 5.6 and 5.7, where it creates it; a dynamic privilege the server does not register is then a
  * syntax error. GRANT of roles refuses an account or a role that does not exist
  * (ER_UNKNOWN_AUTHID) and a grant that would make a role reach itself (ER_ROLE_GRANTED_TO_ITSELF).
- * GRANT PROXY is refused, as the account of the session holds no PROXY privilege
- * (ER_ACCESS_DENIED_NO_PASSWORD_ERROR). Nothing is granted when the statement fails (verified on
- * a live 8.4 server).
+ * PROXY grants require authority over the proxied account (see Proxies). Nothing is granted
+ * when the statement fails (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/grant.html.
  *
  * @visibility MySqlMemory
@@ -70,15 +69,7 @@ final class GrantCommand implements Command
         if ($statement instanceof GrantRoles) {
             $this->roles($statement, $operation, $session);
         } elseif ($statement instanceof GrantProxy) {
-            $names = new Names($session->settings()->release());
-            $names->check([$statement->proxied, ...$names->users($statement->grantees)]);
-            $names->resolve($names->identity($statement->proxied, $session), $context->diagnostics);
-            foreach ($statement->grantees as $grantee) {
-                $names->resolve($names->identity($grantee->user, $session), $context->diagnostics);
-            }
-            [$user, $host] = explode('@', $session->variables->account, 2) + [1 => ''];
-
-            throw AccountError::AccessDeniedNoPassword->error($user, $host);
+            (new Proxies())->grant($statement, $session);
         } else {
             assert($statement instanceof GrantPrivileges);
             $this->privileges($statement, $operation, $session, $context);
@@ -150,14 +141,15 @@ final class GrantCommand implements Command
      *
      * @throws SqlError When an account cannot be created, or a plugin or an authentication string is refused
      */
-    public function accounts(GrantPrivileges $statement, array $grantees, Session $session): array
+    public function accounts(GrantPrivileges|GrantProxy $statement, array $grantees, Session $session): array
     {
         $release = $session->settings()->release();
         $warns = $release === \SqlSemantics\Contract\GrammarRelease::MySql5744;
         $accounts = $session->instance->accounts;
         $options = new Options($release);
         $plugin = (new Credentials($release))->default();
-        $limits = array_values(array_filter($statement->options, static fn ($with): bool => $with instanceof ResourceLimit));
+        $limits = $statement instanceof GrantPrivileges ? array_values(array_filter($statement->options, static fn ($with): bool => $with instanceof ResourceLimit)) : [];
+        $tls = $statement instanceof GrantPrivileges ? $statement->tls : null;
         $found = [];
         foreach ($statement->grantees as $index => $grantee) {
             $identity = $grantees[$index];
@@ -173,13 +165,13 @@ final class GrantCommand implements Command
                 if ($warns) {
                     $session->diagnostics->warning(1287, 'Using GRANT for creating new user is deprecated and will be removed in future release. Create new user with CREATE USER statement.');
                 }
-            } elseif ($warns && ($identification !== null || $statement->tls !== null || $limits !== [])) {
+            } elseif ($warns && ($identification !== null || $tls !== null || $limits !== [])) {
                 $session->diagnostics->warning(1287, "Using GRANT statement to modify existing user's properties other than privileges is deprecated and will be removed in future release. Use ALTER USER statement for this operation.");
             }
             if ($identification !== null) {
                 $options->identify($account, $identification, false);
             }
-            $options->apply($account, $statement->tls, $limits, [], null);
+            $options->apply($account, $tls, $limits, [], null);
             $found[] = $account;
         }
 

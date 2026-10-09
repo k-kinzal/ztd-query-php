@@ -80,7 +80,8 @@ final class Servers
      *
      * The account has every privilege, and no generated statement names it, so a statement that
      * drops or locks the account the statements run as cannot take the repair down with it. It is
-     * created on both servers, so that both list the same accounts.
+     * created on both servers, so that both list the same accounts. PROXY on CURRENT_USER stores
+     * the empty wildcard mapping, allowing the guard to remove generated PROXY grants too.
      */
     public function guard(PDO $connection, string $version, string $password): void
     {
@@ -89,6 +90,7 @@ final class Servers
         $statements = str_starts_with($version, '5.6.')
             ? ["GRANT ALL ON *.* TO {$account} IDENTIFIED BY {$quoted} WITH GRANT OPTION"]
             : ["CREATE USER IF NOT EXISTS {$account} IDENTIFIED BY {$quoted}", "GRANT ALL ON *.* TO {$account} WITH GRANT OPTION"];
+        $statements[] = "GRANT PROXY ON CURRENT_USER TO {$account} WITH GRANT OPTION";
         foreach ($statements as $statement) {
             $connection->exec($statement);
         }

@@ -96,7 +96,7 @@ final class Grants
     }
 
     /**
-     * Revokes every privilege at every level, GRANT OPTION and the PROXY grants included.
+     * Revokes global, database, table and routine privileges and GRANT OPTION, preserving PROXY grants.
      */
     public function clear(): void
     {
@@ -104,7 +104,6 @@ final class Grants
         $this->dynamic = [];
         $this->databases = [];
         $this->tables = [];
-        $this->proxies = [];
         $this->routines = [];
     }
 

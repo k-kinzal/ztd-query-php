@@ -71,6 +71,15 @@ final class GrantsTest extends TestCase
         self::assertSame([[], [], []], [$grants->global->names, $grants->dynamic, $grants->databases]);
     }
 
+    public function testClearPreservesProxyGrants(): void
+    {
+        $identity = new Identity('u', '%');
+        $grants = new Grants(proxies: [$identity->key() => [$identity, true]]);
+        $grants->clear();
+
+        self::assertSame([$identity->key() => [$identity, true]], $grants->proxies);
+    }
+
     public function testCopyChangesApart(): void
     {
         $grants = new Grants();

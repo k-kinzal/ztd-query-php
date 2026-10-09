@@ -20,6 +20,40 @@ use SqlSemantics\Platform\MySql\Statement\Server\Maintenance\RepairTable;
 #[Small]
 final class AdministrationCommandTest extends TestCase
 {
+    public function testPartitionsReportsMissingTablesWithoutSqlErrors(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $result = $session->query('ALTER TABLE missing CHECK PARTITION ALL')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['d.missing', 'check', 'Error', "Table 'd.missing' doesn't exist"], ['d.missing', 'check', 'status', 'Operation failed']], $result->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testPartitionsValidatesPartitionNamesAndAcceptsExistingPartitions(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT) PARTITION BY HASH(a) PARTITIONS 2');
+        $invalid = $session->query('ALTER TABLE t CHECK PARTITION absent')[0];
+        $valid = $session->query('ALTER TABLE t REPAIR PARTITION P0')[0];
+
+        self::assertInstanceOf(ResultSet::class, $invalid);
+        self::assertSame([['d.t', 'check', 'Error', 'Error in list of partitions to d.t'], ['d.t', 'check', 'status', 'Operation failed']], $invalid->rows);
+        self::assertInstanceOf(ResultSet::class, $valid);
+        self::assertSame([['d.t', 'repair', 'status', 'OK']], $valid->rows);
+    }
+
+    public function testPartitionsRequiresABaseTableEvenForCheck(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE VIEW v AS SELECT 1 AS a');
+        $result = $session->query('ALTER TABLE v CHECK PARTITION ALL')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['d.v', 'check', 'Error', "'d.v' is not BASE TABLE"], ['d.v', 'check', 'status', 'Operation failed']], $result->rows);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new AdministrationCommand())->clearsDiagnostics());

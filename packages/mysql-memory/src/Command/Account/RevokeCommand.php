@@ -38,7 +38,7 @@ use SqlSemantics\Statement\Operation;
  * roles refuses an account or a role that does not exist (ER_UNKNOWN_AUTHID, for a role a
  * warning under IF EXISTS); revoking a role that is not granted does nothing. REVOKE ALL, GRANT
  * OPTION keeps the roles and refuses an account that does not exist (ER_REVOKE_GRANTS). REVOKE
- * PROXY of an account is refused, as the account of the session holds no PROXY privilege.
+ * PROXY requires authority over the proxied account (see Proxies).
  * Nothing is revoked when the statement fails (verified on a live 8.4 server).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/revoke.html.
  *
@@ -286,20 +286,13 @@ final class RevokeCommand implements Command
     }
 
     /**
-     * Revokes PROXY: refused for any account that exists, as the account of the session holds no PROXY privilege.
+     * Revokes the named PROXY grants, warning of absent grants under IF EXISTS.
      *
-     * @throws SqlError When an account does not exist or exists
+     * @throws SqlError When the session lacks authority or a named grant does not exist
      */
     public function proxy(RevokeProxy $statement, Session $session): void
     {
-        $names = new Names($session->settings()->release());
-        $names->check([$statement->proxied, ...$names->users($statement->users)]);
-        $names->resolve($names->identity($statement->proxied, $session), $session->diagnostics);
-        [$user, $host] = explode('@', $session->variables->account, 2) + [1 => ''];
-        $denied = AccountError::AccessDeniedNoPassword->error($user, $host);
-        if ($this->found($names->users($statement->users), $statement->ignoreUnknownUser, $session, true, $denied) !== []) {
-            throw $denied;
-        }
+        (new Proxies())->revoke($statement, $session);
     }
 
     /**

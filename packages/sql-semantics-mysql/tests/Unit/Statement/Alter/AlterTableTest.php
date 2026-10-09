@@ -18,6 +18,16 @@ use SqlSemantics\Statement\Shape\OutputSlot;
 #[Medium]
 final class AlterTableTest extends TestCase
 {
+    public function testDeriveStatementRecordsPartitionMaintenanceResults(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $check = $semantics->analyze('ALTER TABLE missing CHECK PARTITION ALL');
+
+        self::assertSame(4, $check->fields()?->count());
+        self::assertSame('Msg_text', $check->field(3)->slot->name?->value);
+        self::assertNull($semantics->analyze('ALTER TABLE missing REBUILD PARTITION ALL')->fields());
+    }
+
     public function testDeriveStatementReportsTheColumnProblems(): void
     {
         $semantics = new Semantics(Dialect::MySql);

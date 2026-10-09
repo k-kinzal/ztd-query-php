@@ -124,6 +124,15 @@ final class DifferentialTest extends TestCase
         yield 'handler index default' => ['CREATE TABLE x(a INT DEFAULT 2, KEY k(a)); INSERT INTO x VALUES(1),(2); HANDLER x OPEN; HANDLER x READ k = (DEFAULT)'];
         yield 'handler missing default' => ['CREATE TABLE x(a INT NOT NULL, KEY k(a)); HANDLER x OPEN; HANDLER x READ k = (DEFAULT)'];
         yield 'handler missing key before default' => ['CREATE TABLE x(a INT DEFAULT 2, KEY k(a)); HANDLER x OPEN; HANDLER x READ absent = (DEFAULT)'];
+        yield 'check partition missing table' => ['ALTER TABLE missing CHECK PARTITION ALL'];
+        yield 'analyze partition missing table' => ['ALTER TABLE missing ANALYZE PARTITION ALL'];
+        yield 'repair partition missing database' => ['ALTER TABLE missing_database.x REPAIR PARTITION ALL'];
+        yield 'optimize partition nonpartitioned table' => ['ALTER TABLE t1 OPTIMIZE PARTITION ALL'];
+        yield 'check partition view' => ['CREATE VIEW v AS SELECT 1 AS a; ALTER TABLE v CHECK PARTITION ALL'];
+        yield 'check named partition' => ['CREATE TABLE p(a INT) PARTITION BY HASH(a) PARTITIONS 2; ALTER TABLE p CHECK PARTITION P0'];
+        yield 'repair named partition' => ['CREATE TABLE p(a INT) PARTITION BY HASH(a) PARTITIONS 2; ALTER TABLE p REPAIR PARTITION p0'];
+        yield 'optimize named partition' => ['CREATE TABLE p(a INT) PARTITION BY HASH(a) PARTITIONS 2; ALTER TABLE p OPTIMIZE PARTITION p0'];
+        yield 'check absent partition' => ['CREATE TABLE p(a INT) PARTITION BY HASH(a) PARTITIONS 2; ALTER TABLE p CHECK PARTITION absent'];
         yield 'kill named window' => ['KILL ROW_NUMBER() OVER missing'];
         yield 'kill named window before argument' => ['KILL SUM(missing) OVER absent'];
         yield 'kill inline window before argument' => ['KILL SUM(missing) OVER ()'];

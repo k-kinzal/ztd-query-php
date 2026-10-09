@@ -96,6 +96,10 @@ final class AlterTableCommand implements Command
             throw QueryError::NoDatabase->error();
         }
         $session->transaction->commit();
+        $last = $commands[count($commands) - 1] ?? null;
+        if ($last instanceof \SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintainPartitions && $last->kind->reports()) {
+            return (new \MySqlMemory\Command\Maintenance\AdministrationCommand())->partitions($last, $name, $session);
+        }
         $table = $this->table($session, $schema, $name->name->value);
         $this->resolve($operation, $session);
         $layout = TableLayout::of($table->definition);
