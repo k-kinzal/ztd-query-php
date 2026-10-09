@@ -68,7 +68,7 @@ final class ShowGrantsCommand implements Command
         $granted = $accounts->roles($identity);
         $roles = $current ? $session->variables->roles : [];
         foreach ($statement->using as $role) {
-            $using = $names->identity($role, $session);
+            $using = $role instanceof \SqlSemantics\Platform\MySql\Statement\Name\CurrentUser ? new Identity('(null)', '(null)') : $names->identity($role, $session);
             if (!isset($granted[$using->key()])) {
                 throw AccountError::RoleNotGranted->error($using->backquoted(), $identity->backquoted());
             }

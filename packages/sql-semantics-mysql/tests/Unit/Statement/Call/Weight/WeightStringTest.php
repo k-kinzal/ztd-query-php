@@ -49,6 +49,13 @@ final class WeightStringTest extends TestCase
         self::assertSame('WEIGHT_STRING(a AS CHAR(4) LEVEL 1, 2 DESC)', (new Lexical())->join($out->pieces()));
     }
 
+    public function testDeriveScalarKeepsLegacyBinaryLengthWithoutAnEightByteMinimum(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.6.51'))->analyze("SELECT WEIGHT_STRING('abc' AS BINARY(1))");
+
+        self::assertEquals(new Known(Domain::string(1, Collation::binary())), $operation->field(0)->type);
+    }
+
     public function testDeriveScalarResolvesTheWeightOfANumberOrABinaryString(): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT WEIGHT_STRING(1), WEIGHT_STRING(1e0), WEIGHT_STRING('a' AS BINARY(12))");

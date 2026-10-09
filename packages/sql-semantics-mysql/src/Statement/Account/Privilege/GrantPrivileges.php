@@ -92,6 +92,9 @@ final class GrantPrivileges implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        if ($this->as !== null && !$this->level instanceof Level\GlobalLevel) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Account\Problem\MisplacedPrivilege('AS clause', $this->level->describe(), 'ER_UNSUPPORTED_USE_OF_GRANT_AS'));
+        }
         (new PrivilegeChecks())->grant($derivation, $this->privileges, $this->kind, $this->level);
         (new AccountChecks())->tls($derivation, $this->tls);
     }

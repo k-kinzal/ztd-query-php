@@ -91,7 +91,9 @@ final class WeightString implements Scalar
             default => (new Texts(Settings::of($derivation->context)))->length($operand),
         };
 
-        return new ScalarFact(new Known(Domain::string(max(8, $length), Collation::binary())), $base->nullability);
+        $minimum = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? 0 : 8;
+
+        return new ScalarFact(new Known(Domain::string(max($minimum, $length), Collation::binary())), $base->nullability);
     }
 
     /**

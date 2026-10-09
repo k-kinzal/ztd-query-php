@@ -25,6 +25,16 @@ final class PartitionClauseTest extends TestCase
         self::assertSame(['Column b does not exist.', 'Column c does not exist.'], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
     }
 
+    public function testDerivePartitioningReportsRequiredDefinitionsBeforeOpeningTheTable(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY RANGE COLUMNS(a)');
+        $warning = $operation->facts->warnings[0];
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $warning);
+        self::assertTrue($warning->aborts);
+        self::assertSame('For RANGE partitions each partition must be defined.', $warning->message());
+    }
+
     public function testRenderWritesTheCountsAndTheDefinitions(): void
     {
         self::assertSame('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 2 (PARTITION p0, PARTITION p1)', (new Semantics(Dialect::MySql))->analyze('ALTER TABLE t PARTITION BY HASH (a) PARTITIONS 2 (PARTITION p0, PARTITION p1)')->toString());

@@ -46,6 +46,26 @@ final class FormatsTest extends TestCase
         self::assertSame(['de_DE', 'en_US'], [(new Formats())->locale($frame, new Constant(Domain::string(5, Collation::known('utf8mb4_0900_ai_ci')), 'DE_de')), (new Formats())->locale($frame, new Constant(Domain::string(5, Collation::known('utf8mb4_0900_ai_ci')), 'de-DE'))]);
     }
 
+    public function testFormatConvertsTheCountBeforeResolvingARuntimeLocale(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SELECT FORMAT(USER(),USER(),USER())');
+
+        self::assertSame([
+            ['Warning', 1292, "Truncated incorrect INTEGER value: 'root@localhost'"],
+            ['Warning', 1649, "Unknown locale: 'root@localhost'"],
+            ['Warning', 1292, "Truncated incorrect DOUBLE value: 'root@localhost'"],
+        ], $session->diagnostics->conditions);
+    }
+
+    public function testFormatSkipsRuntimeLocaleWhenTheCountIsNull(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SELECT FORMAT(USER(),NULL,USER())');
+
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testFormatRoundsAndGroupsAsTheServer(): void
     {
         $session = (new Instance())->connect();

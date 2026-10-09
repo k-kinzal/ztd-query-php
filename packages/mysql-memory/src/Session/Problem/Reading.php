@@ -162,7 +162,8 @@ final class Reading
             if (Stages::closing($diagnostic)) {
                 throw (new Errors())->error($alias ?? $diagnostic, $session, 'field list', $operation->statement);
             }
-            $alias ??= $diagnostic instanceof NonUniqueTable ? $diagnostic : null;
+            $insert = $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertRows || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertSet || $operation->statement instanceof \SqlSemantics\Platform\MySql\Statement\Dml\Insert\InsertQuery;
+            $alias ??= $diagnostic instanceof NonUniqueTable || $insert && $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::DuplicateAlias ? $diagnostic : null;
         }
         if ($alias !== null) {
             throw (new Errors())->error($alias, $session, 'field list', $operation->statement);

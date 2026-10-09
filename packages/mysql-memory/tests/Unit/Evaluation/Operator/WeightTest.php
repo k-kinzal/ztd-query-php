@@ -28,6 +28,16 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 #[Small]
 final class WeightTest extends TestCase
 {
+    public function testEvaluateWarnsWhenBinaryWeightTruncatesTheArgument(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT HEX(WEIGHT_STRING('abc' AS BINARY(1)))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['61']], $result->rows);
+        self::assertSame([['Warning', 1292, "Truncated incorrect BINARY(1) value: 'abc'"]], $session->diagnostics->conditions);
+    }
+
     public function testDomainAnswersTheDomainOfTheWeight(): void
     {
         $domain = Domain::string(8, Collation::binary());

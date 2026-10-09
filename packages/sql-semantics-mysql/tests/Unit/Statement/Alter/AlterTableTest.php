@@ -28,6 +28,15 @@ final class AlterTableTest extends TestCase
         self::assertNull($semantics->analyze('ALTER TABLE missing REBUILD PARTITION ALL')->fields());
     }
 
+    public function testDeriveStatementReportsAnExchangeWithTheSameTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $alter = $semantics->analyze('ALTER TABLE t EXCHANGE PARTITION p WITH TABLE t', [$table]);
+
+        self::assertSame(["Not unique table/alias: 't'."], array_map(static fn (Diagnostic $diagnostic): string => $diagnostic->message(), $alter->facts->diagnostics));
+    }
+
     public function testDeriveStatementReportsTheColumnProblems(): void
     {
         $semantics = new Semantics(Dialect::MySql);

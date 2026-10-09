@@ -63,9 +63,12 @@ final class Weight implements Evaluable
             return null;
         }
         if ($this->cast === WeightCast::Binary) {
-            return $this->bytes((string) Convert::toText($value, $domain));
+            return (new Conversion($this->operand, $this->domain, $this->length, 'BINARY'))->text((string) Convert::toText($value, $domain), $frame->context);
         }
         if ($domain->kind === Kind::Integer) {
+            if (in_array($frame->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+                return null;
+            }
             return pack('J', $domain->unsigned ? (int) $value : (int) $value ^ PHP_INT_MIN);
         }
         if ($domain->kind !== Kind::String || $this->cast !== null) {

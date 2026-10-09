@@ -12,7 +12,6 @@ use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\AllPrivileges;
 use SqlSemantics\Platform\MySql\Statement\Account\Privilege\Item\DynamicPrivilege;
@@ -101,6 +100,9 @@ final class Levels
             }
         }
         foreach ($operation->facts->diagnostics as $diagnostic) {
+            if ($diagnostic instanceof MisplacedPrivilege && $diagnostic->error === 'ER_UNSUPPORTED_USE_OF_GRANT_AS') {
+                throw AccountError::UnsupportedGrantAs->error();
+            }
             if ($diagnostic instanceof MisplacedPrivilege && $diagnostic->error === 'ER_ILLEGAL_GRANT_FOR_TABLE') {
                 throw AccountError::IllegalGrantForTable->error();
             }
@@ -137,7 +139,7 @@ final class Levels
     {
         foreach ($operation->facts->diagnostics as $diagnostic) {
             if ($diagnostic instanceof MissingTable) {
-                throw (new Errors())->error($diagnostic, $session);
+                throw QueryError::NoSuchTable->error($diagnostic->name->schema->value ?? $session->variables->database, $diagnostic->name->name->value);
             }
         }
         if ($target[0] === 'PROCEDURE' || $target[0] === 'FUNCTION') {

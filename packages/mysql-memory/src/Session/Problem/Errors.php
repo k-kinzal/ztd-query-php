@@ -231,6 +231,7 @@ final class Errors
                 'DEFAULT' => SchemaError::InvalidDefault->error($diagnostic->column->value),
                 'ON UPDATE' => SchemaError::InvalidOnUpdate->error($diagnostic->column->value),
             },
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Partition\Problem\MissingPartitions => \MySqlMemory\Error\Family\PartitionError::PartitionsNotDefined->error($diagnostic->kind->value),
             $diagnostic instanceof NoColumns => SchemaError::TableMustHaveColumns->error(),
             $diagnostic instanceof DuplicateColumn => SchemaError::DuplicateFieldName->error($diagnostic->column->value),
             $diagnostic instanceof IncorrectColumnName => SchemaError::WrongColumnName->error($diagnostic->column->value),

@@ -89,7 +89,11 @@ final class Formats
      */
     public function resolve(Frame $frame, array $arguments, array $known): array
     {
-        if (isset($arguments[2]) && ($known[2] ?? false)) {
+        $locale = $arguments[2] ?? null;
+        while ($locale instanceof \MySqlMemory\Evaluation\Leaf\Retyped) {
+            $locale = $locale->evaluable;
+        }
+        if (isset($arguments[2]) && $locale instanceof Constant && ($known[2] ?? false)) {
             $arguments[2] = new Constant(Domain::string(5, Collation::known('ascii_general_ci')), $this->locale($frame, $arguments[2]));
         }
 
@@ -125,10 +129,13 @@ final class Formats
      */
     public function format(Frame $frame, array $arguments, Domain $result): ?string
     {
+        $count = Convert::toInteger($arguments[1]->evaluate($frame), $arguments[1]->domain(), $frame->context);
+        if ($count === null) {
+            return null;
+        }
         $locale = isset($arguments[2]) ? $this->locale($frame, $arguments[2]) : 'en_US';
         $value = $arguments[0]->evaluate($frame);
-        $count = Convert::toInteger($arguments[1]->evaluate($frame), $arguments[1]->domain(), $frame->context);
-        if ($value === null || $count === null) {
+        if ($value === null) {
             return null;
         }
         $places = $this->places($count);

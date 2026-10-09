@@ -20,6 +20,7 @@ use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Scope as VariableScope;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -72,7 +73,11 @@ final class Names
             return $this->field($resolution->field, $scope);
         }
         if (!$resolution instanceof ResolvedColumn) {
-            throw QueryError::BadField->error($use->name->value, 'field list');
+            $qualifier = $use->qualifier === null ? '' : ($use->qualifier->schema === null ? '' : $use->qualifier->schema->value . '.') . $use->qualifier->name->value;
+            if ($use->qualifier !== null && $qualifier !== '' && $scope->offsets === [] && $scope->outer === null) {
+                throw QueryError::UnknownTable->error($this->compiler->settings->release() === GrammarRelease::MySql910 ? $use->qualifier->name->value : $qualifier, 'field list');
+            }
+            throw QueryError::BadField->error(($qualifier === '' ? '' : $qualifier . '.') . $use->name->value, 'field list');
         }
         $program = $this->compiler->connection->program;
         if ($program !== null && $scope->locate($resolution->relation) === null) {

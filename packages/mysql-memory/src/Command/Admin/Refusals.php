@@ -79,9 +79,10 @@ final class Refusals
     public function spatial(SpatialProblem $problem, ?Node $statement): SqlError
     {
         $attribute = $problem->attribute === null ? 'SRID' : $problem->attribute->value;
+        $verb = $statement instanceof DropSpatialReference ? 'DROP' : ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference && $statement->orReplace ? 'CREATE OR REPLACE' : 'CREATE');
 
         return match ($problem->rule) {
-            SpatialRule::IdentifierOutOfRange => DataError::DataOutOfRange->error($problem->attribute === SpatialAttributeKind::Organization ? 'IDENTIFIED BY' : 'SRID', ($statement instanceof DropSpatialReference ? 'DROP' : 'CREATE') . ' SPATIAL REFERENCE SYSTEM'),
+            SpatialRule::IdentifierOutOfRange => DataError::DataOutOfRange->error($problem->attribute === SpatialAttributeKind::Organization ? 'IDENTIFIED BY' : 'SRID', $verb . ' SPATIAL REFERENCE SYSTEM'),
             SpatialRule::IdentifierZero => SchemaError::SrsZeroUnmodifiable->error(),
             SpatialRule::RepeatedAttribute => SchemaError::SrsRepeatedAttribute->error($attribute),
             SpatialRule::MissingAttribute => SchemaError::SrsMissingAttribute->error($attribute),

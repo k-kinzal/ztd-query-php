@@ -133,6 +133,25 @@ final class DifferentialTest extends TestCase
         yield 'repair named partition' => ['CREATE TABLE p(a INT) PARTITION BY HASH(a) PARTITIONS 2; ALTER TABLE p REPAIR PARTITION p0'];
         yield 'optimize named partition' => ['CREATE TABLE p(a INT) PARTITION BY HASH(a) PARTITIONS 2; ALTER TABLE p OPTIMIZE PARTITION p0'];
         yield 'check absent partition' => ['CREATE TABLE p(a INT) PARTITION BY HASH(a) PARTITIONS 2; ALTER TABLE p CHECK PARTITION absent'];
+        yield 'grant as database privileges' => ['GRANT SELECT ON * TO root AS CURRENT_USER'];
+        yield 'grant as before missing table' => ['GRANT SELECT ON missing TO root AS nobody'];
+        yield 'grant missing database table' => ['GRANT SELECT ON missing_database.missing TO root'];
+        yield 'show grants current role reference' => ['SHOW GRANTS FOR CURRENT_USER USING CURRENT_USER'];
+        yield 'insert row alias before missing table' => ['INSERT missing VALUES () AS missing'];
+        yield 'exchange partition same table' => ['ALTER TABLE missing EXCHANGE PARTITION p WITH TABLE missing'];
+        yield 'exchange partition qualified same table' => ['ALTER TABLE missing EXCHANGE PARTITION p WITH TABLE fz.missing'];
+        yield 'exchange partition other database' => ['ALTER TABLE missing EXCHANGE PARTITION p WITH TABLE other.missing'];
+        yield 'diagnostics qualified condition name' => ['GET DIAGNOSTICS CONDITION missing.a @x=CLASS_ORIGIN'];
+        yield 'diagnostics schema qualified condition name' => ['GET DIAGNOSTICS CONDITION db.missing.a @x=CLASS_ORIGIN'];
+        yield 'range partitions without definitions' => ['ALTER TABLE missing PARTITION BY RANGE COLUMNS(a)'];
+        yield 'list partitions without definitions' => ['ALTER TABLE missing PARTITION BY LIST COLUMNS(a)'];
+        yield 'format compound locale with null count' => ["SELECT FORMAT(1,NULL,CONCAT('ba','d'))"];
+        yield 'weight integer' => ['SELECT HEX(WEIGHT_STRING(12))'];
+        yield 'weight binary truncation' => ["SELECT HEX(WEIGHT_STRING('abc' AS BINARY(1)))"];
+        yield 'format runtime warning order' => ['SELECT FORMAT(USER(),USER(),USER())'];
+        yield 'format null decimal count' => ['SELECT FORMAT(USER(),NULL,USER())'];
+        yield 'format null value warning order' => ['SELECT FORMAT(NULL,USER(),USER())'];
+        yield 'spatial replacement identifier overflow' => ['CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 18446744073709551615'];
         yield 'kill named window' => ['KILL ROW_NUMBER() OVER missing'];
         yield 'kill named window before argument' => ['KILL SUM(missing) OVER absent'];
         yield 'kill inline window before argument' => ['KILL SUM(missing) OVER ()'];
@@ -217,6 +236,8 @@ final class DifferentialTest extends TestCase
 
         self::assertTrue($comparison->volatile);
         self::assertNull($comparison->difference);
+        self::assertNotNull($comparison->referenceDifference);
+        self::assertStringContainsString('results', $comparison->referenceDifference);
     }
 
     public function testCompareReleasesTheBackupLockBeforeRepairingTheServer(): void

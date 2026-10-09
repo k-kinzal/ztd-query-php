@@ -18,6 +18,14 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class NamesTest extends TestCase
 {
+    public function testColumnReportsAnUnknownQualifierInDiagnosticsWithoutTables(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('GET DIAGNOSTICS CONDITION db.missing.a @x=CLASS_ORIGIN');
+
+        self::assertSame([['Error', 1109, "Unknown table 'db.missing' in field list"]], $session->diagnostics->conditions);
+    }
+
     public function testColumnReadsTheColumnOfEachRow(): void
     {
         $session = (new Instance())->connect();

@@ -95,6 +95,9 @@ final class AlterTable implements Statement, Relation
         $fact = $derivation->target($this, new RelationFact($changes->apply($original, $this->commands, $derivation, true), $original->table));
         $scope = new Environment($derivation->context, null, [new VisibleRelation($this, $fact->shape, null, $this->table, [], $changes->implicit())]);
         foreach ($this->commands as $command) {
+            if ($command instanceof Partition\ExchangePartition && (new Targets())->same($derivation->context, $this->table, $command->table)) {
+                $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable($command->table->name));
+            }
             $command->deriveCommand($derivation, $scope);
             if ($command instanceof Partition\MaintainPartitions && $command->kind->reports()) {
                 (new \SqlSemantics\Platform\MySql\Rules\Server\AdminRows())->admin($derivation);

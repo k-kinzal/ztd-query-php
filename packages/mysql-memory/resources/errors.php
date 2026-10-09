@@ -424,6 +424,7 @@ return [
     3805 => ['HY000', "Cannot rotate binary log master key when 'binlog-encryption' is off."],
     3819 => ['HY000', "Check constraint '%s' is violated."],
     3821 => ['HY000', "Check constraint '%s' is not found in the table."],
+    3835 => ['HY000', 'GRANT ... AS is currently supported only for global privileges.'],
     3836 => ['HY000', 'Either some of the authorization IDs in the AS clause are invalid or the current user lacks privileges to execute the statement.'],
     3887 => ['HY000', 'A capture group has an invalid name.'],
     3889 => ['HY000', 'Secondary engine operation failed. Reason: "%s".'],

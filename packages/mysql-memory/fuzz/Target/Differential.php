@@ -96,7 +96,7 @@ final class Differential
         $expected = $normalized;
         $again = $library->comparable($again, $this->version);
         if ($expected !== $again) {
-            return new Comparison(true);
+            return new Comparison(true, contracts: $contracts, referenceDifference: $this->describe($expected, $again));
         }
         $this->repair($this->memoryGuard());
         $this->baseline?->restore($this->memoryGuard(), false);
@@ -104,6 +104,17 @@ final class Differential
         if ($expected === $actual) {
             return new Comparison(false, contracts: $contracts);
         }
+        return new Comparison(false, $this->describe($expected, $actual), $contracts);
+    }
+
+    /**
+     * Describes only the differing observation fields, including differences between native runs.
+     *
+     * @param array<string, mixed> $expected
+     * @param array<string, mixed> $actual
+     */
+    public function describe(array $expected, array $actual): string
+    {
         $lines = [];
         foreach (array_unique([...array_keys($expected), ...array_keys($actual)]) as $key) {
             if (($expected[$key] ?? null) !== ($actual[$key] ?? null)) {
@@ -111,7 +122,7 @@ final class Differential
             }
         }
 
-        return new Comparison(false, implode("\n", $lines), $contracts);
+        return implode("\n", $lines);
     }
 
     /**

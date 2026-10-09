@@ -46,6 +46,7 @@ enum AccountError: int implements ErrorCode
     case RoleNotGranted = 3530;
     case RenameRole = 3532;
     case IllegalPrivilegeLevel = 3619;
+    case UnsupportedGrantAs = 3835;
     case InvalidGrantAs = 3836;
     case IncorrectCurrentPassword = 3891;
     case CurrentPasswordNotRequired = 3893;
