@@ -19,8 +19,13 @@ use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\MySql\MySqlProvider;
 
 $mode = $argv[1] ?? 'expression';
-$count = (int) ($argv[2] ?? 100);
-mt_srand((int) ($argv[3] ?? 1));
+$count = filter_var($argv[2] ?? 100, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+$seed = filter_var($argv[3] ?? 1, FILTER_VALIDATE_INT);
+if (!in_array($mode, ['expression', 'query', 'select', 'write', 'statement'], true) || $count === false || $seed === false) {
+    fwrite(STDERR, "Usage: php fuzz/campaign.php {expression|query|select|write|statement} COUNT [SEED]; COUNT must be positive.\n");
+    exit(2);
+}
+mt_srand($seed);
 [$target, $grammar, $server] = (new Servers())->start(getenv('MYSQL_MEMORY_EMULATE') !== '0');
 $provider = new MySqlProvider(Factory::create(), $grammar);
 $planner = $provider->planner();
@@ -29,6 +34,10 @@ $constraints = $plans->plan($mode, $grammar);
 $compiler = new BytePlanCompiler();
 $kinds = [];
 $compared = 0;
+$volatile = 0;
+$generationFailures = 0;
+$findings = [];
+echo "Campaign: {$grammar}, {$mode}, {$count} inputs, seed {$seed}\n";
 for ($i = 0; $i < $count; $i++) {
     $input = '';
     for ($b = 0, $length = mt_rand(8, 200); $b < $length; $b++) {
@@ -37,13 +46,21 @@ for ($i = 0; $i < $count; $i++) {
     try {
         $sql = $plans->statement($mode, $provider->generate($compiler->compile($input, $planner, $constraints)));
     } catch (Throwable $failure) {
+        $generationFailures++;
+        fwrite(STDERR, "Generation failed at input {$i} (hex " . bin2hex($input) . "): {$failure->getMessage()}\n");
+        continue;
+    }
+    $comparison = $target->compare($sql);
+    if ($comparison->volatile) {
+        $volatile++;
         continue;
     }
     $compared++;
-    $difference = $target->difference($sql);
+    $difference = $comparison->difference;
     if ($difference === null) {
         continue;
     }
+    $findings[] = ['index' => $i, 'input' => bin2hex($input), 'sql' => $sql, 'sqlHex' => bin2hex($sql), 'difference' => $difference];
     $kind = signature($difference);
     if (!isset($kinds[$kind]) || strlen($sql) < strlen($kinds[$kind][1])) {
         $kinds[$kind] = [($kinds[$kind][0] ?? 0) + 1, $sql, $difference];
@@ -60,6 +77,15 @@ foreach ($kinds as $kind => [$number, $sql, $difference]) {
     echo "### {$number} × {$kind}\n    {$sql}\n" . preg_replace('/^/m', '    ', substr($difference, 0, (int) ((new Servers())->environment('MYSQL_MEMORY_DIFF_BYTES', '900')))) . "\n";
 }
 echo "--- {$failures} of {$compared} differ\n";
+echo "--- {$volatile} volatile; {$generationFailures} generation failures; {$count} attempted\n";
+$report = getenv('MYSQL_MEMORY_REPORT');
+if (is_string($report) && $report !== '') {
+    $written = file_put_contents($report, json_encode(['grammar' => $grammar, 'mode' => $mode, 'emulate' => $target->emulate, 'foundRows' => $target->foundRows, 'seed' => $seed, 'attempted' => $count, 'compared' => $compared, 'volatile' => $volatile, 'generationFailures' => $generationFailures, 'differences' => $failures, 'findings' => $findings], JSON_PRETTY_PRINT | JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR) . "\n");
+    if ($written === false) {
+        exit(2);
+    }
+}
+exit($generationFailures > 0 || $compared === 0 ? 2 : ($failures > 0 ? 1 : 0));
 
 /**
  * Names the kind of a difference: the unsupported feature, the two errors, or the keys that differ.
@@ -72,7 +98,7 @@ function signature(string $difference): string
     if (preg_match('/internal error: ([\\w\\\\]+): (.{0,60})/', $difference, $match) === 1) {
         return 'crash ' . $match[1] . ': ' . $match[2];
     }
-    preg_match_all('/^(\w+)\n  expected: (.{0,40})\n  actual:   (.{0,40})/m', $difference, $matches, PREG_SET_ORDER);
+    preg_match_all('/^(\w+)\n  expected: ([^\n]*)\n  actual:   ([^\n]*)/m', $difference, $matches, PREG_SET_ORDER);
     $parts = [];
     foreach ($matches as [, $key, $expected, $actual]) {
         if ($key === 'error') {

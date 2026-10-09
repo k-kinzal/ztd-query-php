@@ -68,7 +68,7 @@ final class InList implements Scalar
             $nullability = $nullability->propagate($fact->nullability);
         }
         $operands = new Operands();
-        $operands->comparable($facts, $derivation);
+        $operands->comparable($facts, $derivation, $this);
         $operands->collated($facts, count($this->elements) > 1 ? ' IN ' : ($this->negated ? '<>' : '='), $derivation);
 
         return $operands->truth($nullability);

@@ -43,9 +43,9 @@ final class Rows
     public int $duplicates = 0;
 
     /**
-     * The first AUTO_INCREMENT value the statement generated, if any.
+     * The generated and explicit identities of the rows actually written.
      */
-    public ?int $generated = null;
+    public readonly InsertIdentity $identity;
 
     /**
      * The scope that places the relations of the FROM clause of the query of INSERT ... SELECT, which ON DUPLICATE KEY UPDATE reads after the row that was to be inserted; null when it reads none.
@@ -85,6 +85,7 @@ final class Rows
         public readonly ?RowAlias $alias = null,
     ) {
         $this->writer = new Writer($table, $context);
+        $this->identity = new InsertIdentity($table->definition);
     }
 
     /**
@@ -130,9 +131,6 @@ final class Rows
         $row = $this->completed($row, $named, $store, $number, $single);
         $row = $this->triggers()->before('INSERT', $row, null, $this->context) ?? $row;
         [$row, $generated] = $this->writer->autoIncrement($row, $this->context->modes->has('NO_AUTO_VALUE_ON_ZERO'));
-        if ($generated !== null) {
-            $this->generated ??= $generated;
-        }
         $check = $this->writer->violated($row);
         if ($check !== null) {
             if (!$this->into->ignore) {
@@ -145,7 +143,7 @@ final class Rows
         if (!$this->partitioned($row)) {
             return;
         }
-        $this->place($row, $number, $single);
+        $this->place($row, $number, $single, $generated);
     }
 
     /**
@@ -276,7 +274,7 @@ final class Rows
      *
      * @throws SqlError When the row conflicts and the statement does not resolve conflicts
      */
-    public function place(array $row, int $number, bool $single = false): void
+    public function place(array $row, int $number, bool $single = false, ?int $generated = null): void
     {
         $data = $this->table->data;
         while (($conflict = $this->writer->conflict($row, null, $this->into->replace || $this->onDuplicate !== [] ? \MySqlMemory\Concurrency\LockMode::Exclusive : \MySqlMemory\Concurrency\LockMode::Shared)) !== null) {
@@ -286,6 +284,7 @@ final class Rows
                 [$affected, $placed] = (new Replacement($this->table, $this->context, $this->session))->replace($row, $existing, $key);
                 $this->affected += $affected;
                 if ($placed) {
+                    $this->identity->inserted($row, $generated);
                     return;
                 }
                 continue;
@@ -314,6 +313,7 @@ final class Rows
         }
         $this->session->transaction->write($this->table, $data->nextRow);
         $data->insert($row);
+        $this->identity->inserted($row, $generated);
         $this->affected++;
         $this->triggers()->after('INSERT', $row, null, $this->context);
     }
@@ -363,11 +363,10 @@ final class Rows
         }
         $row = $this->writer->generate($row, $store, fn (int $position, $value) => $this->notNull($value, $position, $store, $number, $single));
         $row = $this->triggers()->before('UPDATE', $row, $old, $this->context) ?? $row;
-        $changed = false;
-        foreach ($row as $position => $value) {
-            $changed = $changed || Order::key($value, $this->table->definition->columns[$position]->domain) !== Order::key($old[$position], $this->table->definition->columns[$position]->domain);
-        }
+        $changed = (new ChangeCommand())->differs($old, $row, $this->table);
         if (!$changed) {
+            $this->identity->updated($row, false);
+            $this->affected += $this->session->variables->clientFoundRows ? 1 : 0;
             $this->triggers()->after('UPDATE', $row, $old, $this->context);
 
             return;
@@ -388,6 +387,7 @@ final class Rows
         $this->references()->updating($this->table, $old, $row);
         $this->session->transaction->write($this->table, $existing);
         $data->update($existing, $row);
+        $this->identity->updated($row, true);
         $this->affected += 2;
         $this->triggers()->after('UPDATE', $row, $old, $this->context);
     }

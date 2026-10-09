@@ -63,12 +63,12 @@ final class QuantifiedComparison implements Scalar
         $query = $derivation->query($this->query, $environment);
         $rows = ($this->quantifier === Quantifier::Any && $this->operator === ComparisonOperator::Equal) || ($this->quantifier === Quantifier::All && $this->operator === ComparisonOperator::NotEqual);
         if (!$rows && $query->shape->complete() && count($query->shape->slots) > 1) {
-            $derivation->report(new OperandColumns(1, count($query->shape->slots)));
+            $derivation->report(new OperandColumns(1, count($query->shape->slots), $this));
 
             return (new Operands())->truth($operand->nullability);
         }
 
-        return (new Operands())->truth((new SubqueryRows())->test($operand, $query, $derivation));
+        return (new Operands())->truth((new SubqueryRows())->test($operand, $query, $derivation, $this));
     }
 
     /**

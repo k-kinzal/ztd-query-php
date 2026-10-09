@@ -9,6 +9,8 @@ use MySqlMemory\Session\Problem\Stages;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Call\Problem\UnsupportedWindowing;
+use SqlSemantics\Platform\MySql\Statement\Call\Problem\WindowingLimit;
 use SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
@@ -23,6 +25,14 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class StagesTest extends TestCase
 {
+    public function testPlannedLeavesWindowOptionsToThePlannerButKeepsFrameRefusals(): void
+    {
+        self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::IgnoreNulls)));
+        self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::FromLast)));
+        self::assertFalse(Stages::planned(new UnsupportedWindowing(WindowingLimit::Exclusion)));
+        self::assertFalse(Stages::planned(new Misuse(MisuseRule::DuplicateWindow, new Name('w'))));
+    }
+
     public function testAnsweredLeavesTheMissingTableOfAShowStatementToItsCommand(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

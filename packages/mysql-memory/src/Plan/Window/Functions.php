@@ -16,6 +16,8 @@ use MySqlMemory\Plan\Grouping;
 use MySqlMemory\Plan\Planner;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\CountingEdge;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\NullTreatment;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
@@ -47,6 +49,9 @@ final class Functions
     /**
      * Compiles one call computed over a window; its arguments are read from the rows of the block.
      *
+     * IGNORE NULLS and FROM LAST are refused after names and windows are resolved, before the
+     * count is checked (verified on live 8.0.44, 8.4.7 and 9.1.0 servers).
+     *
      * @throws SqlError When an argument is refused or cannot be compiled
      */
     public function compile(Scalar $call, Scope $scope): Analytic
@@ -57,6 +62,9 @@ final class Functions
         }
         if (!$call instanceof WindowFunction) {
             throw StatementError::NotSupportedYet->error(Resolution::named($call) . ' as a window function');
+        }
+        if ($call->nulls === NullTreatment::Ignore || $call->edge === CountingEdge::Last) {
+            throw StatementError::NotSupportedYet->error($call->nulls === NullTreatment::Ignore ? 'IGNORE NULLS' : 'FROM LAST');
         }
         $domain = $compiler->domain($call);
         $name = Resolution::named($call);

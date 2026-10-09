@@ -182,7 +182,7 @@ final class MultipleChangeCommand implements Command
             }
         }
 
-        return new Completion($changed, 0, $context->diagnostics->count(), sprintf('Rows matched: %d  Changed: %d  Warnings: %d', count($done), $changed, $context->diagnostics->count()));
+        return new Completion($session->variables->clientFoundRows ? count($done) : $changed, 0, $context->diagnostics->count(), sprintf('Rows matched: %d  Changed: %d  Warnings: %d', count($done), $changed, $context->diagnostics->count()));
     }
 
     /**

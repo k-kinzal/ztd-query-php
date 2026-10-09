@@ -416,6 +416,12 @@ final class Locations
      */
     public function width(InQuery|QuantifiedComparison $predicate, Operation $operation, array $diagnostics, array $claimed): ?array
     {
+        $early = Locator::early($predicate, $operation->profile()->grammar);
+        foreach ($diagnostics as $diagnostic) {
+            if ($diagnostic instanceof OperandColumns && $diagnostic->expression === $predicate) {
+                return [$diagnostic, $early];
+            }
+        }
         $operand = $predicate->operand;
         while ($operand instanceof Grouped) {
             $operand = $operand->operand;
@@ -428,9 +434,8 @@ final class Locations
         if (!$shape->complete() || $width < 2) {
             return null;
         }
-        $early = Locator::early($predicate);
         foreach ($diagnostics as $diagnostic) {
-            if ($diagnostic instanceof OperandColumns && $diagnostic->expected === 1 && $diagnostic->actual === $width && !in_array($diagnostic, $claimed, true)) {
+            if ($diagnostic instanceof OperandColumns && $diagnostic->expression === null && $diagnostic->expected === 1 && $diagnostic->actual === $width && !in_array($diagnostic, $claimed, true)) {
                 return [$diagnostic, $early];
             }
         }

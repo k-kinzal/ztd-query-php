@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\ScalarFact;
+use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -53,14 +54,14 @@ final class SubqueryRows
     /**
      * Answers the NULL fact of a test of an operand against the rows of a subquery, reporting a width mismatch.
      */
-    public function test(ScalarFact $operand, QueryFact $query, Derivation $derivation): Nullability
+    public function test(ScalarFact $operand, QueryFact $query, Derivation $derivation, ?Scalar $expression = null): Nullability
     {
         $nullability = $operand->nullability;
         if (!$query->shape->complete()) {
             return $nullability->propagate(Nullability::Dependent);
         }
         $operands = new Operands();
-        $operands->comparable([$operand, $this->value($query)], $derivation);
+        $operands->comparable([$operand, $this->value($query)], $derivation, $expression);
         foreach ($query->shape->slots as $slot) {
             $nullability = $nullability->propagate($slot->nullability);
         }

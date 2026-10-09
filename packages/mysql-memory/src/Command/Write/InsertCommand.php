@@ -79,12 +79,7 @@ final class InsertCommand implements Command
             }
             $rows->write($values === [] ? [] : $positions, $values, $index + 1, count($sources) === 1 && !$queried, $queried);
         }
-        if ($rows->generated !== null && !$session->variables->setByFunction) {
-            $session->variables->lastInsertId = $rows->generated;
-        }
-        $session->variables->setByFunction = false;
-
-        return new Completion($rows->affected, $rows->generated ?? 0, $context->diagnostics->count(), count($sources) > 1 || $statement instanceof InsertQuery ? sprintf('Records: %d  Duplicates: %d  Warnings: %d', count($sources), $rows->duplicates, $context->diagnostics->count()) : '');
+        return new Completion($rows->affected, $rows->identity->finish($session->variables), $context->diagnostics->count(), count($sources) > 1 || $statement instanceof InsertQuery ? sprintf('Records: %d  Duplicates: %d  Warnings: %d', count($sources), $rows->duplicates, $context->diagnostics->count()) : '');
     }
 
     /**

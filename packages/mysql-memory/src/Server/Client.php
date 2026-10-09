@@ -150,6 +150,7 @@ final class Client
         }
         try {
             $this->session = $this->instance->connect($user, $this->instance->clientHost ?? $this->host, $database);
+            $this->session->variables->clientFoundRows = ($this->capabilities & Capability::FOUND_ROWS) !== 0;
         } catch (SqlError $error) {
             $this->packet($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage()));
 
@@ -213,6 +214,7 @@ final class Client
             $session = $this->session();
             $session->close();
             $this->session = $this->instance->connect($session->user, $session->host, $session->variables->database === '' ? null : $session->variables->database);
+            $this->session->variables->clientFoundRows = ($this->capabilities & Capability::FOUND_ROWS) !== 0;
         }
 
         return $this->send($this->messages->ok(0, 0, $this->status(), 0));

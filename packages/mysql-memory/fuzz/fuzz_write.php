@@ -21,7 +21,7 @@ register_shutdown_function(static function (): void {
     }
 });
 
-[$target, $grammar, $server] = (new Servers())->start();
+[$target, $grammar, $server] = (new Servers())->start(getenv('MYSQL_MEMORY_EMULATE') !== '0');
 $provider = new MySqlProvider(Factory::create(), $grammar);
 $planner = $provider->planner();
 $plans = new Plans();

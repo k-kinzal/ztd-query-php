@@ -44,8 +44,8 @@ use SqlSemantics\Statement\Reference\Table\DeclaredTable;
  *
  * The rows of the table that meet the WHERE condition are taken in clustered index order, or in
  * the ORDER BY order, up to the LIMIT. An UPDATE evaluates its assignments left to right, each
- * seeing the values the ones before it assigned; it counts the rows it changed, not those it
- * matched.
+ * seeing the values the ones before it assigned. It counts changed rows by default and matched
+ * rows when the connection requested CLIENT_FOUND_ROWS.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/update.html.
  *
  * @visibility MySqlMemory
@@ -89,7 +89,7 @@ final class ChangeCommand implements Command
         }
         $changed = $this->update($statement, $planner, $scope, $table, $context, $matched, new References($session, $context), $selected);
 
-        return new Completion($changed, 0, $context->diagnostics->count(), sprintf('Rows matched: %d  Changed: %d  Warnings: %d', count($matched), $changed, $context->diagnostics->count()));
+        return new Completion($session->variables->clientFoundRows ? count($matched) : $changed, 0, $context->diagnostics->count(), sprintf('Rows matched: %d  Changed: %d  Warnings: %d', count($matched), $changed, $context->diagnostics->count()));
     }
 
     /**

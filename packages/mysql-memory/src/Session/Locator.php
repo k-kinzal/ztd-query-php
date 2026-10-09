@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\Cast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Predicate\InList;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier;
@@ -230,9 +231,12 @@ final class Locator
                 $this->select($current, $at);
             } elseif ($current instanceof QueryExpression) {
                 $this->expression($current, $clause, $at);
+            } elseif ($current instanceof InList) {
+                $children = [$current->operand, $current->elements];
+                $positions = [[...$at, 0], [...$at, 1]];
             } elseif ($current instanceof InQuery || $current instanceof QuantifiedComparison) {
                 $this->predicates[] = [$current, $clause, $at];
-                $early = self::early($current);
+                $early = self::early($current, $this->release);
                 $this->visit($current->operand, 'IN/ALL/ANY subquery', [...$at, $this->operandFirst ? 0 : ($early ? 2 : 1)]);
                 $children[] = $current->query;
                 $positions[] = [...$at, $this->operandFirst ? 1 : 0];
@@ -311,11 +315,14 @@ final class Locator
      * Tells whether the server checks the width of the subquery of IN, ANY or ALL before it resolves the operand.
      *
      * The subquery is resolved first. The width is checked before the operand for ALL, and for
-     * ANY with an operator other than `=`; after it for IN, `= ANY` and `<> ALL`.
+     * ANY with an operator other than `=`; after it for IN, `= ANY` and `<> ALL`. MySQL 5.6 and
+     * 5.7 resolve the subquery first but check its width after resolving the operand, verified
+     * against live 5.6.51 and 5.7.44 servers.
      */
-    public static function early(InQuery|QuantifiedComparison $predicate): bool
+    public static function early(InQuery|QuantifiedComparison $predicate, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): bool
     {
-        return $predicate instanceof QuantifiedComparison
+        return !in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)
+            && $predicate instanceof QuantifiedComparison
             && !($predicate->quantifier === Quantifier::Any && $predicate->operator === ComparisonOperator::Equal)
             && !($predicate->quantifier === Quantifier::All && $predicate->operator === ComparisonOperator::NotEqual);
     }

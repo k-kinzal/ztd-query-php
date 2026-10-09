@@ -19,6 +19,16 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class LocatorTest extends TestCase
 {
+    public function testVisitResolvesTheInOperandBeforeAListElement(): void
+    {
+        $session = (new Instance())->connect();
+        $results = $session->run('SELECT missing IN ((1 = ALL (SELECT 1,2)), 3)');
+
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $results[0]);
+        self::assertSame(1054, $results[0]->getCode());
+        self::assertSame("Unknown column 'missing' in 'field list'", $results[0]->getMessage());
+    }
+
     public function testStatementLocatesTheNamesOfAQueryBlockByClause(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

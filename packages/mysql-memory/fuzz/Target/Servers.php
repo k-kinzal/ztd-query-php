@@ -22,6 +22,21 @@ use Testcontainers\Testcontainers;
 final class Servers
 {
     /**
+     * @var array{Differential, string, Server}|null The pair kept alive for regression cases in this process
+     */
+    private static ?array $shared = null;
+
+    /**
+     * Answers one pair for regression cases in the current process, retaining the emulator until process shutdown.
+     *
+     * @return array{Differential, string, Server}
+     */
+    public static function shared(): array
+    {
+        return self::$shared ??= (new self())->start();
+    }
+
+    /**
      * The account the differential target repairs the servers through.
      */
     public const GUARD = 'memory_guard';
@@ -57,7 +72,7 @@ final class Servers
         $this->guard($native, $version, $password);
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
-        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD), 'mysql-' . $version, $server];
+        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1'), 'mysql-' . $version, $server];
     }
 
     /**

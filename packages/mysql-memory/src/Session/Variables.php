@@ -85,6 +85,13 @@ final class Variables
     public int $foundRows = 0;
 
     /**
+     * Whether the client requested matched rows for UPDATE and one affected row for an unchanged ON DUPLICATE KEY UPDATE (CLIENT_FOUND_ROWS).
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_row-count.
+     */
+    public bool $clientFoundRows = false;
+
+    /**
      * @param SystemVariables $catalog The system variables the server knows
      * @param Globals $globals The global values of the server
      * @param \MySqlMemory\Instance $instance The server the session is connected to, whose clock, user-level locks and accounts the functions of a statement read

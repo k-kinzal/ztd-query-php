@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Fact\ScalarFact;
+use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Known;
@@ -78,7 +79,7 @@ final class Operands
      *
      * @param list<ScalarFact> $facts
      */
-    public function comparable(array $facts, Derivation $derivation): void
+    public function comparable(array $facts, Derivation $derivation, ?Scalar $expression = null): void
     {
         $expected = null;
         foreach ($facts as $fact) {
@@ -87,7 +88,7 @@ final class Operands
                 continue;
             }
             if ($expected !== null && $width !== $expected) {
-                $derivation->report(new OperandColumns($expected, $width));
+                $derivation->report(new OperandColumns($expected, $width, $expression));
 
                 return;
             }

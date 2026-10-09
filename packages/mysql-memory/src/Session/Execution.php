@@ -79,6 +79,7 @@ final class Execution
     public function run(Operation $operation, Command $command, \MySqlMemory\Hint\Application $hints, array $parameters = [], bool $read = true, bool $contained = true): Reply
     {
         $session = $this->session;
+        $session->variables->setByFunction = false;
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $this->area($operation, $command);
         $late = array_filter($operation->facts->warnings, Stages::afterReading(...));

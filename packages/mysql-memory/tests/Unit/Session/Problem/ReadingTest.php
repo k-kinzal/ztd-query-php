@@ -17,6 +17,17 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class ReadingTest extends TestCase
 {
+    public function testVariablesRefusesAnUndeclaredWindowCountBeforeTheFrame(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1327);
+        $this->expectExceptionMessage('Undeclared variable: missing');
+
+        $session->query('SELECT NTILE(missing) OVER (RANGE CURRENT ROW EXCLUDE CURRENT ROW)');
+    }
+
     public function testReadRaisesAnUnknownCollationAndAnUnknownTableOfAMultipleTableDeleteBeforeOpeningTables(): void
     {
         $session = (new Instance('8.4.7', [], ['p']))->connect('root', 'localhost', 'p');

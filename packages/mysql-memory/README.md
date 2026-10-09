@@ -6,7 +6,7 @@
 [![Docs](https://img.shields.io/badge/docs-mysql--memory-0969da?logo=php&logoColor=white)](https://k-kinzal.github.io/ztd-query-php/k-kinzal/mysql-memory/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-MySQL Memory is an in-memory MySQL server for tests, written in PHP. It parses each statement with [SQL Parser](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-parser/README.md), which is built from the official MySQL grammars. It resolves names and types with [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-mysql/README.md), then plans and runs the statement over rows held in memory. It speaks the MySQL client/server protocol, so PDO and mysqli connect to it as they would to a real server, and it can also be used inside the test process with no socket at all. Results, column metadata, errors and warnings follow those of the emulated MySQL release. The emulator is checked against real MySQL servers by differential fuzzing with [SQL Faker](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-faker/README.md).
+MySQL Memory is an in-memory MySQL server for tests, written in PHP. It parses each statement with [SQL Parser](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-parser/README.md), which is built from the official MySQL grammars. It resolves names and types with [SQL Semantics](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-semantics-mysql/README.md), then plans and runs the statement over rows held in memory. It speaks the MySQL client/server protocol, so PDO and mysqli connect to it as they would to a real server, and it can also be used inside the test process with no socket at all. It aims to reproduce the results, column metadata, errors and warnings of the emulated MySQL release; compatibility is incomplete. The emulator is checked against real MySQL servers by differential fuzzing with [SQL Faker](https://github.com/k-kinzal/ztd-query-php/blob/main/packages/sql-faker/README.md).
 
 Nothing is written to disk. A server starts in a fraction of a second, holds only what the test creates, and is gone when it stops.
 
@@ -18,16 +18,18 @@ Nothing is written to disk. A server starts in a fraction of a second, holds onl
 
 ## Supported Releases
 
-Each release below is compared with a real server of that release by the differential campaigns described in [How Correctness Is Checked](#how-correctness-is-checked). The last column is the share of generated statements on which a client still observes a difference, over the five campaign modes; [docs/compatibility.md](docs/compatibility.md) describes the known differences.
+The releases below have been exercised against real servers. This is evidence for the tested statements, not a guarantee that every statement SQL Faker can generate behaves identically. Known differences remain; see [docs/compatibility.md](docs/compatibility.md).
 
-| Release | `version` argument | Checked against a server | Differing statements |
-|---------|--------------------|--------------------------|----------------------|
-| MySQL 8.4 | `8.4.7` (default) | Yes | 1.5% (23 of 1,500) |
-| MySQL 8.0 | `8.0.44` | Yes | 1.9% (19 of 1,000) |
-| MySQL 9.1 | `9.1.0` | Yes | 2.3% (23 of 1,000) |
-| MySQL 5.7 | `5.7.44` | Yes | 5.6% (56 of 1,000) |
-| MySQL 5.6 | `5.6.51` | Yes | 3.7% (37 of 1,000) |
-| MySQL 8.1, 8.2, 8.3, 9.0 | `8.1.0`, `8.2.0`, `8.3.0`, `9.0.1` | No | Not measured |
+| Release | `version` argument | Checked against a server |
+|---------|--------------------|--------------------------|
+| MySQL 8.4 | `8.4.7` (default) | Yes |
+| MySQL 8.0 | `8.0.44` | Yes |
+| MySQL 9.1 | `9.1.0` | Yes |
+| MySQL 5.7 | `5.7.44` | Yes |
+| MySQL 5.6 | `5.6.51` | Yes |
+| MySQL 8.1, 8.2, 8.3, 9.0 | `8.1.0`, `8.2.0`, `8.3.0`, `9.0.1` | No |
+
+Historical campaign percentages are not a syntax coverage measure. Earlier campaigns did not compare subsequent result sets or insert ids and included unstable reference runs in their denominator. Use the current campaign report for separate compared, unstable and generation-failure counts.
 
 The `version` argument names the release to emulate; it defaults to `8.4.7`. It must be one of the MySQL grammar releases of SQL Parser: `5.6.51`, `5.7.44`, `8.0.44`, `8.1.0`, `8.2.0`, `8.3.0`, `8.4.7`, `9.0.1` or `9.1.0`. Any other value fails at the first statement with an `InvalidArgumentException`. The release decides the grammar, the keywords, the system variables and their defaults (for example the default `sql_mode`), and what `VERSION()` reports.
 
@@ -249,16 +251,19 @@ The emulator is a test double. These differences are known:
 - **Only InnoDB tables are transactional.** A `MyISAM`, `MEMORY` or other table takes no lock and no snapshot, and keeps its changes when a statement fails or a transaction rolls back, with the server's warning 1196.
 - **System tables are computed from the emulator's state.** Every table of `information_schema`, `mysql` and `performance_schema` exists with the columns and column metadata of the emulated release, and can be read like any table. The tables that describe databases, tables, columns, keys, constraints, views, stored programs, accounts and grants, character sets, collations, engines, plugins, keywords, sessions, variables and time zone names hold what the server holds; the others, which describe its internals (InnoDB, Performance Schema instruments, events and threads, help topics, time zone transitions), are empty. Status counters read 0. System tables cannot be written. The `sys` database holds no table. See [docs/compatibility.md](docs/compatibility.md#system-tables).
 - **No files.** `LOAD DATA`, `SELECT ... INTO OUTFILE` and `IMPORT TABLE` are refused as a server with `--secure-file-priv` and `local_infile` off refuses them. In MySQL 5.6 and 5.7, where `local_infile` is on, `LOAD DATA LOCAL` is checked as the server checks it and then refused with error 3948, where the server would ask the client for the file.
-- **The system time zone is UTC.** `SYSTEM` is UTC; `time_zone` takes offsets and the named zones of the tz database PHP carries, which can differ from a server's tables for a zone whose rules changed since. `SET timestamp = n` pins `NOW()` and the other clocks of the session, as on the server.
+- **The system time zone is UTC.** `SYSTEM` is UTC; `time_zone` takes offsets and names from the release catalogs in `resources/time-zones`, generated from real servers. Conversion rules use PHP's tz database, which can differ from the server's rules. `SET timestamp = n` pins `NOW()` and the other clocks of the session, as on the server.
 - **Server lifecycle statements** (`SHUTDOWN`, `RESTART`, `KILL`, `CLONE`) and loadable functions (`CREATE FUNCTION ... SONAME`) fail with error 1235.
 - **Optimizer hints are checked, not followed.** Hint comments (`/*+ ... */`) are read in MySQL 5.7 and later with the server's warnings (syntax errors, conflicting and unresolved hints), and `SET_VAR` sets its variable for the statement; the other hints change no plan, `MAX_EXECUTION_TIME` sets no timer and `RESOURCE_GROUP` binds no thread. See [docs/compatibility.md](docs/compatibility.md#optimizer-hints).
-- **Protocol.** The server offers `mysql_native_password` and no TLS, compression, or `CLIENT_DEPRECATE_EOF`. The `CLIENT_FOUND_ROWS` flag (`PDO::MYSQL_ATTR_FOUND_ROWS`) is not honored: affected rows count changed rows. Packets of 16 MiB or more are not supported. The storage engines the statements that name one accept are those of MySQL 8.4.7 for every release.
+- **Protocol.** The server offers `mysql_native_password` and no TLS, compression, or `CLIENT_DEPRECATE_EOF`. The `CLIENT_FOUND_ROWS` flag (`PDO::MYSQL_ATTR_FOUND_ROWS`) counts matched rows for UPDATE and one row for an unchanged ON DUPLICATE KEY UPDATE; ROW_COUNT() follows that choice. Packets of 16 MiB or more are not supported. The storage engines the statements that name one accept are those of MySQL 8.4.7 for every release.
 - **An error inside the emulator** is reported over the protocol as error 1105 with a message starting `mysql-memory internal error:`, and thrown as is in process.
 
 ## How Correctness Is Checked
 
-Each rule of the emulator is written from the MySQL reference manual and, where the manual is silent, from the behavior of a live server, and is covered by unit tests. On top of that, differential fuzzing runs the same statements on a real MySQL server and on mysql-memory, both starting from the same fixture tables, and requires that a client observes the same thing on both: the result columns and their metadata, the rows, the affected-row count or the error, the warnings, and the contents of every table afterwards. A statement whose result differs between two runs on the real server, because it reads the clock or a random value, is not compared. The statements are generated from the official MySQL grammar by SQL Faker.
+Rules are written from the MySQL reference manual and black-box observations of live servers. Differential fuzzing generates statements with SQL Faker, runs them on a real MySQL server and mysql-memory from the same fixture tables, and compares the metadata PDO exposes, every result set, affected rows, insert ids, errors, warnings and table contents. The fixture pins `timestamp` so that NOW() and related functions have the same clock on both servers. SHOW WARNINGS uses the text protocol even when the tested statement uses native prepares, so preparing the inspection cannot replace the diagnostics being inspected.
 
+The real server runs each input twice. Inputs whose reference observations differ are counted separately and skipped; they are not counted as matches. The harness does not compare OK-packet information text or metadata PDO does not expose. It uses a textual ORDER BY check to decide whether to compare row order, including queries with LIMIT; nested ORDER BY clauses and unordered ties can still produce misleading findings. Finite fuzz campaigns do not establish exhaustive grammar coverage or universal equivalence.
+
+`composer test:integration` includes differential regressions against Testcontainers, covering text and prepared execution with and without CLIENT_FOUND_ROWS, insert ids, multiple result sets and resolution errors. Set `MYSQL_VERSION` to repeat them on another release.
 The fuzzer is part of the repository, not of the installed package. From `packages/mysql-memory` in a checkout:
 
 ```bash
@@ -271,13 +276,15 @@ php fuzz/campaign.php select 500 7             # MODE COUNT [SEED]: differences 
 MYSQL_VERSION=8.0.44 php fuzz/campaign.php statement 1000
 ```
 
-The campaign modes are `expression`, `query`, `select`, `write` and `statement`. Each kind of difference is printed with its count and its shortest statement.
+The campaign modes are `expression`, `query`, `select`, `write` and `statement`. Each kind of difference is printed with its count and its shortest statement. Exit code 0 means all compared inputs matched, 1 means a difference was found, and 2 means invalid arguments, a generation failure, or no comparable input. `MYSQL_MEMORY_REPORT=/path/report.json` also saves the seed, counts and every finding, with the exact SQL bytes and generation input in hexadecimal. The parent directory must already exist.
 
 | Variable | Meaning |
 |----------|---------|
 | `MYSQL_VERSION` | The release to compare, `8.4.7` by default; both servers run it |
 | `MYSQL_MEMORY_NATIVE_DSN` | The PDO DSN of a running MySQL server to compare with; without it a container of the release is started with Testcontainers, which needs Docker |
 | `MYSQL_MEMORY_NATIVE_USER`, `MYSQL_MEMORY_NATIVE_PASSWORD` | The account of that server, `root`/`root` by default |
+| `MYSQL_MEMORY_FOUND_ROWS` | `1` requests CLIENT_FOUND_ROWS on both connections |
+| `MYSQL_MEMORY_REPORT` | Optional JSON report path for a campaign |
 | `MYSQL_MEMORY_EMULATE` | `0` makes the campaign use server-side prepared statements instead of PDO's emulated ones |
 | `MYSQL_MEMORY_BUDGET` | The expansion budget of the generated statements, 96 by default |
 | `MYSQL_MEMORY_VERBOSE` | `1` makes the campaign print every differing statement |

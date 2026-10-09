@@ -122,6 +122,11 @@ final class Reading
     {
         $reached = array_fill_keys(array_map(spl_object_id(...), (new \MySqlMemory\Session\Problems())->reached($operation->statement)), true);
         $program = \MySqlMemory\Command\Dispatcher::program($operation->statement);
+        foreach ($program ? [] : (new Walker())->find($operation->statement, \SqlSemantics\Platform\MySql\Statement\Call\Window\RoutineVariable::class) as $variable) {
+            if ($session->program?->variable($variable->name->value) === null) {
+                throw ProgramError::UndeclaredVariable->error($variable->name->value);
+            }
+        }
         (new Placement())->check($operation->statement, $session->settings()->release(), function (Select $select, bool $ended) use ($session, $operation, $reached, $program): void {
             if (!$program && isset($reached[spl_object_id($select)])) {
                 $this->declared($select, $ended, $session, $operation);

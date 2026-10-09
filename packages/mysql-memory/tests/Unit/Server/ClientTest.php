@@ -21,6 +21,23 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ClientTest extends TestCase
 {
+    public function testResetConnectionPreservesFoundRowsNegotiatedInTheHandshake(): void
+    {
+        $client = new Client(new Instance(), 7, static function (string $bytes): void {
+        });
+        $client->handle("\x02\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        $client->session()->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1)');
+        $before = $client->session()->query('UPDATE t SET a = a')[0];
+        $client->ping(true);
+        $after = $client->session()->query('UPDATE t SET a = a')[0];
+
+        self::assertInstanceOf(Completion::class, $before);
+        self::assertInstanceOf(Completion::class, $after);
+        self::assertSame(1, $before->affectedRows);
+        self::assertSame(1, $after->affectedRows);
+        self::assertSame('Rows matched: 1  Changed: 0  Warnings: 0', $after->info);
+    }
+
     public function testCloseReleasesTheLocksOfTheSession(): void
     {
         $instance = new Instance();

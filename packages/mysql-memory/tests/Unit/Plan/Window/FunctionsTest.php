@@ -16,6 +16,7 @@ use MySqlMemory\Plan\Window\Functions;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
@@ -26,6 +27,28 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class FunctionsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, int, string}>
+     */
+    public static function providerWindowRefusals(): iterable
+    {
+        yield 'undefined window' => ['SELECT NTH_VALUE(1,1) IGNORE NULLS OVER missing', 3579, "Window name 'missing' is not defined."];
+        yield 'unresolved field' => ['SELECT NTH_VALUE(1,1) IGNORE NULLS OVER (), missing', 1054, "Unknown column 'missing' in 'field list'"];
+        yield 'null treatment' => ['SELECT NTH_VALUE(1,1) FROM LAST IGNORE NULLS OVER ()', 1235, "This version of MySQL doesn't yet support 'IGNORE NULLS'"];
+        yield 'counting edge' => ['SELECT NTH_VALUE(1,0) FROM LAST OVER ()', 1235, "This version of MySQL doesn't yet support 'FROM LAST'"];
+    }
+
+    #[DataProvider('providerWindowRefusals')]
+    public function testCompileRefusesUnsupportedOptionsAfterResolution(string $sql, int $code, string $message): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode($code);
+        $this->expectExceptionMessage($message);
+
+        $session->query($sql);
+    }
+
     public function testCompileReadsTheOffsetAndTheDefaultOfLag(): void
     {
         $session = (new Instance())->connect();

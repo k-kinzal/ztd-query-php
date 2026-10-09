@@ -40,6 +40,7 @@ final class Differential
      * @param bool $emulate Whether PDO emulates prepared statements
      * @param string $version The MySQL release of both servers, as `8.4.7`
      * @param string|null $guardUser The account the MySQL server is repaired through, or null for the native user
+     * @param bool $foundRows Whether the clients request CLIENT_FOUND_ROWS
      */
     public function __construct(
         public readonly string $native,
@@ -49,6 +50,7 @@ final class Differential
         public readonly bool $emulate = true,
         public readonly string $version = '8.4.7',
         public readonly ?string $guardUser = null,
+        public readonly bool $foundRows = false,
     ) {
     }
 
@@ -70,18 +72,26 @@ final class Differential
      */
     public function difference(string $sql): ?string
     {
+        return $this->compare($sql)->difference;
+    }
+
+    /**
+     * Compares one statement, distinguishing a skipped volatile observation from an equal one.
+     */
+    public function compare(string $sql): Comparison
+    {
         $guard = $this->guard();
         $expected = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql);
         $this->repair($guard);
         $again = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql);
         $this->repair($guard);
         if ($expected !== $again) {
-            return null;
+            return new Comparison(true);
         }
         $this->repair($this->memoryGuard());
         $actual = $this->run($this->memory, 'root', '', $sql);
         if ($expected === $actual) {
-            return null;
+            return new Comparison(false);
         }
         $lines = [];
         foreach (array_unique([...array_keys($expected), ...array_keys($actual)]) as $key) {
@@ -90,7 +100,7 @@ final class Differential
             }
         }
 
-        return implode("\n", $lines);
+        return new Comparison(false, implode("\n", $lines));
     }
 
     /**
@@ -173,7 +183,7 @@ final class Differential
     {
         $text = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
 
-        return strlen((string) $text) > 600 ? substr((string) $text, 0, 600) . '...' : (string) $text;
+        return (string) $text;
     }
 
     /**
@@ -185,7 +195,7 @@ final class Differential
     {
         $pdo = $this->connect($dsn, $user, $password);
         $observer = new Observer();
-        $ordered = preg_match('/\border\s+by\b/i', $sql) === 1 && preg_match('/\blimit\b/i', $sql) !== 1;
+        $ordered = preg_match('/\border\s+by\b/i', $sql) === 1;
         $observation = $observer->observe($pdo, $sql, $ordered);
         $observation['tables'] = $observer->tables($pdo, self::DATABASE);
 
@@ -198,7 +208,8 @@ final class Differential
     public function connect(string $dsn, string $user, string $password): PDO
     {
         try {
-            $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => $this->emulate]);
+            $foundRows = class_exists(\Pdo\Mysql::class) ? \Pdo\Mysql::ATTR_FOUND_ROWS : PDO::MYSQL_ATTR_FOUND_ROWS;
+            $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => $this->emulate, $foundRows => $this->foundRows]);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
             $pdo->exec('ALTER SCHEMA `' . self::DATABASE . '` READ ONLY = 0');
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

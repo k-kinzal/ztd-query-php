@@ -6,14 +6,15 @@ namespace Fuzz\Target;
 
 use PDO;
 use PDOException;
+use PDOStatement;
 
 /**
- * Runs one statement through PDO and records everything a client observes of it.
+ * Runs one statement through PDO and records the results, errors and warnings exposed by the driver.
  *
  * A success records the result columns (name, table, native type, length, precision, flags), the
- * rows as PDO returns them, or the affected-row count; a failure records the error number,
- * SQLSTATE and message. The warnings of the statement and the rows of every table afterwards are
- * recorded too.
+ * rows as PDO returns them, or the affected-row count and last insert id, for every result set.
+ * A failure records the error number, SQLSTATE and message without discarding earlier results.
+ * The warnings of the statement are recorded too; tables() snapshots a database separately.
  */
 final class Observer
 {
@@ -24,31 +25,42 @@ final class Observer
      */
     public function observe(PDO $pdo, string $sql, bool $ordered): array
     {
+        $observation = ['results' => []];
         try {
             $statement = $pdo->query($sql);
             if ($statement === false) {
                 return ['error' => 'query returned false'];
             }
-            if ($statement->columnCount() === 0) {
-                $observation = ['affected' => $statement->rowCount()];
-            } else {
-                $columns = [];
-                for ($i = 0; $i < $statement->columnCount(); $i++) {
-                    $meta = $statement->getColumnMeta($i);
-                    $columns[] = $meta === false ? null : [$meta['name'], $meta['table'] ?? '', $meta['native_type'] ?? '', $meta['len'], $meta['precision'], $meta['flags']];
-                }
-                $rows = $statement->fetchAll(PDO::FETCH_NUM);
-                $observation = ['columns' => $columns, 'rows' => $ordered ? $rows : $this->bag($rows)];
-            }
-            while ($statement->nextRowset()) {
-            }
+            do {
+                $observation['results'][] = $this->result($pdo, $statement, $ordered);
+            } while ($statement->nextRowset());
             $statement->closeCursor();
         } catch (PDOException $failure) {
-            $observation = ['error' => [$failure->errorInfo[1] ?? null, $failure->errorInfo[0] ?? null, $failure->errorInfo[2] ?? $failure->getMessage()]];
+            $observation['error'] = [$failure->errorInfo[1] ?? null, $failure->errorInfo[0] ?? null, $failure->errorInfo[2] ?? $failure->getMessage()];
         }
         $observation['warnings'] = $this->warnings($pdo);
 
         return $observation;
+    }
+
+    /**
+     * Records the current result before advancing to the next one, which can change the connection's last insert id.
+     *
+     * @return array<string, mixed>
+     */
+    public function result(PDO $pdo, PDOStatement $statement, bool $ordered): array
+    {
+        if ($statement->columnCount() === 0) {
+            return ['affected' => $statement->rowCount(), 'lastInsertId' => $pdo->lastInsertId()];
+        }
+        $columns = [];
+        for ($i = 0; $i < $statement->columnCount(); $i++) {
+            $meta = $statement->getColumnMeta($i);
+            $columns[] = $meta === false ? null : [$meta['name'], $meta['table'] ?? '', $meta['native_type'] ?? '', $meta['len'], $meta['precision'], $meta['flags']];
+        }
+        $rows = $statement->fetchAll(PDO::FETCH_NUM);
+
+        return ['columns' => $columns, 'rows' => $ordered ? $rows : $this->bag($rows)];
     }
 
     /**
@@ -79,12 +91,16 @@ final class Observer
      */
     public function warnings(PDO $pdo): array|string
     {
+        $emulate = $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
         try {
+            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, true);
             $statement = $pdo->query('SHOW WARNINGS');
 
             return $statement === false ? 'none' : $statement->fetchAll(PDO::FETCH_NUM);
         } catch (PDOException $failure) {
             return 'SHOW WARNINGS failed: ' . $failure->getMessage();
+        } finally {
+            $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, $emulate);
         }
     }
 
