@@ -312,11 +312,11 @@ final class Problems
      */
     public function reached(Node $statement): array
     {
-        $references = array_filter((new Walker())->find($statement, Node::class), static fn (Node $node): bool => ($node instanceof TableReference || $node instanceof ExplicitTable) && $node->name()->schema === null);
+        $references = array_filter((new Walker())->find($statement, Node::class), static fn (Node $node): bool => ($node instanceof TableReference || $node instanceof ExplicitTable || $node instanceof WriteTarget) && $node->name()->schema === null);
         $skipped = [];
         foreach ((new Walker())->find($statement, CommonTableExpression::class) as $table) {
             $inside = array_fill_keys(array_map(spl_object_id(...), (new Walker())->find($table, Node::class)), true);
-            $used = array_filter($references, static fn (TableReference|ExplicitTable $reference): bool => $reference->name()->name->value === $table->name->value && !isset($inside[spl_object_id($reference)]));
+            $used = array_filter($references, static fn (TableReference|ExplicitTable|WriteTarget $reference): bool => strcasecmp($reference->name()->name->value, $table->name->value) === 0 && !isset($inside[spl_object_id($reference)]));
             if ($used === []) {
                 $skipped += $inside;
             }

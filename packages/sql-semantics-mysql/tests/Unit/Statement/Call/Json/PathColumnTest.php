@@ -45,6 +45,17 @@ final class PathColumnTest extends TestCase
         self::assertSame(Nullability::NotNull, $derivation->facts()->scalar($default)->nullability);
     }
 
+    public function testDeriveColumnsWarnsWhenErrorPrecedesEmpty(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
+        $column = new PathColumn(new Name('a'), new Integral(IntegralKind::Int), new StringLiteral(['$.a']), false, null, new JsonResponse(JsonResponseKind::Null), new JsonResponse(JsonResponseKind::Error), true);
+
+        $column->deriveColumns($derivation, $derivation->environment());
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::JsonTableResponseOrder)], $derivation->facts()->warnings);
+    }
+
     public function testRenderKeepsTheOrderOfTheResponses(): void
     {
         $platform = new Platform();

@@ -218,9 +218,6 @@ final class Relations
         if (!$column instanceof PathColumn) {
             throw StatementError::NotSupportedYet->error('a JSON_TABLE column');
         }
-        if ($column->errorFirst) {
-            $this->planner->compiler->connection->context->diagnostics->warning(StatementError::DeprecatedSyntax, 'Specifying an ON EMPTY clause after the ON ERROR clause in a JSON_TABLE column definition is deprecated syntax and will be removed in a future release. Specify ON EMPTY before ON ERROR instead.');
-        }
         $domain = Domain::of($declared->tableFunction($column->type), true);
         $name = $column->name->value;
         $response = static function (?JsonResponse $response) use ($domain, $name): array {

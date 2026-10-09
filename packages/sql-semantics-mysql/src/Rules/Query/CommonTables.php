@@ -76,16 +76,23 @@ final class CommonTables
             $scope = $this->extended($outer, $bindings);
             $recursive = $with->recursive && $this->refers($table->query, $table->name, $derivation);
             $materialized = !$recursive && (new Materialization())->mergeable($table->query) ? null : $table->query;
+            $problem = null;
             if ($recursive) {
                 $operands = $this->operands($table->query);
                 if (count($operands) < 2) {
-                    $derivation->report(new Misuse(MisuseRule::RecursiveWithoutUnion, $table->name));
+                    $problem = new Misuse(MisuseRule::RecursiveWithoutUnion, $table->name);
                 } elseif ($this->refers($operands[0], $table->name, $derivation)) {
-                    $derivation->report(new Misuse(MisuseRule::RecursiveWithoutAnchor, $table->name));
+                    $problem = new Misuse(MisuseRule::RecursiveWithoutAnchor, $table->name);
                 }
                 $scope = $this->extended($outer, [...$bindings, new CommonBinding($table->name, $table, new RowShape([], [new RecursiveReference($table->name)]))]);
             }
-            $shape = $derivation->deferred($table, static fn (): RowShape => (new DerivedShapes())->shape($derivation->query($table->query, $scope), $table->columns, $derivation, $materialized));
+            $shape = $derivation->deferred($table, static function () use ($table, $scope, $derivation, $materialized, $problem): RowShape {
+                if ($problem !== null) {
+                    $derivation->report($problem);
+                }
+
+                return (new DerivedShapes())->shape($derivation->query($table->query, $scope), $table->columns, $derivation, $materialized);
+            });
             $bindings[] = new CommonBinding($table->name, $table, $shape);
         }
 
@@ -198,7 +205,7 @@ final class CommonTables
     {
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\MySql\\Statement\\']);
         foreach ($graph->objects($query) as $object) {
-            if ($object instanceof TableReference && $object->name->schema === null && $derivation->context->relationNames->equal($object->name->name->value, $table->value)) {
+            if (($object instanceof TableReference || $object instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable) && $object->name()->schema === null && $derivation->context->relationNames->equal($object->name()->name->value, $table->value)) {
                 return true;
             }
         }

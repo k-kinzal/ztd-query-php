@@ -39,6 +39,20 @@ final class EventCommandTest extends TestCase
         self::assertTrue((new EventCommand())->clearsDiagnostics());
     }
 
+    public function testIntervalNumberReadsComputedTextAsDecimal(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        try {
+            $session->query('ALTER EVENT missing ON SCHEDULE EVERY USER() SECOND');
+            self::fail('An interval with no numeric prefix must be refused.');
+        } catch (SqlError $error) {
+            self::assertSame(1542, $error->getCode());
+        }
+
+        self::assertSame(['Warning', 1366, "Incorrect DECIMAL value: '0' for column '' at row -1"], $session->diagnostics->conditions[0]);
+    }
+
     public function testExecuteCreatesARecurringEventStartingNow(): void
     {
         $session = (new Instance())->connect();

@@ -67,6 +67,18 @@ final class CommonTablesTest extends TestCase
         self::assertCount(count($once->facts->diagnostics), $twice->facts->diagnostics);
     }
 
+    public function testBindDetectsExplicitTableRecursionOnlyWhenUsed(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $used = $semantics->analyze('WITH RECURSIVE c AS (TABLE c) DELETE FROM c', []);
+        $unused = $semantics->analyze('WITH RECURSIVE c AS (TABLE c) SELECT 1', []);
+        $unusedSelect = $semantics->analyze('WITH RECURSIVE c AS (SELECT * FROM c) SELECT 1', []);
+
+        self::assertEquals(new Misuse(MisuseRule::RecursiveWithoutUnion, new Name('c')), $used->facts->diagnostics[0]);
+        self::assertSame([], $unused->facts->diagnostics);
+        self::assertSame([], $unusedSelect->facts->diagnostics);
+    }
+
     public function testExtendedAddsTablesWithoutAQueryLevel(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -199,8 +211,8 @@ final class CommonTablesTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql);
         $twice = $semantics->analyze('WITH c AS (SELECT 1), C AS (SELECT 2) SELECT 1')->facts->diagnostics;
-        $alone = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c) SELECT 1')->facts->diagnostics;
-        $late = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c UNION SELECT 1) SELECT 1')->facts->diagnostics;
+        $alone = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c) SELECT 1 FROM c')->facts->diagnostics;
+        $late = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c UNION SELECT 1) SELECT 1 FROM c')->facts->diagnostics;
 
         self::assertEquals([new Misuse(MisuseRule::DuplicateCommonTable, new Name('C'))], $twice);
         self::assertEquals([new Misuse(MisuseRule::RecursiveWithoutUnion, new Name('c'))], $alone);

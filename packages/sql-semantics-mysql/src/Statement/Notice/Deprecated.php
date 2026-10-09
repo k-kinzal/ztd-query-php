@@ -67,6 +67,7 @@ enum Deprecated: string
     case MasterPosWait = "'MASTER_POS_WAIT' is deprecated and will be removed in a future release. Please use SOURCE_POS_WAIT instead";
     case WaitUntilSqlThreadAfterGtids = "'WAIT_UNTIL_SQL_THREAD_AFTER_GTIDS' is deprecated and will be removed in a future release. Please use WAIT_FOR_EXECUTED_GTID_SET instead";
     case JsonMerge = "'JSON_MERGE' is deprecated and will be removed in a future release. Please use JSON_MERGE_PRESERVE/JSON_MERGE_PATCH instead";
+    case JsonTableResponseOrder = 'Specifying an ON EMPTY clause after the ON ERROR clause in a JSON_TABLE column definition is deprecated syntax and will be removed in a future release. Specify ON EMPTY before ON ERROR instead.';
     case SystemVariable = "'@@<variable>' is deprecated and will be removed in a future release.";
     case LowPriorityWrite = "'LOW_PRIORITY WRITE' is deprecated and will be removed in a future release. Please use WRITE instead";
     case AlterIgnore = "'IGNORE' is deprecated and will be removed in a future release.";
@@ -85,7 +86,7 @@ enum Deprecated: string
             self::Utf8Alias => 3719,
             self::National => 3720,
             self::IntoInsideQuery => 3962,
-            self::BinaryAttribute, self::AsciiCharset, self::UnicodeCharset, self::DelayedInsert, self::DelayedReplace, self::GroupByDirection, self::BinaryBitwise, self::DotColumn, self::DotTable, self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth, self::Utf8mb3, self::Ucs2, self::DisableOnSlave, self::OldPassword, self::DesEncrypt, self::DesDecrypt, self::Encrypt, self::MasterPosWait, self::WaitUntilSqlThreadAfterGtids, self::JsonMerge, self::SystemVariable, self::LowPriorityWrite => 1287,
+            self::BinaryAttribute, self::AsciiCharset, self::UnicodeCharset, self::DelayedInsert, self::DelayedReplace, self::GroupByDirection, self::BinaryBitwise, self::DotColumn, self::DotTable, self::PipesOr, self::AmpersandsAnd, self::BangNot, self::BinaryOperator, self::AssignmentInExpression, self::CalcFoundRows, self::FoundRows, self::ValuesFunction, self::YearWidth, self::Utf8mb3, self::Ucs2, self::DisableOnSlave, self::OldPassword, self::DesEncrypt, self::DesDecrypt, self::Encrypt, self::MasterPosWait, self::WaitUntilSqlThreadAfterGtids, self::JsonMerge, self::JsonTableResponseOrder, self::SystemVariable, self::LowPriorityWrite => 1287,
         };
     }
 

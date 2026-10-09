@@ -245,7 +245,7 @@ final class EventCommand implements Command
         }
         $simple = in_array($schedule->unit, [IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year], true);
         $text = (string) Convert::toText($value, $quantity->domain());
-        $number = $simple ? (string) Convert::toInteger($value, $quantity->domain(), $context) : $this->composite($text, $schedule->unit);
+        $number = $simple ? $this->intervalNumber($value, $quantity, $context) : $this->composite($text, $schedule->unit);
         if ((int) $number <= 0 && !str_contains($number, "'")) {
             throw ProgramError::IntervalNotPositive->error();
         }
@@ -256,6 +256,18 @@ final class EventCommand implements Command
         }
 
         return [null, [$number, $schedule->unit->value], $starts, $ends];
+    }
+
+    /**
+     * Rounds a simple interval through decimal conversion. MySQL 5.6 accepts a numeric prefix without warning about trailing text.
+     */
+    public function intervalNumber(int|float|string $value, \MySqlMemory\Evaluation\Evaluable $quantity, Context $context): string
+    {
+        if ($context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5651 && $quantity->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && preg_match('/\A[ \t\n\r\v\f]*[+-]?\.?[0-9]/', (string) $value) === 1) {
+            return \MySqlMemory\Value\Decimal::round(\MySqlMemory\Value\NumericText::exact((string) $value)->number, 0);
+        }
+
+        return \MySqlMemory\Value\Decimal::round(Convert::operandDecimal($value, $quantity, $context) ?? '0', 0);
     }
 
     /**

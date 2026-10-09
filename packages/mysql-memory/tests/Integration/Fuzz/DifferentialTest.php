@@ -75,6 +75,19 @@ final class DifferentialTest extends TestCase
      */
     public static function providerResolutionErrors(): iterable
     {
+        yield 'recursive explicit table delete' => ['WITH RECURSIVE c AS (TABLE c) DELETE FROM c'];
+        yield 'recursive explicit table update' => ['WITH RECURSIVE c AS (TABLE c) UPDATE c SET a=1'];
+        yield 'recursive explicit table unused' => ['WITH RECURSIVE c AS (TABLE c) SELECT 1'];
+        yield 'recursive select unused' => ['WITH RECURSIVE c AS (SELECT * FROM c) SELECT 1'];
+        yield 'recursive explicit table missing other' => ['WITH RECURSIVE c AS (TABLE c) SELECT * FROM c, missing'];
+        yield 'recursive explicit table missing target' => ['WITH RECURSIVE c AS (TABLE c) DELETE FROM missing'];
+        yield 'json table response order' => ["SELECT * FROM JSON_TABLE('[{}]', '$[*]' COLUMNS (v INT PATH '$.v' ERROR ON ERROR NULL ON EMPTY)) AS jt"];
+        yield 'json table response order before target' => ["DELETE missing FROM JSON_TABLE(USER(), 'text' COLUMNS (v BIT PATH 'text' ERROR ON ERROR ERROR ON EMPTY)) AS jt"];
+        yield 'json table standard response order' => ["SELECT * FROM JSON_TABLE('[{}]', '$[*]' COLUMNS (v INT PATH '$.v' NULL ON EMPTY ERROR ON ERROR)) AS jt"];
+        yield 'event interval computed text' => ['ALTER EVENT missing ON SCHEDULE EVERY USER() SECOND'];
+        yield 'event interval literal text' => ["ALTER EVENT missing ON SCHEDULE EVERY 'x' SECOND"];
+        yield 'event interval partial number' => ["ALTER EVENT missing ON SCHEDULE EVERY '2x' SECOND"];
+        yield 'event interval computed partial number' => ["ALTER EVENT missing ON SCHEDULE EVERY CONCAT('2', 'x') SECOND"];
         yield 'empty table definition' => ['CREATE TABLE empty_probe'];
         yield 'empty table nonboolean check' => ['CREATE TABLE empty_probe (CHECK(USER()))'];
         yield 'empty table boolean check' => ['CREATE TABLE empty_probe (CHECK(1=1))'];

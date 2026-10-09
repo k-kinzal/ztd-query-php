@@ -74,6 +74,9 @@ final class PathColumn implements JsonTableColumn
      */
     public function deriveColumns(Derivation $derivation, Environment $environment): array
     {
+        if ($this->errorFirst) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::JsonTableResponseOrder, $derivation);
+        }
         (new Arguments())->one($this->path, $derivation, $environment);
         foreach ([$this->onEmpty?->default, $this->onError?->default] as $default) {
             if ($default !== null) {
