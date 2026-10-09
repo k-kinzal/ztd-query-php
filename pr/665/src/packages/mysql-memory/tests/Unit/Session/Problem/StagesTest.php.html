@@ -159,7 +159,7 @@
 <span class="src-line" id="L119" data-diff="added"><a class="ln" href="#L119">119</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-id">Stages</span>::<span class="tok-id">parsed</span>(<span class="tok-kw">new</span> <span class="tok-id">UnknownSystemVariable</span>(<span class="tok-str">&#039;nosuch&#039;</span>)));</span>
 <span class="src-line" id="L120" data-diff="added"><a class="ln" href="#L120">120</a>    }</span>
 <span class="src-line" id="L121" data-diff="added"><a class="ln" href="#L121">121</a></span>
-<span class="src-line" id="L122" data-diff="added"><a class="ln" href="#L122">122</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testAnsweredLeavesTheMissingColumnsOfCreateTableToItsCommand</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L122" data-diff="added"><a class="ln" href="#L122">122</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTableDefinitionLeavesTheMissingColumnsOfCreateTableToItsCommand</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L123" data-diff="added"><a class="ln" href="#L123">123</a>    {</span>
 <span class="src-line" id="L124" data-diff="added"><a class="ln" href="#L124">124</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>())-&gt;<span class="tok-id">connect</span>();</span>
 <span class="src-line" id="L125" data-diff="added"><a class="ln" href="#L125">125</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE DATABASE d; USE d&#039;</span>);</span>
