@@ -97,8 +97,11 @@ final class Definitions
     {
         $declaration = new Table(new \SqlSemantics\Statement\Identifier\QualifiedName($declaration->name->name, new \SqlSemantics\Statement\Identifier\Name($schema)), $declaration->profile, $declaration->columns, $declaration->implicit, $declaration->complete, $declaration->kind, $declaration->keys, $declaration->partitions);
         $collation = $this->collation($create);
-        $engine = $this->engine($create);
+        $engine = (new StorageOptions())->engine($create, $this->planner->compiler->connection->variables);
         $elements = array_values(array_filter($create->elements, static fn ($element): bool => $element instanceof ColumnElement));
+        if ($elements === [] && $this->planner->settings->legacy()) {
+            throw SchemaError::TableMustHaveColumns->error();
+        }
         $scope = new Scope();
         $declared = new Declared($collation, $this->planner->settings->release());
         $columns = [];
@@ -113,20 +116,10 @@ final class Definitions
         $expressions->forbidden();
         $constraints = new Constraints($this->planner, $create, $this->checkBase, $this->foreignBase, $this->keptForeign);
         $constraints->forbidden();
-        $foreign = new ForeignKeys($this->planner, $create);
-        $implicit = [];
-        foreach ($create->elements as $element) {
-            if ($element instanceof IndexDefinition && isset($this->generatedKeys[mb_strtolower($element->name->column->value ?? '')])) {
-                $key = $this->key($element, $columns);
-                $keys[] = $implicit[] = new Key($key->name, $key->kind, $key->columns, $key->prefixes, $key->descending, true);
-            } elseif ($element instanceof IndexDefinition) {
-                $keys[] = $this->key($element, $columns);
-            }
-            if ($element instanceof ForeignKeyElement) {
-                $keys[] = $implicit[] = $foreign->implicit($element, $columns);
-            }
+        if ($elements === [] && in_array($this->planner->settings->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
+            throw SchemaError::NoVisibleColumn->error();
         }
-        $keys = $this->named($foreign->pruned($keys, $implicit), $columns);
+        $keys = $this->tableKeys($create, $columns, $keys);
         $this->check($columns, $keys);
         $expressions->keyed($columns, $keys);
         usort($keys, static fn (Key $left, Key $right): int => ($right->kind === KeyKind::Primary) <=> ($left->kind === KeyKind::Primary));
@@ -142,11 +135,29 @@ final class Definitions
     }
 
     /**
-     * Answers the storage engine a table names: the last ENGINE option, or InnoDB when it names none.
+     * Builds explicit table keys and the keys foreign constraints require, keeping inline column keys.
+     *
+     * @param list<ColumnDefinition> $columns The columns of the table
+     * @param list<Key> $keys The keys declared inline on columns
+     *
+     * @return list<Key>
      */
-    public function engine(CreateTable $create): string
+    public function tableKeys(CreateTable $create, array $columns, array $keys): array
     {
-        return (new StorageOptions())->engine($create, $this->planner->compiler->connection->variables);
+        $foreign = new ForeignKeys($this->planner, $create);
+        $implicit = [];
+        foreach ($create->elements as $element) {
+            if ($element instanceof IndexDefinition && isset($this->generatedKeys[mb_strtolower($element->name->column->value ?? '')])) {
+                $key = $this->key($element, $columns);
+                $keys[] = $implicit[] = new Key($key->name, $key->kind, $key->columns, $key->prefixes, $key->descending, true);
+            } elseif ($element instanceof IndexDefinition) {
+                $keys[] = $this->key($element, $columns);
+            }
+            if ($element instanceof ForeignKeyElement) {
+                $keys[] = $implicit[] = $foreign->implicit($element, $columns);
+            }
+        }
+        return $this->named($foreign->pruned($keys, $implicit), $columns);
     }
 
     /**
@@ -419,6 +430,9 @@ final class Definitions
      */
     public function check(array $columns, array $keys): void
     {
+        if ($columns === [] && $this->planner->settings->legacy()) {
+            throw SchemaError::TableMustHaveColumns->error();
+        }
         if (array_filter($columns, static fn (ColumnDefinition $column): bool => !$column->invisible) === []) {
             throw SchemaError::NoVisibleColumn->error();
         }

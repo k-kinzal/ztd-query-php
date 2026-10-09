@@ -18,6 +18,49 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class DefinitionsTest extends TestCase
 {
+    public function testTableRejectsAnEmptyDefinitionAfterCheckingConstraints(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(3812);
+
+        $session->query('CREATE TABLE t (CHECK(USER()))');
+    }
+
+    public function testTableRejectsAnEmptyLegacyDefinitionBeforeKeyNames(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1113);
+
+        $session->query('CREATE TABLE t (KEY(missing))');
+    }
+
+    public function testTableRejectsAnEmptyNineDefinitionBeforeKeyNames(): void
+    {
+        $session = (new Instance('9.1.0'))->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(4028);
+
+        $session->query('CREATE TABLE t (KEY(missing))');
+    }
+
+    public function testTableKeysKeepsInlineKeysAndAddsForeignKeyIndexes(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE p (id INT PRIMARY KEY); CREATE TABLE c (id INT PRIMARY KEY, p INT, FOREIGN KEY (p) REFERENCES p(id))');
+        $keys = $session->instance->dictionary->table('d', 'c')?->definition->keys ?? [];
+
+        self::assertSame(['PRIMARY', 'p'], array_map(static fn ($key): string => $key->name, $keys));
+        self::assertSame([[0], [1]], array_map(static fn ($key): array => $key->columns, $keys));
+    }
+
     public function testTableTakesTheNameEngineAndCollationOfItsOptions(): void
     {
         $session = (new Instance())->connect();
@@ -311,7 +354,7 @@ final class DefinitionsTest extends TestCase
         self::assertSame([['é', 'é,x', 'E9', 'E92C78', '1']], $result->rows);
     }
 
-    public function testEngineTakesTheLastEngineOptionOrInnoDB(): void
+    public function testTableTakesTheLastEngineOptionOrInnoDB(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT) ENGINE=InnoDB ENGINE=MyISAM; CREATE TABLE u (a INT)');

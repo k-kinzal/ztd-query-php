@@ -75,6 +75,30 @@ final class DifferentialTest extends TestCase
      */
     public static function providerResolutionErrors(): iterable
     {
+        yield 'empty table definition' => ['CREATE TABLE empty_probe'];
+        yield 'empty table nonboolean check' => ['CREATE TABLE empty_probe (CHECK(USER()))'];
+        yield 'empty table boolean check' => ['CREATE TABLE empty_probe (CHECK(1=1))'];
+        yield 'empty table missing column check' => ['CREATE TABLE empty_probe (CHECK(missing))'];
+        yield 'empty table unknown engine' => ['CREATE TABLE empty_probe ENGINE=missing'];
+        yield 'empty table key column' => ['CREATE TABLE empty_probe (KEY(x))'];
+        yield 'rename missing event to same name' => ['ALTER EVENT missing RENAME TO missing'];
+        yield 'rename missing event case' => ['ALTER EVENT missing RENAME TO MISSING'];
+        yield 'rename missing event schema' => ['ALTER EVENT absent.missing RENAME TO absent.missing'];
+        yield 'event definer before same name' => ['ALTER DEFINER=unknown EVENT missing RENAME TO missing'];
+        yield 'event schedule before same name' => ['ALTER EVENT missing ON SCHEDULE EVERY 0 SECOND RENAME TO missing'];
+        yield 'unregister current factor' => ['ALTER USER CURRENT_USER 2 FACTOR UNREGISTER'];
+        yield 'unregister other account factor' => ["ALTER USER 'root'@'localhost' 3 FACTOR UNREGISTER"];
+        yield 'unregister missing account factor' => ['ALTER USER missing 2 FACTOR UNREGISTER'];
+        yield 'add omitted factor plugin' => ["ALTER USER CURRENT_USER ADD 2 FACTOR IDENTIFIED BY 'x'"];
+        yield 'modify omitted factor plugin' => ["ALTER USER CURRENT_USER MODIFY 2 FACTOR IDENTIFIED BY 'x'"];
+        yield 'modify explicit factor plugin' => ['ALTER USER CURRENT_USER MODIFY 2 FACTOR IDENTIFIED WITH missing'];
+        yield 'modify missing account factor' => ["ALTER USER missing MODIFY 2 FACTOR IDENTIFIED BY 'x'"];
+        yield 'drop missing account factor' => ['ALTER USER missing DROP 2 FACTOR'];
+        yield 'add third factor without second' => ['ALTER USER CURRENT_USER ADD 3 FACTOR IDENTIFIED WITH missing'];
+        yield 'initial authentication existing account' => ["CREATE USER CURRENT_USER IDENTIFIED WITH missing INITIAL AUTHENTICATION IDENTIFIED BY 'x'"];
+        yield 'initial authentication existing account if not exists' => ["CREATE USER IF NOT EXISTS CURRENT_USER IDENTIFIED WITH missing INITIAL AUTHENTICATION IDENTIFIED BY 'x'"];
+        yield 'initial authentication invalid initial plugin' => ["CREATE USER CURRENT_USER IDENTIFIED WITH missing INITIAL AUTHENTICATION IDENTIFIED WITH missing_initial AS 'abc'"];
+        yield 'initial authentication built in plugin' => ["CREATE USER missing IDENTIFIED WITH caching_sha2_password INITIAL AUTHENTICATION IDENTIFIED BY 'x'"];
         yield 'syntax whitespace' => ["SELEC 1 \t\n"];
         yield 'syntax whitespace after comment' => ["SELEC 1 /* comment */ \t"];
         yield 'syntax whitespace after following statement' => ["SELEC 1; \nSELECT 2 \t"];

@@ -76,8 +76,7 @@ final class CreateUserCommand implements Command
             return $this->legacy($statement, $session, $context, $plugin);
         }
         foreach ($statement->users as $user) {
-            $options->check($user->identification, $plugin);
-            $options->check($user->initial, $plugin);
+            $options->check($user->initial ?? $user->identification, $plugin);
         }
         $created = $this->absent($statement, $names, $session, $context);
         $defaults = $this->defaults($statement, $session);
@@ -229,9 +228,12 @@ final class CreateUserCommand implements Command
         $options = new Options($session->settings()->release());
         $generated = [];
         foreach ($created as [$identity, $user]) {
+            if ($user->initial !== null) {
+                $credentials = new Credentials($session->settings()->release());
+                throw AccountError::PluginOperationUnsupported->error($credentials->plugin($user->identification->plugin->value ?? $credentials->default()));
+            }
             $account = new Account($identity, (new Credentials($session->settings()->release()))->default());
             $password = $user->identification === null ? null : $options->identify($account, $user->identification, false);
-            $password = $user->initial === null ? $password : $options->identify($account, $user->initial, false);
             $options->apply($account, $statement->tls, $statement->resources, $statement->options, $statement->comment);
             $accounts->add($account);
             (new Names())->ascii($identity, 8, $context->diagnostics);

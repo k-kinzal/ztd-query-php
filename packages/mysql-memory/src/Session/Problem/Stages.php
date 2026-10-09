@@ -156,7 +156,7 @@ final class Stages
             return $diagnostic instanceof MissingTable || $diagnostic instanceof TableExists;
         }
         if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable && $statement->query === null) {
-            return $diagnostic instanceof MissingColumn || $diagnostic instanceof MissingTable;
+            return self::tableDefinition($statement, $diagnostic);
         }
         if ($statement instanceof CreateTableLike || $statement instanceof LockTables || $statement instanceof HandlerOpen) {
             return $diagnostic instanceof MissingTable;
@@ -172,6 +172,17 @@ final class Stages
         }
 
         return false;
+    }
+
+    /**
+     * Defers definition diagnostics to the CREATE TABLE command, which checks constraints and empty definitions in release order.
+     */
+    public static function tableDefinition(\SqlSemantics\Platform\MySql\Statement\Table\CreateTable $statement, Diagnostic $diagnostic): bool
+    {
+        $empty = array_filter($statement->elements, static fn ($element): bool => $element instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition) === [];
+
+        return $diagnostic instanceof MissingColumn || $diagnostic instanceof MissingTable || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\NoColumns
+            || ($empty && $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\UnknownKeyColumn);
     }
 
     /**

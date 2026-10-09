@@ -119,7 +119,7 @@ final class StagesTest extends TestCase
         self::assertTrue(Stages::parsed(new UnknownSystemVariable('nosuch')));
     }
 
-    public function testAnsweredLeavesTheMissingColumnsOfCreateTableToItsCommand(): void
+    public function testTableDefinitionLeavesTheMissingColumnsOfCreateTableToItsCommand(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d');

@@ -18,6 +18,26 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class CreateUserCommandTest extends TestCase
 {
+    public function testCreateRefusesInitialAuthenticationForBuiltInPlugins(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(4054);
+
+        $session->query("CREATE USER u IDENTIFIED WITH caching_sha2_password INITIAL AUTHENTICATION IDENTIFIED BY 'x'");
+    }
+
+    public function testExecuteResolvesTheInitialPluginBeforeTheAccountButDefersTheRegistrationPlugin(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1396);
+
+        $session->query("CREATE USER CURRENT_USER IDENTIFIED WITH missing INITIAL AUTHENTICATION IDENTIFIED BY 'x'");
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new CreateUserCommand())->clearsDiagnostics());

@@ -54,7 +54,9 @@ enum AccountError: int implements ErrorCode
     case InvalidUserAttributeJson = 3982;
     case RoleGrantedToItself = 4027;
     case InvalidFactorPlugin = 4052;
+    case PluginOperationUnsupported = 4054;
     case FactorMissing = 4057;
+    case FactorPolicyMismatch = 4058;
     case RegistrationNotAllowed = 4060;
     case FactorOrder = 4062;
     case FactorIdentical = 4063;

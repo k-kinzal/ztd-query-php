@@ -24,6 +24,16 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class EventCommandTest extends TestCase
 {
+    public function testFoundRejectsTheSameNameBeforeTheMissingDatabase(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1551);
+
+        $session->query('ALTER EVENT missing.event RENAME TO missing.EVENT');
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new EventCommand())->clearsDiagnostics());

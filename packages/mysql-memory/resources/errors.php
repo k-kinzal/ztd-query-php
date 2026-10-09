@@ -287,6 +287,8 @@ return [
     3970 => ['HY000', 'The START GROUP_REPLICATION command failed since the username provided for recovery channel is empty.'],
     3971 => ['HY000', 'The START GROUP_REPLICATION command failed since the USER option was not provided with PASSWORD for recovery channel.'],
     4015 => ['HY000', 'CHANGE REPLICATION SOURCE TO ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = LOCAL|<UUID> cannot be executed because @@GLOBAL.GTID_MODE <> ON.'],
+    4054 => ['HY000', 'This operation is not supported for plugin "%s".'],
+    4058 => ['HY000', '%s factor authentication method does not match against authentication policy. Please refer @@authentication_policy system variable.'],
     1763 => ['HY000', 'Setting authentication options is not possible when only the Replica SQL Thread is being started.'],
     1791 => ['HY000', "Unknown EXPLAIN format name: '%s'"],
     1794 => ['HY000', 'Replica is not configured or failed to initialize properly. You must at least set --server-id to enable either a source or a replica. Additional error messages can be found in the MySQL error log.'],

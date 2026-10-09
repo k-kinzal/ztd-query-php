@@ -69,6 +69,26 @@ final class AlterUserCommandTest extends TestCase
         $session->query("ALTER USER nobody ADD 2 FACTOR IDENTIFIED WITH caching_sha2_password BY 'x'");
     }
 
+    public function testFactorsWarnsBeforeLookingUpAnOmittedPlugin(): void
+    {
+        $session = (new Instance())->connect();
+        $answers = $session->run("ALTER USER CURRENT_USER ADD 2 FACTOR IDENTIFIED BY 'x'");
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame([4058, 1524], array_column($session->diagnostics->conditions, 1));
+    }
+
+    public function testFactorsNeedsTheSecondFactorBeforeAddingTheThird(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(4057);
+        $this->expectExceptionMessage("2 factor authentication method doesn't exist.");
+
+        $session->query('ALTER USER CURRENT_USER ADD 3 FACTOR IDENTIFIED WITH missing');
+    }
+
     public function testExecuteRefusesADayOutOfRange(): void
     {
         $session = (new Instance())->connect();

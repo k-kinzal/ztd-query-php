@@ -52,4 +52,14 @@ final class RegistrationCommandTest extends TestCase
 
         $session->query('ALTER USER someone 3 FACTOR UNREGISTER');
     }
+
+    public function testExecuteFindsNoFactorToUnregisterOfAnExistingOtherAccount(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(4057);
+
+        $session->query("ALTER USER 'root'@'localhost' 3 FACTOR UNREGISTER");
+    }
 }

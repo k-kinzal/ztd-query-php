@@ -63,13 +63,13 @@ final class AlterUserCommand implements Command
         $options->parsed($operation, $session->text);
         $accounts = $session->instance->accounts;
         foreach ($statement->users as $user) {
-            $plugin = $accounts->find($names->identity($names->users([$user])[0], $session))->plugin ?? (new Credentials($session->settings()->release()))->default();
+            $account = $accounts->find($names->identity($names->users([$user])[0], $session));
+            $plugin = $account->plugin ?? (new Credentials($session->settings()->release()))->default();
             if ($user instanceof UserSpecification) {
                 $options->check($user->identification, $plugin);
             }
-            foreach ($user instanceof FactorChange && $user->action === FactorAction::Add ? $user->steps : [] as $step) {
-                $name = (new Credentials($session->settings()->release()))->plugin($step->identification->plugin->value ?? $plugin);
-                throw AccountError::InvalidFactorPlugin->error($name, $step->factor->text, 'ALTER USER');
+            if ($user instanceof FactorChange) {
+                $this->factors($user, $account, $session);
             }
         }
         $missing = [];
@@ -101,6 +101,32 @@ final class AlterUserCommand implements Command
         }
 
         return new Completion(0, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Refuses an unavailable factor or a built-in plugin used as an additional factor.
+     *
+     * Omitted authentication plugins warn about the authentication policy before account and
+     * factor checks. Existing accounts have only their first factor; ADD 3 needs factor 2 first.
+     * A missing account reaches plugin validation, even with IF EXISTS (verified on 8.0–9.1).
+     *
+     * @throws SqlError When the factor is absent or the plugin cannot supply an additional factor
+     */
+    public function factors(FactorChange $change, ?Account $account, Session $session): void
+    {
+        $step = $change->steps[0];
+        $factor = (new \MySqlMemory\Command\Admin\Literals())->number($step->factor);
+        $plugin = $step->identification?->plugin?->value;
+        if ($change->action !== FactorAction::Drop && $plugin === null) {
+            $session->diagnostics->warning(AccountError::FactorPolicyMismatch, AccountError::FactorPolicyMismatch->message($factor));
+        }
+        if ($account !== null && ($change->action !== FactorAction::Add || $factor === '3')) {
+            $missing = $change->action === FactorAction::Add ? '2' : $factor;
+            throw AccountError::FactorMissing->error($missing, $missing);
+        }
+        $name = (new Credentials($session->settings()->release()))->plugin($plugin ?? '');
+
+        throw AccountError::InvalidFactorPlugin->error($name, $factor, 'ALTER USER');
     }
 
     /**

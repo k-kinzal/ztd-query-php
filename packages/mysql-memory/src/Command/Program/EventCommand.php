@@ -123,6 +123,9 @@ final class EventCommand implements Command
         }
         $dictionary = $session->instance->dictionary;
         $renamed = $statement->newName === null ? null : $statement->newName->schema->value ?? $session->variables->database;
+        if ($statement->newName !== null && $renamed === $database && strtolower($statement->newName->name->value) === strtolower($statement->name->name->value)) {
+            throw ProgramError::SameEventName->error();
+        }
         if ($renamed !== null && $dictionary->schema($renamed) === null) {
             throw QueryError::BadDatabase->error($renamed);
         }

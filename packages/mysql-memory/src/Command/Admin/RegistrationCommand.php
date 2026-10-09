@@ -25,8 +25,8 @@ use SqlSemantics\Statement\Operation;
  * The statement commits the open transaction. Registration is only allowed in the session of the
  * account registering (ER_INVALID_USER_FOR_REGISTRATION, naming the current account), and the
  * emulated server has no account with a second or third factor
- * (ER_USER_REGISTRATION_FAILED). UNREGISTER needs the authentication plugin of the factor, which
- * no account has (ER_PLUGIN_IS_NOT_LOADED for the empty name; verified on a live 8.4 server).
+ * (ER_USER_REGISTRATION_FAILED). UNREGISTER of an existing account finds no such factor;
+ * a missing account instead fails plugin lookup with an empty name (verified on 8.0–9.1).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html#alter-user-registration.
  *
  * @visibility MySqlMemory
@@ -56,7 +56,11 @@ final class RegistrationCommand implements Command
         $names = new Names($session->settings()->release());
         $names->check([$statement->user]);
         if ($statement->step === RegistrationStep::Unregister) {
-            throw AdministrationError::PluginIsNotLoaded->error('');
+            if ($session->instance->accounts->find($names->identity($statement->user, $session)) === null) {
+                throw AdministrationError::PluginIsNotLoaded->error('');
+            }
+            $factor = (new Literals())->number($statement->factor);
+            throw AccountError::FactorMissing->error($factor, $factor);
         }
         $current = new Identity($session->user, '%');
         if ($names->identity($statement->user, $session)->key() !== $current->key()) {
