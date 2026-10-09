@@ -48,6 +48,7 @@ enum AdministrationError: int implements ErrorCode
     case ForeignServerExists = 1476;
     case ForeignServerMissing = 1477;
     case PluginIsNotLoaded = 1524;
+    case NativeFunctionName = 1585;
     case NoFormatDescriptionEvent = 1609;
     case PermanentPlugin = 1619;
     case VariableIsReadonly = 1621;

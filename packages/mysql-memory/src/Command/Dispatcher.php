@@ -168,6 +168,7 @@ final class Dispatcher
         MySql\Server\ForeignServer\CreateServer::class => Admin\ForeignServerCommand::class,
         MySql\Server\ForeignServer\AlterServer::class => Admin\ForeignServerCommand::class,
         MySql\Server\ForeignServer\DropServer::class => Admin\ForeignServerCommand::class,
+        MySql\Routine\CreateLoadableFunction::class => Admin\PluginCommand::class,
         MySql\Server\Plugin\InstallPlugin::class => Admin\PluginCommand::class,
         MySql\Server\Plugin\UninstallPlugin::class => Admin\PluginCommand::class,
         MySql\Server\Plugin\InstallComponent::class => Admin\PluginCommand::class,

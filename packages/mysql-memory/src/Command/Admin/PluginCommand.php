@@ -15,6 +15,7 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Routine\CreateLoadableFunction;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallComponent;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\InstallPlugin;
 use SqlSemantics\Platform\MySql\Statement\Server\Plugin\UninstallComponent;
@@ -60,6 +61,9 @@ final class PluginCommand implements Command
         $statement = $operation->statement;
         $session->transaction->commit();
         $directory = (string) $session->variables->read('plugin_dir');
+        if ($statement instanceof CreateLoadableFunction) {
+            $this->loadable($statement, $session);
+        }
         if ($statement instanceof InstallPlugin) {
             if ($this->builtIn($statement->plugin->value)) {
                 throw AdministrationError::FunctionExists->error($statement->plugin->value);
@@ -86,6 +90,28 @@ final class PluginCommand implements Command
             throw AdministrationError::ComponentNotLoaded->error($urns[0] ?? '');
         }
         throw StatementError::NotSupportedYet->error('this plugin statement');
+    }
+
+    /**
+     * Refuses a native function name or a path, then reports the absent function library.
+     * Function library errors name the requested library and limit the operating-system detail
+     * to 128 bytes. The emulator has no loadable native libraries.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/create-function-loadable.html.
+     *
+     * @throws SqlError Always, because the library cannot be loaded
+     */
+    public function loadable(CreateLoadableFunction $statement, Session $session): never
+    {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->exists($session->settings()->release(), $statement->name->value)) {
+            throw AdministrationError::NativeFunctionName->error($statement->name->value);
+        }
+        $library = (new Literals())->bytes($statement->library);
+        if (str_contains($library, '/')) {
+            throw AdministrationError::PathsForbidden->error();
+        }
+        $directory = (string) $session->variables->read('plugin_dir');
+
+        throw $this->unopened($directory, $library, '11', false);
     }
 
     /**
@@ -129,13 +155,16 @@ final class PluginCommand implements Command
     /**
      * Answers the error of a library the plugin directory does not hold; an empty name, `.` and `..` name a directory.
      *
+     * @param bool $qualified Whether the error names the full plugin path; function errors name the requested library
      * @param string $errno The error number the server reports for the failed open: 11 from 8.0 on, 2 in 5.6 and 5.7 (verified on live 5.7.44 and 8.4.7 servers)
      */
-    public function unopened(string $directory, string $library, string $errno = '11'): SqlError
+    public function unopened(string $directory, string $library, string $errno = '11', bool $qualified = true): SqlError
     {
         $path = $directory . $library;
         $reason = in_array($library, ['', '.', '..'], true) ? 'cannot read file data: Is a directory' : 'cannot open shared object file: No such file or directory';
 
-        return AdministrationError::CantOpenLibrary->error($path, $errno, $path . ': ' . $reason);
+        $detail = $path . ': ' . $reason;
+
+        return AdministrationError::CantOpenLibrary->error($qualified ? $path : $library, $errno, $qualified ? $detail : substr($detail, 0, 128));
     }
 }

@@ -90,6 +90,10 @@ final class DifferentialTest extends TestCase
         yield 'window ordering before null treatment' => ['SELECT NTH_VALUE(1,1) IGNORE NULLS OVER (ORDER BY 1)'];
         yield 'null treatment before counting edge' => ['SELECT NTH_VALUE(1,1) FROM LAST IGNORE NULLS OVER ()'];
         yield 'counting edge before row number' => ['SELECT NTH_VALUE(1,0) FROM LAST OVER ()'];
+        yield 'loadable function library' => ["CREATE FUNCTION memory_probe RETURNS STRING SONAME 'text'"];
+        yield 'loadable aggregate library' => ["CREATE AGGREGATE FUNCTION memory_probe RETURNS REAL SONAME 'text'"];
+        yield 'loadable function path' => ["CREATE FUNCTION memory_probe RETURNS STRING SONAME '/tmp/text'"];
+        yield 'loadable function native name' => ["CREATE FUNCTION ABS RETURNS STRING SONAME 'text'"];
         yield 'primary key with earlier null' => ['CREATE TABLE x(a INT NULL KEY)'];
         yield 'primary key with null then not null' => ['CREATE TABLE x(a INT NULL NOT NULL PRIMARY KEY)'];
         yield 'routine parameter type warnings' => ['CREATE PROCEDURE p(a INT(11), b NATIONAL CHAR(3)) SELECT a'];

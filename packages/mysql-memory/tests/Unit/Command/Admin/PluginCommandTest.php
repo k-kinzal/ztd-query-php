@@ -16,6 +16,39 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class PluginCommandTest extends TestCase
 {
+    public function testLoadableReportsTheLibraryWithoutAQualifiedName(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1126);
+        $this->expectExceptionMessage("Can't open shared library 'text' (errno: 11 /usr/lib64/mysql/plugin/text: cannot open shared object file: No such file or directory)");
+
+        $session->query("CREATE AGGREGATE FUNCTION f RETURNS REAL SONAME 'text'");
+    }
+
+    public function testLoadableRefusesNativeNamesBeforeReadingTheLibrary(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1585);
+        $this->expectExceptionMessage("This function 'ABS' has the same name as a native function");
+
+        $session->query("CREATE FUNCTION ABS RETURNS STRING SONAME '/tmp/text'");
+    }
+
+    public function testLoadableRefusesPaths(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1124);
+
+        $session->query("CREATE FUNCTION f RETURNS STRING SONAME '/tmp/text'");
+    }
+
+    public function testUnopenedBoundsTheOperatingSystemDetailForFunctions(): void
+    {
+        $error = (new PluginCommand())->unopened('/usr/lib64/mysql/plugin/', str_repeat('x', 65), '11', false);
+
+        self::assertSame("Can't open shared library '" . str_repeat('x', 65) . "' (errno: 11 /usr/lib64/mysql/plugin/" . str_repeat('x', 65) . ': cannot open shared object file: No su)', $error->getMessage());
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new PluginCommand())->clearsDiagnostics());

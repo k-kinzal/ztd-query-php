@@ -535,5 +535,6 @@ return [
     3572 => ['HY000', 'Statement aborted because lock(s) could not be acquired immediately and NOWAIT is set.'],
     6414 => ['HY000', 'Combining the storage engines %s and %s is deprecated, but the statement or transaction updates both the %s table %s and the %s table %s.'],
     3013 => ['HY000', "Invalid size for column '%s'."],
+    1585 => ['HY000', "This function '%s' has the same name as a native function"],
     6001 => ['HY000', 'Language component: Not available.'],
 ];
