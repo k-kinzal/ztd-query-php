@@ -207,49 +207,52 @@
 <span class="src-line" id="L167" data-diff="added"><a class="ln" href="#L167">167</a>                (<span class="tok-var">$this</span>-&gt;<span class="tok-id">resumed</span>)();</span>
 <span class="src-line" id="L168" data-diff="added"><a class="ln" href="#L168">168</a>            }</span>
 <span class="src-line" id="L169" data-diff="added"><a class="ln" href="#L169">169</a>        }</span>
-<span class="src-line" id="L170" data-diff="added"><a class="ln" href="#L170">170</a>        <span class="tok-kw">if</span> (<span class="tok-kw">isset</span>(<span class="tok-var">$locks</span>-&gt;<span class="tok-id">victims</span>[<span class="tok-var">$transaction</span>-&gt;<span class="tok-id">id</span>])) {</span>
-<span class="src-line" id="L171" data-diff="added"><a class="ln" href="#L171">171</a>            <span class="tok-kw">unset</span>(<span class="tok-var">$locks</span>-&gt;<span class="tok-id">victims</span>[<span class="tok-var">$transaction</span>-&gt;<span class="tok-id">id</span>]);</span>
-<span class="src-line" id="L172" data-diff="added"><a class="ln" href="#L172">172</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">deadlock</span>();</span>
-<span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a>        }</span>
-<span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a>        <span class="tok-kw">if</span> (<span class="tok-id">microtime</span>(<span class="tok-id">true</span>) &gt;= <span class="tok-var">$deadline</span>) {</span>
-<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a>            <span class="tok-kw">throw</span> <span class="tok-id">TransactionError</span>::<span class="tok-id">LockWaitTimeout</span>-&gt;<span class="tok-id">error</span>();</span>
+<span class="src-line" id="L170" data-diff="added"><a class="ln" href="#L170">170</a>        <span class="tok-kw">if</span> ((<span class="tok-var">$transaction</span>-&gt;<span class="tok-id">variables</span>?-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">sessions</span>[<span class="tok-var">$transaction</span>-&gt;<span class="tok-id">id</span>] ?? <span class="tok-id">null</span>)?-&gt;<span class="tok-id">get</span>()?-&gt;<span class="tok-id">interrupted</span> === <span class="tok-id">true</span>) {</span>
+<span class="src-line" id="L171" data-diff="added"><a class="ln" href="#L171">171</a>            <span class="tok-kw">throw</span> <span class="tok-id">\MySqlMemory\Error\Family\StatementError</span>::<span class="tok-id">QueryInterrupted</span>-&gt;<span class="tok-id">error</span>();</span>
+<span class="src-line" id="L172" data-diff="added"><a class="ln" href="#L172">172</a>        }</span>
+<span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a>        <span class="tok-kw">if</span> (<span class="tok-kw">isset</span>(<span class="tok-var">$locks</span>-&gt;<span class="tok-id">victims</span>[<span class="tok-var">$transaction</span>-&gt;<span class="tok-id">id</span>])) {</span>
+<span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a>            <span class="tok-kw">unset</span>(<span class="tok-var">$locks</span>-&gt;<span class="tok-id">victims</span>[<span class="tok-var">$transaction</span>-&gt;<span class="tok-id">id</span>]);</span>
+<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">deadlock</span>();</span>
 <span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a>        }</span>
-<span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a></span>
-<span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a>        <span class="tok-kw">return</span> <span class="tok-var">$deadline</span>;</span>
-<span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a>    }</span>
+<span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a>        <span class="tok-kw">if</span> (<span class="tok-id">microtime</span>(<span class="tok-id">true</span>) &gt;= <span class="tok-var">$deadline</span>) {</span>
+<span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a>            <span class="tok-kw">throw</span> <span class="tok-id">TransactionError</span>::<span class="tok-id">LockWaitTimeout</span>-&gt;<span class="tok-id">error</span>();</span>
+<span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a>        }</span>
 <span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a></span>
-<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a><span class="tok-com">     * Rolls back the whole transaction a deadlock chose, and raises ER_LOCK_DEADLOCK.</span></span>
-<span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L184" data-diff="added"><a class="ln" href="#L184">184</a><span class="tok-com">     * @throws SqlError Always</span></span>
-<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deadlock</span>(): <span class="tok-id">never</span></span>
-<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a>    {</span>
-<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">transaction</span>-&gt;<span class="tok-id">restore</span>();</span>
-<span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">transaction</span>-&gt;<span class="tok-id">end</span>();</span>
-<span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a></span>
-<span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a>        <span class="tok-kw">throw</span> <span class="tok-id">TransactionError</span>::<span class="tok-id">LockDeadlock</span>-&gt;<span class="tok-id">error</span>();</span>
-<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a>    }</span>
+<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a>        <span class="tok-kw">return</span> <span class="tok-var">$deadline</span>;</span>
+<span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a>    }</span>
+<span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a></span>
+<span class="src-line" id="L184" data-diff="added"><a class="ln" href="#L184">184</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a><span class="tok-com">     * Rolls back the whole transaction a deadlock chose, and raises ER_LOCK_DEADLOCK.</span></span>
+<span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a><span class="tok-com">     * @throws SqlError Always</span></span>
+<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">deadlock</span>(): <span class="tok-id">never</span></span>
+<span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a>    {</span>
+<span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">transaction</span>-&gt;<span class="tok-id">restore</span>();</span>
+<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">transaction</span>-&gt;<span class="tok-id">end</span>();</span>
 <span class="src-line" id="L193" data-diff="added"><a class="ln" href="#L193">193</a></span>
-<span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a><span class="tok-com">     * Answers the lock the plain reads of the statement take: shared under SERIALIZABLE inside a transaction that spans statements, else none.</span></span>
-<span class="src-line" id="L196" data-diff="added"><a class="ln" href="#L196">196</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">plainReads</span>(): ?<span class="tok-id">LockMode</span></span>
-<span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a>    {</span>
-<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">transaction</span>-&gt;<span class="tok-id">isolation</span> === <span class="tok-id">Isolation</span>::<span class="tok-id">Serializable</span> &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">transaction</span>-&gt;<span class="tok-id">open</span> ? <span class="tok-id">LockMode</span>::<span class="tok-id">Shared</span> : <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a>    }</span>
-<span class="src-line" id="L201" data-diff="added"><a class="ln" href="#L201">201</a></span>
-<span class="src-line" id="L202" data-diff="added"><a class="ln" href="#L202">202</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L203" data-diff="added"><a class="ln" href="#L203">203</a><span class="tok-com">     * Answers the lock the reads of a statement that writes take of the tables it does not write: shared under REPEATABLE READ and SERIALIZABLE, none under the other levels, which read them consistently.</span></span>
-<span class="src-line" id="L204" data-diff="added"><a class="ln" href="#L204">204</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L205" data-diff="added"><a class="ln" href="#L205">205</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">sourceReads</span>(): ?<span class="tok-id">LockMode</span></span>
-<span class="src-line" id="L206" data-diff="added"><a class="ln" href="#L206">206</a>    {</span>
-<span class="src-line" id="L207" data-diff="added"><a class="ln" href="#L207">207</a>        <span class="tok-var">$isolation</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">transaction</span>-&gt;<span class="tok-id">isolation</span>;</span>
-<span class="src-line" id="L208" data-diff="added"><a class="ln" href="#L208">208</a></span>
-<span class="src-line" id="L209" data-diff="added"><a class="ln" href="#L209">209</a>        <span class="tok-kw">return</span> <span class="tok-var">$isolation</span> === <span class="tok-id">Isolation</span>::<span class="tok-id">RepeatableRead</span> || <span class="tok-var">$isolation</span> === <span class="tok-id">Isolation</span>::<span class="tok-id">Serializable</span> ? <span class="tok-id">LockMode</span>::<span class="tok-id">Shared</span> : <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L210" data-diff="added"><a class="ln" href="#L210">210</a>    }</span>
-<span class="src-line" id="L211" data-diff="added"><a class="ln" href="#L211">211</a>}</span>
-<span class="src-line" id="L212" data-diff="added"><a class="ln" href="#L212">212</a></span>
+<span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a>        <span class="tok-kw">throw</span> <span class="tok-id">TransactionError</span>::<span class="tok-id">LockDeadlock</span>-&gt;<span class="tok-id">error</span>();</span>
+<span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a>    }</span>
+<span class="src-line" id="L196" data-diff="added"><a class="ln" href="#L196">196</a></span>
+<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a><span class="tok-com">     * Answers the lock the plain reads of the statement take: shared under SERIALIZABLE inside a transaction that spans statements, else none.</span></span>
+<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">plainReads</span>(): ?<span class="tok-id">LockMode</span></span>
+<span class="src-line" id="L201" data-diff="added"><a class="ln" href="#L201">201</a>    {</span>
+<span class="src-line" id="L202" data-diff="added"><a class="ln" href="#L202">202</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">transaction</span>-&gt;<span class="tok-id">isolation</span> === <span class="tok-id">Isolation</span>::<span class="tok-id">Serializable</span> &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">transaction</span>-&gt;<span class="tok-id">open</span> ? <span class="tok-id">LockMode</span>::<span class="tok-id">Shared</span> : <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L203" data-diff="added"><a class="ln" href="#L203">203</a>    }</span>
+<span class="src-line" id="L204" data-diff="added"><a class="ln" href="#L204">204</a></span>
+<span class="src-line" id="L205" data-diff="added"><a class="ln" href="#L205">205</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L206" data-diff="added"><a class="ln" href="#L206">206</a><span class="tok-com">     * Answers the lock the reads of a statement that writes take of the tables it does not write: shared under REPEATABLE READ and SERIALIZABLE, none under the other levels, which read them consistently.</span></span>
+<span class="src-line" id="L207" data-diff="added"><a class="ln" href="#L207">207</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L208" data-diff="added"><a class="ln" href="#L208">208</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">sourceReads</span>(): ?<span class="tok-id">LockMode</span></span>
+<span class="src-line" id="L209" data-diff="added"><a class="ln" href="#L209">209</a>    {</span>
+<span class="src-line" id="L210" data-diff="added"><a class="ln" href="#L210">210</a>        <span class="tok-var">$isolation</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">transaction</span>-&gt;<span class="tok-id">isolation</span>;</span>
+<span class="src-line" id="L211" data-diff="added"><a class="ln" href="#L211">211</a></span>
+<span class="src-line" id="L212" data-diff="added"><a class="ln" href="#L212">212</a>        <span class="tok-kw">return</span> <span class="tok-var">$isolation</span> === <span class="tok-id">Isolation</span>::<span class="tok-id">RepeatableRead</span> || <span class="tok-var">$isolation</span> === <span class="tok-id">Isolation</span>::<span class="tok-id">Serializable</span> ? <span class="tok-id">LockMode</span>::<span class="tok-id">Shared</span> : <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L213" data-diff="added"><a class="ln" href="#L213">213</a>    }</span>
+<span class="src-line" id="L214" data-diff="added"><a class="ln" href="#L214">214</a>}</span>
+<span class="src-line" id="L215" data-diff="added"><a class="ln" href="#L215">215</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

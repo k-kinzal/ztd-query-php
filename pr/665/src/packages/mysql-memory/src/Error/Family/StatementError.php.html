@@ -71,44 +71,46 @@
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-kw">case</span> <span class="tok-id">UnknownError</span> = <span class="tok-num">1105</span>;</span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">case</span> <span class="tok-id">SyntaxError</span> = <span class="tok-num">1149</span>;</span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">case</span> <span class="tok-id">LockedOrActiveTransaction</span> = <span class="tok-num">1192</span>;</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">case</span> <span class="tok-id">WrongArguments</span> = <span class="tok-num">1210</span>;</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-kw">case</span> <span class="tok-id">WrongUsage</span> = <span class="tok-num">1221</span>;</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">case</span> <span class="tok-id">DuplicateArgument</span> = <span class="tok-num">1225</span>;</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">case</span> <span class="tok-id">CantUseOptionHere</span> = <span class="tok-num">1234</span>;</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-kw">case</span> <span class="tok-id">NotSupportedYet</span> = <span class="tok-num">1235</span>;</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">case</span> <span class="tok-id">UnknownStatementHandler</span> = <span class="tok-num">1243</span>;</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">case</span> <span class="tok-id">DeprecatedSyntax</span> = <span class="tok-num">1287</span>;</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-kw">case</span> <span class="tok-id">OptionPreventsStatement</span> = <span class="tok-num">1290</span>;</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-kw">case</span> <span class="tok-id">UnsupportedPreparedStatement</span> = <span class="tok-num">1295</span>;</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-kw">case</span> <span class="tok-id">FeatureDisabled</span> = <span class="tok-num">1289</span>;</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">case</span> <span class="tok-id">ReservedSyntax</span> = <span class="tok-num">1382</span>;</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    <span class="tok-kw">case</span> <span class="tok-id">XaUnknownXid</span> = <span class="tok-num">1397</span>;</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-kw">case</span> <span class="tok-id">XaInvalidArguments</span> = <span class="tok-num">1398</span>;</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">case</span> <span class="tok-id">XaWrongState</span> = <span class="tok-num">1399</span>;</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    <span class="tok-kw">case</span> <span class="tok-id">XaWorkOutside</span> = <span class="tok-num">1400</span>;</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-kw">case</span> <span class="tok-id">XaDuplicateXid</span> = <span class="tok-num">1440</span>;</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    <span class="tok-kw">case</span> <span class="tok-id">DeprecatedSyntaxNoReplacement</span> = <span class="tok-num">1681</span>;</span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    <span class="tok-kw">case</span> <span class="tok-id">UnknownExplainFormat</span> = <span class="tok-num">1791</span>;</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-kw">case</span> <span class="tok-id">ExplainNotSupported</span> = <span class="tok-num">3012</span>;</span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    <span class="tok-kw">case</span> <span class="tok-id">LocalInfileDisabled</span> = <span class="tok-num">3948</span>;</span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    <span class="tok-kw">case</span> <span class="tok-id">ExplainIntoImplicitFormat</span> = <span class="tok-num">6006</span>;</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    <span class="tok-kw">case</span> <span class="tok-id">ExplainIntoFormat</span> = <span class="tok-num">6007</span>;</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>    <span class="tok-kw">case</span> <span class="tok-id">ExplainIntoForConnection</span> = <span class="tok-num">6009</span>;</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-kw">case</span> <span class="tok-id">FeatureNotSupported</span> = <span class="tok-num">6033</span>;</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    <span class="tok-kw">case</span> <span class="tok-id">HypergraphRequired</span> = <span class="tok-num">6037</span>;</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>    <span class="tok-kw">case</span> <span class="tok-id">SamplePercentageOutOfRange</span> = <span class="tok-num">6107</span>;</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-kw">case</span> <span class="tok-id">SampleOnNonBaseTable</span> = <span class="tok-num">6108</span>;</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    <span class="tok-kw">case</span> <span class="tok-id">DigestParseFailure</span> = <span class="tok-num">3676</span>;</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>    <span class="tok-kw">case</span> <span class="tok-id">FeatureDisabledSeeDoc</span> = <span class="tok-num">3167</span>;</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">case</span> <span class="tok-id">HintTimeMisplaced</span> = <span class="tok-num">3125</span>;</span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    <span class="tok-kw">case</span> <span class="tok-id">HintConflicting</span> = <span class="tok-num">3126</span>;</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>    <span class="tok-kw">case</span> <span class="tok-id">HintBlockNotFound</span> = <span class="tok-num">3127</span>;</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    <span class="tok-kw">case</span> <span class="tok-id">HintUnresolvedName</span> = <span class="tok-num">3128</span>;</span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>    <span class="tok-kw">case</span> <span class="tok-id">HintNotSupported</span> = <span class="tok-num">3515</span>;</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    <span class="tok-kw">case</span> <span class="tok-id">HintArgumentCount</span> = <span class="tok-num">3614</span>;</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    <span class="tok-kw">case</span> <span class="tok-id">HintVariableRefused</span> = <span class="tok-num">3637</span>;</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>}</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">case</span> <span class="tok-id">SetConstantExpression</span> = <span class="tok-num">1204</span>;</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-kw">case</span> <span class="tok-id">WrongArguments</span> = <span class="tok-num">1210</span>;</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">case</span> <span class="tok-id">WrongUsage</span> = <span class="tok-num">1221</span>;</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">case</span> <span class="tok-id">DuplicateArgument</span> = <span class="tok-num">1225</span>;</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-kw">case</span> <span class="tok-id">CantUseOptionHere</span> = <span class="tok-num">1234</span>;</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">case</span> <span class="tok-id">NotSupportedYet</span> = <span class="tok-num">1235</span>;</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">case</span> <span class="tok-id">UnknownStatementHandler</span> = <span class="tok-num">1243</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-kw">case</span> <span class="tok-id">DeprecatedSyntax</span> = <span class="tok-num">1287</span>;</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-kw">case</span> <span class="tok-id">OptionPreventsStatement</span> = <span class="tok-num">1290</span>;</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-kw">case</span> <span class="tok-id">UnsupportedPreparedStatement</span> = <span class="tok-num">1295</span>;</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">case</span> <span class="tok-id">FeatureDisabled</span> = <span class="tok-num">1289</span>;</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    <span class="tok-kw">case</span> <span class="tok-id">ReservedSyntax</span> = <span class="tok-num">1382</span>;</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-kw">case</span> <span class="tok-id">QueryInterrupted</span> = <span class="tok-num">1317</span>;</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">case</span> <span class="tok-id">XaUnknownXid</span> = <span class="tok-num">1397</span>;</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    <span class="tok-kw">case</span> <span class="tok-id">XaInvalidArguments</span> = <span class="tok-num">1398</span>;</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-kw">case</span> <span class="tok-id">XaWrongState</span> = <span class="tok-num">1399</span>;</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    <span class="tok-kw">case</span> <span class="tok-id">XaWorkOutside</span> = <span class="tok-num">1400</span>;</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    <span class="tok-kw">case</span> <span class="tok-id">XaDuplicateXid</span> = <span class="tok-num">1440</span>;</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-kw">case</span> <span class="tok-id">DeprecatedSyntaxNoReplacement</span> = <span class="tok-num">1681</span>;</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    <span class="tok-kw">case</span> <span class="tok-id">UnknownExplainFormat</span> = <span class="tok-num">1791</span>;</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    <span class="tok-kw">case</span> <span class="tok-id">ExplainNotSupported</span> = <span class="tok-num">3012</span>;</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    <span class="tok-kw">case</span> <span class="tok-id">LocalInfileDisabled</span> = <span class="tok-num">3948</span>;</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>    <span class="tok-kw">case</span> <span class="tok-id">ExplainIntoImplicitFormat</span> = <span class="tok-num">6006</span>;</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-kw">case</span> <span class="tok-id">ExplainIntoFormat</span> = <span class="tok-num">6007</span>;</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    <span class="tok-kw">case</span> <span class="tok-id">ExplainIntoForConnection</span> = <span class="tok-num">6009</span>;</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>    <span class="tok-kw">case</span> <span class="tok-id">FeatureNotSupported</span> = <span class="tok-num">6033</span>;</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-kw">case</span> <span class="tok-id">HypergraphRequired</span> = <span class="tok-num">6037</span>;</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    <span class="tok-kw">case</span> <span class="tok-id">SamplePercentageOutOfRange</span> = <span class="tok-num">6107</span>;</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>    <span class="tok-kw">case</span> <span class="tok-id">SampleOnNonBaseTable</span> = <span class="tok-num">6108</span>;</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">case</span> <span class="tok-id">DigestParseFailure</span> = <span class="tok-num">3676</span>;</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    <span class="tok-kw">case</span> <span class="tok-id">FeatureDisabledSeeDoc</span> = <span class="tok-num">3167</span>;</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>    <span class="tok-kw">case</span> <span class="tok-id">HintTimeMisplaced</span> = <span class="tok-num">3125</span>;</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    <span class="tok-kw">case</span> <span class="tok-id">HintConflicting</span> = <span class="tok-num">3126</span>;</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>    <span class="tok-kw">case</span> <span class="tok-id">HintBlockNotFound</span> = <span class="tok-num">3127</span>;</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    <span class="tok-kw">case</span> <span class="tok-id">HintUnresolvedName</span> = <span class="tok-num">3128</span>;</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    <span class="tok-kw">case</span> <span class="tok-id">HintNotSupported</span> = <span class="tok-num">3515</span>;</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    <span class="tok-kw">case</span> <span class="tok-id">HintArgumentCount</span> = <span class="tok-num">3614</span>;</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">case</span> <span class="tok-id">HintVariableRefused</span> = <span class="tok-num">3637</span>;</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>}</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
