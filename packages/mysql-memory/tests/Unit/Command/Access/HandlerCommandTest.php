@@ -18,6 +18,25 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerClose;
 #[Small]
 final class HandlerCommandTest extends TestCase
 {
+    public function testDefaultReadsTheDefaultOfItsIndexColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT DEFAULT 2, KEY k(a)); INSERT INTO t VALUES(1),(2); HANDLER t OPEN');
+        $result = $session->query('HANDLER t READ k = (DEFAULT)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2']], $result->rows);
+    }
+
+    public function testDefaultWarnsAndRefusesAnIndexColumnWithoutADefault(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT NOT NULL, KEY k(a)); HANDLER t OPEN');
+        $session->run('HANDLER t READ k = (DEFAULT)');
+
+        self::assertSame([['Warning', 1364, "Field 'a' doesn't have a default value"], ['Error', 1210, 'Incorrect arguments to HANDLER ... READ']], $session->diagnostics->conditions);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new HandlerCommand())->clearsDiagnostics());

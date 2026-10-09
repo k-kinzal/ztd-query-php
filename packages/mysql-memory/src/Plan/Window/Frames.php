@@ -71,6 +71,9 @@ final class Frames
         if ($frame === null) {
             return;
         }
+        if ($frame->unit === FrameUnit::Groups || $frame->exclusion !== null) {
+            throw StatementError::NotSupportedYet->error($frame->unit === FrameUnit::Groups ? 'GROUPS' : 'EXCLUDE');
+        }
         $bounds = array_values(array_filter([$frame->start, $frame->end], static fn (?FrameBound $bound): bool => $bound !== null && $bound->offset !== null));
         if ($frame->unit === FrameUnit::Rows && array_filter($bounds, static fn (FrameBound $bound): bool => $bound->unit !== null) !== []) {
             throw QueryError::WindowRowsInterval->error($window->name);

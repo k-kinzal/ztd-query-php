@@ -33,6 +33,11 @@ enum SchemaError: int implements ErrorCode
     case DuplicateKeyName = 1061;
     case WrongFieldSpec = 1063;
     case InvalidDefault = 1067;
+    case InvalidOnUpdate = 1294;
+    case InvalidEngineAttribute = 3980;
+    case EngineAttributeUnsupported = 3981;
+    case UnsupportedExtension = 1112;
+    case UsingOtherEngine = 1266;
     case MultiplePrimaryKey = 1068;
     case TooManyKeyParts = 1070;
     case TooLongKey = 1071;

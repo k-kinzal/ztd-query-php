@@ -43,7 +43,6 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\CharsetOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption;
-use SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
@@ -147,14 +146,7 @@ final class Definitions
      */
     public function engine(CreateTable $create): string
     {
-        $engine = 'InnoDB';
-        foreach ($create->options as $option) {
-            if ($option instanceof EngineOption) {
-                $engine = $option->engine->value;
-            }
-        }
-
-        return $engine;
+        return (new StorageOptions())->engine($create, $this->planner->compiler->connection->variables);
     }
 
     /**

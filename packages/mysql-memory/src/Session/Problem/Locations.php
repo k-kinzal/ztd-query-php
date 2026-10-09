@@ -235,7 +235,7 @@ final class Locations
     }
 
     /**
-     * Adds the refusals of window functions outside the select list and ORDER BY of their block, or in an argument of another window function or of an aggregate, each placed right after its arguments.
+     * Adds the refusals of window functions outside the select list and ORDER BY of their block, or in an argument of another window function or of an aggregate, each placed before its arguments.
      *
      * The server refuses such a call where it resolves it, with ER_WINDOW_INVALID_WINDOW_FUNC_USE
      * (verified on a live 8.4 server).
@@ -258,7 +258,7 @@ final class Locations
         foreach ($locator->functions as [$call, $clause, $at]) {
             if (Windowing::windowed($call) && (isset($nested[spl_object_id($call)]) || !in_array($clause, ['field list', 'order clause', 'window partition by', 'window order by'], true))) {
                 $refusal = QueryError::WindowFunctionMisplaced->error(Resolution::named($call));
-                $located[spl_object_id($refusal)] = [$refusal, [$clause, [...$at, PHP_INT_MAX]]];
+                $located[spl_object_id($refusal)] = [$refusal, [$clause, $at]];
             }
         }
 

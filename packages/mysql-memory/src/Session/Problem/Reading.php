@@ -74,9 +74,10 @@ final class Reading
      */
     public function parsed(Operation $operation, Session $session): void
     {
+        (new EngineAttributes())->check($operation->statement);
         (new Identifiers())->check($operation->statement, $session->settings()->release());
         foreach ($operation->facts->diagnostics as $diagnostic) {
-            if ($diagnostic instanceof UnknownCollation) {
+            if ($diagnostic instanceof UnknownCollation || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset) {
                 throw (new Errors())->error($diagnostic, $session, 'field list', $operation->statement);
             }
         }

@@ -25,11 +25,11 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class StagesTest extends TestCase
 {
-    public function testPlannedLeavesWindowOptionsToThePlannerButKeepsFrameRefusals(): void
+    public function testPlannedLeavesWindowOptionsAndFramesToThePlanner(): void
     {
         self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::IgnoreNulls)));
         self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::FromLast)));
-        self::assertFalse(Stages::planned(new UnsupportedWindowing(WindowingLimit::Exclusion)));
+        self::assertTrue(Stages::planned(new UnsupportedWindowing(WindowingLimit::Exclusion)));
         self::assertFalse(Stages::planned(new Misuse(MisuseRule::DuplicateWindow, new Name('w'))));
     }
 

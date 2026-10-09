@@ -17,6 +17,14 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 #[Small]
 final class LiteralsTest extends TestCase
 {
+    public function testSizeAppliesSuffixesWithoutLosingIntegerPrecision(): void
+    {
+        $literal = new Literals();
+
+        self::assertSame('4194304', $literal->size(new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(null, new \SqlSemantics\Statement\Identifier\Name('4M'))));
+        self::assertSame('18446744073709551615', $literal->size(new \SqlSemantics\Platform\MySql\Statement\Literal\ByteSize(new Numeral('18446744073709551615'))));
+    }
+
     public function testBytesDecodesHexadecimalAndBitLiterals(): void
     {
         $literals = new Literals();

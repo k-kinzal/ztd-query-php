@@ -21,7 +21,7 @@ final class LoadDataCommandTest extends TestCase
         self::assertTrue((new LoadDataCommand())->clearsDiagnostics());
     }
 
-    public function testExecuteRefusesSeveralFilesBeforeTheTable(): void
+    public function testAlgorithmRefusesSeveralFilesBeforeTheTable(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d');

@@ -50,6 +50,9 @@ final class Kill implements Statement
     {
         (new Operands())->single($derivation->scalar($this->process, $derivation->environment()), $derivation);
         (new ProcessReferences())->check($this->process, $derivation);
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\WindowReferences())->names([$this->process], false) as $name) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $name));
+        }
     }
 
     /**

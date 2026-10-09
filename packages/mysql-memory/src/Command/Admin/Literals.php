@@ -63,4 +63,24 @@ final class Literals
 
         return number_format(floor((float) $text), 0, '.', '');
     }
+    /**
+     * Answers a declared byte size exactly, applying K, M and G multipliers.
+     *
+     * @return numeric-string
+     */
+    public function size(\SqlSemantics\Platform\MySql\Statement\Literal\ByteSize $size): string
+    {
+        if ($size->number !== null) {
+            return $this->number($size->number);
+        }
+        if (preg_match('/\A([0-9]+)([KMGkmg])\z/', $size->word->value ?? '0', $match) !== 1) {
+            return '0';
+        }
+
+        return bcmul($match[1], match (strtoupper($match[2])) {
+            'K' => '1024',
+            'M' => '1048576',
+            'G' => '1073741824',
+        });
+    }
 }

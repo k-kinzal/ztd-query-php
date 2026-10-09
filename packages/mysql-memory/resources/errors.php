@@ -538,4 +538,9 @@ return [
     1585 => ['HY000', "This function '%s' has the same name as a native function"],
     1291 => ['HY000', "Column '%s' has duplicated value '%s' in %s"],
     6001 => ['HY000', 'Language component: Not available.'],
+    1294 => ['HY000', "Invalid ON UPDATE clause for '%s' column"],
+    3980 => ['HY000', 'Invalid json attribute, error: "%s" at pos %d: \'%s\''],
+    1112 => ['HY000', "Table '%s' uses an extension that doesn't exist in this MySQL version"],
+    1266 => ['HY000', "Using storage engine %s for table '%s'"],
+    3981 => ['HY000', "Storage engine '%s' does not support ENGINE_ATTRIBUTE."],
 ];

@@ -405,19 +405,6 @@ final class TablespaceCommand implements Command
      */
     public function size(SizeOption $option): string
     {
-        $size = $option->size;
-        if ($size->number !== null) {
-            return (new Literals())->number($size->number);
-        }
-        $word = $size->word->value ?? '0';
-        if (preg_match('/\A([0-9]+)([KMGkmg])\z/', $word, $match) !== 1) {
-            return '0';
-        }
-
-        return bcmul($match[1], match (strtoupper($match[2])) {
-            'K' => '1024',
-            'M' => '1048576',
-            'G' => '1073741824',
-        });
+        return (new Literals())->size($option->size);
     }
 }

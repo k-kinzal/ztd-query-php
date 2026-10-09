@@ -172,11 +172,39 @@ final class HandlerCommand implements Command
     {
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $values = [];
-        foreach ($statement->values as $value) {
-            $values[] = $planner->compiler->compile($value, new Scope())->evaluate(new Frame($context));
+        foreach ($statement->values as $position => $value) {
+            $values[] = $value instanceof \SqlSemantics\Platform\MySql\Statement\Dml\DefaultRequest
+                ? $this->default($statement, $position, $session, $context)
+                : $planner->compiler->compile($value, new Scope())->evaluate(new Frame($context));
         }
 
         return $values;
+    }
+
+    /**
+     * Reads the default of the column at an index-key position.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the index column has no default
+     */
+    public function default(HandlerIndexSeek $statement, int $position, Session $session, Context $context): int|float|string|null
+    {
+        $handler = $this->handler($session, $statement->handler->name->value);
+        $table = $session->instance->dictionary->table($handler->schema, $handler->table);
+        assert($table !== null);
+        $key = $this->key($table, $statement->index->value, $handler);
+        $column = $table->definition->columns[$key->columns[$position]];
+        if (!$column->default->declared) {
+            $context->warning(\MySqlMemory\Error\Family\DataError::NoDefaultForField, $column->name);
+            if ($session->settings()->legacy()) {
+                return (new \MySqlMemory\Storage\Writer($table, $context))->implicit($column);
+            }
+            throw \MySqlMemory\Error\Family\StatementError::WrongArguments->error('HANDLER ... READ');
+        }
+        if ($column->default->expression !== null) {
+            return $column->default->expression->evaluate(new Frame($context));
+        }
+
+        return $column->default->value;
     }
 
     /**

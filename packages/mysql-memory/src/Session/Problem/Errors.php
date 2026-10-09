@@ -226,6 +226,11 @@ final class Errors
         return match (true) {
             $diagnostic instanceof RepeatedTable => QueryError::NonUniqueTable->error($diagnostic->name->name->value),
             $diagnostic instanceof MultiplePrimaryKeys => SchemaError::MultiplePrimaryKey->error(),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Table\Problem\InvalidColumnAttribute => match ($diagnostic->attribute) {
+                'SRID' => StatementError::WrongUsage->error('SRID', 'non-geometry column'),
+                'DEFAULT' => SchemaError::InvalidDefault->error($diagnostic->column->value),
+                'ON UPDATE' => SchemaError::InvalidOnUpdate->error($diagnostic->column->value),
+            },
             $diagnostic instanceof NoColumns => SchemaError::TableMustHaveColumns->error(),
             $diagnostic instanceof DuplicateColumn => SchemaError::DuplicateFieldName->error($diagnostic->column->value),
             $diagnostic instanceof IncorrectColumnName => SchemaError::WrongColumnName->error($diagnostic->column->value),

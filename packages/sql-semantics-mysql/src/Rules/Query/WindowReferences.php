@@ -59,10 +59,11 @@ final class WindowReferences
     /**
      * Answers the window names used in parts of a query block, in written order, without entering subqueries.
      *
+     * @param bool $bases Whether to include base names of parenthesized specifications
      * @param list<Node> $parts
      * @return list<Name>
      */
-    public function names(array $parts): array
+    public function names(array $parts, bool $bases = true): array
     {
         $found = [];
         $pending = array_reverse($parts);
@@ -73,7 +74,7 @@ final class WindowReferences
             }
             $reference = match (true) {
                 $node instanceof WindowFunction, $node instanceof Aggregate, $node instanceof GroupConcat, $node instanceof JsonObjectAggregate => $node->over,
-                $node instanceof WindowSpec => $node->base,
+                $node instanceof WindowSpec && $bases => $node->base,
                 default => null,
             };
             if ($reference instanceof Name) {

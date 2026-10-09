@@ -106,6 +106,8 @@ final class Locator
      */
     private array $block = [];
 
+    private bool $process = false;
+
     /**
      * @var list<array{Cast, string, list<int>}> Each cast to an array outside a functional index, of a type a multi-valued index takes, with the clause and the resolution order it is read at
      */
@@ -129,6 +131,7 @@ final class Locator
      */
     public function statement(Node $statement): self
     {
+        $this->process = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Instance\Kill;
         if ((new Problem\WriteOrder($this))->locate($statement)) {
             return $this;
         }
@@ -300,7 +303,7 @@ final class Locator
     public function windowed(Node $node, string $clause, array $order): void
     {
         if ($node instanceof WindowFunction || $node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate) {
-            $this->functions[] = [$node, $clause, $order];
+            $this->functions[] = [$node, $this->process && $this->block === [] ? 'process identifier' : $clause, $order];
         }
         $over = $node instanceof WindowFunction || $node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate ? $node->over : null;
         if ($over instanceof Name) {
