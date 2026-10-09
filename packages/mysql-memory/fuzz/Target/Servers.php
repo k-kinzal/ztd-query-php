@@ -101,6 +101,8 @@ final class Servers
      * other than the defaults, and the database, table and column grants of root are dropped,
      * so that the MySQL server starts a run in the state mysql-memory starts in. MySQL 5.6 lacks
      * DROP USER IF EXISTS; the accounts it drops are those it lists, so it drops them without.
+     * The root@% fixture starts without PROXY grants too; image-specific initial proxy grants
+     * otherwise require privileges that the repair account does not hold.
      */
     public function clean(PDO $native, string $version = MySqlRelease::DEFAULT): void
     {
@@ -123,6 +125,7 @@ final class Servers
                 $statements[] = "DELETE FROM mysql.{$table} WHERE User = 'root'";
             }
         }
+        $statements[] = "DELETE FROM mysql.proxies_priv WHERE User = 'root' AND Host = '%'";
         $statements[] = 'FLUSH PRIVILEGES';
         foreach ($statements as $statement) {
             $native->exec($statement);

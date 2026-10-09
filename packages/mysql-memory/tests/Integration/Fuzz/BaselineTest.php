@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Fuzz;
 
 use Fuzz\Target\Servers;
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
@@ -14,6 +15,20 @@ use PHPUnit\Framework\TestCase;
 #[Large]
 final class BaselineTest extends TestCase
 {
+    public function testCleanDropsImageSpecificRootProxyGrants(): void
+    {
+        [$target, , $server] = (new Servers())->start(true, true);
+        $native = new PDO($target->native, $target->nativeUser, $target->nativePassword);
+        $before = (new Servers())->rows($native, 'SHOW GRANTS');
+        $native->exec('GRANT PROXY ON CURRENT_USER TO CURRENT_USER WITH GRANT OPTION');
+        self::assertCount(count($before) + 1, (new Servers())->rows($native, 'SHOW GRANTS'));
+
+        (new Servers())->clean($native, $target->version);
+
+        self::assertSame($before, (new Servers())->rows($native, 'SHOW GRANTS'));
+        $server->stop();
+    }
+
     /**
      * @return iterable<string, array{string}>
      */

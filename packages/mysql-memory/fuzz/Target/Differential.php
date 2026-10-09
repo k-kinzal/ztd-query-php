@@ -12,7 +12,7 @@ use PDOException;
  * Runs one statement on a MySQL server and on mysql-memory, from the same fixture, and requires every observation to be equal.
  *
  * The statement runs twice on the MySQL server, each time on a fresh database; when the two
- * observations differ the statement is volatile (it reads the clock, a random number, or a
+ * observations differ after LibraryErrors validates its bounded OS-errno contract, the statement is volatile (it reads the clock, a random number, or a
  * server identity) and is not compared. Otherwise the observation of mysql-memory must equal it:
  * the result columns and rows, or the error, the warnings, and the rows of every table after.
  */
@@ -90,14 +90,19 @@ final class Differential
         $again = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql);
         $this->repair($guard);
         $this->baseline?->restore($guard, true);
+        $library = new LibraryErrors();
+        $normalized = $library->comparable($expected, $this->version);
+        $contracts = $normalized === $expected ? [] : ['missing-library-os-errno-2-or-11'];
+        $expected = $normalized;
+        $again = $library->comparable($again, $this->version);
         if ($expected !== $again) {
             return new Comparison(true);
         }
         $this->repair($this->memoryGuard());
         $this->baseline?->restore($this->memoryGuard(), false);
-        $actual = $this->run($this->memory, 'root', '', $sql);
+        $actual = $library->comparable($this->run($this->memory, 'root', '', $sql), $this->version);
         if ($expected === $actual) {
-            return new Comparison(false);
+            return new Comparison(false, contracts: $contracts);
         }
         $lines = [];
         foreach (array_unique([...array_keys($expected), ...array_keys($actual)]) as $key) {
@@ -106,7 +111,7 @@ final class Differential
             }
         }
 
-        return new Comparison(false, implode("\n", $lines));
+        return new Comparison(false, implode("\n", $lines), $contracts);
     }
 
     /**

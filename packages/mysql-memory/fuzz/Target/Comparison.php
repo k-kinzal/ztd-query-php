@@ -11,9 +11,10 @@ final class Comparison
 {
     /**
      * @param bool $volatile Whether the two observations on the real server differed
+     * @param list<string> $contracts Validated nondeterministic fields whose allowed values were compared
      * @param string|null $difference The complete difference, or null when there is none to report
      */
-    public function __construct(public readonly bool $volatile, public readonly ?string $difference = null)
+    public function __construct(public readonly bool $volatile, public readonly ?string $difference = null, public readonly array $contracts = [])
     {
     }
 }
