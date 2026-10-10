@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace MySqlMemory\Command\Definition;
 
 use MySqlMemory\Command\Show\Server\ServerCatalog;
+use MySqlMemory\Error\Family\QueryError;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Session\Session;
 use MySqlMemory\Session\Variables;
+use SqlSemantics\Platform\MySql\Statement\Alter\AlterTable;
+use SqlSemantics\Platform\MySql\Statement\Partition\PartitionOption;
+use SqlSemantics\Platform\MySql\Statement\Partition\PartitionOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\EngineAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexEngineAttribute;
@@ -18,6 +22,8 @@ use SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\Kind\TextOptionKind;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\TablespaceOption;
 use SqlSemantics\Platform\MySql\Statement\Table\Option\TextOption;
+use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Statement;
 
 /**
  * Resolves storage-engine selection and checks the options accepted by the selected engine.
@@ -32,9 +38,44 @@ use SqlSemantics\Platform\MySql\Statement\Table\Option\TextOption;
 final class StorageOptions
 {
     /**
-     * Resolves the selected engine, optionally reporting errors and substitution warnings.
+     * Resolves every table and partition engine before opening tables, retaining option order.
      *
-     * @throws SqlError When an unknown engine is refused by the current SQL mode
+     * Unknown names warn or fail as each option is read. CREATE TABLE then warns if its final
+     * table engine requires substitution. A partition's unknown engine has no second warning.
+     * A missing current database precedes engine lookup. Verified through SQL on MySQL 8.4.7.
+     *
+     * @throws SqlError When an engine is unknown and substitution is disabled
+     */
+    public function resolve(Statement $statement, Session $session, Context $context): void
+    {
+        $name = match (true) {
+            $statement instanceof CreateTable => $statement->name,
+            $statement instanceof AlterTable => $statement->table,
+            default => null,
+        };
+        if ($name !== null && $name->schema === null && $session->variables->database === '') {
+            throw QueryError::NoDatabase->error();
+        }
+        foreach ((new Walker())->find($statement, Node::class) as $node) {
+            $engine = match (true) {
+                $node instanceof EngineOption => $node->engine->value,
+                $node instanceof PartitionOption && $node->kind === PartitionOptionKind::Engine => $node->name?->value,
+                default => null,
+            };
+            if ($engine !== null && ServerCatalog::shared()->engine($engine) === null) {
+                if ($context->modes->has('NO_ENGINE_SUBSTITUTION')) {
+                    throw SchemaError::UnknownStorageEngine->error($engine);
+                }
+                $context->warning(SchemaError::UnknownStorageEngine, $engine);
+            }
+        }
+        foreach ((new Walker())->find($statement, CreateTable::class) as $create) {
+            $this->engine($create, $session->variables, $context);
+        }
+    }
+
+    /**
+     * Resolves the selected engine, optionally reporting the fallback after resolve() checked its name.
      */
     public function engine(CreateTable $create, Variables $variables, ?Context $context = null): string
     {
@@ -47,10 +88,6 @@ final class StorageOptions
         }
         $engine = ServerCatalog::shared()->engine($name);
         if ($engine === null && $context !== null) {
-            if ($context->modes->has('NO_ENGINE_SUBSTITUTION')) {
-                throw SchemaError::UnknownStorageEngine->error($name);
-            }
-            $context->warning(SchemaError::UnknownStorageEngine, $name);
             $context->warning(SchemaError::UsingOtherEngine, $default, $create->name->name->value);
         }
 
@@ -60,13 +97,11 @@ final class StorageOptions
     /**
      * Checks the engine-specific options before the table is stored.
      *
-     * @param bool $engineResolved Whether early START TRANSACTION validation already reported engine selection warnings
-     *
      * @throws SqlError When an option is invalid or unsupported
      */
-    public function check(CreateTable $create, Session $session, Context $context, bool $engineResolved = false): void
+    public function check(CreateTable $create, Session $session, Context $context): void
     {
-        $engine = $this->engine($create, $session->variables, $engineResolved ? null : $context);
+        $engine = $this->engine($create, $session->variables);
         $this->attributes($create, $engine);
         foreach ($create->options as $option) {
             if ($option instanceof TextOption && in_array($option->kind, [TextOptionKind::DataDirectory, TextOptionKind::IndexDirectory], true) && !str_starts_with($option->value->bytes(), '/')) {
@@ -92,9 +127,9 @@ final class StorageOptions
      *
      * @throws SqlError When a primary engine attribute is present
      */
-    public function attributes(\SqlSemantics\Statement\Node $statement, string $engine): void
+    public function attributes(Node $statement, string $engine): void
     {
-        foreach ((new Walker())->find($statement, \SqlSemantics\Statement\Node::class) as $node) {
+        foreach ((new Walker())->find($statement, Node::class) as $node) {
             if (($node instanceof EngineAttribute || $node instanceof IndexEngineAttribute) && !$node->secondary
                 || $node instanceof TextOption && $node->kind === TextOptionKind::EngineAttribute) {
                 throw SchemaError::EngineAttributeUnsupported->error($engine);

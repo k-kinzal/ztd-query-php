@@ -7,7 +7,6 @@ namespace MySqlMemory\Session\Access;
 use MySqlMemory\Command\Definition\StorageOptions;
 use MySqlMemory\Error\Family\TransactionError;
 use MySqlMemory\Error\SqlError;
-use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Replication\Log\BinlogEvent;
 use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Commit;
@@ -51,17 +50,16 @@ final class TableCreation
     /**
      * Checks the engine and forbidden combinations before preparing the table or its query.
      *
-     * Engine selection warnings are reported here; the command subsequently checks its other
-     * storage options without repeating them.
+     * Engine names and substitution warnings have already been resolved by StorageOptions.
      *
      * @throws SqlError When the table cannot be created in a restricted transaction
      */
-    public function validate(Statement $statement, Session $session, Context $context): void
+    public function validate(Statement $statement, Session $session): void
     {
         if (!$statement instanceof CreateTable || !$this->requested($statement)) {
             return;
         }
-        $engine = (new StorageOptions())->engine($statement, $session->variables, $context);
+        $engine = (new StorageOptions())->engine($statement, $session->variables);
         $reason = match (true) {
             $statement->query !== null => 'with CREATE TABLE ... AS SELECT statement.',
             strcasecmp($engine, 'InnoDB') !== 0 => 'with engine that does not support atomic DDL.',

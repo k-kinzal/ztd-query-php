@@ -14,6 +14,32 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class StorageOptionsTest extends TestCase
 {
+    public function testResolveChecksPartitionEnginesBeforeOpeningTheTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->run('ALTER TABLE d.absent ADD PARTITION (PARTITION p ENGINE missing)');
+
+        self::assertSame([['Error', 1286, "Unknown storage engine 'missing'"]], $session->diagnostics->conditions);
+    }
+
+    public function testResolveReportsEveryUnknownEngineBeforeTheFallback(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; SET sql_mode=''; CREATE TABLE d.t(a INT) ENGINE first ENGINE second PARTITION BY HASH(a) (PARTITION p ENGINE third)");
+
+        self::assertSame([1286, 1286, 1286, 1266], array_column($session->diagnostics->conditions, 1));
+        self::assertSame("Unknown storage engine 'first'", $session->diagnostics->conditions[0][2]);
+    }
+
+    public function testResolveNeedsTheCurrentDatabaseBeforeEngineLookup(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run('CREATE TABLE t(a INT) ENGINE missing');
+
+        self::assertSame([['Error', 1046, 'No database selected']], $session->diagnostics->conditions);
+    }
+
     public function testCheckReportsLegacyTablespaceAndEngineErrorsInOrder(): void
     {
         $session = (new Instance('5.7.44'))->connect();

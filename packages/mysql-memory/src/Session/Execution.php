@@ -134,9 +134,10 @@ final class Execution
      */
     public function access(\SqlSemantics\Statement\Statement $statement, Context $context): void
     {
+        (new \MySqlMemory\Command\Definition\StorageOptions())->resolve($statement, $this->session, $context);
         (new Access\PasswordAccess())->check($statement, $this->session);
         (new Access\TableCreation())->check($statement, $this->session);
-        (new Access\TableCreation())->validate($statement, $this->session, $context);
+        (new Access\TableCreation())->validate($statement, $this->session);
     }
 
     /**
