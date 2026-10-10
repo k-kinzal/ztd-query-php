@@ -79,6 +79,33 @@ final class ClientTest extends TestCase
         );
     }
 
+    public function testCloseDropsTrafficForAnAbandonedHandshakeButKeepsGlobalTotals(): void
+    {
+        $client = new Client(new Instance(), 7, static function (string $bytes): void {
+        });
+        $client->greet();
+        $before = $client->instance->registry->status->read('Bytes_sent');
+        $client->close();
+
+        self::assertSame(77, $before);
+        self::assertSame(0, $client->instance->registry->status->read('Bytes_sent', 7));
+        self::assertSame($before, $client->instance->registry->status->read('Bytes_sent'));
+    }
+
+    public function testCloseDropsTheReplySentAfterASessionKillsItself(): void
+    {
+        $client = new Client(new Instance(), 7, static function (string $bytes): void {
+        });
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        self::assertFalse($client->query('KILL CONNECTION_ID()'));
+        self::assertGreaterThan(0, $client->instance->registry->status->read('Bytes_sent', 7));
+        $before = $client->instance->registry->status->read('Bytes_sent');
+        $client->close();
+
+        self::assertSame(0, $client->instance->registry->status->read('Bytes_sent', 7));
+        self::assertSame($before, $client->instance->registry->status->read('Bytes_sent'));
+    }
+
     public function testGreetSendsTheVersionOfTheInstance(): void
     {
         $sent = new ArrayObject();

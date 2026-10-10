@@ -181,11 +181,12 @@ final class Client
     }
 
     /**
-     * Ends the session of the connection, as the client disconnects.
+     * Ends the session and discards its traffic records, retaining global totals even for an abandoned handshake.
      */
     public function close(): void
     {
         $this->session?->close();
+        $this->instance->registry->status->clear($this->id);
     }
 
     /**
