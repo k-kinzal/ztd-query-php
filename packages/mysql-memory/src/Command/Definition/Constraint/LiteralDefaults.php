@@ -24,7 +24,7 @@ use SqlSemantics\Statement\Scalar;
  * Checks literal defaults of large and spatial columns before attempting value conversion.
  *
  * NULL follows the column's nullability. Without strict mode an empty string default is
- * replaced by the type's implicit value with a warning; spatial columns permit that exception only in MySQL 5.6.
+ * replaced by the type's implicit value with a warning; spatial columns permit that exception only in MySQL 5.6 and 5.7.
  * Verified through CREATE TABLE, SHOW WARNINGS and INSERT on MySQL 5.6.51 and 8.4.7.
  *
  * @visibility MySqlMemory
@@ -44,7 +44,7 @@ final class LiteralDefaults
         $legacy = $context->modes->release === GrammarRelease::MySql5651;
         $code = SchemaError::BlobCantHaveDefault;
         $text = $legacy ? "BLOB/TEXT column '" . $column->name . "' can't have a default value" : $code->message($column->name);
-        if ($value instanceof StringLiteral && $value->value() === '' && !$context->modes->strict() && ($legacy || $column->domain->field !== Field::Geometry)) {
+        if ($value instanceof StringLiteral && $value->value() === '' && !$context->modes->strict() && ($legacy || $context->modes->release === GrammarRelease::MySql5744 || $column->domain->field !== Field::Geometry)) {
             $context->diagnostics->warning($code, $text);
 
             $default = $column->nullable() ? null : ($column->domain->field === Field::Json ? 'null' : '');

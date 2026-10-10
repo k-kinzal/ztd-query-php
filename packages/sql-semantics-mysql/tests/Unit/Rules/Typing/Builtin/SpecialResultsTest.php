@@ -23,6 +23,19 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class SpecialResultsTest extends TestCase
 {
+    public function testRulesResolveSridReadingAndReplacementSeparately(): void
+    {
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'));
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $rules = (new SpecialResults())->rules();
+        $read = $rules['ST_SRID'](new Invocation([Domain::null()], [], $settings, $derivation));
+        $write = $rules['ST_SRID'](new Invocation([Domain::null(), Domain::integer()], [], $settings, $derivation));
+
+        self::assertNotNull($read);
+        self::assertNotNull($write);
+        self::assertSame([Field::LongLong, 10, true, Field::Geometry], [$read->field, $read->length, $read->unsigned, $write->field]);
+    }
+
     public function testRulesTypeTheDigestsVectorsAndWaits(): void
     {
         $rules = (new SpecialResults())->rules();

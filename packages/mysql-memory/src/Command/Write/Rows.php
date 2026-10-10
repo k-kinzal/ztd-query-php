@@ -43,6 +43,11 @@ final class Rows
     public int $duplicates = 0;
 
     /**
+     * Whether a refused legacy spatial value prevents later VALUES rows from being evaluated.
+     */
+    public bool $stopped = false;
+
+    /**
      * The generated and explicit identities of the rows actually written.
      */
     public readonly InsertIdentity $identity;
@@ -123,10 +128,11 @@ final class Rows
             }
             [$raw, $domain] = $value instanceof Evaluable ? [$value->evaluate($frame), $value->domain()] : $value;
             try {
-                array_splice($row, $position, 1, [$this->notNull($store->value($raw, $domain, $column), $position, $store, $number, $single)]);
+                array_splice($row, $position, 1, [$this->notNull($store->value($raw, $domain, $column), $position, $store, $number, $single, $queried)]);
             } catch (SqlError $error) {
                 if ($this->into->ignore && $error->error === DataError::BadNull && $column->domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Geometry) {
                     $this->context->warning(DataError::BadNull, $column->name);
+                    $this->stopped = true;
                     return;
                 }
                 throw $queried ? $this->unfilled($error, $named) : $error;
@@ -254,21 +260,13 @@ final class Rows
      * Source: https://dev.mysql.com/doc/refman/8.4/en/constraint-invalid-data.html.
      *
      * @param bool $single Whether the statement writes a single row of values
+     * @param bool $queried Whether values come from an INSERT ... SELECT, which permits the legacy spatial implicit default with IGNORE
      *
      * @throws SqlError When NULL is refused
      */
-    public function notNull(int|float|string|null $value, int $position, Store $store, int $number, bool $single): int|float|string|null
+    public function notNull(int|float|string|null $value, int $position, Store $store, int $number, bool $single, bool $queried = false): int|float|string|null
     {
-        $column = $this->table->definition->columns[$position];
-        if ($value !== null || $column->nullable() || $column->autoIncrement) {
-            return $value;
-        }
-        if (($single && !$this->into->ignore) || $this->context->strict || ($column->domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Geometry && $this->context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5744)) {
-            throw DataError::BadNull->error($column->name);
-        }
-        $this->context->warning(DataError::BadNull, $column->name);
-
-        return $this->writer->implicit($column);
+        return (new \MySqlMemory\Storage\InsertNulls())->value($this->writer, $this->table->definition->columns[$position], $value, $single, $this->into->ignore, $queried);
     }
 
     /**

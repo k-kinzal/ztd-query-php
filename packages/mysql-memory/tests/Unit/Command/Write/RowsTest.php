@@ -33,6 +33,29 @@ final class RowsTest extends TestCase
         $session->query('INSERT INTO t VALUES (1)');
     }
 
+    public function testWriteStopsAfterALegacyIgnoredNullGeometry(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a POINT NOT NULL); INSERT IGNORE INTO t VALUES(NULL),(NULL)');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        $result = $session->query('SELECT HEX(a) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1048', "Column 'a' cannot be null"]], $warnings->rows);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+    }
+
+    public function testWriteStoresALegacyIgnoredNullGeometryFromAQuery(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a POINT NOT NULL); INSERT IGNORE INTO t SELECT NULL');
+        $result = $session->query('SELECT HEX(a) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['']], $result->rows);
+    }
+
     public function testWriteNamesTheRowOfTheWrongWidthAmongSeveral(): void
     {
         $session = (new Instance())->connect();
@@ -93,17 +116,6 @@ final class RowsTest extends TestCase
         $this->expectExceptionCode(1048);
 
         $session->query('INSERT INTO t SELECT NULL');
-    }
-
-    public function testWriteSkipsNullGeometryRowsUnderIgnoreIn57(): void
-    {
-        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
-        $session->query('CREATE TABLE t(a POINT NOT NULL); INSERT IGNORE INTO t VALUES(NULL),(Point(1,2)),(NULL)');
-
-        $result = $session->query('SELECT HEX(a)=HEX(Point(1,2)) FROM t')[0];
-
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['1']], $result->rows);
     }
 
     public function testNotNullRefusesNullForANotNullColumn(): void

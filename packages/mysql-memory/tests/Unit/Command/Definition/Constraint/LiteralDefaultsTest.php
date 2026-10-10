@@ -15,6 +15,17 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class LiteralDefaultsTest extends TestCase
 {
+    public function testCheckKeepsLegacyGeometryDefaultsAfterStrictModeIsEnabled(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query("SET sql_mode=''; CREATE TABLE t(a POINT NOT NULL DEFAULT '')");
+        $session->query("SET sql_mode='STRICT_TRANS_TABLES'; INSERT INTO t VALUES(DEFAULT)");
+        $result = $session->query('SELECT HEX(a) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['']], $result->rows);
+    }
+
     public function testValueRejectsNullInANonNullableColumn(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

@@ -78,6 +78,9 @@ final class InsertCommand implements Command
                 $values = array_slice($values, 0, count($positions));
             }
             $rows->write($values === [] ? [] : $positions, $values, $index + 1, count($sources) === 1 && !$queried, $queried);
+            if ($rows->stopped) {
+                break;
+            }
         }
         return new Completion($rows->affected, $rows->identity->finish($session->variables), $context->diagnostics->count(), count($sources) > 1 || $statement instanceof InsertQuery ? sprintf('Records: %d  Duplicates: %d  Warnings: %d', count($sources), $rows->duplicates, $context->diagnostics->count()) : '');
     }

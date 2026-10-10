@@ -49,6 +49,8 @@ final class SpecialResults
         $text = static fn (Invocation $call): Domain => Domain::string(1048512, $call->settings->connection, Field::MediumBlob, Coercibility::Coercible);
 
         return [
+            'ST_SRID' => static fn (Invocation $call): Domain => count($call->domains) === 1 ? Domain::integer(Field::LongLong, 10, true) : $geometry($call),
+            'SRID' => static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, 10),
             'POINT' => $geometry,
             'LINESTRING' => $geometry,
             'POLYGON' => $geometry,

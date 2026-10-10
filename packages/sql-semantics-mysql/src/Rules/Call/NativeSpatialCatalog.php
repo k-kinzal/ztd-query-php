@@ -69,7 +69,7 @@ final class NativeSpatialCatalog
         'ST_POINTFROMWKB' => [[3, 1, 2, 'GY'], [508, 1, 3, 'GY']], 'ST_POINTN' => [[511, 2, 2, 'GY']],
         'ST_POLYFROMTEXT' => [[3, 1, 2, 'GY'], [508, 1, 3, 'GY']], 'ST_POLYFROMWKB' => [[3, 1, 2, 'GY'], [508, 1, 3, 'GY']],
         'ST_POLYGONFROMTEXT' => [[3, 1, 2, 'GY'], [508, 1, 3, 'GY']], 'ST_POLYGONFROMWKB' => [[3, 1, 2, 'GY'], [508, 1, 3, 'GY']],
-        'ST_SIMPLIFY' => [[510, 2, 2, 'GY']], 'ST_SRID' => [[3, 1, 1, 'UY'], [508, 1, 1, 'UY'], [508, 2, 2, 'GY']], 'ST_STARTPOINT' => [[511, 1, 1, 'GY']],
+        'ST_SIMPLIFY' => [[510, 2, 2, 'GY']], 'ST_SRID' => [[3, 1, 1, 'UY'], [508, 1, 1, 'UP'], [508, 2, 2, 'GY']], 'ST_STARTPOINT' => [[511, 1, 1, 'GY']],
         'ST_SWAPXY' => [[508, 1, 1, 'GY']], 'ST_SYMDIFFERENCE' => [[511, 2, 2, 'GY']], 'ST_TOUCHES' => [[511, 2, 2, 'IY']],
         'ST_TRANSFORM' => [[508, 2, 2, 'GY']], 'ST_UNION' => [[511, 2, 2, 'GY']], 'ST_VALIDATE' => [[510, 1, 1, 'GY']], 'ST_WITHIN' => [[511, 2, 2, 'IY']],
         'ST_X' => [[3, 1, 1, 'DY'], [508, 1, 1, 'DY'], [508, 2, 2, 'GY']], 'ST_Y' => [[3, 1, 1, 'DY'], [508, 1, 1, 'DY'], [508, 2, 2, 'GY']],
