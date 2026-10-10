@@ -12,7 +12,7 @@ use PDOException;
  * Runs one statement on a MySQL server and on mysql-memory, from the same fixture, and requires every observation to be equal.
  *
  * The statement runs twice on the MySQL server, each time on a fresh database; when the two
- * observations differ after the bounded LibraryErrors, TableTimes and RandomPasswords contracts, the statement is volatile (it reads the clock, a random number, or a
+ * observations differ after the bounded observation contracts, the statement is volatile (it reads the clock, a random number, or a
  * server identity) and is not compared. Otherwise the observation of mysql-memory must equal it:
  * the result columns and rows, or the error, the warnings, and the rows of every table after.
  */
@@ -224,9 +224,11 @@ final class Differential
         $clock = TableTimes::handles($sql, $this->version) ? new TableTimes() : null;
         $pdo = $this->connect($dsn, $user, $password, $clock);
         $passwords = RandomPasswords::handles($sql, $this->version) ? RandomPasswords::capture($pdo) : null;
+        $identities = StatementIdentities::handles($sql, $this->version) ? StatementIdentities::capture($pdo) : null;
         $observer = new Observer();
         $ordered = preg_match('/\border\s+by\b/i', $sql) === 1;
         $observation = $observer->observe($pdo, $sql, $ordered);
+        $observation = $identities?->comparable($pdo, $observation) ?? $observation;
         $observation['tables'] = $observer->tables($pdo, self::DATABASE);
         $observation = $passwords?->comparable($pdo, $observation) ?? $observation;
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);

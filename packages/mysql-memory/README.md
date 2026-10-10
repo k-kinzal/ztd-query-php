@@ -285,12 +285,14 @@ The seed replay uses the same root and byte decoding as SQL Faker's `bin/seeds.p
 
 Pull requests changing this package or its SQL dependencies run the complete canonical gate in GitHub Actions. To request another run, dispatch **Fuzz (mysql-memory)** with `canonical_seeds=true` and the desired `mysql_version`. That mode runs only the canonical gate and uploads the per-input observations, coverage, summary and console log, including when the gate fails.
 
-Three bounded comparison contracts handle measured nondeterministic fields:
+Four bounded comparison contracts handle measured nondeterministic fields:
 
 - MySQL 5.6 and 5.7 can report OS errno 2 or 11 for the same missing shared library. The harness accepts those two values only when SQL error 1126, SQLSTATE HY000 and the complete missing-file loader message match. The library name, path, warnings, result sets and fixture table contents still compare exactly. The report records `missing-library-os-errno-2-or-11`.
 - Plain `SHOW TABLE STATUS` on MySQL 8.0 and later reports each server's actual commit clock, independently of `SET timestamp`. The harness samples `SYSDATE()` immediately before and after each fixture table's INSERT on each server. Each `Update_time` must be a valid datetime inside that table's own sampled interval. Only these validated instants are interchangeable; NULL, the pinned statement clock and out-of-range times fail. Every other result field, metadata, warnings and fixture contents remain exact. This applies only to the plain statement, with no predicates or additional statements, and records `table-update-time-within-fixture-insert-interval`.
 
 - `random-primary-password-length-and-replacement` applies only to an isolated random password change for the current account, without retention. The returned account, factor and configured length are checked; `SET PASSWORD ... REPLACE` must reject a different password and accept the returned one. Only that validated random text is interchangeable. This verifies SQL password storage and replacement, not wire authentication or entropy; retained and other-account passwords remain outside this contract.
+
+- `statement-id-between-samples-and-pseudo-id-equals-connection` applies only to unfiltered `SHOW [SESSION|LOCAL] VARIABLES` on modern releases. Each server's statement ID must fall strictly between independently sampled statement IDs around the observation, and its pseudo thread ID must equal the sampled connection ID. Only those two validated values are interchangeable. Other variables, metadata, warnings and fixture contents remain exact.
 
 Applied contracts appear in the input report's `contracts` list. Other unstable reference observations remain failures of the canonical seed gate.
 

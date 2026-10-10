@@ -53,6 +53,7 @@ final class StatementsTest extends TestCase
         $client->statements->handle(0x17, new PayloadReader("\x01\x00\x00\x00\x00\x01\x00\x00\x00"));
 
         self::assertTrue($closed);
+        self::assertSame(2, $client->session()->variables->read('statement_id'));
         self::assertSame(4, $count);
         self::assertSame(["\xFF\xDB\x04#HY000Unknown prepared statement handler (1) given to mysqld_stmt_execute"], array_slice($sent->getArrayCopy(), 4));
     }
@@ -98,6 +99,7 @@ final class StatementsTest extends TestCase
         $client->statements->prepare('DO 2');
 
         self::assertSame(["\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", "\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"], array_slice($sent->getArrayCopy(), 1));
+        self::assertSame(2, $client->session()->variables->read('statement_id'));
     }
 
     public function testPrepareAnswersTheErrorOfAStatement(): void

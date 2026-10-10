@@ -46,6 +46,9 @@ final class Statements
      */
     public function handle(int $command, PayloadReader $reader): bool
     {
+        if ($command === 0x19) {
+            $this->client->session()->beginStatement();
+        }
         return match ($command) {
             0x16 => $this->prepare($reader->rest()),
             0x17 => $this->execute($reader),
@@ -61,6 +64,7 @@ final class Statements
     public function prepare(string $sql): bool
     {
         $session = $this->client->session();
+        $session->beginStatement();
         try {
             $session->split($sql);
             $operation = $session->analyze($sql, true);

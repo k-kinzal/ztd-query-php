@@ -27,6 +27,31 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
 #[Small]
 final class VariablesTest extends TestCase
 {
+    public function testSystemAndSetShareTheLastInsertIdOfTheFunction(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SELECT LAST_INSERT_ID(42)');
+        self::assertSame(42, $session->variables->read('last_insert_id'));
+        self::assertSame(42, $session->variables->read('identity'));
+        $session->query('SET identity=73');
+        $result = $session->query('SELECT LAST_INSERT_ID(), @@last_insert_id, @@identity')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['73', '73', '73']], $result->rows);
+    }
+
+    public function testSystemReadsTheConnectionIdUntilThePseudoIdIsAssigned(): void
+    {
+        $session = (new Instance())->connect();
+        self::assertSame(1, $session->variables->read('pseudo_thread_id'));
+        $session->query('SET pseudo_thread_id=42');
+        $result = $session->query('SELECT CONNECTION_ID(), @@pseudo_thread_id')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['42', '42']], $result->rows);
+        self::assertSame(1, $session->id);
+    }
+
     public function testUserAnswersNullForAVariableNeverAssigned(): void
     {
         $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals());

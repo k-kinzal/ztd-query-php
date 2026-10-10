@@ -59,6 +59,9 @@ final class ShowVariablesCommand implements Command
         $global = $statement->scope === VariableScope::Global;
         $rows = $statement instanceof ShowVariables ? $this->variables($session, $global, $context) : $this->status($session, $global);
         $table = ($global ? 'global_' : 'session_') . ($statement instanceof ShowVariables ? 'variables' : 'status');
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $table = $statement instanceof ShowVariables ? 'VARIABLES' : 'STATUS';
+        }
         $headings = [
             Heading::text('Variable_name', Field::VarString, 64, ColumnFlag::NotNull->value | ColumnFlag::NoDefaultValue->value, 0, 'Variable_name', $table, $table, 'performance_schema', 'utf8mb4_0900_ai_ci'),
             Heading::text('Value', Field::VarString, 1024, 0, 0, 'Value', $table, $table, 'performance_schema', 'utf8mb4_0900_ai_ci'),
@@ -99,7 +102,6 @@ final class ShowVariablesCommand implements Command
             }
             $value = match (true) {
                 !$global && $name === 'timestamp' => sprintf('%.6f', $context->started),
-                !$global && $name === 'pseudo_thread_id' => $variables->connection,
                 default => $variables->system($definition, $global ? Scope::Global : Scope::Session),
             };
             $rows[] = [$definition->name, is_int($value) && $definition->shape === \SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape::Unsigned ? \MySqlMemory\Value\Integer::text($value, true) : (string) $value];

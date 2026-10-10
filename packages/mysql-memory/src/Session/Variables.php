@@ -125,8 +125,14 @@ final class Variables
     public function system(Definition $definition, Scope $scope): string|int|null
     {
         $name = $definition->name;
+        if ($scope !== Scope::Global && in_array($name, ['last_insert_id', 'identity'], true)) {
+            return $this->lastInsertId;
+        }
         if ($scope !== Scope::Global && array_key_exists($name, $this->session)) {
             return $this->session[$name];
+        }
+        if ($scope !== Scope::Global && $name === 'pseudo_thread_id') {
+            return $this->connection;
         }
         if ($scope !== Scope::Global && $definition->reach === Reach::Both) {
             return array_key_exists($name, $this->connected) ? $this->connected[$name] : $definition->default;
@@ -140,6 +146,11 @@ final class Variables
      */
     public function set(Definition $definition, string|int|null $value): void
     {
+        if (in_array($definition->name, ['last_insert_id', 'identity'], true)) {
+            $this->lastInsertId = (int) $value;
+
+            return;
+        }
         $this->session[$definition->name] = $value;
     }
 

@@ -22,6 +22,13 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class CountResultsTest extends TestCase
 {
+    public function testRulesPreserveTheArgumentWidthOfALegacyInsertId(): void
+    {
+        $call = new Invocation([Domain::integer(Field::LongLong, 2)], [], new Settings(Collation::known('latin1_swedish_ci')), new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([])));
+
+        self::assertEquals(Domain::integer(Field::LongLong, 2, true), (new CountResults())->rules()['LAST_INSERT_ID']($call));
+    }
+
     public function testRulesAnswerABigIntOfTheReportedWidth(): void
     {
         $rules = (new CountResults())->rules();

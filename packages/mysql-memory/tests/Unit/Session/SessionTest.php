@@ -19,6 +19,41 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class SessionTest extends TestCase
 {
+    public function testBeginStatementAllocatesAcrossSessions(): void
+    {
+        $instance = new Instance();
+        $first = $instance->connect();
+        $second = $instance->connect();
+        $first->beginStatement();
+        $second->beginStatement();
+
+        self::assertSame(1, $first->variables->read('statement_id'));
+        self::assertSame(2, $second->variables->read('statement_id'));
+    }
+
+    public function testExecuteAllocatesOneNumberForEachPreparedExecution(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("PREPARE p FROM 'SELECT @@statement_id'");
+        $first = $session->query('EXECUTE p')[0];
+        $second = $session->query('EXECUTE p')[0];
+
+        self::assertInstanceOf(ResultSet::class, $first);
+        self::assertInstanceOf(ResultSet::class, $second);
+        self::assertSame([['2']], $first->rows);
+        self::assertSame([['3']], $second->rows);
+    }
+
+    public function testRunCountsFailedSyntaxAndContinuesTheSequence(): void
+    {
+        $session = (new Instance())->connect();
+        $session->run('SELEC 1');
+        $result = $session->query('SELECT @@statement_id')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2']], $result->rows);
+    }
+
     public function testQueryAnswersTheReplyOfEachStatement(): void
     {
         $session = (new Instance())->connect();

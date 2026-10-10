@@ -41,7 +41,7 @@ final class CountResults
         foreach (self::LENGTHS as $name => $length) {
             $rules[$name] = static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, $length);
         }
-        $rules['LAST_INSERT_ID'] = static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, 21, true);
+        $rules['LAST_INSERT_ID'] = static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, $call->domains !== [] && in_array($call->derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? $call->domain(0)->length : 21, true);
         $rules['BIT_COUNT'] = static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, in_array($call->derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? 2 : 21);
         $rules['CRC32'] = static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, 10, true);
 

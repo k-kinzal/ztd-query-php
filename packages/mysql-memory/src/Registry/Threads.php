@@ -39,6 +39,11 @@ final class Threads
     public float $passed = 0.0;
 
     /**
+     * The last statement sequence number allocated across all client sessions.
+     */
+    public int $statements = 0;
+
+    /**
      * Answers the current time of the server, as a Unix time with microseconds.
      */
     public function now(): float

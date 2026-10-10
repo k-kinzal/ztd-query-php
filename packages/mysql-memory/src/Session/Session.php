@@ -248,6 +248,7 @@ final class Session
         } catch (SqlError $error) {
             $statements = (new Problem\Script())->statements($this->semantics(), $sql);
             if ($statements === []) {
+                $this->beginStatement();
                 return [(new Parse\Reader())->refused($error, $sql, $prepared, $this)];
             }
         }
@@ -306,6 +307,9 @@ final class Session
      */
     public function execute(string $statement, array $parameters = [], bool $prepared = false): Reply
     {
+        if ($this->running->using === []) {
+            $this->beginStatement();
+        }
         $this->text = $statement;
         $this->replayed = $prepared;
         try {
@@ -320,6 +324,18 @@ final class Session
         }
 
         return (new Execution($this))->perform($operation, $command, $parameters);
+    }
+
+    /**
+     * Allocates this client statement's sequence number, including failed statements.
+     *
+     * SQL EXECUTE retains the number of its outer command. Wire preparation allocates a
+     * number too. Verified through the public SQL and prepared-statement interfaces on 8.4.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_statement_id.
+     */
+    public function beginStatement(): void
+    {
+        $this->variables->session['statement_id'] = ++$this->instance->registry->threads->statements;
     }
 
     /**
