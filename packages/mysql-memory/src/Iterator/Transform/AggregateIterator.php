@@ -50,7 +50,9 @@ final class AggregateIterator implements RowIterator
     {
         $this->input->init($frame);
         $groups = [];
+        $inputRows = 0;
         while (($row = $this->input->read()) !== null) {
+            $inputRows++;
             $frame->row = $row;
             $values = [];
             $key = '';
@@ -74,6 +76,7 @@ final class AggregateIterator implements RowIterator
         }
         $sorted = $this->sorted(array_values($groups));
         $this->rows = $this->path->rollup ? $this->rollup($sorted, $frame) : $this->emit($sorted, $frame);
+        $frame->context->aggregateRow = $inputRows + 1;
         $this->next = 0;
     }
 

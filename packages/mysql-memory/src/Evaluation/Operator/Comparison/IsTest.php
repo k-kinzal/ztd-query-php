@@ -7,14 +7,18 @@ namespace MySqlMemory\Evaluation\Operator\Comparison;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Function\Json\Coercions;
 use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Evaluation\Operator\DoubleOperand;
 use MySqlMemory\Evaluation\Operator\Logic;
 use MySqlMemory\Evaluation\Operator\Negation;
+use MySqlMemory\Evaluation\Subquery\ScalarRead;
 use MySqlMemory\Typing\Domain;
 use Override;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
  * IS [NOT] NULL, IS [NOT] TRUE, IS [NOT] FALSE and IS [NOT] UNKNOWN: never NULL.
@@ -115,7 +119,33 @@ final class IsTest implements Evaluable
         if ($value instanceof Logic && $value->operator === LogicalOperator::Xor) {
             return self::absent($value->left, $frame) || self::absent($value->right, $frame);
         }
+        if ($value instanceof ScalarRead && $value->domain()->kind === Kind::Json && $frame->context->modes->release === GrammarRelease::MySql5744) {
+            return self::legacyJsonNull($value, $frame);
+        }
 
         return $value->evaluate($frame) === null;
+    }
+
+    /**
+     * Tests a MySQL 5.7 JSON scalar result through its integer conversion.
+     *
+     * Direct JSON expressions do not perform this conversion. Scalar subqueries
+     * do, with an unknown column name and the consumed aggregate input position.
+     * Verified by differential SQL on MySQL 5.7.44.
+     */
+    public static function legacyJsonNull(ScalarRead $value, Frame $frame): bool
+    {
+        $stored = $value->evaluate($frame);
+        $row = $frame->context->row;
+        $frame->context->row = $frame->context->aggregateRow;
+        try {
+            if ($stored !== null) {
+                Coercions::toInteger((string) $stored, $value->domain()->withSource('?'), $frame->context);
+            }
+
+            return $stored === null;
+        } finally {
+            $frame->context->row = $row;
+        }
     }
 }

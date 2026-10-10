@@ -37,6 +37,12 @@ final class Context
     public int $row = 1;
 
     /**
+     * The position after the input consumed by the most recent aggregation.
+     * MySQL 5.7 uses this position when testing a JSON scalar subquery for NULL.
+     */
+    public int $aggregateRow = 1;
+
+    /**
      * @param SqlModes $modes The sql_mode of the session
      * @param Diagnostics $diagnostics Where warnings of the statement are recorded
      * @param Variables $variables The user and system variables the statement reads and assigns
