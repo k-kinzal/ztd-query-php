@@ -71,9 +71,25 @@ final class AggregatesTest extends TestCase
         $text = Domain::string(5, $collation);
         $aggregate = new Aggregates(new Settings($collation));
         $legacy = new Derivation(new AnalysisContext(new LanguageProfile(GrammarRelease::MySql5651), [new Name('d')]));
+        $seven = new Derivation(new AnalysisContext(new LanguageProfile(GrammarRelease::MySql5744), [new Name('d')]));
         $eight = new Derivation(new AnalysisContext(new LanguageProfile(GrammarRelease::MySql8044), [new Name('d')]));
 
         self::assertEquals(new Domain(Kind::String, Field::VarString, 256, 0, false, $collation, [], Coercibility::Implicit), $aggregate->concatenated([$text], $legacy));
+        self::assertEquals($aggregate->concatenated([$text], $legacy), $aggregate->concatenated([$text], $seven));
         self::assertEquals(Domain::string(4096, $collation, Field::LongBlob, Coercibility::Implicit), $aggregate->concatenated([$text], $eight));
     }
+    public function testConcatenatedKeepsLegacyByteLimitsForPartialCharactersAndBlobs(): void
+    {
+        $collation = Collation::known('utf8mb4_general_ci');
+        $text = Domain::string(5, $collation);
+        $legacy = new Derivation(new AnalysisContext(new LanguageProfile(GrammarRelease::MySql5744), [new Name('d')]));
+        $partial = (new Aggregates(new Settings($collation, groupConcatMaxLen: 513)))->concatenated([$text], $legacy);
+        $blob = (new Aggregates(new Settings($collation, groupConcatMaxLen: 4096)))->concatenated([$text], $legacy);
+
+        self::assertNotNull($partial);
+        self::assertNotNull($blob);
+        self::assertSame([Field::VarString, 128, 513], [$partial->field, $partial->length, $partial->metadataLength()]);
+        self::assertSame([Field::Blob, 4096, 4096], [$blob->field, $blob->length, $blob->metadataLength()]);
+    }
+
 }

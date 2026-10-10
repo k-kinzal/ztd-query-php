@@ -71,7 +71,7 @@ final class Domain implements TypeDescriptor
      * @param Collation|null $collation The collation of a string; binary when null
      * @param list<string> $members The members of an ENUM or SET, in declared order
      * @param Coercibility $coercibility How strongly the collation holds
-     * @param int|null $display The display width a column of an integer type reports for itself, when it is narrower than the length
+     * @param int|null $display The unconverted metadata width when it differs from the type bound, including integer display widths and partial multibyte string limits
      */
     public function __construct(
         public readonly Kind $kind,
@@ -185,7 +185,7 @@ final class Domain implements TypeDescriptor
      *
      * TEXT/BLOB fields already carry byte bounds. These differ from the collation-expanded
      * bounds used by functions such as HEX and GTID_SUBTRACT. Integer columns retain their
-     * declared display widths. Verified through result metadata on live MySQL servers.
+     * declared display widths; byte-limited strings retain partial-character bounds. Verified through result metadata on live MySQL servers.
      */
     public function metadataLength(): int
     {
