@@ -28,6 +28,12 @@ final class WeightStringTest extends TestCase
         foreach (['', ' AS CHAR(1)', ',1,1,1'] as $options) {
             yield 'JSON argument ' . $options => ['KILL (USER() = (USER() MEMBER OF (WEIGHT_STRING(USER()' . $options . ')))) IS TRUE'];
         }
+        foreach (["_binary X'007FFF'", "_latin1'aB'", "_utf8mb4'aÉ' COLLATE utf8mb4_general_ci", "_utf8mb4'aÉ' COLLATE utf8mb4_bin"] as $value) {
+            foreach (['1', '0', '6', '1 DESC', '1 REVERSE', '1 DESC REVERSE', '2 DESC', '2 REVERSE', '1, 2 DESC', '1 DESC, 2 ASC', '2-1', '0-6'] as $levels) {
+                yield $value . ' LEVEL ' . $levels => ['SELECT WEIGHT_STRING(' . $value . ' LEVEL ' . $levels . ') AS w; SHOW WARNINGS'];
+            }
+        }
+        yield 'padded descending reverse level' => ["SELECT WEIGHT_STRING(_latin1'aB' AS CHAR(4) LEVEL 1 DESC REVERSE) AS w; SHOW WARNINGS"];
     }
 
     #[DataProvider('providerStatements')]

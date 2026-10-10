@@ -355,20 +355,21 @@ final class Texts
     }
 
     /**
-     * Compiles WEIGHT_STRING; a LEVEL clause is not emulated.
-     *
-     * @throws \MySqlMemory\Error\SqlError When the call has a LEVEL clause
+     * Compiles WEIGHT_STRING; supported collations have one weight level, to which LEVEL numbers clamp.
      */
     public function weight(WeightString|\SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightStringParameters $node, Scope $scope): Evaluable
     {
         if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightStringParameters) {
             return new Weight($this->compiler->compile($node->subject, $scope), null, null, $this->compiler->domain($node), (int) $node->weights->text, (int) $node->length->text, (int) $node->flags->text);
         }
-        if ($node->levels !== [] || $node->range !== null) {
-            throw StatementError::NotSupportedYet->error('WEIGHT_STRING with LEVEL');
+        $descending = false;
+        $reverse = false;
+        foreach ($node->levels as $level) {
+            $descending = $descending || $level->direction === \SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending;
+            $reverse = $reverse || $level->reverse;
         }
 
-        return new Weight($this->compiler->compile($node->subject, $scope), $node->cast, $node->length === null ? null : (int) $node->length->text, $this->compiler->domain($node));
+        return new Weight($this->compiler->compile($node->subject, $scope), $node->cast, $node->length === null ? null : (int) $node->length->text, $this->compiler->domain($node), descending: $descending, reverse: $reverse);
     }
 
     /**

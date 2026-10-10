@@ -23,8 +23,10 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * per utf8mb4 character, and two per utf8mb3 character, its code point. General Unicode and
  * single-byte latin1 weights use mappings obtained through SQL. AS CHAR limits characters and
  * pads under PAD SPACE; the internal form also limits result bytes. Other collation weights
- * are not emulated (verified on a live 8.4 server).
+ * are not emulated (verified on a live 8.4 server). Legacy LEVEL modifiers invert the bytes
+ * for DESC and reverse the weight string for REVERSE; supported collations have one level.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/string-functions.html#function_weight-string.
+ * https://docs.oracle.com/cd/E17952_01/mysql-5.7-en/string-functions.html#function_weight-string.
  *
  * @visibility MySqlMemory
  */
@@ -38,8 +40,10 @@ final class Weight implements Evaluable
      * @param int $weights The internal form's requested weight count, zero for the input length
      * @param int $resultLength The internal form's result byte limit, zero for the derived capacity
      * @param int $flags The internal formatting flags
+     * @param bool $descending Whether the selected level's bytes are inverted
+     * @param bool $reverse Whether the selected level's weight string is reversed
      */
-    public function __construct(public readonly Evaluable $operand, public readonly ?WeightCast $cast, public readonly ?int $length, public readonly Domain $domain, public readonly int $weights = 0, public readonly int $resultLength = 0, public readonly int $flags = 0)
+    public function __construct(public readonly Evaluable $operand, public readonly ?WeightCast $cast, public readonly ?int $length, public readonly Domain $domain, public readonly int $weights = 0, public readonly int $resultLength = 0, public readonly int $flags = 0, public readonly bool $descending = false, public readonly bool $reverse = false)
     {
     }
 
@@ -99,7 +103,10 @@ final class Weight implements Evaluable
             $weight = str_pad($weight, $capacity, $padding);
         }
 
-        return $this->resultLength > 0 ? substr($weight, 0, $this->resultLength) : $weight;
+        $weight = $this->resultLength > 0 ? substr($weight, 0, $this->resultLength) : $weight;
+        $weight = $this->descending ? ~$weight : $weight;
+
+        return $this->reverse ? strrev($weight) : $weight;
     }
 
     /**
