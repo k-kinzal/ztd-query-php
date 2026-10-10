@@ -66,51 +66,55 @@
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com">     * @param list&lt;CommonBinding&gt; $commonTables The common tables introduced at this level; later bindings shadow earlier ones</span></span>
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com">     * @param list&lt;Field&gt; $aliases The output fields this position may refer to by alias</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * @param bool $written Whether the position names the columns a statement writes, where a name is a column and never a variable of a stored program</span></span>
-<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">AnalysisContext</span> <span class="tok-var">$context</span>,</span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Environment</span> <span class="tok-var">$outer</span> = <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$relations</span> = [],</span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$commonTables</span> = [],</span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$aliases</span> = [],</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$written</span> = <span class="tok-id">false</span>,</span>
-<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>    ) {</span>
-<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>    }</span>
-<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a></span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a><span class="tok-com">     * Finds the nearest common table with a name.</span></span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">commonTable</span>(<span class="tok-id">Name</span> <span class="tok-var">$name</span>): ?<span class="tok-id">CommonBinding</span></span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>    {</span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>        <span class="tok-kw">for</span> (<span class="tok-var">$scope</span> = <span class="tok-var">$this</span>; <span class="tok-var">$scope</span> !== <span class="tok-id">null</span>; <span class="tok-var">$scope</span> = <span class="tok-var">$scope</span>-&gt;<span class="tok-id">outer</span>) {</span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>            <span class="tok-kw">for</span> (<span class="tok-var">$index</span> = <span class="tok-id">count</span>(<span class="tok-var">$scope</span>-&gt;<span class="tok-id">commonTables</span>) - <span class="tok-num">1</span>; <span class="tok-var">$index</span> &gt;= <span class="tok-num">0</span>; <span class="tok-var">$index</span>--) {</span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>                <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">context</span>-&gt;<span class="tok-id">relationNames</span>-&gt;<span class="tok-id">equal</span>(<span class="tok-var">$scope</span>-&gt;<span class="tok-id">commonTables</span>[<span class="tok-var">$index</span>]-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>, <span class="tok-var">$name</span>-&gt;<span class="tok-id">value</span>)) {</span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>                    <span class="tok-kw">return</span> <span class="tok-var">$scope</span>-&gt;<span class="tok-id">commonTables</span>[<span class="tok-var">$index</span>];</span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>                }</span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>            }</span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>        }</span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a></span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>        <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>    }</span>
-<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a></span>
-<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a><span class="tok-com">     * Finds the output fields of this position an alias names.</span></span>
-<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a><span class="tok-com">     * @return list&lt;Field&gt;</span></span>
-<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">aliased</span>(<span class="tok-id">Name</span> <span class="tok-var">$name</span>): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>    {</span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>        <span class="tok-var">$fields</span> = [];</span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">aliases</span> <span class="tok-kw">as</span> <span class="tok-var">$field</span>) {</span>
-<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>            <span class="tok-kw">if</span> (<span class="tok-var">$field</span>-&gt;<span class="tok-id">name</span> !== <span class="tok-id">null</span> &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">context</span>-&gt;<span class="tok-id">columnNames</span>-&gt;<span class="tok-id">equal</span>(<span class="tok-var">$field</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>, <span class="tok-var">$name</span>-&gt;<span class="tok-id">value</span>)) {</span>
-<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>                <span class="tok-var">$fields</span>[] = <span class="tok-var">$field</span>;</span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>            }</span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>        }</span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a></span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>        <span class="tok-kw">return</span> <span class="tok-var">$fields</span>;</span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>    }</span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>}</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @param AggregationScope|null $aggregation The query block collecting aggregate occurrences</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @param bool $aggregatesAllowed Whether this clause can own an aggregate</span></span>
+<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">AnalysisContext</span> <span class="tok-var">$context</span>,</span>
+<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">Environment</span> <span class="tok-var">$outer</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$relations</span> = [],</span>
+<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$commonTables</span> = [],</span>
+<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$aliases</span> = [],</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$written</span> = <span class="tok-id">false</span>,</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">AggregationScope</span> <span class="tok-var">$aggregation</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$aggregatesAllowed</span> = <span class="tok-id">false</span>,</span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    ) {</span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    }</span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a></span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     * Finds the nearest common table with a name.</span></span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">commonTable</span>(<span class="tok-id">Name</span> <span class="tok-var">$name</span>): ?<span class="tok-id">CommonBinding</span></span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    {</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>        <span class="tok-kw">for</span> (<span class="tok-var">$scope</span> = <span class="tok-var">$this</span>; <span class="tok-var">$scope</span> !== <span class="tok-id">null</span>; <span class="tok-var">$scope</span> = <span class="tok-var">$scope</span>-&gt;<span class="tok-id">outer</span>) {</span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>            <span class="tok-kw">for</span> (<span class="tok-var">$index</span> = <span class="tok-id">count</span>(<span class="tok-var">$scope</span>-&gt;<span class="tok-id">commonTables</span>) - <span class="tok-num">1</span>; <span class="tok-var">$index</span> &gt;= <span class="tok-num">0</span>; <span class="tok-var">$index</span>--) {</span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>                <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">context</span>-&gt;<span class="tok-id">relationNames</span>-&gt;<span class="tok-id">equal</span>(<span class="tok-var">$scope</span>-&gt;<span class="tok-id">commonTables</span>[<span class="tok-var">$index</span>]-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>, <span class="tok-var">$name</span>-&gt;<span class="tok-id">value</span>)) {</span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>                    <span class="tok-kw">return</span> <span class="tok-var">$scope</span>-&gt;<span class="tok-id">commonTables</span>[<span class="tok-var">$index</span>];</span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>                }</span>
+<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>            }</span>
+<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>        }</span>
+<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a></span>
+<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>        <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>    }</span>
+<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a></span>
+<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a><span class="tok-com">     * Finds the output fields of this position an alias names.</span></span>
+<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a><span class="tok-com">     * @return list&lt;Field&gt;</span></span>
+<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">aliased</span>(<span class="tok-id">Name</span> <span class="tok-var">$name</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>    {</span>
+<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>        <span class="tok-var">$fields</span> = [];</span>
+<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">aliases</span> <span class="tok-kw">as</span> <span class="tok-var">$field</span>) {</span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>            <span class="tok-kw">if</span> (<span class="tok-var">$field</span>-&gt;<span class="tok-id">name</span> !== <span class="tok-id">null</span> &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">context</span>-&gt;<span class="tok-id">columnNames</span>-&gt;<span class="tok-id">equal</span>(<span class="tok-var">$field</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>, <span class="tok-var">$name</span>-&gt;<span class="tok-id">value</span>)) {</span>
+<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>                <span class="tok-var">$fields</span>[] = <span class="tok-var">$field</span>;</span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>            }</span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a>        }</span>
 <span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a></span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>        <span class="tok-kw">return</span> <span class="tok-var">$fields</span>;</span>
+<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>    }</span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>}</span>
+<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
