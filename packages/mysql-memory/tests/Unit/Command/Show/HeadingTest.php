@@ -53,4 +53,13 @@ final class HeadingTest extends TestCase
         self::assertSame([Kind::String, 'utf8mb3_general_ci', true], [$text->kind, $text->collation->name, $text->nullable]);
         self::assertSame([Kind::Integer, true], [$number->kind, $number->unsigned]);
     }
+
+    public function testDomainRetainsTemporalMeaningWhenTheProtocolUsesACharacterSet(): void
+    {
+        $heading = Heading::text('Created', Field::Timestamp, 19, ColumnFlag::NotNull->value);
+
+        self::assertSame(76, $heading->column(Charset::known('utf8mb4'))->length);
+        self::assertSame(Kind::DateTime, $heading->domain()->kind);
+        self::assertSame(Field::Timestamp, $heading->domain()->field);
+    }
 }

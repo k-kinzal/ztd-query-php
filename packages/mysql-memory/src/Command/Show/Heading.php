@@ -88,7 +88,7 @@ final class Heading
     {
         $nullable = ($this->flags & ColumnFlag::NotNull->value) === 0;
         $unsigned = ($this->flags & ColumnFlag::Unsigned->value) !== 0;
-        if ($this->text) {
+        if ($this->text && !in_array($this->field, [Field::Timestamp, Field::DateTime], true)) {
             return Domain::string($this->length, Collation::known($this->collation), $this->field)->withNullable($nullable);
         }
 

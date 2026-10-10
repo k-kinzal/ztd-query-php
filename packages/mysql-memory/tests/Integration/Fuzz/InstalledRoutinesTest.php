@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Integration\Fuzz;
 
 use Fuzz\Target\Servers;
-use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
@@ -15,15 +14,6 @@ use PHPUnit\Framework\TestCase;
 #[Large]
 final class InstalledRoutinesTest extends TestCase
 {
-    #[Override]
-    protected function setUp(): void
-    {
-        parent::setUp();
-        if (getenv('MYSQL_VERSION') === '5.7.44') {
-            self::markTestSkipped('The MySQL 5.7 installed routine metadata is not yet captured.');
-        }
-    }
-
     /**
      * @return iterable<string, array{string}>
      */
@@ -31,6 +21,8 @@ final class InstalledRoutinesTest extends TestCase
     {
         yield 'all functions' => ['SHOW FUNCTION STATUS'];
         yield 'all procedures' => ['SHOW PROCEDURE STATUS'];
+        yield 'session time zone' => ["SET time_zone='+09:00'; SHOW FUNCTION STATUS WHERE Db='sys' AND Name='version_major'"];
+        yield 'negative time zone' => ["SET time_zone='-03:30'; SHOW PROCEDURE STATUS WHERE Db='sys' AND Name='table_exists'"];
         yield 'function prefix' => ["SHOW FUNCTION STATUS LIKE 'ps_thread%'"];
         yield 'security filter' => ["SHOW PROCEDURE STATUS WHERE Db='sys' AND Security_type='INVOKER'"];
         yield 'installation filter' => ["SHOW FUNCTION STATUS WHERE Created < '2027-01-01' AND Modified >= '2000-01-01'"];

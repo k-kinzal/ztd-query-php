@@ -38,6 +38,18 @@ final class InstalledCatalogTest extends TestCase
         self::assertSame([14], array_values(array_unique(array_map(count(...), $data['parameters']))));
     }
 
+    public function testDataRetainsTheObservedLegacyCharsetAndTypeDeclarations(): void
+    {
+        $data = InstalledCatalog::data(GrammarRelease::MySql5744);
+        $functions = array_column($data['routines'], null, 0);
+
+        self::assertCount(48, $data['routines']);
+        self::assertCount(83, $data['parameters']);
+        self::assertSame('tinyint(3) unsigned', $functions['version_major'][10]);
+        self::assertSame(['utf8', 'utf8_general_ci', 'utf8_general_ci'], array_slice($functions['version_major'], 22));
+        self::assertSame([], InstalledCatalog::entries(GrammarRelease::MySql5651));
+    }
+
     public function testParametersKeepsTheReturnValueAndArgumentModes(): void
     {
         $rows = InstalledCatalog::parameters(InstalledCatalog::data()['parameters'], 'PROCEDURE', 'table_exists');
@@ -54,6 +66,7 @@ final class InstalledCatalogTest extends TestCase
     public static function providerReleases(): iterable
     {
         yield 'MySQL 5.6 has no sys catalog' => [GrammarRelease::MySql5651, 0, 0];
+        yield 'MySQL 5.7' => [GrammarRelease::MySql5744, 22, 26];
         yield 'MySQL 8.0' => [GrammarRelease::MySql8044, 22, 26];
         yield 'MySQL 8.4' => [GrammarRelease::MySql847, 22, 26];
         yield 'MySQL 9.1' => [GrammarRelease::MySql910, 22, 26];

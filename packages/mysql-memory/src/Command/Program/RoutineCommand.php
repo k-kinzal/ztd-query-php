@@ -71,7 +71,7 @@ final class RoutineCommand implements Command
         $statement = $operation->statement;
         $session->transaction->commit();
         if ($statement instanceof AlterRoutine) {
-            return $this->alter($statement, $session);
+            return $this->alter($statement, $session, $context->started);
         }
         assert($statement instanceof CreateProcedure || $statement instanceof CreateFunction);
         $this->types($statement, $session, $context);
@@ -141,7 +141,7 @@ final class RoutineCommand implements Command
         [$access, $deterministic, $security, $comment] = $characteristics;
         $function = $statement instanceof CreateFunction;
         $source = ProgramSource::of($session);
-        $now = ProgramSource::now();
+        $now = gmdate('Y-m-d H:i:s', (int) floor($context->started));
 
         return new Routine(
             $schema->name,
@@ -167,7 +167,7 @@ final class RoutineCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When the routine does not exist
      */
-    public function alter(AlterRoutine $statement, Session $session): Reply
+    public function alter(AlterRoutine $statement, Session $session, ?float $instant = null): Reply
     {
         $database = ProgramSource::database($statement->name->schema, $session);
         $function = $statement->kind === ProgramKind::Function;
@@ -177,7 +177,7 @@ final class RoutineCommand implements Command
             throw ProgramError::RoutineMissing->error($statement->kind->value, $database . '.' . $statement->name->name->value);
         }
         [$routine->access, , $routine->security, $routine->comment] = $this->characteristics($statement->characteristics, [$routine->access, $routine->deterministic, $routine->security, $routine->comment]);
-        $routine->modified = ProgramSource::now();
+        $routine->modified = gmdate('Y-m-d H:i:s', (int) floor($instant ?? $session->variables->instant()));
 
         return new Completion();
     }

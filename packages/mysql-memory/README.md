@@ -215,7 +215,7 @@ $pdo->query('SELECT VERSION(), @@sql_mode, USER()')->fetch(PDO::FETCH_NUM);
 - **`globals`**: global values of system variables, by name. Every session starts with these values for the variables that have a session scope, as a MySQL server started with these options does. They are stored as written, without the checks and normalization `SET GLOBAL` applies, so give each value as `SELECT @@GLOBAL.name` reports it. A variable not given keeps the default of the release.
 - **`databases`**: databases created at start, besides `information_schema`, `mysql`, `performance_schema` and, from MySQL 5.7, `sys`, which always exist.
 - **`clientHost`**: the host every client of the server is seen connecting from, as `USER()` reports it. By default it is the peer address, with `127.0.0.1` and `::1` read as `localhost`. In process, the host is the `host` argument of `connect()`.
-- **`routineTimestamps`**: creation and modification epochs for installed `sys` routines, keyed by `FUNCTION:name` or `PROCEDURE:name`. Omitted entries use the instance's creation time. The catalog currently includes MySQL 8.x and 9.x signatures and attributes; installed routine bodies are not implemented.
+- **`routineTimestamps`**: creation and modification epochs for installed `sys` routines, keyed by `FUNCTION:name` or `PROCEDURE:name`. Omitted entries use the instance's creation time. The catalog includes MySQL 5.7, 8.x and 9.x signatures and attributes; installed routine bodies are not implemented.
 
 The server starts with the accounts of a new MySQL installation: `root` at `localhost` and at `%` with every privilege, and the locked system accounts. Variables, accounts, databases and everything else can then be changed with SQL, as on a real server.
 
