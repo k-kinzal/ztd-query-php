@@ -149,6 +149,7 @@ final class MaterializationTest extends TestCase
         self::assertSame(65535, $materialization->combined($legacy, true, GrammarRelease::MySql5651)->capacity);
         self::assertSame(16777215, $materialization->combined($legacy, true, GrammarRelease::MySql5744)->capacity);
         self::assertSame(16777215, $modern->capacity);
+        self::assertEquals($modern, $materialization->set($domain, GrammarRelease::MySql5744));
         self::assertEquals($modern, $materialization->combined($modern));
         self::assertSame($legacy->metadataLength(), $modern->metadataLength());
     }

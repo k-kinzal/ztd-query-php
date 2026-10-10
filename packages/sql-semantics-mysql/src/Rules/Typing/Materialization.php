@@ -182,7 +182,7 @@ final class Materialization
         }
 
         $length = $domain->field === Field::Blob ? min(4294967295, $domain->length * $domain->collation->charset->maxLength) : $domain->length;
-        $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $legacy = $release === GrammarRelease::MySql5651;
 
         return $domain->field === Field::Blob && !$legacy ? $this->stored($domain, $length, $length) : $this->text($domain, $length);
     }

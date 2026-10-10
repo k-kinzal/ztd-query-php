@@ -303,10 +303,10 @@ final class Planner
      *
      * @throws \MySqlMemory\Error\SqlError When SQL Semantics resolved only the class of a type
      */
-    public function outputs(Query $query): array
+    public function outputs(Query $query, ?\SqlSemantics\Statement\Fact\QueryFact $fact = null): array
     {
         $domains = [];
-        foreach ($this->compiler->facts->query($query)->shape->slots as $slot) {
+        foreach (($fact ?? $this->compiler->facts->query($query))->shape->slots as $slot) {
             $type = $slot->type;
             if (!$type instanceof \SqlSemantics\Statement\Type\Known || !$type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
                 throw StatementError::NotSupportedYet->error('the type of a set operation column');
@@ -315,6 +315,20 @@ final class Planner
         }
 
         return $domains;
+    }
+
+    /**
+     * Applies separately resolved statement fields to the final result. The access
+     * path retains the domains used for intermediate and materialized rows.
+     */
+    public function result(QueryPlan $plan): QueryPlan
+    {
+        $output = $this->compiler->facts->output;
+        if (!$this->statement instanceof Query || $output === null || $output === $this->compiler->facts->query($this->statement)) {
+            return $plan;
+        }
+
+        return new QueryPlan($plan->root, $this->outputs($this->statement, $output), $plan->names);
     }
 
 }

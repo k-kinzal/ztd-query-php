@@ -55,6 +55,21 @@ final class PlannerTest extends TestCase
         self::assertSame([['x', '2']], (new Output())->result($plan, $context)->rows);
     }
 
+    public function testResultUsesStatementMetadataWhileRetainingTheAccessPath(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $operation = $session->analyze("SELECT GROUP_CONCAT(CONVERT('x' USING latin1)) AS q UNION ALL SELECT _latin1'y'");
+        self::assertInstanceOf(Query::class, $operation->statement);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($operation->statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $plan = $planner->query($operation->statement, null);
+        $result = $planner->result($plan);
+
+        self::assertSame($plan->root, $result->root);
+        self::assertSame([Field::Blob, Field::VarString], [$plan->domains[0]->field, $result->domains[0]->field]);
+        self::assertSame([['x'], ['y']], (new Output())->result($result, $context)->rows);
+    }
+
     public function testQueryPlansTheQueryInsideParentheses(): void
     {
         $session = (new Instance())->connect();

@@ -135,8 +135,11 @@ later byte-based rule. `CONCAT`, `CONCAT_WS` and `REPLACE` cap long-blob metadat
 at 16 MiB before result character set conversion; this metadata limit is
 separate from the execution limit controlled by `max_allowed_packet`.
 TEXT/BLOB results of `UNION` and `UNION ALL` retain their storage capacity for
-later scalar and derived-table reads, with the separate MySQL 5.x scalar rule.
+later scalar and derived-table reads, with the separate MySQL 5.6 scalar rule.
 Combining further set operands retains the original bounds.
+MySQL 5.7 reports unordered `UNION ALL` string columns without temporary-table
+attributes when returning the statement directly. Scalar and derived-table
+consumers keep the materialized column types.
 `MIN` and `MAX` over TEXT/BLOB columns preserve separate expression and metadata
 bounds, including grouped column references, scalar subqueries, and later
 `CONCAT` or `HEX` calls.

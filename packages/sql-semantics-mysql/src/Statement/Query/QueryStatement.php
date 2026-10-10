@@ -6,6 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
 use SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
@@ -69,7 +70,7 @@ final class QueryStatement implements Statement, Query
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $derivation->output($derivation->query($this, $derivation->environment()));
+        $derivation->output((new SetOutput())->derive($this, $derivation));
     }
 
     /**

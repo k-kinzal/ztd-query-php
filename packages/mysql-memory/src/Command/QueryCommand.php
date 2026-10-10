@@ -65,7 +65,7 @@ final class QueryCommand implements Command
         assert($statement instanceof Query);
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $into = $this->destination($statement);
-        $plan = $planner->query($statement, null);
+        $plan = $planner->result($planner->query($statement, null));
         (new \MySqlMemory\Session\Problem\Sampling())->optimized($statement, $operation->facts, $planner->settings, $planner->dictionary);
         if ($into !== null && !$into instanceof IntoVariables) {
             $this->file($into, $context, $session->settings()->legacy());

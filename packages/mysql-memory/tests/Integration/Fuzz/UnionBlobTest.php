@@ -23,7 +23,7 @@ final class UnionBlobTest extends TestCase
             foreach ([1024, 4096] as $limit) {
                 foreach (['UNION', 'UNION ALL'] as $operator) {
                     $union = "SELECT GROUP_CONCAT(CONVERT(a USING {$charset}) ORDER BY id) AS q FROM t1 {$operator} SELECT CONVERT('x' USING {$charset})";
-                    foreach ([$union, "SELECT ({$union} LIMIT 1)", "SELECT CONCAT(q,'') FROM ({$union}) AS s", "{$union} {$operator} SELECT CONVERT('y' USING {$charset})"] as $query) {
+                    foreach ([$union, "SELECT ({$union} LIMIT 1)", "SELECT CONCAT(q,'') FROM ({$union}) AS s", "{$union} {$operator} SELECT CONVERT('y' USING {$charset})", "{$union} ORDER BY q", "{$union} LIMIT 1"] as $query) {
                         yield "{$charset}: {$limit}: {$query}" => ["SET NAMES utf8mb4; SET group_concat_max_len={$limit}; {$query}"];
                     }
                 }

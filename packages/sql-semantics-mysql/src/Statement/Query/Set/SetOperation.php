@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query\Set;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\QueryTails;
+use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
 use SqlSemantics\Platform\MySql\Rules\Query\SetFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
@@ -69,7 +70,7 @@ final class SetOperation implements Statement, Query
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $derivation->output($derivation->query($this, $derivation->environment()));
+        $derivation->output((new SetOutput())->derive($this, $derivation));
     }
 
     /**

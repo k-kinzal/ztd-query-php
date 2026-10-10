@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\ExpressionFacts;
 use SqlSemantics\Platform\MySql\Rules\Query\QueryTails;
+use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
 use SqlSemantics\Platform\MySql\Rules\Query\SortScopes;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation;
 use SqlSemantics\Rendering\Output;
@@ -71,7 +72,7 @@ final class QueryExpression implements Statement, Query
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $derivation->output($derivation->query($this, $derivation->environment()));
+        $derivation->output((new SetOutput())->derive($this, $derivation));
     }
 
     /**

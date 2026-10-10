@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Query;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Query\Result\SetOutput;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -46,7 +47,7 @@ final class ParenthesizedQuery implements Statement, Query
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $derivation->output($derivation->query($this, $derivation->environment()));
+        $derivation->output((new SetOutput())->derive($this, $derivation));
     }
 
     /**
