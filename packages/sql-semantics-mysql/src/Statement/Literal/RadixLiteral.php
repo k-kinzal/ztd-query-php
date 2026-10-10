@@ -77,6 +77,9 @@ final class RadixLiteral implements Scalar
      */
     public function bytes(): string
     {
+        if ($this->digits === '') {
+            return '';
+        }
         if ($this->radix === Radix::Hexadecimal) {
             return (string) hex2bin(strlen($this->digits) % 2 === 1 ? '0' . $this->digits : $this->digits);
         }
