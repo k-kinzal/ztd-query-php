@@ -24,9 +24,9 @@ use SqlSemantics\Statement\Operation;
  * Executes SHOW [FULL] PROCESSLIST: the sessions connected, by connection id.
  *
  * The rows are those of INFORMATION_SCHEMA.PROCESSLIST, which MySQL 8.0 and later read with a
- * deprecation warning; the session that runs the statement is in the state init, starting in
- * 5.6 and 5.7. Without FULL the statement of a session is cut to its first 100 characters
- * (verified on live 5.7.44, 8.0.44 and 8.4.7 servers).
+ * deprecation warning; the session that runs the statement is in the state init, or starting
+ * in 5.7. Without FULL the statement of a session is cut to its first 100 characters
+ * (verified on live 5.6.51, 5.7.44, 8.0.44 and 8.4.7 servers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-processlist.html.
  *
  * @visibility MySqlMemory
@@ -64,7 +64,7 @@ final class ShowProcesslistCommand implements Command
         }
         ksort($sessions);
         foreach ($sessions as $id => $open) {
-            $row = array_values(Processlist::row($open, $id === $session->id, $legacy ? 'starting' : 'init'));
+            $row = array_values(Processlist::row($open, $id === $session->id, $session->settings()->release() === GrammarRelease::MySql5744 ? 'starting' : 'init'));
             $info = $row[7];
             $row[7] = is_string($info) && !$statement->full ? mb_substr($info, 0, 100) : $info;
             $rows[] = array_slice($row, 0, 8);
@@ -90,7 +90,7 @@ final class ShowProcesslistCommand implements Command
 
         return [
             new Heading('Id', Field::LongLong, $legacy ? 21 : 22, $number),
-            Heading::text('User', Field::VarString, 32, $text, 31),
+            Heading::text('User', Field::VarString, $release === GrammarRelease::MySql5651 ? 16 : 32, $text, 31),
             Heading::text('Host', Field::VarString, $legacy ? 64 : 255, $text, 31),
             Heading::text('db', Field::VarString, 64, 0, 31),
             Heading::text('Command', Field::VarString, 16, $text, 31),

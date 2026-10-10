@@ -41,6 +41,10 @@ final class ShowProcesslistCommandTest extends TestCase
         $result3 = (new Instance('5.7.44'))->connect()->query('SHOW FULL PROCESSLIST')[0];
         self::assertInstanceOf(ResultSet::class, $result3);
         self::assertSame('starting', $result3->rows[0][6]);
+        $result4 = (new Instance('5.6.51'))->connect()->query('SHOW PROCESSLIST')[0];
+        self::assertInstanceOf(ResultSet::class, $result4);
+        self::assertSame('init', $result4->rows[0][6]);
+        self::assertSame(16, $result4->columns[1]->length);
     }
 
     public function testHeadingsDescribesTheColumns(): void

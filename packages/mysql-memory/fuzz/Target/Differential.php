@@ -150,7 +150,7 @@ final class Differential
      */
     public function memoryGuard(): PDO
     {
-        return $this->memoryGuard ??= new PDO($this->memory, 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
+        return $this->memoryGuard ??= new PDO($this->memory, $this->guardUser ?? $this->nativeUser, '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
     }
 
     /**
@@ -226,10 +226,15 @@ final class Differential
         $pdo = $this->connect($dsn, $user, $password, $clock);
         $passwords = RandomPasswords::handles($sql, $this->version) ? RandomPasswords::capture($pdo, preg_match('/\bRETAIN\s+CURRENT\s+PASSWORD\b/i', $sql) === 1) : null;
         $identities = StatementIdentities::handles($sql, $this->version) ? StatementIdentities::capture($pdo) : null;
+        if (Process\Listing::handles($sql)) {
+            Process\Listing::prepare($pdo);
+        }
+        $processes = Process\Listing::handles($sql) ? Process\Listing::capture($pdo, $dsn === $this->native ? $this->guard() : $this->memoryGuard()) : null;
         $observer = new Observer();
         $ordered = preg_match('/\border\s+by\b/i', $sql) === 1;
         $observation = $observer->observe($pdo, $sql, $ordered);
         $observation = $identities?->comparable($pdo, $observation) ?? $observation;
+        $observation = $processes?->comparable($pdo, $observation) ?? $observation;
         $observation['tables'] = $observer->tables($pdo, self::DATABASE);
         $observation = $passwords?->comparable($pdo, $observation) ?? $observation;
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
