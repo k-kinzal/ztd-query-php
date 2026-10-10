@@ -188,7 +188,7 @@ final class ItemNaming
             return $argument->value();
         }
         if ($argument instanceof NumberLiteral && $argument->form === NumberForm::Float) {
-            return \SqlSemantics\Platform\MySql\Rules\Literal\Real::format((float) $argument->text, $this->legacy() ? 32 : 22);
+            return \SqlSemantics\Platform\MySql\Rules\Literal\Real::format((float) $argument->text, $this->legacy() ? PHP_INT_MAX : 22);
         }
         if ($argument instanceof \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral) {
             return \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($argument->form === \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp ? 'DATETIME' : $argument->form->value, $argument->text, (int) $argument->type()->precision, false, false) ?? '';

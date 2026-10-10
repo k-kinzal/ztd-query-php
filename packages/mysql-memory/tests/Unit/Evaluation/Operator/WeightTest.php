@@ -79,6 +79,15 @@ final class WeightTest extends TestCase
         self::assertSame([['007FFF', 'FF8000', 'FF7F00', '0080FF']], $result->rows);
     }
 
+    public function testEvaluateIgnoresModifiersForLevelsTheCollationDoesNotHave(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $result = $session->query("SELECT HEX(WEIGHT_STRING(_latin1'aB' LEVEL 2 DESC)), HEX(WEIGHT_STRING(_latin1'aB' LEVEL 2 REVERSE)), HEX(WEIGHT_STRING(_latin1'aB' LEVEL 1 REVERSE, 2 DESC))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['4142', '4142', '4241']], $result->rows);
+    }
+
     public function testBytesPadsOrCutsToTheLengthOfTheCast(): void
     {
         $weight = new Weight(new Constant(Domain::null(), null), WeightCast::Binary, 3, Domain::string(8, Collation::binary()));

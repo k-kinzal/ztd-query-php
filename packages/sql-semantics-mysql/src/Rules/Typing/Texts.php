@@ -69,8 +69,11 @@ final class Texts
         }
         $field = $operand->field === Field::Blob ? Field::Blob : Field::VarString;
         $length = $operand->kind === Kind::String ? $operand->length : $this->length($operand);
+        if (in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && $operand->kind === Kind::Double) {
+            $length = $operand->length;
+        }
         if ($derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $operand->kind !== Kind::String && $this->settings->connection->charset !== $collation->charset) {
-            $length = 0;
+            $length = intdiv($length, $collation->charset->maxLength);
         }
 
         return Domain::string($length, $collation, $field, Coercibility::Explicit);

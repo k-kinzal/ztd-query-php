@@ -130,6 +130,7 @@ final class ItemNamingTest extends TestCase
         $naming = new ItemNaming((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context()->profile);
 
         self::assertSame('0.000012345678901234568', $naming->constant(new NumberLiteral('1.2345678901234568e-5')));
+        self::assertSame('0.0000000000000012345678901234568', $naming->constant(new NumberLiteral('1.2345678901234568e-15')));
     }
 
     public function testBytesPadsBitsToWholeBytes(): void

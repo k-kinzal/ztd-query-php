@@ -52,12 +52,14 @@ final class TextsTest extends TestCase
         self::assertEquals([new UnknownCollation('klingon_ci'), new CollationMismatch('utf8mb4_bin', 'latin1')], $derivation->facts()->diagnostics);
     }
 
-    public function testCollatedReportsZeroWidthWhenLegacyNumericTextChangesCharset(): void
+    public function testCollatedConvertsLegacyNumericByteWidthsToCharacterCounts(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
         $texts = new Texts(new Settings(Collation::known('latin1_bin')));
 
         self::assertSame(0, $texts->collated(Domain::integer(Field::LongLong, 1), 'utf8mb4_bin', $derivation)?->length);
+        self::assertSame(1, $texts->collated(Domain::decimal(2, 1), 'utf8mb4_bin', $derivation)?->length);
+        self::assertSame(3, $texts->collated(Domain::double(3), 'latin1_bin', $derivation)?->length);
         self::assertSame([], $derivation->facts()->diagnostics);
     }
 

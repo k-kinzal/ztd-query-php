@@ -38,6 +38,8 @@ final class NamedConstantTest extends TestCase
         yield 'negated boolean metadata' => ['SELECT -TRUE, -FALSE, -(TRUE), -+TRUE'];
         yield 'collated numeric metadata' => ['SELECT TRUE COLLATE utf8mb4_bin, 1 COLLATE utf8mb4_bin, 1.5 COLLATE utf8mb4_bin, 1e0 COLLATE utf8mb4_bin; SHOW WARNINGS'];
         yield 'collated latin1 numeric metadata' => ['SET NAMES latin1; SELECT 1 COLLATE latin1_bin, 1.5 COLLATE latin1_bin, 1e0 COLLATE latin1_bin; SHOW WARNINGS'];
+        yield 'collated utf8mb4 numeric metadata' => ['SET NAMES utf8mb4; SELECT TRUE COLLATE utf8mb4_bin, 1 COLLATE utf8mb4_bin, 1.5 COLLATE utf8mb4_bin, 1e0 COLLATE utf8mb4_bin; SHOW WARNINGS'];
+        yield 'collated wider numeric metadata' => ['SET NAMES latin1; SELECT 1234567890 COLLATE utf8mb4_bin, 12345.67890 COLLATE utf8mb4_bin, 1.234e10 COLLATE utf8mb4_bin; SHOW WARNINGS'];
         yield 'empty table' => ["SELECT NAME_CONST('x', TRUE) FROM t1 WHERE FALSE; SHOW WARNINGS"];
         yield 'preparation' => ["PREPARE named_constant FROM 'SELECT NAME_CONST(''x'', TRUE)'; SHOW WARNINGS"];
         yield 'argument count' => ["SELECT NAME_CONST('x'); SHOW WARNINGS"];

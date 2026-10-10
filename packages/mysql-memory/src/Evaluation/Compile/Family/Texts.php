@@ -355,7 +355,7 @@ final class Texts
     }
 
     /**
-     * Compiles WEIGHT_STRING; supported collations have one weight level, to which LEVEL numbers clamp.
+     * Compiles WEIGHT_STRING; supported collations expose one level and only its modifiers apply.
      */
     public function weight(WeightString|\SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightStringParameters $node, Scope $scope): Evaluable
     {
@@ -365,6 +365,9 @@ final class Texts
         $descending = false;
         $reverse = false;
         foreach ($node->levels as $level) {
+            if ((int) $level->number->text > 1) {
+                continue;
+            }
             $descending = $descending || $level->direction === \SqlSemantics\Platform\MySql\Statement\Query\Direction::Descending;
             $reverse = $reverse || $level->reverse;
         }
