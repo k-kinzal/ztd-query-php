@@ -98,6 +98,13 @@ final class SubqueryRowsTest extends TestCase
         self::assertEquals(new Known(Domain::string(262140, $domain->collation, ResolvedField::Blob)), (new SubqueryRows())->value($query)->type);
     }
 
+    public function testStringKeepsExplicitComputedBlobMetadataSeparateFromTheExpressionBound(): void
+    {
+        $domain = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, ResolvedField::Blob, 65535, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'), display: 262140);
+
+        self::assertEquals($domain, (new SubqueryRows())->string($domain, null));
+    }
+
     public function testTestCombinesTheColumnsAndReportsAWidthMismatch(): void
     {
         $platform = new Platform();

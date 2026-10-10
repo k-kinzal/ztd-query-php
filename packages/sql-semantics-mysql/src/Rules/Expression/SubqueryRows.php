@@ -86,7 +86,7 @@ final class SubqueryRows
         $stored = $column || ($expression === null && $domain->capacity !== null);
         $length = $stored && $domain->field->blob() ? min(4294967295, $domain->value()->byteLength()) : $domain->length;
 
-        return $expression instanceof GroupConcat ? $domain : Domain::string($length, $domain->collation, $domain->field, $domain->coercibility);
+        return $expression instanceof GroupConcat ? $domain : new Domain(Kind::String, $domain->field, $length, Domain::NOT_FIXED, false, $domain->collation, $domain->members, $domain->coercibility, $stored ? null : $domain->display);
     }
 
     /**

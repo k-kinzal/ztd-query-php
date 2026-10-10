@@ -39,6 +39,17 @@ final class AggregatesTest extends TestCase
         self::assertNull($aggregates->result(AggregateFunction::Collect, Domain::integer()));
     }
 
+    public function testExtremeSeparatesTheColumnExpressionBoundFromItsMetadata(): void
+    {
+        $aggregates = new Aggregates(new Settings(Collation::known('utf8mb4_bin')));
+        $argument = new Domain(Kind::String, Field::Blob, 65535, 0, false, Collation::known('utf8mb4_bin'));
+        $column = $aggregates->result(AggregateFunction::Minimum, $argument, GrammarRelease::MySql847, true);
+
+        self::assertNotNull($column);
+        self::assertSame([65535, 262140, Domain::NOT_FIXED], [$column->length, $column->metadataLength(), $column->decimals]);
+        self::assertSame($argument, $aggregates->extreme($argument, GrammarRelease::MySql847, false));
+    }
+
     public function testConcatenatedFollowsGroupConcatMaxLen(): void
     {
         $text = Domain::string(5, Collation::known('utf8mb4_0900_ai_ci'));

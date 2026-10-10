@@ -40,7 +40,7 @@ final class Aggregates
     /**
      * Resolves an aggregate other than GROUP_CONCAT over an argument, or answers null for ST_COLLECT.
      */
-    public function result(AggregateFunction $function, ?Domain $argument, GrammarRelease $release = GrammarRelease::MySql847): ?Domain
+    public function result(AggregateFunction $function, ?Domain $argument, GrammarRelease $release = GrammarRelease::MySql847, bool $column = false): ?Domain
     {
         $numbers = new Numbers();
         $operand = $argument === null ? Kind::Integer : $numbers->operand($argument);
@@ -49,7 +49,7 @@ final class Aggregates
         return match ($function) {
             AggregateFunction::Count => Domain::integer(Field::LongLong, 21),
             AggregateFunction::BitAnd, AggregateFunction::BitOr, AggregateFunction::BitXor => Domain::integer(Field::LongLong, 21, true),
-            AggregateFunction::Minimum, AggregateFunction::Maximum => $argument?->kind === Kind::Json && $release !== GrammarRelease::MySql5744 ? JsonResults::json($release) : $argument ?? Domain::null(),
+            AggregateFunction::Minimum, AggregateFunction::Maximum => $this->extreme($argument, $release, $column),
             AggregateFunction::Sum => match (true) {
                 $argument?->kind === Kind::Null => Domain::double(17, 0),
                 $operand === Kind::Double => Domain::double(23),
@@ -65,6 +65,25 @@ final class Aggregates
             AggregateFunction::JsonArray => JsonResults::json($release, true),
             AggregateFunction::Collect => null,
         };
+    }
+
+    /**
+     * Resolves MIN and MAX. A TEXT/BLOB column keeps its expression bound while
+     * reporting its collation-expanded byte width, without fixed decimals. This
+     * preserves the bound used by CONCAT and HEX over the aggregate. Computed
+     * blob expressions already carry their own metadata. Verified through SQL on
+     * MySQL 5.6 and 8.4, including scalar subqueries and set operands.
+     */
+    public function extreme(?Domain $argument, GrammarRelease $release, bool $column): Domain
+    {
+        if ($argument?->kind === Kind::Json && $release !== GrammarRelease::MySql5744) {
+            return JsonResults::json($release);
+        }
+        if ($column && $argument?->kind === Kind::String && $argument->field->blob()) {
+            return new Domain(Kind::String, $argument->field, $argument->length, Domain::NOT_FIXED, false, $argument->collation, $argument->members, $argument->coercibility, min(4294967295, $argument->byteLength()));
+        }
+
+        return $argument ?? Domain::null();
     }
 
     /**

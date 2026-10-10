@@ -137,6 +137,9 @@ separate from the execution limit controlled by `max_allowed_packet`.
 TEXT/BLOB results of `UNION` and `UNION ALL` retain their storage capacity for
 later scalar and derived-table reads, with the separate MySQL 5.x scalar rule.
 Combining further set operands retains the original bounds.
+`MIN` and `MAX` over TEXT/BLOB columns preserve separate expression and metadata
+bounds, including grouped column references, scalar subqueries, and later
+`CONCAT` or `HEX` calls.
 
 Besides the keyword forms above (`CAST`, `CONVERT`, `TRIM`, `POSITION`, `SUBSTRING ... FROM`, `CHAR`, `EXTRACT`, `DATE_ADD`, `DATE_SUB`, `TIMESTAMPADD`, `TIMESTAMPDIFF`, `GET_FORMAT` and the clocks), these functions are evaluated:
 
