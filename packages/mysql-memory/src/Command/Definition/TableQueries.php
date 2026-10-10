@@ -103,6 +103,7 @@ final class TableQueries
         }
         $layout = new TableLayout(new QualifiedName($create->name->name, new Name($schema->name)), $columns, $keys, $create->options, $create->temporaryWords);
         $layout->implicitCollations = $this->implicitCollations($plan, $declared);
+        $layout->reportedLengths = $this->reportedLengths($plan, $declared);
         $definition = (new TableRebuild($this->session, $this->context, $this->connection))->definition($layout, $this->session->instance->dictionary->declarations());
         $table = new StoredTable($definition, new Heap(), created: CreateTableCommand::created($this->context), clock: (int) floor($this->context->variables->clock()));
         [$records, $affected, $duplicates] = $this->fill($table, $plan, $create->query->duplicate);
@@ -111,6 +112,25 @@ final class TableQueries
         $warnings = $this->context->diagnostics->count();
 
         return new Completion($affected, 0, $warnings, 'Records: ' . $records . '  Duplicates: ' . $duplicates . '  Warnings: ' . $warnings);
+    }
+
+    /**
+     * Retains legacy computed DOUBLE widths that have no CREATE TABLE spelling.
+     *
+     * @param array<string, true> $declared The names explicitly declared by CREATE TABLE
+     * @return array<string, int>
+     */
+    public function reportedLengths(QueryPlan $plan, array $declared): array
+    {
+        $lengths = [];
+        foreach ($plan->domains as $position => $domain) {
+            $name = mb_strtolower($plan->names[$position]);
+            if (!isset($declared[$name]) && $this->session->settings()->legacy() && $domain->field === Field::Double && $domain->decimals === Domain::NOT_FIXED) {
+                $lengths[$name] = $domain->display ?? $domain->length;
+            }
+        }
+
+        return $lengths;
     }
 
     /**
@@ -195,12 +215,12 @@ final class TableQueries
     }
 
     /**
-     * Answers the storage field of a computed expression. MySQL 8.0 YEAR results
+     * Answers the storage field SQL Semantics resolved for a computed expression. MySQL 8.0 YEAR results
      * with a binary string field retain integer storage semantics.
      */
     public function field(Domain $domain): Field
     {
-        return $domain->kind === Kind::Year && $domain->field === Field::VarString && $domain->collation->bytes() ? Field::LongLong : $domain->field;
+        return $domain->storageField ?? ($domain->kind === Kind::Year && $domain->field === Field::VarString && $domain->collation->bytes() ? Field::LongLong : $domain->field);
     }
 
     /**
@@ -219,8 +239,8 @@ final class TableQueries
         return match ($field) {
             Field::Tiny, Field::Short, Field::Int24, Field::Long, Field::LongLong => $this->integer($domain, self::INTEGERS[$field->name]),
             Field::Decimal, Field::NewDecimal => 'DECIMAL(' . $domain->precision() . ',' . $domain->decimals . ')' . $unsigned,
-            Field::Float => 'FLOAT' . $unsigned,
-            Field::Double => 'DOUBLE' . $unsigned,
+            Field::Float => $this->floating($domain, 'FLOAT') . $unsigned,
+            Field::Double => $this->floating($domain, 'DOUBLE') . $unsigned,
             Field::Null => in_array($this->session->settings()->release(), [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044], true) ? 'BINARY(0)' : 'VARBINARY(0)',
             Field::Date, Field::NewDate => 'DATE',
             Field::Time => 'TIME' . $fraction,
@@ -236,6 +256,18 @@ final class TableQueries
     }
 
     /**
+     * Retains the scale of a computed floating result in its stored definition.
+     * Modern DOUBLE columns use the normal DOUBLE display width; legacy columns
+     * retain the expression width. Unfixed results omit the width and scale.
+     */
+    public function floating(Domain $domain, string $name): string
+    {
+        $length = $name === 'DOUBLE' && !$this->session->settings()->legacy() ? 22 : $domain->length;
+
+        return $name . ($domain->decimals < Domain::NOT_FIXED ? '(' . $length . ',' . $domain->decimals . ')' : '');
+    }
+
+    /**
      * Answers the type an integer column of a query takes in the table, as SQL: it keeps the
      * display width of the expression, and a LONGLONG is a BIGINT from 11 display characters on.
      *
@@ -243,7 +275,7 @@ final class TableQueries
      */
     public function integer(Domain $domain, string $name): string
     {
-        $name = $domain->field === Field::LongLong && $domain->length >= 11 ? 'BIGINT' : $name;
+        $name = $this->field($domain) === Field::LongLong && $domain->length >= ($this->session->settings()->legacy() ? 10 : 11) ? 'BIGINT' : $name;
 
         return $name . '(' . ($domain->display ?? $domain->length) . ')' . ($domain->unsigned ? ' UNSIGNED' : '');
     }

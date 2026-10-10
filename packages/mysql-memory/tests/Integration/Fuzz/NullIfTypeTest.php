@@ -32,11 +32,13 @@ final class NullIfTypeTest extends TestCase
         foreach (['a+0', 'a+9999999', 'a+a', 'a-a', 'a*a', 'a%2', 'a+b', 'a*b', 'a%b', 'a/2', 'a/b', 'a+c', 'a/c'] as $expression) {
             yield "fixed arithmetic: {$expression}" => ["CREATE TEMPORARY TABLE nullif_probe(a FLOAT(8,2),b DOUBLE(9,3),c DOUBLE); INSERT INTO nullif_probe VALUES(1.25,2.375,1.25); SELECT {$expression} FROM nullif_probe"];
         }
-        foreach (['DATE' => "'2020-01-01'", 'TIME(3)' => "'12:01:02.345'", 'DATETIME(3)' => "'2020-01-01 12:01:02.345'", 'YEAR' => '2020'] as $type => $value) {
-            $setup = "SET NAMES utf8mb4; CREATE TEMPORARY TABLE nullif_probe(a {$type}); INSERT INTO nullif_probe VALUES({$value}); ";
+        foreach (['TINYINT' => '1', 'SMALLINT' => '1', 'MEDIUMINT' => '1', 'INT' => '1', 'BIGINT' => '1', 'INT UNSIGNED' => '1', 'BIGINT UNSIGNED' => '18446744073709551615', 'BIT(8)' => '65', 'YEAR' => '2020', 'DECIMAL(8,2)' => '1.25', 'FLOAT' => '1.25', 'DOUBLE' => '1.25', 'FLOAT(8,2)' => '1.25', 'DOUBLE(9,3)' => '1.25', 'DATE' => "'2020-01-01'", 'TIME(3)' => "'-12:01:02.345'", 'DATETIME(3)' => "'2020-01-01 12:01:02.345'", 'TIMESTAMP(3) NULL' => "'2020-01-01 12:01:02.345'"] as $type => $value) {
+            $setup = "SET NAMES utf8mb4; CREATE TABLE nullif_probe(a {$type}); INSERT INTO nullif_probe VALUES({$value}); ";
             yield "derived: {$type}" => [$setup . 'SELECT x,x+0,CHARSET(x),COERCIBILITY(x) FROM (SELECT NULLIF(a,NULL) x FROM nullif_probe LIMIT 1) d'];
             yield "scalar: {$type}" => [$setup . 'SELECT (SELECT NULLIF(a,NULL) FROM nullif_probe), (SELECT NULLIF(a,NULL) FROM nullif_probe)+0'];
             yield "union: {$type}" => [$setup . 'SELECT NULLIF(a,NULL) x FROM nullif_probe UNION SELECT NULLIF(a,NULL) FROM nullif_probe'];
+            yield "union all: {$type}" => [$setup . 'SELECT NULLIF(a,NULL) x FROM nullif_probe UNION ALL SELECT NULLIF(a,NULL) FROM nullif_probe'];
+            yield "union consumer: {$type}" => [$setup . 'SELECT x,x+0,CHARSET(x),COERCIBILITY(x) FROM (SELECT NULLIF(a,NULL) x FROM nullif_probe UNION SELECT NULLIF(a,NULL) FROM nullif_probe) d'];
             yield "create: {$type}" => [$setup . 'CREATE TEMPORARY TABLE nullif_stored AS SELECT NULLIF(a,NULL) x FROM nullif_probe; SELECT x,x+0,CHARSET(x),COERCIBILITY(x) FROM nullif_stored; SHOW CREATE TABLE nullif_stored'];
         }
         foreach (['a', "CONCAT(a,'')", 'NULLIF(a,NULL)', "_latin1'a' COLLATE latin1_bin"] as $expression) {
@@ -49,7 +51,10 @@ final class NullIfTypeTest extends TestCase
             }
             yield "integer widths: {$type}" => ["CREATE TEMPORARY TABLE nullif_probe(a {$type}); INSERT INTO nullif_probe VALUES(0); " . implode('; ', $queries)];
         }
+        yield 'stored floating widths' => ['CREATE TABLE nullif_probe(a FLOAT); INSERT INTO nullif_probe VALUES(1.25); CREATE TABLE nullif_stored AS SELECT NULLIF(a,NULL) x FROM nullif_probe; CREATE TABLE nullif_copy LIKE nullif_stored; SELECT * FROM nullif_copy; ALTER TABLE nullif_stored ADD y INT; SELECT * FROM nullif_stored; CREATE TABLE nullif_recopied AS SELECT x FROM nullif_stored; SELECT * FROM nullif_recopied; ALTER TABLE nullif_stored MODIFY x DOUBLE; SELECT * FROM nullif_stored'];
         yield 'reported YEAR arithmetic' => ['CREATE TEMPORARY TABLE nullif_probe(a YEAR); INSERT INTO nullif_probe VALUES(2020); SELECT NULLIF(a,NULL)+0, NULLIF(a,NULL)+100000, NULLIF(a,NULL)-1, NULLIF(a,NULL)*2, NULLIF(a,NULL)%2, NULLIF(a,NULL)/2, NULLIF(a,NULL) DIV 2, -NULLIF(a,NULL), ABS(NULLIF(a,NULL)) FROM nullif_probe'];
+        yield 'scalar string conversion' => ["CREATE TABLE nullif_probe(a VARCHAR(10)); INSERT INTO nullif_probe VALUES('12x'); SELECT ((SELECT a FROM nullif_probe))+0, (SELECT a FROM nullif_probe) DIV 2, (SELECT a FROM nullif_probe)/2, (SELECT a FROM nullif_probe)=12"];
+        yield 'reduced scalar conversion' => ["SELECT ((SELECT '12x'))+0"];
         yield 'fixed MOD function' => ['CREATE TEMPORARY TABLE nullif_probe(a FLOAT(8,2),b DOUBLE(9,3)); INSERT INTO nullif_probe VALUES(1.25,2.375); SELECT MOD(a,b), MOD(b,a) FROM nullif_probe'];
         foreach (['DECIMAL(31,30)', 'DECIMAL(35,30)', 'DECIMAL(35,28)'] as $type) {
             $queries = [];
@@ -71,5 +76,6 @@ final class NullIfTypeTest extends TestCase
 
         self::assertFalse($comparison->volatile, (string) $comparison->referenceDifference);
         self::assertNull($comparison->difference, (string) $comparison->difference);
+        self::assertArrayNotHasKey('error', $target->run($target->memory, 'root', '', $sql));
     }
 }

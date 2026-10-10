@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as ResolvedField;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -27,7 +28,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * Rule: MYSQL-SUBQUERY-ROWS-001. A subquery used as a value yields the value
  * of its one column, without the display width of the column, or a row of its columns, and NULL when it returns no
  * row. An unreduced string scalar has no fixed fractional digits, including a
- * column whose own metadata reports zero. A direct GROUP_CONCAT result retains its
+ * column whose own metadata reports zero. A temporal expression reported as a string is read as text
+ * and retains its reported decimals, independently of the original evaluation kind.
+ * A direct GROUP_CONCAT result retains its
  * fractional metadata (zero in MySQL 5.6 and 5.7, verified through SQL). A subquery with an unexpandable star depends on the inputs it
  * misses. A membership or quantified test is NULL when the operand or a
  * column of the subquery can be NULL; a subquery whose columns are not known
@@ -53,6 +56,9 @@ final class SubqueryRows
         $slots = $query->shape->slots;
         if (count($slots) === 1) {
             $domain = (new Precision())->domain($slots[0]->type);
+            if ($domain?->field === ResolvedField::VarString && $domain->kind->temporal()) {
+                return new ScalarFact(new Known(new Domain(Kind::String, $domain->field, $domain->length, $domain->decimals, false, $domain->collation, [], $domain->coercibility, displayDecimals: $domain->displayDecimals ?? $domain->decimals)), Nullability::Nullable);
+            }
             if ($domain?->kind === Kind::String) {
                 $field = $query->projection[0] ?? null;
                 $expression = $field instanceof Field ? $field->expression : null;

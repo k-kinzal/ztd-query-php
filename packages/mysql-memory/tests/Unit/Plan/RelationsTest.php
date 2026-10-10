@@ -33,6 +33,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class RelationsTest extends TestCase
 {
+    public function testDerivedConvertsBitBytesToTheResolvedTemporaryIntegerColumn(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a BIT(8)); INSERT INTO t VALUES(65)');
+        $result = $session->query('SELECT x,x+0 FROM (SELECT NULLIF(a,NULL) x FROM t LIMIT 1) d')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['65', '65']], $result->rows);
+        self::assertSame([Field::Long, Field::LongLong], array_map(static fn ($column): Field => $column->type, $result->columns));
+    }
+
     public function testPlanReadsAStoredTableByAScanAndPlacesItInTheScope(): void
     {
         $session = (new Instance())->connect();

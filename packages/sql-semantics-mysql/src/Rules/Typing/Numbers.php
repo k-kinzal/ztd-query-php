@@ -150,7 +150,7 @@ final class Numbers
         if ($left->kind === Kind::Null || $right->kind === Kind::Null) {
             return Domain::double(2, 0);
         }
-        $fraction = static fn (Domain $domain): int => $domain->kind === Kind::Json || ($domain->kind === Kind::String && ($domain->coercibility !== Coercibility::Ignorable || $domain->length !== 0)) ? Domain::NOT_FIXED : ($domain->displayDecimals ?? $domain->decimals);
+        $fraction = static fn (Domain $domain): int => $domain->displayDecimals ?? ($domain->kind === Kind::Json || ($domain->kind === Kind::String && ($domain->coercibility !== Coercibility::Ignorable || $domain->length !== 0)) ? Domain::NOT_FIXED : $domain->decimals);
         $leftScale = $fraction($left);
         $rightScale = $fraction($right);
         $scale = max($leftScale, $rightScale);
@@ -179,7 +179,7 @@ final class Numbers
         $fraction = $left->displayDecimals !== null && $this->operand($left) === Kind::Integer ? 1 : ($left->decimals > 0 && $left->decimals < Domain::NOT_FIXED ? $left->decimals + 1 : 0);
         $length = $this->legacyRemainders || !$left->kind->temporal() ? $left->length - $fraction : $this->width($left) - $left->decimals;
 
-        return Domain::integer(Field::LongLong, max(1, $length + ($this->operand($right) !== Kind::Integer ? 1 : 0)), $left->unsigned || $right->unsigned);
+        return Domain::integer(Field::LongLong, max(1, $length + ($left->kind === Kind::String && !$this->legacyRemainders ? 1 : 0) + ($this->operand($right) !== Kind::Integer ? 1 : 0)), $left->unsigned || $right->unsigned);
     }
 
     /**

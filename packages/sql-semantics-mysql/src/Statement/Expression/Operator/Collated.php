@@ -31,7 +31,8 @@ use SqlSemantics\Statement\Type\Nullability;
  * COLLATE is the tightest operator; a chain of COLLATE clauses applies
  * from the left (MYSQL-PRECEDENCE-001).
  *
- * Rule: MYSQL-COLLATE-001. Facts: the type and NULL fact of the operand;
+ * Rule: MYSQL-COLLATE-001. Facts: the type of the operand; its NULL fact in
+ * MySQL 5.6, otherwise nullable, including for a constant stored by CREATE TABLE AS SELECT.
  * the collation is part of the comparison semantics the server applies, and
  * the character set of the operand must admit it, which needs the
  * collation catalog of the server and is not checked. A collation the
@@ -78,7 +79,7 @@ final class Collated implements Scalar
         $operand = (new Precision())->domain($fact->type);
         $domain = $operand === null || !$known ? null : (new Texts(Settings::of($derivation->context)))->collated($operand, $this->collation->value, $derivation);
 
-        $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $legacy = $derivation->context->profile->grammar === GrammarRelease::MySql5651;
 
         return new ScalarFact($domain === null ? $fact->type : new Known($domain), $legacy ? $fact->nullability : Nullability::Nullable);
     }

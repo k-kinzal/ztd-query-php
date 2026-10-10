@@ -24,6 +24,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class NumbersTest extends TestCase
 {
+    public function testQuotientReservesAStringDividendSignFrom80(): void
+    {
+        $text = Domain::string(10, Collation::known('utf8mb4_0900_ai_ci'));
+        $divisor = Domain::integer(Field::LongLong, 2);
+
+        self::assertSame(11, (new Numbers())->quotient($text, $divisor)->length);
+        self::assertSame(10, (new Numbers(legacyRemainders: true))->quotient($text, $divisor)->length);
+    }
+
     public function testUnsignedFollowsTheSubtractionMode(): void
     {
         self::assertTrue((new Numbers())->unsigned(ArithmeticOperator::Plus, Domain::integer(), Domain::integer(unsigned: true)));

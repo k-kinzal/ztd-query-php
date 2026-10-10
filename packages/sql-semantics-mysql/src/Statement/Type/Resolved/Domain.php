@@ -34,7 +34,9 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  * in length and its separate result width in display, as GROUP_CONCAT does. Decimals is the number
  * of fractional digits, or NOT_FIXED when a floating-point number or string has none fixed.
  * displayDecimals overrides the reported decimals without changing evaluation precision,
- * as for NULLIF of a temporal value. Strings and textually reported temporal results carry
+ * as for NULLIF of a temporal value. storageField can select a different field for
+ * a stored column before integer narrowing, as for NULLIF of BIT or TINYINT.
+ * Strings and textually reported temporal results carry
  * a collation and its coercibility; other values carry the binary collation.
  * A materialized string column can retain its storage capacity separately: value()
  * exposes that capacity to expressions while metadataLength() retains the reported bound.
@@ -78,6 +80,7 @@ final class Domain implements TypeDescriptor
      * @param Coercibility $coercibility How strongly the collation holds
      * @param int|null $display The unconverted metadata width when it differs from the type bound, including integer display widths and partial multibyte string limits
      * @param int|null $capacity The byte capacity of a materialized string column when expressions read its storage type instead of its reported bound
+     * @param Field|null $storageField The field used when an expression becomes a stored column, before integer narrowing
      * @param int|null $displayDecimals The result column's decimals when they differ from the fractional precision used to evaluate the expression
      */
     public function __construct(
@@ -92,6 +95,7 @@ final class Domain implements TypeDescriptor
         public readonly ?int $display = null,
         public readonly ?int $capacity = null,
         public readonly ?int $displayDecimals = null,
+        public readonly ?Field $storageField = null,
     ) {
         $this->collation = $collation ?? Collation::binary();
     }
@@ -163,10 +167,10 @@ final class Domain implements TypeDescriptor
     public function value(): self
     {
         if ($this->capacity !== null && $this->length !== $this->capacity) {
-            return new self($this->kind, $this->field, $this->capacity, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, null, $this->capacity, $this->displayDecimals);
+            return new self($this->kind, $this->field, $this->capacity, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, null, $this->capacity, $this->displayDecimals, $this->storageField);
         }
 
-        return $this->display === null || $this->field->blob() ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, displayDecimals: $this->displayDecimals);
+        return $this->display === null || $this->field->blob() ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, displayDecimals: $this->displayDecimals, storageField: $this->storageField);
     }
 
     /**
@@ -174,7 +178,15 @@ final class Domain implements TypeDescriptor
      */
     public function withCollation(Collation $collation, Coercibility $coercibility): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->members, $coercibility, $this->field->blob() ? $this->display : null, $this->capacity, $this->displayDecimals);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->members, $coercibility, $this->field->blob() ? $this->display : null, $this->capacity, $this->displayDecimals, $this->storageField);
+    }
+
+    /**
+     * Answers the same expression with a separate field for stored columns.
+     */
+    public function withStorageField(Field $field): self
+    {
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, $this->display, $this->capacity, $this->displayDecimals, $field);
     }
 
     /**

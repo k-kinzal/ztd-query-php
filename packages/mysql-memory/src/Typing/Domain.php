@@ -50,6 +50,7 @@ final class Domain
      * @param bool $quiet Whether a string reads as a number without warning when more than a number is written in it, as the result of a string function of MySQL 5.6 and 5.7 does
      * @param string $source The name a warning about a JSON value read as another type gives where it came from: the JSON column, or the function in lower case; empty when unknown
      * @param int|null $capacity The storage capacity of a materialized string column, distinct from its reported bound
+     * @param Field|null $storageField The field used when the expression becomes a stored column, before integer narrowing
      * @param int|null $displayDecimals The reported decimals when they differ from the fractional precision used during evaluation
      */
     public function __construct(
@@ -68,6 +69,7 @@ final class Domain
         public readonly string $source = '',
         public readonly ?int $capacity = null,
         public readonly ?int $displayDecimals = null,
+        public readonly ?Field $storageField = null,
     ) {
         $this->collation = $collation ?? Collation::binary();
     }
@@ -77,7 +79,15 @@ final class Domain
      */
     public function withNumericBytes(bool $numericBytes = true): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $numericBytes, $this->display, $this->quiet, $this->source, $this->capacity, $this->displayDecimals);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $numericBytes, $this->display, $this->quiet, $this->source, $this->capacity, $this->displayDecimals, $this->storageField);
+    }
+
+    /**
+     * Retains a column's reported width independently of its value domain.
+     */
+    public function withDisplay(int $display): self
+    {
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $this->numericBytes, $display, $this->quiet, $this->source, $this->capacity, $this->displayDecimals, $this->storageField);
     }
 
     /**
@@ -85,7 +95,7 @@ final class Domain
      */
     public function withSource(string $source): self
     {
-        return $source === $this->source ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $this->quiet, $source, $this->capacity, $this->displayDecimals);
+        return $source === $this->source ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $this->quiet, $source, $this->capacity, $this->displayDecimals, $this->storageField);
     }
 
     /**
@@ -93,7 +103,7 @@ final class Domain
      */
     public function withQuiet(bool $quiet = true): self
     {
-        return $quiet === $this->quiet ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $quiet, $this->source, $this->capacity, $this->displayDecimals);
+        return $quiet === $this->quiet ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $quiet, $this->source, $this->capacity, $this->displayDecimals, $this->storageField);
     }
 
     /**
@@ -101,7 +111,7 @@ final class Domain
      */
     public static function of(Resolved $type, bool $nullable): self
     {
-        return new self($type->kind, $type->field, $type->length, $type->decimals, $type->unsigned, $type->collation, $nullable, $type->members, $type->coercibility, false, $type->display, capacity: $type->capacity, displayDecimals: $type->displayDecimals);
+        return new self($type->kind, $type->field, $type->length, $type->decimals, $type->unsigned, $type->collation, $nullable, $type->members, $type->coercibility, false, $type->display, capacity: $type->capacity, displayDecimals: $type->displayDecimals, storageField: $type->storageField);
     }
 
     /**
@@ -109,7 +119,7 @@ final class Domain
      */
     public function resolved(): Resolved
     {
-        return new Resolved($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, $this->display, $this->capacity, $this->displayDecimals);
+        return new Resolved($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, $this->display, $this->capacity, $this->displayDecimals, $this->storageField);
     }
 
     /**
@@ -157,7 +167,7 @@ final class Domain
      */
     public function withNullable(bool $nullable): self
     {
-        return $nullable === $this->nullable ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $this->quiet, $this->source, $this->capacity, $this->displayDecimals);
+        return $nullable === $this->nullable ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $nullable, $this->members, $this->coercibility, $this->numericBytes, $this->display, $this->quiet, $this->source, $this->capacity, $this->displayDecimals, $this->storageField);
     }
 
     /**
@@ -165,7 +175,7 @@ final class Domain
      */
     public function withCollation(Collation $collation, Coercibility $coercibility): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->nullable, $this->members, $coercibility, $this->numericBytes, $this->display, $this->quiet, $this->source, $this->capacity, $this->displayDecimals);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->nullable, $this->members, $coercibility, $this->numericBytes, $this->display, $this->quiet, $this->source, $this->capacity, $this->displayDecimals, $this->storageField);
     }
 
     /**

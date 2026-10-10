@@ -14,6 +14,24 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class TableDefinitionTest extends TestCase
 {
+    public function testWithColumnDisplaysUpdatesRuntimeAndDeclaredColumnsWithoutLosingKeyIdentity(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t (a DOUBLE PRIMARY KEY, b INT)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $original = $table->definition;
+        $changed = $original->withColumnDisplays(['a' => 12]);
+        $domain = $changed->declaration->columns[0]->type;
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $domain);
+        self::assertSame(12, $domain->display);
+        self::assertSame(12, $changed->columns[0]->domain->display);
+        self::assertSame($changed->declaration->columns[0], $changed->declaration->keys[0]->columns[0]);
+        self::assertSame($original->declaration->columns[1], $changed->declaration->columns[1]);
+        self::assertSame($original, $original->withColumnDisplays([]));
+    }
+
     public function testPrimaryKeyAnswersThePrimaryKey(): void
     {
         $session = (new Instance())->connect();

@@ -23,6 +23,30 @@ use SqlSemantics\Statement\Operation;
 #[Small]
 final class TableLayoutTest extends TestCase
 {
+    public function testElementsIndexesColumnDefinitionsWithoutKeys(): void
+    {
+        $session = (new Instance())->connect();
+        $statement = $session->analyze('CREATE TABLE t(A DOUBLE, b INT, PRIMARY KEY(b))')->statement;
+        self::assertInstanceOf(CreateTable::class, $statement);
+
+        self::assertSame(['a', 'b'], array_keys(TableLayout::elements($statement)));
+        self::assertSame($statement->elements[0], TableLayout::elements($statement)['a']);
+    }
+
+    public function testOfRetainsHiddenFloatingWidthsAcrossCopiesAndChanges(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a FLOAT); INSERT INTO t VALUES(1.25); CREATE TABLE c AS SELECT NULLIF(a,NULL) x FROM t');
+        $table = $session->instance->dictionary->table('d', 'c');
+        self::assertNotNull($table);
+        self::assertSame(['x' => 12], TableLayout::of($table->definition)->reportedLengths);
+        $session->query('CREATE TABLE copied LIKE c; ALTER TABLE c ADD y INT; CREATE TABLE recopied AS SELECT x FROM c');
+        self::assertSame(12, $session->instance->dictionary->table('d', 'copied')?->definition->columns[0]->domain->display);
+        self::assertSame(12, $session->instance->dictionary->table('d', 'recopied')?->definition->columns[0]->domain->display);
+        $session->query('ALTER TABLE c MODIFY x DOUBLE');
+        self::assertNull($session->instance->dictionary->table('d', 'c')?->definition->columns[0]->domain->display);
+    }
+
     public function testOfStatesTheKeysCollationsAndNullabilityOfTheTable(): void
     {
         $session = (new Instance())->connect();

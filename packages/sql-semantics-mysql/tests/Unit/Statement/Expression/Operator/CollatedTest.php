@@ -26,6 +26,15 @@ use SqlSemantics\Statement\Type\Known;
 #[Medium]
 final class CollatedTest extends TestCase
 {
+    public function testDeriveScalarMakesCollatedResultsNullableFrom57(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
+        $fact = $derivation->scalar(new Collated(new StringLiteral(['a']), new Name('utf8mb4_bin')), $derivation->environment());
+
+        self::assertSame(\SqlSemantics\Statement\Type\Nullability::Nullable, $fact->nullability);
+    }
+
     public function testDeriveScalarPreservesLegacyOperandNullability(): void
     {
         $platform = new Platform();

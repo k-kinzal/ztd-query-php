@@ -55,16 +55,28 @@ final class ControlResults
             return new Domain(Kind::String, Field::VarString, 0, 0, false, $domain->collation, [], $domain->coercibility);
         }
         if ($legacy && in_array($domain->kind, [Kind::Integer, Kind::Year, Kind::Bit, Kind::Double], true)) {
-            return new Domain($domain->kind, $domain->kind === Kind::Double ? Field::Double : Field::LongLong, $domain->length, $domain->decimals, $domain->unsigned, null, [], Coercibility::Numeric);
+            return new Domain($domain->kind, $domain->kind === Kind::Double ? Field::Double : Field::LongLong, $domain->length, $domain->decimals, $domain->unsigned, null, [], Coercibility::Numeric, storageField: $domain->kind === Kind::Double ? null : $this->integerStorage($domain));
         }
         if ($domain->kind === Kind::Year && $call->derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql8044) {
-            return new Domain(Kind::Year, Field::VarString, $domain->length, 0, true, null, [], Coercibility::Numeric, displayDecimals: Domain::NOT_FIXED);
+            return new Domain(Kind::Year, Field::VarString, $domain->length, 0, true, null, [], Coercibility::Numeric, displayDecimals: Domain::NOT_FIXED, storageField: Field::Long);
         }
         if ($domain->kind->temporal() || $domain->kind === Kind::Year) {
             return new Domain($domain->kind, Field::VarString, $domain->length, $domain->decimals, false, Collation::known('latin1_swedish_ci'), [], Coercibility::Numeric, displayDecimals: $legacy ? null : Domain::NOT_FIXED);
         }
 
-        return (new ResultBounds())->selected($domain, $legacy, $column);
+        $result = (new ResultBounds())->selected($domain, $legacy, $column);
+
+        return in_array($domain->kind, [Kind::Integer, Kind::Bit], true) ? $result->withStorageField($this->integerStorage($domain)) : $result;
+    }
+
+    /**
+     * Resolves the storage family of an integer NULLIF result. Small integer
+     * and YEAR inputs store as INT, while BIGINT and BIT use width-based integer
+     * storage. Temporary derived columns independently narrow by result width.
+     */
+    public function integerStorage(Domain $domain): Field
+    {
+        return $domain->storageField ?? ($domain->kind === Kind::Year || ($domain->kind === Kind::Integer && $domain->field !== Field::LongLong) ? Field::Long : Field::LongLong);
     }
 
     /**

@@ -60,6 +60,29 @@ final class TableDefinition
     }
 
     /**
+     * Retains reported widths absent from CREATE TABLE syntax, and publishes
+     * the same column domains to SQL Semantics without losing key identities.
+     *
+     * @param array<string, int> $widths The reported widths by lowercase column name
+     */
+    public function withColumnDisplays(array $widths): self
+    {
+        if ($widths === []) {
+            return $this;
+        }
+        $columns = array_map(static fn (ColumnDefinition $column): ColumnDefinition => isset($widths[mb_strtolower($column->name)]) ? $column->withDomain($column->domain->withDisplay($widths[mb_strtolower($column->name)])) : $column, $this->columns);
+        $declared = [];
+        foreach ($this->declaration->columns as $position => $column) {
+            $declared[mb_strtolower($column->name->value)] = isset($widths[mb_strtolower($column->name->value)]) ? new \SqlSemantics\Statement\Declaration\Column($column->name, $columns[$position]->domain->resolved(), $column->nullability, $column->generated) : $column;
+        }
+        $keys = array_map(static fn (\SqlSemantics\Statement\Declaration\Key $key): \SqlSemantics\Statement\Declaration\Key => new \SqlSemantics\Statement\Declaration\Key($key->primary, array_map(static fn (\SqlSemantics\Statement\Declaration\Column $column): \SqlSemantics\Statement\Declaration\Column => $declared[mb_strtolower($column->name->value)], $key->columns)), $this->declaration->keys);
+        $original = $this->declaration;
+        $declaration = new Table($original->name, $original->profile, array_values($declared), $original->implicit, $original->complete, $original->kind, $keys, $original->partitions);
+
+        return new self($this->schema, $this->name, $columns, $this->keys, $declaration, $this->engine, $this->collation, $this->temporary, $this->comment, $this->statement, $this->checks, $this->foreignKeys, $this->partitioning);
+    }
+
+    /**
      * Answers the same definition with other CHECK constraints and foreign keys.
      *
      * @param list<Check> $checks

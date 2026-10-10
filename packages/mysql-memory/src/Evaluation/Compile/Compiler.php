@@ -271,17 +271,35 @@ final class Compiler
         }
         $type = $fact->type;
         $domain = $type instanceof Known && $type->descriptor instanceof Resolved ? Domain::of($type->descriptor, $nullable)->withNumericBytes($evaluable->domain()->numericBytes && $type->descriptor->kind === $evaluable->domain()->kind) : $evaluable->domain()->withNullable($nullable);
-        if ($domain->kind === Kind::String && $this->settings->legacy()) {
-            $domain = ($node instanceof SystemVariable ? $evaluable->domain()->withNullable($nullable) : $domain)->withQuiet(!(new Quietness())->loud($node));
-        } elseif ($domain->kind === Kind::String && $node instanceof FunctionCall && in_array(strtoupper($node->name->value), Calls::QUIET, true)) {
-            $domain = $domain->withQuiet();
-        }
+        $domain = $this->conversionWarnings($node, $evaluable, $domain);
 
         if ($domain->kind === Kind::Json) {
             $domain = $domain->withSource($evaluable->domain()->source);
         }
 
         return $domain === $evaluable->domain() ? $evaluable : new Retyped($evaluable, $domain);
+    }
+
+    /**
+     * Retains the numeric conversion warning policy of a string result.
+     * Unreduced scalar subqueries read strings silently; reduced expressions
+     * retain their own policy. Verified through SQL on MySQL 5.6, 8.0 and 8.4.
+     */
+    public function conversionWarnings(Scalar $node, Evaluable $evaluable, Domain $domain): Domain
+    {
+        $origin = $evaluable;
+        while ($origin instanceof Retyped) {
+            $origin = $origin->evaluable;
+        }
+        if ($domain->kind === Kind::String && $origin instanceof \MySqlMemory\Evaluation\Subquery\ScalarRead) {
+            $domain = $domain->withQuiet();
+        } elseif ($domain->kind === Kind::String && $this->settings->legacy()) {
+            $domain = ($node instanceof SystemVariable ? $evaluable->domain()->withNullable($domain->nullable) : $domain)->withQuiet(!(new Quietness())->loud($node));
+        } elseif ($domain->kind === Kind::String && $node instanceof FunctionCall && in_array(strtoupper($node->name->value), Calls::QUIET, true)) {
+            $domain = $domain->withQuiet();
+        }
+
+        return $domain;
     }
 
     /**

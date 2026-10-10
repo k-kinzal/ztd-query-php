@@ -17,6 +17,26 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class DomainTest extends TestCase
 {
+    public function testWithDisplayKeepsTheValueDomainAndStorageField(): void
+    {
+        $domain = new Domain(Kind::Double, Field::Double, 22, Domain::NOT_FIXED, storageField: Field::Double);
+        $reported = $domain->withDisplay(12);
+
+        self::assertNull($domain->display);
+        self::assertSame([22, 12, Field::Double, Domain::NOT_FIXED], [$reported->length, $reported->display, $reported->storageField, $reported->decimals]);
+        self::assertSame(12, $reported->resolved()->display);
+    }
+
+    public function testOfPreservesTheSeparateStorageFieldThroughRuntimeAttributes(): void
+    {
+        $resolved = (new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(Kind::Bit, Field::Bit, 8, 0, true))->withStorageField(Field::LongLong);
+        $domain = Domain::of($resolved, true)->withNullable(false)->withSource('a')->withQuiet()->withNumericBytes()->withCollation(Collation::binary(), Coercibility::Numeric);
+
+        self::assertSame(Field::Bit, $domain->field);
+        self::assertSame(Field::LongLong, $domain->storageField);
+        self::assertSame(Field::LongLong, $domain->resolved()->storageField);
+    }
+
     public function testOfRetainsReportedDecimalsAcrossCopies(): void
     {
         $resolved = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(Kind::Time, Field::VarString, 14, 3, false, Collation::known('latin1_swedish_ci'), displayDecimals: Domain::NOT_FIXED);

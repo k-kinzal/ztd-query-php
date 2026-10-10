@@ -111,7 +111,7 @@ final class ResultSlots
     public function settled(TypeFact $left, TypeFact $right, Derivation $derivation, array $combined = [false, false]): TypeFact
     {
         $domains = [$this->operand($left, $combined[0]), $this->operand($right, $combined[1])];
-        $domain = $domains[0] === null || $domains[1] === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of($domains, 'UNION', $derivation);
+        $domain = $domains[0] === null || $domains[1] === null ? null : (new CombinedColumns())->resolve($domains, $derivation);
 
         return $domain === null ? (new TypeAggregation())->aggregate([$left, $right]) : new Known((new Materialization())->set($domain, $derivation->context->profile->grammar));
     }

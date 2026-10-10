@@ -22,6 +22,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Medium]
 final class ControlResultsTest extends TestCase
 {
+    public function testIntegerStorageDistinguishesSmallIntegersFromBigintWidthStorage(): void
+    {
+        $rules = new ControlResults();
+
+        self::assertSame(Field::Long, $rules->integerStorage(Domain::integer(Field::Tiny, 4)));
+        self::assertSame(Field::Long, $rules->integerStorage(Domain::integer(Field::Long, 11)));
+        self::assertSame(Field::LongLong, $rules->integerStorage(Domain::integer(Field::LongLong, 20)));
+        self::assertSame(Field::Long, $rules->integerStorage(Domain::integer(Field::LongLong, 11)->withStorageField(Field::Long)));
+    }
+
     public function testNullableRetainsTemporalEvaluationWhileReportingAStringField(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -74,6 +84,6 @@ final class ControlResultsTest extends TestCase
 
         self::assertEquals(Domain::decimal(2, 1), $rules['IF'](new Invocation([Domain::integer(Field::LongLong, 2), Domain::integer(Field::LongLong, 2), Domain::decimal(2, 1)], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
         self::assertEquals(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible), $rules['IFNULL'](new Invocation([Domain::null(), Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
-        self::assertEquals(Domain::integer(Field::LongLong, 2), $rules['NULLIF'](new Invocation([Domain::integer(Field::LongLong, 2), Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
+        self::assertEquals(Domain::integer(Field::LongLong, 2)->withStorageField(Field::LongLong), $rules['NULLIF'](new Invocation([Domain::integer(Field::LongLong, 2), Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])))));
     }
 }

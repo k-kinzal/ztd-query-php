@@ -25,6 +25,23 @@ use SqlSemantics\Statement\Operation;
 #[Small]
 final class ColumnChangeTest extends TestCase
 {
+    public function testRenamePreservesTheReportedWidthUnderTheNewName(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a DOUBLE)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $layout = TableLayout::of($table->definition->withColumnDisplays(['a' => 12]));
+        $alter = $session->analyze('ALTER TABLE t RENAME COLUMN a TO b')->statement;
+        self::assertInstanceOf(AlterTable::class, $alter);
+        $command = $alter->commands[0];
+        self::assertInstanceOf(RenameElement::class, $command);
+
+        (new ColumnChange($layout, 't'))->rename($command);
+
+        self::assertSame(['b' => 12], $layout->reportedLengths);
+    }
+
     public function testRenameRetainsTheOriginOfAnImplicitColumnCollation(): void
     {
         $session = (new Instance())->connect();

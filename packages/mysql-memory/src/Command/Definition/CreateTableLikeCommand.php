@@ -142,6 +142,7 @@ final class CreateTableLikeCommand implements Command
         $layout = new TableLayout($name, $from->columns, $keys, $options, $temporaryWords);
         $layout->undefaulted = $from->undefaulted;
         $layout->implicitCollations = $from->implicitCollations;
+        $layout->reportedLengths = $from->reportedLengths;
         $layout->names = $from->names;
 
         return $layout;

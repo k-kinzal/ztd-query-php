@@ -207,6 +207,15 @@ can report string fields and fractional metadata while retaining integer
 semantics; materialization stores them as integers. Decimal division preserves
 precision growth from `divPrecisionIncrement` even after its scale reaches 30.
 
+An unreduced scalar subquery reads a textually reported temporal result as a
+string while retaining its reported fractional metadata. Set columns also
+resolve from the returned field types: temporal `NULLIF` results become strings
+in the release's set collation, and matching BIT fields retain BIT storage.
+`Domain::storageField` records a separate field for storing an expression. For
+example, `NULLIF` of BIT can return a BIT field while a materialized derived
+table or `CREATE TABLE … SELECT` stores its result as an integer. The original
+evaluation and returned field remain available to direct expression consumers.
+
 For a materialized TEXT/BLOB column, `Domain::capacity` records the byte capacity
 of its storage type separately from the reported bound in `length`. The `value()`
 view used when resolving expressions exposes that capacity. This lets a scalar

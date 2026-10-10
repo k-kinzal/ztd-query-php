@@ -107,7 +107,7 @@ final class Relations
             $scope->merged[spl_object_id($reference)] = $merged ? $plan->origins : $this->planner->materialized($placed);
             $scope->derived[spl_object_id($reference)] = $reference->alias->value ?? $reference->name->name->value;
 
-            return new Materialize($plan);
+            return new Materialize($merged ? $plan : new QueryPlan($this->planner->settled($plan, $placed), $placed, $plan->names, $plan->origins));
         }
         if (!$resolution instanceof DeclaredTable) {
             throw QueryError::NoSuchTable->error($reference->name->schema->value ?? $this->planner->settings->database, $reference->name->name->value);
@@ -154,7 +154,7 @@ final class Relations
         $scope->merged[spl_object_id($derived)] = $merged ? $plan->origins : $this->planner->materialized($placed);
         $scope->derived[spl_object_id($derived)] = $derived->alias->value ?? '';
 
-        return new Materialize($plan, $derived->lateral);
+        return new Materialize($merged ? $plan : new QueryPlan($this->planner->settled($plan, $placed), $placed, $plan->names, $plan->origins), $derived->lateral);
     }
 
     /**

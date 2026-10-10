@@ -106,7 +106,7 @@ final class TableRebuild
                 : $column;
         }
 
-        return $definition->withColumns($columns);
+        return $definition->withColumns($columns)->withColumnDisplays($layout->reportedLengths);
     }
 
     /**

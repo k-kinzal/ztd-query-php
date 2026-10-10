@@ -17,6 +17,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class DomainTest extends TestCase
 {
+    public function testWithStorageFieldKeepsReturnedAndStoredTypesSeparate(): void
+    {
+        $domain = (new Domain(Kind::Bit, Field::Bit, 8, 0, true))->withStorageField(Field::LongLong);
+        $changed = $domain->value()->withCollation(Collation::binary(), Coercibility::Numeric);
+
+        self::assertSame(Kind::Bit, $changed->kind);
+        self::assertSame(Field::Bit, $changed->field);
+        self::assertSame(Field::LongLong, $changed->storageField);
+    }
+
     public function testWithCollationKeepsReportedDecimalsSeparateFromValuePrecision(): void
     {
         $domain = new Domain(Kind::Time, Field::VarString, 14, 3, false, Collation::known('latin1_swedish_ci'), displayDecimals: Domain::NOT_FIXED);

@@ -24,6 +24,31 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class TableQueriesTest extends TestCase
 {
+    public function testFloatingRetainsFixedScaleAndUsesReleaseSpecificDoubleWidths(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
+        $old = (new Instance('5.6.51'))->connect();
+        $legacy = new TableQueries($old, $context, new Connection($old->variables, $context));
+        $fixed = new Domain(Kind::Double, Field::Double, 9, 3);
+
+        self::assertSame('DOUBLE(22,3)', $queries->floating($fixed, 'DOUBLE'));
+        self::assertSame('DOUBLE(9,3)', $legacy->floating($fixed, 'DOUBLE'));
+        self::assertSame('FLOAT(8,2)', $queries->floating(new Domain(Kind::Double, Field::Float, 8, 2), 'FLOAT'));
+        self::assertSame('DOUBLE', $legacy->floating(new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), 'DOUBLE'));
+    }
+
+    public function testReportedLengthsRetainsLegacyComputedWidthsOnlyForUndeclaredColumns(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
+        $plan = new \MySqlMemory\Plan\QueryPlan(new \MySqlMemory\Plan\Path\Source\SingleRow(), [new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED), new Domain(Kind::Double, Field::Double, 12, Domain::NOT_FIXED)], ['X', 'y']);
+
+        self::assertSame(['x' => 12], $queries->reportedLengths($plan, ['y' => true]));
+    }
+
     public function testImplicitCollationsDistinguishesComputedAndCopiedColumns(): void
     {
         $session = (new Instance())->connect();

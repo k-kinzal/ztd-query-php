@@ -147,6 +147,10 @@ from growing by the configured increment.
 Computed `CREATE TABLE … SELECT` columns retain whether their default collation
 was implicit. `SHOW CREATE TABLE` preserves this distinction through column
 copies, `CREATE TABLE … LIKE`, and alterations that keep the column definition.
+Fixed-scale FLOAT and DOUBLE results retain their fractional digits in UNION
+and stored query results. MySQL 5.6 and 5.7 can store a computed DOUBLE with a
+reported width absent from `SHOW CREATE TABLE`; that width survives table copies
+and column-preserving alterations, and resets when the type is explicitly changed.
 
 Materialized computed strings longer than 512 characters use BLOB columns.
 Their direct result width and the storage capacity read by later expressions
@@ -160,6 +164,11 @@ Combining further set operands retains the original bounds.
 MySQL 5.7 reports unordered `UNION ALL` string columns without temporary-table
 attributes when returning the statement directly. Scalar and derived-table
 consumers keep the materialized column types.
+Temporal `NULLIF` results read through an unreduced scalar subquery use string
+numeric conversion. Numeric reads of scalar string results do not emit
+truncation warnings; a subquery reduced to its expression keeps that expression's
+warnings. Set operations resolve the returned field independently of the
+operand's evaluation kind, including temporal strings and BIT fields.
 `MIN` and `MAX` over TEXT/BLOB columns preserve separate expression and metadata
 bounds, including grouped column references, scalar subqueries, and later
 `CONCAT` or `HEX` calls.

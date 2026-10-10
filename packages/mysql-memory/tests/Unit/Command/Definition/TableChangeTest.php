@@ -23,6 +23,17 @@ use SqlSemantics\Statement\Operation;
 #[Small]
 final class TableChangeTest extends TestCase
 {
+    public function testDropClearsReportedWidthsBeforeReusingTheColumnName(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a FLOAT); CREATE TABLE c AS SELECT NULLIF(a,NULL) x FROM t; ALTER TABLE c DROP x, ADD x DOUBLE');
+        $table = $session->instance->dictionary->table('d', 'c');
+
+        self::assertNotNull($table);
+        self::assertNull($table->definition->columns[0]->domain->display);
+        self::assertSame([], TableLayout::of($table->definition)->reportedLengths);
+    }
+
     public function testDropClearsTheOldCollationOriginBeforeAddingAColumnOfTheSameName(): void
     {
         $session = (new Instance())->connect();

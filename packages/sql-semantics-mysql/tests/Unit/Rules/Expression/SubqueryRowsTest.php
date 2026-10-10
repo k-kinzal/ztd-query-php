@@ -36,6 +36,18 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class SubqueryRowsTest extends TestCase
 {
+    public function testValueReadsTextualTemporalResultsAsStringsWithTheirReportedPrecision(): void
+    {
+        $domain = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Time, ResolvedField::VarString, 14, 3, collation: Collation::known('latin1_swedish_ci'));
+        $query = new QueryFact([new Field(0, new OutputSlot(new Name('a'), new Known($domain), Nullability::Nullable))], Comparison::AsciiInsensitive);
+        $result = (new SubqueryRows())->value($query)->type;
+
+        self::assertInstanceOf(Known::class, $result);
+        self::assertInstanceOf(Domain::class, $result->descriptor);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, $result->descriptor->kind);
+        self::assertSame(3, $result->descriptor->displayDecimals);
+    }
+
     public function testValueIsTheOneColumnOrARow(): void
     {
         $integer = new Known(new Integral(IntegralKind::Int));

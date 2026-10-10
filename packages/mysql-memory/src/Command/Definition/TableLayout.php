@@ -61,6 +61,11 @@ final class TableLayout
     public array $implicitCollations = [];
 
     /**
+     * @var array<string, int> Reported floating column widths not represented in CREATE TABLE syntax
+     */
+    public array $reportedLengths = [];
+
+    /**
      * The name of each column of the table before the change, by its position.
      *
      * @var array<int, string>
@@ -104,18 +109,17 @@ final class TableLayout
         if ($statement === null) {
             throw StatementError::NotSupportedYet->error('ALTER TABLE of a table created by a query');
         }
-        $elements = [];
-        foreach ($statement->elements as $element) {
-            if ($element instanceof ColumnElement) {
-                $elements[strtolower($element->name->column->value)] = $element;
-            }
-        }
+        $elements = self::elements($statement);
         $columns = [];
         $undefaulted = [];
+        $lengths = [];
         foreach ($definition->columns as $position => $column) {
             $element = $elements[strtolower($column->name)] ?? null;
             if ($element === null) {
                 throw StatementError::NotSupportedYet->error('ALTER TABLE of a table created by a query');
+            }
+            if ($column->domain->kind === Kind::Double && $column->domain->display !== null) {
+                $lengths[mb_strtolower($column->name)] = $column->domain->display;
             }
             $collation = $column->domain->kind === Kind::String && !$column->domain->collation->bytes() ? $column->domain->collation->name : null;
             $columns[] = [self::unkeyed($element, $collation, !$column->nullable()), $position];
@@ -139,6 +143,7 @@ final class TableLayout
         $layout = new self(new QualifiedName(new Name($definition->name), new Name($definition->schema)), $columns, $keys, $options, $statement->temporaryWords);
         $layout->undefaulted = $undefaulted;
         $layout->implicitCollations = array_fill_keys(array_map(static fn ($column): string => mb_strtolower($column->name), array_filter($definition->columns, static fn ($column): bool => $column->implicitCollation)), true);
+        $layout->reportedLengths = $lengths;
         $layout->names = array_map(static fn ($column): string => $column->name, $definition->columns);
         $layout->original = $definition->name;
         $layout->partitioning = $statement->partitioning;
@@ -147,6 +152,23 @@ final class TableLayout
         }
 
         return $layout;
+    }
+
+    /**
+     * Indexes the written column definitions by their case-insensitive names.
+     *
+     * @return array<string, ColumnElement>
+     */
+    public static function elements(CreateTable $statement): array
+    {
+        $elements = [];
+        foreach ($statement->elements as $element) {
+            if ($element instanceof ColumnElement) {
+                $elements[strtolower($element->name->column->value)] = $element;
+            }
+        }
+
+        return $elements;
     }
 
     /**

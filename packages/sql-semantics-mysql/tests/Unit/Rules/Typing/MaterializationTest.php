@@ -27,6 +27,13 @@ use SqlSemantics\Statement\Type\TypeFact;
 #[Small]
 final class MaterializationTest extends TestCase
 {
+    public function testColumnStoresLegacyBitResultsReportedAsBigintInAnIntegerColumn(): void
+    {
+        $input = new Domain(Kind::Bit, Field::LongLong, 8, 0, true);
+
+        self::assertEquals(Domain::column(Field::Long, 8, true), (new Materialization())->column($input));
+    }
+
     public function testColumnStoresMySql80YearResultsInANarrowIntegerColumn(): void
     {
         $input = new Domain(Kind::Year, Field::VarString, 4, 0, true, displayDecimals: 31);

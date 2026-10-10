@@ -18,6 +18,20 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class CompilerTest extends TestCase
 {
+    public function testConversionWarningsReadsUnreducedScalarStringsSilently(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a VARCHAR(10))');
+        $session->query("INSERT INTO t VALUES('12x')");
+        $result = $session->query('SELECT ((SELECT a FROM t))+0, (SELECT a FROM t) DIV 2')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['12', '6']], $result->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+        $session->query("SELECT ((SELECT '12x'))+0");
+        self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: '12x'"]], $session->diagnostics->conditions);
+    }
+
     public function testCompileEvaluatesTheResolvedScalarReplacementWithoutItsLimit(): void
     {
         $session = (new Instance())->connect();
