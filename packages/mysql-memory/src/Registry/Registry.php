@@ -11,8 +11,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
  * The server-wide objects of the emulated server besides databases and accounts: resource groups, foreign servers, spatial reference systems, tablespaces, the binary log, the prepared XA branches, and the client threads with their user-level locks.
  *
  * The emulated server runs no replication: the default channel exists unconfigured, with its
- * receiver thread stopped. Its applier thread runs once START REPLICA SQL_THREAD starts it, until
- * STOP REPLICA.
+ * receiver thread stopped. Its connection repository must be initialized before the applier
+ * thread can start.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/replication-channels.html.
  *
  * @visibility MySqlMemory
@@ -55,9 +55,9 @@ final class Registry
     public array $prepared = [];
 
     /**
-     * Whether the applier thread of the default replication channel runs.
+     * The connection repository, relay log and applier of the default replication channel.
      */
-    public bool $applying = false;
+    public readonly Replication $replication;
 
     /**
      * Creates the objects of a server that has just been installed.
@@ -68,6 +68,7 @@ final class Registry
         $this->spatialCatalog = new SpatialCatalog();
         $this->binaryLog = new BinaryLog();
         $this->threads = new Threads();
+        $this->replication = new Replication();
     }
 
     /**

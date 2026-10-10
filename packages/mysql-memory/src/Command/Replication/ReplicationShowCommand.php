@@ -38,8 +38,9 @@ use SqlSemantics\Statement\Scalar;
  *
  * The emulated server is neither a configured replica nor a source with replicas, so SHOW
  * REPLICA STATUS and SHOW REPLICAS list no row. The binary log files are those of the server's
- * binary log; the relay log of the default channel is one file, named after relay_log, holding
- * the two events every log starts with. SHOW BINLOG EVENTS reads the first file of the index
+ * binary log; the relay log is visible after its repository is initialized. Its one file, named
+ * after relay_log, starts with two events and can retain a closing Stop event across a reset.
+ * SHOW BINLOG EVENTS reads the first file of the index
  * unless IN names another. FROM starts at the first event at or after the position; a position
  * beyond 17592186040320 cannot be read. LIMIT 0 lists every event. A LIMIT operand naming a
  * variable is ER_SP_UNDECLARED_VAR (verified on a live 8.4 server). A server whose log_bin is
@@ -187,8 +188,7 @@ final class ReplicationShowCommand implements Command
     }
 
     /**
-     * Lists the events of SHOW RELAYLOG EVENTS: the two events every log starts with, in the one
-     * relay log file of the default channel, named after relay_log.
+     * Lists events from the initialized relay log, or an empty result before initialization.
      *
      * @throws \MySqlMemory\Error\SqlError When a LIMIT operand names a variable, the channel does not exist, the file is not the relay log, or the position cannot be read
      */
@@ -196,11 +196,19 @@ final class ReplicationShowCommand implements Command
     {
         $this->limit($statement->limit);
         (new ReplicaCommand())->channel($statement->channel);
-        $name = $session->variables->read('relay_log') . '.000001';
-        if ($statement->file !== null && (new Literals())->bytes($statement->file) !== $name) {
+        $replication = $session->instance->registry->replication;
+        if (!$replication->initialized) {
+            return $this->listing(self::EVENTS, [], $context);
+        }
+        $name = basename((string) $session->variables->read('relay_log')) . '.000001';
+        if ($statement->file !== null && basename((new Literals())->bytes($statement->file)) !== $name) {
             throw AdministrationError::CommandFailed->error('SHOW RELAYLOG EVENTS', 'Could not find target log');
         }
         $events = array_map(static fn (array $event): array => [$name, ...$event], array_slice((new BinaryLog())->events(1, $session->instance->version), 0, 2));
+        if ($replication->closed) {
+            $end = $events[count($events) - 1][4];
+            $events[] = [$name, $end, 'Stop', 1, $end + 23, ''];
+        }
 
         return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->number($statement->position), $statement->limit, 'SHOW RELAYLOG EVENTS'), $context);
     }

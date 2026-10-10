@@ -48,6 +48,7 @@ final class SourceChange
             $this->heartbeat((float) $heartbeat->text, $session, $context);
         }
         $this->gtids($options, $session);
+        $session->instance->registry->replication->initialized = true;
         $user = $options[SourceOptionKind::PrivilegeChecksUser->value]->value ?? null;
         if ($user instanceof AccountName) {
             $identity = (new Names())->identity($user, $session);
@@ -59,6 +60,29 @@ final class SourceChange
         $compression = $options[SourceOptionKind::CompressionAlgorithms->value]->value ?? null;
         if ($compression instanceof Text) {
             $this->compression((new Literals())->bytes($compression), $channel);
+        }
+        $this->relay($options, $session);
+    }
+
+    /**
+     * Checks the relay filename against the index, retaining logs only for an explicit relay position.
+     *
+     * @param array<string, SourceOption> $options The final option of each kind
+     */
+    public function relay(array $options, Session $session): void
+    {
+        $replication = $session->instance->registry->replication;
+        $file = $options[SourceOptionKind::RelayLogFile->value]->value ?? null;
+        if ($file instanceof Text) {
+            $base = basename((string) $session->variables->read('relay_log'));
+            $replication->missing = basename((new Literals())->bytes($file)) !== $base . '.000001';
+            if ($replication->missing) {
+                throw AdministrationError::RelayLogPosition->error("Could not find target log file mentioned in applier metadata in the index file './" . $base . ".index' during relay log initialization");
+            }
+        }
+        if ($file === null && !isset($options[SourceOptionKind::RelayLogPosition->value]) && !$replication->applying) {
+            $replication->closed = false;
+            $replication->missing = false;
         }
     }
 

@@ -34,6 +34,6 @@ final class RegistryTest extends TestCase
     {
         $registry = new Registry();
 
-        self::assertSame([false, [], [], [], [1]], [$registry->applying, $registry->servers, $registry->tablespaces, $registry->prepared, $registry->binaryLog->files]);
+        self::assertSame([false, [], [], [], [1]], [$registry->replication->applying, $registry->servers, $registry->tablespaces, $registry->prepared, $registry->binaryLog->files]);
     }
 }

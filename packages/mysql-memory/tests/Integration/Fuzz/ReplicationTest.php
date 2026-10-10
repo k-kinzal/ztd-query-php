@@ -39,6 +39,11 @@ final class ReplicationTest extends TestCase
             "SOURCE_COMPRESSION_ALGORITHMS='zlib,,zstd'",
             "SOURCE_COMPRESSION_ALGORITHMS=''",
             'SOURCE_AUTO_POSITION=1',
+            "RELAY_LOG_FILE='missing'",
+            "RELAY_LOG_FILE=''",
+            "RELAY_LOG_FILE='missing',SOURCE_USER='u'",
+            "RELAY_LOG_FILE='missing',SOURCE_COMPRESSION_ALGORITHMS='bad'",
+            "RELAY_LOG_FILE='missing',SOURCE_AUTO_POSITION=1",
             'ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS=LOCAL',
             'ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS=OFF',
             'PRIVILEGE_CHECKS_USER=missing',
@@ -49,6 +54,14 @@ final class ReplicationTest extends TestCase
         ] as $options) {
             yield $options => ['CHANGE REPLICATION SOURCE TO ' . $options];
         }
+        yield 'uninitialized applier' => ['RESET REPLICA ALL; START REPLICA SQL_THREAD'];
+        yield 'configured applier' => ['CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0; START REPLICA SQL_THREAD; STOP REPLICA'];
+        yield 'reset applier' => ['CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0; RESET REPLICA; START REPLICA SQL_THREAD'];
+        yield 'uninitialized relay log' => ['RESET REPLICA ALL; SHOW RELAYLOG EVENTS'];
+        yield 'uninitialized relay file' => ["RESET REPLICA ALL; SHOW RELAYLOG EVENTS IN 'missing' FROM 18446744073709551615"];
+        yield 'initialized relay log' => ['CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0; SHOW RELAYLOG EVENTS'];
+        yield 'reset relay log' => ['CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0; RESET REPLICA ALL; SHOW RELAYLOG EVENTS'];
+        yield 'preserved relay log' => ['CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0; RESET REPLICA ALL; CHANGE REPLICATION SOURCE TO RELAY_LOG_POS=4; SHOW RELAYLOG EVENTS'];
         yield 'missing group user' => ["START GROUP_REPLICATION PASSWORD='p'"];
         yield 'empty group user' => ["START GROUP_REPLICATION USER='',PASSWORD='p'"];
         yield 'group credentials before transaction' => ["BEGIN; START GROUP_REPLICATION PASSWORD='p'"];

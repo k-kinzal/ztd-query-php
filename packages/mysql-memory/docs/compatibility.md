@@ -61,7 +61,7 @@ The rest of the behavior is modeled on MySQL 8.4: the error messages, the defaul
 | `FLUSH`, `RESET PERSIST`, `ALTER INSTANCE`, `LOCK INSTANCE FOR BACKUP` | Answered as a server without caches, log files or keyring answers |
 | Tablespaces, log file groups, resource groups, foreign servers, spatial reference systems | Kept and checked as the server checks them; no file is written |
 | `INSTALL`, `UNINSTALL PLUGIN` and `COMPONENT` | Refused as a server with no plugin library refuses them |
-| Replication and binary log statements | Answered as a server that is neither a replica nor a source with replicas |
+| Replication and binary log statements | The default channel tracks repository initialization, applier start/stop, reset, and relay log visibility; transaction transport between servers is not implemented |
 | `LOAD DATA`, `IMPORT TABLE`, `SELECT ... INTO OUTFILE` / `DUMPFILE` | Refused as a server with `--secure-file-priv` and `local_infile` off refuses them. MySQL 5.6 and 5.7 have `local_infile` on: there `LOAD DATA LOCAL` is checked as the server checks it (the field separators, the table and its columns) and then refused with error 3948, where the server would ask the client for the file |
 | `KILL`, `SHUTDOWN`, `RESTART`, `CLONE`, `CREATE FUNCTION ... SONAME` | Not supported: error 1235 |
 

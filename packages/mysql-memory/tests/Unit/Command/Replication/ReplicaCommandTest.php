@@ -57,15 +57,42 @@ final class ReplicaCommandTest extends TestCase
     {
         $instance = new Instance();
         $session = $instance->connect();
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0');
         $session->query('START REPLICA SQL_THREAD');
-        $running = $instance->registry->applying;
+        $running = $instance->registry->replication->applying;
         $session->query('STOP REPLICA');
         $session->query('STOP REPLICA');
         $warnings = $session->query('SHOW WARNINGS')[0];
 
         self::assertInstanceOf(ResultSet::class, $warnings);
-        self::assertSame([true, false], [$running, $instance->registry->applying]);
+        self::assertSame([true, false], [$running, $instance->registry->replication->applying]);
         self::assertSame([['Note', '3084', "Replication thread(s) for channel '' are already stopped."]], $warnings->rows);
+    }
+
+    public function testStartRequiresAnInitializedRepository(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1871);
+        $this->expectExceptionMessage('Replica failed to initialize connection metadata structure from the repository');
+
+        $session->query('START REPLICA SQL_THREAD');
+    }
+
+    public function testResetClosesTheRepositoryUntilAnotherSourceChange(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $session->query("CHANGE REPLICATION SOURCE TO SOURCE_USER='u'");
+        $session->query('RESET REPLICA');
+        $error = $session->run('START REPLICA SQL_THREAD')[0];
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0');
+        $session->query('START REPLICA SQL_THREAD');
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1871, $error->getCode());
+        self::assertTrue($instance->registry->replication->applying);
     }
 
     public function testExecuteRefusesAFilterForAChannel(): void
@@ -114,6 +141,7 @@ final class ReplicaCommandTest extends TestCase
     public function testResetRefusesAReplicaWhoseApplierRuns(): void
     {
         $session = (new Instance())->connect();
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0');
         $session->query('START REPLICA SQL_THREAD');
 
         $this->expectException(SqlError::class);

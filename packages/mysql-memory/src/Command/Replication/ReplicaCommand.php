@@ -43,10 +43,11 @@ use SqlSemantics\Statement\Operation;
  * statement naming another channel fails (ER_REPLICA_CHANNEL_DOES_NOT_EXIST). Each statement but
  * the group replication ones commits the open transaction. START REPLICA cannot start the
  * receiver thread (ER_REPLICA_CONFIGURATION), noting first that USER or PASSWORD credentials are sent in plain text;
- * SQL_THREAD alone starts the applier thread, which STOP REPLICA stops and RESET REPLICA refuses
- * to run beside (ER_REPLICA_CHANNEL_MUST_STOP). STOP REPLICA notes threads that are already
- * stopped. CHANGE REPLICATION SOURCE TO is accepted and kept nowhere; CHANGE REPLICATION FILTER
- * for a channel fails, the replica not being initialized (ER_REPLICA_CONFIGURATION). RESET
+ * SQL_THREAD requires an initialized connection repository before it starts the applier thread,
+ * which STOP REPLICA stops and RESET REPLICA refuses to run beside (ER_REPLICA_CHANNEL_MUST_STOP).
+ * STOP REPLICA notes threads that are already stopped. CHANGE REPLICATION SOURCE TO initializes
+ * the connection repository; RESET closes it. CHANGE REPLICATION FILTER for a channel fails,
+ * the replica not being initialized (ER_REPLICA_CONFIGURATION). RESET
  * BINARY LOGS AND GTIDS deletes every binary log file and starts again from the number TO names,
  * 1 by default. Group replication is not configured, and its statements refuse an open
  * transaction (verified on a live 8.4 server). MySQL 5.6 refuses RESET MASTER when log_bin is
@@ -89,8 +90,8 @@ final class ReplicaCommand implements Command
             $this->start($statement, $session);
         } elseif ($statement instanceof StopReplica) {
             $this->channel($statement->channel);
-            if ($registry->applying && ($statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true))) {
-                $registry->applying = false;
+            if ($registry->replication->applying && ($statement->threads === [] || in_array(ReplicaThread::Applier, $statement->threads, true))) {
+                $registry->replication->applying = false;
             } else {
                 $session->diagnostics->note(AdministrationError::ReplicaThreadsStopped, AdministrationError::ReplicaThreadsStopped->message(''));
             }
@@ -124,7 +125,11 @@ final class ReplicaCommand implements Command
         if ($statement->threads === [] || in_array(ReplicaThread::Receiver, $statement->threads, true)) {
             throw AdministrationError::ReplicaNotConfigured->error();
         }
-        $session->instance->registry->applying = true;
+        $replication = $session->instance->registry->replication;
+        if (!$replication->initialized) {
+            throw AdministrationError::ReplicaConnectionMetadata->error();
+        }
+        $replication->applying = !$replication->missing;
     }
 
     /**
@@ -177,9 +182,10 @@ final class ReplicaCommand implements Command
         }
         if ($target instanceof ResetReplica) {
             $this->channel($target->channel);
-            if ($registry->applying) {
+            if ($registry->replication->applying) {
                 throw AdministrationError::ReplicaChannelRunning->error('');
             }
+            $registry->replication->reset();
         }
     }
 

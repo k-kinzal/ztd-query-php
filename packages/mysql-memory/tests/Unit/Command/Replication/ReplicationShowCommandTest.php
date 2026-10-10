@@ -67,10 +67,33 @@ final class ReplicationShowCommandTest extends TestCase
     public function testExecuteListsTheRelayLogOfTheDefaultChannel(): void
     {
         $session = (new Instance())->connect();
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0');
         $result = $session->query('SHOW RELAYLOG EVENTS')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([[$session->variables->read('relay_log') . '.000001', '4', 'Format_desc', '1', '127', 'Server ver: 8.4.7, Binlog ver: 4'], [$session->variables->read('relay_log') . '.000001', '127', 'Previous_gtids', '1', '158', '']], $result->rows);
+    }
+
+    public function testRelaylogEventsIsEmptyWithoutARepositoryEvenForAnUnknownFile(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SHOW RELAYLOG EVENTS IN 'missing' FROM 18446744073709551615")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+    }
+
+    public function testRelaylogEventsRetainsTheClosedLogWithAnExplicitPosition(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0');
+        $session->query('RESET REPLICA ALL');
+        $session->query('CHANGE REPLICATION SOURCE TO RELAY_LOG_POS=4');
+        $result = $session->query('SHOW RELAYLOG EVENTS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['Format_desc', 'Previous_gtids', 'Stop'], array_column($result->rows, 2));
+        self::assertSame(['158', '181'], [$result->rows[2][1], $result->rows[2][4]]);
     }
 
     public function testExecuteRefusesAnotherChannelBeforeThePosition(): void
@@ -103,6 +126,7 @@ final class ReplicationShowCommandTest extends TestCase
     public function testRelaylogEventsRefusesAnotherFile(): void
     {
         $session = (new Instance())->connect();
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0');
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1220);

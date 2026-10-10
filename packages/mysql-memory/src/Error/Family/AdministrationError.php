@@ -44,6 +44,7 @@ enum AdministrationError: int implements ErrorCode
     case BadReplicaUntil = 1277;
     case UnknownKeyCache = 1284;
     case UnknownTargetBinlog = 1373;
+    case RelayLogPosition = 1380;
     case NoBinaryLogging = 1381;
     case ForeignServerExists = 1476;
     case ForeignServerMissing = 1477;
@@ -59,6 +60,7 @@ enum AdministrationError: int implements ErrorCode
     case SqlThreadWithCredentials = 1763;
     case ReplicaNotInitialized = 1794;
     case ActiveLogNotPurged = 1868;
+    case ReplicaConnectionMetadata = 1871;
     case SourcePasswordTooLong = 3056;
     case UserLockWrongName = 3057;
     case WildTableFilterPattern = 3067;

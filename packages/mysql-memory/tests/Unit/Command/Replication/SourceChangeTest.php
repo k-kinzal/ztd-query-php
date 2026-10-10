@@ -26,6 +26,37 @@ final class SourceChangeTest extends TestCase
         $session->query('CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER=missing');
     }
 
+    public function testCheckInitializesTheRepositoryBeforePrivilegeValidation(): void
+    {
+        $instance = new Instance();
+        $session = $instance->connect();
+        $session->run('CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER=missing');
+        $session->query('START REPLICA SQL_THREAD');
+
+        self::assertTrue($instance->registry->replication->applying);
+    }
+
+    public function testRelayAcceptsAnyPathWithTheIndexedBasename(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CHANGE REPLICATION SOURCE TO SOURCE_HEARTBEAT_PERIOD=0');
+        $file = $session->variables->read('relay_log') . '.000001';
+        $session->query("CHANGE REPLICATION SOURCE TO RELAY_LOG_FILE='/elsewhere/" . $file . "'");
+
+        self::assertFalse($session->instance->registry->replication->missing);
+    }
+
+    public function testRelayRefusesAnAbsentFileAndRetainsInitialization(): void
+    {
+        $session = (new Instance())->connect();
+        $error = $session->run("CHANGE REPLICATION SOURCE TO RELAY_LOG_FILE='missing'")[0];
+        $replication = $session->instance->registry->replication;
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1380, $error->getCode());
+        self::assertSame([true, true], [$replication->initialized, $replication->missing]);
+    }
+
     public function testHeartbeatUsesTheGlobalTimeout(): void
     {
         $session = (new Instance())->connect();
