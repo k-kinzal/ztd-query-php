@@ -138,12 +138,20 @@ final class EventCommand implements Command
     }
 
     /**
-     * Ends a one-time event whose time has passed: a created event without ON COMPLETION PRESERVE
-     * is dropped, any other one disabled, each with its note.
+     * Ends a one-time event whose time has passed according to the session clock: a created
+     * event without ON COMPLETION PRESERVE is dropped, any other one disabled, each with its note.
+     * Modern releases also keep an event disabled without a note when its final time is after
+     * the session clock but before the actual clock (verified on live 8.0 and 8.4 servers).
      */
     public function lapse(Event $event, bool $created, Session $session, Context $context): void
     {
-        if ($event->at === null || $event->at >= ProgramSource::now()) {
+        if ($event->at === null || $event->at >= Temporal::dateTime(...[...$context->local(), 0])) {
+            $end = $event->at ?? $event->ends;
+            $legacy = in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+            if (!$legacy && $end !== null && $end < Temporal::dateTime(...[...$context->local(microtime(true)), 0]) && $event->status === 'ENABLED') {
+                $event->status = 'DISABLED';
+            }
+
             return;
         }
         if (!$event->preserve && $created) {
@@ -245,13 +253,14 @@ final class EventCommand implements Command
         }
         $simple = in_array($schedule->unit, [IntervalUnit::Second, IntervalUnit::Minute, IntervalUnit::Hour, IntervalUnit::Day, IntervalUnit::Week, IntervalUnit::Month, IntervalUnit::Quarter, IntervalUnit::Year], true);
         $text = (string) Convert::toText($value, $quantity->domain());
-        $number = $simple ? $this->intervalNumber($value, $quantity, $context) : $this->composite($text, $schedule->unit);
+        $number = $simple ? $this->intervalNumber($value, $quantity, $context, $schedule->unit) : $this->composite($text, $schedule->unit);
         if ((int) $number <= 0 && !str_contains($number, "'")) {
             throw ProgramError::IntervalNotPositive->error();
         }
-        $starts = $schedule->starts === null ? ProgramSource::now() : $this->time($schedule->starts, 'STARTS', $planner, $context);
+        $now = Temporal::dateTime(...[...$context->local(), 0]);
+        $starts = $schedule->starts === null ? $now : $this->time($schedule->starts, 'STARTS', $planner, $context);
         $ends = $schedule->ends === null ? null : $this->time($schedule->ends, 'ENDS', $planner, $context);
-        if ($ends !== null && ($ends < $starts || $ends < ProgramSource::now())) {
+        if ($ends !== null && ($ends < $starts || $ends < $now)) {
             throw ProgramError::EndsBeforeStarts->error();
         }
 
@@ -259,10 +268,13 @@ final class EventCommand implements Command
     }
 
     /**
-     * Rounds a simple interval through decimal conversion. MySQL 5.6 accepts a numeric prefix without warning about trailing text.
+     * Reads SECOND through decimal conversion and the other simple units as integers. MySQL 5.6 accepts a decimal numeric prefix without warning about trailing text.
      */
-    public function intervalNumber(int|float|string $value, \MySqlMemory\Evaluation\Evaluable $quantity, Context $context): string
+    public function intervalNumber(int|float|string $value, \MySqlMemory\Evaluation\Evaluable $quantity, Context $context, IntervalUnit $unit = IntervalUnit::Second): string
     {
+        if ($unit !== IntervalUnit::Second) {
+            return (string) Convert::toInteger($value, $quantity->domain(), $context);
+        }
         if ($context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5651 && $quantity->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && preg_match('/\A[ \t\n\r\v\f]*[+-]?\.?[0-9]/', (string) $value) === 1) {
             return \MySqlMemory\Value\Decimal::round(\MySqlMemory\Value\NumericText::exact((string) $value)->number, 0);
         }

@@ -53,6 +53,15 @@ final class EventCommandTest extends TestCase
         self::assertSame(['Warning', 1366, "Incorrect DECIMAL value: '0' for column '' at row -1"], $session->diagnostics->conditions[0]);
     }
 
+    public function testIntervalNumberTruncatesTextForDayUnits(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $session->query("CREATE EVENT e ON SCHEDULE EVERY '1.5' DAY DO SELECT 1");
+        self::assertSame(['1', 'DAY'], $session->instance->dictionary->schema('d')?->events['e']->every);
+        self::assertSame(['Warning', 1292, "Truncated incorrect INTEGER value: '1.5'"], $session->diagnostics->conditions[0]);
+    }
+
     public function testExecuteCreatesARecurringEventStartingNow(): void
     {
         $session = (new Instance())->connect();
@@ -166,7 +175,7 @@ final class EventCommandTest extends TestCase
         $event = $schema->events['e'];
         $event->at = '2000-01-01 00:00:00';
 
-        (new EventCommand())->lapse($event, true, $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        (new EventCommand())->lapse($event, true, $session, new Context($session->modes(), $session->diagnostics, $session->variables, 1700000000.0));
 
         self::assertSame(['DISABLED', [['Note', 1544, 'Event execution time is in the past. Event has been disabled']]], [$schema->events['e']->status, $session->diagnostics->conditions]);
     }
