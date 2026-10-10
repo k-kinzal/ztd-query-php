@@ -80,7 +80,7 @@ final class Variables
             Kind::Date => Domain::string(10, Collation::known('latin1_swedish_ci')),
             Kind::Time => Domain::string(15, Collation::known('latin1_swedish_ci')),
             Kind::DateTime => Domain::string(26, Collation::known('latin1_swedish_ci')),
-            default => $domain,
+            Kind::Integer, Kind::Decimal, Kind::Double, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => $domain,
         };
     }
 
