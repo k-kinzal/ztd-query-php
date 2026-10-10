@@ -46,6 +46,14 @@ final class ReplicaCommandTest extends TestCase
         self::assertSame(0, $session->instance->registry->status->read('Flush_commands'));
     }
 
+    public function testResetTargetsDoesNotCountADisabledBinaryLogWhenMySql57StillAcceptsTheReset(): void
+    {
+        $session = (new Instance('5.7.44', globals: ['log_bin' => 'OFF']))->connect();
+        $session->query('RESET MASTER, MASTER');
+
+        self::assertSame(0, $session->instance->registry->status->read('Flush_commands'));
+    }
+
     public function testResetTargetsRetainsTheBinaryLogFlushWhenTheFollowingReplicaResetFails(): void
     {
         $session = (new Instance('8.0.44'))->connect();

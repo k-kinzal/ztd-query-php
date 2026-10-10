@@ -52,7 +52,7 @@ use SqlSemantics\Statement\Operation;
  * 1 by default. Group replication is not configured, and its statements refuse an open
  * transaction (verified on a live 8.4 server). MySQL 5.6 refuses RESET MASTER when log_bin is
  * off (ER_FLUSH_MASTER_BINLOG_CLOSED; verified on a live 5.6.51 server).
- * A successful binary-log reset contributes one Flush_commands event per statement, even
+ * A successful reset with binary logging enabled contributes one Flush_commands event per statement, even
  * when RESET MASTER is repeated or a later replica reset fails (verified on MySQL 8.0.44).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-replica.html,
  * https://dev.mysql.com/doc/refman/8.4/en/stop-replica.html,
@@ -125,7 +125,7 @@ final class ReplicaCommand implements Command
                 throw AdministrationError::BinlogClosed->error('RESET MASTER');
             }
             $this->reset($target, $registry);
-            if ($target instanceof ResetBinaryLogs && !$flushed) {
+            if ($target instanceof ResetBinaryLogs && !$flushed && \MySqlMemory\Registry\BinaryLog::enabled($session)) {
                 $registry->status->add('Flush_commands');
                 $flushed = true;
             }
