@@ -17,6 +17,28 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class DomainTest extends TestCase
 {
+    public function testMetadataLengthKeepsAnExplicitBlobWidthSeparateFromExpressionLength(): void
+    {
+        $domain = new Domain(Kind::String, Field::LongBlob, 1024, Domain::NOT_FIXED, false, Collation::known('utf8mb4_general_ci'), display: 4096);
+
+        self::assertSame(1024, $domain->length);
+        self::assertSame(4096, $domain->byteLength());
+        self::assertSame(4096, $domain->metadataLength());
+    }
+
+    public function testValueKeepsTheExplicitWidthOfAComputedBlob(): void
+    {
+        $domain = new Domain(Kind::String, Field::LongBlob, 1024, Domain::NOT_FIXED, false, Collation::known('utf8mb4_general_ci'), display: 4096);
+
+        self::assertSame($domain, $domain->value());
+    }
+
+    public function testWithCollationKeepsTheExplicitBlobWidth(): void
+    {
+        $domain = new Domain(Kind::String, Field::LongBlob, 1024, Domain::NOT_FIXED, false, Collation::known('utf8mb4_general_ci'), display: 4096);
+
+        self::assertSame(4096, $domain->withCollation(Collation::known('utf8mb4_bin'), Coercibility::Explicit)->metadataLength());
+    }
     public function testIntegerCarriesTheBinaryCollationAndNumericCoercibility(): void
     {
         $domain = Domain::integer(Field::Long, 11);

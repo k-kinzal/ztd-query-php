@@ -45,7 +45,7 @@ final class AggregatesTest extends TestCase
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
 
         self::assertEquals(Domain::string(100, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Implicit), (new Aggregates(new Settings(Collation::known('utf8mb4_0900_ai_ci'), 4, null, [], 100)))->concatenated([$text], $derivation));
-        self::assertEquals(Domain::string(16384, Collation::known('utf8mb4_0900_ai_ci'), Field::LongBlob, Coercibility::Implicit), (new Aggregates(new Settings(Collation::known('utf8mb4_0900_ai_ci'))))->concatenated([$text], $derivation));
+        self::assertEquals(new Domain(Kind::String, Field::LongBlob, 4096, Domain::NOT_FIXED, false, Collation::known('utf8mb4_0900_ai_ci'), [], Coercibility::Implicit, 16384), (new Aggregates(new Settings(Collation::known('utf8mb4_0900_ai_ci'))))->concatenated([$text], $derivation));
     }
 
     public function testResultTypesTheSumAndAverageOfNullAsShortDoubles(): void
@@ -76,7 +76,7 @@ final class AggregatesTest extends TestCase
 
         self::assertEquals(new Domain(Kind::String, Field::VarString, 256, 0, false, $collation, [], Coercibility::Implicit), $aggregate->concatenated([$text], $legacy));
         self::assertEquals($aggregate->concatenated([$text], $legacy), $aggregate->concatenated([$text], $seven));
-        self::assertEquals(Domain::string(4096, $collation, Field::LongBlob, Coercibility::Implicit), $aggregate->concatenated([$text], $eight));
+        self::assertEquals(new Domain(Kind::String, Field::LongBlob, 1024, Domain::NOT_FIXED, false, $collation, [], Coercibility::Implicit, 4096), $aggregate->concatenated([$text], $eight));
     }
     public function testConcatenatedKeepsLegacyByteLimitsForPartialCharactersAndBlobs(): void
     {
@@ -89,7 +89,7 @@ final class AggregatesTest extends TestCase
         self::assertNotNull($partial);
         self::assertNotNull($blob);
         self::assertSame([Field::VarString, 128, 513], [$partial->field, $partial->length, $partial->metadataLength()]);
-        self::assertSame([Field::Blob, 4096, 4096], [$blob->field, $blob->length, $blob->metadataLength()]);
+        self::assertSame([Field::Blob, 1024, 4096], [$blob->field, $blob->length, $blob->metadataLength()]);
     }
 
 }

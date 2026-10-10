@@ -18,8 +18,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  * other value as a blob in its collation, a temporal value in latin1: of 16777215 characters
  * in MySQL 5.6 and 5.7, and from MySQL 8.0 as long as 16777215 characters of the most bytes
  * of the character set count in its fewest, a long blob when that passes 16777215 bytes. A
- * variable that holds NULL is a binary medium blob, and one never assigned a binary string of
- * 65532 bytes (verified on live 5.7, 8.0, 8.4 and 9.1 servers).
+ * variable that holds NULL is a binary medium blob. One never assigned is a binary long
+ * blob of 16777216 bytes in MySQL 5.6 and 5.7, and a binary string of 65532 bytes from 8.0
+ * (verified through SQL on live servers and Testcontainers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/user-variables.html.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -45,7 +46,7 @@ final class Variables
         }
         $held = $variables[strtolower($name)] ?? null;
 
-        return $held === null ? ($this->release === GrammarRelease::MySql5651 ? Domain::string(16777216, Collation::binary(), Field::LongBlob) : Domain::string(65532, Collation::binary())) : $this->held($held);
+        return $held === null ? (in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? Domain::string(16777216, Collation::binary(), Field::LongBlob) : Domain::string(65532, Collation::binary())) : $this->held($held);
     }
 
     /**

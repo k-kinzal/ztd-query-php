@@ -110,7 +110,8 @@ final class Output
         $text = ($domain->kind === Kind::String || $domain->kind === Kind::Json || $domain->kind->temporal()) && !$domain->collation->bytes();
         $charset = $text ? ($results === null ? $domain->collation->id : $results->defaultCollation(GrammarRelease::MySql847)->id) : 63;
         $field = $domain->field === Field::Enum || $domain->field === Field::Set ? Field::String : $domain->field;
-        $length = $text && $results !== null ? $this->converted($domain->length, $results->maxLength, in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true)) : $domain->byteLength();
+        $blob = in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
+        $length = $text && $results !== null ? $this->converted($blob ? ($domain->display ?? $domain->length) : $domain->length, $results->maxLength, $blob) : $domain->byteLength();
 
         $flags = $origin !== null && $origin->exact ? $origin->flags | ($domain->flags() & ColumnFlag::NotNull->value) : $domain->flags() | ($origin->flags ?? 0);
         if (($flags & ColumnFlag::ZeroFill->value) !== 0) {

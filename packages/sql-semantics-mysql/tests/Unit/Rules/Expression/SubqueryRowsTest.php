@@ -62,6 +62,15 @@ final class SubqueryRowsTest extends TestCase
         self::assertSame(Nullability::Nullable, $value->nullability);
     }
 
+    public function testStringPreservesDirectGroupedConcatenationMetadata(): void
+    {
+        $type = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, ResolvedField::Blob, 1024, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'));
+        $expression = new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped(new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')]));
+
+        self::assertSame($type, (new SubqueryRows())->string($type, $expression));
+        self::assertSame(Domain::NOT_FIXED, (new SubqueryRows())->string($type, null)->decimals);
+    }
+
     public function testTestCombinesTheColumnsAndReportsAWidthMismatch(): void
     {
         $platform = new Platform();

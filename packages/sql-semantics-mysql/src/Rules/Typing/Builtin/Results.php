@@ -71,8 +71,9 @@ final class Results
     /**
      * Refines the fact of a call with the type its rule resolves, when it resolves one.
      *
-     * MySQL 5.6 answers the account functions and PASSWORD as NOT NULL, and most string functions
-     * as NULL exactly when an argument can be (verified on a live 5.6.51 server).
+     * MySQL 5.6 answers account functions, PASSWORD, CHARSET and COLLATION as NOT NULL, and most string
+     * functions as NULL exactly when an argument can be. COALESCE propagates nullable arguments
+     * in both 5.6 and 5.7 (verified through SQL on live servers and Testcontainers).
      *
      * @param list<Scalar> $arguments The arguments
      * @param list<ScalarFact> $facts The fact of each argument
@@ -80,10 +81,10 @@ final class Results
     public function refine(string $name, array $arguments, array $facts, ScalarFact $fact, Derivation $derivation): ScalarFact
     {
         $type = $this->type($name, $arguments, array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts), $derivation);
-        $nullability = $derivation->context->profile->grammar === GrammarRelease::MySql5651 && in_array(strtoupper($name), ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER', 'PASSWORD'], true) ? Nullability::NotNull : $fact->nullability;
+        $nullability = $derivation->context->profile->grammar === GrammarRelease::MySql5651 && in_array(strtoupper($name), ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER', 'PASSWORD', 'CHARSET', 'COLLATION'], true) ? Nullability::NotNull : $fact->nullability;
 
         $nullability = $this->propagated($name, $arguments, $facts, $derivation) ?? $nullability;
-        if ($derivation->context->profile->grammar === GrammarRelease::MySql5651 && strtoupper($name) === 'COALESCE') {
+        if (in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && strtoupper($name) === 'COALESCE') {
             $nullability = (new ResultTyping())->nullability('P', $facts);
         }
         $nullability = (new Pattern\PatternResults())->nullability($name, $type, $nullability);

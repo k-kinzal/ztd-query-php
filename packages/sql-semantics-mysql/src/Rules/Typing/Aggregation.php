@@ -212,7 +212,7 @@ final class Aggregation
         $length = 0;
         $blob = false;
         foreach ($domains as $domain) {
-            $length = max($length, $domain->kind === Kind::String ? $domain->length : ($domain->kind === Kind::Double ? ($domain->field === Field::Float ? 23 : 22) : $domain->length));
+            $length = max($length, $domain->kind === Kind::String ? ($domain->field->blob() ? ($domain->display ?? $domain->length) : $domain->length) : ($domain->kind === Kind::Double ? ($domain->field === Field::Float ? 23 : 22) : $domain->length));
             $blob = $blob || $domain->field === Field::Blob;
         }
         if ($collation->bytes() && count(array_filter($domains, static fn (Domain $domain): bool => $domain->kind === Kind::String)) === 0) {
@@ -261,6 +261,10 @@ final class Aggregation
             return Domain::string(4294967295, $collation, $united ? Field::Blob : ($early && !$blob ? Field::VarString : Field::LongBlob), $coercibility);
         }
         $length = $this->textLength($operands, $collation, $united);
+        $explicit = array_values(array_filter($operands, static fn (Domain $domain): bool => $domain->field->blob() && $domain->display !== null));
+        if (!$united && $explicit !== []) {
+            return Domain::string($length, $collation, $explicit[0]->field, $coercibility);
+        }
         $written = array_filter($domains, static fn (Domain $domain): bool => $domain->kind === Kind::String) !== [];
         $decimals = $early && !$written ? min(Domain::NOT_FIXED, max(array_map(static fn (Domain $domain): int => $domain->decimals, $domains))) : Domain::NOT_FIXED;
 
@@ -301,7 +305,7 @@ final class Aggregation
         $length = 0;
         foreach ($operands as $domain) {
             $length = max($length, match (true) {
-                $domain->kind === Kind::String => $collation->bytes() || ($domain->field === Field::Blob && !$united) ? $domain->length * $domain->collation->charset->maxLength : $domain->length,
+                $domain->kind === Kind::String => $collation->bytes() || (($domain->field === Field::Blob || ($domain->field->blob() && $domain->display !== null)) && !$united) ? $domain->length * $domain->collation->charset->maxLength : $domain->length,
                 $domain->kind === Kind::Double => $domain->field === Field::Float ? $domain->length : 22,
                 default => $domain->length,
             });

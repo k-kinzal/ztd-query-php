@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Typing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Typing\Variables;
@@ -52,6 +53,23 @@ final class VariablesTest extends TestCase
         self::assertNull((new Variables(new Settings(Collation::known('utf8mb4_0900_ai_ci'))))->read('a'));
         self::assertEquals(Domain::decimal(65, 30), $known->read('a'));
         self::assertEquals(Domain::string(65532, Collation::binary()), $known->read('never'));
+    }
+
+    /**
+     * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease}>
+     */
+    public static function providerLegacyReleases(): iterable
+    {
+        yield '5.6' => [\SqlSemantics\Contract\GrammarRelease::MySql5651];
+        yield '5.7' => [\SqlSemantics\Contract\GrammarRelease::MySql5744];
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testReadKeepsAnAbsentLegacyVariableAsALongBlob(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $variables = new Variables(new Settings(Collation::known('latin1_swedish_ci'), userVariables: []), $release);
+
+        self::assertEquals(Domain::string(16777216, Collation::binary(), Field::LongBlob), $variables->read('v'));
     }
 
     public function testHeldReadsNumbersWideAndEverythingElseAsABlob(): void

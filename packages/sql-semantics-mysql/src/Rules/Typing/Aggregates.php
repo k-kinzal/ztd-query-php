@@ -74,6 +74,8 @@ final class Aggregates
      * character limits and report blob widths differently through 8.0 and from 8.4.
      * These metadata rules were observed through PDO with latin1, utf8mb3, utf8mb4,
      * UCS-2 and UTF-16; they do not change the byte limit applied to the value.
+     * Blob results keep their expression character bound separately from their
+     * explicit metadata width, so CONCAT and HEX do not expand that width twice.
      *
      * @param list<Domain> $arguments
      */
@@ -89,10 +91,10 @@ final class Aggregates
         $width = $collation->charset->maxLength;
         $characters = intdiv($this->settings->groupConcatMaxLen, $legacy ? $width : $collation->charset->minLength());
         if ($legacy) {
-            return new Domain(Kind::String, $characters <= 512 ? Field::VarString : Field::Blob, $characters <= 512 ? $characters : $this->settings->groupConcatMaxLen, 0, false, $collation, [], $coercibility, $characters <= 512 && $this->settings->groupConcatMaxLen % $width !== 0 ? $this->settings->groupConcatMaxLen : null);
+            return new Domain(Kind::String, $characters <= 512 ? Field::VarString : Field::Blob, $characters, 0, false, $collation, [], $coercibility, $characters > 512 || $this->settings->groupConcatMaxLen % $width !== 0 ? $this->settings->groupConcatMaxLen : null);
         }
         $multiplier = $release === GrammarRelease::MySql8044 ? $width : $width * $width;
 
-        return $characters <= 512 ? Domain::string($characters, $collation, Field::VarString, $coercibility) : Domain::string(min(4294967295, $characters * $multiplier), $collation, Field::LongBlob, $coercibility);
+        return $characters <= 512 ? Domain::string($characters, $collation, Field::VarString, $coercibility) : new Domain(Kind::String, Field::LongBlob, min(4294967295, $characters * intdiv($multiplier, $width)), Domain::NOT_FIXED, false, $collation, [], $coercibility, min(4294967295, $characters * $multiplier));
     }
 }

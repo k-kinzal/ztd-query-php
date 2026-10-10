@@ -254,6 +254,7 @@ Differences:
 
 ## Variables
 
+- User-variable reads retain whether the entry existed when that occurrence was resolved. In MySQL 5.6 and 5.7 an absent entry reads as NULL throughout that statement, even if a later expression assigns it. Explicitly assigning NULL with SET creates an entry and keeps subsequent reads live. From MySQL 8.0, IF, IFNULL and COALESCE infer absent variable operand types from their other result branches. Legacy COALESCE retains a nullable result attribute whenever any argument is nullable.
 - Every system variable of the selected release exists, with its scope (global, session or both), its default and its checks: a read-only variable, a global-only variable set for the session, or a value out of range is refused or adjusted as the server does. `SET` assigns all its variables or none.
 - A session starts with the global values of the variables that have both scopes, so `SET GLOBAL` affects later sessions only.
 - `statement_id` follows the server's sequence across client statements, including failures and SQL prepared executions. Wire preparation and statement closure also allocate numbers. `pseudo_thread_id` initially identifies the connection; assigning it changes `CONNECTION_ID()` without changing the transport connection. `identity`, `last_insert_id` and `LAST_INSERT_ID()` share the session's insert ID.

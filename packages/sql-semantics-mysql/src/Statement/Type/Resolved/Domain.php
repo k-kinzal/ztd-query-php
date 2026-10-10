@@ -30,7 +30,8 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  * The length is the display length, counted in characters for strings and temporal values and in
  * digits and signs for numbers. TEXT/BLOB fields retain a byte bound in the same attribute;
  * byteLength() gives the bound used in expression typing, while metadataLength() gives the
- * unconverted result column length. Decimals is the number
+ * unconverted result column length. A computed blob can retain its character bound
+ * in length and its separate result width in display, as GROUP_CONCAT does. Decimals is the number
  * of fractional digits, or NOT_FIXED when a floating-point number or string has none fixed.
  * Strings carry a collation and its coercibility; other values carry the binary collation.
  * A column of an integer type can declare a display width narrower than its type: the result
@@ -153,7 +154,7 @@ final class Domain implements TypeDescriptor
      */
     public function value(): self
     {
-        return $this->display === null ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility);
+        return $this->display === null || $this->field->blob() ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility);
     }
 
     /**
@@ -161,7 +162,7 @@ final class Domain implements TypeDescriptor
      */
     public function withCollation(Collation $collation, Coercibility $coercibility): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->members, $coercibility);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->members, $coercibility, $this->field->blob() ? $this->display : null);
     }
 
     /**
@@ -189,7 +190,7 @@ final class Domain implements TypeDescriptor
      */
     public function metadataLength(): int
     {
-        return $this->field->blob() ? $this->length : ($this->display ?? $this->byteLength());
+        return $this->display ?? ($this->field->blob() ? $this->length : $this->byteLength());
     }
 
     /**

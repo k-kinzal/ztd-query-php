@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Typing\Builtin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
@@ -63,6 +64,27 @@ final class ResultsTest extends TestCase
         $fact = new ScalarFact(new Known(Domain::double(23)), Nullability::Nullable);
 
         self::assertSame([Nullability::NotNull, Nullability::Nullable], [(new Results())->refine('USER', [], [], $fact, $legacy)->nullability, (new Results())->refine('USER', [], [], $fact, $modern)->nullability]);
+    }
+
+    /**
+     * @return iterable<string, array{string, Nullability}>
+     */
+    public static function providerLegacyNullability(): iterable
+    {
+        yield '5.6' => ['mysql-5.6.51', Nullability::NotNull];
+        yield '5.7' => ['mysql-5.7.44', Nullability::Nullable];
+    }
+
+    #[DataProvider('providerLegacyNullability')]
+    public function testRefineRetainsLegacyCoalesceAndIntrospectionNullability(string $release, Nullability $introspection): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, $release))->context([]));
+        $null = new ScalarFact(new Known(Domain::null()), Nullability::Nullable);
+        $number = new ScalarFact(new Known(Domain::integer()), Nullability::NotNull);
+
+        self::assertSame(Nullability::Nullable, (new Results())->refine('COALESCE', [], [$null, $number], $number, $derivation)->nullability);
+        self::assertSame($introspection, (new Results())->refine('COLLATION', [], [$null], $null, $derivation)->nullability);
+        self::assertSame($introspection, (new Results())->refine('CHARSET', [], [$null], $null, $derivation)->nullability);
     }
 
     public function testPropagatedAnswersMostStringFunctionsAsNotNullOfNotNullArgumentsInMySql56(): void

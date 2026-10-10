@@ -25,6 +25,8 @@ final class UninitializedVariablesTest extends TestCase
         yield 'double branch' => ['SELECT COALESCE(@v,1e0)'];
         yield 'string branch' => ["SELECT COALESCE(@v,'a')"];
         yield 'string collation' => ["SELECT COLLATION(COALESCE(@v,'a')),COALESCE(@v,'a')='A'"];
+        yield 'null introspection' => ['SELECT CHARSET(NULL),COLLATION(NULL),COERCIBILITY(NULL),CHARSET(@v),COLLATION(@v),COERCIBILITY(@v)'];
+        yield 'column introspection' => ['SELECT CHARSET(b),COLLATION(b),COERCIBILITY(b) FROM t1 ORDER BY id'];
         yield 'multibyte string' => ["SELECT COALESCE(@v,'É')='é',LENGTH(COALESCE(@v,'É')),CHAR_LENGTH(COALESCE(@v,'É'))"];
         yield 'latin1 branch' => ["SELECT COALESCE(@v,_latin1'a'),COLLATION(COALESCE(@v,_latin1'a'))"];
         yield 'binary branch' => ["SELECT COALESCE(@v,_binary'a'),COLLATION(COALESCE(@v,_binary'a'))"];

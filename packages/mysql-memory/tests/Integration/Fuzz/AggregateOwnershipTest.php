@@ -20,6 +20,12 @@ final class AggregateOwnershipTest extends TestCase
     public static function providerStatements(): iterable
     {
         yield 'group concatenation' => ['SELECT (SELECT GROUP_CONCAT(t1.a ORDER BY t1.a)) FROM t1'];
+        yield 'grouped scalar concatenation' => ['SELECT (SELECT (GROUP_CONCAT(b ORDER BY id)) FROM t1)'];
+        yield 'scalar concatenation wrapper' => ["SELECT (SELECT CONCAT(GROUP_CONCAT(b ORDER BY id),'') FROM t1),(SELECT IFNULL(GROUP_CONCAT(b ORDER BY id),'') FROM t1)"];
+        yield 'scalar string extrema' => ['SELECT (SELECT MIN(b) FROM t1),(SELECT MAX(b) FROM t1)'];
+        yield 'wide utf8mb4 concatenation functions' => ["SET NAMES utf8mb4; SET group_concat_max_len=4096; SELECT GROUP_CONCAT(a ORDER BY id),CONCAT(GROUP_CONCAT(a ORDER BY id),''),IFNULL(GROUP_CONCAT(a ORDER BY id),''),HEX(GROUP_CONCAT(a ORDER BY id)) FROM t1"];
+        yield 'wide latin1 concatenation functions' => ["SET NAMES latin1; SET group_concat_max_len=4096; SELECT GROUP_CONCAT(a ORDER BY id),CONCAT(GROUP_CONCAT(a ORDER BY id),''),IFNULL(GROUP_CONCAT(a ORDER BY id),''),HEX(GROUP_CONCAT(a ORDER BY id)) FROM t1"];
+        yield 'unconverted concatenation functions' => ["SET NAMES utf8mb4; SET character_set_results=NULL; SELECT GROUP_CONCAT(a ORDER BY id),CONCAT(GROUP_CONCAT(a ORDER BY id),''),IFNULL(GROUP_CONCAT(a ORDER BY id),''),HEX(GROUP_CONCAT(a ORDER BY id)) FROM t1"];
         yield 'constant stays local' => ['SELECT (SELECT SUM(1)) FROM t1'];
         yield 'star stays local' => ['SELECT (SELECT COUNT(*)) FROM t1'];
         yield 'mixed column levels' => ['SELECT (SELECT SUM(t1.a+t2.a) FROM t2) FROM t1'];

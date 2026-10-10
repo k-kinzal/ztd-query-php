@@ -22,6 +22,14 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class OutputTest extends TestCase
 {
+    public function testColumnConvertsAnExplicitBlobMetadataWidth(): void
+    {
+        $domain = new Domain(Kind::String, Field::LongBlob, 1024, Domain::NOT_FIXED, false, Collation::known('utf8mb4_general_ci'), display: 4096);
+
+        self::assertSame(4096, (new Output())->column('x', $domain, null)->length);
+        self::assertSame(16384, (new Output())->column('x', $domain, null, Charset::known('utf8mb4'))->length);
+        self::assertSame(4096, (new Output())->column('x', $domain, null, Charset::known('latin1'))->length);
+    }
     public function testResultWritesEachValueInItsText(): void
     {
         $session = (new Instance())->connect();
