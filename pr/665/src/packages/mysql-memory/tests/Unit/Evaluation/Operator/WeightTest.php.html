@@ -101,27 +101,36 @@
 <span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&quot;\0\0a\0\0B&quot;</span>, (<span class="tok-kw">new</span> <span class="tok-id">Weight</span>(<span class="tok-kw">new</span> <span class="tok-id">Constant</span>(<span class="tok-id">Domain</span>::<span class="tok-id">string</span>(<span class="tok-num">2</span>, <span class="tok-id">Collation</span>::<span class="tok-id">known</span>(<span class="tok-str">&#039;utf8mb4_bin&#039;</span>)), <span class="tok-str">&#039;aB&#039;</span>), <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-id">Domain</span>::<span class="tok-id">string</span>(<span class="tok-num">24</span>, <span class="tok-id">Collation</span>::<span class="tok-id">binary</span>())))-&gt;<span class="tok-id">evaluate</span>(<span class="tok-kw">new</span> <span class="tok-id">Frame</span>(<span class="tok-var">$context</span>)));</span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>    }</span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a></span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testBytesPadsOrCutsToTheLengthOfTheCast</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTextPadsLegacyBinaryCharCastsToTheirRequestedLength</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>    {</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-var">$weight</span> = <span class="tok-kw">new</span> <span class="tok-id">Weight</span>(<span class="tok-kw">new</span> <span class="tok-id">Constant</span>(<span class="tok-id">Domain</span>::<span class="tok-id">null</span>(), <span class="tok-id">null</span>), <span class="tok-id">WeightCast</span>::<span class="tok-id">Binary</span>, <span class="tok-num">3</span>, <span class="tok-id">Domain</span>::<span class="tok-id">string</span>(<span class="tok-num">8</span>, <span class="tok-id">Collation</span>::<span class="tok-id">binary</span>()));</span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a></span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&quot;ab\0&quot;</span>, <span class="tok-str">&#039;abc&#039;</span>], [<span class="tok-var">$weight</span>-&gt;<span class="tok-id">bytes</span>(<span class="tok-str">&#039;ab&#039;</span>), <span class="tok-var">$weight</span>-&gt;<span class="tok-id">bytes</span>(<span class="tok-str">&#039;abcd&#039;</span>)]);</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    }</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a></span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testEvaluateRefusesACollationWhoseWeightsAreNotEmulated</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>    {</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>())-&gt;<span class="tok-id">connect</span>();</span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a></span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">SqlError</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionCode</span>(<span class="tok-num">1235</span>);</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a></span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;SELECT HEX(WEIGHT_STRING(&#039;a&#039;))&quot;</span>);</span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    }</span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a></span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a></span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a></span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>}</span>
-<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>(<span class="tok-str">&#039;5.6.51&#039;</span>))-&gt;<span class="tok-id">connect</span>();</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-var">$result</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;SELECT HEX(WEIGHT_STRING(_binary&#039;ab&#039; AS CHAR(4)))&quot;</span>)[<span class="tok-num">0</span>];</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a></span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">ResultSet</span>::<span class="tok-kw">class</span>, <span class="tok-var">$result</span>);</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([[<span class="tok-str">&#039;61620000&#039;</span>]], <span class="tok-var">$result</span>-&gt;<span class="tok-id">rows</span>);</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    }</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a></span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testBytesPadsOrCutsToTheLengthOfTheCast</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    {</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-var">$weight</span> = <span class="tok-kw">new</span> <span class="tok-id">Weight</span>(<span class="tok-kw">new</span> <span class="tok-id">Constant</span>(<span class="tok-id">Domain</span>::<span class="tok-id">null</span>(), <span class="tok-id">null</span>), <span class="tok-id">WeightCast</span>::<span class="tok-id">Binary</span>, <span class="tok-num">3</span>, <span class="tok-id">Domain</span>::<span class="tok-id">string</span>(<span class="tok-num">8</span>, <span class="tok-id">Collation</span>::<span class="tok-id">binary</span>()));</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a></span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&quot;ab\0&quot;</span>, <span class="tok-str">&#039;abc&#039;</span>], [<span class="tok-var">$weight</span>-&gt;<span class="tok-id">bytes</span>(<span class="tok-str">&#039;ab&#039;</span>), <span class="tok-var">$weight</span>-&gt;<span class="tok-id">bytes</span>(<span class="tok-str">&#039;abcd&#039;</span>)]);</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    }</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testEvaluateRefusesACollationWhoseWeightsAreNotEmulated</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    {</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>())-&gt;<span class="tok-id">connect</span>();</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a></span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">SqlError</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionCode</span>(<span class="tok-num">1235</span>);</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a></span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;SELECT HEX(WEIGHT_STRING(&#039;a&#039;))&quot;</span>);</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    }</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a></span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a></span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a></span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>}</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
