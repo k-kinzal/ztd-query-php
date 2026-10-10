@@ -233,7 +233,7 @@ final class CreateUserCommand implements Command
                 throw AccountError::PluginOperationUnsupported->error($credentials->plugin($user->identification->plugin->value ?? $credentials->default()));
             }
             $account = new Account($identity, (new Credentials($session->settings()->release()))->default());
-            $password = $user->identification === null ? null : $options->identify($account, $user->identification, false);
+            $password = $user->identification === null ? null : $options->identify($account, $user->identification, false, (int) $session->variables->read('generated_random_password_length'));
             $options->apply($account, $statement->tls, $statement->resources, $statement->options, $statement->comment);
             $accounts->add($account);
             (new Names())->ascii($identity, 8, $context->diagnostics);

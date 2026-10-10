@@ -93,10 +93,11 @@ final class Options
      * Applies an authentication to an account and answers the random password it generated, if any.
      *
      * @param bool $altered Whether ALTER USER changes the account, where a plugin alone expires the password
+     * @param int $passwordLength The session's checked generated_random_password_length
      *
      * @throws SqlError When the plugin is not loaded or the string has not its form
      */
-    public function identify(Account $account, Identification $identification, bool $altered): ?string
+    public function identify(Account $account, Identification $identification, bool $altered, int $passwordLength = 20): ?string
     {
         $credentials = new Credentials($this->release);
         $account->plugin = $identification->plugin === null ? $account->plugin : $credentials->plugin($identification->plugin->value);
@@ -120,7 +121,7 @@ final class Options
 
                 return null;
             case Credential::RandomPassword:
-                $generated = $credentials->generate();
+                $generated = $credentials->generate($passwordLength);
                 $secret = $generated;
                 break;
             case Credential::Password:

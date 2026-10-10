@@ -58,6 +58,12 @@ final class CredentialsTest extends TestCase
         self::assertSame(20, strlen((new Credentials())->generate()));
     }
 
+    public function testGenerateUsesTheRequestedLength(): void
+    {
+        self::assertSame(5, strlen((new Credentials())->generate(5)));
+        self::assertSame(255, strlen((new Credentials())->generate(255)));
+    }
+
     public function testDefaultIsMySqlNativePasswordInMySql57(): void
     {
         self::assertSame(['mysql_native_password', 'caching_sha2_password'], [(new Credentials(\SqlSemantics\Contract\GrammarRelease::MySql5744))->default(), (new Credentials())->default()]);

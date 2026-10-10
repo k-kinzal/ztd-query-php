@@ -152,4 +152,17 @@ final class AlterUserCommandTest extends TestCase
 
         (new AlterUserCommand())->replace(new Account(new Identity('root', '%'), password: 'root'), 'x', $session);
     }
+    public function testExecuteUsesTheSessionRandomPasswordLength(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET generated_random_password_length = 255');
+
+        $reply = $session->query('ALTER USER CURRENT_USER IDENTIFIED BY RANDOM PASSWORD')[0];
+
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertIsString($reply->rows[0][2]);
+        self::assertSame(255, strlen($reply->rows[0][2]));
+        self::assertSame($reply->rows[0][2], $session->instance->accounts->find(new Identity('root', '%'))?->password);
+    }
+
 }

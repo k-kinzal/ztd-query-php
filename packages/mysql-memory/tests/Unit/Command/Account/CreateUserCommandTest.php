@@ -218,4 +218,17 @@ final class CreateUserCommandTest extends TestCase
 
         self::assertSame([true, true], [$session->instance->accounts->find(new Identity('a', '%')) !== null, $session->instance->accounts->find(new Identity('c', '%')) !== null]);
     }
+    public function testExecuteUsesTheSessionRandomPasswordLength(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET generated_random_password_length = 255');
+
+        $reply = $session->query('CREATE USER random_user IDENTIFIED BY RANDOM PASSWORD')[0];
+
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertIsString($reply->rows[0][2]);
+        self::assertSame(255, strlen($reply->rows[0][2]));
+        self::assertSame($reply->rows[0][2], $session->instance->accounts->find(new Identity('random_user', '%'))?->password);
+    }
+
 }

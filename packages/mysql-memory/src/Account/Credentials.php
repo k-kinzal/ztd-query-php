@@ -129,13 +129,15 @@ final class Credentials
     }
 
     /**
-     * Generates a random password.
+     * Generates a random password of the session's configured length.
+     *
+     * @param int $length The checked generated_random_password_length, between 5 and 255
      */
-    public function generate(): string
+    public function generate(int $length = 20): string
     {
         $characters = '!"#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~';
         $password = '';
-        for ($i = 0; $i < 20; $i++) {
+        for ($i = 0; $i < $length; $i++) {
             $password .= $characters[random_int(0, strlen($characters) - 1)];
         }
 

@@ -94,7 +94,7 @@ final class SetPasswordCommand implements Command
             (new AlterUserCommand())->replace($account, $statement->replace->value, $session);
         }
         $credentials = new Credentials($session->settings()->release());
-        $password = $statement->password === null ? $credentials->generate() : $statement->password->text->value;
+        $password = $statement->password === null ? $credentials->generate((int) $session->variables->read('generated_random_password_length')) : $statement->password->text->value;
         if ($session->settings()->release() === GrammarRelease::MySql5651) {
             $this->legacy($account, $statement);
         } else {
