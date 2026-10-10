@@ -60,4 +60,16 @@ final class ScalarSubqueryTest extends TestCase
 
         self::assertSame('(SELECT 1)', (new Lexical())->join($out->pieces()));
     }
+    public function testDeriveScalarMakesAnEmptyMySql57AggregateNullable(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $subquery = (new Lowering($platform->productions($profile), new Leaves(), $profile))->expressions->expression($platform->parser($profile)->parse('SELECT (SELECT COUNT(*) LIMIT 0)')->find('expr')[0]);
+        $derivation = new Derivation($platform->context($profile, null, [], true));
+        $fact = $derivation->scalar($subquery, $derivation->environment());
+
+        self::assertSame(Nullability::Nullable, $fact->nullability);
+        self::assertNull($fact->replacement);
+    }
+
 }

@@ -707,4 +707,12 @@ final class ErrorsTest extends TestCase
         self::assertInstanceOf(SqlError::class, $answers[0]);
         self::assertSame([1272, "Variable 'sql_mode' is not a variable component (can't be used as XXXX.variable_name)"], [$answers[0]->getCode(), $answers[0]->getMessage()]);
     }
+    public function testServerRepeatsUnknownAssignmentDiagnosticsInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->run('SET missing_variable=1');
+
+        self::assertSame([['Error', 1193, "Unknown system variable 'missing_variable'"], ['Error', 1193, "Unknown system variable 'missing_variable'"]], $session->diagnostics->conditions);
+    }
+
 }

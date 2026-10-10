@@ -301,7 +301,7 @@ final class Errors
     {
         return match (true) {
             $diagnostic instanceof BucketCountOutOfRange => DataError::DataOutOfRange->error('Number of buckets', 'ANALYZE TABLE'),
-            $diagnostic instanceof UnknownSystemVariable => new SqlError(AdministrationError::UnknownSystemVariable, $diagnostic->message(), following: $diagnostic->assigned && !$diagnostic->structured && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? [[AdministrationError::UnknownSystemVariable->value, $diagnostic->message()]] : []),
+            $diagnostic instanceof UnknownSystemVariable => new SqlError(AdministrationError::UnknownSystemVariable, $diagnostic->message(), following: $diagnostic->assigned && !$diagnostic->structured && $session->settings()->legacy() ? [[AdministrationError::UnknownSystemVariable->value, $diagnostic->message()]] : []),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable => AdministrationError::VariableIsNotStruct->error($diagnostic->name),
             $diagnostic instanceof VariableMisuse => new SqlError(ErrorNumbers::from($diagnostic->rule->code()), $diagnostic->message()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem => (new \MySqlMemory\Error\ProgramErrors())->error($diagnostic),

@@ -21,6 +21,8 @@ use SqlSemantics\Statement\Statement;
  * Already connected sessions have independent flags: an administrator resetting the account
  * does not lift another session's restriction. A successful change by the current session
  * copies the account's resulting expiration state. Verified with two live 8.4 connections.
+ * MySQL 5.7 also permits SET variable and character-set statements while expired, as
+ * verified by the versioned differential suite.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/password-management.html.
  *
  * @visibility MySqlMemory
@@ -35,6 +37,9 @@ final class PasswordAccess
     public function check(Statement $statement, Session $session): void
     {
         if (!$session->passwordExpired) {
+            return;
+        }
+        if ($session->settings()->release() === GrammarRelease::MySql5744 && $statement instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables) {
             return;
         }
         $names = new Names($session->settings()->release());

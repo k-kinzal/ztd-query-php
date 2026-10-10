@@ -23,7 +23,8 @@ use SqlSemantics\Statement\Operation;
  *
  * Each commits the open transaction, checks its ENGINE option as the tablespace statements do,
  * then fails: InnoDB does not support log file groups (ER_FEATURE_UNSUPPORTED, followed by
- * ER_CHECK_NOT_IMPLEMENTED; verified on a live 8.4 server).
+ * ER_CHECK_NOT_IMPLEMENTED; verified on a live 8.4 server). MySQL 5.7 reports only
+ * ER_CHECK_NOT_IMPLEMENTED with the specific operation, as observed in the differential suite.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-logfile-group.html.
  *
  * @visibility MySqlMemory
@@ -54,6 +55,11 @@ final class LogfileGroupCommand implements Command
         }
         if ($legacy) {
             throw SchemaError::IllegalCreateOption->error('InnoDB', $operationName);
+        }
+
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            $verb = $statement instanceof CreateLogfileGroup ? 'CREATE' : ($statement instanceof AlterLogfileGroup ? 'ALTER' : 'DROP');
+            throw SchemaError::EngineUnsupportedOperation->error($verb . ' LOGFILE GROUP');
         }
 
         throw new SqlError(AdministrationError::FeatureUnsupported, AdministrationError::FeatureUnsupported->message('LOGFILE GROUP', 'by InnoDB'), null, [[SchemaError::EngineUnsupportedOperation->value, SchemaError::EngineUnsupportedOperation->message($operationName)]]);

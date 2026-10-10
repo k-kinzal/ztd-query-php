@@ -58,7 +58,9 @@ final class CacheOptions
         if ($variable !== null) {
             return $this->undeclared(\MySqlMemory\Error\Family\ProgramError::UndeclaredVariable->error($variable), $statement, $session);
         }
+        [$end, $engines, $error] = (new Parse\EnginePrefix())->conditions($tokens, $statement, $end, $session, $error);
         [$warned, $conflict] = (new Parse\Modifiers($tokens, $release))->scan($end, $settled);
+        $warned += $engines;
         if ($parsed) {
             $warned += array_filter($session->dots, static fn (int $offset): bool => $offset < $end, ARRAY_FILTER_USE_KEY);
         }
@@ -142,7 +144,7 @@ final class CacheOptions
     /**
      * Records the warnings MySQL 5.6 and 5.7 raise while they parse a statement they refuse, in the order of their tokens, and the error the statement fails with, which it answers: the refusal of a conflict of modifiers, or the error given.
      *
-     * @param array<int, Deprecated> $warned The warnings, by the offset of their token
+     * @param array<int, Deprecated|SqlError> $warned The warnings, by the offset of their token
      * @param array{string, string}|null $conflict The conflict of modifiers found, if any
      * @param SqlError|null $previous The error the answered error reports
      * @param bool $clear Whether the conditions recorded before are removed
@@ -154,7 +156,7 @@ final class CacheOptions
             $session->diagnostics->clear();
         }
         foreach ($warned as $construct) {
-            $session->diagnostics->warning($construct->code(), $construct->value);
+            $session->diagnostics->warning($construct instanceof SqlError ? $construct->getCode() : $construct->code(), $construct instanceof SqlError ? $construct->getMessage() : $construct->value);
         }
         $failure = $conflict === null ? $error : $this->refusal($conflict);
         $session->diagnostics->error($failure->getCode(), $failure->getMessage());

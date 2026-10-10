@@ -53,7 +53,7 @@ final class ScalarReduction
      * Tells whether a scalar result retains the selected expression's NULL attribute.
      *
      * With no table or filter, aggregate and window results retain that attribute too.
-     * A modern LIMIT can make the result empty and nullable; MySQL 5.x retains the
+     * From MySQL 5.7, LIMIT can make the result empty and nullable; MySQL 5.6 retains the
      * attribute even when LIMIT discards the row. This describes the published result
      * metadata, including that legacy behavior, rather than a minimum row count.
      */

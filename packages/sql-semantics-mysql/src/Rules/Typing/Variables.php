@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 /**
  * Resolves the type a user variable is read with, from the type of the value it holds.
  *
- * An integer reads as a BIGINT (width 20 in MySQL 5.6 and 21 from 5.7), a decimal as DECIMAL(65,30), a double as a double, and any
+ * An integer reads as a BIGINT (width 20 in MySQL 5.6 and 5.7, and 21 from 8.0), a decimal as DECIMAL(65,30), a double as a double, and any
  * other value as a blob in its collation, a temporal value in latin1: of 16777215 characters
  * in MySQL 5.6 and 5.7, and from MySQL 8.0 as long as 16777215 characters of the most bytes
  * of the character set count in its fewest, a long blob when that passes 16777215 bytes. A
@@ -54,7 +54,7 @@ final class Variables
     public function held(Domain $domain): Domain
     {
         return match ($domain->kind) {
-            Kind::Integer, Kind::Year, Kind::Bit => Domain::integer(Field::LongLong, $this->release === GrammarRelease::MySql5651 ? 20 : 21, $domain->unsigned),
+            Kind::Integer, Kind::Year, Kind::Bit => Domain::integer(Field::LongLong, in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? 20 : 21, $domain->unsigned),
             Kind::Decimal => Domain::decimal(65, 30),
             Kind::Double => Domain::double(23),
             Kind::Null => Domain::string(16777215, Collation::binary(), Field::MediumBlob),

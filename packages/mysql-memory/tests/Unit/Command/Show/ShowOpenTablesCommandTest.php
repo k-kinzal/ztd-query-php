@@ -37,4 +37,13 @@ final class ShowOpenTablesCommandTest extends TestCase
         self::assertSame([], $cased->rows);
         self::assertSame(['OPEN_TABLES', 'information_schema', 8], [$result->columns[2]->table, $result->columns[2]->schema, $result->columns[2]->type->value]);
     }
+    public function testExecutePreservesMySql57NumericColumnWidths(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $result = $session->query('SHOW OPEN TABLES')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([1, 4], [$result->columns[2]->length, $result->columns[3]->length]);
+    }
+
 }

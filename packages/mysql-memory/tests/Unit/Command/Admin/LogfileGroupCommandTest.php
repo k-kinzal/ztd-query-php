@@ -52,4 +52,12 @@ final class LogfileGroupCommandTest extends TestCase
 
         $session->query("DROP LOGFILE GROUP g ENGINE = 'text', ENGINE = x");
     }
+    public function testExecutePreservesTheMySql57UnsupportedOperationError(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->run("ALTER LOGFILE GROUP g ADD UNDOFILE 'u'");
+
+        self::assertSame([['Error', 1178, "The storage engine for the table doesn't support ALTER LOGFILE GROUP"]], $session->diagnostics->conditions);
+    }
+
 }

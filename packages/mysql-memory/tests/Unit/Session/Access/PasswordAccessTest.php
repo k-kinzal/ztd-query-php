@@ -57,4 +57,14 @@ final class PasswordAccessTest extends TestCase
         $this->expectExceptionCode(1193);
         $session->query('SELECT @@unknown_variable');
     }
+    public function testCheckPermitsMySql57SessionSetupWithoutResettingExpiration(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("ALTER USER CURRENT_USER PASSWORD EXPIRE; SET sql_mode=''; SET NAMES utf8mb4; SET @a=1");
+
+        self::assertTrue($session->passwordExpired);
+        self::assertSame('', $session->variables->read('sql_mode'));
+        self::assertSame(1, $session->variables->user('a')[0]);
+    }
+
 }

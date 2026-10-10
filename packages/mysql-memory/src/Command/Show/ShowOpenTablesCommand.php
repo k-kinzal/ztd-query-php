@@ -53,7 +53,7 @@ final class ShowOpenTablesCommand implements Command
         }
         $table = 'OPEN_TABLES';
         $schema = 'information_schema';
-        $oldWidths = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        $oldWidths = $session->settings()->legacy();
         $headings = [
             Heading::text('Database', Field::VarString, 64, ColumnFlag::NotNull->value, 0, 'Database', $table, $table, $schema),
             Heading::text('Table', Field::VarString, 64, ColumnFlag::NotNull->value, 0, 'Table', $table, $table, $schema),

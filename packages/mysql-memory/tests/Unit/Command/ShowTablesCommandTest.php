@@ -129,4 +129,15 @@ final class ShowTablesCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $read2);
         self::assertSame([['time_zone'], ['time_zone_leap_second'], ['time_zone_name'], ['time_zone_transition'], ['time_zone_transition_type']], $read2->rows);
     }
+    public function testExecutePreservesMySql57FullTableMetadata(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $result = $session->query('SHOW FULL TABLES')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['TABLE_NAMES', 'TABLE_NAMES'], array_map(static fn ($column): string => $column->table, $result->columns));
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, $result->columns[1]->type);
+    }
+
 }

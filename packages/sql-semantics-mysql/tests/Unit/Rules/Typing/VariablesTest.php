@@ -58,4 +58,11 @@ final class VariablesTest extends TestCase
 
         self::assertSame([67108860, 16777215, 16777215], [$variables->text(Collation::known('utf8mb4_bin'))->length, $variables->text(Collation::known('ucs2_general_ci'))->length, (new Variables(new Settings(Collation::known('utf8mb4_0900_ai_ci')), \SqlSemantics\Contract\GrammarRelease::MySql5744))->text(Collation::known('utf8mb4_bin'))->length]);
     }
+    public function testHeldKeepsMySql57IntegerVariableWidth(): void
+    {
+        $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), \SqlSemantics\Contract\GrammarRelease::MySql5744);
+
+        self::assertEquals(Domain::integer(Field::LongLong, 20), $variables->held(Domain::integer(Field::Long, 11)));
+    }
+
 }

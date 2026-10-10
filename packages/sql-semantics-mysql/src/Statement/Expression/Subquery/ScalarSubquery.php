@@ -53,7 +53,7 @@ final class ScalarSubquery implements Scalar
     {
         $query = $derivation->query($this->query, $environment);
         $value = (new SubqueryRows())->value($query);
-        $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $legacy = $derivation->context->profile->grammar === GrammarRelease::MySql5651;
         $reduction = new ScalarReduction();
         $replacement = $reduction->expression($this->query, $derivation->context->profile->grammar);
         if ($replacement === null) {
