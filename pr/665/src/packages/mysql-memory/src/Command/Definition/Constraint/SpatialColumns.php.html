@@ -44,63 +44,86 @@
 <span class="src-line" id="L4" data-diff="added"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">MySqlMemory\Command\Definition\Constraint</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Error\Family\SchemaError</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Error\Family\StatementError</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Registry\SpatialCatalog</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Session\Session</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Table\CreateTable</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Spatial</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Checks resolved spatial column restrictions against the session&#039;s reference systems.</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * Zero is the Cartesian system. Other identifiers must exist, and only the last</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * restriction of a column is looked up. MySQL checks these before index preparation.</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * Verified through SQL on MySQL 8.4.7.</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SpatialColumns</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>{</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * Checks spatial reference systems before preparing the indexes of a new table.</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">prepare</span>(<span class="tok-id">Statement</span> <span class="tok-var">$statement</span>, <span class="tok-id">Session</span> <span class="tok-var">$session</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    {</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">CreateTable</span>) {</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>            <span class="tok-kw">return</span>;</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        }</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-var">$schemaName</span> = <span class="tok-var">$statement</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">schema</span>-&gt;<span class="tok-id">value</span> ?? <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">database</span>;</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-var">$name</span> = <span class="tok-var">$statement</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>;</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-var">$schema</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">dictionary</span>-&gt;<span class="tok-id">schema</span>(<span class="tok-var">$schemaName</span>);</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$existing</span> = <span class="tok-var">$statement</span>-&gt;<span class="tok-id">temporary</span>() ? <span class="tok-var">$session</span>-&gt;<span class="tok-id">temporaries</span>-&gt;<span class="tok-id">table</span>(<span class="tok-var">$schemaName</span>, <span class="tok-var">$name</span>) : (<span class="tok-var">$schema</span>?-&gt;<span class="tok-id">table</span>(<span class="tok-var">$name</span>) ?? <span class="tok-var">$schema</span>?-&gt;<span class="tok-id">views</span>[<span class="tok-var">$name</span>] ?? <span class="tok-id">null</span>);</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">if</span> (<span class="tok-var">$existing</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>            <span class="tok-kw">return</span>;</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        }</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$statement</span>-&gt;<span class="tok-id">elements</span> <span class="tok-kw">as</span> <span class="tok-var">$element</span>) {</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>            <span class="tok-kw">if</span> (<span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ColumnDefinition</span>) {</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>                <span class="tok-var">$this</span>-&gt;<span class="tok-id">check</span>(<span class="tok-var">$element</span>, <span class="tok-var">$session</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">registry</span>-&gt;<span class="tok-id">spatialCatalog</span>);</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>            }</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        }</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    }</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a></span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     * Requires the resolved SRID to name an available system.</span></span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">check</span>(<span class="tok-id">ColumnDefinition</span> <span class="tok-var">$column</span>, <span class="tok-id">SpatialCatalog</span> <span class="tok-var">$catalog</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    {</span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>        <span class="tok-var">$srid</span> = <span class="tok-var">$column</span>-&gt;<span class="tok-id">srid</span>();</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-kw">if</span> (<span class="tok-var">$srid</span> !== <span class="tok-id">null</span> &amp;&amp; !<span class="tok-var">$column</span>-&gt;<span class="tok-id">specification</span>-&gt;<span class="tok-id">dataType</span>() <span class="tok-kw">instanceof</span> <span class="tok-id">Spatial</span>) {</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>            <span class="tok-kw">throw</span> <span class="tok-id">StatementError</span>::<span class="tok-id">WrongUsage</span>-&gt;<span class="tok-id">error</span>(<span class="tok-str">&#039;SRID&#039;</span>, <span class="tok-str">&#039;non-geometry column&#039;</span>);</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        }</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-kw">if</span> (<span class="tok-var">$srid</span> !== <span class="tok-id">null</span> &amp;&amp; <span class="tok-var">$srid</span> !== <span class="tok-num">0</span> &amp;&amp; <span class="tok-var">$catalog</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$srid</span>) === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>            <span class="tok-kw">throw</span> <span class="tok-id">SchemaError</span>::<span class="tok-id">SrsNotFound</span>-&gt;<span class="tok-id">error</span>(<span class="tok-var">$srid</span>);</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        }</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    }</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>}</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Dictionary\TableDefinition</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Error\Family\SchemaError</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Error\Family\StatementError</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Registry\SpatialCatalog</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Session\Session</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Table\CreateTable</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Platform\MySql\Statement\Type\Spatial</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Statement</span>;</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * Checks resolved spatial column restrictions against the session&#039;s reference systems.</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * Zero is the Cartesian system. Other identifiers must exist, and only the last</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * restriction of a column is looked up. MySQL checks these before index preparation.</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * Verified through SQL on MySQL 8.4.7.</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SpatialColumns</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>{</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * Checks spatial reference systems before preparing the indexes of a new table.</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">prepare</span>(<span class="tok-id">Statement</span> <span class="tok-var">$statement</span>, <span class="tok-id">Session</span> <span class="tok-var">$session</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    {</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$statement</span> <span class="tok-kw">instanceof</span> <span class="tok-id">CreateTable</span>) {</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>            <span class="tok-kw">return</span>;</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        }</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-var">$schemaName</span> = <span class="tok-var">$statement</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">schema</span>-&gt;<span class="tok-id">value</span> ?? <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">database</span>;</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-var">$name</span> = <span class="tok-var">$statement</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">value</span>;</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$schema</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">dictionary</span>-&gt;<span class="tok-id">schema</span>(<span class="tok-var">$schemaName</span>);</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-var">$existing</span> = <span class="tok-var">$statement</span>-&gt;<span class="tok-id">temporary</span>() ? <span class="tok-var">$session</span>-&gt;<span class="tok-id">temporaries</span>-&gt;<span class="tok-id">table</span>(<span class="tok-var">$schemaName</span>, <span class="tok-var">$name</span>) : (<span class="tok-var">$schema</span>?-&gt;<span class="tok-id">table</span>(<span class="tok-var">$name</span>) ?? <span class="tok-var">$schema</span>?-&gt;<span class="tok-id">views</span>[<span class="tok-var">$name</span>] ?? <span class="tok-id">null</span>);</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-kw">if</span> (<span class="tok-var">$existing</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>            <span class="tok-kw">return</span>;</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        }</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$statement</span>-&gt;<span class="tok-id">elements</span> <span class="tok-kw">as</span> <span class="tok-var">$element</span>) {</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>            <span class="tok-kw">if</span> (<span class="tok-var">$element</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ColumnDefinition</span>) {</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>                <span class="tok-var">$this</span>-&gt;<span class="tok-id">check</span>(<span class="tok-var">$element</span>, <span class="tok-var">$session</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">registry</span>-&gt;<span class="tok-id">spatialCatalog</span>);</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>            }</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        }</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    }</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     * Requires the resolved SRID to name an available system.</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">check</span>(<span class="tok-id">ColumnDefinition</span> <span class="tok-var">$column</span>, <span class="tok-id">SpatialCatalog</span> <span class="tok-var">$catalog</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    {</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-var">$srid</span> = <span class="tok-var">$column</span>-&gt;<span class="tok-id">srid</span>();</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        <span class="tok-kw">if</span> (<span class="tok-var">$srid</span> !== <span class="tok-id">null</span> &amp;&amp; !<span class="tok-var">$column</span>-&gt;<span class="tok-id">specification</span>-&gt;<span class="tok-id">dataType</span>() <span class="tok-kw">instanceof</span> <span class="tok-id">Spatial</span>) {</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>            <span class="tok-kw">throw</span> <span class="tok-id">StatementError</span>::<span class="tok-id">WrongUsage</span>-&gt;<span class="tok-id">error</span>(<span class="tok-str">&#039;SRID&#039;</span>, <span class="tok-str">&#039;non-geometry column&#039;</span>);</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        }</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        <span class="tok-kw">if</span> (<span class="tok-var">$srid</span> !== <span class="tok-id">null</span> &amp;&amp; <span class="tok-var">$srid</span> !== <span class="tok-num">0</span> &amp;&amp; <span class="tok-var">$catalog</span>-&gt;<span class="tok-id">name</span>(<span class="tok-var">$srid</span>) === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-kw">throw</span> <span class="tok-id">SchemaError</span>::<span class="tok-id">SrsNotFound</span>-&gt;<span class="tok-id">error</span>(<span class="tok-var">$srid</span>);</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        }</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>    }</span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a></span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a><span class="tok-com">     * Requires copying when an existing column acquires a different SRID restriction.</span></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a><span class="tok-com">     * Removing a restriction leaves the bytes and their validation unchanged.</span></span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a><span class="tok-com">     * @param list&lt;int|null&gt; $origins The old position of each new column</span></span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">alter</span>(<span class="tok-id">TableDefinition</span> <span class="tok-var">$before</span>, <span class="tok-id">TableDefinition</span> <span class="tok-var">$after</span>, <span class="tok-kw">array</span> <span class="tok-var">$origins</span>, ?<span class="tok-id">string</span> <span class="tok-var">$algorithm</span>, ?<span class="tok-id">string</span> <span class="tok-var">$lock</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    {</span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$after</span>-&gt;<span class="tok-id">columns</span> <span class="tok-kw">as</span> <span class="tok-var">$position</span> =&gt; <span class="tok-var">$column</span>) {</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>            <span class="tok-var">$origin</span> = <span class="tok-var">$origins</span>[<span class="tok-var">$position</span>] ?? <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>            <span class="tok-kw">if</span> (<span class="tok-var">$origin</span> === <span class="tok-id">null</span> || <span class="tok-var">$column</span>-&gt;<span class="tok-id">srid</span> === <span class="tok-id">null</span> || <span class="tok-var">$column</span>-&gt;<span class="tok-id">srid</span> === <span class="tok-var">$before</span>-&gt;<span class="tok-id">columns</span>[<span class="tok-var">$origin</span>]-&gt;<span class="tok-id">srid</span>) {</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>                <span class="tok-kw">continue</span>;</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>            }</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>            <span class="tok-kw">if</span> (<span class="tok-id">in_array</span>(<span class="tok-var">$algorithm</span>, [<span class="tok-str">&#039;inplace&#039;</span>, <span class="tok-str">&#039;instant&#039;</span>], <span class="tok-id">true</span>)) {</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>                <span class="tok-kw">throw</span> <span class="tok-id">SchemaError</span>::<span class="tok-id">AlterOperationNotSupported</span>-&gt;<span class="tok-id">error</span>(<span class="tok-str">&#039;ALGORITHM=&#039;</span> . <span class="tok-id">strtoupper</span>(<span class="tok-var">$algorithm</span>), <span class="tok-str">&#039;ALGORITHM=COPY&#039;</span>);</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>            }</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>            <span class="tok-kw">if</span> (<span class="tok-var">$lock</span> === <span class="tok-str">&#039;none&#039;</span>) {</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>                <span class="tok-kw">throw</span> <span class="tok-id">SchemaError</span>::<span class="tok-id">AlterOperationNotSupportedReason</span>-&gt;<span class="tok-id">error</span>(<span class="tok-str">&#039;LOCK=NONE&#039;</span>, <span class="tok-str">&#039;COPY algorithm requires a lock&#039;</span>, <span class="tok-str">&#039;LOCK=SHARED&#039;</span>);</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>            }</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>        }</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    }</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>}</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
