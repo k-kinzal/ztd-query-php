@@ -99,7 +99,7 @@ final class Blocks
 
         $plan = new QueryPlan($root, $domains, array_map(fn (Field $field): string => $this->name($field, $select), $fields), (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== []));
 
-        return System\ProgramMetadata::buffered($plan, $this->planner, $select, $outer, $scope, $keys !== []);
+        return System\ProgramMetadata::buffered((new SortedDistinct($this->planner))->apply($plan, $select, $keys, $outer), $this->planner, $select, $outer, $scope, $keys !== []);
     }
 
     /**
@@ -181,8 +181,20 @@ final class Blocks
         $compiler = $this->planner->compiler;
         $keys = [];
         foreach ([...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)] as $item) {
-            $resolution = ($item->expression instanceof ColumnUse || $item->expression instanceof OutputOrdinal) && $compiler->facts->covers($item->expression) ? $compiler->facts->scalar($item->expression)->resolution : null;
+            $target = $item->expression;
+            while ($target instanceof Grouped) {
+                $target = $target->operand;
+            }
+            $resolution = ($target instanceof ColumnUse || $target instanceof OutputOrdinal) && $compiler->facts->covers($target) ? $compiler->facts->scalar($target)->resolution : null;
             $position = $resolution instanceof AliasTarget ? array_search($resolution->field, $fields, true) : false;
+            if ($position === false && $target instanceof ColumnUse) {
+                foreach ($fields as $selected => $field) {
+                    if ($field->resolution instanceof ResolvedColumn && (new Equivalence($this->planner))->sameColumn($field->resolution, $target)) {
+                        $position = $selected;
+                        break;
+                    }
+                }
+            }
             if (is_int($position)) {
                 $keys[] = [$position, $domains[$position], $item->direction?->value === 'DESC'];
                 continue;

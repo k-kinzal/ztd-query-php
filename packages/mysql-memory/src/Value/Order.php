@@ -30,7 +30,8 @@ final class Order
         }
 
         return match ($domain->kind) {
-            Kind::Integer, Kind::Year, Kind::Bit => Integer::compare((int) $left, $domain->unsigned, (int) $right, $domain->unsigned),
+            Kind::Integer, Kind::Year => Integer::compare((int) $left, $domain->unsigned, (int) $right, $domain->unsigned),
+            Kind::Bit => strcmp(str_pad((string) $left, 8, "\0", STR_PAD_LEFT), str_pad((string) $right, 8, "\0", STR_PAD_LEFT)) <=> 0,
             Kind::Decimal => Decimal::compare((string) $left, (string) $right),
             Kind::Double => (float) $left <=> (float) $right,
             Kind::Json => self::json((string) $left, (string) $right),
@@ -50,7 +51,8 @@ final class Order
         }
 
         return match ($domain->kind) {
-            Kind::Integer, Kind::Year, Kind::Bit => 'i' . Integer::text((int) $value, $domain->unsigned),
+            Kind::Integer, Kind::Year => 'i' . Integer::text((int) $value, $domain->unsigned),
+            Kind::Bit => 'b' . ltrim((string) $value, "\0"),
             Kind::Decimal => 'd' . self::decimal((string) $value),
             Kind::Double => 'f' . ((float) $value === 0.0 ? '0' : Real::format((float) $value)),
             Kind::Json => 'j' . JsonNode::load((string) $value)->key(),

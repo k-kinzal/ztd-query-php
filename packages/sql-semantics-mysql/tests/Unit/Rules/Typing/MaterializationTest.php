@@ -27,6 +27,23 @@ use SqlSemantics\Statement\Type\TypeFact;
 #[Small]
 final class MaterializationTest extends TestCase
 {
+    public function testOrderedStoresBitSortKeysAsIntegersAtTheirReportedWidth(): void
+    {
+        $rules = new Materialization();
+        $ordinary = Domain::double();
+
+        self::assertEquals(Domain::integer(Field::Long, 8, true), $rules->ordered(new Domain(Kind::Bit, Field::Bit, 8, 0, true)));
+        self::assertEquals(Domain::integer(Field::LongLong, 64, true), $rules->ordered(new Domain(Kind::Bit, Field::Bit, 64, 0, true)));
+        self::assertSame($ordinary, $rules->ordered($ordinary));
+    }
+
+    public function testColumnStoresAnIntegerReportedAsBitInPackedBitStorage(): void
+    {
+        $domain = new Domain(Kind::Integer, Field::Bit, 64, 0, true);
+
+        self::assertEquals(new Domain(Kind::Bit, Field::Bit, 64, 0, true), (new Materialization())->column($domain));
+    }
+
     public function testColumnStoresLegacyBitResultsReportedAsBigintInAnIntegerColumn(): void
     {
         $input = new Domain(Kind::Bit, Field::LongLong, 8, 0, true);

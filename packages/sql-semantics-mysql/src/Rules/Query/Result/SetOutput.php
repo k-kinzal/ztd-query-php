@@ -57,15 +57,30 @@ final class SetOutput
             }
             $operands = $this->domains($body, $field->position, $derivation);
             $settled = $operands === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of($operands, 'UNION', $derivation);
-            if ($settled?->kind !== Kind::String) {
+            $returned = $this->returned($domain, $settled);
+            if ($returned === null) {
                 $fields[] = $field;
                 continue;
             }
-            $type = new Known(Domain::string($settled->length, $settled->collation, ResultField::VarString, $settled->coercibility));
+            $type = new Known($returned);
             $fields[] = new Field($field->position, new OutputSlot($field->name, $type, $field->nullability, unnamed: $field->slot->unnamed));
         }
 
         return $fields === $fact->projection ? $fact : new QueryFact($fields, $fact->names, $fact->aggregates);
+    }
+
+    /**
+     * Retains fractional precision for textually reported temporal operands in a
+     * streamed MySQL 5.7 UNION ALL. Stored set columns instead clear decimals.
+     * Verified through NULLIF over TIME, DATETIME and TIMESTAMP columns on 5.7.
+     */
+    public function returned(Domain $stored, ?Domain $settled): ?Domain
+    {
+        if ($settled?->kind->temporal() === true && $settled->field === ResultField::VarString) {
+            return new Domain(Kind::String, ResultField::VarString, $stored->length, $settled->decimals, false, $stored->collation, [], $stored->coercibility);
+        }
+
+        return $settled?->kind === Kind::String ? Domain::string($settled->length, $settled->collation, ResultField::VarString, $settled->coercibility) : null;
     }
 
     /**

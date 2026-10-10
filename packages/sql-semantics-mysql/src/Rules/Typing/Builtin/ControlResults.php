@@ -76,7 +76,7 @@ final class ControlResults
      */
     public function integerStorage(Domain $domain): Field
     {
-        return $domain->storageField ?? ($domain->kind === Kind::Year || ($domain->kind === Kind::Integer && $domain->field !== Field::LongLong) ? Field::Long : Field::LongLong);
+        return $domain->storageField ?? ($domain->kind === Kind::Year || ($domain->kind === Kind::Integer && !in_array($domain->field, [Field::LongLong, Field::Bit], true)) ? Field::Long : Field::LongLong);
     }
 
     /**

@@ -29,6 +29,7 @@ final class ControlResultsTest extends TestCase
         self::assertSame(Field::Long, $rules->integerStorage(Domain::integer(Field::Tiny, 4)));
         self::assertSame(Field::Long, $rules->integerStorage(Domain::integer(Field::Long, 11)));
         self::assertSame(Field::LongLong, $rules->integerStorage(Domain::integer(Field::LongLong, 20)));
+        self::assertSame(Field::LongLong, $rules->integerStorage(Domain::integer(Field::Bit, 64, true)));
         self::assertSame(Field::Long, $rules->integerStorage(Domain::integer(Field::LongLong, 11)->withStorageField(Field::Long)));
     }
 

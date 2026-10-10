@@ -17,6 +17,24 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class OrderTest extends TestCase
 {
+    public function testCompareOrdersPackedBitsAsUnsignedValues(): void
+    {
+        $domain = new Domain(Kind::Bit, Field::Bit, 64, 0, true);
+
+        self::assertSame(-1, Order::compare('A', "\xff", $domain));
+        self::assertSame(1, Order::compare(str_repeat("\xff", 8), "\x7f" . str_repeat("\xff", 7), $domain));
+        self::assertSame(0, Order::compare("\0A", 'A', $domain));
+    }
+
+    public function testKeyDistinguishesPackedBitValuesAndIgnoresLeadingZeroBytes(): void
+    {
+        $domain = new Domain(Kind::Bit, Field::Bit, 64, 0, true);
+
+        self::assertNotSame(Order::key('A', $domain), Order::key("\xff", $domain));
+        self::assertSame(Order::key('A', $domain), Order::key("\0A", $domain));
+        self::assertNotSame(Order::key(str_repeat("\xff", 8), $domain), Order::key("\0", $domain));
+    }
+
     public function testCompareSortsNullFirst(): void
     {
         $domain = Domain::string(10, Collation::known('utf8mb4_0900_ai_ci'));

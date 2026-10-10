@@ -233,8 +233,22 @@ final class Accumulator
             AggregateFunction::Variance, AggregateFunction::SampleVariance => $this->spread(false),
             null => $this->concatenation($frame),
             AggregateFunction::JsonArray => $this->count === 0 ? null : ($this->accumulation->object ? JsonEdit::object($this->json) : new JsonNode(JsonKind::Array, array_values($this->json)))->store(),
-            AggregateFunction::Minimum, AggregateFunction::Maximum, AggregateFunction::Collect => $this->count === 0 ? null : $this->value,
+            AggregateFunction::Minimum, AggregateFunction::Maximum, AggregateFunction::Collect => $this->extremeResult($frame),
         };
+    }
+
+    /**
+     * Reads the retained extreme in its resolved evaluation domain. MySQL 5.6
+     * BIT extrema evaluate as unsigned integers while still reporting BIT fields.
+     */
+    public function extremeResult(Frame $frame): int|float|string|null
+    {
+        if ($this->count === 0) {
+            return null;
+        }
+        $from = $this->accumulation->arguments[0]->domain();
+
+        return $from->kind === Kind::Bit && $this->accumulation->domain->kind === Kind::Integer ? Convert::toInteger($this->value, $from, $frame->context, true) : $this->value;
     }
 
     /**

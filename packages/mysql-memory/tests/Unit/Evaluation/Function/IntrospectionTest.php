@@ -24,6 +24,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class IntrospectionTest extends TestCase
 {
+    public function testCoercibilityRetainsLegacyBitAggregateStrength(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a BIT(8)); INSERT INTO t VALUES(65)');
+        $result = $session->query('SELECT COERCIBILITY(MIN(a)) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2']], $result->rows);
+    }
+
     public function testTextualIncludesTemporalResultsReportedAsStrings(): void
     {
         $temporal = new Constant(new Domain(Kind::Time, Field::VarString, 14, 3), '12:01:02.345');

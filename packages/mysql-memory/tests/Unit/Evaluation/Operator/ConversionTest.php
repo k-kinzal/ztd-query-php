@@ -19,6 +19,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ConversionTest extends TestCase
 {
+    public function testBitsPacksIntegersAtTheMaterializedColumnWidth(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $target = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Bit, Field::Bit, 64, 0, true);
+        $conversion = new Conversion(new Constant(Domain::integer(), -1), $target, null, 'BINARY');
+
+        self::assertSame(str_repeat("\xff", 8), $conversion->bits(-1, Domain::integer(Field::LongLong, 20, true), $context));
+        self::assertSame("\0\0\0\0\0\0\0A", $conversion->bits(65, Domain::integer(), $context));
+    }
+
     public function testEvaluateReturnsNullForNull(): void
     {
         $session = (new Instance())->connect();

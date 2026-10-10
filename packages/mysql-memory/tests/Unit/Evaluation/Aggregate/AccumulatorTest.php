@@ -22,6 +22,20 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class AccumulatorTest extends TestCase
 {
+    public function testExtremeResultReadsLegacyBitExtremaAsUnsignedIntegers(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $argument = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Bit, Field::Bit, 64, 0, true);
+        $accumulator = new Accumulator(new Accumulation(AggregateFunction::Maximum, [new ColumnRead($argument, 0)], false, Domain::integer(Field::Bit, 64, true)));
+
+        self::assertNull($accumulator->extremeResult(new Frame($context)));
+        $accumulator->add(new Frame($context, ["\0\0\0\0\0\0\0A"]));
+        self::assertSame(65, $accumulator->extremeResult(new Frame($context)));
+        $accumulator->add(new Frame($context, [str_repeat("\xff", 8)]));
+        self::assertSame(-1, $accumulator->extremeResult(new Frame($context)));
+    }
+
     public function testAddCountsTheRowsWhoseArgumentsAreNotNull(): void
     {
         $session = (new Instance())->connect();

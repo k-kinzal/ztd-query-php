@@ -169,6 +169,15 @@ numeric conversion. Numeric reads of scalar string results do not emit
 truncation warnings; a subquery reduced to its expression keeps that expression's
 warnings. Set operations resolve the returned field independently of the
 operand's evaluation kind, including temporal strings and BIT fields.
+MySQL 5.7 retains the fractional precision of temporal strings in a streamed
+`UNION ALL` result; materialized set columns clear that reported precision.
+BIT values retain unsigned ordering and distinct keys for grouping, sorting and
+unique constraints, including values above the signed 64-bit range. MySQL 5.6
+BIT extrema evaluate numerically while reporting BIT fields; storing their
+results in derived tables or UNION restores packed BIT values. Selected BIT
+sort keys of an ordered DISTINCT result use integer metadata when the chosen
+path stores them. Covering indexes and selected non-null unique keys can avoid
+that storage; `LIMIT 0` retains the original field metadata.
 `MIN` and `MAX` over TEXT/BLOB columns preserve separate expression and metadata
 bounds, including grouped column references, scalar subqueries, and later
 `CONCAT` or `HEX` calls.

@@ -27,6 +27,16 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class AggregatesTest extends TestCase
 {
+    public function testExtremeSeparatesLegacyBitEvaluationFromTheReturnedField(): void
+    {
+        $rules = new Aggregates(new Settings(Collation::binary()));
+        $argument = new Domain(Kind::Bit, Field::Bit, 64, 0, true);
+        $domain = $rules->extreme($argument, GrammarRelease::MySql5651, true);
+
+        self::assertSame([Kind::Integer, Field::Bit, 64, true, Coercibility::Implicit], [$domain->kind, $domain->field, $domain->length, $domain->unsigned, $domain->coercibility]);
+        self::assertSame($argument, $rules->extreme($argument, GrammarRelease::MySql847, true));
+    }
+
     public function testExtremeUsesLegacyRealWidthsWithoutChangingModernColumns(): void
     {
         $aggregates = new Aggregates(new Settings(Collation::known('utf8mb4_bin')));

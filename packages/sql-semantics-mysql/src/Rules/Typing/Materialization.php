@@ -85,6 +85,9 @@ final class Materialization
         if ($domain->storageField !== null) {
             $domain = Domain::integer(Field::LongLong, $domain->length, $domain->unsigned);
         }
+        if ($domain->field === Field::Bit) {
+            return new Domain(Kind::Bit, Field::Bit, $domain->length, 0, true);
+        }
         if ($domain->field === Field::VarString && ($domain->kind->temporal() || ($domain->kind === Kind::Year && !$domain->collation->bytes()))) {
             return $this->text($domain, $domain->length);
         }
@@ -95,6 +98,16 @@ final class Materialization
         }
 
         return $domain->kind === Kind::String ? $this->text($domain, $domain->length) : $this->nothing($domain);
+    }
+
+    /**
+     * Resolves a BIT sort key stored by an ordered DISTINCT result. Other fields
+     * retain their domain here. The width is the reported bit width, with INT
+     * below ten characters and BIGINT otherwise. Verified through SQL on 8.4.
+     */
+    public function ordered(Domain $domain): Domain
+    {
+        return $domain->kind === Kind::Bit ? Domain::integer($domain->length < 10 ? Field::Long : Field::LongLong, $domain->length, true) : $domain;
     }
 
     /**

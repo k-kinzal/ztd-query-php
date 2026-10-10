@@ -80,6 +80,9 @@ final class Aggregates
         if ($argument?->kind === Kind::Json && $release !== GrammarRelease::MySql5744) {
             return JsonResults::json($release);
         }
+        if ($argument?->kind === Kind::Bit && $release === GrammarRelease::MySql5651) {
+            return new Domain(Kind::Integer, Field::Bit, $argument->length, 0, true, $argument->collation, [], $argument->coercibility);
+        }
         if ($argument?->kind === Kind::String) {
             return (new Text\ResultBounds())->selected($argument, !$column && in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true), $column);
         }

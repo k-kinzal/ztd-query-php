@@ -40,7 +40,7 @@ final class EventScheduleTest extends TestCase
     {
         [$target] = Servers::shared();
         $comparison = $target->compare($sql);
-        self::assertFalse($comparison->volatile);
+        self::assertFalse($comparison->volatile, (string) $comparison->referenceDifference);
         self::assertNull($comparison->difference, (string) $comparison->difference);
     }
 }

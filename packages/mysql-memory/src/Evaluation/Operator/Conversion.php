@@ -73,8 +73,23 @@ final class Conversion implements Evaluable
             Kind::Year => (new Moments())->year($value, $from, $context),
             Kind::String => ($text = self::transcode((string) Convert::toText($value, $from), $from, $this->domain->collation->charset, $context)) === null ? null : $this->text($text, $context),
             Kind::Json => Jsons::cast($value, $this->operand),
-            Kind::Bit, Kind::Null => $this->text((string) Convert::toText($value, $from), $context),
+            Kind::Bit => $this->bits($value, $from, $context),
+            Kind::Null => $this->text((string) Convert::toText($value, $from), $context),
         };
+    }
+
+    /**
+     * Stores an unsigned value in the packed bytes of a materialized BIT column.
+     */
+    public function bits(int|float|string $value, Domain $from, Context $context): string
+    {
+        $number = (int) Convert::toInteger($value, $from, $context, true);
+        $bytes = '';
+        for ($position = intdiv($this->domain->length + 7, 8) - 1; $position >= 0; $position--) {
+            $bytes .= chr(($number >> ($position * 8)) & 0xFF);
+        }
+
+        return $bytes;
     }
 
     /**
