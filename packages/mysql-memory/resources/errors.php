@@ -192,6 +192,7 @@ return [
     1365 => ['22012', 'Division by 0'],
     1367 => ['22007', "Illegal non geometric '%s' value found during parsing"],
     3037 => ['22023', 'Invalid GIS data provided to function %s.'],
+    3055 => ['HY000', 'Geometry byte string must be little endian.'],
     4032 => ['22S01', 'Invalid cast from %s to %s.'],
     4033 => ['22S04', 'Invalid cast from %s to %s. A polygon ring is in the wrong direction.'],
     1366 => ['HY000', "Incorrect %s value: '%s' for column '%s' at row %d"],

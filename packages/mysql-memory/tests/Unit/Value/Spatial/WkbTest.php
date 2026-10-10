@@ -25,6 +25,14 @@ final class WkbTest extends TestCase
         self::assertEquals(new Geometry(1, [[1.0, 2.0]], [], 4326), Wkb::read($bytes));
     }
 
+    public function testReadCanRequireLittleEndianMembersWithoutChangingTheDefaultReader(): void
+    {
+        $bytes = pack('V', 0) . "\1" . pack('VV', 7, 1) . "\0" . pack('N', 1) . pack('EE', 1.0, 2.0);
+
+        self::assertNotNull(Wkb::read($bytes));
+        self::assertNull(Wkb::read($bytes, true));
+    }
+
     public function testReadRejectsTruncationHugeCountsInvalidHeadersAndTrailingBytes(): void
     {
         $point = Wkb::write(new Geometry(1, [[1.0, 2.0]]));

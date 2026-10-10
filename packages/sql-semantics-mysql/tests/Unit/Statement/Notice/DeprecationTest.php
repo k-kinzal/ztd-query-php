@@ -29,6 +29,19 @@ final class DeprecationTest extends TestCase
         self::assertSame([], $legacy->facts()->warnings);
     }
 
+    public function testSpatialWarnsOnlyForLegacyNamesIn57(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        Deprecation::spatial('srid', $derivation);
+        Deprecation::spatial('ST_SRID', $derivation);
+
+        self::assertCount(1, $derivation->facts()->warnings);
+        self::assertInstanceOf(Deprecation::class, $derivation->facts()->warnings[0]);
+        self::assertSame(1287, $derivation->facts()->warnings[0]->code());
+        self::assertSame("'SRID' is deprecated and will be removed in a future release. Please use ST_SRID instead", $derivation->facts()->warnings[0]->message());
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT SRID(NULL)')->facts->warnings);
+    }
+
     public function testCodeIsThatOfTheConstruct(): void
     {
         self::assertSame(3005, (new Deprecation(Deprecated::InsertDelayed))->code());

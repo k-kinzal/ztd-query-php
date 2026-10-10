@@ -49,6 +49,17 @@ final class Deprecation implements Warning
     }
 
     /**
+     * Records the replacement name for a legacy spatial property function in MySQL 5.7.
+     */
+    public static function spatial(string $name, Derivation $derivation): void
+    {
+        $name = strtoupper($name);
+        if (Deprecated::SpatialFunction->warnedIn($derivation->context->profile->grammar) && in_array($name, ['SRID', 'DIMENSION', 'GEOMETRYTYPE', 'ISEMPTY', 'NUMGEOMETRIES'], true)) {
+            $derivation->warn(new self(Deprecated::SpatialFunction, "'" . $name . "' is deprecated and will be removed in a future release. Please use ST_" . $name . ' instead'));
+        }
+    }
+
+    /**
      * Records the warning of a construct when the release of the derivation warns about it.
      */
     public static function raise(Deprecated $construct, Derivation $derivation, ?\SqlSemantics\Statement\Node $at = null, bool $after = true): void

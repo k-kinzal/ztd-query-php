@@ -95,6 +95,9 @@ final class FunctionCall implements Scalar
         if ($legacy !== null) {
             Deprecation::raise($legacy, $derivation);
         }
+        if ($this->schema === null && count($this->arguments) === 1) {
+            Deprecation::spatial($this->name->value, $derivation);
+        }
         $facts = [];
         foreach ($this->arguments as $argument) {
             $facts[] = (new Arguments())->one($argument->expression, $derivation, $environment);

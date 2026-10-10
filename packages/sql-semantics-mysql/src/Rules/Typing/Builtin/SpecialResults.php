@@ -45,20 +45,9 @@ final class SpecialResults
     public function rules(): array
     {
         $vector = static fn (Invocation $call): Domain => new Domain(Kind::String, Field::Vector, 65532, Domain::NOT_FIXED, false, Collation::binary(), [], Coercibility::Coercible);
-        $geometry = static fn (Invocation $call): Domain => new Domain(Kind::String, Field::Geometry, 4294967295, 0, false, Collation::binary(), [], Coercibility::Coercible);
         $text = static fn (Invocation $call): Domain => Domain::string(1048512, $call->settings->connection, Field::MediumBlob, Coercibility::Coercible);
 
         return [
-            'ST_SRID' => static fn (Invocation $call): Domain => count($call->domains) === 1 ? Domain::integer(Field::LongLong, 10, true) : $geometry($call),
-            'SRID' => static fn (Invocation $call): Domain => Domain::integer(Field::LongLong, 10),
-            'POINT' => $geometry,
-            'LINESTRING' => $geometry,
-            'POLYGON' => $geometry,
-            'MULTIPOINT' => $geometry,
-            'MULTILINESTRING' => $geometry,
-            'MULTIPOLYGON' => $geometry,
-            'GEOMETRYCOLLECTION' => $geometry,
-            'GEOMCOLLECTION' => $geometry,
             'EXTRACTVALUE' => fn (Invocation $call): ?Domain => $this->document($call, $call->domains, 'extractvalue'),
             'UPDATEXML' => fn (Invocation $call): ?Domain => $this->document($call, $call->domains, 'updatexml'),
             'STATEMENT_DIGEST_TEXT' => fn (Invocation $call): ?Domain => $this->document($call, [$call->domain(0)], 'statement_digest_text'),

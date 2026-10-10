@@ -49,6 +49,11 @@ final class SridFunctionTest extends TestCase
                 yield 'unknown write ' . $mode . $ignore => ["SET sql_mode='" . $mode . "'; CREATE TABLE srid_function(a INT UNSIGNED); INSERT " . $ignore . " INTO srid_function SELECT ST_SRID(X'" . bin2hex($binaries['unknown']) . "'); SHOW WARNINGS; SELECT * FROM srid_function"];
             }
         }
+        yield 'legacy name over several rows' => ['SELECT SRID(Point(1,2)) FROM t1; SHOW WARNINGS'];
+        yield 'legacy name over no rows' => ['SELECT SRID(Point(1,2)) WHERE FALSE; SHOW WARNINGS'];
+        yield 'prepared legacy name' => ["PREPARE s FROM 'SELECT SRID(Point(1,2))'; SHOW WARNINGS; EXECUTE s; SHOW WARNINGS; DEALLOCATE PREPARE s"];
+        yield 'signed arithmetic' => ['SELECT ST_SRID(Point(1,2))-1; SHOW WARNINGS'];
+        yield 'created column' => ['CREATE TABLE srid_function AS SELECT ST_SRID(Point(1,2)) AS a; SHOW COLUMNS FROM srid_function; SELECT * FROM srid_function'];
         yield 'stored identifier'  => ['CREATE TABLE srid_function(a INT UNSIGNED); INSERT INTO srid_function SELECT ST_SRID(Point(1,2)); SELECT * FROM srid_function'];
     }
 

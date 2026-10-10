@@ -17,8 +17,9 @@ final class Wkb
 {
     /**
      * Reads a complete value, answering null for a malformed or trailing representation.
+     * The optional little-endian restriction applies independently to every nested geometry.
      */
-    public static function read(string $bytes): ?Geometry
+    public static function read(string $bytes, bool $littleOnly = false): ?Geometry
     {
         if (strlen($bytes) < 9) {
             return null;
@@ -26,7 +27,7 @@ final class Wkb
         $offset = 0;
         $srid = self::number($bytes, $offset, true) ?? 0;
         $offset = 4;
-        $geometry = self::geometry($bytes, $offset, 0);
+        $geometry = self::geometry($bytes, $offset, 0, $littleOnly);
 
         return $geometry === null || $offset !== strlen($bytes) ? null : new Geometry($geometry->type, $geometry->points, $geometry->children, $srid);
     }
@@ -74,9 +75,9 @@ final class Wkb
     /**
      * Reads one WKB geometry at a byte offset and advances past its payload.
      */
-    public static function geometry(string $bytes, int &$offset, int $depth): ?Geometry
+    public static function geometry(string $bytes, int &$offset, int $depth, bool $littleOnly = false): ?Geometry
     {
-        if ($depth >= 64 || strlen($bytes) - $offset < 5 || ord($bytes[$offset]) > 1) {
+        if ($depth >= 64 || strlen($bytes) - $offset < 5 || ord($bytes[$offset]) > 1 || ($littleOnly && $bytes[$offset] !== "\1")) {
             return null;
         }
         $little = $bytes[$offset++] === "\1";
@@ -96,7 +97,7 @@ final class Wkb
         $children = [];
         for ($i = 0; $i < $count; ++$i) {
             $points = $type === 3 ? self::points($bytes, $offset, $little) : null;
-            $child = $type === 3 ? ($points === null ? null : new Geometry(2, $points)) : self::geometry($bytes, $offset, $depth + 1);
+            $child = $type === 3 ? ($points === null ? null : new Geometry(2, $points)) : self::geometry($bytes, $offset, $depth + 1, $littleOnly);
             if ($child === null) {
                 return null;
             }

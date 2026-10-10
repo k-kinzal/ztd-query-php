@@ -63,6 +63,7 @@ final class Results
             (new ServerResults())->rules(),
             (new DateResults())->rules(),
             (new SpecialResults())->rules(),
+            (new Spatial\SpatialResults())->rules(),
             (new DigestResults())->rules(),
             (new JsonResults())->rules(),
             (new Pattern\PatternResults())->rules(),

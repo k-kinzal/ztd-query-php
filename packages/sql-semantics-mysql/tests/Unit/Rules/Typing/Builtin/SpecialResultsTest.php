@@ -23,19 +23,6 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class SpecialResultsTest extends TestCase
 {
-    public function testRulesResolveSridReadingAndReplacementSeparately(): void
-    {
-        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'));
-        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
-        $rules = (new SpecialResults())->rules();
-        $read = $rules['ST_SRID'](new Invocation([Domain::null()], [], $settings, $derivation));
-        $write = $rules['ST_SRID'](new Invocation([Domain::null(), Domain::integer()], [], $settings, $derivation));
-
-        self::assertNotNull($read);
-        self::assertNotNull($write);
-        self::assertSame([Field::LongLong, 10, true, Field::Geometry], [$read->field, $read->length, $read->unsigned, $write->field]);
-    }
-
     public function testRulesTypeTheDigestsVectorsAndWaits(): void
     {
         $rules = (new SpecialResults())->rules();
@@ -90,12 +77,5 @@ final class SpecialResultsTest extends TestCase
             (new SpecialResults())->subtraction(new Invocation([$empty, $empty], [], new Settings($utf8mb3), new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]))))->length,
         ]);
     }
-    public function testRulesResolveGeometryAsBinaryWithCoercibleCollation(): void
-    {
-        $call = new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])));
-        $rules = (new SpecialResults())->rules();
-        $geometry = new Domain(Kind::String, Field::Geometry, 4294967295, 0, false, Collation::binary(), [], Coercibility::Coercible);
-        self::assertEquals($geometry, $rules['POINT']($call));
-        self::assertEquals($geometry, $rules['GEOMETRYCOLLECTION']($call));
-    }
+
 }

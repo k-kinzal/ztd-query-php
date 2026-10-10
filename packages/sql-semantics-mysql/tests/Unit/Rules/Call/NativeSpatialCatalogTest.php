@@ -16,6 +16,11 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class NativeSpatialCatalogTest extends TestCase
 {
+    public function testRowsRefuseASetterArgumentForLegacySrid(): void
+    {
+        self::assertNull((new \SqlSemantics\Platform\MySql\Rules\Call\NativeFunctions())->row(\SqlSemantics\Contract\GrammarRelease::MySql5744, 'SRID', 2));
+    }
+
     public function testRowsPropagateNullabilityForModernSridReading(): void
     {
         $query = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze("SELECT ST_SRID(X'00'),ST_SRID(NULL),ST_SRID(X'00',0)");

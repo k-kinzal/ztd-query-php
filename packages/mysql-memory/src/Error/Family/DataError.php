@@ -45,6 +45,7 @@ enum DataError: int implements ErrorCode
     case TruncatedWrongValueForField = 1366;
     case IllegalNonGeometric = 1367;
     case GisInvalidData = 3037;
+    case GeometryNotLittleEndian = 3055;
     case InvalidSpatialCast = 4032;
     case InvalidGeometryValue = 1416;
     case GeometrySridMismatch = 3643;

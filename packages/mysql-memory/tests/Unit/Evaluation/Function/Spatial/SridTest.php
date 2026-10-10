@@ -59,6 +59,16 @@ final class SridTest extends TestCase
         self::assertSame([['1234567']], $result->rows);
     }
 
+    public function testValueReadsNonfiniteCoordinatesStructurallyIn57(): void
+    {
+        $bytes = bin2hex(Wkb::write(new Geometry(1, [[NAN, 1.0]])));
+        $session = (new Instance('5.7.44'))->connect();
+        $result = $session->query("SELECT ST_SRID(X'" . $bytes . "')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0']], $result->rows);
+    }
+
     public function testLegacyReadsOnlyARecognizedHeader(): void
     {
         self::assertSame(4326, (new Srid())->legacy(pack('V', 4326) . "\xff" . pack('V', 1)));

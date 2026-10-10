@@ -32,7 +32,7 @@ final class Srid
      */
     public function routines(): array
     {
-        return [new Routine('ST_SRID', 1, 2, $this->value(...)), new Routine('SRID', 1, 2, $this->value(...))];
+        return [new Routine('ST_SRID', 1, 2, $this->value(...)), new Routine('SRID', 1, 1, $this->value(...))];
     }
 
     /**
@@ -64,6 +64,9 @@ final class Srid
         if ($frame->context->modes->release === GrammarRelease::MySql5651) {
             return $this->legacy($bytes);
         }
+        if ($frame->context->modes->release === GrammarRelease::MySql5744) {
+            return (new Properties())->geometry($bytes, 'st_srid')->srid;
+        }
         $catalog = $frame->context->variables->instance->registry->spatialCatalog;
         if ($target !== null && $target !== 0 && $catalog->name($target) === null) {
             throw SchemaError::SrsNotFound->error($target);
@@ -75,7 +78,7 @@ final class Srid
         if ($target !== null) {
             return pack('V', $target) . substr($bytes, 4);
         }
-        if (!in_array($frame->context->modes->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && $geometry->srid !== 0 && $catalog->name($geometry->srid) === null) {
+        if ($geometry->srid !== 0 && $catalog->name($geometry->srid) === null) {
             $frame->context->diagnostics->warning(SchemaError::SrsNotFoundWarning, SchemaError::SrsNotFoundWarning->message($geometry->srid));
         }
 
