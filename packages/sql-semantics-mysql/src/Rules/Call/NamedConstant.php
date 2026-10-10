@@ -38,12 +38,12 @@ use SqlSemantics\Statement\Type\Nullability;
 final class NamedConstant
 {
     /**
-     * Retains the result fact or reports a literal-argument problem of a correctly counted call.
+     * Reports a literal-argument problem before argument resolution; other native-call checks retain priority.
      */
-    public function check(FunctionCall $call, ScalarFact $fact, Derivation $derivation): ScalarFact
+    public function check(FunctionCall $call, Derivation $derivation): ?ScalarFact
     {
-        if (strcasecmp($call->name->value, 'NAME_CONST') !== 0) {
-            return $fact;
+        if ($call->schema !== null || count($call->arguments) !== 2 || $call->named() || strcasecmp($call->name->value, 'NAME_CONST') !== 0) {
+            return null;
         }
         $name = $this->unwrapped($call->arguments[0]->expression);
         $value = $this->unwrapped($call->arguments[1]->expression);
@@ -56,7 +56,7 @@ final class NamedConstant
         $validValue = $this->literal($value) || ($value instanceof BooleanLiteral && ($legacy || ($modified && $derivation->context->profile->grammar === GrammarRelease::MySql910)));
         $problem = !$validName || !$validValue ? new InvalidNamedConstant() : ($name instanceof NullLiteral ? new InvalidNamedConstant(true) : null);
         if ($problem === null) {
-            return $fact;
+            return null;
         }
         $derivation->report($problem);
 

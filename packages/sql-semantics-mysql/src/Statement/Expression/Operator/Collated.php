@@ -77,7 +77,7 @@ final class Collated implements Scalar
             $derivation->warn(new ParseFailure($problem));
         }
         $operand = (new Precision())->domain($fact->type);
-        $domain = $operand === null || !$known ? null : (new Texts(Settings::of($derivation->context)))->collated($operand, $this->collation->value, $derivation);
+        $domain = $operand === null || !$known ? null : (new Texts(Settings::of($derivation->context)))->collated($operand, $this->collation->value, $derivation, $this);
 
         $legacy = $derivation->context->profile->grammar === GrammarRelease::MySql5651;
 

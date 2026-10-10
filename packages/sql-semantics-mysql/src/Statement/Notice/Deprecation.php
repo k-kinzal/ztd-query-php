@@ -55,7 +55,7 @@ final class Deprecation implements Warning
     {
         $warning = self::spatialWarning($name, $derivation->context->profile->grammar);
         if ($warning !== null) {
-            $derivation->warn($warning);
+            $derivation->warn($warning, after: false);
         }
     }
 

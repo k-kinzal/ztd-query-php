@@ -53,6 +53,13 @@ final class ServerResultsTest extends TestCase
         self::assertSame([Field::LongLong, 1], [(new ServerResults())->rules()['ANY_VALUE']($call)?->field, (new ServerResults())->rules()['ANY_VALUE']($call)?->length]);
     }
 
+    public function testConstantTypesALegacyNullAsAnEmptyString(): void
+    {
+        $constant = (new ServerResults())->constant(Domain::null(), \SqlSemantics\Contract\GrammarRelease::MySql5744);
+
+        self::assertSame([Field::VarString, 0, 0], [$constant->field, $constant->length, $constant->decimals]);
+    }
+
     public function testConstantReadsAnIntegerAsSigned(): void
     {
         $constant = (new ServerResults())->constant(Domain::integer(Field::LongLong, 20, true));

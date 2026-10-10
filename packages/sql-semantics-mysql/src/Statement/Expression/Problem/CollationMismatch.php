@@ -24,8 +24,9 @@ final class CollationMismatch implements Diagnostic
     /**
      * @param string $collation The collation
      * @param string $charset The character set of the string
+     * @param \SqlSemantics\Statement\Scalar|null $expression The occurrence which requested the incompatible collation
      */
-    public function __construct(public readonly string $collation, public readonly string $charset)
+    public function __construct(public readonly string $collation, public readonly string $charset, public readonly ?\SqlSemantics\Statement\Scalar $expression = null)
     {
     }
 

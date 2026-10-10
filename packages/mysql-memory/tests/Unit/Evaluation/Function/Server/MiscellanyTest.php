@@ -45,6 +45,15 @@ final class MiscellanyTest extends TestCase
         self::assertSame([['x', 'y', '1.5'], [['-1', '-1', 'a']]], [array_map(static fn ($column): string => $column->name, $result->columns), $result->rows]);
     }
 
+    public function testConstantsAcceptsATemporalNameAndPreservesItsNormalizedText(): void
+    {
+        $result = (new Instance())->connect()->query("SELECT NAME_CONST(DATE '20200101', 1), NAME_CONST(TIME '12:34:56.12', 2), NAME_CONST(1e30, 3)")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['2020-01-01', '12:34:56.12', '1e30'], array_map(static fn ($column): string => $column->name, $result->columns));
+        self::assertSame([['1', '2', '3']], $result->rows);
+    }
+
     public function testRoutinesAnswerTheIcuVersionOfTheRelease(): void
     {
         $result = (new Instance())->connect()->query('SELECT ICU_VERSION()')[0];

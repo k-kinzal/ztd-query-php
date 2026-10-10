@@ -52,7 +52,7 @@ final class Texts
     /**
      * Resolves `expr COLLATE name`, reporting a collation that is unknown or of another character set.
      */
-    public function collated(Domain $operand, string $name, Derivation $derivation): ?Domain
+    public function collated(Domain $operand, string $name, Derivation $derivation, ?\SqlSemantics\Statement\Scalar $expression = null): ?Domain
     {
         $collation = Collation::named($name);
         if ($collation === null) {
@@ -60,9 +60,10 @@ final class Texts
 
             return null;
         }
-        $charset = $operand->kind === Kind::String ? $operand->collation->charset : $this->settings->connection->charset;
+        $legacy = $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        $charset = in_array($operand->kind, [Kind::String, Kind::Null], true) ? $operand->collation->charset : ($legacy ? $this->settings->connection->charset : $collation->charset);
         if ($collation->charset !== $charset) {
-            $derivation->report(new CollationMismatch($collation->name, $charset->name));
+            $derivation->report(new CollationMismatch($collation->name, $charset->name, $expression));
 
             return null;
         }

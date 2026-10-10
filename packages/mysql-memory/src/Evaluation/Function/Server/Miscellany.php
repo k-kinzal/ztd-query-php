@@ -81,7 +81,7 @@ final class Miscellany
             $value = $bare($value instanceof Minus ? $value->operand : $value->arguments[0]);
         }
         $literal = static fn (Evaluable $argument): bool => $argument instanceof Constant && !$argument->domain->kind->temporal();
-        if (!$literal($bare($arguments[0])) || !$literal($value)) {
+        if (!$bare($arguments[0]) instanceof Constant || !$literal($value)) {
             throw StatementError::WrongArguments->error('NAME_CONST');
         }
         if ($arguments[0]->evaluate($frame) === null) {

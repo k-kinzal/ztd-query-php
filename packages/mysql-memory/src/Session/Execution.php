@@ -179,6 +179,7 @@ final class Execution
     public function parsing(Operation $operation, array $warnings): void
     {
         $session = $this->session;
+        $warnings = (new Parse\SpatialWarnings())->accepted($operation, $warnings);
         $dots = $session->dots;
         $failure = null;
         foreach ($session->hinted as [$message, $leading]) {

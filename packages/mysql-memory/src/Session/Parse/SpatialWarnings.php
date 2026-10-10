@@ -27,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 final class SpatialWarnings
 {
     /**
-     * Answers completed-call deprecations by their closing-parenthesis offset.
+     * Answers completed-call deprecations by their function-name offset.
      *
      * @param list<Token> $tokens The tokens of the refused statement
      * @return array<int, SqlError>
@@ -50,12 +50,27 @@ final class SpatialWarnings
                 }
                 $warning = Deprecation::spatialWarning(trim($name->text, '`'), $session->settings()->release());
                 if ($warning !== null && $this->complete(substr($statement, $name->offset, $token->offset + 1 - $name->offset), $session)) {
-                    $warnings[$token->offset] = new SqlError(StatementError::DeprecatedSyntax, $warning->message());
+                    $warnings[$name->offset] = new SqlError(StatementError::DeprecatedSyntax, $warning->message());
                 }
             }
         }
 
         return $warnings;
+    }
+
+    /**
+     * Defers spatial deprecations until native argument counts have passed preparation.
+     *
+     * @param array<int, \SqlSemantics\Statement\Fact\Warning> $warnings
+     * @return array<int, \SqlSemantics\Statement\Fact\Warning>
+     */
+    public function accepted(\SqlSemantics\Statement\Operation $operation, array $warnings): array
+    {
+        if (array_filter($operation->facts->diagnostics, static fn ($diagnostic): bool => $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\WrongArgumentCount) === []) {
+            return $warnings;
+        }
+
+        return array_filter($warnings, static fn ($warning): bool => !$warning instanceof Deprecation || $warning->construct !== \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::SpatialFunction);
     }
 
     /**

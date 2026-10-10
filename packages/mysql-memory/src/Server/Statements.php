@@ -75,12 +75,17 @@ final class Statements
     {
         $session = $this->client->session();
         $session->activity->begin();
-        $session->diagnostics->clear();
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $session->diagnostics->retain();
+        } else {
+            $session->diagnostics->clear();
+        }
         \MySqlMemory\Session\State\StatementCounters::received($session, false);
         \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
         try {
             $session->split($sql);
             $operation = $session->analyze($sql, true);
+            (new \MySqlMemory\Session\Execution($session))->area($operation, (new \MySqlMemory\Command\Dispatcher())->command($operation->statement));
             (new \MySqlMemory\Hint\Hints())->prepare($operation, $session);
             (new \MySqlMemory\Session\Problems())->raise($operation, $session);
             $tokens = $session->semantics()->parser()->tokenize($sql);

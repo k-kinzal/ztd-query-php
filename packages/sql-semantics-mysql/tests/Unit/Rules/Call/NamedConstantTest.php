@@ -41,6 +41,14 @@ final class NamedConstantTest extends TestCase
         self::assertSame([], $semantics->analyze("SELECT NAME_CONST(TRUE, -1), NAME_CONST('x', NULL)")->facts->diagnostics);
     }
 
+    public function testCheckPrecedesResolutionOfNonliteralArguments(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT NAME_CONST('a' COLLATE latin1_bin, missing)");
+
+        self::assertInstanceOf(InvalidNamedConstant::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(Invalid::class, $operation->field(0)->type);
+    }
+
     public function testLiteralDistinguishesNumericAndBooleanConstants(): void
     {
         self::assertTrue((new NamedConstant())->literal(new NumberLiteral('1')));

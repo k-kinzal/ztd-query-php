@@ -117,11 +117,12 @@ final class ItemNamingTest extends TestCase
         self::assertSame(['', ''], [$naming->constant(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()), $naming->constant(new Unary(UnaryOperator::Minus, new NumberLiteral('1')))]);
     }
 
-    public function testConstantRefusesAValueItDoesNotSpell(): void
+    public function testConstantNormalizesFloatingAndTemporalNames(): void
     {
-        $this->expectExceptionMessage('the column name NAME_CONST takes from a name argument other than');
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
 
-        (new ItemNaming((new Semantics(Dialect::MySql))->context()->profile))->constant(new NumberLiteral('1e1'));
+        self::assertSame('1000', $naming->constant(new NumberLiteral('1e3')));
+        self::assertSame('2024-01-31', $naming->constant(new OdbcEscape(new Name('d'), new StringLiteral(['20240131']))));
     }
 
     public function testBytesPadsBitsToWholeBytes(): void

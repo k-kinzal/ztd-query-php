@@ -255,7 +255,7 @@ final class Problems
                 break;
             }
             if (!Stages::late($diagnostic)) {
-                throw (new Errors())->error($diagnostic, $session, 'field list', $statement);
+                throw (new Problem\NamedConstants())->following((new Errors())->error($diagnostic, $session, 'field list', $statement), $diagnostic, $statement, $session->settings()->release());
             }
         }
         foreach ($diagnostics as $diagnostic) {

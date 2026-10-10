@@ -70,6 +70,6 @@ final class RoutineCalls
             return new ScalarFact(new Invalid($problem), Nullability::Dependent);
         }
 
-        return (new NamedConstant())->check($call, (new ResultTyping())->fact($row[2], $arguments), $derivation);
+        return (new ResultTyping())->fact($row[2], $arguments);
     }
 }

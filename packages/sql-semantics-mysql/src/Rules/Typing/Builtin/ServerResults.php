@@ -43,7 +43,7 @@ final class ServerResults
 
         return [
             'ANY_VALUE' => static fn (Invocation $call): ?Domain => $call->aggregation()->of($call->domains, 'any_value', $call->derivation),
-            'NAME_CONST' => fn (Invocation $call): Domain => $this->constant($call->domain(1)),
+            'NAME_CONST' => fn (Invocation $call): Domain => $this->constant($call->domain(1), $call->derivation->context->profile->grammar, $call->nodes[1] ?? null),
             'BENCHMARK' => $integer(1),
             'SLEEP' => $integer(21),
             'GET_LOCK' => $integer(1),
@@ -63,8 +63,17 @@ final class ServerResults
     /**
      * Answers the type of the value of NAME_CONST(): the type of the constant, an integer read as signed.
      */
-    public function constant(Domain $value): Domain
+    public function constant(Domain $value, GrammarRelease $release = GrammarRelease::MySql847, ?\SqlSemantics\Statement\Scalar $node = null): Domain
     {
+        $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        if ($legacy && $value->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null) {
+            return new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, Field::VarString, 0, 0, false, $value->collation);
+        }
+        $unwrapped = new \SqlSemantics\Platform\MySql\Rules\Call\NamedConstant();
+        $node = $node === null ? null : $unwrapped->unwrapped($node);
+        if ($release === GrammarRelease::MySql5744 && $node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated && $unwrapped->unwrapped($node->operand) instanceof \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral) {
+            return Domain::string(0, $value->collation, Field::VarString, $value->coercibility);
+        }
         return new Domain($value->kind, $value->field, $value->length, $value->decimals, false, $value->collation, $value->members, $value->coercibility, $value->display);
     }
 }

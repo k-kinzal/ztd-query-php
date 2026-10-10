@@ -14,6 +14,16 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class SpatialWarningsTest extends TestCase
 {
+    public function testAcceptedDefersWarningsUntilArgumentCountsHavePassed(): void
+    {
+        $semantics = (new Instance(version: '5.7.44'))->connect()->semantics();
+        $valid = $semantics->analyze('SELECT DIMENSION(SRID(NULL))');
+        $invalid = $semantics->analyze('SELECT SRID(DIMENSION(NULL), 1)');
+
+        self::assertCount(2, (new SpatialWarnings())->accepted($valid, $valid->facts->warnings));
+        self::assertSame([], (new SpatialWarnings())->accepted($invalid, $invalid->facts->warnings));
+    }
+
     public function testBeforeKeepsOnlyCompleteUnqualifiedCallsBeforeTheError(): void
     {
         $session = (new Instance('5.7.44'))->connect();

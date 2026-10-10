@@ -7,7 +7,6 @@ namespace SqlSemantics\Platform\MySql\Rules\Query;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape;
@@ -105,7 +104,6 @@ final class ItemNaming
      * and the text is not the canonical rendering, as lowering builds it;
      * another layout is an invalid construction.
      *
-     * @throws ImplementationGap When NAME_CONST names the column after a value this rule does not spell
      * @throws \SqlSemantics\Diagnostic\InvalidConstruction When an item that names itself has a layout, or a layout spells the canonical rendering
      */
     public function name(SelectExpression $item): Name|MissingInput
@@ -147,7 +145,6 @@ final class ItemNaming
      * plus and an ODBC escape that stands for its operand name the item as their operand does.
      *
      * @return ColumnUse|Name|array{string, string}|null
-     * @throws ImplementationGap When NAME_CONST names the column after a value this rule does not spell
      */
     public function own(Scalar $expression): ColumnUse|Name|array|null
     {
@@ -160,7 +157,7 @@ final class ItemNaming
             $expression instanceof Parameter => new Name('?'),
             $expression instanceof NumberLiteral => $expression->form === NumberForm::Decimal ? new Name($expression->text) : [$expression->text, 'utf8mb3'],
             $expression instanceof BooleanLiteral => $this->legacy() ? new Name($expression->value ? 'TRUE' : 'FALSE') : null,
-            $expression instanceof FunctionCall && $expression->schema === null && strcasecmp($expression->name->value, 'NAME_CONST') === 0 && $expression->arguments !== [] => [$this->constant($expression->arguments[0]->expression), 'utf8mb3'],
+            $expression instanceof FunctionCall && $expression->schema === null && strcasecmp($expression->name->value, 'NAME_CONST') === 0 && $expression->arguments !== [] => [\SqlSemantics\Platform\MySql\Rules\Literal\NameBytes::format($this->constant($expression->arguments[0]->expression)), 'utf8mb3'],
             default => null,
         };
     }
@@ -183,30 +180,32 @@ final class ItemNaming
      *
      * A name that is not a literal, NULL among them, is empty, as the server refuses the call.
      *
-     * @throws ImplementationGap When the argument is a value this rule does not spell
      */
     public function constant(Scalar $argument): string
     {
-        $argument = $this->unwrapped($argument);
+        $argument = (new \SqlSemantics\Platform\MySql\Rules\Call\NamedConstant())->unwrapped($argument);
         if ($argument instanceof StringLiteral) {
             return $argument->value();
         }
-        if ($argument instanceof NumberLiteral && $argument->form !== NumberForm::Float) {
+        if ($argument instanceof NumberLiteral && $argument->form === NumberForm::Float) {
+            return \SqlSemantics\Platform\MySql\Rules\Literal\Real::format((float) $argument->text);
+        }
+        if ($argument instanceof \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral) {
+            return \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($argument->form === \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp ? 'DATETIME' : $argument->form->value, $argument->text, (int) $argument->type()->precision, false, false) ?? '';
+        }
+        if ($argument instanceof NumberLiteral) {
             [$whole, $fraction] = explode('.', $argument->text . '.');
             $whole = ltrim($whole, '0');
 
             return ($whole === '' ? '0' : $whole) . ($fraction === '' ? '' : '.' . $fraction);
         }
-        if ($argument instanceof RadixLiteral && $argument->introducer === null) {
+        if ($argument instanceof RadixLiteral) {
             return $argument->radix === Radix::Hexadecimal ? (string) hex2bin(str_pad($argument->digits, (int) (ceil(strlen($argument->digits) / 2) * 2), '0', STR_PAD_LEFT)) : $this->bytes($argument->digits);
         }
         if ($argument instanceof BooleanLiteral) {
             return $argument->value ? '1' : '0';
         }
-        if (!$argument instanceof NumberLiteral && !$argument instanceof RadixLiteral) {
-            return '';
-        }
-        throw ImplementationGap::rule('the column name NAME_CONST takes from a name argument other than a string, a decimal or integer number, a hexadecimal or bit value, or a boolean');
+        return '';
     }
 
     /**
