@@ -127,15 +127,42 @@ final class ExplainCommandTest extends TestCase
         $session->query('EXPLAIN FOR CONNECTION 0');
     }
 
+    public function testConnectionRefusesAClosedSessionEvenWhileReferenced(): void
+    {
+        $instance = new Instance();
+        $other = $instance->connect();
+        $session = $instance->connect();
+        $other->close();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1094);
+        $this->expectExceptionMessage('Unknown thread id: 1');
+
+        $session->query('DESC FOR CONNECTION 1');
+    }
+
+    public function testConnectionRefusesADestroyedSession(): void
+    {
+        $instance = new Instance();
+        $instance->connect();
+        $session = $instance->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1094);
+
+        $session->query('EXPLAIN FOR CONNECTION 1');
+    }
+
     public function testConnectionAnswersNothingForAnIdleConnection(): void
     {
         $instance = new Instance();
         $session = $instance->connect();
-        $instance->connect();
+        $idle = $instance->connect();
         $own = $session->analyze('EXPLAIN FOR CONNECTION 1')->statement;
         $other = $session->analyze('EXPLAIN FOR CONNECTION 2')->statement;
         $context = new Context(new SqlModes([]), $session->diagnostics, $session->variables, 0.0);
 
+        self::assertSame(2, $idle->id);
         self::assertInstanceOf(ExplainConnection::class, $own);
         self::assertInstanceOf(ExplainConnection::class, $other);
         self::assertInstanceOf(Completion::class, (new ExplainCommand())->connection($other, $session, $context));

@@ -158,7 +158,8 @@ final class ExplainCommand implements Command
         if ($id === $session->id) {
             throw StatementError::ExplainNotSupported->error();
         }
-        if ($id < 1 || $id > $session->instance->connections()) {
+        $target = ($session->instance->sessions[$id] ?? null)?->get();
+        if ($target === null || $target->released) {
             throw AdministrationError::NoSuchThread->error($statement->connection->text);
         }
 
