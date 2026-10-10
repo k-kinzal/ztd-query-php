@@ -171,6 +171,15 @@ $semantics->analyze("SELECT 'ü'", [])->fields()?->lookup('ü') instanceof Depen
 $semantics->analyze("SELECT 'ü'", [])->field(0)->slot->unnamed[0]->describe(); // => 'the session state: character_set_client'
 ```
 
+### Aggregate ownership
+
+Aggregate ownership is available through `$operation->facts->query($query)->aggregates`.
+For `SELECT (SELECT SUM(t.a)) FROM t`, the outer block owns `SUM(t.a)` because its
+argument reads only the outer table. `COUNT(*)` and constant arguments stay in the
+inner block. Clause visibility also matters: an enclosing WHERE cannot own an
+aggregate. Consumers should use the resolved occurrences when planning groups,
+since their written nesting alone does not identify the rows to aggregate.
+
 ### Tables and views
 
 A `CREATE VIEW` declares a view (`RelationKind::View`); every other declaration is a base table. The declared kind decides what statements on the name do, as the server decides it. `SHOW CREATE TABLE` returns `Table` and `Create Table` for a base table and the four columns of `SHOW CREATE VIEW` for a view. A statement that needs a base table (`ALTER TABLE`, `CREATE INDEX`, `CREATE TRIGGER`, `CREATE TABLE ... LIKE`, `HANDLER ... OPEN`) refuses a view, and one that needs a view (`ALTER VIEW`, `CREATE OR REPLACE VIEW`, `SHOW CREATE VIEW`, `DROP VIEW`) refuses a base table (`WrongRelationKind`). `DROP TABLE` and `TRUNCATE TABLE` do not find a view. `DROP VIEW IF EXISTS` of a base table is refused in 8.1, 8.2, 8.3, 9.0 and 9.1 only; the other releases add only a note.

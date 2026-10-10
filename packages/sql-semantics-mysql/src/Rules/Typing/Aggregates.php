@@ -70,6 +70,11 @@ final class Aggregates
     /**
      * Resolves GROUP_CONCAT over its arguments, or answers null after reporting collations that conflict.
      *
+     * MySQL 5.6 uses a byte-limited result with zero decimals. Later releases use
+     * character limits and report blob widths differently through 8.0 and from 8.4.
+     * These metadata rules were observed through PDO with latin1, utf8mb3, utf8mb4,
+     * UCS-2 and UTF-16; they do not change the byte limit applied to the value.
+     *
      * @param list<Domain> $arguments
      */
     public function concatenated(array $arguments, Derivation $derivation): ?Domain
@@ -79,8 +84,15 @@ final class Aggregates
             return null;
         }
         [$collation, $coercibility] = $settled;
-        $limit = $this->settings->groupConcatMaxLen;
+        $release = $derivation->context->profile->grammar;
+        $legacy = $release === GrammarRelease::MySql5651;
+        $width = $collation->charset->maxLength;
+        $characters = intdiv($this->settings->groupConcatMaxLen, $legacy ? $width : $collation->charset->minLength());
+        if ($legacy) {
+            return new Domain(Kind::String, $characters <= 512 ? Field::VarString : Field::Blob, $characters, 0, false, $collation, [], $coercibility);
+        }
+        $multiplier = in_array($release, [GrammarRelease::MySql5744, GrammarRelease::MySql8044], true) ? $width : $width * $width;
 
-        return $limit <= 512 ? Domain::string($limit, $collation, Field::VarString, $coercibility) : Domain::string(min(4294967295, $limit * 16), $collation, Field::LongBlob, $coercibility);
+        return $characters <= 512 ? Domain::string($characters, $collation, Field::VarString, $coercibility) : Domain::string(min(4294967295, $characters * $multiplier), $collation, Field::LongBlob, $coercibility);
     }
 }

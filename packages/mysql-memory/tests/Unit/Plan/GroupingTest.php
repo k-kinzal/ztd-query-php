@@ -101,6 +101,25 @@ final class GroupingTest extends TestCase
         self::assertSame(['COUNT', 'MIN', 'GROUP_CONCAT'], array_map(static fn ($node): string => $node instanceof Aggregate ? $node->function->value : 'GROUP_CONCAT', $found));
     }
 
+    public function testCollectReadsAggregatesOwnedByTheBlockFromInsideASubquery(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (a INT)');
+        $operation = $session->analyze('SELECT (SELECT SUM(t.a)) FROM t');
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $found = (new Grouping($planner))->collect($statement);
+
+        self::assertCount(1, $found);
+        self::assertSame($operation->facts->query($statement)->aggregates, $found);
+        self::assertInstanceOf(Aggregate::class, $found[0]);
+        self::assertSame(AggregateFunction::Sum, $found[0]->function);
+    }
+
     public function testAccumulationCompilesAnAggregateWithItsArgumentsAndQuantifier(): void
     {
         $session = (new Instance())->connect();

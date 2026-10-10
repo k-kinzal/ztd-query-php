@@ -8,6 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\AnalysisContext;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Typing\Aggregates;
@@ -16,7 +19,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Statement\Identifier\Name;
 
 #[CoversClass(Aggregates::class)]
 #[Small]
@@ -53,10 +58,22 @@ final class AggregatesTest extends TestCase
     public function testResultTypesJsonAggregatesAndExtremesOfJsonByRelease(): void
     {
         $aggregates = new Aggregates(new Settings(Collation::known('utf8mb4_0900_ai_ci')));
-        $json = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json, Field::Json, 4294967295, 0, false, Collation::known('utf8mb4_bin'));
+        $json = new Domain(Kind::Json, Field::Json, 4294967295, 0, false, Collation::known('utf8mb4_bin'));
 
         self::assertSame(Domain::NOT_FIXED, $aggregates->result(AggregateFunction::Maximum, $json)?->decimals);
-        self::assertSame(16777216, $aggregates->result(AggregateFunction::JsonArray, Domain::integer(), \SqlSemantics\Contract\GrammarRelease::MySql5744)?->length);
+        self::assertSame(16777216, $aggregates->result(AggregateFunction::JsonArray, Domain::integer(), GrammarRelease::MySql5744)?->length);
         self::assertSame(4294967295, $aggregates->result(AggregateFunction::JsonArray, Domain::integer())?->length);
+    }
+
+    public function testConcatenatedPreservesReleaseSpecificMetadata(): void
+    {
+        $collation = Collation::known('utf8mb4_general_ci');
+        $text = Domain::string(5, $collation);
+        $aggregate = new Aggregates(new Settings($collation));
+        $legacy = new Derivation(new AnalysisContext(new LanguageProfile(GrammarRelease::MySql5651), [new Name('d')]));
+        $eight = new Derivation(new AnalysisContext(new LanguageProfile(GrammarRelease::MySql8044), [new Name('d')]));
+
+        self::assertEquals(new Domain(Kind::String, Field::VarString, 256, 0, false, $collation, [], Coercibility::Implicit), $aggregate->concatenated([$text], $legacy));
+        self::assertEquals(Domain::string(4096, $collation, Field::LongBlob, Coercibility::Implicit), $aggregate->concatenated([$text], $eight));
     }
 }

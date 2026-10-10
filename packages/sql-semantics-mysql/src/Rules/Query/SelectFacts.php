@@ -27,6 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Resolution\AggregationScope;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\RelationFact;
@@ -72,35 +73,36 @@ final class SelectFacts
         (new SelectOptions())->raise($select, $derivation);
         $from = $select->from === null ? new JoinedInput(new RelationFact(new RowShape([])), [], []) : (new FromScope())->open($select->from, $derivation, $outer, []);
         $visible = $from->visible;
+        $aggregation = new AggregationScope($visible);
         (new FromScope())->unique($visible, $derivation);
         $ordering = array_map(static fn (OrderItem $item): object => $item->expression, [...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)]);
         $expressions = array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items);
         $aggregate = $select->groupBy === null && (new Aggregation())->aggregates([...$expressions, ...$ordering, ...array_values(array_filter([$select->having, $select->qualify]))]);
         $output = $aggregate || $select->groupBy?->modifier !== null ? array_map(static fn ($relation) => (new Joining())->extend($relation), $visible) : $visible;
-        $items = (new Projection())->items($select->items, $derivation, new Environment($context, $outer, $output), new JoinedInput($from->fact, $output, $from->star));
+        $items = (new Projection())->items($select->items, $derivation, new Environment($context, $outer, $output, aggregation: $aggregation, aggregatesAllowed: true), new JoinedInput($from->fact, $output, $from->star));
         $aliases = $this->aliases($select, $items, $context->profile);
         if ($select->where !== null) {
-            (new Operands())->single($derivation->scalar($select->where, new Environment($context, $outer, $visible)), $derivation);
+            (new Operands())->single($derivation->scalar($select->where, new Environment($context, $outer, $visible, aggregation: $aggregation)), $derivation);
         }
         foreach ($select->groupBy === null ? [] : $select->groupBy->items as $item) {
             if ($item->direction !== null) {
                 Deprecation::raise(Deprecated::GroupByDirection, $derivation);
             }
         }
-        $grouping = $select->groupBy === null ? [] : (new SortScopes())->derive($select->groupBy->items, $derivation, new Environment($context, $outer, $visible, [], $aliases), $items, false);
-        $results = new Environment($context, $outer, $output, [], $aliases);
+        $grouping = $select->groupBy === null ? [] : (new SortScopes())->derive($select->groupBy->items, $derivation, new Environment($context, $outer, $visible, [], $aliases, aggregation: $aggregation), $items, false);
+        $results = new Environment($context, $outer, $output, [], $aliases, aggregation: $aggregation, aggregatesAllowed: true);
         if ($select->having !== null) {
             $scope = new HavingScope();
             $row = new GroupedRow($items, $scope->grouping($grouping, $visible, $output), $select->groupBy !== null || $aggregate || in_array(SelectOption::Distinct, $select->options, true), $scope->undecided($grouping, $items));
             (new Operands())->single($derivation->scalar($select->having, $scope->enter($results, $row)), $derivation);
         }
-        $this->windows($select, $derivation, new Environment($context, $outer, $output));
+        $this->windows($select, $derivation, new Environment($context, $outer, $output, aggregation: $aggregation, aggregatesAllowed: true));
         (new WindowReferences())->check($select, $derivation);
         if ($select->qualify !== null) {
             $derivation->scalar($select->qualify, $results);
         }
         (new SortScopes())->derive([...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)], $derivation, $results, $items, true);
-        (new GroupedColumns())->check($select, $visible, $items, $derivation);
+        (new GroupedColumns())->check($select, $visible, $items, $derivation, $aggregation->expressions() !== []);
         (new TailFacts())->limit($select->limit, $derivation, $outer);
         (new TailFacts())->limit($select->late?->limit, $derivation, $outer);
         if ($select->procedure !== null) {
@@ -109,7 +111,7 @@ final class SelectFacts
         foreach ($select->procedure === null ? [] : $select->procedure->arguments as $argument) {
             $derivation->scalar($argument, new Environment($context, $outer));
         }
-        $fact = new QueryFact((new RollupItems())->fields($select, $this->tabled($select, $items), $visible, $output, $derivation), $context->columnNames);
+        $fact = new QueryFact((new RollupItems())->fields($select, $this->tabled($select, $items), $visible, $output, $derivation), $context->columnNames, $aggregation->expressions());
         (new TailFacts())->derive($derivation, $outer, $fact, $select);
 
         return $fact;

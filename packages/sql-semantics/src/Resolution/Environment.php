@@ -27,6 +27,8 @@ final class Environment
      * @param list<CommonBinding> $commonTables The common tables introduced at this level; later bindings shadow earlier ones
      * @param list<Field> $aliases The output fields this position may refer to by alias
      * @param bool $written Whether the position names the columns a statement writes, where a name is a column and never a variable of a stored program
+     * @param AggregationScope|null $aggregation The query block collecting aggregate occurrences
+     * @param bool $aggregatesAllowed Whether this clause can own an aggregate
      */
     public function __construct(
         public readonly AnalysisContext $context,
@@ -35,6 +37,8 @@ final class Environment
         public readonly array $commonTables = [],
         public readonly array $aliases = [],
         public readonly bool $written = false,
+        public readonly ?AggregationScope $aggregation = null,
+        public readonly bool $aggregatesAllowed = false,
     ) {
     }
 

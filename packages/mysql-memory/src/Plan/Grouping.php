@@ -374,45 +374,13 @@ final class Grouping
     }
 
     /**
-     * Finds the aggregates of a block in its select list, HAVING and ORDER BY, outside its subqueries.
+     * Reads the aggregate occurrences assigned to this block by semantic resolution.
      *
      * @return list<Aggregate|GroupConcat|JsonObjectAggregate>
      */
     public function collect(Select $select): array
     {
-        $roots = [];
-        foreach ($select->items as $item) {
-            if ($item instanceof SelectExpression) {
-                $roots[] = $item->expression;
-            }
-        }
-        if ($select->having !== null) {
-            $roots[] = $select->having;
-        }
-        foreach ($select->orderBy as $item) {
-            $roots[] = $item->expression;
-        }
-        $walker = new Walker();
-        $found = [];
-        foreach ($roots as $root) {
-            foreach ($walker->find($root, Aggregate::class, false) as $node) {
-                if ($node->over === null) {
-                    $found[] = $node;
-                }
-            }
-            foreach ($walker->find($root, GroupConcat::class, false) as $node) {
-                if ($node->over === null) {
-                    $found[] = $node;
-                }
-            }
-            foreach ($walker->find($root, JsonObjectAggregate::class, false) as $node) {
-                if ($node->over === null) {
-                    $found[] = $node;
-                }
-            }
-        }
-
-        return $found;
+        return array_values(array_filter($this->planner->compiler->facts->query($select)->aggregates, static fn (Scalar $call): bool => $call instanceof Aggregate || $call instanceof GroupConcat || $call instanceof JsonObjectAggregate));
     }
 
     /**

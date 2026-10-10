@@ -56,8 +56,9 @@ final class GroupedColumns
      *
      * @param list<VisibleRelation> $visible The relations of the FROM clause of the block
      * @param list<Field|OpenStar> $fields The output fields of the select list, stars expanded
+     * @param bool|null $ownsAggregates Resolved ownership, or null to inspect the written select list and HAVING
      */
-    public function check(Select $select, array $visible, array $fields, Derivation $derivation): void
+    public function check(Select $select, array $visible, array $fields, Derivation $derivation, ?bool $ownsAggregates = null): void
     {
         $facts = $derivation->facts();
         if ($facts->diagnostics !== [] || $this->computed($select, $facts)) {
@@ -67,11 +68,11 @@ final class GroupedColumns
         foreach ($visible as $relation) {
             $relations[spl_object_id($relation->relation)] = $relation;
         }
-        $aggregates = (new Aggregation())->aggregates(array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items));
+        $aggregates = $ownsAggregates ?? ((new Aggregation())->aggregates(array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items)) || ($select->having !== null && (new Aggregation())->aggregates([$select->having])));
         $problem = null;
         if ($select->groupBy !== null) {
             $problem = $this->grouped($select, $fields, $relations, $facts, $derivation);
-        } elseif ($aggregates || ($select->having !== null && (new Aggregation())->aggregates([$select->having]))) {
+        } elseif ($aggregates) {
             $problem = $this->items($fields, $relations, $facts, null, GroupingRule::WithoutGroupBy, $derivation);
         } elseif (in_array(SelectOption::Distinct, $select->options, true)) {
             $problem = $this->distinct($select, $relations, $facts, $derivation);

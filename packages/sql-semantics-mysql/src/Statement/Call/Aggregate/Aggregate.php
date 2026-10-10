@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\AggregateResults;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
+use SqlSemantics\Platform\MySql\Rules\Query\Grouping\AggregateOwnership;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
 use SqlSemantics\Platform\MySql\Rules\Typing\Aggregates;
 use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
@@ -101,6 +102,7 @@ final class Aggregate implements SetFunction
             $facts[] = (new Arguments())->one($argument, $derivation, $environment);
         }
         (new Windows())->derive($this->over, $derivation, $environment);
+        (new AggregateOwnership())->register($this, $derivation, $environment);
 
         $fact = (new AggregateResults())->aggregate($this, $facts, $derivation);
         $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));

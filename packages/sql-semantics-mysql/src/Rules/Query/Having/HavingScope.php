@@ -43,7 +43,7 @@ final class HavingScope
      */
     public function enter(Environment $environment, GroupedRow $row): Environment
     {
-        return new Environment($environment->context, $environment->outer, [...$environment->relations, new VisibleRelation($row, new RowShape([]))], $environment->commonTables, $environment->aliases);
+        return new Environment($environment->context, $environment->outer, [...$environment->relations, new VisibleRelation($row, new RowShape([]))], $environment->commonTables, $environment->aliases, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed);
     }
 
     /**
@@ -120,7 +120,7 @@ final class HavingScope
         }
         $relations = array_values(array_filter($environment->relations, static fn (VisibleRelation $relation): bool => !$relation->relation instanceof GroupedRow));
 
-        return new Environment($environment->context, $environment->outer, $relations, $environment->commonTables, $environment->aliases);
+        return new Environment($environment->context, $environment->outer, $relations, $environment->commonTables, $environment->aliases, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed);
     }
 
     /**

@@ -54,7 +54,11 @@ $sum = $semantics->analyze('SELECT 1 + NULL');
 $sum->facts->scalar($sum->field(0)->expression->right)->type instanceof NullOnly; // => true
 ```
 
-`$facts->scalar($node)` answers the `ScalarFact` of an expression (`type`, `nullability`, and `resolution` for a name use), `$facts->relation($node)` the `RelationFact` of a relation occurrence (`shape`, and `table` for a named relation), and `$facts->query($node)` the `QueryFact` of a query, including subqueries. `$facts->diagnostics` lists the semantic problems, `$facts->declarations` the provided declarations, and `$facts->output` the `QueryFact` of the rows the statement returns, or null. Asking for a node that is not part of the operation throws `InvalidConstruction`; a node of one operation has no facts in another.
+`$facts->scalar($node)` answers the `ScalarFact` of an expression (`type`, `nullability`, and `resolution` for a name use), `$facts->relation($node)` the `RelationFact` of a relation occurrence (`shape`, and `table` for a named relation), and `$facts->query($node)` the `QueryFact` of a query, including subqueries.
+
+`QueryFact::$aggregates` lists the aggregate occurrences assigned to that query block by platforms that resolve ownership (currently MySQL). An occurrence can be written inside a nested query while aggregating the rows of an enclosing query. Window functions are not in this list.
+
+`$facts->diagnostics` lists the semantic problems, `$facts->declarations` the provided declarations, and `$facts->output` the `QueryFact` of the rows the statement returns, or null. Asking for a node that is not part of the operation throws `InvalidConstruction`; a node of one operation has no facts in another.
 
 A scalar fact can also publish a `replacement`: a bound expression evaluated in place of that occurrence. It is a strict descendant in the same operation, with its own facts and original name bindings. Consumers may compile it directly; the original statement and its rendered SQL stay intact. For example, MySQL resolves `(SELECT 1 LIMIT 0)` to its selected expression and returns `1`. A scalar subquery that reads table rows still needs query execution and can return NULL or raise a multiple-row error. Which forms are reduced depends on the dialect and release.
 
@@ -166,7 +170,7 @@ A name used as a value resolves to one of the following (namespace `SqlSemantics
 
 | Resolution | Meaning |
 |------------|---------|
-| `ResolvedColumn` | Exactly one slot: `relation` (the occurrence it was found in), `slot` (the slot visible at the use position), `depth` (how many enclosing queries lie between the use and the occurrence; 0 for the same query), `declaration()`. |
+| `ResolvedColumn` | Exactly one slot: `relation` (the occurrence it was found in), `slot` (the slot visible at the use position), `depth` (how many enclosing queries lie between the use and the occurrence; 0 for the same query), `declaration()`. `resultReference` marks a reference to an enclosing query result rather than its input rows. |
 | `AliasTarget` | An output field of the same query, named by its alias, for example in ORDER BY: `field`. |
 | `MissingColumn` | No visible relation has the name, established by complete declarations. A diagnostic. |
 | `AmbiguousColumn` | Several slots have the name at the same precedence: `candidates`. A diagnostic. |

@@ -142,6 +142,7 @@ final class ResultReferencesTest extends TestCase
         self::assertSame($resolution, (new ResultReferences())->deeper($resolution, 0));
         self::assertSame($resolution->depth + 2, (new ResultReferences())->deeper($resolution, 2)->depth);
         self::assertSame($resolution->slot, (new ResultReferences())->deeper($resolution, 2)->slot);
+        self::assertTrue((new ResultReferences())->deeper($resolution, 2)->resultReference);
         self::assertNull((new ResultReferences())->find(new GroupedRow([], [], true), new Environment($operation->context), new Name('a'), null, 0));
     }
 

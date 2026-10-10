@@ -9,6 +9,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
+use SqlSemantics\Platform\MySql\Rules\Query\Grouping\AggregateOwnership;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
 use SqlSemantics\Platform\MySql\Rules\Typing\Aggregates;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
@@ -102,6 +103,7 @@ final class GroupConcat implements SetFunction
             (new Arguments())->one($item->expression, $derivation, $environment);
         }
         (new Windows())->derive($this->over, $derivation, $environment);
+        (new AggregateOwnership())->register($this, $derivation, $environment);
         if ($this->over !== null) {
             $derivation->report(new UnsupportedWindowing(WindowingLimit::GroupConcat));
         }

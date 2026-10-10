@@ -205,6 +205,6 @@ final class ResultReferences
      */
     public function deeper(ResolvedColumn $resolution, int $depth): ResolvedColumn
     {
-        return $depth === 0 ? $resolution : new ResolvedColumn($resolution->relation, $resolution->slot, $resolution->depth + $depth);
+        return $depth === 0 ? $resolution : new ResolvedColumn($resolution->relation, $resolution->slot, $resolution->depth + $depth, resultReference: true);
     }
 }
