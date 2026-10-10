@@ -240,7 +240,7 @@ final class ChangeCommand implements Command
                 continue;
             }
             $store = new Store($context, $index + 1, $target);
-            [$row, $assigned] = $this->assigned($old, $compiled, $table, $writer, $store);
+            [$row, $assigned] = $this->assigned($old, $compiled, $table, $writer, $store, $statement->ignore);
             $triggers = new Triggers($references->session, $table);
             $row = $triggers->before('UPDATE', $row, $old, $context) ?? $row;
             if (!$this->differs($old, $row, $table)) {
@@ -273,7 +273,7 @@ final class ChangeCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When a value is refused
      */
-    public function assigned(array $old, array $compiled, StoredTable $table, Writer $writer, Store $store): array
+    public function assigned(array $old, array $compiled, StoredTable $table, Writer $writer, Store $store, bool $ignore = false): array
     {
         $context = $writer->context;
         $definition = $table->definition;
@@ -291,11 +291,11 @@ final class ChangeCommand implements Command
                 continue;
             }
             $stored = $store->value($value->evaluate($frame), $value->domain(), $column);
-            array_splice($row, $position, 1, [$this->nonNull($stored, $column, $writer)]);
+            array_splice($row, $position, 1, [$this->nonNull($stored, $column, $writer, $ignore)]);
             $assigned[$position] = true;
         }
 
-        return [$writer->generate($row, $store, fn (int $position, $value) => $this->nonNull($value, $definition->columns[$position], $writer)), $assigned];
+        return [$writer->generate($row, $store, fn (int $position, $value) => $this->nonNull($value, $definition->columns[$position], $writer, $ignore)), $assigned];
     }
 
     /**
@@ -324,15 +324,20 @@ final class ChangeCommand implements Command
      *
      * @throws \MySqlMemory\Error\SqlError When NULL is refused
      */
-    public function nonNull(int|float|string|null $value, \MySqlMemory\Dictionary\ColumnDefinition $column, Writer $writer): int|float|string|null
+    public function nonNull(int|float|string|null $value, \MySqlMemory\Dictionary\ColumnDefinition $column, Writer $writer, bool $ignore = false): int|float|string|null
     {
         if ($value !== null || $column->nullable()) {
             return $value;
         }
-        if ($writer->context->strict) {
+        $geometry = $column->domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Geometry && $writer->context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5744;
+        if ($writer->context->strict || ($geometry && !$ignore)) {
             throw DataError::BadNull->error($column->name);
         }
         $writer->context->warning(DataError::BadNull, $column->name);
+        if ($geometry) {
+            $error = DataError::InvalidGeometryValue;
+            throw new \MySqlMemory\Error\SqlError($error, $error->message(), following: [[$error->number(), $error->message()]]);
+        }
 
         return $writer->implicit($column);
     }

@@ -285,6 +285,24 @@ final class ChangeCommandTest extends TestCase
         $session->query('UPDATE u SET a = DEFAULT');
     }
 
+    public function testNonNullRefusesGeometryNullWithoutStrictModeIn57(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query("SET sql_mode=''; CREATE TABLE t(a POINT NOT NULL); INSERT INTO t VALUES(Point(1,2))");
+        $this->expectExceptionCode(1048);
+
+        $session->query('UPDATE t SET a=NULL');
+    }
+
+    public function testNonNullRejectsTheImplicitGeometryAfterAnIgnoredNullIn57(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a POINT NOT NULL); INSERT INTO t VALUES(Point(1,2))');
+        $this->expectExceptionCode(1416);
+
+        $session->query('UPDATE IGNORE t SET a=NULL');
+    }
+
     public function testNonNullStoresTheImplicitDefaultOutsideAStrictMode(): void
     {
         $session = (new Instance())->connect();

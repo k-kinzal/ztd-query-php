@@ -86,6 +86,26 @@ final class RowsTest extends TestCase
         self::assertSame([['1', '0', '']], $result->rows);
     }
 
+    public function testNotNullRefusesGeometryNullFromAQueryWithoutStrictModeIn57(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query("SET sql_mode=''; CREATE TABLE t(a POINT NOT NULL)");
+        $this->expectExceptionCode(1048);
+
+        $session->query('INSERT INTO t SELECT NULL');
+    }
+
+    public function testWriteSkipsNullGeometryRowsUnderIgnoreIn57(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a POINT NOT NULL); INSERT IGNORE INTO t VALUES(NULL),(Point(1,2)),(NULL)');
+
+        $result = $session->query('SELECT HEX(a)=HEX(Point(1,2)) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
     public function testNotNullRefusesNullForANotNullColumn(): void
     {
         $session = (new Instance())->connect();

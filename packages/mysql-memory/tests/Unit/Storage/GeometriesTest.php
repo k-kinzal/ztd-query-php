@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Storage;
 
 use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Storage\Geometries;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -14,6 +15,17 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class GeometriesTest extends TestCase
 {
+    public function testDefaultAllowsAnOmittedGeometryWithIgnoreIn57(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a POINT NOT NULL); INSERT IGNORE INTO t VALUES()');
+
+        $result = $session->query('SELECT HEX(a) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['']], $result->rows);
+    }
+
     public function testDefaultRefusesAnOmittedRequiredGeometryWithoutStrictMode(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

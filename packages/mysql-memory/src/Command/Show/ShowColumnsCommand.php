@@ -79,7 +79,7 @@ final class ShowColumnsCommand implements Command
         }
         $filter = $statement instanceof ShowColumns ? $statement->filter : ($statement->column === null ? null : new ShowLike(new Text($statement->column instanceof Text ? (new Inspection())->pattern($statement->column) : $statement->column->value)));
 
-        $headings = $definition->temporary && !$text->legacy() ? $this->temporary($full) : $this->headings($full, $text->legacy());
+        $headings = $definition->temporary && !$text->legacy() ? $this->temporary($full) : $this->headings($full, $text->legacy(), $context->modes->strict());
 
         return (new Listing($headings))->result($rows, $operation, $session, $context, $connection, $filter, 0, 'utf8mb3_tolower_ci', 'EXPLICIT');
     }
@@ -131,7 +131,7 @@ final class ShowColumnsCommand implements Command
         }
         $filter = $statement instanceof ShowColumns ? $statement->filter : ($statement->column === null ? null : new ShowLike(new Text($statement->column instanceof Text ? (new Inspection())->pattern($statement->column) : $statement->column->value)));
 
-        return (new Listing($this->headings($full, $legacy)))->result($rows, $operation, $session, $context, $connection, $filter, 0, 'utf8mb3_tolower_ci', 'EXPLICIT');
+        return (new Listing($this->headings($full, $legacy, $context->modes->strict())))->result($rows, $operation, $session, $context, $connection, $filter, 0, 'utf8mb3_tolower_ci', 'EXPLICIT');
     }
 
     /**
@@ -139,12 +139,13 @@ final class ShowColumnsCommand implements Command
      *
      * @return list<Heading>
      */
-    public function headings(bool $full, bool $legacy = false): array
+    public function headings(bool $full, bool $legacy = false, bool $strict = true): array
     {
         if ($legacy) {
             return $this->legacy($full);
         }
-        $headings = [Heading::text('Field', Field::VarString, 64, 0, 0, 'Field', 'COLUMNS'), Heading::text('Type', Field::Blob, 16777215, ColumnFlag::NotNull->value | ColumnFlag::Blob->value | ColumnFlag::Binary->value | ColumnFlag::NoDefaultValue->value, 0, 'Type', 'COLUMNS', 'columns')];
+        $flags = $strict ? 0 : ColumnFlag::NotNull->value;
+        $headings = [Heading::text('Field', Field::VarString, 64, $flags, 0, 'Field', 'COLUMNS'), Heading::text('Type', Field::Blob, 16777215, ColumnFlag::NotNull->value | ColumnFlag::Blob->value | ColumnFlag::Binary->value | ColumnFlag::NoDefaultValue->value, 0, 'Type', 'COLUMNS', 'columns')];
         if ($full) {
             $headings[] = Heading::text('Collation', Field::VarString, 64, 0, 0, 'Collation', 'COLUMNS');
         }
@@ -153,7 +154,7 @@ final class ShowColumnsCommand implements Command
             Heading::text('Null', Field::VarString, 3, ColumnFlag::NotNull->value, 0, 'Null', 'COLUMNS'),
             Heading::text('Key', Field::String, 3, ColumnFlag::NotNull->value | ColumnFlag::Binary->value | ColumnFlag::Enum->value | ColumnFlag::NoDefaultValue->value, 0, 'Key', 'COLUMNS', 'columns'),
             Heading::text('Default', Field::Blob, 65535, ColumnFlag::Blob->value | ColumnFlag::Binary->value, 0, 'Default', 'COLUMNS', 'columns'),
-            Heading::text('Extra', Field::VarString, 256, 0, 0, 'Extra', 'COLUMNS'),
+            Heading::text('Extra', Field::VarString, 256, $flags, 0, 'Extra', 'COLUMNS'),
         );
         if ($full) {
             array_push($headings, Heading::text('Privileges', Field::VarString, 154, 0, 0, 'Privileges', 'COLUMNS'), Heading::text('Comment', Field::Blob, 6144, ColumnFlag::NotNull->value | ColumnFlag::Blob->value | ColumnFlag::Binary->value, 0, 'Comment', 'COLUMNS'));

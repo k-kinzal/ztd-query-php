@@ -236,7 +236,7 @@ final class ColumnText
         if ($default->expression !== null) {
             return $default->text === null ? null : str_replace("'", "\\'", $default->text);
         }
-        if ($default->value === null) {
+        if ($default->value === null || $column->domain->field === Field::Blob) {
             return null;
         }
         $domain = $column->domain;
@@ -269,6 +269,9 @@ final class ColumnText
         }
         if ($default->expression !== null) {
             return ' DEFAULT (' . $default->text . ')';
+        }
+        if ($domain->field === Field::Blob) {
+            return '';
         }
         if ($default->value === null) {
             return $domain->field->blob() && $domain->field !== Field::Json && !$written instanceof Spatial ? '' : ' DEFAULT NULL';

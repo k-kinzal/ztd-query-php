@@ -212,13 +212,7 @@ final class MultipleChangeCommand implements Command
             }
             $column = $table->definition->columns[$position];
             $stored = (new Store($context, $line, $direct !== null && $direct[0] === $id ? $direct[1] : ''))->value($value, $expression->domain(), $column);
-            if ($stored === null && !$column->nullable()) {
-                if ($context->strict) {
-                    throw DataError::BadNull->error($column->name);
-                }
-                $context->warning(DataError::BadNull, $column->name);
-                $stored = (new Writer($table, $context))->implicit($column);
-            }
+            $stored = (new ChangeCommand())->nonNull($stored, $column, new Writer($table, $context), $ignore);
             $rows[$id][2][$position] = $stored;
             $assigned[$id][$position] = true;
         }
@@ -231,7 +225,7 @@ final class MultipleChangeCommand implements Command
             $session->transaction->touch($table);
             $writer = new Writer($table, $context);
             $old = $table->data->rows[$number];
-            $row = $writer->refresh($writer->generate($row, new Store($context, $line, $direct !== null && $direct[0] === $id ? $direct[1] : ''), fn (int $position, $value) => (new ChangeCommand())->nonNull($value, $table->definition->columns[$position], $writer)), $assigned[$id] ?? []);
+            $row = $writer->refresh($writer->generate($row, new Store($context, $line, $direct !== null && $direct[0] === $id ? $direct[1] : ''), fn (int $position, $value) => (new ChangeCommand())->nonNull($value, $table->definition->columns[$position], $writer, $ignore)), $assigned[$id] ?? []);
             $changed += $this->stored($table, $number, $row, $old, $writer, $session, $ignore) ? 1 : 0;
         }
 

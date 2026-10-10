@@ -34,7 +34,7 @@ final class SpatialDefaultTest extends TestCase
         foreach (['', 'STRICT_TRANS_TABLES'] as $mode) {
             foreach ($cases as $name => $pattern) {
                 foreach (['', 'IGNORE'] as $ignore) {
-                    yield $mode . ' ' . $name . ' ' . $ignore => ["SET sql_mode='" . $mode . "'; " . sprintf($pattern, $ignore) . '; SELECT HEX(a) FROM spatial_defaults'];
+                    yield $mode . ' ' . $name . ' ' . $ignore => ["SET sql_mode='" . $mode . "'; " . sprintf($pattern, $ignore) . '; SHOW WARNINGS; SELECT HEX(a) FROM spatial_defaults'];
                 }
             }
         }

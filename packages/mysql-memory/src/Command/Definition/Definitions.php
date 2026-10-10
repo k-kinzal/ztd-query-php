@@ -15,12 +15,8 @@ use MySqlMemory\Dictionary\KeyKind;
 use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\Family\StatementError;
-use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Evaluation\Leaf\Clock;
-use MySqlMemory\Evaluation\Leaf\Retyped;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Planner;
-use MySqlMemory\Storage\Store;
 use MySqlMemory\Typing\Declared;
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Value\Encoding;
@@ -280,30 +276,12 @@ final class Definitions
             }
             if ($attribute instanceof DefaultLiteral) {
                 $value = $attribute->value;
-                if (in_array($column->domain->field, [Field::Blob, Field::Json], true)) {
-                    throw SchemaError::BlobCantHaveDefault->error($column->name);
+                $default = (new Constraint\LiteralDefaults())->check($column, $value, $this->planner->compiler->connection->context);
+                if ($default !== null) {
+                    return $default;
                 }
                 $evaluable = $this->planner->compiler->compile($value, new Scope());
-                if (($evaluable instanceof Retyped ? $evaluable->evaluable : $evaluable) instanceof Clock) {
-                    return new Fill(true, null, $evaluable, true, 'CURRENT_TIMESTAMP' . ($column->domain->decimals > 0 ? '(' . $column->domain->decimals . ')' : ''));
-                }
-                $frame = new Frame($this->planner->compiler->connection->context);
-                $raw = $evaluable->evaluate($frame);
-                if ($raw === null && !$column->nullable()) {
-                    throw SchemaError::InvalidDefault->error($column->name);
-                }
-                $context = $frame->context;
-                $strict = $context->strict;
-                $context->strict = true;
-                try {
-                    $stored = (new Store($context))->value($raw, $evaluable->domain(), $column);
-                } catch (\MySqlMemory\Error\SqlError $error) {
-                    throw new \MySqlMemory\Error\SqlError(SchemaError::InvalidDefault, SchemaError::InvalidDefault->message($column->name), $error);
-                } finally {
-                    $context->strict = $strict;
-                }
-
-                return Fill::constant($stored, $raw === null ? null : (string) $stored);
+                return (new Constraint\LiteralDefaults())->value($evaluable, $column, $this->planner->compiler->connection->context);
             }
         }
 

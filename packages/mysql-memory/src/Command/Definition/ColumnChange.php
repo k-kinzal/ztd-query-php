@@ -114,8 +114,9 @@ final class ColumnChange
         $index = $this->existing($command->column->column->value);
         [$element, $origin] = $layout->columns[$index];
         $domain = (new \MySqlMemory\Typing\Declared(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), $this->release))->domain($element->specification->dataType());
-        if ($this->release === \SqlSemantics\Contract\GrammarRelease::MySql5651 && $domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Blob) {
-            throw new SqlError(\MySqlMemory\Error\Family\SchemaError::BlobCantHaveDefault, "BLOB/TEXT column '" . $element->name->column->value . "' can't have a default value");
+        if (in_array($this->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && in_array($domain->field, [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Blob, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Json], true)) {
+            $code = \MySqlMemory\Error\Family\SchemaError::BlobCantHaveDefault;
+            throw new SqlError($code, $this->release === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? "BLOB/TEXT column '" . $element->name->column->value . "' can't have a default value" : $code->message($element->name->column->value));
         }
         $attributes = array_values(array_filter($this->attributes($element), static fn (ColumnAttribute $attribute): bool => !$attribute instanceof DefaultLiteral && !$attribute instanceof DefaultExpression));
         if ($command->value !== null) {

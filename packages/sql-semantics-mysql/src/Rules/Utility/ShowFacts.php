@@ -80,7 +80,7 @@ final class ShowFacts
     public function shape(Derivation $derivation, Report $report, ?string $first = null): RowShape
     {
         $rows = new ShowRows();
-        $columns = $rows->columns($report, $derivation->context->profile->grammar);
+        $columns = $rows->columns($report, $derivation->context->profile->grammar, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->strict);
         if ($first !== null) {
             $columns[0] = [$first, $columns[0][1]];
         }

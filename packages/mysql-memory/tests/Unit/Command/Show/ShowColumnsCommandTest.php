@@ -17,6 +17,16 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ShowColumnsCommandTest extends TestCase
 {
+    public function testHeadingsReflectStrictModeForComputedColumnNamesAndExtras(): void
+    {
+        $command = new ShowColumnsCommand();
+        $strict = $command->headings(false, false, true);
+        $loose = $command->headings(false, false, false);
+
+        self::assertSame([0, 0], [$strict[0]->flags, $strict[5]->flags]);
+        self::assertSame([1, 1], [$loose[0]->flags, $loose[5]->flags]);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new ShowColumnsCommand())->clearsDiagnostics());

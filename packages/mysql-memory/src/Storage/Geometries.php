@@ -59,9 +59,9 @@ final class Geometries
 
     /**
      * Refuses an absent required geometry. An explicit DEFAULT attempts to store invalid bytes;
-     * omitted values have no implicit geometry default after MySQL 5.6.
+     * omitted values are refused unconditionally after MySQL 5.7 and only in strict mode in 5.7.
      */
-    public function default(ColumnDefinition $column, GrammarRelease $release, bool $explicit): void
+    public function default(ColumnDefinition $column, GrammarRelease $release, bool $explicit, bool $strict = true): void
     {
         if ($column->domain->field !== Field::Geometry || $column->nullable()) {
             return;
@@ -69,7 +69,7 @@ final class Geometries
         if ($explicit) {
             throw DataError::InvalidGeometryValue->error();
         }
-        if ($release !== GrammarRelease::MySql5651) {
+        if ($release !== GrammarRelease::MySql5651 && ($release !== GrammarRelease::MySql5744 || $strict)) {
             throw DataError::NoDefaultForField->error($column->name);
         }
     }

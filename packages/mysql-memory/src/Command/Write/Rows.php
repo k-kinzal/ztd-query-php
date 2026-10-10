@@ -125,6 +125,10 @@ final class Rows
             try {
                 array_splice($row, $position, 1, [$this->notNull($store->value($raw, $domain, $column), $position, $store, $number, $single)]);
             } catch (SqlError $error) {
+                if ($this->into->ignore && $error->error === DataError::BadNull && $column->domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Geometry) {
+                    $this->context->warning(DataError::BadNull, $column->name);
+                    return;
+                }
                 throw $queried ? $this->unfilled($error, $named) : $error;
             }
         }
@@ -233,7 +237,7 @@ final class Rows
         if ($has || $column->autoIncrement) {
             return $value;
         }
-        (new \MySqlMemory\Storage\Geometries())->default($column, $this->context->modes->release, $explicit);
+        (new \MySqlMemory\Storage\Geometries())->default($column, $this->context->modes->release, $explicit, $this->context->strict);
         if ($explicit || !isset($this->undefaulted[$position])) {
             $store->adjust(DataError::NoDefaultForField, $column->name);
         }
@@ -259,7 +263,7 @@ final class Rows
         if ($value !== null || $column->nullable() || $column->autoIncrement) {
             return $value;
         }
-        if (($single && !$this->into->ignore) || $this->context->strict) {
+        if (($single && !$this->into->ignore) || $this->context->strict || ($column->domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Geometry && $this->context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5744)) {
             throw DataError::BadNull->error($column->name);
         }
         $this->context->warning(DataError::BadNull, $column->name);

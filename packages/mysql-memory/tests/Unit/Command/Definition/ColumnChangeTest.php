@@ -25,6 +25,16 @@ use SqlSemantics\Statement\Operation;
 #[Small]
 final class ColumnChangeTest extends TestCase
 {
+    public function testAlterDefaultRefusesGeometryDefaultChangesIn57(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a POINT)');
+        $this->expectExceptionCode(1101);
+        $this->expectExceptionMessage("BLOB, TEXT, GEOMETRY or JSON column 'a' can't have a default value");
+
+        $session->query('ALTER TABLE t ALTER a DROP DEFAULT');
+    }
+
     public function testRenamePreservesTheReportedWidthUnderTheNewName(): void
     {
         $session = (new Instance())->connect();
