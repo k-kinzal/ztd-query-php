@@ -52,8 +52,9 @@ final class Client
      * @param int $id The connection id
      * @param Closure $send Sends bytes to the client: fn (string): void
      * @param string $host The address the client connects from
+     * @param int|null $port The client's TCP source port, or null for a Unix socket
      */
-    public function __construct(public readonly Instance $instance, public readonly int $id, public readonly Closure $send, public readonly string $host = 'localhost')
+    public function __construct(public readonly Instance $instance, public readonly int $id, public readonly Closure $send, public readonly string $host = 'localhost', public readonly ?int $port = null)
     {
         $this->messages = new Messages();
         $this->statements = new Statements($this);
@@ -149,7 +150,7 @@ final class Client
             $database = $database === '' ? null : $database;
         }
         try {
-            $this->session = $this->instance->connect($user, $this->instance->clientHost ?? $this->host, $database);
+            $this->session = $this->instance->connect($user, $this->instance->clientHost ?? $this->host, $database, $this->port);
             $this->session->variables->clientFoundRows = ($this->capabilities & Capability::FOUND_ROWS) !== 0;
         } catch (SqlError $error) {
             $this->packet($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage()));
@@ -221,7 +222,7 @@ final class Client
         if ($reset) {
             $session = $this->session();
             $session->close();
-            $this->session = $this->instance->connect($session->user, $session->host, $session->variables->database === '' ? null : $session->variables->database);
+            $this->session = $this->instance->connect($session->user, $session->host, $session->variables->database === '' ? null : $session->variables->database, $session->port);
             $this->session->variables->clientFoundRows = ($this->capabilities & Capability::FOUND_ROWS) !== 0;
         }
 

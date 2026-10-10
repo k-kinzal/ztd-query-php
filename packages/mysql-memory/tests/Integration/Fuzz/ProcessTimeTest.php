@@ -32,4 +32,13 @@ final class ProcessTimeTest extends TestCase
         self::assertFalse($result->volatile);
         self::assertNull($result->difference, (string) $result->difference);
     }
+
+    public function testProcessHostIncludesTheTcpSourcePort(): void
+    {
+        [$target] = Servers::shared();
+        $result = $target->compare("SELECT HOST LIKE CONCAT(SUBSTRING_INDEX(USER(),'@',-1),':%') AS host_matches, CAST(SUBSTRING_INDEX(HOST,':',-1) AS UNSIGNED) BETWEEN 1 AND 65535 AS source_port FROM information_schema.PROCESSLIST WHERE ID=CONNECTION_ID()");
+
+        self::assertFalse($result->volatile);
+        self::assertNull($result->difference, (string) $result->difference);
+    }
 }

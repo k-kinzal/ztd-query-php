@@ -31,6 +31,11 @@ final class ListenerTest extends TestCase
         fwrite($client, "\x26\x00\x00\x01\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
         $listener->read($id);
         $reply = fread($client, 1024);
+        $peer = stream_socket_get_name($client, false);
+        self::assertIsString($peer);
+        $session = $instance->sessions[1]->get();
+        self::assertNotNull($session);
+        self::assertSame('localhost:' . substr($peer, (int) strrpos($peer, ':') + 1), \MySqlMemory\System\Server\Processlist::row($session, false, '')['HOST']);
         fclose($client);
         $listener->read($id);
         $listener->read($id);

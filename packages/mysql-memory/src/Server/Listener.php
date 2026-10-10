@@ -189,6 +189,7 @@ final class Listener
         $id = (int) $accepted;
         $this->sockets[$id] = $accepted;
         $peer = (string) stream_socket_get_name($accepted, true);
+        $port = !str_starts_with($this->address, 'unix://') && preg_match('/:([0-9]+)\z/', $peer, $match) === 1 ? (int) $match[1] : null;
         $host = str_contains($peer, ':') ? substr($peer, 0, (int) strrpos($peer, ':')) : 'localhost';
         $host = $host === '127.0.0.1' || $host === '::1' || $host === '' ? 'localhost' : $host;
         $this->clients[$id] = new Client($this->instance, ++$this->connections, static function (string $bytes) use ($accepted): void {
@@ -204,7 +205,7 @@ final class Listener
                 }
                 $written += $sent;
             }
-        }, $host);
+        }, $host, $port);
         $this->clients[$id]->greet();
 
         return $id;

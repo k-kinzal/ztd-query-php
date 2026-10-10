@@ -146,10 +146,11 @@ final class Session
      * @param string $user The user name
      * @param string $host The host connected from
      * @param string|null $database The database to use, or null for none
+     * @param int|null $port The client's TCP source port, or null for a local session
      *
      * @throws SqlError When the database does not exist
      */
-    public function __construct(public readonly Instance $instance, public readonly int $id, public readonly string $user = 'root', public readonly string $host = 'localhost', ?string $database = null)
+    public function __construct(public readonly Instance $instance, public readonly int $id, public readonly string $user = 'root', public readonly string $host = 'localhost', ?string $database = null, public readonly ?int $port = null)
     {
         $this->variables = new Variables($instance->catalog, $instance->globals, $instance);
         $this->activity = new State\Activity($this->variables);

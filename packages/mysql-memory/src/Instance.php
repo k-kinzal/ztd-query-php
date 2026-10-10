@@ -130,15 +130,16 @@ final class Instance
      * @param string $user The user name the session authenticates as
      * @param string $host The host the session connects from
      * @param string|null $database The database to use, or null for none
+     * @param int|null $port The client's TCP source port, or null for a local session
      *
      * @throws Error\SqlError When the database does not exist
      */
-    public function connect(string $user = 'root', string $host = 'localhost', ?string $database = null): Session
+    public function connect(string $user = 'root', string $host = 'localhost', ?string $database = null, ?int $port = null): Session
     {
         if ($this->stopped) {
             throw Error\Family\TransactionError::ServerGone->error();
         }
-        $session = new Session($this, ++$this->connections, $user, $host, $database);
+        $session = new Session($this, ++$this->connections, $user, $host, $database, $port);
         $this->sessions[$session->id] = WeakReference::create($session);
 
         return $session;

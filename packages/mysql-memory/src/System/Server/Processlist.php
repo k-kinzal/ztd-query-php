@@ -52,7 +52,7 @@ final class Processlist implements SystemRows
         return [
             'ID' => $session->id,
             'USER' => $session->user,
-            'HOST' => $session->host,
+            'HOST' => $session->host . ($session->port === null ? '' : ':' . $session->port),
             'DB' => $session->variables->database === '' ? null : $session->variables->database,
             'COMMAND' => $current ? 'Query' : 'Sleep',
             'TIME' => $session->activity->elapsed(),
