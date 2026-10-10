@@ -42,7 +42,7 @@ final class Reader
         try {
             $tree = $semantics->parser()->parse($statement);
         } catch (SourceException $error) {
-            throw (!$prepared ? (new Syntax())->premature($error, $statement, $semantics->parser(), $session->following) : null) ?? (new Syntax())->error($error, $statement, $session->settings()->release(), $session->following);
+            throw (!$prepared ? (new Syntax())->premature($error, $statement, $semantics->parser(), $session->following) : null) ?? (new Syntax())->error($error, $statement, $session->settings()->release(), $session->following, $semantics->parser());
         }
         if (!$prepared) {
             $listed = $session->settings()->release() === GrammarRelease::MySql5651 ? (new Clashes())->listed($tree, $session->variables->database) : null;

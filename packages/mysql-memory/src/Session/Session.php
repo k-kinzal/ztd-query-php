@@ -266,7 +266,7 @@ final class Session
         try {
             $statements = $this->semantics()->split($sql);
         } catch (AnalysisException $error) {
-            throw (new Syntax())->error($error, $sql, $this->settings()->release());
+            throw (new Syntax())->error($error, $sql, $this->settings()->release(), parser: $this->semantics()->parser());
         }
 
         return $statements === [] ? [$sql] : $statements;

@@ -132,8 +132,8 @@ final class Syntax
         }
         try {
             $tokens = $parser->tokenize($statement);
-        } catch (LexicalException) {
-            return null;
+        } catch (LexicalException $error) {
+            $tokens = $parser->tokenize(substr($statement, 0, $error->offset));
         }
         foreach ($tokens as $token) {
             if ($cause instanceof SyntaxException && $token->offset >= $cause->token->offset) {
@@ -274,9 +274,10 @@ final class Syntax
     }
 
     /**
+     * Earlier refused tokens take precedence over later lexical failures when a parser is supplied.
      * Answers the parse error of a failure to read a statement; an attribute a generated column cannot have is ER_WRONG_USAGE, as the parser of the server refuses it (verified on a live 8.4 server). MySQL 5.6 and 5.7, whose lexer reads the word after WITH to tell WITH ROLLUP and WITH CUBE apart, report an error at WITH from the text after it (verified on live 5.6.51 and 5.7.44 servers).
      */
-    public function error(Throwable $failure, string $statement, ?\SqlSemantics\Contract\GrammarRelease $release = null, string $following = ''): SqlError
+    public function error(Throwable $failure, string $statement, ?\SqlSemantics\Contract\GrammarRelease $release = null, string $following = '', ?\SqlParser\Parser\SqlParser $parser = null): SqlError
     {
         $cause = $failure;
         while ($cause !== null && !$cause instanceof SyntaxException) {
@@ -286,7 +287,19 @@ final class Syntax
             return new SqlError(StatementError::WrongUsage, StatementError::WrongUsage->message($usage[1], 'generated column'), $failure);
         }
         if (!$cause instanceof SyntaxException) {
-            $lexical = $failure instanceof LexicalException ? $failure : $failure->getPrevious();
+            $lexical = $failure;
+            while ($lexical !== null && !$lexical instanceof LexicalException) {
+                $lexical = $lexical->getPrevious();
+            }
+            if ($lexical instanceof LexicalException && $parser !== null && $lexical->offset > 0) {
+                try {
+                    $parser->parse(substr($statement, 0, $lexical->offset));
+                } catch (\SqlParser\Lexer\SourceException $prefix) {
+                    if ($prefix instanceof SyntaxException && $prefix->token->offset < $lexical->offset) {
+                        return $this->error($prefix, $statement, $release, $following);
+                    }
+                }
+            }
 
             return $this->near($lexical instanceof LexicalException ? $lexical->offset : strlen($statement), $statement, $following, $failure);
         }

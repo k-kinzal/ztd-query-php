@@ -19,6 +19,24 @@ use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 #[Small]
 final class SyntaxTest extends TestCase
 {
+    public function testErrorReportsTheEarlierRefusedTokenBeforeAnUnterminatedString(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage("near 'a'b' at line 1");
+
+        $session->query("PREPARE p FROM 'a''b'");
+    }
+
+    public function testPrematureKeepsParameterErrorsBeforeLexicalFailures(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage("near '? 'bad' at line 1");
+
+        $session->query("SELECT ? 'bad");
+    }
+
     public function testDebugOnlyRefusesShowParseTreeAtParseTree(): void
     {
         $session = (new Instance())->connect();
