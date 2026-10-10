@@ -139,9 +139,9 @@ final class ExplainCommand implements Command
         if ($format === 'TRADITIONAL') {
             $rows = $this->rows($statement, $session, $database);
             $headings = $this->headings();
-            if (str_starts_with($session->instance->version, '5.6.')) {
-                $headings = LegacyPlan::headings($headings, $statement->modifier);
-                $rows = LegacyPlan::rows($rows, $statement);
+            if ($session->settings()->legacy()) {
+                $headings = LegacyPlan::headings($headings, $statement->modifier, $session->instance->version);
+                $rows = LegacyPlan::rows($rows, $statement, $session->instance->version);
             }
 
             return (new Listing($headings))->sent($rows, $context);

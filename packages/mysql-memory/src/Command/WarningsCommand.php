@@ -83,7 +83,7 @@ final class WarningsCommand implements Command
     }
 
     /**
-     * Answers the diagnostic column metadata, including the four-digit code field of MySQL 5.6.
+     * Answers the diagnostic column metadata, including the four-digit code field of MySQL 5.x.
      *
      * @return list<ResultColumn>
      */
@@ -95,7 +95,7 @@ final class WarningsCommand implements Command
 
         return [
             new ResultColumn('Level', Field::VarString, 7 * $charset->maxLength, 31, ColumnFlag::NotNull->value, $collation),
-            new ResultColumn('Code', Field::Long, $session->settings()->release() === GrammarRelease::MySql5651 ? 4 : 5, 0, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::Binary->value | ColumnFlag::Numeric->value, 63),
+            new ResultColumn('Code', Field::Long, $session->settings()->legacy() ? 4 : 5, 0, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::Binary->value | ColumnFlag::Numeric->value, 63),
             new ResultColumn('Message', Field::VarString, 512 * $charset->maxLength, 31, ColumnFlag::NotNull->value, $collation),
         ];
     }

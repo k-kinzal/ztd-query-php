@@ -24,6 +24,7 @@ final class WarningsCommandTest extends TestCase
     {
         $session = (new Instance('5.6.51'))->connect();
         self::assertSame(4, (new WarningsCommand())->columns($session)[1]->length);
+        self::assertSame(4, (new WarningsCommand())->columns((new Instance('5.7.44'))->connect())[1]->length);
     }
 
     public function testClearsDiagnosticsAnswersFalse(): void

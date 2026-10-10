@@ -88,6 +88,8 @@ final class StatementCountersTest extends TestCase
     public function testPdoPreparationCountsProtocolRequests(bool $memory, bool $emulate): void
     {
         [$target] = Servers::shared();
+        $target->repair($target->guard());
+        $target->repair($target->memoryGuard());
         $pdo = new PDO($memory ? $target->memory : $target->native, $memory ? 'root' : $target->nativeUser, $memory ? '' : $target->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => $emulate]);
         $pdo->exec('FLUSH STATUS');
         $statement = $pdo->prepare('SELECT ?');

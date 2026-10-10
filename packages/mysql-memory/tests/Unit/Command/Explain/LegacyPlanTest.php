@@ -18,6 +18,17 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Explain\ExplainModifier;
 #[Small]
 final class LegacyPlanTest extends TestCase
 {
+    public function testRowsKeepsTheTableAndDmlKindIn57(): void
+    {
+        $session = (new Instance('5.7.44', databases: ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY); INSERT INTO t VALUES (1),(2)');
+        $result = $session->query('EXPLAIN DELETE FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([3, 10, 12], [$result->columns[0]->length, $result->columns[9]->length, count($result->columns)]);
+        self::assertSame([['1', 'DELETE', 't', null, 'ALL', null, null, null, null, '2', '100.00', 'Deleting all rows']], $result->rows);
+    }
+
     public function testHeadingsSelectsTheColumnsOfEachLegacyModifier(): void
     {
         $headings = (new ExplainCommand())->headings();
