@@ -320,6 +320,7 @@ return [
     3020 => ['2201E', 'Invalid argument for logarithm'],
     3056 => ['HY000', 'The password provided for the replication user exceeds the maximum length of 32 characters'],
     3057 => ['42000', "Incorrect user-level lock name '%s'. The name is empty, NULL, or can not be expressed in the current character-set."],
+    3029 => ['HY000', 'Expression #%d of ORDER BY contains aggregate function and applies to the result of a non-aggregated query'],
     3065 => ['HY000', "Expression #%d of ORDER BY clause is not in SELECT list, references column '%s' which is not in SELECT list; this is incompatible with %s"],
     3067 => ['HY000', "Supplied filter list contains a value which is not in the required format 'db_pattern.table_pattern'"],
     3064 => ['HY000', 'Incorrect type for argument %s in function %s.'],

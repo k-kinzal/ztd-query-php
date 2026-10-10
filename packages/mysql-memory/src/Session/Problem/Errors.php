@@ -41,6 +41,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
 use SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\GroupingRule;
@@ -178,6 +179,7 @@ final class Errors
             $diagnostic instanceof UndeclaredVariable => ProgramError::UndeclaredVariable->error($diagnostic->name->value),
             $diagnostic instanceof Misuse => $this->misuse($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\CacheOptionConflict => $diagnostic->repeated() ? StatementError::DuplicateArgument->error($diagnostic->first->value) : StatementError::WrongUsage->error($diagnostic->first->value, $diagnostic->second->value),
+            $diagnostic instanceof AggregateInOrdering => QueryError::AggregateInOrder->error($diagnostic->position),
             $diagnostic instanceof NonGroupedColumn => new SqlError(match ($diagnostic->rule) {
                 GroupingRule::NotDetermined => QueryError::WrongFieldWithGroup,
                 GroupingRule::WithoutGroupBy => QueryError::MixOfGroupFunctionAndFields,

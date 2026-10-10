@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Typing\Domain;
+use SqlSemantics\Platform\MySql\Rules\Query\Grouping\OrderingAggregates;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
@@ -48,7 +49,7 @@ final class Origins
      */
     public function origins(Select $select, ?Scope $outer, Scope $scope, array $fields, array $rolled, array $domains, bool $sorted): array
     {
-        $buffered = (in_array(SelectOption::BufferResult, $select->options, true) || (in_array(SelectOption::Distinct, $select->options, true) && (new ConstantTables($this->planner->compiler->facts))->joined($select) > 1)) && !$this->planner->blocks->empty($select, $outer);
+        $buffered = ($this->aggregateOrder($select) || in_array(SelectOption::BufferResult, $select->options, true) || (in_array(SelectOption::Distinct, $select->options, true) && (new ConstantTables($this->planner->compiler->facts))->joined($select) > 1)) && !$this->planner->blocks->empty($select, $outer);
         $materialized = $sorted || in_array(SelectOption::Distinct, $select->options, true);
         $implicit = $this->planner->compiler->settings->legacy() && $select->groupBy === null && (new Grouping($this->planner))->collect($select) !== [];
         $supplied = $implicit ? $this->supplied($select->from) : [];
@@ -60,6 +61,28 @@ final class Origins
         }, $fields, $rolled, $domains);
 
         return $buffered ? array_map(static fn (?ColumnOrigin $origin): ?ColumnOrigin => $origin?->unkeyed(), $origins) : $origins;
+    }
+
+    /**
+     * Tells whether sorting an explicit group by its aggregates buffers the result.
+     *
+     * Such a result preserves column identities but loses key flags. Ordinary column
+     * ordering retains those flags. Verified through PDO on MySQL 5.6, 8.0 and 8.4.
+     */
+    public function aggregateOrder(Select $select): bool
+    {
+        if ($select->groupBy === null) {
+            return false;
+        }
+        $grouping = new Grouping($this->planner);
+        $owned = array_fill_keys(array_map(spl_object_id(...), $grouping->collect($select)), true);
+        foreach ([...$select->orderBy, ...($select->late->orderBy ?? [])] as $item) {
+            if ((new OrderingAggregates())->occurrences($grouping->target($item->expression), $owned) !== []) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

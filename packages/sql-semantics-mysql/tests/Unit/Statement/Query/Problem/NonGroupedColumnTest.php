@@ -7,6 +7,7 @@ namespace Tests\Unit\Statement\Query\Problem;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\GroupingRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 
@@ -14,6 +15,12 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 #[Small]
 final class NonGroupedColumnTest extends TestCase
 {
+    public function testMessageUsesTheMySql56GroupingDiagnostics(): void
+    {
+        self::assertSame('Mixing of GROUP columns (MIN(),MAX(),COUNT(),...) with no GROUP columns is illegal if there is no GROUP BY clause', (new NonGroupedColumn(GroupingRule::WithoutGroupBy, false, 1, 'd.t.a', release: GrammarRelease::MySql5651))->message());
+        self::assertSame("'d.t.a' isn't in GROUP BY", (new NonGroupedColumn(GroupingRule::NotDetermined, false, 1, 'd.t.a', release: GrammarRelease::MySql5651))->message());
+    }
+
     public function testMessageNamesTheHavingCondition(): void
     {
         self::assertSame("In aggregated query without GROUP BY, expression #1 of HAVING clause contains nonaggregated column 'd.t.a'; this is incompatible with sql_mode=only_full_group_by", (new NonGroupedColumn(GroupingRule::WithoutGroupBy, false, 1, 'd.t.a', true))->message());

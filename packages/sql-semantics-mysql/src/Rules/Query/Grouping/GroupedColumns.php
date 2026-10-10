@@ -57,19 +57,25 @@ final class GroupedColumns
      *
      * @param list<VisibleRelation> $visible The relations of the FROM clause of the block
      * @param list<Field|OpenStar> $fields The output fields of the select list, stars expanded
-     * @param bool|null $ownsAggregates Resolved ownership, or null to inspect the written select list and HAVING
+     * @param list<Scalar>|null $ownedAggregates Resolved ownership, or null to inspect the written select list and HAVING
      */
-    public function check(Select $select, array $visible, array $fields, Derivation $derivation, ?bool $ownsAggregates = null): void
+    public function check(Select $select, array $visible, array $fields, Derivation $derivation, ?array $ownedAggregates = null): void
     {
         $facts = $derivation->facts();
         if ($facts->diagnostics !== [] || $this->computed($select, $facts)) {
+            return;
+        }
+        $ordering = (new OrderingAggregates())->check($select, $ownedAggregates ?? [], $derivation->context->profile->grammar);
+        if ($ordering !== null) {
+            $derivation->report($ordering);
+
             return;
         }
         $relations = [];
         foreach ($visible as $relation) {
             $relations[spl_object_id($relation->relation)] = $relation;
         }
-        $aggregates = $ownsAggregates ?? ((new Aggregation())->aggregates(array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items)) || ($select->having !== null && (new Aggregation())->aggregates([$select->having])));
+        $aggregates = $ownedAggregates !== null ? $ownedAggregates !== [] : ((new Aggregation())->aggregates(array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items)) || ($select->having !== null && (new Aggregation())->aggregates([$select->having])));
         $problem = null;
         if ($select->groupBy !== null) {
             $problem = $this->grouped($select, $fields, $relations, $facts, $derivation);
@@ -141,7 +147,7 @@ final class GroupedColumns
             $expression = $matching->target($item->expression, $facts);
             $missing = $determination->undetermined($expression, $groups, $determined, $relations, $facts);
             if ($missing !== null) {
-                return new NonGroupedColumn(GroupingRule::NotDetermined, true, $position + 1, $this->name($missing, $relations, $derivation));
+                return new NonGroupedColumn(GroupingRule::NotDetermined, true, $position + 1, $this->name($missing, $relations, $derivation), release: $derivation->context->profile->grammar);
             }
         }
 
@@ -165,7 +171,7 @@ final class GroupedColumns
         }
         $missing = $grouping === null ? ((new ColumnReads())->columns($select->having, $relations, $facts, false)[0][1] ?? null) : (new Determination())->undetermined($select->having, $grouping[0], $grouping[1], $relations, $facts);
 
-        return $missing === null ? null : new NonGroupedColumn($grouping === null ? GroupingRule::WithoutGroupBy : GroupingRule::NotDetermined, false, 1, $this->name($missing, $relations, $derivation), true);
+        return $missing === null ? null : new NonGroupedColumn($grouping === null ? GroupingRule::WithoutGroupBy : GroupingRule::NotDetermined, false, 1, $this->name($missing, $relations, $derivation), true, $derivation->context->profile->grammar);
     }
 
     /**
@@ -190,7 +196,7 @@ final class GroupedColumns
                 $missing = $column !== null && ($grouping === null || !isset($grouping[1][$reads->key($column)])) ? $column : null;
             }
             if ($missing !== null) {
-                return new NonGroupedColumn($rule, false, $field->position + 1, $this->name($missing, $relations, $derivation));
+                return new NonGroupedColumn($rule, false, $field->position + 1, $this->name($missing, $relations, $derivation), release: $derivation->context->profile->grammar);
             }
         }
 
@@ -227,7 +233,7 @@ final class GroupedColumns
             }
             foreach ($reads->columns($expression, $relations, $facts, true) as [$key, $column]) {
                 if (!isset($selected[$key])) {
-                    return new NonGroupedColumn(GroupingRule::NotSelected, true, $position + 1, $this->name($column, $relations, $derivation));
+                    return new NonGroupedColumn(GroupingRule::NotSelected, true, $position + 1, $this->name($column, $relations, $derivation), release: $derivation->context->profile->grammar);
                 }
             }
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Statement\Query\Problem;
 
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
@@ -27,11 +28,12 @@ final class NonGroupedColumn implements Diagnostic
     /**
      * @param GroupingRule $rule The rule the column breaks
      * @param bool $ordering Whether the expression is an ORDER BY key rather than a select item
+     * @param GrammarRelease $release The release whose grouping diagnostic is reported
      * @param bool $having Whether the expression is the HAVING condition
      * @param int $position The position of the expression in its list, counted from 1
      * @param string $column The column as the server names it
      */
-    public function __construct(public readonly GroupingRule $rule, public readonly bool $ordering, public readonly int $position, public readonly string $column, public readonly bool $having = false)
+    public function __construct(public readonly GroupingRule $rule, public readonly bool $ordering, public readonly int $position, public readonly string $column, public readonly bool $having = false, public readonly GrammarRelease $release = GrammarRelease::MySql847)
     {
     }
 
@@ -40,6 +42,9 @@ final class NonGroupedColumn implements Diagnostic
      */
     public function message(): string
     {
+        if ($this->release === GrammarRelease::MySql5651 && $this->rule !== GroupingRule::NotSelected) {
+            return $this->rule === GroupingRule::WithoutGroupBy ? 'Mixing of GROUP columns (MIN(),MAX(),COUNT(),...) with no GROUP columns is illegal if there is no GROUP BY clause' : sprintf("'%s' isn't in GROUP BY", $this->column);
+        }
         $list = $this->having ? 'HAVING clause' : ($this->ordering ? 'ORDER BY clause' : 'SELECT list');
 
         return match ($this->rule) {

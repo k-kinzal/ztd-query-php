@@ -56,6 +56,7 @@ enum QueryError: int implements ErrorCode
     case WrongParametersToProcedure = 1108;
     case OptionIgnored = 1618;
     case WrongVariableTypeInLimit = 1691;
+    case AggregateInOrder = 3029;
     case FieldInOrderNotSelect = 3065;
     case NativeFunctionRejected = 3566;
     case UnresolvedLockedTable = 3568;

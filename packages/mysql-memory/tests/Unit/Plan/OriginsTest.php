@@ -66,6 +66,19 @@ final class OriginsTest extends TestCase
         self::assertSame(['a', 'x'], [$result->columns[0]->name, $result->columns[0]->table]);
     }
 
+    public function testAggregateOrderDropsKeysOnlyWhenSortingGroupsByAnOwnedAggregate(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(id INT PRIMARY KEY, a INT); INSERT INTO t VALUES (1,10),(2,5)');
+        $aggregate = $session->query('SELECT id, SUM(a) AS s FROM t GROUP BY id ORDER BY s')[0];
+        $column = $session->query('SELECT id FROM t GROUP BY id ORDER BY a')[0];
+        self::assertInstanceOf(ResultSet::class, $aggregate);
+        self::assertInstanceOf(ResultSet::class, $column);
+
+        self::assertSame([0, 2], [$aggregate->columns[0]->flags & 2, $column->columns[0]->flags & 2]);
+        self::assertSame(['t', 'id'], [$aggregate->columns[0]->originalTable, $aggregate->columns[0]->originalName]);
+    }
+
     public function testOriginsDropTheKeyFlagsOfABufferedResult(): void
     {
         $session = (new Instance())->connect();

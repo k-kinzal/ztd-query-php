@@ -18,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CacheOptionConflict;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
@@ -32,6 +33,15 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 #[Small]
 final class ErrorsTest extends TestCase
 {
+    public function testQueryMapsAnAggregateIntroducedByOrdering(): void
+    {
+        $problem = new AggregateInOrdering(2);
+        $error = (new Errors())->query($problem, 'order clause');
+
+        self::assertNotNull($error);
+        self::assertSame([3029, 'HY000', $problem->message()], [$error->getCode(), $error->sqlState(), $error->getMessage()]);
+    }
+
     public function testErrorReportsABucketCountOutOfRange(): void
     {
         $session = (new Instance())->connect();
