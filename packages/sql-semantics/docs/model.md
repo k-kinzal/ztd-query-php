@@ -11,13 +11,16 @@ An operation is one analyzed root:
 | `$operation->context` | The `AnalysisContext` the facts were derived against: the language profile and the declarations. See [Contexts](contexts.md). |
 | `$operation->statement` | The statement structure: a concrete class of the database package, or a `Script` of several statements. |
 | `$operation->facts` | Every fact derived for the structure against the context. |
+| `$operation->sources` | Recorded byte ranges of particular occurrences in the original parser input. Coverage is partial; `sources->of($node)` returns null when that rule does not record a location. |
 | `toString()` | SQL rendered from the structure and checked against it. See [Rendering](rendering.md). |
 | `profile()` | The language profile: grammar release, lexical settings, parameter style. |
 | `declarations()` | The `Table` declarations the statement provides, for example those of a CREATE TABLE or CREATE VIEW. |
 | `shape()`, `fields()`, `field()`, `lookupField()` | The rows the statement returns, when it returns rows. |
 | `inputRelation()`, `singleNamedInput()` | The input relation of a statement that reads rows. |
 
-The constructor `new Operation($context, $statement)` is the only way to obtain an operation, and `analyze()` uses it too. All facts are established in the constructor; nothing is filled in later.
+The constructor `new Operation($context, $statement)` is the only way to obtain an operation, and `analyze()` uses it too. All facts are established in the constructor; nothing is filled in later. An optional third argument supplies a `SourceMap`. Direct construction defaults to an empty map; source locations are never inherited implicitly from another operation.
+
+Input locations are separate from both the semantic structure and its rendering. An `Origin` holds the exact node occurrence, a byte `offset`, and a byte `length`, measured from the first through the last token. Comments and whitespace between those tokens remain within the range; empty synthetic tokens do not. Offsets refer to the input passed to the parser, including when `analyze()` receives an already parsed tree. Keep that input if you need to show the original text in a diagnostic. The current MySQL lowering records partition-function and partition-bound expressions; other rules may return no origin.
 
 ## Statement structure and facts
 

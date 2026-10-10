@@ -169,8 +169,9 @@ final class Semantics
             }
         }
         $leaves = new Leaves();
-        $statement = (new Publication())->root($this->platform->lower($tree, $this->profile, $leaves));
-        $operation = new Operation($declarations, $statement);
+        $origins = new \SqlSemantics\Construction\Origins();
+        $statement = (new Publication())->root($this->platform->lower($tree, $this->profile, $leaves, $origins));
+        $operation = new Operation($declarations, $statement, $origins->publish());
 
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $this->platform->statementNamespace()]);
         $dropped = (new LeafEmbedding())->dropped($leaves, $graph->objects($statement));

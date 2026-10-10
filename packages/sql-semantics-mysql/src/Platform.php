@@ -110,9 +110,9 @@ final class Platform implements \SqlSemantics\Contract\Platform
     /**
      * Lowers a parse tree into its statements.
      */
-    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves): array
+    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null): array
     {
-        return (new Lowering($this->productions($profile), $leaves, $profile))->statements($tree);
+        return (new Lowering($this->productions($profile), $leaves, $profile, $origins ?? new \SqlSemantics\Construction\Origins()))->statements($tree);
     }
 
     /**

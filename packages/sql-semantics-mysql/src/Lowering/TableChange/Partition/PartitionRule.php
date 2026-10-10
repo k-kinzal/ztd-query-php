@@ -252,14 +252,14 @@ final class PartitionRule
     public function expression(Node $function): Scalar
     {
         if ($function->name === 'bit_expr') {
-            return $this->lowering->expressions->bitExpression($function);
+            return $this->lowering->origins->record($this->lowering->expressions->bitExpression($function), $function);
         }
         $form = $this->lowering->form($function);
 
         return match ($form->signature) {
             'part_func: ( remember_name part_func_expr remember_end )', 'sub_part_func: ( remember_name part_func_expr remember_end )' => $this->remembered($form),
             'part_func: ( part_func_expr )', 'sub_part_func: ( part_func_expr )' => $this->expression($form->node(1)),
-            'part_func_expr: bit_expr' => $this->lowering->expressions->bitExpression($form->node(0)),
+            'part_func_expr: bit_expr' => $this->expression($form->node(0)),
             default => throw ImplementationGap::production($form),
         };
     }

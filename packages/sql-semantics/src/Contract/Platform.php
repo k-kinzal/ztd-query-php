@@ -37,9 +37,10 @@ interface Platform
     /**
      * Lowers a parse tree into the statements it contains, recording the operand leaves it creates.
      *
+     * @param \SqlSemantics\Construction\Origins|null $origins The optional recorder for original input locations
      * @return list<Statement>
      */
-    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves): array;
+    public function lower(Node $tree, LanguageProfile $profile, Leaves $leaves, ?\SqlSemantics\Construction\Origins $origins = null): array;
 
     /**
      * Answers the grammar productions of a profile's release.

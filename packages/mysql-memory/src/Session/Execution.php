@@ -178,7 +178,7 @@ final class Execution
                 $dots = [];
             }
             if ($warning instanceof ParseFailure) {
-                $error = (new Problem\Precision())->legacy((new CacheOptions())->placed($warning->problem, $operation->statement, $session) ?? (new Errors())->error($warning->problem, $session, 'field list', $operation->statement), $session->settings()->release());
+                $error = (new Problem\Precision())->legacy((new Parse\LocatedErrors())->error($warning->problem, $operation, $session) ?? (new CacheOptions())->placed($warning->problem, $operation->statement, $session) ?? (new Errors())->error($warning->problem, $session, 'field list', $operation->statement), $session->settings()->release());
                 $session->diagnostics->error($error->getCode(), $error->getMessage());
                 $failure ??= $error;
                 if ($warning->aborts) {

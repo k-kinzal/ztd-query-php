@@ -187,8 +187,9 @@ final class Lowering
      * @param Productions $productions The productions of the grammar release
      * @param Leaves $leaves The record of operand leaves of this analysis
      * @param LanguageProfile $profile The language profile the tree was parsed under
+     * @param \SqlSemantics\Construction\Origins $origins The input locations recorded for this lowering
      */
-    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile)
+    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile, public readonly \SqlSemantics\Construction\Origins $origins = new \SqlSemantics\Construction\Origins())
     {
         $this->names = new NameRule($this);
         $this->literals = new LiteralRule($this);

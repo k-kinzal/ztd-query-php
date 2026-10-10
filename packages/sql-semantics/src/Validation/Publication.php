@@ -43,11 +43,15 @@ final class Publication
      * @return array{Facts, string}
      * @throws InvariantViolation When the rendered SQL does not correspond to the structure
      */
-    public function establish(AnalysisContext $context, Statement $statement): array
+    public function establish(AnalysisContext $context, Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap()): array
     {
         $platform = Platforms::of($context->profile->grammar->database());
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $platform->statementNamespace()]);
         $objects = $graph->objects($statement);
+        $graph->objects($sources);
+        foreach ($sources->origins as $origin) {
+            Check::input(in_array($origin->node, $objects, true), 'A source location belongs to an occurrence of this statement.');
+        }
 
         $derivation = new Derivation($context);
         $derivation->statement($statement);

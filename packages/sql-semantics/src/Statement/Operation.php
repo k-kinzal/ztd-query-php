@@ -59,10 +59,11 @@ final class Operation
      *
      * @param AnalysisContext $context The fixed profile and declaration snapshot
      * @param Statement $statement The requested statement
+     * @param Source\SourceMap $sources Optional original input locations, independent of the semantic structure
      */
-    public function __construct(public readonly AnalysisContext $context, public readonly Statement $statement)
+    public function __construct(public readonly AnalysisContext $context, public readonly Statement $statement, public readonly Source\SourceMap $sources = new Source\SourceMap())
     {
-        [$facts, $sql] = (new Publication())->establish($context, $statement);
+        [$facts, $sql] = (new Publication())->establish($context, $statement, $sources);
         $this->facts = $facts;
         $this->sql = $sql;
     }
