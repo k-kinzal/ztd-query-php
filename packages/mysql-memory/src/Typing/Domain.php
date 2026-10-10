@@ -38,7 +38,7 @@ final class Domain
     /**
      * @param Kind $kind How a value is held at run time
      * @param Field $field The field type the protocol reports
-     * @param int $length The display length in characters
+     * @param int $length The display length in characters, or bytes for TEXT/BLOB fields
      * @param int $decimals The number of decimals, or NOT_FIXED
      * @param bool $unsigned Whether an integer or decimal is UNSIGNED
      * @param Collation|null $collation The collation of a string; binary for every other kind when null
@@ -173,11 +173,11 @@ final class Domain
     }
 
     /**
-     * Answers the display length in bytes, as the column definition reports it: the display width of a column of an integer type that declares one.
+     * Answers the unconverted display length in bytes: TEXT/BLOB bounds already count bytes, and integer columns retain their display widths.
      */
     public function byteLength(): int
     {
-        return $this->kind === Kind::String || $this->kind->temporal() ? $this->length * $this->collation->charset->maxLength : $this->display ?? $this->length;
+        return $this->resolved()->metadataLength();
     }
 
     /**

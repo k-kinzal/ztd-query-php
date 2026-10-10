@@ -116,4 +116,16 @@ final class DomainTest extends TestCase
         self::assertSame('GEOMETRY', Domain::string(1, Collation::binary(), Field::Geometry)->text()->name());
     }
 
+
+    public function testMetadataLengthRetainsTheByteBoundsOfBlobFields(): void
+    {
+        $fields = [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob];
+        $lengths = array_map(static fn (Field $field): int => Domain::string(100, Collation::known('utf8mb4_general_ci'), $field)->metadataLength(), $fields);
+
+        self::assertSame([100, 100, 100, 100], $lengths);
+        self::assertSame(400, Domain::string(100, Collation::known('utf8mb4_general_ci'), Field::Blob)->byteLength());
+        self::assertSame(400, Domain::string(100, Collation::known('utf8mb4_general_ci'))->metadataLength());
+        self::assertSame(5, Domain::column(Field::Long, 5)->metadataLength());
+    }
+
 }

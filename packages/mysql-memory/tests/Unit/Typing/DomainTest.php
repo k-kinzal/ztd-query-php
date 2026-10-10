@@ -137,4 +137,13 @@ final class DomainTest extends TestCase
 
         self::assertSame(['j', $domain], [$domain->withSource('j')->source, $domain->withSource('')]);
     }
+
+    public function testByteLengthRetainsTheByteBoundsOfBlobFields(): void
+    {
+        $fields = [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob];
+        $lengths = array_map(static fn (Field $field): int => Domain::string(100, Collation::known('utf8mb4_general_ci'), $field)->byteLength(), $fields);
+
+        self::assertSame([100, 100, 100, 100], $lengths);
+    }
+
 }

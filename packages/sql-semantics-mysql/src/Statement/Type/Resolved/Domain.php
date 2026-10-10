@@ -28,7 +28,9 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  * The type the server resolves for a value: its kind, the column type it reports, and the attributes that come with it.
  *
  * The length is the display length, counted in characters for strings and temporal values and in
- * digits and signs for numbers; the result metadata reports it in bytes. Decimals is the number
+ * digits and signs for numbers. TEXT/BLOB fields retain a byte bound in the same attribute;
+ * byteLength() gives the bound used in expression typing, while metadataLength() gives the
+ * unconverted result column length. Decimals is the number
  * of fractional digits, or NOT_FIXED when a floating-point number or string has none fixed.
  * Strings carry a collation and its coercibility; other values carry the binary collation.
  * A column of an integer type can declare a display width narrower than its type: the result
@@ -171,11 +173,23 @@ final class Domain implements TypeDescriptor
     }
 
     /**
-     * Answers the display length in bytes, as the result metadata reports it.
+     * Answers the byte bound used when resolving expressions over this value.
      */
     public function byteLength(): int
     {
         return $this->kind === Kind::String || $this->kind->temporal() ? $this->length * $this->collation->charset->maxLength : $this->length;
+    }
+
+    /**
+     * Answers the column length in bytes when the result character set performs no conversion.
+     *
+     * TEXT/BLOB fields already carry byte bounds. These differ from the collation-expanded
+     * bounds used by functions such as HEX and GTID_SUBTRACT. Integer columns retain their
+     * declared display widths. Verified through result metadata on live MySQL servers.
+     */
+    public function metadataLength(): int
+    {
+        return $this->field->blob() ? $this->length : ($this->display ?? $this->byteLength());
     }
 
     /**
