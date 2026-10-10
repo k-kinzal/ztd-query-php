@@ -452,8 +452,33 @@
 <span class="src-line" id="L412" data-diff="added"><a class="ln" href="#L412">412</a></span>
 <span class="src-line" id="L413" data-diff="added"><a class="ln" href="#L413">413</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-id">false</span>, <span class="tok-id">true</span>, <span class="tok-id">false</span>, <span class="tok-id">true</span>, <span class="tok-id">false</span>], <span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-var">$column</span>): <span class="tok-id">bool</span> =&gt; (<span class="tok-kw">new</span> <span class="tok-id">AlterTableCommand</span>())-&gt;<span class="tok-id">copiesAdded</span>(<span class="tok-var">$column</span>), <span class="tok-var">$table</span>-&gt;<span class="tok-id">definition</span>-&gt;<span class="tok-id">columns</span>));</span>
 <span class="src-line" id="L414" data-diff="added"><a class="ln" href="#L414">414</a>    }</span>
-<span class="src-line" id="L415" data-diff="added"><a class="ln" href="#L415">415</a>}</span>
-<span class="src-line" id="L416" data-diff="added"><a class="ln" href="#L416">416</a></span>
+<span class="src-line" id="L415" data-diff="added"><a class="ln" href="#L415">415</a></span>
+<span class="src-line" id="L416" data-diff="added"><a class="ln" href="#L416">416</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRebuildRewritesTheUpdateTimeWhenCopyingRowsIn57</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L417" data-diff="added"><a class="ln" href="#L417">417</a>    {</span>
+<span class="src-line" id="L418" data-diff="added"><a class="ln" href="#L418">418</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>(<span class="tok-str">&#039;5.7.44&#039;</span>))-&gt;<span class="tok-id">connect</span>();</span>
+<span class="src-line" id="L419" data-diff="added"><a class="ln" href="#L419">419</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1)&#039;</span>);</span>
+<span class="src-line" id="L420" data-diff="added"><a class="ln" href="#L420">420</a>        <span class="tok-var">$table</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">dictionary</span>-&gt;<span class="tok-id">table</span>(<span class="tok-str">&#039;d&#039;</span>, <span class="tok-str">&#039;t&#039;</span>);</span>
+<span class="src-line" id="L421" data-diff="added"><a class="ln" href="#L421">421</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNotNull</span>(<span class="tok-var">$table</span>);</span>
+<span class="src-line" id="L422" data-diff="added"><a class="ln" href="#L422">422</a>        <span class="tok-var">$table</span>-&gt;<span class="tok-id">updated</span> = <span class="tok-num">123</span>;</span>
+<span class="src-line" id="L423" data-diff="added"><a class="ln" href="#L423">423</a>        <span class="tok-var">$before</span> = <span class="tok-id">time</span>();</span>
+<span class="src-line" id="L424" data-diff="added"><a class="ln" href="#L424">424</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;ALTER TABLE t ALGORITHM=COPY&#039;</span>);</span>
+<span class="src-line" id="L425" data-diff="added"><a class="ln" href="#L425">425</a>        <span class="tok-var">$after</span> = <span class="tok-id">time</span>();</span>
+<span class="src-line" id="L426" data-diff="added"><a class="ln" href="#L426">426</a></span>
+<span class="src-line" id="L427" data-diff="added"><a class="ln" href="#L427">427</a>        <span class="tok-id">self</span>::<span class="tok-id">assertGreaterThanOrEqual</span>(<span class="tok-var">$before</span>, <span class="tok-var">$table</span>-&gt;<span class="tok-id">updated</span>);</span>
+<span class="src-line" id="L428" data-diff="added"><a class="ln" href="#L428">428</a>        <span class="tok-id">self</span>::<span class="tok-id">assertLessThanOrEqual</span>(<span class="tok-var">$after</span>, <span class="tok-var">$table</span>-&gt;<span class="tok-id">updated</span>);</span>
+<span class="src-line" id="L429" data-diff="added"><a class="ln" href="#L429">429</a>    }</span>
+<span class="src-line" id="L430" data-diff="added"><a class="ln" href="#L430">430</a></span>
+<span class="src-line" id="L431" data-diff="added"><a class="ln" href="#L431">431</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRebuildKeepsANullUpdateTimeWhenCopyingAnEmptyTableIn57</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L432" data-diff="added"><a class="ln" href="#L432">432</a>    {</span>
+<span class="src-line" id="L433" data-diff="added"><a class="ln" href="#L433">433</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>(<span class="tok-str">&#039;5.7.44&#039;</span>))-&gt;<span class="tok-id">connect</span>();</span>
+<span class="src-line" id="L434" data-diff="added"><a class="ln" href="#L434">434</a>        <span class="tok-var">$session</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE DATABASE d; USE d; CREATE TABLE t (a INT); ALTER TABLE t ALGORITHM=COPY&#039;</span>);</span>
+<span class="src-line" id="L435" data-diff="added"><a class="ln" href="#L435">435</a>        <span class="tok-var">$table</span> = <span class="tok-var">$session</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">dictionary</span>-&gt;<span class="tok-id">table</span>(<span class="tok-str">&#039;d&#039;</span>, <span class="tok-str">&#039;t&#039;</span>);</span>
+<span class="src-line" id="L436" data-diff="added"><a class="ln" href="#L436">436</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNotNull</span>(<span class="tok-var">$table</span>);</span>
+<span class="src-line" id="L437" data-diff="added"><a class="ln" href="#L437">437</a></span>
+<span class="src-line" id="L438" data-diff="added"><a class="ln" href="#L438">438</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNull</span>(<span class="tok-var">$table</span>-&gt;<span class="tok-id">updated</span>);</span>
+<span class="src-line" id="L439" data-diff="added"><a class="ln" href="#L439">439</a>    }</span>
+<span class="src-line" id="L440" data-diff="added"><a class="ln" href="#L440">440</a>}</span>
+<span class="src-line" id="L441" data-diff="added"><a class="ln" href="#L441">441</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
