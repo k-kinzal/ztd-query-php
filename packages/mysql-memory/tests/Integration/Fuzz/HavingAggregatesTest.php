@@ -22,6 +22,11 @@ final class HavingAggregatesTest extends TestCase
         yield 'outer SUM in HAVING' => ['SELECT COUNT(*) FROM t1 HAVING (SELECT SUM(t1.a)) > 0'];
         yield 'plain outer input is hidden' => ['SELECT COUNT(*) FROM t1 HAVING (SELECT t1.a) > 0'];
         yield 'result alias stays row dependent' => ['SELECT a AS x FROM t1 HAVING (SELECT SUM(x)) > 0'];
+        yield 'computed alias stays row dependent' => ['SELECT a+1 AS x FROM t1 HAVING (SELECT SUM(x))>5 ORDER BY id'];
+        yield 'computed alias in table subquery' => ['SELECT a+1 AS x FROM t1 HAVING (SELECT x FROM t2 LIMIT 1)>5 ORDER BY id'];
+        yield 'computed alias across two scopes' => ['SELECT a+1 AS x FROM t1 HAVING (SELECT (SELECT SUM(x)))>5 ORDER BY id'];
+        yield 'computed alias in inner aggregate' => ['SELECT a+1 AS x FROM t1 HAVING (SELECT SUM(x) FROM t2)>5 ORDER BY id'];
+        yield 'computed alias and ordinary correlation' => ['SELECT a+1 AS x FROM t1 HAVING (SELECT SUM(x) FROM t2 WHERE t2.id=t1.id)>5 ORDER BY id'];
         yield 'unaliased input owns SUM' => ['SELECT a FROM t1 HAVING (SELECT SUM(a)) > 0'];
         yield 'local aggregate input' => ['SELECT COUNT(*) FROM t1 HAVING (SELECT MAX(a) FROM t2) > 0'];
         yield 'reduced subquery argument' => ['SELECT COUNT(*) FROM t1 HAVING (SELECT SUM((SELECT t1.a))) > 0'];
@@ -30,6 +35,16 @@ final class HavingAggregatesTest extends TestCase
         yield 'outer group concatenation' => ['SELECT COUNT(*) FROM t1 HAVING (SELECT GROUP_CONCAT(t1.a)) IS NOT NULL'];
         if (!str_starts_with((string) getenv('MYSQL_VERSION'), '5.6.')) {
             yield 'outer JSON array' => ['SELECT COUNT(*) FROM t1 HAVING (SELECT JSON_ARRAYAGG(t1.a)) IS NOT NULL'];
+            yield 'outer JSON array null test' => ['SELECT COUNT(*) FROM t1 HAVING (SELECT JSON_ARRAYAGG(t1.a)) IS NULL'];
+            yield 'outer JSON object' => ['SELECT COUNT(*) FROM t1 HAVING (SELECT JSON_OBJECTAGG(t1.id,t1.a)) IS NOT NULL'];
+            yield 'local JSON array' => ['SELECT COUNT(*) FROM t1 HAVING JSON_ARRAYAGG(a) IS NOT NULL'];
+            yield 'local JSON array null test' => ['SELECT COUNT(*) FROM t1 HAVING JSON_ARRAYAGG(a) IS NULL'];
+            yield 'independent JSON array' => ['SELECT COUNT(*) FROM t1 HAVING (SELECT JSON_ARRAYAGG(a) FROM t2) IS NOT NULL'];
+            yield 'selected JSON array nullness' => ['SELECT JSON_ARRAYAGG(a) IS NULL, JSON_ARRAYAGG(a) IS NOT NULL FROM t1'];
+            yield 'selected JSON scalar nullness' => ['SELECT (SELECT JSON_ARRAYAGG(a) FROM t1) IS NOT NULL'];
+            yield 'JSON constructor nullness' => ['SELECT JSON_ARRAY(a) IS NULL, JSON_ARRAY(a) IS NOT NULL FROM t1 ORDER BY id'];
+            yield 'scalar JSON constructor nullness' => ['SELECT (SELECT JSON_ARRAY(a)) IS NOT NULL FROM t1 ORDER BY id'];
+            yield 'empty JSON group nullness' => ['SELECT JSON_ARRAYAGG(a) IS NULL, JSON_ARRAYAGG(a) IS NOT NULL FROM t1 WHERE FALSE'];
         }
         yield 'aggregate inside inner WHERE' => ['SELECT COUNT(*) FROM t1 HAVING (SELECT 1 WHERE SUM(t1.a)>0)'];
         yield 'ordinary inner WHERE' => ['SELECT COUNT(*) FROM t1 HAVING (SELECT 1 WHERE t1.a>0)'];

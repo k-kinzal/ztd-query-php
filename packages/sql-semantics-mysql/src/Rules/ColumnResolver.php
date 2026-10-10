@@ -116,7 +116,7 @@ final class ColumnResolver
             }
             $aliases = $qualifier === null ? $scope->aliased($column) : [];
             if ($aliases !== []) {
-                return $open === [] ? $this->alias($column, $aliases) : $lookup->conditional($column, [], $open);
+                return $open === [] ? $this->alias($column, $aliases, $depth) : $lookup->conditional($column, [], $open);
             }
             $depth++;
         }
@@ -241,16 +241,16 @@ final class ColumnResolver
      *
      * @param non-empty-list<Field> $fields
      */
-    public function alias(Name $column, array $fields): AliasTarget|AmbiguousAlias
+    public function alias(Name $column, array $fields, int $depth = 0): AliasTarget|AmbiguousAlias
     {
         $first = $fields[0];
         $equivalence = new Equivalence();
         foreach ($fields as $field) {
             if ($field->expression === null || $first->expression === null || $equivalence->difference($first->expression, $field->expression) !== null) {
-                return count($fields) === 1 ? new AliasTarget($first) : new AmbiguousAlias($column, $fields);
+                return count($fields) === 1 ? new AliasTarget($first, $depth) : new AmbiguousAlias($column, $fields);
             }
         }
 
-        return new AliasTarget($first);
+        return new AliasTarget($first, $depth);
     }
 }

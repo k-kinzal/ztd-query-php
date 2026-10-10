@@ -20,9 +20,7 @@ use SqlSemantics\Statement\Shape\Field;
 /**
  * Resolves a name against the GROUP BY columns and the select list of a grouped row.
  *
- * Rule: MYSQL-HAVING-REFERENCE-001, after resolve_ref_in_select_and_group,
- * find_field_in_group_list (sql/item.cc) and find_item_in_list
- * (sql/sql_base.cc). A name in HAVING outside set functions, and a name of a
+ * Rule: MYSQL-HAVING-REFERENCE-001. A name in HAVING outside set functions, and a name of a
  * nested query that reaches the HAVING position outwards, is searched first
  * among the GROUP BY items that are columns and then in the select list; a
  * GROUP BY column wins over a select list item. In GROUP BY a column
@@ -95,7 +93,7 @@ final class ResultReferences
             $resolution = $field?->expression instanceof ColumnUse ? $field->resolution : null;
             $named = $qualifier === null && $field?->name !== null && $scope->context->columnNames->equal($field->name->value, $column->value);
             if ($field !== null && $named && !$resolution instanceof ResolvedColumn) {
-                return $this->undecided($column, new AliasTarget($field), $unnamed);
+                return $this->undecided($column, new AliasTarget($field, $depth), $unnamed);
             }
             if (!$resolution instanceof ResolvedColumn) {
                 continue;

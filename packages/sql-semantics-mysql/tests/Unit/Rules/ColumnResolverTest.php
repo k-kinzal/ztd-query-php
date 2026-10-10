@@ -112,6 +112,9 @@ final class ColumnResolverTest extends TestCase
         $ambiguous = (new ColumnResolver())->alias(new Name('x'), [$fields[0], $fields[1], $fields[2]]);
         self::assertInstanceOf(AmbiguousAlias::class, $ambiguous);
         self::assertCount(3, $ambiguous->candidates);
+        $outer = (new ColumnResolver())->find(new Environment($operation->context, new Environment($operation->context, aliases: [$fields[0]])), new Name('x'));
+        self::assertInstanceOf(AliasTarget::class, $outer);
+        self::assertSame(1, $outer->depth);
     }
 
     public function testUnlistedAnswersTheOccurrencesThatMayGiveAHavingPositionTheName(): void

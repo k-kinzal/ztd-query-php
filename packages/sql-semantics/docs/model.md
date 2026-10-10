@@ -171,7 +171,7 @@ A name used as a value resolves to one of the following (namespace `SqlSemantics
 | Resolution | Meaning |
 |------------|---------|
 | `ResolvedColumn` | Exactly one slot: `relation` (the occurrence it was found in), `slot` (the slot visible at the use position), `depth` (how many enclosing queries lie between the use and the occurrence; 0 for the same query), `declaration()`. `resultReference` marks a reference to an enclosing query result rather than its input rows. |
-| `AliasTarget` | An output field of the same query, named by its alias, for example in ORDER BY: `field`. |
+| `AliasTarget` | An output field named by its alias, for example in ORDER BY: `field`. `depth` counts enclosing query scopes, with zero for the same block. |
 | `MissingColumn` | No visible relation has the name, established by complete declarations. A diagnostic. |
 | `AmbiguousColumn` | Several slots have the name at the same precedence: `candidates`. A diagnostic. |
 | `ConditionalColumn` | The outcome depends on missing declarations: `candidates` (known slots), `relations` (incompletely known occurrences that can own the name), `missing`. |

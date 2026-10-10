@@ -184,6 +184,9 @@ Inside HAVING, aggregate arguments can read the enclosing block's input columns,
 including through nested queries. A selected alias without a matching input column
 remains a reference to the result row. For example, `(SELECT SUM(a))` and
 `(SELECT SUM(x))` differ when the outer query selects `a AS x`.
+A reference to a computed result alias retains its enclosing query depth in
+`AliasTarget::depth`. Consumers must retain that dependency when deciding whether
+a scalar subquery can be evaluated once or must be evaluated for each outer row.
 MySQL 9.1 also lets ordinary nested expressions read unselected outer input columns;
 those references are checked against GROUP BY and functional dependencies.
 Earlier supported releases reject those names in grouped blocks, except for

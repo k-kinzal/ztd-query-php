@@ -24,6 +24,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 
@@ -135,7 +136,7 @@ enum Constancy: int
         }
         $resolution = $facts->covers($use) ? $facts->scalar($use)->resolution : null;
 
-        return $resolution instanceof ResolvedColumn && $resolution->depth >= $level ? self::Row : self::Resolved;
+        return ($resolution instanceof ResolvedColumn || $resolution instanceof AliasTarget) && $resolution->depth >= $level ? self::Row : self::Resolved;
     }
 
     /**

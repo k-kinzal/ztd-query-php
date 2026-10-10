@@ -21,6 +21,16 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 #[Small]
 final class ConstancyTest extends TestCase
 {
+    public function testColumnKeepsComputedOuterAliasesDependentOnEachRow(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a INT); INSERT INTO t VALUES (10),(-3),(NULL),(7)');
+        $result = $session->query('SELECT a+1 AS x FROM t HAVING (SELECT (SELECT SUM(x)))>5 ORDER BY x')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+
+        self::assertSame([['8'], ['11']], $result->rows);
+    }
+
     public function testOfTellsHowLongEachKindOfExpressionStaysTheSame(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT CONCAT('a', DATABASE(), ROW_COUNT(), (SELECT 'a')), CONCAT(USER(), NOW(), @v, (SELECT USER())), CONCAT(SYSDATE()), (@v := 1)");

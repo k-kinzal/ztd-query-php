@@ -90,6 +90,9 @@ final class ResultReferencesTest extends TestCase
         self::assertInstanceOf(ResolvedColumn::class, $column->facts->scalar($columnSelect->having->left)->resolution);
         self::assertInstanceOf(AliasTarget::class, $alias);
         self::assertSame($computed->field('x'), $alias->field);
+        $outer = (new ResultReferences())->selected(new GroupedRow([$computed->field('x')], [], false), new Environment($computed->context), new Name('x'), null, 2);
+        self::assertInstanceOf(AliasTarget::class, $outer);
+        self::assertSame(2, $outer->depth);
         self::assertInstanceOf(ResolvedColumn::class, $hidden->facts->scalar($hiddenSelect->having->left)->resolution);
         self::assertCount(1, $ambiguous->facts->diagnostics);
         self::assertInstanceOf(AmbiguousColumn::class, $ambiguous->facts->diagnostics[0]);
