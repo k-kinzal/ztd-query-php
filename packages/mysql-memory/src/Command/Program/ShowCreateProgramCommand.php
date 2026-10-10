@@ -154,6 +154,6 @@ final class ShowCreateProgramCommand implements Command
             Heading::text('character_set_client', Field::VarString, 32, $flag, 31),
             Heading::text('collation_connection', Field::VarString, 32, $flag, 31),
             Heading::text('Database Collation', Field::VarString, 32, $flag, 31),
-        ]))->sent([[$routine->name, $routine->mode, $routine->create(), ...$routine->charsets]], $context);
+        ]))->sent([[$routine->name, $routine->mode, ($routine->create() ?? throw \MySqlMemory\Error\Family\StatementError::NotSupportedYet->error('source of installed sys routines')), ...$routine->charsets]], $context);
     }
 }

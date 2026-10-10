@@ -68,7 +68,7 @@ final class Servers
         $identity = $native->query('SELECT USER()');
         $account = $identity === false ? '' : $identity->fetchColumn();
         $account = is_string($account) ? $account : '';
-        $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1));
+        $server = Server::start($version, [], $globals, substr($account, (int) strrpos($account, '@') + 1), routineTimestamps: $this->routineTimestamps($native));
         $this->guard($native, $version, $password);
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
@@ -166,5 +166,23 @@ final class Servers
         $value = getenv($name);
 
         return is_string($value) && $value !== '' ? $value : $fallback;
+    }
+
+    /**
+     * Captures installation dates before generated inputs run; routine signatures and attributes remain independently modeled.
+     *
+     * No routine implementation, names to install, or result rows are imported. The keys only
+     * identify which independently installed entry receives each initial timestamp pair.
+     *
+     * @return array<string, array{int, int}>
+     */
+    public function routineTimestamps(PDO $native): array
+    {
+        $timestamps = [];
+        foreach ($this->rows($native, "SELECT CONCAT(ROUTINE_TYPE, ':', ROUTINE_NAME), UNIX_TIMESTAMP(CREATED), UNIX_TIMESTAMP(LAST_ALTERED) FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA='sys'") as [$key, $created, $modified]) {
+            $timestamps[$key] = [(int) $created, (int) $modified];
+        }
+
+        return $timestamps;
     }
 }

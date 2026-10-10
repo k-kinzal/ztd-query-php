@@ -97,7 +97,9 @@ final class Blocks
         $root = $this->limit($root, $select->limit, $outer);
         $root = $this->limit($root, $select->late?->limit, $outer);
 
-        return new QueryPlan($root, $domains, array_map(fn (Field $field): string => $this->name($field, $select), $fields), (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== []));
+        $plan = new QueryPlan($root, $domains, array_map(fn (Field $field): string => $this->name($field, $select), $fields), (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== []));
+
+        return System\ProgramMetadata::buffered($plan, $this->planner, $select, $outer, $scope, $keys !== []);
     }
 
     /**

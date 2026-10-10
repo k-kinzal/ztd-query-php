@@ -87,7 +87,7 @@ final class Calls
         if ($routine === null || $session === null) {
             return null;
         }
-        $count = count($routine->statement->parameters->parameters);
+        $count = $routine->parameterCount();
         if ($count !== count($call->arguments)) {
             throw ProgramError::RoutineArgumentCount->error('FUNCTION', $routine->schema . '.' . $routine->name, $count, count($call->arguments));
         }

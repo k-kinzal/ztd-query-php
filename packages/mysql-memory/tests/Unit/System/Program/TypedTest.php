@@ -33,7 +33,7 @@ final class TypedTest extends TestCase
         $routine = $s->instance->dictionary->schema('d')?->procedures['pr'] ?? null;
         self::assertNotNull($routine);
 
-        self::assertSame(['varchar', 20, 20, 'latin1', 'varchar(20)'], array_values(array_intersect_key(Typed::columns($routine, $routine->statement->parameters->parameters[1]->type, null, $reading), array_flip(['DATA_TYPE', 'CHARACTER_MAXIMUM_LENGTH', 'CHARACTER_OCTET_LENGTH', 'CHARACTER_SET_NAME', 'DTD_IDENTIFIER']))));
+        self::assertSame(['varchar', 20, 20, 'latin1', 'varchar(20)'], array_values(array_intersect_key(Typed::columns($routine, \MySqlMemory\Program\Routine\Body::of($routine)->parameters->parameters[1]->type, null, $reading), array_flip(['DATA_TYPE', 'CHARACTER_MAXIMUM_LENGTH', 'CHARACTER_OCTET_LENGTH', 'CHARACTER_SET_NAME', 'DTD_IDENTIFIER']))));
     }
 
     public function testDescribedDescribesATypeFromItsDomain(): void
@@ -60,6 +60,10 @@ final class TypedTest extends TestCase
         self::assertNotNull($system);
         $reading = new Reading($s->instance, new Connection($s->variables, new Context($s->modes(), $s->diagnostics, $s->variables, 0.0), 'root', 'localhost', $s->id), $system->catalog->tables[0], GrammarRelease::MySql847);
 
-        self::assertSame(['fn', 'pr'], array_map(static fn ($routine): string => $routine->name, Typed::routines($reading)));
+        $routines = Typed::routines($reading);
+        self::assertCount(50, $routines);
+        self::assertSame(['fn', 'pr'], array_map(static fn ($routine): string => $routine->name, array_slice($routines, 0, 2)));
+        self::assertSame('create_synonym_db', $routines[2]->name);
+        self::assertSame('version_patch', $routines[49]->name);
     }
 }

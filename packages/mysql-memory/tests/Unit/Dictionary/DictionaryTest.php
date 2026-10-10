@@ -143,6 +143,8 @@ final class DictionaryTest extends TestCase
 
         $functions = $session->instance->dictionary->functions();
 
-        self::assertSame([['d.f'], \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Tiny], [array_keys($functions), $functions['d.f']->field]);
+        self::assertCount(23, $functions);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Tiny, $functions['d.f']->field);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Tiny, $functions['sys.version_major']->field);
     }
 }

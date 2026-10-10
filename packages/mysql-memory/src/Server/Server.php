@@ -39,10 +39,11 @@ final class Server
      * @param array<string, string|int> $globals Global variable values the server starts with
      * @param string|null $clientHost The host every client is seen connecting from, or null for its address
      * @param bool $supervised Whether SQL RESTART is available
+     * @param array<string, array{int, int}> $routineTimestamps Installation creation and modification epochs, keyed by FUNCTION:name or PROCEDURE:name
      *
      * @throws RuntimeException When the process cannot be started
      */
-    public static function start(string $version = '8.4.7', array $databases = [], array $globals = [], ?string $clientHost = null, bool $supervised = true): self
+    public static function start(string $version = '8.4.7', array $databases = [], array $globals = [], ?string $clientHost = null, bool $supervised = true, array $routineTimestamps = []): self
     {
         $command = [PHP_BINARY, '-d', 'memory_limit=-1', '-d', 'xdebug.mode=off', dirname(__DIR__, 2) . '/bin/mysql-memory', '--listen=tcp://127.0.0.1:0', '--release=' . $version];
         if (!$supervised) {
@@ -56,6 +57,9 @@ final class Server
         }
         foreach ($globals as $name => $value) {
             $command[] = '--global=' . $name . '=' . $value;
+        }
+        foreach ($routineTimestamps as $key => [$created, $modified]) {
+            $command[] = '--routine-time=' . $key . ':' . $created . ':' . $modified;
         }
         $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => STDERR], $pipes);
         if (!is_resource($process)) {

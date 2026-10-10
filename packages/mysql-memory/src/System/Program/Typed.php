@@ -10,7 +10,6 @@ use MySqlMemory\System\Reading;
 use MySqlMemory\System\Schema\Columns;
 use MySqlMemory\Typing\Declared;
 use MySqlMemory\Typing\Domain;
-use SqlSemantics\Platform\MySql\Statement\Routine\CreateFunction;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -86,7 +85,7 @@ final class Typed
         foreach ($reading->instance->dictionary->schemas as $schema) {
             array_push($routines, ...array_values($schema->procedures), ...array_values($schema->functions));
         }
-        usort($routines, static fn (Routine $left, Routine $right): int => [$left->schema, strtolower($left->name), $left->statement instanceof CreateFunction ? 0 : 1] <=> [$right->schema, strtolower($right->name), $right->statement instanceof CreateFunction ? 0 : 1]);
+        usort($routines, static fn (Routine $left, Routine $right): int => [$left->schema, strtolower($left->name), $left->kind() === 'FUNCTION' ? 0 : 1] <=> [$right->schema, strtolower($right->name), $right->kind() === 'FUNCTION' ? 0 : 1]);
 
         return $routines;
     }

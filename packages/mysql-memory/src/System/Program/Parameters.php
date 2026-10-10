@@ -28,6 +28,10 @@ final class Parameters implements SystemRows
     {
         $rows = [];
         foreach (Typed::routines($reading) as $routine) {
+            if ($routine->statement === null) {
+                array_push($rows, ...($routine->installed->parameters ?? []));
+                continue;
+            }
             $statement = $routine->statement;
             $named = ['SPECIFIC_CATALOG' => 'def', 'SPECIFIC_SCHEMA' => $routine->schema, 'SPECIFIC_NAME' => $routine->name];
             if ($statement instanceof CreateFunction) {

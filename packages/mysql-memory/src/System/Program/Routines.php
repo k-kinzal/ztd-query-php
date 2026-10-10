@@ -30,7 +30,8 @@ final class Routines implements SystemRows
         $rows = [];
         foreach (Typed::routines($reading) as $routine) {
             $statement = $routine->statement;
-            $typed = $statement instanceof CreateFunction ? Typed::columns($routine, $statement->returns, $statement->collation?->name?->value, $reading) : ['DATA_TYPE' => '', 'DTD_IDENTIFIER' => null];
+            $typed = $statement instanceof CreateFunction ? Typed::columns($routine, $statement->returns, $statement->collation?->name?->value, $reading) : ($routine->installed->metadata ?? ['DATA_TYPE' => '', 'DTD_IDENTIFIER' => null]);
+            unset($typed['SQL_DATA_ACCESS'], $typed['SECURITY_TYPE'], $typed['ROUTINE_COMMENT']);
             $rows[] = [
                 'SPECIFIC_NAME' => $routine->name,
                 'ROUTINE_CATALOG' => 'def',
@@ -39,7 +40,7 @@ final class Routines implements SystemRows
                 'ROUTINE_TYPE' => $routine->kind(),
             ] + $typed + [
                 'ROUTINE_BODY' => 'SQL',
-                'ROUTINE_DEFINITION' => $routine->body,
+                'ROUTINE_DEFINITION' => $routine->installed === null ? $routine->body : null,
                 'EXTERNAL_NAME' => null,
                 'EXTERNAL_LANGUAGE' => $reading->dictionary() ? 'SQL' : null,
                 'PARAMETER_STYLE' => 'SQL',

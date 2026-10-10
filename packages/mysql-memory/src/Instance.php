@@ -94,8 +94,9 @@ final class Instance
      * @param list<string> $databases Databases created at start, besides the system ones
      * @param string|null $clientHost The host every client is seen connecting from, or null for its address
      * @param bool $supervised Whether a supervisor permits SQL RESTART
+     * @param array<string, array{int, int}> $routineTimestamps Installation creation and modification epochs, keyed by FUNCTION:name or PROCEDURE:name
      */
-    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null, public readonly bool $supervised = true)
+    public function __construct(public readonly string $version = '8.4.7', array $globals = [], array $databases = [], public readonly ?string $clientHost = null, public readonly bool $supervised = true, array $routineTimestamps = [])
     {
         $release = GrammarRelease::tryFrom('mysql-' . $version) ?? GrammarRelease::MySql847;
         $this->catalog = SystemVariables::of($release);
@@ -116,6 +117,9 @@ final class Instance
         }
         foreach ($system as $name => $collation) {
             $this->dictionary->schemas[$name] = new Schema($name, $collation);
+        }
+        if (isset($this->dictionary->schemas['sys'])) {
+            \MySqlMemory\Dictionary\Program\InstalledCatalog::install($this->dictionary->schemas['sys'], $release, $routineTimestamps);
         }
         foreach ($databases as $name) {
             $this->dictionary->schemas[$name] ??= new Schema($name);

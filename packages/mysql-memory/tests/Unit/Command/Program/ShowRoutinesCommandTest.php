@@ -49,7 +49,7 @@ final class ShowRoutinesCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result2);
         $rows = $result2->rows;
 
-        self::assertSame(['f1'], array_column($rows, 1));
+        self::assertSame(['f1', 'format_bytes', 'format_path', 'format_statement', 'format_time'], array_column($rows, 1));
     }
 
     public function testHeadingsDescribeTheColumnsOfTheRoutinesTable(): void
@@ -58,6 +58,16 @@ final class ShowRoutinesCommandTest extends TestCase
 
         self::assertSame(['Db', 'Name', 'Type', 'Language', 'Definer', 'Modified', 'Created', 'Security_type', 'Comment', 'character_set_client', 'collation_connection', 'Database Collation'], array_map(static fn (Heading $heading): string => $heading->name, $headings));
         self::assertSame(['ROUTINES', 'schemata', 4225], [$headings[0]->table, $headings[0]->originalTable, $headings[0]->flags]);
+    }
+
+    public function testHeadingsUsesLegacyRoutineColumnTypesAndWidths(): void
+    {
+        $headings = (new ShowRoutinesCommand())->headings(false, \SqlSemantics\Contract\GrammarRelease::MySql5651);
+        $later = (new ShowRoutinesCommand())->headings(false, \SqlSemantics\Contract\GrammarRelease::MySql5744);
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString, $headings[2]->field);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::DateTime, $headings[4]->field);
+        self::assertSame([77, 93, 196605, 32], [$headings[3]->length, $later[3]->length, $headings[7]->length, $headings[8]->length]);
     }
 
     public function testExecuteListsNoLanguageBeforeMySql82(): void

@@ -83,7 +83,7 @@ final class CallCommand implements Command
         $invocation = new Invocation($session);
         $activation->scope[] = $parameters = $invocation->parameters($routine, $bound, $routine->mode);
         try {
-            $invocation->run($activation, $routine->statement->body, $routine->schema, $routine->mode);
+            $invocation->run($activation, \MySqlMemory\Program\Routine\Body::of($routine)->body, $routine->schema, $routine->mode);
         } catch (SqlError $error) {
             if ($caller === null) {
                 $session->running->replies = $activation->results;
@@ -111,9 +111,9 @@ final class CallCommand implements Command
         if ($routine === null) {
             throw ProgramError::RoutineMissing->error('PROCEDURE', $database . '.' . $name);
         }
-        $parameters = $routine->statement->parameters->parameters;
-        if (count($parameters) !== count($statement->arguments)) {
-            throw ProgramError::RoutineArgumentCount->error('PROCEDURE', $database . '.' . $name, count($parameters), count($statement->arguments));
+        $count = $routine->parameterCount();
+        if ($count !== count($statement->arguments)) {
+            throw ProgramError::RoutineArgumentCount->error('PROCEDURE', $database . '.' . $name, $count, count($statement->arguments));
         }
 
         return $routine;
@@ -129,7 +129,7 @@ final class CallCommand implements Command
     public function targets(ProcedureCall $statement, Routine $routine, ?Activation $caller): array
     {
         $targets = [];
-        foreach ($routine->statement->parameters->parameters as $index => $parameter) {
+        foreach (\MySqlMemory\Program\Routine\Body::of($routine)->parameters->parameters as $index => $parameter) {
             if ($parameter->mode !== ParameterMode::Out && $parameter->mode !== ParameterMode::InOut) {
                 continue;
             }
@@ -171,7 +171,7 @@ final class CallCommand implements Command
     {
         $planner = new Planner($statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $bound = [];
-        foreach ($routine->statement->parameters->parameters as $index => $parameter) {
+        foreach (\MySqlMemory\Program\Routine\Body::of($routine)->parameters->parameters as $index => $parameter) {
             $target = $targets[$index] ?? null;
             $bound[] = match (true) {
                 $parameter->mode === ParameterMode::Out => [null, Domain::null()],

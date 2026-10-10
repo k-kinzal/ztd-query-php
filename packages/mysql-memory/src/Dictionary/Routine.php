@@ -39,7 +39,8 @@ final class Routine
      * @param string $created When the routine was created, as `YYYY-MM-DD hh:mm:ss`
      * @param string $modified When the routine was last changed, as `YYYY-MM-DD hh:mm:ss`
      * @param array{string, string, string} $charsets The character_set_client, collation_connection and database collation the routine was created with
-     * @param CreateProcedure|CreateFunction $statement The statement that created the routine
+     * @param CreateProcedure|CreateFunction|null $statement The statement that created the routine, absent for installed metadata
+     * @param Program\Installed|null $installed Public metadata of an installed routine, without an implementation body
      */
     public function __construct(
         public readonly string $schema,
@@ -56,7 +57,8 @@ final class Routine
         public readonly string $created,
         public string $modified,
         public readonly array $charsets,
-        public readonly CreateProcedure|CreateFunction $statement,
+        public readonly CreateProcedure|CreateFunction|null $statement,
+        public readonly ?Program\Installed $installed = null,
     ) {
     }
 
@@ -67,6 +69,9 @@ final class Routine
     {
         if ($this->returnType !== null) {
             return $this->returnType;
+        }
+        if ($this->installed !== null) {
+            return $this->returnType = $this->installed->returned();
         }
         $declared = new \MySqlMemory\Typing\Declared(Collation::named($this->charsets[2]) ?? Collation::known('utf8mb4_0900_ai_ci'));
         $statement = $this->statement;
@@ -91,18 +96,29 @@ final class Routine
      */
     public function kind(): string
     {
-        return $this->statement instanceof CreateFunction ? 'FUNCTION' : 'PROCEDURE';
+        return $this->installed?->metadata['ROUTINE_TYPE'] === 'FUNCTION' || $this->statement instanceof CreateFunction ? 'FUNCTION' : 'PROCEDURE';
     }
 
     /**
-     * Answers the statement SHOW CREATE writes for the routine.
+     * Answers the number of declared arguments, excluding the return value of a function.
+     */
+    public function parameterCount(): int
+    {
+        return $this->installed === null ? count($this->statement->parameters->parameters ?? []) : count(array_filter($this->installed->parameters, static fn (array $row): bool => $row['ORDINAL_POSITION'] !== 0));
+    }
+
+    /**
+     * Answers the statement SHOW CREATE writes for the routine, or null when its body is not available.
      *
      * The characteristics that differ from the defaults are written each on a line of their own,
      * the data access first, then DETERMINISTIC, SQL SECURITY INVOKER and the comment (verified
      * on a live 8.4 server).
      */
-    public function create(): string
+    public function create(): ?string
     {
+        if ($this->statement === null) {
+            return null;
+        }
         $text = 'CREATE DEFINER=' . self::quoted($this->definer[0]) . '@' . self::quoted($this->definer[1]) . ' ' . $this->kind() . ' ' . self::quoted($this->name) . '(' . $this->parameters . ')';
         if ($this->returns !== '') {
             $text .= ' RETURNS ' . $this->returns;

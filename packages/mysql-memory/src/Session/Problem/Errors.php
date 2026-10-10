@@ -418,7 +418,7 @@ final class Errors
 
         $function = $session->instance->dictionary->schema($call->schema->value ?? $database)->functions[strtolower($call->name->value)] ?? null;
         if ($function !== null) {
-            $count = count($function->statement->parameters->parameters);
+            $count = $function->parameterCount();
 
             return $count === count($call->arguments) ? StatementError::NotSupportedYet->error('calls of stored functions') : ProgramError::RoutineArgumentCount->error('FUNCTION', $function->schema . '.' . $function->name, $count, count($call->arguments));
         }

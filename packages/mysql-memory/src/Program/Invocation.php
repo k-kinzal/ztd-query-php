@@ -92,7 +92,7 @@ final class Invocation
 
         return $this->contained(function () use ($activation, $routine, $arguments, $name): int|float|string|null {
             $activation->scope[] = $this->parameters($routine, $arguments, $routine->mode);
-            $jump = $this->run($activation, $routine->statement->body, $routine->schema, $routine->mode);
+            $jump = $this->run($activation, \MySqlMemory\Program\Routine\Body::of($routine)->body, $routine->schema, $routine->mode);
             if ($jump === null || $jump->flow !== Flow::Return) {
                 throw ProgramError::FunctionWithoutReturn->error($routine->name);
             }
@@ -140,8 +140,8 @@ final class Invocation
     {
         $collation = Collation::named($routine->charsets[2]) ?? Collation::known('utf8mb4_0900_ai_ci');
         $context = $this->context($mode);
-        $row = new Row($routine->statement->parameters, []);
-        foreach ($routine->statement->parameters->parameters as $index => $parameter) {
+        $row = new Row(\MySqlMemory\Program\Routine\Body::of($routine)->parameters, []);
+        foreach (\MySqlMemory\Program\Routine\Body::of($routine)->parameters->parameters as $index => $parameter) {
             $variable = new Variable($parameter->name->value, VariableDomain::declared($parameter->type, $parameter->collation, $collation));
             if (isset($arguments[$index])) {
                 $variable->assign($arguments[$index][0], $arguments[$index][1], $context);

@@ -14,6 +14,15 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class RoutineTest extends TestCase
 {
+    public function testParameterCountCountsArgumentsWithoutTheReturnValue(): void
+    {
+        $instance = new Instance(databases: ['d']);
+        $instance->connect()->query('CREATE FUNCTION d.f(x INT) RETURNS INT DETERMINISTIC RETURN x + 1');
+
+        self::assertSame(1, $instance->dictionary->schemas['d']->functions['f']->parameterCount());
+        self::assertSame(2, $instance->dictionary->schemas['sys']->functions['sys_get_config']->parameterCount());
+    }
+
     public function testKindAnswersProcedureOrFunction(): void
     {
         $session = (new Instance())->connect();
