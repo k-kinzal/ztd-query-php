@@ -91,13 +91,44 @@ final class SortedDistinct
             if ($index->unique() && $required === [] && $nullable === []) {
                 return true;
             }
-            $ordered = array_map(static fn (array $key): ?int => $selected[$key[0]] ?? null, $keys);
-            if ($this->available($index, $source) && array_diff($selected, $index->columns) === [] && $ordered === array_slice($index->columns, 0, count($ordered))) {
+            if ($this->available($index, $source) && $this->ordered($index, $selected, $keys)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Requires complete indexed values and one consistent scan direction.
+     * Prefix indexes cannot supply a selected value beyond their prefix. A
+     * mixed ASC/DESC ordering needs matching key directions, or their reversal.
+     *
+     * @param list<int> $selected The table positions of the selected columns
+     * @param list<array{int, Domain, bool}> $keys The projected sort positions
+     */
+    public function ordered(Key $index, array $selected, array $keys): bool
+    {
+        $ordered = array_map(static fn (array $key): ?int => $selected[$key[0]] ?? null, $keys);
+        if (array_diff($selected, $index->columns) !== [] || $ordered !== array_slice($index->columns, 0, count($ordered))) {
+            return false;
+        }
+        foreach ($index->columns as $position => $column) {
+            if (in_array($column, $selected, true) && ($index->prefixes[$position] ?? null) !== null) {
+                return false;
+            }
+        }
+        $reverse = null;
+        foreach ($keys as $position => [, , $descending]) {
+            $direction = !$this->planner->settings->legacy() && ($index->descending[$position] ?? false);
+            $opposite = $direction !== $descending;
+            if ($reverse !== null && $reverse !== $opposite) {
+                return false;
+            }
+            $reverse = $opposite;
+        }
+
+        return true;
     }
 
     /**

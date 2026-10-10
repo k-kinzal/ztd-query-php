@@ -217,7 +217,7 @@ temporal values reported as strings; its stored query fields clear that precisio
 example, `NULLIF` of BIT can return a BIT field while a materialized derived
 table or `CREATE TABLE … SELECT` stores its result as an integer. The original
 evaluation and returned field remain available to direct expression consumers.
-MySQL 5.6 BIT extrema similarly evaluate as unsigned integers while reporting
+MySQL 5.6 and 5.7 BIT extrema similarly evaluate as unsigned integers while reporting
 BIT fields. Their materialized result columns retain BIT storage and bounds.
 Expression resolution precedes execution paths: `Materialization::ordered()`
 provides the integer domain of a BIT sort key when an ordered DISTINCT path

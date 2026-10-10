@@ -172,7 +172,7 @@ operand's evaluation kind, including temporal strings and BIT fields.
 MySQL 5.7 retains the fractional precision of temporal strings in a streamed
 `UNION ALL` result; materialized set columns clear that reported precision.
 BIT values retain unsigned ordering and distinct keys for grouping, sorting and
-unique constraints, including values above the signed 64-bit range. MySQL 5.6
+unique constraints, including values above the signed 64-bit range. MySQL 5.6 and 5.7
 BIT extrema evaluate numerically while reporting BIT fields; storing their
 results in derived tables or UNION restores packed BIT values. Selected BIT
 sort keys of an ordered DISTINCT result use integer metadata when the chosen

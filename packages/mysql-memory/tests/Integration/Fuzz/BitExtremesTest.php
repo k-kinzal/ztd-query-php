@@ -19,6 +19,9 @@ final class BitExtremesTest extends TestCase
      */
     public static function providerStatements(): iterable
     {
+        foreach (['b BIT(8),KEY k(a,b)', 'b BIT(8),KEY k(a,b DESC)', 'b VARCHAR(10),KEY k(a,b(3))'] as $definition) {
+            yield "index directions: {$definition}" => ["CREATE TABLE bit_extreme_probe(a BIT(8),{$definition}); INSERT INTO bit_extreme_probe VALUES(65,1),(0,2),(65,1); SELECT DISTINCT a,b FROM bit_extreme_probe ORDER BY a; SELECT DISTINCT a,b FROM bit_extreme_probe ORDER BY a,b; SELECT DISTINCT a,b FROM bit_extreme_probe ORDER BY a DESC,b ASC; SELECT DISTINCT a,b FROM bit_extreme_probe ORDER BY a DESC,b DESC; SELECT DISTINCT a FROM bit_extreme_probe ORDER BY a"];
+        }
         foreach (['USE INDEX()', 'IGNORE INDEX(k)', 'USE INDEX(k)', 'FORCE INDEX(k)', 'IGNORE INDEX(K)', 'USE INDEX(j)', 'USE INDEX(j) USE INDEX(k)', 'USE INDEX(k) IGNORE INDEX(k)', 'IGNORE INDEX FOR ORDER BY(k)', 'IGNORE INDEX FOR GROUP BY(k)', 'IGNORE INDEX FOR JOIN(k)', 'IGNORE INDEX FOR ORDER BY(k) IGNORE INDEX FOR GROUP BY(k)'] as $hint) {
             yield "sorted hint: {$hint}" => ["CREATE TABLE bit_extreme_probe(a BIT(8),b BIT(64),KEY k(a,b),KEY j(b)); INSERT INTO bit_extreme_probe VALUES(65,1),(0,2),(65,1); SELECT DISTINCT a,b FROM bit_extreme_probe {$hint} ORDER BY a"];
         }

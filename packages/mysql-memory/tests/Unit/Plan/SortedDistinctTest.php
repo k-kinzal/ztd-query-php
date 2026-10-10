@@ -97,4 +97,31 @@ final class SortedDistinctTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame($type, $result->columns[0]->type);
     }
+
+    /**
+     * @return iterable<string, array{string, string, list<Field>}>
+     */
+    public static function providerOrdering(): iterable
+    {
+        yield 'mixed scan directions' => ['b BIT(8),KEY k(a,b)', 'a DESC,b ASC', [Field::Long, Field::Long]];
+        yield 'reverse scan' => ['b BIT(8),KEY k(a,b)', 'a DESC,b DESC', [Field::Bit, Field::Bit]];
+        yield 'descending index' => ['b BIT(8),KEY k(a,b DESC)', 'a ASC,b DESC', [Field::Bit, Field::Bit]];
+        yield 'reverse descending index' => ['b BIT(8),KEY k(a,b DESC)', 'a DESC,b ASC', [Field::Bit, Field::Bit]];
+        yield 'mismatched descending index' => ['b BIT(8),KEY k(a,b DESC)', 'a,b', [Field::Long, Field::Long]];
+        yield 'prefixed selected value' => ['b VARCHAR(10),KEY k(a,b(3))', 'a', [Field::Long, Field::VarString]];
+    }
+
+    /**
+     * @param list<Field> $types
+     */
+    #[DataProvider('providerOrdering')]
+    public function testOrderedRequiresCompleteValuesAndCompatibleDirections(string $definition, string $order, array $types): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a BIT(8),' . $definition . ')');
+        $result = $session->query('SELECT DISTINCT a,b FROM t ORDER BY ' . $order)[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+
+        self::assertSame($types, array_map(static fn ($column): Field => $column->type, $result->columns));
+    }
 }

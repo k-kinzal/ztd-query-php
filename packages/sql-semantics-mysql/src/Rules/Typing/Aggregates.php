@@ -73,14 +73,14 @@ final class Aggregates
      * preserves the bound used by CONCAT and HEX over the aggregate. Legacy
      * computed strings choose their result field by their expression width.
      * Computed blob expressions retain their separate metadata. Verified through SQL on
-     * MySQL 5.6 and 8.4, including scalar subqueries and set operands.
+     * MySQL 5.6, 5.7 and 8.4, including scalar subqueries and set operands.
      */
     public function extreme(?Domain $argument, GrammarRelease $release, bool $column): Domain
     {
         if ($argument?->kind === Kind::Json && $release !== GrammarRelease::MySql5744) {
             return JsonResults::json($release);
         }
-        if ($argument?->kind === Kind::Bit && $release === GrammarRelease::MySql5651) {
+        if ($argument?->kind === Kind::Bit && in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
             return new Domain(Kind::Integer, Field::Bit, $argument->length, 0, true, $argument->collation, [], $argument->coercibility);
         }
         if ($argument?->kind === Kind::String) {

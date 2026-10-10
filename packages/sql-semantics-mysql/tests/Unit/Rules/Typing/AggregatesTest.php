@@ -34,6 +34,7 @@ final class AggregatesTest extends TestCase
         $domain = $rules->extreme($argument, GrammarRelease::MySql5651, true);
 
         self::assertSame([Kind::Integer, Field::Bit, 64, true, Coercibility::Implicit], [$domain->kind, $domain->field, $domain->length, $domain->unsigned, $domain->coercibility]);
+        self::assertEquals($domain, $rules->extreme($argument, GrammarRelease::MySql5744, true));
         self::assertSame($argument, $rules->extreme($argument, GrammarRelease::MySql847, true));
     }
 
