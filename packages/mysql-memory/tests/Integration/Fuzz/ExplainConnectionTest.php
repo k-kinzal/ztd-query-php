@@ -16,14 +16,16 @@ use PHPUnit\Framework\TestCase;
 final class ExplainConnectionTest extends TestCase
 {
     /**
-     * @return iterable<string, array{string, string, array{string, int|null}}>
+     * @return iterable<string, array{string, string, array{string, int|null}, string}>
      */
     public static function providerConnections(): iterable
     {
         $legacy = str_starts_with((string) getenv('MYSQL_VERSION'), '5.6.');
         foreach (['native', 'memory'] as $kind) {
-            yield $kind . ' idle' => [$kind, 'QUERY', $legacy ? ['42000', 1064] : ['00000', null]];
-            yield $kind . ' closed' => [$kind, 'CONNECTION', $legacy ? ['42000', 1064] : ['HY000', 1094]];
+            foreach (['SELECT 1', 'ALTER USER CURRENT_USER PASSWORD EXPIRE'] as $previous) {
+                yield $kind . ' idle after ' . $previous => [$kind, 'QUERY', $legacy ? ['42000', 1064] : ['00000', null], $previous];
+                yield $kind . ' closed after ' . $previous => [$kind, 'CONNECTION', $legacy ? ['42000', 1064] : ['HY000', 1094], $previous];
+            }
         }
     }
 
@@ -31,9 +33,12 @@ final class ExplainConnectionTest extends TestCase
      * @param array{string, int|null} $error The expected SQLSTATE and server error number
      */
     #[DataProvider('providerConnections')]
-    public function testExplainUsesOnlyLiveConnections(string $kind, string $kill, array $error): void
+    public function testExplainUsesOnlyLiveConnections(string $kind, string $kill, array $error, string $previous): void
     {
         [$target] = Servers::shared();
+        self::assertNull($target->compare($previous)->difference);
+        $target->repair($target->guard());
+        $target->repair($target->memoryGuard());
         $connections = ['native' => [$target->native, $target->nativeUser, $target->nativePassword], 'memory' => [$target->memory, 'root', '']];
         [$dsn, $user, $password] = $connections[$kind];
         $observer = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
