@@ -34,13 +34,14 @@ defaults:
 
 jobs:
   test:
-    name: Test (PHP ${{ matrix.php }})
+    name: Test (PHP ${{ matrix.php }}, shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+        shard: [0, 1]
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -66,18 +67,33 @@ jobs:
         if: matrix.php == '8.4' || matrix.php == '8.5'
         run: composer check-platform-reqs --no-dev
       - name: Run unit tests and examples in parallel
+        if: matrix.shard == 0
         run: vendor/bin/paratest --processes=auto --exclude-testsuite integration
-      - name: Run integration tests sequentially
-        run: vendor/bin/phpunit --testsuite integration
+      - name: Run every integration class in its assigned shard
+        env:
+          TEST_SHARD: ${{ matrix.shard }}
+        run: |
+          pattern=$(python3 - <<'PYTHON'
+          import os, pathlib, re, sys
+          files = sorted(pathlib.Path('tests/Integration').rglob('*Test.php'))
+          selected = files[int(os.environ['TEST_SHARD'])::2]
+          assert selected, 'An integration shard must contain tests'
+          print('\n'.join(str(path) for path in selected), file=sys.stderr)
+          classes = ['Tests\\' + str(path.relative_to('tests').with_suffix('')).replace('/', '\\') for path in selected]
+          print('^(?:' + '|'.join(re.escape(name) for name in classes) + ')::')
+          PYTHON
+          )
+          vendor/bin/phpunit --testsuite integration --filter "$pattern"
 
   differential:
-    name: Differential (MySQL ${{ matrix.mysql }})
+    name: Differential (MySQL ${{ matrix.mysql }}, shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         mysql: ['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0']
+        shard: [0, 1]
     env:
       MYSQL_VERSION: ${{ matrix.mysql }}
     steps:
@@ -97,19 +113,34 @@ jobs:
           composer-options: --prefer-dist
           require-lock-file: true
       - name: Capture public installed-routine metadata without implementation bodies
+        if: matrix.shard == 0
         run: |
           mkdir -p build
           php bin/system-routines.php --container=${{ matrix.mysql }} > build/system-routines.php
           php -l build/system-routines.php
       - name: Upload installed-routine metadata
+        if: matrix.shard == 0
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: mysql-memory-system-routines-${{ matrix.mysql }}
           path: packages/mysql-memory/build/system-routines.php
           if-no-files-found: error
           retention-days: 14
-      - name: Compare regression cases with MySQL started by Testcontainers
-        run: vendor/bin/phpunit tests/Integration/Fuzz
+      - name: Compare every assigned regression class with MySQL started by Testcontainers
+        env:
+          TEST_SHARD: ${{ matrix.shard }}
+        run: |
+          pattern=$(python3 - <<'PYTHON'
+          import os, pathlib, re, sys
+          files = sorted(pathlib.Path('tests/Integration/Fuzz').rglob('*Test.php'))
+          selected = files[int(os.environ['TEST_SHARD'])::2]
+          assert selected, 'A differential shard must contain tests'
+          print('\n'.join(str(path) for path in selected), file=sys.stderr)
+          classes = ['Tests\\' + str(path.relative_to('tests').with_suffix('')).replace('/', '\\') for path in selected]
+          print('^(?:' + '|'.join(re.escape(name) for name in classes) + ')::')
+          PYTHON
+          )
+          vendor/bin/phpunit tests/Integration/Fuzz --filter "$pattern"
 
   lint:
     name: Lint
