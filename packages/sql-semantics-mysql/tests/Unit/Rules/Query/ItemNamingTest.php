@@ -125,6 +125,13 @@ final class ItemNamingTest extends TestCase
         self::assertSame('2024-01-31', $naming->constant(new OdbcEscape(new Name('d'), new StringLiteral(['20240131']))));
     }
 
+    public function testConstantKeepsLongerPositionalNamesInLegacyReleases(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context()->profile);
+
+        self::assertSame('0.000012345678901234568', $naming->constant(new NumberLiteral('1.2345678901234568e-5')));
+    }
+
     public function testBytesPadsBitsToWholeBytes(): void
     {
         self::assertSame("\x01\x01", (new ItemNaming((new Semantics(Dialect::MySql))->context()->profile))->bytes('100000001'));

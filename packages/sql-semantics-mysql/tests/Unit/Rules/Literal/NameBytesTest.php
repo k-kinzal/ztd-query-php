@@ -22,4 +22,9 @@ final class NameBytesTest extends TestCase
     {
         self::assertSame(['a', 'a', '', 'a ', 'a'], [NameBytes::format("\0a\0b"), NameBytes::format("a\xE9b"), NameBytes::format("\xE9a"), NameBytes::format(' a '), NameBytes::format("\xFFa")]);
     }
+
+    public function testFormatReplacesASurrogateSequenceOnceInLegacyMetadata(): void
+    {
+        self::assertSame(['?', '?a?', '????'], [NameBytes::format("\xED\xB0\x80", true), NameBytes::format("\xED\xA0\x80a\xED\xBF\xBF", true), NameBytes::format('😀', true)]);
+    }
 }

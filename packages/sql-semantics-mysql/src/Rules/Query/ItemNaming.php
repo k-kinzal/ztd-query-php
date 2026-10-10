@@ -157,7 +157,7 @@ final class ItemNaming
             $expression instanceof Parameter => new Name('?'),
             $expression instanceof NumberLiteral => $expression->form === NumberForm::Decimal ? new Name($expression->text) : [$expression->text, 'utf8mb3'],
             $expression instanceof BooleanLiteral => $this->legacy() ? new Name($expression->value ? 'TRUE' : 'FALSE') : null,
-            $expression instanceof FunctionCall && $expression->schema === null && strcasecmp($expression->name->value, 'NAME_CONST') === 0 && $expression->arguments !== [] => [\SqlSemantics\Platform\MySql\Rules\Literal\NameBytes::format($this->constant($expression->arguments[0]->expression)), 'utf8mb3'],
+            $expression instanceof FunctionCall && $expression->schema === null && strcasecmp($expression->name->value, 'NAME_CONST') === 0 && $expression->arguments !== [] => [\SqlSemantics\Platform\MySql\Rules\Literal\NameBytes::format($this->constant($expression->arguments[0]->expression), $this->legacy()), 'utf8mb3'],
             default => null,
         };
     }
@@ -188,7 +188,7 @@ final class ItemNaming
             return $argument->value();
         }
         if ($argument instanceof NumberLiteral && $argument->form === NumberForm::Float) {
-            return \SqlSemantics\Platform\MySql\Rules\Literal\Real::format((float) $argument->text);
+            return \SqlSemantics\Platform\MySql\Rules\Literal\Real::format((float) $argument->text, $this->legacy() ? 32 : 22);
         }
         if ($argument instanceof \SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral) {
             return \SqlSemantics\Platform\MySql\Rules\Literal\Temporal::literal($argument->form === \SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm::Timestamp ? 'DATETIME' : $argument->form->value, $argument->text, (int) $argument->type()->precision, false, false) ?? '';

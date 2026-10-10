@@ -68,8 +68,12 @@ final class Texts
             return null;
         }
         $field = $operand->field === Field::Blob ? Field::Blob : Field::VarString;
+        $length = $operand->kind === Kind::String ? $operand->length : $this->length($operand);
+        if ($derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $operand->kind !== Kind::String && $this->settings->connection->charset !== $collation->charset) {
+            $length = 0;
+        }
 
-        return Domain::string($operand->kind === Kind::String ? $operand->length : $this->length($operand), $collation, $field, Coercibility::Explicit);
+        return Domain::string($length, $collation, $field, Coercibility::Explicit);
     }
 
     /**

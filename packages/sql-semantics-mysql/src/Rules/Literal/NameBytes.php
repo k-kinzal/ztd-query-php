@@ -9,8 +9,9 @@ namespace SqlSemantics\Platform\MySql\Rules\Literal;
  *
  * Leading controls, spaces, DEL and FF are discarded; the first following NUL ends the
  * name. Incomplete two- or three-byte sequences end it too. Each other invalid byte,
- * including the bytes of a supplementary character, becomes a question mark.
- * Verified through column metadata on live MySQL 8.0.44 and 8.4.7 servers.
+ * including the bytes of a supplementary character, becomes a question mark. MySQL 5.x
+ * consumes a three-byte surrogate sequence as one replacement character.
+ * Verified through column metadata on live MySQL 5.6.51, 5.7.44, 8.0.44 and 8.4.7 servers.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -19,7 +20,7 @@ final class NameBytes
     /**
      * Answers the metadata spelling, independently of a literal's character-set introducer.
      */
-    public static function format(string $text): string
+    public static function format(string $text, bool $legacy = false): string
     {
         $text = explode("\0", ltrim($text, "\x00..\x20\x7F\xFF"))[0];
         $result = '';
@@ -31,7 +32,10 @@ final class NameBytes
                 break;
             }
             $character = substr($text, $index, $width);
-            if (mb_check_encoding($character, 'UTF-8')) {
+            if ($legacy && preg_match('/\A\xED[\xA0-\xBF][\x80-\xBF]\z/', $character) === 1) {
+                $result .= '?';
+                $index += $width;
+            } elseif (mb_check_encoding($character, 'UTF-8')) {
                 $result .= $character;
                 $index += $width;
             } else {

@@ -33,6 +33,11 @@ final class RealTest extends TestCase
         self::assertSame('0', Real::format(0.0));
     }
 
+    public function testFormatAllowsAWiderPositionalName(): void
+    {
+        self::assertSame('0.000012345678901234568', Real::format(1.2345678901234568e-5, 32));
+    }
+
     public function testDigitsAnswersTheShortestDigitsAndThePlaceOfThePoint(): void
     {
         self::assertSame([['1', 0], ['12345', 4], ['17', -2]], [Real::digits(0.1), Real::digits(1234.5), Real::digits(0.0017)]);

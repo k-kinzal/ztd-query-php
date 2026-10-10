@@ -52,6 +52,15 @@ final class TextsTest extends TestCase
         self::assertEquals([new UnknownCollation('klingon_ci'), new CollationMismatch('utf8mb4_bin', 'latin1')], $derivation->facts()->diagnostics);
     }
 
+    public function testCollatedReportsZeroWidthWhenLegacyNumericTextChangesCharset(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $texts = new Texts(new Settings(Collation::known('latin1_bin')));
+
+        self::assertSame(0, $texts->collated(Domain::integer(Field::LongLong, 1), 'utf8mb4_bin', $derivation)?->length);
+        self::assertSame([], $derivation->facts()->diagnostics);
+    }
+
     public function testBinaryCountsTheBytesOfAString(): void
     {
         self::assertEquals(Domain::string(12, Collation::binary()), (new Texts(new Settings(Collation::known('latin1_bin'))))->binary(Domain::string(3, Collation::known('utf8mb4_bin'))));

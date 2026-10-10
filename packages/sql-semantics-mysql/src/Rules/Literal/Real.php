@@ -18,8 +18,9 @@ final class Real
      * Writes a number in the text the server returns for a DOUBLE.
      *
      * An infinity, which ROUND past the largest double produces, is written as 0, as the server writes it.
+     * The width limits positional notation; legacy literal names allow more characters than modern results.
      */
-    public static function format(float $value): string
+    public static function format(float $value, int $width = 22): string
     {
         if (is_infinite($value)) {
             return '0';
@@ -34,7 +35,7 @@ final class Real
         $sign = $value < 0 ? '-' : '';
         $length = strlen($digits);
         $positional = $point <= 0 ? $length - $point + 2 : ($point < $length ? $length + 1 : $point);
-        if ($point > 15 || $point <= -15 || $positional + strlen($sign) > 22) {
+        if ($point > 15 || $point <= -15 || $positional + strlen($sign) > $width) {
             $mantissa = $length > 1 ? $digits[0] . '.' . substr($digits, 1) : $digits;
 
             return $sign . $mantissa . 'e' . ($point - 1);
