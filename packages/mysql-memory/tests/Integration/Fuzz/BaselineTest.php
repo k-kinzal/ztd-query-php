@@ -116,6 +116,30 @@ final class BaselineTest extends TestCase
         self::assertNull($memoryValue);
     }
 
+    public function testRunRestoresTheSelectorWithoutAComparisonWrapper(): void
+    {
+        [$base, , $server] = (new Servers())->start();
+        $native = new PDO($base->native, $base->nativeUser, $base->nativePassword);
+        $memory = new PDO($base->memory, 'root', '');
+        $original = new Baseline($native, $base->version);
+        $native->exec('SET GLOBAL innodb_monitor_reset=DEFAULT');
+        $memory->exec('SET GLOBAL innodb_monitor_reset=DEFAULT');
+        $baseline = new Baseline($native, $base->version);
+        $target = new Differential($base->native, $base->nativeUser, $base->nativePassword, $base->memory, version: $base->version, guardUser: $base->guardUser, baseline: $baseline);
+        $nativeResult = $target->run($base->native, $base->nativeUser, $base->nativePassword, 'SELECT @@GLOBAL.innodb_monitor_reset');
+        $memoryResult = $target->run($base->memory, 'root', '', 'SELECT @@GLOBAL.innodb_monitor_reset');
+        $nativeValue = (new Servers())->globals($native, $base->version)['innodb_monitor_reset'];
+        $memoryValue = (new Servers())->globals($memory, $base->version)['innodb_monitor_reset'];
+        $original->restore($native, true);
+        $original->restore($memory, false);
+        $server->stop();
+
+        self::assertNull($baseline->globals['innodb_monitor_reset']);
+        self::assertSame($nativeResult, $memoryResult);
+        self::assertNull($nativeValue);
+        self::assertNull($memoryValue);
+    }
+
     public function testRestoreRemovesGrantsFromTheTestAccountRatherThanTheGuard(): void
     {
         [$target, , $server] = (new Servers())->start(true, true);

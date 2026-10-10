@@ -105,10 +105,6 @@ final class Differential
         $this->repair($this->memoryGuard());
         $this->baseline?->restore($this->memoryGuard(), false);
         $actual = $library->comparable($this->run($this->memory, 'root', '', $sql), $this->version);
-        if ($this->baseline !== null) {
-            $this->repair($this->memoryGuard());
-            $this->baseline->restore($this->memoryGuard(), false);
-        }
         if ($expected === $actual) {
             return new Comparison(false, contracts: $contracts);
         }
@@ -221,6 +217,7 @@ final class Differential
      * Answers the observation of a statement on one server, from a fresh fixture.
      * Ends its session explicitly after recording it: a PDO statement retained by an exception
      * can otherwise retain the connection and its server locks until garbage collection.
+     * Isolated runs restore their original configuration before returning, including direct callers.
      *
      * @return array<string, mixed>
      */
@@ -228,6 +225,9 @@ final class Differential
     {
         $clock = TableTimes::handles($sql, $this->version) ? new TableTimes() : null;
         $pdo = $this->connect($dsn, $user, $password, $clock);
+        if ($this->baseline !== null) {
+            Baseline::mutexes($pdo, $this->version);
+        }
         $passwords = RandomPasswords::handles($sql, $this->version) ? RandomPasswords::capture($pdo, preg_match('/\bRETAIN\s+CURRENT\s+PASSWORD\b/i', $sql) === 1) : null;
         $identities = StatementIdentities::handles($sql, $this->version) ? StatementIdentities::capture($pdo) : null;
         if (Process\Listing::handles($sql)) {
@@ -246,6 +246,11 @@ final class Differential
         $pdo->exec('KILL CONNECTION_ID()');
         $pdo = null;
         gc_collect_cycles();
+        if ($this->baseline !== null) {
+            $guard = $dsn === $this->native ? $this->guard() : $this->memoryGuard();
+            $this->repair($guard);
+            $this->baseline->restore($guard, $dsn === $this->native);
+        }
 
         return $clock?->comparable($observation) ?? $observation;
     }
@@ -272,9 +277,6 @@ final class Differential
                 }
             }
             $this->baseline?->logs($pdo);
-            if ($this->baseline !== null) {
-                Baseline::mutexes($pdo, $this->version);
-            }
         } catch (PDOException $failure) {
             fwrite(STDERR, "Setup failed on {$dsn}: {$failure->getMessage()}\n");
             exit(2);
