@@ -108,7 +108,7 @@
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>            <span class="tok-var">$target</span>-&gt;<span class="tok-id">interrupted</span> = <span class="tok-id">true</span>;</span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        }</span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statement</span>-&gt;<span class="tok-id">scope</span> !== <span class="tok-id">KillScope</span>::<span class="tok-id">Query</span>) {</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>            <span class="tok-var">$target</span>-&gt;<span class="tok-id">release</span>();</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>            <span class="tok-var">$target</span>-&gt;<span class="tok-id">close</span>();</span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>        }</span>
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-kw">if</span> (<span class="tok-var">$target</span> === <span class="tok-var">$session</span>) {</span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>            <span class="tok-kw">throw</span> <span class="tok-id">StatementError</span>::<span class="tok-id">QueryInterrupted</span>-&gt;<span class="tok-id">error</span>();</span>

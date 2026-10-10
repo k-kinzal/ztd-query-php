@@ -133,7 +133,7 @@
 <span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>        }</span>
 <span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>        <span class="tok-var">$completion</span> = <span class="tok-id">strtoupper</span>((string) <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">read</span>(<span class="tok-str">&#039;completion_type&#039;</span>));</span>
 <span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        <span class="tok-kw">if</span> (<span class="tok-var">$statement</span>-&gt;<span class="tok-id">release</span> ?? <span class="tok-id">in_array</span>(<span class="tok-var">$completion</span>, [<span class="tok-str">&#039;RELEASE&#039;</span>, <span class="tok-str">&#039;2&#039;</span>], <span class="tok-id">true</span>)) {</span>
-<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>            <span class="tok-var">$session</span>-&gt;<span class="tok-id">release</span>();</span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>            <span class="tok-var">$session</span>-&gt;<span class="tok-id">close</span>();</span>
 <span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a></span>
 <span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>            <span class="tok-kw">return</span>;</span>
 <span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>        }</span>
