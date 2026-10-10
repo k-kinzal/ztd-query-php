@@ -184,7 +184,7 @@ final class ReplicationShowCommand implements Command
         }
         $events = array_map(static fn (array $event): array => [BinaryLog::name($file), ...$event], $log->events($file, $session->instance->version));
 
-        return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->number($statement->position), $statement->limit, 'SHOW BINLOG EVENTS'), $context);
+        return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->prefix($statement->position), $statement->limit, 'SHOW BINLOG EVENTS'), $context);
     }
 
     /**
@@ -210,7 +210,7 @@ final class ReplicationShowCommand implements Command
             $events[] = [$name, $end, 'Stop', 1, $end + 23, ''];
         }
 
-        return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->number($statement->position), $statement->limit, 'SHOW RELAYLOG EVENTS'), $context);
+        return $this->listing(self::EVENTS, $this->window($events, $statement->position === null ? '4' : (new Literals())->prefix($statement->position), $statement->limit, 'SHOW RELAYLOG EVENTS'), $context);
     }
 
     /**

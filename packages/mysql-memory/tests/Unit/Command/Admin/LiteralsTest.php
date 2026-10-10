@@ -17,6 +17,13 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Text;
 #[Small]
 final class LiteralsTest extends TestCase
 {
+    public function testPrefixReadsOnlyInitialDigitsWithoutRoundingOrExponentEvaluation(): void
+    {
+        $literals = new Literals();
+
+        self::assertSame(['1', '1', '127', '0', '18446744073709551616'], [$literals->prefix(new Numeral('1e2')), $literals->prefix(new Numeral('1.27e2')), $literals->prefix(new Numeral('00127.9')), $literals->prefix(new Numeral('.1')), $literals->prefix(new Numeral('18446744073709551616'))]);
+    }
+
     public function testSizeAppliesSuffixesWithoutLosingIntegerPrecision(): void
     {
         $literal = new Literals();

@@ -63,6 +63,28 @@ final class Literals
 
         return number_format(floor((float) $text), 0, '.', '');
     }
+
+    /**
+     * Reads the leading decimal digits of an unsigned option, without evaluating an exponent.
+     *
+     * SHOW BINLOG EVENTS FROM accepts decimal and floating spellings but consumes only their
+     * initial integer digits: 1e2 and 1.27e2 both mean position 1. Verified through MySQL
+     * 8.0.44, 8.4.7 and 9.1.0. Expression literals continue to use numeric evaluation.
+     *
+     * @return numeric-string
+     */
+    public function prefix(Numeral $numeral): string
+    {
+        if ($numeral->hexadecimal) {
+            return $this->number($numeral);
+        }
+        if (preg_match('/\A[0-9]+/', $numeral->text, $digits) !== 1) {
+            return '0';
+        }
+        $trimmed = ltrim($digits[0], '0');
+
+        return is_numeric($trimmed) ? $trimmed : '0';
+    }
     /**
      * Answers a declared byte size exactly, applying K, M and G multipliers.
      *

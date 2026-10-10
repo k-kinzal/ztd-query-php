@@ -93,6 +93,21 @@ final class Baseline
     }
 
     /**
+     * Starts each isolated observation after fixture writes with one empty binary log.
+     *
+     * The same SQL resets both disposable servers. Generated statements remain logged, and
+     * their results are compared without replacing positions, event information or rows.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/reset-binary-logs-and-gtids.html.
+     */
+    public function logs(PDO $connection): void
+    {
+        if (($this->globals['log_bin'] ?? 'OFF') !== 'ON') {
+            return;
+        }
+        (new Fixture())->execute($connection, version_compare($this->version, '8.4.0', '>=') ? 'RESET BINARY LOGS AND GTIDS' : 'RESET MASTER');
+    }
+
+    /**
      * Records inverse statements for all generated catalog objects, including replication channels.
      */
     public function discover(PDO $native): void

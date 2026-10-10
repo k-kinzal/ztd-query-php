@@ -267,6 +267,7 @@ final class Differential
                     $clock->execute($pdo, $statement);
                 }
             }
+            $this->baseline?->logs($pdo);
         } catch (PDOException $failure) {
             fwrite(STDERR, "Setup failed on {$dsn}: {$failure->getMessage()}\n");
             exit(2);
