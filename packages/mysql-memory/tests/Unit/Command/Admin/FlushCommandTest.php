@@ -67,6 +67,15 @@ final class FlushCommandTest extends TestCase
         self::assertSame([], $closed->rows);
         self::assertSame([['1']], $read->rows);
         self::assertSame([['d', 't', '0', '0']], $reopened->rows);
+        self::assertSame(1, $session->instance->registry->status->read('Flush_commands'));
+    }
+
+    public function testTablesKeepsTheGlobalFlushTotalForNamedTablesAndStatusResets(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT); FLUSH TABLES; FLUSH TABLES t; FLUSH STATUS; FLUSH PRIVILEGES');
+
+        self::assertSame(1, $session->instance->registry->status->read('Flush_commands'));
     }
 
     public function testClearsDiagnosticsAnswersTrue(): void

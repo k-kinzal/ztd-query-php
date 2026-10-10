@@ -116,11 +116,14 @@ final class FlushCommand implements Command
 
     /**
      * Closes cached handles while retaining definitions, rows and HANDLER cursor names.
+     * Flush_commands counts a flush of all tables, including WITH READ LOCK, but not named tables.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html#statvar_Flush_commands.
      */
     public function tables(FlushTables $statement, Session $session): void
     {
         $cache = $session->instance->dictionary->cache;
         if ($statement->tables === []) {
+            $session->instance->registry->status->add('Flush_commands');
             $cache->close();
 
             return;

@@ -52,6 +52,8 @@ use SqlSemantics\Statement\Operation;
  * 1 by default. Group replication is not configured, and its statements refuse an open
  * transaction (verified on a live 8.4 server). MySQL 5.6 refuses RESET MASTER when log_bin is
  * off (ER_FLUSH_MASTER_BINLOG_CLOSED; verified on a live 5.6.51 server).
+ * A successful binary-log reset contributes one Flush_commands event per statement, even
+ * when RESET MASTER is repeated or a later replica reset fails (verified on MySQL 8.0.44).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/start-replica.html,
  * https://dev.mysql.com/doc/refman/8.4/en/stop-replica.html,
  * https://dev.mysql.com/doc/refman/8.4/en/change-replication-filter.html,
@@ -100,20 +102,37 @@ final class ReplicaCommand implements Command
                 throw AdministrationError::ReplicaNotInitialized->error();
             }
         } elseif ($statement instanceof Reset) {
-            foreach ($statement->targets as $target) {
-                if ($target instanceof ResetBinaryLogs && $session->settings()->release() === GrammarRelease::MySql5651 && !\MySqlMemory\Registry\BinaryLog::enabled($session)) {
-                    throw AdministrationError::BinlogClosed->error('RESET MASTER');
-                }
-                $this->reset($target, $registry);
-                if ($target instanceof ResetBinaryLogs && $session->settings()->release() !== GrammarRelease::MySql5651) {
-                    $session->instance->dictionary->cache->open('mysql', 'gtid_executed');
-                }
-            }
+            $this->resetTargets($statement, $session);
         } elseif ($statement instanceof ChangeReplicationSource) {
             (new SourceChange())->check($statement, $session, $context);
         }
 
         return new Completion(0, 0, $session->diagnostics->count());
+    }
+
+    /**
+     * Applies RESET targets in order, recording one binary-log table flush per statement.
+     * A failed later target retains the earlier reset and its flush count.
+     *
+     * @throws \MySqlMemory\Error\SqlError When binary logging is required or a replica target cannot reset
+     */
+    public function resetTargets(Reset $statement, Session $session): void
+    {
+        $registry = $session->instance->registry;
+        $flushed = false;
+        foreach ($statement->targets as $target) {
+            if ($target instanceof ResetBinaryLogs && $session->settings()->release() === GrammarRelease::MySql5651 && !\MySqlMemory\Registry\BinaryLog::enabled($session)) {
+                throw AdministrationError::BinlogClosed->error('RESET MASTER');
+            }
+            $this->reset($target, $registry);
+            if ($target instanceof ResetBinaryLogs && !$flushed) {
+                $registry->status->add('Flush_commands');
+                $flushed = true;
+            }
+            if ($target instanceof ResetBinaryLogs && $session->settings()->release() !== GrammarRelease::MySql5651) {
+                $session->instance->dictionary->cache->open('mysql', 'gtid_executed');
+            }
+        }
     }
 
     /**

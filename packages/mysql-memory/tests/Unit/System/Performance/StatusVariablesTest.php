@@ -59,14 +59,15 @@ final class StatusVariablesTest extends TestCase
         self::assertSame([['Bytes_received', '8'], ['Bytes_sent', '0']], $catalog->values($instance, false, false, 2, connection: 2));
     }
 
-    public function testValuesReadsGlobalAbortedClientsInBothShowScopes(): void
+    public function testValuesReadsGlobalConnectionAndFlushCountersInBothShowScopes(): void
     {
         $instance = new Instance();
         $instance->registry->status->add('Aborted_clients');
-        $catalog = new StatusVariables([['Aborted_clients', 'Global', '0', true]]);
+        $instance->registry->status->add('Flush_commands');
+        $catalog = new StatusVariables([['Aborted_clients', 'Global', '0', true], ['Flush_commands', 'Global', '0', true]]);
 
-        self::assertSame([['Aborted_clients', '1']], $catalog->values($instance, true, false, 1));
-        self::assertSame([['Aborted_clients', '1']], $catalog->values($instance, false, false, 1, connection: 1));
+        self::assertSame([['Aborted_clients', '1'], ['Flush_commands', '1']], $catalog->values($instance, true, false, 1));
+        self::assertSame([['Aborted_clients', '1'], ['Flush_commands', '1']], $catalog->values($instance, false, false, 1, connection: 1));
         self::assertSame([], $catalog->values($instance, false, true, 1, connection: 1));
     }
 

@@ -25,6 +25,35 @@ final class ReplicaCommandTest extends TestCase
         $session->query('FLUSH LOCAL TABLES; RESET BINARY LOGS AND GTIDS');
 
         self::assertSame([['mysql', 'gtid_executed']], $session->instance->dictionary->cache->names());
+        self::assertSame(2, $session->instance->registry->status->read('Flush_commands'));
+    }
+
+    public function testResetTargetsCountsOneTableFlushForRepeatedBinaryLogResets(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $session->query('RESET MASTER, MASTER');
+
+        self::assertSame(1, $session->instance->registry->status->read('Flush_commands'));
+    }
+
+    public function testResetTargetsDoesNotCountAFlushWhenResetMasterRequiresDisabledBinaryLogging(): void
+    {
+        $session = (new Instance('5.6.51', globals: ['log_bin' => 'OFF']))->connect();
+        $replies = $session->run('RESET MASTER');
+
+        self::assertInstanceOf(SqlError::class, $replies[0]);
+        self::assertSame(1186, $replies[0]->getCode());
+        self::assertSame(0, $session->instance->registry->status->read('Flush_commands'));
+    }
+
+    public function testResetTargetsRetainsTheBinaryLogFlushWhenTheFollowingReplicaResetFails(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $replies = $session->run("RESET MASTER, REPLICA FOR CHANNEL 'missing'");
+
+        self::assertInstanceOf(SqlError::class, $replies[0]);
+        self::assertSame(3074, $replies[0]->getCode());
+        self::assertSame(1, $session->instance->registry->status->read('Flush_commands'));
     }
 
     public function testClearsDiagnosticsAnswersTrue(): void
