@@ -111,7 +111,7 @@
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a><span class="tok-com">     * @param Collation|null $collation The collation of a string; binary when null</span></span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a><span class="tok-com">     * @param list&lt;string&gt; $members The members of an ENUM or SET, in declared order</span></span>
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a><span class="tok-com">     * @param Coercibility $coercibility How strongly the collation holds</span></span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a><span class="tok-com">     * @param int|null $display The display width a column of an integer type reports for itself, when it is narrower than the length</span></span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a><span class="tok-com">     * @param int|null $display The unconverted metadata width when it differs from the type bound, including integer display widths and partial multibyte string limits</span></span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
 <span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Kind</span> <span class="tok-var">$kind</span>,</span>
@@ -225,7 +225,7 @@
 <span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a><span class="tok-com">     * TEXT/BLOB fields already carry byte bounds. These differ from the collation-expanded</span></span>
 <span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a><span class="tok-com">     * bounds used by functions such as HEX and GTID_SUBTRACT. Integer columns retain their</span></span>
-<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a><span class="tok-com">     * declared display widths. Verified through result metadata on live MySQL servers.</span></span>
+<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a><span class="tok-com">     * declared display widths; byte-limited strings retain partial-character bounds. Verified through result metadata on live MySQL servers.</span></span>
 <span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">metadataLength</span>(): <span class="tok-id">int</span></span>
 <span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a>    {</span>
