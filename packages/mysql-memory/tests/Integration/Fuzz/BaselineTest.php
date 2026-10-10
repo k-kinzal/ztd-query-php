@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Fuzz;
 
+use Fuzz\Target\Baseline;
+use Fuzz\Target\Differential;
 use Fuzz\Target\Servers;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -78,6 +80,40 @@ final class BaselineTest extends TestCase
         self::assertSame([[$original]], (new Servers())->rows($native, 'SELECT @@global.max_connections'));
         self::assertSame([[$original]], (new Servers())->rows($memory, 'SELECT @@global.max_connections'));
         $server->stop();
+    }
+
+    /**
+     * @return iterable<string, array{string, string, string}>
+     */
+    public static function providerNullableGlobals(): iterable
+    {
+        yield 'monitor default' => ['innodb_monitor_reset', 'DEFAULT', "'all'"];
+        yield 'explicit null' => ['character_set_results', 'NULL', "'latin1'"];
+    }
+
+    #[DataProvider('providerNullableGlobals')]
+    public function testRestorePreservesNullOnBothServersAfterComparison(string $name, string $initial, string $changed): void
+    {
+        [$base, , $server] = (new Servers())->start();
+        $native = new PDO($base->native, $base->nativeUser, $base->nativePassword);
+        $memory = new PDO($base->memory, 'root', '');
+        $original = new Baseline($native, $base->version);
+        $native->exec('SET GLOBAL ' . $name . '=' . $initial);
+        $memory->exec('SET GLOBAL ' . $name . '=' . $initial);
+        $baseline = new Baseline($native, $base->version);
+        $target = new Differential($base->native, $base->nativeUser, $base->nativePassword, $base->memory, version: $base->version, guardUser: $base->guardUser, baseline: $baseline);
+        $result = $target->compare('SET GLOBAL ' . $name . '=' . $changed . '; SELECT @@GLOBAL.' . $name);
+        $nativeValue = (new Servers())->globals($native, $base->version)[$name];
+        $memoryValue = (new Servers())->globals($memory, $base->version)[$name];
+        $original->restore($native, true);
+        $original->restore($memory, false);
+        $server->stop();
+
+        self::assertNull($baseline->globals[$name]);
+        self::assertFalse($result->volatile, (string) $result->referenceDifference);
+        self::assertNull($result->difference, (string) $result->difference);
+        self::assertNull($nativeValue);
+        self::assertNull($memoryValue);
     }
 
     public function testRestoreRemovesGrantsFromTheTestAccountRatherThanTheGuard(): void

@@ -61,9 +61,6 @@ final class Servers
         }
         $native = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $this->clean($native, $version);
-        if ($isolate) {
-            Baseline::mutexes($native, $version);
-        }
         $globals = $this->globals($native, $version);
         $identity = $native->query('SELECT USER()');
         $account = $identity === false ? '' : $identity->fetchColumn();
@@ -83,12 +80,21 @@ final class Servers
     public function globals(PDO $native, string $version): array
     {
         $globals = [];
+        $empty = [];
         foreach ($this->rows($native, str_starts_with($version, '5.6.') ? 'SHOW GLOBAL VARIABLES' : 'SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.global_variables') as [$name, $value]) {
-            if ($value === '') {
-                $read = $native->query('SELECT @@GLOBAL.`' . str_replace('`', '``', $name) . '`');
-                $value = $read !== false && $read->fetchColumn() === null ? null : $value;
-            }
             $globals[strtolower($name)] = $value;
+            if ($value === '') {
+                $empty[] = strtolower($name);
+            }
+        }
+        if ($empty !== []) {
+            $read = $native->query('SELECT ' . implode(', ', array_map(static fn (string $name): string => '@@GLOBAL.`' . str_replace('`', '``', $name) . '`', $empty)));
+            $values = $read === false ? false : $read->fetch(PDO::FETCH_NUM);
+            foreach ($empty as $position => $name) {
+                if (is_array($values) && array_key_exists($position, $values) && $values[$position] === null) {
+                    $globals[$name] = null;
+                }
+            }
         }
 
         return $globals;

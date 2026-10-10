@@ -105,6 +105,10 @@ final class Differential
         $this->repair($this->memoryGuard());
         $this->baseline?->restore($this->memoryGuard(), false);
         $actual = $library->comparable($this->run($this->memory, 'root', '', $sql), $this->version);
+        if ($this->baseline !== null) {
+            $this->repair($this->memoryGuard());
+            $this->baseline->restore($this->memoryGuard(), false);
+        }
         if ($expected === $actual) {
             return new Comparison(false, contracts: $contracts);
         }

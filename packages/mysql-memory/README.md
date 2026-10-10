@@ -288,7 +288,7 @@ The seed replay uses the same root and byte decoding as SQL Faker's `bin/seeds.p
 
 Pull requests changing this package or its SQL dependencies run the complete canonical gate in GitHub Actions. To request another run, dispatch **Fuzz (mysql-memory)** with `canonical_seeds=true` and the desired `mysql_version`. That mode runs only the canonical gate and uploads the per-input observations, coverage, summary and console log, including when the gate fails.
 
-Isolated observations on MySQL 8.0 and later clear historical mutex waits with `SET GLOBAL innodb_monitor_reset='latch'` after fixture setup. The same SQL runs on both servers, and the retained selector is part of their initial global configuration. This prevents contention from earlier inputs or fixture creation from leaking into `SHOW ENGINE ... MUTEX`. Waits generated during the input remain visible; rows and counters are compared without replacement. Other engine statistics and status observations remain subject to the strict gate.
+Isolated observations on MySQL 8.0 and later clear historical mutex waits with `SET GLOBAL innodb_monitor_reset='latch'` after fixture setup. The same SQL runs on both servers, and their original global values, including a NULL selector, are restored after observation. This prevents contention from earlier inputs or fixture creation from leaking into `SHOW ENGINE ... MUTEX`. Waits generated during the input remain visible; rows and counters are compared without replacement. Other engine statistics and status observations remain subject to the strict gate.
 
 Six bounded comparison contracts handle measured nondeterministic fields:
 

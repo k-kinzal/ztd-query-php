@@ -21,7 +21,7 @@ final class Baseline
     public array $cleanup = [];
 
     /**
-     * @var array<string, string> The initial global system variables
+     * @var array<string, string|null> The initial global system variables
      */
     public array $globals = [];
 
@@ -49,9 +49,7 @@ final class Baseline
         [$user, $host] = explode('@', $server->rows($native, 'SELECT CURRENT_USER()')[0][0], 2);
         $this->identity = $native->quote($user) . '@' . $native->quote($host);
         $this->grants = array_column($server->rows($native, 'SHOW GRANTS FOR CURRENT_USER'), 0);
-        foreach ((new Servers())->rows($native, 'SHOW GLOBAL VARIABLES') as [$name, $value]) {
-            $this->globals[strtolower($name)] = $value;
-        }
+        $this->globals = $server->globals($native, $version);
         $account = (new Servers())->rows($native, 'SHOW CREATE USER CURRENT_USER');
         $this->account = $account === [] ? null : (string) preg_replace('/\ACREATE USER /', 'ALTER USER ', $account[0][1] ?? $account[0][0]);
     }
@@ -80,11 +78,12 @@ final class Baseline
         if ($this->account !== null && $connection->exec($this->account) === false) {
             throw new RuntimeException('Cannot restore the reference account: ' . json_encode($connection->errorInfo()));
         }
-        foreach ((new Servers())->rows($connection, 'SHOW GLOBAL VARIABLES') as [$name, $value]) {
-            $key = strtolower($name);
-            if (isset($this->globals[$key]) && $this->globals[$key] !== $value) {
-                $original = $this->globals[$key];
-                $literal = preg_match('/\A-?[0-9]+(?:\.[0-9]+)?\z/', $original) === 1 ? $original : $connection->quote($original);
+        foreach ((new Servers())->globals($connection, $this->version) as $name => $value) {
+            if (array_key_exists($name, $this->globals) && $this->globals[$name] !== $value) {
+                $original = $this->globals[$name];
+                $literal = $original === null
+                    ? (str_starts_with($name, 'innodb_monitor_') ? 'DEFAULT' : 'NULL')
+                    : (preg_match('/\A-?[0-9]+(?:\.[0-9]+)?\z/', $original) === 1 ? $original : $connection->quote($original));
                 if ($connection->exec('SET GLOBAL ' . $this->identifier($name) . ' = ' . $literal) === false) {
                     throw new RuntimeException('Cannot restore the global variable ' . $name . ': ' . json_encode($connection->errorInfo()));
                 }
@@ -109,7 +108,7 @@ final class Baseline
 
     /**
      * Clears historical latch waits before an isolated observation, using the same SQL on both servers.
-     * The fixture also sets this value before capturing globals, since MySQL retains the reset selector.
+     * The original selector is restored with the other globals after the observation.
      * Counters produced during the generated input remain visible and are never normalized.
      * MySQL 5.6 does not recognize latch; this fixture is enabled only for verified modern releases.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/show-engine.html.
