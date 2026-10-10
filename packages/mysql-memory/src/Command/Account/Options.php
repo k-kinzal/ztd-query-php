@@ -94,14 +94,18 @@ final class Options
      *
      * @param bool $altered Whether ALTER USER changes the account, where a plugin alone expires the password
      * @param int $passwordLength The session's checked generated_random_password_length
+     * @param bool $retain Whether to retain the existing primary password as the secondary
      *
      * @throws SqlError When the plugin is not loaded or the string has not its form
      */
-    public function identify(Account $account, Identification $identification, bool $altered, int $passwordLength = 20): ?string
+    public function identify(Account $account, Identification $identification, bool $altered, int $passwordLength = 20, bool $retain = false): ?string
     {
         $credentials = new Credentials($this->release);
-        $account->plugin = $identification->plugin === null ? $account->plugin : $credentials->plugin($identification->plugin->value);
+        $this->check($identification, $account->plugin);
+        $plugin = $identification->plugin === null ? $account->plugin : $credentials->plugin($identification->plugin->value);
         $secret = $identification->secret->value ?? '';
+        (new \MySqlMemory\Account\SecondaryPassword())->change($account, $plugin, $secret === '' && $identification->credential !== Credential::RandomPassword, $retain);
+        $account->plugin = $plugin;
         $generated = null;
         switch ($identification->credential) {
             case Credential::None:

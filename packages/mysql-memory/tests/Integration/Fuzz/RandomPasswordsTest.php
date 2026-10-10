@@ -27,7 +27,8 @@ final class RandomPasswordsTest extends TestCase
         yield 'set explicit' => ['SET PASSWORD FOR CURRENT_USER TO RANDOM', '8.4.7', true];
         yield 'whitespace and terminator' => [" set\n password for current_user ( ) to random ; ", '8.0.44', true];
         yield 'legacy' => ['SET PASSWORD TO RANDOM', '5.7.44', false];
-        yield 'retention needs another contract' => ['ALTER USER USER() IDENTIFIED BY RANDOM PASSWORD RETAIN CURRENT PASSWORD', '8.4.7', false];
+        yield 'retention has an additional contract' => ['ALTER USER USER() IDENTIFIED BY RANDOM PASSWORD RETAIN CURRENT PASSWORD', '8.4.7', true];
+        yield 'set retention' => ['SET PASSWORD TO RANDOM RETAIN CURRENT PASSWORD', '8.4.7', true];
         yield 'another account' => ["SET PASSWORD FOR 'u'@'%' TO RANDOM", '8.4.7', false];
         yield 'multiple statements' => ['SET PASSWORD TO RANDOM; SELECT 1', '8.4.7', false];
         yield 'preceding settings' => ['SET generated_random_password_length=5; SET PASSWORD TO RANDOM', '8.4.7', false];
@@ -94,6 +95,9 @@ final class RandomPasswordsTest extends TestCase
         yield 'alter user function' => ['ALTER USER USER ( ) IDENTIFIED BY RANDOM PASSWORD', $contracts];
         yield 'set implicit' => ['SET PASSWORD TO RANDOM', $contracts];
         yield 'set explicit' => ['SET PASSWORD FOR CURRENT_USER TO RANDOM', $contracts];
+        $retained = [...$contracts, \Fuzz\Target\Password\Retention::CONTRACT];
+        yield 'alter with retention' => ['ALTER USER USER() IDENTIFIED BY RANDOM PASSWORD RETAIN CURRENT PASSWORD', $retained];
+        yield 'set with retention' => ['SET PASSWORD TO RANDOM RETAIN CURRENT PASSWORD', $retained];
     }
 
     /**

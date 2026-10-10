@@ -78,6 +78,9 @@ final class Users implements SystemRows
         if ($account->failedAttempts !== 0 || $account->lockTime !== 0) {
             $members[] = '"Password_locking": {"failed_login_attempts": ' . $account->failedAttempts . ', "password_lock_time_days": ' . $account->lockTime . '}';
         }
+        if ($account->secondary !== null) {
+            $members[] = '"additional_password": ' . json_encode($account->secondary[0], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        }
 
         return $members === [] ? null : '{' . implode(', ', $members) . '}';
     }

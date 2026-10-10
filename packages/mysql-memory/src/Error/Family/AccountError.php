@@ -49,8 +49,11 @@ enum AccountError: int implements ErrorCode
     case IllegalPrivilegeLevel = 3619;
     case UnsupportedGrantAs = 3835;
     case InvalidGrantAs = 3836;
+    case RetainEmptyPassword = 3878;
     case IncorrectCurrentPassword = 3891;
     case CurrentPasswordNotRequired = 3893;
+    case RetainChangesPlugin = 3894;
+    case RetainWithEmptyPassword = 3895;
     case UnregisteredDynamicPrivilege = 3929;
     case InvalidUserAttributeJson = 3982;
     case RoleGrantedToItself = 4027;

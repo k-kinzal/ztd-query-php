@@ -23,6 +23,11 @@ use SqlSemantics\Platform\MySql\Statement\Account\Option\TlsKind;
 final class Account
 {
     /**
+     * @var array{string, string|null}|null The retained authentication string and known password, or null without a secondary password
+     */
+    public ?array $secondary = null;
+
+    /**
      * @param Identity $identity The user name and host
      * @param string $plugin The authentication plugin
      * @param string $hash The authentication string

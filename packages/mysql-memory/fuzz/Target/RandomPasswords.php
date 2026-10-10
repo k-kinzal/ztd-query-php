@@ -9,11 +9,13 @@ use PDO;
 /**
  * Validates a random primary password returned for the current account.
  *
- * Only an isolated ALTER USER or SET PASSWORD without retention is eligible. The returned
+ * Only an isolated ALTER USER or SET PASSWORD is eligible. The returned
  * account, factor and configured length must be correct. A subsequent SET PASSWORD must
  * reject a different current password and accept the returned one. Only then is the random
  * text interchangeable; metadata, warnings, errors and fixture rows remain exact.
- * This checks SQL password storage and replacement, not wire authentication or entropy.
+ * RETAIN additionally verifies the previous primary hash becomes the secondary, survives an
+ * ordinary update, and is removed by DISCARD without changing the primary. These checks cover
+ * SQL password storage and replacement, not wire authentication or entropy.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/password-management.html.
  */
 final class RandomPasswords
@@ -26,8 +28,9 @@ final class RandomPasswords
     /**
      * @param int $length The session's configured generation length before the statement
      * @param string $account CURRENT_USER() before the statement
+     * @param Password\Retention|null $retention The previous primary when retention is requested
      */
-    public function __construct(public readonly int $length, public readonly string $account)
+    public function __construct(public readonly int $length, public readonly string $account, public readonly ?Password\Retention $retention = null)
     {
     }
 
@@ -38,18 +41,23 @@ final class RandomPasswords
     {
         $user = '(?:CURRENT_USER(?:\s*\(\s*\))?|USER\s*\(\s*\))';
 
-        return !str_starts_with($version, '5.') && preg_match('/\A\s*(?:ALTER\s+USER\s+' . $user . '\s+IDENTIFIED\s+BY\s+RANDOM\s+PASSWORD|SET\s+PASSWORD(?:\s+FOR\s+' . $user . ')?\s+TO\s+RANDOM)\s*;?\s*\z/i', $sql) === 1;
+        return !str_starts_with($version, '5.') && preg_match('/\A\s*(?:ALTER\s+USER\s+' . $user . '\s+IDENTIFIED\s+BY\s+RANDOM\s+PASSWORD|SET\s+PASSWORD(?:\s+FOR\s+' . $user . ')?\s+TO\s+RANDOM)(?:\s+RETAIN\s+CURRENT\s+PASSWORD)?\s*;?\s*\z/i', $sql) === 1;
     }
 
     /**
      * Samples the account and length independently of the generated result.
      */
-    public static function capture(PDO $pdo): ?self
+    public static function capture(PDO $pdo, bool $retain = false): ?self
     {
         $statement = $pdo->query('SELECT @@generated_random_password_length, CURRENT_USER()');
         $row = $statement === false ? false : $statement->fetch(PDO::FETCH_NUM);
+        $statement = null;
+        $retention = $retain ? Password\Retention::capture($pdo) : null;
+        if ($retain && $retention === null) {
+            return null;
+        }
 
-        return is_array($row) && is_numeric($row[0] ?? null) && is_string($row[1] ?? null) ? new self((int) $row[0], $row[1]) : null;
+        return is_array($row) && is_numeric($row[0] ?? null) && is_string($row[1] ?? null) ? new self((int) $row[0], $row[1], $retention) : null;
     }
 
     /**
@@ -106,14 +114,14 @@ final class RandomPasswords
     public function comparable(PDO $pdo, array $observation): array
     {
         $password = $this->password($observation);
-        if ($password === null || !$this->verifies($pdo, $password)) {
+        if ($password === null || ($this->retention !== null && !$this->retention->retained($pdo)) || !$this->verifies($pdo, $password) || ($this->retention !== null && !$this->retention->discarded($pdo))) {
             return $observation;
         }
         $results = $observation['results'];
         assert(is_array($results) && is_array($results[0]) && is_array($results[0]['rows']) && is_array($results[0]['rows'][0]));
         $results[0]['rows'][0][2] = '{' . self::CONTRACT . '}';
         $observation['results'] = $results;
-        $observation['contracts'] = [self::CONTRACT];
+        $observation['contracts'] = $this->retention === null ? [self::CONTRACT] : [self::CONTRACT, Password\Retention::CONTRACT];
 
         return $observation;
     }

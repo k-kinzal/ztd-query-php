@@ -220,10 +220,13 @@ final class AlterUserCommand implements Command
                 $this->replace($account, $user->replace->value, $session);
             }
             if ($user->identification !== null) {
-                $password = $options->identify($account, $user->identification, true, (int) $session->variables->read('generated_random_password_length'));
+                $password = $options->identify($account, $user->identification, true, (int) $session->variables->read('generated_random_password_length'), $user->retainCurrent);
                 if ($password !== null) {
                     $generated[] = [$account->identity, $password];
                 }
+            }
+            if ($user->discardOld) {
+                $account->secondary = null;
             }
             $options->apply($account, $statement->tls, $statement->resources, $statement->options, $statement->comment);
         }

@@ -98,6 +98,7 @@ final class SetPasswordCommand implements Command
         if ($session->settings()->release() === GrammarRelease::MySql5651) {
             $this->legacy($account, $statement);
         } else {
+            (new \MySqlMemory\Account\SecondaryPassword())->change($account, $account->plugin, $password === '', $statement->retainCurrent);
             $account->hash = $credentials->hash($account->plugin, $password);
             $account->password = $password;
         }

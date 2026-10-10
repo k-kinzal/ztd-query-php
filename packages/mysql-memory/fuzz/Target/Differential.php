@@ -190,6 +190,7 @@ final class Differential
         $statements = [
             "CREATE USER IF NOT EXISTS {$quoted} IDENTIFIED BY {$password}",
             "ALTER USER {$quoted} IDENTIFIED BY {$password} REQUIRE NONE WITH MAX_QUERIES_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_USER_CONNECTIONS 0 ACCOUNT UNLOCK PASSWORD EXPIRE NEVER",
+            "ALTER USER {$quoted} DISCARD OLD PASSWORD",
             "GRANT ALL ON *.* TO {$quoted} WITH GRANT OPTION",
             "SET DEFAULT ROLE NONE TO {$quoted}",
             'SET GLOBAL offline_mode = OFF',
@@ -199,7 +200,7 @@ final class Differential
             'ALTER INSTANCE ENABLE INNODB REDO_LOG',
         ];
 
-        return str_starts_with($this->version, '5.7.') ? array_values(array_diff($statements, ["SET DEFAULT ROLE NONE TO {$quoted}", 'ALTER INSTANCE ENABLE INNODB REDO_LOG'])) : $statements;
+        return str_starts_with($this->version, '5.7.') ? array_values(array_diff($statements, ["SET DEFAULT ROLE NONE TO {$quoted}", 'ALTER INSTANCE ENABLE INNODB REDO_LOG', "ALTER USER {$quoted} DISCARD OLD PASSWORD"])) : $statements;
     }
 
     /**
@@ -223,7 +224,7 @@ final class Differential
     {
         $clock = TableTimes::handles($sql, $this->version) ? new TableTimes() : null;
         $pdo = $this->connect($dsn, $user, $password, $clock);
-        $passwords = RandomPasswords::handles($sql, $this->version) ? RandomPasswords::capture($pdo) : null;
+        $passwords = RandomPasswords::handles($sql, $this->version) ? RandomPasswords::capture($pdo, preg_match('/\bRETAIN\s+CURRENT\s+PASSWORD\b/i', $sql) === 1) : null;
         $identities = StatementIdentities::handles($sql, $this->version) ? StatementIdentities::capture($pdo) : null;
         $observer = new Observer();
         $ordered = preg_match('/\border\s+by\b/i', $sql) === 1;
