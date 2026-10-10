@@ -146,15 +146,16 @@ final class EventCommand implements Command
     /**
      * Ends a one-time event whose time has passed according to the session clock: a created
      * event without ON COMPLETION PRESERVE is dropped, any other one disabled, each with its note.
-     * Modern releases also keep an event disabled without a note when its final time is after
-     * the session clock but before the actual clock (verified on live 8.0 and 8.4 servers).
+     * With the scheduler enabled, modern releases also disable an event without a note when
+     * its final time is after the session clock but before the actual clock. A stopped
+     * scheduler leaves that definition enabled (verified on live 8.0 and 8.4 servers).
      */
     public function lapse(Event $event, bool $created, Session $session, Context $context): void
     {
         if ($event->at === null || $event->at >= Temporal::dateTime(...[...$context->local(), 0])) {
             $end = $event->at ?? $event->ends;
             $legacy = in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
-            if (!$legacy && $end !== null && $end < Temporal::dateTime(...[...$context->local(microtime(true)), 0]) && $event->status === 'ENABLED') {
+            if (!$legacy && $session->variables->read('event_scheduler') === 'ON' && $end !== null && $end < Temporal::dateTime(...[...$context->local(microtime(true)), 0]) && $event->status === 'ENABLED') {
                 $event->status = 'DISABLED';
             }
 

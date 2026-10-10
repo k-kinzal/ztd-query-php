@@ -36,10 +36,10 @@ final class EventScheduleTest extends TestCase
     }
 
     #[DataProvider('providerSchedules')]
-    public function testScheduleMatchesTheServer(string $sql): void
+    public function testScheduleValidationAndMetadataMatchWithTheSchedulerStopped(string $sql): void
     {
         [$target] = Servers::shared();
-        $comparison = $target->compare($sql);
+        $comparison = $target->compare('SET GLOBAL event_scheduler=OFF; ' . $sql);
         self::assertFalse($comparison->volatile, (string) $comparison->referenceDifference);
         self::assertNull($comparison->difference, (string) $comparison->difference);
     }

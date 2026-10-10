@@ -23,6 +23,18 @@ use SqlSemantics\Statement\Operation;
 #[Small]
 final class TableChangeTest extends TestCase
 {
+    public function testActPreservesIndexVisibilityThroughRenamingAndColumnChanges(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT,KEY k(a)); ALTER TABLE t ALTER INDEX k INVISIBLE; ALTER TABLE t RENAME INDEX k TO j, ADD b INT');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        self::assertSame(['j', false], [$table->definition->keys[0]->name, $table->definition->keys[0]->visible]);
+        $session->query('ALTER TABLE t ALTER INDEX j VISIBLE');
+
+        self::assertTrue($session->instance->dictionary->table('d', 't')?->definition->keys[0]->visible);
+    }
+
     public function testDropClearsReportedWidthsBeforeReusingTheColumnName(): void
     {
         $session = (new Instance('5.6.51'))->connect();

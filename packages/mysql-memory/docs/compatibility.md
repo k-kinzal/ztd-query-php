@@ -72,7 +72,7 @@ A statement, an expression form or a function that the emulator does not run fai
 ## Queries
 
 - Query blocks with every clause: `FROM`, `WHERE`, `GROUP BY` with `WITH ROLLUP` and `GROUPING()`, `HAVING`, `DISTINCT`, `ORDER BY` (by expression, alias or position), `LIMIT` and `OFFSET`, `SQL_CALC_FOUND_ROWS`, `FOR UPDATE` and `FOR SHARE`.
-- Joins: comma, `INNER`, `CROSS`, `LEFT`, `RIGHT`, `NATURAL`, `USING`, `STRAIGHT_JOIN`; derived tables, including `LATERAL`; index hints are checked (an index the table does not have is error 1176, a view has none) and then ignored. The indexes of the tables of `information_schema`, `mysql` and `performance_schema` are not checked.
+- Joins: comma, `INNER`, `CROSS`, `LEFT`, `RIGHT`, `NATURAL`, `USING`, `STRAIGHT_JOIN`; derived tables, including `LATERAL`; index hints are checked (an unavailable index is error 1176, a view has none) and determine whether an ordered DISTINCT result retains index-backed field metadata. Row access still uses table scans. The indexes of the tables of `information_schema`, `mysql` and `performance_schema` are not checked.
 - Common table expressions, including recursive ones; `UNION`, `INTERSECT` and `EXCEPT` with `ALL` and `DISTINCT`; `VALUES ROW(...)` and `TABLE t`.
 - Subqueries: scalar, row, `IN`, `NOT IN`, `EXISTS`, `ANY`, `SOME`, `ALL`, correlated or not.
 - `SELECT ... INTO @variables`.
@@ -177,7 +177,9 @@ BIT extrema evaluate numerically while reporting BIT fields; storing their
 results in derived tables or UNION restores packed BIT values. Selected BIT
 sort keys of an ordered DISTINCT result use integer metadata when the chosen
 path stores them. Covering indexes and selected non-null unique keys can avoid
-that storage; `LIMIT 0` retains the original field metadata.
+that storage; `LIMIT 0` retains the original field metadata. USE, FORCE and IGNORE
+INDEX apply their grouping and ordering scopes. Invisible indexes participate
+only when `optimizer_switch` enables `use_invisible_indexes`.
 `MIN` and `MAX` over TEXT/BLOB columns preserve separate expression and metadata
 bounds, including grouped column references, scalar subqueries, and later
 `CONCAT` or `HEX` calls.
@@ -247,6 +249,7 @@ Not emulated:
 
 - `CREATE DATABASE`, `ALTER DATABASE`, `DROP DATABASE`, with character sets and collations.
 - `CREATE TABLE` with columns of every non-spatial type, keys, indexes, defaults, `AUTO_INCREMENT`, invisible columns, table options; `CREATE TABLE ... LIKE`; `CREATE TABLE ... SELECT`; `IF NOT EXISTS`.
+- Index visibility is retained by CREATE, ALTER, renaming and table copies, and reported by SHOW CREATE TABLE, SHOW INDEX and INFORMATION_SCHEMA.STATISTICS. An explicit or implicit primary key cannot be invisible. Invisible unique indexes still reject duplicates.
 - `ALTER TABLE` with its actions (columns, keys, renames, options), `CREATE INDEX`, `DROP INDEX`, `RENAME TABLE`, `DROP TABLE`, `TRUNCATE TABLE`. An `ALTER TABLE` converts the rows of the table into the new definition, with the warnings or errors of the server, and changes nothing when it fails.
 - `SHOW CREATE TABLE` writes the definition as the server writes it.
 - The statements that commit implicitly commit an open transaction first.
@@ -275,7 +278,7 @@ Routine creation and alteration use statement time, including `SET timestamp`; r
 - `CALL` binds `IN`, `OUT` and `INOUT` parameters: an `OUT` or `INOUT` argument is a user variable, a variable of the calling program or a column of the `NEW` row of a `BEFORE` trigger (error 1414 otherwise), which receives the value of the parameter. Each query of a procedure, and of the procedures it calls, answers a result set, and the procedure then answers a completion with the rows its last statement affected, which `ROW_COUNT()` reads; the result sets come before an error that ends the procedure. A procedure that calls itself deeper than `max_sp_recursion_depth` fails with error 1456. Each statement of a procedure stands on its own: one that fails does not undo the statements before it.
 - Stored functions are called in any expression (select lists, `WHERE`, values written by `INSERT` and `UPDATE`), each call running the function with its arguments stored into the parameter types; the declared `RETURNS` type converts the value, with the call named in its warnings and errors, and a function that ends without `RETURN` fails with error 1321. A function cannot call itself (error 1424), and the conditions of its last statement are added to those of the statement that calls it. A native function of the same name is called instead of an unqualified stored function.
 - Triggers fire for each row, `BEFORE` and `AFTER` `INSERT`, `UPDATE` and `DELETE`, in their `FOLLOWS` and `PRECEDES` order, with `NEW` and `OLD` and `SET NEW.col` in `BEFORE` triggers. `INSERT ... ON DUPLICATE KEY UPDATE` fires `BEFORE INSERT` and then the `UPDATE` triggers for a row that conflicts, `REPLACE` the `DELETE` triggers of the rows it replaces, and `UPDATE` its triggers for every matched row, changed or not. A trigger that fails fails its statement, which then changes nothing. A function or trigger that writes a table the statement invoking it uses fails with error 1442.
-- Events never run. `event_scheduler` reads `ON`, as it does on a new MySQL 8.0 or later server (`OFF` in 5.6 and 5.7), but the emulator keeps the events it is given without ever running them, so that tests do not depend on the clock: run the body of an event yourself where a test needs its effect.
+- Scheduled event bodies are not executed. `event_scheduler` defaults to `ON` in MySQL 8.0 and later, and `OFF` in 5.6 and 5.7. Schedule validation uses the session clock. With the scheduler stopped, an event whose end is after a pinned session clock remains enabled even if it is before the real clock. Real-clock event execution and eventual removal by the daemon remain unimplemented; run an event body explicitly where a test needs its effects.
 
 Not emulated:
 

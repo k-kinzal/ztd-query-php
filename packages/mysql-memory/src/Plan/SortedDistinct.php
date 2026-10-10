@@ -4,12 +4,20 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan;
 
+use MySqlMemory\Dictionary\Key;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
+use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHint;
+use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction;
+use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintScope;
+use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
+use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Identifier\Name;
+use SqlSemantics\Statement\Relation;
 
 /**
  * Types the stored sort columns of DISTINCT after its access path is selected.
@@ -37,7 +45,7 @@ final class SortedDistinct
      */
     public function apply(QueryPlan $plan, Select $select, array $keys, ?Scope $outer): QueryPlan
     {
-        if (!in_array(SelectOption::Distinct, $select->options, true) || $keys === [] || $this->planner->blocks->empty($select, $outer) || $this->indexed($plan, $keys)) {
+        if (!in_array(SelectOption::Distinct, $select->options, true) || $keys === [] || $this->planner->blocks->empty($select, $outer) || $this->indexed($plan, $keys, $select->from)) {
             return $plan;
         }
         $domains = $plan->domains;
@@ -56,8 +64,14 @@ final class SortedDistinct
      *
      * @param list<array{int, Domain, bool}> $keys The projected sort positions
      */
-    public function indexed(QueryPlan $plan, array $keys): bool
+    public function indexed(QueryPlan $plan, array $keys, ?Relation $source = null): bool
     {
+        while ($source instanceof NestedRelation) {
+            $source = $source->relation;
+        }
+        if (!$source instanceof TableReference) {
+            return false;
+        }
         $first = $plan->origins[0] ?? null;
         $table = $first === null ? null : $this->planner->dictionary->table($first->schema, $first->originalTable);
         if ($table === null) {
@@ -78,11 +92,48 @@ final class SortedDistinct
                 return true;
             }
             $ordered = array_map(static fn (array $key): ?int => $selected[$key[0]] ?? null, $keys);
-            if (array_diff($selected, $index->columns) === [] && $ordered === array_slice($index->columns, 0, count($ordered))) {
+            if ($this->available($index, $source) && array_diff($selected, $index->columns) === [] && $ordered === array_slice($index->columns, 0, count($ordered))) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Checks visibility and the hint scopes that can avoid duplicate storage.
+     */
+    public function available(Key $index, TableReference $source): bool
+    {
+        $visible = $index->visible || str_contains((string) $this->planner->compiler->connection->variables->read('optimizer_switch'), 'use_invisible_indexes=on');
+
+        return $visible && ($this->allowed($index->name, $source->indexHints, IndexHintScope::OrderBy) || $this->allowed($index->name, $source->indexHints, IndexHintScope::GroupBy));
+    }
+
+    /**
+     * Applies USE/FORCE unions and IGNORE exclusions in one index-hint scope.
+     * A covering index can avoid DISTINCT storage through grouping or ordering;
+     * disabling only its JOIN scope does not prevent either use.
+     *
+     * @param list<IndexHint> $hints The hints on the table reference
+     */
+    public function allowed(string $name, array $hints, IndexHintScope $scope): bool
+    {
+        $selected = null;
+        $ignored = false;
+        foreach ($hints as $hint) {
+            if ($hint->scope !== null && $hint->scope !== $scope) {
+                continue;
+            }
+            $names = array_map(static fn ($index): string => $index instanceof Name ? strtolower($index->value) : 'primary', $hint->indexes);
+            $named = in_array(strtolower($name), $names, true);
+            if ($hint->action === IndexHintAction::Ignore) {
+                $ignored = $ignored || $named;
+            } else {
+                $selected = $selected === true || $named;
+            }
+        }
+
+        return !$ignored && $selected !== false;
     }
 }

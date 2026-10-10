@@ -81,6 +81,17 @@ final class IndexHintsTest extends TestCase
         self::assertSame([[], ['k'], null], [(new IndexHints())->keys($view, $session), (new IndexHints())->keys($table, $session), (new IndexHints())->keys($system, $session)]);
     }
 
+    public function testKeysRequiresTheOptimizerSwitchForAnInvisibleIndex(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a INT,KEY k(a) INVISIBLE)');
+        $reference = (new Walker())->find($session->analyze('SELECT * FROM t')->statement, TableReference::class)[0];
+
+        self::assertSame([], (new IndexHints())->keys($reference, $session));
+        $session->query("SET optimizer_switch='use_invisible_indexes=on'");
+        self::assertSame(['k'], (new IndexHints())->keys($reference, $session));
+    }
+
     public function testRefusalRaisesTheHintsOfABlockBeforeItsDerivedTablesInMySql84(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

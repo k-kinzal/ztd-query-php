@@ -16,9 +16,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
- * The result metadata of sorted reads of the data dictionary's program views.
+ * The result metadata of sorted reads of data dictionary views.
  *
- * ROUTINES and PARAMETERS pass sorted rows through temporary columns in MySQL 8.x and 9.x.
+ * ROUTINES, PARAMETERS and STATISTICS pass sorted rows through temporary columns in MySQL 8.x and 9.x.
  * Text expressions become column values with zero decimals, large text is sent as BLOB, temporal
  * values are binary, and key flags disappear. LIMIT 0 keeps the original expression metadata.
  * These distinctions are observed through the client protocol, without reading view definitions.
@@ -37,7 +37,7 @@ final class ProgramMetadata
         }
         foreach ($scope->tables as $definition) {
             $table = $planner->dictionary->system?->table($definition->declaration);
-            if ($table?->schema === 'information_schema' && in_array($table->name, ['ROUTINES', 'PARAMETERS'], true)) {
+            if ($table?->schema === 'information_schema' && in_array($table->name, ['ROUTINES', 'PARAMETERS', 'STATISTICS'], true)) {
                 $domains = array_map(self::domain(...), $plan->domains);
 
                 return new QueryPlan($plan->root, $domains, $plan->names, array_map(self::origin(...), $plan->origins, $domains));

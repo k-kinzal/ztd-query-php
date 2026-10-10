@@ -99,7 +99,9 @@ final class IndexHints
         }
         $table = $session->instance->dictionary->table($database, $reference->name->name->value);
         if ($table !== null) {
-            return array_map(static fn ($key): string => strtolower($key->name), $table->definition->keys);
+            $invisible = str_contains((string) $session->variables->read('optimizer_switch'), 'use_invisible_indexes=on');
+
+            return array_values(array_map(static fn ($key): string => strtolower($key->name), array_filter($table->definition->keys, static fn ($key): bool => $key->visible || $invisible)));
         }
 
         return isset($schema->views[$reference->name->name->value]) ? [] : null;

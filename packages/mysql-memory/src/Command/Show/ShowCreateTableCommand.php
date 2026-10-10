@@ -171,7 +171,7 @@ final class ShowCreateTableCommand implements Command
             $prefix = $key->prefixes[$index] ?? null;
             $parts[] = $this->name($table->columns[$position]->name) . ($prefix === null ? '' : '(' . $prefix . ')') . (($key->descending[$index] ?? false) ? ' DESC' : '');
         }
-        $columns = '(' . implode(',', $parts) . ')';
+        $columns = '(' . implode(',', $parts) . ')' . ($key->visible ? '' : ' /*!80000 INVISIBLE */');
 
         return match ($key->kind) {
             KeyKind::Primary => 'PRIMARY KEY ' . $columns,

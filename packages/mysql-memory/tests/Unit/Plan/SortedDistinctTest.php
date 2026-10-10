@@ -28,6 +28,19 @@ final class SortedDistinctTest extends TestCase
         self::assertSame([['0', str_repeat("\0", 8)], ['65', str_repeat("\xff", 8)]], $result->rows);
     }
 
+    public function testAvailableUsesInvisibleIndexesOnlyWhenTheSessionEnablesThem(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a BIT(8),KEY k(a) INVISIBLE)');
+        $hidden = $session->query('SELECT DISTINCT a FROM t ORDER BY a')[0];
+        $session->query("SET optimizer_switch='use_invisible_indexes=on'");
+        $enabled = $session->query('SELECT DISTINCT a FROM t ORDER BY a')[0];
+        self::assertInstanceOf(ResultSet::class, $hidden);
+        self::assertInstanceOf(ResultSet::class, $enabled);
+
+        self::assertSame([Field::Long, Field::Bit], [$hidden->columns[0]->type, $enabled->columns[0]->type]);
+    }
+
     /**
      * @return iterable<string, array{string, string, Field}>
      */
@@ -50,6 +63,36 @@ final class SortedDistinctTest extends TestCase
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a BIT(8),b BIT(64)' . $index . ')');
         $result = $session->query($sql)[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame($type, $result->columns[0]->type);
+    }
+
+    /**
+     * @return iterable<string, array{string, Field}>
+     */
+    public static function providerHints(): iterable
+    {
+        yield 'empty selection' => ['USE INDEX()', Field::Long];
+        yield 'excluded index' => ['IGNORE INDEX(k)', Field::Long];
+        yield 'selected index' => ['USE INDEX(k)', Field::Bit];
+        yield 'forced index' => ['FORCE INDEX(k)', Field::Bit];
+        yield 'case insensitive' => ['IGNORE INDEX(K)', Field::Long];
+        yield 'other selected index' => ['USE INDEX(j)', Field::Long];
+        yield 'union of selected indexes' => ['USE INDEX(j) USE INDEX(k)', Field::Bit];
+        yield 'ignored selection' => ['USE INDEX(k) IGNORE INDEX(k)', Field::Long];
+        yield 'order scope only' => ['IGNORE INDEX FOR ORDER BY(k)', Field::Bit];
+        yield 'group scope only' => ['IGNORE INDEX FOR GROUP BY(k)', Field::Bit];
+        yield 'join scope only' => ['IGNORE INDEX FOR JOIN(k)', Field::Bit];
+        yield 'order and group scopes' => ['IGNORE INDEX FOR ORDER BY(k) IGNORE INDEX FOR GROUP BY(k)', Field::Long];
+    }
+
+    #[DataProvider('providerHints')]
+    public function testAllowedRespectsTheIndexHintsOfGroupingAndOrdering(string $hint, Field $type): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a BIT(8),b BIT(64),KEY k(a,b),KEY j(b))');
+        $result = $session->query('SELECT DISTINCT a,b FROM t ' . $hint . ' ORDER BY a')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame($type, $result->columns[0]->type);

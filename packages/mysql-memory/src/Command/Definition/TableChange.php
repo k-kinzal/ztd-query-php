@@ -243,6 +243,9 @@ final class TableChange
             if ($key instanceof IndexDefinition && $key->kind === IndexKind::Primary && !$command->visible) {
                 throw SchemaError::PrimaryKeyInvisible->error();
             }
+            if ($key instanceof IndexDefinition) {
+                $this->layout->keys[$index][0] = (new Constraint\IndexOptions())->change($key, $command->visible);
+            }
         } elseif ($command instanceof ConstraintEnforcement) {
             $index = $this->constraint($command->constraint->value, $command->kind === ElementKind::Check);
             if ($index === null) {

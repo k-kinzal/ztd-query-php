@@ -124,6 +124,7 @@ final class Definitions
         $expressions->keyed($columns, $keys);
         usort($keys, static fn (Key $left, Key $right): int => ($right->kind === KeyKind::Primary) <=> ($left->kind === KeyKind::Primary));
         $definition = new TableDefinition($schema, $create->name->name->value, $columns, $keys, $declaration, $engine, $collation->name, $create->temporaryWords > 0, '', $create);
+        (new Constraint\IndexOptions())->check($definition);
         $definition = $expressions->computed($definition, $this->planner->settings->connectionCollation->charset->name);
 
         $definition = $constraints->constrained($definition);
@@ -149,7 +150,7 @@ final class Definitions
         foreach ($create->elements as $element) {
             if ($element instanceof IndexDefinition && isset($this->generatedKeys[mb_strtolower($element->name->column->value ?? '')])) {
                 $key = $this->key($element, $columns);
-                $keys[] = $implicit[] = new Key($key->name, $key->kind, $key->columns, $key->prefixes, $key->descending, true);
+                $keys[] = $implicit[] = new Key($key->name, $key->kind, $key->columns, $key->prefixes, $key->descending, true, $key->visible);
             } elseif ($element instanceof IndexDefinition) {
                 $keys[] = $this->key($element, $columns);
             }
@@ -380,7 +381,7 @@ final class Definitions
             IndexKind::Index => KeyKind::Index,
         };
 
-        return new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes, $descending);
+        return new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes, $descending, visible: (new Constraint\IndexOptions())->visible($index));
     }
 
     /**
@@ -410,7 +411,7 @@ final class Definitions
                     $name = $base . '_' . $suffix;
                 }
                 $used[strtolower($name)] = true;
-                $key = new Key($name, $key->kind, $key->columns, $key->prefixes, $key->descending, $key->generated);
+                $key = new Key($name, $key->kind, $key->columns, $key->prefixes, $key->descending, $key->generated, $key->visible);
             }
             $named[] = $key;
         }

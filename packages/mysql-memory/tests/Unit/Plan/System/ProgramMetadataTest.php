@@ -53,6 +53,17 @@ final class ProgramMetadataTest extends TestCase
         self::assertSame(Collation::binary(), ProgramMetadata::domain($time)->collation);
     }
 
+    public function testBufferedClearsDecimalsOfSortedStatisticsText(): void
+    {
+        $session = (new Instance())->connect();
+        $direct = $session->query('SELECT INDEX_NAME,IS_VISIBLE FROM information_schema.STATISTICS')[0];
+        $sorted = $session->query('SELECT INDEX_NAME,IS_VISIBLE FROM information_schema.STATISTICS ORDER BY INDEX_NAME')[0];
+        self::assertInstanceOf(ResultSet::class, $direct);
+        self::assertInstanceOf(ResultSet::class, $sorted);
+
+        self::assertSame([31, 31, 0, 0], [$direct->columns[0]->decimals, $direct->columns[1]->decimals, $sorted->columns[0]->decimals, $sorted->columns[1]->decimals]);
+    }
+
     public function testOriginRetainsIdentitiesWithoutKeyFlags(): void
     {
         $origin = new ColumnOrigin('d', 'a', 't', 'c', 8, true);

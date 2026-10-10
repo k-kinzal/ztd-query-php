@@ -242,6 +242,24 @@ final class DefinitionsTest extends TestCase
         );
     }
 
+    public function testKeyRetainsTheLastVisibilityOptionAndUnnamedIndexVisibility(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT, KEY (a) VISIBLE INVISIBLE, KEY b (a) INVISIBLE VISIBLE)');
+        $keys = $session->instance->dictionary->table('d', 't')?->definition->keys ?? [];
+
+        self::assertSame([['a', false], ['b', true]], array_map(static fn ($key): array => [$key->name, $key->visible], $keys));
+    }
+
+    public function testTableRefusesAnInvisibleImplicitPrimaryKey(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $this->expectExceptionMessage('A primary key index cannot be invisible');
+
+        $session->query('CREATE TABLE t (a INT NOT NULL, UNIQUE KEY (a) INVISIBLE)');
+    }
+
     public function testNamedNamesAnUnnamedKeyAfterItsFirstColumn(): void
     {
         $session = (new Instance())->connect();

@@ -68,7 +68,7 @@ final class Statistics implements SystemRows
                             'INDEX_TYPE' => $show->type($key->kind, $definition->engine),
                             'COMMENT' => '',
                             'INDEX_COMMENT' => '',
-                            'IS_VISIBLE' => 'YES',
+                            'IS_VISIBLE' => $key->visible ? 'YES' : 'NO',
                             'EXPRESSION' => null,
                         ];
                     }

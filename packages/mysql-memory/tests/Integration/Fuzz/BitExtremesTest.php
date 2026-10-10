@@ -19,6 +19,9 @@ final class BitExtremesTest extends TestCase
      */
     public static function providerStatements(): iterable
     {
+        foreach (['USE INDEX()', 'IGNORE INDEX(k)', 'USE INDEX(k)', 'FORCE INDEX(k)', 'IGNORE INDEX(K)', 'USE INDEX(j)', 'USE INDEX(j) USE INDEX(k)', 'USE INDEX(k) IGNORE INDEX(k)', 'IGNORE INDEX FOR ORDER BY(k)', 'IGNORE INDEX FOR GROUP BY(k)', 'IGNORE INDEX FOR JOIN(k)', 'IGNORE INDEX FOR ORDER BY(k) IGNORE INDEX FOR GROUP BY(k)'] as $hint) {
+            yield "sorted hint: {$hint}" => ["CREATE TABLE bit_extreme_probe(a BIT(8),b BIT(64),KEY k(a,b),KEY j(b)); INSERT INTO bit_extreme_probe VALUES(65,1),(0,2),(65,1); SELECT DISTINCT a,b FROM bit_extreme_probe {$hint} ORDER BY a"];
+        }
         foreach (['' => '', 'primary' => ',PRIMARY KEY(a)', 'nullable unique' => ',UNIQUE(a)', 'covering index' => ',KEY(a,b)', 'partial index' => ',KEY(a)'] as $label => $index) {
             yield "sorted fields: {$label}" => ["CREATE TABLE bit_extreme_probe(a BIT(8),b BIT(64){$index}); INSERT INTO bit_extreme_probe VALUES(65,18446744073709551615),(0,0); SELECT DISTINCT a,b FROM bit_extreme_probe z ORDER BY (a); SELECT DISTINCT * FROM bit_extreme_probe ORDER BY 1; SELECT DISTINCT a FROM bit_extreme_probe ORDER BY a; SELECT DISTINCT a FROM bit_extreme_probe ORDER BY a+0; SELECT DISTINCT a FROM bit_extreme_probe ORDER BY a LIMIT 0"];
         }

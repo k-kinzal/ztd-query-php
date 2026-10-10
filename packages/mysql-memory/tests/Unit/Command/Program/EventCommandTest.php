@@ -24,6 +24,15 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class EventCommandTest extends TestCase
 {
+    public function testLapseKeepsPinnedClockDefinitionsEnabledWhenTheSchedulerIsOff(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; SET GLOBAL event_scheduler=OFF; SET timestamp=1700000000; CREATE EVENT e ON SCHEDULE EVERY 1 DAY ENDS '2024-01-01' DO SELECT 1");
+
+        self::assertSame('ENABLED', $session->instance->dictionary->schema('d')?->events['e']->status);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testFoundRejectsTheSameNameBeforeTheMissingDatabase(): void
     {
         $session = (new Instance())->connect();

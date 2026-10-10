@@ -78,7 +78,7 @@ final class ShowKeysCommand implements Command
                     $this->type($key->kind, $definition->engine),
                     '',
                     '',
-                    ...($legacy ? [] : ['YES', null]),
+                    ...($legacy ? [] : [$key->visible ? 'YES' : 'NO', null]),
                 ];
             }
         }
