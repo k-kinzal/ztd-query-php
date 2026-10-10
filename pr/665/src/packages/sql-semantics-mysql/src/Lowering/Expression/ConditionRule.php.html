@@ -157,7 +157,8 @@
 <span class="src-line" id="L109" data-diff="added"><a class="ln" href="#L109">109</a>            <span class="tok-var">$result</span> = <span class="tok-kw">new</span> <span class="tok-id">Logical</span>(<span class="tok-var">$operator</span>, <span class="tok-var">$result</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">expression</span>(<span class="tok-var">$right</span>), <span class="tok-var">$symbolic</span>);</span>
 <span class="src-line" id="L110" data-diff="same"><a class="ln" href="#L110">110</a>        }</span>
 <span class="src-line" id="L111" data-diff="same"><a class="ln" href="#L111">111</a></span>
-<span class="src-line" id="L112" data-diff="same"><a class="ln" href="#L112">112</a>        <span class="tok-kw">return</span> <span class="tok-var">$result</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">113</span>        <span class="tok-kw">return</span> <span class="tok-var">$result</span>;</span>
+<span class="src-line" id="L112" data-diff="added"><a class="ln" href="#L112">112</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">lowering</span>-&gt;<span class="tok-id">origins</span>-&gt;<span class="tok-id">record</span>(<span class="tok-var">$result</span>, <span class="tok-var">$expression</span>);</span>
 <span class="src-line" id="L113" data-diff="same"><a class="ln" href="#L113">113</a>    }</span>
 <span class="src-line" id="L114" data-diff="same"><a class="ln" href="#L114">114</a></span>
 <span class="src-line" id="L115" data-diff="same"><a class="ln" href="#L115">115</a>    <span class="tok-com">/**</span></span>
