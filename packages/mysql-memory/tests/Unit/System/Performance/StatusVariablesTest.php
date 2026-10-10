@@ -47,6 +47,18 @@ final class StatusVariablesTest extends TestCase
         self::assertLessThanOrEqual(4, (int) $after[1][1]);
     }
 
+    public function testValuesReadsTrafficInTheRequestedScope(): void
+    {
+        $instance = new Instance();
+        $instance->registry->status->add('Bytes_received', 1, 13);
+        $instance->registry->status->add('Bytes_received', 2, 8);
+        $instance->registry->status->add('Bytes_sent', 1, 56);
+        $catalog = new StatusVariables([['Bytes_received', 'Both', '0', true], ['Bytes_sent', 'Both', '0', true]]);
+
+        self::assertSame([['Bytes_received', '21'], ['Bytes_sent', '56']], $catalog->values($instance, true, false, 2));
+        self::assertSame([['Bytes_received', '8'], ['Bytes_sent', '0']], $catalog->values($instance, false, false, 2, connection: 2));
+    }
+
     public function testValuesWrapsPinnedTimestampsBeforeTheRealOrigins(): void
     {
         $instance = new Instance();

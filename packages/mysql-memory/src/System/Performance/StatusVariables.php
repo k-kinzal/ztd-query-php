@@ -11,7 +11,7 @@ use SqlSemantics\Contract\GrammarRelease;
 /**
  * The status variables of a release, as resources/status holds them, with the values the emulated server shows.
  *
- * SQL request and command counters reflect execution in their scope. Unmodeled storage and
+ * SQL request, command and protocol byte counters reflect execution in their scope. Unmodeled storage and
  * operating-system counters retain their catalog defaults. What describes the
  * configuration of the server reads as on a server of the release; Uptime and
  * Uptime_since_flush_status subtract the real start or flush time from the reading statement's
@@ -79,6 +79,7 @@ final class StatusVariables
                 'Uptime' => \MySqlMemory\Value\Integer::text((int) $instant - (int) $instance->started, true),
                 'Uptime_since_flush_status' => \MySqlMemory\Value\Integer::text((int) $instant - (int) ($instance->registry->status->flushedAt ?? $instance->started), true),
                 'Queries' => (string) $instance->registry->status->read($name),
+                'Bytes_received', 'Bytes_sent' => (string) $instance->registry->status->read($name, $global ? null : $connection),
                 default => $connections[$name] ?? ($name === 'Questions' || str_starts_with($name, 'Com_') ? (string) $instance->registry->status->read($this->counter($name), $global ? null : $connection) : $value),
             }];
         }

@@ -27,13 +27,13 @@ final class StatusCounters
     public ?float $flushedAt = null;
 
     /**
-     * Counts an event globally and, when supplied, for its connection.
+     * Adds an event count or byte amount globally and, when supplied, for its connection.
      */
-    public function add(string $name, ?int $connection = null): void
+    public function add(string $name, ?int $connection = null, int $amount = 1): void
     {
-        $this->global[$name] = ($this->global[$name] ?? 0) + 1;
+        $this->global[$name] = ($this->global[$name] ?? 0) + $amount;
         if ($connection !== null) {
-            $this->sessions[$connection][$name] = ($this->sessions[$connection][$name] ?? 0) + 1;
+            $this->sessions[$connection][$name] = ($this->sessions[$connection][$name] ?? 0) + $amount;
         }
     }
 

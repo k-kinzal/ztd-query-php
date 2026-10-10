@@ -102,6 +102,7 @@ final class ClientTest extends TestCase
         self::assertSame(["\x07\x00\x00\x02\x00\x00\x00\x02\x00\x00\x00"], $sent->getArrayCopy());
         self::assertSame('root', $client->session()->user);
         self::assertSame('localhost', $client->session()->host);
+        self::assertSame([42, 11], [$client->instance->registry->status->read('Bytes_received', 7), $client->instance->registry->status->read('Bytes_sent', 7)]);
     }
 
     public function testReceiveWaitsForTheRestOfAPacket(): void
@@ -119,6 +120,7 @@ final class ClientTest extends TestCase
         self::assertTrue($second);
         self::assertTrue($third);
         self::assertSame(0, $waited);
+        self::assertSame(42, $client->instance->registry->status->read('Bytes_received', 7));
         self::assertSame(["\x07\x00\x00\x02\x00\x00\x00\x02\x00\x00\x00"], $sent->getArrayCopy());
     }
 
@@ -131,6 +133,7 @@ final class ClientTest extends TestCase
         $client->receive("\x26\x00\x00\x01" . "\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00" . "\x01\x00\x00\x00\x0E");
 
         self::assertSame(["\x07\x00\x00\x02\x00\x00\x00\x02\x00\x00\x00", "\x07\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00"], $sent->getArrayCopy());
+        self::assertSame([47, 22], [$client->instance->registry->status->read('Bytes_received', 7), $client->instance->registry->status->read('Bytes_sent', 7)]);
     }
 
     public function testReceiveAnswersFalseWhenTheClientQuits(): void

@@ -29,6 +29,17 @@ final class StatusCountersTest extends TestCase
         self::assertSame([0, 0], [$counters->read('Questions'), $counters->read('Questions', 1)]);
     }
 
+    public function testAddCountsByteAmountsWithoutChangingOtherConnections(): void
+    {
+        $counters = new StatusCounters();
+        $counters->add('Bytes_sent', 1, 56);
+        $counters->add('Bytes_sent', 2, 11);
+        $counters->add('Bytes_sent', 1, 0);
+        $counters->clear(1);
+
+        self::assertSame([67, 0, 11], [$counters->read('Bytes_sent'), $counters->read('Bytes_sent', 1), $counters->read('Bytes_sent', 2)]);
+    }
+
     public function testClearRetainsGlobalTotalsAndOtherSessions(): void
     {
         $counters = new StatusCounters();

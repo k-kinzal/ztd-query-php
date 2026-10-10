@@ -82,6 +82,7 @@ final class Client
             if (strlen($this->buffer) < 4 + $length) {
                 break;
             }
+            $this->instance->registry->status->add('Bytes_received', $this->id, 4 + $length);
             $this->sequence = (ord($this->buffer[3]) + 1) & 0xFF;
             $payload = substr($this->buffer, 4, $length);
             $this->buffer = substr($this->buffer, 4 + $length);
@@ -235,15 +236,12 @@ final class Client
     public function query(string $sql): bool
     {
         $session = $this->session();
-        $answers = $session->run($sql);
-        foreach ($answers as $index => $answer) {
-            $more = $index < count($answers) - 1 || ($session->released && $session->following !== '') ? 8 : 0;
+        foreach ((new \MySqlMemory\Session\Script\Replies($session))->run($sql) as [$answer, $more]) {
             if ($answer instanceof SqlError) {
                 $this->send($this->messages->error($answer->getCode(), $answer->sqlState(), $answer->getMessage()));
-
-                return !$session->released;
+                continue;
             }
-            $this->reply($answer, $more, false);
+            $this->reply($answer, $more ? 8 : 0, false);
         }
 
         return !$session->released;
@@ -290,6 +288,7 @@ final class Client
     {
         $length = strlen($payload);
         ($this->send)(chr($length & 0xFF) . chr(($length >> 8) & 0xFF) . chr(($length >> 16) & 0xFF) . chr($this->sequence) . $payload);
+        $this->instance->registry->status->add('Bytes_sent', $this->id, 4 + $length);
         $this->sequence = ($this->sequence + 1) & 0xFF;
     }
 }

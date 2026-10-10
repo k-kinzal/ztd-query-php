@@ -243,35 +243,10 @@ final class Session
      */
     public function run(string $sql, array $parameters = [], bool $prepared = false): array
     {
-        $gone = $this->gone();
-        if ($gone !== null) {
-            return [$gone];
-        }
-        try {
-            $statements = $this->split($sql);
-        } catch (SqlError $error) {
-            $statements = (new Problem\Script())->statements($this->semantics(), $sql);
-            if ($statements === []) {
-                $this->activity->begin();
-                State\StatementCounters::received($this);
-                return [(new Parse\Reader())->refused($error, $sql, $prepared, $this)];
-            }
-        }
         $answers = [];
-        foreach ($statements as $index => $statement) {
-            $this->following = implode('', array_slice($statements, $index + 1));
-            try {
-                $reply = $this->execute($statement, $parameters, $prepared);
-                array_push($answers, ...($reply instanceof \MySqlMemory\Result\Batch ? $reply->replies : [$reply]));
-                if ($this->released) {
-                    return $answers;
-                }
-            } catch (SqlError $error) {
-                array_push($answers, ...(new Execution($this))->failed($error));
-                break;
-            }
+        foreach ((new Script\Replies($this))->run($sql, $parameters, $prepared) as [$answer]) {
+            $answers[] = $answer;
         }
-        $this->following = '';
 
         return $answers;
     }
