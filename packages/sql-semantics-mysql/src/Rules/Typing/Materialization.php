@@ -126,7 +126,7 @@ final class Materialization
     public function computed(Domain $domain, ?Scalar $expression, Settings $settings, GrammarRelease $release): Domain
     {
         $width = $domain->collation->charset->maxLength;
-        $characters = $expression instanceof GroupConcat ? intdiv($settings->groupConcatMaxLen, $domain->collation->charset->minLength()) : ($domain->field->blob() ? intdiv($domain->length, $width) : $domain->length);
+        $characters = $expression instanceof GroupConcat ? intdiv($settings->groupConcatMaxLen, $domain->collation->charset->minLength()) : ($domain->field->blob() ? intdiv($domain->metadataLength(), $width) : $domain->length);
         if ($expression instanceof GroupConcat && $characters <= 512) {
             return new Domain(Kind::String, Field::VarString, $characters, 0, false, $domain->collation, [], $domain->coercibility);
         }

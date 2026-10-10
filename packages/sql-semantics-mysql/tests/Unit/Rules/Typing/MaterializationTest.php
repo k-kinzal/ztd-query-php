@@ -50,6 +50,15 @@ final class MaterializationTest extends TestCase
         self::assertSame(Field::Blob, $materialization->computed(Domain::string(513, $collation), null, $settings, GrammarRelease::MySql847)->field);
     }
 
+    public function testComputedUsesAnExplicitBlobWidthWhenMaterializingAScalarResult(): void
+    {
+        $collation = Collation::known('utf8mb4_bin');
+        $scalar = new Domain(Kind::String, Field::LongBlob, 4096, Domain::NOT_FIXED, false, $collation, [], Coercibility::Implicit, 16384);
+        $column = (new Materialization())->computed($scalar, null, new Settings($collation), GrammarRelease::MySql847);
+
+        self::assertSame([Field::Blob, 16384, 65535], [$column->field, $column->metadataLength(), $column->capacity]);
+    }
+
     public function testMergeableHoldsForAPlainQueryBlockOverTables(): void
     {
         $semantics = new Semantics(Dialect::MySql);

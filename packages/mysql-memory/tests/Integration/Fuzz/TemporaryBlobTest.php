@@ -26,6 +26,9 @@ final class TemporaryBlobTest extends TestCase
                     yield $expression . ': ' . $outer => ["SET NAMES utf8mb4; SELECT {$outer} FROM {$derived}"];
                 }
                 yield $expression . ': scalar' => ["SET NAMES utf8mb4; SELECT (SELECT q FROM {$derived})"];
+                $nested = "(SELECT (SELECT {$expression} FROM t1 LIMIT 1) AS q) AS s";
+                yield $expression . ': materialized scalar' => ["SET NAMES utf8mb4; SELECT q FROM {$nested}"];
+                yield $expression . ': nested scalar' => ["SET NAMES utf8mb4; SELECT (SELECT q FROM {$nested})"];
             }
         }
     }
