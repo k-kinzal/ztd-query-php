@@ -72,7 +72,7 @@ final class Servers
         $this->guard($native, $version, $password);
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
-        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $isolate ? new Baseline($native, $version) : null), 'mysql-' . $version, $server];
+        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $isolate ? new Baseline($native, $version) : null, $server), 'mysql-' . $version, $server];
     }
 
     /**
