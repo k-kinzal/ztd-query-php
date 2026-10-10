@@ -288,7 +288,7 @@ final class Lowering
         }
         $family = (new StatementRoutes())->family($form->signature) ?? throw ImplementationGap::production($form);
 
-        return $family === Family::Definition ? $this->definition($form->node(0)) : $this->routed($family, $form->node(0));
+        return $this->origins->record($family === Family::Definition ? $this->definition($form->node(0)) : $this->routed($family, $form->node(0)), $statement);
     }
 
     /**

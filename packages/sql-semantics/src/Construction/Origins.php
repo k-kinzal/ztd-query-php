@@ -22,6 +22,11 @@ final class Origins
     private array $origins = [];
 
     /**
+     * @var list<\SqlSemantics\Statement\Source\SourceNotice> Warnings of the original input spelling
+     */
+    private array $notices = [];
+
+    /**
      * Records the range from the first through the last source token, excluding empty synthetic tokens, and returns the occurrence.
      *
      * @template T of Node
@@ -41,10 +46,22 @@ final class Origins
     }
 
     /**
+     * Records a spelling-dependent warning after the final token of its input production.
+     */
+    public function notice(Node|\SqlSemantics\Statement\Identifier\Name $subject, \SqlSemantics\Statement\Fact\Warning $warning, ParseNode $source): void
+    {
+        $tokens = $source->tokens();
+        $last = $tokens[count($tokens) - 1] ?? null;
+        if ($last !== null) {
+            $this->notices[] = new \SqlSemantics\Statement\Source\SourceNotice($subject, $warning, $last->offset + strlen($last->text));
+        }
+    }
+
+    /**
      * Publishes a snapshot that later recordings cannot change.
      */
     public function publish(): SourceMap
     {
-        return new SourceMap(array_values($this->origins));
+        return new SourceMap(array_values($this->origins), $this->notices);
     }
 }

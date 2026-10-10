@@ -33,4 +33,18 @@ final class OriginsTest extends TestCase
         self::assertSame([], $published->origins);
         self::assertCount(1, $origins->publish()->origins);
     }
+    public function testNoticeRecordsTheReadBoundaryWithoutChangingAnEarlierSnapshot(): void
+    {
+        $origins = new Origins();
+        $before = $origins->publish();
+        $name = new \SqlSemantics\Statement\Identifier\Name('full');
+        $warning = new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull);
+        $tree = (new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7'))->parser()->parse('SELECT 1 AS full');
+        $origins->notice($name, $warning, $tree);
+        $notice = $origins->publish()->notices[0];
+
+        self::assertSame([], $before->notices);
+        self::assertSame([$name, $warning, 16], [$notice->subject, $notice->warning, $notice->offset]);
+    }
+
 }

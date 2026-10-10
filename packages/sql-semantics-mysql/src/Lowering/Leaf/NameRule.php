@@ -31,7 +31,11 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
  * production is the name it spells, letter case kept; a string or a host
  * name at a name position is the name it holds. The leading dot of
  * `.table` and `.table.column` names the default database and is not kept.
- * Every name is recorded as an operand leaf. Constructs: Name,
+ * Every name is recorded as an operand leaf.
+ * Unquoted FULL in the keyword-as-identifier production also records an input notice in
+ * releases that deprecate it, without changing the decoded name. Source:
+ * https://dev.mysql.com/doc/relnotes/mysql/8.0/en/news-8-0-32.html.
+ * Constructs: Name,
  * QualifiedName, ColumnUse, ColumnName, TableWildcard. Terminates: unit
  * productions are followed in a loop over strict subtrees and lists are
  * flattened iteratively. Source: https://dev.mysql.com/doc/refman/8.4/en/identifiers.html,
@@ -127,7 +131,13 @@ final class NameRule
         }
         $text = $form->token(0)->text;
 
-        return $this->lowering->leaves->record(new Name($kind === 'identifier' ? (new Identifiers())->decode($text) : $text));
+        $value = $this->lowering->leaves->record(new Name($kind === 'identifier' ? (new Identifiers())->decode($text) : $text));
+        $deprecated = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull;
+        if ($form->signature === 'ident_keywords_unambiguous: FULL' && $deprecated->warnedIn($this->lowering->profile->grammar)) {
+            $this->lowering->origins->notice($value, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($deprecated), $form->node);
+        }
+
+        return $value;
     }
 
     /**

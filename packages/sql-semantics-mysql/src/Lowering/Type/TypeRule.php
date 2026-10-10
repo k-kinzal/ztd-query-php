@@ -138,7 +138,7 @@ final class TypeRule
     {
         $form = $this->lowering->productions->form($type);
 
-        return $this->numeric($form) ?? $this->keyword($form) ?? $this->strings->type($form) ?? throw ImplementationGap::production($form);
+        return $this->lowering->origins->record($this->numeric($form) ?? $this->keyword($form) ?? $this->strings->type($form) ?? throw ImplementationGap::production($form), $type);
     }
 
     /**

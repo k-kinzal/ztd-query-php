@@ -53,7 +53,7 @@ final class BinaryCast implements Scalar
     }
 
     /**
-     * Derives the operand; the result is a binary string the server marks as nullable whatever the operand.
+     * Derives the operand; MySQL 5.6 preserves its NULL fact, while later releases mark the binary result nullable.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
@@ -62,7 +62,7 @@ final class BinaryCast implements Scalar
 
         $operand = (new Precision())->domain($fact->type);
 
-        return new ScalarFact(new Known($operand === null ? new Binary(BinaryKind::VarBinary) : (new Texts(Settings::of($derivation->context)))->binary($operand)), Nullability::Nullable);
+        return new ScalarFact(new Known($operand === null ? new Binary(BinaryKind::VarBinary) : (new Texts(Settings::of($derivation->context)))->binary($operand)), $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $fact->nullability : Nullability::Nullable);
     }
 
     /**

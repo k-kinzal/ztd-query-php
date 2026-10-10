@@ -47,9 +47,13 @@ final class LogfileGroupCommand implements Command
     {
         $statement = $operation->statement;
         $session->transaction->commit();
-        $operationName = 'CREATE/ALTER/DROP LOGFILE GROUP';
+        $legacy = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        $operationName = $legacy ? 'TABLESPACE or LOGFILE GROUP' : 'CREATE/ALTER/DROP LOGFILE GROUP';
         if ($statement instanceof CreateLogfileGroup || $statement instanceof AlterLogfileGroup || $statement instanceof DropLogfileGroup) {
             (new TablespaceCommand())->engine($statement->options, $operationName);
+        }
+        if ($legacy) {
+            throw SchemaError::IllegalCreateOption->error('InnoDB', $operationName);
         }
 
         throw new SqlError(AdministrationError::FeatureUnsupported, AdministrationError::FeatureUnsupported->message('LOGFILE GROUP', 'by InnoDB'), null, [[SchemaError::EngineUnsupportedOperation->value, SchemaError::EngineUnsupportedOperation->message($operationName)]]);

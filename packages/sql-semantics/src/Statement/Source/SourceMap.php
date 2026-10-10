@@ -31,11 +31,18 @@ final class SourceMap
     public readonly array $origins;
 
     /**
-     * @param list<Origin> $origins The recorded occurrences, each at most once
+     * @var list<SourceNotice> Warnings of original spellings, separate from semantic values
      */
-    public function __construct(array $origins = [])
+    public readonly array $notices;
+
+    /**
+     * @param list<Origin> $origins The recorded occurrences, each at most once
+     * @param list<SourceNotice> $notices The warnings recorded while lowering the original input
+     */
+    public function __construct(array $origins = [], array $notices = [])
     {
         $this->origins = Check::listOf($origins, Origin::class, 'Source locations are origins.');
+        $this->notices = Check::listOf($notices, SourceNotice::class, 'Input notices are source notice values.');
         $seen = [];
         foreach ($this->origins as $origin) {
             $id = spl_object_id($origin->node);

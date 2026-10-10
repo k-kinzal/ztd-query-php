@@ -207,6 +207,8 @@ $semantics->analyze('UPDATE t SET total = 3', [$table])->facts->diagnostics[0]->
 
 `CREATE TABLE` columns, routine parameters and function return types share checks for numeric widths, precision and scale, and temporal fractional precision. Invalid sizes appear as `InvalidTypeSize` diagnostics; an accompanying `ParseFailure` records where the server stops reading, so an executor can preserve warning order. Parameter and return-type errors use an empty column name, as MySQL reports them. MySQL 5.6 accepts `BIT(0)`; later supported releases reject it.
 
+The original spelling of an unquoted `FULL` identifier produces warning 4119 in the supported MySQL 8.x and 9.x releases. Quoted names, string aliases and names lexed as parts of a qualified identifier do not produce that warning. The decoded name remains independent of this notice, which is retained in `Operation::$sources` and merged into `facts->warnings`.
+
 Deprecated type attributes produce warnings in written order, including integer display widths, `ASCII`, `UNICODE`, `BINARY` and national character types. These checks do not establish complete validation of every type or table option.
 
 ## Limitations

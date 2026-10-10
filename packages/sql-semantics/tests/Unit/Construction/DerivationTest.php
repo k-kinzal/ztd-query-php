@@ -359,4 +359,14 @@ final class DerivationTest extends TestCase
         self::assertNull($derivation->written(new Select([new Star()])));
     }
 
+    public function testReadingWarningsMergesSourceNoticesAtExplicitBoundaries(): void
+    {
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7');
+        $operation = $semantics->analyze('SELECT !full, BINARY full');
+        $derivation = new Derivation($operation->context, $operation->sources);
+        $derivation->statement($operation->statement);
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator->value], array_map(static fn ($warning): string => $warning->message(), $derivation->readingWarnings()));
+    }
+
 }

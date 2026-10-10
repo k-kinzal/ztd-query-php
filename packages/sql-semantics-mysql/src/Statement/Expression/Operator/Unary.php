@@ -63,7 +63,7 @@ final class Unary implements Scalar
     {
         $operands = new Operands();
         if ($this->operator === UnaryOperator::Not) {
-            Deprecation::raise(Deprecated::BangNot, $derivation);
+            Deprecation::raise(Deprecated::BangNot, $derivation, $this, false);
         }
         $fact = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
         $numbers = new NumericResult();

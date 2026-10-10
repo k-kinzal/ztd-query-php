@@ -45,13 +45,13 @@ final class TypeNotices
             $this->numeric($type, $derivation);
         }
         if ($type instanceof Temporal && $type->kind === TemporalKind::Year && $type->precision === '4') {
-            Deprecation::raise(Deprecated::YearWidth, $derivation);
+            Deprecation::raise(Deprecated::YearWidth, $derivation, $type);
         }
         if ($type instanceof Character || $type instanceof Enumeration) {
-            $this->charset($type->charset, $derivation);
+            $this->charset($type->charset, $derivation, $type);
         }
         if ($type instanceof Character && $type->national) {
-            Deprecation::raise(Deprecated::National, $derivation);
+            Deprecation::raise(Deprecated::National, $derivation, $type);
         }
     }
 
@@ -62,38 +62,38 @@ final class TypeNotices
     {
         $modifiers = $type->modifiers;
         if ($type instanceof Integral && $type->width !== null && !($type->kind === IntegralKind::TinyInt && $type->width === '1') && !in_array(NumericModifier::Zerofill, $modifiers, true)) {
-            Deprecation::raise(Deprecated::DisplayWidth, $derivation);
+            Deprecation::raise(Deprecated::DisplayWidth, $derivation, $type);
         }
         if (in_array(NumericModifier::Zerofill, $modifiers, true)) {
-            Deprecation::raise(Deprecated::Zerofill, $derivation);
+            Deprecation::raise(Deprecated::Zerofill, $derivation, $type);
         }
         if ($type instanceof Floating && $type->scale !== null) {
-            Deprecation::raise(Deprecated::FloatingDigits, $derivation);
+            Deprecation::raise(Deprecated::FloatingDigits, $derivation, $type);
         }
         if (($type instanceof Decimal || $type instanceof Floating) && in_array(NumericModifier::Unsigned, $modifiers, true)) {
-            Deprecation::raise(Deprecated::UnsignedFraction, $derivation);
+            Deprecation::raise(Deprecated::UnsignedFraction, $derivation, $type);
         }
     }
 
     /**
      * Raises the warnings of a deprecated character set name or shorthand.
      */
-    public function charset(?CharsetAttribute $charset, Derivation $derivation): void
+    public function charset(?CharsetAttribute $charset, Derivation $derivation, ?\SqlSemantics\Statement\Node $at = null): void
     {
         if ($charset?->form === CharsetForm::Binary || $charset?->mark === BinaryMark::Leading) {
-            Deprecation::raise(Deprecated::BinaryAttribute, $derivation);
+            Deprecation::raise(Deprecated::BinaryAttribute, $derivation, $at);
         }
         if ($charset?->charset !== null) {
-            Deprecation::charset($charset->charset->value, $derivation);
+            Deprecation::charset($charset->charset->value, $derivation, $at);
         }
         if ($charset?->form === CharsetForm::Ascii) {
-            Deprecation::raise(Deprecated::AsciiCharset, $derivation);
+            Deprecation::raise(Deprecated::AsciiCharset, $derivation, $at);
         }
         if ($charset?->form === CharsetForm::Unicode) {
-            Deprecation::raise(Deprecated::UnicodeCharset, $derivation);
+            Deprecation::raise(Deprecated::UnicodeCharset, $derivation, $at);
         }
         if ($charset?->mark === BinaryMark::Trailing) {
-            Deprecation::raise(Deprecated::BinaryAttribute, $derivation);
+            Deprecation::raise(Deprecated::BinaryAttribute, $derivation, $at);
         }
     }
 }

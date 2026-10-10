@@ -47,7 +47,7 @@ final class SelectOptions
                 SelectOption::All, SelectOption::Distinct, SelectOption::StraightJoin, SelectOption::HighPriority, SelectOption::SmallResult, SelectOption::BigResult, SelectOption::BufferResult => null,
             };
             if ($construct !== null) {
-                Deprecation::raise($construct, $derivation);
+                Deprecation::raise($construct, $derivation, $select, false);
             }
             $cache = $option === SelectOption::Cache || $option === SelectOption::NoCache;
             $earlier = $grammar === GrammarRelease::MySql5651 ? $first : ($grammar === GrammarRelease::MySql5744 ? $previous : null);

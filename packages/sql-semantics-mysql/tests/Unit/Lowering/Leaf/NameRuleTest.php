@@ -225,4 +225,25 @@ final class NameRuleTest extends TestCase
         self::assertSame(OptionalWords::Written, $operation->statement->from->dot);
         self::assertSame('SELECT 1 FROM .t', $operation->toString());
     }
+    public function testIdentifierKeepsSpellingWarningsSeparateFromTheName(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-8.4.7');
+        $bare = $semantics->analyze('SELECT 1 AS full');
+        $quoted = $semantics->analyze('SELECT 1 AS `full`');
+
+        self::assertSame($bare->toString(), $quoted->toString());
+        self::assertCount(1, $bare->facts->warnings);
+        self::assertSame([], $quoted->facts->warnings);
+        self::assertSame(16, $bare->sources->notices[0]->offset);
+    }
+
+    public function testIdentifierDoesNotWarnForQualifiedNamesOrLegacyReleases(): void
+    {
+        $modern = (new Semantics(Dialect::MySql, 'mysql-8.4.7'))->analyze('SELECT full.x, x.full');
+        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT 1 AS full');
+
+        self::assertSame([], $modern->sources->notices);
+        self::assertSame([], $legacy->sources->notices);
+    }
+
 }

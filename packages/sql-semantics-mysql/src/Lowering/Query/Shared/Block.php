@@ -45,6 +45,8 @@ final class Block
      * @param Scalar|null $qualify The QUALIFY predicate
      * @param Trailer $trailer The clauses written after the block
      * @param list<OptimizerHint> $hints The hints of the comment written right after SELECT
+     * @param \SqlParser\Parser\Node|null $source The original query specification, when tracked
+     * @param \SqlSemantics\Construction\Origins|null $origins The recorder for the finished selection
      */
     public function __construct(
         public readonly array $options,
@@ -58,6 +60,8 @@ final class Block
         public readonly ?Scalar $qualify = null,
         public readonly Trailer $trailer = new Trailer(),
         public readonly array $hints = [],
+        public readonly ?\SqlParser\Parser\Node $source = null,
+        public readonly ?\SqlSemantics\Construction\Origins $origins = null,
     ) {
     }
 
@@ -68,7 +72,7 @@ final class Block
      */
     public function then(Trailer $later): self
     {
-        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $this->trailer->then($later), $this->hints);
+        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $this->trailer->then($later), $this->hints, $this->source, $this->origins);
     }
 
     /**
@@ -107,7 +111,7 @@ final class Block
      */
     public function hinted(array $hints): self
     {
-        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $this->trailer, $hints);
+        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $this->trailer, $hints, $this->source, $this->origins);
     }
 
     /**
@@ -115,7 +119,7 @@ final class Block
      */
     public function bare(): self
     {
-        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, hints: $this->hints);
+        return new self($this->options, $this->items, $this->into, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, hints: $this->hints, source: $this->source, origins: $this->origins);
     }
 
     /**
@@ -138,6 +142,8 @@ final class Block
             $position = IntoPosition::AfterItems;
         }
 
-        return new Select($this->options, $this->items, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $trailer->orderBy, $trailer->limit, $trailer->procedure, $trailer->locking, $into, $position, $late, $this->hints);
+        $select = new Select($this->options, $this->items, $this->from, $this->where, $this->groupBy, $this->having, $this->windows, $this->qualify, $trailer->orderBy, $trailer->limit, $trailer->procedure, $trailer->locking, $into, $position, $late, $this->hints);
+
+        return $this->source === null || $this->origins === null ? $select : $this->origins->record($select, $this->source);
     }
 }

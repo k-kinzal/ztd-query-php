@@ -58,6 +58,18 @@ final class ShowTablesCommandTest extends TestCase
         self::assertSame(['Tables_in_d (T)', []], [$result->columns[0]->name, $result->rows]);
     }
 
+    public function testExecutePreservesLegacyTableNameColumnMetadata(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; USE d');
+
+        $result = $session->query('SHOW FULL TABLES')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['TABLE_NAME', 'TABLE_TYPE'], array_map(static fn ($column): string => $column->originalName, $result->columns));
+        self::assertSame(['TABLE_NAMES', 'TABLE_NAMES', 'information_schema', 1], [$result->columns[1]->table, $result->columns[1]->originalTable, $result->columns[1]->schema, $result->columns[1]->flags]);
+    }
+
     public function testExecuteListsTheTablesOfTheDatabaseItNames(): void
     {
         $session = (new Instance())->connect();

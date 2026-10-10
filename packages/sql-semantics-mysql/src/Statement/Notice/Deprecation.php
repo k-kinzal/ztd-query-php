@@ -51,10 +51,10 @@ final class Deprecation implements Warning
     /**
      * Records the warning of a construct when the release of the derivation warns about it.
      */
-    public static function raise(Deprecated $construct, Derivation $derivation): void
+    public static function raise(Deprecated $construct, Derivation $derivation, ?\SqlSemantics\Statement\Node $at = null, bool $after = true): void
     {
         if ($construct->warnedIn($derivation->context->profile->grammar)) {
-            $derivation->warn(new self($construct));
+            $derivation->warn(new self($construct), $at, $after);
         }
     }
 
@@ -64,7 +64,7 @@ final class Deprecation implements Warning
      * An introducer, CONVERT ... USING and CAST ... CHARACTER SET warn about the name; a
      * collation name does not (verified on a live 8.4 server).
      */
-    public static function charset(string $name, Derivation $derivation): void
+    public static function charset(string $name, Derivation $derivation, ?\SqlSemantics\Statement\Node $at = null): void
     {
         $construct = match (strtolower($name)) {
             'utf8' => Deprecated::Utf8Alias,
@@ -73,7 +73,7 @@ final class Deprecation implements Warning
             default => null,
         };
         if ($construct !== null) {
-            self::raise($construct, $derivation);
+            self::raise($construct, $derivation, $at);
         }
     }
 

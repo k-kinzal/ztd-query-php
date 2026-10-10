@@ -53,7 +53,10 @@ final class Publication
             Check::input(in_array($origin->node, $objects, true), 'A source location belongs to an occurrence of this statement.');
         }
 
-        $derivation = new Derivation($context);
+        foreach ($sources->notices as $notice) {
+            Check::input(in_array($notice->subject, $objects, true), 'An input notice belongs to an occurrence of this statement.');
+        }
+        $derivation = new Derivation($context, $sources);
         $derivation->statement($statement);
         $facts = $derivation->facts();
         foreach ($objects as $object) {

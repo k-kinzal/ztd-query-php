@@ -64,7 +64,7 @@ final class Logical implements Scalar
         $operands = new Operands();
         $left = $operands->single($derivation->scalar($this->left, $environment), $derivation);
         if ($this->symbolic) {
-            Deprecation::raise($this->operator === LogicalOperator::Or ? Deprecated::PipesOr : Deprecated::AmpersandsAnd, $derivation);
+            Deprecation::raise($this->operator === LogicalOperator::Or ? Deprecated::PipesOr : Deprecated::AmpersandsAnd, $derivation, $this->left);
         }
         $right = $operands->single($derivation->scalar($this->right, $environment), $derivation);
 

@@ -26,6 +26,7 @@ use SqlSemantics\Contract\GrammarRelease;
  */
 enum Deprecated: string
 {
+    case UnquotedFull = 'Using FULL as unquoted identifier is deprecated, please use quotes or rename the identifier.';
     case PipesOr = "'|| as a synonym for OR' is deprecated and will be removed in a future release. Please use OR instead";
     case AmpersandsAnd = "'&&' is deprecated and will be removed in a future release. Please use AND instead";
     case BangNot = "'!' is deprecated and will be removed in a future release. Please use NOT instead";
@@ -82,6 +83,7 @@ enum Deprecated: string
     {
         return match ($this) {
             self::InsertDelayed, self::ReplaceDelayed => 3005,
+            self::UnquotedFull => 4119,
             self::DisplayWidth, self::Zerofill, self::FloatingDigits, self::UnsignedFraction, self::NoCache, self::Cache, self::ProcedureAnalyse, self::ValuesElsewhere, self::AlterIgnore => 1681,
             self::Utf8Alias => 3719,
             self::National => 3720,

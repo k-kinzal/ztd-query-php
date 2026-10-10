@@ -109,7 +109,7 @@ final class ConditionRule
             $result = new Logical($operator, $result, $this->expression($right), $symbolic);
         }
 
-        return $result;
+        return $this->lowering->origins->record($result, $expression);
     }
 
     /**
