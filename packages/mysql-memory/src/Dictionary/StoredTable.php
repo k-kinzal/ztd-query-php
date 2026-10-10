@@ -42,10 +42,12 @@ final class StoredTable
      * @param Heap $data The rows
      * @param array<string, string> $histograms The columns that have histogram statistics, by lowercase name
      * @param int|null $created The creation time; the actual clock when no statement clock is supplied
+     * @param int|null $clock The server-clock second at creation, including simulated elapsed time
      */
-    public function __construct(public TableDefinition $definition, public Heap $data, public array $histograms = [], ?int $created = null)
+    public function __construct(public TableDefinition $definition, public Heap $data, public array $histograms = [], ?int $created = null, ?int $clock = null)
     {
-        $this->created = $created ?? time();
-        $this->updated = strcasecmp($definition->engine, 'MyISAM') === 0 ? time() : null;
+        $clock ??= time();
+        $this->created = $created ?? $clock;
+        $this->updated = strcasecmp($definition->engine, 'MyISAM') === 0 ? $clock : null;
     }
 }

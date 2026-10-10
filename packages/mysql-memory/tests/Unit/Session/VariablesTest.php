@@ -195,6 +195,16 @@ final class VariablesTest extends TestCase
         self::assertGreaterThan(microtime(true) + 7100.0, $variables->instant());
     }
 
+    public function testClockIncludesSleepWhileIgnoringThePinnedStatementTimestamp(): void
+    {
+        $session = (new Instance())->connect();
+        $before = $session->variables->clock();
+        $session->query('SET timestamp=1700000000; DO SLEEP(5)');
+
+        self::assertGreaterThanOrEqual($before + 5, $session->variables->clock());
+        self::assertSame(1700000000.0, $session->variables->instant());
+    }
+
     public function testInstantReadsTheTimestampTheSessionSet(): void
     {
         $session = (new Instance())->connect();

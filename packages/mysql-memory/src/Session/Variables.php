@@ -163,7 +163,15 @@ final class Variables
     {
         $set = $this->session['timestamp'] ?? null;
 
-        return $set === null ? $this->instance->registry->threads->now() : (float) $set;
+        return $set === null ? $this->clock() : (float) $set;
+    }
+
+    /**
+     * Answers the server clock, including elapsed sleeps and waits, independently of SET timestamp.
+     */
+    public function clock(): float
+    {
+        return $this->instance->registry->threads->now();
     }
 
     /**

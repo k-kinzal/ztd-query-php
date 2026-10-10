@@ -171,7 +171,7 @@ final class XaCommand implements Command
         $registry = $session->instance->registry;
         $prepared = $registry->prepared[$key] ?? throw StatementError::XaUnknownXid->error();
         if ($commit) {
-            $session->instance->transactions->apply($prepared->changes);
+            $session->instance->transactions->apply($prepared->changes, (int) floor($session->variables->clock()));
         }
         unset($registry->prepared[$key]);
     }

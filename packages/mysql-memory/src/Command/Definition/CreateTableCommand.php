@@ -100,7 +100,7 @@ final class CreateTableCommand implements Command
         foreach ($this->duplicates($definition->keys) as $duplicate) {
             $context->warning(SchemaError::DuplicateIndex, $duplicate->name, $definition->schema . '.' . $definition->name);
         }
-        $table = new StoredTable($this->primaryNotNull($definition), new Heap(), created: self::created($context));
+        $table = new StoredTable($this->primaryNotNull($definition), new Heap(), created: self::created($context), clock: (int) floor($context->variables->clock()));
         if ($started) {
             $session->transaction->creation->begin($table);
         } else {
@@ -113,7 +113,7 @@ final class CreateTableCommand implements Command
      */
     public static function created(Context $context): int
     {
-        return in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? time() : (int) floor($context->started);
+        return in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? (int) floor($context->variables->clock()) : (int) floor($context->started);
     }
 
     /**

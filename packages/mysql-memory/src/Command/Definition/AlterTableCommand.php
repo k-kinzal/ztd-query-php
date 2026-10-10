@@ -200,7 +200,7 @@ final class AlterTableCommand implements Command
         $records = $copies ? count($data->rows) : 0;
         $updated = $copies || count($origins) !== count($table->definition->columns) || in_array(null, $origins, true) || $change->storageLayout ? null : $table->updated;
         if ($records > 0 && $context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
-            $updated = time();
+            $updated = (int) floor($context->variables->clock());
         }
         $table->definition = $definition;
         $table->data = $data;

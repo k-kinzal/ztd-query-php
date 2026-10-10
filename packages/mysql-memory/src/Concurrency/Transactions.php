@@ -123,11 +123,12 @@ final class Transactions
      * A row of a table whose rows were replaced meanwhile, as TRUNCATE TABLE replaces them, is left out.
      *
      * @param list<array{StoredTable, Heap, int, list<int|float|string|null>|null}> $changes
+     * @param int|null $committed The server-clock second of the commit
      */
-    public function apply(array $changes): void
+    public function apply(array $changes, ?int $committed = null): void
     {
         $before = [];
-        $committed = time();
+        $committed ??= time();
         foreach ($changes as [$table, $heap, $number, $after]) {
             if ($table->data !== $heap) {
                 continue;
