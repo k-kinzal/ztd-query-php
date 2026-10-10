@@ -218,6 +218,7 @@ final class Errors
             $diagnostic instanceof WrongArgumentCount => QueryError::WrongParameterCountToNativeFunction->error($diagnostic->function->value),
             $diagnostic instanceof NamedArgument => QueryError::WrongParametersToNativeFunction->error(strtolower($diagnostic->function->value)),
             $diagnostic instanceof ReservedFunction => QueryError::NativeFunctionRejected->error($diagnostic->function->value),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Call\Problem\InvalidNamedConstant => ($diagnostic->nullName ? StatementError::ReservedSyntax : StatementError::WrongArguments)->error('NAME_CONST'),
             $diagnostic instanceof UnsupportedWindowing => StatementError::NotSupportedYet->error($diagnostic->limit->value),
             default => null,
         };
@@ -418,7 +419,9 @@ final class Errors
     {
         $database = $session->variables->database;
         if ($call->schema === null && $database === '') {
-            return QueryError::NoDatabase->error();
+            $error = QueryError::NoDatabase;
+
+            return new SqlError($error, $error->message(), following: $session->settings()->legacy() ? [] : [[$error->number(), $error->message()]]);
         }
 
         $function = $session->instance->dictionary->schema($call->schema->value ?? $database)->functions[strtolower($call->name->value)] ?? null;

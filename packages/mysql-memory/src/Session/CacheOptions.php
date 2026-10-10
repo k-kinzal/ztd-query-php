@@ -60,7 +60,7 @@ final class CacheOptions
         }
         [$end, $engines, $error] = (new Parse\EnginePrefix())->conditions($tokens, $statement, $end, $session, $error);
         [$warned, $conflict] = (new Parse\Modifiers($tokens, $release))->scan($end, $settled);
-        $warned += $engines;
+        $warned += $engines + (new Parse\SpatialWarnings())->before($tokens, $statement, $end, $session);
         if ($parsed) {
             $warned += array_filter($session->dots, static fn (int $offset): bool => $offset < $end, ARRAY_FILTER_USE_KEY);
         }

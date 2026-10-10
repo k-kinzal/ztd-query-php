@@ -65,7 +65,7 @@ final class Properties
         }
 
         return match ($property) {
-            'GEOMETRYTYPE' => $geometry->name(),
+            'GEOMETRYTYPE' => $release === GrammarRelease::MySql5744 && $geometry->type === 7 ? 'GEOMETRYCOLLECTION' : $geometry->name(),
             'ISEMPTY' => $this->dimension($geometry) === null ? 1 : 0,
             'NUMGEOMETRIES' => $geometry->type >= 4 ? count($geometry->children) : null,
             default => $this->dimension($geometry),

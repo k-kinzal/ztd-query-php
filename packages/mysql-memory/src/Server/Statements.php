@@ -75,6 +75,7 @@ final class Statements
     {
         $session = $this->client->session();
         $session->activity->begin();
+        $session->diagnostics->clear();
         \MySqlMemory\Session\State\StatementCounters::received($session, false);
         \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
         try {
@@ -86,11 +87,17 @@ final class Statements
             $parameters = count(array_filter($tokens, static fn ($token): bool => $token->text === '?'));
             $columns = $this->columns($operation, $session, $parameters);
         } catch (SqlError $error) {
+            if (!$error->recorded) {
+                $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);
+            }
+            foreach ($error->following as [$code, $message]) {
+                $session->diagnostics->error($code, $message);
+            }
             return $this->client->send($this->client->messages->error($error->getCode(), $error->sqlState(), $error->getMessage()));
         }
         $id = $this->next++;
         $this->prepared[$id] = [$sql, $parameters, [], [], \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation)];
-        $this->client->packet((new PayloadWriter())->integer(0, 1)->integer($id, 4)->integer(count($columns), 2)->integer($parameters, 2)->integer(0, 1)->integer(0, 2)->payload());
+        $this->client->packet((new PayloadWriter())->integer(0, 1)->integer($id, 4)->integer(count($columns), 2)->integer($parameters, 2)->integer(0, 1)->integer($session->diagnostics->count(), 2)->payload());
         if ($parameters > 0) {
             for ($i = 0; $i < $parameters; $i++) {
                 $this->client->packet($this->client->messages->column(new ResultColumn('?', Field::VarString, 0, 0, 128, 63)));

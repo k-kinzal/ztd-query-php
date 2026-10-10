@@ -84,6 +84,18 @@ final class ExecutionTest extends TestCase
         self::assertSame(1792, $error->getCode());
     }
 
+    public function testParsingEmitsSpatialDeprecationsAtPreparationAndBeforeSyntaxErrors(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("PREPARE p FROM 'SELECT SRID(Point(1,2))'");
+
+        self::assertSame(1287, $session->diagnostics->conditions[0][1]);
+        $session->query('EXECUTE p');
+        self::assertSame([], $session->diagnostics->conditions);
+        $session->run('SELECT SRID(NULL) WHERE FALSE');
+        self::assertSame([1287, 1064], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testParsingRecordsTheWarningsRaisedWhileTheStatementIsRead(): void
     {
         $session = (new Instance())->connect();

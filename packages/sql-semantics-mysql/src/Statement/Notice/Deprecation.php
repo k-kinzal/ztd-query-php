@@ -53,10 +53,21 @@ final class Deprecation implements Warning
      */
     public static function spatial(string $name, Derivation $derivation): void
     {
-        $name = strtoupper($name);
-        if (Deprecated::SpatialFunction->warnedIn($derivation->context->profile->grammar) && in_array($name, ['SRID', 'DIMENSION', 'GEOMETRYTYPE', 'ISEMPTY', 'NUMGEOMETRIES'], true)) {
-            $derivation->warn(new self(Deprecated::SpatialFunction, "'" . $name . "' is deprecated and will be removed in a future release. Please use ST_" . $name . ' instead'));
+        $warning = self::spatialWarning($name, $derivation->context->profile->grammar);
+        if ($warning !== null) {
+            $derivation->warn($warning);
         }
+    }
+
+    /**
+     * Answers the versioned deprecation of an unqualified legacy spatial function name.
+     */
+    public static function spatialWarning(string $name, \SqlSemantics\Contract\GrammarRelease $release): ?self
+    {
+        $name = strtoupper($name);
+
+        return Deprecated::SpatialFunction->warnedIn($release) && in_array($name, ['SRID', 'DIMENSION', 'GEOMETRYTYPE', 'ISEMPTY', 'NUMGEOMETRIES'], true)
+            ? new self(Deprecated::SpatialFunction, "'" . $name . "' is deprecated and will be removed in a future release. Please use ST_" . $name . ' instead') : null;
     }
 
     /**

@@ -35,6 +35,12 @@ final class GeometryPropertyTest extends TestCase
         foreach (['latin1', 'utf8mb4', 'binary'] as $charset) {
             yield 'charset ' . $charset => ['SET NAMES ' . $charset . '; SELECT ST_GEOMETRYTYPE(Point(1,2)), COLLATION(ST_GEOMETRYTYPE(Point(1,2))), COERCIBILITY(ST_GEOMETRYTYPE(Point(1,2)))'];
         }
+        foreach (['SRID', 'DIMENSION', 'GEOMETRYTYPE', 'ISEMPTY', 'NUMGEOMETRIES'] as $name) {
+            yield 'prepare ' . $name => ["PREPARE spatial_property FROM 'SELECT " . $name . "(NULL)'; SHOW WARNINGS; EXECUTE spatial_property; SHOW WARNINGS; DEALLOCATE PREPARE spatial_property"];
+            yield 'syntax after ' . $name => ['SELECT ' . $name . '(NULL) WHERE FALSE; SHOW WARNINGS'];
+        }
+        yield 'nested legacy warnings' => ['SELECT DIMENSION(SRID(NULL)); SHOW WARNINGS'];
+        yield 'nested legacy warning before arity' => ['SELECT SRID(DIMENSION(NULL), 1); SHOW WARNINGS'];
         yield 'stored properties' => ['CREATE TABLE geometry_properties AS SELECT ST_DIMENSION(Point(1,2)) AS d, ST_GEOMETRYTYPE(Point(1,2)) AS t, ST_ISEMPTY(Point(1,2)) AS e, ST_NUMGEOMETRIES(MultiPoint(Point(1,2))) AS n; SHOW COLUMNS FROM geometry_properties; SELECT * FROM geometry_properties'];
     }
 

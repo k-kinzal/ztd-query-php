@@ -91,13 +91,17 @@ final class Unary implements Scalar
     }
 
     /**
-     * Resolves unary minus over an operand whose type is resolved; MySQL 5.6 and 5.7 count the sign in the length of an exact result.
+     * Resolves unary minus over a resolved operand. Legacy exact results and boolean literals include an extra sign character.
      */
     public function negated(Numbers $precise, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain $operand, NumericResult $numbers, Derivation $derivation): \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain
     {
         $result = $precise->negated($operand, (new Constants())->negative($this->operand) || $numbers->beyond($this->operand));
         $grammar = $derivation->context->profile->grammar;
+        $literal = $this->operand;
+        while ($literal instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped || ($literal instanceof self && $literal->operator === UnaryOperator::Plus)) {
+            $literal = $literal->operand;
+        }
 
-        return $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? $precise->legacyNegated($result, $operand->unsigned && $precise->operand($operand) === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer) : $result;
+        return $literal instanceof \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral || $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? $precise->legacyNegated($result, $operand->unsigned && $precise->operand($operand) === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer) : $result;
     }
 }

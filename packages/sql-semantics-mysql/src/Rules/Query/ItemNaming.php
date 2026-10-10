@@ -187,6 +187,7 @@ final class ItemNaming
      */
     public function constant(Scalar $argument): string
     {
+        $argument = $this->unwrapped($argument);
         if ($argument instanceof StringLiteral) {
             return $argument->value();
         }

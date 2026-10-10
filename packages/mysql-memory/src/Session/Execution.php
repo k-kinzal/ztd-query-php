@@ -82,7 +82,7 @@ final class Execution
         $context = new Context($session->modes(), $session->diagnostics, $session->variables, $session->variables->instant());
         $this->area($operation, $command);
         $late = array_filter($operation->facts->warnings, Stages::afterReading(...));
-        if ($read) {
+        if ($read && !$session->replayed) {
             $this->parsing($operation, array_diff_key($operation->facts->warnings, $late));
         }
         try {
@@ -93,7 +93,7 @@ final class Execution
         State\StatementCounters::evaluated($operation->statement, $session);
         $this->access($operation->statement, $context);
         $hints->report($session);
-        foreach ($this->undeclared($operation) ? [] : $late as $warning) {
+        foreach ($session->replayed || $this->undeclared($operation) ? [] : $late as $warning) {
             $session->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
         }
         (new \MySqlMemory\System\Guard())->check($operation->statement, $session);

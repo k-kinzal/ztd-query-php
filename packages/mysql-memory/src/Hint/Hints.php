@@ -99,9 +99,7 @@ final class Hints
      */
     public function prepare(\SqlSemantics\Statement\Operation $operation, Session $session): void
     {
-        foreach ($session->hinted as [$message]) {
-            $session->diagnostics->warning(\MySqlMemory\Error\Family\StatementError::ParseError, $message);
-        }
+        (new \MySqlMemory\Session\Execution($session))->parsing($operation, $operation->facts->warnings);
         $application = $this->apply($operation->statement, $session);
         $application->restore($session);
         $application->report($session);

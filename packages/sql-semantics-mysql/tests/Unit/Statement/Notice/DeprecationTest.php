@@ -42,6 +42,16 @@ final class DeprecationTest extends TestCase
         self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT SRID(NULL)')->facts->warnings);
     }
 
+    public function testSpatialWarningUsesTheReleaseAndNormalizesTheName(): void
+    {
+        $warning = Deprecation::spatialWarning('srid', \SqlSemantics\Contract\GrammarRelease::MySql5744);
+
+        self::assertNotNull($warning);
+        self::assertSame(Deprecated::SpatialFunction, $warning->construct);
+        self::assertNull(Deprecation::spatialWarning('srid', \SqlSemantics\Contract\GrammarRelease::MySql847));
+        self::assertNull(Deprecation::spatialWarning('ST_SRID', \SqlSemantics\Contract\GrammarRelease::MySql5744));
+    }
+
     public function testCodeIsThatOfTheConstruct(): void
     {
         self::assertSame(3005, (new Deprecation(Deprecated::InsertDelayed))->code());

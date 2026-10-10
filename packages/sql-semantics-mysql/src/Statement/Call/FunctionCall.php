@@ -95,16 +95,16 @@ final class FunctionCall implements Scalar
         if ($legacy !== null) {
             Deprecation::raise($legacy, $derivation);
         }
-        if ($this->schema === null && count($this->arguments) === 1) {
-            Deprecation::spatial($this->name->value, $derivation);
-        }
         $facts = [];
         foreach ($this->arguments as $argument) {
             $facts[] = (new Arguments())->one($argument->expression, $derivation, $environment);
         }
+        if ($this->schema === null && count($this->arguments) === 1) {
+            Deprecation::spatial($this->name->value, $derivation);
+        }
 
         $fact = (new RoutineCalls())->result($this, $facts, $derivation);
-        if ($this->schema !== null || !(new NativeFunctions())->exists($derivation->context->profile->grammar, $this->name->value)) {
+        if ($fact->type instanceof \SqlSemantics\Statement\Type\Invalid || $this->schema !== null || !(new NativeFunctions())->exists($derivation->context->profile->grammar, $this->name->value)) {
             return $fact;
         }
 
