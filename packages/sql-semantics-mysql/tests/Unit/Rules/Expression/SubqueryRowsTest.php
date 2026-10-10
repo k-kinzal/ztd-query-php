@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
@@ -69,6 +71,21 @@ final class SubqueryRowsTest extends TestCase
 
         self::assertSame($type, (new SubqueryRows())->string($type, $expression));
         self::assertSame(Domain::NOT_FIXED, (new SubqueryRows())->string($type, null)->decimals);
+    }
+
+    public function testValueExpandsBlobColumnsThroughGroupingAndStars(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE blobs (b TEXT CHARACTER SET utf8mb4)');
+        $plain = $semantics->analyze('SELECT (SELECT b FROM blobs)', [$table])->field(0)->type;
+        $grouped = $semantics->analyze('SELECT (SELECT (b) FROM blobs)', [$table])->field(0)->type;
+        $star = $semantics->analyze('SELECT (SELECT * FROM blobs)', [$table])->field(0)->type;
+
+        self::assertInstanceOf(Known::class, $plain);
+        self::assertInstanceOf(Domain::class, $plain->descriptor);
+        self::assertSame(262140, $plain->descriptor->length);
+        self::assertEquals($plain, $grouped);
+        self::assertEquals($plain, $star);
     }
 
     public function testTestCombinesTheColumnsAndReportsAWidthMismatch(): void

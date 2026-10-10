@@ -11,8 +11,10 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\ScalarFact;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Type\Dependent;
@@ -43,7 +45,7 @@ final class SubqueryRows
     /**
      * Answers the facts of a subquery used as a value.
      */
-    public function value(QueryFact $query): ScalarFact
+    public function value(QueryFact $query, ?Facts $facts = null): ScalarFact
     {
         if (!$query->shape->complete()) {
             return new ScalarFact(new Dependent($query->shape->missing), Nullability::Nullable);
@@ -53,7 +55,13 @@ final class SubqueryRows
             $domain = (new Precision())->domain($slots[0]->type);
             if ($domain?->kind === Kind::String) {
                 $field = $query->projection[0] ?? null;
-                return new ScalarFact(new Known($this->string($domain, $field instanceof Field ? $field->expression : null)), Nullability::Nullable);
+                $expression = $field instanceof Field ? $field->expression : null;
+                while ($expression instanceof Grouped) {
+                    $expression = $expression->operand;
+                }
+                $resolution = $expression !== null && $facts?->covers($expression) === true ? $facts->scalar($expression)->resolution : ($field instanceof Field ? $field->resolution : null);
+
+                return new ScalarFact(new Known($this->string($domain, $expression, $resolution instanceof ResolvedColumn)), Nullability::Nullable);
             }
 
             return new ScalarFact($domain === null || $domain->display === null ? $slots[0]->type : new Known($domain->value()), Nullability::Nullable);
@@ -64,14 +72,19 @@ final class SubqueryRows
 
     /**
      * Retains direct GROUP_CONCAT metadata and removes fixed fractional digits from other string scalar results.
+     * A TEXT/BLOB column contributes its collation-expanded bound; a computed blob
+     * already carries its result bound. Name resolution distinguishes columns from
+     * expression aliases, including through parentheses and star expansion.
      */
-    public function string(Domain $domain, ?Scalar $expression): Domain
+    public function string(Domain $domain, ?Scalar $expression, bool $column = false): Domain
     {
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
 
-        return $expression instanceof GroupConcat ? $domain : Domain::string($domain->length, $domain->collation, $domain->field, $domain->coercibility);
+        $length = $column && $domain->field->blob() ? min(4294967295, $domain->byteLength()) : $domain->length;
+
+        return $expression instanceof GroupConcat ? $domain : Domain::string($length, $domain->collation, $domain->field, $domain->coercibility);
     }
 
     /**
@@ -84,7 +97,7 @@ final class SubqueryRows
             return $nullability->propagate(Nullability::Dependent);
         }
         $operands = new Operands();
-        $operands->comparable([$operand, $this->value($query)], $derivation, $expression);
+        $operands->comparable([$operand, $this->value($query, $derivation->facts())], $derivation, $expression);
         foreach ($query->shape->slots as $slot) {
             $nullability = $nullability->propagate($slot->nullability);
         }

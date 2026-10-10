@@ -52,7 +52,7 @@ final class ScalarSubquery implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $query = $derivation->query($this->query, $environment);
-        $value = (new SubqueryRows())->value($query);
+        $value = (new SubqueryRows())->value($query, $derivation->facts());
         $legacy = $derivation->context->profile->grammar === GrammarRelease::MySql5651;
         $reduction = new ScalarReduction();
         $replacement = $reduction->expression($this->query, $derivation->context->profile->grammar);

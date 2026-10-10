@@ -123,6 +123,11 @@ result metadata from UCS-2 or UTF-16 uses the source character set's minimum
 width. MySQL 5.6 string casts preserve the operand's nullable attribute; later
 releases report those casts as nullable.
 
+A scalar subquery that reads a TEXT/BLOB column uses the column's
+collation-expanded bound. Computed string expressions retain their own bound;
+resolved column bindings preserve this distinction through parentheses, stars
+and result aliases.
+
 Besides the keyword forms above (`CAST`, `CONVERT`, `TRIM`, `POSITION`, `SUBSTRING ... FROM`, `CHAR`, `EXTRACT`, `DATE_ADD`, `DATE_SUB`, `TIMESTAMPADD`, `TIMESTAMPDIFF`, `GET_FORMAT` and the clocks), these functions are evaluated:
 
 | Family | Functions |
