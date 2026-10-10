@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class IsTestTest extends TestCase
 {
-    public function testLegacyJsonNullWarnsAtTheAggregatePositionAndRestoresTheCurrentRow(): void
+    public function testScalarNullWarnsAtTheAggregatePositionAndRestoresTheCurrentRow(): void
     {
         $session = (new Instance('5.7.44'))->connect();
         $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
@@ -29,7 +29,7 @@ final class IsTestTest extends TestCase
         $plan = new \MySqlMemory\Plan\QueryPlan(new \MySqlMemory\Plan\Path\Source\Inline([[new Constant($domain, '[1]')]], 1), [$domain], ['j']);
         $read = new \MySqlMemory\Evaluation\Subquery\ScalarRead(new \MySqlMemory\Evaluation\Subquery\Rows($plan), $domain);
 
-        self::assertFalse(IsTest::legacyJsonNull($read, $frame));
+        self::assertFalse(IsTest::scalarNull($read, $frame));
         self::assertSame(1, $frame->context->row);
         self::assertSame([['Warning', 3156, 'Invalid JSON value for CAST to INTEGER from column ? at row 6']], $session->diagnostics->conditions);
     }

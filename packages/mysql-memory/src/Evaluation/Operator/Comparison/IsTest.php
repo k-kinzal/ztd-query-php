@@ -119,22 +119,25 @@ final class IsTest implements Evaluable
         if ($value instanceof Logic && $value->operator === LogicalOperator::Xor) {
             return self::absent($value->left, $frame) || self::absent($value->right, $frame);
         }
-        if ($value instanceof ScalarRead && $value->domain()->kind === Kind::Json && $frame->context->modes->release === GrammarRelease::MySql5744) {
-            return self::legacyJsonNull($value, $frame);
+        if ($value instanceof ScalarRead) {
+            return self::scalarNull($value, $frame);
         }
 
         return $value->evaluate($frame) === null;
     }
 
     /**
-     * Tests a MySQL 5.7 JSON scalar result through its integer conversion.
+     * Tests a scalar result for NULL, including MySQL 5.7's JSON integer conversion.
      *
      * Direct JSON expressions do not perform this conversion. Scalar subqueries
      * do, with an unknown column name and the consumed aggregate input position.
      * Verified by differential SQL on MySQL 5.7.44.
      */
-    public static function legacyJsonNull(ScalarRead $value, Frame $frame): bool
+    public static function scalarNull(ScalarRead $value, Frame $frame): bool
     {
+        if ($value->domain()->kind !== Kind::Json || $frame->context->modes->release !== GrammarRelease::MySql5744) {
+            return $value->evaluate($frame) === null;
+        }
         $stored = $value->evaluate($frame);
         $row = $frame->context->row;
         $frame->context->row = $frame->context->aggregateRow;
