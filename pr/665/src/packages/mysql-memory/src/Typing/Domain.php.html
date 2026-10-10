@@ -78,7 +78,7 @@
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     * @param Kind $kind How a value is held at run time</span></span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * @param Field $field The field type the protocol reports</span></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * @param int $length The display length in characters</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * @param int $length The display length in characters, or bytes for TEXT/BLOB fields</span></span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     * @param int $decimals The number of decimals, or NOT_FIXED</span></span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     * @param bool $unsigned Whether an integer or decimal is UNSIGNED</span></span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     * @param Collation|null $collation The collation of a string; binary for every other kind when null</span></span>
@@ -213,11 +213,11 @@
 <span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a>    }</span>
 <span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a></span>
 <span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a><span class="tok-com">     * Answers the display length in bytes, as the column definition reports it: the display width of a column of an integer type that declares one.</span></span>
+<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a><span class="tok-com">     * Answers the unconverted display length in bytes: TEXT/BLOB bounds already count bytes, and integer columns retain their display widths.</span></span>
 <span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">byteLength</span>(): <span class="tok-id">int</span></span>
 <span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a>    {</span>
-<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">kind</span> === <span class="tok-id">Kind</span>::<span class="tok-id">String</span> || <span class="tok-var">$this</span>-&gt;<span class="tok-id">kind</span>-&gt;<span class="tok-id">temporal</span>() ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">length</span> * <span class="tok-var">$this</span>-&gt;<span class="tok-id">collation</span>-&gt;<span class="tok-id">charset</span>-&gt;<span class="tok-id">maxLength</span> : <span class="tok-var">$this</span>-&gt;<span class="tok-id">display</span> ?? <span class="tok-var">$this</span>-&gt;<span class="tok-id">length</span>;</span>
+<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">resolved</span>()-&gt;<span class="tok-id">metadataLength</span>();</span>
 <span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a>    }</span>
 <span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a></span>
 <span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a>    <span class="tok-com">/**</span></span>
