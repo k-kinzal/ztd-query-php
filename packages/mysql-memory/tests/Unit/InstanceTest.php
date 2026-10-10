@@ -94,6 +94,19 @@ final class InstanceTest extends TestCase
         self::assertSame(2, $instance->connections());
     }
 
+    public function testRestartClearsConnectionTotalsAndMaximum(): void
+    {
+        $instance = new Instance();
+        $first = $instance->connect();
+        $second = $instance->connect();
+        $instance->restart();
+        $again = $instance->connect();
+
+        self::assertTrue($first->released);
+        self::assertTrue($second->released);
+        self::assertSame([1, 1, [$again->id => true]], [$instance->connections(), $instance->registry->threads->maximum, $instance->registry->threads->connected]);
+    }
+
     public function testResetPreservesTheConnectionIdentityAndEndsItsTransaction(): void
     {
         $instance = new Instance();
@@ -106,6 +119,22 @@ final class InstanceTest extends TestCase
         self::assertSame([], $fresh->variables->user);
         self::assertSame([$original->id, 'example.test', 12345, 1], [$fresh->id, $fresh->host, $fresh->port, $instance->connections()]);
         self::assertSame($fresh, $instance->sessions[$original->id]->get());
+    }
+
+    public function testResetKeepsTheReplacementAliveWhenTheOldSessionIsDestroyed(): void
+    {
+        $instance = new Instance();
+        $original = $instance->connect();
+        $fresh = $instance->reset($original);
+        $fresh->query("DO 1; SELECT GET_LOCK('reset_lock',0); BEGIN");
+        unset($original);
+        gc_collect_cycles();
+
+        self::assertSame([$fresh->id => true], $instance->registry->threads->connected);
+        self::assertSame(1, $instance->registry->status->read('Com_do', $fresh->id));
+        self::assertSame($fresh->id, $instance->registry->threads->owner('reset_lock'));
+        self::assertSame($fresh->transaction, $instance->transactions->of($fresh->id));
+        self::assertTrue($fresh->transaction->open);
     }
 
     public function testConnectNumbersTheConnectionsFromOneWhenNoDaemonRuns(): void

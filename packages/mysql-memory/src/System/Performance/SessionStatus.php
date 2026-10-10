@@ -23,6 +23,6 @@ final class SessionStatus implements SystemRows
     #[Override]
     public function rows(Reading $reading): array
     {
-        return Variables::rows(StatusVariables::of($reading->release)->values($reading->instance, false, false, count($reading->sessions()), connection: $reading->connection->id, instant: $reading->connection->context->started), $reading);
+        return Variables::rows(StatusVariables::of($reading->release)->values($reading->instance, false, false, count($reading->sessions()), connection: $reading->connection->id, instant: $reading->connection->context->started, zone: $reading->connection->context->zone()), $reading);
     }
 }

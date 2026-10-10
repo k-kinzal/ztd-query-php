@@ -457,12 +457,12 @@ final class SessionTest extends TestCase
         self::assertSame([['11']], $result->rows);
     }
 
-    public function testReleaseEndsTheSession(): void
+    public function testCloseMarksTheSessionReleased(): void
     {
         $instance = new Instance();
         $session = $instance->connect();
 
-        $session->release();
+        $session->close();
 
         self::assertSame([true, []], [$session->released, $instance->registry->threads->connected]);
     }

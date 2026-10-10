@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\System\Performance;
 
 use MySqlMemory\Instance;
+use MySqlMemory\Value\Zone;
 use SqlSemantics\Contract\GrammarRelease;
 
 /**
@@ -15,9 +16,10 @@ use SqlSemantics\Contract\GrammarRelease;
  * configuration of the server reads as on a server of the release; Uptime and
  * Uptime_since_flush_status subtract the real start or flush time from the reading statement's
  * timestamp, with unsigned wraparound for a pinned timestamp before that origin. Threads_connected counts the
- * sessions connected, Threads_running the one running the statement, and Connections the
- * sessions opened so far. A release without a catalog of its own has that of the latest
- * series of its major version.
+ * clients connected, Threads_running includes the reader and enabled event daemon, and
+ * Connections counts client sessions opened so far. The connection maximum survives
+ * disconnects until FLUSH STATUS and records its clock in the reading session time zone.
+ * A release without a catalog of its own has that of the latest series of its major version.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html.
  *
  * @visibility MySqlMemory
@@ -64,9 +66,10 @@ final class StatusVariables
      *
      * @return list<array{string, string}>
      */
-    public function values(Instance $instance, bool $global, bool $threaded, int $connected, bool $tabled = true, ?int $connection = null, ?float $instant = null): array
+    public function values(Instance $instance, bool $global, bool $threaded, int $connected, bool $tabled = true, ?int $connection = null, ?float $instant = null, ?Zone $zone = null): array
     {
         $instant ??= $instance->registry->threads->now();
+        $connections = $this->connections($instance, $connected, $zone ?? Zone::utc());
         $rows = [];
         foreach ($this->entries as [$name, $scope, $value, $listed]) {
             if (($global && $scope === 'Session') || ($threaded && $scope === 'Global') || ($tabled && !$listed)) {
@@ -75,15 +78,32 @@ final class StatusVariables
             $rows[] = [$name, match ($name) {
                 'Uptime' => \MySqlMemory\Value\Integer::text((int) $instant - (int) $instance->started, true),
                 'Uptime_since_flush_status' => \MySqlMemory\Value\Integer::text((int) $instant - (int) ($instance->registry->status->flushedAt ?? $instance->started), true),
-                'Threads_connected', 'Max_used_connections' => (string) $connected,
-                'Threads_running' => '1',
-                'Connections' => (string) $instance->connections(),
                 'Queries' => (string) $instance->registry->status->read($name),
-                default => $name === 'Questions' || str_starts_with($name, 'Com_') ? (string) $instance->registry->status->read($this->counter($name), $global ? null : $connection) : $value,
+                default => $connections[$name] ?? ($name === 'Questions' || str_starts_with($name, 'Com_') ? (string) $instance->registry->status->read($this->counter($name), $global ? null : $connection) : $value),
             }];
         }
 
         return $rows;
+    }
+
+    /**
+     * Reads connection totals and the maximum in the observing session's time zone.
+     * An enabled event scheduler counts as running but is not a client connection.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html.
+     *
+     * @return array<string, string>
+     */
+    public function connections(Instance $instance, int $connected, Zone $zone): array
+    {
+        $threads = $instance->registry->threads;
+
+        return [
+            'Connections' => (string) $instance->connections(),
+            'Threads_connected' => (string) $connected,
+            'Threads_running' => $instance->registry->eventScheduler->row() === null ? '1' : '2',
+            'Max_used_connections' => (string) $threads->maximum,
+            'Max_used_connections_time' => gmdate('Y-m-d H:i:s', $zone->local((int) $threads->maximumAt)),
+        ];
     }
 
     /**

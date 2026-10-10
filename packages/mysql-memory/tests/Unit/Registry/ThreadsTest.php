@@ -49,6 +49,33 @@ final class ThreadsTest extends TestCase
         self::assertSame([3 => true], $threads->connected);
     }
 
+    public function testConnectRetainsTheMaximumAfterDisconnect(): void
+    {
+        $threads = new Threads();
+        $threads->connect(1);
+        $threads->connect(2);
+        $recorded = $threads->maximumAt;
+        $threads->disconnect(2);
+        $threads->pass(10.0);
+        $threads->connect(3);
+
+        self::assertSame([2, $recorded], [$threads->maximum, $threads->maximumAt]);
+    }
+
+    public function testResetMaximumRecordsTheCurrentCountAndClock(): void
+    {
+        $threads = new Threads();
+        $threads->connect(1);
+        $threads->connect(2);
+        $recorded = $threads->maximumAt;
+        $threads->disconnect(2);
+        $threads->pass(10.0);
+        $threads->resetMaximum();
+
+        self::assertSame(1, $threads->maximum);
+        self::assertGreaterThanOrEqual($recorded + 10.0, $threads->maximumAt);
+    }
+
     public function testDisconnectReleasesTheLocksOfTheSession(): void
     {
         $threads = new Threads();

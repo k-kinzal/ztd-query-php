@@ -41,6 +41,16 @@ final class Threads
     public array $connected = [];
 
     /**
+     * The greatest number of simultaneous clients since startup or FLUSH STATUS.
+     */
+    public int $maximum = 0;
+
+    /**
+     * The server-clock instant at which the current maximum was recorded.
+     */
+    public float $maximumAt = 0.0;
+
+    /**
      * @var array<string, array{int, int}> The connection id of the session holding each lock and the number of times it took it, by the key of the lock name
      */
     public array $locks = [];
@@ -77,6 +87,19 @@ final class Threads
     public function connect(int $connection): void
     {
         $this->connected[$connection] = true;
+        if (count($this->connected) > $this->maximum) {
+            $this->resetMaximum();
+        }
+    }
+
+    /**
+     * Starts measuring the maximum again from the currently connected clients.
+     * FLUSH STATUS records the real server clock, independently of SET timestamp.
+     */
+    public function resetMaximum(): void
+    {
+        $this->maximum = count($this->connected);
+        $this->maximumAt = $this->now();
     }
 
     /**

@@ -180,27 +180,22 @@ final class Session
 
     /**
      * Ends the session, as the client disconnecting does: the user-level locks it holds are released, and its open transaction is rolled back, releasing its row locks.
+     * Repeated closure is inert: a reset may already have reused this connection identity.
+     * COMMIT/ROLLBACK RELEASE and KILL use the same transition; subsequent statements fail
+     * with CR_SERVER_GONE_ERROR and the wire connection closes after the current reply.
      *
      * Source: https://dev.mysql.com/doc/refman/8.4/en/locking-functions.html,
      * https://dev.mysql.com/doc/refman/8.4/en/innodb-autocommit-commit-rollback.html.
      */
     public function close(): void
     {
+        if ($this->released) {
+            return;
+        }
         $this->released = true;
         $this->instance->registry->status->clear($this->id);
         $this->instance->registry->threads->disconnect($this->id);
         $this->transaction->disconnect();
-    }
-
-    /**
-     * Ends the session after a COMMIT or ROLLBACK with RELEASE: the server closes the connection once it answers the statement, so the statements written after it in the same text do not run, and every later statement fails as on a closed connection (CR_SERVER_GONE_ERROR).
-     *
-     * Source: https://dev.mysql.com/doc/refman/8.4/en/commit.html.
-     */
-    public function release(): void
-    {
-        $this->released = true;
-        $this->close();
     }
 
     /**

@@ -68,4 +68,19 @@ final class StatusVariablesTest extends TestCase
 
         self::assertSame(['2', '2', '2', '2', '1'], [$values['Com_show_replicas'], $values['Com_show_slave_hosts'], $values['Com_show_replica_status'], $values['Com_show_slave_status'], $values['Com_show_master_status']]);
     }
+
+    public function testConnectionsSeparatesCurrentPeakAndTotalAndLocalizesThePeakTime(): void
+    {
+        $instance = new Instance(globals: ['event_scheduler' => 'OFF']);
+        $first = $instance->connect();
+        $second = $instance->connect();
+        $second->close();
+        $instance->registry->threads->maximumAt = 1700000000.0;
+        $catalog = new StatusVariables([]);
+        $values = $catalog->connections($instance, 1, new \MySqlMemory\Value\Zone('+09:00', 32400));
+
+        self::assertSame(['Connections' => '2', 'Threads_connected' => '1', 'Threads_running' => '1', 'Max_used_connections' => '2', 'Max_used_connections_time' => '2023-11-15 07:13:20'], $values);
+        $first->query('SET GLOBAL event_scheduler=ON');
+        self::assertSame('2', $catalog->connections($instance, 1, \MySqlMemory\Value\Zone::utc())['Threads_running']);
+    }
 }

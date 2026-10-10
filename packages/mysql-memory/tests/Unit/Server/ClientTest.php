@@ -28,7 +28,7 @@ final class ClientTest extends TestCase
         self::assertFalse($client->ended());
         $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
         self::assertFalse($client->ended());
-        $client->session()->release();
+        $client->session()->close();
 
         self::assertTrue($client->ended());
     }

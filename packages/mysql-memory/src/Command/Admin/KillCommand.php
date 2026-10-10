@@ -68,7 +68,7 @@ final class KillCommand implements Command
             $target->interrupted = true;
         }
         if ($statement->scope !== KillScope::Query) {
-            $target->release();
+            $target->close();
         }
         if ($target === $session) {
             throw StatementError::QueryInterrupted->error();

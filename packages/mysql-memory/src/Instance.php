@@ -180,7 +180,7 @@ final class Instance
             $session = $reference->get();
             if ($session !== null) {
                 $session->interrupted = true;
-                $session->release();
+                $session->close();
             }
         }
     }
@@ -202,6 +202,8 @@ final class Instance
         }
         $this->shutdown();
         $this->registry->status->reset();
+        $this->registry->threads->resetMaximum();
+        $this->connections = 0;
         $this->globals->values = $this->startup;
         $this->globals->caches = [];
         $this->dictionary->discardVolatileRows();

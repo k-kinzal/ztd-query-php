@@ -102,6 +102,7 @@ final class FlushCommand implements Command
             if ($item->option === FlushOption::Status) {
                 $session->instance->registry->status->clear($session->settings()->release() === GrammarRelease::MySql5651 ? $session->id : null);
                 $session->instance->registry->status->flushedAt = $session->instance->registry->threads->now();
+                $session->instance->registry->threads->resetMaximum();
             }
             if ($item->option === FlushOption::RelayLogs && $item->channel !== null && $item->channel->value !== '') {
                 throw AdministrationError::ReplicaChannelMissing->error($item->channel->value);

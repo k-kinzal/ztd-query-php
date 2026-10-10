@@ -93,7 +93,7 @@ final class TransactionCommand implements Command
         }
         $completion = strtoupper((string) $session->variables->read('completion_type'));
         if ($statement->release ?? in_array($completion, ['RELEASE', '2'], true)) {
-            $session->release();
+            $session->close();
 
             return;
         }

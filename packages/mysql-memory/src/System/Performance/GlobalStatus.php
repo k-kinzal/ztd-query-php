@@ -23,6 +23,6 @@ final class GlobalStatus implements SystemRows
     #[Override]
     public function rows(Reading $reading): array
     {
-        return Variables::rows(StatusVariables::of($reading->release)->values($reading->instance, true, false, count($reading->sessions()), instant: $reading->connection->context->started), $reading);
+        return Variables::rows(StatusVariables::of($reading->release)->values($reading->instance, true, false, count($reading->sessions()), instant: $reading->connection->context->started, zone: $reading->connection->context->zone()), $reading);
     }
 }
