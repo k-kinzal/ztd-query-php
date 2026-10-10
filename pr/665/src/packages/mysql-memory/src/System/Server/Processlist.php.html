@@ -53,8 +53,8 @@
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * The rows of INFORMATION_SCHEMA.PROCESSLIST and performance_schema.processlist: one for each session connected, by connection id.</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * The session that reads the table is running a Query, executing the statement it reads it</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * with; every other session is in Sleep, with an empty state and no statement. The emulator</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * runs no background thread, so the event scheduler daemon the server lists is not listed.</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * with; every other client session is in Sleep, with an empty state and no statement. The event</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * scheduler contributes its daemon row while enabled. TCP peers include their source port.</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * TIME counts whole clock seconds since the last client statement. A pinned timestamp also</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * controls this start time, including while sleeping, and a future timestamp gives a negative</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * time (verified through the public SQL interface on 8.4.7).</span></span>
@@ -75,34 +75,38 @@
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$reading</span>-&gt;<span class="tok-id">sessions</span>() <span class="tok-kw">as</span> <span class="tok-var">$id</span> =&gt; <span class="tok-var">$session</span>) {</span>
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            <span class="tok-var">$rows</span>[] = <span class="tok-id">self</span>::<span class="tok-id">row</span>(<span class="tok-var">$session</span>, <span class="tok-var">$id</span> === <span class="tok-var">$reading</span>-&gt;<span class="tok-id">connection</span>-&gt;<span class="tok-id">id</span>, <span class="tok-str">&#039;executing&#039;</span>);</span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        }</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">return</span> <span class="tok-var">$rows</span>;</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    }</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     * Answers the row of a session.</span></span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     * @param bool $current Whether the session is the one that reads the list</span></span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com">     * @param string $state The state of the session that reads the list</span></span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-com">     * @return array&lt;string, int|string|null&gt;</span></span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">row</span>(<span class="tok-id">Session</span> <span class="tok-var">$session</span>, <span class="tok-id">bool</span> <span class="tok-var">$current</span>, <span class="tok-id">string</span> <span class="tok-var">$state</span>): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    {</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>        <span class="tok-kw">return</span> [</span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>            <span class="tok-str">&#039;ID&#039;</span> =&gt; <span class="tok-var">$session</span>-&gt;<span class="tok-id">id</span>,</span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>            <span class="tok-str">&#039;USER&#039;</span> =&gt; <span class="tok-var">$session</span>-&gt;<span class="tok-id">user</span>,</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>            <span class="tok-str">&#039;HOST&#039;</span> =&gt; <span class="tok-var">$session</span>-&gt;<span class="tok-id">host</span>,</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>            <span class="tok-str">&#039;DB&#039;</span> =&gt; <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">database</span> === <span class="tok-str">&#039;&#039;</span> ? <span class="tok-id">null</span> : <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">database</span>,</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>            <span class="tok-str">&#039;COMMAND&#039;</span> =&gt; <span class="tok-var">$current</span> ? <span class="tok-str">&#039;Query&#039;</span> : <span class="tok-str">&#039;Sleep&#039;</span>,</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            <span class="tok-str">&#039;TIME&#039;</span> =&gt; <span class="tok-var">$session</span>-&gt;<span class="tok-id">activity</span>-&gt;<span class="tok-id">elapsed</span>(),</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>            <span class="tok-str">&#039;STATE&#039;</span> =&gt; <span class="tok-var">$current</span> ? <span class="tok-var">$state</span> : <span class="tok-str">&#039;&#039;</span>,</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-str">&#039;INFO&#039;</span> =&gt; <span class="tok-var">$current</span> ? <span class="tok-var">$session</span>-&gt;<span class="tok-id">text</span> : <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            <span class="tok-str">&#039;EXECUTION_ENGINE&#039;</span> =&gt; <span class="tok-str">&#039;PRIMARY&#039;</span>,</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        ];</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    }</span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>}</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$daemon</span> = <span class="tok-var">$reading</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">registry</span>-&gt;<span class="tok-id">eventScheduler</span>-&gt;<span class="tok-id">row</span>();</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">if</span> (<span class="tok-var">$daemon</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>            <span class="tok-var">$rows</span>[] = <span class="tok-var">$daemon</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        }</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-kw">return</span> <span class="tok-var">$rows</span>;</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    }</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com">     * Answers the row of a session.</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a><span class="tok-com">     * @param bool $current Whether the session is the one that reads the list</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     * @param string $state The state of the session that reads the list</span></span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     * @return array&lt;string, int|string|null&gt;</span></span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">row</span>(<span class="tok-id">Session</span> <span class="tok-var">$session</span>, <span class="tok-id">bool</span> <span class="tok-var">$current</span>, <span class="tok-id">string</span> <span class="tok-var">$state</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    {</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>        <span class="tok-kw">return</span> [</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>            <span class="tok-str">&#039;ID&#039;</span> =&gt; <span class="tok-var">$session</span>-&gt;<span class="tok-id">id</span>,</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            <span class="tok-str">&#039;USER&#039;</span> =&gt; <span class="tok-var">$session</span>-&gt;<span class="tok-id">user</span>,</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>            <span class="tok-str">&#039;HOST&#039;</span> =&gt; <span class="tok-var">$session</span>-&gt;<span class="tok-id">host</span> . (<span class="tok-var">$session</span>-&gt;<span class="tok-id">port</span> === <span class="tok-id">null</span> ? <span class="tok-str">&#039;&#039;</span> : <span class="tok-str">&#039;:&#039;</span> . <span class="tok-var">$session</span>-&gt;<span class="tok-id">port</span>),</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-str">&#039;DB&#039;</span> =&gt; <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">database</span> === <span class="tok-str">&#039;&#039;</span> ? <span class="tok-id">null</span> : <span class="tok-var">$session</span>-&gt;<span class="tok-id">variables</span>-&gt;<span class="tok-id">database</span>,</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            <span class="tok-str">&#039;COMMAND&#039;</span> =&gt; <span class="tok-var">$current</span> ? <span class="tok-str">&#039;Query&#039;</span> : <span class="tok-str">&#039;Sleep&#039;</span>,</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            <span class="tok-str">&#039;TIME&#039;</span> =&gt; <span class="tok-var">$session</span>-&gt;<span class="tok-id">activity</span>-&gt;<span class="tok-id">elapsed</span>(),</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>            <span class="tok-str">&#039;STATE&#039;</span> =&gt; <span class="tok-var">$current</span> ? <span class="tok-var">$state</span> : <span class="tok-str">&#039;&#039;</span>,</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>            <span class="tok-str">&#039;INFO&#039;</span> =&gt; <span class="tok-var">$current</span> ? <span class="tok-var">$session</span>-&gt;<span class="tok-id">text</span> : <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>            <span class="tok-str">&#039;EXECUTION_ENGINE&#039;</span> =&gt; <span class="tok-str">&#039;PRIMARY&#039;</span>,</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        ];</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>    }</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>}</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
