@@ -128,6 +128,13 @@ collation-expanded bound. Computed string expressions retain their own bound;
 resolved column bindings preserve this distinction through parentheses, stars
 and result aliases.
 
+Control functions retain a computed blob's character bound separately from its
+reported byte width. Nested `COALESCE`, `IFNULL`, `NULLIF`, `CONCAT` and `HEX`
+therefore use the original expression bound. String field types and decimals
+follow the release-specific rules, including legacy `NULLIF` and computed
+`MIN`/`MAX` results. MySQL 5.6 reports long `CONCAT`, `CONCAT_WS` and `REPLACE`
+results as nullable even when their arguments are not nullable.
+
 Materialized computed strings longer than 512 characters use BLOB columns.
 Their direct result width and the storage capacity read by later expressions
 are distinct, including the MySQL 5.6 character-based allocation rule and the

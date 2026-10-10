@@ -5,7 +5,12 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Typing\Builtin;
 
 use Closure;
+use SqlSemantics\Platform\MySql\Rules\Typing\Text\ResultBounds;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
 /**
  * Resolves the results of flow control functions: IF, IFNULL and COALESCE settle the types of their branches, NULLIF keeps the type of its first argument.
@@ -27,8 +32,27 @@ final class ControlResults
             'IF' => static fn (Invocation $call): ?Domain => $call->aggregation()->of((new self())->branches($call, [1, 2]), 'if', $call->derivation),
             'IFNULL' => static fn (Invocation $call): ?Domain => $call->aggregation()->of((new self())->branches($call, array_keys($call->domains)), 'ifnull', $call->derivation),
             'COALESCE' => static fn (Invocation $call): ?Domain => $call->aggregation()->of((new self())->branches($call, array_keys($call->domains)), 'coalesce', $call->derivation),
-            'NULLIF' => static fn (Invocation $call): Domain => $call->domain(0),
+            'NULLIF' => $this->nullable(...),
         ];
+    }
+
+    /**
+     * Keeps the first argument's value type while resolving its returned string field.
+     */
+    public function nullable(Invocation $call): Domain
+    {
+        $node = $call->nodes[0] ?? null;
+        while ($node instanceof Grouped) {
+            $node = $node->operand;
+        }
+        $column = $node !== null && $call->derivation->facts()->scalar($node)->resolution instanceof ResolvedColumn;
+        $legacy = (new FormatResults())->legacy($call);
+        $domain = $call->domain(0);
+        if ($legacy && $domain->kind === Kind::Null) {
+            return new Domain(Kind::String, Field::VarString, 0, 0, false, $domain->collation, [], $domain->coercibility);
+        }
+
+        return (new ResultBounds())->selected($domain, $legacy, $column);
     }
 
     /**

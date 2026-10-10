@@ -84,6 +84,9 @@ final class Results
         $nullability = $derivation->context->profile->grammar === GrammarRelease::MySql5651 && in_array(strtoupper($name), ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER', 'PASSWORD', 'CHARSET', 'COLLATION'], true) ? Nullability::NotNull : $fact->nullability;
 
         $nullability = $this->propagated($name, $arguments, $facts, $derivation) ?? $nullability;
+        if ($derivation->context->profile->grammar === GrammarRelease::MySql5651 && $type?->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongBlob && in_array(strtoupper($name), ['CONCAT', 'CONCAT_WS', 'REPLACE'], true)) {
+            $nullability = Nullability::Nullable;
+        }
         if (in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && strtoupper($name) === 'COALESCE') {
             $nullability = (new ResultTyping())->nullability('P', $facts);
         }

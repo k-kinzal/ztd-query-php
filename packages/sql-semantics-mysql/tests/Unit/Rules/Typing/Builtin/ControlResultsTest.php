@@ -22,6 +22,19 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Medium]
 final class ControlResultsTest extends TestCase
 {
+    public function testNullableNormalizesAComputedBlobAndPreservesLegacyNullMetadata(): void
+    {
+        $settings = new Settings(Collation::known('utf8mb4_general_ci'));
+        $rule = new ControlResults();
+        $modern = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $legacy = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]));
+        $blob = $rule->nullable(new Invocation([Domain::string(68000, $settings->connection, Field::MediumBlob)], [], $settings, $modern));
+        $null = $rule->nullable(new Invocation([Domain::null()], [], $settings, $legacy));
+
+        self::assertSame([17000, 68000], [$blob->length, $blob->metadataLength()]);
+        self::assertSame([Field::VarString, 0, 0], [$null->field, $null->length, $null->decimals]);
+    }
+
     public function testBranchesUseTheFirstKnownBranchBeforeAggregatingTheResults(): void
     {
         $semantics = new Semantics(Dialect::MySql);

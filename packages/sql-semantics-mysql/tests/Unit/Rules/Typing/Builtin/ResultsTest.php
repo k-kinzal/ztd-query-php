@@ -25,6 +25,13 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class ResultsTest extends TestCase
 {
+    public function testRefineMakesLegacyLongConcatenationsNullable(): void
+    {
+        $query = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("SELECT CONCAT(REPEAT('x',16777216),'')");
+
+        self::assertSame(Nullability::Nullable, $query->field(0)->nullability);
+    }
+
     public function testRulesHoldEveryFamily(): void
     {
         self::assertArrayHasKey('CONCAT', Results::rules());

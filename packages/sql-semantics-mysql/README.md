@@ -187,6 +187,10 @@ explicit NULL, before aggregating all result types. An omitted ELSE adds no
 inference operand.
 
 Resolved domains distinguish string expression bounds from reported byte lengths.
+`CASE`, control functions and string extrema retain both bounds so nested
+expressions do not repeatedly multiply a blob's width by its character set size.
+The returned field type of `NULLIF` and computed `MIN`/`MAX` strings follows
+the emulated release, including MySQL 5.6 and 5.7 string sizing.
 When a derived table materializes a direct `GROUP_CONCAT` result, its column type
 uses `groupConcatMaxLen` and the argument character set, which can differ from
 the function's directly reported type. Set operations retain their separate

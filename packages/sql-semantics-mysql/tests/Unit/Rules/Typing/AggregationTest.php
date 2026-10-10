@@ -97,7 +97,7 @@ final class AggregationTest extends TestCase
         $aggregation = new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci')));
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
 
-        self::assertSame([262140, 65535], [$aggregation->texts([$text, Domain::integer()], 'ifnull', $derivation)?->length, $aggregation->texts([$text, Domain::integer()], 'UNION', $derivation)?->length]);
+        self::assertSame([65535, 262140, 65535], [$aggregation->texts([$text, Domain::integer()], 'ifnull', $derivation)?->length, $aggregation->texts([$text, Domain::integer()], 'ifnull', $derivation)?->metadataLength(), $aggregation->texts([$text, Domain::integer()], 'UNION', $derivation)?->length]);
     }
 
     public function testTextsMakeALongtextOfJsonAmongOtherValues(): void
@@ -124,7 +124,9 @@ final class AggregationTest extends TestCase
         $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
 
         self::assertEquals(Domain::string(1024, $collation, Field::Blob), $aggregation->strings([$text], 'UNION', $derivation));
-        self::assertEquals(Domain::string(4096, $collation, Field::Blob), $aggregation->strings([$text], 'ifnull', $derivation));
+        self::assertEquals(new Domain(Kind::String, Field::Blob, 1024, Domain::NOT_FIXED, false, $collation, [], Coercibility::Implicit, 4096), $aggregation->strings([$text], 'ifnull', $derivation));
+        $partial = new Domain(Kind::String, Field::Blob, 1024, 0, false, $collation, [], Coercibility::Implicit, 4097);
+        self::assertSame(4096, $aggregation->strings([$partial], 'ifnull', $derivation)?->metadataLength());
     }
 
     public function testTextLengthCountsEachValueWrittenAsText(): void

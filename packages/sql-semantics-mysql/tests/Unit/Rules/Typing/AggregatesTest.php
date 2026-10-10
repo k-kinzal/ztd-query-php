@@ -47,7 +47,7 @@ final class AggregatesTest extends TestCase
 
         self::assertNotNull($column);
         self::assertSame([65535, 262140, Domain::NOT_FIXED], [$column->length, $column->metadataLength(), $column->decimals]);
-        self::assertSame($argument, $aggregates->extreme($argument, GrammarRelease::MySql847, false));
+        self::assertSame([65535, 262140, 0], [$aggregates->extreme($argument, GrammarRelease::MySql847, false)->length, $aggregates->extreme($argument, GrammarRelease::MySql847, false)->metadataLength(), $aggregates->extreme($argument, GrammarRelease::MySql847, false)->decimals]);
     }
 
     public function testConcatenatedFollowsGroupConcatMaxLen(): void

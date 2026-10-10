@@ -214,7 +214,7 @@ final class Aggregation
         foreach ($domains as $domain) {
             $bound = $domain->kind === Kind::Double ? ($domain->field === Field::Float ? 23 : 22) : $domain->length;
             if ($domain->kind === Kind::String && $domain->field->blob() && $operation !== 'UNION') {
-                $bound = $domain->capacity === null ? ($domain->display ?? $domain->length) : $domain->value()->byteLength();
+                $bound = $domain->field === Field::Blob || $domain->display !== null || $domain->capacity !== null ? $domain->value()->byteLength() : $domain->length;
             }
             $length = max($length, $bound);
             $blob = $blob || $domain->field === Field::Blob;
@@ -223,7 +223,9 @@ final class Aggregation
             $collation = $this->collations->connection;
         }
 
-        return $blob || $operation === 'UNION' ? Domain::string($length, $collation, $blob ? Field::Blob : Field::VarString, $coercibility) : $this->sized($length, $collation, $coercibility);
+        $result = $blob || $operation === 'UNION' ? Domain::string($length, $collation, $blob ? Field::Blob : Field::VarString, $coercibility) : $this->sized($length, $collation, $coercibility);
+
+        return $operation === 'UNION' ? $result : (new Text\ResultBounds())->computed($result);
     }
 
     /**
@@ -267,12 +269,14 @@ final class Aggregation
         $length = $this->textLength($operands, $collation, $united);
         $explicit = array_values(array_filter($operands, static fn (Domain $domain): bool => $domain->field->blob() && $domain->display !== null));
         if (!$united && $explicit !== []) {
-            return Domain::string($length, $collation, $explicit[0]->field, $coercibility);
+            return (new Text\ResultBounds())->computed(Domain::string($length, $collation, $explicit[0]->field, $coercibility));
         }
         $written = array_filter($domains, static fn (Domain $domain): bool => $domain->kind === Kind::String) !== [];
         $decimals = $early && !$written ? min(Domain::NOT_FIXED, max(array_map(static fn (Domain $domain): int => $domain->decimals, $domains))) : Domain::NOT_FIXED;
 
-        return !$blob && !$united && $written ? $this->sized($length, $collation, $coercibility, $early) : new Domain(Kind::String, $blob ? Field::Blob : Field::VarString, min(4294967295, $length), $decimals, false, $collation, [], $coercibility);
+        $result = !$blob && !$united && $written ? $this->sized($length, $collation, $coercibility, $early) : new Domain(Kind::String, $blob ? Field::Blob : Field::VarString, min(4294967295, $length), $decimals, false, $collation, [], $coercibility);
+
+        return $united ? $result : (new Text\ResultBounds())->computed($result);
     }
 
     /**

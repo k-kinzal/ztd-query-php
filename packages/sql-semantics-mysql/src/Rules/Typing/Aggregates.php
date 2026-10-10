@@ -70,8 +70,9 @@ final class Aggregates
     /**
      * Resolves MIN and MAX. A TEXT/BLOB column keeps its expression bound while
      * reporting its collation-expanded byte width, without fixed decimals. This
-     * preserves the bound used by CONCAT and HEX over the aggregate. Computed
-     * blob expressions already carry their own metadata. Verified through SQL on
+     * preserves the bound used by CONCAT and HEX over the aggregate. Legacy
+     * computed strings choose their result field by their expression width.
+     * Computed blob expressions retain their separate metadata. Verified through SQL on
      * MySQL 5.6 and 8.4, including scalar subqueries and set operands.
      */
     public function extreme(?Domain $argument, GrammarRelease $release, bool $column): Domain
@@ -79,8 +80,8 @@ final class Aggregates
         if ($argument?->kind === Kind::Json && $release !== GrammarRelease::MySql5744) {
             return JsonResults::json($release);
         }
-        if ($column && $argument?->kind === Kind::String && $argument->field->blob()) {
-            return new Domain(Kind::String, $argument->field, $argument->length, Domain::NOT_FIXED, false, $argument->collation, $argument->members, $argument->coercibility, min(4294967295, $argument->byteLength()));
+        if ($argument?->kind === Kind::String) {
+            return (new Text\ResultBounds())->selected($argument, !$column && in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true), $column);
         }
 
         return $argument ?? Domain::null();
