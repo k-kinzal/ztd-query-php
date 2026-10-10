@@ -156,6 +156,7 @@ final class ClientTest extends TestCase
         });
         $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
         $client->receive("\x09\x00\x00\x00\x03SELECT 1");
+        self::assertNull($client->session()->running->respond);
 
         self::assertSame(
             [

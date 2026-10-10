@@ -53,6 +53,10 @@ final class TrafficCountersTest extends TestCase
         yield 'response before next statement' => ["FLUSH LOCAL STATUS; SELECT 1; SHOW SESSION STATUS WHERE Variable_name IN ('Bytes_received','Bytes_sent')"];
         yield 'reset in the middle of a request' => ["SELECT 1; FLUSH LOCAL STATUS; SHOW SESSION STATUS WHERE Variable_name IN ('Bytes_received','Bytes_sent')"];
         yield 'success before an error' => ['FLUSH LOCAL STATUS; SELECT 1; SELECT missing; SELECT 2'];
+        yield 'procedure response before its next statement' => ["CREATE PROCEDURE p() BEGIN FLUSH LOCAL STATUS; SELECT 1; SHOW SESSION STATUS WHERE Variable_name IN ('Bytes_received','Bytes_sent'); END; CALL p()"];
+        yield 'nested procedure response' => ["CREATE PROCEDURE q() SELECT 1; CREATE PROCEDURE p() BEGIN FLUSH LOCAL STATUS; CALL q(); SHOW SESSION STATUS WHERE Variable_name IN ('Bytes_received','Bytes_sent'); END; CALL p()"];
+        yield 'procedure response before a caught error' => ["CREATE PROCEDURE q() BEGIN SELECT 1; SIGNAL SQLSTATE '45000'; END; CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; FLUSH LOCAL STATUS; CALL q(); SHOW SESSION STATUS WHERE Variable_name IN ('Bytes_received','Bytes_sent'); END; CALL p()"];
+        yield 'procedure response before an uncaught error' => ['CREATE PROCEDURE p() BEGIN SELECT 1; SELECT missing; END; CALL p()'];
     }
 
     #[DataProvider('providerScripts')]
@@ -117,5 +121,34 @@ final class TrafficCountersTest extends TestCase
         $actual = $observe(new PDO($target->memory, 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]));
 
         self::assertSame($expected, $actual);
+    }
+
+    public function testPreparedCallSendsBinaryResultsBeforeTheProcedureReadsStatus(): void
+    {
+        [$target] = Servers::shared();
+        $observe = static function (PDO $pdo): array {
+            $pdo->exec('CREATE DATABASE traffic_counter_test');
+            try {
+                $pdo->exec("CREATE PROCEDURE traffic_counter_test.p() BEGIN FLUSH LOCAL STATUS; SELECT 1; SHOW SESSION STATUS WHERE Variable_name IN ('Bytes_received','Bytes_sent'); END");
+                $pdo->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+                $call = $pdo->prepare('CALL traffic_counter_test.p()');
+                self::assertNotFalse($call);
+                $call->execute();
+                $results = [];
+                do {
+                    $results[] = $call->fetchAll(PDO::FETCH_NUM);
+                } while ($call->nextRowset());
+                $call->closeCursor();
+
+                return $results;
+            } finally {
+                $pdo->exec('DROP DATABASE traffic_counter_test');
+            }
+        };
+        $expected = $observe(new PDO($target->native, $target->nativeUser, $target->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]));
+        $actual = $observe(new PDO($target->memory, 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]));
+
+        self::assertSame($expected, $actual);
+        self::assertCount(3, $actual);
     }
 }

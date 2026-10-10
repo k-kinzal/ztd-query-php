@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Program;
 
+use Closure;
 use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
@@ -38,6 +39,11 @@ final class Running
      * @var list<\MySqlMemory\Result\Reply> The replies a statement answered before it failed, which the client receives before the error, as the result sets of a procedure CALL
      */
     public array $replies = [];
+
+    /**
+     * @var Closure(\MySqlMemory\Result\ResultSet): void|null Sends a procedure result immediately on a wire connection; null collects results for an in-process caller
+     */
+    public ?Closure $respond = null;
 
     /**
      * Answers the tables a statement uses, each as `database.table`.

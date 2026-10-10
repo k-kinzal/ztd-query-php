@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Program;
 
+use ArrayObject;
 use MySqlMemory\Instance;
 use MySqlMemory\Program\Activation;
 use MySqlMemory\Program\Row;
@@ -64,6 +65,22 @@ final class StatementsTest extends TestCase
         $this->expectExceptionMessage('Not allowed to return a result set from a function');
 
         $session->query('SELECT f()');
+    }
+
+    public function testRunSendsEachProcedureResultBeforeTheNextStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE PROCEDURE p() BEGIN SELECT 1; SELECT @received; END');
+        $sent = new ArrayObject();
+        $session->running->respond = static function (ResultSet $result) use ($session, $sent): void {
+            $sent->append($result->rows);
+            $session->variables->assign('received', 7, Domain::integer());
+        };
+        $answers = $session->query('CALL p()');
+
+        self::assertSame([[['1']], [['7']]], $sent->getArrayCopy());
+        self::assertCount(1, $answers);
+        self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $answers[0]);
     }
 
     public function testValueStoresTheValueAssignedToAVariable(): void

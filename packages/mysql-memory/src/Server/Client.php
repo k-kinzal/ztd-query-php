@@ -114,18 +114,26 @@ final class Client
         }
         $reader = new PayloadReader($payload);
         $command = $reader->integer(1);
-
-        return match ($command) {
-            0x01 => false,
-            0x02 => $this->initDatabase($reader->rest()),
-            0x03 => $this->query($reader->rest()),
-            0x04 => $this->send($this->messages->eof(0, $this->status())),
-            0x0E, 0x1F => $this->ping($command === 0x1F),
-            0x1B => $this->send($this->messages->eof(0, $this->status())),
-            0x09 => $this->send('Uptime: 1  Threads: 1  Questions: 0  Slow queries: 0  Opens: 0  Flush tables: 0  Open tables: 0  Queries per second avg: 0.000'),
-            0x16, 0x17, 0x18, 0x19, 0x1A, 0x1C => $this->statements->handle($command, $reader),
-            default => $this->send($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message())),
+        $running = $this->session->running;
+        $previous = $running->respond;
+        $running->respond = function (ResultSet $result) use ($command): void {
+            $this->reply($result, 8, $command === 0x17);
         };
+        try {
+            return match ($command) {
+                0x01 => false,
+                0x02 => $this->initDatabase($reader->rest()),
+                0x03 => $this->query($reader->rest()),
+                0x04 => $this->send($this->messages->eof(0, $this->status())),
+                0x0E, 0x1F => $this->ping($command === 0x1F),
+                0x1B => $this->send($this->messages->eof(0, $this->status())),
+                0x09 => $this->send('Uptime: 1  Threads: 1  Questions: 0  Slow queries: 0  Opens: 0  Flush tables: 0  Open tables: 0  Queries per second avg: 0.000'),
+                0x16, 0x17, 0x18, 0x19, 0x1A, 0x1C => $this->statements->handle($command, $reader),
+                default => $this->send($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message())),
+            };
+        } finally {
+            $running->respond = $previous;
+        }
     }
 
     /**

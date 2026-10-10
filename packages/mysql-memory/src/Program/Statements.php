@@ -83,7 +83,13 @@ final class Statements
         if ($results !== [] && $this->activation->contained) {
             throw ProgramError::ResultSetFromProgram->error($this->activation->kind === 'TRIGGER' ? 'trigger' : 'function');
         }
-        array_push($this->activation->results, ...$results);
+        foreach ($results as $result) {
+            if ($this->session->running->respond !== null) {
+                ($this->session->running->respond)($result);
+            } else {
+                $this->activation->results[] = $result;
+            }
+        }
 
         return $reply;
     }
