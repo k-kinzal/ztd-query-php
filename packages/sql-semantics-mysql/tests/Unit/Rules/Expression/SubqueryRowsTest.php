@@ -13,9 +13,11 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows;
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as ResolvedField;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -56,7 +58,7 @@ final class SubqueryRowsTest extends TestCase
 
     public function testValueDropsFixedFractionalMetadataForStrings(): void
     {
-        $type = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, ResolvedField::VarString, 20, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'));
+        $type = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, ResolvedField::VarString, 20, 0, false, Collation::known('latin1_swedish_ci'));
         $query = new QueryFact([new Field(0, new OutputSlot(new Name('b'), new Known($type), Nullability::NotNull))], Comparison::AsciiInsensitive);
         $value = (new SubqueryRows())->value($query);
 
@@ -66,7 +68,7 @@ final class SubqueryRowsTest extends TestCase
 
     public function testStringPreservesDirectGroupedConcatenationMetadata(): void
     {
-        $type = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, ResolvedField::Blob, 1024, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'));
+        $type = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, ResolvedField::Blob, 1024, 0, false, Collation::known('latin1_swedish_ci'));
         $expression = new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped(new \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat([new \SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral('1')]));
 
         self::assertSame($type, (new SubqueryRows())->string($type, $expression));
@@ -86,6 +88,14 @@ final class SubqueryRowsTest extends TestCase
         self::assertSame(262140, $plain->descriptor->length);
         self::assertEquals($plain, $grouped);
         self::assertEquals($plain, $star);
+    }
+
+    public function testValueReadsTheCapacityOfAMaterializedSetColumn(): void
+    {
+        $domain = (new Materialization())->set(Domain::string(4096, Collation::known('utf8mb4_bin'), ResolvedField::Blob));
+        $query = new QueryFact([new Field(0, new OutputSlot(new Name('q'), new Known($domain), Nullability::Nullable))], Comparison::AsciiInsensitive);
+
+        self::assertEquals(new Known(Domain::string(262140, $domain->collation, ResolvedField::Blob)), (new SubqueryRows())->value($query)->type);
     }
 
     public function testTestCombinesTheColumnsAndReportsAWidthMismatch(): void

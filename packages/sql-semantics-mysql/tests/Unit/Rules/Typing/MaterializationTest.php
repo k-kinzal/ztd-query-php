@@ -45,6 +45,7 @@ final class MaterializationTest extends TestCase
         $cast = Domain::string(68000, $collation, Field::MediumBlob);
 
         self::assertSame(65535, $materialization->computed($cast, null, $settings, GrammarRelease::MySql5651)->capacity);
+        self::assertSame(16777215, $materialization->computed($cast, null, $settings, GrammarRelease::MySql5744)->capacity);
         self::assertSame(16777215, $materialization->computed($cast, null, $settings, GrammarRelease::MySql847)->capacity);
         self::assertSame(Field::VarString, $materialization->computed(Domain::string(512, $collation), null, $settings, GrammarRelease::MySql847)->field);
         self::assertSame(Field::Blob, $materialization->computed(Domain::string(513, $collation), null, $settings, GrammarRelease::MySql847)->field);
@@ -135,6 +136,21 @@ final class MaterializationTest extends TestCase
         self::assertSame(262140, (new Materialization())->set(Domain::string(65535, Collation::known('utf8mb4_bin'), Field::Blob))->length);
         self::assertSame(3, (new Materialization())->set(Domain::string(3, Collation::known('utf8mb4_bin')))->length);
         self::assertEquals(Domain::integer(), (new Materialization())->set(Domain::integer()));
+    }
+
+    public function testCombinedAllocatesLegacyStorageOnlyWhenReadAsADerivedTable(): void
+    {
+        $materialization = new Materialization();
+        $domain = Domain::string(65535, Collation::known('utf8mb4_bin'), Field::Blob);
+        $legacy = $materialization->set($domain, GrammarRelease::MySql5651);
+        $modern = $materialization->set($domain, GrammarRelease::MySql847);
+
+        self::assertNull($legacy->capacity);
+        self::assertSame(65535, $materialization->combined($legacy, true, GrammarRelease::MySql5651)->capacity);
+        self::assertSame(16777215, $materialization->combined($legacy, true, GrammarRelease::MySql5744)->capacity);
+        self::assertSame(16777215, $modern->capacity);
+        self::assertEquals($modern, $materialization->combined($modern));
+        self::assertSame($legacy->metadataLength(), $modern->metadataLength());
     }
 
     public function testTextKeepsTheCollationWithoutDecimals(): void

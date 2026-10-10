@@ -110,17 +110,28 @@ final class ResultSlots
      */
     public function settled(TypeFact $left, TypeFact $right, Derivation $derivation, array $combined = [false, false]): TypeFact
     {
-        $domains = (new Precision())->all([$left, $right]);
-        if ($domains !== null) {
-            $domains = array_map(static fn (ResolvedDomain $domain, bool $combined): ResolvedDomain => match (true) {
-                $combined && $domain->kind === Kind::String && $domain->length === 0 && $domain->coercibility === Coercibility::Ignorable && $domain->collation->bytes() => ResolvedDomain::null(),
-                $combined && $domain->kind === Kind::String && $domain->field === ResolvedField::Blob => (new Materialization())->text($domain, intdiv($domain->length, $domain->collation->charset->maxLength)),
-                default => $domain,
-            }, $domains, $combined);
-        }
-        $domain = $domains === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of($domains, 'UNION', $derivation);
+        $domains = [$this->operand($left, $combined[0]), $this->operand($right, $combined[1])];
+        $domain = $domains[0] === null || $domains[1] === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of($domains, 'UNION', $derivation);
 
         return $domain === null ? (new TypeAggregation())->aggregate([$left, $right]) : new Known((new Materialization())->set($domain, $derivation->context->profile->grammar));
+    }
+
+    /**
+     * Reads an operand of a set operation. An already combined result contributes
+     * its original bound, not the capacity a later expression reads from storage.
+     */
+    public function operand(TypeFact $type, bool $combined): ?ResolvedDomain
+    {
+        $domain = (new Precision())->domain($type);
+        if ($domain === null || !$combined) {
+            return $domain?->value();
+        }
+
+        return match (true) {
+            $domain->kind === Kind::String && $domain->length === 0 && $domain->coercibility === Coercibility::Ignorable && $domain->collation->bytes() => ResolvedDomain::null(),
+            $domain->kind === Kind::String && $domain->field === ResolvedField::Blob => (new Materialization())->text($domain, intdiv($domain->length, $domain->collation->charset->maxLength)),
+            default => $domain->value(),
+        };
     }
 
     /**

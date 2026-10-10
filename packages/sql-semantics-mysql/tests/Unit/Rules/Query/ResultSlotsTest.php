@@ -11,6 +11,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\ResultSlots;
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperator;
@@ -18,6 +19,9 @@ use SqlSemantics\Platform\MySql\Statement\Query\ValueRow;
 use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as ResolvedField;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Shape\Field;
@@ -94,6 +98,15 @@ final class ResultSlotsTest extends TestCase
         self::assertEquals($once, $nested);
     }
 
+    public function testOperandKeepsTheOriginalBoundOfAnAlreadyCombinedString(): void
+    {
+        $column = (new Materialization())->set(Domain::string(4096, Collation::known('utf8mb4_bin'), ResolvedField::Blob));
+        $results = new ResultSlots();
+
+        self::assertSame(4096, $results->operand(new Known($column), true)?->length);
+        self::assertSame(65535, $results->operand(new Known($column), false)?->length);
+    }
+
     public function testValuesNamesTheColumnsByPosition(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -117,7 +130,7 @@ final class ResultSlotsTest extends TestCase
         $type = (new Semantics(Dialect::MySql))->analyze('SELECT 1 UNION (SELECT NULL INTERSECT SELECT NULL)')->facts->output?->fields()?->at(0)->type;
 
         self::assertInstanceOf(Known::class, $type);
-        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::class, $type->descriptor);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
         self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, $type->descriptor->kind);
     }
 }

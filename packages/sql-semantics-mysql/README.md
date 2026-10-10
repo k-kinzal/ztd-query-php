@@ -197,6 +197,10 @@ of its storage type separately from the reported bound in `length`. The `value()
 view used when resolving expressions exposes that capacity. This lets a scalar
 subquery or string function read the same column type while direct projection
 retains the expression's original result width.
+For TEXT/BLOB set results, MySQL 8.0 and later expose the temporary column's
+capacity to scalar subqueries. MySQL 5.x keeps the expression bound until a
+derived table reads the result. Nested set operations combine the original
+bounds rather than the allocated capacities.
 
 ### Aggregate ownership
 

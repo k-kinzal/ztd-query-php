@@ -75,6 +75,7 @@ final class SubqueryRows
      * A TEXT/BLOB column contributes its collation-expanded bound; a computed blob
      * already carries its result bound. Name resolution distinguishes columns from
      * expression aliases, including through parentheses and star expansion.
+     * A set output with a retained capacity already describes a temporary column.
      */
     public function string(Domain $domain, ?Scalar $expression, bool $column = false): Domain
     {
@@ -82,7 +83,8 @@ final class SubqueryRows
             $expression = $expression->operand;
         }
 
-        $length = $column && $domain->field->blob() ? min(4294967295, $domain->value()->byteLength()) : $domain->length;
+        $stored = $column || ($expression === null && $domain->capacity !== null);
+        $length = $stored && $domain->field->blob() ? min(4294967295, $domain->value()->byteLength()) : $domain->length;
 
         return $expression instanceof GroupConcat ? $domain : Domain::string($length, $domain->collation, $domain->field, $domain->coercibility);
     }

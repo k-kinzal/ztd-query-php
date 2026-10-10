@@ -114,7 +114,7 @@ final class Materialization
         $resolution = $expression !== null && $facts->covers($expression) ? $facts->scalar($expression)->resolution : ($field instanceof OutputField ? $field->resolution : null);
         $text = $domain->kind === Kind::String && in_array($domain->field, [Field::VarChar, Field::VarString, Field::String, Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
         if (!$text || !$query instanceof Select || $resolution instanceof ResolvedColumn) {
-            return $this->column($domain, $narrows);
+            return !$query instanceof Select ? $this->combined($domain, $narrows, $derivation->context->profile->grammar) : $this->column($domain, $narrows);
         }
 
         return $this->computed($domain, $expression, Settings::of($derivation->context), $derivation->context->profile->grammar);
@@ -134,7 +134,7 @@ final class Materialization
             return $this->column($domain);
         }
         $bytes = min(4294967295, $characters * $width);
-        $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $legacy = $release === GrammarRelease::MySql5651;
 
         return $this->stored($domain, $bytes, $legacy ? $characters : $bytes);
     }
@@ -142,7 +142,7 @@ final class Materialization
     /**
      * Resolves a temporary BLOB column with its reported byte bound and storage capacity.
      * Expressions over the column see the whole storage type; direct projection
-     * retains the original bound. The allocation bound is in characters in 5.x
+     * retains the original bound. The allocation bound is in characters in 5.6
      * and bytes in later releases, as observed with materialized casts.
      */
     public function stored(Domain $domain, int $bytes, int $allocation): Domain
@@ -150,6 +150,18 @@ final class Materialization
         $capacity = $allocation <= 255 ? 255 : ($allocation <= 65535 ? 65535 : ($allocation <= 16777215 ? 16777215 : 4294967295));
 
         return new Domain(Kind::String, Field::Blob, $bytes, 0, false, $domain->collation, [], $domain->coercibility, null, $capacity);
+    }
+
+    /**
+     * Gives a derived set result its storage capacity. A legacy set result keeps its
+     * expression bound until a derived table reads it; later releases already retain
+     * the temporary column capacity in the set output.
+     */
+    public function combined(Domain $domain, bool $narrows = true, GrammarRelease $release = GrammarRelease::MySql847): Domain
+    {
+        $allocation = $release === GrammarRelease::MySql5651 ? intdiv($domain->length, $domain->collation->charset->maxLength) : $domain->length;
+
+        return $domain->field === Field::Blob && $domain->capacity === null ? $this->stored($domain, $domain->length, $allocation) : $this->column($domain, $narrows);
     }
 
     /**
@@ -169,7 +181,10 @@ final class Materialization
             return $this->nothing($domain);
         }
 
-        return $this->text($domain, $domain->field === Field::Blob ? min(4294967295, $domain->length * $domain->collation->charset->maxLength) : $domain->length);
+        $length = $domain->field === Field::Blob ? min(4294967295, $domain->length * $domain->collation->charset->maxLength) : $domain->length;
+        $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+
+        return $domain->field === Field::Blob && !$legacy ? $this->stored($domain, $length, $length) : $this->text($domain, $length);
     }
 
     /**
