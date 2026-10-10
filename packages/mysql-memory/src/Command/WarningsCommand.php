@@ -79,16 +79,25 @@ final class WarningsCommand implements Command
         if ($limit instanceof RowLimit) {
             $rows = array_slice($rows, $this->bound($limit->offset) ?? 0, $this->bound($limit->count));
         }
+        return new ResultSet($this->columns($session), $rows);
+    }
+
+    /**
+     * Answers the diagnostic column metadata, including the four-digit code field of MySQL 5.6.
+     *
+     * @return list<ResultColumn>
+     */
+    public function columns(Session $session): array
+    {
         $results = $session->variables->read('character_set_results');
         $charset = (is_string($results) ? Charset::named($results) : null) ?? Charset::known('utf8mb3');
         $collation = $charset->defaultCollation(GrammarRelease::MySql847)->id;
-        $columns = [
+
+        return [
             new ResultColumn('Level', Field::VarString, 7 * $charset->maxLength, 31, ColumnFlag::NotNull->value, $collation),
-            new ResultColumn('Code', Field::Long, 5, 0, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::Binary->value | ColumnFlag::Numeric->value, 63),
+            new ResultColumn('Code', Field::Long, $session->settings()->release() === GrammarRelease::MySql5651 ? 4 : 5, 0, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::Binary->value | ColumnFlag::Numeric->value, 63),
             new ResultColumn('Message', Field::VarString, 512 * $charset->maxLength, 31, ColumnFlag::NotNull->value, $collation),
         ];
-
-        return new ResultSet($columns, $rows);
     }
 
     /**

@@ -17,6 +17,7 @@ use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Account\AlterUser;
+use SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords;
 use SqlSemantics\Platform\MySql\Statement\Account\User\FactorAction;
 use SqlSemantics\Platform\MySql\Statement\Account\User\FactorChange;
 use SqlSemantics\Platform\MySql\Statement\Account\User\UserSpecification;
@@ -55,6 +56,9 @@ final class AlterUserCommand implements Command
     public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
     {
         $statement = $operation->statement;
+        if ($statement instanceof ExpireUserPasswords) {
+            return $this->expire($statement, $session, $context);
+        }
         assert($statement instanceof AlterUser);
         $session->transaction->commit();
         $names = new Names($session->settings()->release());
@@ -62,16 +66,7 @@ final class AlterUserCommand implements Command
         $options = new Options($session->settings()->release());
         $options->parsed($operation, $session->text);
         $accounts = $session->instance->accounts;
-        foreach ($statement->users as $user) {
-            $account = $accounts->find($names->identity($names->users([$user])[0], $session));
-            $plugin = $account->plugin ?? (new Credentials($session->settings()->release()))->default();
-            if ($user instanceof UserSpecification) {
-                $options->check($user->identification, $plugin);
-            }
-            if ($user instanceof FactorChange) {
-                $this->factors($user, $account, $session);
-            }
-        }
+        $this->authentication($statement, $session, $options);
         $missing = [];
         $changed = [];
         foreach ($statement->users as $user) {
@@ -96,8 +91,62 @@ final class AlterUserCommand implements Command
             $accounts->restore($saved);
             throw $error;
         }
+        foreach ($changed as [$account]) {
+            (new \MySqlMemory\Session\Access\PasswordAccess())->changed($account, $session);
+        }
         if ($generated !== []) {
             return (new Passwords())->result($generated, $context);
+        }
+
+        return new Completion(0, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Checks authentication plugins and factors before reporting missing accounts.
+     *
+     * @throws SqlError When an authentication request is invalid
+     */
+    public function authentication(AlterUser $statement, Session $session, Options $options): void
+    {
+        $names = new Names($session->settings()->release());
+        $accounts = $session->instance->accounts;
+        foreach ($statement->users as $user) {
+            $account = $accounts->find($names->identity($names->users([$user])[0], $session));
+            $plugin = $account->plugin ?? (new Credentials($session->settings()->release()))->default();
+            if ($user instanceof UserSpecification) {
+                $options->check($user->identification, $plugin);
+            }
+            if ($user instanceof FactorChange) {
+                $this->factors($user, $account, $session);
+            }
+        }
+    }
+
+    /**
+     * Executes the MySQL 5.6 form, which expires existing accounts even if another is missing.
+     *
+     * This release leaves already connected sessions unrestricted, including the acting one.
+     * Verified through the public SQL interface on 5.6.51.
+     *
+     * @throws SqlError When any named account does not exist
+     */
+    public function expire(ExpireUserPasswords $statement, Session $session, Context $context): Completion
+    {
+        $session->transaction->commit();
+        $names = new Names($session->settings()->release());
+        $names->check($statement->users);
+        $missing = [];
+        foreach ($statement->users as $name) {
+            $identity = $names->identity($name, $session);
+            $account = $session->instance->accounts->find($identity);
+            if ($account === null) {
+                $missing[] = $identity->quoted();
+            } else {
+                $account->expired = true;
+            }
+        }
+        if ($missing !== []) {
+            throw AccountError::CannotUser->error('ALTER USER', implode(',', $missing));
         }
 
         return new Completion(0, 0, $context->diagnostics->count());

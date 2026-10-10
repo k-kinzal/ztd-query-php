@@ -38,6 +38,7 @@ enum AccountError: int implements ErrorCode
     case NoSuchUser = 1449;
     case AccessDeniedNoPassword = 1698;
     case InsecurePlainText = 1759;
+    case MustChangePassword = 1820;
     case PasswordFormat = 1827;
     case UserDoesNotExist = 3162;
     case UserAlreadyExists = 3163;

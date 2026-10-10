@@ -137,6 +137,7 @@ final class Dispatcher
         MySql\Account\DropUser::class => Account\DropUserCommand::class,
         MySql\Account\DropRole::class => Account\DropUserCommand::class,
         MySql\Account\AlterUser::class => Account\AlterUserCommand::class,
+        MySql\Account\ExpireUserPasswords::class => Account\AlterUserCommand::class,
         MySql\Account\RenameUser::class => Account\RenameUserCommand::class,
         MySql\Account\SetPassword::class => Account\SetPasswordCommand::class,
         MySql\Account\Privilege\GrantPrivileges::class => Account\GrantCommand::class,

@@ -299,6 +299,7 @@ return [
     1800 => ['HY000', "Unknown ALGORITHM '%s'"],
     1801 => ['HY000', "Unknown LOCK type '%s'"],
     1813 => ['HY000', "Tablespace '%s' exists."],
+    1820 => ['HY000', 'You must reset your password using %s statement before executing this statement.'],
     1827 => ['HY000', "The password hash doesn't have the expected format."],
     1831 => ['HY000', "Duplicate index '%s' defined on the table '%s'. This is deprecated and will be disallowed in a future release."],
     1845 => ['0A000', '%s is not supported for this operation. Try %s.'],

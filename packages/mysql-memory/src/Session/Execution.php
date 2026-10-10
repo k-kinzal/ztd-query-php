@@ -90,6 +90,7 @@ final class Execution
         } catch (SqlError $error) {
             throw (new Problem\Precision())->legacy($error, $session->settings()->release());
         }
+        (new Access\PasswordAccess())->check($operation->statement, $session);
         $hints->report($session);
         foreach ($this->undeclared($operation) ? [] : $late as $warning) {
             $session->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());

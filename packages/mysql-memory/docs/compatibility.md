@@ -215,7 +215,9 @@ The server starts with the accounts of a new installation: `root` at `localhost`
 
 MySQL 5.6 and 5.7 start with the root accounts only, and 5.7 also with `mysql.session` and `mysql.sys`; their accounts use `mysql_native_password`, whose password hash (`*` and the double SHA-1) is the server's, and they know neither roles nor dynamic privileges. There `GRANT` creates the accounts it names, with the password and the TLS and resource options it gives, unless `NO_AUTO_CREATE_USER` (part of the 5.7 default `sql_mode`) requires a password (error 1133); 5.7 warns that this, `IDENTIFIED BY PASSWORD` and changing an account with `GRANT` are deprecated, and that changing `NO_AUTO_CREATE_USER` in `sql_mode` is. In 5.6 `SET PASSWORD = '...'` takes the hash itself and `PASSWORD('...')` hashes a password. `SHOW GRANTS` and `SHOW CREATE USER` write these releases' forms, including the password hash, TLS requirement and limits that 5.6 writes on the global grant.
 
-**Privileges are not enforced.** Every session may run every statement, whatever its account and grants, and any password is accepted at connection.
+Manual password expiry is tracked for each connection. A connection that expires its own password must use `ALTER USER` or `SET PASSWORD` to change its credentials before other statements can run (error 1820). Existing connections for the same account retain their previous state, and resetting the account from another connection does not release an already restricted connection. MySQL 5.6's `ALTER USER ... PASSWORD EXPIRE` updates the account without restricting existing connections. Automatic expiry from password age and the wire-protocol negotiation for connecting with an expired password are not implemented.
+
+**Privileges are not enforced.** Grants do not limit the statements a session may run, and any password is accepted at connection. Password-expiry restrictions described above still apply.
 
 ## Transactions
 

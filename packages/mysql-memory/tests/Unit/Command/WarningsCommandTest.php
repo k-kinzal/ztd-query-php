@@ -20,6 +20,12 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Session\ShowWarnings;
 #[Small]
 final class WarningsCommandTest extends TestCase
 {
+    public function testColumnsUsesTheLegacyCodeWidth(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        self::assertSame(4, (new WarningsCommand())->columns($session)[1]->length);
+    }
+
     public function testClearsDiagnosticsAnswersFalse(): void
     {
         self::assertFalse((new WarningsCommand())->clearsDiagnostics());

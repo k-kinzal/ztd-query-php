@@ -71,6 +71,11 @@ final class Session
     public bool $replayed = false;
 
     /**
+     * Whether this connection must change its expired password before executing other statements.
+     */
+    public bool $passwordExpired = false;
+
+    /**
      * The open transaction and the rows a failing statement restores.
      */
     public readonly Transaction $transaction;
@@ -145,6 +150,7 @@ final class Session
         $this->variables->connection = $id;
         $this->variables->account = $user . '@' . $host;
         $this->variables->definer = $user . '@%';
+        $this->passwordExpired = $instance->accounts->find(new \MySqlMemory\Account\Identity($user, '%'))->expired ?? false;
         $this->variables->roles = array_values($instance->accounts->defaults[(new \MySqlMemory\Account\Identity($user, '%'))->key()] ?? []);
         $this->diagnostics = new Diagnostics();
         $this->temporaries = new \MySqlMemory\Dictionary\Temporaries();

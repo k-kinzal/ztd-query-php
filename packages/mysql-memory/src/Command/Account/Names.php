@@ -71,7 +71,7 @@ final class Names
     public static function owns(Statement $statement): bool
     {
         return $statement instanceof CreateUser || $statement instanceof CreateRole || $statement instanceof DropUser || $statement instanceof DropRole
-            || $statement instanceof AlterUser || $statement instanceof AlterDefaultRole || $statement instanceof RenameUser || $statement instanceof SetPassword
+            || $statement instanceof AlterUser || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Account\ExpireUserPasswords || $statement instanceof AlterDefaultRole || $statement instanceof RenameUser || $statement instanceof SetPassword
             || $statement instanceof GrantPrivileges || $statement instanceof GrantRoles || $statement instanceof GrantProxy || $statement instanceof RevokePrivileges
             || $statement instanceof RevokeRoles || $statement instanceof RevokeProxy || $statement instanceof RevokeAll || $statement instanceof SetRole
             || $statement instanceof SetDefaultRole || $statement instanceof ShowGrants || $statement instanceof ShowCreateUser;

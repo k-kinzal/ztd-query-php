@@ -23,6 +23,16 @@ final class AlterUserCommandTest extends TestCase
         self::assertTrue((new AlterUserCommand())->clearsDiagnostics());
     }
 
+    public function testExpireKeepsConnectedLegacySessionsUnrestricted(): void
+    {
+        $instance = new Instance('5.6.51');
+        $session = $instance->connect();
+        $session->query('ALTER USER CURRENT_USER PASSWORD EXPIRE');
+        self::assertTrue($instance->accounts->find(new Identity('root', '%'))?->expired);
+        self::assertFalse($session->passwordExpired);
+        self::assertCount(1, $session->query('SELECT 1'));
+    }
+
     public function testExecuteRefusesMissingAccounts(): void
     {
         $session = (new Instance())->connect();
@@ -58,7 +68,7 @@ final class AlterUserCommandTest extends TestCase
         self::assertSame("CREATE USER `u`@`%` IDENTIFIED WITH 'sha256_password' REQUIRE NONE PASSWORD EXPIRE ACCOUNT UNLOCK PASSWORD HISTORY DEFAULT PASSWORD REUSE INTERVAL DEFAULT PASSWORD REQUIRE CURRENT DEFAULT", $created->rows[0][0]);
     }
 
-    public function testExecuteRefusesAFactorOfALoadedPlugin(): void
+    public function testAuthenticationRefusesAFactorOfALoadedPlugin(): void
     {
         $session = (new Instance())->connect();
 

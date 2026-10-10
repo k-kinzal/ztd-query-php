@@ -102,6 +102,7 @@ final class SetPasswordCommand implements Command
             $account->password = $password;
         }
         $account->expired = false;
+        (new \MySqlMemory\Session\Access\PasswordAccess())->changed($account, $session);
         if ($statement->password === null) {
             return (new Passwords())->result([[$identity, $password]], $context);
         }
