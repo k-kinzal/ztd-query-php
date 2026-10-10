@@ -130,6 +130,34 @@ final class ClientTest extends TestCase
         self::assertSame(0, $client->instance->registry->status->read('Aborted_clients'));
     }
 
+    public function testCloseDoesNotCountConnectionsFromBeforeARestart(): void
+    {
+        $client = new Client(new Instance(supervised: true), 7, static function (string $bytes): void {
+        });
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        $client->instance->restart();
+        $client->close();
+
+        self::assertSame(0, $client->instance->registry->status->read('Aborted_clients'));
+    }
+
+    public function testReceiveKeepsOldReplyTrafficOutOfTheRestartedServersCounters(): void
+    {
+        $client = new Client(new Instance(supervised: true), 7, static function (string $bytes): void {
+        });
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        self::assertFalse($client->receive("\x08\x00\x00\x00\x03RESTART"));
+        self::assertFalse($client->receive("\x01\x00\x00\x00\x01"));
+        $client->close();
+        $status = $client->instance->registry->status;
+        self::assertSame([0, 0], [$status->read('Bytes_received'), $status->read('Bytes_sent')]);
+        $fresh = new Client($client->instance, 8, static function (string $bytes): void {
+        });
+        $fresh->greet();
+
+        self::assertSame(77, $status->read('Bytes_sent'));
+    }
+
     public function testGreetSendsTheVersionOfTheInstance(): void
     {
         $sent = new ArrayObject();

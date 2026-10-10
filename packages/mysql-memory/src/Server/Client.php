@@ -41,6 +41,8 @@ final class Client
 
     private bool $abortCounted = false;
 
+    private readonly int $generation;
+
     /**
      * Builds the payloads the connection sends.
      */
@@ -60,6 +62,7 @@ final class Client
      */
     public function __construct(public readonly Instance $instance, public readonly int $id, public readonly Closure $send, public readonly string $host = 'localhost', public readonly ?int $port = null)
     {
+        $this->generation = $instance->registry->status->generation;
         $this->messages = new Messages();
         $this->statements = new Statements($this);
     }
@@ -86,7 +89,9 @@ final class Client
             if (strlen($this->buffer) < 4 + $length) {
                 break;
             }
-            $this->instance->registry->status->add('Bytes_received', $this->id, 4 + $length);
+            if ($this->generation === $this->instance->registry->status->generation) {
+                $this->instance->registry->status->add('Bytes_received', $this->id, 4 + $length);
+            }
             $this->sequence = (ord($this->buffer[3]) + 1) & 0xFF;
             $payload = substr($this->buffer, 4, $length);
             $this->buffer = substr($this->buffer, 4 + $length);
@@ -195,7 +200,7 @@ final class Client
      */
     public function close(): void
     {
-        if ($this->session !== null && !$this->quit && !$this->abortCounted) {
+        if ($this->session !== null && !$this->quit && !$this->abortCounted && $this->generation === $this->instance->registry->status->generation) {
             $this->instance->registry->status->add('Aborted_clients');
             $this->abortCounted = true;
         }
@@ -311,7 +316,9 @@ final class Client
     {
         $length = strlen($payload);
         ($this->send)(chr($length & 0xFF) . chr(($length >> 8) & 0xFF) . chr(($length >> 16) & 0xFF) . chr($this->sequence) . $payload);
-        $this->instance->registry->status->add('Bytes_sent', $this->id, 4 + $length);
+        if ($this->generation === $this->instance->registry->status->generation) {
+            $this->instance->registry->status->add('Bytes_sent', $this->id, 4 + $length);
+        }
         $this->sequence = ($this->sequence + 1) & 0xFF;
     }
 }

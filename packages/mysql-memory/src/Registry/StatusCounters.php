@@ -28,6 +28,11 @@ final class StatusCounters
     public ?float $flushedAt = null;
 
     /**
+     * The server generation; only a restart advances it, so late traffic from old clients can be ignored.
+     */
+    public int $generation = 0;
+
+    /**
      * Adds an event count or byte amount globally and, when supplied, for its connection.
      */
     public function add(string $name, ?int $connection = null, int $amount = 1): void
@@ -73,6 +78,7 @@ final class StatusCounters
      */
     public function reset(): void
     {
+        ++$this->generation;
         $this->global = [];
         $this->sessions = [];
         $this->flushedAt = null;

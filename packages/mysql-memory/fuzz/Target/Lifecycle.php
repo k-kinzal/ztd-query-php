@@ -15,7 +15,7 @@ use Testcontainers\Testcontainers;
  * Compares SHUTDOWN and RESTART on disposable servers, without dropping them from coverage.
  *
  * Their completion, connection termination and ability to reconnect are observed. A successful
- * restart must preserve the fixture rows. Post-statement SHOW WARNINGS cannot be observed
+ * restart must preserve the fixture rows and reset aborted-client statistics. Post-statement SHOW WARNINGS cannot be observed
  * reliably on a connection the server is closing; errors still record their full diagnostics.
  */
 final class Lifecycle
@@ -86,7 +86,7 @@ final class Lifecycle
         $restart = str_starts_with(strtoupper(ltrim($sql)), 'RESTART');
         $again = $disconnected ? $this->reconnect($dsn, $user, $password, $restart) : null;
 
-        return ['result' => $result, 'disconnected' => $disconnected, 'reconnected' => $again !== null, 'tables' => $again === null ? null : $observer->tables($again, 'fz')];
+        return ['result' => $result, 'disconnected' => $disconnected, 'reconnected' => $again !== null, 'tables' => $again === null ? null : $observer->tables($again, 'fz'), 'status' => $again === null ? null : $observer->observe($again, "SHOW GLOBAL STATUS LIKE 'Aborted_clients'", true)];
     }
 
     /**
