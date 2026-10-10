@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
@@ -86,11 +87,14 @@ final class CastResult
 
     /**
      * Answers the NULL fact of a cast to a target of an operand with a NULL fact.
+     * MySQL 5.6 string casts retain operand nullability, including character-set
+     * conversions and large strings; later releases report them as nullable.
      */
-    public function nullability(CastTarget $target, Nullability $operand): Nullability
+    public function nullability(CastTarget $target, Nullability $operand, GrammarRelease $release = GrammarRelease::MySql847): Nullability
     {
         $numeric = in_array($target->kind, [CastKind::Signed, CastKind::Unsigned, CastKind::Decimal, CastKind::Real, CastKind::Double, CastKind::Float], true);
+        $legacy = $release === GrammarRelease::MySql5651 && in_array($target->kind, [CastKind::Char, CastKind::Binary, CastKind::NationalChar], true);
 
-        return $numeric ? $operand : Nullability::Nullable;
+        return $numeric || $legacy ? $operand : Nullability::Nullable;
     }
 }

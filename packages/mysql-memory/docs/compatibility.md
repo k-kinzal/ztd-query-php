@@ -116,6 +116,13 @@ In MySQL 8.0 and later, `GROUP BY` without `ORDER BY` returns the groups in the 
 
 ### Built-in functions
 
+`GROUP_CONCAT` result metadata accounts for direct results, materialized derived
+columns and UNION columns separately. Bounds depend on `group_concat_max_len`,
+the expression character set and the emulated release. Converting TEXT/BLOB
+result metadata from UCS-2 or UTF-16 uses the source character set's minimum
+width. MySQL 5.6 string casts preserve the operand's nullable attribute; later
+releases report those casts as nullable.
+
 Besides the keyword forms above (`CAST`, `CONVERT`, `TRIM`, `POSITION`, `SUBSTRING ... FROM`, `CHAR`, `EXTRACT`, `DATE_ADD`, `DATE_SUB`, `TIMESTAMPADD`, `TIMESTAMPDIFF`, `GET_FORMAT` and the clocks), these functions are evaluated:
 
 | Family | Functions |

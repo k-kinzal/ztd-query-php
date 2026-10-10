@@ -212,7 +212,7 @@ final class Aggregation
         $length = 0;
         $blob = false;
         foreach ($domains as $domain) {
-            $length = max($length, $domain->kind === Kind::String ? ($domain->field->blob() ? ($domain->display ?? $domain->length) : $domain->length) : ($domain->kind === Kind::Double ? ($domain->field === Field::Float ? 23 : 22) : $domain->length));
+            $length = max($length, $domain->kind === Kind::String ? ($domain->field->blob() && $operation !== 'UNION' ? ($domain->display ?? $domain->length) : $domain->length) : ($domain->kind === Kind::Double ? ($domain->field === Field::Float ? 23 : 22) : $domain->length));
             $blob = $blob || $domain->field === Field::Blob;
         }
         if ($collation->bytes() && count(array_filter($domains, static fn (Domain $domain): bool => $domain->kind === Kind::String)) === 0) {
@@ -256,7 +256,7 @@ final class Aggregation
         }
         $united = $operation === 'UNION';
         $early = $derivation->context->profile->grammar === GrammarRelease::MySql8044 && !$united;
-        $blob = array_filter($operands, static fn (Domain $domain): bool => $domain->field === Field::Blob) !== [];
+        $blob = array_filter($operands, static fn (Domain $domain): bool => $domain->field === Field::Blob || ($united && $domain->field->blob() && $domain->display !== null)) !== [];
         if (array_filter($operands, static fn (Domain $domain): bool => $domain->kind === Kind::Json) !== []) {
             return Domain::string(4294967295, $collation, $united ? Field::Blob : ($early && !$blob ? Field::VarString : Field::LongBlob), $coercibility);
         }

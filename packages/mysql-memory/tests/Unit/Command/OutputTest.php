@@ -30,6 +30,17 @@ final class OutputTest extends TestCase
         self::assertSame(16384, (new Output())->column('x', $domain, null, Charset::known('utf8mb4'))->length);
         self::assertSame(4096, (new Output())->column('x', $domain, null, Charset::known('latin1'))->length);
     }
+
+    public function testColumnConvertsWideCharacterBlobByteBounds(): void
+    {
+        $domain = new Domain(Kind::String, Field::Blob, 8192, 0, false, Collation::known('utf16_general_ci'));
+        $output = new Output();
+
+        self::assertSame(8192, $output->column('x', $domain, null)->length);
+        self::assertSame(16384, $output->column('x', $domain, null, Charset::known('utf8mb4'))->length);
+        self::assertSame(4096, $output->column('x', $domain, null, Charset::known('latin1'))->length);
+    }
+
     public function testResultWritesEachValueInItsText(): void
     {
         $session = (new Instance())->connect();

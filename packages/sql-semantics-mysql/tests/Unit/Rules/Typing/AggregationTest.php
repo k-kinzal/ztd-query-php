@@ -107,6 +107,26 @@ final class AggregationTest extends TestCase
         self::assertEquals(Domain::string(4294967295, Collation::known('utf8mb4_bin'), Field::LongBlob), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->texts([$json, Domain::integer()], 'coalesce', new Derivation((new Semantics(Dialect::MySql))->context([]))));
     }
 
+    public function testTextsKeepAComputedBlobInAUnionUntilMaterialization(): void
+    {
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+        $aggregation = new Aggregation(new Collations($collation));
+        $text = new Domain(Kind::String, Field::LongBlob, 4096, Domain::NOT_FIXED, false, $collation, [], Coercibility::Implicit, 16384);
+
+        self::assertEquals(Domain::string(4096, $collation, Field::Blob), $aggregation->texts([$text, Domain::string(1, $collation)], 'UNION', new Derivation((new Semantics(Dialect::MySql))->context([]))));
+    }
+
+    public function testStringsUseTheLegacyExpressionBoundInAUnion(): void
+    {
+        $collation = Collation::known('utf8mb4_general_ci');
+        $aggregation = new Aggregation(new Collations($collation));
+        $text = new Domain(Kind::String, Field::Blob, 1024, 0, false, $collation, [], Coercibility::Implicit, 4096);
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+
+        self::assertEquals(Domain::string(1024, $collation, Field::Blob), $aggregation->strings([$text], 'UNION', $derivation));
+        self::assertEquals(Domain::string(4096, $collation, Field::Blob), $aggregation->strings([$text], 'ifnull', $derivation));
+    }
+
     public function testTextLengthCountsEachValueWrittenAsText(): void
     {
         $aggregation = new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci')));

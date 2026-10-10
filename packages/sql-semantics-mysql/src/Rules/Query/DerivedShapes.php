@@ -96,7 +96,9 @@ final class DerivedShapes
                 $slots[] = new OutputSlot($slot->name, new Known($domain), $slot->nullability, $slot->column, $slot->origin, $slot->unnamed);
                 continue;
             }
-            $slots[] = $domain === null ? $slot : new OutputSlot($slot->name, new Known((new Materialization())->column($domain, $narrows)), $slot->nullability, $slot->column, $slot->origin, $slot->unnamed);
+            $materialization = new Materialization();
+            $type = $domain === null ? $slot->type : new Known($query === null || $derivation === null ? $materialization->column($domain, $narrows) : $materialization->projected($domain, $query, $position, $derivation, $narrows));
+            $slots[] = new OutputSlot($slot->name, $type, $slot->nullability, $slot->column, $slot->origin, $slot->unnamed);
         }
 
         return new RowShape($slots, $shape->missing);

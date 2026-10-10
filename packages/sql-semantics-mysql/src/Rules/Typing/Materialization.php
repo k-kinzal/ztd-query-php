@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
+use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\Aggregation as Aggregates;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -18,7 +21,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Shape\Field as OutputField;
 
 /**
  * Resolves the types of the columns of a temporary table: the rows of a set operation and of a derived table the server materializes.
@@ -81,6 +86,35 @@ final class Materialization
         }
 
         return $domain->kind === Kind::String ? $this->text($domain, $domain->length) : $this->nothing($domain);
+    }
+
+    /**
+     * Resolves a materialized projection with the temporary-column rule of its expression.
+     *
+     * GROUP_CONCAT uses the session byte limit divided by the character set's minimum
+     * width. Up to 512 characters the column is VARCHAR; beyond that it is BLOB and
+     * holds the maximum byte bound. This differs from the function's directly reported
+     * domain, including in MySQL 5.6 and 5.7. Verified through SQL with latin1, utf8mb4,
+     * UCS-2 and UTF-16 on MySQL 5.6, 8.0 and 8.4.
+     */
+    public function projected(Domain $domain, Query $query, int $position, Derivation $derivation, bool $narrows = true): Domain
+    {
+        while ($query instanceof ParenthesizedQuery || $query instanceof QueryExpression) {
+            $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
+        }
+        $facts = $derivation->facts();
+        $field = $query instanceof Select && $facts->covers($query) ? ($facts->query($query)->projection[$position] ?? null) : null;
+        $expression = $field instanceof OutputField ? $field->expression : null;
+        while ($expression instanceof Grouped) {
+            $expression = $expression->operand;
+        }
+        if (!$expression instanceof GroupConcat) {
+            return $this->column($domain, $narrows);
+        }
+        $characters = intdiv(Settings::of($derivation->context)->groupConcatMaxLen, $domain->collation->charset->minLength());
+        $blob = $characters > 512;
+
+        return new Domain(Kind::String, $blob ? Field::Blob : Field::VarString, min(4294967295, $characters * ($blob ? $domain->collation->charset->maxLength : 1)), 0, false, $domain->collation, [], $domain->coercibility);
     }
 
     /**

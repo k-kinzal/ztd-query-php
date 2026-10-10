@@ -186,6 +186,12 @@ each absent operand from the first other resolved result branch, including an
 explicit NULL, before aggregating all result types. An omitted ELSE adds no
 inference operand.
 
+Resolved domains distinguish string expression bounds from reported byte lengths.
+When a derived table materializes a direct `GROUP_CONCAT` result, its column type
+uses `groupConcatMaxLen` and the argument character set, which can differ from
+the function's directly reported type. Set operations retain their separate
+release-specific string aggregation rules before materializing the result.
+
 ### Aggregate ownership
 
 Aggregate ownership is available through `$operation->facts->query($query)->aggregates`.

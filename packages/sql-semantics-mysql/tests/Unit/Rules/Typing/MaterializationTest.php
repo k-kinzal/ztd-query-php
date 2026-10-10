@@ -83,6 +83,20 @@ final class MaterializationTest extends TestCase
         self::assertEquals([new Known(new Domain(Kind::Integer, Field::Long, 11, 0, false, null, [], Coercibility::Numeric, 2)), new Known(Domain::integer(Field::LongLong, 11)), new Known(Domain::integer(Field::LongLong, 12))], array_map(static fn (OutputSlot $slot): TypeFact => $slot->type, $output->shape->slots));
     }
 
+    public function testProjectedGivesGroupConcatenationItsTemporaryColumnBound(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $type = $semantics->analyze("SELECT q FROM (SELECT (GROUP_CONCAT('x')) AS q) AS d")->field(0)->type;
+        $legacy = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("SELECT q FROM (SELECT (GROUP_CONCAT(CONVERT('x' USING utf8mb4))) AS q) AS d")->field(0)->type;
+
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+        self::assertSame([Field::Blob, 4096, 0], [$type->descriptor->field, $type->descriptor->length, $type->descriptor->decimals]);
+        self::assertInstanceOf(Known::class, $legacy);
+        self::assertInstanceOf(Domain::class, $legacy->descriptor);
+        self::assertSame([Field::Blob, 4096, 0], [$legacy->descriptor->field, $legacy->descriptor->length, $legacy->descriptor->decimals]);
+    }
+
     public function testSetCountsBlobLengthsInBytes(): void
     {
         self::assertSame(262140, (new Materialization())->set(Domain::string(65535, Collation::known('utf8mb4_bin'), Field::Blob))->length);

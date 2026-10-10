@@ -100,7 +100,9 @@ final class Output
      * Answers the definition of one column.
      *
      * A string is sent converted to the character set of the results, so its length counts the
-     * bytes of its characters in that set; a set without results keeps the column's own. A
+     * bytes of its characters in that set; a set without results keeps the column's own.
+     * A TEXT/BLOB byte bound is divided by its source character set's minimum width
+     * before conversion, including UCS-2 and UTF-16. A
      * temporal value in a character set, as a rollup item is, is sent as such a string. A
      * ZEROFILL column carries no BINARY flag. A column of a system table carries the flags the
      * server reports for it, and NOT NULL when its type is.
@@ -111,7 +113,7 @@ final class Output
         $charset = $text ? ($results === null ? $domain->collation->id : $results->defaultCollation(GrammarRelease::MySql847)->id) : 63;
         $field = $domain->field === Field::Enum || $domain->field === Field::Set ? Field::String : $domain->field;
         $blob = in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
-        $length = $text && $results !== null ? $this->converted($blob ? ($domain->display ?? $domain->length) : $domain->length, $results->maxLength, $blob) : $domain->byteLength();
+        $length = $text && $results !== null ? $this->converted($blob ? intdiv($domain->display ?? $domain->length, $domain->collation->charset->minLength()) : $domain->length, $results->maxLength, $blob) : $domain->byteLength();
 
         $flags = $origin !== null && $origin->exact ? $origin->flags | ($domain->flags() & ColumnFlag::NotNull->value) : $domain->flags() | ($origin->flags ?? 0);
         if (($flags & ColumnFlag::ZeroFill->value) !== 0) {

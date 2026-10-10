@@ -97,7 +97,7 @@ final class Cast implements Scalar
         $operand = (new Precision())->domain($fact->type);
         $domain = $operand === null ? null : (new Casts(Settings::of($derivation->context), $grammar))->cast($operand, $this->target);
 
-        return new ScalarFact($domain === null ? $result->type($this->target) : new Known($domain), $result->nullability($this->target, $fact->nullability));
+        return new ScalarFact($domain === null ? $result->type($this->target) : new Known($domain), $result->nullability($this->target, $fact->nullability, $grammar));
     }
 
     /**
