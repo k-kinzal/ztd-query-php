@@ -61,7 +61,7 @@ final class TableTimes
     {
         $table = preg_match('/\AINSERT INTO (t1|t2)\b/', $sql, $match) === 1 ? $match[1] : null;
         $before = $table === null ? null : $this->now($pdo);
-        $pdo->exec($sql);
+        (new Fixture())->execute($pdo, $sql);
         if ($table !== null && $before !== null) {
             $this->intervals[$table] = [$before, $this->now($pdo)];
         }

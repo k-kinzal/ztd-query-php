@@ -271,7 +271,7 @@ In MySQL 5.6 the diagnostics area is cleared only by a statement that opens a ta
 Differences:
 
 - **`SHOW PROCESSLIST`** lists the sessions of the server; the event scheduler daemon is not listed, the time a session has spent in its state reads 0, and a session's host is the one it connected as, without a port.
-- **The table cache does not model every internal access.** Internal dictionary handles opened by server startup and metadata-changing statements, capacity-driven eviction, pending lock requests and transient name locks are not fully represented. The differential fixture explicitly flushes both caches before each input; populated-cache regressions separately check the modeled transitions.
+- **The table cache does not model every internal access.** Internal dictionary handles opened by server startup and metadata-changing statements, capacity-driven eviction, pending lock requests and transient name locks are not fully represented. The differential fixture disables background statistics recalculation, analyzes the fixture tables synchronously and flushes both caches before each input; populated-cache regressions separately check the modeled transitions.
 - **`CHECKSUM TABLE`** answers a stable checksum of the rows, which is not the server's.
 
 ## System tables

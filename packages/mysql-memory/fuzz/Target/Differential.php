@@ -254,7 +254,7 @@ final class Differential
             $pdo->exec('USE `' . self::DATABASE . '`');
             foreach ((new Fixture())->statements() as $statement) {
                 if ($clock === null) {
-                    $pdo->exec($statement);
+                    (new Fixture())->execute($pdo, $statement);
                 } else {
                     $clock->execute($pdo, $statement);
                 }

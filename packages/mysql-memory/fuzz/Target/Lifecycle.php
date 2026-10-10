@@ -70,7 +70,7 @@ final class Lifecycle
         $pdo->exec('CREATE DATABASE fz');
         $pdo->exec('USE fz');
         foreach ((new Fixture())->statements() as $statement) {
-            $pdo->exec($statement);
+            (new Fixture())->execute($pdo, $statement);
         }
         $observer = new Observer();
         try {
