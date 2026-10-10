@@ -22,7 +22,7 @@ final class Definition
      * @param string $name The name in lower case
      * @param Reach $reach Where the variable has a value
      * @param ValueShape $shape The values it takes
-     * @param string|int $default The global value of a new server; for an unsigned variable, the 64 bits of the value read as a signed integer
+     * @param string|int|null $default The global value of a new server; for an unsigned variable, the 64 bits of the value read as a signed integer
      * @param Writability $writability Which values SET can change
      * @param int|null $minimum The smallest integer it takes, when bounded
      * @param int|null $maximum The largest integer it takes, when bounded; for an unsigned variable, the 64 bits of the value read as a signed integer
@@ -32,7 +32,7 @@ final class Definition
         public readonly string $name,
         public readonly Reach $reach,
         public readonly ValueShape $shape,
-        public readonly string|int $default,
+        public readonly string|int|null $default,
         public readonly Writability $writability,
         public readonly ?int $minimum,
         public readonly ?int $maximum,

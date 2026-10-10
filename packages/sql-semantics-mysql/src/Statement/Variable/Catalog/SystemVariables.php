@@ -49,12 +49,12 @@ final class SystemVariables
         if (!isset(self::$releases[$release->value])) {
             $directory = dirname(__DIR__, 4) . '/resources/variables/';
             $file = is_file($directory . $release->value . '.php') ? $directory . $release->value . '.php' : $directory . GrammarRelease::MySql847->value . '.php';
-            /** @var list<array{string, string, string, string|int, string, int|null, int|string|null, int, int, int, bool, string}> $entries */
+            /** @var list<array{string, string, string, string|int|null, string, int|null, int|string|null, int, int, int, bool, string}> $entries */
             $entries = require $file;
             $definitions = [];
             foreach ($entries as [$name, $reach, $shape, $default, $writability, $minimum, $maximum, $field, $length, $decimals, $unsigned, $collation]) {
                 $unsignedShape = $shape === 'Unsigned';
-                $definitions[$name] = new Definition($name, self::REACHES[$reach] ?? Reach::Both, self::SHAPES[$shape] ?? ValueShape::Text, $unsignedShape ? self::bits($default) : $default, self::writability($writability), $minimum, $maximum === null ? null : (int) self::bits($maximum), self::domain($field, $length, $decimals, $unsigned, $collation));
+                $definitions[$name] = new Definition($name, self::REACHES[$reach] ?? Reach::Both, self::SHAPES[$shape] ?? ValueShape::Text, $unsignedShape && $default !== null ? self::bits($default) : $default, self::writability($writability), $minimum, $maximum === null ? null : (int) self::bits($maximum), self::domain($field, $length, $decimals, $unsigned, $collation));
             }
             self::$releases[$release->value] = new self($definitions);
         }

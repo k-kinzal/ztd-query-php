@@ -74,7 +74,7 @@ final class Instance
     public bool $stopped = false;
 
     /**
-     * @var array<string, string|int> The global configuration reloaded by RESTART
+     * @var array<string, string|int|null> The global configuration reloaded by RESTART
      */
     private readonly array $startup;
 
@@ -90,7 +90,7 @@ final class Instance
      * (verified on live 5.6.51 and 5.7.44 servers).
      *
      * @param string $version The MySQL release emulated, as `8.4.7`
-     * @param array<string, string|int> $globals Global variable values the server starts with, by name
+     * @param array<string, string|int|null> $globals Global variable values the server starts with, by name
      * @param list<string> $databases Databases created at start, besides the system ones
      * @param string|null $clientHost The host every client is seen connecting from, or null for its address
      * @param bool $supervised Whether a supervisor permits SQL RESTART

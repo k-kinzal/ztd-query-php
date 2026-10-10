@@ -70,6 +70,9 @@ final class Assigner
             throw AdministrationError::VariableIsReadonly->error('SESSION', $definition->name, 'GLOBAL');
         }
         $checked = $domain === null ? ($scope === Scope::Global ? $definition->default : $this->variables->globals->value($definition)) : $this->check($definition, $value, $domain);
+        if ($domain === null && str_starts_with($definition->name, 'innodb_monitor_') && in_array($this->context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            $this->context->diagnostics->warning(1230, 'Default value is not defined for this set option. Please specify correct counter or module name.');
+        }
         if ($cache !== null) {
             $this->cache($cache, $definition, $checked);
 

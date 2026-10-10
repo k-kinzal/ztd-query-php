@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Variable\Catalog;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
@@ -23,6 +24,29 @@ final class SystemVariablesTest extends TestCase
         self::assertSame(SystemVariables::of(GrammarRelease::MySql847), SystemVariables::of(GrammarRelease::MySql847));
         self::assertNull(SystemVariables::of(GrammarRelease::MySql5651)->find('activate_all_roles_on_login'));
         self::assertNotNull(SystemVariables::of(GrammarRelease::MySql847)->find('activate_all_roles_on_login'));
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease, string}>
+     */
+    public static function providerNullableDefaults(): iterable
+    {
+        foreach (GrammarRelease::cases() as $release) {
+            if (str_starts_with($release->value, 'mysql-')) {
+                foreach (['innodb_monitor_reset', 'innodb_monitor_reset_all', 'innodb_monitor_enable', 'innodb_monitor_disable'] as $name) {
+                    yield $release->value . ':' . $name => [$release, $name];
+                }
+            }
+        }
+    }
+
+    #[DataProvider('providerNullableDefaults')]
+    public function testOfPreservesNullDefaults(GrammarRelease $release, string $name): void
+    {
+        $definition = SystemVariables::of($release)->find($name);
+
+        self::assertNotNull($definition);
+        self::assertNull($definition->default);
     }
 
     public function testWritabilityReadsTheReadOnlyScopes(): void

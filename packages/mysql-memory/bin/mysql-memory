@@ -4,7 +4,7 @@
 /**
  * Runs an in-memory MySQL server.
  *
- * Usage: mysql-memory [--listen=tcp://127.0.0.1:3306] [--release=8.4.7] [--database=NAME]... [--global=NAME=VALUE]... [--client-host=HOST] [--unsupervised] [--routine-time=KIND:NAME:CREATED:MODIFIED]...
+ * Usage: mysql-memory [--listen=tcp://127.0.0.1:3306] [--release=8.4.7] [--database=NAME]... [--global=NAME=VALUE]... [--global-null=NAME]... [--client-host=HOST] [--unsupervised] [--routine-time=KIND:NAME:CREATED:MODIFIED]...
  * Prints "ready ADDRESS" once it accepts connections.
  */
 
@@ -36,6 +36,8 @@ foreach (array_slice($argv, 1) as $argument) {
         $databases[] = substr($argument, 11);
     } elseif (str_starts_with($argument, '--client-host=')) {
         $clientHost = substr($argument, 14);
+    } elseif (str_starts_with($argument, '--global-null=')) {
+        $globals[substr($argument, 14)] = null;
     } elseif (str_starts_with($argument, '--global=')) {
         [$name, $value] = explode('=', substr($argument, 9), 2) + [1 => ''];
         $globals[$name] = $value;

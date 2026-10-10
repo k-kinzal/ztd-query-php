@@ -39,7 +39,8 @@ foreach ($values as $name => $value) {
         continue;
     }
     $field = $result->fetch_fields()[0];
-    $collation = (string) ($result->fetch_row()[1] ?? 'binary');
+    $observed = $result->fetch_row();
+    $collation = (string) ($observed[1] ?? 'binary');
     [$minimum, $maximum] = $bounds[$name] ?? [null, null];
     $shape = match (true) {
         in_array($value, ['ON', 'OFF'], true) => 'Boolean',
@@ -50,6 +51,7 @@ foreach ($values as $name => $value) {
     };
     $scope = $session && $global ? 'Both' : ($session ? 'Session' : 'Global');
     $default = in_array($shape, ['Integer', 'Unsigned'], true) ? (bccomp($value, (string) PHP_INT_MAX) > 0 ? $value : (int) $value) : $value;
+    $default = $observed[0] === null ? null : $default;
     $numeric = in_array($shape, ['Integer', 'Unsigned'], true);
     $length = $field->charsetnr === 63 ? $field->length : intdiv($field->length, 4);
     $entries[] = sprintf(

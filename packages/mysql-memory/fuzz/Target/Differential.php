@@ -268,6 +268,9 @@ final class Differential
                 }
             }
             $this->baseline?->logs($pdo);
+            if ($this->baseline !== null) {
+                Baseline::mutexes($pdo, $this->version);
+            }
         } catch (PDOException $failure) {
             fwrite(STDERR, "Setup failed on {$dsn}: {$failure->getMessage()}\n");
             exit(2);

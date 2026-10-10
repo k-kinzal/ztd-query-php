@@ -108,6 +108,20 @@ final class Baseline
     }
 
     /**
+     * Clears historical latch waits before an isolated observation, using the same SQL on both servers.
+     * The fixture also sets this value before capturing globals, since MySQL retains the reset selector.
+     * Counters produced during the generated input remain visible and are never normalized.
+     * MySQL 5.6 does not recognize latch; this fixture is enabled only for verified modern releases.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/show-engine.html.
+     */
+    public static function mutexes(PDO $connection, string $version): void
+    {
+        if (version_compare($version, '8.0.0', '>=')) {
+            (new Fixture())->execute($connection, "SET GLOBAL innodb_monitor_reset='latch'");
+        }
+    }
+
+    /**
      * Records inverse statements for all generated catalog objects, including replication channels.
      */
     public function discover(PDO $native): void

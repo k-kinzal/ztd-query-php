@@ -10,9 +10,11 @@ use MySqlMemory\Session\Globals;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Reach;
+use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Writability;
 
@@ -62,6 +64,17 @@ final class GlobalsTest extends TestCase
         $globals->set($definition, null);
 
         self::assertNull($globals->value($definition));
+    }
+
+    public function testValueKeepsNullDefaultsDistinctFromExplicitEmptyValues(): void
+    {
+        $definition = SystemVariables::of(GrammarRelease::MySql847)->find('innodb_monitor_reset');
+        self::assertNotNull($definition);
+
+        self::assertNull((new Globals())->value($definition));
+        self::assertNull((new Globals(['innodb_monitor_reset' => null]))->value($definition));
+        self::assertSame('', (new Globals(['innodb_monitor_reset' => '']))->value($definition));
+        self::assertSame('latch', (new Globals(['innodb_monitor_reset' => 'latch']))->value($definition));
     }
 
     public function testCachedAnswersZeroForAKeyCacheThatDoesNotExist(): void

@@ -12,6 +12,7 @@ use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Assigner;
 use MySqlMemory\Variable\Scope;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
@@ -65,6 +66,33 @@ final class AssignerTest extends TestCase
         $assigner->assign('div_precision_increment', Scope::Global, 9, Domain::integer());
         $assigner->assign('div_precision_increment', Scope::Global, null, null);
         self::assertSame(4, $session->variables->globals->value($definition));
+    }
+
+    /**
+     * @return iterable<string, array{string, string, list<array{string, int, string}>}>
+     */
+    public static function providerMonitorDefaults(): iterable
+    {
+        foreach (['innodb_monitor_enable', 'innodb_monitor_disable', 'innodb_monitor_reset', 'innodb_monitor_reset_all'] as $name) {
+            yield '5.6:' . $name => ['5.6.51', $name, [['Warning', 1230, 'Default value is not defined for this set option. Please specify correct counter or module name.']]];
+            yield '8.4:' . $name => ['8.4.7', $name, []];
+        }
+    }
+
+    /**
+     * @param list<array{string, int, string}> $warnings
+     */
+    #[DataProvider('providerMonitorDefaults')]
+    public function testAssignRestoresNullMonitorDefaults(string $version, string $name, array $warnings): void
+    {
+        $session = (new Instance($version, [$name => 'all']))->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $definition = $session->variables->catalog->find($name);
+        self::assertNotNull($definition);
+        $assigner->assign($name, Scope::Global, null, null);
+
+        self::assertNull($session->variables->globals->value($definition));
+        self::assertSame($warnings, $session->diagnostics->conditions);
     }
 
     public function testAssignRefusesAnUnknownVariable(): void

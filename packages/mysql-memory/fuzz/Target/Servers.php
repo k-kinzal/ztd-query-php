@@ -61,10 +61,10 @@ final class Servers
         }
         $native = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $this->clean($native, $version);
-        $globals = [];
-        foreach ($this->rows($native, str_starts_with($version, '5.6.') ? 'SHOW GLOBAL VARIABLES' : 'SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.global_variables') as [$name, $value]) {
-            $globals[strtolower($name)] = $value;
+        if ($isolate) {
+            Baseline::mutexes($native, $version);
         }
+        $globals = $this->globals($native, $version);
         $identity = $native->query('SELECT USER()');
         $account = $identity === false ? '' : $identity->fetchColumn();
         $account = is_string($account) ? $account : '';
@@ -73,6 +73,25 @@ final class Servers
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
         return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $isolate ? new Baseline($native, $version) : null, $server), 'mysql-' . $version, $server];
+    }
+
+    /**
+     * Captures startup configuration, preserving NULL reads that SHOW VARIABLES renders as empty strings.
+     *
+     * @return array<string, string|null>
+     */
+    public function globals(PDO $native, string $version): array
+    {
+        $globals = [];
+        foreach ($this->rows($native, str_starts_with($version, '5.6.') ? 'SHOW GLOBAL VARIABLES' : 'SELECT VARIABLE_NAME, VARIABLE_VALUE FROM performance_schema.global_variables') as [$name, $value]) {
+            if ($value === '') {
+                $read = $native->query('SELECT @@GLOBAL.`' . str_replace('`', '``', $name) . '`');
+                $value = $read !== false && $read->fetchColumn() === null ? null : $value;
+            }
+            $globals[strtolower($name)] = $value;
+        }
+
+        return $globals;
     }
 
     /**

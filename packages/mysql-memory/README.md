@@ -183,6 +183,7 @@ mysql -h127.0.0.1 -P33061 -uroot -e 'SELECT @@sql_mode, 1+1'
 | `--release=VERSION` | `8.4.7` | The release to emulate |
 | `--database=NAME` | none | A database to create at start; repeat it for more |
 | `--global=NAME=VALUE` | none | The global value of a system variable at start; repeat it for more |
+| `--global-null=NAME` | none | A global variable starting as SQL NULL, distinct from an empty value |
 | `--client-host=HOST` | the peer address | The host every client is seen connecting from |
 | `--routine-time=KIND:NAME:CREATED:MODIFIED` | current time | Installation epochs for a standard `sys` routine; repeat for more routines |
 
@@ -212,7 +213,7 @@ $pdo->query('SELECT VERSION(), @@sql_mode, USER()')->fetch(PDO::FETCH_NUM);
 ```
 
 - **`version`**: the release to emulate. See [Supported Releases](#supported-releases).
-- **`globals`**: global values of system variables, by name. Every session starts with these values for the variables that have a session scope, as a MySQL server started with these options does. They are stored as written, without the checks and normalization `SET GLOBAL` applies, so give each value as `SELECT @@GLOBAL.name` reports it. A variable not given keeps the default of the release.
+- **`globals`**: global values of system variables, by name. Every session starts with these values for the variables that have a session scope, as a MySQL server started with these options does. They are stored as written, without the checks and normalization `SET GLOBAL` applies, so give each value as `SELECT @@GLOBAL.name` reports it, including PHP `null` for SQL NULL. A variable not given keeps the default of the release.
 - **`databases`**: databases created at start, besides `information_schema`, `mysql`, `performance_schema` and, from MySQL 5.7, `sys`, which always exist.
 - **`clientHost`**: the host every client of the server is seen connecting from, as `USER()` reports it. By default it is the peer address, with `127.0.0.1` and `::1` read as `localhost`. In process, the host is the `host` argument of `connect()`.
 - **`routineTimestamps`**: creation and modification epochs for installed `sys` routines, keyed by `FUNCTION:name` or `PROCEDURE:name`. Omitted entries use the instance's creation time. The catalog includes MySQL 5.7, 8.x and 9.x signatures and attributes; installed routine bodies are not implemented.
@@ -286,6 +287,8 @@ The seed replay uses the same root and byte decoding as SQL Faker's `bin/seeds.p
 `php fuzz/seeds.php [SEED_DIRECTORY] [REPORT_PREFIX]` writes per-input JSON Lines, a grammar coverage snapshot and a summary (by default under `build/fuzz/seeds-mysql-VERSION`). It reports reached and emitted productions separately, plus reached productions belonging to successfully compared inputs. Exit 0 requires every input to match and the entire reachable statement grammar to be covered. Differences, volatile observations and incomplete coverage fail the replay. Reaching every production during generation does not mean every production survives SQL Faker's output rewrites; the emitted count makes that distinction visible. This gate currently exposes remaining compatibility gaps and is not yet passing.
 
 Pull requests changing this package or its SQL dependencies run the complete canonical gate in GitHub Actions. To request another run, dispatch **Fuzz (mysql-memory)** with `canonical_seeds=true` and the desired `mysql_version`. That mode runs only the canonical gate and uploads the per-input observations, coverage, summary and console log, including when the gate fails.
+
+Isolated observations on MySQL 8.0 and later clear historical mutex waits with `SET GLOBAL innodb_monitor_reset='latch'` after fixture setup. The same SQL runs on both servers, and the retained selector is part of their initial global configuration. This prevents contention from earlier inputs or fixture creation from leaking into `SHOW ENGINE ... MUTEX`. Waits generated during the input remain visible; rows and counters are compared without replacement. Other engine statistics and status observations remain subject to the strict gate.
 
 Six bounded comparison contracts handle measured nondeterministic fields:
 

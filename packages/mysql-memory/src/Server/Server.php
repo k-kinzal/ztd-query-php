@@ -36,7 +36,7 @@ final class Server
      *
      * @param string $version The MySQL release emulated
      * @param list<string> $databases Databases created at start
-     * @param array<string, string|int> $globals Global variable values the server starts with
+     * @param array<string, string|int|null> $globals Global variable values the server starts with
      * @param string|null $clientHost The host every client is seen connecting from, or null for its address
      * @param bool $supervised Whether SQL RESTART is available
      * @param array<string, array{int, int}> $routineTimestamps Installation creation and modification epochs, keyed by FUNCTION:name or PROCEDURE:name
@@ -56,7 +56,7 @@ final class Server
             $command[] = '--client-host=' . $clientHost;
         }
         foreach ($globals as $name => $value) {
-            $command[] = '--global=' . $name . '=' . $value;
+            $command[] = $value === null ? '--global-null=' . $name : '--global=' . $name . '=' . $value;
         }
         foreach ($routineTimestamps as $key => [$created, $modified]) {
             $command[] = '--routine-time=' . $key . ':' . $created . ':' . $modified;
