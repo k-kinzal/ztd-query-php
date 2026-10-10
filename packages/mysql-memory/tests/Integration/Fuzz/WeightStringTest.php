@@ -50,10 +50,12 @@ final class WeightStringTest extends TestCase
      */
     public static function providerUnicodeStatements(): iterable
     {
-        foreach (['', 'aÉßΩŒ😀', 'l·', "и\u{0306}", "a\u{0301}", "\u{FDFA}", "\u{FDFA}a", '一가', "\u{D7AF}\u{18AFF}\u{10FFFF}", "\u{0}\u{301}\u{FE0F}"] as $text) {
-            $value = "_utf8mb4 X'" . bin2hex($text) . "' COLLATE utf8mb4_0900_ai_ci";
-            foreach (['', ' AS CHAR(1)', ' AS CHAR(8)', ',0,4,64', ',0,4,128'] as $options) {
-                yield bin2hex($text) . $options => ['SELECT WEIGHT_STRING(' . $value . $options . ') AS w; SHOW WARNINGS'];
+        foreach (['', 'aÉßΩŒ😀', 'l·', "и\u{0306}", "a\u{0301}", "\u{FDFA}", "\u{FDFA}a", '一가', "\u{D6FF}\u{D700}\u{D7AF}\u{18AFF}\u{10FFFF}", "\u{0}\u{301}\u{FE0F}"] as $text) {
+            foreach (['utf8mb4_0900_ai_ci', 'utf8mb4_0900_as_ci', 'utf8mb4_0900_as_cs'] as $collation) {
+                $value = "_utf8mb4 X'" . bin2hex($text) . "' COLLATE " . $collation;
+                foreach (['', ' AS CHAR(1)', ' AS CHAR(8)', ',0,4,64', ',0,4,128'] as $options) {
+                    yield $collation . bin2hex($text) . $options => ['SELECT WEIGHT_STRING(' . $value . $options . ') AS w; SHOW WARNINGS'];
+                }
             }
         }
     }

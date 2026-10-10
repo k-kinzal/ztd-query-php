@@ -52,8 +52,37 @@ final class UnicodeWeightsTest extends TestCase
     }
 
     #[DataProvider('providerPrimaryWeights')]
-    public function testPrimaryMatchesObservedExpansionsAndImplicitBoundaries(int $point, string $expected): void
+    public function testLevelMatchesObservedPrimaryExpansionsAndImplicitBoundaries(int $point, string $expected): void
     {
-        self::assertSame(strtolower($expected), bin2hex((new UnicodeWeights())->primary($point)));
+        self::assertSame(strtolower($expected), bin2hex((new UnicodeWeights())->level($point, 1)));
+    }
+
+    public function testLevelRetainsAccentCaseAndHangulPageBoundaries(): void
+    {
+        $weights = new UnicodeWeights();
+
+        self::assertSame('00200024', bin2hex($weights->level(0xE9, 2)));
+        self::assertSame('0008', bin2hex($weights->level(0x41, 3)));
+        self::assertSame('000200020002', bin2hex($weights->level(0xD6FF, 3)));
+        self::assertSame('000300030003', bin2hex($weights->level(0xD700, 3)));
+        self::assertSame('000300030003', bin2hex($weights->level(0xD7AF, 3)));
+        self::assertSame('0020', bin2hex($weights->level(0x10FFFF, 2)));
+        self::assertSame('0002', bin2hex($weights->level(0x10FFFF, 3)));
+    }
+
+    public function testTextCombinesCharactersWithinEachLevel(): void
+    {
+        self::assertSame('1c471caa00000020002000240000000800020002', bin2hex((new UnicodeWeights())->text(['A', 'é'], 3)));
+        self::assertSame('00000000', bin2hex((new UnicodeWeights())->text([], 3)));
+    }
+
+    public function testLevelsIdentifiesOnlyUntailoredUnicode9Collations(): void
+    {
+        $weights = new UnicodeWeights();
+
+        self::assertSame(1, $weights->levels('utf8mb4_0900_ai_ci'));
+        self::assertSame(2, $weights->levels('utf8mb4_0900_as_ci'));
+        self::assertSame(3, $weights->levels('utf8mb4_0900_as_cs'));
+        self::assertSame(0, $weights->levels('utf8mb4_de_pb_0900_as_cs'));
     }
 }
