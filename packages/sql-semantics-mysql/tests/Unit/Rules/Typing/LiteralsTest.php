@@ -94,6 +94,14 @@ final class LiteralsTest extends TestCase
         self::assertSame('latin1_swedish_ci', $literals->radix(new RadixLiteral(Radix::Bit, '1', new Name('latin1')))->collation->name);
     }
 
+    public function testRadixCountsIntroducedCharactersInsteadOfEncodedBytes(): void
+    {
+        $literals = new Literals(new Settings(Collation::known('utf8mb4_0900_ai_ci')), GrammarRelease::MySql847);
+
+        self::assertSame(1, $literals->radix(new RadixLiteral(Radix::Hexadecimal, 'F09F9880', new Name('utf8mb4')))->length);
+        self::assertSame(1, $literals->radix(new RadixLiteral(Radix::Bit, '1100001110101001', new Name('utf8mb4')))->length);
+    }
+
     public function testTemporalKeepsUpToSixFractionalDigits(): void
     {
         $literals = new Literals(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);

@@ -23,6 +23,11 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class RadixLiteralTest extends TestCase
 {
+    public function testBytesPreservesLeadingZerosAndPadsPartialOctets(): void
+    {
+        self::assertSame(['000abc', '0100', '', ''], [bin2hex((new RadixLiteral(Radix::Hexadecimal, '00ABC'))->bytes()), bin2hex((new RadixLiteral(Radix::Bit, '100000000'))->bytes()), (new RadixLiteral(Radix::Hexadecimal, ''))->bytes(), (new RadixLiteral(Radix::Bit, ''))->bytes()]);
+    }
+
     public function testDeriveScalarAnswersVarBinaryWithoutAnIntroducer(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze("SELECT a FROM t WHERE a = X'1F'");

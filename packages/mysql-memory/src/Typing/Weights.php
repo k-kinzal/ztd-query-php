@@ -10,7 +10,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 
 /**
- * Produces binary, Unicode code-point, general_ci and single-byte latin1 sort weights.
+ * Produces binary, Unicode code-point, general_ci, Unicode 9.0 primary and single-byte latin1 sort weights.
  *
  * The general_ci character mapping was sampled through SQL for every valid BMP code point.
  * Supplementary characters weigh FFFD. Padding follows the collation; the binary charset
@@ -67,6 +67,9 @@ final class Weights
             return $single[ord($byte)];
         }
         $point = mb_ord($character, 'UTF-8');
+        if ($collation->name === 'utf8mb4_0900_ai_ci') {
+            return (new UnicodeWeights())->primary($point);
+        }
         if ($collation->name === 'utf8mb4_0900_bin') {
             return $character;
         }

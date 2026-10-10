@@ -17,7 +17,6 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\SignedLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
@@ -106,20 +105,9 @@ final class Literals
      */
     public function radix(RadixLiteral $literal): Constant
     {
-        $digits = $literal->digits;
-        if ($literal->radix === Radix::Bit) {
-            $bytes = '';
-            $digits = str_pad($digits, (int) ceil(strlen($digits) / 8) * 8, '0', STR_PAD_LEFT);
-            foreach (str_split($digits, 8) as $octet) {
-                $bytes .= $digits === '' ? '' : chr((int) bindec($octet));
-            }
-        } else {
-            $bytes = (string) hex2bin(strlen($digits) % 2 === 1 ? '0' . $digits : $digits);
-        }
-
         $domain = $this->typed($literal, $this->rules()->radix($literal));
 
-        return new Constant($literal->introducer === null ? $domain->withNumericBytes() : $domain, $bytes);
+        return new Constant($literal->introducer === null ? $domain->withNumericBytes() : $domain, $literal->bytes());
     }
 
     /**

@@ -31,6 +31,12 @@ final class WeightsTest extends TestCase
         self::assertSame('00200020', bin2hex((new Weights())->text('', Collation::known('utf8mb4_general_ci'), 2)));
     }
 
+    public function testTextWeighsUntailoredUnicode9CharactersSeparately(): void
+    {
+        self::assertSame('1d77028b', bin2hex((new Weights())->text('l·', Collation::known('utf8mb4_0900_ai_ci'))));
+        self::assertSame('1caa1e711e71', bin2hex((new Weights())->text('éß', Collation::known('utf8mb4_0900_ai_ci'))));
+    }
+
     public function testCharacterKeepsUtf8BinaryCodePointWidths(): void
     {
         self::assertSame('00e9', bin2hex((new Weights())->character('é', Collation::known('utf8mb3_bin'))));

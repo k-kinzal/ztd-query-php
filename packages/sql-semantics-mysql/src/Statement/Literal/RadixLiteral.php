@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Type\Nullability;
  * VARBINARY; with an introducer a character string, VARCHAR, of the
  * introduced character set; never NULL. In a numeric context the server
  * converts the value, which is a rule of the operator, not of the literal.
- * Precision: the type family is exact; the length is not derived.
+ * Precision: the length counts bytes without an introducer and characters in the introduced character set.
  * Diagnostics: none. Source: https://dev.mysql.com/doc/refman/8.4/en/hexadecimal-literals.html,
  * https://dev.mysql.com/doc/refman/8.4/en/bit-value-literals.html. Status: Implemented.
  *
@@ -67,6 +67,25 @@ final class RadixLiteral implements Scalar
         }
 
         return new ScalarFact(new Known(Literals::of($derivation->context)->radix($this)), Nullability::NotNull);
+    }
+
+    /**
+     * Decodes the literal's bytes, preserving leading zeros and padding incomplete octets on the left.
+     *
+     * @example Decoding odd hexadecimal digits
+     *     bin2hex((new \SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral(\SqlSemantics\Platform\MySql\Statement\Literal\Radix::Hexadecimal, 'ABC'))->bytes()) // => '0abc'
+     */
+    public function bytes(): string
+    {
+        if ($this->radix === Radix::Hexadecimal) {
+            return (string) hex2bin(strlen($this->digits) % 2 === 1 ? '0' . $this->digits : $this->digits);
+        }
+        $bytes = '';
+        foreach (str_split(str_pad($this->digits, (int) ceil(strlen($this->digits) / 8) * 8, '0', STR_PAD_LEFT), 8) as $octet) {
+            $bytes .= chr((int) bindec($octet));
+        }
+
+        return $bytes;
     }
 
     /**

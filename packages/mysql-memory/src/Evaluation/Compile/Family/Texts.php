@@ -80,7 +80,7 @@ final class Texts
     {
         $operand = $this->compiler->compile($node->operand, $scope);
         $collation = Collation::named($node->collation->value);
-        if ($collation === null) {
+        if ($collation === null || !$collation->availableIn($this->compiler->settings->modes->release)) {
             throw SchemaError::UnknownCollation->error($node->collation->value);
         }
         $domain = $operand->domain();

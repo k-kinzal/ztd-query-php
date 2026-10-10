@@ -99,7 +99,7 @@ final class Weight implements Evaluable
 
         if (($this->flags & 128) !== 0) {
             $capacity = $this->resultLength > 0 ? $this->resultLength : (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->capacity($domain->collation, strlen($value), $count);
-            $padding = $domain->collation->bytes() ? "\0" : (new \MySqlMemory\Typing\Weights())->character(' ', $domain->collation);
+            $padding = $domain->collation->bytes() || !$domain->collation->padSpace ? "\0" : (new \MySqlMemory\Typing\Weights())->character(' ', $domain->collation);
             $weight = str_pad($weight, $capacity, $padding);
         }
 

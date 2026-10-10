@@ -133,7 +133,7 @@ final class Literals
 
         $bytes = intdiv($bits + 7, 8);
 
-        return $literal->introducer === null ? new Domain(Kind::String, Field::VarString, $bytes, 0, false, $collation, [], Coercibility::Coercible) : Domain::string($bytes, $collation, Field::VarString, Coercibility::Coercible);
+        return $literal->introducer === null ? new Domain(Kind::String, Field::VarString, $bytes, 0, false, $collation, [], Coercibility::Coercible) : Domain::string($collation->charset->length($literal->bytes()), $collation, Field::VarString, Coercibility::Coercible);
     }
 
     /**

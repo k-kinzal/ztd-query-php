@@ -63,6 +63,14 @@ final class TextsTest extends TestCase
         self::assertSame([], $derivation->facts()->diagnostics);
     }
 
+    public function testCollatedRejectsACollationIntroducedByALaterRelease(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+
+        self::assertNull((new Texts(new Settings(Collation::known('utf8mb4_general_ci'))))->collated(Domain::string(1, Collation::known('utf8mb4_general_ci')), 'utf8mb4_0900_ai_ci', $derivation));
+        self::assertEquals([new UnknownCollation('utf8mb4_0900_ai_ci')], $derivation->facts()->diagnostics);
+    }
+
     public function testBinaryCountsTheBytesOfAString(): void
     {
         self::assertEquals(Domain::string(12, Collation::binary()), (new Texts(new Settings(Collation::known('latin1_bin'))))->binary(Domain::string(3, Collation::known('utf8mb4_bin'))));

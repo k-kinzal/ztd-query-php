@@ -55,7 +55,7 @@ final class Texts
     public function collated(Domain $operand, string $name, Derivation $derivation, ?\SqlSemantics\Statement\Scalar $expression = null): ?Domain
     {
         $collation = Collation::named($name);
-        if ($collation === null) {
+        if ($collation === null || !$collation->availableIn($derivation->context->profile->grammar)) {
             $derivation->report(new UnknownCollation($name));
 
             return null;
