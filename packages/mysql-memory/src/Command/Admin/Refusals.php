@@ -51,7 +51,7 @@ final class Refusals
      */
     public static function handles(Diagnostic $diagnostic): bool
     {
-        return $diagnostic instanceof StorageProblem || $diagnostic instanceof SpatialProblem || $diagnostic instanceof PriorityOutOfRange || $diagnostic instanceof RefusedSetting || $diagnostic instanceof NumberOutOfRange;
+        return $diagnostic instanceof StorageProblem || $diagnostic instanceof SpatialProblem || $diagnostic instanceof PriorityOutOfRange || $diagnostic instanceof RefusedSetting || $diagnostic instanceof NumberOutOfRange || $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber;
     }
 
     /**
@@ -66,6 +66,7 @@ final class Refusals
                 StorageRule::SizeOverflow => SchemaError::SizeOverflow->error(),
             },
             $diagnostic instanceof SpatialProblem => $this->spatial($diagnostic, $statement),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber => new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number->text, '/') . '/') . "' at line 1"),
             $diagnostic instanceof PriorityOutOfRange => $this->priority($diagnostic, $statement),
             $diagnostic instanceof RefusedSetting => $this->replication($diagnostic->error, $statement, $text),
             $diagnostic instanceof NumberOutOfRange => $diagnostic->error === 'ER_WRONG_VALUE' ? DataError::WrongValue->error($diagnostic->option, $diagnostic->number) : new SqlError(StatementError::ParseError, "Only integers allowed as number here near '" . $this->near($text, '/' . preg_quote($diagnostic->number, '/') . '/') . "' at line 1"),
@@ -80,9 +81,10 @@ final class Refusals
     {
         $attribute = $problem->attribute === null ? 'SRID' : $problem->attribute->value;
         $verb = $statement instanceof DropSpatialReference ? 'DROP' : ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Server\Spatial\CreateSpatialReference && $statement->orReplace ? 'CREATE OR REPLACE' : 'CREATE');
+        $subject = $statement instanceof \SqlSemantics\Platform\MySql\Statement\Table\CreateTable || $statement instanceof \SqlSemantics\Platform\MySql\Statement\Alter\AlterTable ? 'SRID' : $verb . ' SPATIAL REFERENCE SYSTEM';
 
         return match ($problem->rule) {
-            SpatialRule::IdentifierOutOfRange => DataError::DataOutOfRange->error($problem->attribute === SpatialAttributeKind::Organization ? 'IDENTIFIED BY' : 'SRID', $verb . ' SPATIAL REFERENCE SYSTEM'),
+            SpatialRule::IdentifierOutOfRange => DataError::DataOutOfRange->error($problem->attribute === SpatialAttributeKind::Organization ? 'IDENTIFIED BY' : 'SRID', $subject),
             SpatialRule::IdentifierZero => SchemaError::SrsZeroUnmodifiable->error(),
             SpatialRule::RepeatedAttribute => SchemaError::SrsRepeatedAttribute->error($attribute),
             SpatialRule::MissingAttribute => SchemaError::SrsMissingAttribute->error($attribute),

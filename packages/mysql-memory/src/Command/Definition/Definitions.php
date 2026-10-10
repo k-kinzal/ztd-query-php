@@ -207,6 +207,10 @@ final class Definitions
      */
     public function column(ColumnElement $element, ?\SqlSemantics\Statement\Declaration\Column $declaration, Declared $declared, Scope $scope, CreateTable $create): ColumnDefinition
     {
+        $session = $this->planner->compiler->connection->session();
+        if ($session !== null) {
+            (new Constraint\SpatialColumns())->check($element, $session->instance->registry->spatialCatalog);
+        }
         $specification = $element->specification;
         $attributes = $specification instanceof OrdinaryColumn || $specification instanceof GeneratedColumn ? $specification->attributes : [];
         $collation = null;

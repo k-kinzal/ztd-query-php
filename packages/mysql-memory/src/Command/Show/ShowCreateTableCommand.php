@@ -116,6 +116,8 @@ final class ShowCreateTableCommand implements Command
         } elseif ($domain->field === Field::Timestamp) {
             $written .= ' NULL';
         }
+        $srid = $text->element($table, $column)?->srid();
+        $written .= $srid === null ? '' : ' /*!80003 SRID ' . $srid . ' */';
         $written .= $column->generated === null ? $text->createDefault($column, $type) : '';
         if ($column->onUpdateNow) {
             $written .= ' ON UPDATE CURRENT_TIMESTAMP' . ($domain->decimals > 0 ? '(' . $domain->decimals . ')' : '');

@@ -138,6 +138,7 @@ final class Execution
         (new Access\PasswordAccess())->check($statement, $this->session);
         (new Access\TableCreation())->check($statement, $this->session);
         (new Access\TableCreation())->validate($statement, $this->session);
+        (new \MySqlMemory\Command\Definition\Constraint\SpatialColumns())->prepare($statement, $this->session);
         (new \MySqlMemory\Command\Definition\Constraint\IndexOptions())->prepare($statement, $this->session, $context);
     }
 

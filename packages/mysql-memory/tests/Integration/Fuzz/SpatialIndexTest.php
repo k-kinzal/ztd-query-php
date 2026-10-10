@@ -21,11 +21,12 @@ final class SpatialIndexTest extends TestCase
     {
         $version = getenv('MYSQL_VERSION');
         $legacy = is_string($version) && str_starts_with($version, '5.');
+        $rtreeError = is_string($version) && str_starts_with($version, '5.7.') ? 1070 : 1210;
         $listing = '; SHOW WARNINGS; SHOW CREATE TABLE spatial_probe; SHOW INDEX FROM spatial_probe';
         foreach (['InnoDB', 'MyISAM', 'MEMORY'] as $engine) {
             foreach (['INT', 'POINT', 'POINT NOT NULL', 'GEOMETRY NOT NULL'] as $type) {
                 foreach (['KEY', 'UNIQUE KEY'] as $kind) {
-                    $error = $engine === 'MEMORY' && $type !== 'INT' ? 1178 : ($legacy ? 1210 : ($type === 'INT' ? 1687 : ($kind === 'UNIQUE KEY' ? 3728 : ($type === 'POINT' ? 1252 : null))));
+                    $error = $engine === 'MEMORY' && $type !== 'INT' ? 1178 : ($legacy ? $rtreeError : ($type === 'INT' ? 1687 : ($kind === 'UNIQUE KEY' ? 3728 : ($type === 'POINT' ? 1252 : null))));
                     yield $engine . ' ' . $type . ' ' . $kind => ['CREATE TABLE spatial_probe(a ' . $type . ',' . $kind . ' k(a) USING RTREE) ENGINE=' . $engine . $listing, $error];
                 }
             }

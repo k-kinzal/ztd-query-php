@@ -62,6 +62,9 @@ final class StagesTest extends TestCase
     public function testParsedHoldsForTheProblemsOfTheParser(): void
     {
         self::assertTrue(Stages::parsed(new WrongArgumentCount(new Name('abs'), 0)));
+        self::assertTrue(Stages::parsed(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierOutOfRange)));
+        self::assertFalse(Stages::parsed(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierOutOfRange, \SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind::Organization)));
+        self::assertTrue(Stages::parsed(new \SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber(new \SqlSemantics\Platform\MySql\Statement\Literal\Numeral('1.0'))));
         self::assertFalse(Stages::parsed(new Misuse(MisuseRule::UnknownLockedTable, new QualifiedName(new Name('t')))));
         self::assertFalse(Stages::parsed(new Misuse(MisuseRule::DuplicateWindow, new Name('w'))));
     }

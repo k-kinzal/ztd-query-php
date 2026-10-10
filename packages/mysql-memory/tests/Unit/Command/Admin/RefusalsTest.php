@@ -154,4 +154,13 @@ final class RefusalsTest extends TestCase
 
         self::assertSame([3067, "Supplied filter list contains a value which is not in the required format 'db_pattern.table_pattern'"], [$error->getCode(), $error->getMessage()]);
     }
+    public function testErrorReportsTheSourcePositionOfAFractionalSrid(): void
+    {
+        $session = (new Instance())->connect();
+        $this->expectExceptionCode(1064);
+        $this->expectExceptionMessage("Only integers allowed as number here near '1e0)' at line 1");
+
+        $session->query('CREATE TABLE t(a POINT SRID 1e0)');
+    }
+
 }

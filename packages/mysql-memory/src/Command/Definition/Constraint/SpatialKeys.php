@@ -12,7 +12,6 @@ use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Plan\Planner;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition as ColumnElement;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\SridAttribute;
 use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
@@ -61,7 +60,7 @@ final class SpatialKeys
         $legacy = $this->planner->settings->legacy();
         $algorithm = (new IndexOptions())->algorithm($index, 'MEMORY');
         if ($legacy && $algorithm === IndexAlgorithm::Rtree) {
-            throw StatementError::WrongArguments->error('RTREE INDEX');
+            throw $this->planner->settings->release() === GrammarRelease::MySql5651 ? StatementError::WrongArguments->error('RTREE INDEX') : SchemaError::TooManyKeyParts->error(1);
         }
         $this->engine($columns, $engine, $key);
         $geometric = array_filter($key->columns, static fn (int $position): bool => $columns[$position]->domain->field === Field::Geometry);
@@ -107,7 +106,7 @@ final class SpatialKeys
         $statement = $this->planner->statement;
         $restricted = [];
         foreach ($statement instanceof CreateTable ? $statement->elements : [] as $element) {
-            if ($element instanceof ColumnElement && array_filter($element->specification->columnAttributes(), static fn ($attribute): bool => $attribute instanceof SridAttribute) !== []) {
+            if ($element instanceof ColumnElement && $element->srid() !== null) {
                 $restricted[] = strtolower($element->name->column->value);
             }
         }

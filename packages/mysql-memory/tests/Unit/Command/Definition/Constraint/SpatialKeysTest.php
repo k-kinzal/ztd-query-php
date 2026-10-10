@@ -47,4 +47,13 @@ final class SpatialKeysTest extends TestCase
 
         self::assertSame([], $restricted->rows);
     }
+    public function testResolveReportsTheFiveSevenRtreeDiagnostic(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $this->expectExceptionCode(1070);
+        $this->expectExceptionMessage('Too many key parts specified; max 1 parts allowed');
+
+        $session->query('CREATE TABLE t(a INT,KEY k(a) USING RTREE)');
+    }
+
 }

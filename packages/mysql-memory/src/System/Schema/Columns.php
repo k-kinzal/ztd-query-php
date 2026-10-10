@@ -16,8 +16,6 @@ use MySqlMemory\System\SystemRows;
 use Override;
 use SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemColumn;
 use SqlSemantics\Platform\MySql\Statement\Table\Catalog\SystemTable;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn;
-use SqlSemantics\Platform\MySql\Statement\Table\Column\SridAttribute;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -233,13 +231,6 @@ final class Columns implements SystemRows
      */
     public function srid(TableDefinition $table, ColumnDefinition $column): ?int
     {
-        $specification = (new ColumnText())->element($table, $column)?->specification;
-        foreach ($specification instanceof OrdinaryColumn ? $specification->attributes : [] as $attribute) {
-            if ($attribute instanceof SridAttribute) {
-                return (int) $attribute->srid->text;
-            }
-        }
-
-        return null;
+        return (new ColumnText())->element($table, $column)?->srid();
     }
 }

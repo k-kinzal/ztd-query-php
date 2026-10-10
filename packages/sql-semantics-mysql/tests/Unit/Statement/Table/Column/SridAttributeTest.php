@@ -17,7 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 #[Medium]
 final class SridAttributeTest extends TestCase
 {
-    public function testDeriveAttributeDerivesNothing(): void
+    public function testDeriveAttributeAcceptsAKnownRestriction(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (g POINT SRID 4326)');
         $statement = $create->statement;
@@ -36,4 +36,13 @@ final class SridAttributeTest extends TestCase
     {
         self::assertSame('CREATE TABLE t (g POINT SRID 4326)', (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (g POINT SRID 4326)')->toString());
     }
+    public function testDeriveAttributeChecksEveryRestrictionBeforeLaterAttributesReplaceIt(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(a POINT SRID 4294967296 SRID 0)');
+        $problems = array_values(array_filter($operation->facts->diagnostics, static fn ($problem): bool => $problem instanceof \SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialProblem));
+
+        self::assertCount(1, $problems);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Server\Problem\SpatialRule::IdentifierOutOfRange, $problems[0]->rule);
+    }
+
 }
