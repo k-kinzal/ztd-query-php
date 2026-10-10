@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Variable;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -49,6 +51,8 @@ final class VariableAssignment implements Scalar
     {
         $derivation->scalar($this->target, $environment);
         $fact = (new Operands())->single($derivation->scalar($this->value, $environment), $derivation);
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\Variables(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context), $derivation->context->profile->grammar))->introduce($this->target->name->value, $derivation);
+        Deprecation::raise(Deprecated::AssignmentInExpression, $derivation);
 
         return new ScalarFact($fact->type, $fact->nullability);
     }

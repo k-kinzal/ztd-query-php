@@ -58,4 +58,9 @@ final class MultipleDeleteTest extends TestCase
 
         new MultipleDelete(null, [], [], MultipleDeleteForm::Using, [new WriteTarget(new QualifiedName(new Name('t')))]);
     }
+
+    public function testRenderWritesTheHintCommentAfterTheVerb(): void
+    {
+        self::assertSame('DELETE /*+ BKA(`u`) */ t FROM t, u', (new Semantics(Dialect::MySql))->analyze('DELETE /*+ BKA(u) */ t FROM t, u')->toString());
+    }
 }

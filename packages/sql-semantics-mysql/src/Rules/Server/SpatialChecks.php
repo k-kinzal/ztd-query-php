@@ -22,8 +22,12 @@ use SqlSemantics\Platform\MySql\Statement\Server\Spatial\SpatialAttributeKind;
  * control character (0x00-0x1F, 0x7F); NAME holds at most 80 characters,
  * DEFINITION 4096, ORGANIZATION 256 and DESCRIPTION 2048, counted as UTF-8
  * characters; the organization's identifier is at most 2^32-1. Each broken
- * rule is one SpatialProblem; the server stops at the first. Terminates: one
- * pass over the attributes.
+ * rule is one SpatialProblem; the server stops at the first. The problems are
+ * reported in the server's order: the identifier, the repeated attributes in
+ * written order, then NAME, DEFINITION, ORGANIZATION and DESCRIPTION in turn,
+ * each missing, blank, holding a control character, too long, then its
+ * identifier out of range (verified on a live 8.4 server). Terminates: five
+ * passes over the attributes.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-spatial-reference-system.html.
  * Status: Implemented.
  *
@@ -65,11 +69,15 @@ final class SpatialChecks
                 $derivation->report(new SpatialProblem(SpatialRule::RepeatedAttribute, $attribute->kind));
             }
             $seen[$attribute->kind->value] = true;
-            $this->attribute($derivation, $attribute);
         }
-        foreach ([SpatialAttributeKind::Name, SpatialAttributeKind::Definition] as $mandatory) {
-            if (!isset($seen[$mandatory->value])) {
-                $derivation->report(new SpatialProblem(SpatialRule::MissingAttribute, $mandatory));
+        foreach ([SpatialAttributeKind::Name, SpatialAttributeKind::Definition, SpatialAttributeKind::Organization, SpatialAttributeKind::Description] as $kind) {
+            if (!isset($seen[$kind->value]) && ($kind === SpatialAttributeKind::Name || $kind === SpatialAttributeKind::Definition)) {
+                $derivation->report(new SpatialProblem(SpatialRule::MissingAttribute, $kind));
+            }
+            foreach ($attributes as $attribute) {
+                if ($attribute->kind === $kind) {
+                    $this->attribute($derivation, $attribute);
+                }
             }
         }
     }

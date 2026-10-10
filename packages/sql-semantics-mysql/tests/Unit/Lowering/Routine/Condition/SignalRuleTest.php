@@ -169,7 +169,7 @@ final class SignalRuleTest extends TestCase
     #[DataProvider('providerOperandLowersLiteralsVariablesAndNames')]
     public function testOperandLowersLiteralsVariablesAndNames(string $release): void
     {
-        $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p(m text) signal sqlstate '45000' set message_text = m, class_origin = @a, subclass_origin = @@session.x, table_name = null, mysql_errno = 1000, column_name = 'c'");
+        $operation = (new Semantics(Dialect::MySql, $release))->analyze("create procedure p(m text) signal sqlstate '45000' set message_text = m, class_origin = @a, subclass_origin = @@session.sql_mode, table_name = null, mysql_errno = 1000, column_name = 'c'");
         $statement = $operation->statement;
         self::assertInstanceOf(CreateProcedure::class, $statement);
         self::assertInstanceOf(Signal::class, $statement->body);
@@ -177,12 +177,12 @@ final class SignalRuleTest extends TestCase
         self::assertEquals([
             new SignalItem(ConditionItemName::MessageText, new ColumnUse(new Name('m'))),
             new SignalItem(ConditionItemName::ClassOrigin, new UserVariable(new Name('a'))),
-            new SignalItem(ConditionItemName::SubclassOrigin, new SystemVariable(new Name('x'), VariableScope::Session)),
+            new SignalItem(ConditionItemName::SubclassOrigin, new SystemVariable(new Name('sql_mode'), VariableScope::Session)),
             new SignalItem(ConditionItemName::TableName, new NullLiteral()),
             new SignalItem(ConditionItemName::MysqlErrno, new NumberLiteral('1000')),
             new SignalItem(ConditionItemName::ColumnName, new StringLiteral(['c'])),
         ], $statement->body->items);
-        self::assertSame("CREATE PROCEDURE p(m TEXT) SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = m, CLASS_ORIGIN = @a, SUBCLASS_ORIGIN = @@SESSION.x, TABLE_NAME = NULL, MYSQL_ERRNO = 1000, COLUMN_NAME = 'c'", $operation->toString());
+        self::assertSame("CREATE PROCEDURE p(m TEXT) SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = m, CLASS_ORIGIN = @a, SUBCLASS_ORIGIN = @@SESSION.sql_mode, TABLE_NAME = NULL, MYSQL_ERRNO = 1000, COLUMN_NAME = 'c'", $operation->toString());
         self::assertSame([], $operation->facts->diagnostics);
     }
 }

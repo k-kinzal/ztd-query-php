@@ -1,0 +1,184 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Session;
+
+use MySqlMemory\Error\ErrorCode;
+use MySqlMemory\Error\ErrorNumbers;
+
+/**
+ * The diagnostics area of a session: the warnings and notes of the last statement that raised any.
+ *
+ * SHOW WARNINGS reads it; a statement that uses no table and raises nothing leaves it as it was.
+ * It keeps at most max_error_count warnings and notes, and counts those beyond (verified on a
+ * live 8.4 server).
+ * In MySQL 5.6 a query, SET or DO that uses no table keeps it until the statement raises a
+ * condition (verified on a live 5.6.51 server).
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/show-warnings.html,
+ * https://dev.mysql.com/doc/refman/5.6/en/show-warnings.html.
+ *
+ * @visibility MySqlMemory
+ */
+final class Diagnostics
+{
+    /**
+     * @var list<array{string, int, string}> The level, error number and message of each condition
+     */
+    public array $conditions = [];
+
+    /**
+     * @var array<int, array<string, string>> The condition information items a SIGNAL statement gave a condition, RETURNED_SQLSTATE among them, by the position of the condition
+     */
+    public array $signalled = [];
+
+    /**
+     * Whether the conditions are those of an earlier statement, forgotten when the current statement raises one.
+     */
+    public bool $stale = false;
+
+    /**
+     * The most warnings and notes the area keeps: max_error_count.
+     */
+    public int $limit = 1024;
+
+    /**
+     * The warnings and notes raised beyond the limit, which the area counts without keeping.
+     */
+    public int $dropped = 0;
+
+    /**
+     * @var array{int, int} The conditions and the errors the statement before the current one raised, which @@warning_count and @@error_count read
+     */
+    public array $previous = [0, 0];
+
+    /**
+     * Records a warning.
+     */
+    public function warning(ErrorCode|int $code, string $message): void
+    {
+        $this->fresh();
+        if (count($this->conditions) < $this->limit) {
+            $this->conditions[] = ['Warning', $code instanceof ErrorCode ? $code->number() : $code, $message];
+        } else {
+            $this->dropped++;
+        }
+    }
+
+    /**
+     * Records a note.
+     */
+    public function note(ErrorCode $code, string $message): void
+    {
+        $this->fresh();
+        if (count($this->conditions) < $this->limit) {
+            $this->conditions[] = ['Note', $code->number(), $message];
+        } else {
+            $this->dropped++;
+        }
+    }
+
+    /**
+     * Records an error that ended the statement.
+     *
+     * @param array<string, string>|null $signalled The condition information items a SIGNAL statement gave the error, or null for an error the server raised
+     */
+    public function error(int $code, string $message, ?array $signalled = null): void
+    {
+        $this->fresh();
+        if ($signalled !== null) {
+            $this->signalled[count($this->conditions)] = $signalled;
+        }
+        $this->conditions[] = ['Error', $code, $message];
+    }
+
+    /**
+     * Records a warning a SIGNAL statement raises with its own condition information items.
+     *
+     * @param array<string, string> $signalled The items, RETURNED_SQLSTATE among them, by name
+     */
+    public function signal(int $code, string $message, array $signalled): void
+    {
+        $this->fresh();
+        if (count($this->conditions) < $this->limit) {
+            $this->signalled[count($this->conditions)] = $signalled;
+            $this->conditions[] = ['Warning', $code, $message];
+        } else {
+            $this->dropped++;
+        }
+    }
+
+    /**
+     * Answers a condition information item of the condition at a position, as GET DIAGNOSTICS reads it.
+     *
+     * A condition the server raises has the SQLSTATE of its error number and 'ISO 9075' for its
+     * origins (verified on a live 8.4 server); one a SIGNAL statement raises has the items it set.
+     * The items no condition sets are empty.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/get-diagnostics.html.
+     */
+    public function item(int $position, string $name): string
+    {
+        if (isset($this->signalled[$position])) {
+            return $this->signalled[$position][$name] ?? '';
+        }
+
+        return match ($name) {
+            'RETURNED_SQLSTATE' => ErrorNumbers::tryFrom($this->conditions[$position][1] ?? 0)?->sqlState() ?? 'HY000',
+            'CLASS_ORIGIN', 'SUBCLASS_ORIGIN' => 'ISO 9075',
+            default => '',
+        };
+    }
+
+    /**
+     * Forgets every condition, as a new statement does.
+     */
+    public function clear(): void
+    {
+        $this->conditions = [];
+        $this->signalled = [];
+        $this->stale = false;
+        $this->dropped = 0;
+    }
+
+    /**
+     * Keeps the conditions of the earlier statement until the current one raises a condition.
+     */
+    public function retain(): void
+    {
+        $this->stale = true;
+    }
+
+    /**
+     * Forgets the conditions of an earlier statement kept by retain().
+     */
+    public function fresh(): void
+    {
+        if ($this->stale) {
+            $this->clear();
+        }
+    }
+
+    /**
+     * Counts the conditions.
+     */
+    public function count(): int
+    {
+        return count($this->conditions);
+    }
+
+    /**
+     * Counts the conditions raised, those beyond the limit included.
+     */
+    public function raised(): int
+    {
+        return count($this->conditions) + $this->dropped;
+    }
+
+    /**
+     * Counts the errors the area keeps.
+     */
+    public function errors(): int
+    {
+        return count(array_filter($this->conditions, static fn (array $condition): bool => $condition[0] === 'Error'));
+    }
+}

@@ -13,6 +13,7 @@ use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A comparison of the SOUNDEX strings of two operands: `x SOUNDS LIKE y`, which the server reads as `SOUNDEX(x) = SOUNDEX(y)`.
@@ -46,15 +47,15 @@ final class SoundsLike implements Scalar
     }
 
     /**
-     * Derives both operands and combines their NULL facts.
+     * Derives both operands; the comparison can be NULL, as SOUNDEX can (verified on a live 8.4 server).
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         $operands = new Operands();
-        $operand = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
-        $pattern = $operands->single($derivation->scalar($this->pattern, $environment), $derivation);
+        $operands->single($derivation->scalar($this->operand, $environment), $derivation);
+        $operands->single($derivation->scalar($this->pattern, $environment), $derivation);
 
-        return $operands->truth($operand->nullability->propagate($pattern->nullability));
+        return $operands->truth(Nullability::Nullable);
     }
 
     /**

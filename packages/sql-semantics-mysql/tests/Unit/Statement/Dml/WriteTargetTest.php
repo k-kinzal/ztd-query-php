@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Dml\Delete;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
+use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -67,5 +69,13 @@ final class WriteTargetTest extends TestCase
         $this->expectExceptionMessage('A table is qualified by at most a database.');
 
         new WriteTarget(new QualifiedName(new Name('t'), new Name('s'), new Name('c')));
+    }
+
+    public function testDeriveRelationNamesACommonTableTarget(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertEquals([new WriteMisuse(WriteRule::CommonTableTarget, new Name('c'))], $semantics->analyze('WITH c AS (SELECT 1 AS k) DELETE FROM c')->facts->diagnostics);
+        self::assertEquals([new WriteMisuse(WriteRule::CommonTableTarget, new Name('z'))], $semantics->analyze('WITH c AS (SELECT 1 AS k) DELETE FROM c AS z')->facts->diagnostics);
     }
 }

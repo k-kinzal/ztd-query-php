@@ -20,6 +20,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
@@ -101,8 +102,8 @@ final class NumberLiteralTest extends TestCase
         self::assertSame('18446744073709551615', $literal->text);
         self::assertSame(NumberForm::Integer, $literal->form);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Integral::class, $fact->type->descriptor);
-        self::assertTrue($fact->type->descriptor->unsigned());
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['BIGINT', 20, true], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->unsigned]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
@@ -116,7 +117,8 @@ final class NumberLiteralTest extends TestCase
         $fact = $operation->facts->scalar($item->expression);
 
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Decimal::class, $fact->type->descriptor);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['DECIMAL', 3, 1], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->decimals]);
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
     }
 

@@ -13,11 +13,11 @@ use SqlSemantics\Platform\MySql\Mode;
 use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\EscapeRule;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Operation;
 use SqlSemantics\Statement\Type\Known;
@@ -56,11 +56,8 @@ final class StringLiteralTest extends TestCase
         self::assertNull($literal->introducer);
         self::assertFalse($literal->national);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertSame(CharacterKind::VarChar, $fact->type->descriptor->kind);
-        self::assertNull($fact->type->descriptor->length);
-        self::assertFalse($fact->type->descriptor->national);
-        self::assertNull($fact->type->descriptor->charset);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARCHAR', 1, 'utf8mb4_0900_ai_ci'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
@@ -77,9 +74,8 @@ final class StringLiteralTest extends TestCase
 
         self::assertSame('utf8mb4', $literal->introducer?->value);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertSame(CharsetForm::Named, $fact->type->descriptor->charset?->form);
-        self::assertSame('utf8mb4', $fact->type->descriptor->charset->charset?->value);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame('utf8mb4_0900_ai_ci', $fact->type->descriptor->collation->name);
         self::assertSame("SELECT _utf8mb4 'x'", $operation->toString());
     }
 
@@ -97,9 +93,8 @@ final class StringLiteralTest extends TestCase
         self::assertTrue($literal->national);
         self::assertSame('xy', $literal->value());
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertTrue($fact->type->descriptor->national);
-        self::assertNull($fact->type->descriptor->charset);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARCHAR', 2, 'utf8mb3_general_ci'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame("SELECT N'x' 'y'", $operation->toString());
     }
 
@@ -183,5 +178,18 @@ final class StringLiteralTest extends TestCase
         $this->expectExceptionMessage('An introducer names a character set of the server in lower case and excludes the national form.');
 
         new StringLiteral(['a'], EscapeRule::Backslash, new Name('utf8mb4'), true);
+    }
+
+    public function testDeriveScalarWarnsAboutAUtf8mb3Introducer(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _utf8mb3 'a', _utf8 'b'");
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(Deprecated::Utf8mb3), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(Deprecated::Utf8Alias)], $operation->facts->warnings);
+    }
+
+    public function testDeriveScalarWarnsThatANationalStringIsUtf8mb3FromMySql80(): void
+    {
+        self::assertSame([Deprecated::National->value], array_map(static fn (Warning $warning): string => $warning->message(), (new Semantics(Dialect::MySql, 'mysql-8.0.44'))->analyze("SELECT N'a'")->facts->warnings));
+        self::assertSame([], (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze("SELECT N'a'")->facts->warnings);
     }
 }

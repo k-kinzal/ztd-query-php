@@ -7,12 +7,15 @@ namespace SqlSemantics\Platform\MySql\Statement\Call;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
+use SqlSemantics\Platform\MySql\Rules\Typing\Moments;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 
 /**
  * A call of EXTRACT(unit FROM date): the part of a date or time a unit names.
@@ -45,7 +48,9 @@ final class Extract implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new ResultTyping())->fact('IY', [(new Arguments())->one($this->source, $derivation, $environment)]);
+        $fact = (new ResultTyping())->fact('IY', [(new Arguments())->one($this->source, $derivation, $environment)]);
+
+        return new ScalarFact(new Known((new Moments(Settings::of($derivation->context)))->extract($this->unit)), $fact->nullability);
     }
 
     /**

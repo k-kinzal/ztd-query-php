@@ -176,4 +176,14 @@ final class OperationTest extends TestCase
 
         $operation->singleNamedInput();
     }
+    public function testToStringPreservesExplicitSourcesWithoutInheritingThemOnReconstruction(): void
+    {
+        $semantics = new Semantics(Dialect::Sqlite);
+        $statement = new Select([new ResultColumn(new IntegerLiteral('7'))]);
+        $sources = new \SqlSemantics\Statement\Source\SourceMap([new \SqlSemantics\Statement\Source\Origin($statement, 2, 8)]);
+        $operation = new Operation($semantics->context([]), $statement, $sources);
+        self::assertSame($sources, $operation->sources);
+        self::assertSame('SELECT 7', $operation->toString());
+        self::assertSame([], (new Operation($operation->context, $statement))->sources->origins);
+    }
 }

@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rendering\LeadingDot;
+use SqlSemantics\Platform\MySql\Rules\Query\From\PartitionSelection;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
@@ -97,7 +98,10 @@ final class TableReference implements NamedRelation
             $derivation->scalar($this->sample->percentage, new Environment($derivation->context, $environment));
         }
 
-        return (new TableShapes())->named($this->name, $derivation, $environment);
+        $fact = (new TableShapes())->named($this->name, $derivation, $environment);
+        (new PartitionSelection())->check($this->partitions, $fact, $derivation);
+
+        return $fact;
     }
 
     /**

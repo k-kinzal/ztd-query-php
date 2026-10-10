@@ -138,6 +138,14 @@ final class PlatformTest extends TestCase
         self::assertSame(Comparison::AsciiInsensitive, $explicit->columnNames);
     }
 
+    public function testContextFoldsTheNamesOfInformationSchema(): void
+    {
+        $platform = new Platform();
+        $context = $platform->context($platform->profile(null, null, ParameterStyle::Native), ['shop'], [], true);
+
+        self::assertSame(['information_schema'], $context->foldedSchemas);
+    }
+
     public function testContextRejectsASearchPathOfSeveralDatabases(): void
     {
         $platform = new Platform();

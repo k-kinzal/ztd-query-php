@@ -14,6 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\JsonTable;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\OdbcJoin;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableList;
+use SqlSemantics\Platform\MySql\Statement\Server\Problem\NonUniqueTable;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\NamedRelation;
@@ -43,6 +44,37 @@ use SqlSemantics\Statement\Relation;
  */
 final class FromScope
 {
+    /**
+     * Reports a relation of a FROM clause whose name another relation of the clause already takes.
+     *
+     * Two relations clash when their aliases, or table names when they have
+     * none, are equal and they read tables of one database; a table name
+     * without a database names a table of the current database, and a
+     * derived table belongs to no database. The first clash is reported
+     * (ER_NONUNIQ_TABLE).
+     *
+     * @param list<VisibleRelation> $visible
+     */
+    public function unique(array $visible, Derivation $derivation): void
+    {
+        $names = $derivation->context->relationNames;
+        $current = $derivation->context->searchPath[0]->value ?? '';
+        $seen = [];
+        foreach ($visible as $relation) {
+            $name = $relation->alias ?? $relation->name?->name;
+            if ($name === null) {
+                continue;
+            }
+            $key = ($relation->name === null ? '' : $names->fold($relation->name->schema->value ?? $current)) . "\0" . $names->fold($name->value);
+            if (isset($seen[$key])) {
+                $derivation->report(new NonUniqueTable($name));
+
+                return;
+            }
+            $seen[$key] = true;
+        }
+    }
+
     /**
      * Derives one term, records its facts and answers what it makes visible.
      *

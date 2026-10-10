@@ -29,6 +29,24 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class ProgramFactsTest extends TestCase
 {
+    public function testRoutineRejectsAnImplicitBinaryReturnCollation(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $refused = $semantics->analyze('CREATE FUNCTION f() RETURNS CHAR(2) BINARY RETURN 1');
+
+        self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", $refused->facts->diagnostics[0]->message());
+        self::assertSame([], $semantics->analyze('CREATE FUNCTION f() RETURNS NCHAR(2) BINARY RETURN 1')->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('CREATE FUNCTION f() RETURNS CHAR(2) ASCII BINARY RETURN 1')->facts->diagnostics);
+    }
+
+    public function testRoutineRejectsNationalBinaryReturnsOnLegacyReleases(): void
+    {
+        $sql = 'CREATE FUNCTION f() RETURNS NCHAR(2) BINARY RETURN 1';
+
+        self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", (new Semantics(Dialect::MySql, '5.6.51'))->analyze($sql)->facts->diagnostics[0]->message());
+        self::assertSame("This version of MySQL doesn't yet support 'return value collation'.", (new Semantics(Dialect::MySql, '5.7.44'))->analyze($sql)->facts->diagnostics[0]->message());
+    }
+
     public function testBodyKeepsExternalCode(): void
     {
         $body = new ExternalBody(new Text('return 1'));

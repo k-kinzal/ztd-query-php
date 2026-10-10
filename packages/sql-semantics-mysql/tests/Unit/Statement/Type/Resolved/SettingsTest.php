@@ -1,0 +1,87 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Statement\Type\Resolved;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+
+#[CoversClass(Settings::class)]
+#[Small]
+final class SettingsTest extends TestCase
+{
+    public function testDefaultsFollowTheRelease(): void
+    {
+        self::assertSame('utf8mb4_0900_ai_ci', Settings::defaults(GrammarRelease::MySql847)->connection->name);
+        self::assertSame('latin1_swedish_ci', Settings::defaults(GrammarRelease::MySql5744)->connection->name);
+        self::assertSame(4, Settings::defaults(GrammarRelease::MySql847)->divPrecisionIncrement);
+    }
+
+    public function testOfReadsTheSessionOfAContext(): void
+    {
+        $settings = new Settings(Collation::known('latin1_bin'), 6);
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertSame($settings, Settings::of($semantics->context([], true, null, $settings)));
+        self::assertSame('utf8mb4_0900_ai_ci', Settings::of($semantics->context([]))->connection->name);
+    }
+
+    public function testLocaleIsTheLocaleOfTheNamesOrEnglish(): void
+    {
+        self::assertSame(['en_US', 'de_DE'], [(new Settings(Collation::known('utf8mb4_0900_ai_ci')))->locale()->name, (new Settings(Collation::known('utf8mb4_0900_ai_ci'), timeNames: Locale::named('de_DE')))->locale()->name]);
+    }
+
+    public function testSchemaFallsBackToTheServerThenTheConnection(): void
+    {
+        $settings = new Settings(Collation::known('latin1_bin'), 4, Collation::known('utf8mb4_bin'), ['App' => Collation::known('ascii_bin')]);
+
+        self::assertSame('ascii_bin', $settings->schema('app')->name);
+        self::assertSame('utf8mb4_bin', $settings->schema('other')->name);
+        self::assertSame('latin1_bin', (new Settings(Collation::known('latin1_bin')))->schema('other')->name);
+    }
+
+    public function testClientIsTheCharacterSetStatementsAreReadIn(): void
+    {
+        self::assertSame('latin1', (new Settings(Collation::known('utf8mb4_0900_ai_ci'), 4, null, [], 1024, null, [], true, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset::known('latin1')))->client?->name);
+        self::assertNull(Settings::defaults(GrammarRelease::MySql847)->client);
+    }
+
+    public function testUserVariablesAreKeyedByLowerCaseName(): void
+    {
+        self::assertSame(['a'], array_keys((new Settings(Collation::known('latin1_bin'), 4, null, [], 1024, ['A' => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]))->userVariables ?? []));
+        self::assertNull((new Settings(Collation::known('latin1_bin')))->userVariables);
+    }
+
+    public function testVariableFindsTheInnermostVariableOfARunningProgram(): void
+    {
+        $outer = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [new \SqlSemantics\Statement\Identifier\Name('x')], [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
+        $inner = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [new \SqlSemantics\Statement\Identifier\Name('y'), new \SqlSemantics\Statement\Identifier\Name('X')], [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer()]);
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'), program: [$outer, $inner]);
+
+        self::assertSame([[$inner, 1], null], [$settings->variable('x'), $settings->variable('z')]);
+    }
+
+    public function testRowFindsTheNewOrOldRowOfARunningTrigger(): void
+    {
+        $new = new \SqlSemantics\Platform\MySql\Statement\Routine\Program\ProgramRow(new \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList([]), [], [], new \SqlSemantics\Statement\Identifier\Name('NEW'));
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'), program: [$new]);
+
+        self::assertSame([$new, null], [$settings->row('new'), $settings->row('OLD')]);
+    }
+
+    public function testFunctionAnswersTheTypeAStoredFunctionReturns(): void
+    {
+        $domain = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::integer();
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'), functions: ['D.F' => $domain]);
+
+        self::assertSame([$domain, null], [$settings->function('d', 'f'), $settings->function('d', 'g')]);
+    }
+}

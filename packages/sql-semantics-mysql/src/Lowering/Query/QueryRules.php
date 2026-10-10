@@ -83,7 +83,7 @@ final class QueryRules
     {
         $expressions = new ExpressionRule($this->lowering);
 
-        return match ($query->name) {
+        $result = match ($query->name) {
             'select' => (new UnionRule($this->lowering))->statement($query),
             'select_stmt' => $expressions->statement($query),
             'subselect' => (new SubqueryRule($this->lowering))->subselect($query),
@@ -94,6 +94,8 @@ final class QueryRules
             'view_select_aux' => (new UnionRule($this->lowering))->viewQuery($query),
             default => throw ImplementationGap::production($this->lowering->form($query)),
         };
+
+        return $this->lowering->origins->record($result, $query);
     }
 
     /**

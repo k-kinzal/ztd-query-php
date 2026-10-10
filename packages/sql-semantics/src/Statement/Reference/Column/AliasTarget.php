@@ -8,7 +8,7 @@ use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * A name that resolves to an output field of the same query by its alias.
+ * A name that resolves to an output field of a query by its alias.
  *
  * The reference stays a reference: the aliased expression is not copied to the use position.
  *
@@ -23,8 +23,9 @@ final class AliasTarget implements Resolution
 
     /**
      * @param Field $field The output field the alias names
+     * @param int $depth The number of enclosing query scopes between the use and the field
      */
-    public function __construct(public readonly Field $field)
+    public function __construct(public readonly Field $field, public readonly int $depth = 0)
     {
     }
 }

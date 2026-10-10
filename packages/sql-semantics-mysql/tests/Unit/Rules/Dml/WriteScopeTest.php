@@ -73,4 +73,12 @@ final class WriteScopeTest extends TestCase
 
         self::assertInstanceOf(DuplicateColumn::class, $operation->facts->diagnostics[0]);
     }
+
+    public function testWrittenNamesTheColumnsAStatementWritesNeverAVariable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $environment = new \SqlSemantics\Resolution\Environment($semantics->context());
+
+        self::assertSame([false, true], [$environment->written, (new WriteScope())->written($environment)->written]);
+    }
 }

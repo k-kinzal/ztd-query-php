@@ -10,6 +10,7 @@ use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\WindowResults;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
@@ -20,6 +21,8 @@ use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * A call of a function that is only a window function: ranking, distribution, and the value functions LEAD, LAG, FIRST_VALUE, LAST_VALUE and NTH_VALUE.
@@ -83,8 +86,11 @@ final class WindowFunction implements Scalar
             $facts[] = (new Arguments())->one($argument, $derivation, $environment);
         }
         (new Windows())->derive($this->over, $derivation, $environment);
+        $fact = (new WindowResults())->result($this, $facts, $derivation);
+        $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));
+        $domain = $arguments === null ? null : (new WindowResults())->resolved($this, $arguments, $derivation);
 
-        return (new WindowResults())->result($this, $facts, $derivation);
+        return $domain === null ? $fact : new ScalarFact(new Known($domain), $fact->nullability);
     }
 
     /**

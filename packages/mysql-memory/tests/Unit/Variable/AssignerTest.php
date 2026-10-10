@@ -1,0 +1,502 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Variable;
+
+use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Instance;
+use MySqlMemory\Result\ResultSet;
+use MySqlMemory\Typing\Domain;
+use MySqlMemory\Variable\Assigner;
+use MySqlMemory\Variable\Scope;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+
+#[CoversClass(Assigner::class)]
+#[Small]
+final class AssignerTest extends TestCase
+{
+    public function testAssignSetsTheSessionValue(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        $definition = $session->variables->catalog->find('div_precision_increment');
+
+        self::assertNotNull($definition);
+        $assigner->assign('div_precision_increment', Scope::Session, 7, Domain::integer());
+        self::assertSame([7, 4], [$session->variables->read('div_precision_increment'), $session->variables->globals->value($definition)]);
+    }
+
+    public function testAssignSetsTheGlobalValue(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $definition = $session->variables->catalog->find('autocommit');
+
+        self::assertNotNull($definition);
+        $assigner->assign('AUTOCOMMIT', Scope::Global, 0, Domain::integer());
+        self::assertSame('OFF', $session->variables->globals->value($definition));
+    }
+
+    public function testAssignRestoresTheGlobalValueForASessionDefault(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        $assigner->assign('div_precision_increment', Scope::Global, 9, Domain::integer());
+        $assigner->assign('div_precision_increment', Scope::Session, 2, Domain::integer());
+        $assigner->assign('div_precision_increment', Scope::Session, null, null);
+
+        self::assertSame(9, $session->variables->read('div_precision_increment'));
+    }
+
+    public function testAssignRestoresTheCompiledDefaultForAGlobalDefault(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $definition = $session->variables->catalog->find('div_precision_increment');
+
+        self::assertNotNull($definition);
+        $assigner->assign('div_precision_increment', Scope::Global, 9, Domain::integer());
+        $assigner->assign('div_precision_increment', Scope::Global, null, null);
+        self::assertSame(4, $session->variables->globals->value($definition));
+    }
+
+    /**
+     * @return iterable<string, array{string, string, list<array{string, int, string}>}>
+     */
+    public static function providerMonitorDefaults(): iterable
+    {
+        foreach (['innodb_monitor_enable', 'innodb_monitor_disable', 'innodb_monitor_reset', 'innodb_monitor_reset_all'] as $name) {
+            yield '5.6:' . $name => ['5.6.51', $name, [['Warning', 1230, 'Default value is not defined for this set option. Please specify correct counter or module name.']]];
+            yield '8.4:' . $name => ['8.4.7', $name, []];
+        }
+    }
+
+    /**
+     * @param list<array{string, int, string}> $warnings
+     */
+    #[DataProvider('providerMonitorDefaults')]
+    public function testAssignRestoresNullMonitorDefaults(string $version, string $name, array $warnings): void
+    {
+        $session = (new Instance($version, [$name => 'all']))->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $definition = $session->variables->catalog->find($name);
+        self::assertNotNull($definition);
+        $assigner->assign($name, Scope::Global, null, null);
+
+        self::assertNull($session->variables->globals->value($definition));
+        self::assertSame($warnings, $session->diagnostics->conditions);
+    }
+
+    public function testAssignRefusesAnUnknownVariable(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1193);
+        $this->expectExceptionMessage("Unknown system variable 'nope'");
+
+        $assigner->assign('nope', Scope::Session, 1, Domain::integer());
+    }
+
+    public function testAssignRefusesAReadOnlyVariable(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1238);
+        $this->expectExceptionMessage("Variable 'version' is a read only variable");
+
+        $assigner->assign('version', Scope::Global, 'x', Domain::string(1, Collation::known('utf8mb4_0900_ai_ci')));
+    }
+
+    public function testAssignRefusesTheSessionValueOfAGlobalVariable(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1229);
+        $this->expectExceptionMessage("Variable 'max_connections' is a GLOBAL variable and should be set with SET GLOBAL");
+
+        $assigner->assign('max_connections', Scope::Session, 10, Domain::integer());
+    }
+
+    public function testAssignRefusesTheGlobalValueOfASessionVariable(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1228);
+        $this->expectExceptionMessage("Variable 'timestamp' is a SESSION variable and can't be used with SET GLOBAL");
+
+        $assigner->assign('timestamp', Scope::Global, 1, Domain::integer());
+    }
+
+    public function testAssignRefusesTheSessionValueOfAVariableOnlyWrittenGlobally(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1621);
+        $this->expectExceptionMessage("SESSION variable 'max_allowed_packet' is read-only. Use SET GLOBAL to assign the value");
+
+        $assigner->assign('max_allowed_packet', Scope::Session, 1024, Domain::integer());
+    }
+
+    public function testCheckDispatchesOnTheShapeOfTheVariable(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $text = Domain::string(8, Collation::known('utf8mb4_0900_ai_ci'));
+        $boolean = $session->variables->catalog->find('autocommit');
+        $integer = $session->variables->catalog->find('div_precision_increment');
+        $other = $session->variables->catalog->find('time_zone');
+
+        self::assertNotNull($boolean);
+        self::assertNotNull($integer);
+        self::assertNotNull($other);
+        self::assertSame(['OFF', 12, '+01:00'], [$assigner->check($boolean, 'off', $text), $assigner->check($integer, 12, Domain::integer()), $assigner->check($other, '+01:00', $text)]);
+    }
+
+    public function testBooleanTakesOnOffTrueFalseOneAndZero(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $definition = $session->variables->catalog->find('autocommit');
+        $text = Domain::string(5, Collation::known('utf8mb4_0900_ai_ci'));
+
+        self::assertNotNull($definition);
+        self::assertSame(
+            ['ON', 'OFF', 'ON', 'OFF', 'ON', 'OFF'],
+            [
+                $assigner->boolean($definition, 1, Domain::integer(), '1'),
+                $assigner->boolean($definition, 0, Domain::integer(), '0'),
+                $assigner->boolean($definition, 'on', $text, 'on'),
+                $assigner->boolean($definition, 'Off', $text, 'Off'),
+                $assigner->boolean($definition, 'true', $text, 'true'),
+                $assigner->boolean($definition, 'FALSE', $text, 'FALSE'),
+            ],
+        );
+    }
+
+    public function testBooleanRefusesAnotherInteger(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $definition = $session->variables->catalog->find('autocommit');
+
+        self::assertNotNull($definition);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1231);
+        $this->expectExceptionMessage("Variable 'autocommit' can't be set to the value of '2'");
+
+        $assigner->boolean($definition, 2, Domain::integer(), '2');
+    }
+
+    public function testBooleanRefusesADecimal(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1232);
+        $this->expectExceptionMessage("Incorrect argument type to variable 'autocommit'");
+
+        $session->query('SET autocommit = 0.5');
+    }
+
+    public function testBooleanRefusesAnotherWord(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1231);
+        $this->expectExceptionMessage("Variable 'autocommit' can't be set to the value of 'yes'");
+
+        $session->query("SET autocommit = 'yes'");
+    }
+
+    public function testIntegerClipsAValueToTheBoundsWithAWarning(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $assigner = new Assigner($session->variables, $context);
+        $definition = $session->variables->catalog->find('div_precision_increment');
+
+        self::assertNotNull($definition);
+        self::assertSame([30, 0], [$assigner->integer($definition, 40, Domain::integer(), '40'), $assigner->integer($definition, -1, Domain::integer(), '-1')]);
+        self::assertSame(
+            [['Warning', 1292, "Truncated incorrect div_precision_increment value: '40'"], ['Warning', 1292, "Truncated incorrect div_precision_increment value: '-1'"]],
+            $session->diagnostics->conditions,
+        );
+    }
+
+    public function testIntegerRefusesNull(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1231);
+        $this->expectExceptionMessage("Variable 'div_precision_increment' can't be set to the value of 'NULL'");
+
+        $session->query('SET div_precision_increment = NULL');
+    }
+
+    public function testIntegerRefusesAString(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1232);
+        $this->expectExceptionMessage("Incorrect argument type to variable 'div_precision_increment'");
+
+        $session->query("SET div_precision_increment = '5'");
+    }
+
+    public function testTextNormalizesTheSqlModeAndTheCollationAndCharacterSetNames(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $modes = $session->variables->catalog->find('sql_mode');
+        $collation = $session->variables->catalog->find('collation_connection');
+        $charset = $session->variables->catalog->find('character_set_client');
+
+        self::assertNotNull($modes);
+        self::assertNotNull($collation);
+        self::assertNotNull($charset);
+        self::assertSame(['ANSI_QUOTES', 'utf8mb4_bin', 'latin1'], [$assigner->text($modes, 'ansi_quotes', 'ansi_quotes'), $assigner->text($collation, 'UTF8MB4_BIN', 'UTF8MB4_BIN'), $assigner->text($charset, 'LATIN1', 'LATIN1')]);
+    }
+
+    public function testTextRefusesAnUnknownSqlMode(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1231);
+        $this->expectExceptionMessage("Variable 'sql_mode' can't be set to the value of 'NOPE'");
+
+        $session->query("SET sql_mode = 'NOPE'");
+    }
+
+    public function testTextRefusesNull(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1231);
+        $this->expectExceptionMessage("Variable 'sql_mode' can't be set to the value of 'NULL'");
+
+        $session->query('SET sql_mode = NULL');
+    }
+
+    public function testTextRefusesAnUnknownCollation(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1273);
+        $this->expectExceptionMessage("Unknown collation: 'nope'");
+
+        $session->query("SET collation_connection = 'nope'");
+    }
+
+    public function testTextRefusesAnUnknownCharacterSet(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1115);
+        $this->expectExceptionMessage("Unknown character set: 'nope'");
+
+        $session->query("SET character_set_client = 'nope'");
+    }
+
+    public function testTextTakesNullForTheVariablesThatAcceptIt(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $results = $session->variables->catalog->find('character_set_results');
+        $client = $session->variables->catalog->find('character_set_client');
+        self::assertNotNull($results);
+        self::assertNotNull($client);
+
+        self::assertNull($assigner->text($results, null, 'NULL'));
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1231);
+        $this->expectExceptionMessage("Variable 'character_set_client' can't be set to the value of 'NULL'");
+
+        $assigner->text($client, null, 'NULL');
+    }
+
+    public function testTextReadsTheModesOf57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query("SET sql_mode = 'ansi'");
+
+        $result = $session->query('SELECT @@sql_mode')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['REAL_AS_FLOAT,PIPES_AS_CONCAT,ANSI_QUOTES,IGNORE_SPACE,ONLY_FULL_GROUP_BY,ANSI']], $result->rows);
+    }
+
+    public function testTextTakesABlockEncryptionModeByNameOrNumber(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET block_encryption_mode = 'AES-256-OFB'");
+        $named = $session->query('SELECT @@block_encryption_mode')[0];
+        $session->query('SET block_encryption_mode = 5');
+        $numbered = $session->query('SELECT @@block_encryption_mode')[0];
+
+        self::assertInstanceOf(ResultSet::class, $named);
+        self::assertInstanceOf(ResultSet::class, $numbered);
+        self::assertSame([[['aes-256-ofb']], [['aes-256-cbc']]], [$named->rows, $numbered->rows]);
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionMessage("Variable 'block_encryption_mode' can't be set to the value of 'aes-128-cfb'");
+
+        $session->query("SET block_encryption_mode = 'aes-128-cfb'");
+    }
+
+    public function testCheckReadsTheVariablesOfTheClock(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET time_zone = 'europe/paris'");
+        $session->query('SET lc_time_names = 5');
+        $session->query('SET timestamp = 1');
+        $session->query('SET timestamp = DEFAULT');
+
+        $reply = $session->query('SELECT @@time_zone, @@lc_time_names')[0];
+        self::assertInstanceOf(ResultSet::class, $reply);
+        self::assertSame([['Europe/Paris', 'fr_FR']], $reply->rows);
+        self::assertGreaterThan(1700000000, $session->variables->instant());
+    }
+    public function testIsolationHoldsTheNameOfALevelInUpperCase(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET transaction_isolation = 'read-committed'");
+        $named = $session->variables->read('transaction_isolation');
+        $session->query('SET transaction_isolation = 0');
+
+        self::assertSame(['READ-COMMITTED', 'READ-UNCOMMITTED'], [$named, $session->variables->read('transaction_isolation')]);
+    }
+
+    public function testIsolationRefusesAValueThatNamesNoLevel(): void
+    {
+        $session = (new Instance())->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1231);
+        $this->expectExceptionMessage("Variable 'transaction_isolation' can't be set to the value of 'REPEATABLE READ'");
+
+        $session->query("SET transaction_isolation = 'REPEATABLE READ'");
+    }
+
+    public function testAliasesSetsBothNamesOfAVariableMySql57Has(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('SET tx_read_only = 1');
+        $result = $session->query('SELECT @@transaction_read_only, @@tx_read_only')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1']], $result->rows);
+    }
+
+    public function testDeprecatedWarnsOfTheModesOfMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $session->query("SET sql_mode = 'STRICT_ALL_TABLES'");
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([
+            ['Warning', '3135', "'NO_ZERO_DATE', 'NO_ZERO_IN_DATE' and 'ERROR_FOR_DIVISION_BY_ZERO' sql modes should be used with strict mode. They will be merged with strict mode in a future release."],
+            ['Warning', '3090', "Changing sql mode 'NO_AUTO_CREATE_USER' is deprecated. It will be removed in a future release."],
+        ], $warnings->rows);
+    }
+
+    public function testRetiredWarnsOfADeprecatedVariableBeforeItsValueIsChecked(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $session->run("SET @@tx_isolation = 'bogus'");
+
+        $warnings = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([
+            ['Warning', '1287', "'@@tx_isolation' is deprecated and will be removed in a future release. Please use '@@transaction_isolation' instead"],
+            ['Error', '1231', "Variable 'tx_isolation' can't be set to the value of 'bogus'"],
+        ], $warnings->rows);
+    }
+
+    public function testIntegerComparesTheBoundsOfAnUnsignedVariableAsUnsigned(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET sql_select_limit = 18446744073709551614');
+        $kept = $session->diagnostics->conditions;
+        $session->query('SET max_join_size = 0');
+        $clipped = $session->diagnostics->conditions;
+        $result = $session->query('SELECT @@sql_select_limit, @@max_join_size')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[], [['Warning', 1292, "Truncated incorrect max_join_size value: '0'"]], [['18446744073709551614', '1']]], [$kept, $clipped, $result->rows]);
+    }
+
+    public function testModesReadsTheBitsOfANumberInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+
+        $session->query('SET sql_mode = 2147483651');
+
+        $mode = $session->query('SELECT @@sql_mode')[0];
+        self::assertInstanceOf(ResultSet::class, $mode);
+        self::assertSame([['REAL_AS_FLOAT,PIPES_AS_CONCAT,PAD_CHAR_TO_FULL_LENGTH']], $mode->rows);
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1232);
+
+        $session->query('SET sql_mode = 1.5');
+    }
+
+    public function testCacheSetsAParameterOfANamedKeyCacheAndWarnsAboutTheSyntaxInMySql84(): void
+    {
+        $session = (new Instance())->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $definition = $session->variables->catalog->find('key_cache_block_size');
+
+        self::assertNotNull($definition);
+        $assigner->cache('kc', $definition, 2048);
+        self::assertSame([2048, 1024], [$session->variables->globals->cached('kc', $definition), $session->variables->globals->value($definition)]);
+        self::assertSame([['Warning', 1287, 'kc.key_cache_block_size syntax is deprecated and will be removed in a future release']], $session->diagnostics->conditions);
+    }
+
+    public function testCacheDoesNotWarnInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $assigner = new Assigner($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $definition = $session->variables->catalog->find('key_cache_block_size');
+
+        self::assertNotNull($definition);
+        $assigner->cache('kc', $definition, 2048);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testAssignTakesAnyUnsignedValueOfAVariableWithoutKnownBoundsInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $session->query('SET SESSION group_concat_max_len = 5');
+
+        self::assertSame([5, []], [$session->variables->read('group_concat_max_len'), $session->diagnostics->conditions]);
+    }
+}

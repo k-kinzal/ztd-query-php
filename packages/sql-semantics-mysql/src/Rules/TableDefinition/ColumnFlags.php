@@ -16,22 +16,14 @@ use SqlSemantics\Statement\Type\Nullability;
 /**
  * Applies the attributes of a column definition in written order, as the server sets its column flags.
  *
- * Rule: MYSQL-COLUMN-FLAGS-001. The type SERIAL sets NOT NULL (it is BIGINT
- * UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE). NOT NULL, AUTO_INCREMENT, SERIAL
- * DEFAULT VALUE and PRIMARY KEY (or KEY) set NOT NULL; NULL clears it and
- * marks the column explicitly nullable; a later attribute overrides an
- * earlier one (`PT_null_column_attr`, `PT_not_null_column_attr`,
- * `PT_auto_increment_column_attr`, `PT_serial_default_value_column_attr`,
- * `PT_primary_key_column_attr` in sql/parse_tree_column_attrs.h; the
- * `attribute` actions of sql_yacc.yy in 5.6 and 5.7). A primary key column is
- * NOT NULL: "If they are not explicitly declared as NOT NULL, MySQL declares
- * them so implicitly (and silently)"; one that is still explicitly NULL is an
- * error from 5.7 on (MYSQL-TABLE-PROBLEMS-001). A TIMESTAMP column without
- * NULL or NOT NULL is NOT NULL when the server variable
- * explicit_defaults_for_timestamp is OFF and nullable when it is ON; the
- * profile does not carry that variable, so its NULL fact is Dependent. The
- * last of VISIBLE and INVISIBLE decides the visibility. Terminates: one pass
- * over the attributes.
+ * Rule: MYSQL-COLUMN-FLAGS-001. SERIAL, NOT NULL, AUTO_INCREMENT, SERIAL
+ * DEFAULT VALUE and PRIMARY KEY set NOT NULL; NULL clears it. Whether NULL
+ * was explicitly written is remembered independently: a primary key with
+ * any NULL attribute is refused from MySQL 5.7 on, even if NOT NULL follows
+ * it (verified on MySQL 8.4.7). A primary key without NULL is implicitly
+ * NOT NULL. TIMESTAMP without NULL or NOT NULL depends on
+ * explicit_defaults_for_timestamp. The last visibility attribute wins.
+ * Terminates: one pass over the attributes.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/create-table.html,
  * https://dev.mysql.com/doc/refman/8.4/en/numeric-type-syntax.html (SERIAL),
  * https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_explicit_defaults_for_timestamp,
@@ -42,7 +34,7 @@ use SqlSemantics\Statement\Type\Nullability;
 final class ColumnFlags
 {
     /**
-     * Answers the flags the attributes leave: whether NOT NULL is set, whether NULL is written explicitly and still in force, and whether the column is a primary key by an attribute.
+     * Answers the flags the attributes leave: whether NOT NULL is set, whether NULL was explicitly written, and whether the column is a primary key by an attribute.
      *
      * @return array{bool, bool, bool}
      */
@@ -79,6 +71,30 @@ final class ColumnFlags
         $type = $specification->dataType();
 
         return !$explicit && $type instanceof Temporal && $type->kind === TemporalKind::Timestamp ? Nullability::Dependent : Nullability::Nullable;
+    }
+
+    /**
+     * Tells whether a column attribute keyword is written.
+     */
+    public function keyword(ColumnSpecification $specification, ColumnKeyword $keyword): bool
+    {
+        foreach ($specification->columnAttributes() as $attribute) {
+            if ($attribute instanceof KeywordAttribute && $attribute->keyword === $keyword) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Tells whether the type of a column is SERIAL, which is a unique key of its own.
+     */
+    public function serial(ColumnSpecification $specification): bool
+    {
+        $type = $specification->dataType();
+
+        return $type instanceof Elementary && $type->kind === ElementaryKind::Serial;
     }
 
     /**

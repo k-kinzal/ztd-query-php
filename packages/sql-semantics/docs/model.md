@@ -11,13 +11,18 @@ An operation is one analyzed root:
 | `$operation->context` | The `AnalysisContext` the facts were derived against: the language profile and the declarations. See [Contexts](contexts.md). |
 | `$operation->statement` | The statement structure: a concrete class of the database package, or a `Script` of several statements. |
 | `$operation->facts` | Every fact derived for the structure against the context. |
+| `$operation->sources` | Recorded byte ranges of particular occurrences in the original parser input. Coverage is partial; `sources->of($node)` returns null when that rule does not record a location. |
 | `toString()` | SQL rendered from the structure and checked against it. See [Rendering](rendering.md). |
 | `profile()` | The language profile: grammar release, lexical settings, parameter style. |
 | `declarations()` | The `Table` declarations the statement provides, for example those of a CREATE TABLE or CREATE VIEW. |
 | `shape()`, `fields()`, `field()`, `lookupField()` | The rows the statement returns, when it returns rows. |
 | `inputRelation()`, `singleNamedInput()` | The input relation of a statement that reads rows. |
 
-The constructor `new Operation($context, $statement)` is the only way to obtain an operation, and `analyze()` uses it too. All facts are established in the constructor; nothing is filled in later.
+The constructor `new Operation($context, $statement)` is the only way to obtain an operation, and `analyze()` uses it too. All facts are established in the constructor; nothing is filled in later. An optional third argument supplies a `SourceMap`. Direct construction defaults to an empty map; source locations are never inherited implicitly from another operation.
+
+Input locations are separate from both the semantic structure and its rendering. An `Origin` holds the exact node occurrence, a byte `offset`, and a byte `length`, measured from the first through the last token. Comments and whitespace between those tokens remain within the range; empty synthetic tokens do not. Offsets refer to the input passed to the parser, including when `analyze()` receives an already parsed tree. Keep that input if you need to show the original text in a diagnostic. The MySQL lowering records statement, query, expression and data type ranges, including partition functions and bounds; rules without tracking may still return no origin.
+
+A `SourceMap` also holds `notices`: spelling-dependent warnings attached to a node or decoded `Name` by identity. Each `SourceNotice` records the warning and the byte boundary after that spelling. For example, MySQL deprecates an unquoted `FULL` identifier but accepts the same decoded name in backticks. These notices enter `facts->warnings`; they do not change lookup or canonical SQL. When notices are present, located warnings are merged by their recorded boundaries; warnings without a location follow in derivation order. A map supplied to direct construction must describe that statement and its original analysis profile. Reusing a structure without the map does not retain input spelling warnings.
 
 ## Statement structure and facts
 
@@ -49,7 +54,13 @@ $sum = $semantics->analyze('SELECT 1 + NULL');
 $sum->facts->scalar($sum->field(0)->expression->right)->type instanceof NullOnly; // => true
 ```
 
-`$facts->scalar($node)` answers the `ScalarFact` of an expression (`type`, `nullability`, and `resolution` for a name use), `$facts->relation($node)` the `RelationFact` of a relation occurrence (`shape`, and `table` for a named relation), and `$facts->query($node)` the `QueryFact` of a query, including subqueries. `$facts->diagnostics` lists the semantic problems, `$facts->declarations` the provided declarations, and `$facts->output` the `QueryFact` of the rows the statement returns, or null. Asking for a node that is not part of the operation throws `InvalidConstruction`; a node of one operation has no facts in another.
+`$facts->scalar($node)` answers the `ScalarFact` of an expression (`type`, `nullability`, and `resolution` for a name use), `$facts->relation($node)` the `RelationFact` of a relation occurrence (`shape`, and `table` for a named relation), and `$facts->query($node)` the `QueryFact` of a query, including subqueries.
+
+`QueryFact::$aggregates` lists the aggregate occurrences assigned to that query block by platforms that resolve ownership (currently MySQL). An occurrence can be written inside a nested query while aggregating the rows of an enclosing query. Window functions are not in this list.
+
+`$facts->diagnostics` lists the semantic problems, `$facts->declarations` the provided declarations, and `$facts->output` the `QueryFact` of the rows the statement returns, or null. Asking for a node that is not part of the operation throws `InvalidConstruction`; a node of one operation has no facts in another.
+
+A scalar fact can also publish a `replacement`: a bound expression evaluated in place of that occurrence. It is a strict descendant in the same operation, with its own facts and original name bindings. Consumers may compile it directly; the original statement and its rendered SQL stay intact. For example, MySQL resolves `(SELECT 1 LIMIT 0)` to its selected expression and returns `1`. A scalar subquery that reads table rows still needs query execution and can return NULL or raise a multiple-row error. Which forms are reduced depends on the dialect and release.
 
 The structure classes and their properties are documented in each database package. The core defines the roles they play:
 
@@ -159,13 +170,13 @@ A name used as a value resolves to one of the following (namespace `SqlSemantics
 
 | Resolution | Meaning |
 |------------|---------|
-| `ResolvedColumn` | Exactly one slot: `relation` (the occurrence it was found in), `slot` (the slot visible at the use position), `depth` (how many enclosing queries lie between the use and the occurrence; 0 for the same query), `declaration()`. |
-| `AliasTarget` | An output field of the same query, named by its alias, for example in ORDER BY: `field`. |
+| `ResolvedColumn` | Exactly one slot: `relation` (the occurrence it was found in), `slot` (the slot visible at the use position), `depth` (how many enclosing queries lie between the use and the occurrence; 0 for the same query), `declaration()`. `resultReference` marks a reference to an enclosing query result rather than its input rows. |
+| `AliasTarget` | An output field named by its alias, for example in ORDER BY: `field`. `depth` counts enclosing query scopes, with zero for the same block. |
 | `MissingColumn` | No visible relation has the name, established by complete declarations. A diagnostic. |
 | `AmbiguousColumn` | Several slots have the name at the same precedence: `candidates`. A diagnostic. |
 | `ConditionalColumn` | The outcome depends on missing declarations: `candidates` (known slots), `relations` (incompletely known occurrences that can own the name), `missing`. |
 
-A known candidate in a farther scope is not chosen while a nearer scope is incompletely known. A database package can add resolutions of its own, for example `SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias`; test with `instanceof` and treat other classes as database-specific.
+A known candidate in a farther scope is not chosen while a nearer scope is incompletely known. A database package can add resolutions of its own, for example `SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias` or `SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding`; test with `instanceof` and treat other classes as database-specific.
 
 ```php
 use SqlSemantics\Facade\Semantics;

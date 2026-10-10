@@ -8,11 +8,17 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\TypeAggregation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregation;
+use SqlSemantics\Platform\MySql\Rules\Typing\BranchInference;
+use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -62,6 +68,7 @@ final class CaseExpression implements Scalar
         $operands = new Operands();
         $compared = $this->operand === null ? [] : [$derivation->scalar($this->operand, $environment)];
         $types = [];
+        $results = [];
         $nullability = $this->else === null ? Nullability::Nullable : Nullability::NotNull;
         foreach ($this->branches as $branch) {
             $condition = $derivation->scalar($branch->condition, $environment);
@@ -72,16 +79,23 @@ final class CaseExpression implements Scalar
             }
             $result = $operands->single($derivation->scalar($branch->result, $environment), $derivation);
             $types[] = $result->type;
+            $results[] = $branch->result;
             $nullability = $nullability->propagate($result->nullability);
         }
         $operands->comparable($compared, $derivation);
         if ($this->else !== null) {
             $result = $operands->single($derivation->scalar($this->else, $environment), $derivation);
             $types[] = $result->type;
+            $results[] = $this->else;
             $nullability = $nullability->propagate($result->nullability);
         }
 
-        return new ScalarFact((new TypeAggregation())->aggregate($types), $nullability);
+        $domains = (new Precision())->all($types);
+        $settings = Settings::of($derivation->context);
+        $inferred = $domains === null ? null : (new BranchInference())->resolve($domains, $results, $derivation);
+        $domain = $inferred === null ? null : (new Aggregation(new Collations($settings->connection)))->of($inferred, 'case', $derivation);
+
+        return new ScalarFact($domain === null ? (new TypeAggregation())->aggregate($types) : new Known($domain), $nullability);
     }
 
     /**

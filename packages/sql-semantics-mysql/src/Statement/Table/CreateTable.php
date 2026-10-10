@@ -12,7 +12,9 @@ use SqlSemantics\Platform\MySql\Rules\TableDefinition\EnclosedQuery;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableDeclaration;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableProblems;
 use SqlSemantics\Platform\MySql\Rules\TableDefinition\TableTargets;
+use SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices;
 use SqlSemantics\Platform\MySql\Statement\Partition\Partitioning;
+use SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\RelationFact;
@@ -127,6 +129,12 @@ final class CreateTable implements Statement, Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
+        foreach ($this->elements as $element) {
+            if ($element instanceof ColumnDefinition) {
+                (new TypeNotices())->type($element->specification->dataType(), $derivation);
+                (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($element->specification->dataType(), $element->name->column->value, $derivation);
+            }
+        }
         $output = $this->query === null ? null : $derivation->query($this->query->query, $derivation->environment());
         $table = (new TableDeclaration())->table($this, $output, $derivation);
         $derivation->declare($table);

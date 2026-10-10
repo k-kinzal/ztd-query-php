@@ -40,4 +40,11 @@ final class LockTablesTest extends TestCase
 
         self::assertInstanceOf(NonUniqueTable::class, $lock->facts->diagnostics[0]);
     }
+
+    public function testDeriveStatementWarnsOfEachLowPriorityWriteIn57(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+
+        self::assertCount(2, $semantics->analyze('LOCK TABLES t LOW_PRIORITY WRITE, t AS u LOW_PRIORITY WRITE, t AS v READ')->facts->warnings);
+    }
 }

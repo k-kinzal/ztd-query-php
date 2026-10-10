@@ -9,12 +9,20 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
+use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A value with an explicit collation: `x COLLATE collation` (`Item_func_set_collation`).
@@ -25,8 +33,12 @@ use SqlSemantics\Statement\Snapshot;
  * Rule: MYSQL-COLLATE-001. Facts: the type and NULL fact of the operand;
  * the collation is part of the comparison semantics the server applies, and
  * the character set of the operand must admit it, which needs the
- * collation catalog of the server and is not checked. Terminates: the
- * operand is a strict part.
+ * collation catalog of the server and is not checked. A collation the
+ * server does not know is reported before the operand is derived, whatever
+ * the operand is, as the server looks the name up while it parses the
+ * statement; its ParseFailure notice follows the warnings of the operand,
+ * as the server parses the operand first (verified on a live 8.4 server).
+ * Terminates: the operand is a strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/charset-collate.html.
  * Status: Implemented.
  *
@@ -53,9 +65,19 @@ final class Collated implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        $known = Collation::named($this->collation->value) !== null;
+        $problem = $known ? null : new UnknownCollation($this->collation->value);
+        if ($problem !== null) {
+            $derivation->report($problem);
+        }
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
+        if ($problem !== null) {
+            $derivation->warn(new ParseFailure($problem));
+        }
+        $operand = (new Precision())->domain($fact->type);
+        $domain = $operand === null || !$known ? null : (new Texts(Settings::of($derivation->context)))->collated($operand, $this->collation->value, $derivation);
 
-        return new ScalarFact($fact->type, $fact->nullability);
+        return new ScalarFact($domain === null ? $fact->type : new Known($domain), Nullability::Nullable);
     }
 
     /**

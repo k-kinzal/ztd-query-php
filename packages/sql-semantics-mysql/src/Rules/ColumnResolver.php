@@ -6,8 +6,9 @@ namespace SqlSemantics\Platform\MySql\Rules;
 
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
-use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
+use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingLookup;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\ResultReferences;
+use SqlSemantics\Platform\MySql\Rules\Query\ProjectionLookup;
 use SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias;
 use SqlSemantics\Resolution\ColumnLookup;
 use SqlSemantics\Resolution\Environment;
@@ -20,7 +21,6 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
 use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Reference\Column\Resolution;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Missing\MissingInput;
@@ -34,9 +34,12 @@ use SqlSemantics\Validation\Equivalence;
 /**
  * Resolves a column name the way MySQL does: the columns of a query first, then its select list aliases.
  *
+ * In a stored program a name first denotes a parameter, a local variable or a column of the row
+ * of a trigger (MYSQL-PROGRAM-VARIABLE-LOOKUP-001).
  * Rule: MYSQL-COLUMN-LOOKUP-001. The lookup starts at the innermost query and
  * moves outwards one query at a time. At one query the relation occurrences
- * the qualifier admits are searched as in CORE-COLUMN-LOOKUP-001: one known
+ * the qualifier admits (MYSQL-RELATION-QUALIFIER-001 when it writes a
+ * database) are searched as in CORE-COLUMN-LOOKUP-001: one known
  * slot resolves, several are ambiguous, and an incompletely known occurrence
  * at that or a nearer query makes the outcome conditional. When no slot has
  * the name, an unqualified name is searched among the select list aliases
@@ -50,10 +53,12 @@ use SqlSemantics\Validation\Equivalence;
  * At a HAVING position (MYSQL-HAVING-SCOPE-001) the GROUP BY columns and
  * the select list are searched first (MYSQL-HAVING-REFERENCE-001); a name
  * written there outside set functions never sees the columns of the FROM
- * clause of its own query (ER_BAD_FIELD_ERROR "in 'having clause'"), and a
- * name of a nested query sees them only when the enclosing block neither
- * groups, aggregates nor is DISTINCT (Item_ref::fix_fields,
- * Item_field::fix_outer_field). A select list star over an incompletely
+ * clause of its own query (ER_BAD_FIELD_ERROR "in 'having clause'"). An
+ * aggregate argument, including a nested query in that argument, prefers
+ * the input columns of an enclosing HAVING block. An ordinary nested use
+ * normally sees those inputs only when the block neither groups, aggregates nor is DISTINCT;
+ * eligible merged inputs and MySQL 9.1 also expose them for subsequent grouping checks.
+ * A select list star over an incompletely
  * known occurrence, and a GROUP BY or select list column of the name that
  * belongs to such an occurrence, leave a name not found there conditional.
  * Terminates: the scopes form a finite chain. Source:
@@ -71,11 +76,17 @@ final class ColumnResolver
      */
     public function find(Environment $environment, Name $column, ?QualifiedName $qualifier = null): Resolution
     {
+        $variable = (new ProgramVariables())->find($environment, $column, $qualifier);
+        if ($variable !== null) {
+            return $variable;
+        }
         $lookup = new ColumnLookup();
         $open = [];
         $depth = 0;
+        $argument = false;
         for ($scope = $environment; $scope !== null; $scope = $scope->outer) {
-            $row = (new HavingScope())->row($scope);
+            $argument = $argument || $scope->aggregateArgument;
+            $row = (new HavingLookup())->row($scope, $column, $qualifier, $depth, $argument);
             if ($row !== null) {
                 $result = (new ResultReferences())->find($row, $scope, $column, $qualifier, $depth);
                 if ($result instanceof ConditionalColumn) {
@@ -85,12 +96,12 @@ final class ColumnResolver
                     return $open === [] ? $result : $lookup->conditional($column, $result instanceof ResolvedColumn ? [$result] : [], $open);
                 }
                 $open = [...$open, ...$this->unlisted($row, $scope, $column)];
-                if ($depth === 0 || $row->grouped) {
+                if ((new HavingLookup())->blocked($row, $scope, $depth)) {
                     $depth++;
                     continue;
                 }
             }
-            $level = new LookupLevel($scope, $column, $qualifier, $depth);
+            $level = (new HavingLookup())->input($scope, $column, $qualifier, $depth);
             $found = $level->found();
             $open = [...$open, ...$level->open()];
             if ($found !== []) {
@@ -100,18 +111,35 @@ final class ColumnResolver
 
                 return count($found) === 1 ? $found[0] : new AmbiguousColumn($column, $found);
             }
-            $unnamed = $qualifier === null ? $this->unnamed($scope->aliases) : [];
-            if ($unnamed !== []) {
-                return $this->undecided($column, [], $open, $unnamed);
-            }
-            $aliases = $qualifier === null ? $scope->aliased($column) : [];
-            if ($aliases !== []) {
-                return $open === [] ? $this->alias($column, $aliases) : $lookup->conditional($column, [], $open);
+            $output = $qualifier === null ? $this->output($scope, $column, $depth, $open) : null;
+            if ($output !== null) {
+                return $output;
             }
             $depth++;
         }
 
-        return $open === [] ? new MissingColumn($column, $qualifier) : $lookup->conditional($column, [], $open);
+        return $open === [] ? (new HavingLookup())->missing($environment, $column, $qualifier) : $lookup->conditional($column, [], $open);
+    }
+
+    /**
+     * Searches result names after input columns, retaining uncertainty from nearer inputs.
+     *
+     * @param list<VisibleRelation> $open The incomplete relation occurrences already searched
+     */
+    public function output(Environment $scope, Name $column, int $depth, array $open): ?Resolution
+    {
+        $lookup = new ColumnLookup();
+        $projected = (new ProjectionLookup())->find($scope, $column, $depth);
+        if ($projected !== null) {
+            return $open === [] ? $projected : $lookup->conditional($column, [], $open);
+        }
+        $unnamed = $this->unnamed($scope->aliases);
+        if ($unnamed !== []) {
+            return $this->undecided($column, [], $open, $unnamed);
+        }
+        $aliases = $scope->aliased($column);
+
+        return $aliases === [] ? null : ($open === [] ? $this->alias($column, $aliases, $depth) : $lookup->conditional($column, [], $open));
     }
 
     /**
@@ -231,16 +259,16 @@ final class ColumnResolver
      *
      * @param non-empty-list<Field> $fields
      */
-    public function alias(Name $column, array $fields): AliasTarget|AmbiguousAlias
+    public function alias(Name $column, array $fields, int $depth = 0): AliasTarget|AmbiguousAlias
     {
         $first = $fields[0];
         $equivalence = new Equivalence();
         foreach ($fields as $field) {
             if ($field->expression === null || $first->expression === null || $equivalence->difference($first->expression, $field->expression) !== null) {
-                return count($fields) === 1 ? new AliasTarget($first) : new AmbiguousAlias($column, $fields);
+                return count($fields) === 1 ? new AliasTarget($first, $depth) : new AmbiguousAlias($column, $fields);
             }
         }
 
-        return new AliasTarget($first);
+        return new AliasTarget($first, $depth);
     }
 }

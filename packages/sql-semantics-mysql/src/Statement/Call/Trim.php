@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Call;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -53,7 +54,9 @@ final class Trim implements Scalar
         }
         $facts[] = (new Arguments())->one($this->subject, $derivation, $environment);
 
-        return (new ResultTyping())->fact('SP', $facts);
+        $arguments = $this->removed === null ? [$this->subject] : [$this->removed, $this->subject];
+
+        return (new Results())->refine('TRIM', $arguments, $facts, (new ResultTyping())->fact('SY', $facts), $derivation);
     }
 
     /**

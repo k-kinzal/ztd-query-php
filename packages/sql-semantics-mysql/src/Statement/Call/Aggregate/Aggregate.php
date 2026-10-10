@@ -9,15 +9,22 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\AggregateResults;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
+use SqlSemantics\Platform\MySql\Rules\Query\Grouping\AggregateOwnership;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregates;
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
+use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * A call of an aggregate function with one argument, COUNT(*), or COUNT(DISTINCT ...) with several arguments.
@@ -89,14 +96,22 @@ final class Aggregate implements SetFunction
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $environment = $this->aggregates() ? (new HavingScope())->leave($environment) : $environment;
+        $environment = $this->aggregates() ? (new HavingScope())->arguments($environment) : $environment;
         $facts = [];
         foreach ($this->arguments as $argument) {
             $facts[] = (new Arguments())->one($argument, $derivation, $environment);
         }
         (new Windows())->derive($this->over, $derivation, $environment);
+        (new AggregateOwnership())->register($this, $derivation, $environment);
 
-        return (new AggregateResults())->aggregate($this, $facts, $derivation);
+        $fact = (new AggregateResults())->aggregate($this, $facts, $derivation);
+        $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));
+        $domain = $arguments === null ? null : (new Aggregates(Settings::of($derivation->context)))->result($this->function, $arguments[0] ?? null, $derivation->context->profile->grammar);
+        if ($domain !== null && $this->over !== null && in_array($this->function, [AggregateFunction::Minimum, AggregateFunction::Maximum, AggregateFunction::JsonArray], true)) {
+            $domain = (new Materialization())->windowed($domain, $derivation->context->profile->grammar);
+        }
+
+        return $domain === null ? $fact : new ScalarFact(new Known($domain), $fact->nullability);
     }
 
     /**

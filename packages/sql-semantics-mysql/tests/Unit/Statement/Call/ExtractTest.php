@@ -10,11 +10,12 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Extract;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -32,7 +33,7 @@ final class ExtractTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new Extract(IntervalUnit::DayHour, new StringLiteral(['x'])), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Integer->descriptor()), $fact->type);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 5)), $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 

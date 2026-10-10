@@ -45,6 +45,9 @@ final class ColumnDefinition implements TableElement
     public function deriveElement(Derivation $derivation, Environment $scope): void
     {
         $this->specification->deriveSpecification($derivation, $scope);
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\TableDefinition\ColumnAttributes())->problems($this) as $problem) {
+            $derivation->report($problem);
+        }
     }
 
     /**

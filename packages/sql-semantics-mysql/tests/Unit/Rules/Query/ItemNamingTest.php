@@ -12,9 +12,12 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\ItemNaming;
 use SqlSemantics\Platform\MySql\Statement\Call\CallArgument;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Arithmetic;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
@@ -23,6 +26,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
@@ -83,6 +87,17 @@ final class ItemNamingTest extends TestCase
         self::assertNull($modern->own(new Arithmetic(ArithmeticOperator::Plus, new NumberLiteral('1'), new NumberLiteral('1'))));
     }
 
+    public function testUnwrappedStripsTheWrappersThatCreateNoItem(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+        $column = new ColumnUse(new Name('a'));
+        $date = new OdbcEscape(new Name('d'), new StringLiteral(['2024-01-31']));
+        $minus = new Unary(UnaryOperator::Minus, $column);
+
+        self::assertSame($column, $naming->unwrapped(new Grouped(new Unary(UnaryOperator::Plus, new OdbcEscape(new Name('fn'), $column)))));
+        self::assertSame([$date, $minus], [$naming->unwrapped($date), $naming->unwrapped(new Grouped($minus))]);
+    }
+
     public function testConstantSpellsTheNameArgumentOfNameConst(): void
     {
         $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
@@ -93,6 +108,13 @@ final class ItemNamingTest extends TestCase
         self::assertSame('A', $naming->constant(new RadixLiteral(Radix::Hexadecimal, '41')));
         self::assertSame('1', $naming->constant(new BooleanLiteral(true)));
         self::assertSame(['x', 'utf8mb3'], $naming->own(new FunctionCall(new Name('name_const'), [new CallArgument(new StringLiteral(['x'])), new CallArgument(new NumberLiteral('1'))])));
+    }
+
+    public function testConstantAnswersAnEmptyNameForAnArgumentThatIsNoLiteral(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertSame(['', ''], [$naming->constant(new \SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral()), $naming->constant(new Unary(UnaryOperator::Minus, new NumberLiteral('1')))]);
     }
 
     public function testConstantRefusesAValueItDoesNotSpell(): void
@@ -133,9 +155,25 @@ final class ItemNamingTest extends TestCase
         self::assertEquals(new Name('é'), $naming->stored('é', 'national'));
         self::assertEquals(new Name(''), $naming->stored('é', 'binary'));
         self::assertEquals(new Name('aé'), $naming->stored('aé', 'binary'));
-        self::assertEquals(new NameConversion('utf16'), $naming->stored('ab', 'utf16'));
-        self::assertEquals(new NameConversion('latin1'), $naming->stored('é', 'latin1'));
+        self::assertEquals(new Name('慢'), $naming->stored('ab', 'utf16'));
+        self::assertEquals(new Name('Ã©'), $naming->stored('é', 'latin1'));
+        self::assertEquals(new NameConversion('cp1251'), $naming->stored('é', 'cp1251'));
         self::assertEquals(new Name('é?'), $naming->stored('é😀', 'utf8mb4'));
+    }
+
+    public function testStoredReadsATextOfTheClientInTheCharacterSetTheSessionNames(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('utf8mb4'));
+
+        self::assertEquals(new Name("UPPER('straße')"), $naming->stored("UPPER('straße')", 'client'));
+        self::assertEquals(new Name("CONCAT('?', 'a')"), $naming->stored("CONCAT('😀', 'a')", 'client'));
+        self::assertEquals(new Name(str_repeat('a', 255)), $naming->stored(str_repeat('a', 300), 'client'));
+        self::assertEquals(new Name("CONCAT('Ã©')"), (new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('latin1')))->stored("CONCAT('é')", 'client'));
+    }
+
+    public function testLatin1ReadsTheBytesAsCp1252WithTheControlsOfItsUnassignedBytes(): void
+    {
+        self::assertSame("aÃ©\u{20AC}\u{81}\u{9D}", (new ItemNaming((new Semantics(Dialect::MySql))->context()->profile))->latin1("aé\x80\x81\x9D"));
     }
 
     public function testNarrowedKeepsWholeCharactersOfUtf8mb3(): void
@@ -151,5 +189,28 @@ final class ItemNamingTest extends TestCase
     {
         self::assertTrue((new ItemNaming((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context()->profile))->legacy());
         self::assertFalse((new ItemNaming((new Semantics(Dialect::MySql, 'mysql-8.0.44'))->context()->profile))->legacy());
+    }
+
+    public function testOwnNamesAnOdbcEscapeAsItsOperandUnlessItIsATemporalLiteral(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertEquals(new Name('a'), $naming->name(new SelectExpression(new OdbcEscape(new Name('fn'), new ColumnUse(new Name('a'))))));
+        self::assertNull($naming->own(new OdbcEscape(new Name('d'), new StringLiteral(['2024-01-31']))));
+    }
+
+    public function testIdentifierReadsANameALatin1ClientWritesInTheSystemCharacterSet(): void
+    {
+        $latin1 = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('latin1'));
+        $utf8 = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile, Charset::known('utf8mb4'));
+
+        self::assertEquals([new Name("\u{C3}\u{A9}"), new Name('x'), new Name('é')], [$latin1->identifier(new Name('é')), $latin1->identifier(new Name('x')), $utf8->identifier(new Name('é'))]);
+    }
+
+    public function testWideReadsWholeUnitsAndWritesAQuestionMarkForAUnitThatIsNoCharacter(): void
+    {
+        $naming = new ItemNaming((new Semantics(Dialect::MySql))->context()->profile);
+
+        self::assertSame(['慢', '', '?', '扡', '😀'], [$naming->wide('abc', 'utf16'), $naming->wide('a', 'utf16'), $naming->wide('abcde', 'utf32'), $naming->wide('ab', 'utf16le'), $naming->wide("\xD8\x3D\xDE\x00", 'utf16')]);
     }
 }

@@ -10,15 +10,17 @@ use SqlSemantics\Platform\MySql\Rules\Query\From\JoinedInput;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Resolution\ProjectionScope;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Missing\MissingInput;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
 use SqlSemantics\Statement\Shape\OutputSlot;
@@ -29,7 +31,7 @@ use SqlSemantics\Statement\Shape\OutputSlot;
  * Rule: MYSQL-STAR-001. An expression item is one field named by
  * MYSQL-SELECT-ITEM-NAME-001. `*` contributes the columns the FROM clause
  * selects (MYSQL-JOIN-COLUMNS-001: merged columns once); `t.*` contributes
- * every column of the tables the qualifier names, merged ones included. A
+ * every column of the tables the qualifier names (MYSQL-RELATION-QUALIFIER-001), merged ones included. A
  * relation whose columns are not all known contributes its known columns
  * and an open star that names the missing inputs; columns whose names
  * depend on missing inputs (MYSQL-DERIVED-SHAPES-001) are known columns.
@@ -52,13 +54,17 @@ final class Projection
     public function items(array $items, Derivation $derivation, Environment $environment, JoinedInput $from): array
     {
         $fields = [];
-        foreach ($items as $item) {
+        $projection = $this->scope($items, $derivation);
+        $environment = new Environment($environment->context, $environment->outer, $environment->relations, $environment->commonTables, $environment->aliases, $environment->written, $environment->aggregation, $environment->aggregatesAllowed, $environment->aggregateArgument, $projection);
+        foreach ($items as $position => $item) {
             if ($item instanceof SelectExpression) {
                 $fact = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
                 $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
-                $name = (new ItemNaming($derivation->context->profile))->name($item);
+                $name = (new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client))->name($item);
                 $slot = $name instanceof Name ? new OutputSlot($name, $fact->type, $fact->nullability, null, $origin) : new OutputSlot(null, $fact->type, $fact->nullability, null, $origin, [$name]);
-                $fields[] = new Field(count($fields), $slot, $item->expression, $fact->resolution);
+                $field = new Field(count($fields), $slot, $item->expression, $fact->resolution);
+                $fields[] = $field;
+                $projection->bind($position, $field);
             } elseif ($item instanceof Star) {
                 $fields = $this->star($fields, $derivation, $environment, $from);
             } else {
@@ -67,6 +73,24 @@ final class Projection
         }
 
         return $fields;
+    }
+
+    /**
+     * Declares every result name before any expression is resolved.
+     *
+     * @param list<SelectExpression|Star|TableWildcard> $items
+     */
+    public function scope(array $items, Derivation $derivation): ProjectionScope
+    {
+        $declared = [];
+        $naming = new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client);
+        foreach ($items as $position => $item) {
+            if ($item instanceof SelectExpression) {
+                $declared[$position] = [$naming->name($item), $item->expression];
+            }
+        }
+
+        return new ProjectionScope($declared);
     }
 
     /**
@@ -93,7 +117,7 @@ final class Projection
         }
         foreach ($from->star as [$index, $position]) {
             $relation = $environment->relations[$index];
-            $fields[] = $this->field(count($fields), $relation, $relation->shape->slots[$position]);
+            $fields[] = $this->field(count($fields), $relation, JoinedInput::member($relation, $position));
         }
 
         return $fields;
@@ -109,13 +133,13 @@ final class Projection
     {
         $found = false;
         foreach ($environment->relations as $relation) {
-            if ($this->admits($derivation, $relation, $table)) {
+            if ((new \SqlSemantics\Platform\MySql\Rules\RelationQualifiers())->admits($environment, $relation, $table)) {
                 $found = true;
                 $fields = $this->expand($fields, $relation, false);
             }
         }
         if (!$found) {
-            $derivation->report(new MissingTable($table));
+            $derivation->report(new UnknownQualifier($table));
         }
 
         return $fields;
@@ -162,7 +186,9 @@ final class Projection
             return false;
         }
 
-        return $qualifier->schema === null || $relation->name->schema === null || $names->equal($relation->name->schema->value, $qualifier->schema->value);
+        $schema = $relation->name->schema->value ?? ($derivation->context->searchPath[0]->value ?? null);
+
+        return $qualifier->schema === null || $schema === null || $names->equal($schema, $qualifier->schema->value);
     }
 
     /**

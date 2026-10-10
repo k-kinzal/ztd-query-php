@@ -6,6 +6,8 @@ namespace SqlSemantics\Platform\MySql\Statement\Variable;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
+use SqlSemantics\Platform\MySql\Rules\Typing\Variables;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -14,6 +16,7 @@ use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Dependent;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
 
 /**
@@ -48,7 +51,15 @@ final class UserVariable implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return new ScalarFact(new Dependent([new SessionState('user variable @' . $this->name->value)]), Nullability::Dependent);
+        $settings = Settings::of($derivation->context);
+        $name = strtolower($this->name->value);
+        $domain = (new Variables($settings, $derivation->context->profile->grammar))->read($name);
+        if ($domain === null) {
+            return new ScalarFact(new Dependent([new SessionState('user variable @' . $this->name->value)]), Nullability::Dependent);
+        }
+        $introduced = $derivation->introducedVariables[$name] ?? null;
+
+        return new ScalarFact($introduced ?? new Known($domain), Nullability::Nullable, new UserVariableBinding($this->name, $introduced !== null || isset($settings->userVariables[$name])));
     }
 
     /**

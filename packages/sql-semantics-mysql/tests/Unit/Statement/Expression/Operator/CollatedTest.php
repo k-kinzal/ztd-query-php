@@ -13,8 +13,10 @@ use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\BinaryCast;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -29,7 +31,15 @@ final class CollatedTest extends TestCase
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
 
-        self::assertEquals(new Known(new Character(CharacterKind::VarChar)), $derivation->scalar(new Collated(new StringLiteral(['a']), new Name('utf8mb4_bin')), $derivation->environment())->type);
+        self::assertEquals(new Known(Domain::string(1, Collation::known('utf8mb4_bin'), Field::VarString, Coercibility::Explicit)), $derivation->scalar(new Collated(new StringLiteral(['a']), new Name('utf8mb4_bin')), $derivation->environment())->type);
+    }
+
+    public function testDeriveScalarReportsAnUnknownCollationBeforeTheOperand(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT ROW(1, 2) COLLATE zz');
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $operation->facts->diagnostics[0]);
+        self::assertCount(2, $operation->facts->diagnostics);
     }
 
     public function testRenderChainsCollationsFromTheLeft(): void
@@ -47,4 +57,13 @@ final class CollatedTest extends TestCase
 
         new Collated(new BinaryCast(new StringLiteral(['a'])), new Name('utf8mb4_bin'));
     }
+
+    public function testDeriveScalarPlacesTheUnknownCollationAfterTheWarningsOfTheOperand(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (BINARY 1) COLLATE zz');
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::class, $operation->facts->warnings[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure::class, $operation->facts->warnings[1]);
+    }
+
 }

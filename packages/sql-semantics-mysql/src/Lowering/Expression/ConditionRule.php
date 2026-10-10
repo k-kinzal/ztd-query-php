@@ -28,7 +28,8 @@ use SqlSemantics\Statement\Scalar;
  * left spine is walked in a loop and the operations are built from the
  * innermost outwards, so the structure associates as the grammar does.
  * `&&` is AND and `||` without PIPES_AS_CONCAT is OR (their nonterminals are
- * synonyms); SOME is the keyword ANY. Constructs: Logical, Not, TruthTest,
+ * synonyms), and the operation keeps which spelling was written; SOME is the
+ * keyword ANY. Constructs: Logical, Not, TruthTest,
  * NullTest, Comparison, QuantifiedComparison. Terminates: the spine loop
  * descends one left child per step; every other child is a strict subtree.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/expressions.html.
@@ -78,9 +79,9 @@ final class ConditionRule
     private const QUANTIFIERS = ['all_or_any: ALL' => Quantifier::All, 'all_or_any: ANY_SYM' => Quantifier::Any];
 
     /**
-     * The synonym keyword productions of the logical operators.
+     * The synonym keyword productions of the logical operators, and whether each is the symbol `||` or `&&`.
      */
-    private const SYNONYMS = ['or: OR_SYM' => true, 'or: OR2_SYM' => true, 'and: AND_SYM' => true, 'and: AND_AND_SYM' => true];
+    private const SYNONYMS = ['or: OR_SYM' => false, 'or: OR2_SYM' => true, 'and: AND_SYM' => false, 'and: AND_AND_SYM' => true];
 
     /**
      * @param Lowering $lowering The lowering this rule belongs to
@@ -99,18 +100,16 @@ final class ConditionRule
         $pending = [];
         $form = $this->lowering->form($expression);
         while (isset(self::LOGICAL[$form->signature])) {
-            if ($form->signature !== 'expr: expr XOR expr') {
-                $this->synonym($form->node(1));
-            }
-            $pending[] = [self::LOGICAL[$form->signature], $form->node(2)];
+            $symbolic = $form->signature !== 'expr: expr XOR expr' && $this->synonym($form->node(1));
+            $pending[] = [self::LOGICAL[$form->signature], $form->node(2), $symbolic];
             $form = $this->lowering->form($form->node(0));
         }
         $result = $this->unit($form);
-        foreach (array_reverse($pending) as [$operator, $right]) {
-            $result = new Logical($operator, $result, $this->expression($right));
+        foreach (array_reverse($pending) as [$operator, $right, $symbolic]) {
+            $result = new Logical($operator, $result, $this->expression($right), $symbolic);
         }
 
-        return $result;
+        return $this->lowering->origins->record($result, $expression);
     }
 
     /**
@@ -217,11 +216,13 @@ final class ConditionRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function synonym(Node $keyword): void
+    public function synonym(Node $keyword): bool
     {
         $form = $this->lowering->form($keyword);
         if (!isset(self::SYNONYMS[$form->signature])) {
             throw ImplementationGap::production($form);
         }
+
+        return self::SYNONYMS[$form->signature];
     }
 }

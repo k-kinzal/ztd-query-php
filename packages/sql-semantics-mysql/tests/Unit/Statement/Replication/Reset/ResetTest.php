@@ -26,6 +26,6 @@ final class ResetTest extends TestCase
 
     public function testRenderWritesTheItemsInOrder(): void
     {
-        self::assertSame("RESET REPLICA FOR CHANNEL 'a\\nb', BINARY LOGS AND GTIDS TO 1.5", (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze("reset slave for channel 'a\\nb', master to 1.5")->toString());
+        self::assertSame("RESET SLAVE FOR CHANNEL 'a\\nb', BINARY LOGS AND GTIDS TO 1.5", (new Semantics(Dialect::MySql, 'mysql-8.2.0'))->analyze("reset slave for channel 'a\\nb', master to 1.5")->toString());
     }
 }

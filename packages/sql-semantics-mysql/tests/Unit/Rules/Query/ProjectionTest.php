@@ -12,6 +12,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\Projection;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\UnknownQualifier;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
@@ -21,7 +22,6 @@ use SqlSemantics\Statement\Declaration\Table;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
-use SqlSemantics\Statement\Reference\Table\MissingTable;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
@@ -32,6 +32,20 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ProjectionTest extends TestCase
 {
+    public function testScopeDeclaresNamesBeforeTheirFieldsExist(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $operation = $semantics->analyze('SELECT 1 AS x, 2 AS y');
+        $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $select);
+        $scope = (new Projection())->scope($select->items, new Derivation($semantics->context()));
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $select->items[1]);
+        self::assertEquals(new Name('y'), $scope->items[1][0]);
+        self::assertSame($select->items[1]->expression, $scope->items[1][1]);
+        self::assertNull($scope->field(1));
+    }
+
     public function testItemsDerivesExpressionsAndStars(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -70,7 +84,16 @@ final class ProjectionTest extends TestCase
         $operation = $semantics->analyze('SELECT u.* FROM t', [$t]);
 
         self::assertCount(1, $operation->facts->diagnostics);
-        self::assertInstanceOf(MissingTable::class, $operation->facts->diagnostics[0]);
+        self::assertInstanceOf(UnknownQualifier::class, $operation->facts->diagnostics[0]);
+    }
+
+    public function testAdmitsComparesTheDatabaseOfAQualifierWithTheCurrentOne(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $context = $semantics->context(null, false, new \SqlSemantics\Contract\SearchPath('fz'));
+
+        self::assertSame("Unknown table 't2.t2'", $semantics->analyze('SELECT t2.t2.* FROM t2', $context)->facts->diagnostics[0]->message());
+        self::assertSame([], $semantics->analyze('SELECT fz.t2.* FROM t2', $context)->facts->diagnostics);
     }
 
     public function testExpandAppendsAnOpenStarForUndeclaredColumns(): void
@@ -111,5 +134,13 @@ final class ProjectionTest extends TestCase
         $missing = new SessionState('x');
 
         self::assertSame([$missing], (new Projection())->missing([new VisibleRelation(new Dual(), new RowShape([], [$missing])), new VisibleRelation(new Dual(), new RowShape([]))]));
+    }
+
+    public function testStarSelectsAnInvisibleColumnAUsingListMerged(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = [...$semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE)')->declarations(), ...$semantics->analyze('CREATE TABLE u (e INT, b INT)')->declarations()];
+
+        self::assertSame(['e', 'a', 'b'], array_map(static fn (Field $field): ?string => $field->name?->value, $semantics->analyze('SELECT * FROM u RIGHT JOIN v USING (e)', $tables)->fields()->items ?? []));
     }
 }

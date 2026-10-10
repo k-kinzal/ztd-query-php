@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Subquery;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Expression\ScalarReduction;
 use SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -20,7 +22,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Rule: MYSQL-SCALAR-SUBQUERY-001. Facts: MYSQL-SUBQUERY-ROWS-001; a
  * subquery of one column has its type, one of several columns is a row,
- * and either is NULL when no row is returned. Terminates: the query is a
+ * and either is NULL when no row is returned. A reducible one-expression query
+ * instead publishes that bound expression as its replacement and retains its
+ * type and NULL attribute (MYSQL-SCALAR-REDUCTION-001). Terminates: the query is a
  * strict part.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/scalar-subqueries.html,
  * https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html.
@@ -47,7 +51,16 @@ final class ScalarSubquery implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        return (new SubqueryRows())->value($derivation->query($this->query, $environment));
+        $query = $derivation->query($this->query, $environment);
+        $value = (new SubqueryRows())->value($query);
+        $legacy = $derivation->context->profile->grammar === GrammarRelease::MySql5651;
+        $reduction = new ScalarReduction();
+        $replacement = $reduction->expression($this->query, $derivation->context->profile->grammar);
+        if ($replacement === null) {
+            return count($query->shape->slots) === 1 && $reduction->preservesNullability($this->query, $legacy) ? new ScalarFact($value->type, $query->shape->slots[0]->nullability) : $value;
+        }
+
+        return count($query->shape->slots) !== 1 ? $value : new ScalarFact($query->shape->slots[0]->type, $query->shape->slots[0]->nullability, replacement: $replacement);
     }
 
     /**

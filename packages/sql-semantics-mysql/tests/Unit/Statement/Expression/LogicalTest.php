@@ -14,8 +14,8 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -32,7 +32,7 @@ final class LogicalTest extends TestCase
         $and = new Logical(LogicalOperator::And, new NumberLiteral('1'), new NumberLiteral('2'));
         $or = new Logical(LogicalOperator::Or, new NumberLiteral('1'), new NullLiteral());
 
-        self::assertEquals(new Known(new Integral(IntegralKind::BigInt)), $derivation->scalar($and, $derivation->environment())->type);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 1)), $derivation->scalar($and, $derivation->environment())->type);
         self::assertSame(Nullability::NotNull, $derivation->scalar($and, $derivation->environment())->nullability);
         self::assertSame(Nullability::Nullable, $derivation->scalar($or, $derivation->environment())->nullability);
     }

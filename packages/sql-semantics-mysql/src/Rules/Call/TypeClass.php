@@ -22,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Spatial;
 use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 use SqlSemantics\Statement\Type\TypeDescriptor;
@@ -76,6 +77,7 @@ enum TypeClass
             $descriptor instanceof Spatial => self::Spatial,
             $descriptor instanceof Elementary => self::elementary($descriptor->kind),
             $descriptor instanceof CastTarget => self::cast($descriptor->kind),
+            $descriptor instanceof Domain => self::of($descriptor->declared()),
             default => self::foreign(),
         };
     }

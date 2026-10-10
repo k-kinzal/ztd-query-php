@@ -9,6 +9,10 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\InsertFacts;
 use SqlSemantics\Platform\MySql\Statement\Dml\Assignment;
+use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
+use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
+use SqlSemantics\Platform\MySql\Statement\Query\ValuesQuery;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Snapshot;
@@ -45,6 +49,22 @@ final class InsertQuery implements Statement
     {
         $this->onDuplicate = Check::listOf($onDuplicate, Assignment::class, 'ON DUPLICATE KEY UPDATE holds assignments.');
         Check::input(!$into->replace || $this->onDuplicate === [], 'REPLACE has no ON DUPLICATE KEY UPDATE.');
+    }
+
+    /**
+     * Answers the VALUES rows the source writes, also in parentheses, after WITH, under ORDER BY, LIMIT or a locking clause, or null when the source is another query.
+     *
+     * The server writes every row of such a source in written order: it
+     * ignores ORDER BY and LIMIT there (verified on a live 8.4 server).
+     */
+    public function values(): ?ValuesQuery
+    {
+        $source = $this->source;
+        while ($source instanceof QueryStatement || $source instanceof ParenthesizedQuery || $source instanceof QueryExpression) {
+            $source = $source instanceof QueryExpression ? $source->body : $source->query;
+        }
+
+        return $source instanceof ValuesQuery ? $source : null;
     }
 
     /**

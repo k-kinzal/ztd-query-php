@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponse;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonResponseKind;
 use SqlSemantics\Platform\MySql\Statement\Call\Json\JsonValueCall;
@@ -19,6 +18,10 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CastKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -36,7 +39,7 @@ final class JsonValueCallTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new JsonValueCall(new StringLiteral(['x']), new StringLiteral(['$.a']), new CastTarget(CastKind::Unsigned), new JsonResponse(JsonResponseKind::Default, new NumberLiteral('1'))), $derivation->environment());
 
-        self::assertEquals(new Known(new CastTarget(CastKind::Unsigned)), $fact->type);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 21, true)), $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 
@@ -47,7 +50,7 @@ final class JsonValueCallTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new JsonValueCall(new StringLiteral(['x']), new StringLiteral(['$.a'])), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Character->descriptor()), $fact->type);
+        self::assertEquals(new Known(Domain::string(512, Collation::known('utf8mb4_0900_bin'), Field::VarString, Coercibility::Coercible)), $fact->type);
     }
 
     public function testRenderWritesTheResponses(): void

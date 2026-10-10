@@ -1,0 +1,65 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Command\Transaction;
+
+use MySqlMemory\Command\Command;
+use MySqlMemory\Error\Family\StatementError;
+use MySqlMemory\Error\Family\TransactionError;
+use MySqlMemory\Evaluation\Compile\Connection;
+use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Result\Completion;
+use MySqlMemory\Result\Reply;
+use MySqlMemory\Session\Session;
+use MySqlMemory\Session\XaState;
+use Override;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\ReleaseSavepoint;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\RollbackToSavepoint;
+use SqlSemantics\Platform\MySql\Statement\Server\Transaction\Savepoint;
+use SqlSemantics\Statement\Operation;
+
+/**
+ * Executes SAVEPOINT, ROLLBACK TO SAVEPOINT and RELEASE SAVEPOINT.
+ *
+ * A savepoint the transaction lacks is ER_SP_DOES_NOT_EXIST, naming it as the statement wrote it.
+ * ROLLBACK TO SAVEPOINT warns with ER_WARNING_NOT_COMPLETE_ROLLBACK when a table that is not
+ * transactional changed after the savepoint (verified on a live 8.4 server).
+ * The statements fail with XAER_RMFAIL while an XA transaction is idle.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/savepoint.html.
+ *
+ * @visibility MySqlMemory
+ */
+final class SavepointCommand implements Command
+{
+    /**
+     * Answers true.
+     */
+    #[Override]
+    public function clearsDiagnostics(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Sets, restores or deletes the savepoint.
+     */
+    #[Override]
+    public function execute(Operation $operation, Session $session, Context $context, Connection $connection): Reply
+    {
+        $statement = $operation->statement;
+        $transaction = $session->transaction;
+        if ($transaction->xa === XaState::Idle) {
+            throw StatementError::XaWrongState->error($transaction->xa->value);
+        }
+        if ($statement instanceof Savepoint) {
+            $transaction->savepoints->set($statement->savepoint->value);
+        } elseif ($statement instanceof RollbackToSavepoint && $transaction->savepoints->rollbackTo($statement->savepoint->value)) {
+            $context->diagnostics->warning(TransactionError::NotCompleteRollback, TransactionError::NotCompleteRollback->message());
+        } elseif ($statement instanceof ReleaseSavepoint) {
+            $transaction->savepoints->release($statement->savepoint->value);
+        }
+
+        return new Completion(0, 0, $context->diagnostics->count());
+    }
+}

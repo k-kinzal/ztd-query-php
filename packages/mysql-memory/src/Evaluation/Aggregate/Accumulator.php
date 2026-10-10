@@ -1,0 +1,298 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Evaluation\Aggregate;
+
+use MySqlMemory\Error\Family\DataError;
+use MySqlMemory\Evaluation\Compile\Family\Jsons;
+use MySqlMemory\Evaluation\Convert;
+use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Function\Json\Constructions;
+use MySqlMemory\Typing\Domain;
+use MySqlMemory\Value\Decimal;
+use MySqlMemory\Value\Encoding;
+use MySqlMemory\Value\Json\JsonEdit;
+use MySqlMemory\Value\Json\JsonKind;
+use MySqlMemory\Value\Json\JsonNode;
+use MySqlMemory\Value\Order;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+
+/**
+ * The fold of one aggregate over the rows of one group.
+ *
+ * NULL arguments are skipped, except by JSON_ARRAYAGG and JSON_OBJECTAGG, which keep a NULL value as the JSON null. COUNT counts the rows whose arguments are all not NULL; SUM, AVG,
+ * MIN and MAX of no value are NULL; the bit aggregates of no value are their identity.
+ * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html.
+ *
+ * @visibility MySqlMemory
+ */
+final class Accumulator
+{
+    private int $count = 0;
+
+    private int|float|string|null $value = null;
+
+    private float $squares = 0.0;
+
+    private float $mean = 0.0;
+
+    /**
+     * @var array<string, true>
+     */
+    private array $seen = [];
+
+    /**
+     * @var list<array{string, list<int|float|string|null>}>
+     */
+    private array $parts = [];
+
+    /**
+     * @var array<int|string, JsonNode> The elements of JSON_ARRAYAGG, or the members of JSON_OBJECTAGG by name
+     */
+    private array $json = [];
+
+    /**
+     * @param Accumulation $accumulation The aggregate folded
+     */
+    public function __construct(public readonly Accumulation $accumulation)
+    {
+    }
+
+    /**
+     * Folds the arguments evaluated over the row of a frame.
+     */
+    public function add(Frame $frame): void
+    {
+        if ($this->accumulation->function === AggregateFunction::JsonArray) {
+            $this->collect($frame);
+
+            return;
+        }
+        $values = [];
+        $key = '';
+        foreach ($this->accumulation->arguments as $argument) {
+            $value = $argument->evaluate($frame);
+            if ($value === null) {
+                return;
+            }
+            $values[] = $value;
+            $key .= Order::key($value, $argument->domain()) . "\0";
+        }
+        if ($this->accumulation->distinct) {
+            if (isset($this->seen[$key])) {
+                return;
+            }
+            $this->seen[$key] = true;
+        }
+        if ($this->accumulation->function === null) {
+            $this->concatenate($frame, $values);
+
+            return;
+        }
+        $this->count++;
+        if ($values !== []) {
+            $this->fold($frame, $values[0]);
+        }
+    }
+
+    /**
+     * Folds a row into JSON_ARRAYAGG or JSON_OBJECTAGG: a NULL value is the JSON null; a NULL name is refused, and a later member of a name replaces an earlier one.
+     *
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html#function_json-arrayagg.
+     *
+     * @throws \MySqlMemory\Error\SqlError When a name is NULL or a binary string
+     */
+    public function collect(Frame $frame): void
+    {
+        $arguments = $this->accumulation->arguments;
+        $this->count++;
+        if (!$this->accumulation->object) {
+            $this->json[] = Jsons::argument($arguments[0], $frame);
+
+            return;
+        }
+        $name = $arguments[0]->evaluate($frame);
+        if ($name === null) {
+            throw DataError::JsonDocumentNullKey->error();
+        }
+        $this->json[Constructions::name($name, $arguments[0])] = Jsons::argument($arguments[1], $frame);
+    }
+
+    /**
+     * Folds one argument value into the function's state.
+     */
+    public function fold(Frame $frame, int|float|string $value): void
+    {
+        $argument = $this->accumulation->arguments[0];
+        $domain = $argument->domain();
+        $context = $frame->context;
+        switch ($this->accumulation->function) {
+            case AggregateFunction::Minimum:
+            case AggregateFunction::Maximum:
+                $this->extreme($value, $domain);
+                break;
+            case AggregateFunction::Sum:
+            case AggregateFunction::Average:
+                $this->total($frame, $value);
+                break;
+            case AggregateFunction::BitAnd:
+            case AggregateFunction::BitOr:
+            case AggregateFunction::BitXor:
+                $this->bits((int) Convert::toInteger($value, $domain, $context, true));
+                break;
+            case AggregateFunction::StandardDeviation:
+            case AggregateFunction::Variance:
+            case AggregateFunction::SampleStandardDeviation:
+            case AggregateFunction::SampleVariance:
+                $this->moment((float) Convert::toDouble($value, $domain, $context));
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Folds one value into a MIN or MAX: the first value, then any value ordered before (MIN) or after (MAX) the kept one.
+     */
+    public function extreme(int|float|string $value, Domain $domain): void
+    {
+        $order = $this->value === null ? 0 : Order::compare($value, $this->value, $domain);
+        if ($this->count === 1 || ($this->accumulation->function === AggregateFunction::Minimum ? $order < 0 : $order > 0)) {
+            $this->value = $value;
+        }
+    }
+
+    /**
+     * Folds one value into a SUM or AVG, in double arithmetic for a double result or a double argument of AVG, else in exact decimal arithmetic.
+     */
+    public function total(Frame $frame, int|float|string $value): void
+    {
+        $domain = $this->accumulation->arguments[0]->domain();
+        $this->value = $this->accumulation->domain->kind === Kind::Double || ($this->accumulation->function === AggregateFunction::Average && $domain->kind === Kind::Double)
+            ? (float) $this->value + (float) Convert::toDouble($value, $domain, $frame->context)
+            : Decimal::add((string) ($this->value ?? '0'), (string) Convert::toDecimal($value, $domain, $frame->context));
+    }
+
+    /**
+     * Folds one integer operand into BIT_AND, BIT_OR or BIT_XOR; BIT_AND starts from all bits set.
+     */
+    public function bits(int $operand): void
+    {
+        if ($this->accumulation->function === AggregateFunction::BitAnd) {
+            $this->value = ($this->count === 1 ? -1 : (int) $this->value) & $operand;
+
+            return;
+        }
+        $this->value = $this->accumulation->function === AggregateFunction::BitOr ? (int) $this->value | $operand : (int) $this->value ^ $operand;
+    }
+
+    /**
+     * Folds one number into the running mean and sum of squared deviations (Welford's method) of STD, VARIANCE and their sample forms.
+     */
+    public function moment(float $number): void
+    {
+        $delta = $number - $this->mean;
+        $this->mean += $delta / $this->count;
+        $this->squares += $delta * ($number - $this->mean);
+    }
+
+    /**
+     * Folds the values of a GROUP_CONCAT call.
+     *
+     * @param list<int|float|string> $values
+     */
+    public function concatenate(Frame $frame, array $values): void
+    {
+        $text = '';
+        foreach ($this->accumulation->arguments as $index => $argument) {
+            $text .= Encoding::convert((string) Convert::toText($values[$index], $argument->domain()), $argument->domain()->kind === Kind::String ? $argument->domain()->collation->charset : Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset);
+        }
+        $keys = [];
+        foreach ($this->accumulation->order as [$key]) {
+            $keys[] = $key->evaluate($frame);
+        }
+        $this->parts[] = [$text, $keys];
+        $this->count++;
+    }
+
+    /**
+     * Answers the result of the fold.
+     */
+    public function result(Frame $frame): int|float|string|null
+    {
+        return match ($this->accumulation->function) {
+            AggregateFunction::Count => $this->count,
+            AggregateFunction::BitAnd => $this->count === 0 ? -1 : $this->value,
+            AggregateFunction::BitOr, AggregateFunction::BitXor => $this->count === 0 ? 0 : $this->value,
+            AggregateFunction::Average => $this->average(),
+            AggregateFunction::Sum => $this->count === 0 ? null : ($this->accumulation->domain->kind === Kind::Decimal ? Decimal::round((string) $this->value, $this->accumulation->domain->decimals) : $this->value),
+            AggregateFunction::StandardDeviation, AggregateFunction::SampleStandardDeviation => $this->spread(true),
+            AggregateFunction::Variance, AggregateFunction::SampleVariance => $this->spread(false),
+            null => $this->concatenation($frame),
+            AggregateFunction::JsonArray => $this->count === 0 ? null : ($this->accumulation->object ? JsonEdit::object($this->json) : new JsonNode(JsonKind::Array, array_values($this->json)))->store(),
+            AggregateFunction::Minimum, AggregateFunction::Maximum, AggregateFunction::Collect => $this->count === 0 ? null : $this->value,
+        };
+    }
+
+    /**
+     * Answers the average of the folded values, or null for none.
+     */
+    public function average(): float|string|null
+    {
+        if ($this->count === 0) {
+            return null;
+        }
+        if ($this->accumulation->domain->kind === Kind::Double) {
+            return (float) $this->value / $this->count;
+        }
+
+        return Decimal::divide((string) $this->value, (string) $this->count, $this->accumulation->domain->decimals);
+    }
+
+    /**
+     * Answers the variance or standard deviation of the folded values, population or sample.
+     */
+    public function spread(bool $root): ?float
+    {
+        $sample = $this->accumulation->function === AggregateFunction::SampleStandardDeviation || $this->accumulation->function === AggregateFunction::SampleVariance;
+        if ($this->count === 0 || ($sample && $this->count === 1)) {
+            return null;
+        }
+        $variance = $this->squares / ($sample ? $this->count - 1 : $this->count);
+
+        return $root ? sqrt($variance) : $variance;
+    }
+
+    /**
+     * Answers the GROUP_CONCAT result: the values in order, joined, cut at the length limit.
+     */
+    public function concatenation(Frame $frame): ?string
+    {
+        if ($this->parts === []) {
+            return null;
+        }
+        $order = $this->accumulation->order;
+        if ($order !== []) {
+            usort($this->parts, static function (array $left, array $right) use ($order): int {
+                foreach ($order as $index => [$key, $descending]) {
+                    $compared = Order::compare($left[1][$index], $right[1][$index], $key->domain());
+                    if ($compared !== 0) {
+                        return $descending ? -$compared : $compared;
+                    }
+                }
+
+                return 0;
+            });
+        }
+        $text = implode(Encoding::convert($this->accumulation->separator, Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset), array_column($this->parts, 0));
+        if (strlen($text) > $this->accumulation->limit) {
+            $text = mb_strcut($text, 0, $this->accumulation->limit, Encoding::name($this->accumulation->domain->collation->charset) ?? '8bit');
+            $frame->context->warning(DataError::CutByGroupConcat, count($this->parts));
+        }
+
+        return $text;
+    }
+}

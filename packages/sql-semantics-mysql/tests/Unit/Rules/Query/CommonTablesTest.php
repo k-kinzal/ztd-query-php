@@ -13,6 +13,8 @@ use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Rules\Query\CommonTables;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\RecursiveReference;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
@@ -21,6 +23,11 @@ use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field as DomainField;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Identifier\Name;
@@ -31,6 +38,7 @@ use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Statement\Type\NullOnly;
 
 #[CoversClass(CommonTables::class)]
 #[Medium]
@@ -39,11 +47,36 @@ final class CommonTablesTest extends TestCase
     public function testBindSeesEarlierTablesOnly(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('WITH a AS (SELECT 1 AS x), b AS (SELECT x FROM a) SELECT x FROM b', []);
-        $forward = (new Semantics(Dialect::MySql))->analyze('WITH b AS (SELECT x FROM a), a AS (SELECT 1 AS x) SELECT 1', []);
+        $forward = (new Semantics(Dialect::MySql))->analyze('WITH b AS (SELECT x FROM a), a AS (SELECT 1 AS x) SELECT * FROM b', []);
 
         self::assertSame([], $operation->facts->diagnostics);
         self::assertInstanceOf(Known::class, $operation->field('x')->type);
         self::assertInstanceOf(MissingTable::class, $forward->facts->diagnostics[0]);
+    }
+
+    public function testBindReportsTheProblemsOfAnExpressionOnlyWhereItIsUsed(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $unused = $semantics->analyze('WITH b AS (SELECT x FROM a), c (p, q) AS (SELECT 1) SELECT 1', []);
+        $used = $semantics->analyze('WITH c (p, q) AS (SELECT 1) SELECT * FROM c', []);
+        $once = $semantics->analyze('WITH b AS (SELECT x FROM a) SELECT * FROM b', []);
+        $twice = $semantics->analyze('WITH b AS (SELECT x FROM a) SELECT * FROM b, b AS d', []);
+
+        self::assertSame([], $unused->facts->diagnostics);
+        self::assertCount(1, $used->facts->diagnostics);
+        self::assertCount(count($once->facts->diagnostics), $twice->facts->diagnostics);
+    }
+
+    public function testBindDetectsExplicitTableRecursionOnlyWhenUsed(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $used = $semantics->analyze('WITH RECURSIVE c AS (TABLE c) DELETE FROM c', []);
+        $unused = $semantics->analyze('WITH RECURSIVE c AS (TABLE c) SELECT 1', []);
+        $unusedSelect = $semantics->analyze('WITH RECURSIVE c AS (SELECT * FROM c) SELECT 1', []);
+
+        self::assertEquals(new Misuse(MisuseRule::RecursiveWithoutUnion, new Name('c')), $used->facts->diagnostics[0]);
+        self::assertSame([], $unused->facts->diagnostics);
+        self::assertSame([], $unusedSelect->facts->diagnostics);
     }
 
     public function testExtendedAddsTablesWithoutAQueryLevel(): void
@@ -98,6 +131,28 @@ final class CommonTablesTest extends TestCase
         self::assertSame('x', $shape->slots[0]->name?->value);
     }
 
+    public function testRecursiveKeepsTheTypeWithoutADerivation(): void
+    {
+        $type = new NullOnly();
+
+        self::assertSame($type, (new CommonTables())->recursive($type, null));
+    }
+
+    public function testRecursiveKeepsATypeWithoutAResolvedDomain(): void
+    {
+        $type = new Known(new Integral(IntegralKind::BigInt));
+
+        self::assertSame($type, (new CommonTables())->recursive($type, new Derivation((new Semantics(Dialect::MySql))->context())));
+    }
+
+    public function testRecursiveSettlesTheTypeAsATemporaryTableColumn(): void
+    {
+        $settled = (new CommonTables())->recursive(new NullOnly(), new Derivation((new Semantics(Dialect::MySql))->context()));
+
+        self::assertInstanceOf(Known::class, $settled);
+        self::assertEquals(new Domain(Kind::String, DomainField::VarString, 0, 0, false, Collation::binary(), [], Coercibility::Ignorable), $settled->descriptor);
+    }
+
     public function testNullableMakesEveryColumnNullable(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -150,5 +205,17 @@ final class CommonTablesTest extends TestCase
         $operation = (new Semantics(Dialect::MySql))->analyze("WITH RECURSIVE c AS (SELECT 'é' UNION ALL SELECT 1 FROM c) SELECT * FROM c");
 
         self::assertEquals([new SessionState('character_set_client')], $operation->field(0)->slot->unnamed);
+    }
+
+    public function testBindNamesTheProblemsOfTheExpressions(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $twice = $semantics->analyze('WITH c AS (SELECT 1), C AS (SELECT 2) SELECT 1')->facts->diagnostics;
+        $alone = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c) SELECT 1 FROM c')->facts->diagnostics;
+        $late = $semantics->analyze('WITH RECURSIVE c AS (SELECT 1 FROM c UNION SELECT 1) SELECT 1 FROM c')->facts->diagnostics;
+
+        self::assertEquals([new Misuse(MisuseRule::DuplicateCommonTable, new Name('C'))], $twice);
+        self::assertEquals([new Misuse(MisuseRule::RecursiveWithoutUnion, new Name('c'))], $alone);
+        self::assertEquals([new Misuse(MisuseRule::RecursiveWithoutAnchor, new Name('c'))], $late);
     }
 }

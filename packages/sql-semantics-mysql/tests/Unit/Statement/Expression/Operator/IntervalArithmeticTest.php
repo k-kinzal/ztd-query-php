@@ -18,8 +18,9 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalArithmetic
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -35,7 +36,7 @@ final class IntervalArithmeticTest extends TestCase
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
         $fact = $derivation->scalar(new IntervalArithmetic(new TemporalLiteral(TemporalForm::Date, '2024-01-31'), new Interval(new NumberLiteral('1'), IntervalUnit::Month), true), $derivation->environment());
 
-        self::assertEquals([new Known(new Temporal(TemporalKind::Date)), Nullability::Nullable], [$fact->type, $fact->nullability]);
+        self::assertEquals([new Known(new Domain(Kind::Date, Field::Date, 10)), Nullability::Nullable], [$fact->type, $fact->nullability]);
     }
 
     public function testRenderWritesTheSignBeforeTheInterval(): void

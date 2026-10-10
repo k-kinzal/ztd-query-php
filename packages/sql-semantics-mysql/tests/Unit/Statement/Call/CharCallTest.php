@@ -31,8 +31,9 @@ final class CharCallTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new CharCall([new NumberLiteral('1')]), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Binary->descriptor()), $fact->type);
-        self::assertSame(Nullability::NotNull, $fact->nullability);
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame(TypeClass::Binary, TypeClass::of($fact->type->descriptor));
+        self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 
     public function testRenderWritesTheCharacterSet(): void
@@ -43,5 +44,13 @@ final class CharCallTest extends TestCase
         (new CharCall([new NumberLiteral('1'), new NumberLiteral('1')], new CharsetName(new Name('utf8mb4'))))->render($out);
 
         self::assertSame('CHAR(1, 1 USING utf8mb4)', (new Lexical())->join($out->pieces()));
+    }
+
+    public function testDeriveScalarIsNotNullOfNotNullCodesInMySql56(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.6.51', null, ParameterStyle::Native), null, [], true));
+
+        self::assertSame(Nullability::NotNull, $derivation->scalar(new CharCall([new NumberLiteral('65')]), $derivation->environment())->nullability);
     }
 }

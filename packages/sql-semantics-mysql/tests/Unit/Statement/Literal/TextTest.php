@@ -24,6 +24,16 @@ use SqlSemantics\Rendering\Output;
 #[Small]
 final class TextTest extends TestCase
 {
+    public function testBytesDecodesEachSpellingWithoutLosingLeadingZeroes(): void
+    {
+        self::assertSame("a\x00b", (new Text("a\x00b"))->bytes());
+        self::assertSame("\x00\x0f", (new Text('000f', EscapeRule::Backslash, Radix::Hexadecimal))->bytes());
+        self::assertSame("\x0f", (new Text('f', EscapeRule::Backslash, Radix::Hexadecimal))->bytes());
+        self::assertSame("\x01\x01", (new Text('100000001', EscapeRule::Backslash, Radix::Bit))->bytes());
+        self::assertSame('', (new Text('', EscapeRule::Backslash, Radix::Bit))->bytes());
+        self::assertSame('', (new Text('', EscapeRule::Backslash, Radix::Hexadecimal))->bytes());
+    }
+
     public function testRenderWritesAQuotedStringUnderTheBackslashRule(): void
     {
         $out = new Output(new Codec(GrammarRelease::MySql847));

@@ -52,4 +52,16 @@ final class Text implements Node
             Radix::Bit => (new RadixSpelling())->bits($this->value),
         });
     }
+
+    /**
+     * Answers the bytes the text denotes, decoding hexadecimal and bit digits when present.
+     */
+    public function bytes(): string
+    {
+        return match ($this->radix) {
+            null => $this->value,
+            Radix::Hexadecimal => (string) hex2bin(strlen($this->value) % 2 === 1 ? '0' . $this->value : $this->value),
+            Radix::Bit => implode('', array_map(static fn (string $octet): string => chr((int) bindec($octet)), $this->value === '' ? [] : str_split(str_pad($this->value, (int) ceil(strlen($this->value) / 8) * 8, '0', STR_PAD_LEFT), 8))),
+        };
+    }
 }

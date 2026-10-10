@@ -98,7 +98,7 @@ final class SchemaMember implements Statement
             $path[] = $this->schema;
         }
 
-        return new AnalysisContext($outer->profile, $path, $tables, $outer->complete, $outer->relationNames, $outer->columnNames, $outer->declarationSchema);
+        return new AnalysisContext($outer->profile, $path, $tables, $outer->complete, $outer->relationNames, $outer->columnNames, $outer->declarationSchema, $outer->session);
     }
 
     /**

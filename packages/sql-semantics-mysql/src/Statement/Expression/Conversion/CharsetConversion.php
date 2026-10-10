@@ -7,19 +7,24 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Conversion;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
+use SqlSemantics\Platform\MySql\Rules\Typing\Texts;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
 use SqlSemantics\Statement\Type\Known;
+use SqlSemantics\Statement\Type\Nullability;
 
 /**
  * A conversion of a string to a character set: `CONVERT(expr USING charset)` (`Item_func_conv_charset`).
@@ -56,9 +61,12 @@ final class CharsetConversion implements Scalar
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
         $name = $this->charset->name;
         Check::invariant($name !== null, 'CONVERT … USING names a character set.');
+        Deprecation::charset($name->value, $derivation);
         $type = strtolower($name->value) === 'binary' ? new Binary(BinaryKind::VarBinary) : new Character(CharacterKind::VarChar, null, false, new CharsetAttribute(CharsetForm::Named, $name));
+        $operand = (new Precision())->domain($fact->type);
+        $domain = $operand === null ? null : (new Texts(Settings::of($derivation->context)))->converted($operand, $name->value, $derivation);
 
-        return new ScalarFact(new Known($type), $fact->nullability);
+        return new ScalarFact(new Known($domain ?? $type), Nullability::Nullable);
     }
 
     /**

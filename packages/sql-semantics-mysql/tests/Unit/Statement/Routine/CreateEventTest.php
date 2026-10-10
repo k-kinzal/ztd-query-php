@@ -163,4 +163,11 @@ final class CreateEventTest extends TestCase
 
         new CreateEvent(new QualifiedName(new Name('e')), new OnceSchedule(new NumberLiteral('1')), new Block([]), null, null, new Text('41', EscapeRule::Backslash, Radix::Hexadecimal));
     }
+
+    public function testDeriveStatementWarnsOfDisableOnSlave(): void
+    {
+        $facts = (new Semantics(Dialect::MySql))->analyze("CREATE EVENT e ON SCHEDULE AT '2030-01-01 00:00:00' DISABLE ON SLAVE DO SELECT 1")->facts;
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings));
+    }
 }

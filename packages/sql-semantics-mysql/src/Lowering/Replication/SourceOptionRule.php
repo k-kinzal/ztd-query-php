@@ -214,8 +214,9 @@ final class SourceOptionRule
             throw ImplementationGap::production($form);
         }
         $kind = self::OPTIONS[$form->signature] ?? $this->keyword($form->node(0));
+        $synonym = $terminology === Terminology::Current && !isset(self::OPTIONS[$form->signature]) && str_contains($this->lowering->form($form->node(0))->signature, 'MASTER_');
 
-        return new SourceOption($terminology, $kind, (new SourceValueRule($this->lowering))->value($form));
+        return new SourceOption($terminology, $kind, (new SourceValueRule($this->lowering))->value($form), $synonym);
     }
 
     /**

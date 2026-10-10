@@ -11,6 +11,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\NameAssignment;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Known;
@@ -33,9 +34,21 @@ final class NameAssignmentTest extends TestCase
 
     public function testDeriveItemReportsARowAsTheValue(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SET SESSION x = (1, 2)');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SET SESSION sort_buffer_size = (1, 2)');
 
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+    }
+
+    public function testDeriveItemResolvesAnUnknownTargetBeforeItsValue(): void
+    {
+        $diagnostics = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SET unknown_target = @@unknown_value')->facts->diagnostics;
+
+        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[0]);
+        self::assertSame('unknown_target', $diagnostics[0]->name);
+        self::assertTrue($diagnostics[0]->assigned);
+        self::assertFalse($diagnostics[0]->structured);
+        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[1]);
+        self::assertFalse($diagnostics[1]->assigned);
     }
 
     public function testRenderWritesTheScopeAndTheQualifier(): void
@@ -47,5 +60,18 @@ final class NameAssignmentTest extends TestCase
     {
         $this->expectExceptionMessage('A bare name value is known to be text exactly when a scope keyword names a system variable.');
         new NameAssignment(new Name('x'), new BareName(new Name('y')));
+    }
+
+    public function testDeriveItemReportsAQualifiedNameThatIsNoKeyCacheVariable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $unknown = $semantics->analyze('SET SESSION a.b = 1')->facts->diagnostics;
+
+        self::assertCount(1, $unknown);
+        self::assertInstanceOf(UnknownSystemVariable::class, $unknown[0]);
+        self::assertSame('a.b', $unknown[0]->name);
+        self::assertTrue($unknown[0]->assigned);
+        self::assertTrue($unknown[0]->structured);
+        self::assertSame([], $semantics->analyze('SET GLOBAL hot.key_buffer_size = 0')->facts->diagnostics);
     }
 }

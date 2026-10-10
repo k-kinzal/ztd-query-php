@@ -114,15 +114,15 @@ final class VariableRule
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function system(Node $name, ?VariableScope $scope): SystemVariable
+    public function system(Node $name, ?VariableScope $scope, bool $assigned = false): SystemVariable
     {
         $form = $this->lowering->productions->form($name);
         $names = $this->lowering->names;
 
         return $this->lowering->leaves->record(match ($form->signature) {
-            'rvalue_system_variable: ident_or_text', 'lvalue_variable: lvalue_ident' => new SystemVariable($names->identifier($form->node(0)), $scope),
-            'rvalue_system_variable: ident_or_text . ident', 'lvalue_variable: lvalue_ident . ident' => new SystemVariable($names->identifier($form->node(2)), $scope, $names->identifier($form->node(0))),
-            'lvalue_variable: DEFAULT_SYM . ident' => new SystemVariable($names->identifier($form->node(2)), $scope, $this->lowering->leaves->record(new Name('default'))),
+            'rvalue_system_variable: ident_or_text', 'lvalue_variable: lvalue_ident' => new SystemVariable($names->identifier($form->node(0)), $scope, null, $assigned),
+            'rvalue_system_variable: ident_or_text . ident', 'lvalue_variable: lvalue_ident . ident' => new SystemVariable($names->identifier($form->node(2)), $scope, $names->identifier($form->node(0)), $assigned),
+            'lvalue_variable: DEFAULT_SYM . ident' => new SystemVariable($names->identifier($form->node(2)), $scope, $this->lowering->leaves->record(new Name('default')), $assigned),
             default => throw ImplementationGap::production($form),
         });
     }

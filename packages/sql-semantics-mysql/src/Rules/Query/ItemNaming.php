@@ -10,6 +10,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
 use SqlSemantics\Platform\MySql\Rendering\Codec;
 use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
+use SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
@@ -24,6 +25,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NameConversion;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -60,12 +62,14 @@ use SqlSemantics\Statement\Scalar;
  * byte). A text of ASCII characters is therefore its own name when it is
  * short enough, assuming an ASCII-compatible `character_set_client`; a text
  * read in `character_set_client` with other characters, or longer than 255
- * bytes, depends on the session state `character_set_client`. Binary text
+ * bytes, depends on the session state `character_set_client` unless the
+ * session settings name it, when it is read as text in that character set. Binary text
  * keeps its bytes; utf8mb4 text keeps whole characters up to 255 bytes,
- * each character outside utf8mb3 written `?`. The name of text with other
- * characters in another introduced character set, and of any text in
- * ucs2, utf16, utf16le or utf32, depends on the server's conversion
- * (NameConversion). Verified on live servers of each release. Source: sql/parse_tree_items.cc
+ * each character outside utf8mb3 written `?`, and so does latin1 text,
+ * read as cp1252 whose unassigned bytes are the C1 controls. Text in ucs2, utf16, utf16le
+ * or utf32 is read in whole units of its bytes, a unit that is no character written `?`.
+ * The name of text with other characters in another introduced character set depends on
+ * the server's conversion (NameConversion). Verified on live servers of each release. Source: sql/parse_tree_items.cc
  * (`PTI_expr_with_alias::itemize`), sql/sql_yacc.yy (`select_item`), sql/item.cc
  * and sql/item.h (the constructors that set `item_name`) of each release,
  * https://dev.mysql.com/doc/refman/8.4/en/select.html,
@@ -88,8 +92,9 @@ final class ItemNaming
 
     /**
      * @param LanguageProfile $profile The profile whose release and codec the name follows
+     * @param Charset|null $client The character set of the session's character_set_client; null when it is not known
      */
-    public function __construct(private readonly LanguageProfile $profile)
+    public function __construct(private readonly LanguageProfile $profile, private readonly ?Charset $client = null)
     {
     }
 
@@ -106,12 +111,12 @@ final class ItemNaming
     public function name(SelectExpression $item): Name|MissingInput
     {
         if ($item->alias !== null) {
-            return $item->alias;
+            return $this->identifier($item->alias);
         }
         $own = $this->own($item->expression);
         Check::input($item->layout === null || ($own === null && $item->layout->text() !== $this->canonical($item->expression)), 'A select item keeps a layout only when MySQL names it after a text other than its canonical rendering.');
         if ($own instanceof ColumnUse) {
-            return $own->name;
+            return $this->identifier($own->name);
         }
         if ($own instanceof Name) {
             return $own;
@@ -121,18 +126,32 @@ final class ItemNaming
     }
 
     /**
+     * Answers an alias or a column name as the server stores it: converted from a latin1 character_set_client into the system character set.
+     *
+     * The server reads identifiers in character_set_client; a client of another character set
+     * than latin1 is taken to write UTF-8.
+     */
+    public function identifier(Name $name): Name
+    {
+        if ($this->client?->name !== 'latin1' || preg_match('/[\x80-\xFF]/', $name->value) !== 1) {
+            return $name;
+        }
+
+        return new Name($this->latin1($name->value));
+    }
+
+    /**
      * Answers the own name of an item that names itself, its text with the character set it is in, or null when the item is named after its written text.
      *
-     * A column reference answers itself: it is named by its column name.
+     * A column reference answers itself: it is named by its column name. Parentheses, a unary
+     * plus and an ODBC escape that stands for its operand name the item as their operand does.
      *
      * @return ColumnUse|Name|array{string, string}|null
      * @throws ImplementationGap When NAME_CONST names the column after a value this rule does not spell
      */
     public function own(Scalar $expression): ColumnUse|Name|array|null
     {
-        while ($expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus)) {
-            $expression = $expression->operand;
-        }
+        $expression = $this->unwrapped($expression);
 
         return match (true) {
             $expression instanceof ColumnUse => $expression,
@@ -147,7 +166,22 @@ final class ItemNaming
     }
 
     /**
+     * Answers the expression an item is named by: the operand of the parentheses, unary plus and
+     * ODBC escapes that stand for their operand around it, which create no item in the server.
+     */
+    public function unwrapped(Scalar $expression): Scalar
+    {
+        while ($expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus) || ($expression instanceof OdbcEscape && $expression->literal() === null)) {
+            $expression = $expression->operand;
+        }
+
+        return $expression;
+    }
+
+    /**
      * Answers the value of the name argument of NAME_CONST as the server converts it to text.
+     *
+     * A name that is not a literal, NULL among them, is empty, as the server refuses the call.
      *
      * @throws ImplementationGap When the argument is a value this rule does not spell
      */
@@ -167,6 +201,9 @@ final class ItemNaming
         }
         if ($argument instanceof BooleanLiteral) {
             return $argument->value ? '1' : '0';
+        }
+        if (!$argument instanceof NumberLiteral && !$argument instanceof RadixLiteral) {
+            return '';
         }
         throw ImplementationGap::rule('the column name NAME_CONST takes from a name argument other than a string, a decimal or integer number, a hexadecimal or bit value, or a boolean');
     }
@@ -207,12 +244,16 @@ final class ItemNaming
      * Answers the name the server stores for a text read in a character set, or the input it depends on.
      *
      * The character set is client for `character_set_client`, national for
-     * a national string, else the introduced character set in lower case.
+     * a national string, else the introduced character set in lower case;
+     * a known `character_set_client` names the character set of client.
      */
     public function stored(string $text, string $charset): Name|MissingInput
     {
+        if ($charset === 'client' && $this->client !== null) {
+            $charset = strtolower($this->client->name);
+        }
         if (in_array($charset, self::WIDE, true)) {
-            return new NameConversion($charset);
+            return $this->narrowed(ltrim($this->wide($text, $charset), "\x00..\x20"));
         }
         $text = ltrim($text, $charset === 'binary' ? "\x00..\x20\x7F..\xFF" : "\x00..\x20\x7F");
         $ascii = preg_match('/[\x80-\xFF]/', $text) !== 1;
@@ -222,12 +263,68 @@ final class ItemNaming
         if ($charset === 'utf8mb4' && !$ascii) {
             return $this->narrowed($text);
         }
+        if ($charset === 'latin1' && !$ascii) {
+            return $this->narrowed($this->latin1($text));
+        }
         if (!$ascii && !in_array($charset, ['binary', 'utf8mb3', 'utf8', 'national'], true)) {
             return new NameConversion($charset);
         }
         $same = in_array($charset, ['utf8mb3', 'utf8', 'national'], true);
 
         return new Name(substr($text, 0, self::LIMITS[$same ? 'same' : 'convert']));
+    }
+
+    /**
+     * Answers in UTF-8 the bytes of a text written for a character set of wide units, UCS-2, UTF-16, UTF-16LE or UTF-32, as the server names a column after it.
+     *
+     * The bytes are read in whole units, a trailing part of a unit is dropped, and a unit or a
+     * pair of UTF-16 units that is no character becomes `?` (verified on a live 8.4 server).
+     */
+    public function wide(string $text, string $charset): string
+    {
+        $unit = $charset === 'utf32' ? 4 : 2;
+        $codes = [];
+        foreach (str_split(substr($text, 0, strlen($text) - strlen($text) % $unit), $unit) as $bytes) {
+            if ($bytes === '') {
+                continue;
+            }
+            $codes[] = match ($charset) {
+                'utf16le' => ord($bytes[0]) | (ord($bytes[1]) << 8),
+                'utf32' => (ord($bytes[0]) << 24) | (ord($bytes[1]) << 16) | (ord($bytes[2]) << 8) | ord($bytes[3]),
+                default => (ord($bytes[0]) << 8) | ord($bytes[1]),
+            };
+        }
+        $converted = '';
+        for ($index = 0; $index < count($codes); $index++) {
+            $code = $codes[$index];
+            $next = $codes[$index + 1] ?? null;
+            if ($charset !== 'utf32' && $charset !== 'ucs2' && $code >= 0xD800 && $code <= 0xDBFF && $next !== null && $next >= 0xDC00 && $next <= 0xDFFF) {
+                $converted .= mb_chr(0x10000 + (($code - 0xD800) << 10) + ($next - 0xDC00), 'UTF-8');
+                $index++;
+                continue;
+            }
+            $converted .= ($code >= 0xD800 && $code <= 0xDFFF) || $code > 0x10FFFF ? '?' : mb_chr($code, 'UTF-8');
+        }
+
+        return $converted;
+    }
+
+    /**
+     * Answers a latin1 text in UTF-8: latin1 is cp1252, whose five unassigned bytes stand for the C1 controls of the same code.
+     */
+    public function latin1(string $text): string
+    {
+        $converted = '';
+        foreach (str_split($text) as $byte) {
+            $code = ord($byte);
+            $converted .= match (true) {
+                $code < 0x80 => $byte,
+                in_array($code, [0x81, 0x8D, 0x8F, 0x90, 0x9D], true) => mb_chr($code, 'UTF-8'),
+                default => mb_convert_encoding($byte, 'UTF-8', 'Windows-1252'),
+            };
+        }
+
+        return $converted;
     }
 
     /**

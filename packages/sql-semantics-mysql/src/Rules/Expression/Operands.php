@@ -5,15 +5,21 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Fact\ScalarFact;
+use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Type\Dependent;
 use SqlSemantics\Statement\Type\Invalid;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Statement\Type\TypeFact;
 
 /**
  * Checks the number of columns of operands and builds the facts of truth-valued operators.
@@ -73,7 +79,7 @@ final class Operands
      *
      * @param list<ScalarFact> $facts
      */
-    public function comparable(array $facts, Derivation $derivation): void
+    public function comparable(array $facts, Derivation $derivation, ?Scalar $expression = null): void
     {
         $expected = null;
         foreach ($facts as $fact) {
@@ -82,7 +88,7 @@ final class Operands
                 continue;
             }
             if ($expected !== null && $width !== $expected) {
-                $derivation->report(new OperandColumns($expected, $width));
+                $derivation->report(new OperandColumns($expected, $width, $expression));
 
                 return;
             }
@@ -91,10 +97,27 @@ final class Operands
     }
 
     /**
+     * Reports strings compared under collations that cannot be reconciled.
+     *
+     * The collations take part only when every operand is a string whose type resolved.
+     *
+     * @param list<ScalarFact> $facts The compared operands
+     * @param string $operation The operation as the server names it
+     */
+    public function collated(array $facts, string $operation, Derivation $derivation): void
+    {
+        $domains = (new Precision())->all(array_map(static fn (ScalarFact $fact): TypeFact => $fact->type, $facts));
+        if ($domains === null || count(array_filter($domains, static fn (Domain $domain): bool => $domain->kind !== Kind::String)) > 0) {
+            return;
+        }
+        (new Collations(Settings::of($derivation->context)->connection))->aggregate($domains, $operation, $derivation, true);
+    }
+
+    /**
      * Answers the facts of a truth value: an integer with the given NULL fact.
      */
     public function truth(Nullability $nullability): ScalarFact
     {
-        return new ScalarFact(new Known(new Integral(IntegralKind::BigInt)), $nullability);
+        return new ScalarFact(new Known((new Numbers())->truth()), $nullability);
     }
 }

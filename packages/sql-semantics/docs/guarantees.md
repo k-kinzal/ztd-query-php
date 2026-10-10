@@ -63,7 +63,7 @@ Every lowering rule and derivation collaborator carries a rule record in its cla
 | `Implemented` | The rule is implemented against its contract. |
 | `ContractReviewed` | The contract and the argument for the implementation were reviewed. |
 
-Passing tests never upgrade a status. In this release nearly all rules are `Implemented`, a few are `Specified` (for example MySQL optimizer hints), and none is `ContractReviewed` yet. The rule records are part of the API documentation of each database package.
+Passing tests never upgrade a status. In this release nearly all rules are `Implemented`, a few are `Specified` (for example the entry rules of the MySQL data manipulation statements), and none is `ContractReviewed` yet. The rule records are part of the API documentation of each database package.
 
 ## What tests and fuzzing establish
 

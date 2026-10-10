@@ -8,9 +8,11 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
+use SqlSemantics\Platform\MySql\Rules\Typing\Declared;
 use SqlSemantics\Platform\MySql\Statement\Call\JsonTableColumn;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\CollationName;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -66,12 +68,15 @@ final class PathColumn implements JsonTableColumn
     }
 
     /**
-     * Derives the path and the defaults and answers the column.
+     * Derives the path and the defaults and answers the column, of the type it declares ({@see Declared::tableFunction()}).
      *
      * @return list<OutputSlot>
      */
     public function deriveColumns(Derivation $derivation, Environment $environment): array
     {
+        if ($this->errorFirst) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::JsonTableResponseOrder, $derivation);
+        }
         (new Arguments())->one($this->path, $derivation, $environment);
         foreach ([$this->onEmpty?->default, $this->onError?->default] as $default) {
             if ($default !== null) {
@@ -79,7 +84,9 @@ final class PathColumn implements JsonTableColumn
             }
         }
 
-        return [new OutputSlot($this->name, new Known($this->type), Nullability::Nullable)];
+        $domain = (new Declared(Settings::of($derivation->context)->connection, $derivation->context->profile->grammar))->tableFunction($this->type);
+
+        return [new OutputSlot($this->name, new Known($domain), Nullability::Nullable)];
     }
 
     /**

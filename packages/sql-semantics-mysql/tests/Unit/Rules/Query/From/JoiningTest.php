@@ -7,14 +7,18 @@ namespace Tests\Unit\Rules\Query\From;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
+use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Query\From\Joining;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
 use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Resolution\ImplicitSlot;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Declaration\Column;
 use SqlSemantics\Statement\Declaration\Table;
@@ -95,5 +99,46 @@ final class JoiningTest extends TestCase
         $t = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [new Column(new Name('x'), new Integral(IntegralKind::Int), Nullability::NotNull)]);
 
         self::assertSame([], $semantics->analyze("SELECT x FROM (SELECT 'é') AS d JOIN t USING (x)", [$t])->facts->diagnostics);
+    }
+
+    public function testLocateNamesTheAmbiguousColumnAsItsRelationNamesIt(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT * FROM ((SELECT 1 a) d JOIN (SELECT 2 a) e ON 1) JOIN (SELECT 3 a) f USING (A)');
+
+        self::assertEquals([new Misuse(MisuseRule::AmbiguousJoinColumn, new Name('a'))], $operation->facts->diagnostics);
+    }
+
+    public function testJoinSelectsAnInvisibleUsingColumnAmongTheMergedColumns(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = [...$semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE, f INT)')->declarations(), ...$semantics->analyze('CREATE TABLE u (e INT, b INT)')->declarations(), ...$semantics->analyze('CREATE TABLE x (e INT INVISIBLE, c INT)')->declarations()];
+        $names = static fn (string $sql): array => array_map(static fn (Field $field): ?string => $field->name?->value, $semantics->analyze($sql, $tables)->fields()->items ?? []);
+
+        self::assertSame(['e', 'a', 'f', 'b'], $names('SELECT * FROM v JOIN u USING (e)'));
+        self::assertSame(['e', 'a', 'f', 'c'], $names('SELECT * FROM v JOIN x USING (e)'));
+        self::assertSame(['a', 'f'], $names('SELECT v.* FROM v JOIN u USING (e)'));
+        self::assertSame(['e', 'a', 'f', 'c', 'b'], $names('SELECT * FROM v JOIN x USING (e) JOIN u USING (e)'));
+        self::assertSame([], $semantics->analyze('SELECT e, x.e FROM v JOIN x USING (e)', $tables)->facts->diagnostics);
+    }
+
+    public function testDeclaredLeavesOutTheInvisibleColumnsAnOperandOfANaturalJoinMerged(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = [...$semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE, f INT)')->declarations(), ...$semantics->analyze('CREATE TABLE u (e INT, b INT)')->declarations(), ...$semantics->analyze('CREATE TABLE x (e INT INVISIBLE, c INT)')->declarations()];
+        $names = static fn (string $sql): array => array_map(static fn (Field $field): ?string => $field->name?->value, $semantics->analyze($sql, $tables)->fields()->items ?? []);
+
+        self::assertSame(['a', 'f', 'c', 'e', 'b'], $names('SELECT * FROM (v JOIN x USING (e)) NATURAL JOIN u'));
+        self::assertSame(['a', 'f', 'e', 'b'], $names('SELECT * FROM v NATURAL JOIN u'));
+    }
+
+    public function testRevealAddsTheInvisibleColumnAUsingNameDenotes(): void
+    {
+        $platform = new Platform();
+        $hidden = new OutputSlot(new Name('e'), new Known(new Integral(IntegralKind::Int)), Nullability::Nullable);
+        $relation = new VisibleRelation(new Dual(), new RowShape([new OutputSlot(new Name('a'), new Known(new Integral(IntegralKind::Int)), Nullability::Nullable)]), null, null, [], [new ImplicitSlot([new Name('e')], $hidden)]);
+        $derivation = new Derivation($platform->context($platform->profile(null, null, ParameterStyle::Native), null, [], false));
+
+        self::assertSame([[0, 0], [0, 1]], (new Joining())->reveal($derivation, [$relation], [[0, 0]], new Name('E'), [0, 1]));
+        self::assertSame([[0, 0]], (new Joining())->reveal($derivation, [$relation], [[0, 0]], new Name('a'), [0, 1]));
     }
 }

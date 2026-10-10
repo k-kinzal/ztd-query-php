@@ -13,12 +13,8 @@ use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Statement\Expression\Conversion\CharsetConversion;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\CharsetName;
-use SqlSemantics\Platform\MySql\Statement\Type\Binary;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -33,8 +29,8 @@ final class CharsetConversionTest extends TestCase
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
 
-        self::assertEquals(new Known(new Character(CharacterKind::VarChar, null, false, new CharsetAttribute(CharsetForm::Named, new Name('latin1')))), $derivation->scalar(new CharsetConversion(new StringLiteral(['x']), new CharsetName(new Name('latin1'))), $derivation->environment())->type);
-        self::assertEquals(new Known(new Binary(BinaryKind::VarBinary)), $derivation->scalar(new CharsetConversion(new StringLiteral(['x']), new CharsetName(new Name('BINARY'))), $derivation->environment())->type);
+        self::assertEquals(new Known(Domain::string(1, Collation::known('latin1_swedish_ci'))), $derivation->scalar(new CharsetConversion(new StringLiteral(['x']), new CharsetName(new Name('latin1'))), $derivation->environment())->type);
+        self::assertEquals(new Known(Domain::string(1, Collation::binary())), $derivation->scalar(new CharsetConversion(new StringLiteral(['x']), new CharsetName(new Name('BINARY'))), $derivation->environment())->type);
     }
 
     public function testRenderWritesUsing(): void
@@ -52,4 +48,12 @@ final class CharsetConversionTest extends TestCase
 
         new CharsetConversion(new StringLiteral(['x']), new CharsetName(null));
     }
+
+    public function testDeriveScalarWarnsAboutUtf8mb3(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT CONVERT('a' USING utf8mb3)");
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3)], $operation->facts->warnings);
+    }
+
 }

@@ -40,7 +40,8 @@ final class GroupConcatTest extends TestCase
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
         $fact = $derivation->scalar(new GroupConcat([new StringLiteral(['x'])], false, [], null, new Name('w')), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Character->descriptor()), $fact->type);
+        self::assertInstanceOf(Known::class, $fact->type);
+        self::assertSame(TypeClass::Character, TypeClass::of($fact->type->descriptor));
         self::assertEquals([new UnsupportedWindowing(WindowingLimit::GroupConcat)], $derivation->facts()->diagnostics);
     }
 

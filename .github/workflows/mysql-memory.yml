@@ -1,0 +1,151 @@
+name: CI (mysql-memory)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'packages/mysql-memory/**'
+      - 'packages/sql-parser/**'
+      - 'packages/sql-semantics/**'
+      - 'packages/sql-semantics-mysql/**'
+      - 'packages/sql-faker/**'
+      - 'packages/container/**'
+      - '.github/workflows/mysql-memory.yml'
+      - '.github/workflows/mysql-memory-fuzz.yml'
+      - '!packages/**/README.md'
+      - '!packages/**/docs/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  COMPOSER_NO_INTERACTION: '1'
+
+defaults:
+  run:
+    shell: bash
+    working-directory: packages/mysql-memory
+
+jobs:
+  test:
+    name: Test (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: bcmath, intl, mbstring, pdo, pdo_mysql, mysqli, dom, filter, hash, iconv, json, libxml, pcntl, pcre, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          coverage: none
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
+        with:
+          working-directory: packages/mysql-memory
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
+        run: composer check-platform-reqs
+      - name: Check library requirements outside the locked ParaTest PHP range
+        if: matrix.php == '8.4' || matrix.php == '8.5'
+        run: composer check-platform-reqs --no-dev
+      - name: Run unit tests and examples in parallel
+        run: vendor/bin/paratest --processes=auto --exclude-testsuite integration
+      - name: Run integration tests sequentially
+        run: vendor/bin/phpunit --testsuite integration
+
+  differential:
+    name: Differential (MySQL ${{ matrix.mysql }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        mysql: ['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0']
+    env:
+      MYSQL_VERSION: ${{ matrix.mysql }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, intl, mbstring, pdo_mysql, mysqli, pcntl
+          coverage: none
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
+        with:
+          working-directory: packages/mysql-memory
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Capture public installed-routine metadata without implementation bodies
+        run: |
+          mkdir -p build
+          php bin/system-routines.php --container=${{ matrix.mysql }} > build/system-routines.php
+          php -l build/system-routines.php
+      - name: Upload installed-routine metadata
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mysql-memory-system-routines-${{ matrix.mysql }}
+          path: packages/mysql-memory/build/system-routines.php
+          if-no-files-found: error
+          retention-days: 14
+      - name: Compare regression cases with MySQL started by Testcontainers
+        run: vendor/bin/phpunit tests/Integration/Fuzz
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, intl, mbstring, pdo, pdo_mysql, mysqli, dom, filter, hash, iconv, json, libxml, pcntl, pcre, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          coverage: none
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
+        with:
+          working-directory: packages/mysql-memory
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
+      - name: Check PSR-4 paths and ambiguous classes
+        run: composer autoload:check
+      - name: Check the formatting
+        run: composer format:check
+      - name: Analyse with PHPStan
+        run: composer phpstan
+      - name: Check PHP compatibility
+        run: composer compat
+      - name: Check the source metrics
+        run: composer loc-guard
+      - name: Check the directory structure
+        run: composer tree-guard
+      - name: Check the architecture layers
+        run: composer deptrac

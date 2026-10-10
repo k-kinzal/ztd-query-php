@@ -8,6 +8,7 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\DerivedShapes;
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Platform\MySql\Statement\Name\AliasMark;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
@@ -68,7 +69,7 @@ final class DerivedTable implements Relation
             $derivation->report(new Misuse(MisuseRule::DerivedWithoutAlias));
         }
 
-        return new RelationFact((new DerivedShapes())->shape($derivation->query($this->query, $environment), $this->columns, $derivation));
+        return new RelationFact((new DerivedShapes())->shape($derivation->query($this->query, $environment), $this->columns, $derivation, (new Materialization())->mergeable($this->query) ? null : $this->query));
     }
 
     /**

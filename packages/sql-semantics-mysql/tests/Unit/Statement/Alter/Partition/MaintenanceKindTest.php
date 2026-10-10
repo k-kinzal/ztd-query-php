@@ -13,6 +13,11 @@ use SqlSemantics\Platform\MySql\Statement\Alter\Partition\MaintenanceKind;
 #[Small]
 final class MaintenanceKindTest extends TestCase
 {
+    public function testReportsIdentifiesOperationsReturningAdministrationRows(): void
+    {
+        self::assertSame(['OPTIMIZE', 'ANALYZE', 'CHECK', 'REPAIR'], array_column(array_values(array_filter(MaintenanceKind::cases(), static fn (MaintenanceKind $kind): bool => $kind->reports())), 'value'));
+    }
+
     public function testLoggedAnswersTheOperationsThatTakeNoWriteToBinlog(): void
     {
         self::assertSame(['REBUILD', 'OPTIMIZE', 'ANALYZE', 'REPAIR'], array_column(array_values(array_filter(MaintenanceKind::cases(), static fn (MaintenanceKind $kind): bool => $kind->logged())), 'value'));

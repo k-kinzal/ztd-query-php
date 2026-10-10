@@ -9,11 +9,16 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
+use SqlSemantics\Facade\Semantics;
+use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Platform;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Statement\Expression\Tuple;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Reference\Missing\SessionState;
 use SqlSemantics\Statement\Type\Dependent;
@@ -71,6 +76,18 @@ final class OperandsTest extends TestCase
 
     public function testTruthIsAnInteger(): void
     {
-        self::assertEquals(new ScalarFact(new Known(new Integral(IntegralKind::BigInt)), Nullability::Dependent), (new Operands())->truth(Nullability::Dependent));
+        self::assertEquals(new ScalarFact(new Known(Domain::integer(Field::LongLong, 1)), Nullability::Dependent), (new Operands())->truth(Nullability::Dependent));
     }
+
+    public function testCollatedReportsStringsUnderConflictingCollations(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $fact = static fn (string $collation): ScalarFact => new ScalarFact(new Known(Domain::string(5, Collation::known($collation))), Nullability::Nullable);
+
+        (new Operands())->collated([$fact('utf8mb4_bin'), $fact('latin1_bin')], '=', $derivation);
+        (new Operands())->collated([$fact('utf8mb4_general_ci'), $fact('utf8mb4_unicode_ci')], '=', $derivation);
+
+        self::assertCount(1, $derivation->facts()->diagnostics);
+    }
+
 }

@@ -42,4 +42,14 @@ final class CastResultTest extends TestCase
 
         self::assertSame([Nullability::Nullable, Nullability::NotNull], [$results->nullability(new CastTarget(CastKind::Year), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::Signed), Nullability::NotNull)]);
     }
+
+    public function testNullabilityMakesAStringCastNullableAndANumericCastPropagate(): void
+    {
+        $results = new CastResult();
+
+        self::assertSame(
+            [Nullability::Nullable, Nullability::Nullable, Nullability::Nullable, Nullability::Nullable, Nullability::NotNull, Nullability::Nullable],
+            [$results->nullability(new CastTarget(CastKind::Char, '2'), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::Binary), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::NationalChar), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::Point), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::Decimal, '5', '2'), Nullability::NotNull), $results->nullability(new CastTarget(CastKind::Double), Nullability::Nullable)],
+        );
+    }
 }

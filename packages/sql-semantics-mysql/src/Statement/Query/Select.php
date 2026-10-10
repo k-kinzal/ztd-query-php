@@ -9,6 +9,8 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\SelectFacts;
 use SqlSemantics\Platform\MySql\Rules\Query\SortScopes;
+use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Name\TableWildcard;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\Grouping;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\LateOrdering;
@@ -40,7 +42,8 @@ use SqlSemantics\Statement\Statement;
  * as one. An INTO clause after the query clauses needs one of them, because
  * otherwise it is written as the INTO after the select list. A block of a
  * 5.6 subquery may write its ORDER BY and LIMIT after its locking clauses,
- * or a LIMIT after its own LIMIT that replaces it (LateOrdering).
+ * or a LIMIT after its own LIMIT that replaces it (LateOrdering). The hints of
+ * the comment written right after SELECT are kept with the block.
  *
  * Rule: MYSQL-SELECT-001. The facts are derived by MYSQL-SELECT-FACTS-001.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/select.html,
@@ -86,6 +89,11 @@ final class Select implements Statement, Query, Selection
     public readonly array $locking;
 
     /**
+     * @var list<OptimizerHint> The hints of the comment written right after SELECT, in written order
+     */
+    public readonly array $hints;
+
+    /**
      * @param list<SelectOption> $options The modifiers in written order
      * @param list<Node> $items The select list of expressions and qualified stars; at least one item, an unqualified star only first
      * @param Relation|null $from The FROM clause
@@ -101,6 +109,7 @@ final class Select implements Statement, Query, Selection
      * @param IntoDestination|null $into The INTO destination
      * @param IntoPosition|null $intoPosition Where INTO is written; given exactly when there is a destination
      * @param LateOrdering|null $late The ORDER BY and LIMIT a 5.6 subquery writes after the locking clauses or the LIMIT of the block
+     * @param list<OptimizerHint> $hints The hints of the comment written right after SELECT, in written order
      */
     public function __construct(
         array $options,
@@ -118,7 +127,9 @@ final class Select implements Statement, Query, Selection
         public readonly ?IntoDestination $into = null,
         public readonly ?IntoPosition $intoPosition = null,
         public readonly ?LateOrdering $late = null,
+        array $hints = [],
     ) {
+        $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a query block are optimizer hints.');
         $this->options = Check::listOf($options, SelectOption::class, 'The modifiers of a selection are select options.');
         $list = [];
         foreach (Check::listOf($items, Node::class, 'A selection projects at least one item.', 1) as $position => $item) {
@@ -189,6 +200,10 @@ final class Select implements Statement, Query, Selection
     public function render(Output $out): void
     {
         $out->keyword('SELECT');
+        $comment = (new HintComment($this->hints))->text();
+        if ($comment !== null) {
+            $out->comment($comment);
+        }
         foreach ($this->options as $option) {
             $out->keyword($option->value);
         }

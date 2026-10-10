@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Server\Instance;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
+use SqlSemantics\Platform\MySql\Rules\Utility\ProcessReferences;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Snapshot;
@@ -29,6 +31,11 @@ final class Kill implements Statement
     use Snapshot;
 
     /**
+     * The server's name for dependencies forbidden in a process identifier.
+     */
+    public const DEPENDENCIES = 'Usage of subqueries or stored function calls as part of this statement';
+
+    /**
      * @param KillScope|null $scope CONNECTION or QUERY, when written
      * @param Scalar $process The processlist identifier
      */
@@ -41,7 +48,11 @@ final class Kill implements Statement
      */
     public function deriveStatement(Derivation $derivation): void
     {
-        $derivation->scalar($this->process, $derivation->environment());
+        (new Operands())->single($derivation->scalar($this->process, $derivation->environment()), $derivation);
+        (new ProcessReferences())->check($this->process, $derivation);
+        foreach ((new \SqlSemantics\Platform\MySql\Rules\Query\WindowReferences())->names([$this->process], false) as $name) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse(\SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule::UnknownWindow, $name));
+        }
     }
 
     /**

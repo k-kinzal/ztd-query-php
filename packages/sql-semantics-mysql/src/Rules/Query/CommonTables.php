@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Query;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Aggregation;
+use SqlSemantics\Platform\MySql\Rules\Typing\Collations;
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
+use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\Misuse;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\MisuseRule;
@@ -15,6 +19,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation;
 use SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\With\With;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
@@ -23,7 +28,9 @@ use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Shape\RowShape;
+use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
+use SqlSemantics\Statement\Type\TypeFact;
 use SqlSemantics\Validation\ValueGraph;
 
 /**
@@ -39,7 +46,11 @@ use SqlSemantics\Validation\ValueGraph;
  * set operation is reported, and a reference to it sees columns that depend
  * on the missing nonrecursive part. The shape of every expression is that
  * of its query under its column list (MYSQL-DERIVED-SHAPES-001). The
- * bindings extend the enclosing scope without opening a query level.
+ * bindings extend the enclosing scope without opening a query level. The
+ * server resolves the query of an expression only where a table reference
+ * names the expression, so the problems of that query are reported at its
+ * first use and an expression that is never used reports none; a name
+ * defined twice is reported in any case.
  * Terminates: every expression is derived once. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/with.html ("The types of the CTE
  * result columns are inferred from the column types of the nonrecursive
@@ -59,18 +70,30 @@ final class CommonTables
         foreach ($with->tables as $table) {
             $key = $derivation->context->relationNames->fold($table->name->value);
             if (isset($seen[$key])) {
-                $derivation->report(new Misuse(MisuseRule::DuplicateCommonTable));
+                $derivation->report(new Misuse(MisuseRule::DuplicateCommonTable, $table->name));
             }
             $seen[$key] = true;
             $scope = $this->extended($outer, $bindings);
-            if ($with->recursive && $this->refers($table->query, $table->name, $derivation)) {
+            $recursive = $with->recursive && $this->refers($table->query, $table->name, $derivation);
+            $materialized = !$recursive && (new Materialization())->mergeable($table->query) ? null : $table->query;
+            $problem = null;
+            if ($recursive) {
                 $operands = $this->operands($table->query);
-                if (count($operands) < 2 || $this->refers($operands[0], $table->name, $derivation)) {
-                    $derivation->report(new Misuse(MisuseRule::RecursiveWithoutAnchor));
+                if (count($operands) < 2) {
+                    $problem = new Misuse(MisuseRule::RecursiveWithoutUnion, $table->name);
+                } elseif ($this->refers($operands[0], $table->name, $derivation)) {
+                    $problem = new Misuse(MisuseRule::RecursiveWithoutAnchor, $table->name);
                 }
                 $scope = $this->extended($outer, [...$bindings, new CommonBinding($table->name, $table, new RowShape([], [new RecursiveReference($table->name)]))]);
             }
-            $bindings[] = new CommonBinding($table->name, $table, (new DerivedShapes())->shape($derivation->query($table->query, $scope), $table->columns, $derivation));
+            $shape = $derivation->deferred($table, static function () use ($table, $scope, $derivation, $materialized, $problem): RowShape {
+                if ($problem !== null) {
+                    $derivation->report($problem);
+                }
+
+                return (new DerivedShapes())->shape($derivation->query($table->query, $scope), $table->columns, $derivation, $materialized);
+            });
+            $bindings[] = new CommonBinding($table->name, $table, $shape);
         }
 
         return $this->extended($outer, $bindings);
@@ -83,7 +106,7 @@ final class CommonTables
      */
     public function extended(Environment $outer, array $bindings): Environment
     {
-        return new Environment($outer->context, $outer->outer, $outer->relations, [...$outer->commonTables, ...$bindings], $outer->aliases);
+        return new Environment($outer->context, $outer->outer, $outer->relations, [...$outer->commonTables, ...$bindings], $outer->aliases, aggregation: $outer->aggregation, aggregatesAllowed: $outer->aggregatesAllowed, aggregateArgument: $outer->aggregateArgument, projection: $outer->projection);
     }
 
     /**
@@ -114,7 +137,7 @@ final class CommonTables
             $bindings[] = $binding === $pending ? new CommonBinding($binding->name, $binding->definition, $this->shape($pending, $anchor, $derivation)) : $binding;
         }
 
-        return new Environment($outer->context, $outer->outer, $outer->relations, $bindings, $outer->aliases);
+        return new Environment($outer->context, $outer->outer, $outer->relations, $bindings, $outer->aliases, aggregation: $outer->aggregation, aggregatesAllowed: $outer->aggregatesAllowed, aggregateArgument: $outer->aggregateArgument, projection: $outer->projection);
     }
 
     /**
@@ -132,13 +155,24 @@ final class CommonTables
     }
 
     /**
+     * Answers the type a column of a recursive table keeps from its anchor: settled alone in the temporary table.
+     */
+    public function recursive(TypeFact $type, ?Derivation $derivation): TypeFact
+    {
+        $domain = $derivation === null ? null : (new Precision())->domain($type);
+        $settled = $domain === null ? null : (new Aggregation(new Collations(Settings::of($derivation->context)->connection)))->of([$domain], 'UNION', $derivation);
+
+        return $settled === null ? $type : new Known((new Materialization())->set($settled, $derivation->context->profile->grammar));
+    }
+
+    /**
      * Answers the output of a recursive set operation: the columns of its nonrecursive part, all nullable.
      */
-    public function nullable(QueryFact $anchor): QueryFact
+    public function nullable(QueryFact $anchor, ?Derivation $derivation = null): QueryFact
     {
         $fields = [];
         foreach ($anchor->projection as $item) {
-            $fields[] = $item instanceof Field ? new Field($item->position, new OutputSlot($item->slot->name, $item->slot->type, Nullability::Nullable, null, $item->slot, $item->slot->unnamed)) : $item;
+            $fields[] = $item instanceof Field ? new Field($item->position, new OutputSlot($item->slot->name, $this->recursive($item->slot->type, $derivation), Nullability::Nullable, null, $item->slot, $item->slot->unnamed)) : $item;
         }
 
         return new QueryFact($fields, $anchor->names);
@@ -171,7 +205,7 @@ final class CommonTables
     {
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', 'SqlSemantics\\Platform\\MySql\\Statement\\']);
         foreach ($graph->objects($query) as $object) {
-            if ($object instanceof TableReference && $object->name->schema === null && $derivation->context->relationNames->equal($object->name->name->value, $table->value)) {
+            if (($object instanceof TableReference || $object instanceof \SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable) && $object->name()->schema === null && $derivation->context->relationNames->equal($object->name()->name->value, $table->value)) {
                 return true;
             }
         }

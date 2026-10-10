@@ -15,6 +15,17 @@ use SqlSemantics\Platform\MySql\Rules\Dml\HandlerFacts;
 #[Medium]
 final class HandlerFactsTest extends TestCase
 {
+    public function testReadResolvesDefaultAgainstTheOpenHandlerState(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i = (DEFAULT)');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Dml\Handler\HandlerIndexSeek::class, $operation->statement);
+        $fact = $operation->facts->scalar($operation->statement->values[0]);
+
+        self::assertSame([], $operation->facts->diagnostics);
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Dependent::class, $fact->type);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Missing\SessionState::class, $fact->type->missing[0]);
+    }
+
     public function testReadRecordsTheRowsOfTheHandler(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('HANDLER h READ i = (1) WHERE h.a = 2 LIMIT 1');

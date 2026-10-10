@@ -9,6 +9,8 @@ use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\InvalidConstruction;
 use SqlSemantics\Platform\MySql\Rules\Dml\ChangeFacts;
+use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Platform\MySql\Statement\Query\WithClause;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -21,7 +23,8 @@ use SqlSemantics\Statement\Statement;
  * DELETE from several tables: the tables rows are deleted from, the table references that find the rows, and WHERE.
  *
  * Each table to delete from names a table of the references, by its
- * correlation name when it has one. The facts follow MYSQL-DELETE-001.
+ * correlation name when it has one. The facts follow MYSQL-DELETE-001. The
+ * hints of the comment written right after DELETE are kept with the statement.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/delete.html.
  *
  * @visibility public
@@ -32,6 +35,11 @@ use SqlSemantics\Statement\Statement;
 final class MultipleDelete implements Statement
 {
     use Snapshot;
+
+    /**
+     * @var list<OptimizerHint> The hints of the comment written right after the verb, in written order
+     */
+    public readonly array $hints;
 
     /**
      * @var list<DeleteOption> The modifiers in written order
@@ -55,6 +63,7 @@ final class MultipleDelete implements Statement
      * @param MultipleDeleteForm $form Where the tables to delete from are written
      * @param list<Relation> $tables The table references; at least one
      * @param Scalar|null $where The row predicate
+     * @param list<OptimizerHint> $hints The hints of the comment written right after the verb, in written order
      * @throws InvalidConstruction When there is no table to delete from or no table reference
      */
     public function __construct(
@@ -64,7 +73,9 @@ final class MultipleDelete implements Statement
         public readonly MultipleDeleteForm $form,
         array $tables,
         public readonly ?Scalar $where = null,
+        array $hints = [],
     ) {
+        $this->hints = Check::listOf($hints, OptimizerHint::class, 'The hints of a statement are optimizer hints.');
         $this->options = Check::listOf($options, DeleteOption::class, 'The modifiers of DELETE are delete options.');
         $this->targets = Check::listOf($targets, QualifiedName::class, 'A multiple-table DELETE names at least one table to delete from.', 1);
         foreach ($this->targets as $target) {
@@ -87,6 +98,10 @@ final class MultipleDelete implements Statement
     public function render(Output $out): void
     {
         $out->node($this->with)->keyword('DELETE');
+        $comment = (new HintComment($this->hints))->text();
+        if ($comment !== null) {
+            $out->comment($comment);
+        }
         foreach ($this->options as $option) {
             $out->keyword($option->value);
         }

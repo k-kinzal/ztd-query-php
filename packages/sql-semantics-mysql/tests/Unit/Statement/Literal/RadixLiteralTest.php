@@ -14,11 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
-use SqlSemantics\Platform\MySql\Statement\Type\Binary;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\Nullability;
@@ -41,9 +37,8 @@ final class RadixLiteralTest extends TestCase
         self::assertSame('1F', $literal->digits);
         self::assertNull($literal->introducer);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Binary::class, $fact->type->descriptor);
-        self::assertSame(BinaryKind::VarBinary, $fact->type->descriptor->kind);
-        self::assertNull($fact->type->descriptor->length);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARBINARY', 1, 'binary'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
@@ -62,11 +57,8 @@ final class RadixLiteralTest extends TestCase
         self::assertSame('1', $literal->digits);
         self::assertSame('latin1', $literal->introducer?->value);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Character::class, $fact->type->descriptor);
-        self::assertSame(CharacterKind::VarChar, $fact->type->descriptor->kind);
-        self::assertFalse($fact->type->descriptor->national);
-        self::assertSame(CharsetForm::Named, $fact->type->descriptor->charset?->form);
-        self::assertSame('latin1', $fact->type->descriptor->charset->charset?->value);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['VARCHAR', 1, 'latin1_swedish_ci'], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->collation->name]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
@@ -141,4 +133,12 @@ final class RadixLiteralTest extends TestCase
 
         new RadixLiteral(Radix::Hexadecimal, '1F', new Name('UTF8MB4'));
     }
+
+    public function testDeriveScalarWarnsAboutAUtf8mb3Introducer(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT _utf8mb3 X'41', _utf8mb3 b'1'");
+
+        self::assertEquals([new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3), new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8mb3)], $operation->facts->warnings);
+    }
+
 }

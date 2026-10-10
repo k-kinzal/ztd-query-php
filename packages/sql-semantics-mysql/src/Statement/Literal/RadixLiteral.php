@@ -8,12 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Introducers;
 use SqlSemantics\Platform\MySql\Rules\RadixSpelling;
+use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Binary;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -64,11 +62,11 @@ final class RadixLiteral implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $type = $this->introducer === null
-            ? new Binary(BinaryKind::VarBinary)
-            : new Character(CharacterKind::VarChar, null, false, new CharsetAttribute(CharsetForm::Named, $this->introducer));
+        if ($this->introducer !== null) {
+            Deprecation::charset($this->introducer->value, $derivation);
+        }
 
-        return new ScalarFact(new Known($type), Nullability::NotNull);
+        return new ScalarFact(new Known(Literals::of($derivation->context)->radix($this)), Nullability::NotNull);
     }
 
     /**

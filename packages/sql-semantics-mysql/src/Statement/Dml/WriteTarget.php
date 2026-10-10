@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Dml;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
+use SqlSemantics\Platform\MySql\Rules\Query\From\PartitionSelection;
 use SqlSemantics\Platform\MySql\Rules\Query\TableShapes;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteMisuse;
 use SqlSemantics\Platform\MySql\Statement\Dml\Problem\WriteRule;
@@ -25,8 +26,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Rule: MYSQL-DML-TARGET-001. The name resolves like a table reference
  * (MYSQL-TABLE-SHAPES-001); a common table is no table a statement can
- * write, which the server reports as a non-updatable target. Partition names
- * are not checked: the context holds no partitions. Terminates: no child
+ * write, which the server reports as a non-updatable target. The partitions
+ * it selects are checked against the declared partitions of the table
+ * (PartitionSelection). Terminates: no child
  * relation. Source: https://dev.mysql.com/doc/refman/8.4/en/insert.html,
  * https://dev.mysql.com/doc/refman/8.4/en/delete.html,
  * https://dev.mysql.com/doc/refman/8.4/en/partitioning-selection.html. Status: Implemented.
@@ -80,8 +82,9 @@ final class WriteTarget implements NamedRelation
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
         $fact = (new TableShapes())->named($this->name, $derivation, $environment);
+        (new PartitionSelection())->check($this->partitions, $fact, $derivation);
         if ($fact->table instanceof CommonTable) {
-            $derivation->report(new WriteMisuse(WriteRule::CommonTableTarget));
+            $derivation->report(new WriteMisuse(WriteRule::CommonTableTarget, $this->alias ?? $this->name->name));
         }
 
         return $fact;

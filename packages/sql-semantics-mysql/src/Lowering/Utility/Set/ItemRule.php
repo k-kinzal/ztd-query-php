@@ -81,11 +81,11 @@ final class ItemRule
                 $this->lowering->options->skip($form->node(4));
                 [$name, $instance] = $this->variable($form->node(3));
 
-                return new SystemAssignment($this->lowering->leaves->record(new SystemVariable($name, $this->lowering->variables->scope($form->node(2)), $instance)), $values->value($form->node(5), true));
+                return new SystemAssignment($this->lowering->leaves->record(new SystemVariable($name, $this->lowering->variables->scope($form->node(2)), $instance, true)), $values->value($form->node(5), true));
             case 'option_value_no_option_type: @ @ opt_set_var_ident_type lvalue_variable equal set_expr_or_default':
                 $this->lowering->options->skip($form->node(4));
 
-                return new SystemAssignment($this->lowering->variables->system($form->node(3), $this->lowering->variables->scope($form->node(2))), $values->value($form->node(5), true));
+                return new SystemAssignment($this->lowering->variables->system($form->node(3), $this->lowering->variables->scope($form->node(2)), true), $values->value($form->node(5), true));
             default:
                 return $this->connection($form);
         }

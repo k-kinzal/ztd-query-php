@@ -31,4 +31,21 @@ final class LoadFactsTest extends TestCase
 
         self::assertInstanceOf(MissingColumn::class, $operation->facts->diagnostics[0]);
     }
+
+    public function testDeriveFindsTheInvisibleColumnsOfTheTable(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $tables = $semantics->analyze('CREATE TABLE v (a INT, e INT INVISIBLE)')->declarations();
+
+        self::assertSame([], $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE v (a, e)", $tables)->facts->diagnostics);
+    }
+
+    public function testDeriveWarnsOfTheCharacterSetTheStatementNames(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $t = $semantics->analyze('CREATE TABLE t (a INT)');
+        $facts = $semantics->analyze("LOAD DATA INFILE 'f' INTO TABLE t CHARACTER SET utf8", [$t])->facts;
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::Utf8Alias->value], array_map(static fn ($warning): string => $warning->message(), $facts->warnings));
+    }
 }

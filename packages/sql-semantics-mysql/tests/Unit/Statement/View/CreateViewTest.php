@@ -23,8 +23,9 @@ final class CreateViewTest extends TestCase
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE VIEW v AS SELECT 1 AS a, NULL AS b');
         $table = $create->declarations()[0];
 
-        self::assertSame('a', $table->columns[0]->name->value);
-        self::assertFalse($table->complete);
+        self::assertSame(['a', 'b'], [$table->columns[0]->name->value, $table->columns[1]->name->value]);
+        self::assertEquals(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::null(), $table->columns[1]->type);
+        self::assertTrue($table->complete);
     }
 
     public function testDeriveStatementReportsTheProblems(): void

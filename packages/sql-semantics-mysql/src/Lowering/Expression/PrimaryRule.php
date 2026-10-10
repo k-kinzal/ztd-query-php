@@ -91,7 +91,7 @@ final class PrimaryRule
                 : new Collated($result, $this->lowering->names->identifier($operation->node(2)));
         }
 
-        return $result;
+        return $this->lowering->origins->record($result, $expression);
     }
 
     /**

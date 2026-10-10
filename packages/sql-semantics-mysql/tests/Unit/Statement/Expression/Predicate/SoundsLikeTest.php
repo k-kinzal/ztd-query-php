@@ -27,7 +27,7 @@ final class SoundsLikeTest extends TestCase
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
         $fact = $derivation->scalar(new SoundsLike(new StringLiteral(['Smith']), new StringLiteral(['Smyth'])), $derivation->environment());
 
-        self::assertSame(Nullability::NotNull, $fact->nullability);
+        self::assertSame(Nullability::Nullable, $fact->nullability);
     }
 
     public function testRenderWritesBothWords(): void

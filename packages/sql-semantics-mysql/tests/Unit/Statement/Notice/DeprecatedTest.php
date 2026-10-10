@@ -1,0 +1,72 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Statement\Notice;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+
+#[CoversClass(Deprecated::class)]
+#[Small]
+final class DeprecatedTest extends TestCase
+{
+    public function testCodeNamesTheErrorOfEachKindOfWarning(): void
+    {
+        self::assertSame(1287, Deprecated::PipesOr->code());
+        self::assertSame(3005, Deprecated::ReplaceDelayed->code());
+        self::assertSame(1681, Deprecated::Zerofill->code());
+        self::assertSame(3719, Deprecated::Utf8Alias->code());
+        self::assertSame(3962, Deprecated::IntoInsideQuery->code());
+    }
+
+    public function testWarnedInLimitsReleasesBeforeEightToDelayed(): void
+    {
+        self::assertTrue(Deprecated::InsertDelayed->warnedIn(GrammarRelease::MySql5744));
+        self::assertFalse(Deprecated::AmpersandsAnd->warnedIn(GrammarRelease::MySql5651));
+        self::assertTrue(Deprecated::AmpersandsAnd->warnedIn(GrammarRelease::MySql847));
+    }
+
+    public function testCodeAnswersTheNumberOfTheNationalCharacterSetWarning(): void
+    {
+        self::assertSame(3720, Deprecated::National->code());
+        self::assertSame([false, true], [Deprecated::National->warnedIn(GrammarRelease::MySql5744), Deprecated::National->warnedIn(GrammarRelease::MySql8044)]);
+    }
+
+    public function testWarnedInKeysTheConstructsOf56And57OnTheirRelease(): void
+    {
+        self::assertSame([true, false, false], [Deprecated::DelayedInsert->warnedIn(GrammarRelease::MySql5651), Deprecated::DelayedInsert->warnedIn(GrammarRelease::MySql5744), Deprecated::InsertDelayed->warnedIn(GrammarRelease::MySql5651)]);
+        self::assertSame([false, true, true], [Deprecated::Cache->warnedIn(GrammarRelease::MySql5651), Deprecated::Cache->warnedIn(GrammarRelease::MySql5744), Deprecated::DotTable->warnedIn(GrammarRelease::MySql5744)]);
+        self::assertSame([1681, 1287, 1287], [Deprecated::ProcedureAnalyse->code(), Deprecated::GroupByDirection->code(), Deprecated::DelayedReplace->code()]);
+    }
+
+    public function testWarnedInKeysTheLegacyEncryptionFunctionsOnTheirRelease(): void
+    {
+        self::assertSame([true, false, false, true, false], [Deprecated::OldPassword->warnedIn(GrammarRelease::MySql5651), Deprecated::OldPassword->warnedIn(GrammarRelease::MySql5744), Deprecated::DesEncrypt->warnedIn(GrammarRelease::MySql5651), Deprecated::DesEncrypt->warnedIn(GrammarRelease::MySql5744), Deprecated::Encrypt->warnedIn(GrammarRelease::MySql847)]);
+        self::assertSame([1287, 1287], [Deprecated::DesDecrypt->code(), Deprecated::OldPassword->code()]);
+    }
+
+    public function testWarnedInKeysTheReplicaWaitsOnTheirRelease(): void
+    {
+        self::assertSame([false, true, true, true, false], [Deprecated::MasterPosWait->warnedIn(GrammarRelease::MySql5744), Deprecated::MasterPosWait->warnedIn(GrammarRelease::MySql8044), Deprecated::MasterPosWait->warnedIn(GrammarRelease::MySql847), Deprecated::WaitUntilSqlThreadAfterGtids->warnedIn(GrammarRelease::MySql8044), Deprecated::WaitUntilSqlThreadAfterGtids->warnedIn(GrammarRelease::MySql847)]);
+        self::assertSame(1287, Deprecated::MasterPosWait->code());
+    }
+
+    public function testWarnedInWarnsOfJsonMergeFrom57(): void
+    {
+        self::assertSame([false, true, true, 1287], [Deprecated::JsonMerge->warnedIn(GrammarRelease::MySql5651), Deprecated::JsonMerge->warnedIn(GrammarRelease::MySql5744), Deprecated::JsonMerge->warnedIn(GrammarRelease::MySql847), Deprecated::JsonMerge->code()]);
+    }
+
+    public function testCodeAnswersTheNumberOfTheValuesFunctionOutsideAnUpdate(): void
+    {
+        self::assertSame([1681, false, true], [Deprecated::ValuesElsewhere->code(), Deprecated::ValuesElsewhere->warnedIn(GrammarRelease::MySql5744), Deprecated::ValuesElsewhere->warnedIn(GrammarRelease::MySql8044)]);
+    }
+
+    public function testWarnedInWarnsOfDisableOnSlaveFromMySql84(): void
+    {
+        self::assertSame([false, true, 1287], [Deprecated::DisableOnSlave->warnedIn(GrammarRelease::MySql8044), Deprecated::DisableOnSlave->warnedIn(GrammarRelease::MySql847), Deprecated::DisableOnSlave->code()]);
+    }
+}

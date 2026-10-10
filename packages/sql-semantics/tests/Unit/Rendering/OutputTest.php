@@ -33,6 +33,25 @@ final class OutputTest extends TestCase
         self::assertSame(PieceKind::Keyword, $output->pieces()[0]->kind);
     }
 
+    public function testCommentSeparatesTheNextPieceFromThePreviousOne(): void
+    {
+        $output = new Output(new Codec());
+
+        $output->keyword('SELECT')->comment('/*+ BKA(t) */')->spelled('1');
+
+        self::assertSame('SELECT /*+ BKA(t) */ 1', (new Lexical())->join($output->pieces()));
+        self::assertSame(['SELECT', '1'], array_map(static fn (Piece $piece): string => $piece->text, $output->canonical()));
+    }
+
+    public function testCommentRefusesTextThatIsNotOneBlockComment(): void
+    {
+        $output = new Output(new Codec());
+
+        $this->expectExceptionMessage('A comment is one block comment.');
+
+        $output->comment('/* a */ 1 /* b */');
+    }
+
     public function testKeywordRefusesAnythingButOneUpperCaseWord(): void
     {
         $output = new Output(new Codec());

@@ -72,10 +72,13 @@ final class AlterEvent implements Statement
     }
 
     /**
-     * Derives the schedule and the body, when written.
+     * Derives the schedule and the body, when written; DISABLE ON SLAVE is deprecated from MySQL 8.4 (verified on live 8.0.44, 8.4.7 and 9.1.0 servers).
      */
     public function deriveStatement(Derivation $derivation): void
     {
+        if ($this->status === EventStatus::DisableOnSlave) {
+            \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation::raise(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::DisableOnSlave, $derivation);
+        }
         (new ProgramFacts())->event($this->schedule, $this->body, $derivation);
     }
 

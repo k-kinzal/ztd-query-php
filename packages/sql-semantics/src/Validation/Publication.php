@@ -43,18 +43,28 @@ final class Publication
      * @return array{Facts, string}
      * @throws InvariantViolation When the rendered SQL does not correspond to the structure
      */
-    public function establish(AnalysisContext $context, Statement $statement): array
+    public function establish(AnalysisContext $context, Statement $statement, \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap()): array
     {
         $platform = Platforms::of($context->profile->grammar->database());
         $graph = new ValueGraph(['SqlSemantics\\Statement\\', 'SqlSemantics\\Contract\\', $platform->statementNamespace()]);
         $objects = $graph->objects($statement);
+        $graph->objects($sources);
+        foreach ($sources->origins as $origin) {
+            Check::input(in_array($origin->node, $objects, true), 'A source location belongs to an occurrence of this statement.');
+        }
 
-        $derivation = new Derivation($context);
+        foreach ($sources->notices as $notice) {
+            Check::input(in_array($notice->subject, $objects, true), 'An input notice belongs to an occurrence of this statement.');
+        }
+        $derivation = new Derivation($context, $sources);
         $derivation->statement($statement);
         $facts = $derivation->facts();
         foreach ($objects as $object) {
             if ($object instanceof Scalar || $object instanceof Relation || $object instanceof Query) {
                 Check::invariant($facts->covers($object), 'Derivation left a ' . $object::class . ' without facts.');
+            }
+            if ($object instanceof Scalar && ($replacement = $facts->scalar($object)->replacement) !== null) {
+                Check::invariant($replacement !== $object && in_array($replacement, $graph->objects($object), true) && $facts->covers($replacement), 'A scalar replacement is a bound strict descendant of its occurrence.');
             }
         }
         $graph->objects($facts);

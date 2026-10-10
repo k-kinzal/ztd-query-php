@@ -8,8 +8,11 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
 use SqlSemantics\Platform\MySql\Rules\Call\ResultTyping;
+use SqlSemantics\Platform\MySql\Rules\Typing\Builtin\Results;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
 use SqlSemantics\Platform\MySql\Statement\Expression\OptionalWords;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -22,10 +25,11 @@ use SqlSemantics\Statement\Snapshot;
  * Rule: MYSQL-KEYWORD-CALL-001. The function decides the argument counts
  * the grammar accepts and the result (MYSQL-CALL-RESULT-001); ADDDATE and
  * SUBDATE with a number of days are typed as a date plus or minus days.
- * GROUPING() yields 1 or 0 and is never NULL. The keyword is written against
+ * GROUPING() yields a bit per argument and its column can be NULL, as a live 8.4 server reports. The keyword is written against
  * its parenthesis, and the niladic functions are written with empty
  * parentheses, which the grammar accepts for every one of them; CURRENT_USER
- * keeps whether its optional parentheses are written.
+ * keeps whether its optional parentheses are written. MySQL 5.6 warns that OLD_PASSWORD() is
+ * deprecated.
  * Terminates: the arguments are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/built-in-function-reference.html.
  * Status: Implemented.
@@ -64,16 +68,19 @@ final class KeywordCall implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        if ($this->function === KeywordFunction::OldPassword) {
+            Deprecation::raise(Deprecated::OldPassword, $derivation);
+        }
         $facts = [];
         foreach ($this->arguments as $argument) {
             $facts[] = (new Arguments())->one($argument, $derivation, $environment);
         }
         $typing = new ResultTyping();
         if ($this->function === KeywordFunction::AddDate || $this->function === KeywordFunction::SubDate) {
-            return new ScalarFact($typing->dateArithmetic($facts[0]->type, IntervalUnit::Day), $typing->nullability('Y', $facts));
+            return (new Results())->refine($this->function->value, $this->arguments, $facts, new ScalarFact($typing->dateArithmetic($facts[0]->type, IntervalUnit::Day), $typing->nullability('Y', $facts)), $derivation);
         }
 
-        return $typing->fact($this->function->result(), $facts);
+        return (new Results())->refine($this->function->value, $this->arguments, $facts, $typing->fact($this->function->result(), $facts), $derivation);
     }
 
     /**

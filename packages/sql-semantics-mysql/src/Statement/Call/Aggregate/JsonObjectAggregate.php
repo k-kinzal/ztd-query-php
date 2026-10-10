@@ -5,12 +5,18 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Call\Aggregate;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Call\Arguments;
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Rules\Call\Windows;
+use SqlSemantics\Platform\MySql\Rules\Query\Grouping\AggregateOwnership;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
+use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\WindowSpecification;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -64,16 +70,23 @@ final class JsonObjectAggregate implements SetFunction
     }
 
     /**
-     * Derives the operands and the window; the result is JSON.
+     * Derives the operands and the window; the result is JSON, as the temporary table of a window holds it over a window.
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $environment = $this->aggregates() ? (new HavingScope())->leave($environment) : $environment;
+        $environment = $this->aggregates() ? (new HavingScope())->arguments($environment) : $environment;
         (new Arguments())->one($this->key, $derivation, $environment);
         (new Arguments())->one($this->value, $derivation, $environment);
         (new Windows())->derive($this->over, $derivation, $environment);
+        (new AggregateOwnership())->register($this, $derivation, $environment);
 
-        return new ScalarFact(new Known(TypeClass::Json->descriptor()), Nullability::Nullable);
+        $domain = $derivation->context->profile->grammar === GrammarRelease::MySql5744 ? new Domain(Kind::Json, Field::Json, 16777216, 0, false, Collation::binary()) : new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'));
+
+        if ($this->over !== null) {
+            $domain = (new Materialization())->windowed($domain, $derivation->context->profile->grammar);
+        }
+
+        return new ScalarFact(new Known($domain), Nullability::Nullable);
     }
 
     /**

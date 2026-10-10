@@ -46,4 +46,12 @@ final class RegexpTest extends TestCase
 
         new Regexp(new StringLiteral(['a']), new InList(new NumberLiteral('1'), [new NumberLiteral('2')]));
     }
+
+    public function testDeriveScalarDependsOnThePatternInMySql57(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
+
+        self::assertSame([Nullability::Dependent, Nullability::Nullable], [$derivation->scalar(new Regexp(new StringLiteral(['a']), new NullLiteral()), $derivation->environment())->nullability, $derivation->scalar(new Regexp(new NullLiteral(), new StringLiteral(['a'])), $derivation->environment())->nullability]);
+    }
 }

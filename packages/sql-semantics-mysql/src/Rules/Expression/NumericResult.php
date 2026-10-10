@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Rules\Typing\Constants;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NullLiteral;
@@ -18,6 +19,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Fact\ScalarFact;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Type\Known;
@@ -39,8 +42,9 @@ use SqlSemantics\Statement\Type\TypeFact;
  * when an operand is. `%` follows `+` but its integer result takes the
  * sign of the dividend. The bit operators and `~` yield BIGINT UNSIGNED;
  * from MySQL 8.0 they yield VARBINARY when their operands (for the shifts
- * and `~`, the shifted operand) are binary strings other than hexadecimal,
- * bit and NULL literals. Unary minus keeps DECIMAL and DOUBLE, makes an
+ * and `~`, the shifted operand) are binary strings or hexadecimal, bit and
+ * NULL literals, and one of them is not such a literal; a literal written
+ * with an introducer is a string, not a literal of this kind. Unary minus keeps DECIMAL and DOUBLE, makes an
  * integer a signed BIGINT, and makes an integer literal beyond the negated
  * BIGINT range a DECIMAL. Terminates: no recursion.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/arithmetic-functions.html,
@@ -112,16 +116,56 @@ final class NumericResult
         if ($release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744) {
             return new Known($this->integer(true));
         }
-        $binary = true;
+        $binary = false;
         foreach ($operands as [$expression, $fact]) {
             while ($expression instanceof Grouped) {
                 $expression = $expression->operand;
             }
-            $binary = $binary && !$expression instanceof RadixLiteral && !$expression instanceof NullLiteral
-                && $fact->type instanceof Known && $fact->type->descriptor instanceof Binary;
+            if (($expression instanceof RadixLiteral && $expression->introducer === null) || $expression instanceof NullLiteral) {
+                continue;
+            }
+            if (!$fact->type instanceof Known || !($fact->type->descriptor instanceof Binary || ($fact->type->descriptor instanceof Domain && $fact->type->descriptor->kind === Kind::String && $fact->type->descriptor->collation->bytes()))) {
+                return new Known($this->integer(true));
+            }
+            $binary = true;
         }
 
         return new Known($binary ? new Binary(BinaryKind::VarBinary) : $this->integer(true));
+    }
+
+    /**
+     * Tells whether MySQL 5.7 warns that a bit operator works on binary strings: a shift whose left operand is a binary string, or another operator with a binary string operand and no operand that is not one, a hexadecimal or bit literal or NULL (verified on a live 5.7.44 server).
+     */
+    public function binaryOperation(ArithmeticOperator $operator, Scalar $left, ScalarFact $leftFact, Scalar $right, ScalarFact $rightFact): bool
+    {
+        if ($operator === ArithmeticOperator::ShiftLeft || $operator === ArithmeticOperator::ShiftRight) {
+            return $this->binaryOperand($left, $leftFact);
+        }
+        foreach ([[$left, $leftFact], [$right, $rightFact]] as [$operand, $fact]) {
+            while ($operand instanceof Grouped) {
+                $operand = $operand->operand;
+            }
+            if (!($operand instanceof RadixLiteral && $operand->introducer === null) && !$operand instanceof NullLiteral && !$this->binaryOperand($operand, $fact)) {
+                return false;
+            }
+        }
+
+        return $this->binaryOperand($left, $leftFact) || $this->binaryOperand($right, $rightFact);
+    }
+
+    /**
+     * Tells whether an operand of a bit operator is a binary string, which MySQL 5.7 warns about: neither a hexadecimal or bit literal without introducer nor NULL (verified on a live 5.7.44 server).
+     */
+    public function binaryOperand(Scalar $expression, ScalarFact $fact): bool
+    {
+        while ($expression instanceof Grouped) {
+            $expression = $expression->operand;
+        }
+        if (($expression instanceof RadixLiteral && $expression->introducer === null) || $expression instanceof NullLiteral || !$fact->type instanceof Known) {
+            return false;
+        }
+
+        return $fact->type->descriptor instanceof Binary || ($fact->type->descriptor instanceof Domain && $fact->type->descriptor->kind === Kind::String && $fact->type->descriptor->collation->bytes());
     }
 
     /**
@@ -137,7 +181,7 @@ final class NumericResult
         $results = [];
         foreach ($alternatives->of($fact->type) as $type) {
             $results[] = match ((new NumericContext())->classify($operand, $type)) {
-                NumericClass::Signed, NumericClass::Unsigned => $this->beyond($operand) ? new Decimal() : $this->integer(false),
+                NumericClass::Signed, NumericClass::Unsigned => $this->beyond($operand) || (new Constants())->negative($operand) ? new Decimal() : $this->integer(false),
                 NumericClass::Decimal => new Decimal(),
                 NumericClass::Double => new Floating(FloatingKind::Double),
             };

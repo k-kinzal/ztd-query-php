@@ -100,6 +100,23 @@ final class Output
     }
 
     /**
+     * Writes one block comment as the trivia between the previous piece and the next one.
+     *
+     * A dialect whose server reads a comment, such as an optimizer hint comment, writes it
+     * here; the comment separates the pieces as a space does and adds no token.
+     *
+     * @return $this
+     * @throws \SqlSemantics\Diagnostic\InvariantViolation When the text is not exactly one block comment
+     */
+    public function comment(string $text): self
+    {
+        Check::invariant(preg_match('~\A/\*.*\*/\z~s', $text) === 1 && strpos($text, '*/') === strlen($text) - 2, 'A comment is one block comment.');
+        $this->trail = ' ' . $text . ' ';
+
+        return $this;
+    }
+
+    /**
      * Joins the next piece to the previous one without a separating space.
      *
      * @return $this

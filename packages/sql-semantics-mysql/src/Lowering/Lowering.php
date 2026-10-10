@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Lowering;
 
+use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\LanguageProfile;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Diagnostic\ImplementationGap;
@@ -17,10 +17,10 @@ use SqlSemantics\Platform\MySql\Lowering\Call\CallRules;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\DefinitionRoutes;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\DefinitionTails;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\Family;
-use SqlSemantics\Platform\MySql\Lowering\Dispatch\OptimizerHints;
 use SqlSemantics\Platform\MySql\Lowering\Dispatch\StatementRoutes;
 use SqlSemantics\Platform\MySql\Lowering\Dml\DmlRules;
 use SqlSemantics\Platform\MySql\Lowering\Expression\ExpressionRules;
+use SqlSemantics\Platform\MySql\Lowering\Hint\HintReader;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\CharsetRule;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\LiteralRule;
 use SqlSemantics\Platform\MySql\Lowering\Leaf\NameRule;
@@ -36,6 +36,8 @@ use SqlSemantics\Platform\MySql\Lowering\TableChange\TableChangeRules;
 use SqlSemantics\Platform\MySql\Lowering\TableDefinition\TableDefinitionRules;
 use SqlSemantics\Platform\MySql\Lowering\Type\TypeRule;
 use SqlSemantics\Platform\MySql\Lowering\Utility\UtilityRules;
+use SqlSemantics\Platform\MySql\Statement\Hint\Comment\HintComment;
+use SqlSemantics\Platform\MySql\Statement\Hint\OptimizerHint;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -48,8 +50,9 @@ use SqlSemantics\Statement\Statement;
  * input holds none. A statement is handed to the family that owns its rule
  * (MYSQL-STATEMENT-ROUTES-001, MYSQL-DEFINITION-ROUTES-001). The other
  * start_entry alternatives begin with a grammar selector token the lexer
- * never produces, so no SQL text reaches them. An optimizer hint comment is
- * reported as a missing rule (MYSQL-OPTIMIZER-HINTS-001). Terminates: the
+ * never produces, so no SQL text reaches them. The hint comments of the
+ * input are read once (MYSQL-OPTIMIZER-HINTS-001) and kept with the query
+ * block or statement whose keyword they follow. Terminates: the
  * root rules are unit productions over strict subtrees.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/sql-statements.html.
  * Status: Implemented.
@@ -171,11 +174,22 @@ final class Lowering
     public readonly UtilityRules $utility;
 
     /**
+     * @var list<int> The byte offsets of the parameter markers of the input, in order
+     */
+    private array $markers = [];
+
+    /**
+     * @var array<int, HintComment> The hint comments of the input, by the offset of the keyword each follows
+     */
+    private array $hints = [];
+
+    /**
      * @param Productions $productions The productions of the grammar release
      * @param Leaves $leaves The record of operand leaves of this analysis
      * @param LanguageProfile $profile The language profile the tree was parsed under
+     * @param \SqlSemantics\Construction\Origins $origins The input locations recorded for this lowering
      */
-    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile)
+    public function __construct(public readonly Productions $productions, public readonly Leaves $leaves, public readonly LanguageProfile $profile, public readonly \SqlSemantics\Construction\Origins $origins = new \SqlSemantics\Construction\Origins())
     {
         $this->names = new NameRule($this);
         $this->literals = new LiteralRule($this);
@@ -199,17 +213,43 @@ final class Lowering
     }
 
     /**
+     * Answers the position of a parameter marker among the markers of the input, counted from 0.
+     *
+     * The markers are those of the input statements() last read; an offset that holds no marker
+     * answers null.
+     */
+    public function marker(int $offset): ?int
+    {
+        $position = array_search($offset, $this->markers, true);
+
+        return $position === false ? null : $position;
+    }
+
+    /**
+     * Answers the hints of the comment that follows a keyword of the input statements() last read, in written order; none when no comment does.
+     *
+     * @return list<OptimizerHint>
+     */
+    public function hints(Token $keyword): array
+    {
+        return $this->hints[$keyword->offset]->hints ?? [];
+    }
+
+    /**
      * Lowers a complete input into the statements it holds: one, or none for an empty input.
      *
      * @return list<Statement>
-     * @throws ImplementationGap When a production has no rule or the input holds an optimizer hint comment
+     * @throws ImplementationGap When a production has no rule
      */
     public function statements(Node $input): array
     {
-        $hint = $this->profile->grammar === GrammarRelease::MySql5651 ? null : (new OptimizerHints())->first($input);
-        if ($hint !== null) {
-            throw ImplementationGap::rule('MySQL optimizer hints, which the parser delivers as a comment: ' . $hint);
+        $this->markers = [];
+        foreach ($input->tokens() as $token) {
+            if ($token->name === 'PARAM_MARKER') {
+                $this->markers[] = $token->offset;
+            }
         }
+        $this->hints = (new HintReader($this->profile->grammar, $this->profile->lexical->ansiQuotes))->comments($input);
         $form = $this->productions->form($input);
         Check::invariant(!isset(self::SELECTED[$form->signature]), 'A grammar selector entry is not reachable from SQL text: ' . $form->signature);
         if ($form->signature === 'start_entry: sql_statement') {
@@ -248,7 +288,7 @@ final class Lowering
         }
         $family = (new StatementRoutes())->family($form->signature) ?? throw ImplementationGap::production($form);
 
-        return $family === Family::Definition ? $this->definition($form->node(0)) : $this->routed($family, $form->node(0));
+        return $this->origins->record($family === Family::Definition ? $this->definition($form->node(0)) : $this->routed($family, $form->node(0)), $statement);
     }
 
     /**

@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Conversion;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet;
+use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
 use SqlSemantics\Platform\MySql\Statement\Type\CastTarget;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
@@ -50,6 +51,7 @@ final class CastAtLocal implements Scalar
         $fact = (new Operands())->single($derivation->scalar($this->operand, $environment), $derivation);
         $problem = new NotSupportedYet('AT LOCAL');
         $derivation->report($problem);
+        $derivation->warn(new ParseFailure($problem));
 
         return new ScalarFact(new Invalid($problem), $fact->nullability);
     }

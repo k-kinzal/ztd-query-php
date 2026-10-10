@@ -76,6 +76,6 @@ final class BitRule
                 : new Arithmetic($operator, $result, $this->bitExpression($operation->node(2)));
         }
 
-        return $result;
+        return $this->lowering->origins->record($result, $expression);
     }
 }

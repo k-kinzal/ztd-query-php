@@ -84,7 +84,7 @@ final class HavingScopeTest extends TestCase
     public function testLeaveLetsTheArgumentsOfASetFunctionSeeTheColumns(): void
     {
         $semantics = new Semantics(Dialect::MySql);
-        $operation = $semantics->analyze('SELECT a FROM t HAVING MAX(c) > 0', [$semantics->analyze('CREATE TABLE t (a INT, c INT)')]);
+        $operation = $semantics->analyze('SELECT MAX(a) FROM t HAVING MAX(c) > 0', [$semantics->analyze('CREATE TABLE t (a INT, c INT)')]);
         $select = $operation->statement;
         self::assertInstanceOf(Select::class, $select);
         self::assertInstanceOf(Comparison::class, $select->having);
@@ -97,6 +97,18 @@ final class HavingScopeTest extends TestCase
         self::assertInstanceOf(ResolvedColumn::class, $operation->facts->scalar($maximum->arguments[0])->resolution);
         self::assertSame($environment, (new HavingScope())->leave($environment));
         self::assertSame([], (new HavingScope())->leave((new HavingScope())->enter($environment, new GroupedRow([], [], true)))->relations);
+    }
+
+    public function testArgumentsMarksTheInputPositionAndRemovesItsHavingResult(): void
+    {
+        $context = (new Semantics(Dialect::MySql))->context([]);
+        $environment = (new HavingScope())->enter(new \SqlSemantics\Resolution\Environment($context), new GroupedRow([], [], true));
+        $arguments = (new HavingScope())->arguments($environment);
+
+        self::assertTrue($arguments->aggregateArgument);
+        self::assertFalse($environment->aggregateArgument);
+        self::assertSame([], $arguments->relations);
+        self::assertSame($context, $arguments->context);
     }
 
     public function testRowAnswersTheGroupedRowOfAHavingEnvironmentOnly(): void

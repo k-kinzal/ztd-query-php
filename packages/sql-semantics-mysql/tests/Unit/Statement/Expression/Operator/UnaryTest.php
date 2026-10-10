@@ -10,19 +10,18 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
+use SqlSemantics\Platform\MySql\Rules\Expression\NumericResult;
+use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Collated;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Concatenation;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\Floating;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\FloatingKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -41,7 +40,18 @@ final class UnaryTest extends TestCase
         $invert = $derivation->scalar(new Unary(UnaryOperator::Invert, new StringLiteral(['7'])), $derivation->environment());
         $not = $derivation->scalar(new Unary(UnaryOperator::Not, new StringLiteral(['7'])), $derivation->environment());
 
-        self::assertEquals([new Known(new Character(CharacterKind::VarChar)), new Known(new Floating(FloatingKind::Double)), new Known(new Integral(IntegralKind::BigInt, null, [NumericModifier::Unsigned])), new Known(new Integral(IntegralKind::BigInt))], [$plus->type, $minus->type, $invert->type, $not->type]);
+        self::assertEquals([new Known(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)), new Known(Domain::double(23)), new Known(Domain::integer(Field::LongLong, 21, true)), new Known(Domain::integer(Field::LongLong, 1))], [$plus->type, $minus->type, $invert->type, $not->type]);
+    }
+
+    public function testDeriveScalarMakesTheNegationOfANegativeIntegerConstantADecimal(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+        $twice = $derivation->scalar(new Unary(UnaryOperator::Minus, new Unary(UnaryOperator::Minus, new NumberLiteral('3'))), $derivation->environment());
+        $once = $derivation->scalar(new Unary(UnaryOperator::Minus, new NumberLiteral('3')), $derivation->environment());
+        $smallest = $derivation->scalar(new Unary(UnaryOperator::Minus, new NumberLiteral('9223372036854775808')), $derivation->environment());
+
+        self::assertEquals([new Known(Domain::decimal(1, 0)), new Known(Domain::integer(Field::LongLong, 2)), new Known(Domain::integer(Field::LongLong, 20))], [$twice->type, $once->type, $smallest->type]);
     }
 
     public function testRenderNegatesACollatedOperandWithoutParentheses(): void
@@ -58,5 +68,15 @@ final class UnaryTest extends TestCase
         $this->expectExceptionMessage('The operand of a prefix operator needs a grouping to keep its place.');
 
         new Unary(UnaryOperator::Minus, new Concatenation(new NumberLiteral('1'), new NumberLiteral('2')));
+    }
+
+    public function testNegatedCountsTheSignInTheLengthOfAnExactResultIn57(): void
+    {
+        $platform = new Platform();
+        $legacy = new Derivation($platform->context($platform->profile('mysql-5.7.44', null, ParameterStyle::Native), null, [], true));
+        $modern = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+        $minus = new Unary(UnaryOperator::Minus, new NumberLiteral('1.5'));
+
+        self::assertSame([5, 4], [$minus->negated(new Numbers(), Domain::decimal(2, 1), new NumericResult(), $legacy)->length, $minus->negated(new Numbers(), Domain::decimal(2, 1), new NumericResult(), $modern)->length]);
     }
 }

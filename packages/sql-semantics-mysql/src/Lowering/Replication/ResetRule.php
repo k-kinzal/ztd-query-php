@@ -107,7 +107,7 @@ final class ResetRule
             $all = $this->lowering->form($form->node(1));
             $channel = count($form->node->children) === 3 ? $this->lowering->replication->channel($form->node(2)) : null;
 
-            return new ResetReplica($replica, self::ALL[$all->signature] ?? throw ImplementationGap::production($all), $channel);
+            return new ResetReplica($replica, self::ALL[$all->signature] ?? throw ImplementationGap::production($all), $channel, $form->signature === 'reset_option: SLAVE opt_replica_reset_options opt_channel');
         }
         $terminology = self::BINARY_LOGS[$form->signature] ?? throw ImplementationGap::production($form);
         if ($form->signature === 'reset_option: master_or_binary_logs_and_gtids source_reset_options') {

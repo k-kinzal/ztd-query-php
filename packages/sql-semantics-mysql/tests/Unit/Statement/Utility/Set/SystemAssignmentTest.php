@@ -11,6 +11,7 @@ use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\BareName;
 use SqlSemantics\Platform\MySql\Statement\Utility\Set\SystemAssignment;
+use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Type\Dependent;
@@ -33,9 +34,21 @@ final class SystemAssignmentTest extends TestCase
 
     public function testDeriveItemReportsARowAsTheValue(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze('SET @@SESSION.x = (1, 2)');
+        $operation = (new Semantics(Dialect::MySql))->analyze('SET @@SESSION.sort_buffer_size = (1, 2)');
 
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
+    }
+
+    public function testDeriveItemChecksTheValueBeforeTheTargetInModernReleases(): void
+    {
+        $diagnostics = (new Semantics(Dialect::MySql))->analyze('SET @@unknown_target = @@unknown_value')->facts->diagnostics;
+
+        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[0]);
+        self::assertSame('unknown_value', $diagnostics[0]->name);
+        self::assertFalse($diagnostics[0]->assigned);
+        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[1]);
+        self::assertSame('unknown_target', $diagnostics[1]->name);
+        self::assertTrue($diagnostics[1]->assigned);
     }
 
     public function testRenderWritesTheKeywordValue(): void
@@ -48,5 +61,22 @@ final class SystemAssignmentTest extends TestCase
     {
         $this->expectExceptionMessage('A bare name assigned to a system variable is its text.');
         new SystemAssignment(new SystemVariable(new Name('x')), new BareName(new Name('y'), null, false));
+    }
+
+    public function testDeriveItemLeavesTheAssignmentsOfAStoredProgramToItsRun(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+
+        self::assertSame(["Variable 'version' is a read only variable"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $semantics->analyze('SET @@version = 1')->facts->diagnostics));
+        self::assertSame([], $semantics->analyze('CREATE PROCEDURE p() SET @@version = 1')->facts->diagnostics);
+    }
+
+    public function testDeriveItemReportsAStructuredVariableThatIsNoKeyCacheVariable(): void
+    {
+        $unknown = (new Semantics(Dialect::MySql))->analyze('SET @@a.b = 1')->facts->diagnostics;
+
+        self::assertCount(1, $unknown);
+        self::assertInstanceOf(UnknownSystemVariable::class, $unknown[0]);
+        self::assertSame('a.b', $unknown[0]->name);
     }
 }

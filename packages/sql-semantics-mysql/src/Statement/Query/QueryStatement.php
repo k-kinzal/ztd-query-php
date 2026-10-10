@@ -6,7 +6,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Query;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Query\TailFacts;
+use SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoDestination;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoPosition;
 use SqlSemantics\Platform\MySql\Statement\Query\Locking\LockingClause;
@@ -78,7 +78,7 @@ final class QueryStatement implements Statement, Query
     public function deriveQuery(Derivation $derivation, Environment $outer): QueryFact
     {
         $fact = $derivation->query($this->query, $outer);
-        (new TailFacts())->derive($derivation, $outer, $fact, $this->into, $this->locking, null);
+        (new TailFacts())->derive($derivation, $outer, $fact, $this);
 
         return $fact;
     }

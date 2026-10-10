@@ -15,8 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Comparison;
 use SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
-use SqlSemantics\Platform\MySql\Statement\Type\Integral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\IntegralKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -38,9 +37,8 @@ final class BooleanLiteralTest extends TestCase
 
         self::assertTrue($literal->value);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Integral::class, $fact->type->descriptor);
-        self::assertSame(IntegralKind::BigInt, $fact->type->descriptor->kind);
-        self::assertFalse($fact->type->descriptor->unsigned());
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['BIGINT', 1, false], [$fact->type->descriptor->name(), $fact->type->descriptor->length, $fact->type->descriptor->unsigned]);
         self::assertSame(Nullability::NotNull, $fact->nullability);
     }
 
@@ -57,8 +55,8 @@ final class BooleanLiteralTest extends TestCase
 
         self::assertFalse($literal->value);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertInstanceOf(Integral::class, $fact->type->descriptor);
-        self::assertSame(IntegralKind::BigInt, $fact->type->descriptor->kind);
+        self::assertInstanceOf(Domain::class, $fact->type->descriptor);
+        self::assertSame(['BIGINT', 1], [$fact->type->descriptor->name(), $fact->type->descriptor->length]);
         self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
     }
 

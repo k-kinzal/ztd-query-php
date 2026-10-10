@@ -54,7 +54,7 @@ final class InQuery implements Scalar
         $operand = $derivation->scalar($this->operand, $environment);
         $query = $derivation->query($this->query, $environment);
 
-        return (new Operands())->truth((new SubqueryRows())->test($operand, $query, $derivation));
+        return (new Operands())->truth((new SubqueryRows())->test($operand, $query, $derivation, $this));
     }
 
     /**

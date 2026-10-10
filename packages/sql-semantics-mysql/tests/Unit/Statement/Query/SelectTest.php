@@ -409,4 +409,12 @@ final class SelectTest extends TestCase
 
         new Operation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]), new Select([], [new SelectExpression(new ScalarSubquery($select))]));
     }
+
+    public function testRenderWritesTheHintCommentAfterSelect(): void
+    {
+        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(1000) */ DISTINCT 1', (new Semantics(Dialect::MySql))->analyze('select/*+max_execution_time(1000)*/ distinct 1')->toString());
+        self::assertSame('SELECT 1', (new Semantics(Dialect::MySql))->analyze('SELECT /*+ FOO */ 1')->toString());
+        self::assertSame('SELECT /*+ BKA(`t`) */ 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT /*+ BKA(t) */ 1')->toString());
+        self::assertSame('SELECT 1', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT /*+ BKA(t) */ 1')->toString());
+    }
 }

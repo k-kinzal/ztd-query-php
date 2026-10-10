@@ -20,7 +20,8 @@ use SqlSemantics\Statement\Statement;
  * Rule: MYSQL-VALUES-001. The columns are named column_0, column_1 and so
  * on; the type of a column is aggregated over the rows
  * (MYSQL-RESULT-SLOTS-001) and it can be NULL when a value of it can. Rows of
- * different lengths are reported. The values see no column of the query.
+ * different lengths are reported, and so is an empty row, except in the
+ * rows an INSERT writes. The values see no column of the query.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/values.html. Status: Implemented.
  *
  * @visibility public

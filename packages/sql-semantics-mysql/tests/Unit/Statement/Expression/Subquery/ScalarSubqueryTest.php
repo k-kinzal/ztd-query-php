@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ScalarSubqueryTest extends TestCase
 {
-    public function testDeriveScalarHasTheTypeOfTheOneColumnAndCanBeNull(): void
+    public function testDeriveScalarPreservesTheTypeAndNullabilityOfTheReducedExpression(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
@@ -33,7 +33,9 @@ final class ScalarSubqueryTest extends TestCase
 
         self::assertInstanceOf(ScalarSubquery::class, $subquery);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertSame(['VARCHAR', Nullability::Nullable], [$fact->type->descriptor->name(), $fact->nullability]);
+        self::assertSame(['VARCHAR', Nullability::NotNull], [$fact->type->descriptor->name(), $fact->nullability]);
+        self::assertNotNull($fact->replacement);
+        self::assertTrue($derivation->facts()->covers($fact->replacement));
     }
 
     public function testDeriveScalarIsARowForSeveralColumns(): void
@@ -58,4 +60,16 @@ final class ScalarSubqueryTest extends TestCase
 
         self::assertSame('(SELECT 1)', (new Lexical())->join($out->pieces()));
     }
+    public function testDeriveScalarMakesAnEmptyMySql57AggregateNullable(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $subquery = (new Lowering($platform->productions($profile), new Leaves(), $profile))->expressions->expression($platform->parser($profile)->parse('SELECT (SELECT COUNT(*) LIMIT 0)')->find('expr')[0]);
+        $derivation = new Derivation($platform->context($profile, null, [], true));
+        $fact = $derivation->scalar($subquery, $derivation->environment());
+
+        self::assertSame(Nullability::Nullable, $fact->nullability);
+        self::assertNull($fact->replacement);
+    }
+
 }

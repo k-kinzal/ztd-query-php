@@ -34,6 +34,17 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ColumnResolverTest extends TestCase
 {
+    public function testOutputRetainsAliasDepthAndLeavesUnlistedNamesUnresolved(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x');
+        $scope = new Environment($operation->context, aliases: [$operation->field('x')]);
+        $reference = (new ColumnResolver())->output($scope, new Name('x'), 2, []);
+
+        self::assertInstanceOf(AliasTarget::class, $reference);
+        self::assertSame(2, $reference->depth);
+        self::assertNull((new ColumnResolver())->output($scope, new Name('y'), 2, []));
+    }
+
     public function testFindPrefersAColumnOfTheFromClauseToAnAlias(): void
     {
         $semantics = new Semantics(Dialect::MySql);
@@ -47,7 +58,7 @@ final class ColumnResolverTest extends TestCase
 
         self::assertInstanceOf(ResolvedColumn::class, $resolution);
         self::assertSame($table->columns[0], $resolution->declaration());
-        self::assertSame([], $operation->facts->diagnostics);
+        self::assertSame(["Expression #1 of SELECT list is not in GROUP BY clause and contains nonaggregated column '(current).t.b' which is not functionally dependent on columns in GROUP BY clause; this is incompatible with sql_mode=only_full_group_by"], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
     public function testFindFallsBackToTheAliasOfASelectListItem(): void
@@ -112,6 +123,9 @@ final class ColumnResolverTest extends TestCase
         $ambiguous = (new ColumnResolver())->alias(new Name('x'), [$fields[0], $fields[1], $fields[2]]);
         self::assertInstanceOf(AmbiguousAlias::class, $ambiguous);
         self::assertCount(3, $ambiguous->candidates);
+        $outer = (new ColumnResolver())->find(new Environment($operation->context, new Environment($operation->context, aliases: [$fields[0]])), new Name('x'));
+        self::assertInstanceOf(AliasTarget::class, $outer);
+        self::assertSame(1, $outer->depth);
     }
 
     public function testUnlistedAnswersTheOccurrencesThatMayGiveAHavingPositionTheName(): void
@@ -198,5 +212,13 @@ final class ColumnResolverTest extends TestCase
 
         self::assertSame([$input], $resolution->relations);
         self::assertCount(2, $resolution->missing);
+    }
+
+    public function testFindRefusesAQualifierThatNamesAnotherDatabase(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, null, null, \SqlSemantics\Contract\ParameterStyle::Native, new \SqlSemantics\Contract\SearchPath('d'));
+        $t = $semantics->analyze('CREATE TABLE t (a INT)');
+
+        self::assertSame([0, 1], [count($semantics->analyze('SELECT d.t.a FROM t', [$t])->facts->diagnostics), count($semantics->analyze('SELECT a FROM t WHERE e.t.a = 1', [$t])->facts->diagnostics)]);
     }
 }

@@ -20,6 +20,7 @@ use SqlSemantics\Resolution\CommonBinding;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\RelationFact;
+use SqlSemantics\Statement\Fact\Warning;
 use SqlSemantics\Statement\Identifier\Comparison;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -158,6 +159,27 @@ final class DerivationTest extends TestCase
         self::assertSame($declared->declarations()[0], $qualified->table);
     }
 
+    public function testDeferredWithholdsTheProblemsOfADefinitionUntilItsFirstUse(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $definition = new Star();
+        $problem = new MissingColumn(new Name('a'));
+        $environment = new Environment($derivation->context, null, [], [new CommonBinding(new Name('c'), $definition, new RowShape([]))]);
+
+        $result = $derivation->deferred($definition, static function () use ($derivation, $problem): string {
+            $derivation->report($problem);
+
+            return 'derived';
+        });
+        $withheld = $derivation->facts()->diagnostics;
+        $derivation->table(new QualifiedName(new Name('c')), $environment);
+        $derivation->table(new QualifiedName(new Name('c')), $environment);
+
+        self::assertSame('derived', $result);
+        self::assertSame([], $withheld);
+        self::assertSame([$problem], $derivation->facts()->diagnostics);
+    }
+
     public function testDeclareRecordsADeclarationTheStatementProvides(): void
     {
         $semantics = new Semantics(Dialect::Sqlite);
@@ -197,6 +219,22 @@ final class DerivationTest extends TestCase
         $derivation->report($problem);
 
         self::assertSame([$problem], $derivation->facts()->diagnostics);
+    }
+
+    public function testWarnRecordsAConditionThatIsNoProblem(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $warning = new class () implements Warning {
+            public function message(): string
+            {
+                return 'deprecated';
+            }
+        };
+
+        $derivation->warn($warning);
+
+        self::assertSame([$warning], $derivation->facts()->warnings);
+        self::assertSame([], $derivation->facts()->diagnostics);
     }
 
     public function testFactsFreezesEverythingRecorded(): void
@@ -289,4 +327,46 @@ final class DerivationTest extends TestCase
         self::assertTrue($derivation->facts()->covers($select));
         self::assertNotSame($environment, $derivation->environment());
     }
+
+    public function testProgramDerivesAStoredStatementWhileInProgramHolds(): void
+    {
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $operation = $semantics->analyze('CREATE PROCEDURE p() SET @@version = 1');
+
+        self::assertSame([], $operation->facts->diagnostics);
+    }
+
+    public function testInProgramIsFalseOutsideAStoredProgram(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+
+        self::assertFalse($derivation->inProgram());
+    }
+
+    public function testWritesRecordsTheColumnsTheRowsOfAQueryAreWrittenTo(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+        $query = new Select([new Star()]);
+        $derivation->writes($query, [], true);
+
+        self::assertSame([[], true], $derivation->written($query));
+    }
+
+    public function testWrittenIsNullForAQueryWhoseRowsAreNotWritten(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]));
+
+        self::assertNull($derivation->written(new Select([new Star()])));
+    }
+
+    public function testReadingWarningsMergesSourceNoticesAtExplicitBoundaries(): void
+    {
+        $semantics = new Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-8.4.7');
+        $operation = $semantics->analyze('SELECT !full, BINARY full');
+        $derivation = new Derivation($operation->context, $operation->sources);
+        $derivation->statement($operation->statement);
+
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator->value], array_map(static fn ($warning): string => $warning->message(), $derivation->readingWarnings()));
+    }
+
 }

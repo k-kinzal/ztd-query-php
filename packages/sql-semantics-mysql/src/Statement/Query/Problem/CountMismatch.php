@@ -23,8 +23,9 @@ final class CountMismatch implements Diagnostic
      * @param CountedList $list The lists that disagree
      * @param int $expected The length the first list fixes
      * @param int $actual The length of the list that disagrees
+     * @param int $row The number of the row that disagrees, counted from 1, for the rows of VALUES
      */
-    public function __construct(public readonly CountedList $list, public readonly int $expected, public readonly int $actual)
+    public function __construct(public readonly CountedList $list, public readonly int $expected, public readonly int $actual, public readonly int $row = 1)
     {
     }
 

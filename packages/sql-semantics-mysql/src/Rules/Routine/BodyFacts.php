@@ -24,9 +24,9 @@ use SqlSemantics\Statement\Statement;
  * statement as an inspected request read at the environment of the
  * position, so it sees the same parameters and variables: its parts receive
  * their facts and its diagnostics are kept, while it declares nothing and
- * returns nothing. Limit: a nested statement finds a column of its own
- * tables before a variable of the same name, where the server prefers the
- * variable; that needs a resolution order the core does not offer. An
+ * returns nothing. A name a variable of the program has denotes the
+ * variable before a column of the statement's own tables
+ * (MYSQL-PROGRAM-VARIABLE-LOOKUP-001). An
  * external routine body holds no SQL and derives nothing. Terminates: one
  * pass over the list; nested statements are strict parts.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/local-variable-scope.html,
@@ -68,7 +68,7 @@ final class BodyFacts
         if ($statement instanceof Query) {
             $derivation->query($statement, $scope->environment);
         } elseif ($statement instanceof Statement) {
-            $derivation->inspected($statement, $scope->environment);
+            $derivation->program($statement, $scope->environment);
         }
     }
 }

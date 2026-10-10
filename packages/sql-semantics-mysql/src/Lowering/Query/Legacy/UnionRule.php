@@ -75,11 +75,11 @@ final class UnionRule
                     throw ImplementationGap::production($second);
                 }
 
-                return [$blocks->part($second->node(0)), $second->node(1)];
+                return [$blocks->part($second->node(0))->hinted($this->lowering->hints($form->token(0))), $second->node(1)];
             case 'select_init: ( select_paren ) union_opt':
                 return [new ParenthesizedQuery($this->paren($form->node(1))), $form->node(3)];
             case 'select_init: SELECT_SYM select_part2 opt_union_clause':
-                return [$blocks->part($form->node(1)), $form->node(2)];
+                return [$blocks->part($form->node(1))->hinted($this->lowering->hints($form->token(0))), $form->node(2)];
             default:
                 throw ImplementationGap::production($form);
         }
@@ -95,7 +95,7 @@ final class UnionRule
         $form = $this->lowering->form($paren);
 
         return match ($form->signature) {
-            'select_paren: SELECT_SYM select_part2' => (new BlockRule($this->lowering))->part($form->node(1))->select(),
+            'select_paren: SELECT_SYM select_part2' => (new BlockRule($this->lowering))->part($form->node(1))->hinted($this->lowering->hints($form->token(0)))->select(),
             'select_paren: ( select_paren )', 'create_view_select_paren: ( create_view_select_paren )' => new ParenthesizedQuery($this->paren($form->node(1))),
             'create_view_select_paren: create_view_select' => $this->view($form->node(0))->select(),
             default => throw ImplementationGap::production($form),
@@ -191,6 +191,6 @@ final class UnionRule
             throw ImplementationGap::production($form);
         }
 
-        return (new BlockRule($this->lowering))->part($form->node(1));
+        return (new BlockRule($this->lowering))->part($form->node(1))->hinted($this->lowering->hints($form->token(0)));
     }
 }

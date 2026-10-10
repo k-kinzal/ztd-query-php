@@ -8,10 +8,10 @@ use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Introducers;
 use SqlSemantics\Platform\MySql\Rules\Strings;
+use SqlSemantics\Platform\MySql\Rules\Typing\Literals;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
+use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
 use SqlSemantics\Platform\MySql\Statement\Type\Character;
-use SqlSemantics\Platform\MySql\Statement\Type\CharsetAttribute;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharsetForm;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Resolution\Environment;
 use SqlSemantics\Statement\Fact\ScalarFact;
@@ -86,9 +86,14 @@ final class StringLiteral implements Scalar
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
         Check::input($this->escapes === EscapeRule::under($derivation->context->profile->lexical), 'A string literal must be spelled under the escape rule of the language profile.');
-        $charset = $this->introducer === null ? null : new CharsetAttribute(CharsetForm::Named, $this->introducer);
+        if ($this->introducer !== null) {
+            Deprecation::charset($this->introducer->value, $derivation);
+        }
+        if ($this->national) {
+            Deprecation::raise(Deprecated::National, $derivation);
+        }
 
-        return new ScalarFact(new Known(new Character(CharacterKind::VarChar, null, $this->national, $charset)), Nullability::NotNull);
+        return new ScalarFact(new Known(Literals::of($derivation->context)->string($this)), Nullability::NotNull);
     }
 
     /**

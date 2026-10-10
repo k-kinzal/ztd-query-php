@@ -20,8 +20,9 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\IntervalAddition;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalForm;
 use SqlSemantics\Platform\MySql\Statement\Literal\TemporalLiteral;
-use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
-use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Type\Known;
@@ -35,7 +36,7 @@ final class IntervalAdditionTest extends TestCase
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
 
-        self::assertEquals(new Known(new Temporal(TemporalKind::DateTime)), $derivation->scalar(new IntervalAddition(new Interval(new NumberLiteral('1'), IntervalUnit::Hour), new TemporalLiteral(TemporalForm::Date, '2024-01-31')), $derivation->environment())->type);
+        self::assertEquals(new Known(new Domain(Kind::DateTime, Field::DateTime, 19)), $derivation->scalar(new IntervalAddition(new Interval(new NumberLiteral('1'), IntervalUnit::Hour), new TemporalLiteral(TemporalForm::Date, '2024-01-31')), $derivation->environment())->type);
     }
 
     public function testRenderLetsTheOperandExtendOverAComparison(): void

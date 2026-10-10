@@ -66,6 +66,15 @@ final class StartGroupReplication implements Statement
                 $derivation->report(new RefusedSetting(ReplicationError::GroupPasswordTooLong));
             }
         }
+        $credentials = [];
+        foreach ($this->options as $option) {
+            $credentials[$option->credential->value] = $option->value->value;
+        }
+        if (($credentials['USER'] ?? null) === '') {
+            $derivation->report(new RefusedSetting(ReplicationError::GroupUserEmpty));
+        } elseif (isset($credentials['PASSWORD']) && !isset($credentials['USER'])) {
+            $derivation->report(new RefusedSetting(ReplicationError::GroupUserMissing));
+        }
     }
 
     /**

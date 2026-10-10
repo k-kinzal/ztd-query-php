@@ -10,11 +10,14 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Rendering\Lexical;
 use SqlSemantics\Rendering\Output;
 use SqlSemantics\Statement\Identifier\Name;
@@ -37,8 +40,26 @@ final class JsonObjectAggregateTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new JsonObjectAggregate(new StringLiteral(['x']), new NumberLiteral('1')), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Json->descriptor()), $fact->type);
+        self::assertEquals(new Known(new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'))), $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
+    }
+
+    public function testDeriveScalarAnswersTheBinaryJsonOf57(): void
+    {
+        $platform = new Platform();
+        $profile = $platform->profile('mysql-5.7.44', null, ParameterStyle::Native);
+        $derivation = new Derivation($platform->context($profile, null, [], false));
+        $fact = $derivation->scalar(new JsonObjectAggregate(new StringLiteral(['x']), new NumberLiteral('1')), $derivation->environment());
+
+        self::assertEquals(new Known(new Domain(Kind::Json, Field::Json, 16777216, 0, false, Collation::binary())), $fact->type);
+    }
+
+    public function testDeriveScalarAnswersTheJsonOfATemporaryTableOverAWindow(): void
+    {
+        $type = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT JSON_OBJECTAGG('a', 1) OVER ()")->field(0)->type;
+
+        self::assertInstanceOf(Known::class, $type);
+        self::assertSame(0, $type->descriptor instanceof Domain ? $type->descriptor->decimals : null);
     }
 
     public function testRenderWritesEachAll(): void
