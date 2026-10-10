@@ -104,6 +104,7 @@ final class HandlerCommand implements Command
     {
         $handler = $this->handler($session, $statement->handler->name->value);
         $table = $session->instance->dictionary->table($handler->schema, $handler->table);
+        (new \MySqlMemory\Session\Access\OpenedTables())->open($handler->schema, $handler->table, $session);
         assert($table !== null);
         $key = $statement instanceof HandlerScan ? null : $this->key($table, $statement->index->value, $handler);
         if ($statement instanceof HandlerIndexSeek && $key !== null && count($statement->values) > count($key->columns)) {
@@ -244,6 +245,7 @@ final class HandlerCommand implements Command
             throw QueryError::NonUniqueTable->error($name);
         }
         $session->handlers[mb_strtolower($name)] = new Handler($schema, $statement->table->name->value, $name);
+        (new \MySqlMemory\Session\Access\OpenedTables())->open($schema, $statement->table->name->value, $session);
 
         return new Completion();
     }

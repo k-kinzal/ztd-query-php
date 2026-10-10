@@ -17,6 +17,22 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class FlushCommandTest extends TestCase
 {
+    public function testTablesClosesHandlesWithoutRemovingDefinitionsOrRows(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(id INT); INSERT INTO t VALUES(1); FLUSH TABLES');
+        $closed = $session->query('SHOW OPEN TABLES FROM d')[0];
+        $read = $session->query('SELECT * FROM t')[0];
+        $reopened = $session->query('SHOW OPEN TABLES FROM d')[0];
+
+        self::assertInstanceOf(ResultSet::class, $closed);
+        self::assertInstanceOf(ResultSet::class, $read);
+        self::assertInstanceOf(ResultSet::class, $reopened);
+        self::assertSame([], $closed->rows);
+        self::assertSame([['1']], $read->rows);
+        self::assertSame([['d', 't', '0', '0']], $reopened->rows);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new FlushCommand())->clearsDiagnostics());

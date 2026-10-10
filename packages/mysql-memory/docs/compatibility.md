@@ -58,7 +58,8 @@ The rest of the behavior is modeled on MySQL 8.4: the error messages, the defaul
 | `DO`, `USE` | Emulated |
 | `SHOW`, `DESCRIBE`, `EXPLAIN`, `HELP` | See [Inspection](#inspection) |
 | `CHECK`, `ANALYZE`, `OPTIMIZE`, `REPAIR`, `CHECKSUM TABLE`, `CACHE INDEX`, `LOAD INDEX` | Emulated as for InnoDB tables; `CHECKSUM TABLE` values are not the server's |
-| `FLUSH`, `RESET PERSIST`, `ALTER INSTANCE`, `LOCK INSTANCE FOR BACKUP` | Answered as a server without caches, log files or keyring answers |
+| `FLUSH TABLES` | Closes cached table handles without removing definitions or rows; named flushes retain other handles, and HANDLER cursors reopen on their next read |
+| Other `FLUSH` forms, `RESET PERSIST`, `ALTER INSTANCE`, `LOCK INSTANCE FOR BACKUP` | Implemented for the modeled server state; physical log files and keyring operations are unavailable |
 | Tablespaces, log file groups, resource groups, foreign servers, spatial reference systems | Kept and checked as the server checks them; no file is written |
 | `INSTALL`, `UNINSTALL PLUGIN` and `COMPONENT` | Refused as a server with no plugin library refuses them |
 | Replication and binary log statements | The default channel tracks repository initialization, applier start/stop, reset, and relay log visibility; transaction transport between servers is not implemented |
@@ -264,11 +265,13 @@ In MySQL 5.6 the diagnostics area is cleared only by a statement that opens a ta
 - `SHOW TABLE STATUS` reports the figures InnoDB reports for a table of one page.
 - Table creation times retain the DDL statement clock in MySQL 8.0 and later; MySQL 5.6 and 5.7 use the actual clock. Update times track committed writes, including XA commits and nontransactional MyISAM writes, independently of `SET timestamp`. InnoDB update times are unavailable in MySQL 5.6 and are cleared by table rebuilds, truncation and restart. Readers see times in their session time zone. Table statistics expire according to `information_schema_stats_expiry` and the session clock; setting the expiry to zero bypasses the cached values without replacing them.
 - `HELP` finds no topic: the server's help tables are not included.
+- `SHOW OPEN TABLES` reads the table-handle cache, separately from the catalog. Table reads, writes, SHOW CREATE TABLE and ALTER open base-table handles; temporary tables stay outside the shared cache. HANDLER cursors and LOCK TABLES contribute to `In_use`, including uses held by another session. FLUSH, DROP and RENAME invalidate the affected handles.
 - `EXPLAIN` answers the plan of a statement as a server that scans every table would: one row per table with access type `ALL` in the traditional format, and the matching `TREE` and `JSON` documents. Only the plan of a statement that reads no table is the server's; the plans of the server come from its optimizer and cost model, which the emulator does not have.
 
 Differences:
 
 - **`SHOW PROCESSLIST`** lists the sessions of the server; the event scheduler daemon is not listed, the time a session has spent in its state reads 0, and a session's host is the one it connected as, without a port.
+- **The table cache does not model every internal access.** Internal dictionary handles opened by server startup and metadata-changing statements, capacity-driven eviction, pending lock requests and transient name locks are not fully represented. The differential fixture explicitly flushes both caches before each input; populated-cache regressions separately check the modeled transitions.
 - **`CHECKSUM TABLE`** answers a stable checksum of the rows, which is not the server's.
 
 ## System tables

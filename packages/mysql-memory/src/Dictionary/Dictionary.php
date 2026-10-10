@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Dictionary;
 
+use MySqlMemory\Dictionary\Cache\TableCache;
 use MySqlMemory\System\SystemSchemas;
 use SqlSemantics\Statement\Declaration\Table;
 
@@ -23,6 +24,7 @@ final class Dictionary
      */
     public function discardVolatileRows(): void
     {
+        $this->cache->close();
         foreach ($this->schemas as $schema) {
             foreach ($schema->tables as $table) {
                 $table->updated = strcasecmp($table->definition->engine, 'MyISAM') === 0 ? $table->updated : null;
@@ -46,11 +48,17 @@ final class Dictionary
     public Temporaries $temporaries;
 
     /**
+     * The server's open table handles, independent of its table definitions.
+     */
+    public readonly TableCache $cache;
+
+    /**
      * @param array<string, Schema> $schemas The databases, by name
      */
     public function __construct(public array $schemas = [])
     {
         $this->temporaries = new Temporaries();
+        $this->cache = new TableCache();
     }
 
     /**
@@ -113,6 +121,7 @@ final class Dictionary
             return;
         }
         unset($this->schemas[$schema]->tables[$name]);
+        $this->cache->close($schema, $name);
     }
 
     /**

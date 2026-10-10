@@ -71,6 +71,7 @@ final class ShowCreateTableCommand implements Command
         if ($view !== null && $view->declaration === $stored->definition->declaration) {
             return (new \MySqlMemory\Command\View\ShowCreateViewCommand())->write($view, $session, $context);
         }
+        (new \MySqlMemory\Session\Access\OpenedTables())->open($stored->definition->schema, $stored->definition->name, $session);
         $text = (new self($session->settings()->release()))->statement($stored);
         $headings = [
             Heading::text('Table', Field::VarString, 64, ColumnFlag::NotNull->value, 31),

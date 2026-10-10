@@ -23,7 +23,7 @@ final class ShowOpenTablesCommandTest extends TestCase
     public function testExecuteListsTheTablesOfADatabase(): void
     {
         $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT)');
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); SELECT * FROM t');
 
         $result = $session->query('SHOW OPEN TABLES FROM d')[0];
         $missing = $session->query('SHOW OPEN TABLES FROM nodb')[0];

@@ -70,6 +70,7 @@ final class LockTablesCommand implements Command
                 throw QueryError::NoSuchTable->error($schema, $lock->table->name->value);
             }
             $locks[] = [$schema, $lock->table->name->value, $lock->alias->value ?? $lock->table->name->value, $lock->mode === LockMode::Write || $lock->mode === LockMode::LowPriorityWrite];
+            (new \MySqlMemory\Session\Access\OpenedTables())->open($schema, $lock->table->name->value, $session);
         }
         $session->transaction->commit();
         $session->locks = $locks;

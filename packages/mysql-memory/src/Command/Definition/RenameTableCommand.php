@@ -85,6 +85,7 @@ final class RenameTableCommand implements Command
         }
         foreach ($moves as [$table]) {
             unset($dictionary->schemas[$table->definition->schema]->tables[$table->definition->name]);
+            $dictionary->cache->close($table->definition->schema, $table->definition->name);
         }
         foreach ($moves as [$table, $to]) {
             $from = [$table->definition->schema, $table->definition->name];

@@ -144,6 +144,7 @@ final class AlterTableCommand implements Command
         if ($table === null) {
             throw $session->instance->dictionary->schema($schema) === null ? Errors::unknown($schema, $name, $session->settings()->release()) : QueryError::NoSuchTable->error($schema, $name);
         }
+        (new \MySqlMemory\Session\Access\OpenedTables())->open($schema, $name, $session);
 
         return $table;
     }

@@ -124,6 +124,9 @@ final class Relations
             throw QueryError::NoSuchTable->error($name->schema->value ?? $this->planner->settings->database, $name->name->value);
         }
         $definition = $stored->definition;
+        if (!$definition->temporary) {
+            $this->planner->dictionary->cache->open($definition->schema, $definition->name);
+        }
         $selected = null;
         if ($reference->partitions !== []) {
             if ($definition->partitioning === null) {

@@ -23,8 +23,8 @@ use SqlSemantics\Statement\Operation;
 /**
  * Executes FLUSH and FLUSH TABLES.
  *
- * Every form commits the open transaction. The emulated server keeps no caches, logs to no file
- * and holds no table open, so most forms only succeed. FLUSH BINARY LOGS and FLUSH LOGS close the
+ * Every form commits the open transaction. FLUSH TABLES closes cached handles while retaining
+ * definitions and rows. Most other forms only succeed. FLUSH BINARY LOGS and FLUSH LOGS close the
  * active binary log file and open the next. FLUSH RELAY LOGS FOR CHANNEL fails for a channel other
  * than the default one, which is the only channel of the server. FLUSH TABLES ... WITH READ LOCK
  * and FLUSH TABLES ... FOR EXPORT need each table they name to exist, and lock the tables for
@@ -56,6 +56,9 @@ final class FlushCommand implements Command
     {
         $statement = $operation->statement;
         $session->transaction->commit();
+        if ($statement instanceof FlushTables) {
+            $this->tables($statement, $session);
+        }
         if ($statement instanceof FlushTables && $statement->lock !== null) {
             $locks = [];
             foreach ($statement->tables as $table) {
@@ -70,6 +73,7 @@ final class FlushCommand implements Command
                     throw QueryError::NoSuchTable->error($schema, $table->name->name->value);
                 }
                 $locks[] = [$schema, $table->name->name->value, $table->name->name->value, false];
+                (new \MySqlMemory\Session\Access\OpenedTables())->open($schema, $table->name->name->value, $session);
             }
             if ($locks !== []) {
                 $session->locks = $locks;
@@ -92,5 +96,22 @@ final class FlushCommand implements Command
         }
 
         return new Completion();
+    }
+
+    /**
+     * Closes cached handles while retaining definitions, rows and HANDLER cursor names.
+     */
+    public function tables(FlushTables $statement, Session $session): void
+    {
+        $cache = $session->instance->dictionary->cache;
+        if ($statement->tables === []) {
+            $cache->close();
+
+            return;
+        }
+        foreach ($statement->tables as $table) {
+            $schema = $table->name->schema->value ?? $session->variables->database;
+            $cache->close($schema, $table->name->name->value);
+        }
     }
 }

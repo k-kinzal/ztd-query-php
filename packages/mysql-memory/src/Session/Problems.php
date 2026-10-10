@@ -8,6 +8,7 @@ use MySqlMemory\Error\Family\ProgramError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Walker;
+use MySqlMemory\Session\Access\OpenedTables;
 use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Problem\Locations;
 use MySqlMemory\Session\Problem\Stages;
@@ -221,6 +222,7 @@ final class Problems
      */
     public function opened(Operation $operation, Session $session, array $diagnostics): void
     {
+        (new OpenedTables())->prepare($this->reached($operation->statement), $operation->facts, $session);
         $missing = array_values(array_filter($diagnostics, static fn (Diagnostic $diagnostic): bool => $diagnostic instanceof MissingTable));
         if ($missing === []) {
             return;

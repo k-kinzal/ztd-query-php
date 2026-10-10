@@ -97,7 +97,7 @@ jobs:
           composer-options: --prefer-dist
           require-lock-file: true
       - name: Compare regression cases with MySQL started by Testcontainers
-        run: vendor/bin/phpunit tests/Integration/Fuzz/DifferentialTest.php
+        run: vendor/bin/phpunit tests/Integration/Fuzz
 
   lint:
     name: Lint
