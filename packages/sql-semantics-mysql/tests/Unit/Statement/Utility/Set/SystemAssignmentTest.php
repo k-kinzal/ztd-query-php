@@ -39,6 +39,18 @@ final class SystemAssignmentTest extends TestCase
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
+    public function testDeriveItemChecksTheValueBeforeTheTargetInModernReleases(): void
+    {
+        $diagnostics = (new Semantics(Dialect::MySql))->analyze('SET @@unknown_target = @@unknown_value')->facts->diagnostics;
+
+        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[0]);
+        self::assertSame('unknown_value', $diagnostics[0]->name);
+        self::assertFalse($diagnostics[0]->assigned);
+        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[1]);
+        self::assertSame('unknown_target', $diagnostics[1]->name);
+        self::assertTrue($diagnostics[1]->assigned);
+    }
+
     public function testRenderWritesTheKeywordValue(): void
     {
         self::assertSame('SET @@SESSION.x = ON', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('set @@local.x = on')->toString());

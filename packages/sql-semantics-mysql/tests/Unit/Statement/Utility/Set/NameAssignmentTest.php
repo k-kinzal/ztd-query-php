@@ -39,6 +39,18 @@ final class NameAssignmentTest extends TestCase
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
+    public function testDeriveItemResolvesAnUnknownTargetBeforeItsValue(): void
+    {
+        $diagnostics = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SET unknown_target = @@unknown_value')->facts->diagnostics;
+
+        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[0]);
+        self::assertSame('unknown_target', $diagnostics[0]->name);
+        self::assertTrue($diagnostics[0]->assigned);
+        self::assertFalse($diagnostics[0]->structured);
+        self::assertInstanceOf(UnknownSystemVariable::class, $diagnostics[1]);
+        self::assertFalse($diagnostics[1]->assigned);
+    }
+
     public function testRenderWritesTheScopeAndTheQualifier(): void
     {
         self::assertSame('SET GLOBAL k.key_buffer_size = 1', (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze('set global k.key_buffer_size = 1')->toString());
@@ -58,6 +70,8 @@ final class NameAssignmentTest extends TestCase
         self::assertCount(1, $unknown);
         self::assertInstanceOf(UnknownSystemVariable::class, $unknown[0]);
         self::assertSame('a.b', $unknown[0]->name);
+        self::assertTrue($unknown[0]->assigned);
+        self::assertTrue($unknown[0]->structured);
         self::assertSame([], $semantics->analyze('SET GLOBAL hot.key_buffer_size = 0')->facts->diagnostics);
     }
 }

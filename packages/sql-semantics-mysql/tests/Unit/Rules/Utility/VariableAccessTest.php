@@ -44,6 +44,16 @@ final class VariableAccessTest extends TestCase
         self::assertEquals([VariableRule::ReadOnly, VariableRule::SetGlobalOfSessionVariable, VariableRule::SetSessionOfGlobalVariable, VariableRule::SessionReadOnly], array_map(static fn ($diagnostic) => $diagnostic instanceof VariableMisuse ? $diagnostic->rule : null, $derivation->facts()->diagnostics));
     }
 
+    public function testAssignRetainsWhetherTheUnknownVariableWasWritten(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $access = new VariableAccess();
+        $access->assign('nosuch', null, $derivation);
+        $access->read('nosuch', null, $derivation);
+
+        self::assertEquals([new UnknownSystemVariable('nosuch', true), new UnknownSystemVariable('nosuch')], $derivation->facts()->diagnostics);
+    }
+
     public function testFindReportsAnUnknownVariable(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));

@@ -100,13 +100,13 @@ final class SystemVariable implements Scalar
         $grammar = $derivation->context->profile->grammar;
         $variables = SystemVariables::of($grammar);
         if ($grammar === GrammarRelease::MySql5651 || $grammar === GrammarRelease::MySql5744) {
-            $derivation->report($variables->find($this->name->value) === null ? new UnknownSystemVariable($this->name->value) : new UnstructuredVariable($this->name->value));
+            $derivation->report($variables->find($this->name->value) === null ? new UnknownSystemVariable($this->name->value, $this->assigned, true) : new UnstructuredVariable($this->name->value));
 
             return;
         }
         $name = $this->instance->value . '.' . $this->name->value;
         if ($variables->find($name) === null) {
-            $derivation->report(new UnknownSystemVariable($name));
+            $derivation->report(new UnknownSystemVariable($name, $this->assigned, true));
         }
     }
 

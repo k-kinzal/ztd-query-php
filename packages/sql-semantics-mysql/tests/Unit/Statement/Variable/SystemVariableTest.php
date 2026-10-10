@@ -134,7 +134,7 @@ final class SystemVariableTest extends TestCase
     {
         $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
 
-        self::assertEquals([[new UnknownSystemVariable('y')], [new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable('sql_mode')]], [$semantics->analyze('SELECT @@x.y')->facts->diagnostics, $semantics->analyze("SET x.sql_mode = ''")->facts->diagnostics]);
+        self::assertEquals([[new UnknownSystemVariable('y', structured: true)], [new \SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnstructuredVariable('sql_mode')]], [$semantics->analyze('SELECT @@x.y')->facts->diagnostics, $semantics->analyze("SET x.sql_mode = ''")->facts->diagnostics]);
     }
 
     public function testDeriveScalarTypesAParameterOfANamedKeyCacheAsTheVariable(): void

@@ -29,7 +29,10 @@ use SqlSemantics\Statement\Snapshot;
  * instance of a structured system variable; `DEFAULT.x` is the instance
  * `default`. The value is derived as an expression at a position that sees
  * no relation, a keyword value has no facts, and a bare name value is its
- * text for a system variable (MYSQL-SET-WORD-001). Diagnostics: none.
+ * text for a system variable (MYSQL-SET-WORD-001). Outside a program, an unknown
+ * assignment target is reported. An explicitly scoped target is also checked for
+ * writability and scope. MySQL 8.0 and later derive the value before checking the
+ * target; older releases check the target first.
  * Terminates: the parts are leaves.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-variable.html,
  * https://dev.mysql.com/doc/refman/8.4/en/set-statement.html,
@@ -57,16 +60,26 @@ final class NameAssignment implements SetItem
     }
 
     /**
-     * Derives the value, and checks that SET can change a variable written with a scope; a name without a scope may be a variable of a stored program.
+     * Resolves the target and value in the release's order; inside a stored program an unscoped name may be local.
      */
     public function deriveItem(Derivation $derivation): void
     {
-        if ($this->scope !== null && $this->qualifier === null && !$derivation->inProgram()) {
-            (new VariableAccess())->assign($this->name->value, $this->scope, $derivation);
-        } elseif ($this->qualifier !== null && !$derivation->inProgram() && Settings::of($derivation->context)->row($this->qualifier->value) === null) {
-            (new SystemVariable($this->name, null, $this->qualifier))->structured($derivation);
+        $valueFirst = !in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        if ($valueFirst && $this->value instanceof Scalar) {
+            (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
-        if ($this->value instanceof Scalar) {
+        $settings = Settings::of($derivation->context);
+        if ($this->qualifier === null && !$derivation->inProgram() && ($this->scope !== null || $settings->variable($this->name->value) === null)) {
+            $access = new VariableAccess();
+            if ($this->scope === null) {
+                $access->find($this->name->value, $derivation, true);
+            } else {
+                $access->assign($this->name->value, $this->scope, $derivation);
+            }
+        } elseif ($this->qualifier !== null && !$derivation->inProgram() && $settings->row($this->qualifier->value) === null) {
+            (new SystemVariable($this->name, null, $this->qualifier, true))->structured($derivation);
+        }
+        if (!$valueFirst && $this->value instanceof Scalar) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
     }

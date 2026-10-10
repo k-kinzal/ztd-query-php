@@ -21,8 +21,10 @@ use SqlSemantics\Statement\Snapshot;
  * assigned. The variable is derived as a system variable reference, the
  * value as an expression at a position that sees no relation; a keyword
  * value (SetWord) has no facts, and a bare name value is its text
- * (MYSQL-SET-WORD-001). Diagnostics: none, as the variables of the running
- * server are not part of the context. Terminates: the parts are leaves.
+ * (MYSQL-SET-WORD-001). Outside a stored program the target is checked for
+ * existence, writability and scope. MySQL 8.0 and later derive the value before
+ * checking the target; older releases check the target first.
+ * Terminates: the parts are leaves.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/set-variable.html.
  * Status: Implemented.
  *
@@ -49,13 +51,17 @@ final class SystemAssignment implements SetItem
      */
     public function deriveItem(Derivation $derivation): void
     {
+        $valueFirst = !in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        if ($valueFirst && $this->value instanceof Scalar) {
+            (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
+        }
         $derivation->scalar($this->variable, $derivation->environment());
         if ($this->variable->instance === null && !$derivation->inProgram()) {
             (new VariableAccess())->assign($this->variable->name->value, $this->variable->scope, $derivation);
         } elseif (!$derivation->inProgram()) {
             $this->variable->structured($derivation);
         }
-        if ($this->value instanceof Scalar) {
+        if (!$valueFirst && $this->value instanceof Scalar) {
             (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         }
     }

@@ -23,8 +23,10 @@ final class UnknownSystemVariable implements Diagnostic
 
     /**
      * @param string $name The variable as written
+     * @param bool $assigned Whether this occurrence is the target of SET, rather than a value read
+     * @param bool $structured Whether lookup included a component or key cache instance name
      */
-    public function __construct(public readonly string $name)
+    public function __construct(public readonly string $name, public readonly bool $assigned = false, public readonly bool $structured = false)
     {
     }
 

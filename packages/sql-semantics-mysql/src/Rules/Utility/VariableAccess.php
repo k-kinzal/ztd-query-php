@@ -59,7 +59,7 @@ final class VariableAccess
      */
     public function assign(string $name, ?VariableScope $scope, Derivation $derivation): void
     {
-        $definition = $this->find($name, $derivation);
+        $definition = $this->find($name, $derivation, true);
         if ($definition === null) {
             return;
         }
@@ -79,11 +79,11 @@ final class VariableAccess
     /**
      * Answers the variable of the release with a name, or null after reporting that there is none.
      */
-    public function find(string $name, Derivation $derivation): ?Definition
+    public function find(string $name, Derivation $derivation, bool $assigned = false): ?Definition
     {
         $definition = SystemVariables::of($derivation->context->profile->grammar)->find($name);
         if ($definition === null) {
-            $derivation->report(new UnknownSystemVariable($name));
+            $derivation->report(new UnknownSystemVariable($name, $assigned));
         }
 
         return $definition;
