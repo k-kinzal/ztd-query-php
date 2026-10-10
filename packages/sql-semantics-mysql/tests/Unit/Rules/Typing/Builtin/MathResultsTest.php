@@ -41,7 +41,7 @@ final class MathResultsTest extends TestCase
 
     public function testSameKeepsTheClassOfTheArgument(): void
     {
-        self::assertEquals(Domain::integer(Field::Long, 11), (new MathResults())->same(Domain::integer(Field::Long, 11)));
+        self::assertEquals(Domain::integer(Field::LongLong, 11), (new MathResults())->same(Domain::integer(Field::Long, 11)));
         self::assertEquals(Domain::double(23), (new MathResults())->same(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)));
     }
 

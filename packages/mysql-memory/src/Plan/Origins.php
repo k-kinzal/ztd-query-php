@@ -107,6 +107,10 @@ final class Origins
      */
     public function origin(Field $field, Scope $scope): ?ColumnOrigin
     {
+        $replacement = $field->expression === null ? null : $this->planner->compiler->facts->scalar($field->expression)->replacement;
+        if ($replacement !== null) {
+            return $this->origin(new Field($field->position, $field->slot, $replacement), $scope);
+        }
         $resolution = $field->resolution;
         if ($field->expression instanceof ColumnUse) {
             $resolution = $this->planner->compiler->facts->scalar($field->expression)->resolution;

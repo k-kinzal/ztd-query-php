@@ -18,6 +18,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class CompilerTest extends TestCase
 {
+    public function testCompileEvaluatesTheResolvedScalarReplacementWithoutItsLimit(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT (SELECT 1 LIMIT 0), (SELECT 2 LIMIT 1 OFFSET 1), (SELECT NULL), (SELECT MAX(3) LIMIT 0)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '2', null, null]], $result->rows);
+        self::assertSame([1, 1, 0, 0], array_map(static fn ($column): int => $column->flags & 1, $result->columns));
+    }
+
     public function testParameterIndexReadsEachMarkerInWrittenOrder(): void
     {
         $session = (new Instance())->connect();

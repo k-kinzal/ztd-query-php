@@ -94,16 +94,17 @@ final class ConstancyTest extends TestCase
         self::assertSame(Constancy::Row, Constancy::children($call, $operation->facts, 0, true, []));
     }
 
-    public function testMergedAnswersTheItemOfASubqueryWithoutAnyClause(): void
+    public function testWithinUsesTheReplacementResolvedBySemantics(): void
     {
-        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT (SELECT 'a' FROM DUAL), (SELECT 'a' FROM DUAL WHERE 1), (SELECT 'a' UNION SELECT 'b')");
-        $merged = array_map(static function (int $index) use ($operation): bool {
+        $operation = (new Semantics(Dialect::MySql))->analyze("SELECT (SELECT 'a' LIMIT 0), (SELECT 'a' FROM DUAL WHERE 1), (SELECT 'a' UNION SELECT 'b')");
+        $lifetimes = array_map(static function (int $index) use ($operation): Constancy {
             $subquery = $operation->field($index)->expression;
+            self::assertInstanceOf(ScalarSubquery::class, $subquery);
 
-            return $subquery instanceof ScalarSubquery && Constancy::merged($subquery->query) !== null;
+            return Constancy::within($subquery, $operation->facts, 0, true, []);
         }, range(0, 2));
 
-        self::assertSame([true, false, false], $merged);
+        self::assertSame([Constancy::Resolved, Constancy::Statement, Constancy::Statement], $lifetimes);
     }
 
     public function testJoinAnswersTheShorterLived(): void

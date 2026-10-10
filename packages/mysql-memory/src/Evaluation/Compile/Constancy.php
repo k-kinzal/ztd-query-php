@@ -15,15 +15,9 @@ use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\DefaultOfColumn;
 use SqlSemantics\Platform\MySql\Statement\Expression\Access\InsertedColumn;
-use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\MySql\Statement\Literal\Parameter;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
-use SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery;
-use SqlSemantics\Platform\MySql\Statement\Query\QueryExpression;
-use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
-use SqlSemantics\Platform\MySql\Statement\Relation\Dual;
 use SqlSemantics\Platform\MySql\Statement\Variable\SystemVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
@@ -97,7 +91,7 @@ enum Constancy: int
         if ($level > 0) {
             return self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary, $legacy);
         }
-        $merged = $node instanceof ScalarSubquery ? self::merged($node->query) : null;
+        $merged = $node instanceof Scalar && $facts->covers($node) ? $facts->scalar($node)->replacement : null;
         if ($merged !== null) {
             return self::within($merged, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy);
         }
@@ -181,22 +175,6 @@ enum Constancy: int
         }
 
         return $constancy;
-    }
-
-    /**
-     * Answers the expression a subquery selects when the server merges it into the enclosing block: one select item and no table or other clause.
-     */
-    public static function merged(Query $query): ?Scalar
-    {
-        while ($query instanceof ParenthesizedQuery || ($query instanceof QueryExpression && $query->with === null && $query->orderBy === [] && $query->limit === null)) {
-            $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
-        }
-        if (!$query instanceof Select || ($query->from !== null && !$query->from instanceof Dual) || $query->where !== null || $query->groupBy !== null || $query->having !== null || $query->windows !== [] || $query->qualify !== null || $query->orderBy !== [] || $query->into !== null || count($query->items) !== 1) {
-            return null;
-        }
-        $item = $query->items[0];
-
-        return $item instanceof SelectExpression ? $item->expression : null;
     }
 
     /**

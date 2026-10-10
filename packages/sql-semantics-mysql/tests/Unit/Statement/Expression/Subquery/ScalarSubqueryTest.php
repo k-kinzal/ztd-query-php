@@ -23,7 +23,7 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ScalarSubqueryTest extends TestCase
 {
-    public function testDeriveScalarHasTheTypeOfTheOneColumnAndCanBeNull(): void
+    public function testDeriveScalarPreservesTheTypeAndNullabilityOfTheReducedExpression(): void
     {
         $platform = new Platform();
         $profile = $platform->profile('mysql-8.4.7', null, ParameterStyle::Native);
@@ -33,7 +33,9 @@ final class ScalarSubqueryTest extends TestCase
 
         self::assertInstanceOf(ScalarSubquery::class, $subquery);
         self::assertInstanceOf(Known::class, $fact->type);
-        self::assertSame(['VARCHAR', Nullability::Nullable], [$fact->type->descriptor->name(), $fact->nullability]);
+        self::assertSame(['VARCHAR', Nullability::NotNull], [$fact->type->descriptor->name(), $fact->nullability]);
+        self::assertNotNull($fact->replacement);
+        self::assertTrue($derivation->facts()->covers($fact->replacement));
     }
 
     public function testDeriveScalarIsARowForSeveralColumns(): void

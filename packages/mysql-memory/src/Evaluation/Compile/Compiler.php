@@ -217,7 +217,9 @@ final class Compiler
             return $bound[0] === 0 ? $bound[1] : $this->names->outer($bound[1], $bound[0]);
         }
 
-        return $this->typed($node, $this->dispatch($node, $scope));
+        $replacement = $this->facts->covers($node) ? $this->facts->scalar($node)->replacement : null;
+
+        return $this->typed($node, $replacement === null ? $this->dispatch($node, $scope) : $this->compile($replacement, $scope));
     }
 
     /**

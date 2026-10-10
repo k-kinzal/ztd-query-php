@@ -18,6 +18,13 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class VariablesTest extends TestCase
 {
+    public function testHeldUsesTheLegacyIntegerVariableWidthInMySql56(): void
+    {
+        $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), \SqlSemantics\Contract\GrammarRelease::MySql5651);
+
+        self::assertEquals(Domain::integer(Field::LongLong, 20), $variables->held(Domain::integer(Field::Long, 11)));
+    }
+
     public function testReadNeedsTheVariablesOfTheSession(): void
     {
         $known = new Variables(new Settings(Collation::known('utf8mb4_0900_ai_ci'), 4, null, [], 1024, ['A' => Domain::decimal(3, 1)]));

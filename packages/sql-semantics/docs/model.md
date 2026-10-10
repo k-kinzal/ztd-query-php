@@ -56,6 +56,8 @@ $sum->facts->scalar($sum->field(0)->expression->right)->type instanceof NullOnly
 
 `$facts->scalar($node)` answers the `ScalarFact` of an expression (`type`, `nullability`, and `resolution` for a name use), `$facts->relation($node)` the `RelationFact` of a relation occurrence (`shape`, and `table` for a named relation), and `$facts->query($node)` the `QueryFact` of a query, including subqueries. `$facts->diagnostics` lists the semantic problems, `$facts->declarations` the provided declarations, and `$facts->output` the `QueryFact` of the rows the statement returns, or null. Asking for a node that is not part of the operation throws `InvalidConstruction`; a node of one operation has no facts in another.
 
+A scalar fact can also publish a `replacement`: a bound expression evaluated in place of that occurrence. It is a strict descendant in the same operation, with its own facts and original name bindings. Consumers may compile it directly; the original statement and its rendered SQL stay intact. For example, MySQL resolves `(SELECT 1 LIMIT 0)` to its selected expression and returns `1`. A scalar subquery that reads table rows still needs query execution and can return NULL or raise a multiple-row error. Which forms are reduced depends on the dialect and release.
+
 The structure classes and their properties are documented in each database package. The core defines the roles they play:
 
 | Interface | Role |

@@ -19,6 +19,17 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class OriginsTest extends TestCase
 {
+    public function testOriginKeepsTheColumnOfAReducedScalarSubquery(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(id INT PRIMARY KEY)');
+        $result = $session->query('SELECT (SELECT (SELECT x.id LIMIT 0)) AS scalar_id FROM t AS x')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['scalar_id', 'id', 'x', 't', 'd'], [$result->columns[0]->name, $result->columns[0]->originalName, $result->columns[0]->table, $result->columns[0]->originalTable, $result->columns[0]->schema]);
+        self::assertSame(3, $result->columns[0]->flags & 3);
+    }
+
     public function testOriginReportsTheColumnDefaultReads(): void
     {
         $session = (new Instance())->connect();

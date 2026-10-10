@@ -63,6 +63,9 @@ final class Publication
             if ($object instanceof Scalar || $object instanceof Relation || $object instanceof Query) {
                 Check::invariant($facts->covers($object), 'Derivation left a ' . $object::class . ' without facts.');
             }
+            if ($object instanceof Scalar && ($replacement = $facts->scalar($object)->replacement) !== null) {
+                Check::invariant($replacement !== $object && in_array($replacement, $graph->objects($object), true) && $facts->covers($replacement), 'A scalar replacement is a bound strict descendant of its occurrence.');
+            }
         }
         $graph->objects($facts);
 
