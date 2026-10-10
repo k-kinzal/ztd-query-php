@@ -35,7 +35,9 @@ final class ControlResults
      * Infers absent user-variable operands from the other result branches.
      *
      * Explicitly initialized variables retain their recorded type. Each absent
-     * occurrence is inferred independently; this does not create a session entry.
+     * occurrence is inferred independently from the first other resolved branch,
+     * including a literal NULL; this does not create a session entry. The remaining
+     * branches take part only in the final aggregation of result types.
      * Verified through SQL on MySQL 8.0.44, 8.4.7 and 9.1.0.
      *
      * @param list<int> $positions The result-argument positions
@@ -44,30 +46,8 @@ final class ControlResults
     public function branches(Invocation $call, array $positions): array
     {
         $domains = array_map($call->domain(...), $positions);
-        if (in_array($call->derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
-            return $domains;
-        }
-        $facts = $call->derivation->facts();
-        $absent = [];
-        foreach ($positions as $index => $position) {
-            $node = $call->nodes[$position] ?? null;
-            while ($node instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Grouped) {
-                $node = $node->operand;
-            }
-            $binding = $node !== null && $facts->covers($node) ? $facts->scalar($node)->resolution : null;
-            if ($binding instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding && !$binding->exists) {
-                $absent[] = $index;
-            }
-        }
-        $known = array_values(array_diff_key($domains, array_flip($absent)));
-        $inferred = $absent === [] || $known === [] ? null : $call->aggregation()->of($known, 'coalesce', $call->derivation);
-        if ($inferred !== null && ($inferred->kind->numeric() || $inferred->kind->temporal() || $inferred->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String)) {
-            $variable = (new \SqlSemantics\Platform\MySql\Rules\Typing\Variables($call->settings, $call->derivation->context->profile->grammar))->inferred($inferred);
-            foreach ($absent as $index) {
-                $domains[$index] = $variable;
-            }
-        }
+        $nodes = array_map(static fn (int $position): ?\SqlSemantics\Statement\Scalar => $call->nodes[$position] ?? null, $positions);
 
-        return array_values($domains);
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\BranchInference())->resolve($domains, $nodes, $call->derivation);
     }
 }

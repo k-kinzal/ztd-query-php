@@ -180,8 +180,11 @@ produce `InvalidProjectionAlias`, with an `AliasRule` identifying the reason.
 When session settings specify user variables, a read publishes a
 `UserVariableBinding` that records whether the entry exists at that occurrence.
 An expression assignment introduces an entry for later occurrences without changing
-the supplied session snapshot. This distinction preserves MySQL 5.6's reads of
-absent variables and modern branch type inference in `COALESCE`, `IFNULL`, and `IF`.
+the supplied session snapshot. This distinction preserves MySQL 5.6 and 5.7 reads
+of absent variables. From MySQL 8.0, `CASE`, `COALESCE`, `IFNULL`, and `IF` infer
+each absent operand from the first other resolved result branch, including an
+explicit NULL, before aggregating all result types. An omitted ELSE adds no
+inference operand.
 
 ### Aggregate ownership
 

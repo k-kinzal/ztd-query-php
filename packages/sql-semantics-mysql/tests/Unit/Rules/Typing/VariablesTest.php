@@ -27,6 +27,8 @@ final class VariablesTest extends TestCase
         self::assertEquals(Domain::string(16383, $collation), $variables->inferred(Domain::string(1, $collation)));
         self::assertEquals(Domain::decimal(65, 30), $variables->inferred(Domain::decimal(2, 1)));
         self::assertSame([10, 15, 26], [$variables->inferred(new Domain(Kind::Date, Field::Date, 10))->length, $variables->inferred(new Domain(Kind::Time, Field::Time, 10))->length, $variables->inferred(new Domain(Kind::DateTime, Field::DateTime, 19))->length]);
+        self::assertEquals(Domain::string(65535, Collation::binary()), $variables->inferred(Domain::null()));
+        self::assertEquals(Domain::string(16383, Collation::known('utf8mb4_bin')), $variables->inferred(new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'))));
     }
 
     public function testIntroduceAllocatesAnEntryWithoutChangingTheSession(): void

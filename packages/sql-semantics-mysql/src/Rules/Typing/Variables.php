@@ -77,11 +77,12 @@ final class Variables
         }
 
         return match ($domain->kind) {
-            Kind::String => Domain::string(intdiv(65535, $domain->collation->charset->maxLength), $domain->collation),
+            Kind::String, Kind::Json => Domain::string(intdiv(65535, $domain->collation->charset->maxLength), $domain->collation),
+            Kind::Null => Domain::string(65535, Collation::binary()),
             Kind::Date => Domain::string(10, Collation::known('latin1_swedish_ci')),
             Kind::Time => Domain::string(15, Collation::known('latin1_swedish_ci')),
             Kind::DateTime => Domain::string(26, Collation::known('latin1_swedish_ci')),
-            Kind::Integer, Kind::Decimal, Kind::Double, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => $domain,
+            Kind::Integer, Kind::Decimal, Kind::Double, Kind::Year, Kind::Bit => $domain,
         };
     }
 

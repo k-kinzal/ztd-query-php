@@ -35,6 +35,20 @@ final class UninitializedVariablesTest extends TestCase
         yield 'datetime branch' => ["SELECT COALESCE(@v,TIMESTAMP'2020-01-02 12:00:00'),COALESCE(@v,TIMESTAMP'2020-01-02 12:00:00.123')"];
         yield 'absent branches' => ['SELECT COALESCE(@v,@w)'];
         yield 'independent inference' => ["SELECT COALESCE(@v,0),COALESCE(@v,'a'),@v"];
+        yield 'first branch numeric' => ["SELECT COALESCE(@v,1,'a'),COALESCE(1,@v,'a')"];
+        yield 'first branch string' => ["SELECT COALESCE(@v,'a',1)"];
+        yield 'first branch null' => ["SELECT COALESCE(@v,NULL,1),COALESCE(NULL,1,@v),COALESCE(@v,NULL,'a')"];
+        yield 'explicit null branch' => ['SELECT COALESCE(@v,NULL),COALESCE(NULL,@v),IFNULL(@v,NULL),IF(0,@v,NULL)'];
+        yield 'case integer branch' => ['SELECT CASE WHEN 1 THEN @v ELSE 1 END,CASE WHEN 0 THEN @v ELSE 1 END'];
+        yield 'case string branch' => ["SELECT CASE WHEN 0 THEN @v ELSE 'a' END"];
+        yield 'case without else' => ['SELECT CASE WHEN 0 THEN @v END'];
+        yield 'case date branch' => ["SELECT CASE WHEN 0 THEN @v ELSE DATE'2020-01-02' END"];
+        yield 'case mixed branches' => ["SELECT CASE WHEN 0 THEN @v WHEN 0 THEN 1 ELSE 'a' END"];
+        yield 'case null branch' => ['SELECT CASE WHEN 0 THEN @v ELSE NULL END,CASE WHEN 0 THEN @v WHEN 0 THEN NULL ELSE 1 END'];
+        yield 'case nested branch' => ['SELECT CASE WHEN 0 THEN @v ELSE COALESCE(@w,1) END'];
+        if (!str_starts_with((string) getenv('MYSQL_VERSION'), '5.6.')) {
+            yield 'JSON branch' => ['SELECT COALESCE(@v,CAST(1 AS JSON)),CASE WHEN 0 THEN @v ELSE CAST(1 AS JSON) END'];
+        }
         yield 'control functions' => ['SELECT IFNULL(@v,0),IF(1,@v,0),COALESCE(1,2),COALESCE(NULL,1)'];
         yield 'earlier assignment' => ['SELECT (@v:=1),COALESCE(@v,0)'];
         yield 'absent self assignment' => ['SELECT (@v:=COALESCE(@v,0)+1) FROM t1 ORDER BY id'];

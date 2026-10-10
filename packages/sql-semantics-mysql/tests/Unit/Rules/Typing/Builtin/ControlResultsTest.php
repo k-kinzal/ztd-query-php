@@ -22,6 +22,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Medium]
 final class ControlResultsTest extends TestCase
 {
+    public function testBranchesUseTheFirstKnownBranchBeforeAggregatingTheResults(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $context = $semantics->context([], session: new Settings(Collation::known('utf8mb4_0900_ai_ci'), userVariables: []));
+        $query = $semantics->analyze("SELECT COALESCE(@v,1,'a'),COALESCE(@v,'a',1),COALESCE(@v,NULL,1)", $context);
+
+        self::assertEquals(new \SqlSemantics\Statement\Type\Known(Domain::string(21, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)), $query->field(0)->type);
+        self::assertEquals(new \SqlSemantics\Statement\Type\Known(Domain::string(16383, Collation::known('utf8mb4_0900_ai_ci'))), $query->field(1)->type);
+        self::assertEquals(new \SqlSemantics\Statement\Type\Known(Domain::string(65535, Collation::binary())), $query->field(2)->type);
+    }
     public function testBranchesInferAbsentNumericVariablesWithoutAllocatingThem(): void
     {
         $semantics = new Semantics(Dialect::MySql);
