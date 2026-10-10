@@ -101,6 +101,7 @@ final class FlushCommand implements Command
         foreach ($statement->items as $item) {
             if ($item->option === FlushOption::Status) {
                 $session->instance->registry->status->clear($session->settings()->release() === GrammarRelease::MySql5651 ? $session->id : null);
+                $session->instance->registry->status->clearGlobal('Aborted_clients');
                 $session->instance->registry->status->flushedAt = $session->instance->registry->threads->now();
                 $session->instance->registry->threads->resetMaximum();
             }

@@ -8,7 +8,8 @@ namespace MySqlMemory\Registry;
  * Cumulative server counters and the independently resettable counters of each client.
  *
  * A session reset or disconnect does not subtract its contribution to global totals.
- * FLUSH STATUS clears session counters while retaining global totals. RESTART clears all totals.
+ * FLUSH STATUS clears session counters and selected global counters; command and traffic totals survive.
+ * RESTART clears all totals.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/flush.html.
  *
  * @visibility MySqlMemory
@@ -57,6 +58,14 @@ final class StatusCounters
             return;
         }
         unset($this->sessions[$connection]);
+    }
+
+    /**
+     * Clears a resettable server counter without affecting other totals or session records.
+     */
+    public function clearGlobal(string $name): void
+    {
+        unset($this->global[$name]);
     }
 
     /**

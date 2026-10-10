@@ -78,7 +78,7 @@ final class StatusVariables
             $rows[] = [$name, match ($name) {
                 'Uptime' => \MySqlMemory\Value\Integer::text((int) $instant - (int) $instance->started, true),
                 'Uptime_since_flush_status' => \MySqlMemory\Value\Integer::text((int) $instant - (int) ($instance->registry->status->flushedAt ?? $instance->started), true),
-                'Queries' => (string) $instance->registry->status->read($name),
+                'Queries', 'Aborted_clients' => (string) $instance->registry->status->read($name),
                 'Bytes_received', 'Bytes_sent' => (string) $instance->registry->status->read($name, $global ? null : $connection),
                 default => $connections[$name] ?? ($name === 'Questions' || str_starts_with($name, 'Com_') ? (string) $instance->registry->status->read($this->counter($name), $global ? null : $connection) : $value),
             }];

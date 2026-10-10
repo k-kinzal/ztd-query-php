@@ -90,6 +90,7 @@ final class ClientTest extends TestCase
         self::assertSame(77, $before);
         self::assertSame(0, $client->instance->registry->status->read('Bytes_sent', 7));
         self::assertSame($before, $client->instance->registry->status->read('Bytes_sent'));
+        self::assertSame(0, $client->instance->registry->status->read('Aborted_clients'));
     }
 
     public function testCloseDropsTheReplySentAfterASessionKillsItself(): void
@@ -104,6 +105,29 @@ final class ClientTest extends TestCase
 
         self::assertSame(0, $client->instance->registry->status->read('Bytes_sent', 7));
         self::assertSame($before, $client->instance->registry->status->read('Bytes_sent'));
+        self::assertSame(1, $client->instance->registry->status->read('Aborted_clients'));
+    }
+
+    public function testCloseCountsAnUnannouncedDisconnectOnce(): void
+    {
+        $client = new Client(new Instance(), 7, static function (string $bytes): void {
+        });
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        $client->close();
+        $client->close();
+
+        self::assertSame(1, $client->instance->registry->status->read('Aborted_clients'));
+    }
+
+    public function testCloseDoesNotCountAClientThatSentQuit(): void
+    {
+        $client = new Client(new Instance(), 7, static function (string $bytes): void {
+        });
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        self::assertFalse($client->handle("\x01"));
+        $client->close();
+
+        self::assertSame(0, $client->instance->registry->status->read('Aborted_clients'));
     }
 
     public function testGreetSendsTheVersionOfTheInstance(): void

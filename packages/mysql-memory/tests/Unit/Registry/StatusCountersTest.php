@@ -60,6 +60,16 @@ final class StatusCountersTest extends TestCase
         self::assertSame([0, 0, null], [$counters->read('Questions'), $counters->read('Questions', 1), $counters->flushedAt]);
     }
 
+    public function testClearGlobalRetainsOtherTotalsAndSessionRecords(): void
+    {
+        $counters = new StatusCounters();
+        $counters->add('Aborted_clients');
+        $counters->add('Questions', 1);
+        $counters->clearGlobal('Aborted_clients');
+
+        self::assertSame([0, 1, 1], [$counters->read('Aborted_clients'), $counters->read('Questions'), $counters->read('Questions', 1)]);
+    }
+
     public function testClearAllRetainsGlobalTotals(): void
     {
         $counters = new StatusCounters();

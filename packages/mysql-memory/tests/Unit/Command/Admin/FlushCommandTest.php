@@ -36,12 +36,14 @@ final class FlushCommandTest extends TestCase
         $second = $instance->connect();
         $first->query('DO 1');
         $second->query('DO 2');
+        $instance->registry->status->add('Aborted_clients');
         $first->query('FLUSH STATUS');
 
+        self::assertSame(0, $instance->registry->status->read('Aborted_clients'));
         self::assertSame([2, 0, $remaining], [$instance->registry->status->read('Com_do'), $instance->registry->status->read('Com_do', $first->id), $instance->registry->status->read('Com_do', $second->id)]);
     }
 
-    public function testOptionsResetsOnlySessionCountersAndRecordsTheFlushClock(): void
+    public function testOptionsRetainsGlobalStatementCountsAndRecordsTheFlushClock(): void
     {
         $session = (new Instance())->connect();
         $session->query('SELECT 1; FLUSH STATUS');

@@ -37,6 +37,10 @@ final class Client
 
     private int $capabilities = 0;
 
+    private bool $quit = false;
+
+    private bool $abortCounted = false;
+
     /**
      * Builds the payloads the connection sends.
      */
@@ -114,6 +118,11 @@ final class Client
         }
         $reader = new PayloadReader($payload);
         $command = $reader->integer(1);
+        if ($command === 0x01) {
+            $this->quit = true;
+
+            return false;
+        }
         $running = $this->session->running;
         $previous = $running->respond;
         $running->respond = function (ResultSet $result) use ($command): void {
@@ -121,7 +130,6 @@ final class Client
         };
         try {
             return match ($command) {
-                0x01 => false,
                 0x02 => $this->initDatabase($reader->rest()),
                 0x03 => $this->query($reader->rest()),
                 0x04 => $this->send($this->messages->eof(0, $this->status())),
@@ -181,10 +189,16 @@ final class Client
     }
 
     /**
-     * Ends the session and discards its traffic records, retaining global totals even for an abandoned handshake.
+     * Counts authenticated connections ended without COM_QUIT, then releases the session and its traffic records.
+     * Repeated cleanup counts an abort only once; abandoned handshakes are not connected clients.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/server-status-variables.html#statvar_Aborted_clients.
      */
     public function close(): void
     {
+        if ($this->session !== null && !$this->quit && !$this->abortCounted) {
+            $this->instance->registry->status->add('Aborted_clients');
+            $this->abortCounted = true;
+        }
         $this->session?->close();
         $this->instance->registry->status->clear($this->id);
     }
