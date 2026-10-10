@@ -110,8 +110,7 @@ final class DropTableCommand implements Command
         $this->truncated($table, $session, $context);
         $table->data = new Heap();
         $table->updated = null;
-        $table->statistics = [];
-        $table->statisticsRead = null;
+        $table->statistics = array_intersect_key($table->statistics, ['table' => true]);
 
         return new Completion();
     }

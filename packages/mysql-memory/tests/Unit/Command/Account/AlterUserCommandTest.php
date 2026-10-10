@@ -18,6 +18,29 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class AlterUserCommandTest extends TestCase
 {
+    public function testMissingKeepsChangesOfExistingLegacyAccounts(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('ALTER USER CURRENT_USER PASSWORD EXPIRE');
+        $answers = $session->run("ALTER USER missing IDENTIFIED BY 'new', CURRENT_USER IDENTIFIED BY 'changed'");
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame(1396, $answers[0]->getCode());
+        self::assertSame('changed', $session->instance->accounts->find(new Identity('root', '%'))?->password);
+        self::assertFalse($session->passwordExpired);
+    }
+
+    public function testMissingLeavesModernAccountsUnchanged(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET PASSWORD='original'");
+        $answers = $session->run("ALTER USER CURRENT_USER IDENTIFIED BY 'changed', missing IDENTIFIED BY 'new'");
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame(1396, $answers[0]->getCode());
+        self::assertSame('original', $session->instance->accounts->find(new Identity('root', '%'))?->password);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new AlterUserCommand())->clearsDiagnostics());

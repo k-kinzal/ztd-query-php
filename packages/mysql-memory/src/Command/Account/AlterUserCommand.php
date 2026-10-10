@@ -33,8 +33,10 @@ use SqlSemantics\Statement\Operation;
  * the session and is refused for another account. Only the authentication plugins of the
  * server are loaded, and none of them is a second or third factor: ADD of a factor names an
  * invalid plugin, and MODIFY or DROP a factor that does not exist (verified on a live 8.4
- * server). Nothing is changed when the statement fails.
+ * server). Modern releases roll back a failed change. MySQL 5.7 changes existing accounts
+ * even when another named account does not exist.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-user.html.
+ * https://dev.mysql.com/doc/refman/8.0/en/atomic-ddl.html.
  *
  * @visibility MySqlMemory
  */
@@ -81,9 +83,7 @@ final class AlterUserCommand implements Command
             }
             $changed[] = [$account, $user];
         }
-        if ($missing !== [] && !$statement->ifExists) {
-            throw AccountError::CannotUser->error('ALTER USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
-        }
+        $this->missing($missing, $changed, $statement, $session, $options);
         $saved = $accounts->copy();
         try {
             $generated = $this->change($changed, $statement, $session, $options);
@@ -99,6 +99,27 @@ final class AlterUserCommand implements Command
         }
 
         return new Completion(0, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Reports absent accounts after applying the valid changes on MySQL 5.7.
+     *
+     * @param list<Identity> $missing
+     * @param list<array{Account, \SqlSemantics\Platform\MySql\Statement\Account\User\UserAlteration}> $changed
+     * @throws SqlError When a named account does not exist
+     */
+    public function missing(array $missing, array $changed, AlterUser $statement, Session $session, Options $options): void
+    {
+        if ($missing === [] || $statement->ifExists) {
+            return;
+        }
+        if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            $this->change($changed, $statement, $session, $options);
+            foreach ($changed as [$account]) {
+                (new \MySqlMemory\Session\Access\PasswordAccess())->changed($account, $session);
+            }
+        }
+        throw AccountError::CannotUser->error('ALTER USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $missing)));
     }
 
     /**
