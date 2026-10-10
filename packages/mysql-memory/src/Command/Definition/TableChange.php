@@ -305,6 +305,7 @@ final class TableChange
             if ($index === null) {
                 throw SchemaError::CantDropFieldOrKey->error($name);
             }
+            unset($layout->implicitCollations[mb_strtolower($name)]);
             array_splice($layout->columns, $index, 1);
 
             return;

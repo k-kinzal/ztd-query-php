@@ -153,7 +153,9 @@ final class ShowCreateTableCommand implements Command
             return $collation->name === $table->collation ? '' : ' CHARACTER SET ' . $collation->charset->nameIn($this->release) . ($collation->charset->defaultCollation($this->release)->name === $collation->name ? '' : ' COLLATE ' . $collation->nameIn($this->release));
         }
         if ($collation->name !== $table->collation || $text->explicit($text->element($table, $column))) {
-            return ' CHARACTER SET ' . $collation->charset->name . ' COLLATE ' . $collation->name;
+            $implicit = $column->implicitCollation && $collation->charset->defaultCollation($this->release)->name === $collation->name;
+
+            return ' CHARACTER SET ' . $collation->charset->name . ($implicit ? '' : ' COLLATE ' . $collation->name);
         }
 
         return $collation->charset->defaultCollation(GrammarRelease::MySql847)->name === $collation->name ? '' : ' COLLATE ' . $collation->name;

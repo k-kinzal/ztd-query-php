@@ -23,6 +23,16 @@ use SqlSemantics\Statement\Operation;
 #[Small]
 final class TableChangeTest extends TestCase
 {
+    public function testDropClearsTheOldCollationOriginBeforeAddingAColumnOfTheSameName(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t AS SELECT _latin1'a' x; ALTER TABLE t DROP x, ADD x VARCHAR(1) CHARACTER SET latin1");
+        $table = $session->instance->dictionary->table('d', 't');
+
+        self::assertNotNull($table);
+        self::assertFalse($table->definition->columns[0]->implicitCollation);
+    }
+
     public function testApplyDropsTheOldColumnBeforeItAddsANewOne(): void
     {
         $session = (new Instance())->connect();

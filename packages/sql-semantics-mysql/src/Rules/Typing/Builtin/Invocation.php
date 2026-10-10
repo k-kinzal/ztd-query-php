@@ -77,7 +77,7 @@ final class Invocation
     /**
      * Answers the length in characters of a value written as text.
      *
-     * A double without fixed decimals takes 22 characters, a FLOAT its display length (verified on a live 8.4 server);
+     * A DOUBLE takes 22 characters, a FLOAT its display length (verified on a live 8.4 server);
      * MySQL 5.6 and 5.7 take the display length of every double: the text of a literal, 23 for a
      * computed value (verified on live 5.6.51 and 5.7.44 servers).
      */
@@ -86,7 +86,7 @@ final class Invocation
         $legacy = in_array($this->derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
 
         return match ($domain->kind) {
-            Kind::Double => $legacy || $domain->decimals < Domain::NOT_FIXED || $domain->field === Field::Float ? $domain->length : 22,
+            Kind::Double => $legacy || $domain->field === Field::Float ? $domain->length : 22,
             Kind::Null => 0,
             Kind::Integer, Kind::Decimal, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit => $domain->length,
         };
@@ -102,6 +102,7 @@ final class Invocation
      */
     public function text(array $domains, int $length, string $operation): ?Domain
     {
+        $domains = array_map(static fn (Domain $domain): Domain => $domain->field === Field::Bit ? Domain::string($domain->length, $domain->collation, Field::VarString, $domain->coercibility) : $domain, $domains);
         $settled = $this->collations()->aggregate($domains, $operation, $this->derivation);
         if ($settled === null) {
             return null;

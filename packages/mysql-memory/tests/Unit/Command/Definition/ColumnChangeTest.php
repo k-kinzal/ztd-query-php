@@ -25,6 +25,17 @@ use SqlSemantics\Statement\Operation;
 #[Small]
 final class ColumnChangeTest extends TestCase
 {
+    public function testRenameRetainsTheOriginOfAnImplicitColumnCollation(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t AS SELECT _latin1'a' x; ALTER TABLE t RENAME COLUMN x TO y");
+        $table = $session->instance->dictionary->table('d', 't');
+
+        self::assertNotNull($table);
+        self::assertTrue($table->definition->columns[0]->implicitCollation);
+        self::assertSame('y', $table->definition->columns[0]->name);
+    }
+
     public function testExistingRefusesAnUnknownColumn(): void
     {
         $session = (new Instance())->connect();

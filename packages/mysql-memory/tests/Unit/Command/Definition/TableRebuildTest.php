@@ -117,6 +117,15 @@ final class TableRebuildTest extends TestCase
         ]);
     }
 
+    public function testInPlaceAllowsModernCollationChangesWithinTheSameCharacterSet(): void
+    {
+        $from = new Domain(Kind::String, Field::VarChar, 1, collation: Collation::known('latin1_bin'));
+        $to = new Domain(Kind::String, Field::VarChar, 10, collation: Collation::known('latin1_swedish_ci'));
+
+        self::assertTrue(TableRebuild::inPlace($from, $to));
+        self::assertFalse(TableRebuild::inPlace($from, $to, true));
+    }
+
     public function testInPlaceTellsWhetherTheServerChangesAColumnInPlace(): void
     {
         $collation = Collation::known('utf8mb4_0900_ai_ci');

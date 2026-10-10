@@ -82,8 +82,11 @@ final class Materialization
      */
     public function column(Domain $domain, bool $narrows = true): Domain
     {
-        if ($domain->kind === Kind::Integer && $domain->display === null) {
-            $narrowed = $narrows && $domain->field === Field::LongLong && $domain->length < 10;
+        if ($domain->field === Field::VarString && ($domain->kind->temporal() || ($domain->kind === Kind::Year && !$domain->collation->bytes()))) {
+            return $this->text($domain, $domain->length);
+        }
+        if (($domain->kind === Kind::Integer || ($domain->kind === Kind::Year && $domain->field !== Field::Year && $domain->collation->bytes())) && $domain->display === null) {
+            $narrowed = $narrows && ($domain->field === Field::LongLong || $domain->kind === Kind::Year) && $domain->length < 10;
 
             return Domain::column($narrowed ? Field::Long : $domain->field, $domain->length, $domain->unsigned);
         }

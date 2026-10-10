@@ -135,6 +135,19 @@ follow the release-specific rules, including legacy `NULLIF` and computed
 `MIN`/`MAX` results. MySQL 5.6 reports long `CONCAT`, `CONCAT_WS` and `REPLACE`
 results as nullable even when their arguments are not nullable.
 
+Temporal `NULLIF` results report string metadata while preserving temporal
+conversion during direct evaluation. Once stored in a materialized derived
+table, they convert as strings. Legacy numeric `NULLIF` results use LONGLONG or
+DOUBLE fields. Arithmetic on fixed-scale FLOAT and DOUBLE values retains its
+scale; division adds `div_precision_increment`. MySQL 8.0 YEAR results retain
+their integer evaluation and storage behavior despite reporting string fields.
+For DECIMAL division, reaching the maximum scale does not stop result precision
+from growing by the configured increment.
+
+Computed `CREATE TABLE … SELECT` columns retain whether their default collation
+was implicit. `SHOW CREATE TABLE` preserves this distinction through column
+copies, `CREATE TABLE … LIKE`, and alterations that keep the column definition.
+
 Materialized computed strings longer than 512 characters use BLOB columns.
 Their direct result width and the storage capacity read by later expressions
 are distinct, including the MySQL 5.6 character-based allocation rule and the

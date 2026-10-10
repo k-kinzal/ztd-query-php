@@ -24,6 +24,85 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class NumbersTest extends TestCase
 {
+    public function testUnsignedFollowsTheSubtractionMode(): void
+    {
+        self::assertTrue((new Numbers())->unsigned(ArithmeticOperator::Plus, Domain::integer(), Domain::integer(unsigned: true)));
+        self::assertFalse((new Numbers(unsignedSubtraction: false))->unsigned(ArithmeticOperator::Minus, Domain::integer(), Domain::integer(unsigned: true)));
+    }
+
+    public function testLegacyNegatedKeepsASignAlreadyReservedForAnUnsignedOperand(): void
+    {
+        $domain = Domain::integer(Field::LongLong, 5);
+
+        self::assertSame($domain, (new Numbers())->legacyNegated($domain, true));
+        self::assertSame(3, (new Numbers(legacyRemainders: true))->binary(ArithmeticOperator::Modulo, Domain::integer(Field::Tiny, 3, true), Domain::integer(Field::LongLong, 1))->length);
+    }
+
+    public function testWidthOmitsTheSignForUnsignedArithmeticResults(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame(6, $numbers->width(Domain::integer(Field::LongLong, 7), true));
+        self::assertSame(10, $numbers->width(Domain::integer(Field::Long, 11), true));
+        self::assertSame(10, $numbers->width(Domain::integer(Field::Long, 10, true), true));
+        self::assertSame(8, $numbers->width(new Domain(Kind::Date, Field::Date, 10), true));
+    }
+
+    public function testIntegerResultRetainsYearResultDecimalsWithoutChangingIntegerEvaluation(): void
+    {
+        $year = new Domain(Kind::Year, Field::VarString, 4, 0, true, displayDecimals: 31);
+        $result = (new Numbers())->integerResult(ArithmeticOperator::Plus, $year, Domain::integer(Field::LongLong, 2));
+
+        self::assertSame([Kind::Integer, 34, 0, 31], [$result->kind, $result->length, $result->decimals, $result->displayDecimals]);
+        self::assertSame([3, 31], (new Numbers())->digits($year));
+    }
+
+    public function testReportedIntegerCapsTheFractionalMetadataOfAProduct(): void
+    {
+        $year = new Domain(Kind::Year, Field::VarString, 4, 0, true, displayDecimals: 31);
+        $result = (new Numbers())->reportedInteger(ArithmeticOperator::Multiply, $year, Domain::integer(), 5, true);
+
+        self::assertSame([5, 0, 30], [$result->length, $result->decimals, $result->displayDecimals]);
+    }
+
+    public function testDecimalDivisionKeepsPrecisionGrowthAfterItsScaleReachesThirty(): void
+    {
+        self::assertSame([37, 30], [(new Numbers())->decimal(ArithmeticOperator::Divide, [31, 30], [1, 0])->length, (new Numbers())->decimal(ArithmeticOperator::Divide, [31, 30], [1, 0])->decimals]);
+    }
+
+    public function testFloatingCanUseTheMySql80WidthWithoutLegacyIntegerRules(): void
+    {
+        $numbers = new Numbers(legacyFloating: true);
+
+        self::assertEquals(Domain::double(19, 2), $numbers->floating(ArithmeticOperator::Plus, Domain::double(8, 2), Domain::integer()));
+        self::assertSame(66, $numbers->binary(ArithmeticOperator::Plus, Domain::integer(Field::LongLong, 66), Domain::integer())->length);
+    }
+
+    public function testFloatingRetainsFixedScaleAndAddsTheDivisionIncrement(): void
+    {
+        $numbers = new Numbers();
+        $left = Domain::double(8, 2);
+        $right = Domain::double(9, 3);
+
+        self::assertEquals(Domain::double(9, 3), $numbers->floating(ArithmeticOperator::Multiply, $left, $right));
+        self::assertEquals(Domain::double(13, 7), $numbers->floating(ArithmeticOperator::Divide, $left, $right));
+        self::assertEquals(Domain::double(20, 3), (new Numbers(legacyRemainders: true))->floating(ArithmeticOperator::Plus, $left, $right));
+        self::assertEquals(Domain::double(23), $numbers->floating(ArithmeticOperator::Plus, $left, Domain::double()));
+    }
+
+    public function testFloatingDistinguishesNumericStringsFromTemporalsReportedAsStrings(): void
+    {
+        $numbers = new Numbers(legacyRemainders: true);
+        $temporal = new Domain(Kind::Time, Field::VarString, 14, 3);
+        $reported = new Domain(Kind::Time, Field::VarString, 14, 3, displayDecimals: 31);
+
+        self::assertSame(Kind::Double, $numbers->operand($temporal));
+        self::assertEquals(Domain::double(20, 3), $numbers->floating(ArithmeticOperator::Plus, $temporal, Domain::integer()));
+        self::assertEquals(Domain::double(23), $numbers->floating(ArithmeticOperator::Plus, $reported, Domain::integer()));
+        self::assertEquals(Domain::double(23), $numbers->floating(ArithmeticOperator::Plus, Domain::string(4, Collation::binary()), Domain::integer()));
+        self::assertEquals(Domain::double(23), $numbers->floating(ArithmeticOperator::Plus, new Domain(Kind::Json, Field::Json, 4), Domain::integer()));
+    }
+
     public function testBinaryPreservesTheLegacySignedCarryAtMaximumPrecision(): void
     {
         $numbers = new Numbers(legacyRemainders: true);

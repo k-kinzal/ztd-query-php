@@ -77,7 +77,7 @@ final class MathResults
         $numbers = new Numbers();
 
         return match ($numbers->operand($domain)) {
-            Kind::Integer => Domain::integer(Field::LongLong, $domain->length, $domain->unsigned),
+            Kind::Integer => new Domain(Kind::Integer, Field::LongLong, $domain->length, 0, $domain->unsigned, null, [], Coercibility::Numeric, displayDecimals: $domain->displayDecimals),
             Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(...$numbers->digits($domain)),
             Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Domain::double(23),
         };
@@ -242,7 +242,7 @@ final class MathResults
      */
     public function modulo(Invocation $call): Domain
     {
-        $numbers = new Numbers($call->settings->divPrecisionIncrement, $call->settings->unsignedSubtraction);
+        $numbers = new Numbers($call->settings->divPrecisionIncrement, $call->settings->unsignedSubtraction, in_array($call->derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true), legacyFloating: in_array($call->derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044], true));
         $left = isset($call->nodes[0]) ? $numbers->numeric($call->nodes[0], $call->domain(0)) : $call->domain(0);
         $right = isset($call->nodes[1]) ? $numbers->numeric($call->nodes[1], $call->domain(1)) : $call->domain(1);
 

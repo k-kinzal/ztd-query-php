@@ -196,6 +196,17 @@ uses `groupConcatMaxLen` and the argument character set, which can differ from
 the function's directly reported type. Set operations retain their separate
 release-specific string aggregation rules before materializing the result.
 
+A domain also separates an expression's evaluation kind from its reported field.
+For example, `NULLIF` of a DATE reports a string but still converts the date to
+its numeric date value in arithmetic. `Domain::displayDecimals` overrides the
+result column's decimals without changing the fractional precision used during
+evaluation. Materializing that expression stores a string, so later arithmetic
+uses string conversion. Fixed-scale FLOAT and DOUBLE arithmetic retains the
+resolved scale and the release-specific display width. MySQL 8.0 YEAR results
+can report string fields and fractional metadata while retaining integer
+semantics; materialization stores them as integers. Decimal division preserves
+precision growth from `divPrecisionIncrement` even after its scale reaches 30.
+
 For a materialized TEXT/BLOB column, `Domain::capacity` records the byte capacity
 of its storage type separately from the reported bound in `length`. The `value()`
 view used when resolving expressions exposes that capacity. This lets a scalar

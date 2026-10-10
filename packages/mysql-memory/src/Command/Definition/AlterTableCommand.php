@@ -372,7 +372,7 @@ final class AlterTableCommand implements Command
                 continue;
             }
             $before = $old->columns[$origin];
-            $retyped = $retyped || !TableRebuild::inPlace($before->domain, $column->domain);
+            $retyped = $retyped || !TableRebuild::inPlace($before->domain, $column->domain, in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
             $copies = $copies || $this->copiesColumn($before, $column, $context);
         }
         if ($retyped && $change->algorithm === 'inplace') {

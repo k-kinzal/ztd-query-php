@@ -27,6 +27,16 @@ use SqlSemantics\Statement\Type\Known;
 #[Small]
 final class InvocationTest extends TestCase
 {
+    public function testTextKeepsBitFieldsBinaryButUsesNumericReturnedFieldsAsNumbers(): void
+    {
+        $bit = new Domain(Kind::Bit, Field::Bit, 8, 0, true);
+        $number = new Domain(Kind::Bit, Field::LongLong, 8, 0, true, null, [], Coercibility::Numeric);
+        $call = new Invocation([], [], new Settings(Collation::known('utf8mb4_bin')), new Derivation((new Semantics(Dialect::MySql))->context([])));
+
+        self::assertSame('binary', $call->text([$bit], 8, 'concat')?->collation->charset->name);
+        self::assertSame('utf8mb4', $call->text([$number], 8, 'concat')?->collation->charset->name);
+    }
+
     public function testDomainAnswersNullBeyondTheArguments(): void
     {
         self::assertEquals(Domain::null(), (new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([]))))->domain(0));

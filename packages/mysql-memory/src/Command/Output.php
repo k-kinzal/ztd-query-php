@@ -109,7 +109,7 @@ final class Output
      */
     public function column(string $name, Domain $domain, ?ColumnOrigin $origin, ?Charset $results = null): ResultColumn
     {
-        $text = ($domain->kind === Kind::String || $domain->kind === Kind::Json || $domain->kind->temporal()) && !$domain->collation->bytes();
+        $text = in_array($domain->kind, [Kind::String, Kind::Json, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year], true) && !$domain->collation->bytes();
         $charset = $text ? ($results === null ? $domain->collation->id : $results->defaultCollation(GrammarRelease::MySql847)->id) : 63;
         $field = $domain->field === Field::Enum || $domain->field === Field::Set ? Field::String : $domain->field;
         $blob = in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
@@ -120,7 +120,7 @@ final class Output
             $flags &= ~ColumnFlag::Binary->value;
         }
 
-        return new ResultColumn($name, $field, $length, $domain->decimals, $flags, $charset, $origin->column ?? '', $origin->table ?? '', $origin->originalTable ?? '', $origin->schema ?? '');
+        return new ResultColumn($name, $field, $length, $domain->displayDecimals ?? $domain->decimals, $flags, $charset, $origin->column ?? '', $origin->table ?? '', $origin->originalTable ?? '', $origin->schema ?? '');
     }
 
     /**
@@ -156,7 +156,7 @@ final class Output
             return Real::format((float) sprintf('%.6G', (float) $value));
         }
         if ($domain->kind === Kind::Bit) {
-            return (string) $value;
+            return $domain->field === Field::Bit ? (string) $value : \MySqlMemory\Value\Integer::text(Convert::bits((string) $value), true);
         }
 
         return Convert::toText($value, $domain);

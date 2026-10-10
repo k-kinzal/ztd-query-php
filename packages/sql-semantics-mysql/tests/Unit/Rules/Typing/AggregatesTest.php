@@ -27,6 +27,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class AggregatesTest extends TestCase
 {
+    public function testExtremeUsesLegacyRealWidthsWithoutChangingModernColumns(): void
+    {
+        $aggregates = new Aggregates(new Settings(Collation::known('utf8mb4_bin')));
+        $argument = new Domain(Kind::Double, Field::Float, 8, 2);
+
+        self::assertSame(19, $aggregates->extreme($argument, GrammarRelease::MySql5651, true)->length);
+        self::assertSame($argument, $aggregates->extreme($argument, GrammarRelease::MySql847, true));
+    }
+
     public function testResultWidensSumsAndAveragesOfExactNumbers(): void
     {
         $aggregates = new Aggregates(new Settings(Collation::known('utf8mb4_0900_ai_ci')));

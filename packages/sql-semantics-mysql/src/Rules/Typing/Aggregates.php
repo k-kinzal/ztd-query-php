@@ -83,6 +83,9 @@ final class Aggregates
         if ($argument?->kind === Kind::String) {
             return (new Text\ResultBounds())->selected($argument, !$column && in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true), $column);
         }
+        if ($argument?->kind === Kind::Double && in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+            return new Domain(Kind::Double, $argument->field, $argument->decimals === Domain::NOT_FIXED ? 23 : 17 + $argument->decimals, $argument->decimals, $argument->unsigned, $argument->collation, [], $argument->coercibility);
+        }
 
         return $argument ?? Domain::null();
     }

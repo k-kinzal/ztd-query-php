@@ -56,6 +56,11 @@ final class TableLayout
     public array $undefaulted = [];
 
     /**
+     * @var array<string, true> Computed query columns whose default collation was implicit, by lowercase name
+     */
+    public array $implicitCollations = [];
+
+    /**
      * The name of each column of the table before the change, by its position.
      *
      * @var array<int, string>
@@ -133,6 +138,7 @@ final class TableLayout
 
         $layout = new self(new QualifiedName(new Name($definition->name), new Name($definition->schema)), $columns, $keys, $options, $statement->temporaryWords);
         $layout->undefaulted = $undefaulted;
+        $layout->implicitCollations = array_fill_keys(array_map(static fn ($column): string => mb_strtolower($column->name), array_filter($definition->columns, static fn ($column): bool => $column->implicitCollation)), true);
         $layout->names = array_map(static fn ($column): string => $column->name, $definition->columns);
         $layout->original = $definition->name;
         $layout->partitioning = $statement->partitioning;

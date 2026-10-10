@@ -22,6 +22,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Medium]
 final class ControlResultsTest extends TestCase
 {
+    public function testNullableRetainsTemporalEvaluationWhileReportingAStringField(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $domain = $semantics->analyze("SELECT NULLIF(CAST('12:01:02.345' AS TIME(3)),NULL)")->field(0)->type;
+
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $domain);
+        self::assertInstanceOf(Domain::class, $domain->descriptor);
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Time, Field::VarString, 3, Domain::NOT_FIXED, 'latin1'], [$domain->descriptor->kind, $domain->descriptor->field, $domain->descriptor->decimals, $domain->descriptor->displayDecimals, $domain->descriptor->collation->charset->name]);
+    }
+
     public function testNullableNormalizesAComputedBlobAndPreservesLegacyNullMetadata(): void
     {
         $settings = new Settings(Collation::known('utf8mb4_general_ci'));

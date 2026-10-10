@@ -33,7 +33,9 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  * unconverted result column length. A computed blob can retain its character bound
  * in length and its separate result width in display, as GROUP_CONCAT does. Decimals is the number
  * of fractional digits, or NOT_FIXED when a floating-point number or string has none fixed.
- * Strings carry a collation and its coercibility; other values carry the binary collation.
+ * displayDecimals overrides the reported decimals without changing evaluation precision,
+ * as for NULLIF of a temporal value. Strings and textually reported temporal results carry
+ * a collation and its coercibility; other values carry the binary collation.
  * A materialized string column can retain its storage capacity separately: value()
  * exposes that capacity to expressions while metadataLength() retains the reported bound.
  * A column of an integer type can declare a display width narrower than its type: the result
@@ -76,6 +78,7 @@ final class Domain implements TypeDescriptor
      * @param Coercibility $coercibility How strongly the collation holds
      * @param int|null $display The unconverted metadata width when it differs from the type bound, including integer display widths and partial multibyte string limits
      * @param int|null $capacity The byte capacity of a materialized string column when expressions read its storage type instead of its reported bound
+     * @param int|null $displayDecimals The result column's decimals when they differ from the fractional precision used to evaluate the expression
      */
     public function __construct(
         public readonly Kind $kind,
@@ -88,6 +91,7 @@ final class Domain implements TypeDescriptor
         public readonly Coercibility $coercibility = Coercibility::Implicit,
         public readonly ?int $display = null,
         public readonly ?int $capacity = null,
+        public readonly ?int $displayDecimals = null,
     ) {
         $this->collation = $collation ?? Collation::binary();
     }
@@ -159,10 +163,10 @@ final class Domain implements TypeDescriptor
     public function value(): self
     {
         if ($this->capacity !== null && $this->length !== $this->capacity) {
-            return new self($this->kind, $this->field, $this->capacity, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, null, $this->capacity);
+            return new self($this->kind, $this->field, $this->capacity, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, null, $this->capacity, $this->displayDecimals);
         }
 
-        return $this->display === null || $this->field->blob() ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility);
+        return $this->display === null || $this->field->blob() ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, displayDecimals: $this->displayDecimals);
     }
 
     /**
@@ -170,7 +174,7 @@ final class Domain implements TypeDescriptor
      */
     public function withCollation(Collation $collation, Coercibility $coercibility): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->members, $coercibility, $this->field->blob() ? $this->display : null, $this->capacity);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->members, $coercibility, $this->field->blob() ? $this->display : null, $this->capacity, $this->displayDecimals);
     }
 
     /**

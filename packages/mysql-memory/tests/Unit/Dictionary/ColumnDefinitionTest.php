@@ -16,6 +16,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ColumnDefinitionTest extends TestCase
 {
+    public function testWithImplicitCollationPreservesTheDeclarationOriginAcrossCopies(): void
+    {
+        $column = (new ColumnDefinition('a', Domain::integer(), Fill::none()))->withImplicitCollation(true);
+
+        self::assertTrue($column->implicitCollation);
+        self::assertTrue($column->withDomain(Domain::integer())->implicitCollation);
+        self::assertTrue($column->withDefault(Fill::none())->implicitCollation);
+        self::assertFalse($column->withImplicitCollation(false)->implicitCollation);
+    }
+
     public function testNullableFollowsTheNullabilityOfTheDomain(): void
     {
         $nullable = new ColumnDefinition('a', Domain::integer(Field::Long, 11)->withNullable(true), Fill::none());

@@ -98,6 +98,6 @@ final class Unary implements Scalar
         $result = $precise->negated($operand, (new Constants())->negative($this->operand) || $numbers->beyond($this->operand));
         $grammar = $derivation->context->profile->grammar;
 
-        return $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? $precise->legacyNegated($result) : $result;
+        return $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 || $grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? $precise->legacyNegated($result, $operand->unsigned && $precise->operand($operand) === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer) : $result;
     }
 }

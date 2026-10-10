@@ -12,8 +12,8 @@ use MySqlMemory\Typing\Domain;
 /**
  * The information functions: DATABASE, USER, CURRENT_ROLE, VERSION, CONNECTION_ID, LAST_INSERT_ID, ROW_COUNT, FOUND_ROWS, CHARSET, COLLATION and COERCIBILITY.
  *
- * CHARSET() and COLLATION() name the character set and collation of a string or JSON value, and
- * binary for any other value (verified on a live 8.4 server).
+ * CHARSET() and COLLATION() name the character set and collation of a string, JSON value,
+ * or a temporal value reported as a string; other values report binary (verified on a live 8.4 server).
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html.
  *
@@ -49,13 +49,13 @@ final class Introspection
     }
 
     /**
-     * Tells whether a value has a character set of its own: a string or a JSON value; any other value is binary.
+     * Tells whether a value has a character set of its own: a string, JSON value, or temporal value reported as a string.
      */
     public function textual(Evaluable $argument): bool
     {
         $kind = $argument->domain()->kind;
 
-        return $kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String || $kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json;
+        return $kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String || $kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json || ($argument->domain()->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString && ($kind->temporal() || $kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Year));
     }
 
     /**
@@ -77,8 +77,10 @@ final class Introspection
         return match (true) {
             $origin instanceof \MySqlMemory\Evaluation\Leaf\UserVariableRead => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Implicit->value,
             $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Ignorable->value,
+            $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Bit => $domain->coercibility->value,
+            $domain->kind->temporal() || $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Year => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric->value,
             !$this->textual($argument) => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric->value,
-            $domain->coercibility === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible->value,
+            $domain->coercibility === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric && !$origin instanceof \MySqlMemory\Evaluation\Leaf\ColumnRead => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible->value,
             default => $domain->coercibility->value,
         };
     }

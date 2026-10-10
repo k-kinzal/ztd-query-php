@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Contract\NameUse;
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
@@ -77,7 +78,9 @@ final class Collated implements Scalar
         $operand = (new Precision())->domain($fact->type);
         $domain = $operand === null || !$known ? null : (new Texts(Settings::of($derivation->context)))->collated($operand, $this->collation->value, $derivation);
 
-        return new ScalarFact($domain === null ? $fact->type : new Known($domain), Nullability::Nullable);
+        $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+
+        return new ScalarFact($domain === null ? $fact->type : new Known($domain), $legacy ? $fact->nullability : Nullability::Nullable);
     }
 
     /**

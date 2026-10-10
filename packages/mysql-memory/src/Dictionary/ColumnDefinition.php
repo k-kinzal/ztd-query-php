@@ -27,6 +27,7 @@ final class ColumnDefinition
      * @param string $comment The comment of the column
      * @param bool $stored Whether a generated column is STORED rather than VIRTUAL
      * @param string $expression The expression of a generated column as SHOW CREATE TABLE writes it
+     * @param bool $implicitCollation Whether a computed CREATE TABLE SELECT column omits its default collation in SHOW CREATE TABLE
      */
     public function __construct(
         public readonly string $name,
@@ -40,6 +41,7 @@ final class ColumnDefinition
         public readonly string $comment = '',
         public readonly bool $stored = false,
         public readonly string $expression = '',
+        public readonly bool $implicitCollation = false,
     ) {
     }
 
@@ -48,7 +50,7 @@ final class ColumnDefinition
      */
     public function withDomain(Domain $domain): self
     {
-        return new self($this->name, $domain, $this->default, $this->autoIncrement, $this->onUpdateNow, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression);
+        return new self($this->name, $domain, $this->default, $this->autoIncrement, $this->onUpdateNow, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $this->implicitCollation);
     }
 
     /**
@@ -56,7 +58,7 @@ final class ColumnDefinition
      */
     public function withDefault(Fill $default): self
     {
-        return new self($this->name, $this->domain, $default, $this->autoIncrement, $this->onUpdateNow, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression);
+        return new self($this->name, $this->domain, $default, $this->autoIncrement, $this->onUpdateNow, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $this->implicitCollation);
     }
 
     /**
@@ -64,7 +66,15 @@ final class ColumnDefinition
      */
     public function withGeneration(Evaluable $generated, bool $stored, string $expression): self
     {
-        return new self($this->name, $this->domain, Fill::none(), false, false, $generated, $this->invisible, $this->declaration, $this->comment, $stored, $expression);
+        return new self($this->name, $this->domain, Fill::none(), false, false, $generated, $this->invisible, $this->declaration, $this->comment, $stored, $expression, $this->implicitCollation);
+    }
+
+    /**
+     * Answers the same column with its collation declaration origin recorded.
+     */
+    public function withImplicitCollation(bool $implicit): self
+    {
+        return new self($this->name, $this->domain, $this->default, $this->autoIncrement, $this->onUpdateNow, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $implicit);
     }
 
     /**

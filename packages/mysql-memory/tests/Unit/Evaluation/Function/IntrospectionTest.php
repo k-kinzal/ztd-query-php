@@ -24,6 +24,26 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class IntrospectionTest extends TestCase
 {
+    public function testTextualIncludesTemporalResultsReportedAsStrings(): void
+    {
+        $temporal = new Constant(new Domain(Kind::Time, Field::VarString, 14, 3), '12:01:02.345');
+        $year = new Constant(new Domain(Kind::Year, Field::VarString, 4), 2020);
+
+        self::assertTrue((new Introspection())->textual($temporal));
+        self::assertTrue((new Introspection())->textual($year));
+        self::assertSame(5, (new Introspection())->coercibility($temporal));
+        self::assertSame(5, (new Introspection())->coercibility($year));
+    }
+
+    public function testCoercibilityRetainsTheResolvedStrengthOfBitValues(): void
+    {
+        $implicit = new Constant(new Domain(Kind::Bit, Field::Bit, 8, coercibility: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Implicit), 'A');
+        $numeric = new Constant(new Domain(Kind::Bit, Field::LongLong, 8, coercibility: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric), 'A');
+
+        self::assertSame(2, (new Introspection())->coercibility($implicit));
+        self::assertSame(5, (new Introspection())->coercibility($numeric));
+    }
+
     public function testRoutinesNamesTheInformationFunctions(): void
     {
         $names = array_map(static fn ($routine): string => $routine->name, (new Introspection())->routines());

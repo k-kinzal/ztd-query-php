@@ -7,6 +7,8 @@ namespace SqlSemantics\Platform\MySql\Rules\Typing\Builtin;
 use Closure;
 use SqlSemantics\Platform\MySql\Rules\Typing\Text\ResultBounds;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -37,7 +39,8 @@ final class ControlResults
     }
 
     /**
-     * Keeps the first argument's value type while resolving its returned string field.
+     * Keeps the first argument's evaluation kind while resolving its returned field.
+     * Temporal results report strings; legacy numeric results use LONGLONG or DOUBLE.
      */
     public function nullable(Invocation $call): Domain
     {
@@ -50,6 +53,15 @@ final class ControlResults
         $domain = $call->domain(0);
         if ($legacy && $domain->kind === Kind::Null) {
             return new Domain(Kind::String, Field::VarString, 0, 0, false, $domain->collation, [], $domain->coercibility);
+        }
+        if ($legacy && in_array($domain->kind, [Kind::Integer, Kind::Year, Kind::Bit, Kind::Double], true)) {
+            return new Domain($domain->kind, $domain->kind === Kind::Double ? Field::Double : Field::LongLong, $domain->length, $domain->decimals, $domain->unsigned, null, [], Coercibility::Numeric);
+        }
+        if ($domain->kind === Kind::Year && $call->derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql8044) {
+            return new Domain(Kind::Year, Field::VarString, $domain->length, 0, true, null, [], Coercibility::Numeric, displayDecimals: Domain::NOT_FIXED);
+        }
+        if ($domain->kind->temporal() || $domain->kind === Kind::Year) {
+            return new Domain($domain->kind, Field::VarString, $domain->length, $domain->decimals, false, Collation::known('latin1_swedish_ci'), [], Coercibility::Numeric, displayDecimals: $legacy ? null : Domain::NOT_FIXED);
         }
 
         return (new ResultBounds())->selected($domain, $legacy, $column);

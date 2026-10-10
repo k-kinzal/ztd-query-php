@@ -80,7 +80,7 @@ final class Arithmetic implements Scalar
         $domains = (new Precision())->all([$left->type, $right->type]);
         $settings = Settings::of($derivation->context);
         if ($domains !== null && ($type instanceof Known || !$this->operator->bitwise())) {
-            $numbers = new Numbers($settings->divPrecisionIncrement, $settings->unsignedSubtraction, in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true));
+            $numbers = new Numbers($settings->divPrecisionIncrement, $settings->unsignedSubtraction, in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true), $derivation->context->profile->grammar === GrammarRelease::MySql8044);
             $bytes = $domains;
             $domains = [$numbers->numeric($this->left, $domains[0]), $numbers->numeric($this->right, $domains[1])];
             if (in_array($this->operator, [ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::Multiply], true) && in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {

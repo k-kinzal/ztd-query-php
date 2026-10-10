@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Literal\Radix;
 use SqlSemantics\Platform\MySql\Statement\Literal\RadixLiteral;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -34,9 +35,10 @@ final class Numbers
     /**
      * @param int $divPrecisionIncrement The digits a division adds to the scale of its dividend
      * @param bool $unsignedSubtraction Whether a subtraction with an unsigned operand is unsigned
+     * @param bool $legacyFloating Whether nondivision fixed-scale real arithmetic uses 17 plus its scale, also in MySQL 8.0
      * @param bool $legacyRemainders Whether a remainder and an integer division count a temporal operand by its length, as MySQL 5.6 and 5.7 do
      */
-    public function __construct(public readonly int $divPrecisionIncrement = 4, public readonly bool $unsignedSubtraction = true, public readonly bool $legacyRemainders = false)
+    public function __construct(public readonly int $divPrecisionIncrement = 4, public readonly bool $unsignedSubtraction = true, public readonly bool $legacyRemainders = false, public readonly bool $legacyFloating = false)
     {
     }
 
@@ -45,6 +47,9 @@ final class Numbers
      */
     public function operand(Domain $domain): Kind
     {
+        if ($domain->field === Field::VarString && ($domain->kind->temporal() || ($domain->kind === Kind::Year && !$domain->collation->bytes()))) {
+            return Kind::Double;
+        }
         return match ($domain->kind) {
             Kind::Integer, Kind::Year, Kind::Bit => Kind::Integer,
             Kind::Decimal => Kind::Decimal,
@@ -56,10 +61,15 @@ final class Numbers
     /**
      * Answers the precision and scale an operand brings to decimal arithmetic.
      *
+     * @param bool $reported Whether integer results reported with fractional metadata contribute that precision
      * @return array{int, int}
      */
-    public function digits(Domain $domain): array
+    public function digits(Domain $domain, bool $reported = true): array
     {
+        if ($reported && $domain->displayDecimals !== null && in_array($domain->kind, [Kind::Year, Kind::Integer], true)) {
+            return [max(1, $domain->length - ($domain->unsigned ? 0 : 1) - 1), $domain->displayDecimals];
+        }
+
         return match ($domain->kind) {
             Kind::Decimal => [$domain->precision(), $domain->decimals],
             Kind::Date => [8, 0],
@@ -79,24 +89,82 @@ final class Numbers
         }
         $kinds = [$this->operand($left), $this->operand($right)];
         if (in_array(Kind::Double, $kinds, true)) {
-            $null = $left->kind === Kind::Null || $right->kind === Kind::Null;
-
-            return Domain::double($null ? 2 : 23, $null ? 0 : Domain::NOT_FIXED);
+            return $this->floating($operator, $left, $right);
         }
         if ($operator === ArithmeticOperator::Divide || in_array(Kind::Decimal, $kinds, true)) {
             return $this->decimal($operator, $this->digits($left), $this->digits($right));
         }
-        $unsigned = ($left->unsigned || $right->unsigned) && ($operator !== ArithmeticOperator::Minus || $this->unsignedSubtraction);
+        return $this->integerResult($operator, $left, $right);
+    }
+
+    /**
+     * Answers whether integer arithmetic has an unsigned result under the session subtraction mode.
+     */
+    public function unsigned(ArithmeticOperator $operator, Domain $left, Domain $right): bool
+    {
+        return ($left->unsigned || $right->unsigned) && ($operator !== ArithmeticOperator::Minus || $this->unsignedSubtraction);
+    }
+
+    /**
+     * Resolves integer arithmetic, including reported fractional metadata carried by MySQL 8.0 YEAR results.
+     */
+    public function integerResult(ArithmeticOperator $operator, Domain $left, Domain $right): Domain
+    {
+        $unsigned = $this->unsigned($operator, $left, $right);
         $length = match ($operator) {
-            ArithmeticOperator::Multiply => min(65, $this->digits($left)[0] + $this->digits($right)[0]) + ($unsigned ? 0 : 1),
-            ArithmeticOperator::Modulo => ($this->legacyRemainders ? max($left->length, $right->length) : max($this->width($left), $this->width($right))) + ($unsigned ? 1 : 0),
+            ArithmeticOperator::Multiply => min(65, $this->digits($left, false)[0] + $this->digits($right, false)[0]) + ($unsigned ? 0 : 1),
+            ArithmeticOperator::Modulo => ($this->legacyRemainders ? max($left->length, $right->length) : max($this->width($left), $this->width($right))) + ($unsigned && !$this->legacyRemainders ? 1 : 0),
             ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::BitXor,
-            ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight => max($this->width($left), $this->width($right)) + 1,
+            ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight, ArithmeticOperator::Divide, ArithmeticOperator::IntegerDivide => max($this->width($left, $unsigned), $this->width($right, $unsigned)) + 1,
         };
 
-        $maximum = $this->legacyRemainders && in_array($operator, [ArithmeticOperator::Plus, ArithmeticOperator::Minus], true) && !$unsigned ? 67 : 66;
+        return $this->reportedInteger($operator, $left, $right, $length, $unsigned);
+    }
 
-        return Domain::integer(Field::LongLong, min($maximum, $length), $unsigned);
+    /**
+     * Retains reported decimals separately from integer evaluation and applies the result width limit.
+     */
+    public function reportedInteger(ArithmeticOperator $operator, Domain $left, Domain $right, int $length, bool $unsigned): Domain
+    {
+        $scale = max($left->displayDecimals ?? 0, $right->displayDecimals ?? 0);
+        $addition = in_array($operator, [ArithmeticOperator::Plus, ArithmeticOperator::Minus], true);
+        if ($scale > 0) {
+            $length = $addition ? max($left->length - ($left->displayDecimals ?? 0), $right->length - ($right->displayDecimals ?? 0)) + $scale + 1 : $length;
+            $scale = $operator === ArithmeticOperator::Multiply ? min(30, $scale) : $scale;
+        }
+        $maximum = $this->legacyRemainders && $addition && !$unsigned ? 67 : 66;
+
+        return new Domain(Kind::Integer, Field::LongLong, min($maximum, $length), 0, $unsigned, null, [], Coercibility::Numeric, displayDecimals: $scale > 0 ? $scale : null);
+    }
+
+    /**
+     * Resolves floating arithmetic. Fixed-scale operands retain their greatest
+     * scale; division adds div_precision_increment. Legacy nondivision results
+     * use 17 plus that scale, while later releases retain the widest integral
+     * operand. Textually reported temporal results use their reported decimals
+     * without changing how their values convert to numbers. Verified through SQL
+     * with FLOAT, DOUBLE and NULLIF on MySQL 5.6 and 8.4.
+     */
+    public function floating(ArithmeticOperator $operator, Domain $left, Domain $right): Domain
+    {
+        if ($left->kind === Kind::Null || $right->kind === Kind::Null) {
+            return Domain::double(2, 0);
+        }
+        $fraction = static fn (Domain $domain): int => $domain->kind === Kind::Json || ($domain->kind === Kind::String && ($domain->coercibility !== Coercibility::Ignorable || $domain->length !== 0)) ? Domain::NOT_FIXED : ($domain->displayDecimals ?? $domain->decimals);
+        $leftScale = $fraction($left);
+        $rightScale = $fraction($right);
+        $scale = max($leftScale, $rightScale);
+        if ($scale >= Domain::NOT_FIXED) {
+            return Domain::double(23);
+        }
+        $integral = max($left->length - $leftScale, $right->length - $rightScale);
+        if ($operator === ArithmeticOperator::Divide) {
+            $scale = min(Domain::NOT_FIXED, $scale + $this->divPrecisionIncrement);
+
+            return Domain::double($integral + $scale, $scale);
+        }
+
+        return Domain::double(($this->legacyRemainders || $this->legacyFloating ? 17 : $integral) + $scale, $scale);
     }
 
     /**
@@ -108,7 +176,7 @@ final class Numbers
      */
     public function quotient(Domain $left, Domain $right): Domain
     {
-        $fraction = $left->decimals > 0 && $left->decimals < Domain::NOT_FIXED ? $left->decimals + 1 : 0;
+        $fraction = $left->displayDecimals !== null && $this->operand($left) === Kind::Integer ? 1 : ($left->decimals > 0 && $left->decimals < Domain::NOT_FIXED ? $left->decimals + 1 : 0);
         $length = $this->legacyRemainders || !$left->kind->temporal() ? $left->length - $fraction : $this->width($left) - $left->decimals;
 
         return Domain::integer(Field::LongLong, max(1, $length + ($this->operand($right) !== Kind::Integer ? 1 : 0)), $left->unsigned || $right->unsigned);
@@ -117,9 +185,11 @@ final class Numbers
     /**
      * Answers the characters an operand takes in integer arithmetic: a temporal value its digits and a sign, 9 for a DATE, 15 for a DATETIME and 8 for a TIME; any other its length (verified on live 5.6, 5.7, 8.0, 8.4 and 9.1 servers).
      */
-    public function width(Domain $domain): int
+    public function width(Domain $domain, bool $unsigned = false): int
     {
-        return $domain->kind->temporal() ? $this->digits($domain)[0] + 1 : $domain->length;
+        $length = $domain->kind->temporal() ? $this->digits($domain)[0] + 1 : $domain->length;
+
+        return $length - ($unsigned && !$domain->unsigned ? 1 : 0);
     }
 
     /**
@@ -139,7 +209,7 @@ final class Numbers
         $integral = max($leftPrecision - $leftScale, $rightPrecision - $rightScale);
         [$precision, $scale] = match ($operator) {
             ArithmeticOperator::Multiply => [$leftPrecision + $rightPrecision, min(30, $leftScale + $rightScale)],
-            ArithmeticOperator::Divide => [$leftPrecision - $leftScale + $rightScale + min(30, $leftScale + $this->divPrecisionIncrement), min(30, $leftScale + $this->divPrecisionIncrement)],
+            ArithmeticOperator::Divide => [$leftPrecision + $rightScale + $this->divPrecisionIncrement, min(30, $leftScale + $this->divPrecisionIncrement)],
             ArithmeticOperator::Modulo => [$integral + $scale, $scale],
             ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::IntegerDivide,
             ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::BitXor, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight => [$integral + 1 + $scale, $scale],
@@ -162,7 +232,7 @@ final class Numbers
         }
 
         return match ($this->operand($domain)) {
-            Kind::Integer => $negative && $domain->kind === Kind::Integer ? Domain::decimal(...$this->digits($domain)) : Domain::integer(Field::LongLong, $domain->length + (int) $domain->unsigned),
+            Kind::Integer => $negative && $domain->kind === Kind::Integer ? Domain::decimal(...$this->digits($domain)) : new Domain(Kind::Integer, Field::LongLong, $domain->length + (int) $domain->unsigned, 0, false, null, [], Coercibility::Numeric, displayDecimals: $domain->displayDecimals),
             Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(...$this->digits($domain)),
             Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Domain::double(23, $domain->kind === Kind::Double ? $domain->decimals : Domain::NOT_FIXED),
         };
@@ -171,9 +241,9 @@ final class Numbers
     /**
      * Widens the result of unary minus over an exact number as MySQL 5.6 and 5.7 do: one character more than the operand, for the sign (verified on live 5.6.51 and 5.7.44 servers).
      */
-    public function legacyNegated(Domain $result): Domain
+    public function legacyNegated(Domain $result, bool $signIncluded = false): Domain
     {
-        if ($result->kind !== Kind::Integer && $result->kind !== Kind::Decimal) {
+        if ($signIncluded || ($result->kind !== Kind::Integer && $result->kind !== Kind::Decimal)) {
             return $result;
         }
 

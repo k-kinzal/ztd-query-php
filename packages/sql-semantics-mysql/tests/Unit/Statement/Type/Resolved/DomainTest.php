@@ -17,6 +17,14 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class DomainTest extends TestCase
 {
+    public function testWithCollationKeepsReportedDecimalsSeparateFromValuePrecision(): void
+    {
+        $domain = new Domain(Kind::Time, Field::VarString, 14, 3, false, Collation::known('latin1_swedish_ci'), displayDecimals: Domain::NOT_FIXED);
+        $changed = $domain->withCollation(Collation::known('utf8mb4_bin'), Coercibility::Explicit)->value();
+
+        self::assertSame([3, Domain::NOT_FIXED], [$changed->decimals, $changed->displayDecimals]);
+    }
+
     public function testValueReadsStorageCapacityWithoutChangingColumnMetadata(): void
     {
         $column = new Domain(Kind::String, Field::Blob, 4096, 0, false, Collation::known('utf8mb4_general_ci'), capacity: 65535);

@@ -24,6 +24,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class TableQueriesTest extends TestCase
 {
+    public function testImplicitCollationsDistinguishesComputedAndCopiedColumns(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t(a VARCHAR(10) CHARACTER SET latin1); CREATE TABLE r(z VARCHAR(10) CHARACTER SET latin1) AS SELECT a, CONCAT(a,'') x, CONCAT(a,'') z FROM t");
+        $table = $session->instance->dictionary->table('d', 'r');
+
+        self::assertNotNull($table);
+        self::assertSame([false, false, true], array_map(static fn ($column): bool => $column->implicitCollation, $table->definition->columns));
+    }
+
     public function testCreateCreatesTheTableWithTheRowsOfTheQuery(): void
     {
         $session = (new Instance())->connect();
@@ -99,6 +109,16 @@ final class TableQueriesTest extends TestCase
         $element = (new TableQueries($session, $context, new Connection($session->variables, $context)))->copied(new ColumnOrigin('d', 'u', 't', 'b'), 'c');
 
         self::assertSame('c', $element?->name->column->value);
+    }
+
+    public function testFieldUsesIntegerStorageForMySql80YearResults(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $queries = new TableQueries($session, $context, new Connection($session->variables, $context));
+
+        self::assertSame(Field::LongLong, $queries->field(new Domain(Kind::Year, Field::VarString, 4, 0, true, displayDecimals: 31)));
+        self::assertSame(Field::Year, $queries->field(new Domain(Kind::Year, Field::Year, 4)));
     }
 
     public function testTypeAnswersTheTypeOfAnExpression(): void

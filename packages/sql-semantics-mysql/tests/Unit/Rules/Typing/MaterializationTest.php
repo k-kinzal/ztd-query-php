@@ -27,6 +27,22 @@ use SqlSemantics\Statement\Type\TypeFact;
 #[Small]
 final class MaterializationTest extends TestCase
 {
+    public function testColumnStoresMySql80YearResultsInANarrowIntegerColumn(): void
+    {
+        $input = new Domain(Kind::Year, Field::VarString, 4, 0, true, displayDecimals: 31);
+        $column = (new Materialization())->column($input);
+
+        self::assertSame([Kind::Integer, Field::Long, 4, 0, true], [$column->kind, $column->field, $column->metadataLength(), $column->decimals, $column->unsigned]);
+    }
+
+    public function testColumnStoresTextuallyReportedTemporalResultsAsStrings(): void
+    {
+        $input = new Domain(Kind::Time, Field::VarString, 14, 3, collation: Collation::known('latin1_swedish_ci'), displayDecimals: 31);
+        $column = (new Materialization())->column($input);
+
+        self::assertSame([Kind::String, Field::VarString, 14, 0, null, 'latin1_swedish_ci'], [$column->kind, $column->field, $column->length, $column->decimals, $column->displayDecimals, $column->collation->name]);
+    }
+
     public function testStoredSeparatesTheReportedBoundFromStorageCapacity(): void
     {
         $materialization = new Materialization();

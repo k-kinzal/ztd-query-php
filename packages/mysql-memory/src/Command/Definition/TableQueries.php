@@ -102,6 +102,7 @@ final class TableQueries
             $columns[] = [$element, null];
         }
         $layout = new TableLayout(new QualifiedName($create->name->name, new Name($schema->name)), $columns, $keys, $create->options, $create->temporaryWords);
+        $layout->implicitCollations = $this->implicitCollations($plan, $declared);
         $definition = (new TableRebuild($this->session, $this->context, $this->connection))->definition($layout, $this->session->instance->dictionary->declarations());
         $table = new StoredTable($definition, new Heap(), created: CreateTableCommand::created($this->context), clock: (int) floor($this->context->variables->clock()));
         [$records, $affected, $duplicates] = $this->fill($table, $plan, $create->query->duplicate);
@@ -110,6 +111,31 @@ final class TableQueries
         $warnings = $this->context->diagnostics->count();
 
         return new Completion($affected, 0, $warnings, 'Records: ' . $records . '  Duplicates: ' . $duplicates . '  Warnings: ' . $warnings);
+    }
+
+    /**
+     * Records computed columns whose default character-set collation was not declared.
+     * Direct column copies retain that property from their source column.
+     *
+     * @param array<string, true> $declared The lowercase names explicitly declared by CREATE TABLE
+     * @return array<string, true>
+     */
+    public function implicitCollations(QueryPlan $plan, array $declared): array
+    {
+        $implicit = [];
+        foreach ($plan->names as $position => $name) {
+            if (isset($declared[mb_strtolower($name)])) {
+                continue;
+            }
+            $origin = $plan->origins[$position] ?? null;
+            $table = $origin === null ? null : $this->session->instance->dictionary->table($origin->schema, $origin->originalTable);
+            $index = $table?->definition->position($origin->column ?? '');
+            if ($index === null || ($table?->definition->columns[$index]->implicitCollation ?? false)) {
+                $implicit[mb_strtolower($name)] = true;
+            }
+        }
+
+        return $implicit;
     }
 
     /**
@@ -169,6 +195,15 @@ final class TableQueries
     }
 
     /**
+     * Answers the storage field of a computed expression. MySQL 8.0 YEAR results
+     * with a binary string field retain integer storage semantics.
+     */
+    public function field(Domain $domain): Field
+    {
+        return $domain->kind === Kind::Year && $domain->field === Field::VarString && $domain->collation->bytes() ? Field::LongLong : $domain->field;
+    }
+
+    /**
      * Answers the type a column of a query takes in the table, as SQL.
      *
      * A NULL column is a BINARY(0) before MySQL 8.1 and a VARBINARY(0) from 8.1, and so is the
@@ -177,11 +212,12 @@ final class TableQueries
      */
     public function type(Domain $domain): string
     {
+        $field = $this->field($domain);
         $unsigned = $domain->unsigned ? ' UNSIGNED' : '';
         $fraction = $domain->decimals > 0 && $domain->decimals < Domain::NOT_FIXED ? '(' . $domain->decimals . ')' : '';
 
-        return match ($domain->field) {
-            Field::Tiny, Field::Short, Field::Int24, Field::Long, Field::LongLong => $this->integer($domain, self::INTEGERS[$domain->field->name]),
+        return match ($field) {
+            Field::Tiny, Field::Short, Field::Int24, Field::Long, Field::LongLong => $this->integer($domain, self::INTEGERS[$field->name]),
             Field::Decimal, Field::NewDecimal => 'DECIMAL(' . $domain->precision() . ',' . $domain->decimals . ')' . $unsigned,
             Field::Float => 'FLOAT' . $unsigned,
             Field::Double => 'DOUBLE' . $unsigned,

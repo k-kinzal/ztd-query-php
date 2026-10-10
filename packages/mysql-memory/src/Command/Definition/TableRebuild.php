@@ -100,6 +100,7 @@ final class TableRebuild
         }
         $columns = [];
         foreach ($definition->columns as $column) {
+            $column = $column->withImplicitCollation(isset($layout->implicitCollations[mb_strtolower($column->name)]));
             $columns[] = isset($layout->undefaulted[mb_strtolower($column->name)])
                 ? $column->withDefault(Fill::none())
                 : $column;
@@ -271,13 +272,17 @@ final class TableRebuild
 
     /**
      * Tells whether the server changes a column in place: the same storage, a VARCHAR that grows within the same length size, or an ENUM or SET that gains members at its end.
+     * MySQL 8.0 and later also permit a different collation of the same character set.
+     *
+     * @param bool $legacy Whether changing a collation requires copying, as in MySQL 5.6 and 5.7
      */
-    public static function inPlace(Domain $from, Domain $to): bool
+    public static function inPlace(Domain $from, Domain $to, bool $legacy = false): bool
     {
         if (!self::changed($from, $to)) {
             return true;
         }
-        if ($from->field !== $to->field || $from->collation->name !== $to->collation->name || $from->unsigned !== $to->unsigned || $from->decimals !== $to->decimals) {
+        $collation = $legacy ? $from->collation->name === $to->collation->name : $from->collation->charset->name === $to->collation->charset->name;
+        if ($from->field !== $to->field || !$collation || $from->unsigned !== $to->unsigned || $from->decimals !== $to->decimals) {
             return false;
         }
         if ($from->kind === Kind::String && ($from->field === Field::VarChar || $from->field === Field::VarString)) {

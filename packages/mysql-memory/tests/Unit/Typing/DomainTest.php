@@ -17,6 +17,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class DomainTest extends TestCase
 {
+    public function testOfRetainsReportedDecimalsAcrossCopies(): void
+    {
+        $resolved = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(Kind::Time, Field::VarString, 14, 3, false, Collation::known('latin1_swedish_ci'), displayDecimals: Domain::NOT_FIXED);
+        $domain = Domain::of($resolved, true);
+
+        self::assertEquals($resolved, $domain->resolved());
+        self::assertSame(Domain::NOT_FIXED, $domain->withNullable(false)->withSource('a')->withQuiet()->withNumericBytes()->withCollation(Collation::known('utf8mb4_bin'), Coercibility::Explicit)->resolved()->displayDecimals);
+        self::assertSame(3, $domain->decimals);
+    }
+
     public function testOfRetainsMaterializedStorageCapacityAcrossCopies(): void
     {
         $resolved = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(Kind::String, Field::Blob, 4096, 0, false, Collation::known('utf8mb4_general_ci'), capacity: 65535);

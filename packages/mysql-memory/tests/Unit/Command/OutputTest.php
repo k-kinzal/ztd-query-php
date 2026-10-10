@@ -22,6 +22,22 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class OutputTest extends TestCase
 {
+    public function testColumnReportsStringDecimalsWithoutChangingTemporalEvaluationPrecision(): void
+    {
+        $domain = new Domain(Kind::Time, Field::VarString, 14, 3, false, Collation::known('latin1_swedish_ci'), displayDecimals: Domain::NOT_FIXED);
+        $column = (new Output())->column('v', $domain, null, Charset::known('utf8mb4'));
+
+        self::assertSame([Field::VarString, 56, Domain::NOT_FIXED], [$column->type, $column->length, $column->decimals]);
+        self::assertSame(3, $domain->decimals);
+    }
+
+    public function testTextSendsALegacyBitResultAsAnUnsignedInteger(): void
+    {
+        $domain = new Domain(Kind::Bit, Field::LongLong, 8, 0, true);
+
+        self::assertSame('65', (new Output())->text('A', $domain));
+    }
+
     public function testColumnConvertsAnExplicitBlobMetadataWidth(): void
     {
         $domain = new Domain(Kind::String, Field::LongBlob, 1024, Domain::NOT_FIXED, false, Collation::known('utf8mb4_general_ci'), display: 4096);

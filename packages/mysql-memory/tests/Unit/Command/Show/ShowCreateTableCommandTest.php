@@ -78,6 +78,16 @@ final class ShowCreateTableCommandTest extends TestCase
         self::assertSame("`b` varchar(20) DEFAULT NULL /*!80023 INVISIBLE */ COMMENT 'hi'", (new ShowCreateTableCommand())->column($table->definition->columns[1], $table->definition));
     }
 
+    public function testCollationOmitsTheDefaultCollationOfAComputedQueryColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t AS SELECT _latin1'a' x, _latin1'a' COLLATE latin1_bin y");
+        $table = $session->instance->dictionary->table('d', 't');
+
+        self::assertNotNull($table);
+        self::assertSame([' CHARACTER SET latin1', ' CHARACTER SET latin1 COLLATE latin1_bin'], array_map(static fn ($column): string => (new ShowCreateTableCommand())->collation($column, $table->definition), $table->definition->columns));
+    }
+
     public function testCollationWritesANamedOrNonDefaultCollation(): void
     {
         $session = (new Instance())->connect();

@@ -73,6 +73,7 @@ final class ColumnChange
         $layout = $this->layout;
         $index = $this->existing(($command->column ?? $command->definition->name)->column->value);
         $origin = $layout->columns[$index][1];
+        unset($layout->implicitCollations[mb_strtolower($layout->columns[$index][0]->name->column->value)]);
         $this->stored($layout->columns[$index][0], $command->definition);
         unset($layout->undefaulted[mb_strtolower($layout->columns[$index][0]->name->column->value)]);
         if ($command->position === null) {
@@ -148,6 +149,10 @@ final class ColumnChange
         $layout = $this->layout;
         $index = $this->existing($command->from->column->value);
         [$element, $origin] = $layout->columns[$index];
+        if (isset($layout->implicitCollations[mb_strtolower($element->name->column->value)])) {
+            unset($layout->implicitCollations[mb_strtolower($element->name->column->value)]);
+            $layout->implicitCollations[mb_strtolower($command->to->column->value)] = true;
+        }
         if (isset($layout->undefaulted[mb_strtolower($element->name->column->value)])) {
             unset($layout->undefaulted[mb_strtolower($element->name->column->value)]);
             $layout->undefaulted[mb_strtolower($command->to->column->value)] = true;
