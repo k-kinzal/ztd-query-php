@@ -74,7 +74,7 @@ final class JsonObjectAggregate implements SetFunction
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
-        $environment = $this->aggregates() ? (new HavingScope())->leave($environment) : $environment;
+        $environment = $this->aggregates() ? (new HavingScope())->arguments($environment) : $environment;
         (new Arguments())->one($this->key, $derivation, $environment);
         (new Arguments())->one($this->value, $derivation, $environment);
         (new Windows())->derive($this->over, $derivation, $environment);

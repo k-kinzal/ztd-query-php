@@ -36,6 +36,7 @@ final class GroupedColumnsTest extends TestCase
         yield 'order key' => ['SELECT a FROM t1 GROUP BY a ORDER BY b', GroupingRule::NotDetermined, 'fz.t1.b'];
         yield 'alias' => ['SELECT x.b FROM t1 x GROUP BY x.a', GroupingRule::NotDetermined, 'fz.x.b'];
         yield 'derived' => ['SELECT d.p FROM (SELECT a AS p, b FROM t1) d GROUP BY d.b', GroupingRule::NotDetermined, 'd.p'];
+        yield 'common table' => ['WITH c AS (SELECT a, b FROM t1) SELECT b, COUNT(*) FROM c', GroupingRule::WithoutGroupBy, 'c.b'];
         yield 'distinct' => ['SELECT DISTINCT a FROM t1 ORDER BY b', GroupingRule::NotSelected, 'fz.t1.b'];
         yield 'star' => ['SELECT *, COUNT(*) FROM t1', GroupingRule::WithoutGroupBy, 'fz.t1.id'];
         yield 'rollup primary key' => ['SELECT id, b FROM t1 GROUP BY id WITH ROLLUP', GroupingRule::NotDetermined, 'fz.t1.b'];
@@ -176,6 +177,23 @@ final class GroupedColumnsTest extends TestCase
         $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape)];
 
         self::assertNull((new GroupedColumns())->distinct($select, $relations, $operation->facts, new Derivation($context)));
+    }
+
+    public function testHavingChecksCorrelatedInputsAfterResolution(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, '9.1.0');
+        $context = $semantics->context([$semantics->analyze('CREATE TABLE fz.t1 (id INT PRIMARY KEY, a INT)')], true, new SearchPath('fz'));
+        $operation = $semantics->analyze('SELECT COUNT(*) FROM t1 HAVING (SELECT t1.a)>0', $context);
+        $select = $operation->statement;
+        self::assertInstanceOf(Select::class, $select);
+        self::assertInstanceOf(TableReference::class, $select->from);
+        $relations = [spl_object_id($select->from) => new VisibleRelation($select->from, $operation->facts->relation($select->from)->shape, null, $select->from->name)];
+        $problem = (new GroupedColumns())->having($select, $relations, $operation->facts, null, new Derivation($context));
+
+        self::assertNotNull($problem);
+        self::assertSame([GroupingRule::WithoutGroupBy, true, 'fz.t1.a'], [$problem->rule, $problem->having, $problem->column]);
+        self::assertEquals([$problem], $operation->facts->diagnostics);
+        self::assertSame([], $semantics->analyze('SELECT id FROM t1 GROUP BY id HAVING (SELECT t1.a)>0', $context)->facts->diagnostics);
     }
 
     public function testNameWritesTheDatabaseTheTableAndTheColumn(): void

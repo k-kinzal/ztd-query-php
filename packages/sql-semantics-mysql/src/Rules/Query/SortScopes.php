@@ -75,9 +75,9 @@ final class SortScopes
         foreach ($items as $item) {
             $word = $aliasFirst ? $this->word($item->expression) : null;
             if ($item->expression instanceof OutputOrdinal) {
-                $facts[] = $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, $open ? $environment->relations : [], [], $known, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed));
+                $facts[] = $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, $open ? $environment->relations : [], [], $known, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed, aggregateArgument: $environment->aggregateArgument));
             } elseif ($word !== null && $environment->aliased($word) !== []) {
-                $facts[] = $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, [], [], $environment->aliased($word), aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed));
+                $facts[] = $derivation->scalar($item->expression, new Environment($derivation->context, $environment->outer, [], [], $environment->aliased($word), aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed, aggregateArgument: $environment->aggregateArgument));
             } else {
                 $facts[] = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
             }

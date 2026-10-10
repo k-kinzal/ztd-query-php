@@ -27,10 +27,11 @@ final class NonGroupedColumn implements Diagnostic
     /**
      * @param GroupingRule $rule The rule the column breaks
      * @param bool $ordering Whether the expression is an ORDER BY key rather than a select item
+     * @param bool $having Whether the expression is the HAVING condition
      * @param int $position The position of the expression in its list, counted from 1
      * @param string $column The column as the server names it
      */
-    public function __construct(public readonly GroupingRule $rule, public readonly bool $ordering, public readonly int $position, public readonly string $column)
+    public function __construct(public readonly GroupingRule $rule, public readonly bool $ordering, public readonly int $position, public readonly string $column, public readonly bool $having = false)
     {
     }
 
@@ -39,7 +40,7 @@ final class NonGroupedColumn implements Diagnostic
      */
     public function message(): string
     {
-        $list = $this->ordering ? 'ORDER BY clause' : 'SELECT list';
+        $list = $this->having ? 'HAVING clause' : ($this->ordering ? 'ORDER BY clause' : 'SELECT list');
 
         return match ($this->rule) {
             GroupingRule::NotDetermined => sprintf("Expression #%d of %s is not in GROUP BY clause and contains nonaggregated column '%s' which is not functionally dependent on columns in GROUP BY clause; this is incompatible with sql_mode=only_full_group_by", $this->position, $list, $this->column),

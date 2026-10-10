@@ -63,6 +63,7 @@ final class Settings implements Session
      * @param Charset|null $client The character set statements are read in (character_set_client); null when the session does not say
      * @param list<ProgramRow> $program The parameters, local variables and trigger rows a statement of a running stored program sees, the innermost last; empty outside a program
      * @param array<string, Domain> $functions The type each stored function returns, by `database.name`
+     * @param bool $derivedMerge Whether eligible derived queries can merge into their enclosing block
      * @param Locale|null $timeNames The locale of the names of months and days (lc_time_names); en_US when null
      * @param string $blockEncryptionMode The mode of AES_ENCRYPT and AES_DECRYPT (block_encryption_mode), whose stream modes do not pad
      */
@@ -80,6 +81,7 @@ final class Settings implements Session
         array $functions = [],
         public readonly ?Locale $timeNames = null,
         public readonly string $blockEncryptionMode = 'aes-128-ecb',
+        public readonly bool $derivedMerge = true,
     ) {
         $this->program = Check::listOf($program, ProgramRow::class, 'A running stored program shows rows of names.');
         $routines = [];

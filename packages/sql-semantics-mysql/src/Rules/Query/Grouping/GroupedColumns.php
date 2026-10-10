@@ -18,6 +18,7 @@ use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Reference\Table\CommonTable;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 use SqlSemantics\Statement\Shape\OpenStar;
@@ -73,7 +74,7 @@ final class GroupedColumns
         if ($select->groupBy !== null) {
             $problem = $this->grouped($select, $fields, $relations, $facts, $derivation);
         } elseif ($aggregates) {
-            $problem = $this->items($fields, $relations, $facts, null, GroupingRule::WithoutGroupBy, $derivation);
+            $problem = $this->items($fields, $relations, $facts, null, GroupingRule::WithoutGroupBy, $derivation) ?? $this->having($select, $relations, $facts, null, $derivation);
         } elseif (in_array(SelectOption::Distinct, $select->options, true)) {
             $problem = $this->distinct($select, $relations, $facts, $derivation);
         }
@@ -144,7 +145,27 @@ final class GroupedColumns
             }
         }
 
-        return null;
+        return $this->having($select, $relations, $facts, [$groups, $determined], $derivation);
+    }
+
+    /**
+     * Checks input columns read by the HAVING condition, including correlated subqueries.
+     *
+     * MySQL 9.1 resolves unselected outer inputs inside a HAVING subquery and then
+     * applies grouping rules to those references. Earlier releases reject such names
+     * during lookup. Verified with the same SQL on 8.0, 8.4 and 9.1 servers.
+     *
+     * @param array<int, VisibleRelation> $relations
+     * @param array{list<Scalar>, array<string, true>}|null $grouping
+     */
+    public function having(Select $select, array $relations, Facts $facts, ?array $grouping, Derivation $derivation): ?NonGroupedColumn
+    {
+        if ($select->having === null) {
+            return null;
+        }
+        $missing = $grouping === null ? ((new ColumnReads())->columns($select->having, $relations, $facts, false)[0][1] ?? null) : (new Determination())->undetermined($select->having, $grouping[0], $grouping[1], $relations, $facts);
+
+        return $missing === null ? null : new NonGroupedColumn($grouping === null ? GroupingRule::WithoutGroupBy : GroupingRule::NotDetermined, false, 1, $this->name($missing, $relations, $derivation), true);
     }
 
     /**
@@ -223,7 +244,8 @@ final class GroupedColumns
     {
         $relation = $relations[spl_object_id($column->relation)] ?? null;
         $table = $relation->alias->value ?? $relation->name->name->value ?? '';
-        $schema = $relation?->name === null ? null : ($relation->name->schema->value ?? ($derivation->context->searchPath[0]->value ?? null));
+        $common = $derivation->facts()->covers($column->relation) && $derivation->facts()->relation($column->relation)->table instanceof CommonTable;
+        $schema = $relation?->name === null || $common ? null : ($relation->name->schema->value ?? ($derivation->context->searchPath[0]->value ?? null));
         $name = $column->slot->name->value ?? '';
 
         return ($schema === null ? '' : $schema . '.') . $table . '.' . $name;

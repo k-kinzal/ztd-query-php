@@ -180,6 +180,16 @@ inner block. Clause visibility also matters: an enclosing WHERE cannot own an
 aggregate. Consumers should use the resolved occurrences when planning groups,
 since their written nesting alone does not identify the rows to aggregate.
 
+Inside HAVING, aggregate arguments can read the enclosing block's input columns,
+including through nested queries. A selected alias without a matching input column
+remains a reference to the result row. For example, `(SELECT SUM(a))` and
+`(SELECT SUM(x))` differ when the outer query selects `a AS x`.
+MySQL 9.1 also lets ordinary nested expressions read unselected outer input columns;
+those references are checked against GROUP BY and functional dependencies.
+Earlier supported releases reject those names in grouped blocks, except for
+eligible derived or common tables merged into the block from MySQL 5.7 onward.
+The `derivedMerge` session setting controls that exception.
+
 ### Tables and views
 
 A `CREATE VIEW` declares a view (`RelationKind::View`); every other declaration is a base table. The declared kind decides what statements on the name do, as the server decides it. `SHOW CREATE TABLE` returns `Table` and `Create Table` for a base table and the four columns of `SHOW CREATE VIEW` for a view. A statement that needs a base table (`ALTER TABLE`, `CREATE INDEX`, `CREATE TRIGGER`, `CREATE TABLE ... LIKE`, `HANDLER ... OPEN`) refuses a view, and one that needs a view (`ALTER VIEW`, `CREATE OR REPLACE VIEW`, `SHOW CREATE VIEW`, `DROP VIEW`) refuses a base table (`WrongRelationKind`). `DROP TABLE` and `TRUNCATE TABLE` do not find a view. `DROP VIEW IF EXISTS` of a base table is refused in 8.1, 8.2, 8.3, 9.0 and 9.1 only; the other releases add only a note.

@@ -236,6 +236,16 @@ final class SessionTest extends TestCase
         self::assertSame([], $resolution->parameters);
     }
 
+    public function testResolutionTracksDerivedMerge(): void
+    {
+        $session = (new Instance())->connect();
+        self::assertTrue($session->resolution()->derivedMerge);
+        $session->query("SET optimizer_switch='derived_merge=off'");
+        self::assertFalse($session->resolution()->derivedMerge);
+        $session->query("SET optimizer_switch='derived_merge=on'");
+        self::assertTrue($session->resolution()->derivedMerge);
+    }
+
     public function testResolutionNamesTheCharacterSetStatementsAreReadIn(): void
     {
         $session = (new Instance())->connect();

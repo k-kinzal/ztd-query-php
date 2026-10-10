@@ -14,6 +14,11 @@ use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 #[Small]
 final class NonGroupedColumnTest extends TestCase
 {
+    public function testMessageNamesTheHavingCondition(): void
+    {
+        self::assertSame("In aggregated query without GROUP BY, expression #1 of HAVING clause contains nonaggregated column 'd.t.a'; this is incompatible with sql_mode=only_full_group_by", (new NonGroupedColumn(GroupingRule::WithoutGroupBy, false, 1, 'd.t.a', true))->message());
+    }
+
     public function testMessageIsThatOfTheServerForEachRule(): void
     {
         self::assertSame("Expression #2 of ORDER BY clause is not in GROUP BY clause and contains nonaggregated column 'd.t.b' which is not functionally dependent on columns in GROUP BY clause; this is incompatible with sql_mode=only_full_group_by", (new NonGroupedColumn(GroupingRule::NotDetermined, true, 2, 'd.t.b'))->message());

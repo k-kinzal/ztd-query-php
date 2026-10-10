@@ -6,7 +6,7 @@ namespace SqlSemantics\Platform\MySql\Rules;
 
 use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
-use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
+use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingLookup;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\ResultReferences;
 use SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias;
 use SqlSemantics\Resolution\ColumnLookup;
@@ -20,7 +20,6 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\AmbiguousColumn;
 use SqlSemantics\Statement\Reference\Column\ConditionalColumn;
-use SqlSemantics\Statement\Reference\Column\MissingColumn;
 use SqlSemantics\Statement\Reference\Column\Resolution;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Reference\Missing\MissingInput;
@@ -53,10 +52,12 @@ use SqlSemantics\Validation\Equivalence;
  * At a HAVING position (MYSQL-HAVING-SCOPE-001) the GROUP BY columns and
  * the select list are searched first (MYSQL-HAVING-REFERENCE-001); a name
  * written there outside set functions never sees the columns of the FROM
- * clause of its own query (ER_BAD_FIELD_ERROR "in 'having clause'"), and a
- * name of a nested query sees them only when the enclosing block neither
- * groups, aggregates nor is DISTINCT (Item_ref::fix_fields,
- * Item_field::fix_outer_field). A select list star over an incompletely
+ * clause of its own query (ER_BAD_FIELD_ERROR "in 'having clause'"). An
+ * aggregate argument, including a nested query in that argument, prefers
+ * the input columns of an enclosing HAVING block. An ordinary nested use
+ * normally sees those inputs only when the block neither groups, aggregates nor is DISTINCT;
+ * eligible merged inputs and MySQL 9.1 also expose them for subsequent grouping checks.
+ * A select list star over an incompletely
  * known occurrence, and a GROUP BY or select list column of the name that
  * belongs to such an occurrence, leave a name not found there conditional.
  * Terminates: the scopes form a finite chain. Source:
@@ -81,8 +82,10 @@ final class ColumnResolver
         $lookup = new ColumnLookup();
         $open = [];
         $depth = 0;
+        $argument = false;
         for ($scope = $environment; $scope !== null; $scope = $scope->outer) {
-            $row = (new HavingScope())->row($scope);
+            $argument = $argument || $scope->aggregateArgument;
+            $row = (new HavingLookup())->row($scope, $column, $qualifier, $depth, $argument);
             if ($row !== null) {
                 $result = (new ResultReferences())->find($row, $scope, $column, $qualifier, $depth);
                 if ($result instanceof ConditionalColumn) {
@@ -92,12 +95,12 @@ final class ColumnResolver
                     return $open === [] ? $result : $lookup->conditional($column, $result instanceof ResolvedColumn ? [$result] : [], $open);
                 }
                 $open = [...$open, ...$this->unlisted($row, $scope, $column)];
-                if ($depth === 0 || $row->grouped) {
+                if ((new HavingLookup())->blocked($row, $scope, $depth)) {
                     $depth++;
                     continue;
                 }
             }
-            $level = $qualifier?->schema === null ? new LookupLevel($scope, $column, $qualifier, $depth) : new LookupLevel((new RelationQualifiers())->narrowed($scope, $qualifier), $column, new QualifiedName($qualifier->name), $depth);
+            $level = (new HavingLookup())->input($scope, $column, $qualifier, $depth);
             $found = $level->found();
             $open = [...$open, ...$level->open()];
             if ($found !== []) {
@@ -118,7 +121,7 @@ final class ColumnResolver
             $depth++;
         }
 
-        return $open === [] ? new MissingColumn($column, $qualifier) : $lookup->conditional($column, [], $open);
+        return $open === [] ? (new HavingLookup())->missing($environment, $column, $qualifier) : $lookup->conditional($column, [], $open);
     }
 
     /**

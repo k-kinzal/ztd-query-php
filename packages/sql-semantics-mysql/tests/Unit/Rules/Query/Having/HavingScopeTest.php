@@ -99,6 +99,18 @@ final class HavingScopeTest extends TestCase
         self::assertSame([], (new HavingScope())->leave((new HavingScope())->enter($environment, new GroupedRow([], [], true)))->relations);
     }
 
+    public function testArgumentsMarksTheInputPositionAndRemovesItsHavingResult(): void
+    {
+        $context = (new Semantics(Dialect::MySql))->context([]);
+        $environment = (new HavingScope())->enter(new \SqlSemantics\Resolution\Environment($context), new GroupedRow([], [], true));
+        $arguments = (new HavingScope())->arguments($environment);
+
+        self::assertTrue($arguments->aggregateArgument);
+        self::assertFalse($environment->aggregateArgument);
+        self::assertSame([], $arguments->relations);
+        self::assertSame($context, $arguments->context);
+    }
+
     public function testRowAnswersTheGroupedRowOfAHavingEnvironmentOnly(): void
     {
         $platform = new Platform();

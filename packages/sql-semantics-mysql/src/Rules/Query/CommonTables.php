@@ -106,7 +106,7 @@ final class CommonTables
      */
     public function extended(Environment $outer, array $bindings): Environment
     {
-        return new Environment($outer->context, $outer->outer, $outer->relations, [...$outer->commonTables, ...$bindings], $outer->aliases, aggregation: $outer->aggregation, aggregatesAllowed: $outer->aggregatesAllowed);
+        return new Environment($outer->context, $outer->outer, $outer->relations, [...$outer->commonTables, ...$bindings], $outer->aliases, aggregation: $outer->aggregation, aggregatesAllowed: $outer->aggregatesAllowed, aggregateArgument: $outer->aggregateArgument);
     }
 
     /**
@@ -137,7 +137,7 @@ final class CommonTables
             $bindings[] = $binding === $pending ? new CommonBinding($binding->name, $binding->definition, $this->shape($pending, $anchor, $derivation)) : $binding;
         }
 
-        return new Environment($outer->context, $outer->outer, $outer->relations, $bindings, $outer->aliases, aggregation: $outer->aggregation, aggregatesAllowed: $outer->aggregatesAllowed);
+        return new Environment($outer->context, $outer->outer, $outer->relations, $bindings, $outer->aliases, aggregation: $outer->aggregation, aggregatesAllowed: $outer->aggregatesAllowed, aggregateArgument: $outer->aggregateArgument);
     }
 
     /**
