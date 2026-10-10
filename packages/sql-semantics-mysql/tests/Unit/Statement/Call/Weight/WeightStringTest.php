@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightCast;
 use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightLevel;
 use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightString;
@@ -36,7 +35,7 @@ final class WeightStringTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new WeightString(new StringLiteral(['x'])), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Binary->descriptor()), $fact->type);
+        self::assertEquals(new Known(Domain::string(64, Collation::binary())), $fact->type);
     }
 
     public function testRenderWritesTheCastAndTheLevels(): void

@@ -381,7 +381,7 @@ final class Compiler
             $node instanceof CharCall => $this->texts->char($node, $scope),
             $node instanceof SoundsLike => $this->texts->soundsLike($node, $scope),
             $node instanceof Regexp => $this->texts->regexp($node, $scope),
-            $node instanceof WeightString => $this->texts->weight($node, $scope),
+            $node instanceof WeightString, $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightStringParameters => $this->texts->weight($node, $scope),
             $node instanceof FullTextSearch => $this->texts->match($node, $scope),
             $node instanceof Concatenation => $this->calls->named('CONCAT', [$node->left, $node->right], $scope, $node),
             default => null,

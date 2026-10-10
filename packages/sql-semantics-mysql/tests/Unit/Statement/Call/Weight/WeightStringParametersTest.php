@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Contract\ParameterStyle;
 use SqlSemantics\Platform\MySql\Platform;
-use SqlSemantics\Platform\MySql\Rules\Call\TypeClass;
 use SqlSemantics\Platform\MySql\Statement\Call\Weight\WeightStringParameters;
 use SqlSemantics\Platform\MySql\Statement\Literal\Numeral;
 use SqlSemantics\Platform\MySql\Statement\Literal\StringLiteral;
@@ -31,7 +30,7 @@ final class WeightStringParametersTest extends TestCase
         $derivation = new Derivation($platform->context($profile, null, [], false));
         $fact = $derivation->scalar(new WeightStringParameters(new StringLiteral(['x']), new Numeral('0'), new Numeral('1'), new Numeral('2')), $derivation->environment());
 
-        self::assertEquals(new Known(TypeClass::Binary->descriptor()), $fact->type);
+        self::assertEquals(new Known(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::string(64, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary())), $fact->type);
     }
 
     public function testRenderWritesTheNumbers(): void

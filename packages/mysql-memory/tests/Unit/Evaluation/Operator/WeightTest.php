@@ -61,6 +61,15 @@ final class WeightTest extends TestCase
         self::assertSame("\0\0a\0\0B", (new Weight(new Constant(Domain::string(2, Collation::known('utf8mb4_bin')), 'aB'), null, null, Domain::string(24, Collation::binary())))->evaluate(new Frame($context)));
     }
 
+    public function testTextPadsLegacyBinaryCharCastsToTheirRequestedLength(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $result = $session->query("SELECT HEX(WEIGHT_STRING(_binary'ab' AS CHAR(4)))")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['61620000']], $result->rows);
+    }
+
     public function testBytesPadsOrCutsToTheLengthOfTheCast(): void
     {
         $weight = new Weight(new Constant(Domain::null(), null), WeightCast::Binary, 3, Domain::string(8, Collation::binary()));
