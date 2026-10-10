@@ -7,7 +7,6 @@ namespace MySqlMemory\Command\Explain;
 use MySqlMemory\Dictionary\TableDefinition;
 use SqlSemantics\Platform\MySql\Statement\Dml\Update;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
-use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Statement\Statement;
 
 /**
@@ -40,7 +39,7 @@ final class PrimaryScan
         $names = [];
         foreach ($primary->columns as $position) {
             $column = $table->columns[$position];
-            $bytes = self::INTEGER_BYTES[$column->domain->field->value] ?? null;
+            $bytes = self::INTEGER_BYTES[$column->domain->field->name] ?? null;
             if ($bytes === null) {
                 return null;
             }
@@ -55,7 +54,7 @@ final class PrimaryScan
     /**
      * Integer key storage lengths, independent of their display widths.
      *
-     * @var array<int, int>
+     * @var array<string, int>
      */
-    public const INTEGER_BYTES = [Field::Tiny->value => 1, Field::Short->value => 2, Field::Int24->value => 3, Field::Long->value => 4, Field::LongLong->value => 8];
+    public const INTEGER_BYTES = ['Tiny' => 1, 'Short' => 2, 'Int24' => 3, 'Long' => 4, 'LongLong' => 8];
 }
