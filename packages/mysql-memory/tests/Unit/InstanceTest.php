@@ -94,9 +94,23 @@ final class InstanceTest extends TestCase
         self::assertSame(2, $instance->connections());
     }
 
-    public function testConnectNumbersTheConnectionsFromOne(): void
+    public function testResetPreservesTheConnectionIdentityAndEndsItsTransaction(): void
     {
         $instance = new Instance();
+        $original = $instance->connect('root', 'example.test', port: 12345);
+        $original->query('SET @v=1; BEGIN');
+        $fresh = $instance->reset($original);
+
+        self::assertTrue($original->released);
+        self::assertFalse($fresh->transaction->open);
+        self::assertSame([], $fresh->variables->user);
+        self::assertSame([$original->id, 'example.test', 12345, 1], [$fresh->id, $fresh->host, $fresh->port, $instance->connections()]);
+        self::assertSame($fresh, $instance->sessions[$original->id]->get());
+    }
+
+    public function testConnectNumbersTheConnectionsFromOneWhenNoDaemonRuns(): void
+    {
+        $instance = new Instance(globals: ['event_scheduler' => 'OFF']);
 
         self::assertSame(1, $instance->connect()->id);
         self::assertSame(2, $instance->connect()->id);

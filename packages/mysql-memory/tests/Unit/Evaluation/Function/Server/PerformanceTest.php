@@ -58,12 +58,12 @@ final class PerformanceTest extends TestCase
         $first = $instance->connect();
         $second = $instance->connect();
         $second->close();
-        $result = $first->query("SELECT PS_CURRENT_THREAD_ID(), PS_THREAD_ID(1), PS_THREAD_ID(2), PS_THREAD_ID(1.4), PS_THREAD_ID(NULL), PS_THREAD_ID('a'), PS_THREAD_ID(99999999999999999999)")[0];
+        $result = $first->query("SELECT PS_CURRENT_THREAD_ID(), PS_THREAD_ID({$first->id}), PS_THREAD_ID({$second->id}), PS_THREAD_ID({$first->id}.4), PS_THREAD_ID(NULL), PS_THREAD_ID('a'), PS_THREAD_ID(99999999999999999999)")[0];
         $warnings = $first->query('SHOW WARNINGS')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertInstanceOf(ResultSet::class, $warnings);
-        self::assertSame([['38', '38', null, '38', null, null, null]], $result->rows);
+        self::assertSame([[(string) ($first->id + 37), (string) ($first->id + 37), null, (string) ($first->id + 37), null, null, null]], $result->rows);
         self::assertSame([['Warning', '1292', "Truncated incorrect INTEGER value: 'a'"], ['Warning', '1292', "Truncated incorrect DECIMAL value: '99999999999999999999'"]], $warnings->rows);
     }
 

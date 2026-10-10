@@ -158,11 +158,11 @@ final class ExplainCommandTest extends TestCase
         $instance = new Instance();
         $session = $instance->connect();
         $idle = $instance->connect();
-        $own = $session->analyze('EXPLAIN FOR CONNECTION 1')->statement;
-        $other = $session->analyze('EXPLAIN FOR CONNECTION 2')->statement;
+        $own = $session->analyze('EXPLAIN FOR CONNECTION ' . $session->id)->statement;
+        $other = $session->analyze('EXPLAIN FOR CONNECTION ' . $idle->id)->statement;
         $context = new Context(new SqlModes([]), $session->diagnostics, $session->variables, 0.0);
 
-        self::assertSame(2, $idle->id);
+        self::assertNotSame($session->id, $idle->id);
         self::assertInstanceOf(ExplainConnection::class, $own);
         self::assertInstanceOf(ExplainConnection::class, $other);
         self::assertInstanceOf(Completion::class, (new ExplainCommand())->connection($other, $session, $context));

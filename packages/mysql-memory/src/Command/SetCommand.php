@@ -84,6 +84,7 @@ final class SetCommand implements Command
             $session->variables->globals->caches = $caches;
             throw $error;
         }
+        $session->instance->registry->eventScheduler->configured($session->variables->globals, $session->variables->catalog, $session->instance->dictionary);
 
         return new Completion(0, 0, $context->diagnostics->count());
     }

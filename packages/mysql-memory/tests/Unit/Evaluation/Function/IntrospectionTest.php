@@ -87,7 +87,7 @@ final class IntrospectionTest extends TestCase
         $result = $session->query('SELECT CONNECTION_ID()')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['1']], $result->rows);
+        self::assertSame([[(string) $session->id]], $result->rows);
         self::assertSame(Field::LongLong, $result->columns[0]->type);
     }
 

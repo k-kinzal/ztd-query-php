@@ -136,7 +136,7 @@ final class TableRebuildTest extends TestCase
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1452);
-        $this->expectExceptionMessage('Cannot add or update a child row: a foreign key constraint fails (`d`.`#sql-1_1`, CONSTRAINT `c_ibfk_1` FOREIGN KEY (`pid`) REFERENCES `p` (`id`))');
+        $this->expectExceptionMessage('Cannot add or update a child row: a foreign key constraint fails (`d`.`#sql-1_' . $session->id . '`, CONSTRAINT `c_ibfk_1` FOREIGN KEY (`pid`) REFERENCES `p` (`id`))');
 
         $session->query('ALTER TABLE c ADD FOREIGN KEY (pid) REFERENCES p(id)');
     }

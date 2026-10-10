@@ -43,8 +43,8 @@ final class LocksTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $taken);
         self::assertInstanceOf(ResultSet::class, $refused);
         self::assertInstanceOf(ResultSet::class, $released);
-        self::assertSame([['1', '1', '0', '1']], $taken->rows);
-        self::assertSame([['0', '0', null, '1']], $refused->rows);
+        self::assertSame([['1', '1', '0', (string) $first->id]], $taken->rows);
+        self::assertSame([['0', '0', null, (string) $first->id]], $refused->rows);
         self::assertSame([['1', '1', null, '0']], $released->rows);
     }
 
@@ -79,7 +79,7 @@ final class LocksTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['0', '0', '0']], $result->rows);
-        self::assertSame([3605.0, 1], [$instance->registry->threads->passed, $instance->registry->threads->owner('a')]);
+        self::assertSame([3605.0, $holder->id], [$instance->registry->threads->passed, $instance->registry->threads->owner('a')]);
     }
 
     public function testRoutinesReleaseTheLocksOfASessionNothingRefersTo(): void

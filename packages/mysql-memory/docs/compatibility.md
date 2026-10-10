@@ -275,7 +275,7 @@ In MySQL 5.6 the diagnostics area is cleared only by a statement that opens a ta
 
 Differences:
 
-- **`SHOW PROCESSLIST`** lists the sessions of the server; the event scheduler daemon is not listed, the time a session has spent in its state reads 0, and a session's host is the one it connected as, without a port.
+- **`SHOW PROCESSLIST`** lists client sessions and the event scheduler daemon while `event_scheduler` is `ON`. Client hosts include their TCP source port. Connection identities remain stable across `COM_RESET_CONNECTION` and share an allocator with daemon identities and wire greetings, including abandoned handshakes. Session elapsed time follows the statement clock, including a pinned `timestamp`; daemon elapsed time follows the server clock. Creating or enabling a future event wakes the daemon into its next-activation wait. Event bodies and scheduled wakeups are not executed.
 - **The table cache does not model every internal access.** Internal dictionary handles opened by server startup and metadata-changing statements, capacity-driven eviction, pending lock requests and transient name locks are not fully represented. The differential fixture disables background statistics recalculation, analyzes the fixture tables synchronously and flushes both caches before each input; populated-cache regressions separately check the modeled transitions.
 - **`CHECKSUM TABLE`** answers a stable checksum of the rows, which is not the server's.
 

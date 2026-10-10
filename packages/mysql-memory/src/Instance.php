@@ -122,6 +122,7 @@ final class Instance
         }
         $this->dictionary->system = new SystemSchemas($this, $release);
         $this->started = microtime(true);
+        $this->registry->eventScheduler->configured($this->globals, $this->catalog, $this->dictionary);
     }
 
     /**
@@ -131,18 +132,35 @@ final class Instance
      * @param string $host The host the session connects from
      * @param string|null $database The database to use, or null for none
      * @param int|null $port The client's TCP source port, or null for a local session
+     * @param int|null $threadId The identity already allocated for a wire greeting, or null to allocate one
      *
      * @throws Error\SqlError When the database does not exist
      */
-    public function connect(string $user = 'root', string $host = 'localhost', ?string $database = null, ?int $port = null): Session
+    public function connect(string $user = 'root', string $host = 'localhost', ?string $database = null, ?int $port = null, ?int $threadId = null): Session
     {
         if ($this->stopped) {
             throw Error\Family\TransactionError::ServerGone->error();
         }
-        $session = new Session($this, ++$this->connections, $user, $host, $database, $port);
+        ++$this->connections;
+        $session = new Session($this, $this->registry->threads->allocate($threadId), $user, $host, $database, $port);
         $this->sessions[$session->id] = WeakReference::create($session);
 
         return $session;
+    }
+
+    /**
+     * Resets a connection's session state while keeping its wire identity, peer and database.
+     *
+     * @visibility MySqlMemory
+     * @throws Error\SqlError When the selected database no longer exists
+     */
+    public function reset(Session $session): Session
+    {
+        $session->close();
+        $fresh = new Session($this, $session->id, $session->user, $session->host, $session->variables->database === '' ? null : $session->variables->database, $session->port);
+        $this->sessions[$fresh->id] = WeakReference::create($fresh);
+
+        return $fresh;
     }
 
     /**
@@ -153,6 +171,7 @@ final class Instance
     public function shutdown(): void
     {
         $this->stopped = true;
+        $this->registry->eventScheduler->stop();
         foreach ($this->sessions as $reference) {
             $session = $reference->get();
             if ($session !== null) {
@@ -183,13 +202,15 @@ final class Instance
         $this->dictionary->discardVolatileRows();
         $this->started = microtime(true);
         $this->stopped = false;
+        $this->registry->eventScheduler->configured($this->globals, $this->catalog, $this->dictionary);
     }
 
     /**
-     * Answers the number of sessions opened so far, which is the id of the last one.
+     * Answers the number of client connections opened so far, excluding resets and internal threads.
      */
     public function connections(): int
     {
         return $this->connections;
     }
+
 }

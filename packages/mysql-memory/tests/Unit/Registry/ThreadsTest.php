@@ -13,6 +13,18 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ThreadsTest extends TestCase
 {
+    public function testAllocateSharesTheSequenceWithAlreadyGreetedConnections(): void
+    {
+        $threads = new Threads();
+
+        self::assertSame(1, $threads->allocate());
+        self::assertSame(2, $threads->allocate());
+        self::assertSame(1, $threads->allocate(1));
+        self::assertSame(3, $threads->allocate());
+        self::assertSame(7, $threads->allocate(7));
+        self::assertSame(8, $threads->allocate());
+    }
+
     public function testNowReadsTheTimeSleepsHavePassed(): void
     {
         $threads = new Threads();

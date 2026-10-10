@@ -55,7 +55,7 @@ final class ShowVariablesCommandTest extends TestCase
         $local = array_column((new ShowVariablesCommand())->variables($session, false, $context), 1, 0);
 
         self::assertArrayNotHasKey('timestamp', $global);
-        self::assertSame(['1700000000.500000', '1', 'ON'], [$local['timestamp'], $local['pseudo_thread_id'], $local['autocommit']]);
+        self::assertSame(['1700000000.500000', (string) $session->id, 'ON'], [$local['timestamp'], $local['pseudo_thread_id'], $local['autocommit']]);
     }
 
     public function testStatusListsTheStatusVariablesWithTheStatementCounters(): void

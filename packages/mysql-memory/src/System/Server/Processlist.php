@@ -13,8 +13,8 @@ use Override;
  * The rows of INFORMATION_SCHEMA.PROCESSLIST and performance_schema.processlist: one for each session connected, by connection id.
  *
  * The session that reads the table is running a Query, executing the statement it reads it
- * with; every other session is in Sleep, with an empty state and no statement. The emulator
- * runs no background thread, so the event scheduler daemon the server lists is not listed.
+ * with; every other client session is in Sleep, with an empty state and no statement. The event
+ * scheduler contributes its daemon row while enabled. TCP peers include their source port.
  * TIME counts whole clock seconds since the last client statement. A pinned timestamp also
  * controls this start time, including while sleeping, and a future timestamp gives a negative
  * time (verified through the public SQL interface on 8.4.7).
@@ -34,6 +34,10 @@ final class Processlist implements SystemRows
         $rows = [];
         foreach ($reading->sessions() as $id => $session) {
             $rows[] = self::row($session, $id === $reading->connection->id, 'executing');
+        }
+        $daemon = $reading->instance->registry->eventScheduler->row();
+        if ($daemon !== null) {
+            $rows[] = $daemon;
         }
 
         return $rows;

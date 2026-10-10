@@ -150,7 +150,7 @@ final class Client
             $database = $database === '' ? null : $database;
         }
         try {
-            $this->session = $this->instance->connect($user, $this->instance->clientHost ?? $this->host, $database, $this->port);
+            $this->session = $this->instance->connect($user, $this->instance->clientHost ?? $this->host, $database, $this->port, $this->id);
             $this->session->variables->clientFoundRows = ($this->capabilities & Capability::FOUND_ROWS) !== 0;
         } catch (SqlError $error) {
             $this->packet($this->messages->error($error->getCode(), $error->sqlState(), $error->getMessage()));
@@ -220,9 +220,7 @@ final class Client
     public function ping(bool $reset): bool
     {
         if ($reset) {
-            $session = $this->session();
-            $session->close();
-            $this->session = $this->instance->connect($session->user, $session->host, $session->variables->database === '' ? null : $session->variables->database, $session->port);
+            $this->session = $this->instance->reset($this->session());
             $this->session->variables->clientFoundRows = ($this->capabilities & Capability::FOUND_ROWS) !== 0;
         }
 

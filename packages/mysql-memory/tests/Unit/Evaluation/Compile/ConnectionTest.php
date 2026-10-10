@@ -25,7 +25,7 @@ final class ConnectionTest extends TestCase
         $result = $session->query('SELECT CONNECTION_ID(), USER()')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['2', 'alice@example.com']], $result->rows);
+        self::assertSame([[(string) $session->id, 'alice@example.com']], $result->rows);
     }
 
     public function testTheParametersAreTheValuesBoundToTheMarkers(): void

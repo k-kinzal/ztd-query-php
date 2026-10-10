@@ -205,7 +205,7 @@ final class ResourceGroupCommandTest extends TestCase
 
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(3661);
-        $this->expectExceptionMessage("Unable to bind resource group SYS_default with thread id (1).(System resource group can't be applied to user thread.).");
+        $this->expectExceptionMessage("Unable to bind resource group SYS_default with thread id ({$session->id}).(System resource group can't be applied to user thread.).");
 
         (new ResourceGroupCommand())->assign($statement, $session, new ResourceGroups());
     }

@@ -224,6 +224,8 @@ final class ClientTest extends TestCase
 
         self::assertTrue($open);
         self::assertSame('app', $client->session()->user);
+        self::assertSame(7, $client->session()->id);
+        self::assertSame(1, $client->instance->connections());
         self::assertSame('10.0.0.5', $client->session()->host);
         self::assertSame('d', $client->session()->variables->database);
         self::assertSame(["\x07\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00"], $sent->getArrayCopy());

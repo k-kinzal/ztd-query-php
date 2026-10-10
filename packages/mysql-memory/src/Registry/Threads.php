@@ -23,6 +23,18 @@ namespace MySqlMemory\Registry;
  */
 final class Threads
 {
+    private int $lastId = 0;
+
+    /**
+     * Allocates a server thread identity, or records one already allocated for a wire greeting.
+     */
+    public function allocate(?int $greeted = null): int
+    {
+        $this->lastId = max($this->lastId + ($greeted === null ? 1 : 0), $greeted ?? 0);
+
+        return $greeted ?? $this->lastId;
+    }
+
     /**
      * @var array<int, true> The ids of the sessions connected, as keys
      */

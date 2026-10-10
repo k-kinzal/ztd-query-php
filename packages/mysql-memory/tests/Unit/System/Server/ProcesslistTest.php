@@ -25,7 +25,8 @@ final class ProcesslistTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result1);
         self::assertContains($result1->rows[0][5], ['0', '1']);
         self::assertContains($result1->rows[1][5], ['0', '1']);
-        self::assertSame([[(string) $idle->id, 'root', 'localhost', null, 'Sleep', '', null], [(string) $s->id, 'root', 'localhost', null, 'Query', 'executing', 'SELECT * FROM performance_schema.processlist']], array_map(static fn (array $row): array => array_values(array_diff_key(array_slice($row, 0, 8), [5 => true])), $result1->rows));
+        self::assertContains($result1->rows[2][5], ['0', '1']);
+        self::assertSame([[(string) $idle->id, 'root', 'localhost', null, 'Sleep', '', null], [(string) $s->id, 'root', 'localhost', null, 'Query', 'executing', 'SELECT * FROM performance_schema.processlist'], ['1', 'event_scheduler', 'localhost', null, 'Daemon', 'Waiting on empty queue', null]], array_map(static fn (array $row): array => array_values(array_diff_key(array_slice($row, 0, 8), [5 => true])), $result1->rows));
     }
 
     public function testRowsWarnsThatInformationSchemaProcesslistIsDeprecated(): void

@@ -413,7 +413,7 @@ final class SessionTest extends TestCase
         $connected = $instance->registry->threads->connected;
         $session->close();
 
-        self::assertSame([[1 => true], [], []], [$connected, $instance->registry->threads->connected, $instance->registry->threads->locks]);
+        self::assertSame([[$session->id => true], [], []], [$connected, $instance->registry->threads->connected, $instance->registry->threads->locks]);
     }
 
     public function testCloseRunsOnceNothingRefersToTheSession(): void

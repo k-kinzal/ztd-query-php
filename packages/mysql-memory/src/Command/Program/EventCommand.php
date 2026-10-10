@@ -106,6 +106,9 @@ final class EventCommand implements Command
         if ($schedule !== null) {
             $this->lapse($event, $statement instanceof CreateEvent, $session, $context);
         }
+        if (isset($dictionary->schema($event->schema)?->events[strtolower($event->name)])) {
+            $session->instance->registry->eventScheduler->activated($event);
+        }
 
         return new Completion(0, 0, $context->diagnostics->count());
     }

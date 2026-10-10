@@ -40,6 +40,11 @@ final class Registry
     public readonly Threads $threads;
 
     /**
+     * The event scheduler daemon's identity and wait state.
+     */
+    public readonly EventScheduler $eventScheduler;
+
+    /**
      * @var array<string, ForeignServer> The foreign servers, by the key of their name
      */
     public array $servers = [];
@@ -68,6 +73,7 @@ final class Registry
         $this->spatialCatalog = new SpatialCatalog();
         $this->binaryLog = new BinaryLog();
         $this->threads = new Threads();
+        $this->eventScheduler = new EventScheduler($this->threads);
         $this->replication = new Replication();
     }
 

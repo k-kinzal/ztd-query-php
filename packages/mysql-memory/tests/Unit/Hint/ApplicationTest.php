@@ -35,7 +35,7 @@ final class ApplicationTest extends TestCase
         $application = (new Application())->apply($registration, $session);
 
         self::assertSame([
-            [3661, "Unable to bind resource group SYS_default with thread id (1).(System resource group can't be bound with a session thread)."],
+            [3661, "Unable to bind resource group SYS_default with thread id ({$session->id}).(System resource group can't be bound with a session thread)."],
             [1292, "Truncated incorrect sort_buffer_size value: '1'"],
             [1231, "Variable 'sql_mode' can't be set to the value of 'NOPE'"],
         ], $application->warnings);

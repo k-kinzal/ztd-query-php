@@ -69,6 +69,10 @@ final class ShowProcesslistCommand implements Command
             $row[7] = is_string($info) && !$statement->full ? mb_substr($info, 0, 100) : $info;
             $rows[] = array_slice($row, 0, 8);
         }
+        $daemon = $session->instance->registry->eventScheduler->row();
+        if ($daemon !== null) {
+            $rows[] = array_slice(array_values($daemon), 0, 8);
+        }
 
         return (new Listing($this->headings($statement->full, $session->settings()->release())))->sent($rows, $context);
     }
