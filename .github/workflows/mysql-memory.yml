@@ -65,8 +65,10 @@ jobs:
       - name: Check library requirements outside the locked ParaTest PHP range
         if: matrix.php == '8.4' || matrix.php == '8.5'
         run: composer check-platform-reqs --no-dev
-      - name: Run the tests in parallel
-        run: composer test
+      - name: Run unit tests and examples in parallel
+        run: vendor/bin/paratest --processes=auto --exclude-testsuite integration
+      - name: Run integration tests sequentially
+        run: vendor/bin/phpunit --testsuite integration
 
   differential:
     name: Differential (MySQL ${{ matrix.mysql }})
