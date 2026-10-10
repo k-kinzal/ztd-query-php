@@ -19,6 +19,14 @@ use SqlSemantics\Platform\MySql\Statement\Replication\Reset\Reset;
 #[Small]
 final class ReplicaCommandTest extends TestCase
 {
+    public function testExecuteRetainsTheGtidTableOpenedByALogReset(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('FLUSH LOCAL TABLES; RESET BINARY LOGS AND GTIDS');
+
+        self::assertSame([['mysql', 'gtid_executed']], $session->instance->dictionary->cache->names());
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new ReplicaCommand())->clearsDiagnostics());

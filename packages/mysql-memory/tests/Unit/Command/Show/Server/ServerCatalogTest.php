@@ -44,4 +44,14 @@ final class ServerCatalogTest extends TestCase
         self::assertContains(['SET_USER_ID', 'Server Admin', ''], ServerCatalog::of('8.0.44')->privileges);
         self::assertNotContains(['SET_USER_ID', 'Server Admin', ''], ServerCatalog::of('8.4.7')->privileges);
     }
+
+    public function testOfKeepsOnlyLegacyStaticPrivileges(): void
+    {
+        $privileges = ServerCatalog::of('5.6.51')->privileges;
+
+        self::assertCount(31, $privileges);
+        self::assertContains(['Super', 'Server Admin', 'To use KILL thread, SET GLOBAL, CHANGE MASTER, etc.'], $privileges);
+        self::assertNotContains('Create role', array_column($privileges, 0));
+        self::assertNotContains('SYSTEM_USER', array_column($privileges, 0));
+    }
 }

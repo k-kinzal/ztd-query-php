@@ -32,6 +32,14 @@ final class TableCacheTest extends TestCase
         yield 'flush keeps definitions and rows' => ['FLUSH TABLES; SELECT COUNT(*) FROM t1; ' . $show];
         yield 'show create opens its table' => ['FLUSH TABLES; SHOW CREATE TABLE t1; ' . $show];
         yield 'show tables does not open base handles' => ['FLUSH TABLES; SHOW TABLES; ' . $show];
+        yield 'show tables opens dictionary dependencies' => ['FLUSH TABLES; SHOW TABLES; SHOW OPEN TABLES'];
+        yield 'empty listing opens dictionary dependencies' => ['FLUSH TABLES; SHOW FULL TABLES WHERE 0; SHOW OPEN TABLES'];
+        yield 'missing database opens its lookup' => ['CREATE PROCEDURE p() BEGIN DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END; SHOW TABLES FROM absent_cache_database; END; FLUSH TABLES; CALL p(); SHOW OPEN TABLES'];
+        yield 'warm procedure retains its loaded definition' => ['CREATE PROCEDURE p() DO 1; FLUSH TABLES; CALL p(); SHOW OPEN TABLES; FLUSH TABLES; CALL p(); SHOW OPEN TABLES'];
+        yield 'routine DDL invalidates loaded definitions' => ["CREATE PROCEDURE p() DO 1; CALL p(); CREATE PROCEDURE q() DO 2; FLUSH TABLES; CALL p(); SHOW OPEN TABLES; ALTER PROCEDURE q COMMENT 'x'; FLUSH TABLES; CALL p(); SHOW OPEN TABLES; DROP PROCEDURE q; FLUSH TABLES; CALL p(); SHOW OPEN TABLES"];
+        yield 'warm function retains its loaded definition' => ['CREATE FUNCTION f() RETURNS INT DETERMINISTIC RETURN 1; FLUSH TABLES; SELECT f(); SHOW OPEN TABLES; FLUSH TABLES; SELECT f(); SHOW OPEN TABLES'];
+        yield 'exact table listing retains dictionary metadata' => ["SHOW FULL TABLES WHERE Tables_in_fz='t1'; SHOW FULL TABLES WHERE Tables_in_fz IN ('t2'); SHOW FULL TABLES WHERE Tables_in_fz='missing'"];
+        yield 'constant conjunct retains dictionary metadata' => ["SHOW FULL TABLES WHERE Table_type='VIEW' AND 0; SHOW FULL TABLES WHERE 1=0; SHOW FULL TABLES WHERE 0 OR 0"];
         yield 'handlers retain a use' => ['FLUSH TABLES; HANDLER t1 OPEN; ' . $show . '; HANDLER t1 CLOSE; ' . $show];
         yield 'handlers reopen after flush' => ['HANDLER t1 OPEN; FLUSH TABLES; ' . $show . '; HANDLER t1 READ FIRST; ' . $show . '; HANDLER t1 CLOSE'];
         yield 'table locks retain a use' => ['FLUSH TABLES; LOCK TABLES t1 READ; ' . $show . '; UNLOCK TABLES; ' . $show];

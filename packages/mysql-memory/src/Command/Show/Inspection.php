@@ -47,6 +47,9 @@ final class Inspection
     public function check(Node $statement, Session $session): void
     {
         try {
+            if ($statement instanceof ShowTables) {
+                (new \MySqlMemory\Session\Access\OpenedTables())->listing($statement->database->value ?? $session->variables->database, $session);
+            }
             if (($statement instanceof ShowColumns && $this->system($statement->table, $statement->database, $session) === null) || $statement instanceof ShowKeys) {
                 $this->table($statement->table, $statement->database, $session);
             }

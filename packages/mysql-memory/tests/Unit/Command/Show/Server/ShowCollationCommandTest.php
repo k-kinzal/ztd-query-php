@@ -35,6 +35,20 @@ final class ShowCollationCommandTest extends TestCase
         self::assertSame([['utf8mb3', 'UTF-8 Unicode', 'utf8mb3_general_ci', '3'], ['utf8mb4', 'UTF-8 Unicode', 'utf8mb4_0900_ai_ci', '4']], $charsets->rows);
     }
 
+    public function testExecutePreservesLegacyUtf8NamesAndMetadata(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $collations = $session->query("SHOW COLLATION LIKE 'utf8_general_ci'")[0];
+        $charsets = $session->query("SHOW CHARSET LIKE 'utf8'")[0];
+
+        self::assertInstanceOf(ResultSet::class, $collations);
+        self::assertInstanceOf(ResultSet::class, $charsets);
+        self::assertSame([['utf8_general_ci', 'utf8', '33', 'Yes', 'Yes', '1']], $collations->rows);
+        self::assertSame([['utf8', 'UTF-8 Unicode', 'utf8_general_ci', '3']], $charsets->rows);
+        self::assertCount(6, $collations->columns);
+        self::assertSame(3, $charsets->columns[3]->length);
+    }
+
     public function testCollationsComeInTheOrderOfGeneralCi(): void
     {
         $names = array_column((new ShowCollationCommand())->collations(GrammarRelease::MySql847), 0);

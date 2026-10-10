@@ -93,12 +93,14 @@ final class FlushCommand implements Command
 
     /**
      * Applies status resets and log flushes in written order.
+     * MySQL 5.6 clears only the requesting session; newer releases clear all active sessions.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/performance-schema-status-variable-tables.html.
      */
     public function options(Flush $statement, Session $session): void
     {
         foreach ($statement->items as $item) {
             if ($item->option === FlushOption::Status) {
-                $session->instance->registry->status->clear($session->id);
+                $session->instance->registry->status->clear($session->settings()->release() === GrammarRelease::MySql5651 ? $session->id : null);
                 $session->instance->registry->status->flushedAt = $session->instance->registry->threads->now();
             }
             if ($item->option === FlushOption::RelayLogs && $item->channel !== null && $item->channel->value !== '') {

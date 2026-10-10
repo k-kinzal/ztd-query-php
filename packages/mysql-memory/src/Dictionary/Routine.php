@@ -20,6 +20,11 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 final class Routine
 {
     /**
+     * Whether a MySQL 8.0+ dictionary lookup has loaded this definition into the shared cache.
+     */
+    public bool $metadataLoaded = false;
+
+    /**
      * The type the function returns, once it is known.
      */
     private ?\MySqlMemory\Typing\Domain $returnType = null;

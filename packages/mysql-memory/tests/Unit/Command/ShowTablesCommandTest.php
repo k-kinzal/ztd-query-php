@@ -16,6 +16,22 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ShowTablesCommandTest extends TestCase
 {
+    public function testResultPreservesTheDictionaryKeyFlagWithoutMaterialization(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
+        $fixed = $session->query("SHOW FULL TABLES WHERE Tables_in_d='t'")[0];
+        $empty = $session->query("SHOW FULL TABLES WHERE Table_type='VIEW' AND 0")[0];
+        $sorted = $session->query("SHOW FULL TABLES LIKE 't'")[0];
+        self::assertInstanceOf(ResultSet::class, $fixed);
+        self::assertInstanceOf(ResultSet::class, $empty);
+        self::assertInstanceOf(ResultSet::class, $sorted);
+
+        self::assertSame([8, 8, 0], [$fixed->columns[1]->flags & 8, $empty->columns[1]->flags & 8, $sorted->columns[1]->flags & 8]);
+        self::assertSame([['t', 'BASE TABLE']], $fixed->rows);
+        self::assertSame([], $empty->rows);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new ShowTablesCommand())->clearsDiagnostics());

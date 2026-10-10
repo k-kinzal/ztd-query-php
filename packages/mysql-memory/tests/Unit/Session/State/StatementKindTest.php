@@ -31,6 +31,18 @@ final class StatementKindTest extends TestCase
         yield 'warning count' => ['SHOW COUNT(*) WARNINGS', 'Com_select'];
         yield 'status' => ['SHOW SESSION STATUS', 'Com_show_status'];
         yield 'alter view' => ['ALTER VIEW d.v AS SELECT 1', 'Com_create_view'];
+        yield 'describe' => ['DESCRIBE d.t', 'Com_show_fields'];
+        yield 'create view listing' => ['SHOW CREATE VIEW d.v', 'Com_show_create_table'];
+        yield 'alter procedure' => ["ALTER PROCEDURE d.p COMMENT 'x'", 'Com_alter_procedure'];
+        yield 'alter function' => ["ALTER FUNCTION d.f COMMENT 'x'", 'Com_alter_function'];
+        yield 'drop procedure' => ['DROP PROCEDURE d.p', 'Com_drop_procedure'];
+        yield 'drop function' => ['DROP FUNCTION d.f', 'Com_drop_function'];
+        yield 'drop trigger' => ['DROP TRIGGER d.tr', 'Com_drop_trigger'];
+        yield 'drop event' => ['DROP EVENT d.e', 'Com_drop_event'];
+        yield 'default role' => ['SET DEFAULT ROLE NONE TO a', 'Com_alter_user_default_role'];
+        yield 'alter default role' => ['ALTER USER a DEFAULT ROLE NONE', 'Com_alter_user_default_role'];
+        yield 'reset' => ['RESET BINARY LOGS AND GTIDS', 'Com_reset'];
+        yield 'diagnostics' => ['GET DIAGNOSTICS @a=NUMBER', 'Com_get_diagnostics'];
     }
 
     #[DataProvider('providerStatements')]

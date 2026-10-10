@@ -26,6 +26,9 @@ final class Dictionary
     {
         $this->cache->close();
         foreach ($this->schemas as $schema) {
+            foreach (array_merge(array_values($schema->procedures), array_values($schema->functions)) as $routine) {
+                $routine->metadataLoaded = false;
+            }
             foreach ($schema->tables as $table) {
                 $table->updated = strcasecmp($table->definition->engine, 'MyISAM') === 0 ? $table->updated : null;
                 $table->statistics = [];
@@ -51,6 +54,11 @@ final class Dictionary
      * The server's open table handles, independent of its table definitions.
      */
     public readonly TableCache $cache;
+
+    /**
+     * Invalidates session routine lookups after a stored routine definition changes.
+     */
+    public int $routineGeneration = 0;
 
     /**
      * @param array<string, Schema> $schemas The databases, by name

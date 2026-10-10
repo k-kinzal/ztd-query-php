@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Access;
 
+use MySqlMemory\Dictionary\Routine;
 use MySqlMemory\Session\Session;
 use SqlSemantics\Platform\MySql\Statement\Dml\WriteTarget;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
@@ -57,6 +58,63 @@ final class OpenedTables
             if (!$session->settings()->legacy() && !in_array($schema, ['mysql', 'information_schema', 'performance_schema', 'sys'], true)) {
                 $dictionary->cache->open('mysql', 'column_statistics');
             }
+        }
+    }
+
+    /**
+     * Opens the dictionary view and dependencies read by SHOW TABLES in MySQL 8.0 and later.
+     * A missing database opens only schemata; a false listing predicate still opens the view.
+     * Verified through FLUSH TABLES and SHOW OPEN TABLES on MySQL 8.0, 8.4 and 9.1.
+     */
+    public function listing(string $database, Session $session): void
+    {
+        if ($session->settings()->legacy() || $database === '') {
+            return;
+        }
+        $dictionary = $session->instance->dictionary;
+        $dictionary->cache->open('mysql', 'schemata');
+        if ($dictionary->schema($database) === null) {
+            return;
+        }
+        $dictionary->cache->open('information_schema', 'TABLES');
+        foreach (['catalogs', 'collations', 'tables', 'table_stats', 'tablespaces'] as $name) {
+            $dictionary->cache->open('mysql', $name);
+        }
+    }
+
+    /**
+     * Opens routine metadata for a cold lookup, retaining definitions across table flushes.
+     * MySQL 5.x has session caches invalidated by any routine DDL. Newer releases share loaded
+     * dictionary definitions and invalidate only the altered routine. Missing routines are not
+     * cached. Observed through repeated CALL, SELECT, FLUSH TABLES and SHOW OPEN TABLES.
+     */
+    public function routine(?Routine $routine, Session $session): void
+    {
+        $dictionary = $session->instance->dictionary;
+        if (!$session->settings()->legacy()) {
+            if ($routine?->metadataLoaded === true) {
+                return;
+            }
+            foreach (['routines', 'parameters', 'parameter_type_elements'] as $name) {
+                $dictionary->cache->open('mysql', $name);
+            }
+            if ($routine !== null) {
+                $routine->metadataLoaded = true;
+            }
+
+            return;
+        }
+        $prepared = $session->preparation;
+        if ($prepared->routineGeneration !== $dictionary->routineGeneration) {
+            $prepared->routineGeneration = $dictionary->routineGeneration;
+            $prepared->routines = [];
+        }
+        if ($routine !== null && isset($prepared->routines[spl_object_id($routine)])) {
+            return;
+        }
+        $dictionary->cache->open('mysql', 'proc');
+        if ($routine !== null) {
+            $prepared->routines[spl_object_id($routine)] = true;
         }
     }
 

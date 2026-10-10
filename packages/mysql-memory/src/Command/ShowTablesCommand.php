@@ -77,6 +77,29 @@ final class ShowTablesCommand implements Command
         }
         $rows = array_map(static fn (array $row): array => $full ? $row : [$row[0]], $rows);
 
-        return (new Show\Listing($headings))->result($rows, $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb3_bin');
+        return $this->result($headings, $rows, $operation, $session, $context, $connection, $legacy, $heading);
+    }
+
+    /**
+     * Sends the listing, retaining the dictionary enum's key flag when no sort materialization
+     * is needed: a constant-empty filter or equality on the table-name key.
+     *
+     * @param list<Show\Heading> $headings
+     * @param list<list<string>> $rows
+     */
+    public function result(array $headings, array $rows, Operation $operation, Session $session, Context $context, Connection $connection, bool $legacy, string $name): Reply
+    {
+        $statement = $operation->statement;
+        assert($statement instanceof ShowTables);
+        $listing = new Show\Listing($headings);
+        $result = $listing->result($rows, $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb3_bin');
+        $fixed = Show\FixedColumns::of($statement->filter, $operation->facts);
+        if ($legacy || count($headings) !== 2 || (!$listing->constantEmpty && !isset($fixed[strtolower($name)]))) {
+            return $result;
+        }
+        $type = $result->columns[1];
+        $column = new \MySqlMemory\Result\ResultColumn($type->name, $type->type, $type->length, $type->decimals, $type->flags | \MySqlMemory\Result\ColumnFlag::MultipleKey->value, $type->charset, $type->originalName, $type->table, $type->originalTable, $type->schema);
+
+        return new \MySqlMemory\Result\ResultSet([$result->columns[0], $column], $result->rows, $result->warnings);
     }
 }

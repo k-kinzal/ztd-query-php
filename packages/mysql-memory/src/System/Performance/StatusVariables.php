@@ -13,7 +13,8 @@ use SqlSemantics\Contract\GrammarRelease;
  * SQL request and command counters reflect execution in their scope. Unmodeled storage and
  * operating-system counters retain their catalog defaults. What describes the
  * configuration of the server reads as on a server of the release; Uptime and
- * Uptime_since_flush_status count the seconds since the server started, Threads_connected the
+ * Uptime_since_flush_status subtract the real start or flush time from the reading statement's
+ * timestamp, with unsigned wraparound for a pinned timestamp before that origin. Threads_connected counts the
  * sessions connected, Threads_running the one running the statement, and Connections the
  * sessions opened so far. A release without a catalog of its own has that of the latest
  * series of its major version.
@@ -63,25 +64,39 @@ final class StatusVariables
      *
      * @return list<array{string, string}>
      */
-    public function values(Instance $instance, bool $global, bool $threaded, int $connected, bool $tabled = true, ?int $connection = null): array
+    public function values(Instance $instance, bool $global, bool $threaded, int $connected, bool $tabled = true, ?int $connection = null, ?float $instant = null): array
     {
-        $uptime = (string) max(0, (int) floor(microtime(true) - $instance->started));
+        $instant ??= $instance->registry->threads->now();
         $rows = [];
         foreach ($this->entries as [$name, $scope, $value, $listed]) {
             if (($global && $scope === 'Session') || ($threaded && $scope === 'Global') || ($tabled && !$listed)) {
                 continue;
             }
             $rows[] = [$name, match ($name) {
-                'Uptime' => $uptime,
-                'Uptime_since_flush_status' => (string) max(0, (int) floor($instance->registry->threads->now() - ($instance->registry->status->flushedAt ?? $instance->started))),
+                'Uptime' => \MySqlMemory\Value\Integer::text((int) $instant - (int) $instance->started, true),
+                'Uptime_since_flush_status' => \MySqlMemory\Value\Integer::text((int) $instant - (int) ($instance->registry->status->flushedAt ?? $instance->started), true),
                 'Threads_connected', 'Max_used_connections' => (string) $connected,
                 'Threads_running' => '1',
                 'Connections' => (string) $instance->connections(),
                 'Queries' => (string) $instance->registry->status->read($name),
-                default => $name === 'Questions' || str_starts_with($name, 'Com_') ? (string) $instance->registry->status->read($name, $global ? null : $connection) : $value,
+                default => $name === 'Questions' || str_starts_with($name, 'Com_') ? (string) $instance->registry->status->read($this->counter($name), $global ? null : $connection) : $value,
             }];
         }
 
         return $rows;
+    }
+
+    /**
+     * Resolves legacy replication counter names to the same underlying event totals.
+     * MySQL 8.0 exposes both replica and slave aliases, independently of the SQL spelling.
+     */
+    public function counter(string $name): string
+    {
+        return match ($name) {
+            'Com_show_slave_hosts' => 'Com_show_replicas',
+            'Com_show_slave_status' => 'Com_show_replica_status',
+            'Com_show_master_status' => 'Com_show_binary_log_status',
+            default => $name,
+        };
     }
 }

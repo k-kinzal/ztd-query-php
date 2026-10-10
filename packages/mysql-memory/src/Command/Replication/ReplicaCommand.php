@@ -105,6 +105,9 @@ final class ReplicaCommand implements Command
                     throw AdministrationError::BinlogClosed->error('RESET MASTER');
                 }
                 $this->reset($target, $registry);
+                if ($target instanceof ResetBinaryLogs && $session->settings()->release() !== GrammarRelease::MySql5651) {
+                    $session->instance->dictionary->cache->open('mysql', 'gtid_executed');
+                }
             }
         } elseif ($statement instanceof ChangeReplicationSource) {
             (new SourceChange())->check($statement, $session, $context);

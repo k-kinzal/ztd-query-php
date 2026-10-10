@@ -10,6 +10,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Result\Completion;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -17,6 +18,29 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class FlushCommandTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerFlushScopes(): iterable
+    {
+        yield '5.6 requesting session' => ['5.6.51', 1];
+        yield '5.7 all sessions' => ['5.7.44', 0];
+        yield '8.4 all sessions' => ['8.4.7', 0];
+    }
+
+    #[DataProvider('providerFlushScopes')]
+    public function testOptionsResetsTheReleaseScopeWithoutLosingGlobalTotals(string $version, int $remaining): void
+    {
+        $instance = new Instance($version);
+        $first = $instance->connect();
+        $second = $instance->connect();
+        $first->query('DO 1');
+        $second->query('DO 2');
+        $first->query('FLUSH STATUS');
+
+        self::assertSame([2, 0, $remaining], [$instance->registry->status->read('Com_do'), $instance->registry->status->read('Com_do', $first->id), $instance->registry->status->read('Com_do', $second->id)]);
+    }
+
     public function testOptionsResetsOnlySessionCountersAndRecordsTheFlushClock(): void
     {
         $session = (new Instance())->connect();

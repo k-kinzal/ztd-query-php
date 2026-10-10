@@ -115,6 +115,7 @@ final class DropProgramCommand implements Command
             unset($schema->procedures[$key]);
         }
         $session->instance->accounts->forget($function ? 'FUNCTION' : 'PROCEDURE', $database, $name);
+        $session->instance->dictionary->routineGeneration++;
 
         return null;
     }

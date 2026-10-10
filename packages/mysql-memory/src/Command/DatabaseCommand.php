@@ -88,6 +88,7 @@ final class DatabaseCommand implements Command
             return new Completion(0, 0, 1);
         }
         unset($dictionary->schemas[$name]);
+        $dictionary->routineGeneration++;
         $dictionary->cache->close($name);
         if ($session->variables->database === $name) {
             $session->variables->database = '';

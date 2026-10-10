@@ -38,6 +38,11 @@ use SqlSemantics\Statement\Operation;
 final class Listing
 {
     /**
+     * Whether a statement-constant condition eliminated the input before rows were read.
+     */
+    public bool $constantEmpty = false;
+
+    /**
      * @param list<Heading> $headings The columns of the rows
      */
     public function __construct(public readonly array $headings)
@@ -56,6 +61,7 @@ final class Listing
      */
     public function result(array $rows, Operation $operation, Session $session, Context $context, Connection $connection, ShowLike|ShowWhere|null $filter = null, int $named = 0, string $collation = 'utf8mb3_general_ci', string $derivation = 'IMPLICIT'): ResultSet
     {
+        $this->constantEmpty = false;
         if ($filter instanceof ShowLike) {
             $this->mix($filter->pattern->value, $collation, $derivation, $context);
             $rows = $this->like($rows, $filter->pattern->value, $named, $collation, $context);
@@ -122,17 +128,18 @@ final class Listing
         $planner = new Planner($operation->statement, $operation->facts, $session->settings(), $connection, $session->instance->dictionary);
         $scope = new Scope();
         $scope->place($operation->statement, array_map(static fn (Heading $heading): Domain => $heading->domain(), $this->headings));
-        $condition = $planner->compiler->compile($where->condition, $scope);
-        if ($planner->compiler->constancy($where->condition)->constant()) {
-            $frame = new Frame($context);
-
-            return Convert::toBool($condition->evaluate($frame), $condition->domain(), $context) === true ? $rows : [];
-        }
-        $kept = [];
+        $expressions = [];
         foreach ($rows as $row) {
-            if (Convert::toBool($condition->evaluate(new Frame($context, $row)), $condition->domain(), $context) === true) {
-                $kept[] = $row;
-            }
+            $expressions[] = array_map(fn ($value, int $position): Constant => new Constant($this->headings[$position]->domain(), $value), $row, array_keys($row));
+        }
+        $input = new \MySqlMemory\Plan\Path\Source\Inline($expressions, count($this->headings));
+        $filter = (new \MySqlMemory\Plan\Blocks($planner))->where($input, $where->condition, $scope);
+        $iterator = new \MySqlMemory\Iterator\Transform\FilterIterator($filter, (new \MySqlMemory\Iterator\Builder())->build($input));
+        $iterator->init(new Frame($context));
+        $this->constantEmpty = !$iterator->holds();
+        $kept = [];
+        while (($row = $iterator->read()) !== null) {
+            $kept[] = $row;
         }
 
         return $kept;

@@ -108,6 +108,7 @@ final class CallCommand implements Command
         $name = $statement->procedure->name->value;
         $database = ProgramSource::database($statement->procedure->schema, $session);
         $routine = $session->instance->dictionary->schema($database)->procedures[strtolower($name)] ?? null;
+        (new \MySqlMemory\Session\Access\OpenedTables())->routine($routine, $session);
         if ($routine === null) {
             throw ProgramError::RoutineMissing->error('PROCEDURE', $database . '.' . $name);
         }

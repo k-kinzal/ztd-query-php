@@ -19,6 +19,18 @@ use SqlSemantics\Platform\MySql\Statement\Utility\Show\Replication\ShowBinlogEve
 #[Small]
 final class ReplicationShowCommandTest extends TestCase
 {
+    public function testStatusColumnsPreservesTheMySql56SurfaceAndEmptySettingWidths(): void
+    {
+        $command = new ReplicationShowCommand();
+        $columns = $command->statusColumns('5.6.51');
+
+        self::assertCount(54, $columns);
+        self::assertSame(['Source_Host', 0], $columns[1]);
+        self::assertSame(['Source_Port', Field::Long, 7], $columns[3]);
+        self::assertSame(['Auto_Position', Field::Long, 8], $columns[53]);
+        self::assertSame(ReplicationShowCommand::STATUS, $command->statusColumns('8.4.7'));
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new ReplicationShowCommand())->clearsDiagnostics());

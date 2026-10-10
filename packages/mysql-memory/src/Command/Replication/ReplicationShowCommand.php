@@ -135,7 +135,9 @@ final class ReplicationShowCommand implements Command
         if ($statement instanceof ShowReplicaStatus) {
             (new ReplicaCommand())->channel($statement->channel);
 
-            return $this->listing($statement->terminology === Terminology::Legacy ? $this->legacy(self::STATUS) : self::STATUS, [], $context);
+            $columns = $this->statusColumns($version);
+
+            return $this->listing($statement->terminology === Terminology::Legacy ? $this->legacy($columns) : $columns, [], $context);
         }
         $logging = BinaryLog::enabled($session);
         $legacy = (new \MySqlMemory\Account\Catalog($session->settings()->release()))->legacy();
@@ -158,9 +160,36 @@ final class ReplicationShowCommand implements Command
             return $this->relaylogEvents($statement, $session, $context);
         }
         if ($statement instanceof ShowReplicas) {
-            return $this->listing($statement->terminology === Terminology::Legacy ? $this->legacy(self::REPLICAS) : self::REPLICAS, [], $context);
+            $columns = str_starts_with($version, '5.6.') ? [['Server_Id', Field::Long, 10], ['Host', 20], ['Port', Field::Long, 7], ['Source_Id', Field::Long, 10], ['Replica_UUID', 36]] : self::REPLICAS;
+
+            return $this->listing($statement->terminology === Terminology::Legacy ? $this->legacy($columns) : $columns, [], $context);
         }
         throw StatementError::NotSupportedYet->error('this replication statement');
+    }
+
+    /**
+     * Answers the columns of an unconfigured replica, before applying legacy terminology.
+     * MySQL 5.6 omits channel and TLS-version fields, and reports empty connection settings
+     * with zero width. Its numeric display widths exclude the sign digit.
+     *
+     * @return list<array{string, int}|array{string, Field, int}>
+     */
+    public function statusColumns(string $version): array
+    {
+        if (!str_starts_with($version, '5.6.')) {
+            return self::STATUS;
+        }
+        $columns = [];
+        foreach (array_slice(self::STATUS, 0, 54) as $column) {
+            if (count($column) === 3) {
+                $column[2]--;
+            } elseif (in_array($column[0], ['Source_Host', 'Source_User', 'Source_SSL_CA_File', 'Source_SSL_CA_Path', 'Source_SSL_Cert', 'Source_SSL_Cipher', 'Source_SSL_Key', 'Source_Bind', 'Source_SSL_Crl', 'Source_SSL_Crlpath'], true)) {
+                $column[1] = 0;
+            }
+            $columns[] = $column;
+        }
+
+        return $columns;
     }
 
     /**

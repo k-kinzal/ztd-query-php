@@ -56,7 +56,7 @@ final class ShowVariablesCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof ShowVariables || $statement instanceof ShowStatus);
         $global = $statement->scope === VariableScope::Global;
-        $rows = $statement instanceof ShowVariables ? $this->variables($session, $global, $context) : $this->status($session, $global);
+        $rows = $statement instanceof ShowVariables ? $this->variables($session, $global, $context) : $this->status($session, $global, $context->started);
         $table = ($global ? 'global_' : 'session_') . ($statement instanceof ShowVariables ? 'variables' : 'status');
         if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             $table = $statement instanceof ShowVariables ? 'VARIABLES' : 'STATUS';
@@ -74,14 +74,14 @@ final class ShowVariablesCommand implements Command
      *
      * @return list<array{string, string}>
      */
-    public function status(Session $session, bool $global): array
+    public function status(Session $session, bool $global, ?float $instant = null): array
     {
         $connected = 0;
         foreach ($session->instance->sessions as $id => $reference) {
             $connected += $reference->get() !== null && isset($session->instance->registry->threads->connected[$id]) ? 1 : 0;
         }
 
-        return StatusVariables::of($session->settings()->release())->values($session->instance, $global, false, $connected, false, $session->id);
+        return StatusVariables::of($session->settings()->release())->values($session->instance, $global, false, $connected, false, $session->id, $instant ?? $session->variables->instant());
     }
 
     /**

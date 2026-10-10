@@ -104,6 +104,7 @@ final class RoutineCommand implements Command
         } else {
             $schema->procedures[$key] = $routine;
         }
+        $session->instance->dictionary->routineGeneration++;
 
         return new Completion(0, 0, $context->diagnostics->count());
     }
@@ -178,6 +179,8 @@ final class RoutineCommand implements Command
         }
         [$routine->access, , $routine->security, $routine->comment] = $this->characteristics($statement->characteristics, [$routine->access, $routine->deterministic, $routine->security, $routine->comment]);
         $routine->modified = gmdate('Y-m-d H:i:s', (int) floor($instant ?? $session->variables->instant()));
+        $routine->metadataLoaded = false;
+        $session->instance->dictionary->routineGeneration++;
 
         return new Completion();
     }

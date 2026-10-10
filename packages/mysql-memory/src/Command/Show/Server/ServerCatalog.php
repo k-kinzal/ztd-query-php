@@ -77,6 +77,14 @@ final class ServerCatalog
             }
         }
         $privileges = $shared->privileges;
+        if (str_starts_with($version, '5.')) {
+            $privileges = [];
+            foreach ($shared->privileges as [$name, $context, $description]) {
+                if ($description !== '' && !in_array($name, ['Create role', 'Drop role'], true)) {
+                    $privileges[] = [$name, $context, str_replace('CHANGE REPLICATION SOURCE', 'CHANGE MASTER', $description)];
+                }
+            }
+        }
         if (str_starts_with($version, '8.0.')) {
             /** @var list<array{string, string, string}> $privileges */
             $privileges = require dirname(__DIR__, 4) . '/resources/privileges-8.0.php';

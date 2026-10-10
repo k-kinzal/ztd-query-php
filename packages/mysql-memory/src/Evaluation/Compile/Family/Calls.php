@@ -84,6 +84,9 @@ final class Calls
             $schema = $candidate->name === $database || ($schema === null && strcasecmp($candidate->name, $database) === 0) ? $candidate : $schema;
         }
         $routine = $schema?->functions[strtolower($call->name->value)] ?? null;
+        if ($session !== null) {
+            (new \MySqlMemory\Session\Access\OpenedTables())->routine($routine, $session);
+        }
         if ($routine === null || $session === null) {
             return null;
         }

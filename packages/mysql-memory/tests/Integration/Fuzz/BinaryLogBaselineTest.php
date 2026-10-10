@@ -21,6 +21,7 @@ final class BinaryLogBaselineTest extends TestCase
     {
         yield 'files' => ['SHOW BINARY LOGS'];
         yield 'events' => ['SHOW BINLOG EVENTS'];
+        yield 'reset opens GTID metadata' => ['SHOW OPEN TABLES'];
         yield 'floating position' => ['SHOW BINLOG EVENTS FROM 1e2'];
         yield 'fractional exponent' => ['SHOW BINLOG EVENTS FROM 1.27e2'];
         yield 'boundary exponent' => ['SHOW BINLOG EVENTS FROM 127e0'];
@@ -54,10 +55,20 @@ final class BinaryLogBaselineTest extends TestCase
         self::assertNull($reset->difference, (string) $reset->difference);
     }
 
-    public function testComparisonStillDetectsTheUnimplementedLoggingOfWrites(): void
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLoggedStatements(): iterable
+    {
+        yield 'write' => ['INSERT INTO t1(id) VALUES (6)'];
+        yield 'administration' => ['FLUSH STATUS'];
+    }
+
+    #[DataProvider('providerLoggedStatements')]
+    public function testComparisonStillDetectsTheUnimplementedLoggingOfWrites(string $sql): void
     {
         [$target, , $server] = (new Servers())->start(true, true);
-        $comparison = $target->compare('INSERT INTO t1(id) VALUES (6); SHOW BINARY LOGS');
+        $comparison = $target->compare($sql . '; SHOW BINARY LOGS');
         $server->stop();
 
         self::assertNotNull($target->baseline);

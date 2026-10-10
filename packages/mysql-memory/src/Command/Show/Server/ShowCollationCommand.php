@@ -54,11 +54,12 @@ final class ShowCollationCommand implements Command
         $statement = $operation->statement;
         assert($statement instanceof ShowCollation || $statement instanceof ShowCharacterSet);
         $release = $session->settings()->release();
+        $legacy = $session->settings()->legacy();
         if ($statement instanceof ShowCollation) {
-            return (new Listing($this->collationHeadings()))->result($this->collations($release), $operation, $session, $context, $connection, $statement->filter);
+            return (new Listing($this->collationHeadings($legacy)))->result($this->collations($release), $operation, $session, $context, $connection, $statement->filter);
         }
 
-        return (new Listing($this->charsetHeadings()))->result($this->charsets($release), $operation, $session, $context, $connection, $statement->filter);
+        return (new Listing($this->charsetHeadings($legacy)))->result($this->charsets($release), $operation, $session, $context, $connection, $statement->filter);
     }
 
     /**
@@ -71,13 +72,18 @@ final class ShowCollationCommand implements Command
         $catalog = Catalog::shared();
         $defaults = $catalog->defaults[$release->value] ?? [];
         $sortLengths = ServerCatalog::shared()->collations;
+        $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
         $rows = [];
         foreach ($catalog->collations as $name => $collation) {
             if (!in_array($release->value, $catalog->releases[$name] ?? [], true)) {
                 continue;
             }
             $charset = $collation->charset->name;
-            $rows[strtoupper($name)] = [$name, $charset, $collation->id, ($defaults[$charset] ?? null) === $name ? 'Yes' : '', 'Yes', $sortLengths[$name] ?? 1, $collation->padSpace ? 'PAD SPACE' : 'NO PAD'];
+            $row = [$legacy ? str_replace('utf8mb3', 'utf8', $name) : $name, $legacy ? str_replace('utf8mb3', 'utf8', $charset) : $charset, $collation->id, ($defaults[$charset] ?? null) === $name ? 'Yes' : '', 'Yes', $sortLengths[$name] ?? 1];
+            if (!$legacy) {
+                $row[] = $collation->padSpace ? 'PAD SPACE' : 'NO PAD';
+            }
+            $rows[strtoupper($row[0])] = $row;
         }
         ksort($rows, SORT_STRING);
 
@@ -93,9 +99,11 @@ final class ShowCollationCommand implements Command
     {
         $catalog = Catalog::shared();
         $descriptions = ServerCatalog::shared()->charsets;
+        $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
         $rows = [];
         foreach ($catalog->defaults[$release->value] ?? [] as $name => $default) {
-            $rows[$name] = [$name, $descriptions[$name] ?? '', $default, $catalog->charsets[$name]->maxLength ?? 1];
+            $shown = $legacy ? str_replace('utf8mb3', 'utf8', $name) : $name;
+            $rows[$shown] = [$shown, $descriptions[$name] ?? '', $legacy ? str_replace('utf8mb3', 'utf8', $default) : $default, $catalog->charsets[$name]->maxLength ?? 1];
         }
         ksort($rows, SORT_STRING);
 
@@ -107,21 +115,23 @@ final class ShowCollationCommand implements Command
      *
      * @return list<Heading>
      */
-    public function collationHeadings(): array
+    public function collationHeadings(bool $legacy = false): array
     {
         $table = 'COLLATIONS';
         $schema = 'information_schema';
         $name = ColumnFlag::NotNull->value | ColumnFlag::NoDefaultValue->value;
 
-        return [
-            Heading::text('Collation', Field::VarString, 64, $name, 0, 'Collation', $table, $table, $schema),
-            Heading::text('Charset', Field::VarString, 64, $name, 0, 'Charset', $table, $table, $schema),
-            new Heading('Id', Field::LongLong, 20, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::Numeric->value, 0, false, 'Id', $table, $table, $schema),
+        $headings = [
+            Heading::text('Collation', Field::VarString, $legacy ? 32 : 64, $name, 0, 'Collation', $table, $table, $schema),
+            Heading::text('Charset', Field::VarString, $legacy ? 32 : 64, $name, 0, 'Charset', $table, $table, $schema),
+            new Heading('Id', Field::LongLong, $legacy ? 11 : 20, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::Numeric->value, 0, false, 'Id', $table, $table, $schema),
             Heading::text('Default', Field::VarString, 3, ColumnFlag::NotNull->value, 0, 'Default', $table, $table, $schema),
             Heading::text('Compiled', Field::VarString, 3, ColumnFlag::NotNull->value, 0, 'Compiled', $table, $table, $schema),
-            new Heading('Sortlen', Field::Long, 10, $name | ColumnFlag::Unsigned->value | ColumnFlag::Numeric->value, 0, false, 'Sortlen', $table, $table, $schema),
+            new Heading('Sortlen', $legacy ? Field::LongLong : Field::Long, $legacy ? 3 : 10, $name | ColumnFlag::Unsigned->value | ColumnFlag::Numeric->value, 0, false, 'Sortlen', $table, $table, $schema),
             Heading::text('Pad_attribute', Field::String, 9, $name | ColumnFlag::Binary->value | ColumnFlag::Enum->value, 0, 'Pad_attribute', $table, $table, $schema),
         ];
+
+        return $legacy ? array_slice($headings, 0, 6) : $headings;
     }
 
     /**
@@ -129,17 +139,17 @@ final class ShowCollationCommand implements Command
      *
      * @return list<Heading>
      */
-    public function charsetHeadings(): array
+    public function charsetHeadings(bool $legacy = false): array
     {
         $table = 'CHARACTER_SETS';
         $schema = 'information_schema';
-        $key = ColumnFlag::NotNull->value | ColumnFlag::UniqueKey->value | ColumnFlag::NoDefaultValue->value | 16384;
+        $key = ColumnFlag::NotNull->value | ($legacy ? 0 : ColumnFlag::UniqueKey->value | ColumnFlag::NoDefaultValue->value | 16384);
 
         return [
-            Heading::text('Charset', Field::VarString, 64, $key, 0, 'Charset', $table, 'cs', $schema),
-            Heading::text('Description', Field::VarString, 2048, ColumnFlag::NotNull->value | ColumnFlag::NoDefaultValue->value, 0, 'Description', $table, 'cs', $schema),
-            Heading::text('Default collation', Field::VarString, 64, $key, 0, 'Default collation', $table, 'col', $schema),
-            new Heading('Maxlen', Field::Long, 10, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::NoDefaultValue->value | ColumnFlag::Numeric->value, 0, false, 'Maxlen', $table, 'cs', $schema),
+            Heading::text('Charset', Field::VarString, $legacy ? 32 : 64, $key, 0, 'Charset', $table, $legacy ? $table : 'cs', $schema),
+            Heading::text('Description', Field::VarString, $legacy ? 60 : 2048, ColumnFlag::NotNull->value | ColumnFlag::NoDefaultValue->value, 0, 'Description', $table, $legacy ? $table : 'cs', $schema),
+            Heading::text('Default collation', Field::VarString, $legacy ? 32 : 64, $key, 0, 'Default collation', $table, $legacy ? $table : 'col', $schema),
+            new Heading('Maxlen', $legacy ? Field::LongLong : Field::Long, $legacy ? 3 : 10, ColumnFlag::NotNull->value | ColumnFlag::Unsigned->value | ColumnFlag::NoDefaultValue->value | ColumnFlag::Numeric->value, 0, false, 'Maxlen', $table, $legacy ? $table : 'cs', $schema),
         ];
     }
 }
