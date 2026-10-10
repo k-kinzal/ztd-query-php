@@ -68,57 +68,63 @@
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> ?<span class="tok-id">float</span> <span class="tok-var">$flushedAt</span> = <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * Adds an event count or byte amount globally and, when supplied, for its connection.</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * The server generation; only a restart advances it, so late traffic from old clients can be ignored.</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">add</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>, ?<span class="tok-id">int</span> <span class="tok-var">$connection</span> = <span class="tok-id">null</span>, <span class="tok-id">int</span> <span class="tok-var">$amount</span> = <span class="tok-num">1</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    {</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">global</span>[<span class="tok-var">$name</span>] = (<span class="tok-var">$this</span>-&gt;<span class="tok-id">global</span>[<span class="tok-var">$name</span>] ?? <span class="tok-num">0</span>) + <span class="tok-var">$amount</span>;</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">if</span> (<span class="tok-var">$connection</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span>[<span class="tok-var">$connection</span>][<span class="tok-var">$name</span>] = (<span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span>[<span class="tok-var">$connection</span>][<span class="tok-var">$name</span>] ?? <span class="tok-num">0</span>) + <span class="tok-var">$amount</span>;</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        }</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     * Reads a global or session total, initially zero.</span></span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">read</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>, ?<span class="tok-id">int</span> <span class="tok-var">$connection</span> = <span class="tok-id">null</span>): <span class="tok-id">int</span></span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    {</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">return</span> <span class="tok-var">$connection</span> === <span class="tok-id">null</span> ? (<span class="tok-var">$this</span>-&gt;<span class="tok-id">global</span>[<span class="tok-var">$name</span>] ?? <span class="tok-num">0</span>) : (<span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span>[<span class="tok-var">$connection</span>][<span class="tok-var">$name</span>] ?? <span class="tok-num">0</span>);</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    }</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a></span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     * Forgets one session&#039;s counts, or all sessions when no connection is supplied.</span></span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     * Global contributions remain in either case.</span></span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">clear</span>(?<span class="tok-id">int</span> <span class="tok-var">$connection</span> = <span class="tok-id">null</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    {</span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-kw">if</span> (<span class="tok-var">$connection</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span> = [];</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a></span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            <span class="tok-kw">return</span>;</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        }</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-kw">unset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span>[<span class="tok-var">$connection</span>]);</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    }</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-id">int</span> <span class="tok-var">$generation</span> = <span class="tok-num">0</span>;</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * Adds an event count or byte amount globally and, when supplied, for its connection.</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">add</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>, ?<span class="tok-id">int</span> <span class="tok-var">$connection</span> = <span class="tok-id">null</span>, <span class="tok-id">int</span> <span class="tok-var">$amount</span> = <span class="tok-num">1</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    {</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">global</span>[<span class="tok-var">$name</span>] = (<span class="tok-var">$this</span>-&gt;<span class="tok-id">global</span>[<span class="tok-var">$name</span>] ?? <span class="tok-num">0</span>) + <span class="tok-var">$amount</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-kw">if</span> (<span class="tok-var">$connection</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span>[<span class="tok-var">$connection</span>][<span class="tok-var">$name</span>] = (<span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span>[<span class="tok-var">$connection</span>][<span class="tok-var">$name</span>] ?? <span class="tok-num">0</span>) + <span class="tok-var">$amount</span>;</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        }</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    }</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com">     * Reads a global or session total, initially zero.</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">read</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>, ?<span class="tok-id">int</span> <span class="tok-var">$connection</span> = <span class="tok-id">null</span>): <span class="tok-id">int</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    {</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>        <span class="tok-kw">return</span> <span class="tok-var">$connection</span> === <span class="tok-id">null</span> ? (<span class="tok-var">$this</span>-&gt;<span class="tok-id">global</span>[<span class="tok-var">$name</span>] ?? <span class="tok-num">0</span>) : (<span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span>[<span class="tok-var">$connection</span>][<span class="tok-var">$name</span>] ?? <span class="tok-num">0</span>);</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    }</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a></span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a><span class="tok-com">     * Forgets one session&#039;s counts, or all sessions when no connection is supplied.</span></span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a><span class="tok-com">     * Global contributions remain in either case.</span></span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">clear</span>(?<span class="tok-id">int</span> <span class="tok-var">$connection</span> = <span class="tok-id">null</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>    {</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-kw">if</span> (<span class="tok-var">$connection</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span> = [];</span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a></span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a><span class="tok-com">     * Clears a resettable server counter without affecting other totals or session records.</span></span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">clearGlobal</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>    {</span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        <span class="tok-kw">unset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">global</span>[<span class="tok-var">$name</span>]);</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    }</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a></span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a><span class="tok-com">     * Resets all counts when the server restarts.</span></span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">reset</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>    {</span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">global</span> = [];</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span> = [];</span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">flushedAt</span> = <span class="tok-id">null</span>;</span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    }</span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>}</span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a></span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>            <span class="tok-kw">return</span>;</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>        }</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        <span class="tok-kw">unset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span>[<span class="tok-var">$connection</span>]);</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    }</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a></span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a><span class="tok-com">     * Clears a resettable server counter without affecting other totals or session records.</span></span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">clearGlobal</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>    {</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-kw">unset</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">global</span>[<span class="tok-var">$name</span>]);</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    }</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a><span class="tok-com">     * Resets all counts when the server restarts.</span></span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">reset</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    {</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>        ++<span class="tok-var">$this</span>-&gt;<span class="tok-id">generation</span>;</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">global</span> = [];</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">sessions</span> = [];</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">flushedAt</span> = <span class="tok-id">null</span>;</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    }</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>}</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
