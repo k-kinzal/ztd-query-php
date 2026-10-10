@@ -19,18 +19,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class SessionTest extends TestCase
 {
-    public function testBeginStatementAllocatesAcrossSessions(): void
-    {
-        $instance = new Instance();
-        $first = $instance->connect();
-        $second = $instance->connect();
-        $first->beginStatement();
-        $second->beginStatement();
-
-        self::assertSame(1, $first->variables->read('statement_id'));
-        self::assertSame(2, $second->variables->read('statement_id'));
-    }
-
     public function testExecuteAllocatesOneNumberForEachPreparedExecution(): void
     {
         $session = (new Instance())->connect();

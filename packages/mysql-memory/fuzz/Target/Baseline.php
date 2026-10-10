@@ -60,7 +60,7 @@ final class Baseline
      * Restores both observations to an empty application catalog and the captured server configuration.
      * The caller first repairs the administrator and read-only modes.
      *
-     * @throws RuntimeException When the original account cannot be restored
+     * @throws RuntimeException When the original account, grants or global variables cannot be restored
      */
     public function restore(PDO $connection, bool $native): void
     {
@@ -83,7 +83,11 @@ final class Baseline
         foreach ((new Servers())->rows($connection, 'SHOW GLOBAL VARIABLES') as [$name, $value]) {
             $key = strtolower($name);
             if (isset($this->globals[$key]) && $this->globals[$key] !== $value) {
-                $connection->exec('SET GLOBAL ' . $this->identifier($name) . ' = ' . $connection->quote($this->globals[$key]));
+                $original = $this->globals[$key];
+                $literal = preg_match('/\A-?[0-9]+(?:\.[0-9]+)?\z/', $original) === 1 ? $original : $connection->quote($original);
+                if ($connection->exec('SET GLOBAL ' . $this->identifier($name) . ' = ' . $literal) === false) {
+                    throw new RuntimeException('Cannot restore the global variable ' . $name . ': ' . json_encode($connection->errorInfo()));
+                }
             }
         }
     }

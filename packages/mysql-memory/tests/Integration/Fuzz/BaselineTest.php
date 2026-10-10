@@ -71,6 +71,12 @@ final class BaselineTest extends TestCase
         self::assertNull($changed->difference, (string) $changed->difference);
         self::assertFalse($read->volatile);
         self::assertNull($read->difference, (string) $read->difference);
+        self::assertNotNull($target->baseline);
+        $original = $target->baseline->globals['max_connections'];
+        $native = new PDO($target->native, $target->nativeUser, $target->nativePassword);
+        $memory = new PDO($target->memory, 'root', '');
+        self::assertSame([[$original]], (new Servers())->rows($native, 'SELECT @@global.max_connections'));
+        self::assertSame([[$original]], (new Servers())->rows($memory, 'SELECT @@global.max_connections'));
         $server->stop();
     }
 

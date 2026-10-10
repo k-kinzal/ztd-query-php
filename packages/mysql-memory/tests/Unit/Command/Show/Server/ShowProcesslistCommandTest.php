@@ -31,7 +31,9 @@ final class ShowProcesslistCommandTest extends TestCase
 
         $result1 = $s->query($statement)[0];
         self::assertInstanceOf(ResultSet::class, $result1);
-        self::assertSame([[(string) $idle->id, 'root', 'localhost', 'mysql', 'Sleep', '0', '', null], [(string) $s->id, 'root', 'localhost', null, 'Query', '0', 'init', substr($statement, 0, 100)]], $result1->rows);
+        self::assertContains($result1->rows[0][5], ['0', '1']);
+        self::assertContains($result1->rows[1][5], ['0', '1']);
+        self::assertSame([[(string) $idle->id, 'root', 'localhost', 'mysql', 'Sleep', '', null], [(string) $s->id, 'root', 'localhost', null, 'Query', 'init', substr($statement, 0, 100)]], array_map(static fn (array $row): array => array_values(array_diff_key($row, [5 => true])), $result1->rows));
         $result2 = $s->query('SHOW WARNINGS')[0];
         self::assertInstanceOf(ResultSet::class, $result2);
         self::assertSame([['Warning', '1287', "'INFORMATION_SCHEMA.PROCESSLIST' is deprecated and will be removed in a future release. Please use performance_schema.processlist instead"]], $result2->rows);

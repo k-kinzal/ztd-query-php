@@ -412,4 +412,29 @@ final class AlterTableCommandTest extends TestCase
 
         self::assertSame([false, true, false, true, false], array_map(static fn ($column): bool => (new AlterTableCommand())->copiesAdded($column), $table->definition->columns));
     }
+
+    public function testRebuildRewritesTheUpdateTimeWhenCopyingRowsIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $table->updated = 123;
+        $before = time();
+        $session->query('ALTER TABLE t ALGORITHM=COPY');
+        $after = time();
+
+        self::assertGreaterThanOrEqual($before, $table->updated);
+        self::assertLessThanOrEqual($after, $table->updated);
+    }
+
+    public function testRebuildKeepsANullUpdateTimeWhenCopyingAnEmptyTableIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); ALTER TABLE t ALGORITHM=COPY');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+
+        self::assertNull($table->updated);
+    }
 }

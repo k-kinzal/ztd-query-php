@@ -109,7 +109,7 @@ final class DropTableCommand implements Command
         }
         $this->truncated($table, $session, $context);
         $table->data = new Heap();
-        $table->updated = null;
+        $table->updated = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? $table->updated : null;
         $table->statistics = array_intersect_key($table->statistics, ['table' => true]);
 
         return new Completion();

@@ -176,6 +176,7 @@ final class AlterTableCommand implements Command
     /**
      * Declares the changed layout again and fills the table with its rows converted, and answers
      * the completion: the records count the rows when the server copies the table.
+     * MySQL 5.7 records that copy as a new update when it writes rows (verified on 5.7.44).
      *
      * @throws \MySqlMemory\Error\SqlError When the layout cannot be declared or a row cannot be converted
      */
@@ -198,6 +199,9 @@ final class AlterTableCommand implements Command
         }
         $records = $copies ? count($data->rows) : 0;
         $updated = $copies || count($origins) !== count($table->definition->columns) || in_array(null, $origins, true) || $change->storageLayout ? null : $table->updated;
+        if ($records > 0 && $context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            $updated = time();
+        }
         $table->definition = $definition;
         $table->data = $data;
         $table->created = CreateTableCommand::created($context);

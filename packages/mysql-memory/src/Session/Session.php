@@ -76,6 +76,11 @@ final class Session
     public bool $passwordExpired = false;
 
     /**
+     * The sequence and clock of the last client statement.
+     */
+    public readonly State\Activity $activity;
+
+    /**
      * The open transaction and the rows a failing statement restores.
      */
     public readonly Transaction $transaction;
@@ -147,6 +152,7 @@ final class Session
     public function __construct(public readonly Instance $instance, public readonly int $id, public readonly string $user = 'root', public readonly string $host = 'localhost', ?string $database = null)
     {
         $this->variables = new Variables($instance->catalog, $instance->globals, $instance);
+        $this->activity = new State\Activity($this->variables);
         $this->variables->connection = $id;
         $this->variables->account = $user . '@' . $host;
         $this->variables->definer = $user . '@%';
@@ -248,7 +254,7 @@ final class Session
         } catch (SqlError $error) {
             $statements = (new Problem\Script())->statements($this->semantics(), $sql);
             if ($statements === []) {
-                $this->beginStatement();
+                $this->activity->begin();
                 return [(new Parse\Reader())->refused($error, $sql, $prepared, $this)];
             }
         }
@@ -308,7 +314,7 @@ final class Session
     public function execute(string $statement, array $parameters = [], bool $prepared = false): Reply
     {
         if ($this->running->using === []) {
-            $this->beginStatement();
+            $this->activity->begin();
         }
         $this->text = $statement;
         $this->replayed = $prepared;
@@ -324,18 +330,6 @@ final class Session
         }
 
         return (new Execution($this))->perform($operation, $command, $parameters);
-    }
-
-    /**
-     * Allocates this client statement's sequence number, including failed statements.
-     *
-     * SQL EXECUTE retains the number of its outer command. Wire preparation allocates a
-     * number too. Verified through the public SQL and prepared-statement interfaces on 8.4.
-     * Source: https://dev.mysql.com/doc/refman/8.4/en/server-system-variables.html#sysvar_statement_id.
-     */
-    public function beginStatement(): void
-    {
-        $this->variables->session['statement_id'] = ++$this->instance->registry->threads->statements;
     }
 
     /**

@@ -189,4 +189,17 @@ final class DropTableCommandTest extends TestCase
 
         (new DropTableCommand())->truncate(new TruncateTable(new QualifiedName(new Name('nope'))), $session, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
     }
+
+    public function testTruncateRetainsThePreviousUpdateTimeIn57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t (a INT); INSERT INTO t VALUES (1)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $table->updated = 123;
+        $session->query('TRUNCATE TABLE t');
+
+        self::assertSame(123, $table->updated);
+        self::assertSame([], $table->data->rows);
+    }
 }
