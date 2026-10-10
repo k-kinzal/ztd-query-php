@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintAction;
 use SqlSemantics\Platform\MySql\Statement\Relation\Hint\IndexHintScope;
 use SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation;
 use SqlSemantics\Platform\MySql\Statement\Relation\TableReference;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Relation;
@@ -91,7 +92,7 @@ final class SortedDistinct
             if ($index->unique() && $required === [] && $nullable === []) {
                 return true;
             }
-            if ($this->available($index, $source) && $this->ordered($index, $selected, $keys)) {
+            if ($index->access($table->definition->engine) === IndexAlgorithm::Btree && $this->available($index, $source) && $this->ordered($index, $selected, $keys)) {
                 return true;
             }
         }

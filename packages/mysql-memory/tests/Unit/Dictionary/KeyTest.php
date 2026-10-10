@@ -9,11 +9,26 @@ use MySqlMemory\Dictionary\KeyKind;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 
 #[CoversClass(Key::class)]
 #[Small]
 final class KeyTest extends TestCase
 {
+    public function testAccessResolvesDefaultsAndRetainsExplicitStructures(): void
+    {
+        $implicit = new Key('k', KeyKind::Index, [0]);
+        $btree = new Key('k', KeyKind::Index, [0], algorithm: IndexAlgorithm::Btree);
+
+        self::assertSame(IndexAlgorithm::Hash, $implicit->access('MEMORY'));
+        self::assertSame(IndexAlgorithm::Hash, $implicit->access('heap'));
+        self::assertSame(IndexAlgorithm::Btree, $implicit->access('InnoDB'));
+        self::assertSame(IndexAlgorithm::Btree, $btree->access('MEMORY'));
+        self::assertSame(IndexAlgorithm::Btree, (new Key('k', KeyKind::Index, [0], algorithm: IndexAlgorithm::Hash))->access('InnoDB'));
+        self::assertFalse($implicit->duplicates($btree, 'MEMORY'));
+        self::assertTrue($implicit->duplicates($btree, 'InnoDB'));
+    }
+
     public function testUniqueHoldsForPrimaryAndUniqueKeys(): void
     {
         $primary = new Key('PRIMARY', KeyKind::Primary, [0]);

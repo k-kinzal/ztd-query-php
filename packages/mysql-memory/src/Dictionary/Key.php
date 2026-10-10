@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Dictionary;
 
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
+
 /**
  * An index of a stored table: its name, kind, and the columns it covers.
  *
@@ -22,17 +24,32 @@ final class Key
      * @param list<bool> $descending Whether each column is indexed in descending order; a missing entry is ascending
      * @param bool $generated Whether the server added the index for a foreign key, which an index another foreign key needs replaces
      * @param bool $visible Whether the optimizer can use the index without use_invisible_indexes
+     * @param IndexAlgorithm|null $algorithm The explicit index structure the engine retained
      */
-    public function __construct(public readonly string $name, public readonly KeyKind $kind, public readonly array $columns, public readonly array $prefixes = [], public readonly array $descending = [], public readonly bool $generated = false, public readonly bool $visible = true)
+    public function __construct(public readonly string $name, public readonly KeyKind $kind, public readonly array $columns, public readonly array $prefixes = [], public readonly array $descending = [], public readonly bool $generated = false, public readonly bool $visible = true, public readonly ?IndexAlgorithm $algorithm = null)
     {
+    }
+
+    /**
+     * Resolves the structure: MEMORY defaults to HASH, other engines use BTREE.
+     * A legacy HASH declaration on InnoDB or MyISAM still uses BTREE.
+     */
+    public function access(string $engine): IndexAlgorithm
+    {
+        $memory = in_array(strtoupper($engine), ['MEMORY', 'HEAP'], true);
+        if (!$memory && $this->algorithm === IndexAlgorithm::Hash) {
+            return IndexAlgorithm::Btree;
+        }
+
+        return $this->algorithm ?? ($memory ? IndexAlgorithm::Hash : IndexAlgorithm::Btree);
     }
 
     /**
      * Tells whether another key indexes the same columns as this one in the same way: of the same kind, with the same prefixes and the same order.
      */
-    public function duplicates(self $other): bool
+    public function duplicates(self $other, string $engine = 'InnoDB'): bool
     {
-        if ($this->kind !== $other->kind || $this->columns !== $other->columns) {
+        if ($this->kind !== $other->kind || $this->columns !== $other->columns || $this->access($engine) !== $other->access($engine)) {
             return false;
         }
         foreach (array_keys($this->columns) as $index) {

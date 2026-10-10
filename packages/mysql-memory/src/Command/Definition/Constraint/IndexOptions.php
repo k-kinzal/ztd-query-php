@@ -7,11 +7,15 @@ namespace MySqlMemory\Command\Definition\Constraint;
 use MySqlMemory\Command\Show\Keys;
 use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Error\Family\SchemaError;
+use MySqlMemory\Evaluation\Context;
+use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexVisibility;
 
 /**
- * Retains index visibility through definition changes and checks primary keys.
+ * Retains index options through definition changes and checks primary keys.
  *
  * The last written visibility wins. An explicit primary key, or the first
  * non-null unique key used as an implicit primary, cannot be invisible.
@@ -21,6 +25,40 @@ use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexVisibility;
  */
 final class IndexOptions
 {
+    /**
+     * Retains the last USING option when the storage engine supports it.
+     * Modern InnoDB and MyISAM discard HASH; legacy definitions retain the
+     * requested spelling. MEMORY retains HASH and BTREE.
+     * Verified through CREATE TABLE and SHOW CREATE TABLE on MySQL 8.4.
+     */
+    public function algorithm(IndexDefinition $index, string $engine, bool $legacy = false): ?IndexAlgorithm
+    {
+        $algorithm = $index->algorithm;
+        foreach ($index->options as $option) {
+            if ($option instanceof IndexUsing) {
+                $algorithm = $option->algorithm;
+            }
+        }
+
+        return !$legacy && $algorithm === IndexAlgorithm::Hash && !in_array(strtoupper($engine), ['MEMORY', 'HEAP'], true) ? null : $algorithm;
+    }
+
+    /**
+     * Records the modern server note when an unsupported structure falls back.
+     * MySQL 5.6 and 5.7 silently replace HASH on disk-backed engines.
+     */
+    public function warn(TableDefinition $table, Context $context): void
+    {
+        if (in_array($context->modes->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+            return;
+        }
+        foreach ($table->statement->elements ?? [] as $element) {
+            if ($element instanceof IndexDefinition && $this->algorithm($element, 'MEMORY') === IndexAlgorithm::Hash && $this->algorithm($element, $table->engine) === null) {
+                $context->note(SchemaError::UnsupportedIndexAlgorithm, 'HASH');
+            }
+        }
+    }
+
     /**
      * Answers the effective visibility, which defaults to visible.
      */

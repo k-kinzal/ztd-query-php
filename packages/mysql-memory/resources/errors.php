@@ -361,6 +361,7 @@ return [
     3513 => ['HY000', 'Binary operands of bitwise operators must be of equal length'],
     3517 => ['SR002', "Can't parse the spatial reference system definition of SRID %s."],
     3519 => ['SR001', "There's no spatial reference system with SRID %s."],
+    3502 => ['HY000', 'This storage engine does not support the %s index algorithm, storage engine default was used instead.'],
     3522 => ['HY000', 'A primary key index cannot be invisible'],
     3523 => ['HY000', 'Unknown authorization ID %s'],
     3526 => ['HY000', 'Failed to set default roles'],

@@ -119,7 +119,7 @@ final class Definitions
         if ($elements === [] && in_array($this->planner->settings->release(), [\SqlSemantics\Contract\GrammarRelease::MySql901, \SqlSemantics\Contract\GrammarRelease::MySql910], true)) {
             throw SchemaError::NoVisibleColumn->error();
         }
-        $keys = $this->tableKeys($create, $columns, $keys);
+        $keys = $this->tableKeys($create, $columns, $keys, $engine);
         $this->check($columns, $keys);
         $expressions->keyed($columns, $keys);
         usort($keys, static fn (Key $left, Key $right): int => ($right->kind === KeyKind::Primary) <=> ($left->kind === KeyKind::Primary));
@@ -143,16 +143,16 @@ final class Definitions
      *
      * @return list<Key>
      */
-    public function tableKeys(CreateTable $create, array $columns, array $keys): array
+    public function tableKeys(CreateTable $create, array $columns, array $keys, string $engine = 'InnoDB'): array
     {
         $foreign = new ForeignKeys($this->planner, $create);
         $implicit = [];
         foreach ($create->elements as $element) {
             if ($element instanceof IndexDefinition && isset($this->generatedKeys[mb_strtolower($element->name->column->value ?? '')])) {
-                $key = $this->key($element, $columns);
-                $keys[] = $implicit[] = new Key($key->name, $key->kind, $key->columns, $key->prefixes, $key->descending, true, $key->visible);
+                $key = $this->key($element, $columns, $engine);
+                $keys[] = $implicit[] = new Key($key->name, $key->kind, $key->columns, $key->prefixes, $key->descending, true, $key->visible, $key->algorithm);
             } elseif ($element instanceof IndexDefinition) {
-                $keys[] = $this->key($element, $columns);
+                $keys[] = $this->key($element, $columns, $engine);
             }
             if ($element instanceof ForeignKeyElement) {
                 $keys[] = $implicit[] = $foreign->implicit($element, $columns);
@@ -351,7 +351,7 @@ final class Definitions
      *
      * @throws \MySqlMemory\Error\SqlError When a key part names no column
      */
-    public function key(IndexDefinition $index, array $columns): Key
+    public function key(IndexDefinition $index, array $columns, string $engine = 'InnoDB'): Key
     {
         $positions = [];
         $prefixes = [];
@@ -381,7 +381,7 @@ final class Definitions
             IndexKind::Index => KeyKind::Index,
         };
 
-        return new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes, $descending, visible: (new Constraint\IndexOptions())->visible($index));
+        return new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes, $descending, visible: (new Constraint\IndexOptions())->visible($index), algorithm: (new Constraint\IndexOptions())->algorithm($index, $engine, $this->planner->settings->legacy()));
     }
 
     /**
@@ -411,7 +411,7 @@ final class Definitions
                     $name = $base . '_' . $suffix;
                 }
                 $used[strtolower($name)] = true;
-                $key = new Key($name, $key->kind, $key->columns, $key->prefixes, $key->descending, $key->generated, $key->visible);
+                $key = new Key($name, $key->kind, $key->columns, $key->prefixes, $key->descending, $key->generated, $key->visible, $key->algorithm);
             }
             $named[] = $key;
         }

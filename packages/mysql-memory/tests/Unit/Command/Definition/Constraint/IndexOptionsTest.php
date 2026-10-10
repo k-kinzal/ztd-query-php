@@ -11,8 +11,10 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnName;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\ColumnPart;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexKind;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexVisibility;
 use SqlSemantics\Statement\Identifier\Name;
 
@@ -20,6 +22,26 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class IndexOptionsTest extends TestCase
 {
+    public function testAlgorithmRetainsTheLastSupportedUsingOption(): void
+    {
+        $index = new IndexDefinition(IndexKind::Index, [new ColumnPart(new Name('a'))], algorithm: IndexAlgorithm::Btree, options: [new IndexUsing(IndexAlgorithm::Hash)]);
+        $options = new IndexOptions();
+
+        self::assertSame(IndexAlgorithm::Hash, $options->algorithm($index, 'MEMORY'));
+        self::assertNull($options->algorithm($index, 'InnoDB'));
+        self::assertSame(IndexAlgorithm::Btree, $options->algorithm(new IndexDefinition(IndexKind::Index, $index->parts, algorithm: IndexAlgorithm::Btree), 'MEMORY'));
+    }
+
+    public function testWarnRecordsTheFallbackAfterCreatingTheTable(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT,KEY k(a) USING HASH)');
+        $result = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+
+        self::assertSame([['Note', '3502', 'This storage engine does not support the HASH index algorithm, storage engine default was used instead.']], $result->rows);
+    }
+
     public function testVisibleUsesTheLastWrittenOption(): void
     {
         $rules = new IndexOptions();

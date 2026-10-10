@@ -13,6 +13,7 @@ use MySqlMemory\System\Reading;
 use MySqlMemory\System\SystemRows;
 use Override;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 
 /**
  * The rows of INFORMATION_SCHEMA.STATISTICS: one for each column of each index of each base table.
@@ -49,6 +50,9 @@ final class Statistics implements SystemRows
                 }
                 foreach ($keys as $key) {
                     foreach ($key->columns as $sequence => $position) {
+                        if ($key->access($definition->engine) === IndexAlgorithm::Hash) {
+                            unset($table->statistics['index ' . $key->name . ' ' . $sequence]);
+                        }
                         $table->statistics['index ' . $key->name . ' ' . $sequence] ??= [$show->cardinality($table, $key, $sequence)];
                         $column = $definition->columns[$position];
                         $rows[] = [
@@ -60,12 +64,12 @@ final class Statistics implements SystemRows
                             'INDEX_NAME' => $key->name,
                             'SEQ_IN_INDEX' => $sequence + 1,
                             'COLUMN_NAME' => $column->name,
-                            'COLLATION' => $key->kind === KeyKind::FullText ? null : (($key->descending[$sequence] ?? false) ? 'D' : 'A'),
+                            'COLLATION' => $key->kind === KeyKind::FullText || $key->access($definition->engine) === IndexAlgorithm::Hash ? null : (($key->descending[$sequence] ?? false) ? 'D' : 'A'),
                             'CARDINALITY' => $table->statistics['index ' . $key->name . ' ' . $sequence][0],
                             'SUB_PART' => $key->kind === KeyKind::Spatial ? 32 : ($key->prefixes[$sequence] ?? null),
                             'PACKED' => null,
                             'NULLABLE' => $column->nullable() ? 'YES' : '',
-                            'INDEX_TYPE' => $show->type($key->kind, $definition->engine),
+                            'INDEX_TYPE' => $show->type($key->kind, $definition->engine, $key->access($definition->engine)),
                             'COMMENT' => '',
                             'INDEX_COMMENT' => '',
                             'IS_VISIBLE' => $key->visible ? 'YES' : 'NO',

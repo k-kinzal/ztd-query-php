@@ -22,6 +22,7 @@ enum SchemaError: int implements ErrorCode
 {
     use CatalogedError;
 
+    case UnsupportedIndexAlgorithm = 3502;
     case DatabaseExists = 1007;
     case DatabaseMissing = 1008;
     case FileNotFound = 1017;

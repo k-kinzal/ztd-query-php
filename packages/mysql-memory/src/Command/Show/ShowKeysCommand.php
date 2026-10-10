@@ -16,6 +16,7 @@ use MySqlMemory\Session\Session;
 use MySqlMemory\Value\Encoding;
 use MySqlMemory\Value\Order;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowKeys;
@@ -61,6 +62,9 @@ final class ShowKeysCommand implements Command
         $legacy = $session->settings()->legacy();
         foreach ((new Keys())->ordered($definition) as $key) {
             foreach ($key->columns as $sequence => $position) {
+                if ($key->access($definition->engine) === IndexAlgorithm::Hash) {
+                    unset($stored->statistics['index ' . $key->name . ' ' . $sequence]);
+                }
                 $stored->statistics['index ' . $key->name . ' ' . $sequence] ??= [$this->cardinality($stored, $key, $sequence, $release !== \SqlSemantics\Contract\GrammarRelease::MySql5651)];
                 $cardinality = $stored->statistics['index ' . $key->name . ' ' . $sequence][0];
                 $column = $definition->columns[$position];
@@ -70,12 +74,12 @@ final class ShowKeysCommand implements Command
                     $key->name,
                     $sequence + 1,
                     $column->name,
-                    $key->kind === KeyKind::FullText ? null : (($key->descending[$sequence] ?? false) ? 'D' : 'A'),
+                    $key->kind === KeyKind::FullText || $key->access($definition->engine) === IndexAlgorithm::Hash ? null : (($key->descending[$sequence] ?? false) ? 'D' : 'A'),
                     $cardinality,
                     $key->kind === KeyKind::Spatial ? 32 : ($key->prefixes[$sequence] ?? null),
                     null,
                     $column->nullable() ? 'YES' : '',
-                    $this->type($key->kind, $definition->engine),
+                    $this->type($key->kind, $definition->engine, $key->access($definition->engine)),
                     '',
                     '',
                     ...($legacy ? [] : [$key->visible ? 'YES' : 'NO', null]),
@@ -92,7 +96,9 @@ final class ShowKeysCommand implements Command
      *
      * InnoDB counts the distinct values of those columns, NULL equal to NULL, as it does exactly
      * for a table of few pages; MySQL 5.6 counts whole values where the key takes a prefix (verified
-     * on a live 5.6.51 server).
+     * on a live 5.6.51 server). MEMORY HASH reports the row count for a complete
+     * unique key and zero for an empty index. Its nonunique physical bucket
+     * estimates are not modeled. MEMORY BTREE reports no estimate.
      *
      * @param bool $prefixed Whether the values are cut to the prefixes of the key MyISAM counts the rows for the whole of a unique key of NOT NULL
      * columns and reports nothing else.
@@ -100,6 +106,9 @@ final class ShowKeysCommand implements Command
     public function cardinality(StoredTable $stored, Key $key, int $sequence, bool $prefixed = true): ?int
     {
         $definition = $stored->definition;
+        if ($key->access($definition->engine) === IndexAlgorithm::Hash) {
+            return $sequence === count($key->columns) - 1 && ($key->unique() || $stored->data->rows === []) ? count($stored->data->rows) : null;
+        }
         if (strcasecmp($definition->engine, 'MyISAM') === 0) {
             return $key->unique() && (new Keys())->notNull($key, $definition) && $sequence === count($key->columns) - 1 ? count($stored->data->rows) : null;
         }
@@ -125,14 +134,14 @@ final class ShowKeysCommand implements Command
     }
 
     /**
-     * Answers the index type of a key: FULLTEXT, SPATIAL, HASH for a key of a MEMORY table, else BTREE.
+     * Answers the index type, retaining an explicit structure or resolving the engine default.
      */
-    public function type(KeyKind $kind, string $engine): string
+    public function type(KeyKind $kind, string $engine, ?IndexAlgorithm $algorithm = null): string
     {
         return match ($kind) {
             KeyKind::FullText => 'FULLTEXT',
             KeyKind::Spatial => 'SPATIAL',
-            KeyKind::Primary, KeyKind::Unique, KeyKind::Index => strcasecmp($engine, 'MEMORY') === 0 || strcasecmp($engine, 'HEAP') === 0 ? 'HASH' : 'BTREE',
+            KeyKind::Primary, KeyKind::Unique, KeyKind::Index => $algorithm->value ?? (strcasecmp($engine, 'MEMORY') === 0 || strcasecmp($engine, 'HEAP') === 0 ? 'HASH' : 'BTREE'),
         };
     }
 

@@ -226,7 +226,7 @@ final class TableLayout
             KeyKind::Spatial => IndexKind::Spatial,
         };
 
-        return new IndexDefinition($kind, $parts, $kind === IndexKind::Primary ? null : new ColumnName(new Name($key->name)), options: $key->visible ? [] : [new \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexVisibility(false)]);
+        return new IndexDefinition($kind, $parts, $kind === IndexKind::Primary ? null : new ColumnName(new Name($key->name)), $key->algorithm, options: $key->visible ? [] : [new \SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexVisibility(false)]);
     }
 
     /**

@@ -97,7 +97,8 @@ final class CreateTableCommand implements Command
      */
     public function store(TableDefinition $definition, Session $session, Context $context, bool $started): void
     {
-        foreach ($this->duplicates($definition->keys) as $duplicate) {
+        (new Constraint\IndexOptions())->warn($definition, $context);
+        foreach ($this->duplicates($definition->keys, $definition->engine) as $duplicate) {
             $context->warning(SchemaError::DuplicateIndex, $duplicate->name, $definition->schema . '.' . $definition->name);
         }
         $table = new StoredTable($this->primaryNotNull($definition), new Heap(), created: self::created($context), clock: (int) floor($context->variables->clock()));
@@ -143,12 +144,12 @@ final class CreateTableCommand implements Command
      * @param list<Key> $keys The keys in the order the table holds them
      * @return list<Key>
      */
-    public function duplicates(array $keys): array
+    public function duplicates(array $keys, string $engine = 'InnoDB'): array
     {
         $duplicates = [];
         foreach ($keys as $position => $key) {
             foreach (array_slice($keys, 0, $position) as $earlier) {
-                if ($key->kind !== KeyKind::Primary && $key->duplicates($earlier)) {
+                if ($key->kind !== KeyKind::Primary && $key->duplicates($earlier, $engine)) {
                     $duplicates[] = $key;
                     break;
                 }

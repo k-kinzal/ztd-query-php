@@ -28,6 +28,19 @@ final class SortedDistinctTest extends TestCase
         self::assertSame([['0', str_repeat("\0", 8)], ['65', str_repeat("\xff", 8)]], $result->rows);
     }
 
+    public function testIndexedNeedsAnOrderedStructureToAvoidDuplicateStorage(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a BIT(8),KEY k(a)) ENGINE=MEMORY');
+        $hash = $session->query('SELECT DISTINCT a FROM t ORDER BY a')[0];
+        $session->query('ALTER TABLE t DROP INDEX k,ADD KEY k(a) USING BTREE');
+        $btree = $session->query('SELECT DISTINCT a FROM t ORDER BY a')[0];
+        self::assertInstanceOf(ResultSet::class, $hash);
+        self::assertInstanceOf(ResultSet::class, $btree);
+
+        self::assertSame([Field::Long, Field::Bit], [$hash->columns[0]->type, $btree->columns[0]->type]);
+    }
+
     public function testAvailableUsesInvisibleIndexesOnlyWhenTheSessionEnablesThem(): void
     {
         $session = (new Instance())->connect();
