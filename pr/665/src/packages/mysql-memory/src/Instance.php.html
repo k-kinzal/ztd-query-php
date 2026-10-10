@@ -114,7 +114,7 @@
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    <span class="tok-kw">public</span> <span class="tok-id">bool</span> <span class="tok-var">$stopped</span> = <span class="tok-id">false</span>;</span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a></span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a><span class="tok-com">     * @var array&lt;string, string|int&gt; The global configuration reloaded by RESTART</span></span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a><span class="tok-com">     * @var array&lt;string, string|int|null&gt; The global configuration reloaded by RESTART</span></span>
 <span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$startup</span>;</span>
 <span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a></span>
@@ -130,7 +130,7 @@
 <span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a><span class="tok-com">     * (verified on live 5.6.51 and 5.7.44 servers).</span></span>
 <span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a><span class="tok-com">     * @param string $version The MySQL release emulated, as `8.4.7`</span></span>
-<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a><span class="tok-com">     * @param array&lt;string, string|int&gt; $globals Global variable values the server starts with, by name</span></span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a><span class="tok-com">     * @param array&lt;string, string|int|null&gt; $globals Global variable values the server starts with, by name</span></span>
 <span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a><span class="tok-com">     * @param list&lt;string&gt; $databases Databases created at start, besides the system ones</span></span>
 <span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a><span class="tok-com">     * @param string|null $clientHost The host every client is seen connecting from, or null for its address</span></span>
 <span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a><span class="tok-com">     * @param bool $supervised Whether a supervisor permits SQL RESTART</span></span>
