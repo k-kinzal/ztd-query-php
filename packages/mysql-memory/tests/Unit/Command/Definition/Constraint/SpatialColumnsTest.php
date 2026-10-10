@@ -39,4 +39,14 @@ final class SpatialColumnsTest extends TestCase
 
         $session->query('ALTER TABLE t ADD b POINT SRID 99999999');
     }
+    public function testAlterRequiresCopyForANewSridRestriction(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a POINT)');
+        $this->expectExceptionCode(1845);
+        $this->expectExceptionMessage('ALGORITHM=INPLACE is not supported for this operation. Try ALGORITHM=COPY.');
+
+        $session->query('ALTER TABLE t MODIFY a POINT SRID 0,ALGORITHM=INPLACE');
+    }
+
 }

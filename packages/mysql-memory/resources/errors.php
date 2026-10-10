@@ -580,4 +580,6 @@ return [
     1266 => ['HY000', "Using storage engine %s for table '%s'"],
     3981 => ['HY000', "Storage engine '%s' does not support ENGINE_ATTRIBUTE."],
     1812 => ['HY000', 'Tablespace is missing for table %s.'],
+    1416 => ['22003', 'Cannot get geometry object from data you send to the GEOMETRY field'],
+    3643 => ['HY000', "The SRID of the geometry does not match the SRID of the column '%s'. The SRID of the geometry is %d, but the SRID of the column is %d. Consider changing the SRID of the geometry or the SRID property of the column."],
 ];

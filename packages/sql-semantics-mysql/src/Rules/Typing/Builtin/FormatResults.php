@@ -68,7 +68,7 @@ final class FormatResults
             'BIN' => $radix,
             'OCT' => $radix,
             'CONV' => $radix,
-            'HEX' => fn (Invocation $call): Domain => $this->undecimal($call, $this->sized($this->legacy($call) && $call->domain(0)->kind->numeric() ? 2 * $call->length($call->domain(0)) : $this->digitsOf($call->domain(0)), $call->settings->connection, Coercibility::Coercible)),
+            'HEX' => $this->hex(...),
             'UNHEX' => fn (Invocation $call): Domain => $this->undecimal($call, $this->sized(intdiv($this->bytes($call->domain(0)) + 1, 2), Collation::binary(), Coercibility::Coercible)),
             'COMPRESS' => fn (Invocation $call): Domain => $this->sized($this->legacy($call) ? intdiv($this->bytes($call->domain(0)) * 120, 100) + 12 : $this->bound($this->bytes($call->domain(0))), Collation::binary(), Coercibility::Coercible),
             'UNCOMPRESS' => $blob,
@@ -145,6 +145,18 @@ final class FormatResults
             Kind::Null => 0,
             Kind::Integer, Kind::Decimal, Kind::Double, Kind::Year, Kind::Bit => 16,
         };
+    }
+
+    /**
+     * Resolves HEX, including the legacy unsigned 32-bit character count before charset scaling.
+     * Verified with GEOMETRY, LONGBLOB and LONGTEXT under latin1 and utf8mb4 on MySQL 5.6.51.
+     */
+    public function hex(Invocation $call): Domain
+    {
+        $legacy = $this->legacy($call);
+        $length = $legacy && $call->domain(0)->kind->numeric() ? 2 * $call->length($call->domain(0)) : $this->digitsOf($call->domain(0));
+
+        return $this->undecimal($call, $this->sized($legacy ? $length & 4294967295 : $length, $call->settings->connection, Coercibility::Coercible));
     }
 
     /**

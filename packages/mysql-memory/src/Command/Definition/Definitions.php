@@ -234,9 +234,10 @@ final class Definitions
         $domain = $domain->withNullable($nullable && !$serial);
         $keywords = array_map(static fn ($attribute) => $attribute->keyword, array_values(array_filter($attributes, static fn ($attribute): bool => $attribute instanceof KeywordAttribute)));
         $name = $element->name->column->value;
-        $column = new ColumnDefinition($name, $domain, Fill::none(), $serial || in_array(ColumnKeyword::AutoIncrement, $keywords, true), false, null, in_array(ColumnKeyword::Invisible, $keywords, true), $declaration, $comment);
+        $type = $specification->dataType();
+        $column = new ColumnDefinition($name, $domain, Fill::none(), $serial || in_array(ColumnKeyword::AutoIncrement, $keywords, true), $this->onUpdate($attributes), null, in_array(ColumnKeyword::Invisible, $keywords, true), $declaration, $comment, spatialKind: $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Spatial ? $type->kind : null, srid: $element->srid());
 
-        return new ColumnDefinition($name, $domain, $this->default($attributes, $column, $create), $column->autoIncrement, $this->onUpdate($attributes), null, $column->invisible, $declaration, $comment);
+        return $column->withDefault($this->default($attributes, $column, $create));
     }
 
     /**

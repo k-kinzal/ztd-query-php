@@ -65,4 +65,17 @@ final class ColumnDefinitionTest extends TestCase
 
         self::assertSame([true, '(`a` + 1)', false], [$column->stored, $column->expression, $column->default->declared]);
     }
+    public function testWithDomainPreservesSpatialRestrictionsAcrossAllCopies(): void
+    {
+        $session = (new \MySqlMemory\Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a POINT SRID 4326)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $column = $table->definition->columns[0];
+        $copy = $column->withDomain($column->domain)->withDefault(Fill::none())->withImplicitCollation(true);
+
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind::Point, $copy->spatialKind);
+        self::assertSame(4326, $copy->srid);
+    }
+
 }

@@ -55,6 +55,9 @@ final class Store
             return null;
         }
         $to = $column->domain;
+        if ($to->field === Field::Geometry) {
+            return (new Geometries())->value($value, $column, $this->context->modes->release);
+        }
 
         return match ($to->kind) {
             Kind::Integer => $this->integer($value, $from, $column),

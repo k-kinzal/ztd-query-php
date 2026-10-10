@@ -149,4 +149,15 @@ final class TableRebuildTest extends TestCase
 
         $session->query('ALTER TABLE c ADD FOREIGN KEY (pid) REFERENCES p(id)');
     }
+    public function testColumnInPlaceDistinguishesGeometrySubtypesWithTheSameStorageDomain(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a GEOMETRY,b POINT)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+
+        self::assertFalse(TableRebuild::columnInPlace($table->definition->columns[0], $table->definition->columns[1]));
+        self::assertTrue(TableRebuild::columnInPlace($table->definition->columns[1], $table->definition->columns[1]));
+    }
+
 }

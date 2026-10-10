@@ -372,7 +372,7 @@ final class AlterTableCommand implements Command
                 continue;
             }
             $before = $old->columns[$origin];
-            $retyped = $retyped || !TableRebuild::inPlace($before->domain, $column->domain, in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
+            $retyped = $retyped || !TableRebuild::columnInPlace($before, $column, in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
             $copies = $copies || $this->copiesColumn($before, $column, $context);
         }
         if ($retyped && $change->algorithm === 'inplace') {
@@ -380,6 +380,9 @@ final class AlterTableCommand implements Command
         }
         if ($retyped && $change->lock === 'none') {
             throw SchemaError::AlterOperationNotSupportedReason->error('LOCK=NONE', 'Cannot change column type INPLACE', 'LOCK=SHARED');
+        }
+        if (!$retyped) {
+            (new Constraint\SpatialColumns())->alter($old, $new, $origins, $change->algorithm, $change->lock);
         }
         $rekeyed = array_map(static fn ($key): array => [$key->name, $key->kind, $key->columns], $old->keys) !== array_map(static fn ($key): array => [$key->name, $key->kind, $key->columns], $new->keys);
         if ($change->algorithm === 'instant' && ($retyped || $copies || $rekeyed)) {
@@ -409,7 +412,7 @@ final class AlterTableCommand implements Command
     {
         $generated = ($before->generated !== null) !== ($after->generated !== null) || $before->stored !== $after->stored || $before->expression !== $after->expression;
 
-        return $generated || ($after->autoIncrement && !$before->autoIncrement) || ($before->nullable() && !$after->nullable() && !$context->modes->strict());
+        return $generated || ($after->srid !== null && $after->srid !== $before->srid) || ($after->autoIncrement && !$before->autoIncrement) || ($before->nullable() && !$after->nullable() && !$context->modes->strict());
     }
 
     /**

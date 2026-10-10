@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Definition\Constraint;
 
+use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Registry\SpatialCatalog;
@@ -57,6 +58,28 @@ final class SpatialColumns
         }
         if ($srid !== null && $srid !== 0 && $catalog->name($srid) === null) {
             throw SchemaError::SrsNotFound->error($srid);
+        }
+    }
+
+    /**
+     * Requires copying when an existing column acquires a different SRID restriction.
+     * Removing a restriction leaves the bytes and their validation unchanged.
+     *
+     * @param list<int|null> $origins The old position of each new column
+     */
+    public function alter(TableDefinition $before, TableDefinition $after, array $origins, ?string $algorithm, ?string $lock): void
+    {
+        foreach ($after->columns as $position => $column) {
+            $origin = $origins[$position] ?? null;
+            if ($origin === null || $column->srid === null || $column->srid === $before->columns[$origin]->srid) {
+                continue;
+            }
+            if (in_array($algorithm, ['inplace', 'instant'], true)) {
+                throw SchemaError::AlterOperationNotSupported->error('ALGORITHM=' . strtoupper($algorithm), 'ALGORITHM=COPY');
+            }
+            if ($lock === 'none') {
+                throw SchemaError::AlterOperationNotSupportedReason->error('LOCK=NONE', 'COPY algorithm requires a lock', 'LOCK=SHARED');
+            }
         }
     }
 }

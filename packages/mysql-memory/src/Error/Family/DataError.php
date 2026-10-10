@@ -46,6 +46,8 @@ enum DataError: int implements ErrorCode
     case IllegalNonGeometric = 1367;
     case GisInvalidData = 3037;
     case InvalidSpatialCast = 4032;
+    case InvalidGeometryValue = 1416;
+    case GeometrySridMismatch = 3643;
     case PolygonRingDirection = 4033;
     case DataTooLong = 1406;
     case WrongValueForType = 1411;

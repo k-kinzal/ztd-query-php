@@ -123,4 +123,15 @@ final class FormatResultsTest extends TestCase
     {
         self::assertSame([24, 20, 0, 16], [(new FormatResults())->digitsOf(Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'))), (new FormatResults())->digitsOf(new Domain(Kind::Date, Field::NewDate, 10)), (new FormatResults())->digitsOf(Domain::null()), (new FormatResults())->digitsOf(Domain::integer())]);
     }
+    public function testHexWrapsTheLegacyCharacterCountBeforeScalingForTheConnectionCharset(): void
+    {
+        $domain = Domain::string(4294967295, Collation::binary(), Field::Geometry);
+        $derivation = new Derivation((new Semantics(Dialect::MySql, '5.6.51'))->context([]));
+        $latin = (new FormatResults())->hex(new Invocation([$domain], [], new Settings(Collation::known('latin1_swedish_ci')), $derivation));
+        $utf8 = (new FormatResults())->hex(new Invocation([$domain], [], new Settings(Collation::known('utf8mb4_general_ci')), $derivation));
+
+        self::assertSame([4294967294, 4294967295], [$latin->length, $utf8->length]);
+        self::assertSame([0, 0], [$latin->decimals, $utf8->decimals]);
+    }
+
 }

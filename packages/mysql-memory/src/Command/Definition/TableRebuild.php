@@ -249,7 +249,8 @@ final class TableRebuild
      */
     public function kept(int|float|string|null $value, Domain $from, ColumnDefinition $column, Store $store, Writer $writer, int $number): int|float|string|null
     {
-        $stored = $value === null || !self::changed($from, $column->domain) ? $value : $store->value($value, $from, $column);
+        $convert = $column->domain->field === Field::Geometry || self::changed($from, $column->domain);
+        $stored = $value === null || !$convert ? $value : $store->value($value, $from, $column);
         if ($stored !== null || $column->nullable() || $column->autoIncrement) {
             return $stored;
         }
@@ -268,6 +269,14 @@ final class TableRebuild
     {
         return $from->field !== $to->field || $from->length !== $to->length || $from->decimals !== $to->decimals || $from->unsigned !== $to->unsigned
             || $from->collation->name !== $to->collation->name || $from->members !== $to->members;
+    }
+
+    /**
+     * Tells whether a column's type can change in place, including its geometry subtype.
+     */
+    public static function columnInPlace(ColumnDefinition $from, ColumnDefinition $to, bool $legacy = false): bool
+    {
+        return $from->spatialKind === $to->spatialKind && self::inPlace($from->domain, $to->domain, $legacy);
     }
 
     /**
