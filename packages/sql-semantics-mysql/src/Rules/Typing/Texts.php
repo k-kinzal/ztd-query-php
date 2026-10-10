@@ -61,7 +61,7 @@ final class Texts
             return null;
         }
         $legacy = $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651;
-        $charset = in_array($operand->kind, [Kind::String, Kind::Null], true) ? $operand->collation->charset : ($legacy ? $this->settings->connection->charset : $collation->charset);
+        $charset = in_array($operand->kind, [Kind::String, Kind::Null], true) ? $operand->collation->charset : ($legacy ? Charset::known('latin1') : $collation->charset);
         if ($collation->charset !== $charset) {
             $derivation->report(new CollationMismatch($collation->name, $charset->name, $expression));
 
@@ -72,7 +72,7 @@ final class Texts
         if (in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && $operand->kind === Kind::Double) {
             $length = $operand->length;
         }
-        if ($derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $operand->kind !== Kind::String && $this->settings->connection->charset !== $collation->charset) {
+        if ($derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $operand->kind !== Kind::String) {
             $length = intdiv($length, $collation->charset->maxLength);
         }
 

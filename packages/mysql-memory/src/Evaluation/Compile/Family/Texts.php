@@ -85,7 +85,7 @@ final class Texts
         }
         $domain = $operand->domain();
         $legacy = $this->compiler->settings->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5651;
-        $charset = in_array($domain->kind, [Kind::String, Kind::Null], true) ? $domain->collation->charset : ($legacy ? $this->compiler->settings->connectionCollation->charset : $collation->charset);
+        $charset = in_array($domain->kind, [Kind::String, Kind::Null], true) ? $domain->collation->charset : ($legacy ? Charset::known('latin1') : $collation->charset);
         if ($collation->charset !== $charset) {
             throw SchemaError::CollationCharsetMismatch->error($collation->name, $charset->name);
         }

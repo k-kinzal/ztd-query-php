@@ -71,6 +71,25 @@ final class TextsTest extends TestCase
         self::assertEquals([new UnknownCollation('utf8mb4_0900_ai_ci')], $derivation->facts()->diagnostics);
     }
 
+    public function testCollatedUsesLegacyNumericBytesIndependentlyOfTheConnection(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $texts = new Texts(new Settings(Collation::known('utf8mb4_general_ci')));
+
+        self::assertSame(0, $texts->collated(Domain::integer(Field::LongLong, 1), 'utf8mb4_bin', $derivation)?->length);
+        self::assertSame(1, $texts->collated(Domain::decimal(2, 1), 'utf8mb4_bin', $derivation)?->length);
+        self::assertSame(0, $texts->collated(Domain::double(3), 'utf8mb4_bin', $derivation)?->length);
+        self::assertSame([], $derivation->facts()->diagnostics);
+    }
+
+    public function testCollatedRequiresLatin1ForNumericValuesInMySql56(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([]));
+
+        self::assertNull((new Texts(new Settings(Collation::known('utf8mb4_general_ci'))))->collated(Domain::integer(Field::LongLong, 1), 'utf8mb4_bin', $derivation));
+        self::assertEquals([new CollationMismatch('utf8mb4_bin', 'latin1')], $derivation->facts()->diagnostics);
+    }
+
     public function testBinaryCountsTheBytesOfAString(): void
     {
         self::assertEquals(Domain::string(12, Collation::binary()), (new Texts(new Settings(Collation::known('latin1_bin'))))->binary(Domain::string(3, Collation::known('utf8mb4_bin'))));

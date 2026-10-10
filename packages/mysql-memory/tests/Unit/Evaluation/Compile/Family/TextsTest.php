@@ -60,6 +60,18 @@ final class TextsTest extends TestCase
         $session->query("SELECT 'abc' COLLATE latin1_swedish_ci");
     }
 
+    public function testCollatedUsesLatin1ForMySql56NumericValuesAfterSetNames(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('SET NAMES utf8mb4');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1253);
+        $this->expectExceptionMessage("COLLATION 'utf8mb4_bin' is not valid for CHARACTER SET 'latin1'");
+
+        $session->query('SELECT TRUE COLLATE utf8mb4_bin');
+    }
+
     public function testBinaryComparesTheBytesOfTheValue(): void
     {
         $session = (new Instance())->connect();
