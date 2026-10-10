@@ -24,9 +24,9 @@ final class StatusByThread implements SystemRows
     public function rows(Reading $reading): array
     {
         $sessions = $reading->sessions();
-        $values = StatusVariables::of($reading->release)->values($reading->instance, false, true, count($sessions));
         $rows = [];
         foreach ($sessions as $session) {
+            $values = StatusVariables::of($reading->release)->values($reading->instance, false, true, count($sessions), connection: $session->id);
             foreach ($values as [$name, $value]) {
                 $rows[] = ['THREAD_ID' => Variables::thread($session, $reading), 'VARIABLE_NAME' => $name, 'VARIABLE_VALUE' => $value];
             }

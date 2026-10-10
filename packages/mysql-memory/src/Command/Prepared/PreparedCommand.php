@@ -55,10 +55,11 @@ final class PreparedCommand implements Command
     {
         $statement = $operation->statement;
         if ($statement instanceof Deallocate) {
-            if (!isset($session->prepared[strtolower($statement->name->value)])) {
+            if (!isset($session->preparation->named[strtolower($statement->name->value)])) {
                 throw StatementError::UnknownStatementHandler->error($statement->name->value, 'DEALLOCATE PREPARE');
             }
-            unset($session->prepared[strtolower($statement->name->value)]);
+            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_close');
+            unset($session->preparation->named[strtolower($statement->name->value)]);
 
             return new Completion();
         }
@@ -66,8 +67,9 @@ final class PreparedCommand implements Command
             return $this->run($statement, $session);
         }
         assert($statement instanceof Prepare);
+        \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
         $key = strtolower($statement->name->value);
-        unset($session->prepared[$key]);
+        unset($session->preparation->named[$key]);
         if ($statement->source instanceof Text) {
             $text = $statement->source->value;
         } else {
@@ -87,7 +89,7 @@ final class PreparedCommand implements Command
         (new \MySqlMemory\Hint\Hints())->prepare($prepared, $session);
         (new Problems())->raise($prepared, $session);
         $parameters = count(array_filter($session->semantics()->parser()->tokenize($text), static fn ($token): bool => $token->name === 'PARAM_MARKER'));
-        $session->prepared[$key] = [$text, $parameters];
+        $session->preparation->named[$key] = [$text, $parameters, ParameterBindings::capture($prepared)];
 
         return new Completion(0, 0, 0, 'Statement prepared');
     }
@@ -99,11 +101,12 @@ final class PreparedCommand implements Command
      */
     public function run(Execute $statement, Session $session): Reply
     {
-        $prepared = $session->prepared[strtolower($statement->name->value)] ?? null;
+        $prepared = $session->preparation->named[strtolower($statement->name->value)] ?? null;
         if ($prepared === null) {
             throw StatementError::UnknownStatementHandler->error($statement->name->value, 'EXECUTE');
         }
-        [$text, $count] = $prepared;
+        [$text, $count, $types] = $prepared;
+        \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_execute');
         if (count($statement->variables) !== $count) {
             throw StatementError::WrongArguments->error('EXECUTE');
         }
@@ -111,8 +114,18 @@ final class PreparedCommand implements Command
         foreach ($statement->variables as $variable) {
             $parameters[] = $this->parameter($session, ...$session->variables->user($variable->name->value));
         }
+        if (version_compare($session->instance->version, '8.0.22', '>=') && $types->changed($parameters)) {
+            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_reprepare');
+            \MySqlMemory\Session\State\StatementCounters::command($session, 'Com_stmt_prepare');
+        }
 
-        return $session->execute($text, $parameters, true);
+        $previous = $session->preparation->domains;
+        $session->preparation->domains = version_compare($session->instance->version, '8.0.22', '>=') ? $types->domains() : [];
+        try {
+            return $session->execute($text, $parameters, true);
+        } finally {
+            $session->preparation->domains = $previous;
+        }
     }
 
     /**
@@ -127,6 +140,9 @@ final class PreparedCommand implements Command
      */
     public function parameter(Session $session, int|float|string|null $value, \MySqlMemory\Typing\Domain $domain): array
     {
+        if (version_compare($session->instance->version, '8.0.0', '<')) {
+            return $this->legacyParameter($value, $domain);
+        }
         $connection = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named((string) $session->variables->read('collation_connection')) ?? \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci');
         $kind = $domain->kind;
         if ($value === null || $kind === Kind::Null) {
@@ -140,5 +156,27 @@ final class PreparedCommand implements Command
             $domain->collation->bytes() => [$value, \MySqlMemory\Typing\Domain::string(65535, $domain->collation)],
             default => [\MySqlMemory\Value\Encoding::convert((string) $value, $domain->collation->charset, $connection->charset), \MySqlMemory\Typing\Domain::string(16383, $connection)],
         };
+    }
+
+    /**
+     * Binds a SQL user variable as MySQL 5.x does: result metadata uses VAR_STRING,
+     * while expression evaluation retains the variable's numeric kind and precision.
+     * Observed through SQL PREPARE on MySQL 5.6.51, including NULL and type changes.
+     *
+     * @return array{int|float|string|null, \MySqlMemory\Typing\Domain}
+     */
+    public function legacyParameter(int|float|string|null $value, \MySqlMemory\Typing\Domain $domain): array
+    {
+        if ($value === null) {
+            return [null, new \MySqlMemory\Typing\Domain(Kind::Null, Field::VarString)];
+        }
+        $length = match ($domain->kind) {
+            Kind::Integer => 21,
+            Kind::String => mb_strlen((string) $value, \MySqlMemory\Value\Encoding::name($domain->collation->charset) ?? '8bit'),
+            Kind::Decimal => strlen(ltrim((string) $value, '-')) + 1,
+            Kind::Double, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => $domain->length,
+        };
+
+        return [$value, new \MySqlMemory\Typing\Domain($domain->kind, Field::VarString, $length, $domain->decimals, $domain->unsigned, $domain->collation, $domain->kind === Kind::Decimal)];
     }
 }

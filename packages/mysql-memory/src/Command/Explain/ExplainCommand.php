@@ -127,7 +127,7 @@ final class ExplainCommand implements Command
         if ($statement instanceof ExplainConnection) {
             return $this->connection($statement, $session, $context);
         }
-        $format = $statement->analyze ? 'TREE' : strtoupper($statement->format->value ?? (string) $session->variables->read('explain_format'));
+        $format = $statement->analyze ? 'TREE' : strtoupper($statement->format->value ?? (string) ($session->variables->read('explain_format') ?? 'TRADITIONAL'));
         $database = $statement->database->value ?? $session->variables->database;
         $tables = $this->tables($statement->statement, $database);
         (new \MySqlMemory\Session\Problem\Sampling())->optimized($statement->statement, $operation->facts, $session->settings(), $session->instance->dictionary);
@@ -137,7 +137,14 @@ final class ExplainCommand implements Command
             return new Completion(0, 0, $context->diagnostics->count());
         }
         if ($format === 'TRADITIONAL') {
-            return (new Listing($this->headings()))->sent($this->rows($statement, $session, $database), $context);
+            $rows = $this->rows($statement, $session, $database);
+            $headings = $this->headings();
+            if (str_starts_with($session->instance->version, '5.6.')) {
+                $headings = LegacyPlan::headings($headings, $statement->modifier);
+                $rows = LegacyPlan::rows($rows, $statement);
+            }
+
+            return (new Listing($headings))->sent($rows, $context);
         }
         $text = $format === 'JSON' ? $this->document($tables) : $this->tree($tables);
 
@@ -216,7 +223,8 @@ final class ExplainCommand implements Command
             return $rows;
         }
         foreach ($this->tables($statement, $database) as [$alias, $schema, $name]) {
-            $rows[] = [1, $kind, $alias, null, 'ALL', null, null, null, null, $this->count($session, new QualifiedName(new Name($name), new Name($schema)), $database), '100.00', $where === null ? null : 'Using where'];
+            $scan = PrimaryScan::of($statement, $session->instance->dictionary->table($schema, $name)?->definition);
+            $rows[] = [1, $kind, $alias, null, $scan[0] ?? 'ALL', null, $scan[1] ?? null, $scan[2] ?? null, null, $this->count($session, new QualifiedName(new Name($name), new Name($schema)), $database), '100.00', $scan[3] ?? ($where === null ? null : 'Using where')];
         }
         if ($rows === []) {
             $rows[] = [1, 'SIMPLE', null, null, null, null, null, null, null, null, null, 'No tables used'];

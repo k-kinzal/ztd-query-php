@@ -90,6 +90,7 @@ final class Execution
         } catch (SqlError $error) {
             throw (new Problem\Precision())->legacy($error, $session->settings()->release());
         }
+        State\StatementCounters::evaluated($operation->statement, $session);
         $this->access($operation->statement, $context);
         $hints->report($session);
         foreach ($this->undeclared($operation) ? [] : $late as $warning) {
@@ -123,7 +124,6 @@ final class Execution
         $session->transaction->statements->end($contained);
         $last = $reply instanceof \MySqlMemory\Result\Batch ? ($reply->replies[count($reply->replies) - 1] ?? null) : $reply;
         $session->variables->rowCount = $last instanceof Completion ? $last->affectedRows : -1;
-
         return $reply;
     }
 

@@ -201,6 +201,7 @@ final class Instance
             throw new Error\SqlError($error, $error->message('mysqld is not managed by supervisor process'), following: [[$error->value, $error->message('Restart server failed')]]);
         }
         $this->shutdown();
+        $this->registry->status->reset();
         $this->globals->values = $this->startup;
         $this->globals->caches = [];
         $this->dictionary->discardVolatileRows();

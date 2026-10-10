@@ -21,6 +21,20 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class PreparedCommandTest extends TestCase
 {
+    public function testLegacyParameterKeepsNumericMeaningWithStringMetadata(): void
+    {
+        $command = new PreparedCommand();
+        [$integer, $integerDomain] = $command->legacyParameter(7, Domain::integer());
+        [$decimal, $decimalDomain] = $command->legacyParameter('-3.5', Domain::decimal(65, 1));
+        [$text, $textDomain] = $command->legacyParameter('abc', Domain::string(16383, Collation::binary()));
+        [$null, $nullDomain] = $command->legacyParameter(null, Domain::integer());
+
+        self::assertSame([7, '-3.5', 'abc', null], [$integer, $decimal, $text, $null]);
+        self::assertSame([Field::VarString, 21, false], [$integerDomain->field, $integerDomain->length, $integerDomain->nullable]);
+        self::assertSame([Field::VarString, 4, 1, true], [$decimalDomain->field, $decimalDomain->length, $decimalDomain->decimals, $decimalDomain->nullable]);
+        self::assertSame([3, false, 0, true], [$textDomain->length, $textDomain->nullable, $nullDomain->length, $nullDomain->nullable]);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new PreparedCommand())->clearsDiagnostics());
@@ -33,7 +47,7 @@ final class PreparedCommandTest extends TestCase
         $reply = $session->query("PREPARE s FROM 'SELECT ? + 1 AS x, ?'")[0];
 
         self::assertInstanceOf(Completion::class, $reply);
-        self::assertSame(['s' => ['SELECT ? + 1 AS x, ?', 2]], $session->prepared);
+        self::assertSame(['SELECT ? + 1 AS x, ?', 2], array_slice($session->preparation->named['s'], 0, 2));
     }
 
     public function testExecuteRefusesSeveralStatementsAtTheSecond(): void
@@ -62,7 +76,7 @@ final class PreparedCommandTest extends TestCase
 
         $session->run("PREPARE s FROM 'bad'");
 
-        self::assertSame([], $session->prepared);
+        self::assertSame([], $session->preparation->named);
     }
 
     public function testExecutePreparesTheTextNullOfAnUnsetVariable(): void
@@ -82,7 +96,7 @@ final class PreparedCommandTest extends TestCase
 
         $session->query('DEALLOCATE PREPARE S');
 
-        self::assertSame([], $session->prepared);
+        self::assertSame([], $session->preparation->named);
     }
 
     public function testExecuteRefusesToDeallocateAnUnknownStatement(): void

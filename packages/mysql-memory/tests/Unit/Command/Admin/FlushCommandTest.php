@@ -17,6 +17,16 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class FlushCommandTest extends TestCase
 {
+    public function testOptionsResetsOnlySessionCountersAndRecordsTheFlushClock(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SELECT 1; FLUSH STATUS');
+
+        self::assertSame(0, $session->instance->registry->status->read('Com_select', $session->id));
+        self::assertSame(1, $session->instance->registry->status->read('Com_select'));
+        self::assertNotNull($session->instance->registry->status->flushedAt);
+    }
+
     public function testTablesClosesHandlesWithoutRemovingDefinitionsOrRows(): void
     {
         $session = (new Instance())->connect();

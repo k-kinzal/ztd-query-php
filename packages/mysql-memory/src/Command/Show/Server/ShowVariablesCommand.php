@@ -30,8 +30,7 @@ use SqlSemantics\Statement\Operation;
  * timestamp is the time of the statement, and pseudo_thread_id the connection id. The rows are
  * read from the variables tables of the Performance Schema, which the column metadata names.
  * LIKE matches the names without regard to case. SHOW STATUS lists the status variables of the
- * release, and the statement counters the tables leave out; the emulator keeps no counter, so
- * each reads 0 ({@see StatusVariables}).
+ * release, and the statement counters the tables leave out ({@see StatusVariables}).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/show-variables.html,
  * https://dev.mysql.com/doc/refman/8.4/en/show-status.html.
  *
@@ -82,7 +81,7 @@ final class ShowVariablesCommand implements Command
             $connected += $reference->get() !== null && isset($session->instance->registry->threads->connected[$id]) ? 1 : 0;
         }
 
-        return StatusVariables::of($session->settings()->release())->values($session->instance, $global, false, $connected, false);
+        return StatusVariables::of($session->settings()->release())->values($session->instance, $global, false, $connected, false, $session->id);
     }
 
     /**

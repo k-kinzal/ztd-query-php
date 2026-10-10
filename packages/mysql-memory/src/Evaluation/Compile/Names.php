@@ -217,7 +217,13 @@ final class Names
             return new Constant(Domain::null(), null);
         }
 
-        return new Constant($this->compiler->resolved($parameter) ?? $bound[$index][1], $bound[$index][0]);
+        $domain = $this->compiler->resolved($parameter) ?? $bound[$index][1];
+        if ($this->compiler->settings->legacy()) {
+            $domain = $domain->withNullable($bound[$index][1]->nullable);
+        }
+        $operand = new Constant($bound[$index][1], $bound[$index][0]);
+
+        return $domain->kind === $bound[$index][1]->kind ? new Constant($domain, $bound[$index][0]) : new \MySqlMemory\Evaluation\Operator\Conversion($operand, $domain, null, $domain->kind === Kind::Integer ? ($domain->unsigned ? 'UNSIGNED' : 'SIGNED') : $domain->resolved()->name());
     }
 
     /**

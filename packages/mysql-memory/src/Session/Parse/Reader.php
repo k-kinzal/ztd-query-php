@@ -115,7 +115,7 @@ final class Reader
                 continue;
             }
             if (isset($parameters[$index])) {
-                $bound[$index] = $parameters[$index][1]->resolved();
+                $bound[$index] = ($session->preparation->domains[$index] ?? $parameters[$index][1])->resolved();
             } elseif ($prepared) {
                 $bound[$index] = $unbound;
             }

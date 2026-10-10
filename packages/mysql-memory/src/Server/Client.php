@@ -205,6 +205,8 @@ final class Client
      */
     public function initDatabase(string $database): bool
     {
+        \MySqlMemory\Session\State\StatementCounters::received($this->session());
+        \MySqlMemory\Session\State\StatementCounters::command($this->session(), 'Com_change_db');
         try {
             $this->session()->use($database);
         } catch (SqlError $error) {

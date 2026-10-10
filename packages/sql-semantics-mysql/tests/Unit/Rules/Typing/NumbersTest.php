@@ -24,6 +24,15 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class NumbersTest extends TestCase
 {
+    public function testBinaryPreservesTheLegacySignedCarryAtMaximumPrecision(): void
+    {
+        $numbers = new Numbers(legacyRemainders: true);
+
+        self::assertSame(67, $numbers->binary(ArithmeticOperator::Plus, Domain::integer(Field::LongLong, 66), Domain::integer())->length);
+        self::assertSame(66, $numbers->binary(ArithmeticOperator::Multiply, Domain::integer(Field::LongLong, 66), Domain::integer())->length);
+        self::assertSame(66, $numbers->binary(ArithmeticOperator::Plus, Domain::integer(Field::LongLong, 65, true), Domain::integer())->length);
+    }
+
     public function testOperandReadsTemporalValuesByTheirFraction(): void
     {
         $numbers = new Numbers();
@@ -61,6 +70,17 @@ final class NumbersTest extends TestCase
         self::assertEquals(Domain::decimal(7, 3), $numbers->decimal(ArithmeticOperator::Multiply, [5, 2], [2, 1]));
         self::assertEquals(Domain::decimal(6, 2), $numbers->decimal(ArithmeticOperator::Plus, [5, 2], [2, 1]));
         self::assertEquals(Domain::decimal(5, 2), $numbers->decimal(ArithmeticOperator::Modulo, [5, 2], [2, 1]));
+    }
+
+    public function testDecimalPreservesTheCarryDigitInMaximumPrecisionResultMetadata(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame(68, $numbers->decimal(ArithmeticOperator::Plus, [65, 30], [1, 0])->length);
+        self::assertSame(68, $numbers->decimal(ArithmeticOperator::Plus, [66, 30], [1, 0])->length);
+        self::assertSame(67, $numbers->decimal(ArithmeticOperator::Minus, [65, 0], [1, 0])->length);
+        self::assertSame(67, $numbers->decimal(ArithmeticOperator::Multiply, [65, 30], [65, 30])->length);
+        self::assertSame(67, $numbers->decimal(ArithmeticOperator::Divide, [65, 30], [65, 30])->length);
     }
 
     public function testNegatedWidensUnsignedIntegers(): void

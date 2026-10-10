@@ -35,6 +35,11 @@ final class Registry
     public readonly BinaryLog $binaryLog;
 
     /**
+     * Global and per-connection SQL execution counters.
+     */
+    public readonly StatusCounters $status;
+
+    /**
      * The sessions connected, their user-level locks and the clock of the server.
      */
     public readonly Threads $threads;
@@ -72,6 +77,7 @@ final class Registry
         $this->resourceGroups = new ResourceGroups();
         $this->spatialCatalog = new SpatialCatalog();
         $this->binaryLog = new BinaryLog();
+        $this->status = new StatusCounters();
         $this->threads = new Threads();
         $this->eventScheduler = new EventScheduler($this->threads);
         $this->replication = new Replication();

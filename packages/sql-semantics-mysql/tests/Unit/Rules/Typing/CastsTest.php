@@ -25,6 +25,16 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class CastsTest extends TestCase
 {
+    public function testIntegerRetainsLegacyStringPrecisionBeyondTheReportedIntegerWidth(): void
+    {
+        $casts = new Casts(new Settings(Collation::binary()), GrammarRelease::MySql5651);
+        $signed = $casts->cast(Domain::string(1024, Collation::binary()), new CastTarget(CastKind::Signed));
+        $unsigned = $casts->cast(Domain::string(1024, Collation::binary()), new CastTarget(CastKind::Unsigned));
+
+        self::assertSame([66, 21, 65, 21], [$signed->length, $signed->display, $unsigned->length, $unsigned->display]);
+        self::assertSame([false, true], [$signed->unsigned, $unsigned->unsigned]);
+    }
+
     public function testCastResolvesEachTarget(): void
     {
         $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);

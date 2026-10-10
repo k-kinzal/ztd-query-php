@@ -10,7 +10,8 @@ use SqlSemantics\Contract\GrammarRelease;
 /**
  * The status variables of a release, as resources/status holds them, with the values the emulated server shows.
  *
- * The emulator keeps no counter, so a counter reads 0 in every scope. What describes the
+ * SQL request and command counters reflect execution in their scope. Unmodeled storage and
+ * operating-system counters retain their catalog defaults. What describes the
  * configuration of the server reads as on a server of the release; Uptime and
  * Uptime_since_flush_status count the seconds since the server started, Threads_connected the
  * sessions connected, Threads_running the one running the statement, and Connections the
@@ -62,7 +63,7 @@ final class StatusVariables
      *
      * @return list<array{string, string}>
      */
-    public function values(Instance $instance, bool $global, bool $threaded, int $connected, bool $tabled = true): array
+    public function values(Instance $instance, bool $global, bool $threaded, int $connected, bool $tabled = true, ?int $connection = null): array
     {
         $uptime = (string) max(0, (int) floor(microtime(true) - $instance->started));
         $rows = [];
@@ -71,11 +72,13 @@ final class StatusVariables
                 continue;
             }
             $rows[] = [$name, match ($name) {
-                'Uptime', 'Uptime_since_flush_status' => $uptime,
+                'Uptime' => $uptime,
+                'Uptime_since_flush_status' => (string) max(0, (int) floor($instance->registry->threads->now() - ($instance->registry->status->flushedAt ?? $instance->started))),
                 'Threads_connected', 'Max_used_connections' => (string) $connected,
                 'Threads_running' => '1',
                 'Connections' => (string) $instance->connections(),
-                default => $value,
+                'Queries' => (string) $instance->registry->status->read($name),
+                default => $name === 'Questions' || str_starts_with($name, 'Com_') ? (string) $instance->registry->status->read($name, $global ? null : $connection) : $value,
             }];
         }
 

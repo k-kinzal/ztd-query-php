@@ -94,7 +94,9 @@ final class Numbers
             ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight => max($this->width($left), $this->width($right)) + 1,
         };
 
-        return Domain::integer(Field::LongLong, min(66, $length), $unsigned);
+        $maximum = $this->legacyRemainders && in_array($operator, [ArithmeticOperator::Plus, ArithmeticOperator::Minus], true) && !$unsigned ? 67 : 66;
+
+        return Domain::integer(Field::LongLong, min($maximum, $length), $unsigned);
     }
 
     /**
@@ -122,6 +124,9 @@ final class Numbers
 
     /**
      * Resolves decimal arithmetic from the precision and scale of each operand.
+     * Addition and subtraction reserve one carry digit in result metadata, up to 66 digits;
+     * multiplication and division retain the 65-digit limit. Observed through result column
+     * metadata on MySQL 5.6.51, 8.0.44, 8.4.7 and 9.1.0, independently of declaration limits.
      *
      * @param array{int, int} $left
      * @param array{int, int} $right
@@ -140,7 +145,9 @@ final class Numbers
             ArithmeticOperator::BitOr, ArithmeticOperator::BitAnd, ArithmeticOperator::BitXor, ArithmeticOperator::ShiftLeft, ArithmeticOperator::ShiftRight => [$integral + 1 + $scale, $scale],
         };
 
-        return Domain::decimal(min(65, $precision), $scale);
+        $maximum = in_array($operator, [ArithmeticOperator::Plus, ArithmeticOperator::Minus], true) ? 66 : 65;
+
+        return Domain::decimal(min($maximum, $precision), $scale);
     }
 
     /**

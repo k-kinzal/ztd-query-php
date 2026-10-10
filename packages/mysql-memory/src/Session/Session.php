@@ -116,9 +116,9 @@ final class Session
     public bool $interrupted = false;
 
     /**
-     * @var array<string, array{string, int}> The text and parameter count of each statement PREPARE named, by lower-case name
+     * Prepared statements and the parameter domains of the current execution.
      */
-    public array $prepared = [];
+    public readonly State\Preparation $preparation;
 
     /**
      * The activation of the stored program the session runs a statement of, or null outside a program.
@@ -153,6 +153,7 @@ final class Session
     public function __construct(public readonly Instance $instance, public readonly int $id, public readonly string $user = 'root', public readonly string $host = 'localhost', ?string $database = null, public readonly ?int $port = null)
     {
         $this->variables = new Variables($instance->catalog, $instance->globals, $instance);
+        $this->preparation = new State\Preparation();
         $this->activity = new State\Activity($this->variables);
         $this->variables->connection = $id;
         $this->variables->account = $user . '@' . $host;
@@ -186,6 +187,7 @@ final class Session
     public function close(): void
     {
         $this->released = true;
+        $this->instance->registry->status->clear($this->id);
         $this->instance->registry->threads->disconnect($this->id);
         $this->transaction->disconnect();
     }
@@ -256,6 +258,7 @@ final class Session
             $statements = (new Problem\Script())->statements($this->semantics(), $sql);
             if ($statements === []) {
                 $this->activity->begin();
+                State\StatementCounters::received($this);
                 return [(new Parse\Reader())->refused($error, $sql, $prepared, $this)];
             }
         }
@@ -316,6 +319,7 @@ final class Session
     {
         if ($this->running->using === []) {
             $this->activity->begin();
+            State\StatementCounters::received($this);
         }
         $this->text = $statement;
         $this->replayed = $prepared;

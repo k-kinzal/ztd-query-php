@@ -21,7 +21,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  * Resolves the type of CAST and CONVERT to a type.
  *
  * SIGNED and UNSIGNED are BIGINTs, as long as the operand but at most 21 characters in MySQL 5.6
- * and 5.7 (verified on live 5.6.51 and 5.7.44 servers); DECIMAL takes the written precision and scale, 10 and 0 by
+ * and 5.7 (verified on live 5.6.51 and 5.7.44 servers). A legacy string conversion retains
+ * up to 65 digits for arithmetic, separately from that reported width. DECIMAL takes the written precision and scale, 10 and 0 by
  * default; DOUBLE and REAL are doubles, FLOAT a single unless its precision exceeds 24; the
  * temporal targets keep the fractional digits written; CHAR is a string in the connection
  * collation or the character set written, BINARY a binary string, both as long as written or as
@@ -49,12 +50,9 @@ final class Casts
         $decimals = $target->length === null ? 0 : (int) $target->length;
         $fraction = $decimals > 0 ? $decimals + 1 : 0;
 
-        $legacy = $this->release === GrammarRelease::MySql5651 || $this->release === GrammarRelease::MySql5744;
-        $integral = $legacy ? min($operand->length, 21) : 21;
-
         return match ($target->kind) {
-            CastKind::Signed => Domain::integer(Field::LongLong, $integral),
-            CastKind::Unsigned => Domain::integer(Field::LongLong, $integral, true),
+            CastKind::Signed => $this->integer($operand, false),
+            CastKind::Unsigned => $this->integer($operand, true),
             CastKind::Decimal => $this->decimal($target),
             CastKind::Double, CastKind::Real => Domain::double(23),
             CastKind::Float => $this->float($target),
@@ -68,6 +66,20 @@ final class Casts
             CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiLineString,
             CastKind::MultiPolygon, CastKind::GeometryCollection => new Domain(Kind::String, Field::Geometry, 4294967295, 0, false, Collation::binary(), [], Coercibility::Coercible),
         };
+    }
+
+    /**
+     * Resolves an integer conversion, retaining legacy string precision for arithmetic.
+     */
+    public function integer(Domain $operand, bool $unsigned): Domain
+    {
+        $legacy = $this->release === GrammarRelease::MySql5651 || $this->release === GrammarRelease::MySql5744;
+        $display = $legacy ? min($operand->length, 21) : 21;
+        if ($legacy && $operand->kind === Kind::String) {
+            return new Domain(Kind::Integer, Field::LongLong, min(65, $operand->length) + (int) !$unsigned, 0, $unsigned, null, [], Coercibility::Numeric, $display);
+        }
+
+        return Domain::integer(Field::LongLong, $display, $unsigned);
     }
 
     /**

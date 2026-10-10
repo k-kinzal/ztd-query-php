@@ -75,6 +75,7 @@ final class Statements
      */
     public function run(Statement $statement): Reply
     {
+        \MySqlMemory\Session\State\StatementCounters::query($this->session);
         $operation = $this->operation($statement);
         $command = (new Dispatcher())->command($operation->statement);
         $reply = (new \MySqlMemory\Session\Execution($this->session))->perform($operation, $command, [], false, $this->activation->contained);
@@ -99,6 +100,7 @@ final class Statements
     public function value(Scalar $expression, ?Variable $target = null, bool $assigned = false): array
     {
         $session = $this->session;
+        \MySqlMemory\Session\State\StatementCounters::query($session);
         $select = new Select([], [new SelectExpression($expression)]);
         $operation = $this->operation($select);
         $session->diagnostics->clear();

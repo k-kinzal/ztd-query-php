@@ -85,17 +85,29 @@ final class FlushCommand implements Command
             if ($hosts !== [] && $release !== GrammarRelease::MySql5651 && $release !== GrammarRelease::MySql5744) {
                 $context->warning(StatementError::DeprecatedSyntax, 'FLUSH HOSTS', 'TRUNCATE TABLE performance_schema.host_cache');
             }
-            foreach ($statement->items as $item) {
-                if ($item->option === FlushOption::RelayLogs && $item->channel !== null && $item->channel->value !== '') {
-                    throw AdministrationError::ReplicaChannelMissing->error($item->channel->value);
-                }
-                if ($item->option === FlushOption::BinaryLogs || $item->option === FlushOption::Logs) {
-                    $session->instance->registry->binaryLog->rotate();
-                }
-            }
+            $this->options($statement, $session);
         }
 
         return new Completion();
+    }
+
+    /**
+     * Applies status resets and log flushes in written order.
+     */
+    public function options(Flush $statement, Session $session): void
+    {
+        foreach ($statement->items as $item) {
+            if ($item->option === FlushOption::Status) {
+                $session->instance->registry->status->clear($session->id);
+                $session->instance->registry->status->flushedAt = $session->instance->registry->threads->now();
+            }
+            if ($item->option === FlushOption::RelayLogs && $item->channel !== null && $item->channel->value !== '') {
+                throw AdministrationError::ReplicaChannelMissing->error($item->channel->value);
+            }
+            if ($item->option === FlushOption::BinaryLogs || $item->option === FlushOption::Logs) {
+                $session->instance->registry->binaryLog->rotate();
+            }
+        }
     }
 
     /**
