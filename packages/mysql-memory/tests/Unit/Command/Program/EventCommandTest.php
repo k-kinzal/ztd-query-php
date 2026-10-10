@@ -34,6 +34,24 @@ final class EventCommandTest extends TestCase
         $session->query('ALTER EVENT missing.event RENAME TO missing.EVENT');
     }
 
+    public function testFoundChecksTheRenameDatabaseFirstInMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1049);
+        $session->query('ALTER EVENT absent.missing RENAME TO absent.missing');
+    }
+
+    public function testIntervalNumberKeepsPartialSecondTextQuietInMySql57(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect();
+        $session->query("CREATE EVENT d.e ON SCHEDULE EVERY '2x' SECOND DO SELECT 1");
+
+        self::assertSame(['2', 'SECOND'], $session->instance->dictionary->schema('d')?->events['e']->every);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testClearsDiagnosticsAnswersTrue(): void
     {
         self::assertTrue((new EventCommand())->clearsDiagnostics());

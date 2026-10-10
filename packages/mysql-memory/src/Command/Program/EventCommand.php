@@ -123,6 +123,9 @@ final class EventCommand implements Command
         }
         $dictionary = $session->instance->dictionary;
         $renamed = $statement->newName === null ? null : $statement->newName->schema->value ?? $session->variables->database;
+        if ($renamed !== null && $dictionary->schema($renamed) === null && $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744) {
+            throw QueryError::BadDatabase->error($renamed);
+        }
         if ($statement->newName !== null && $renamed === $database && strtolower($statement->newName->name->value) === strtolower($statement->name->name->value)) {
             throw ProgramError::SameEventName->error();
         }
@@ -275,7 +278,7 @@ final class EventCommand implements Command
         if ($unit !== IntervalUnit::Second) {
             return (string) Convert::toInteger($value, $quantity->domain(), $context);
         }
-        if ($context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5651 && $quantity->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && preg_match('/\A[ \t\n\r\v\f]*[+-]?\.?[0-9]/', (string) $value) === 1) {
+        if (in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) && $quantity->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && preg_match('/\A[ \t\n\r\v\f]*[+-]?\.?[0-9]/', (string) $value) === 1) {
             return \MySqlMemory\Value\Decimal::round(\MySqlMemory\Value\NumericText::exact((string) $value)->number, 0);
         }
 
