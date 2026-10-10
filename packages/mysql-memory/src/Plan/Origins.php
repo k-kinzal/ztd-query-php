@@ -12,6 +12,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\Grouping\OrderingAggregates;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
+use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Shape\Field;
 
@@ -144,9 +145,21 @@ final class Origins
         if ((new ProgramColumns($this->planner))->called($field)) {
             return (new ProgramColumns($this->planner))->flagged($field, false);
         }
+        if ($resolution instanceof AliasTarget) {
+            return $this->origin($resolution->field, $scope);
+        }
         if (!$resolution instanceof ResolvedColumn) {
             return null;
         }
+
+        return $this->resolved($resolution, $field, $scope);
+    }
+
+    /**
+     * Retains the source names and flags of a bound input column.
+     */
+    public function resolved(ResolvedColumn $resolution, Field $field, Scope $scope): ?ColumnOrigin
+    {
         $id = spl_object_id($resolution->relation);
         if (isset($scope->derived[$id])) {
             $position = $this->planner->compiler->names->position($scope, $resolution);

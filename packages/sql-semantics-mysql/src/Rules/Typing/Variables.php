@@ -45,7 +45,43 @@ final class Variables
         }
         $held = $variables[strtolower($name)] ?? null;
 
-        return $held === null ? Domain::string(65532, Collation::binary()) : $this->held($held);
+        return $held === null ? ($this->release === GrammarRelease::MySql5651 ? Domain::string(16777216, Collation::binary(), Field::LongBlob) : Domain::string(65532, Collation::binary())) : $this->held($held);
+    }
+
+    /**
+     * Records the empty entry an expression assignment introduces after its value is resolved.
+     *
+     * The assigned value has not executed yet. Later occurrences therefore see an
+     * allocated string entry, while the session snapshot remains unchanged.
+     */
+    public function introduce(string $name, \SqlSemantics\Construction\Derivation $derivation): void
+    {
+        $name = strtolower($name);
+        if ($this->settings->userVariables !== null && !isset($this->settings->userVariables[$name])) {
+            $derivation->introducedVariables[$name] ??= new \SqlSemantics\Statement\Type\Known($this->text($this->settings->connection));
+        }
+    }
+
+    /**
+     * Infers an absent variable's operand type from another result branch.
+     *
+     * Strings use the branch collation and the VARCHAR byte limit. Temporal
+     * operands become latin1 strings: DATE has ten characters, TIME at least
+     * fifteen, and DATETIME twenty-six. Verified through SQL on MySQL 8.0 and 8.4.
+     */
+    public function inferred(Domain $domain): Domain
+    {
+        if ($domain->kind->numeric()) {
+            return $this->held($domain);
+        }
+
+        return match ($domain->kind) {
+            Kind::String => Domain::string(intdiv(65535, $domain->collation->charset->maxLength), $domain->collation),
+            Kind::Date => Domain::string(10, Collation::known('latin1_swedish_ci')),
+            Kind::Time => Domain::string(15, Collation::known('latin1_swedish_ci')),
+            Kind::DateTime => Domain::string(26, Collation::known('latin1_swedish_ci')),
+            default => $domain,
+        };
     }
 
     /**

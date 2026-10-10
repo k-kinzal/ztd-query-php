@@ -33,6 +33,19 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 #[Small]
 final class ErrorsTest extends TestCase
 {
+    public function testNamesDistinguishesForwardAndAmbiguousSelectItems(): void
+    {
+        $forward = new \SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias(new Name('x'), \SqlSemantics\Platform\MySql\Statement\Name\AliasRule::Forward);
+        $ambiguous = new \SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias(new Name('x'), \SqlSemantics\Platform\MySql\Statement\Name\AliasRule::Ambiguous);
+        $first = (new Errors())->names($forward, 'd', 'field list', null);
+        $second = (new Errors())->names($ambiguous, 'd', 'field list', null);
+        self::assertNotNull($first);
+        self::assertNotNull($second);
+
+        self::assertSame([1247, '42S22', "Reference 'x' not supported (forward reference in item list)"], [$first->getCode(), $first->sqlState(), $first->getMessage()]);
+        self::assertSame([1052, '23000', "Column 'x' in field list is ambiguous"], [$second->getCode(), $second->sqlState(), $second->getMessage()]);
+    }
+
     public function testQueryMapsAnAggregateIntroducedByOrdering(): void
     {
         $problem = new AggregateInOrdering(2);

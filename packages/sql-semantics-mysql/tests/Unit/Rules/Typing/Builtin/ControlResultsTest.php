@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Typing\Builtin;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Facade\Semantics;
@@ -19,9 +19,22 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 
 #[CoversClass(ControlResults::class)]
-#[Small]
+#[Medium]
 final class ControlResultsTest extends TestCase
 {
+    public function testBranchesInferAbsentNumericVariablesWithoutAllocatingThem(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $context = $semantics->context([], session: new Settings(Collation::known('utf8mb4_0900_ai_ci'), userVariables: []));
+        $query = $semantics->analyze('SELECT COALESCE(@v,0), COALESCE(@v,1.2), IFNULL(@v,0), IF(1,@v,0), @v', $context);
+
+        self::assertEquals(new \SqlSemantics\Statement\Type\Known(Domain::integer(Field::LongLong, 21)), $query->field(0)->type);
+        self::assertEquals(new \SqlSemantics\Statement\Type\Known(Domain::decimal(65, 30)), $query->field(1)->type);
+        self::assertEquals($query->field(0)->type, $query->field(2)->type);
+        self::assertEquals($query->field(0)->type, $query->field(3)->type);
+        self::assertEquals(new \SqlSemantics\Statement\Type\Known(Domain::string(65532, Collation::binary())), $query->field(4)->type);
+    }
+
     public function testRulesSettleTheBranches(): void
     {
         $rules = (new ControlResults())->rules();

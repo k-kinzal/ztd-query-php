@@ -171,6 +171,18 @@ $semantics->analyze("SELECT 'ü'", [])->fields()?->lookup('ü') instanceof Depen
 $semantics->analyze("SELECT 'ü'", [])->field(0)->slot->unnamed[0]->describe(); // => 'the session state: character_set_client'
 ```
 
+A nested query in a select list can refer to an earlier result alias. For example,
+`SELECT a+1 AS x, (SELECT x) FROM t` resolves the inner `x` to an `AliasTarget`.
+Input columns take precedence over result aliases. Forward references, ambiguous
+result names, and references to a result aggregate owned by the enclosing block
+produce `InvalidProjectionAlias`, with an `AliasRule` identifying the reason.
+
+When session settings specify user variables, a read publishes a
+`UserVariableBinding` that records whether the entry exists at that occurrence.
+An expression assignment introduces an entry for later occurrences without changing
+the supplied session snapshot. This distinction preserves MySQL 5.6's reads of
+absent variables and modern branch type inference in `COALESCE`, `IFNULL`, and `IF`.
+
 ### Aggregate ownership
 
 Aggregate ownership is available through `$operation->facts->query($query)->aggregates`.

@@ -18,6 +18,26 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class VariablesTest extends TestCase
 {
+    public function testInferredRetainsTheBranchCollationAndTemporalTextWidths(): void
+    {
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+        $variables = new Variables(new Settings($collation));
+
+        self::assertEquals(Domain::string(16383, $collation), $variables->inferred(Domain::string(1, $collation)));
+        self::assertEquals(Domain::decimal(65, 30), $variables->inferred(Domain::decimal(2, 1)));
+        self::assertSame([10, 15, 26], [$variables->inferred(new Domain(Kind::Date, Field::Date, 10))->length, $variables->inferred(new Domain(Kind::Time, Field::Time, 10))->length, $variables->inferred(new Domain(Kind::DateTime, Field::DateTime, 19))->length]);
+    }
+
+    public function testIntroduceAllocatesAnEntryWithoutChangingTheSession(): void
+    {
+        $settings = new Settings(Collation::known('latin1_swedish_ci'), userVariables: []);
+        $derivation = new \SqlSemantics\Construction\Derivation((new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->context([], session: $settings));
+        (new Variables($settings))->introduce('V', $derivation);
+
+        self::assertEquals(new \SqlSemantics\Statement\Type\Known(Domain::string(16777215, $settings->connection, Field::MediumBlob)), $derivation->introducedVariables['v']);
+        self::assertSame([], $settings->userVariables);
+    }
+
     public function testHeldUsesTheLegacyIntegerVariableWidthInMySql56(): void
     {
         $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), \SqlSemantics\Contract\GrammarRelease::MySql5651);

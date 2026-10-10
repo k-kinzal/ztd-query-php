@@ -176,7 +176,7 @@ A name used as a value resolves to one of the following (namespace `SqlSemantics
 | `AmbiguousColumn` | Several slots have the name at the same precedence: `candidates`. A diagnostic. |
 | `ConditionalColumn` | The outcome depends on missing declarations: `candidates` (known slots), `relations` (incompletely known occurrences that can own the name), `missing`. |
 
-A known candidate in a farther scope is not chosen while a nearer scope is incompletely known. A database package can add resolutions of its own, for example `SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias`; test with `instanceof` and treat other classes as database-specific.
+A known candidate in a farther scope is not chosen while a nearer scope is incompletely known. A database package can add resolutions of its own, for example `SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias` or `SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding`; test with `instanceof` and treat other classes as database-specific.
 
 ```php
 use SqlSemantics\Facade\Semantics;

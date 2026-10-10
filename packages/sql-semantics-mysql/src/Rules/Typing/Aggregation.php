@@ -219,7 +219,7 @@ final class Aggregation
             $collation = $this->collations->connection;
         }
 
-        return Domain::string($length, $collation, $blob ? Field::Blob : Field::VarString, $coercibility);
+        return $blob || $operation === 'UNION' ? Domain::string($length, $collation, $blob ? Field::Blob : Field::VarString, $coercibility) : $this->sized($length, $collation, $coercibility);
     }
 
     /**
@@ -264,7 +264,26 @@ final class Aggregation
         $written = array_filter($domains, static fn (Domain $domain): bool => $domain->kind === Kind::String) !== [];
         $decimals = $early && !$written ? min(Domain::NOT_FIXED, max(array_map(static fn (Domain $domain): int => $domain->decimals, $domains))) : Domain::NOT_FIXED;
 
-        return new Domain(Kind::String, $blob ? Field::Blob : Field::VarString, min(4294967295, $length), $decimals, false, $collation, [], $coercibility);
+        return !$blob && !$united && $written ? $this->sized($length, $collation, $coercibility, $early) : new Domain(Kind::String, $blob ? Field::Blob : Field::VarString, min(4294967295, $length), $decimals, false, $collation, [], $coercibility);
+    }
+
+    /**
+     * Selects the field type for a long string result outside a set operation.
+     *
+     * MySQL 8.0 retains VARCHAR for long branches with its earlier width rule.
+     * Other supported releases choose a medium or long BLOB.
+     * Verified through COALESCE over user variables.
+     */
+    public function sized(int $length, Collation $collation, Coercibility $coercibility, bool $early = false): Domain
+    {
+        $bytes = $length * $collation->charset->maxLength;
+        if ($early && $bytes > 65535) {
+            return Domain::string(intdiv($length, $collation->charset->maxLength), $collation, Field::VarString, $coercibility);
+        }
+
+        $field = $bytes <= 65535 ? Field::VarString : ($bytes <= 16777215 ? Field::MediumBlob : Field::LongBlob);
+
+        return Domain::string(min(4294967295, $length), $collation, $field, $coercibility);
     }
 
     /**

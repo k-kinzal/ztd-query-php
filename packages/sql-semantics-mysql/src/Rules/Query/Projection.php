@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\SelectExpression;
 use SqlSemantics\Platform\MySql\Statement\Query\Star;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Resolution\Environment;
+use SqlSemantics\Resolution\ProjectionScope;
 use SqlSemantics\Resolution\VisibleRelation;
 use SqlSemantics\Statement\Identifier\Name;
 use SqlSemantics\Statement\Identifier\QualifiedName;
@@ -53,13 +54,17 @@ final class Projection
     public function items(array $items, Derivation $derivation, Environment $environment, JoinedInput $from): array
     {
         $fields = [];
-        foreach ($items as $item) {
+        $projection = $this->scope($items, $derivation);
+        $environment = new Environment($environment->context, $environment->outer, $environment->relations, $environment->commonTables, $environment->aliases, $environment->written, $environment->aggregation, $environment->aggregatesAllowed, $environment->aggregateArgument, $projection);
+        foreach ($items as $position => $item) {
             if ($item instanceof SelectExpression) {
                 $fact = (new Operands())->single($derivation->scalar($item->expression, $environment), $derivation);
                 $origin = $fact->resolution instanceof ResolvedColumn ? $fact->resolution->slot : null;
                 $name = (new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client))->name($item);
                 $slot = $name instanceof Name ? new OutputSlot($name, $fact->type, $fact->nullability, null, $origin) : new OutputSlot(null, $fact->type, $fact->nullability, null, $origin, [$name]);
-                $fields[] = new Field(count($fields), $slot, $item->expression, $fact->resolution);
+                $field = new Field(count($fields), $slot, $item->expression, $fact->resolution);
+                $fields[] = $field;
+                $projection->bind($position, $field);
             } elseif ($item instanceof Star) {
                 $fields = $this->star($fields, $derivation, $environment, $from);
             } else {
@@ -68,6 +73,24 @@ final class Projection
         }
 
         return $fields;
+    }
+
+    /**
+     * Declares every result name before any expression is resolved.
+     *
+     * @param list<SelectExpression|Star|TableWildcard> $items
+     */
+    public function scope(array $items, Derivation $derivation): ProjectionScope
+    {
+        $declared = [];
+        $naming = new ItemNaming($derivation->context->profile, Settings::of($derivation->context)->client);
+        foreach ($items as $position => $item) {
+            if ($item instanceof SelectExpression) {
+                $declared[$position] = [$naming->name($item), $item->expression];
+            }
+        }
+
+        return new ProjectionScope($declared);
     }
 
     /**

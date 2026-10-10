@@ -19,6 +19,17 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class OriginsTest extends TestCase
 {
+    public function testResolvedKeepsBaseMetadataThroughASelectedAlias(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(id INT PRIMARY KEY)');
+        $result = $session->query('SELECT id AS x, (SELECT x) AS y FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+
+        self::assertSame(['y', 'id', 't', 't', 'd'], [$result->columns[1]->name, $result->columns[1]->originalName, $result->columns[1]->table, $result->columns[1]->originalTable, $result->columns[1]->schema]);
+        self::assertSame(3, $result->columns[1]->flags & 3);
+    }
+
     public function testOriginKeepsTheColumnOfAReducedScalarSubquery(): void
     {
         $session = (new Instance())->connect();

@@ -83,6 +83,9 @@ final class Results
         $nullability = $derivation->context->profile->grammar === GrammarRelease::MySql5651 && in_array(strtoupper($name), ['USER', 'SESSION_USER', 'SYSTEM_USER', 'CURRENT_USER', 'PASSWORD'], true) ? Nullability::NotNull : $fact->nullability;
 
         $nullability = $this->propagated($name, $arguments, $facts, $derivation) ?? $nullability;
+        if ($derivation->context->profile->grammar === GrammarRelease::MySql5651 && strtoupper($name) === 'COALESCE') {
+            $nullability = (new ResultTyping())->nullability('P', $facts);
+        }
         $nullability = (new Pattern\PatternResults())->nullability($name, $type, $nullability);
 
         return $type === null ? $fact : new ScalarFact(new Known($type), $nullability, $fact->resolution);

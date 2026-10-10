@@ -72,6 +72,11 @@ final class Derivation
      */
     private array $warningOffsets = [];
 
+    /**
+     * @var array<string, \SqlSemantics\Statement\Type\TypeFact> Variable entries introduced while resolving this statement, keyed by platform-normalized name
+     */
+    public array $introducedVariables = [];
+
     private ?Node $reading = null;
 
     /**

@@ -8,6 +8,7 @@ use SqlSemantics\Diagnostic\Check;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingLookup;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\ResultReferences;
+use SqlSemantics\Platform\MySql\Rules\Query\ProjectionLookup;
 use SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias;
 use SqlSemantics\Resolution\ColumnLookup;
 use SqlSemantics\Resolution\Environment;
@@ -110,18 +111,35 @@ final class ColumnResolver
 
                 return count($found) === 1 ? $found[0] : new AmbiguousColumn($column, $found);
             }
-            $unnamed = $qualifier === null ? $this->unnamed($scope->aliases) : [];
-            if ($unnamed !== []) {
-                return $this->undecided($column, [], $open, $unnamed);
-            }
-            $aliases = $qualifier === null ? $scope->aliased($column) : [];
-            if ($aliases !== []) {
-                return $open === [] ? $this->alias($column, $aliases, $depth) : $lookup->conditional($column, [], $open);
+            $output = $qualifier === null ? $this->output($scope, $column, $depth, $open) : null;
+            if ($output !== null) {
+                return $output;
             }
             $depth++;
         }
 
         return $open === [] ? (new HavingLookup())->missing($environment, $column, $qualifier) : $lookup->conditional($column, [], $open);
+    }
+
+    /**
+     * Searches result names after input columns, retaining uncertainty from nearer inputs.
+     *
+     * @param list<VisibleRelation> $open The incomplete relation occurrences already searched
+     */
+    public function output(Environment $scope, Name $column, int $depth, array $open): ?Resolution
+    {
+        $lookup = new ColumnLookup();
+        $projected = (new ProjectionLookup())->find($scope, $column, $depth);
+        if ($projected !== null) {
+            return $open === [] ? $projected : $lookup->conditional($column, [], $open);
+        }
+        $unnamed = $this->unnamed($scope->aliases);
+        if ($unnamed !== []) {
+            return $this->undecided($column, [], $open, $unnamed);
+        }
+        $aliases = $scope->aliased($column);
+
+        return $aliases === [] ? null : ($open === [] ? $this->alias($column, $aliases, $depth) : $lookup->conditional($column, [], $open));
     }
 
     /**

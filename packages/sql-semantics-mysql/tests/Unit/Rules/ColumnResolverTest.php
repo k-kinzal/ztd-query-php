@@ -34,6 +34,17 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ColumnResolverTest extends TestCase
 {
+    public function testOutputRetainsAliasDepthAndLeavesUnlistedNamesUnresolved(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x');
+        $scope = new Environment($operation->context, aliases: [$operation->field('x')]);
+        $reference = (new ColumnResolver())->output($scope, new Name('x'), 2, []);
+
+        self::assertInstanceOf(AliasTarget::class, $reference);
+        self::assertSame(2, $reference->depth);
+        self::assertNull((new ColumnResolver())->output($scope, new Name('y'), 2, []));
+    }
+
     public function testFindPrefersAColumnOfTheFromClauseToAnAlias(): void
     {
         $semantics = new Semantics(Dialect::MySql);

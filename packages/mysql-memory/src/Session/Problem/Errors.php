@@ -40,7 +40,9 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Problem\OperandColumns;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\TooBigPrecision;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCharset;
 use SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation;
+use SqlSemantics\Platform\MySql\Statement\Name\AliasRule;
 use SqlSemantics\Platform\MySql\Statement\Name\AmbiguousAlias;
+use SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountedList;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\CountMismatch;
@@ -162,6 +164,7 @@ final class Errors
             $diagnostic instanceof MissingColumn => QueryError::BadField->error(($diagnostic->qualifier?->schema === null ? '' : $diagnostic->qualifier->schema->value . '.') . ($diagnostic->qualifier === null ? '' : $diagnostic->qualifier->name->value . '.') . $diagnostic->name->value, $this->joining($diagnostic, $statement) ? 'from clause' : $clause),
             $diagnostic instanceof AmbiguousColumn => QueryError::NonUniqueColumn->error($diagnostic->name->value, $clause),
             $diagnostic instanceof AmbiguousAlias => QueryError::NonUniqueColumn->error($diagnostic->name->value, $clause),
+            $diagnostic instanceof InvalidProjectionAlias => $diagnostic->rule === AliasRule::Ambiguous ? QueryError::NonUniqueColumn->error($diagnostic->name->value, $clause) : QueryError::IllegalReference->error($diagnostic->name->value, $diagnostic->rule->value),
             default => null,
         };
     }

@@ -30,6 +30,7 @@ final class Environment
      * @param AggregationScope|null $aggregation The query block collecting aggregate occurrences
      * @param bool $aggregatesAllowed Whether this clause can own an aggregate
      * @param bool $aggregateArgument Whether this position evaluates an aggregate argument
+     * @param ProjectionScope|null $projection The select list currently being resolved
      */
     public function __construct(
         public readonly AnalysisContext $context,
@@ -41,6 +42,7 @@ final class Environment
         public readonly ?AggregationScope $aggregation = null,
         public readonly bool $aggregatesAllowed = false,
         public readonly bool $aggregateArgument = false,
+        public readonly ?ProjectionScope $projection = null,
     ) {
     }
 

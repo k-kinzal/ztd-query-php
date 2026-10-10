@@ -36,7 +36,7 @@ final class HavingScope
      */
     public function enter(Environment $environment, GroupedRow $row): Environment
     {
-        return new Environment($environment->context, $environment->outer, [...$environment->relations, new VisibleRelation($row, new RowShape([]))], $environment->commonTables, $environment->aliases, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed, aggregateArgument: $environment->aggregateArgument);
+        return new Environment($environment->context, $environment->outer, [...$environment->relations, new VisibleRelation($row, new RowShape([]))], $environment->commonTables, $environment->aliases, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed, aggregateArgument: $environment->aggregateArgument, projection: $environment->projection);
     }
 
     /**
@@ -113,7 +113,7 @@ final class HavingScope
         }
         $relations = array_values(array_filter($environment->relations, static fn (VisibleRelation $relation): bool => !$relation->relation instanceof GroupedRow));
 
-        return new Environment($environment->context, $environment->outer, $relations, $environment->commonTables, $environment->aliases, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed, aggregateArgument: $environment->aggregateArgument);
+        return new Environment($environment->context, $environment->outer, $relations, $environment->commonTables, $environment->aliases, aggregation: $environment->aggregation, aggregatesAllowed: $environment->aggregatesAllowed, aggregateArgument: $environment->aggregateArgument, projection: $environment->projection);
     }
 
     /**
@@ -127,7 +127,7 @@ final class HavingScope
     {
         $input = $this->leave($environment);
 
-        return new Environment($input->context, $input->outer, $input->relations, $input->commonTables, $input->aliases, $input->written, $input->aggregation, $input->aggregatesAllowed, true);
+        return new Environment($input->context, $input->outer, $input->relations, $input->commonTables, $input->aliases, $input->written, $input->aggregation, $input->aggregatesAllowed, true, $input->projection);
     }
 
     /**

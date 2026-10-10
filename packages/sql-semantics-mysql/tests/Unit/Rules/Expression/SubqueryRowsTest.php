@@ -52,6 +52,16 @@ final class SubqueryRowsTest extends TestCase
         self::assertEquals(new Known(Domain::integer(ResolvedField::Long, 11)), (new SubqueryRows())->value($column)->type);
     }
 
+    public function testValueDropsFixedFractionalMetadataForStrings(): void
+    {
+        $type = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, ResolvedField::VarString, 20, 0, false, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'));
+        $query = new QueryFact([new Field(0, new OutputSlot(new Name('b'), new Known($type), Nullability::NotNull))], Comparison::AsciiInsensitive);
+        $value = (new SubqueryRows())->value($query);
+
+        self::assertEquals(new Known(Domain::string(20, $type->collation)), $value->type);
+        self::assertSame(Nullability::Nullable, $value->nullability);
+    }
+
     public function testTestCombinesTheColumnsAndReportsAWidthMismatch(): void
     {
         $platform = new Platform();

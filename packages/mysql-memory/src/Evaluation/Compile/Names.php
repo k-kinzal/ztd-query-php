@@ -231,6 +231,10 @@ final class Names
      */
     public function userVariable(UserVariable $variable): Evaluable
     {
+        $binding = $this->compiler->facts->scalar($variable)->resolution;
+        if ($this->compiler->settings->release() === GrammarRelease::MySql5651 && $binding instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableBinding && !$binding->exists) {
+            return new Constant($this->compiler->domain($variable), null);
+        }
         [$value, $domain] = $this->compiler->connection->variables->user($variable->name->value);
         if ($value === null) {
             $domain = Domain::string(0, Collation::binary(), Field::MediumBlob)->withCollation($this->compiler->settings->connectionCollation, Coercibility::Implicit);

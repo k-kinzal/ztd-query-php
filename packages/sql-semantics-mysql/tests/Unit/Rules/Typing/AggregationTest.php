@@ -23,6 +23,15 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class AggregationTest extends TestCase
 {
+    public function testSizedKeepsTheReleaseSpecificFieldOfLongStringBranches(): void
+    {
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+        $aggregation = new Aggregation(new Collations($collation));
+
+        self::assertEquals(Domain::string(67108860, $collation, Field::LongBlob), $aggregation->sized(67108860, $collation, Coercibility::Implicit));
+        self::assertSame(67108860, $aggregation->sized(67108860, $collation, Coercibility::Implicit, true)->metadataLength());
+    }
+
     public function testOfSkipsNullBranches(): void
     {
         self::assertEquals(Domain::integer(Field::LongLong, 2), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->of([Domain::null(), Domain::integer(Field::LongLong, 2)], 'case', new Derivation((new Semantics(Dialect::MySql))->context([]))));

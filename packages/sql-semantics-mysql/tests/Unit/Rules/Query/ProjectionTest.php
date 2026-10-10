@@ -32,6 +32,20 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ProjectionTest extends TestCase
 {
+    public function testScopeDeclaresNamesBeforeTheirFieldsExist(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $operation = $semantics->analyze('SELECT 1 AS x, 2 AS y');
+        $select = $operation->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $select);
+        $scope = (new Projection())->scope($select->items, new Derivation($semantics->context()));
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\SelectExpression::class, $select->items[1]);
+        self::assertEquals(new Name('y'), $scope->items[1][0]);
+        self::assertSame($select->items[1]->expression, $scope->items[1][1]);
+        self::assertNull($scope->field(1));
+    }
+
     public function testItemsDerivesExpressionsAndStars(): void
     {
         $semantics = new Semantics(Dialect::MySql);
