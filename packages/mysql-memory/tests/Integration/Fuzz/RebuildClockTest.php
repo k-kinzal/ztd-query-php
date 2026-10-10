@@ -34,6 +34,8 @@ final class RebuildClockTest extends TestCase
     public function testRebuildDistinguishesRetainedAndNewUpdateTimes(string $sql, int $rows, string $mode): void
     {
         [$target] = Servers::shared();
+        $target->repair($target->guard());
+        $target->repair($target->memoryGuard());
         $native = $target->connect($target->native, $target->nativeUser, $target->nativePassword);
         $memory = $target->connect($target->memory, 'root', '');
         $native->exec($mode);

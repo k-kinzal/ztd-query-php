@@ -50,6 +50,7 @@ final class SampleTest extends TestCase
     public function testReadSamplesIdentityAndThePinnedClockIndependently(): void
     {
         [$target] = Servers::shared();
+        $target->repair($target->guard());
         $pdo = $target->connect($target->native, $target->nativeUser, $target->nativePassword);
         $sample = Sample::read($pdo);
 

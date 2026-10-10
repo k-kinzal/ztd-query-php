@@ -160,7 +160,7 @@ final class ReplicationShowCommand implements Command
             return $this->relaylogEvents($statement, $session, $context);
         }
         if ($statement instanceof ShowReplicas) {
-            $columns = str_starts_with($version, '5.6.') ? [['Server_Id', Field::Long, 10], ['Host', 20], ['Port', Field::Long, 7], ['Source_Id', Field::Long, 10], ['Replica_UUID', 36]] : self::REPLICAS;
+            $columns = str_starts_with($version, '5.') ? [['Server_Id', Field::Long, 10], ['Host', 20], ['Port', Field::Long, 7], ['Source_Id', Field::Long, 10], ['Replica_UUID', 36]] : self::REPLICAS;
 
             return $this->listing($statement->terminology === Terminology::Legacy ? $this->legacy($columns) : $columns, [], $context);
         }
@@ -169,21 +169,25 @@ final class ReplicationShowCommand implements Command
 
     /**
      * Answers the columns of an unconfigured replica, before applying legacy terminology.
-     * MySQL 5.6 omits channel and TLS-version fields, and reports empty connection settings
-     * with zero width. Its numeric display widths exclude the sign digit.
+     * MySQL 5.6 omits channel and TLS-version fields and reports empty settings with zero
+     * width. MySQL 5.7 has 57 fields and 61-character hosts. Both omit numeric sign digits.
+     * Verified on 5.6.51 and the 5.7.44 Testcontainers differential regression.
      *
      * @return list<array{string, int}|array{string, Field, int}>
      */
     public function statusColumns(string $version): array
     {
-        if (!str_starts_with($version, '5.6.')) {
+        if (!str_starts_with($version, '5.')) {
             return self::STATUS;
         }
+        $oldest = str_starts_with($version, '5.6.');
         $columns = [];
-        foreach (array_slice(self::STATUS, 0, 54) as $column) {
+        foreach (array_slice(self::STATUS, 0, $oldest ? 54 : 57) as $column) {
             if (count($column) === 3) {
                 $column[2]--;
-            } elseif (in_array($column[0], ['Source_Host', 'Source_User', 'Source_SSL_CA_File', 'Source_SSL_CA_Path', 'Source_SSL_Cert', 'Source_SSL_Cipher', 'Source_SSL_Key', 'Source_Bind', 'Source_SSL_Crl', 'Source_SSL_Crlpath'], true)) {
+            } elseif (!$oldest && in_array($column[0], ['Source_Host', 'Source_Bind'], true)) {
+                $column[1] = 61;
+            } elseif ($oldest && in_array($column[0], ['Source_Host', 'Source_User', 'Source_SSL_CA_File', 'Source_SSL_CA_Path', 'Source_SSL_Cert', 'Source_SSL_Cipher', 'Source_SSL_Key', 'Source_Bind', 'Source_SSL_Crl', 'Source_SSL_Crlpath'], true)) {
                 $column[1] = 0;
             }
             $columns[] = $column;

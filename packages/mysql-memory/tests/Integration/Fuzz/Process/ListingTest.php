@@ -150,7 +150,9 @@ final class ListingTest extends TestCase
     public function testCaptureUsesTheRepairConnectionsOwnIdentity(): void
     {
         [$target] = Servers::shared();
+        self::assertNull($target->compare('ALTER USER CURRENT_USER PASSWORD EXPIRE')->difference);
         $guard = $target->guard();
+        $target->repair($guard);
         $pdo = $target->connect($target->native, $target->nativeUser, $target->nativePassword);
         $listing = Listing::capture($pdo, $guard);
 
@@ -162,6 +164,7 @@ final class ListingTest extends TestCase
     public function testPrepareRestartsAnEnabledDaemonAfterTheOldEventIsRemoved(): void
     {
         [$target] = Servers::shared();
+        $target->repair($target->guard());
         $pdo = $target->connect($target->native, $target->nativeUser, $target->nativePassword);
         $pdo->exec('SET @previous_scheduler=@@GLOBAL.event_scheduler');
         try {

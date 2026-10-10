@@ -44,6 +44,19 @@ final class ReplicationShowCommandTest extends TestCase
         self::assertSame([[], 60, ['Replica_IO_State', 56], ['Source_Port', 8], ['Network_Namespace', 772]], [$result->rows, count($result->columns), [$result->columns[0]->name, $result->columns[0]->length], [$result->columns[3]->name, $result->columns[3]->length], [$result->columns[59]->name, $result->columns[59]->length]]);
     }
 
+    public function testStatusColumnsPreservesTheMySql57ChannelAndHostMetadata(): void
+    {
+        $columns = (new ReplicationShowCommand())->statusColumns('5.7.44');
+
+        self::assertCount(57, $columns);
+        self::assertSame(['Source_Host', 61], $columns[1]);
+        self::assertSame(['Source_User', 97], $columns[2]);
+        self::assertSame(['Source_Port', Field::Long, 7], $columns[3]);
+        self::assertSame(['Source_Bind', 61], $columns[46]);
+        self::assertSame(['Channel_Name', 192], $columns[55]);
+        self::assertSame(['Source_TLS_Version', 512], $columns[56]);
+    }
+
     public function testExecuteListsTheBinaryLogFiles(): void
     {
         $session = (new Instance())->connect();
