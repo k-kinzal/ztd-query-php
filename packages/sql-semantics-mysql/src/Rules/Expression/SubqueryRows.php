@@ -82,7 +82,7 @@ final class SubqueryRows
             $expression = $expression->operand;
         }
 
-        $length = $column && $domain->field->blob() ? min(4294967295, $domain->byteLength()) : $domain->length;
+        $length = $column && $domain->field->blob() ? min(4294967295, $domain->value()->byteLength()) : $domain->length;
 
         return $expression instanceof GroupConcat ? $domain : Domain::string($length, $domain->collation, $domain->field, $domain->coercibility);
     }

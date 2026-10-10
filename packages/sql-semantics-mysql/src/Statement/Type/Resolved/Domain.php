@@ -34,6 +34,8 @@ use SqlSemantics\Statement\Type\TypeDescriptor;
  * in length and its separate result width in display, as GROUP_CONCAT does. Decimals is the number
  * of fractional digits, or NOT_FIXED when a floating-point number or string has none fixed.
  * Strings carry a collation and its coercibility; other values carry the binary collation.
+ * A materialized string column can retain its storage capacity separately: value()
+ * exposes that capacity to expressions while metadataLength() retains the reported bound.
  * A column of an integer type can declare a display width narrower than its type: the result
  * metadata reports that width for the column itself, while an expression over the column sees
  * the length of the whole type.
@@ -73,6 +75,7 @@ final class Domain implements TypeDescriptor
      * @param list<string> $members The members of an ENUM or SET, in declared order
      * @param Coercibility $coercibility How strongly the collation holds
      * @param int|null $display The unconverted metadata width when it differs from the type bound, including integer display widths and partial multibyte string limits
+     * @param int|null $capacity The byte capacity of a materialized string column when expressions read its storage type instead of its reported bound
      */
     public function __construct(
         public readonly Kind $kind,
@@ -84,6 +87,7 @@ final class Domain implements TypeDescriptor
         public readonly array $members = [],
         public readonly Coercibility $coercibility = Coercibility::Implicit,
         public readonly ?int $display = null,
+        public readonly ?int $capacity = null,
     ) {
         $this->collation = $collation ?? Collation::binary();
     }
@@ -150,10 +154,14 @@ final class Domain implements TypeDescriptor
     }
 
     /**
-     * Answers the type of the value a column holds, as an expression over it sees it: without the display width of the column.
+     * Answers the type of the value a column holds, as an expression over it sees it: without an integer display width, and with the storage capacity of a materialized string.
      */
     public function value(): self
     {
+        if ($this->capacity !== null && $this->length !== $this->capacity) {
+            return new self($this->kind, $this->field, $this->capacity, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, null, $this->capacity);
+        }
+
         return $this->display === null || $this->field->blob() ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility);
     }
 
@@ -162,7 +170,7 @@ final class Domain implements TypeDescriptor
      */
     public function withCollation(Collation $collation, Coercibility $coercibility): self
     {
-        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->members, $coercibility, $this->field->blob() ? $this->display : null);
+        return new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $collation, $this->members, $coercibility, $this->field->blob() ? $this->display : null, $this->capacity);
     }
 
     /**

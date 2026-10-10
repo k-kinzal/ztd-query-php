@@ -212,7 +212,11 @@ final class Aggregation
         $length = 0;
         $blob = false;
         foreach ($domains as $domain) {
-            $length = max($length, $domain->kind === Kind::String ? ($domain->field->blob() && $operation !== 'UNION' ? ($domain->display ?? $domain->length) : $domain->length) : ($domain->kind === Kind::Double ? ($domain->field === Field::Float ? 23 : 22) : $domain->length));
+            $bound = $domain->kind === Kind::Double ? ($domain->field === Field::Float ? 23 : 22) : $domain->length;
+            if ($domain->kind === Kind::String && $domain->field->blob() && $operation !== 'UNION') {
+                $bound = $domain->capacity === null ? ($domain->display ?? $domain->length) : $domain->value()->byteLength();
+            }
+            $length = max($length, $bound);
             $blob = $blob || $domain->field === Field::Blob;
         }
         if ($collation->bytes() && count(array_filter($domains, static fn (Domain $domain): bool => $domain->kind === Kind::String)) === 0) {

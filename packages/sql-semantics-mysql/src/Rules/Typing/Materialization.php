@@ -23,6 +23,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Query;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field as OutputField;
 
 /**
@@ -34,7 +36,8 @@ use SqlSemantics\Statement\Shape\Field as OutputField;
  * type of a column it copies; a BIGINT narrower than 10 characters becomes an INT, a string loses
  * its decimals, and NULL becomes an empty binary string. An integer column reports the length of
  * its expression as its display width, while an expression over it sees the length of its whole
- * type. The rows of a set operation are materialized too, and a TEXT or BLOB column counts its
+ * type. Computed strings longer than 512 characters become BLOB columns with a separate
+ * storage capacity, while copied columns retain their type. The rows of a set operation are materialized too, and a TEXT or BLOB column counts its
  * length in bytes.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/derived-table-optimization.html,
  * https://dev.mysql.com/doc/refman/8.4/en/numeric-type-attributes.html.
@@ -108,13 +111,45 @@ final class Materialization
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
-        if (!$expression instanceof GroupConcat) {
+        $resolution = $expression !== null && $facts->covers($expression) ? $facts->scalar($expression)->resolution : ($field instanceof OutputField ? $field->resolution : null);
+        $text = $domain->kind === Kind::String && in_array($domain->field, [Field::VarChar, Field::VarString, Field::String, Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
+        if (!$text || !$query instanceof Select || $resolution instanceof ResolvedColumn) {
             return $this->column($domain, $narrows);
         }
-        $characters = intdiv(Settings::of($derivation->context)->groupConcatMaxLen, $domain->collation->charset->minLength());
-        $blob = $characters > 512;
 
-        return new Domain(Kind::String, $blob ? Field::Blob : Field::VarString, min(4294967295, $characters * ($blob ? $domain->collation->charset->maxLength : 1)), 0, false, $domain->collation, [], $domain->coercibility);
+        return $this->computed($domain, $expression, Settings::of($derivation->context), $derivation->context->profile->grammar);
+    }
+
+    /**
+     * Resolves the temporary column of a computed string, retaining its storage capacity separately from its reported width.
+     */
+    public function computed(Domain $domain, ?Scalar $expression, Settings $settings, GrammarRelease $release): Domain
+    {
+        $width = $domain->collation->charset->maxLength;
+        $characters = $expression instanceof GroupConcat ? intdiv($settings->groupConcatMaxLen, $domain->collation->charset->minLength()) : ($domain->field->blob() ? intdiv($domain->length, $width) : $domain->length);
+        if ($expression instanceof GroupConcat && $characters <= 512) {
+            return new Domain(Kind::String, Field::VarString, $characters, 0, false, $domain->collation, [], $domain->coercibility);
+        }
+        if ($characters <= 512 && !$domain->field->blob()) {
+            return $this->column($domain);
+        }
+        $bytes = min(4294967295, $characters * $width);
+        $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+
+        return $this->stored($domain, $bytes, $legacy ? $characters : $bytes);
+    }
+
+    /**
+     * Resolves a temporary BLOB column with its reported byte bound and storage capacity.
+     * Expressions over the column see the whole storage type; direct projection
+     * retains the original bound. The allocation bound is in characters in 5.x
+     * and bytes in later releases, as observed with materialized casts.
+     */
+    public function stored(Domain $domain, int $bytes, int $allocation): Domain
+    {
+        $capacity = $allocation <= 255 ? 255 : ($allocation <= 65535 ? 65535 : ($allocation <= 16777215 ? 16777215 : 4294967295));
+
+        return new Domain(Kind::String, Field::Blob, $bytes, 0, false, $domain->collation, [], $domain->coercibility, null, $capacity);
     }
 
     /**
@@ -171,7 +206,7 @@ final class Materialization
      */
     public function text(Domain $domain, int $length): Domain
     {
-        return new Domain(Kind::String, $domain->field, $length, 0, false, $domain->collation, $domain->members, $domain->coercibility);
+        return new Domain(Kind::String, $domain->field, $length, 0, false, $domain->collation, $domain->members, $domain->coercibility, null, $domain->capacity);
     }
 
     /**

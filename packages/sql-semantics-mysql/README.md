@@ -192,6 +192,12 @@ uses `groupConcatMaxLen` and the argument character set, which can differ from
 the function's directly reported type. Set operations retain their separate
 release-specific string aggregation rules before materializing the result.
 
+For a materialized TEXT/BLOB column, `Domain::capacity` records the byte capacity
+of its storage type separately from the reported bound in `length`. The `value()`
+view used when resolving expressions exposes that capacity. This lets a scalar
+subquery or string function read the same column type while direct projection
+retains the expression's original result width.
+
 ### Aggregate ownership
 
 Aggregate ownership is available through `$operation->facts->query($query)->aggregates`.

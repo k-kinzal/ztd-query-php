@@ -17,6 +17,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class DomainTest extends TestCase
 {
+    public function testValueReadsStorageCapacityWithoutChangingColumnMetadata(): void
+    {
+        $column = new Domain(Kind::String, Field::Blob, 4096, 0, false, Collation::known('utf8mb4_general_ci'), capacity: 65535);
+
+        self::assertSame(4096, $column->metadataLength());
+        self::assertSame(65535, $column->value()->length);
+        self::assertSame(262140, $column->value()->byteLength());
+        self::assertEquals($column->value(), $column->value()->value());
+        self::assertSame(65535, $column->withCollation(Collation::known('utf8mb4_bin'), Coercibility::Explicit)->capacity);
+    }
+
     public function testMetadataLengthKeepsAnExplicitBlobWidthSeparateFromExpressionLength(): void
     {
         $domain = new Domain(Kind::String, Field::LongBlob, 1024, Domain::NOT_FIXED, false, Collation::known('utf8mb4_general_ci'), display: 4096);

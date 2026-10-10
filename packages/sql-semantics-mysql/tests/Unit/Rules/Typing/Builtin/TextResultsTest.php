@@ -24,6 +24,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class TextResultsTest extends TestCase
 {
+    public function testBoundedCapsLongBlobMetadataBeforeResultConversion(): void
+    {
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+        $call = new Invocation([Domain::string(16777215, $collation, Field::Blob)], [], new Settings($collation), new Derivation((new Semantics(Dialect::MySql))->context([])));
+        $results = new TextResults();
+
+        self::assertSame(16777216, $results->bounded($call, 16777215, 'concat')?->length);
+        self::assertSame(Field::LongBlob, $results->bounded($call, 16777215, 'concat')->field);
+        self::assertSame(1024, $results->bounded($call, 1024, 'concat')?->length);
+    }
+
     public function testRulesSumConcatenationsAndCountSeparators(): void
     {
         $rules = (new TextResults())->rules();

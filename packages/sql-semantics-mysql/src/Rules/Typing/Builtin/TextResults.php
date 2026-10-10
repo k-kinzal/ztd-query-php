@@ -7,6 +7,7 @@ namespace SqlSemantics\Platform\MySql\Rules\Typing\Builtin;
 use Closure;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 /**
  * Resolves the results of string functions: a string in the collation the string arguments aggregate to, as long as the longest text the function can return.
@@ -28,8 +29,8 @@ final class TextResults
         $sum = static fn (Invocation $call): int => array_sum(array_map($call->length(...), $call->domains));
 
         return [
-            'CONCAT' => static fn (Invocation $call): ?Domain => $call->text($call->domains, $sum($call), 'concat'),
-            'CONCAT_WS' => static fn (Invocation $call): ?Domain => $call->text($call->domains, $sum($call) - $call->length($call->domain(0)) + $call->length($call->domain(0)) * max(0, count($call->domains) - 2), 'concat_ws'),
+            'CONCAT' => fn (Invocation $call): ?Domain => $this->bounded($call, $sum($call), 'concat'),
+            'CONCAT_WS' => fn (Invocation $call): ?Domain => $this->bounded($call, $sum($call) - $call->length($call->domain(0)) + $call->length($call->domain(0)) * max(0, count($call->domains) - 2), 'concat_ws'),
             'UPPER' => $same,
             'UCASE' => $same,
             'LOWER' => $same,
@@ -43,7 +44,7 @@ final class TextResults
             'SUBSTRING' => fn (Invocation $call): ?Domain => $call->text([$call->domain(0)], $this->substring($call), 'substr'),
             'SUBSTR' => fn (Invocation $call): ?Domain => $call->text([$call->domain(0)], $this->substring($call), 'substr'),
             'MID' => fn (Invocation $call): ?Domain => $call->text([$call->domain(0)], $this->substring($call), 'substr'),
-            'REPLACE' => static fn (Invocation $call): ?Domain => $call->text($call->domains, $call->length($call->domain(0)) * max(1, $call->length($call->domain(2))), 'replace'),
+            'REPLACE' => fn (Invocation $call): ?Domain => $this->bounded($call, $call->length($call->domain(0)) * max(1, $call->length($call->domain(2))), 'replace'),
             'REPEAT' => static fn (Invocation $call): ?Domain => $call->text([$call->domain(0)], min(16777216, $call->length($call->domain(0)) * max(0, $call->constant(1) ?? 64)), 'repeat'),
             'LPAD' => static fn (Invocation $call): ?Domain => $call->text([$call->domain(0), $call->domain(2)], max(0, $call->constant(1) ?? $call->length($call->domain(0))), 'lpad'),
             'RPAD' => static fn (Invocation $call): ?Domain => $call->text([$call->domain(0), $call->domain(2)], max(0, $call->constant(1) ?? $call->length($call->domain(0))), 'rpad'),
@@ -51,6 +52,19 @@ final class TextResults
             'SUBSTRING_INDEX' => static fn (Invocation $call): ?Domain => $call->text([$call->domain(0), $call->domain(1)], $call->length($call->domain(0)), 'substring_index'),
             'INSERT' => static fn (Invocation $call): Domain => (new FormatResults())->inserted($call),
         ];
+    }
+
+    /**
+     * Resolves CONCAT, CONCAT_WS and REPLACE with their maximum reported blob width.
+     * Their long-blob metadata is capped at 16777216 bytes before result character
+     * set conversion. This bound is distinct from max_allowed_packet, which limits
+     * execution. Verified through SQL on MySQL 5.6 and 8.4 with different packet limits.
+     */
+    public function bounded(Invocation $call, int $length, string $operation): ?Domain
+    {
+        $domain = $call->text($call->domains, $length, $operation);
+
+        return $domain !== null && $domain->field === Field::LongBlob && $domain->length > 16777216 ? Domain::string(16777216, $domain->collation, $domain->field, $domain->coercibility) : $domain;
     }
 
     /**

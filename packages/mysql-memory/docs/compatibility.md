@@ -128,6 +128,13 @@ collation-expanded bound. Computed string expressions retain their own bound;
 resolved column bindings preserve this distinction through parentheses, stars
 and result aliases.
 
+Materialized computed strings longer than 512 characters use BLOB columns.
+Their direct result width and the storage capacity read by later expressions
+are distinct, including the MySQL 5.x character-based allocation rule and the
+later byte-based rule. `CONCAT`, `CONCAT_WS` and `REPLACE` cap long-blob metadata
+at 16 MiB before result character set conversion; this metadata limit is
+separate from the execution limit controlled by `max_allowed_packet`.
+
 Besides the keyword forms above (`CAST`, `CONVERT`, `TRIM`, `POSITION`, `SUBSTRING ... FROM`, `CHAR`, `EXTRACT`, `DATE_ADD`, `DATE_SUB`, `TIMESTAMPADD`, `TIMESTAMPDIFF`, `GET_FORMAT` and the clocks), these functions are evaluated:
 
 | Family | Functions |

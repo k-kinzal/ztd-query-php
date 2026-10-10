@@ -18,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Shape\OutputSlot;
 use SqlSemantics\Statement\Type\Known;
 use SqlSemantics\Statement\Type\TypeFact;
@@ -26,6 +27,29 @@ use SqlSemantics\Statement\Type\TypeFact;
 #[Small]
 final class MaterializationTest extends TestCase
 {
+    public function testStoredSeparatesTheReportedBoundFromStorageCapacity(): void
+    {
+        $materialization = new Materialization();
+        $domain = Domain::string(17000, Collation::known('utf8mb4_bin'));
+        $legacy = $materialization->stored($domain, 68000, 17000);
+        $modern = $materialization->stored($domain, 68000, 68000);
+
+        self::assertSame([Field::Blob, 68000, 65535, 16777215], [$legacy->field, $legacy->metadataLength(), $legacy->value()->length, $modern->value()->length]);
+    }
+
+    public function testComputedUsesTheReleaseSpecificAllocationBound(): void
+    {
+        $materialization = new Materialization();
+        $collation = Collation::known('utf8mb4_bin');
+        $settings = new Settings($collation);
+        $cast = Domain::string(68000, $collation, Field::MediumBlob);
+
+        self::assertSame(65535, $materialization->computed($cast, null, $settings, GrammarRelease::MySql5651)->capacity);
+        self::assertSame(16777215, $materialization->computed($cast, null, $settings, GrammarRelease::MySql847)->capacity);
+        self::assertSame(Field::VarString, $materialization->computed(Domain::string(512, $collation), null, $settings, GrammarRelease::MySql847)->field);
+        self::assertSame(Field::Blob, $materialization->computed(Domain::string(513, $collation), null, $settings, GrammarRelease::MySql847)->field);
+    }
+
     public function testMergeableHoldsForAPlainQueryBlockOverTables(): void
     {
         $semantics = new Semantics(Dialect::MySql);

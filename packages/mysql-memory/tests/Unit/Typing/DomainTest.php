@@ -17,6 +17,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class DomainTest extends TestCase
 {
+    public function testOfRetainsMaterializedStorageCapacityAcrossCopies(): void
+    {
+        $resolved = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain(Kind::String, Field::Blob, 4096, 0, false, Collation::known('utf8mb4_general_ci'), capacity: 65535);
+        $domain = Domain::of($resolved, true);
+
+        self::assertEquals($resolved, $domain->resolved());
+        self::assertSame(4096, $domain->byteLength());
+        self::assertSame(65535, $domain->withNullable(false)->withSource('b')->withQuiet()->withNumericBytes()->withCollation(Collation::known('utf8mb4_bin'), Coercibility::Explicit)->resolved()->value()->length);
+    }
+
     public function testWithNumericBytesKeepsTheRestOfTheDomain(): void
     {
         $domain = Domain::string(2, Collation::binary());
