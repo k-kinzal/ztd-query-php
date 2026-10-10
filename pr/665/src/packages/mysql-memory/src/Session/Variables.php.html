@@ -203,34 +203,42 @@
 <span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a>    {</span>
 <span class="src-line" id="L164" data-diff="added"><a class="ln" href="#L164">164</a>        <span class="tok-var">$set</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">session</span>[<span class="tok-str">&#039;timestamp&#039;</span>] ?? <span class="tok-id">null</span>;</span>
 <span class="src-line" id="L165" data-diff="added"><a class="ln" href="#L165">165</a></span>
-<span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a>        <span class="tok-kw">return</span> <span class="tok-var">$set</span> === <span class="tok-id">null</span> ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">registry</span>-&gt;<span class="tok-id">threads</span>-&gt;<span class="tok-id">now</span>() : (float) <span class="tok-var">$set</span>;</span>
+<span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a>        <span class="tok-kw">return</span> <span class="tok-var">$set</span> === <span class="tok-id">null</span> ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">clock</span>() : (float) <span class="tok-var">$set</span>;</span>
 <span class="src-line" id="L167" data-diff="added"><a class="ln" href="#L167">167</a>    }</span>
 <span class="src-line" id="L168" data-diff="added"><a class="ln" href="#L168">168</a></span>
 <span class="src-line" id="L169" data-diff="added"><a class="ln" href="#L169">169</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L170" data-diff="added"><a class="ln" href="#L170">170</a><span class="tok-com">     * Reads a system variable of the session by name, or null when the server has none of that name or the variable holds NULL.</span></span>
+<span class="src-line" id="L170" data-diff="added"><a class="ln" href="#L170">170</a><span class="tok-com">     * Answers the server clock, including elapsed sleeps and waits, independently of SET timestamp.</span></span>
 <span class="src-line" id="L171" data-diff="added"><a class="ln" href="#L171">171</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L172" data-diff="added"><a class="ln" href="#L172">172</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">read</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>): <span class="tok-id">string</span>|<span class="tok-id">int</span>|<span class="tok-id">null</span></span>
+<span class="src-line" id="L172" data-diff="added"><a class="ln" href="#L172">172</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">clock</span>(): <span class="tok-id">float</span></span>
 <span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a>    {</span>
-<span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a>        <span class="tok-var">$definition</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">catalog</span>-&gt;<span class="tok-id">find</span>(<span class="tok-var">$name</span>);</span>
-<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a></span>
-<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a>        <span class="tok-kw">return</span> <span class="tok-var">$definition</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-var">$this</span>-&gt;<span class="tok-id">system</span>(<span class="tok-var">$definition</span>, <span class="tok-id">Scope</span>::<span class="tok-id">Session</span>);</span>
-<span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a>    }</span>
-<span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a></span>
-<span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a><span class="tok-com">     * Reads a system variable of the session as a count: an unsigned value beyond the largest integer, which the variable holds as a negative one, counts as the largest integer.</span></span>
-<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">count</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-id">int</span> <span class="tok-var">$default</span>): <span class="tok-id">int</span></span>
-<span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a>    {</span>
-<span class="src-line" id="L184" data-diff="added"><a class="ln" href="#L184">184</a>        <span class="tok-var">$value</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$name</span>);</span>
-<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a>        <span class="tok-kw">if</span> (<span class="tok-var">$value</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a>            <span class="tok-kw">return</span> <span class="tok-var">$default</span>;</span>
-<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a>        }</span>
-<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a>        <span class="tok-var">$number</span> = (int) <span class="tok-var">$value</span>;</span>
-<span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a></span>
-<span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a>        <span class="tok-kw">return</span> <span class="tok-var">$number</span> &lt; <span class="tok-num">0</span> &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">catalog</span>-&gt;<span class="tok-id">find</span>(<span class="tok-var">$name</span>)?-&gt;<span class="tok-id">shape</span> === <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape</span>::<span class="tok-id">Unsigned</span> ? <span class="tok-id">PHP_INT_MAX</span> : <span class="tok-var">$number</span>;</span>
-<span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a>    }</span>
-<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a>}</span>
-<span class="src-line" id="L193" data-diff="added"><a class="ln" href="#L193">193</a></span>
+<span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">instance</span>-&gt;<span class="tok-id">registry</span>-&gt;<span class="tok-id">threads</span>-&gt;<span class="tok-id">now</span>();</span>
+<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a>    }</span>
+<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a></span>
+<span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a><span class="tok-com">     * Reads a system variable of the session by name, or null when the server has none of that name or the variable holds NULL.</span></span>
+<span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">read</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>): <span class="tok-id">string</span>|<span class="tok-id">int</span>|<span class="tok-id">null</span></span>
+<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a>    {</span>
+<span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a>        <span class="tok-var">$definition</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">catalog</span>-&gt;<span class="tok-id">find</span>(<span class="tok-var">$name</span>);</span>
+<span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a></span>
+<span class="src-line" id="L184" data-diff="added"><a class="ln" href="#L184">184</a>        <span class="tok-kw">return</span> <span class="tok-var">$definition</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-var">$this</span>-&gt;<span class="tok-id">system</span>(<span class="tok-var">$definition</span>, <span class="tok-id">Scope</span>::<span class="tok-id">Session</span>);</span>
+<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a>    }</span>
+<span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a></span>
+<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a><span class="tok-com">     * Reads a system variable of the session as a count: an unsigned value beyond the largest integer, which the variable holds as a negative one, counts as the largest integer.</span></span>
+<span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">count</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-id">int</span> <span class="tok-var">$default</span>): <span class="tok-id">int</span></span>
+<span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a>    {</span>
+<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a>        <span class="tok-var">$value</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">read</span>(<span class="tok-var">$name</span>);</span>
+<span class="src-line" id="L193" data-diff="added"><a class="ln" href="#L193">193</a>        <span class="tok-kw">if</span> (<span class="tok-var">$value</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a>            <span class="tok-kw">return</span> <span class="tok-var">$default</span>;</span>
+<span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a>        }</span>
+<span class="src-line" id="L196" data-diff="added"><a class="ln" href="#L196">196</a>        <span class="tok-var">$number</span> = (int) <span class="tok-var">$value</span>;</span>
+<span class="src-line" id="L197" data-diff="added"><a class="ln" href="#L197">197</a></span>
+<span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a>        <span class="tok-kw">return</span> <span class="tok-var">$number</span> &lt; <span class="tok-num">0</span> &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">catalog</span>-&gt;<span class="tok-id">find</span>(<span class="tok-var">$name</span>)?-&gt;<span class="tok-id">shape</span> === <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Variable\Catalog\ValueShape</span>::<span class="tok-id">Unsigned</span> ? <span class="tok-id">PHP_INT_MAX</span> : <span class="tok-var">$number</span>;</span>
+<span class="src-line" id="L199" data-diff="added"><a class="ln" href="#L199">199</a>    }</span>
+<span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a>}</span>
+<span class="src-line" id="L201" data-diff="added"><a class="ln" href="#L201">201</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
