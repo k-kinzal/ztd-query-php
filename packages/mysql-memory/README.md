@@ -261,7 +261,7 @@ The emulator is a test double. These differences are known:
 
 Rules are written from the MySQL reference manual and black-box observations of live servers. Differential fuzzing generates statements with SQL Faker, runs them on a real MySQL server and mysql-memory from the same fixture tables, and compares the metadata PDO exposes, every result set, affected rows, insert ids, errors, warnings and table contents. The fixture pins `timestamp` so that NOW() and related functions have the same clock on both servers. SHOW WARNINGS uses the text protocol even when the tested statement uses native prepares, so preparing the inspection cannot replace the diagnostics being inspected.
 
-The real server runs each input twice. Inputs whose reference observations differ are counted separately and skipped; they are not counted as matches. The harness does not compare OK-packet information text or metadata PDO does not expose. It uses a textual ORDER BY check to decide whether to compare row order, including queries with LIMIT; nested ORDER BY clauses and unordered ties can still produce misleading findings. Finite fuzz campaigns do not establish exhaustive grammar coverage or universal equivalence.
+The real server runs each input twice. Inputs whose reference observations differ after the bounded comparison contracts described below are counted separately and skipped; they are not counted as matches. The harness does not compare OK-packet information text or metadata PDO does not expose. It uses a textual ORDER BY check to decide whether to compare row order, including queries with LIMIT; nested ORDER BY clauses and unordered ties can still produce misleading findings. Finite fuzz campaigns do not establish exhaustive grammar coverage or universal equivalence.
 
 `composer test:integration` includes differential regressions against Testcontainers, covering text and prepared execution with and without CLIENT_FOUND_ROWS, insert ids, multiple result sets and resolution errors. Set `MYSQL_VERSION` to repeat them on another release.
 The fuzzer is part of the repository, not of the installed package. From `packages/mysql-memory` in a checkout:
@@ -285,7 +285,12 @@ The seed replay uses the same root and byte decoding as SQL Faker's `bin/seeds.p
 
 Pull requests changing this package or its SQL dependencies run the complete canonical gate in GitHub Actions. To request another run, dispatch **Fuzz (mysql-memory)** with `canonical_seeds=true` and the desired `mysql_version`. That mode runs only the canonical gate and uploads the per-input observations, coverage, summary and console log, including when the gate fails.
 
-One comparison contract handles a measured nondeterministic field: MySQL 5.6 and 5.7 can report OS errno 2 or 11 for the same missing shared library. The harness accepts those two values only when SQL error 1126, SQLSTATE HY000 and the complete missing-file loader message match. The library name, path, warnings, result sets and fixture table contents still compare exactly. Such comparisons record `missing-library-os-errno-2-or-11` in the input report's `contracts` list. Other unstable reference observations remain failures of the canonical seed gate.
+Two bounded comparison contracts handle measured nondeterministic fields:
+
+- MySQL 5.6 and 5.7 can report OS errno 2 or 11 for the same missing shared library. The harness accepts those two values only when SQL error 1126, SQLSTATE HY000 and the complete missing-file loader message match. The library name, path, warnings, result sets and fixture table contents still compare exactly. The report records `missing-library-os-errno-2-or-11`.
+- Plain `SHOW TABLE STATUS` on MySQL 8.0 and later reports each server's actual commit clock, independently of `SET timestamp`. The harness samples `SYSDATE()` immediately before and after each fixture table's INSERT on each server. Each `Update_time` must be a valid datetime inside that table's own sampled interval. Only these validated instants are interchangeable; NULL, the pinned statement clock and out-of-range times fail. Every other result field, metadata, warnings and fixture contents remain exact. This applies only to the plain statement, with no predicates or additional statements, and records `table-update-time-within-fixture-insert-interval`.
+
+Applied contracts appear in the input report's `contracts` list. Other unstable reference observations remain failures of the canonical seed gate.
 
 | Variable | Meaning |
 |----------|---------|

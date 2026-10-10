@@ -12,7 +12,7 @@ use PDOException;
  * Runs one statement on a MySQL server and on mysql-memory, from the same fixture, and requires every observation to be equal.
  *
  * The statement runs twice on the MySQL server, each time on a fresh database; when the two
- * observations differ after LibraryErrors validates its bounded OS-errno contract, the statement is volatile (it reads the clock, a random number, or a
+ * observations differ after the bounded LibraryErrors and TableTimes contracts, the statement is volatile (it reads the clock, a random number, or a
  * server identity) and is not compared. Otherwise the observation of mysql-memory must equal it:
  * the result columns and rows, or the error, the warnings, and the rows of every table after.
  */
@@ -94,7 +94,9 @@ final class Differential
         $this->baseline?->restore($guard, true);
         $library = new LibraryErrors();
         $normalized = $library->comparable($expected, $this->version);
-        $contracts = $normalized === $expected ? [] : ['missing-library-os-errno-2-or-11'];
+        $clockContracts = $expected['contracts'] ?? null;
+        $contracts = is_array($clockContracts) ? array_values(array_filter($clockContracts, 'is_string')) : [];
+        $contracts = [...$contracts, ...($normalized === $expected ? [] : ['missing-library-os-errno-2-or-11'])];
         $expected = $normalized;
         $again = $library->comparable($again, $this->version);
         if ($expected !== $again) {
@@ -219,7 +221,8 @@ final class Differential
      */
     public function run(string $dsn, string $user, string $password, string $sql): array
     {
-        $pdo = $this->connect($dsn, $user, $password);
+        $clock = TableTimes::handles($sql, $this->version) ? new TableTimes() : null;
+        $pdo = $this->connect($dsn, $user, $password, $clock);
         $observer = new Observer();
         $ordered = preg_match('/\border\s+by\b/i', $sql) === 1;
         $observation = $observer->observe($pdo, $sql, $ordered);
@@ -230,13 +233,13 @@ final class Differential
         $pdo = null;
         gc_collect_cycles();
 
-        return $observation;
+        return $clock?->comparable($observation) ?? $observation;
     }
 
     /**
      * Connects to a server and prepares the fixture database, writable again if a statement made it read-only.
      */
-    public function connect(string $dsn, string $user, string $password): PDO
+    public function connect(string $dsn, string $user, string $password, ?TableTimes $clock = null): PDO
     {
         try {
             $foundRows = class_exists(\Pdo\Mysql::class) ? \Pdo\Mysql::ATTR_FOUND_ROWS : PDO::MYSQL_ATTR_FOUND_ROWS;
@@ -248,7 +251,11 @@ final class Differential
             $pdo->exec('CREATE DATABASE `' . self::DATABASE . '`');
             $pdo->exec('USE `' . self::DATABASE . '`');
             foreach ((new Fixture())->statements() as $statement) {
-                $pdo->exec($statement);
+                if ($clock === null) {
+                    $pdo->exec($statement);
+                } else {
+                    $clock->execute($pdo, $statement);
+                }
             }
         } catch (PDOException $failure) {
             fwrite(STDERR, "Setup failed on {$dsn}: {$failure->getMessage()}\n");
