@@ -32,6 +32,13 @@ final class Context
     public readonly WeakMap $kept;
 
     /**
+     * Semantic nodes whose preparation diagnostics have been emitted.
+     *
+     * @var WeakMap<object, true>
+     */
+    public readonly WeakMap $reported;
+
+    /**
      * The number of the row the statement is sending, counted from 1, which warnings about a JSON value read as another type name.
      */
     public int $row = 1;
@@ -57,6 +64,7 @@ final class Context
         public bool $strict = false,
     ) {
         $this->kept = new WeakMap();
+        $this->reported = new WeakMap();
     }
 
     /**

@@ -95,7 +95,6 @@ final class TableRebuild
             }
         }
         $definition = $command->primaryNotNull($definitions->table($create, $operation->declarations()[0], $schemaName));
-        (new Constraint\IndexOptions())->warn($definition, $this->context);
         foreach ($warn ? $command->duplicates($definition->keys, $definition->engine) : [] as $duplicate) {
             $this->context->warning(SchemaError::DuplicateIndex, $duplicate->name, $schemaName . '.' . $definition->name);
         }

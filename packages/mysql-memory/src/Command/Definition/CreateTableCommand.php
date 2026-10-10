@@ -97,7 +97,6 @@ final class CreateTableCommand implements Command
      */
     public function store(TableDefinition $definition, Session $session, Context $context, bool $started): void
     {
-        (new Constraint\IndexOptions())->warn($definition, $context);
         foreach ($this->duplicates($definition->keys, $definition->engine) as $duplicate) {
             $context->warning(SchemaError::DuplicateIndex, $duplicate->name, $definition->schema . '.' . $definition->name);
         }

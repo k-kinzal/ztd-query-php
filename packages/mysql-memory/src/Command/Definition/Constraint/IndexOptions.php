@@ -4,15 +4,19 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command\Definition\Constraint;
 
+use MySqlMemory\Command\Definition\StorageOptions;
 use MySqlMemory\Command\Show\Keys;
 use MySqlMemory\Dictionary\TableDefinition;
 use MySqlMemory\Error\Family\SchemaError;
 use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Session\Session;
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Table\CreateTable;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexAlgorithm;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\IndexDefinition;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexUsing;
 use SqlSemantics\Platform\MySql\Statement\Table\Key\Option\IndexVisibility;
+use SqlSemantics\Statement\Statement;
 
 /**
  * Retains index options through definition changes and checks primary keys.
@@ -47,14 +51,41 @@ final class IndexOptions
      * Records the modern server note when an unsupported structure falls back.
      * MySQL 5.6 and 5.7 silently replace HASH on disk-backed engines.
      */
-    public function warn(TableDefinition $table, Context $context): void
+    public function warn(IndexDefinition $index, string $engine, Context $context): void
     {
+        $reported = $context->reported;
+        if (isset($reported[$index])) {
+            return;
+        }
+        $reported[$index] = true;
         if (in_array($context->modes->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
             return;
         }
-        foreach ($table->statement->elements ?? [] as $element) {
-            if ($element instanceof IndexDefinition && $this->algorithm($element, 'MEMORY') === IndexAlgorithm::Hash && $this->algorithm($element, $table->engine) === null) {
-                $context->note(SchemaError::UnsupportedIndexAlgorithm, 'HASH');
+        if ($this->algorithm($index, 'MEMORY') === IndexAlgorithm::Hash && $this->algorithm($index, $engine) === null) {
+            $context->note(SchemaError::UnsupportedIndexAlgorithm, 'HASH');
+        }
+    }
+
+    /**
+     * Reports CREATE TABLE index substitutions before column binding failures.
+     * Reusing the same prepared node never repeats its diagnostic.
+     */
+    public function prepare(Statement $statement, Session $session, Context $context): void
+    {
+        if (!$statement instanceof CreateTable) {
+            return;
+        }
+        $schemaName = $statement->name->schema->value ?? $session->variables->database;
+        $name = $statement->name->name->value;
+        $schema = $session->instance->dictionary->schema($schemaName);
+        $existing = $statement->temporary() ? $session->temporaries->table($schemaName, $name) : ($schema?->table($name) ?? $schema?->views[$name] ?? null);
+        if ($existing !== null) {
+            return;
+        }
+        $engine = (new StorageOptions())->engine($statement, $session->variables);
+        foreach ($statement->elements as $element) {
+            if ($element instanceof IndexDefinition) {
+                $this->warn($element, $engine, $context);
             }
         }
     }

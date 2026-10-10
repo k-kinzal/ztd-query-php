@@ -112,6 +112,7 @@ final class Definitions
                 $keys[] = $key;
             }
         }
+        (new Constraint\SpatialKeys($this->planner))->engine($columns, $engine);
         $expressions = new TableExpressions($this->planner, $create);
         $expressions->forbidden();
         $constraints = new Constraints($this->planner, $create, $this->checkBase, $this->foreignBase, $this->keptForeign);
@@ -311,13 +312,7 @@ final class Definitions
      */
     public function onUpdate(array $attributes): bool
     {
-        foreach ($attributes as $attribute) {
-            if ($attribute instanceof OnUpdate) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_filter($attributes, static fn (object $attribute): bool => $attribute instanceof OnUpdate) !== [];
     }
 
     /**
@@ -353,6 +348,7 @@ final class Definitions
      */
     public function key(IndexDefinition $index, array $columns, string $engine = 'InnoDB'): Key
     {
+        (new Constraint\IndexOptions())->warn($index, $engine, $this->planner->compiler->connection->context);
         $positions = [];
         $prefixes = [];
         $descending = [];
@@ -381,7 +377,9 @@ final class Definitions
             IndexKind::Index => KeyKind::Index,
         };
 
-        return new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes, $descending, visible: (new Constraint\IndexOptions())->visible($index), algorithm: (new Constraint\IndexOptions())->algorithm($index, $engine, $this->planner->settings->legacy()));
+        $key = new Key($kind === KeyKind::Primary ? 'PRIMARY' : ($index->name?->column->value ?? $index->constraint?->name?->column->value ?? ''), $kind, $positions, $prefixes, $descending, visible: (new Constraint\IndexOptions())->visible($index), algorithm: (new Constraint\IndexOptions())->algorithm($index, $engine, $this->planner->settings->legacy()));
+
+        return (new Constraint\SpatialKeys($this->planner))->resolve($index, $key, $columns, $engine);
     }
 
     /**

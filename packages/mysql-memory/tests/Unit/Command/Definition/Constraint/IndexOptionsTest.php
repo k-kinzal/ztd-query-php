@@ -42,6 +42,21 @@ final class IndexOptionsTest extends TestCase
         self::assertSame([['Note', '3502', 'This storage engine does not support the HASH index algorithm, storage engine default was used instead.']], $result->rows);
     }
 
+    public function testPrepareReportsOnceBeforeUnresolvedColumnsAreRejected(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d');
+        $operation = $session->analyze('CREATE TABLE t(a INT,KEY k(missing) USING HASH)');
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $options = new IndexOptions();
+        $options->prepare($operation->statement, $session, $context);
+        $options->prepare($operation->statement, $session, $context);
+        $result = $session->query('SHOW WARNINGS')[0];
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+
+        self::assertSame([['Note', '3502', 'This storage engine does not support the HASH index algorithm, storage engine default was used instead.']], $result->rows);
+    }
+
     public function testVisibleUsesTheLastWrittenOption(): void
     {
         $rules = new IndexOptions();

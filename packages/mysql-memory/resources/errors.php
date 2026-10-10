@@ -11,6 +11,14 @@
 declare(strict_types=1);
 
 return [
+    1283 => ['HY000', "Column '%s' cannot be part of FULLTEXT index"],
+    1464 => ['HY000', "The used table type doesn't support SPATIAL indexes"],
+    3674 => ['HY000', "The spatial index on column '%s' will not be used by the query optimizer since the column does not have an SRID attribute. Consider adding an SRID attribute to the column."],
+    1687 => ['42000', 'A SPATIAL index may only contain a geometrical type column'],
+    3728 => ['HY000', "Spatial indexes can't be primary or unique indexes."],
+    3729 => ['HY000', 'The index type %s is not supported for spatial indexes.'],
+    1089 => ['HY000', "Incorrect prefix key; the used key part isn't a string, the used length is longer than the key part, or the storage engine doesn't support unique prefix keys"],
+    1252 => ['42000', 'All parts of a SPATIAL index must be NOT NULL'],
     13 => ['HY000', "Can't get stat of '%s' (OS errno %d - %s)"],
     1007 => ['HY000', "Can't create database '%s'; database exists"],
     1008 => ['HY000', "Can't drop database '%s'; database doesn't exist"],
