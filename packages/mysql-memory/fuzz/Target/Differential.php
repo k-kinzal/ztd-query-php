@@ -80,6 +80,7 @@ final class Differential
 
     /**
      * Compares one statement, distinguishing a skipped volatile observation from an equal one.
+     * Repairs the emulator after observing it too, so later clients cannot inherit expired credentials or server restrictions.
      */
     public function compare(string $sql): Comparison
     {
@@ -104,7 +105,12 @@ final class Differential
         }
         $this->repair($this->memoryGuard());
         $this->baseline?->restore($this->memoryGuard(), false);
-        $actual = $library->comparable($this->run($this->memory, 'root', '', $sql), $this->version);
+        try {
+            $actual = $library->comparable($this->run($this->memory, 'root', '', $sql), $this->version);
+        } finally {
+            $this->repair($this->memoryGuard());
+            $this->baseline?->restore($this->memoryGuard(), false);
+        }
         if ($expected === $actual) {
             return new Comparison(false, contracts: $contracts);
         }

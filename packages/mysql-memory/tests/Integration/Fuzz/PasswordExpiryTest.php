@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Fuzz;
 
 use Fuzz\Target\Servers;
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
@@ -35,5 +36,21 @@ final class PasswordExpiryTest extends TestCase
         $comparison = $target->compare($sql);
         self::assertFalse($comparison->volatile);
         self::assertNull($comparison->difference, (string) $comparison->difference);
+    }
+
+    public function testComparisonRepairsExpiredCredentialsBeforeAnotherClientConnects(): void
+    {
+        [$target] = Servers::shared();
+        $comparison = $target->compare('ALTER USER CURRENT_USER PASSWORD EXPIRE');
+        self::assertFalse($comparison->volatile);
+        self::assertNull($comparison->difference, (string) $comparison->difference);
+        $native = new PDO($target->native, $target->nativeUser, $target->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $memory = new PDO($target->memory, 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $expected = $native->query('SELECT 1');
+        $actual = $memory->query('SELECT 1');
+        self::assertNotFalse($expected);
+        self::assertNotFalse($actual);
+
+        self::assertSame($expected->fetchAll(PDO::FETCH_NUM), $actual->fetchAll(PDO::FETCH_NUM));
     }
 }
