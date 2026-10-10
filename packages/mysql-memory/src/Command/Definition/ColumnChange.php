@@ -40,8 +40,9 @@ final class ColumnChange
     /**
      * @param TableLayout $layout The layout the actions change
      * @param string $table The name of the table, for messages
+     * @param \SqlSemantics\Contract\GrammarRelease $release The release whose restrictions apply to default changes
      */
-    public function __construct(public readonly TableLayout $layout, public readonly string $table)
+    public function __construct(public readonly TableLayout $layout, public readonly string $table, public readonly \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847)
     {
     }
 
@@ -112,6 +113,10 @@ final class ColumnChange
         $layout = $this->layout;
         $index = $this->existing($command->column->column->value);
         [$element, $origin] = $layout->columns[$index];
+        $domain = (new \MySqlMemory\Typing\Declared(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), $this->release))->domain($element->specification->dataType());
+        if ($this->release === \SqlSemantics\Contract\GrammarRelease::MySql5651 && $domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Blob) {
+            throw new SqlError(\MySqlMemory\Error\Family\SchemaError::BlobCantHaveDefault, "BLOB/TEXT column '" . $element->name->column->value . "' can't have a default value");
+        }
         $attributes = array_values(array_filter($this->attributes($element), static fn (ColumnAttribute $attribute): bool => !$attribute instanceof DefaultLiteral && !$attribute instanceof DefaultExpression));
         if ($command->value !== null) {
             $attributes[] = $command->expression ? new DefaultExpression($command->value) : new DefaultLiteral($command->value);

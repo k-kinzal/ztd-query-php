@@ -73,6 +73,8 @@ use SqlSemantics\Platform\MySql\Dialect;
 
 Five `sql_mode` settings change tokenization: `ANSI_QUOTES`, `PIPES_AS_CONCAT`, `HIGH_NOT_PRECEDENCE`, `NO_BACKSLASH_ESCAPES` and `IGNORE_SPACE`. Pass a `Mode` as the third argument of `Semantics`. `Mode::fromString()` reads a value as `SELECT @@SESSION.sql_mode` reports it: a combination mode such as `ANSI` turns on the settings it includes, and every other mode name is accepted and not recorded, because it changes no token.
 
+Also pass `Statement\Type\Resolved\Settings` with `strict: false` when neither `STRICT_TRANS_TABLES` nor `STRICT_ALL_TABLES` is enabled. This changes the reported nullability of string calls such as `HEX`, `CONCAT` and `LOWER`, even for constant non-null arguments. `Settings::defaults()` follows the release's default strict mode; its MySQL 5.6 settings start with strict mode disabled.
+
 ```php
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;

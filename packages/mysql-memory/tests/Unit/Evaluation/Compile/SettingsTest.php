@@ -31,6 +31,13 @@ final class SettingsTest extends TestCase
         self::assertSame($resolution, (new Settings(Collation::known('utf8mb4_0900_ai_ci'), new SqlModes([]), 4, '', '8.4.7', $resolution))->resolution());
     }
 
+    public function testResolutionRetainsStrictModeWhenNoSnapshotWasSupplied(): void
+    {
+        $resolution = (new Settings(Collation::known('latin1_swedish_ci'), new SqlModes(['STRICT_TRANS_TABLES'])))->resolution();
+
+        self::assertTrue($resolution->strict);
+    }
+
     public function testReleaseAnswersTheReleaseOfTheVersion(): void
     {
         self::assertSame(GrammarRelease::MySql910, (new Settings(Collation::known('utf8mb4_0900_ai_ci'), new SqlModes([]), 4, '', '9.1.0'))->release());

@@ -30,9 +30,10 @@ use SqlSemantics\Statement\Type\TypeFact;
 final class Results
 {
     /**
-     * The string functions MySQL 5.6 answers as NULL exactly when an argument can be, by upper-case name, with the index of the count that must be constant, if any (verified on a live 5.6.51 server).
+     * The string functions that propagate argument nullability without strict mode, by upper-case name,
+     * with the index of the count that must be constant, if any. Verified on MySQL 5.6.51 and 8.0–9.1.
      */
-    public const PROPAGATED_56 = [
+    public const PROPAGATED = [
         'CONCAT' => null, 'CONCAT_WS' => null, 'LOWER' => null, 'LCASE' => null, 'UPPER' => null, 'UCASE' => null, 'QUOTE' => null,
         'REVERSE' => null, 'EXPORT_SET' => null, 'LTRIM' => null, 'RTRIM' => null, 'TRIM' => null, 'REPLACE' => null, 'INSERT' => null,
         'SUBSTRING' => null, 'SUBSTR' => null, 'MID' => null, 'LEFT' => null, 'RIGHT' => null, 'HEX' => null, 'SUBSTRING_INDEX' => null,
@@ -96,9 +97,9 @@ final class Results
     }
 
     /**
-     * Answers the NULL fact MySQL 5.6 gives a string function of PROPAGATED_56, or null for another function or release.
+     * Answers the NULL fact of a string function of PROPAGATED, or null for another function.
      *
-     * The result is NULL exactly when an argument can be; a function whose count is not a literal
+     * Strict mode makes these calls nullable. Otherwise the result is NULL exactly when an argument can be; a function whose count is not a literal
      * can also be NULL, as its result could be longer than max_allowed_packet. The server takes any
      * constant count, which a literal approximates here (verified on a live 5.6.51 server).
      *
@@ -108,10 +109,13 @@ final class Results
     public function propagated(string $name, array $arguments, array $facts, Derivation $derivation): ?Nullability
     {
         $name = strtoupper($name);
-        if ($derivation->context->profile->grammar !== GrammarRelease::MySql5651 || !array_key_exists($name, self::PROPAGATED_56)) {
+        if (!array_key_exists($name, self::PROPAGATED)) {
             return null;
         }
-        $count = self::PROPAGATED_56[$name];
+        if (Settings::of($derivation->context)->strict) {
+            return Nullability::Nullable;
+        }
+        $count = self::PROPAGATED[$name];
         if ($count !== null && !($arguments[$count] ?? null) instanceof NumberLiteral && !($arguments[$count] ?? null) instanceof StringLiteral) {
             return Nullability::Nullable;
         }

@@ -138,7 +138,7 @@ final class TableChange
      */
     public function __construct(public readonly TableLayout $layout, public readonly string $table, public readonly string $database, public readonly GrammarRelease $release)
     {
-        $this->columns = new ColumnChange($layout, $table);
+        $this->columns = new ColumnChange($layout, $table, $release);
     }
 
     /**

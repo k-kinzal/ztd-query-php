@@ -66,6 +66,7 @@ final class Settings implements Session
      * @param bool $derivedMerge Whether eligible derived queries can merge into their enclosing block
      * @param Locale|null $timeNames The locale of the names of months and days (lc_time_names); en_US when null
      * @param string $blockEncryptionMode The mode of AES_ENCRYPT and AES_DECRYPT (block_encryption_mode), whose stream modes do not pad
+     * @param bool $strict Whether STRICT_TRANS_TABLES or STRICT_ALL_TABLES is enabled; string calls are reported as nullable in either mode
      */
     public function __construct(
         public readonly Collation $connection,
@@ -82,6 +83,7 @@ final class Settings implements Session
         public readonly ?Locale $timeNames = null,
         public readonly string $blockEncryptionMode = 'aes-128-ecb',
         public readonly bool $derivedMerge = true,
+        public readonly bool $strict = true,
     ) {
         $this->program = Check::listOf($program, ProgramRow::class, 'A running stored program shows rows of names.');
         $routines = [];
@@ -108,7 +110,7 @@ final class Settings implements Session
     {
         $old = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
 
-        return new self(Charset::known($old ? 'latin1' : 'utf8mb4')->defaultCollation($release));
+        return new self(Charset::known($old ? 'latin1' : 'utf8mb4')->defaultCollation($release), strict: $release !== GrammarRelease::MySql5651);
     }
 
     /**

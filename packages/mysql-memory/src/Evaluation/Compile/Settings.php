@@ -39,7 +39,7 @@ final class Settings
      */
     public function resolution(): Resolution
     {
-        return $this->resolution ?? new Resolution($this->connectionCollation, $this->divPrecisionIncrement);
+        return $this->resolution ?? new Resolution($this->connectionCollation, $this->divPrecisionIncrement, strict: $this->modes->strict());
     }
 
     /**

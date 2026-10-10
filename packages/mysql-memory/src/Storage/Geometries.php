@@ -9,6 +9,7 @@ use MySqlMemory\Error\Family\DataError;
 use MySqlMemory\Value\Spatial\Wkb;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 
 /**
  * Stores geometry bytes under the subtype and SRID restrictions of a resolved column.
@@ -21,10 +22,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Kind\SpatialKind;
 final class Geometries
 {
     /**
-     * Checks a non-null value and preserves the geometry's stored bytes.
+     * Checks a value and preserves the geometry's stored bytes.
      */
-    public function value(int|float|string $value, ColumnDefinition $column, GrammarRelease $release = GrammarRelease::MySql847): string
+    public function value(int|float|string|null $value, ColumnDefinition $column, GrammarRelease $release = GrammarRelease::MySql847): ?string
     {
+        if ($value === null) {
+            if (!$column->nullable() && !in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+                throw DataError::GeometryCannotBeNull->error($column->name);
+            }
+
+            return null;
+        }
         if (!is_string($value)) {
             throw DataError::InvalidGeometryValue->error();
         }
@@ -47,5 +55,22 @@ final class Geometries
         }
 
         return $value;
+    }
+
+    /**
+     * Refuses an absent required geometry. An explicit DEFAULT attempts to store invalid bytes;
+     * omitted values have no implicit geometry default after MySQL 5.6.
+     */
+    public function default(ColumnDefinition $column, GrammarRelease $release, bool $explicit): void
+    {
+        if ($column->domain->field !== Field::Geometry || $column->nullable()) {
+            return;
+        }
+        if ($explicit) {
+            throw DataError::InvalidGeometryValue->error();
+        }
+        if ($release !== GrammarRelease::MySql5651) {
+            throw DataError::NoDefaultForField->error($column->name);
+        }
     }
 }

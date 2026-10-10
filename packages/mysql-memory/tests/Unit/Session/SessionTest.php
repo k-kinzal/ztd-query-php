@@ -246,6 +246,14 @@ final class SessionTest extends TestCase
         self::assertTrue($session->resolution()->derivedMerge);
     }
 
+    public function testResolutionTracksStrictMode(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        self::assertFalse($session->resolution()->strict);
+        $session->query("SET sql_mode='STRICT_ALL_TABLES'");
+        self::assertTrue($session->resolution()->strict);
+    }
+
     public function testResolutionNamesTheCharacterSetStatementsAreReadIn(): void
     {
         $session = (new Instance())->connect();

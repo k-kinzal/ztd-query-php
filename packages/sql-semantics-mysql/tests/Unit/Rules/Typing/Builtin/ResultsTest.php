@@ -25,6 +25,25 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class ResultsTest extends TestCase
 {
+    public function testPropagatedReportsModernNonStrictStringCallsFromTheirArguments(): void
+    {
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(Collation::known('utf8mb4_0900_ai_ci'), strict: false);
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([], true, null, $settings));
+        $fact = new ScalarFact(new Known(Domain::integer()), Nullability::NotNull);
+
+        self::assertSame(Nullability::NotNull, (new Results())->propagated('HEX', [new NumberLiteral('1')], [$fact], $derivation));
+    }
+
+    public function testPropagatedReportsLegacyStringCallsAsNullableUnderStrictMode(): void
+    {
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(Collation::known('latin1_swedish_ci'), strict: true);
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([], true, null, $settings));
+        $fact = new ScalarFact(new Known(Domain::integer()), Nullability::NotNull);
+
+        self::assertSame(Nullability::Nullable, (new Results())->propagated('HEX', [new NumberLiteral('1')], [$fact], $derivation));
+        self::assertSame(Nullability::Nullable, (new Results())->propagated('LOWER', [new NumberLiteral('1')], [$fact], $derivation));
+    }
+
     public function testRefineMakesLegacyLongConcatenationsNullable(): void
     {
         $query = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("SELECT CONCAT(REPEAT('x',16777216),'')");

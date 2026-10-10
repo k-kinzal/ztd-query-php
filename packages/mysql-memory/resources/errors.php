@@ -582,4 +582,5 @@ return [
     1812 => ['HY000', 'Tablespace is missing for table %s.'],
     1416 => ['22003', 'Cannot get geometry object from data you send to the GEOMETRY field'],
     3643 => ['HY000', "The SRID of the geometry does not match the SRID of the column '%s'. The SRID of the geometry is %d, but the SRID of the column is %d. Consider changing the SRID of the geometry or the SRID property of the column."],
+    3673 => ['23000', "Column '%s' cannot be null"],
 ];

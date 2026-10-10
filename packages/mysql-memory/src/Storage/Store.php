@@ -51,12 +51,12 @@ final class Store
      */
     public function value(int|float|string|null $value, Domain $from, ColumnDefinition $column): int|float|string|null
     {
-        if ($value === null) {
-            return null;
-        }
         $to = $column->domain;
         if ($to->field === Field::Geometry) {
             return (new Geometries())->value($value, $column, $this->context->modes->release);
+        }
+        if ($value === null) {
+            return null;
         }
 
         return match ($to->kind) {

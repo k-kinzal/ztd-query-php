@@ -23,6 +23,8 @@ final class SettingsTest extends TestCase
         self::assertSame('utf8mb4_0900_ai_ci', Settings::defaults(GrammarRelease::MySql847)->connection->name);
         self::assertSame('latin1_swedish_ci', Settings::defaults(GrammarRelease::MySql5744)->connection->name);
         self::assertSame(4, Settings::defaults(GrammarRelease::MySql847)->divPrecisionIncrement);
+        self::assertTrue(Settings::defaults(GrammarRelease::MySql847)->strict);
+        self::assertFalse(Settings::defaults(GrammarRelease::MySql5651)->strict);
     }
 
     public function testOfReadsTheSessionOfAContext(): void

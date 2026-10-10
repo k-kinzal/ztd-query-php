@@ -309,7 +309,12 @@ final class ChangeCommand implements Command
         if ($has || $column->autoIncrement) {
             return $value;
         }
+        (new \MySqlMemory\Storage\Geometries())->default($column, $writer->context->modes->release, true);
         $store->adjust(DataError::NoDefaultForField, $column->name);
+        if ($column->domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Geometry) {
+            $error = DataError::InvalidGeometryValue;
+            throw new \MySqlMemory\Error\SqlError($error, $error->message(), following: [[$error->number(), $error->message()]]);
+        }
 
         return $column->nullable() ? null : $writer->implicit($column);
     }

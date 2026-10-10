@@ -233,6 +233,7 @@ final class Rows
         if ($has || $column->autoIncrement) {
             return $value;
         }
+        (new \MySqlMemory\Storage\Geometries())->default($column, $this->context->modes->release, $explicit);
         if ($explicit || !isset($this->undefaulted[$position])) {
             $store->adjust(DataError::NoDefaultForField, $column->name);
         }
