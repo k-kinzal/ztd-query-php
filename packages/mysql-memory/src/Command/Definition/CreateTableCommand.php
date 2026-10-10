@@ -51,6 +51,7 @@ final class CreateTableCommand implements Command
     {
         $create = $operation->statement;
         assert($create instanceof CreateTable);
+        $started = (new \MySqlMemory\Session\Access\TableCreation())->requested($create);
         if ($create->temporaryWords === 0) {
             $session->transaction->commit();
         }
@@ -68,10 +69,13 @@ final class CreateTableCommand implements Command
                 throw SchemaError::TableExists->error($name);
             }
             $context->note(SchemaError::TableExists, $name);
+            if ($started) {
+                $session->transaction->creation->begin();
+            }
 
             return new Completion(0, 0, $context->diagnostics->count());
         }
-        (new StorageOptions())->check($create, $session, $context);
+        (new StorageOptions())->check($create, $session, $context, $started);
         if ($create->temporaryWords > 0 && $session->transaction->open) {
             $session->transaction->temporaries['created'] = true;
         }
@@ -83,12 +87,25 @@ final class CreateTableCommand implements Command
         if (!$definition->temporary) {
             Constraints::unique($definition, $schema);
         }
-        foreach ($this->duplicates($definition->keys) as $duplicate) {
-            $context->warning(SchemaError::DuplicateIndex, $duplicate->name, $schemaName . '.' . $name);
-        }
-        $session->instance->dictionary->store(new StoredTable($this->primaryNotNull($definition), new Heap()));
+        $this->store($definition, $session, $context, $started);
 
         return new Completion(0, 0, $context->diagnostics->count());
+    }
+
+    /**
+     * Stores a prepared definition immediately, or holds it until COMMIT when START TRANSACTION was requested.
+     */
+    public function store(TableDefinition $definition, Session $session, Context $context, bool $started): void
+    {
+        foreach ($this->duplicates($definition->keys) as $duplicate) {
+            $context->warning(SchemaError::DuplicateIndex, $duplicate->name, $definition->schema . '.' . $definition->name);
+        }
+        $table = new StoredTable($this->primaryNotNull($definition), new Heap());
+        if ($started) {
+            $session->transaction->creation->begin($table);
+        } else {
+            $session->instance->dictionary->store($table);
+        }
     }
 
     /**

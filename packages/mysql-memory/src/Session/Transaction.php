@@ -65,6 +65,11 @@ final class Transaction
     public readonly Savepoints $savepoints;
 
     /**
+     * The unpublished table and command restriction of CREATE TABLE ... START TRANSACTION.
+     */
+    public readonly Transaction\Creation $creation;
+
+    /**
      * The statements running and the changes each restores when it fails.
      */
     public readonly Statements $statements;
@@ -154,6 +159,7 @@ final class Transaction
     public function __construct(public readonly Dictionary $dictionary, public readonly int $id = 0, public readonly ?Variables $variables = null, public readonly Transactions $system = new Transactions(), public readonly ?Diagnostics $diagnostics = null)
     {
         $this->savepoints = new Savepoints($this);
+        $this->creation = new Transaction\Creation($this);
         $this->statements = new Statements($this);
         $this->access = new RowAccess($this);
         $this->engineMix = new EngineMix($this);
@@ -286,6 +292,7 @@ final class Transaction
     public function restore(): void
     {
         $this->statements->undoFrom(0, false);
+        $this->creation->rollback();
     }
 
     /**
@@ -296,6 +303,7 @@ final class Transaction
      */
     public function end(): void
     {
+        $this->creation->commit();
         if ($this->changed !== []) {
             $this->system->commit($this);
         }

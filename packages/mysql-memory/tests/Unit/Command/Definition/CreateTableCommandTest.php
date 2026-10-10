@@ -109,6 +109,15 @@ final class CreateTableCommandTest extends TestCase
         $session->query('CREATE TABLE nope.t (a INT)');
     }
 
+    public function testStoreKeepsAStartedTableUntilCommit(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $session->query('CREATE TABLE d.t(a INT PRIMARY KEY) START TRANSACTION');
+        self::assertNull($session->instance->dictionary->table('d', 't'));
+        $session->query('COMMIT');
+        self::assertNotNull($session->instance->dictionary->table('d', 't'));
+    }
+
     public function testPrimaryNotNullMakesTheColumnsOfThePrimaryKeyNotNull(): void
     {
         $session = (new Instance())->connect();

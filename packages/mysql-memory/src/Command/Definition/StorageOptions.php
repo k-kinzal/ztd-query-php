@@ -60,11 +60,13 @@ final class StorageOptions
     /**
      * Checks the engine-specific options before the table is stored.
      *
+     * @param bool $engineResolved Whether early START TRANSACTION validation already reported engine selection warnings
+     *
      * @throws SqlError When an option is invalid or unsupported
      */
-    public function check(CreateTable $create, Session $session, Context $context): void
+    public function check(CreateTable $create, Session $session, Context $context, bool $engineResolved = false): void
     {
-        $engine = $this->engine($create, $session->variables, $context);
+        $engine = $this->engine($create, $session->variables, $engineResolved ? null : $context);
         $this->attributes($create, $engine);
         foreach ($create->options as $option) {
             if ($option instanceof TextOption && in_array($option->kind, [TextOptionKind::DataDirectory, TextOptionKind::IndexDirectory], true) && !str_starts_with($option->value->bytes(), '/')) {

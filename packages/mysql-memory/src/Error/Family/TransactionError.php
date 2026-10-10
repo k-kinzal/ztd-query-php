@@ -30,5 +30,8 @@ enum TransactionError: int implements ErrorCode
     case ReadOnlyTransaction = 1792;
     case ServerGone = 2006;
     case LockNowait = 3572;
+    case CreateTransactionRestricted = 3977;
+    case CreateTransactionForeignKey = 3978;
+    case CreateTransactionInvalid = 3979;
     case CombinedEngines = 6414;
 }

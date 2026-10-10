@@ -90,7 +90,7 @@ final class Execution
         } catch (SqlError $error) {
             throw (new Problem\Precision())->legacy($error, $session->settings()->release());
         }
-        (new Access\PasswordAccess())->check($operation->statement, $session);
+        $this->access($operation->statement, $context);
         $hints->report($session);
         foreach ($this->undeclared($operation) ? [] : $late as $warning) {
             $session->diagnostics->warning($warning instanceof Deprecation ? $warning->code() : 1105, $warning->message());
@@ -125,6 +125,18 @@ final class Execution
         $session->variables->rowCount = $last instanceof Completion ? $last->affectedRows : -1;
 
         return $reply;
+    }
+
+    /**
+     * Checks connection restrictions and table-creation options before resolving tables and columns.
+     *
+     * @throws SqlError When the connection or CREATE TABLE options prohibit the statement
+     */
+    public function access(\SqlSemantics\Statement\Statement $statement, Context $context): void
+    {
+        (new Access\PasswordAccess())->check($statement, $this->session);
+        (new Access\TableCreation())->check($statement, $this->session);
+        (new Access\TableCreation())->validate($statement, $this->session, $context);
     }
 
     /**

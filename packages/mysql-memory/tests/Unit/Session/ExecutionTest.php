@@ -15,6 +15,16 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ExecutionTest extends TestCase
 {
+    public function testAccessRejectsQueriesWhileTableCreationWaitsForCommit(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect();
+        $session->query('CREATE TABLE d.t(a INT) START TRANSACTION');
+
+        $this->expectException(\MySqlMemory\Error\SqlError::class);
+        $this->expectExceptionCode(3977);
+        $session->query('SELECT 1');
+    }
+
     public function testPerformRunsAnAnalyzedStatementAndSetsRowCount(): void
     {
         $session = (new Instance())->connect();
