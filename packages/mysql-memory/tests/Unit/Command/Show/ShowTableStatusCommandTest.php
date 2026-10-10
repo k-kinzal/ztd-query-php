@@ -7,6 +7,7 @@ namespace Tests\Unit\Command\Show;
 use MySqlMemory\Command\Show\Heading;
 use MySqlMemory\Command\Show\ShowTableStatusCommand;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -50,15 +51,16 @@ final class ShowTableStatusCommandTest extends TestCase
     public function testRowKeepsTheStatisticsItReadFirst(): void
     {
         $session = (new Instance())->connect();
-        $session->query('CREATE DATABASE d; USE d; CREATE TABLE s (a INT PRIMARY KEY AUTO_INCREMENT, b INT); INSERT INTO s (b) VALUES (1),(2),(3)');
+        $session->query('CREATE DATABASE d; USE d; SET timestamp=1700000000; CREATE TABLE s (a INT PRIMARY KEY AUTO_INCREMENT, b INT); INSERT INTO s (b) VALUES (1),(2),(3)');
         $table = $session->instance->dictionary->table('d', 's');
 
         self::assertNotNull($table);
-        $first = (new ShowTableStatusCommand())->row($table, '2024-01-02 03:04:05');
+        $first = (new ShowTableStatusCommand())->row($table, new Context($session->modes(), $session->diagnostics, $session->variables, 1700000000.0));
         $session->query('INSERT INTO s (b) VALUES (4)');
-        $second = (new ShowTableStatusCommand())->row($table, '2024-01-02 03:04:06');
+        $second = (new ShowTableStatusCommand())->row($table, new Context($session->modes(), $session->diagnostics, $session->variables, 1700000001.0));
 
-        self::assertSame([3, 5461, 16384, 0, 0, 0, 4, '2024-01-02 03:04:05', '2024-01-02 03:04:05', null], array_slice($first, 4, 10));
+        self::assertSame([3, 5461, 16384, 0, 0, 0, 4, '2023-11-14 22:13:20'], array_slice($first, 4, 8));
+        self::assertIsString($first[12]);
         self::assertSame($first, $second);
     }
 
@@ -69,7 +71,7 @@ final class ShowTableStatusCommandTest extends TestCase
         $table = $session->instance->dictionary->table('d', 's');
 
         self::assertNotNull($table);
-        self::assertSame([0, 0, 16384, 0, 0, 0, 1, 'now', null], (new ShowTableStatusCommand())->statistics($table, true, 'now'));
+        self::assertSame([0, 0, 16384, 0, 0, 0, 1, null], (new ShowTableStatusCommand())->statistics($table, true));
     }
 
     public function testHeadingsDifferForADerivedTable(): void

@@ -96,6 +96,11 @@ final class TableChange
     public bool $copies = false;
 
     /**
+     * Whether a table option explicitly requests a new storage layout, even when its value is unchanged.
+     */
+    public bool $storageLayout = false;
+
+    /**
      * Whether an action adds a foreign key, which the server copies the table for while foreign_key_checks is on.
      */
     public bool $referencing = false;
@@ -378,6 +383,7 @@ final class TableChange
     {
         $kept = $this->layout->options;
         foreach ($options as $option) {
+            $this->storageLayout = $this->storageLayout || $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\EngineOption || $option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\RowFormatOption;
             $kept = array_values(array_filter($kept, fn (TableOption $existing): bool => $this->kind($existing) !== $this->kind($option)));
             $kept[] = $option;
         }

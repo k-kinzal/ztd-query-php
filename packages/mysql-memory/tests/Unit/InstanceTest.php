@@ -60,6 +60,20 @@ final class InstanceTest extends TestCase
         self::assertSame([[['1']], [], [['100']]], [$rows[0]->rows, $rows[1]->rows, $rows[2]->rows]);
     }
 
+    public function testRestartClearsUpdateTimesWhilePreservingCreation(): void
+    {
+        $instance = new Instance();
+        $instance->connect()->query('CREATE DATABASE d; USE d; SET timestamp=1700000000; CREATE TABLE t(a INT); INSERT INTO t VALUES(1); SHOW TABLE STATUS');
+        $table = $instance->dictionary->table('d', 't');
+
+        self::assertNotNull($table);
+        self::assertNotNull($table->updated);
+        $instance->restart();
+        self::assertSame(1700000000, $table->created);
+        self::assertNull($table->updated);
+        self::assertSame([], $table->statistics);
+    }
+
     public function testRestartRefusesAnInstanceWithoutASupervisor(): void
     {
         $instance = new Instance(supervised: false);

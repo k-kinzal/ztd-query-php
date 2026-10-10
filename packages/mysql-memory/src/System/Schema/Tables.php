@@ -41,7 +41,7 @@ final class Tables implements SystemRows
             foreach (Listed::of($schema, $reading) as $name => $object) {
                 $row = ['TABLE_CATALOG' => 'def', 'TABLE_SCHEMA' => $schema->name, 'TABLE_NAME' => $name];
                 $rows[] = $row + match (true) {
-                    $object instanceof StoredTable => $this->table($object, $now, $reading),
+                    $object instanceof StoredTable => $this->table($object, $reading),
                     $object instanceof View => $this->view($now, $reading),
                     $object instanceof SystemTable => $this->system($object, $started, $reading),
                 };
@@ -56,9 +56,9 @@ final class Tables implements SystemRows
      *
      * @return array<string, int|string|null>
      */
-    public function table(StoredTable $table, string $now, Reading $reading): array
+    public function table(StoredTable $table, Reading $reading): array
     {
-        [, $engine, $version, $format, $count, $average, $data, $maximum, $index, $free, $increment, $created, $updated, $checked, $collation, $checksum, $options, $comment] = (new ShowTableStatusCommand())->row($table, $now);
+        [, $engine, $version, $format, $count, $average, $data, $maximum, $index, $free, $increment, $created, $updated, $checked, $collation, $checksum, $options, $comment] = (new ShowTableStatusCommand())->row($table, $reading->connection->context);
         $collation = is_string($collation) ? Collation::named($collation)?->nameIn($reading->release) ?? $collation : $collation;
 
         return [
@@ -73,7 +73,7 @@ final class Tables implements SystemRows
             'INDEX_LENGTH' => $index,
             'DATA_FREE' => $free,
             'AUTO_INCREMENT' => $increment,
-            'CREATE_TIME' => $created,
+            'CREATE_TIME' => $reading->dictionary() ? gmdate('Y-m-d H:i:s', $table->created) : $created,
             'UPDATE_TIME' => $updated,
             'CHECK_TIME' => $checked,
             'TABLE_COLLATION' => $collation,

@@ -80,7 +80,7 @@ final class CreateTableLikeCommand implements Command
         }
         $layout = $this->layout($source, new QualifiedName(new Name($name), new Name($schema)), $create->temporaryWords);
         $definition = (new TableRebuild($session, $context, $connection))->definition($layout, $dictionary->declarations(), false);
-        $dictionary->store(new StoredTable($definition, new Heap()));
+        $dictionary->store(new StoredTable($definition, new Heap(), created: CreateTableCommand::created($context)));
         if ($definition->temporary && $session->transaction->open) {
             $session->transaction->temporaries['created'] = true;
         }

@@ -127,10 +127,12 @@ final class Transactions
     public function apply(array $changes): void
     {
         $before = [];
+        $committed = time();
         foreach ($changes as [$table, $heap, $number, $after]) {
             if ($table->data !== $heap) {
                 continue;
             }
+            $table->updated = $committed;
             $id = spl_object_id($table);
             $before[$id] ??= [$heap, []];
             if (!array_key_exists($number, $before[$id][1])) {

@@ -24,6 +24,26 @@ final class CreateTableCommandTest extends TestCase
         self::assertTrue((new CreateTableCommand())->clearsDiagnostics());
     }
 
+    public function testCreatedUsesTheStatementClockForTheTransactionalDictionary(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; SET timestamp=1700000000; CREATE TABLE t(a INT)');
+
+        self::assertSame(1700000000, $session->instance->dictionary->table('d', 't')?->created);
+    }
+
+    public function testCreatedUsesTheActualFileClockInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $before = time();
+        $session->query('CREATE DATABASE d; USE d; SET timestamp=1700000000; CREATE TABLE t(a INT)');
+        $table = $session->instance->dictionary->table('d', 't');
+
+        self::assertNotNull($table);
+        self::assertGreaterThanOrEqual($before, $table->created);
+        self::assertLessThanOrEqual(time(), $table->created);
+    }
+
     public function testExecuteCreatesAnEmptyTableInTheCurrentDatabase(): void
     {
         $session = (new Instance())->connect();

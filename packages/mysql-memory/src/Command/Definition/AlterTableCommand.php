@@ -196,8 +196,13 @@ final class AlterTableCommand implements Command
             $context->warning(StatementError::UnknownError, 'ORDER BY ignored as there is a user-defined clustered index in the table \'' . $definition->name . '\'');
         }
         $records = $copies ? count($data->rows) : 0;
+        $updated = $copies || count($origins) !== count($table->definition->columns) || in_array(null, $origins, true) || $change->storageLayout ? null : $table->updated;
         $table->definition = $definition;
         $table->data = $data;
+        $table->created = CreateTableCommand::created($context);
+        $table->updated = $updated;
+        $table->statistics = [];
+        $table->statisticsRead = null;
         $table->histograms = array_intersect_key($table->histograms, array_flip(array_map(static fn ($column): string => strtolower($column->name), $definition->columns)));
         $warnings = $context->diagnostics->count();
 

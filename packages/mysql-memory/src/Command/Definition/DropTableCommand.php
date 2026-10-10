@@ -109,6 +109,9 @@ final class DropTableCommand implements Command
         }
         $this->truncated($table, $session, $context);
         $table->data = new Heap();
+        $table->updated = null;
+        $table->statistics = [];
+        $table->statisticsRead = null;
 
         return new Completion();
     }

@@ -25,6 +25,9 @@ final class Dictionary
     {
         foreach ($this->schemas as $schema) {
             foreach ($schema->tables as $table) {
+                $table->updated = strcasecmp($table->definition->engine, 'MyISAM') === 0 ? $table->updated : null;
+                $table->statistics = [];
+                $table->statisticsRead = null;
                 if (strcasecmp($table->definition->engine, 'MEMORY') === 0) {
                     $table->data = new \MySqlMemory\Storage\Heap();
                 }

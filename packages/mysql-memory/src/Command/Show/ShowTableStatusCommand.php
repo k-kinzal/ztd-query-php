@@ -13,7 +13,9 @@ use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Result\ColumnFlag;
 use MySqlMemory\Result\Reply;
 use MySqlMemory\Session\Session;
+use MySqlMemory\Value\Temporal;
 use Override;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\Schema\ShowTableStatus;
 use SqlSemantics\Platform\MySql\Statement\Utility\Show\ShowWhere;
@@ -26,7 +28,9 @@ use SqlSemantics\Statement\Operation;
  * many for each secondary key and for the FTS_DOC_ID_INDEX of a table with a full-text key,
  * the rows it holds and their average length. They are read once and kept, as the data
  * dictionary keeps them for information_schema_stats_expiry seconds. The creation and update
- * times are the time of that first read, an update time only for a table that holds rows.
+ * times retain the DDL clock and the latest committed change, respectively. Update times use
+ * the wall clock; cache expiry uses the session clock. Cached instants are displayed in the
+ * current session time zone. An expiry of zero bypasses the cache without updating it.
  * LIKE matches the table names with regard to case. A WHERE condition that depends on the rows
  * makes the server read them from a derived table, whose column metadata differs (verified on a
  * live 8.4 server).
@@ -61,8 +65,7 @@ final class ShowTableStatusCommand implements Command
         $schema = (new Inspection())->database($statement->database, $session);
         $tables = array_filter($schema->tables, static fn (StoredTable $table): bool => !$table->definition->temporary);
         ksort($tables, SORT_STRING);
-        $now = date('Y-m-d H:i:s', (int) floor($context->started));
-        $rows = array_map(fn (StoredTable $table): array => $this->row($table, $now), array_values($tables));
+        $rows = array_map(fn (StoredTable $table): array => $this->row($table, $context), array_values($tables));
         $derived = $statement->filter instanceof ShowWhere && Constancy::of($statement->filter->condition, $operation->facts) === Constancy::Row;
 
         return (new Listing($this->headings($derived)))->result($rows, $operation, $session, $context, $connection, $statement->filter, 0, 'utf8mb3_bin');
@@ -73,19 +76,34 @@ final class ShowTableStatusCommand implements Command
      *
      * @return list<int|string|null>
      */
-    public function row(StoredTable $table, string $now): array
+    public function row(StoredTable $table, Context $context): array
     {
         $definition = $table->definition;
         $innodb = strcasecmp($definition->engine, 'InnoDB') === 0 || strcasecmp($definition->engine, 'innobase') === 0;
-        $table->statistics['table'] ??= $this->statistics($table, $innodb, $now);
-        $statistics = $table->statistics['table'];
+        $now = (int) floor($context->started);
+        $expiry = in_array($context->modes->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? 0 : (int) $context->variables->read('information_schema_stats_expiry');
+        if ($expiry === 0) {
+            $statistics = $this->statistics($table, $innodb);
+        } else {
+            if ($table->statisticsRead === null || !isset($table->statistics['table']) || $now - $table->statisticsRead >= $expiry) {
+                $table->statistics['table'] = $this->statistics($table, $innodb);
+                $table->statisticsRead = $now;
+            }
+            $statistics = $table->statistics['table'];
+        }
+        $updated = $statistics[7] ?? null;
+        if ($innodb && $context->modes->release === GrammarRelease::MySql5651) {
+            $updated = null;
+        }
 
         return [
             $definition->name,
             ServerCatalog::shared()->engine($definition->engine) ?? $definition->engine,
             10,
             $innodb ? 'Dynamic' : 'Fixed',
-            ...$statistics,
+            ...array_slice($statistics, 0, 7),
+            Temporal::dateTime(...[...$context->local((float) $table->created), 0]),
+            is_int($updated) ? Temporal::dateTime(...[...$context->local((float) $updated), 0]) : null,
             null,
             $definition->collation,
             null,
@@ -95,14 +113,14 @@ final class ShowTableStatusCommand implements Command
     }
 
     /**
-     * Answers the statistics of a table as the engine reports them now: its rows, their average length, the lengths of its data and keys, the free space, the next AUTO_INCREMENT value and the times of its creation and last change.
+     * Answers the statistics of a table as the engine reports them now: its rows, their average length, the lengths of its data and keys, the free space, the next AUTO_INCREMENT value and the instant of its last committed change.
      *
      * The next AUTO_INCREMENT value is reported for a table with an AUTO_INCREMENT column, as for
      * a table the server has opened; one it has not opened since it was created reports none.
      *
      * @return list<int|string|null>
      */
-    public function statistics(StoredTable $table, bool $innodb, string $now): array
+    public function statistics(StoredTable $table, bool $innodb): array
     {
         $definition = $table->definition;
         $count = count($table->data->rows);
@@ -122,8 +140,7 @@ final class ShowTableStatusCommand implements Command
             $innodb ? self::PAGE * $secondary : 0,
             0,
             $definition->autoIncrementColumn() === null ? null : $counter,
-            $now,
-            $count > 0 ? $now : null,
+            $table->updated,
         ];
     }
 

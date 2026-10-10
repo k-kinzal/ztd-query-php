@@ -103,8 +103,9 @@ final class TableQueries
         }
         $layout = new TableLayout(new QualifiedName($create->name->name, new Name($schema->name)), $columns, $keys, $create->options, $create->temporaryWords);
         $definition = (new TableRebuild($this->session, $this->context, $this->connection))->definition($layout, $this->session->instance->dictionary->declarations());
-        $table = new StoredTable($definition, new Heap());
+        $table = new StoredTable($definition, new Heap(), created: CreateTableCommand::created($this->context));
         [$records, $affected, $duplicates] = $this->fill($table, $plan, $create->query->duplicate);
+        $table->updated = $affected > 0 ? time() : $table->updated;
         $this->session->instance->dictionary->store($table);
         $warnings = $this->context->diagnostics->count();
 

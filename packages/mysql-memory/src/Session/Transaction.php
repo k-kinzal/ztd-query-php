@@ -187,6 +187,7 @@ final class Transaction
         $this->engaged = true;
         $this->engineMix->combine($table);
         if (!self::transactional($table)) {
+            $table->updated = strcasecmp($table->definition->engine, 'MyISAM') === 0 ? time() : null;
             $this->nontransactional = $this->nontransactional || $this->open;
             $this->untracked++;
             $this->statements->unrestorable();
@@ -304,6 +305,12 @@ final class Transaction
     public function end(): void
     {
         $this->creation->commit();
+        $committed = time();
+        foreach ($this->undo as [$table, $heap]) {
+            if ($table->data === $heap) {
+                $table->updated = $committed;
+            }
+        }
         if ($this->changed !== []) {
             $this->system->commit($this);
         }

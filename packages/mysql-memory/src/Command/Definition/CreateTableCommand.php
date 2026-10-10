@@ -100,12 +100,20 @@ final class CreateTableCommand implements Command
         foreach ($this->duplicates($definition->keys) as $duplicate) {
             $context->warning(SchemaError::DuplicateIndex, $duplicate->name, $definition->schema . '.' . $definition->name);
         }
-        $table = new StoredTable($this->primaryNotNull($definition), new Heap());
+        $table = new StoredTable($this->primaryNotNull($definition), new Heap(), created: self::created($context));
         if ($started) {
             $session->transaction->creation->begin($table);
         } else {
             $session->instance->dictionary->store($table);
         }
+    }
+
+    /**
+     * Answers the DDL creation clock: the file clock in MySQL 5.x, the statement clock in the transactional data dictionary.
+     */
+    public static function created(Context $context): int
+    {
+        return in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true) ? time() : (int) floor($context->started);
     }
 
     /**

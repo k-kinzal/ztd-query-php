@@ -17,6 +17,24 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class TransactionTest extends TestCase
 {
+    public function testEndRecordsOnlyChangesThatSurviveStatementRollback(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect(database: 'd');
+        $session->query('CREATE TABLE t(a INT PRIMARY KEY)');
+        $session->run('INSERT INTO t VALUES(1),(1)');
+        $table = $session->instance->dictionary->table('d', 't');
+
+        self::assertNotNull($table);
+        self::assertNull($table->updated);
+        $session->query('BEGIN; INSERT INTO t VALUES(1)');
+        self::assertNull($table->updated);
+        $before = time();
+        $session->query('COMMIT');
+        self::assertNotNull($table->updated);
+        self::assertGreaterThanOrEqual($before, $table->updated);
+        self::assertLessThanOrEqual(time(), $table->updated);
+    }
+
     public function testWriteKeepsTheRowsAFailedStatementRestores(): void
     {
         $instance = new Instance('8.4.7', [], ['d']);

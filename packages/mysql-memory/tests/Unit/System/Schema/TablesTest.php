@@ -56,7 +56,7 @@ final class TablesTest extends TestCase
         self::assertNotNull($system);
         $reading = new Reading($s->instance, new Connection($s->variables, new Context($s->modes(), $s->diagnostics, $s->variables, 0.0), 'root', 'localhost', $s->id), $system->catalog->tables[0], GrammarRelease::MySql847);
 
-        self::assertSame(['BASE TABLE', 'InnoDB', 'Dynamic', 0, null], [...array_values(array_slice((new Tables())->table($table, '2026-01-01 00:00:00', $reading), 0, 1)), ...array_values(array_slice((new Tables())->table($table, '2026-01-01 00:00:00', $reading), 1, 1)), (new Tables())->table($table, '2026-01-01 00:00:00', $reading)['ROW_FORMAT'], (new Tables())->table($table, '2026-01-01 00:00:00', $reading)['TABLE_ROWS'], (new Tables())->table($table, '2026-01-01 00:00:00', $reading)['AUTO_INCREMENT']]);
+        self::assertSame(['BASE TABLE', 'InnoDB', 'Dynamic', 0, null], [...array_values(array_slice((new Tables())->table($table, $reading), 0, 1)), ...array_values(array_slice((new Tables())->table($table, $reading), 1, 1)), (new Tables())->table($table, $reading)['ROW_FORMAT'], (new Tables())->table($table, $reading)['TABLE_ROWS'], (new Tables())->table($table, $reading)['AUTO_INCREMENT']]);
     }
 
     public function testViewAnswersTheCommentView(): void
