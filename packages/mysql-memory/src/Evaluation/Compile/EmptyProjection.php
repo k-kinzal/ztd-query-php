@@ -140,10 +140,10 @@ final class EmptyProjection
 
             return $column instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn && ($column->depth > 0 || $tabled || $this->compiler->connection->program?->find($column->relation, $node->name->value) !== null);
         }
-        if ($node instanceof Query) {
+        if ($node instanceof Query || $node instanceof DefaultOfColumn) {
             return true;
         }
-        if ($node instanceof WindowFunction || $node instanceof DefaultOfColumn || $node instanceof InsertedColumn) {
+        if ($node instanceof WindowFunction || $node instanceof InsertedColumn) {
             return false;
         }
         $children = [];

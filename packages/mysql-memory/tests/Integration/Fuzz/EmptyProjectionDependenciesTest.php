@@ -32,6 +32,10 @@ final class EmptyProjectionDependenciesTest extends TestCase
         yield 'nested scalar unused cardinality' => ['SELECT (SELECT NULL,(SELECT a FROM t1) FROM DUAL WHERE 0) <=> (1,NULL) AS n'];
         yield 'nested scalar assignment' => ['SET @v=0; SELECT id,(SELECT (SELECT @v:=@v+1 FROM DUAL WHERE 1),NULL FROM DUAL WHERE 0) <=> (1,NULL) AS n,@v FROM t2 ORDER BY id'];
         yield 'nested scalar buffered input' => ['SELECT (SELECT (SELECT t1.a FROM DUAL WHERE 1),NULL FROM t1 WHERE 0) <=> (NULL,NULL) AS n'];
+        yield 'default value' => ['CREATE TABLE dp(a INT DEFAULT 7); SELECT (SELECT DEFAULT(a),NULL FROM dp WHERE 0) <=> (0,NULL) AS n'];
+        yield 'default null' => ['CREATE TABLE dp(a INT DEFAULT NULL); SELECT (SELECT DEFAULT(a),NULL FROM dp WHERE 0) <=> (NULL,NULL) AS n'];
+        yield 'default expression' => ['CREATE TABLE dp(a INT DEFAULT 7); SELECT (SELECT DEFAULT(a)+1,NULL FROM dp LIMIT 0) <=> (0,NULL) AS n'];
+        yield 'default unused' => ['CREATE TABLE dp(a INT DEFAULT 7); SELECT (SELECT NULL,DEFAULT(a)/0 FROM dp WHERE 0) <=> (1,NULL) AS n'];
     }
 
     #[DataProvider('providerStatements')]

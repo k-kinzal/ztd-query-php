@@ -111,6 +111,16 @@ final class EmptyProjectionTest extends TestCase
         self::assertSame([['Warning', '1365', 'Division by 0']], $warnings->rows);
     }
 
+    public function testReadableKeepsColumnDefaultsWithoutReadingATableRow(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a INT DEFAULT 7,b INT DEFAULT NULL)');
+        $result = $session->query('SELECT (SELECT DEFAULT(a),NULL FROM t WHERE 0) <=> (0,NULL), (SELECT DEFAULT(b),NULL FROM t WHERE 0) <=> (NULL,NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1']], $result->rows);
+    }
+
     public function testInitialKeepsCountZeroDistinctFromUnknownExtrema(): void
     {
         $result = (new Instance())->connect()->query('SELECT (SELECT NULLIF(COUNT(*),0),MIN(1) FROM DUAL HAVING 0) <=> (NULL,NULL)')[0];
