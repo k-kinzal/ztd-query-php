@@ -15,6 +15,13 @@ namespace MySqlMemory\Evaluation;
 final class Frame
 {
     /**
+     * The latest row held by a buffered query result, distinct from the projection's input row.
+     *
+     * @var list<int|float|string|null>
+     */
+    public array $buffered = [];
+
+    /**
      * @param Context $context The statement being evaluated
      * @param list<int|float|string|null> $row The current row of the block
      * @param Frame|null $outer The frame of the enclosing block, for a subquery

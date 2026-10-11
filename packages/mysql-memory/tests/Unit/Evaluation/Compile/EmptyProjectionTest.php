@@ -66,4 +66,24 @@ final class EmptyProjectionTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1']], $result->rows);
     }
+
+    public function testOfReadsUninitializedSetFieldsWithoutEvaluatingTheirExpressions(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT (SELECT 1/0,NULL FROM DUAL WHERE 0 UNION ALL SELECT 1/0,NULL FROM DUAL WHERE 0) <=> (NULL,NULL)')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
+    public function testOfRetainsTheLastSortedSetRowDiscardedByOffset(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (SELECT NULL a,NULL b UNION ALL SELECT 1,NULL ORDER BY a DESC LIMIT 1 OFFSET 2) <=> (NULL,NULL), (SELECT NULL a,NULL b UNION ALL SELECT 1,NULL ORDER BY a ASC LIMIT 1 OFFSET 2) <=> (NULL,NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0']], $result->rows);
+    }
 }

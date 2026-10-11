@@ -136,4 +136,19 @@ final class SetOperationIteratorTest extends TestCase
 
         self::assertNull($iterator->read());
     }
+
+    public function testInitRetainsTheLastLeftRowEvenWhenExceptDiscardsEveryRow(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $left = new WorkingTable(1);
+        $left->rows = [[1], [null]];
+        $right = new WorkingTable(1);
+        $right->rows = [[null], [1]];
+        $iterator = new SetOperationIterator(new SetOperation(SetKind::Except, true, $left, $right, [Domain::integer()->withNullable(true)]), new WorkingTableIterator($left), new WorkingTableIterator($right));
+        $iterator->init($frame);
+
+        self::assertNull($iterator->read());
+        self::assertSame([null], $frame->buffered);
+    }
 }

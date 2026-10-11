@@ -54,6 +54,9 @@ final class EmptyProjection
         while ($query instanceof ParenthesizedQuery || $query instanceof QueryExpression) {
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
         }
+        if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation) {
+            return array_map(static fn (\MySqlMemory\Typing\Domain $domain, int $position): Evaluable => new \MySqlMemory\Evaluation\Leaf\BufferedRead($domain, $position), $plan->domains, array_keys($plan->domains));
+        }
         $path = $this->project($plan);
         if (!$query instanceof Select || $path === null) {
             return [];

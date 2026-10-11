@@ -21,6 +21,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  */
 final class SortIterator implements RowIterator
 {
+    private Frame $frame;
+
     /**
      * @var list<list<int|float|string|null>>
      */
@@ -42,6 +44,7 @@ final class SortIterator implements RowIterator
     #[Override]
     public function init(Frame $frame): void
     {
+        $this->frame = $frame;
         $this->input->init($frame);
         $rows = [];
         while (($row = $this->input->read()) !== null) {
@@ -92,6 +95,11 @@ final class SortIterator implements RowIterator
     #[Override]
     public function read(): ?array
     {
-        return $this->rows[$this->next++] ?? null;
+        $row = $this->rows[$this->next++] ?? null;
+        if ($row !== null) {
+            $this->frame->buffered = $row;
+        }
+
+        return $row;
     }
 }

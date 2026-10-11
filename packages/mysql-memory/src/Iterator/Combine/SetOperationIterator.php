@@ -21,6 +21,8 @@ use Override;
  */
 final class SetOperationIterator implements RowIterator
 {
+    private Frame $frame;
+
     /**
      * @var list<list<int|float|string|null>>
      */
@@ -43,6 +45,8 @@ final class SetOperationIterator implements RowIterator
     #[Override]
     public function init(Frame $frame): void
     {
+        $this->frame = $frame;
+        $frame->buffered = [];
         $left = $this->rows($this->left, new Frame($frame->context, [], $frame->outer));
         $right = $this->rows($this->right, new Frame($frame->context, [], $frame->outer));
         $counts = [];
@@ -53,6 +57,7 @@ final class SetOperationIterator implements RowIterator
         $emitted = [];
         $candidates = $this->path->kind === SetKind::Union ? [...$left, ...$right] : $left;
         foreach ($candidates as [$key, $row]) {
+            $frame->buffered = $row;
             if ($this->path->kind === SetKind::Intersect || $this->path->kind === SetKind::Except) {
                 $present = ($counts[$key] ?? 0) > 0;
                 if ($this->path->distinct ? $present === ($this->path->kind === SetKind::Except) : ($this->path->kind === SetKind::Intersect ? !$present : $present)) {
@@ -103,6 +108,11 @@ final class SetOperationIterator implements RowIterator
     #[Override]
     public function read(): ?array
     {
-        return $this->rows[$this->next++] ?? null;
+        $row = $this->rows[$this->next++] ?? null;
+        if ($row !== null) {
+            $this->frame->buffered = $row;
+        }
+
+        return $row;
     }
 }
