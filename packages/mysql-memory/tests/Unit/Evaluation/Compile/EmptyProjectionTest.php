@@ -25,6 +25,16 @@ final class EmptyProjectionTest extends TestCase
         self::assertSame([['1', '1'], ['0', '1']], $result->rows);
     }
 
+    public function testRetainKeepsALaterRuntimeProjectionWithoutRepeatingItsAssignmentOnMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('SET @v=0');
+        $result = $session->query('SELECT (SELECT NULL,@v:=@v+1 FROM DUAL WHERE 0) <=> (NULL,1),@v FROM (SELECT 1 UNION ALL SELECT 2) t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1'], ['1', '1']], $result->rows);
+    }
+
     public function testOfKeepsNullProducingExpressionsReadableWithoutAnInputRow(): void
     {
         $result = (new Instance())->connect()->query('SELECT (SELECT SQRT(-1),CONCAT(NULL) FROM DUAL WHERE 0) <=> (NULL,NULL), (SELECT 1,NULL LIMIT 0) <=> (2,NULL)')[0];

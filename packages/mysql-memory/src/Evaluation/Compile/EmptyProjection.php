@@ -72,24 +72,24 @@ final class EmptyProjection
             if (!$field instanceof Field || $field->expression === null || !$this->readable($field->expression, $aggregated, $source !== null)) {
                 return [];
             }
-            $expressions[] = $this->retain($path->expressions[$field->position], $field->expression, $field->position);
+            $expressions[] = $this->retain($path->expressions[$field->position], $field->expression);
         }
 
         return $expressions;
     }
 
     /**
-     * Retains legacy constants and the first runtime projection read by a MySQL 5.7 empty row.
-     * Runtime projections lose their comparison value after the first read without repeating effects.
+     * Retains legacy constants and runtime projections read by a MySQL 5.7 empty row.
+     * The first runtime projection loses its comparison value after the first read; later slots retain it.
      */
-    public function retain(Evaluable $value, \SqlSemantics\Statement\Scalar $node, int $position): Evaluable
+    public function retain(Evaluable $value, \SqlSemantics\Statement\Scalar $node): Evaluable
     {
         if (!$this->compiler->settings->legacy()) {
             return $value;
         }
         $constant = $this->compiler->constancy($node) === Constancy::Resolved;
         $old = $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
-        if (!$constant && ($old || $position !== 0)) {
+        if (!$constant && $old) {
             return $value;
         }
         if ($old && !in_array($value->domain()->kind, [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String], true)) {
