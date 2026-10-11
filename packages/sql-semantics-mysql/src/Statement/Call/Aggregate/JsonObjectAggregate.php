@@ -81,12 +81,13 @@ final class JsonObjectAggregate implements SetFunction
         (new AggregateOwnership())->register($this, $derivation, $environment);
 
         $domain = $derivation->context->profile->grammar === GrammarRelease::MySql5744 ? new Domain(Kind::Json, Field::Json, 16777216, 0, false, Collation::binary()) : new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'));
+        $unmaterialized = $this->over === null ? null : new Known($domain);
 
         if ($this->over !== null) {
             $domain = (new Materialization())->windowed($domain, $derivation->context->profile->grammar);
         }
 
-        return new ScalarFact(new Known($domain), Nullability::Nullable);
+        return new ScalarFact(new Known($domain), Nullability::Nullable, unmaterializedType: $unmaterialized);
     }
 
     /**

@@ -78,17 +78,24 @@ final class WindowResults
 
     /**
      * Resolves the type of a window function call over the resolved types of its arguments, or answers null after reporting collations that conflict.
+     * A direct temporal result uses the connection character set; storage converts it to binary.
      *
      * @param list<Domain> $arguments
+     * @param bool $materialized Whether the result passes through a window's temporary column
      */
-    public function resolved(WindowFunction $call, array $arguments, Derivation $derivation): ?Domain
+    public function resolved(WindowFunction $call, array $arguments, Derivation $derivation, bool $materialized = true): ?Domain
     {
-        return match ($call->kind) {
+        $domain = match ($call->kind) {
             WindowFunctionKind::RowNumber, WindowFunctionKind::Rank, WindowFunctionKind::DenseRank, WindowFunctionKind::Tile => Domain::integer(Field::LongLong, 21),
             WindowFunctionKind::CumulativeDistribution, WindowFunctionKind::PercentRank => Domain::double(23),
-            WindowFunctionKind::FirstValue, WindowFunctionKind::LastValue, WindowFunctionKind::NthValue => (new Materialization())->windowed($arguments[0], $derivation->context->profile->grammar),
-            WindowFunctionKind::Lead, WindowFunctionKind::Lag => $this->shifted($call, $arguments, $derivation),
+            WindowFunctionKind::FirstValue, WindowFunctionKind::LastValue, WindowFunctionKind::NthValue => $arguments[0],
+            WindowFunctionKind::Lead, WindowFunctionKind::Lag => $this->shifted($call, $arguments, $derivation, false),
         };
+        if ($domain !== null && $domain->kind->temporal()) {
+            $domain = $domain->withCollation(Settings::of($derivation->context)->connection, $domain->coercibility);
+        }
+
+        return $domain === null || !$materialized ? $domain : $this->materialized($call->kind, $domain, $derivation->context->profile->grammar);
     }
 
     /**
@@ -97,18 +104,31 @@ final class WindowResults
      * MySQL 8.0 reports such a JSON value in the collation of JSON text (verified on a live 8.0 server).
      *
      * @param list<Domain> $arguments
+     * @param bool $materialized Whether the result passes through a window's temporary column
      */
-    public function shifted(WindowFunction $call, array $arguments, Derivation $derivation): ?Domain
+    public function shifted(WindowFunction $call, array $arguments, Derivation $derivation, bool $materialized = true): ?Domain
     {
         $values = [$arguments[0], ...(isset($arguments[2]) ? [$arguments[2]] : [])];
         $json = $arguments[0]->kind === Kind::Json && array_filter($values, static fn (Domain $value): bool => $value->kind !== Kind::Json && $value->kind !== Kind::Null) === [];
         $settings = Settings::of($derivation->context);
         $release = $derivation->context->profile->grammar;
-        if ($json && $release === GrammarRelease::MySql8044) {
-            return new Domain(Kind::Json, Field::Json, 4294967295, 0, false, Collation::known('utf8mb4_bin'));
-        }
         $aggregated = $json ? $arguments[0] : (new Aggregation(new Collations($settings->connection)))->of($values, strtolower($call->kind->value), $derivation);
 
-        return $aggregated === null ? null : (new Materialization())->windowed($aggregated, $release);
+        return $aggregated === null || !$materialized ? $aggregated : $this->materialized($call->kind, $aggregated, $release);
+    }
+
+    /**
+     * Resolves the stored result separately from the expression's type before window materialization.
+     */
+    public function materialized(WindowFunctionKind $kind, Domain $domain, GrammarRelease $release): Domain
+    {
+        if (!$kind->treatsNulls()) {
+            return $domain;
+        }
+        if (($kind === WindowFunctionKind::Lead || $kind === WindowFunctionKind::Lag) && $domain->kind === Kind::Json && $release === GrammarRelease::MySql8044) {
+            return new Domain(Kind::Json, Field::Json, 4294967295, 0, false, Collation::known('utf8mb4_bin'));
+        }
+
+        return (new Materialization())->windowed($domain, $release);
     }
 }

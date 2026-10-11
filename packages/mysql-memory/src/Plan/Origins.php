@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan;
 
 use MySqlMemory\Evaluation\Compile\Walker;
+use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Scope;
-use MySqlMemory\Plan\Window\Windowing;
+use MySqlMemory\Evaluation\Window\OutputRead;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Rules\Query\Grouping\OrderingAggregates;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -19,7 +20,7 @@ use SqlSemantics\Statement\Shape\Field;
 /**
  * Answers the base column each output column of a query block reads, as the column metadata of its result reports it.
  *
- * A select item that is a window function is a column of the temporary table of its window. A
+ * A materialized window function is a column of its temporary table. A
  * select item of a block WITH ROLLUP that is a grouping expression reads no base column, but in
  * MySQL 5.6 and 5.7 (verified on live 5.6.51 and 5.7.44 servers); when the rows pass through a
  * temporary table, for ORDER BY or DISTINCT, it is a column of that table.
@@ -46,16 +47,17 @@ final class Origins
      * @param list<bool> $rolled Whether each item is a grouping expression of a block WITH ROLLUP
      * @param list<Domain> $domains The domains of the select list
      * @param bool $sorted Whether the block sorts its rows
+     * @param list<Evaluable> $expressions Compiled select items followed by any sort keys and carried columns
      * @return list<ColumnOrigin|null>
      */
-    public function origins(Select $select, ?Scope $outer, Scope $scope, array $fields, array $rolled, array $domains, bool $sorted): array
+    public function origins(Select $select, ?Scope $outer, Scope $scope, array $fields, array $rolled, array $domains, bool $sorted, array $expressions): array
     {
         $buffered = ($this->aggregateOrder($select) || $this->joinedOrder($select) || in_array(SelectOption::BufferResult, $select->options, true) || (in_array(SelectOption::Distinct, $select->options, true) && (new ConstantTables($this->planner->compiler->facts))->joined($select) > 1)) && !$this->planner->blocks->empty($select, $outer);
         $materialized = $sorted || in_array(SelectOption::Distinct, $select->options, true);
         $implicit = $this->planner->compiler->settings->legacy() && $select->groupBy === null && (new Grouping($this->planner))->collect($select) !== [];
         $supplied = $implicit ? $this->supplied($select->from) : [];
         $origins = array_map(fn (Field $field, bool $rolled, Domain $domain): ?ColumnOrigin => match (true) {
-            $field->expression !== null && Windowing::windowed($field->expression) => $this->planner->materialized([$domain])[0],
+            $expressions[$field->position] instanceof OutputRead => $expressions[$field->position]->materialized ? $this->planner->materialized([$domain])[0] : null,
             $rolled => $materialized ? $this->planner->materialized([$domain])[0] : ($this->planner->compiler->settings->legacy() ? $this->origin($field, $scope) : null),
             $implicit => $this->kept($field, $scope, $this->origin($field, $scope), $supplied),
             default => $this->origin($field, $scope),

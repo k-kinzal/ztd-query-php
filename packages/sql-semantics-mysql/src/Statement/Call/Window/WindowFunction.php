@@ -88,9 +88,10 @@ final class WindowFunction implements Scalar
         (new Windows())->derive($this->over, $derivation, $environment);
         $fact = (new WindowResults())->result($this, $facts, $derivation);
         $arguments = (new Precision())->all(array_map(static fn (ScalarFact $argument): TypeFact => $argument->type, $facts));
-        $domain = $arguments === null ? null : (new WindowResults())->resolved($this, $arguments, $derivation);
+        $results = new WindowResults();
+        $domain = $arguments === null ? null : $results->resolved($this, $arguments, $derivation, false);
 
-        return $domain === null ? $fact : new ScalarFact(new Known($domain), $fact->nullability);
+        return $domain === null ? $fact : new ScalarFact(new Known($results->materialized($this->kind, $domain, $derivation->context->profile->grammar)), $fact->nullability, unmaterializedType: new Known($domain));
     }
 
     /**

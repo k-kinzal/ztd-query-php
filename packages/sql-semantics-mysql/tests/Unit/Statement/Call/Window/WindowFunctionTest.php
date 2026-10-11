@@ -33,6 +33,17 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class WindowFunctionTest extends TestCase
 {
+    public function testDeriveScalarKeepsTheTypeBeforeWindowMaterialization(): void
+    {
+        $query = (new Semantics(Dialect::MySql))->analyze('SELECT FIRST_VALUE(10) OVER ()');
+        $expression = $query->field(0)->expression;
+        self::assertNotNull($expression);
+        $fact = $query->facts->scalar($expression);
+
+        self::assertEquals(new Known(Domain::integer(Field::Long, 3)), $fact->type);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 3)), $fact->unmaterializedType);
+    }
+
     public function testDeriveScalarDerivesTheArgumentsAndTheWindow(): void
     {
         $platform = new Platform();

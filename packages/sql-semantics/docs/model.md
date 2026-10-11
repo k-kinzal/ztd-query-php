@@ -62,6 +62,8 @@ $sum->facts->scalar($sum->field(0)->expression->right)->type instanceof NullOnly
 
 A scalar fact can also publish a `replacement`: a bound expression evaluated in place of that occurrence. It is a strict descendant in the same operation, with its own facts and original name bindings. Consumers may compile it directly; the original statement and its rendered SQL stay intact. For example, MySQL resolves `(SELECT 1 LIMIT 0)` to its selected expression and returns `1`. A scalar subquery that reads table rows still needs query execution and can return NULL or raise a multiple-row error. Which forms are reduced depends on the dialect and release.
 
+Some expressions also publish `unmaterializedType`, their result type before an execution path stores them in a temporary column. MySQL window expressions can report different field types depending on whether their query requires materialization. The ordinary `type` retains the stored result type; an executor that establishes that materialization is unnecessary can use `unmaterializedType`. A null property means no separate type was published, and does not describe the expression's NULL value or nullability.
+
 The structure classes and their properties are documented in each database package. The core defines the roles they play:
 
 | Interface | Role |

@@ -34,12 +34,14 @@ final class ScalarFact
      * @param Nullability $nullability Whether the value can be NULL
      * @param Resolution|null $resolution The name resolution when the expression is a name use
      * @param Scalar|null $replacement The bound expression evaluated in place of this occurrence, when resolution eliminates a wrapper
+     * @param TypeFact|null $unmaterializedType The result type before an execution path stores the expression in a temporary column
      */
     public function __construct(
         public readonly TypeFact $type,
         public readonly Nullability $nullability,
         public readonly ?Resolution $resolution = null,
         public readonly ?Scalar $replacement = null,
+        public readonly ?TypeFact $unmaterializedType = null,
     ) {
     }
 }

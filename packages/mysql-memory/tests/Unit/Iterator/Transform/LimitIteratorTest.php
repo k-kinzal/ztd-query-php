@@ -20,6 +20,22 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class LimitIteratorTest extends TestCase
 {
+    public function testReadCountsDiscardedInputBeforeProjectionAndResetsTheCountOnInit(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $working = new WorkingTable(1);
+        $working->rows = [[1]];
+        $iterator = new LimitIterator(new Limit($working, 0, 2, true), new WorkingTableIterator($working));
+        $iterator->init($frame);
+        self::assertNull($iterator->read());
+        self::assertSame(1, $frame->foundBeforeProjection);
+        $working->rows = [];
+        $iterator->init($frame);
+        self::assertNull($iterator->read());
+        self::assertSame(0, $frame->foundBeforeProjection);
+    }
+
     public function testInitSkipsAnUnorderedMySql57UnionWithZeroCountDespiteItsOffset(): void
     {
         $session = (new Instance('5.7.44'))->connect();

@@ -119,8 +119,20 @@ final class IsTest implements Evaluable
         if ($value instanceof Logic && $value->operator === LogicalOperator::Xor) {
             return self::absent($value->left, $frame) || self::absent($value->right, $frame);
         }
+
+        return self::readNull($value, $frame);
+    }
+
+    /**
+     * Reads the NULL state of a scalar or window output, evaluating ordinary values when needed.
+     */
+    public static function readNull(Evaluable $value, Frame $frame): bool
+    {
         if ($value instanceof ScalarRead) {
             return self::scalarNull($value, $frame);
+        }
+        if ($value instanceof \MySqlMemory\Evaluation\Window\OutputRead) {
+            return $value->absent($frame);
         }
 
         return $value->evaluate($frame) === null;

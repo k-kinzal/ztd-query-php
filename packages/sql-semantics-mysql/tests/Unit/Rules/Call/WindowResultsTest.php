@@ -33,6 +33,25 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class WindowResultsTest extends TestCase
 {
+    public function testResolvedReportsDirectTemporalWindowsInTheConnectionCharset(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
+        $call = new WindowFunction(WindowFunctionKind::FirstValue, [new NumberLiteral('1')], new Name('w'));
+        $date = new Domain(Kind::Date, Field::Date, 10, 0);
+        $results = new WindowResults();
+
+        self::assertSame([255, 63], [$results->resolved($call, [$date], $derivation, false)?->collation->id, $results->resolved($call, [$date], $derivation)?->collation->id]);
+    }
+
+    public function testMaterializedSeparatesTheStoredFieldFromTheOriginalValueDomain(): void
+    {
+        $domain = Domain::integer(Field::LongLong, 3);
+        $result = (new WindowResults())->materialized(WindowFunctionKind::FirstValue, $domain, \SqlSemantics\Contract\GrammarRelease::MySql847);
+
+        self::assertSame([Field::LongLong, Field::Long, 3], [$domain->field, $result->field, $result->length]);
+    }
+
     public function testResultTypesEachKindOfWindowFunction(): void
     {
         $platform = new Platform();

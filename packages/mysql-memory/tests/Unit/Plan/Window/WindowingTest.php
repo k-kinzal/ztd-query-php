@@ -25,6 +25,46 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class WindowingTest extends TestCase
 {
+    public function testPlanRetainsTemporalWidthsAndJsonFlagsThroughTransparentWrappers(): void
+    {
+        $session = (new Instance())->connect();
+        $expression = "SELECT +(FIRST_VALUE(CAST('2020-01-02' AS DATE)) OVER ()), (FIRST_VALUE(CAST('[1]' AS JSON)) OVER ())";
+        $direct = $session->query($expression)[0];
+        $stored = $session->query($expression . ' FROM (SELECT 1 UNION ALL SELECT 2) t')[0];
+        $rolled = $session->query($expression . ' GROUP BY 1+1 WITH ROLLUP')[0];
+        self::assertInstanceOf(ResultSet::class, $direct);
+        self::assertInstanceOf(ResultSet::class, $stored);
+        self::assertInstanceOf(ResultSet::class, $rolled);
+
+        self::assertSame([40, 10], [$direct->columns[0]->length, $stored->columns[0]->length]);
+        self::assertSame([0, 16], [$direct->columns[1]->flags & 16, $stored->columns[1]->flags & 16]);
+        self::assertSame([40, 0], [$rolled->columns[0]->length, $rolled->columns[1]->flags & 16]);
+    }
+
+    public function testDirectPreservesTheOriginalWindowTypeUntilRowsRequireMaterialization(): void
+    {
+        $session = (new Instance())->connect();
+        $direct = $session->query('SELECT FIRST_VALUE(10) OVER ()')[0];
+        $stored = $session->query('SELECT FIRST_VALUE(10) OVER () FROM (SELECT 1 UNION ALL SELECT 2) t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $direct);
+        self::assertInstanceOf(ResultSet::class, $stored);
+        self::assertSame([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long], [$direct->columns[0]->type, $stored->columns[0]->type]);
+    }
+
+    public function testBoundedSkipsWindowArgumentsAfterAnExhaustedTablelessOffsetButKeepsFilterWarnings(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET sql_mode='ERROR_FOR_DIVISION_BY_ZERO'");
+        $result = $session->query('SELECT FIRST_VALUE(1/0) OVER () LIMIT 1 OFFSET 1')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertCount(0, $session->diagnostics->conditions);
+
+        $session->query('SELECT FIRST_VALUE(1/0) OVER () WHERE 1/0 LIMIT 1 OFFSET 1');
+        self::assertCount(1, $session->diagnostics->conditions);
+    }
+
     public function testPlanComputesTheWindowsOneAfterTheOtherNamedFirst(): void
     {
         $session = (new Instance())->connect();

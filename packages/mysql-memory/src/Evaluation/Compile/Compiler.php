@@ -261,6 +261,9 @@ final class Compiler
             return $evaluable;
         }
         $fact = $this->facts->scalar($node);
+        if ($fact->replacement !== null) {
+            return $evaluable;
+        }
         $nullable = match ($fact->nullability) {
             Nullability::NotNull => false,
             Nullability::Nullable => true,

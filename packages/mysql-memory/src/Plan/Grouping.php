@@ -323,6 +323,9 @@ final class Grouping
      */
     public function output(Field $field, Evaluable $expression): Evaluable
     {
+        if ($expression instanceof \MySqlMemory\Evaluation\Window\OutputRead) {
+            return $expression;
+        }
         $type = $field->type;
         $nullable = $field->nullability !== Nullability::NotNull;
         $domain = $type instanceof Known && $type->descriptor instanceof Resolved ? Domain::of($type->descriptor, $nullable) : $expression->domain()->withNullable($nullable);

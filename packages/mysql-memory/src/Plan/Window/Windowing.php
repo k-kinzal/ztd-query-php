@@ -81,9 +81,11 @@ final class Windowing
         }
         $functions = new Functions($this->planner);
         $analytics = [];
+        $direct = $this->direct($select, $scope);
         foreach ($calls as $call) {
-            $analytics[spl_object_id($call)] = $functions->compile($call, $scope);
+            $analytics[spl_object_id($call)] = $functions->compile($call, $scope, $direct);
         }
+        $input = $this->bounded($select, $input, $scope);
         $used = array_values(array_filter($windows, static fn (Specification $window): bool => $window->calls !== []));
         $pushed = $used !== [] && $this->pushes($select, $used);
         if ($pushed) {
@@ -103,7 +105,7 @@ final class Windowing
             }
             $input = new Window($input, $partition, $order, $frames->compile($window, $order, $scope), $computed, $arguments);
             foreach ($window->calls as $index => $call) {
-                $bindings[] = [$call, new OutputRead($computed[$index], $width + $index)];
+                $bindings[] = [$call, new OutputRead($analytics[spl_object_id($call)], $width + $index, !$direct)];
             }
         }
         foreach ($bindings as [$call, $read]) {
@@ -111,6 +113,51 @@ final class Windowing
         }
 
         return [$input, $pushed];
+    }
+
+    /**
+     * Answers whether an empty or constant query reports window types without temporary-column conversion.
+     */
+    public function direct(Select $select, Scope $scope): bool
+    {
+        if ($select->from === null || $select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual || $this->planner->blocks->empty($select, $scope->outer) || (new \MySqlMemory\Plan\ConstantTables($this->planner->compiler->facts))->joined($select) === 0) {
+            return true;
+        }
+        if ($select->groupBy === null) {
+            return (new Grouping($this->planner))->collect($select) !== [];
+        }
+        if ($select->groupBy->modifier !== null) {
+            return false;
+        }
+        foreach ($select->groupBy->items as $item) {
+            if (!$this->planner->compiler->constancy($item->expression)->constant() || (new Walker())->find($item->expression, Query::class) !== []) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Applies an exhausted tableless offset before window evaluation, retaining WHERE and HAVING effects.
+     * Grouped queries consume their aggregate inputs before their output bounds.
+     */
+    public function bounded(Select $select, AccessPath $input, Scope $scope): AccessPath
+    {
+        if (($select->from !== null && !$select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual) || (new Grouping($this->planner))->collect($select) !== []) {
+            return $input;
+        }
+        foreach ([$select->limit, $select->late?->limit] as $limit) {
+            if (!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $limit->offset === null) {
+                continue;
+            }
+            $offset = $this->planner->blocks->bound($limit->offset, $scope->outer);
+            if ($offset > 0) {
+                return new \MySqlMemory\Plan\Path\Transform\Limit($input, 0, $offset, in_array(SelectOption::CalcFoundRows, $select->options, true));
+            }
+        }
+
+        return $input;
     }
 
     /**

@@ -48,8 +48,8 @@ use SqlSemantics\Statement\Shape\Field;
  * Plans one query block: its FROM, WHERE, grouping, HAVING, windows, select list, DISTINCT, ORDER BY and LIMIT, in the order the server applies them.
  *
  * The rows of the block's plan hold the select list followed by the sort keys that are not in it.
- * A select item that is a window function is a column of the temporary table of its window, so a
- * BLOB or JSON one is flagged as a blob. The base column each output column reads is answered by
+ * A materialized window function reads a temporary column, so a BLOB or JSON result is
+ * flagged as a blob. The base column each output column reads is answered by
  * {@see Origins}.
  *
  * @visibility MySqlMemory
@@ -89,11 +89,11 @@ final class Blocks
         if ($select->groupBy?->modifier !== null) {
             $expressions = array_map(static fn (Field $field, Evaluable $expression): Evaluable => $grouping->output($field, $expression), $fields, $expressions);
         }
-        $domains = array_map(fn (Field $field, Evaluable $expression): Domain => $this->tabled($field, $expression->domain()), $fields, $expressions);
+        $domains = array_map(fn (Field $field, Evaluable $expression): Domain => $this->tabled($field, $expression->domain(), $expression), $fields, $expressions);
         [$keys, $expressions] = $this->sortKeys($select, $fields, $domains, $expressions, $evaluation);
         $expressions = $this->carry($select, $scope, $evaluation, $expressions);
         $names = array_map(fn (Field $field): string => $this->name($field, $select), $fields);
-        $origins = (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== []);
+        $origins = (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== [], $expressions);
         $hashes = (new SortedDistinct($this->planner))->hashes(new QueryPlan($input, $domains, $names, $origins), $select, $keys);
         $root = $this->distinct($select, $fields, $input, $expressions, $domains, $hashes);
         if ($keys !== [] && !$presorted) {
@@ -113,9 +113,13 @@ final class Blocks
      * A column of a merged derived table holds a temporal value in the connection collation; a
      * block that passes its rows through a temporary table, for GROUP BY, DISTINCT or a window,
      * sends it binary (verified on a live 8.4 server).
+     * A compiled window already carries the type of its chosen execution path.
      */
-    public function tabled(Field $field, Domain $domain): Domain
+    public function tabled(Field $field, Domain $domain, ?Evaluable $expression = null): Domain
     {
+        if ($expression instanceof \MySqlMemory\Evaluation\Window\OutputRead) {
+            return $domain;
+        }
         $type = $field->slot->type;
         if (!$domain->kind->temporal() || $domain->collation->bytes() || !$type instanceof \SqlSemantics\Statement\Type\Known || !$type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain || !$type->descriptor->collation->bytes() || $type->descriptor->kind !== $domain->kind) {
             return $domain;

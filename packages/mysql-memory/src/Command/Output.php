@@ -52,8 +52,9 @@ final class Output
         $charset = is_string($results) ? Charset::named($results) : null;
         $rows = [];
         $found = 0;
+        $frame = new Frame($context);
         try {
-            $iterator->init(new Frame($context));
+            $iterator->init($frame);
             while (($row = $iterator->read()) !== null) {
                 $found++;
                 $context->row = $found + 1;
@@ -72,7 +73,7 @@ final class Output
             }
             throw $error;
         }
-        $context->variables->foundRows = $found;
+        $context->variables->foundRows = $calculate ? ($frame->foundBeforeProjection ?? $found) : $found;
 
         return new ResultSet($this->columns($plan, $charset), $rows, $context->diagnostics->raised());
     }

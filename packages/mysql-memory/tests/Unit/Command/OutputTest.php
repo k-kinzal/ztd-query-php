@@ -22,6 +22,18 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class OutputTest extends TestCase
 {
+    public function testResultCountsAnOffsetRowWithoutEvaluatingItsWindowArguments(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SET sql_mode='ERROR_FOR_DIVISION_BY_ZERO'");
+        $result = $session->query('SELECT SQL_CALC_FOUND_ROWS FIRST_VALUE(1/0) OVER () FROM DUAL LIMIT 1 OFFSET 1')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertSame(1, $session->variables->foundRows);
+        self::assertSame([1287], array_column($session->diagnostics->conditions, 1));
+    }
+
     public function testColumnReportsStringDecimalsWithoutChangingTemporalEvaluationPrecision(): void
     {
         $domain = new Domain(Kind::Time, Field::VarString, 14, 3, false, Collation::known('latin1_swedish_ci'), displayDecimals: Domain::NOT_FIXED);

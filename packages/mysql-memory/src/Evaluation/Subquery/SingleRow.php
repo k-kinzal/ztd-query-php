@@ -101,7 +101,10 @@ final class SingleRow
         }
 
         $value = $this->projection[$position];
+        if ($mode === null) {
+            return new ProjectionRead(null, \MySqlMemory\Evaluation\Operator\Comparison\IsTest::absent($value, $frame));
+        }
 
-        return $mode !== null && $value instanceof CachedProjection ? $value->compared($frame, $this->repeated && $position === 0, $mode, $nullOperand) : new ProjectionRead($value->evaluate($frame));
+        return $value instanceof CachedProjection ? $value->compared($frame, $this->repeated && $position === 0, $mode, $nullOperand) : new ProjectionRead($value->evaluate($frame));
     }
 }

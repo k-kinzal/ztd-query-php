@@ -15,6 +15,11 @@ namespace MySqlMemory\Evaluation;
 final class Frame
 {
     /**
+     * Input rows counted by a bound applied before projection for SQL_CALC_FOUND_ROWS.
+     */
+    public ?int $foundBeforeProjection = null;
+
+    /**
      * The latest row held by a buffered query result, distinct from the projection's input row.
      *
      * @var list<int|float|string|null>

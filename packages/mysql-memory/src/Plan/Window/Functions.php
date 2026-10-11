@@ -52,13 +52,19 @@ final class Functions
      * IGNORE NULLS and FROM LAST are refused after names and windows are resolved, before the
      * count is checked (verified on live 8.0.44, 8.4.7 and 9.1.0 servers).
      *
+     * @param bool $direct Whether the query reports the type before window materialization
      * @throws SqlError When an argument is refused or cannot be compiled
      */
-    public function compile(Scalar $call, Scope $scope): Analytic
+    public function compile(Scalar $call, Scope $scope, bool $direct = false): Analytic
     {
         $compiler = $this->planner->compiler;
+        $domain = $compiler->domain($call);
+        $type = $compiler->facts->scalar($call)->unmaterializedType;
+        if ($direct && $type instanceof \SqlSemantics\Statement\Type\Known && $type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
+            $domain = \MySqlMemory\Typing\Domain::of($type->descriptor, $domain->nullable);
+        }
         if ($call instanceof Aggregate || $call instanceof JsonObjectAggregate) {
-            return new Analytic(null, (new Grouping($this->planner))->accumulation($call, $scope), [], 1, $compiler->domain($call));
+            return new Analytic(null, (new Grouping($this->planner))->accumulation($call, $scope), [], 1, $domain);
         }
         if (!$call instanceof WindowFunction) {
             throw StatementError::NotSupportedYet->error(Resolution::named($call) . ' as a window function');
@@ -66,7 +72,6 @@ final class Functions
         if ($call->nulls === NullTreatment::Ignore || $call->edge === CountingEdge::Last) {
             throw StatementError::NotSupportedYet->error($call->nulls === NullTreatment::Ignore ? 'IGNORE NULLS' : 'FROM LAST');
         }
-        $domain = $compiler->domain($call);
         $name = Resolution::named($call);
         $arguments = array_map(static fn (Scalar $argument): Evaluable => $compiler->compile($argument, $scope), $call->kind === WindowFunctionKind::Tile || $call->kind === WindowFunctionKind::NthValue ? [] : array_values(array_filter($call->arguments, static fn (int $position): bool => $position !== 1, ARRAY_FILTER_USE_KEY)));
 

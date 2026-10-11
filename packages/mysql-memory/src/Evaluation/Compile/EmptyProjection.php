@@ -168,7 +168,7 @@ final class EmptyProjection
             return true;
         }
         if ($node instanceof WindowFunction) {
-            return !$node->kind->treatsNulls();
+            return true;
         }
         if ($node instanceof InsertedColumn) {
             return false;

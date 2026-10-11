@@ -20,6 +20,17 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class IsTestTest extends TestCase
 {
+    public function testReadNullInspectsAnUnreadWindowWithoutEvaluatingItsArgument(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $argument = $this->createMock(\MySqlMemory\Evaluation\Evaluable::class);
+        $argument->expects(self::never())->method('evaluate');
+        $read = new \MySqlMemory\Evaluation\Window\OutputRead(new \MySqlMemory\Evaluation\Window\Analytic(\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::FirstValue, null, [$argument], 1, Domain::integer()), 0);
+
+        self::assertSame([true, false], [IsTest::readNull($read, new Frame($context)), IsTest::readNull($read, new Frame($context, [10]))]);
+    }
+
     public function testScalarNullWarnsAtTheAggregatePositionAndRestoresTheCurrentRow(): void
     {
         $session = (new Instance('5.7.44'))->connect();
