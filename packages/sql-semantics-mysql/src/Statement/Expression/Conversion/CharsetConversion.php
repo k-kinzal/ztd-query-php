@@ -66,7 +66,7 @@ final class CharsetConversion implements Scalar
         $operand = (new Precision())->domain($fact->type);
         $domain = $operand === null ? null : (new Texts(Settings::of($derivation->context)))->converted($operand, $name->value, $derivation);
 
-        return new ScalarFact(new Known($domain ?? $type), Nullability::Nullable);
+        return new ScalarFact(new Known($domain ?? $type), $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651 ? $fact->nullability : Nullability::Nullable);
     }
 
     /**

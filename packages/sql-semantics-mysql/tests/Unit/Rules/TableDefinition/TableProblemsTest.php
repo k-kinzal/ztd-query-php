@@ -20,6 +20,19 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Medium]
 final class TableProblemsTest extends TestCase
 {
+    public function testCollationsRejectsNamesUnavailableInTheRelease(): void
+    {
+        $legacy = new Semantics(Dialect::MySql, '5.7.44');
+        $column = $legacy->analyze('CREATE TABLE t(v VARCHAR(10) COLLATE utf8mb4_0900_ai_ci)');
+        $table = $legacy->analyze('CREATE TABLE t(v VARCHAR(10)) COLLATE utf8mb4_0900_as_cs');
+        $generated = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(v VARCHAR(10) COLLATE missing_collation AS (\'x\'))');
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $column->facts->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $table->facts->diagnostics[0]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation::class, $generated->facts->diagnostics[0]);
+        self::assertSame([], (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t(v VARCHAR(10)) COLLATE utf8mb4_0900_as_cs')->facts->diagnostics);
+    }
+
     public function testReportReportsANullablePrimaryKeyFromMySql57(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT NULL, PRIMARY KEY (a))');

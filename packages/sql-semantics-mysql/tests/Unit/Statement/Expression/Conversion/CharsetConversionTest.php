@@ -24,6 +24,15 @@ use SqlSemantics\Statement\Type\Known;
 #[Medium]
 final class CharsetConversionTest extends TestCase
 {
+    public function testDeriveScalarPreservesOperandNullabilityOnMySql56(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-5.6.51', null, ParameterStyle::Native), null, [], true));
+        $conversion = new CharsetConversion(new StringLiteral(['x']), new CharsetName(new Name('utf16')));
+
+        self::assertSame(\SqlSemantics\Statement\Type\Nullability::NotNull, $derivation->scalar($conversion, $derivation->environment())->nullability);
+    }
+
     public function testDeriveScalarIsAStringOfTheCharacterSet(): void
     {
         $platform = new Platform();

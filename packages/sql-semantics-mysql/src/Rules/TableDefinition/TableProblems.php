@@ -55,6 +55,7 @@ final class TableProblems
      */
     public function report(CreateTable $definition, Table $table, Derivation $derivation): void
     {
+        $this->collations($definition, $derivation);
         $this->duplicates($table, $derivation);
         $this->names($table, $derivation);
         $declaration = new TableDeclaration();
@@ -79,6 +80,40 @@ final class TableProblems
         }
         if ($columns === 0 && $definition->query === null) {
             $derivation->report(new NoColumns());
+        }
+    }
+
+    /**
+     * Reports explicit table and column collations that the selected release does not provide.
+     */
+    public function collations(CreateTable $definition, Derivation $derivation): void
+    {
+        $names = [];
+        foreach ($definition->options as $option) {
+            if ($option instanceof \SqlSemantics\Platform\MySql\Statement\Table\Option\CollationOption) {
+                $names[] = $option->collation->name;
+            }
+        }
+        foreach ($definition->elements as $element) {
+            if (!$element instanceof ColumnDefinition) {
+                continue;
+            }
+            $specification = $element->specification;
+            if ($specification instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\OrdinaryColumn || $specification instanceof GeneratedColumn) {
+                foreach ($specification->attributes as $attribute) {
+                    if ($attribute instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\CollateAttribute) {
+                        $names[] = $attribute->collation->name;
+                    }
+                }
+            }
+            if ($specification instanceof GeneratedColumn) {
+                $names[] = $specification->collation?->name;
+            }
+        }
+        foreach ($names as $name) {
+            if ($name !== null && !(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::named($name->value)?->availableIn($derivation->context->profile->grammar) ?? false)) {
+                $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\UnknownCollation($name->value));
+            }
         }
     }
 
