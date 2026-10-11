@@ -41,6 +41,9 @@ final class RowSubqueryNullabilityTest extends TestCase
         yield 'aggregate false filter' => [$comparisons('SELECT COUNT(*),COUNT(*) FROM DUAL WHERE 0')];
         yield 'scalar aggregate true filter' => ['SELECT (SELECT COUNT(*) FROM DUAL WHERE 1) = 1 AS comparison'];
         yield 'scalar aggregate false filter' => ['SELECT (SELECT COUNT(*) FROM DUAL WHERE 0) = 1 AS comparison'];
+        yield 'union having' => [$comparisons('SELECT NULL,NULL HAVING 0 UNION ALL SELECT 1,2 HAVING 0')];
+        yield 'union one table' => [$comparisons('SELECT NULL,NULL FROM DUAL WHERE 0 UNION ALL SELECT 1,2 FROM t1 WHERE 0')];
+        yield 'union derived' => [$comparisons('SELECT NULL,NULL FROM (SELECT 1) d WHERE 0 UNION ALL SELECT 1,2 FROM DUAL WHERE 0')];
     }
 
     #[DataProvider('providerStatements')]

@@ -20,6 +20,18 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class LimitIteratorTest extends TestCase
 {
+    public function testInitSkipsAnUnorderedMySql57UnionWithZeroCountDespiteItsOffset(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $result = $session->query('SELECT 1/0,NULL UNION ALL SELECT 1/0,NULL LIMIT 0 OFFSET 2')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
     public function testInitSkipsBufferedInputForAZeroCountWithoutAnOffset(): void
     {
         $session = (new Instance())->connect();

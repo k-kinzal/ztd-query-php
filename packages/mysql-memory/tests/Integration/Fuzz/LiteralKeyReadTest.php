@@ -37,6 +37,12 @@ final class LiteralKeyReadTest extends TestCase
         yield 'assignment with zero limit' => ['SET @v=0; SELECT id FROM t1 WHERE (@v:=@v+1)>0 AND id=2 LIMIT 0; SELECT @v'];
         yield 'conversion with zero limit' => ['SELECT id FROM t1 WHERE b=0 AND id=2 LIMIT 0'];
         yield 'assignment before aggregation' => ['SET @v=0; SELECT SUM(a) FROM t1 WHERE (@v:=@v+1)>0 AND id=2; SELECT @v'];
+        yield 'random predicate' => ['SELECT id,(SELECT 1 FROM t2 WHERE id=1 AND RAND(17)>0.5) FROM t1 ORDER BY id'];
+        yield 'random before conversion' => ['SELECT id FROM t1 WHERE RAND(17)>2 AND b=0 AND id=2'];
+        yield 'conversion before random' => ['SELECT id FROM t1 WHERE b=0 AND RAND(17)>2 AND id=2'];
+        yield 'assignment before random' => ['SET @v=0; SELECT id FROM t1 WHERE (@v:=@v+1)>0 AND RAND(17)>2 AND id=2; SELECT @v'];
+        yield 'random before assignment' => ['SET @v=0; SELECT id FROM t1 WHERE RAND(17)>2 AND (@v:=@v+1)>0 AND id=2; SELECT @v'];
+        yield 'passing random and assignment' => ['SET @v=0; SELECT id FROM t1 WHERE RAND(17)<2 AND (@v:=@v+1)>0 AND id=2; SELECT @v'];
         yield 'aggregate present' => ['SELECT COUNT(*),SUM(a) FROM t1 WHERE id=2'];
         yield 'aggregate missing' => ['SELECT COUNT(*),MAX(a) FROM t1 WHERE id=99'];
         yield 'locking read' => ['START TRANSACTION; SELECT * FROM t1 WHERE id=2 FOR UPDATE; ROLLBACK'];

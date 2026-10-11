@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Expression\Subquery;
 
 use SqlSemantics\Construction\Derivation;
-use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Expression\ScalarReduction;
 use SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows;
 use SqlSemantics\Rendering\Output;
@@ -24,6 +23,8 @@ use SqlSemantics\Statement\Snapshot;
  * subquery of one column has its type, one of several columns is a row,
  * and either is NULL when no row is returned. A tableless, unfiltered row subquery
  * retains its columns' combined NULL attribute, subject to the release's LIMIT rule.
+ * MySQL 5.6 instead reports a nonnullable attribute for tableless unfiltered rows and
+ * tableless UNION rows, independently of NULL values in their columns.
  * A reducible one-expression query
  * instead publishes that bound expression as its replacement and retains its
  * type and NULL attribute (MYSQL-SCALAR-REDUCTION-001). Terminates: the query is a
@@ -55,7 +56,7 @@ final class ScalarSubquery implements Scalar
     {
         $query = $derivation->query($this->query, $environment);
         $value = (new SubqueryRows())->value($query, $derivation->facts());
-        $legacy = $derivation->context->profile->grammar === GrammarRelease::MySql5651;
+        $release = $derivation->context->profile->grammar;
         $domain = (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($value->type);
         if ($domain?->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer) {
             $value = new ScalarFact(new \SqlSemantics\Statement\Type\Known($domain->withStorageField(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong)), $value->nullability);
@@ -63,16 +64,7 @@ final class ScalarSubquery implements Scalar
         $reduction = new ScalarReduction();
         $replacement = $reduction->expression($this->query, $derivation->context->profile->grammar);
         if ($replacement === null) {
-            if ($query->shape->complete() && $query->shape->slots !== [] && $reduction->preservesNullability($this->query, $legacy)) {
-                $nullable = \SqlSemantics\Statement\Type\Nullability::NotNull;
-                foreach ($query->shape->slots as $slot) {
-                    $nullable = $nullable->propagate($slot->nullability);
-                }
-
-                return new ScalarFact($value->type, $nullable);
-            }
-
-            return $value;
+            return new ScalarFact($value->type, (new SubqueryRows())->attribute($this->query, $query, $release));
         }
 
         return count($query->shape->slots) !== 1 ? $value : new ScalarFact($query->shape->slots[0]->type, $query->shape->slots[0]->nullability, replacement: $replacement);

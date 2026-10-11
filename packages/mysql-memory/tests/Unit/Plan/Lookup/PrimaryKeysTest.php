@@ -24,6 +24,16 @@ use SqlSemantics\Statement\Query;
 #[Small]
 final class PrimaryKeysTest extends TestCase
 {
+    public function testPreparableLeavesRandomCallsForTheOrdinaryRowPredicate(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY); INSERT INTO t VALUES (1),(2),(3),(4),(5)');
+        $result = $session->query('SELECT id,(SELECT 1 FROM t b WHERE b.id=1 AND RAND(17)>0.5) FROM t ORDER BY id')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1',null],['2','1'],['3',null],['4',null],['5','1']], $result->rows);
+    }
+
     /**
      * @return iterable<string, array{string, class-string<KeyLookup|TableScan>}>
      */

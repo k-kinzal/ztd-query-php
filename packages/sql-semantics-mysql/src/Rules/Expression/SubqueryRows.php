@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Expression;
 
 use SqlSemantics\Construction\Derivation;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Typing\Precision;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
@@ -82,6 +83,52 @@ final class SubqueryRows
     }
 
     /**
+     * Answers the published NULL attribute of an unreduced scalar or row subquery.
+     * MySQL 5.6 does not propagate projected NULLs into a tableless unfiltered row's
+     * attribute, or a tableless UNION's attribute. This describes metadata, not whether
+     * a value can be NULL (verified through ordinary comparisons against both kinds of row).
+     */
+    public function attribute(Query $statement, QueryFact $query, GrammarRelease $release): Nullability
+    {
+        if (!$query->shape->complete() || $query->shape->slots === []) {
+            return Nullability::Nullable;
+        }
+        $row = count($query->shape->slots) > 1;
+        $body = $statement;
+        while ($body instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery || $body instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression) {
+            $body = $body instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery ? $body->query : $body->body;
+        }
+        if ($row && $release === GrammarRelease::MySql5651 && $body instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation && $this->tableless($body)) {
+            return Nullability::NotNull;
+        }
+        if (!(new ScalarReduction())->preservesNullability($statement, $release)) {
+            return Nullability::Nullable;
+        }
+        $nullable = Nullability::NotNull;
+        if (!$row || $release !== GrammarRelease::MySql5651) {
+            foreach ($query->shape->slots as $slot) {
+                $nullable = $nullable->propagate($slot->nullability);
+            }
+        }
+
+        return $nullable;
+    }
+
+    /**
+     * Tells whether every UNION operand has no FROM relation other than DUAL.
+     */
+    public function tableless(Query $query): bool
+    {
+        return match (true) {
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery => $this->tableless($query->query),
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression => $this->tableless($query->body),
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation => $query->left instanceof Query && $this->tableless($query->left) && $this->tableless($query->right),
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select => $query->from === null || $query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual,
+            default => false,
+        };
+    }
+
+    /**
      * Retains direct GROUP_CONCAT metadata and removes fixed fractional digits from other string scalar results.
      * A TEXT/BLOB column contributes its collation-expanded bound; a computed blob
      * already carries its result bound. Name resolution distinguishes columns from
@@ -128,7 +175,7 @@ final class SubqueryRows
         if (($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison) && (new ScalarReduction())->expression($expression->query) === null) {
             $nullability = Nullability::Nullable;
         }
-        $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        $legacy = in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $wide = $legacy && !$negated && (new Operands())->width($operand) > 1;
 
         return new ScalarFact(new Known(Domain::integer(ResolvedField::LongLong, $wide ? 21 : 1)), $nullability);
@@ -140,9 +187,9 @@ final class SubqueryRows
      * their direct scalar result reports width one. Negation has its own wrapper.
      * Verified through PDO metadata from MySQL 5.6.51 and 5.7.44 Testcontainers.
      */
-    public function stored(?Scalar $expression, \SqlSemantics\Contract\GrammarRelease $release): ?Domain
+    public function stored(?Scalar $expression, GrammarRelease $release): ?Domain
     {
-        if (!in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+        if (!in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
             return null;
         }
         $membership = ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery && !$expression->negated)

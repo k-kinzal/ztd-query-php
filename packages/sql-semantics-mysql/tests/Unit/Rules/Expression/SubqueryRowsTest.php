@@ -37,6 +37,30 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class SubqueryRowsTest extends TestCase
 {
+    public function testAttributeKeepsTheMySql56RowFlagSeparateFromItsNullableColumns(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $operation = $semantics->analyze('SELECT (SELECT NULL,NULL) = (1,2), (SELECT NULL,NULL) = (NULL,NULL), (SELECT NULL,NULL FROM DUAL WHERE 0) = (1,2), (SELECT NULL,NULL FROM DUAL WHERE 0 UNION ALL SELECT 1,2 FROM DUAL WHERE 0) = (1,2)');
+
+        self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(1)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(2)->nullability);
+        self::assertSame(Nullability::NotNull, $operation->field(3)->nullability);
+    }
+
+    public function testTablelessDistinguishesDualFromActualRelationsAcrossUnionOperands(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $rules = new SubqueryRows();
+        $tableless = $semantics->analyze('(SELECT 1 FROM DUAL WHERE 0) UNION ALL SELECT 2 HAVING 0')->statement;
+        $tabled = $semantics->analyze('SELECT 1 FROM DUAL UNION ALL SELECT 2 FROM t')->statement;
+
+        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $tableless);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $tabled);
+        self::assertTrue($rules->tableless($tableless));
+        self::assertFalse($rules->tableless($tabled));
+    }
+
     public function testValueReadsTextualTemporalResultsAsStringsWithTheirReportedPrecision(): void
     {
         $domain = new Domain(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Time, ResolvedField::VarString, 14, 3, collation: Collation::known('latin1_swedish_ci'));

@@ -50,6 +50,10 @@ final class SetEmptyRowTest extends TestCase
             'zero limit' => 'SELECT NULL,NULL UNION ALL SELECT 1,NULL LIMIT 0',
             'zero limit null type' => 'SELECT NULL,NULL UNION ALL SELECT NULL,NULL LIMIT 0',
             'distinct last null' => 'SELECT 1,NULL FROM DUAL WHERE 0 UNION SELECT 2,NULL FROM DUAL WHERE 0',
+            'distinct offset last null' => 'SELECT 1,NULL UNION SELECT 2,NULL LIMIT 1 OFFSET 2',
+            'distinct offset first null' => 'SELECT NULL,NULL UNION SELECT 1,2 LIMIT 1 OFFSET 2',
+            'offset table last null' => 'SELECT id,NULL FROM t1 WHERE id=1 UNION ALL SELECT id,NULL FROM t1 WHERE id=2 LIMIT 1 OFFSET 2',
+            'offset locally bounded' => '(SELECT 1,NULL LIMIT 1) UNION ALL (SELECT 2,NULL LIMIT 1) LIMIT 1 OFFSET 2',
             'except' => 'SELECT 1,NULL EXCEPT SELECT 1,NULL',
             'intersect' => 'SELECT 1,NULL INTERSECT SELECT 2,NULL',
         ];

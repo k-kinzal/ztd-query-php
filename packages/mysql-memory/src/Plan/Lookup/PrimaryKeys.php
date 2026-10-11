@@ -99,4 +99,19 @@ final class PrimaryKeys
 
         return [$position, $constant, Comparator::of($domain, $constant->domain(), '=', $compiler->settings->connectionCollation, $compiler->settings->release())];
     }
+
+    /**
+     * Keeps per-read calls such as RAND out of a legacy constant-table preparation check.
+     * Variable assignments still participate; subqueries retain their own execution boundary.
+     */
+    public function preparable(Scalar $condition): bool
+    {
+        foreach ((new \MySqlMemory\Evaluation\Compile\Walker())->find($condition, \SqlSemantics\Statement\Node::class, false) as $node) {
+            if ($node instanceof \SqlSemantics\Statement\Query || (($node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall || $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\ClockCall) && \MySqlMemory\Evaluation\Compile\Constancy::uncacheable($node))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

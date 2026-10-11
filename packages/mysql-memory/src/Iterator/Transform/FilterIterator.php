@@ -15,7 +15,8 @@ use Override;
  *
  * The precondition is evaluated once for the statement, before the first row is read; when it is
  * not true the input is not read. MySQL 5.6 and 5.7 recheck a passing predicate of a
- * constant primary-key row; a false first read and LIMIT 0 do not recheck it (verified through SQL).
+ * constant primary-key row; a false preparation check and LIMIT 0 do not recheck it.
+ * Per-read calls such as RAND remain in the ordinary row predicate (verified through SQL).
  *
  * @visibility MySqlMemory
  */
@@ -53,14 +54,11 @@ final class FilterIterator implements RowIterator
         $condition = $this->path->condition;
         while (($row = $this->input->read()) !== null) {
             $this->frame->row = $row;
+            $preparation = $this->path->preparation;
+            if ($preparation !== null && Convert::toBool($preparation->evaluate($this->frame), $preparation->domain(), $this->frame->context) !== true) {
+                continue;
+            }
             if (Convert::toBool($condition->evaluate($this->frame), $condition->domain(), $this->frame->context) === true) {
-                if ($this->path->recheck) {
-                    $rechecked = $condition->evaluate($this->frame);
-                    if (Convert::toBool($rechecked, $condition->domain(), $this->frame->context) !== true) {
-                        continue;
-                    }
-                }
-
                 return $row;
             }
         }

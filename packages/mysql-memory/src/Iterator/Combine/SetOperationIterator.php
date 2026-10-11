@@ -57,7 +57,9 @@ final class SetOperationIterator implements RowIterator
         $emitted = [];
         $candidates = $this->path->kind === SetKind::Union ? [...$left, ...$right] : $left;
         foreach ($candidates as [$key, $row]) {
-            $frame->buffered = $row;
+            if ($this->path->retain) {
+                $frame->buffered = $row;
+            }
             if ($this->path->kind === SetKind::Intersect || $this->path->kind === SetKind::Except) {
                 $present = ($counts[$key] ?? 0) > 0;
                 if ($this->path->distinct ? $present === ($this->path->kind === SetKind::Except) : ($this->path->kind === SetKind::Intersect ? !$present : $present)) {
@@ -109,7 +111,7 @@ final class SetOperationIterator implements RowIterator
     public function read(): ?array
     {
         $row = $this->rows[$this->next++] ?? null;
-        if ($row !== null) {
+        if ($row !== null && $this->path->retain) {
             $this->frame->buffered = $row;
         }
 

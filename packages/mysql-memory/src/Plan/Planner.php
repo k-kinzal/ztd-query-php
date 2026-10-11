@@ -213,7 +213,10 @@ final class Planner
             SetOperator::Except => SetKind::Except,
         };
 
-        return new QueryPlan(new SetPath($kind, $operation->quantifier !== SetQuantifier::All, $this->settled($left, $domains), $this->settled($right, $domains), $domains), $domains, $left->names, $this->materialized($domains));
+        $distinct = $operation->quantifier !== SetQuantifier::All;
+        $retain = !$this->compiler->settings->legacy() || $kind !== SetKind::Union || $distinct;
+
+        return new QueryPlan(new SetPath($kind, $distinct, $this->settled($left, $domains), $this->settled($right, $domains), $domains, $retain), $domains, $left->names, $this->materialized($domains));
     }
 
     /**

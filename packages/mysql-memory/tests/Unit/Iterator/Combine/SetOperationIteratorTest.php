@@ -151,4 +151,20 @@ final class SetOperationIteratorTest extends TestCase
         self::assertNull($iterator->read());
         self::assertSame([null], $frame->buffered);
     }
+
+    public function testReadLeavesUnretainedFieldsInitialWhileStillReturningEveryRow(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $left = new WorkingTable(1);
+        $left->rows = [[1], [null]];
+        $right = new WorkingTable(1);
+        $right->rows = [[2]];
+        $iterator = new SetOperationIterator(new SetOperation(SetKind::Union, false, $left, $right, [Domain::integer()->withNullable(true)], false), new WorkingTableIterator($left), new WorkingTableIterator($right));
+        $iterator->init($frame);
+
+        self::assertSame([], $frame->buffered);
+        self::assertSame([[1], [null], [2], null], [$iterator->read(), $iterator->read(), $iterator->read(), $iterator->read()]);
+        self::assertSame([], $frame->buffered);
+    }
 }

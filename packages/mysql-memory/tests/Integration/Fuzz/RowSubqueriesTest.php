@@ -82,6 +82,13 @@ final class RowSubqueriesTest extends TestCase
         yield 'later unknown with conversion' => ['SELECT (0, NULL, 1) IN (SELECT b, a, id FROM t1)'];
         yield 'inner null with conversion' => ['SELECT (0, 0, 1) IN (SELECT b, NULL, id FROM t1)'];
         yield 'missing primary key' => ['SELECT (0, 9) IN (SELECT b, id FROM t1)'];
+        foreach ([' WHERE 0', ' WHERE id=99', ' GROUP BY id,b', ' HAVING 0', ' WHERE RAND(17)<0'] as $tail) {
+            foreach (['IN', 'NOT IN'] as $operator) {
+                yield 'projected null boundary ' . $operator . $tail => ['SELECT (0,1,99) ' . $operator . ' (SELECT NULL,b,id FROM t1' . $tail . ')'];
+            }
+        }
+        yield 'unread null membership' => ['SELECT CASE WHEN 0 THEN (0,1,99) IN (SELECT NULL,b,id FROM t1) ELSE 7 END'];
+        yield 'unread coercing membership' => ['SELECT CASE WHEN 0 THEN (0,1) IN (SELECT b,id FROM t1) ELSE 7 END'];
         foreach ([0, 1] as $value) {
             foreach ([1, 99] as $key) {
                 yield 'constant first null ' . $value . ' key ' . $key => ['SELECT (0,' . $value . ',' . $key . ') IN (SELECT NULL,b,id FROM t1)'];

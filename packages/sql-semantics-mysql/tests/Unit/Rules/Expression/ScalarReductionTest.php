@@ -104,7 +104,7 @@ final class ScalarReductionTest extends TestCase
         $subquery = $operation->field(0)->expression;
         self::assertInstanceOf(ScalarSubquery::class, $subquery);
 
-        self::assertSame($preserved, (new ScalarReduction())->preservesNullability($subquery->query, $legacy));
+        self::assertSame($preserved, (new ScalarReduction())->preservesNullability($subquery->query, $legacy ? \SqlSemantics\Contract\GrammarRelease::MySql5651 : \SqlSemantics\Contract\GrammarRelease::MySql847));
     }
 
     public function testExpressionReducesATablelessRollupInMySql91(): void

@@ -102,6 +102,17 @@ final class ScalarSubqueryTest extends TestCase
         self::assertSame(Nullability::NotNull, $operation->field(3)->nullability);
     }
 
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyReleases')]
+    public function testDeriveScalarKeepsFilteredLegacyRowsAndAggregatesNullable(string $release): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release);
+        $operation = $semantics->analyze('SELECT (1,2) = (SELECT 1,2 FROM DUAL WHERE 1), (SELECT COUNT(*) FROM DUAL WHERE 1), (SELECT COUNT(*))');
+
+        self::assertSame(Nullability::Nullable, $operation->field(0)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(1)->nullability);
+        self::assertSame(Nullability::NotNull, $operation->field(2)->nullability);
+    }
+
     public function testRenderWritesTheQueryInParentheses(): void
     {
         $platform = new Platform();

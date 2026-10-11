@@ -22,6 +22,7 @@ final class SetOperation implements AccessPath
      * @param AccessPath $left The left query
      * @param AccessPath $right The right query
      * @param list<Domain> $domains The domains of the combined columns, to compare rows by
+     * @param bool $retain Whether consumed rows replace the exposed result fields
      */
     public function __construct(
         public readonly SetKind $kind,
@@ -29,6 +30,7 @@ final class SetOperation implements AccessPath
         public readonly AccessPath $left,
         public readonly AccessPath $right,
         public readonly array $domains,
+        public readonly bool $retain = true,
     ) {
     }
 
