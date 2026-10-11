@@ -52,6 +52,7 @@ final class Differential
      * @param string|null $guardUser The account the MySQL server is repaired through, or null for the native user
      * @param bool $foundRows Whether the clients request CLIENT_FOUND_ROWS
      * @param \MySqlMemory\Server\Server|null $server The emulator process retained for the lifetime of this target
+     * @param \Testcontainers\Containers\ContainerInstance|null $reference The owned reference container, or null for an external server
      */
     public function __construct(
         public readonly string $native,
@@ -64,6 +65,7 @@ final class Differential
         public readonly bool $foundRows = false,
         public readonly ?Baseline $baseline = null,
         public readonly ?\MySqlMemory\Server\Server $server = null,
+        public readonly ?\Testcontainers\Containers\ContainerInstance $reference = null,
     ) {
     }
 

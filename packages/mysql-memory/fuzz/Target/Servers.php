@@ -37,13 +37,16 @@ final class Servers
     }
 
     /**
-     * Releases a failed shared pair so the next independent test starts fresh servers.
+     * Releases a failed shared pair so the next independent test initializes a new pair.
      * The failed input still raises an error; it is never retried or counted as a match.
+     * An owned reference is stopped before reuse can observe a container still exiting after a crash.
+     * External reference servers have no owned handle and remain under their caller's control.
      */
     public static function discard(Differential $target): void
     {
         if (self::$shared !== null && self::$shared[0] === $target) {
             self::$shared[2]->stop();
+            $target->reference?->stop();
             self::$shared = null;
         }
     }
@@ -62,11 +65,13 @@ final class Servers
     {
         $version = getenv('MYSQL_VERSION') !== false ? (string) getenv('MYSQL_VERSION') : MySqlRelease::DEFAULT;
         $dsn = getenv('MYSQL_MEMORY_NATIVE_DSN');
+        $reference = null;
         if ($dsn !== false && $dsn !== '') {
             $user = $this->environment('MYSQL_MEMORY_NATIVE_USER', 'root');
             $password = $this->environment('MYSQL_MEMORY_NATIVE_PASSWORD', 'root');
         } else {
-            $endpoint = Testcontainers::run(MySqlRelease::container($version))->getData(Endpoint::class);
+            $reference = Testcontainers::run(MySqlRelease::container($version));
+            $endpoint = $reference->getData(Endpoint::class);
             $dsn = 'mysql:host=' . $endpoint->host . ';port=' . $endpoint->port;
             $user = $endpoint->username;
             $password = $endpoint->password;
@@ -81,7 +86,7 @@ final class Servers
         $this->guard($native, $version, $password);
         $this->guard(new PDO($server->dsn(), 'root', '', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]), $version, $password);
 
-        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $isolate ? new Baseline($native, $version) : null, $server), 'mysql-' . $version, $server];
+        return [new Differential($dsn, $user, $password, $server->dsn(), $emulate, $version, self::GUARD, getenv('MYSQL_MEMORY_FOUND_ROWS') === '1', $isolate ? new Baseline($native, $version) : null, $server, $reference), 'mysql-' . $version, $server];
     }
 
     /**

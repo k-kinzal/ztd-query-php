@@ -49,6 +49,7 @@ final class DifferentialTest extends TestCase
 
         self::assertInstanceOf(RuntimeException::class, $failure);
         self::assertInstanceOf(PDOException::class, $failure->getPrevious());
+        self::assertFalse($failed->reference?->isRunning() ?? false);
         self::assertNotSame($failed, $fresh);
         self::assertFalse($comparison->volatile, (string) $comparison->referenceDifference);
         self::assertNull($comparison->difference, (string) $comparison->difference);
