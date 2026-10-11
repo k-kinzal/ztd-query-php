@@ -84,7 +84,8 @@ final class Arithmetic implements Scalar
             $bytes = $domains;
             $domains = [$numbers->numeric($this->left, $domains[0]), $numbers->numeric($this->right, $domains[1])];
             if (in_array($this->operator, [ArithmeticOperator::Plus, ArithmeticOperator::Minus, ArithmeticOperator::Multiply], true) && in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
-                $domains = [$numbers->signed($this->left, $domains[0]), $numbers->signed($this->right, $domains[1])];
+                $facts = $derivation->facts();
+                $domains = [$numbers->signed($this->left, $domains[0], $facts), $numbers->signed($this->right, $domains[1], $facts)];
             }
             $type = new Known($this->operator->bitwise() && $type instanceof Known ? (TypeClass::of($type->descriptor) === TypeClass::Unsigned ? $numbers->bits() : $numbers->binaryBits($this->operator, $bytes[0], $bytes[1])) : $numbers->binary($this->operator, $domains[0], $domains[1]));
         }

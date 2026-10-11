@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Typing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Rules\Typing\Numbers;
@@ -24,6 +25,32 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class NumbersTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerSignedBranches(): iterable
+    {
+        yield 'IF ten' => ['IF(0,0,10)', 3];
+        yield 'IF three digits' => ['IF(0,0,123)', 4];
+        yield 'CASE ten' => ['CASE WHEN 0 THEN 0 ELSE 10 END', 3];
+        yield 'CASE three digits' => ['CASE WHEN 0 THEN 0 ELSE 123 END', 4];
+        yield 'negative branch' => ['IF(0,0,-1)', 2];
+        yield 'COALESCE keeps its width' => ['COALESCE(10,0)', 2];
+    }
+
+    #[DataProvider('providerSignedBranches')]
+    public function testSignedRetainsTheArithmeticWidthOfLegacyCaseAndIfBranches(string $sql, int $expected): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT ' . $sql);
+        $expression = $operation->field(0)->expression;
+        self::assertNotNull($expression);
+        $type = $operation->facts->scalar($expression)->type;
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+
+        self::assertSame($expected, (new Numbers())->signed($expression, $type->descriptor, $operation->facts)->length);
+    }
+
     public function testQuotientReservesAStringDividendSignFrom80(): void
     {
         $text = Domain::string(10, Collation::known('utf8mb4_0900_ai_ci'));

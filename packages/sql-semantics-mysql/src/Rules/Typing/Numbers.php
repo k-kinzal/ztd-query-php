@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
+use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
+use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
+use SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression;
 use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
 use SqlSemantics\Platform\MySql\Statement\Expression\Operator\ArithmeticOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
@@ -14,6 +17,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -259,18 +263,39 @@ final class Numbers
     }
 
     /**
-     * Answers the domain an integer literal operand of addition, subtraction or multiplication has in MySQL 5.6 and 5.7: as long as its digits and a sign, though it is shown without the sign (verified on live 5.6.51 and 5.7.44 servers).
+     * Answers the signed width of a legacy arithmetic operand. Integer literals
+     * reserve their sign; CASE and IF retain the widest signed result branch.
+     * Their own reported widths remain unchanged. Verified through differential
+     * arithmetic and text conversions on MySQL 5.6.51 and 5.7.44.
      */
-    public function signed(Scalar $node, Domain $domain): Domain
+    public function signed(Scalar $node, Domain $domain, ?Facts $facts = null): Domain
     {
         while ($node instanceof Grouped) {
             $node = $node->operand;
         }
-        if (!$node instanceof NumberLiteral || $domain->kind !== Kind::Integer || $domain->unsigned) {
+        if ($domain->kind !== Kind::Integer || $domain->unsigned) {
             return $domain;
         }
+        if ($node instanceof NumberLiteral) {
+            return Domain::integer($domain->field, $domain->length + 1);
+        }
+        if ($facts === null) {
+            return $domain;
+        }
+        $branches = match (true) {
+            $node instanceof CaseExpression => [...array_map(static fn ($branch): Scalar => $branch->result, $node->branches), ...($node->else === null ? [] : [$node->else])],
+            $node instanceof KeywordCall && $node->function === KeywordFunction::If => array_slice($node->arguments, 1),
+            default => [],
+        };
+        $length = $domain->length;
+        foreach ($branches as $branch) {
+            $resolved = $facts->covers($branch) ? (new Precision())->domain($facts->scalar($branch)->type) : null;
+            if ($resolved !== null) {
+                $length = max($length, $this->signed($branch, $resolved->value(), $facts)->length);
+            }
+        }
 
-        return Domain::integer($domain->field, $domain->length + 1);
+        return $length === $domain->length ? $domain : Domain::integer($domain->field, $length);
     }
 
     /**

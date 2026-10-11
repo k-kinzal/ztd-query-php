@@ -20,7 +20,7 @@ final class BranchPrecisionTest extends TestCase
     public static function providerStatements(): iterable
     {
         foreach (['10', '-1', '123', '1e0'] as $value) {
-            foreach ([$value, 'CASE WHEN 0 THEN 0 ELSE ' . $value . ' END', 'IF(0,0,' . $value . ')', 'COALESCE(' . $value . ',0)'] as $expression) {
+            foreach ([$value, 'CASE WHEN 0 THEN 0 ELSE ' . $value . ' END', 'IF(0,0,' . $value . ')', 'COALESCE(' . $value . ',0)', 'IFNULL(NULL,' . $value . ')', 'CASE WHEN 0 THEN NULL ELSE IF(0,0,' . $value . ') END', 'IF(0,NULL,CASE WHEN 0 THEN 0 ELSE ' . $value . ' END)'] as $expression) {
                 yield $expression => ['SELECT ' . $expression . ' AS v,(' . $expression . ')+0 AS a,(' . $expression . ')*1 AS m,CAST(' . $expression . ' AS CHAR) AS c,CAST(' . $expression . ' AS BINARY) AS b FROM t2'];
             }
         }
