@@ -21,7 +21,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * decimal weighs NULL. A binary string, and any string AS BINARY(N), weighs its bytes, padded
  * with 0x00 or cut to N; a string of a _bin collation of utf8mb4 or utf8mb3 weighs three bytes
  * per utf8mb4 character, and two per utf8mb3 character, its code point. General Unicode and
- * single-byte latin1 weights use mappings obtained through SQL; untailored Unicode 9.0 weights
+ * single-byte latin1 weights use mappings obtained through SQL; untailored Unicode 4.0, 5.2 and 9.0 weights
  * derive from the public Unicode data. AS CHAR limits characters and
  * pads under PAD SPACE; the internal form also limits result bytes. Other collation weights
  * are not emulated (verified on a live 8.4 server). Legacy LEVEL modifiers invert the bytes
@@ -98,7 +98,7 @@ final class Weight implements Evaluable
         $flags = $this->flags | ($legacy && ($this->cast === WeightCast::Char || ($this->flags & 64) !== 0) ? 128 : 0);
         $pad = !$legacy || $this->cast === WeightCast::Char || ($this->flags & 64) !== 0;
         $weigher = new \MySqlMemory\Typing\Weights();
-        if ($legacy && str_ends_with($domain->collation->name, '_unicode_520_ci')) {
+        if ($legacy && (str_ends_with($domain->collation->name, '_unicode_520_ci') || str_ends_with($domain->collation->name, '_unicode_ci'))) {
             $weight = $weigher->text($value, $domain->collation);
             if ($count > 0) {
                 $weight = substr($weight, 0, 2 * $count);

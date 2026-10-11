@@ -17,7 +17,7 @@ final class UnicodeDistinctTest extends TestCase
     /**
      * @return iterable<string, array{string}>
      */
-    public static function providerStatements(): iterable
+    public static function providerCollationStatements(): iterable
     {
         $setup = "CREATE TABLE unicode_distinct (id INT PRIMARY KEY,v VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci); INSERT INTO unicode_distinct VALUES (0,'a'),(1,_utf8mb4 X'612000'),(2,'a '),(3,_utf8mb4 X'6100'),(4,NULL); ";
         foreach (['scan' => '', 'index' => 'ALTER TABLE unicode_distinct ADD KEY(v); '] as $access => $index) {
@@ -33,6 +33,17 @@ final class UnicodeDistinctTest extends TestCase
         yield 'unsampled ignored index' => [str_replace('COLLATE utf8mb4_unicode_520_ci)', 'COLLATE utf8mb4_unicode_520_ci,KEY(v))', $setup) . 'SELECT COUNT(*) FROM (SELECT DISTINCT v FROM unicode_distinct IGNORE INDEX FOR GROUP BY(v)) d'];
         yield 'analyzed ignored index' => [str_replace('COLLATE utf8mb4_unicode_520_ci)', 'COLLATE utf8mb4_unicode_520_ci,KEY(v))', $setup) . 'ANALYZE TABLE unicode_distinct; SELECT COUNT(*) FROM (SELECT DISTINCT v FROM unicode_distinct IGNORE INDEX FOR GROUP BY(v)) d'];
         yield 'temporary ignored index' => [str_replace('CREATE TABLE', 'CREATE TEMPORARY TABLE', $setup) . 'ALTER TABLE unicode_distinct ADD KEY(v); SELECT COUNT(*) FROM (SELECT DISTINCT v FROM unicode_distinct IGNORE INDEX FOR GROUP BY(v)) d'];
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerStatements(): iterable
+    {
+        foreach (self::providerCollationStatements() as $name => [$sql]) {
+            yield 'UCA 5.2 ' . $name => [$sql];
+            yield 'UCA 4.0 ' . $name => [str_replace('unicode_520_ci', 'unicode_ci', $sql)];
+        }
     }
 
     #[DataProvider('providerStatements')]

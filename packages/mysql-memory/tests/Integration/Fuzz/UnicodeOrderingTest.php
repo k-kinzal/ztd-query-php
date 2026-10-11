@@ -21,7 +21,7 @@ final class UnicodeOrderingTest extends TestCase
     {
         $pairs = [['ß', 'ss'], ['ß', 's'], ['é', "e\u{301}"], ['l·', 'l'], ["и\u{306}", 'й'], ['🫠', '😀'], ["\u{FDFA}", 'صلى الله عليه وسلم'], ['a', "a\0"]];
         $texts = ['ß', 's', 'ss', 'e', 'é', "e\u{301}", 'l', 'l·', "и\u{306}", 'й', '😀', '🫠', 'a ', 'A', 'a', '', "a\0", "\0", "a \0"];
-        foreach (['utf8mb4_general_ci', 'utf8mb4_0900_ai_ci', 'utf8mb4_0900_as_ci', 'utf8mb4_0900_as_cs', 'utf8mb4_unicode_520_ci'] as $collation) {
+        foreach (['utf8mb4_general_ci', 'utf8mb4_0900_ai_ci', 'utf8mb4_0900_as_ci', 'utf8mb4_0900_as_cs', 'utf8mb4_unicode_520_ci', 'utf8mb4_unicode_ci'] as $collation) {
             $expressions = [];
             foreach ($pairs as $index => [$left, $right]) {
                 $left = "_utf8mb4 X'" . bin2hex($left) . "' COLLATE " . $collation;

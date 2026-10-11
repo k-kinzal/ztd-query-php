@@ -22,7 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  *
  * Rows still execute as nested loops. Hash equality matters independently of performance:
  * under legacy UCA, a space before a trailing ignorable character has a different hash key
- * but compares equal. Unicode 5.2 keys with maximum weight capacity above 1024 bytes use
+ * but compares equal. Unicode 4.0 and 5.2 keys with maximum weight capacity above 1024 bytes use
  * this hash; shorter keys retain their padded weights. Indexed and constant lookups use the comparison directly.
  * Verified through SQL on MySQL 8.0.44 and 9.1.0.
  *
@@ -71,7 +71,7 @@ final class JoinComparisons
             return $condition;
         }
         $capacity = max($condition->left->domain()->length, $condition->right->domain()->length) * $condition->comparator->collation->charset->maxLength * 8;
-        if (!str_ends_with($condition->comparator->collation->name, '_unicode_520_ci') || $capacity <= 1024) {
+        if ((!str_ends_with($condition->comparator->collation->name, '_unicode_520_ci') && !str_ends_with($condition->comparator->collation->name, '_unicode_ci')) || $capacity <= 1024) {
             return $condition;
         }
         $left = $this->scanned($condition->left, $scope, $constants);

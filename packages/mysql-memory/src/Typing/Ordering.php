@@ -13,7 +13,7 @@ use Transliterator;
 /**
  * The order of one collation: the comparison and the equality key of its strings.
  *
- * Untailored Unicode 5.2, Unicode 9.0 and general_ci use the same weights as WEIGHT_STRING. Other Unicode
+ * Untailored Unicode 4.0, 5.2, 9.0 and general_ci use the same weights as WEIGHT_STRING. Other Unicode
  * collations use ICU at their declared strength. Invalid UTF-8 falls back to byte comparison;
  * a multibyte character set other than UTF-8 is read in UTF-8.
  *
@@ -146,6 +146,9 @@ final class Ordering
         }
         if (str_ends_with($this->collation->name, '_unicode_520_ci')) {
             return (new Weights())->text($text, Collation::known('utf8mb4_unicode_520_ci'));
+        }
+        if (str_ends_with($this->collation->name, '_unicode_ci')) {
+            return (new Weights())->text($text, Collation::known('utf8mb4_unicode_ci'));
         }
         if ($this->collation->charset->maxLength > 1 && str_ends_with($this->collation->name, '_general_ci')) {
             return (new Weights())->text($text, Collation::known('utf8mb4_general_ci'));

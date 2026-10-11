@@ -116,7 +116,7 @@ final class WeightTest extends TestCase
         $this->expectException(SqlError::class);
         $this->expectExceptionCode(1235);
 
-        $session->query("SELECT HEX(WEIGHT_STRING(_utf8mb4'a' COLLATE utf8mb4_unicode_ci))");
+        $session->query("SELECT HEX(WEIGHT_STRING(_utf8mb4'a' COLLATE utf8mb4_german2_ci))");
     }
 
 

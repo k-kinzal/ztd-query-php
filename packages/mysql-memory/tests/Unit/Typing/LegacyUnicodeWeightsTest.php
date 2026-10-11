@@ -42,4 +42,34 @@ final class LegacyUnicodeWeightsTest extends TestCase
     {
         self::assertSame($expected, bin2hex((new LegacyUnicodeWeights())->primary($point)));
     }
+
+    /**
+     * @return array<string, array{int, string}>
+     */
+    public static function providerUnicode4Weights(): array
+    {
+        return [
+            'ASCII' => [0x61, '0e33'],
+            'accent' => [0xE9, '0e8b'],
+            'expansion' => [0xDF, '0fea0fea'],
+            'expansion over capacity' => [0xFDFA, 'fbc1fdfa'],
+            'ignorable' => [0x301, ''],
+            'core ideograph' => [0x4E00, 'fb40ce00'],
+            'extension A' => [0x3400, 'fb80b400'],
+            'compatibility form' => [0xFA0E, 'fb41fa0e'],
+            'core boundary' => [0x9FA5, 'fb419fa5'],
+            'later ideograph' => [0x9FA6, 'fbc19fa6'],
+            'Hangul' => [0xAC00, 'fbc1ac00'],
+            'supplementary' => [0x1F600, 'fffd'],
+            'extension B' => [0x20000, 'fffd'],
+            'unassigned' => [0x378, 'fbc08378'],
+            'last scalar' => [0x10FFFF, 'fffd'],
+        ];
+    }
+
+    #[DataProvider('providerUnicode4Weights')]
+    public function testPrimarySeparatesUnicode4WeightsAndSupplementaryFallback(int $point, string $expected): void
+    {
+        self::assertSame($expected, bin2hex((new LegacyUnicodeWeights(false))->primary($point)));
+    }
 }
