@@ -72,6 +72,16 @@ final class RowSubqueriesTest extends TestCase
         yield 'table coercion grouped' => ['SELECT (0, 1) IN (SELECT b, id FROM t1 GROUP BY b, id)'];
         yield 'table coercion null key' => ['SELECT (0, NULL) IN (SELECT b, id FROM t1)'];
         yield 'table coercion null value' => ['SELECT (NULL, 2) IN (SELECT b, id FROM t1)'];
+        yield 'grouped later row' => ['SELECT (0, 2) IN (SELECT b, id FROM t1 GROUP BY b, id)'];
+        yield 'constant across outer rows' => ['SELECT id, (0, 1) IN (SELECT b, id FROM t1) FROM t2 ORDER BY id'];
+        yield 'false across outer rows' => ['SELECT id, (1, 1) IN (SELECT b, id FROM t1) FROM t2 ORDER BY id'];
+        yield 'correlated outer rows' => ['SELECT id, (0, id) IN (SELECT b, id FROM t1) FROM t2 ORDER BY id'];
+        yield 'empty outer rows' => ['SELECT (0, 1) IN (SELECT b, id FROM t1) FROM t2 WHERE 0'];
+        yield 'zero limit' => ['SELECT (0, 1) IN (SELECT b, id FROM t1) LIMIT 0'];
+        yield 'unknown with conversion' => ['SELECT (NULL, 0, 1) IN (SELECT a, b, id FROM t1)'];
+        yield 'later unknown with conversion' => ['SELECT (0, NULL, 1) IN (SELECT b, a, id FROM t1)'];
+        yield 'inner null with conversion' => ['SELECT (0, 0, 1) IN (SELECT b, NULL, id FROM t1)'];
+        yield 'missing primary key' => ['SELECT (0, 9) IN (SELECT b, id FROM t1)'];
     }
 
     #[DataProvider('providerCoercion')]
@@ -85,6 +95,6 @@ final class RowSubqueriesTest extends TestCase
         $plan = $statement->fetchAll(PDO::FETCH_NUM);
 
         self::assertFalse($comparison->volatile);
-        self::assertNull($comparison->difference, (string) $comparison->difference . "\nNative plan: " . json_encode($plan, JSON_THROW_ON_ERROR));
+        self::assertNull($comparison->difference, (string) $comparison->difference . "\nNative plan: " . var_export($plan, true));
     }
 }

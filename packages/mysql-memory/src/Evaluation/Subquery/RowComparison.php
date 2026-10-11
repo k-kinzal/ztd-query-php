@@ -17,7 +17,8 @@ use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
  * Compares row constructors and single-row subqueries after evaluating each operand once.
  *
  * An empty row subquery makes ordinary comparison unknown and null-safe equality false,
- * including when both subqueries are empty (verified through SQL on MySQL 9.1).
+ * including when both subqueries are empty, except that MySQL 5.7 treats two empty row
+ * subqueries as null-safe equal (verified through SQL on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html.
  *
  * @visibility MySqlMemory
@@ -29,8 +30,9 @@ final class RowComparison implements Evaluable
      * @param list<Evaluable>|SingleRow $right The right row or subquery
      * @param list<Comparator> $comparators The comparison rule for each column pair
      * @param Domain $domain The resolved truth value type
+     * @param bool $emptyRowsEqual Whether two empty row subqueries are null-safe equal, as in MySQL 5.7
      */
-    public function __construct(public readonly ComparisonOperator $operator, public readonly array|SingleRow $left, public readonly array|SingleRow $right, public readonly array $comparators, public readonly Domain $domain)
+    public function __construct(public readonly ComparisonOperator $operator, public readonly array|SingleRow $left, public readonly array|SingleRow $right, public readonly array $comparators, public readonly Domain $domain, public readonly bool $emptyRowsEqual = false)
     {
     }
 
@@ -52,7 +54,7 @@ final class RowComparison implements Evaluable
         $left = $this->values($this->left, $frame);
         $right = $this->values($this->right, $frame);
         if ($left === [] || $right === []) {
-            return $this->operator === ComparisonOperator::NullSafeEqual ? 0 : null;
+            return $this->operator === ComparisonOperator::NullSafeEqual ? (int) ($this->emptyRowsEqual && $left === [] && $right === []) : null;
         }
         $pairs = [];
         foreach ($this->comparators as $index => $comparator) {

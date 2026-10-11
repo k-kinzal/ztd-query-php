@@ -91,7 +91,7 @@ jobs:
           print('^(?:' + '|'.join(re.escape(name) for name in selected) + ')::')
           PYTHON
           )
-          vendor/bin/phpunit --testsuite integration --filter "$pattern"
+          vendor/bin/phpunit --bootstrap=fuzz/bootstrap.php --testsuite integration --filter "$pattern"
 
   differential:
     name: Differential (MySQL ${{ matrix.mysql }}, shard ${{ matrix.shard }})
@@ -156,7 +156,7 @@ jobs:
           print('^(?:' + '|'.join(re.escape(name) for name in selected) + ')::')
           PYTHON
           )
-          vendor/bin/phpunit tests/Integration/Fuzz --filter "$pattern"
+          vendor/bin/phpunit --bootstrap=fuzz/bootstrap.php tests/Integration/Fuzz --filter "$pattern"
 
   lint:
     name: Lint

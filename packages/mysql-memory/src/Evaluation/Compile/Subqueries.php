@@ -145,7 +145,24 @@ final class Subqueries
             $comparators[] = Comparator::of($domain, $plan->domains[$index], '=', $this->compiler->settings->connectionCollation, $this->compiler->settings->release());
         }
 
-        return new \MySqlMemory\Evaluation\Subquery\RowMembership($values, new Rows($plan), $comparators, $negated, $this->compiler->operators->truth(true), $this->membershipKey($query, $comparators));
+        $key = $this->membershipKey($query, $comparators);
+        $once = $key !== [] && $this->membershipConstant($operand, $query);
+
+        return new \MySqlMemory\Evaluation\Subquery\RowMembership($values, new Rows($plan), $comparators, $negated, $this->compiler->operators->truth(true), $key, $once, $once && $this->compiler->settings->legacy());
+    }
+
+    /**
+     * Tells whether a keyed membership result can be retained for the statement.
+     * Function calls in the subquery remain uncached until their execution dependency is known.
+     */
+    public function membershipConstant(\SqlSemantics\Statement\Scalar $operand, \SqlSemantics\Statement\Query $query): bool
+    {
+        return $this->compiler->constancy($operand)->constant()
+            && Constancy::of($query, $this->compiler->facts) !== Constancy::Row
+            && (new Walker())->find($query, VariableAssignment::class) === []
+            && (new Walker())->find($query, \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall::class) === []
+            && (new Walker())->find($query, \SqlSemantics\Platform\MySql\Statement\Call\ClockCall::class) === []
+            && (new Walker())->find($query, \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable::class) === [];
     }
 
     /**
@@ -158,7 +175,7 @@ final class Subqueries
     public function membershipKey(\SqlSemantics\Statement\Query $query, array $comparators): array
     {
         $query = $this->innermost($query);
-        if (!$query instanceof Select || !$query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $query->groupBy !== null || $query->having !== null || $query->windows !== [] || $query->from->indexHints !== [] || $this->aggregated($query)) {
+        if (!$query instanceof Select || !$query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $query->groupBy?->modifier !== null || $query->having !== null || $query->windows !== [] || $query->from->indexHints !== [] || $this->aggregated($query)) {
             return [];
         }
         $table = $this->compiler->facts->relation($query->from)->table;
@@ -190,7 +207,7 @@ final class Subqueries
                 continue;
             }
             $column = (new \MySqlMemory\Plan\ConstantTables($this->compiler->facts))->column($field->expression);
-            if ($column?->relation === $query->from && $column->declaration() !== null) {
+            if ($column !== null && $column->relation === $query->from && $column->declaration() !== null) {
                 $columns[spl_object_id($column->declaration())] = $field->position;
             }
         }

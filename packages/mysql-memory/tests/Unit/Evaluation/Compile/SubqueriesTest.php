@@ -127,6 +127,22 @@ final class SubqueriesTest extends TestCase
         self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $warnings->rows);
     }
 
+    public function testMembershipConstantCachesTheKeyedResultAcrossOuterRows(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20))');
+        $session->query("INSERT INTO t VALUES (1,'a'),(2,'b')");
+        $result = $session->query('SELECT id,(0,2) IN (SELECT s,id FROM t) FROM t ORDER BY id')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1'], ['2', '1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $warnings->rows);
+    }
+
     public function testQuantifiedRefusesASubqueryOfMoreThanOneColumn(): void
     {
         $session = (new Instance())->connect();

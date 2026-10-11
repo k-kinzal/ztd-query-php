@@ -40,4 +40,12 @@ final class RowComparisonTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '0', null]], $result->rows);
     }
+
+    public function testEvaluateTreatsTwoEmptyRowSubqueriesAsNullSafeEqualInMySql57(): void
+    {
+        $result = (new Instance('5.7.44'))->connect()->query('SELECT (SELECT 1,2 WHERE 0) <=> (SELECT 1,2 WHERE 0), (NULL,NULL) <=> (SELECT 1,2 WHERE 0)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0']], $result->rows);
+    }
 }

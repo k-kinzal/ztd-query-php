@@ -29,8 +29,10 @@ final class RowMembership implements Evaluable
      * @param bool $negated Whether this is NOT IN
      * @param Domain $domain The truth value's reported type
      * @param list<int> $key The integer primary-key comparisons that restrict the candidate rows
+     * @param bool $once Whether the independent keyed result is retained for the statement
+     * @param bool $legacyCondition Whether a satisfied constant-table condition is evaluated again when read, as in MySQL 5.6 and 5.7
      */
-    public function __construct(public readonly array|SingleRow $operands, public readonly Rows $rows, public readonly array $comparators, public readonly bool $negated, public readonly Domain $domain, public readonly array $key = [])
+    public function __construct(public readonly array|SingleRow $operands, public readonly Rows $rows, public readonly array $comparators, public readonly bool $negated, public readonly Domain $domain, public readonly array $key = [], public readonly bool $once = false, public readonly bool $legacyCondition = false)
     {
     }
 
@@ -44,10 +46,28 @@ final class RowMembership implements Evaluable
     }
 
     /**
-     * Reads the left row once and searches the subquery, retaining conversion warnings.
+     * Retains an independent keyed result in its statement context, including NULL results.
      */
     #[Override]
     public function evaluate(Frame $frame): ?int
+    {
+        if (!$this->once) {
+            return $this->read($frame);
+        }
+        $kept = $frame->context->kept;
+        if (!isset($kept[$this])) {
+            $kept[$this] = [$this->read($frame)];
+        }
+
+        return $kept[$this][0] === null ? null : (int) $kept[$this][0];
+    }
+
+    /**
+     * Searches candidate rows. A false constant condition eliminates its row before execution;
+     * legacy releases evaluate a satisfied condition again when consuming the constant row.
+     * Verified through SQL and EXPLAIN on MySQL 5.6, 5.7, 8.0 and 9.1.
+     */
+    public function read(Frame $frame): ?int
     {
         $values = $this->operands instanceof SingleRow ? $this->operands->read($frame) : array_map(static fn (Evaluable $operand): int|float|string|null => $operand->evaluate($frame), $this->operands);
         $values = $values === [] ? array_fill(0, count($this->comparators), null) : $values;
@@ -56,9 +76,15 @@ final class RowMembership implements Evaluable
         while (($row = $iterator->read()) !== null) {
             $match = $this->matches($values, $row, $frame->context);
             if ($match === true) {
+                if ($this->legacyCondition) {
+                    $this->matches($values, $row, $frame->context);
+                }
                 return $this->negated ? 0 : 1;
             }
             if ($match === null && in_array(null, $values, true)) {
+                if ($this->once && array_intersect($this->key, array_keys($values, null, true)) === []) {
+                    $this->matches($values, $row, $frame->context);
+                }
                 return null;
             }
             $unknown = $unknown || $match === null;

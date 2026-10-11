@@ -12,6 +12,7 @@ use MySqlMemory\Plan\QueryPlan;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -43,12 +44,40 @@ final class RowMembershipTest extends TestCase
         self::assertSame([[null, '0', '1']], $result->rows);
     }
 
-    public function testEvaluateReadsCorrelatedRowsForEachOuterRow(): void
+    public function testReadReadsCorrelatedRowsForEachOuterRow(): void
     {
         $result = (new Instance())->connect()->query('SELECT id, (id, v) IN (SELECT 1, 10 WHERE id=1) FROM (SELECT 1 id, 10 v UNION ALL SELECT 2, 20) t ORDER BY id')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1'], ['2', '0']], $result->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyReleases(): iterable
+    {
+        yield '5.6' => ['5.6.51'];
+        yield '5.7' => ['5.7.44'];
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testReadEvaluatesOnlySatisfiedLegacyConstantConditionsAgain(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20))');
+        $session->query("INSERT INTO t VALUES (1,'apple')");
+        $session->query('SELECT (0,1) IN (SELECT s,id FROM t)');
+        $matching = $session->query('SHOW WARNINGS')[0];
+        $session->query('SELECT (1,1) IN (SELECT s,id FROM t)');
+        $unequal = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $matching);
+        self::assertCount(2, $matching->rows);
+        self::assertInstanceOf(ResultSet::class, $unequal);
+        self::assertCount(1, $unequal->rows);
     }
 
     public function testMatchesFallsBackToScanningForANullKeyAndStopsAtTheFirstUnknownRow(): void

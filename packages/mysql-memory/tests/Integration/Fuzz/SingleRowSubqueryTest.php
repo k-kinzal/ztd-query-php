@@ -26,6 +26,10 @@ final class SingleRowSubqueryTest extends TestCase
             yield 'two subqueries ' . $operator => ['SELECT (SELECT 1, 2) ' . $operator . ' (SELECT 1, 2)'];
         }
         yield 'two empty subqueries' => ['SELECT (SELECT 1,2 WHERE 0) <=> (SELECT 1,2 WHERE 0)'];
+        yield 'two empty table subqueries' => ['SELECT (SELECT id,a FROM t1 WHERE 0) <=> (SELECT id,a FROM t2 WHERE 0)'];
+        yield 'two zero limit subqueries' => ['SELECT (SELECT 1,2 LIMIT 0) <=> (SELECT 1,2 LIMIT 0)'];
+        yield 'mixed empty subqueries' => ['SELECT (SELECT 1,2 WHERE 0) <=> (SELECT id,a FROM t1 WHERE 0)'];
+        yield 'empty and null subqueries' => ['SELECT (SELECT 1,2 WHERE 0) <=> (SELECT NULL,NULL)'];
         yield 'left subquery' => ['SELECT (SELECT id,a FROM t1 WHERE id=1) = (1,10)'];
         yield 'correlated' => ['SELECT id, (id,a) = (SELECT id,a FROM t2 WHERE t2.id=t1.id) FROM t1 ORDER BY id'];
         yield 'null in a row' => ['SELECT (1,NULL) = (SELECT 1,NULL), (1,NULL) <=> (SELECT 1,NULL)'];
