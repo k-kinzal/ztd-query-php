@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
  *
  * An empty row subquery makes ordinary comparison unknown. Null-safe equality also reads
  * retained projection expressions; modern releases compare their NULL states, while legacy
- * releases compare their values. Projections that need input-row state are not yet modeled.
+ * releases compare their values. Table-column and set-operation input states remain incomplete.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html.
  *
  * @visibility MySqlMemory
@@ -82,8 +82,8 @@ final class RowComparison implements Evaluable
         }
         $equal = false;
         foreach ($this->comparators as $index => $comparator) {
-            $first = $left === [] ? $one[$index]->evaluate($frame->inner()) : $left[$index];
-            $second = $right === [] ? $two[$index]->evaluate($frame->inner()) : $right[$index];
+            $first = $left === [] ? $this->left->value($index, $frame) : $left[$index];
+            $second = $right === [] ? $this->right->value($index, $frame) : $right[$index];
             if (($first === null) !== ($second === null)) {
                 return 0;
             }

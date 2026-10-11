@@ -63,4 +63,12 @@ final class SingleRowTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1']], $result->rows);
     }
+
+    public function testValueRetainsTheAggregateStateAfterItsOnlyRowIsSkipped(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (SELECT COUNT(*),MAX(1) FROM DUAL LIMIT 0) <=> (0,NULL), (SELECT COUNT(*),MAX(1) FROM DUAL LIMIT 0 OFFSET 1) <=> (0,NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0']], $result->rows);
+    }
 }

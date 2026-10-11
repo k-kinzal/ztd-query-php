@@ -30,8 +30,16 @@ final class Rows
      */
     public function start(Frame $frame): RowIterator
     {
+        return $this->in($frame->inner());
+    }
+
+    /**
+     * Starts the subquery in a caller-owned frame whose final input state can be inspected.
+     */
+    public function in(Frame $frame): RowIterator
+    {
         $this->iterator ??= (new Builder())->build($this->plan->root);
-        $this->iterator->init(new Frame($frame->context, [], $frame));
+        $this->iterator->init($frame);
 
         return $this->iterator;
     }

@@ -19,12 +19,15 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  */
 final class SingleRow
 {
+    private ?Frame $frame = null;
+
     /**
      * @param Rows $rows The planned subquery
      * @param bool $once Whether its result is constant for this statement
      * @param list<Evaluable> $projection Output expressions readable without an input row
+     * @param list<int|float|string|null> $initial The projection's input state before a row is read
      */
-    public function __construct(public readonly Rows $rows, public readonly bool $once = false, public readonly array $projection = [])
+    public function __construct(public readonly Rows $rows, public readonly bool $once = false, public readonly array $projection = [], public readonly array $initial = [])
     {
     }
 
@@ -64,7 +67,8 @@ final class SingleRow
      */
     public function fetch(Frame $frame): array
     {
-        $iterator = $this->rows->start($frame);
+        $this->frame = new Frame($frame->context, $this->initial, $frame);
+        $iterator = $this->rows->in($this->frame);
         $row = $iterator->read();
         if ($row === null) {
             return [];
@@ -74,5 +78,13 @@ final class SingleRow
         }
 
         return array_slice($row, 0, count($this->rows->plan->domains));
+    }
+
+    /**
+     * Reads a retained projection expression after an empty result, in its query's input state.
+     */
+    public function value(int $position, Frame $outer): int|float|string|null
+    {
+        return $this->projection[$position]->evaluate($this->frame ?? $outer->inner());
     }
 }

@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class RowsTest extends TestCase
 {
-    public function testStartRerunsTheSubqueryForEachOuterRow(): void
+    public function testInRerunsTheSubqueryForEachOuterRow(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d');

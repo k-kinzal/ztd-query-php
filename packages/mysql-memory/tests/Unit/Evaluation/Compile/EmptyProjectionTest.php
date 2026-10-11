@@ -30,4 +30,40 @@ final class EmptyProjectionTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1']], $result->rows);
     }
+
+    public function testProjectFindsExpressionsBelowOrderingAndLimit(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (SELECT 1,NULL ORDER BY 1 LIMIT 0) <=> (2,NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
+    public function testAggregatePreservesCountAndExtremaBeforeHavingReadsAnyInput(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (SELECT COUNT(*),MAX(1) FROM DUAL HAVING 0) <=> (99,NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
+    public function testReadableDoesNotEvaluateTheArgumentsOfAnUnreadAggregate(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT (SELECT SUM(1/0),MIN(1/0) FROM DUAL HAVING 0) <=> (NULL,NULL)')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
+    public function testInitialKeepsCountZeroDistinctFromUnknownExtrema(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (SELECT NULLIF(COUNT(*),0),MIN(1) FROM DUAL HAVING 0) <=> (NULL,NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
 }
