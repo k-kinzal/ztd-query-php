@@ -162,7 +162,10 @@ final class EmptyProjection
         if ($node instanceof Query || $node instanceof DefaultOfColumn) {
             return true;
         }
-        if ($node instanceof WindowFunction || $node instanceof InsertedColumn) {
+        if ($node instanceof WindowFunction) {
+            return !$node->kind->treatsNulls();
+        }
+        if ($node instanceof InsertedColumn) {
             return false;
         }
         $children = [];

@@ -33,9 +33,17 @@ final class EmptyProjectionTest extends TestCase
         self::assertSame([['1', '1']], $result->rows);
     }
 
-    public function testOfDoesNotTreatWindowOutputAsAnIndependentExpression(): void
+    public function testOfPreservesComputedWindowOutput(): void
     {
         $result = (new Instance())->connect()->query('SELECT (SELECT ROW_NUMBER() OVER (),1) <=> (1,1)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
+    public function testOfReadsTheInitialStateOfAnUnreadRankWindow(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (SELECT NULLIF(ROW_NUMBER() OVER (),1),NULLIF(PERCENT_RANK() OVER (),0) FROM DUAL WHERE 0) <=> (NULL,NULL)')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1']], $result->rows);

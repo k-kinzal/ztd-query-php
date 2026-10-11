@@ -9,8 +9,8 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Compile\Constancy;
 use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Evaluable;
-use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Scope;
+use MySqlMemory\Evaluation\Window\OutputRead;
 use MySqlMemory\Evaluation\Window\WindowFrame;
 use MySqlMemory\Plan\Grouping;
 use MySqlMemory\Plan\Path\AccessPath;
@@ -103,7 +103,7 @@ final class Windowing
             }
             $input = new Window($input, $partition, $order, $frames->compile($window, $order, $scope), $computed, $arguments);
             foreach ($window->calls as $index => $call) {
-                $bindings[] = [$call, new ColumnRead($computed[$index]->domain, $width + $index)];
+                $bindings[] = [$call, new OutputRead($computed[$index], $width + $index)];
             }
         }
         foreach ($bindings as [$call, $read]) {
