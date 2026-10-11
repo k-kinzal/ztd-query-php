@@ -124,7 +124,7 @@ final class Output
         $charset = $text ? ($results === null ? $domain->collation->id : $results->defaultCollation(GrammarRelease::MySql847)->id) : 63;
         $field = $domain->field === Field::Enum || $domain->field === Field::Set ? Field::String : $domain->field;
         $blob = in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
-        $characters = $blob ? intdiv($domain->display ?? $domain->length, $domain->collation->charset->minLength()) : intdiv($domain->display ?? ($domain->length * $domain->collation->charset->maxLength), $domain->collation->charset->maxLength);
+        $characters = $this->characters($domain, $blob);
         $length = $text && $results !== null ? $this->converted($characters, $results->maxLength, $blob) : $domain->byteLength();
 
         $flags = $origin !== null && $origin->exact ? $origin->flags | ($domain->flags() & ColumnFlag::NotNull->value) : $domain->flags() | ($origin->flags ?? 0);
@@ -133,6 +133,15 @@ final class Output
         }
 
         return new ResultColumn($name, $field, $length, $domain->displayDecimals ?? $domain->decimals, $flags, $charset, $origin->column ?? '', $origin->table ?? '', $origin->originalTable ?? '', $origin->schema ?? '');
+    }
+
+    /**
+     * Computes the character bound before result conversion. JSON holds a byte
+     * bound, ordinary strings a character bound, and blobs use their minimum width.
+     */
+    public function characters(Domain $domain, bool $blob): int
+    {
+        return $blob ? intdiv($domain->display ?? $domain->length, $domain->collation->charset->minLength()) : intdiv($domain->display ?? ($domain->length * ($domain->kind === Kind::Json ? 1 : $domain->collation->charset->maxLength)), $domain->collation->charset->maxLength);
     }
 
     /**

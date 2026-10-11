@@ -33,10 +33,10 @@ use SqlSemantics\Statement\Type\NullOnly;
  * BIGINT, CUME_DIST and PERCENT_RANK DOUBLE; none of them is NULL.
  * LEAD and LAG have the aggregated type of the value and the default
  * (MYSQL-TYPE-AGGREGATION-001), JSON for a JSON value and a JSON or NULL
- * default; FIRST_VALUE, LAST_VALUE and NTH_VALUE
- * the type of the value; each is read from the temporary table of the
- * window, which holds an integer as an INT or a BIGINT and a string as a
- * VARCHAR or a BLOB. FIRST_VALUE, LAST_VALUE and NTH_VALUE are NULL when
+ * default; FIRST_VALUE, LAST_VALUE and NTH_VALUE retain the type of the
+ * value while parent expressions are resolved. Temporary window columns
+ * have separate storage types, selected by the execution path. FIRST_VALUE,
+ * LAST_VALUE and NTH_VALUE are NULL when
  * the frame has no such row, LEAD and LAG when the row is outside the
  * partition and the default is NULL or can be. IGNORE NULLS and FROM LAST
  * are rejected by the server (ER_NOT_SUPPORTED_YET). Terminates: a fixed
@@ -101,7 +101,7 @@ final class WindowResults
     /**
      * Resolves the type of LEAD or LAG: the value and the default aggregated, JSON when both are JSON or the default is NULL, as the temporary table of the window holds it.
      *
-     * MySQL 8.0 reports such a JSON value in the collation of JSON text (verified on a live 8.0 server).
+     * MySQL 8.0 rounds the stored JSON byte bound to whole UTF-8 characters (verified on a live 8.0 server).
      *
      * @param list<Domain> $arguments
      * @param bool $materialized Whether the result passes through a window's temporary column
@@ -113,6 +113,9 @@ final class WindowResults
         $settings = Settings::of($derivation->context);
         $release = $derivation->context->profile->grammar;
         $aggregated = $json ? $arguments[0] : (new Aggregation(new Collations($settings->connection)))->of($values, strtolower($call->kind->value), $derivation);
+        if ($json && $release === GrammarRelease::MySql8044) {
+            $aggregated = new Domain(Kind::Json, Field::Json, $arguments[0]->length, $arguments[0]->decimals, false, $arguments[0]->collation, [], $arguments[0]->coercibility, display: 4294967292);
+        }
 
         return $aggregated === null || !$materialized ? $aggregated : $this->materialized($call->kind, $aggregated, $release);
     }
@@ -126,7 +129,7 @@ final class WindowResults
             return $domain;
         }
         if (($kind === WindowFunctionKind::Lead || $kind === WindowFunctionKind::Lag) && $domain->kind === Kind::Json && $release === GrammarRelease::MySql8044) {
-            return new Domain(Kind::Json, Field::Json, 4294967295, 0, false, Collation::known('utf8mb4_bin'));
+            return new Domain(Kind::Json, Field::Json, 4294967295, 0, false, Collation::binary(), display: 4294967292);
         }
 
         return (new Materialization())->windowed($domain, $release);

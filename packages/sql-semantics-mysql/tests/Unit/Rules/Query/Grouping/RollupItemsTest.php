@@ -24,6 +24,18 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class RollupItemsTest extends TestCase
 {
+    public function testContainsWindowDistinguishesLocalWindowsFromNestedQueries(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $local = $semantics->analyze('SELECT COALESCE(FIRST_VALUE(NULL) OVER (),1)')->field(0)->expression;
+        $nested = $semantics->analyze('SELECT (SELECT FIRST_VALUE(NULL) OVER ())')->field(0)->expression;
+        $items = new RollupItems();
+
+        self::assertNotNull($local);
+        self::assertNotNull($nested);
+        self::assertSame([true, false], [$items->containsWindow([$local]), $items->containsWindow([$nested])]);
+    }
+
     public function testFieldsTypesTheRollupItemsAndKeepsTheOtherColumns(): void
     {
         $semantics = new Semantics(Dialect::MySql);

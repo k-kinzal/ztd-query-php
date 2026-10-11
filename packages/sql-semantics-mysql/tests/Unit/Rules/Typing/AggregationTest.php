@@ -24,6 +24,18 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class AggregationTest extends TestCase
 {
+    public function testFixedPreservesCharUntilAVariableStringParticipates(): void
+    {
+        $collation = Collation::known('utf8mb4_bin');
+        $rules = new Aggregation(new Collations($collation));
+        $result = Domain::string(3, $collation);
+        $character = Domain::string(3, $collation, Field::String);
+
+        self::assertSame(Field::String, $rules->fixed($result, [$character, Domain::integer()])->field);
+        self::assertSame($result, $rules->fixed($result, [$character, $result]));
+        self::assertSame($result, $rules->fixed($result, [Domain::integer()]));
+    }
+
     public function testSizedKeepsTheReleaseSpecificFieldOfLongStringBranches(): void
     {
         $collation = Collation::known('utf8mb4_0900_ai_ci');

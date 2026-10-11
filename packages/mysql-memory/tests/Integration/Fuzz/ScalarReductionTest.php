@@ -36,6 +36,9 @@ final class ScalarReductionTest extends TestCase
             yield 'SQL_NO_CACHE and FULL alias' => ['SELECT (SELECT SQL_NO_CACHE 1) AS full'];
             yield 'with clause' => ['SELECT (WITH c AS (SELECT 1) SELECT 1)'];
             yield 'rollup has multiple rows' => ['SELECT (SELECT 1 FROM DUAL GROUP BY 1 WITH ROLLUP)'];
+            yield 'rollup expression attribute' => ['SELECT (SELECT 1+0 FROM DUAL GROUP BY 1 WITH ROLLUP)'];
+            yield 'rollup null attribute' => ['SELECT (SELECT NULL FROM DUAL GROUP BY 1 WITH ROLLUP)'];
+            yield 'limited rollup attribute' => ['SELECT (SELECT 1 FROM DUAL GROUP BY 1 WITH ROLLUP LIMIT 1)'];
             yield 'window attributes' => ['SELECT (SELECT ROW_NUMBER() OVER ()), (SELECT ROW_NUMBER() OVER () LIMIT 0)'];
         }
     }

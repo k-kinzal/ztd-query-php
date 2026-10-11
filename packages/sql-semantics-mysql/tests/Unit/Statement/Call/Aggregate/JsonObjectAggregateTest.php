@@ -54,12 +54,12 @@ final class JsonObjectAggregateTest extends TestCase
         self::assertEquals(new Known(new Domain(Kind::Json, Field::Json, 16777216, 0, false, Collation::binary())), $fact->type);
     }
 
-    public function testDeriveScalarAnswersTheJsonOfATemporaryTableOverAWindow(): void
+    public function testDeriveScalarAnswersLogicalJsonBeforeWindowStorage(): void
     {
         $type = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze("SELECT JSON_OBJECTAGG('a', 1) OVER ()")->field(0)->type;
 
         self::assertInstanceOf(Known::class, $type);
-        self::assertSame(0, $type->descriptor instanceof Domain ? $type->descriptor->decimals : null);
+        self::assertSame(Domain::NOT_FIXED, $type->descriptor instanceof Domain ? $type->descriptor->decimals : null);
     }
 
     public function testRenderWritesEachAll(): void

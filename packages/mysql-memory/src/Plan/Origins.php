@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan;
 
 use MySqlMemory\Evaluation\Compile\Walker;
-use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Scope;
-use MySqlMemory\Evaluation\Window\OutputRead;
+use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Rules\Query\Grouping\OrderingAggregates;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
@@ -47,17 +46,17 @@ final class Origins
      * @param list<bool> $rolled Whether each item is a grouping expression of a block WITH ROLLUP
      * @param list<Domain> $domains The domains of the select list
      * @param bool $sorted Whether the block sorts its rows
-     * @param list<Evaluable> $expressions Compiled select items followed by any sort keys and carried columns
+     * @param bool $storedWindows Whether window-dependent outputs use temporary columns
      * @return list<ColumnOrigin|null>
      */
-    public function origins(Select $select, ?Scope $outer, Scope $scope, array $fields, array $rolled, array $domains, bool $sorted, array $expressions): array
+    public function origins(Select $select, ?Scope $outer, Scope $scope, array $fields, array $rolled, array $domains, bool $sorted, bool $storedWindows): array
     {
         $buffered = ($this->aggregateOrder($select) || $this->joinedOrder($select) || in_array(SelectOption::BufferResult, $select->options, true) || (in_array(SelectOption::Distinct, $select->options, true) && (new ConstantTables($this->planner->compiler->facts))->joined($select) > 1)) && !$this->planner->blocks->empty($select, $outer);
         $materialized = $sorted || in_array(SelectOption::Distinct, $select->options, true);
         $implicit = $this->planner->compiler->settings->legacy() && $select->groupBy === null && (new Grouping($this->planner))->collect($select) !== [];
         $supplied = $implicit ? $this->supplied($select->from) : [];
         $origins = array_map(fn (Field $field, bool $rolled, Domain $domain): ?ColumnOrigin => match (true) {
-            $expressions[$field->position] instanceof OutputRead => $expressions[$field->position]->materialized ? $this->planner->materialized([$domain])[0] : null,
+            $storedWindows && $field->expression !== null && (new Windowing($this->planner))->reads($field->expression) => $this->planner->materialized([$domain])[0],
             $rolled => $materialized ? $this->planner->materialized([$domain])[0] : ($this->planner->compiler->settings->legacy() ? $this->origin($field, $scope) : null),
             $implicit => $this->kept($field, $scope, $this->origin($field, $scope), $supplied),
             default => $this->origin($field, $scope),

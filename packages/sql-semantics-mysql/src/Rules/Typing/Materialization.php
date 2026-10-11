@@ -68,7 +68,7 @@ final class Materialization
         }
         $parts = array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $query->items);
 
-        return !(new Aggregates())->aggregates([...$parts, ...array_map(static fn ($item): object => $item->expression, $query->orderBy)]) && !(new \SqlSemantics\Platform\MySql\Rules\Expression\MergeDependencies())->separate($parts, $release, $facts);
+        return !(new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\RollupItems())->windowed($query) && !(new Aggregates())->aggregates([...$parts, ...array_map(static fn ($item): object => $item->expression, $query->orderBy)]) && !(new \SqlSemantics\Platform\MySql\Rules\Expression\MergeDependencies())->separate($parts, $release, $facts);
     }
 
     /**
@@ -88,6 +88,9 @@ final class Materialization
      */
     public function column(Domain $domain, bool $narrows = true): Domain
     {
+        if ($domain->kind === Kind::Json) {
+            return $this->jsonColumn($domain);
+        }
         if ($domain->kind === Kind::Decimal) {
             return new Domain($domain->kind, $domain->field, $domain->length, $domain->decimals, $domain->unsigned, $domain->collation, $domain->members, $domain->coercibility, capacity: $domain->capacity, displayDecimals: $domain->displayDecimals, storageField: $domain->storageField);
         }
@@ -100,13 +103,24 @@ final class Materialization
         if ($domain->field === Field::VarString && ($domain->kind->temporal() || ($domain->kind === Kind::Year && !$domain->collation->bytes()))) {
             return $this->text($domain, $domain->length);
         }
+        $domain = $this->integerColumn($domain, $narrows);
+
+        return $domain->kind === Kind::String ? $this->text($domain, $domain->length) : $this->nothing($domain);
+    }
+
+    /**
+     * Assigns integer storage and a separate display width to computed integral results.
+     * Existing column widths, packed BIT fields and native YEAR fields remain intact.
+     */
+    public function integerColumn(Domain $domain, bool $narrows = true): Domain
+    {
         if (($domain->kind === Kind::Integer || ($domain->kind === Kind::Bit && $domain->field === Field::LongLong) || ($domain->kind === Kind::Year && $domain->field !== Field::Year && $domain->collation->bytes())) && $domain->display === null) {
             $narrowed = $narrows && ($domain->field === Field::LongLong || $domain->kind === Kind::Year) && $domain->length < 10;
 
             return Domain::column($narrowed ? Field::Long : $domain->field, $domain->length, $domain->unsigned);
         }
 
-        return $domain->kind === Kind::String ? $this->text($domain, $domain->length) : $this->nothing($domain);
+        return $domain;
     }
 
     /**
@@ -133,11 +147,21 @@ final class Materialization
         while ($query instanceof ParenthesizedQuery || $query instanceof QueryExpression) {
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
         }
+        if (!$query instanceof Select) {
+            return $this->combined($domain, $narrows, $derivation->context->profile->grammar);
+        }
         $facts = $derivation->facts();
-        $field = $query instanceof Select && $facts->covers($query) ? ($facts->query($query)->projection[$position] ?? null) : null;
+        $field = $facts->covers($query) ? ($facts->query($query)->projection[$position] ?? null) : null;
         $expression = $field instanceof OutputField ? $field->expression : null;
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
+        }
+        $release = $derivation->context->profile->grammar;
+        if ($domain->kind === Kind::Json) {
+            return $this->jsonColumn($domain, $expression, $release);
+        }
+        if ($expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\RollupItems())->containsWindow([$expression])) {
+            $domain = $this->windowed($domain, $release, $expression);
         }
         $stored = (new \SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows())->stored($expression, $derivation->context->profile->grammar);
         if ($stored !== null) {
@@ -145,8 +169,8 @@ final class Materialization
         }
         $resolution = $expression !== null && $facts->covers($expression) ? $facts->scalar($expression)->resolution : ($field instanceof OutputField ? $field->resolution : null);
         $text = $domain->kind === Kind::String && in_array($domain->field, [Field::VarChar, Field::VarString, Field::String, Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
-        if (!$text || !$query instanceof Select || $resolution instanceof ResolvedColumn) {
-            return !$query instanceof Select ? $this->combined($domain, $narrows, $derivation->context->profile->grammar) : $this->column($domain, $narrows);
+        if (!$text || $resolution instanceof ResolvedColumn) {
+            return $this->column($domain, $narrows);
         }
 
         return $this->computed($domain, $expression, Settings::of($derivation->context), $derivation->context->profile->grammar);
@@ -230,7 +254,7 @@ final class Materialization
      * operation (verified on live 8.0 and 8.4 servers).
      * Source: https://dev.mysql.com/doc/refman/8.4/en/window-function-optimization.html.
      */
-    public function windowed(Domain $domain, GrammarRelease $release = GrammarRelease::MySql847): Domain
+    public function windowed(Domain $domain, GrammarRelease $release = GrammarRelease::MySql847, ?Scalar $expression = null): Domain
     {
         $fraction = $domain->decimals > 0 && $domain->decimals <= 6 ? $domain->decimals + 1 : 0;
 
@@ -242,10 +266,32 @@ final class Materialization
             Kind::Date => new Domain(Kind::Date, $domain->field, 10, 0, false, null, [], $domain->coercibility),
             Kind::DateTime => new Domain(Kind::DateTime, $domain->field, 19 + $fraction, $domain->decimals, false, null, [], $domain->coercibility),
             Kind::Time => new Domain(Kind::Time, $domain->field, 10 + $fraction, $domain->decimals, false, null, [], $domain->coercibility),
-            Kind::Json => new Domain(Kind::Json, Field::Json, 4294967295, 0, false, Collation::binary(), [], $domain->coercibility),
+            Kind::Json => $this->jsonColumn($domain, $expression, $release),
             Kind::Null => $this->set($domain, $release),
             Kind::Decimal, Kind::Double => $domain,
         };
+    }
+
+    /**
+     * Resolves JSON temporary-column metadata. MySQL 8.0 rounds the reported byte
+     * bound of control expressions and LEAD/LAG to whole UTF-8 characters.
+     * Stored columns use binary collation independently of that reported bound.
+     * Verified through direct, windowed and derived results on 8.0, 8.4 and 9.1.
+     */
+    public function jsonColumn(Domain $domain, ?Scalar $expression = null, GrammarRelease $release = GrammarRelease::MySql847): Domain
+    {
+        while ($expression instanceof Grouped || ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary && $expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus) || ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Access\OdbcEscape && $expression->literal() === null)) {
+            $expression = $expression->operand;
+        }
+        $text = match (true) {
+            $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Branching\CaseExpression => true,
+            $expression instanceof \SqlSemantics\Platform\MySql\Statement\Call\KeywordCall => in_array($expression->function, [\SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::If, \SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction::Coalesce], true),
+            $expression instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall => $expression->schema === null && strtoupper($expression->name->value) === 'IFNULL',
+            $expression instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction => in_array($expression->kind, [\SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Lead, \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind::Lag], true),
+            default => false,
+        };
+
+        return new Domain(Kind::Json, Field::Json, 4294967295, 0, false, Collation::binary(), [], $domain->coercibility, display: $release === GrammarRelease::MySql8044 && $text ? 4294967292 : null);
     }
 
     /**

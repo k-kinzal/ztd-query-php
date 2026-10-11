@@ -91,7 +91,7 @@ final class WindowFunction implements Scalar
         $results = new WindowResults();
         $domain = $arguments === null ? null : $results->resolved($this, $arguments, $derivation, false);
 
-        return $domain === null ? $fact : new ScalarFact(new Known($results->materialized($this->kind, $domain, $derivation->context->profile->grammar)), $fact->nullability, unmaterializedType: new Known($domain));
+        return $domain === null ? $fact : new ScalarFact(new Known($domain), $fact->nullability);
     }
 
     /**

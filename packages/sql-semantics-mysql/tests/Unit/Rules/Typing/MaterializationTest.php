@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Typing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
@@ -27,6 +28,37 @@ use SqlSemantics\Statement\Type\TypeFact;
 #[Small]
 final class MaterializationTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerJsonControls(): iterable
+    {
+        foreach (["COALESCE(CAST('[1]' AS JSON),JSON_ARRAY(1))", "IFNULL(CAST('[1]' AS JSON),JSON_ARRAY(1))", "IF(1,CAST('[1]' AS JSON),JSON_ARRAY(1))", "CASE WHEN 1 THEN CAST('[1]' AS JSON) ELSE JSON_ARRAY(1) END", "LAG(CAST('[1]' AS JSON),0) OVER ()"] as $sql) {
+            yield $sql => [$sql];
+        }
+    }
+
+    #[DataProvider('providerJsonControls')]
+    public function testJsonColumnKeepsTheReportedBoundOfMySql80ControlResults(string $sql): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $domain = new Domain(Kind::Json, Field::Json, 1073741823, 31, false, Collation::known('utf8mb4_bin'));
+        $rules = new Materialization();
+        $expression = $semantics->analyze('SELECT ' . $sql)->field(0)->expression;
+        $legacy = $rules->jsonColumn($domain, $expression, GrammarRelease::MySql8044);
+        $modern = $rules->jsonColumn($domain, $expression);
+
+        self::assertSame([63, 63, 4294967295, 4294967292, 0], [$legacy->collation->id, $modern->collation->id, $legacy->length, $legacy->metadataLength(), $legacy->decimals]);
+    }
+
+    public function testColumnStoresJsonWithItsFullByteBoundAndNoDecimals(): void
+    {
+        $logical = new Domain(Kind::Json, Field::Json, 1073741823, 31, false, Collation::known('utf8mb4_bin'));
+        $column = (new Materialization())->column($logical);
+
+        self::assertSame([Kind::Json, Field::Json, 4294967295, 0, 'binary'], [$column->kind, $column->field, $column->metadataLength(), $column->decimals, $column->collation->name]);
+    }
+
     public function testOrderedStoresBitSortKeysAsIntegersAtTheirReportedWidth(): void
     {
         $rules = new Materialization();
@@ -114,6 +146,7 @@ final class MaterializationTest extends TestCase
         self::assertTrue((new Materialization())->mergeable($derived('SELECT * FROM (SELECT a FROM t) d')->query));
         self::assertFalse((new Materialization())->mergeable($derived('SELECT * FROM (SELECT DISTINCT a FROM t) d')->query));
         self::assertFalse((new Materialization())->mergeable($derived('SELECT * FROM (SELECT COUNT(*) FROM t) d')->query));
+        self::assertFalse((new Materialization())->mergeable($derived('SELECT * FROM (SELECT ROW_NUMBER() OVER () FROM t) d')->query));
         self::assertFalse((new Materialization())->mergeable($derived('SELECT * FROM (SELECT 1) d')->query));
     }
 
@@ -154,6 +187,16 @@ final class MaterializationTest extends TestCase
         self::assertSame(67, $column->metadataLength());
         self::assertSame(65, $column->precision());
         self::assertSame(30, $column->decimals);
+    }
+
+    public function testIntegerColumnNarrowsShortBigIntsAndRetainsExistingWidths(): void
+    {
+        $rules = new Materialization();
+        $column = $rules->integerColumn(Domain::integer(Field::LongLong, 2));
+
+        self::assertSame([Field::Long, 11, 2], [$column->field, $column->length, $column->display]);
+        self::assertSame($column, $rules->integerColumn($column));
+        self::assertSame(Field::LongLong, $rules->integerColumn(Domain::integer(Field::LongLong, 2), false)->field);
     }
 
     public function testColumnNarrowsShortBigIntsAndDropsStringDecimals(): void

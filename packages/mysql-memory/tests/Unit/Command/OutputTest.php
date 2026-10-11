@@ -22,6 +22,22 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class OutputTest extends TestCase
 {
+    public function testCharactersDistinguishesJsonBytesFromStringCharacters(): void
+    {
+        $output = new Output();
+        $collation = Collation::known('utf8mb4_bin');
+
+        self::assertSame([3, 3, 12], [$output->characters(new Domain(Kind::Json, Field::Json, 12, collation: $collation), false), $output->characters(Domain::string(3, $collation), false), $output->characters(Domain::string(12, $collation, Field::Blob), true)]);
+    }
+
+    public function testColumnCountsJsonBytesBeforeResultCharsetConversion(): void
+    {
+        $domain = new Domain(Kind::Json, Field::Json, 4294967295, 31, false, Collation::known('utf8mb4_bin'));
+        $output = new Output();
+
+        self::assertSame([4294967292, 1073741823, 4294967295], [$output->column('v', $domain, null, Charset::known('utf8mb4'))->length, $output->column('v', $domain, null, Charset::known('latin1'))->length, $output->column('v', $domain, null)->length]);
+    }
+
     public function testResultCountsAnOffsetRowWithoutEvaluatingItsWindowArguments(): void
     {
         $session = (new Instance())->connect();

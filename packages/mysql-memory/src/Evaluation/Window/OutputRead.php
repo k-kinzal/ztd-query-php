@@ -25,9 +25,8 @@ final class OutputRead implements Evaluable
     /**
      * @param Analytic $analytic The compiled window function
      * @param int $position Its output position in the query block's row
-     * @param bool $materialized Whether the result uses a temporary window column
      */
-    public function __construct(public readonly Analytic $analytic, public readonly int $position, public readonly bool $materialized = true)
+    public function __construct(public readonly Analytic $analytic, public readonly int $position)
     {
     }
 

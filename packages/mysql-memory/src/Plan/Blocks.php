@@ -82,18 +82,19 @@ final class Blocks
         if ($select->having !== null) {
             $input = $this->where($input, $select->having, $evaluation);
         }
-        [$input, $presorted] = (new Windowing($this->planner))->plan($select, $input, $evaluation);
+        $windows = new Windowing($this->planner);
+        [$input, $presorted, $storedWindows] = $windows->plan($select, $input, $evaluation);
         $fields = $this->fields($select);
         $expressions = array_map(fn (Field $field): Evaluable => $compiler->names->field($field, $evaluation), $fields);
         $rolled = array_map(static fn (Field $field): bool => $grouping->rolls($select, $field), $fields);
         if ($select->groupBy?->modifier !== null) {
             $expressions = array_map(static fn (Field $field, Evaluable $expression): Evaluable => $grouping->output($field, $expression), $fields, $expressions);
         }
-        $domains = array_map(fn (Field $field, Evaluable $expression): Domain => $this->tabled($field, $expression->domain(), $expression), $fields, $expressions);
+        $domains = array_map(fn (Field $field, Evaluable $expression): Domain => $windows->output($field, $expression, $storedWindows), $fields, $expressions);
         [$keys, $expressions] = $this->sortKeys($select, $fields, $domains, $expressions, $evaluation);
         $expressions = $this->carry($select, $scope, $evaluation, $expressions);
         $names = array_map(fn (Field $field): string => $this->name($field, $select), $fields);
-        $origins = (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== [], $expressions);
+        $origins = (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== [], $storedWindows);
         $hashes = (new SortedDistinct($this->planner))->hashes(new QueryPlan($input, $domains, $names, $origins), $select, $keys);
         $root = $this->distinct($select, $fields, $input, $expressions, $domains, $hashes);
         if ($keys !== [] && !$presorted) {
@@ -113,13 +114,9 @@ final class Blocks
      * A column of a merged derived table holds a temporal value in the connection collation; a
      * block that passes its rows through a temporary table, for GROUP BY, DISTINCT or a window,
      * sends it binary (verified on a live 8.4 server).
-     * A compiled window already carries the type of its chosen execution path.
      */
-    public function tabled(Field $field, Domain $domain, ?Evaluable $expression = null): Domain
+    public function tabled(Field $field, Domain $domain): Domain
     {
-        if ($expression instanceof \MySqlMemory\Evaluation\Window\OutputRead) {
-            return $domain;
-        }
         $type = $field->slot->type;
         if (!$domain->kind->temporal() || $domain->collation->bytes() || !$type instanceof \SqlSemantics\Statement\Type\Known || !$type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain || !$type->descriptor->collation->bytes() || $type->descriptor->kind !== $domain->kind) {
             return $domain;

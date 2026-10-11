@@ -106,7 +106,16 @@ final class RollupItems
      */
     public function windowed(Select $select): bool
     {
-        $pending = [...$select->items, ...$select->orderBy];
+        return $this->containsWindow([...$select->items, ...$select->orderBy]);
+    }
+
+    /**
+     * Finds a window belonging to these expressions, without entering nested queries.
+     *
+     * @param list<object> $pending Expressions or select-list and ordering wrappers
+     */
+    public function containsWindow(array $pending): bool
+    {
         while ($pending !== []) {
             $value = array_pop($pending);
             if (is_array($value)) {

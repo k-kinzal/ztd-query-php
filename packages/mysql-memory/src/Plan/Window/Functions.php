@@ -59,9 +59,9 @@ final class Functions
     {
         $compiler = $this->planner->compiler;
         $domain = $compiler->domain($call);
-        $type = $compiler->facts->scalar($call)->unmaterializedType;
-        if ($direct && $type instanceof \SqlSemantics\Statement\Type\Known && $type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
-            $domain = \MySqlMemory\Typing\Domain::of($type->descriptor, $domain->nullable);
+        if (!$direct) {
+            $stored = $call instanceof WindowFunction ? (new \SqlSemantics\Platform\MySql\Rules\Call\WindowResults())->materialized($call->kind, $domain->resolved(), $compiler->settings->release()) : (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->windowed($domain->resolved(), $compiler->settings->release());
+            $domain = \MySqlMemory\Typing\Domain::of($stored, $domain->nullable);
         }
         if ($call instanceof Aggregate || $call instanceof JsonObjectAggregate) {
             return new Analytic(null, (new Grouping($this->planner))->accumulation($call, $scope), [], 1, $domain);

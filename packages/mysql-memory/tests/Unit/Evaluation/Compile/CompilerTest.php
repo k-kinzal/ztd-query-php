@@ -114,6 +114,16 @@ final class CompilerTest extends TestCase
         self::assertSame([1, 0, 1, 0, 1], [$result->columns[0]->flags & 1, $result->columns[1]->flags & 1, $result->columns[2]->flags & 1, $result->columns[3]->flags & 1, $result->columns[4]->flags & 1]);
     }
 
+    public function testTypedRetainsTheNullableAttributeOfAReducedRollupScalar(): void
+    {
+        $session = (new Instance('9.1.0'))->connect();
+        $result = $session->query('SELECT (SELECT 1 FROM DUAL GROUP BY 1 WITH ROLLUP), (SELECT 1 FROM DUAL GROUP BY 1)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1']], $result->rows);
+        self::assertSame([2, 2, 0, 1], [$result->columns[0]->length, $result->columns[1]->length, $result->columns[0]->flags & 1, $result->columns[1]->flags & 1]);
+    }
+
     public function testDispatchCompilesConcatenationWithPipesAsConcat(): void
     {
         $session = (new Instance())->connect();

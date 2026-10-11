@@ -64,12 +64,12 @@ final class AggregateTest extends TestCase
         self::assertSame('COUNT(ALL *) OVER w', (new Lexical())->join($out->pieces()));
     }
 
-    public function testDeriveScalarResolvesMinOverAWindowAsTheTemporaryTableHoldsIt(): void
+    public function testDeriveScalarResolvesTheLogicalTypesOfMinAndMaxOverAWindow(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a TINYINT, c CHAR(3))');
         $query = $semantics->analyze('SELECT MIN(a) OVER (), MAX(c) OVER (), MIN(a) FROM t', [$table]);
 
-        self::assertEquals([new Known(Domain::integer(Field::Long, 4)), Field::VarString, Field::Tiny], [$query->field(0)->type, $query->field(1)->type instanceof Known && $query->field(1)->type->descriptor instanceof Domain ? $query->field(1)->type->descriptor->field : null, $query->field(2)->type instanceof Known && $query->field(2)->type->descriptor instanceof Domain ? $query->field(2)->type->descriptor->field : null]);
+        self::assertEquals([new Known(Domain::integer(Field::Tiny, 4)), Field::String, Field::Tiny], [$query->field(0)->type, $query->field(1)->type instanceof Known && $query->field(1)->type->descriptor instanceof Domain ? $query->field(1)->type->descriptor->field : null, $query->field(2)->type instanceof Known && $query->field(2)->type->descriptor instanceof Domain ? $query->field(2)->type->descriptor->field : null]);
     }
 }

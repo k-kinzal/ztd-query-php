@@ -40,8 +40,15 @@ final class WindowFunctionTest extends TestCase
         self::assertNotNull($expression);
         $fact = $query->facts->scalar($expression);
 
-        self::assertEquals(new Known(Domain::integer(Field::Long, 3)), $fact->type);
-        self::assertEquals(new Known(Domain::integer(Field::LongLong, 3)), $fact->unmaterializedType);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 3)), $fact->type);
+        self::assertEquals($fact->type, $query->field(0)->type);
+    }
+
+    public function testDeriveScalarFeedsItsLogicalTypeToParentExpressions(): void
+    {
+        $query = (new Semantics(Dialect::MySql))->analyze('SELECT COALESCE(FIRST_VALUE(NULL) OVER (),1)');
+
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 2)), $query->field(0)->type);
     }
 
     public function testDeriveScalarDerivesTheArgumentsAndTheWindow(): void
@@ -65,13 +72,13 @@ final class WindowFunctionTest extends TestCase
         self::assertSame('NTH_VALUE(a, 2) FROM FIRST RESPECT NULLS OVER w', (new Lexical())->join($out->pieces()));
     }
 
-    public function testDeriveScalarResolvesTheTypeTheTemporaryTableOfTheWindowHolds(): void
+    public function testDeriveScalarResolvesTheLogicalTypeBeforeWindowStorage(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t (a INT NOT NULL)');
         $query = $semantics->analyze('SELECT ROW_NUMBER() OVER (), FIRST_VALUE(a) OVER (), LAG(a, 1, a) OVER () FROM t', [$table]);
 
-        self::assertEquals([new Known(Domain::integer(Field::LongLong, 21)), new Known(Domain::integer(Field::LongLong, 11))], [$query->field(0)->type, $query->field(1)->type]);
+        self::assertEquals([new Known(Domain::integer(Field::LongLong, 21)), new Known(Domain::integer(Field::Long, 11))], [$query->field(0)->type, $query->field(1)->type]);
         self::assertSame([Nullability::NotNull, Nullability::Nullable, Nullability::NotNull], [$query->field(0)->nullability, $query->field(1)->nullability, $query->field(2)->nullability]);
     }
 }

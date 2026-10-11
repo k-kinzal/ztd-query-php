@@ -54,7 +54,7 @@ final class Aggregation
             $integral = static fn (Domain $domain): bool => $domain->kind === Kind::Integer || $domain->kind === Kind::Year || $domain->kind === Kind::Bit;
 
             return match (true) {
-                $all(static fn (Domain $domain): bool => $domain->kind === Kind::Json) => $operation === 'UNION' ? $present[0] : new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'), [], $present[0]->coercibility),
+                $all(static fn (Domain $domain): bool => $domain->kind === Kind::Json) => $operation === 'UNION' ? $present[0] : new Domain(Kind::Json, Field::Json, 4294967295, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'), [], $present[0]->coercibility, display: $grammar === GrammarRelease::MySql8044 ? 4294967292 : null),
                 $all(static fn (Domain $domain): bool => $domain->kind === Kind::Year) => $present[0],
                 $all(static fn (Domain $domain): bool => $domain->kind === Kind::Bit) => $this->strings($present, $operation, $derivation),
                 $all($integral) => $this->integers($present),
@@ -283,7 +283,23 @@ final class Aggregation
 
         $result = !$blob && !$united && $written ? $this->sized($length, $collation, $coercibility, $early) : new Domain(Kind::String, $blob ? Field::Blob : Field::VarString, min(4294967295, $length), $decimals, false, $collation, [], $coercibility);
 
-        return $united ? $result : (new Text\ResultBounds())->computed($result);
+        return $united ? $result : (new Text\ResultBounds())->computed($this->fixed($result, $domains));
+    }
+
+    /**
+     * Retains CHAR when every string branch is CHAR. Numeric and temporal
+     * branches widen its bound without making it VARCHAR. Verified on 8.0, 8.4 and 9.1.
+     *
+     * @param list<Domain> $domains The branch domains
+     */
+    public function fixed(Domain $result, array $domains): Domain
+    {
+        $strings = array_filter($domains, static fn (Domain $domain): bool => $domain->kind === Kind::String);
+        if ($result->field !== Field::VarString || $strings === [] || array_filter($strings, static fn (Domain $domain): bool => $domain->field !== Field::String) !== []) {
+            return $result;
+        }
+
+        return new Domain(Kind::String, Field::String, $result->length, $result->decimals, false, $result->collation, [], $result->coercibility);
     }
 
     /**

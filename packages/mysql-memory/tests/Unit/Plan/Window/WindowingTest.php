@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class WindowingTest extends TestCase
 {
-    public function testPlanRetainsTemporalWidthsAndJsonFlagsThroughTransparentWrappers(): void
+    public function testOutputRetainsTemporalWidthsAndJsonFlagsThroughTransparentWrappers(): void
     {
         $session = (new Instance())->connect();
         $expression = "SELECT +(FIRST_VALUE(CAST('2020-01-02' AS DATE)) OVER ()), (FIRST_VALUE(CAST('[1]' AS JSON)) OVER ())";

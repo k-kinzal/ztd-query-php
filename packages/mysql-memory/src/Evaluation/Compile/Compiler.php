@@ -261,14 +261,14 @@ final class Compiler
             return $evaluable;
         }
         $fact = $this->facts->scalar($node);
-        if ($fact->replacement !== null) {
-            return $evaluable;
-        }
         $nullable = match ($fact->nullability) {
             Nullability::NotNull => false,
             Nullability::Nullable => true,
             Nullability::Dependent => $evaluable->domain()->nullable,
         };
+        if ($fact->replacement !== null) {
+            return $nullable === $evaluable->domain()->nullable ? $evaluable : new Retyped($evaluable, $evaluable->domain()->withNullable($nullable));
+        }
         if ($node instanceof Parameter && $this->settings->legacy()) {
             $nullable = $evaluable->domain()->nullable;
         }

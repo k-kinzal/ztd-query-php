@@ -139,7 +139,7 @@ final class SelectFacts
                 continue;
             }
             $domain = $field->slot->type instanceof Known && $field->slot->type->descriptor instanceof Domain ? $field->slot->type->descriptor : null;
-            if ($domain === null || !$domain->kind->temporal() || $domain->collation->bytes() || $field->expression instanceof ScalarSubquery) {
+            if ($domain === null || !$domain->kind->temporal() || $domain->collation->bytes() || $field->expression instanceof ScalarSubquery || ($field->expression !== null && (new RollupItems())->containsWindow([$field->expression]))) {
                 $fields[] = $field;
                 continue;
             }

@@ -31,7 +31,6 @@ final class ScalarFactTest extends TestCase
         self::assertSame(Nullability::NotNull, $fact->nullability);
         self::assertNull($fact->resolution);
         self::assertNull($fact->replacement);
-        self::assertNull($fact->unmaterializedType);
     }
 
     public function testResolutionIsKeptForANameUse(): void

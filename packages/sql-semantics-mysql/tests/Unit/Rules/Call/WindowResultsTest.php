@@ -52,6 +52,14 @@ final class WindowResultsTest extends TestCase
         self::assertSame([Field::LongLong, Field::Long, 3], [$domain->field, $result->field, $result->length]);
     }
 
+    public function testMaterializedKeepsTheMySql80JsonShiftWidthInBinaryStorage(): void
+    {
+        $json = new Domain(Kind::Json, Field::Json, 4294967295, 31, false, Collation::known('utf8mb4_bin'));
+        $stored = (new WindowResults())->materialized(WindowFunctionKind::Lag, $json, \SqlSemantics\Contract\GrammarRelease::MySql8044);
+
+        self::assertSame([63, 4294967295, 4294967292, 0], [$stored->collation->id, $stored->length, $stored->metadataLength(), $stored->decimals]);
+    }
+
     public function testResultTypesEachKindOfWindowFunction(): void
     {
         $platform = new Platform();
@@ -107,6 +115,8 @@ final class WindowResultsTest extends TestCase
         $lag = new WindowFunction(WindowFunctionKind::Lag, [new NumberLiteral('1'), new NumberLiteral('1'), new NumberLiteral('2')], new Name('w'));
 
         self::assertSame(Kind::Json, $results->shifted($lag, [$json, Domain::integer(), Domain::null()], $derivation)?->kind);
+        $early = new Derivation($platform->context($platform->profile('mysql-8.0.44', null, ParameterStyle::Native), null, [], false));
+        self::assertSame(4294967292, $results->shifted($lag, [$json, Domain::integer(), Domain::null()], $early, false)?->metadataLength());
         self::assertSame([Kind::Decimal, 1], [$results->shifted($lag, [Domain::column(Field::Long, 11), Domain::integer(), Domain::decimal(2, 1)], $derivation)?->kind, $results->shifted($lag, [Domain::column(Field::Long, 11), Domain::integer(), Domain::decimal(2, 1)], $derivation)?->decimals]);
     }
 }

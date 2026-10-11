@@ -65,14 +65,14 @@ final class Windowing
     /**
      * Plans the windows of a block over its rows, binds each call to its value in the scope, and answers the path and whether it already sorts the rows for the ORDER BY of the block.
      *
-     * @return array{AccessPath, bool}
+     * @return array{AccessPath, bool, bool} The path, whether it is presorted, and whether window outputs are materialized
      * @throws SqlError When a window function or a window is refused
      */
     public function plan(Select $select, AccessPath $input, Scope $scope): array
     {
         $calls = $this->calls($select);
         if ($calls === [] && $select->windows === []) {
-            return [$input, false];
+            return [$input, false, false];
         }
         $windows = (new Resolution())->resolve($select, $calls);
         $frames = new Frames($this->planner);
@@ -105,14 +105,31 @@ final class Windowing
             }
             $input = new Window($input, $partition, $order, $frames->compile($window, $order, $scope), $computed, $arguments);
             foreach ($window->calls as $index => $call) {
-                $bindings[] = [$call, new OutputRead($analytics[spl_object_id($call)], $width + $index, !$direct)];
+                $bindings[] = [$call, new OutputRead($analytics[spl_object_id($call)], $width + $index)];
             }
         }
         foreach ($bindings as [$call, $read]) {
             $scope->bind($call, $read);
         }
 
-        return [$input, $pushed];
+        return [$input, $pushed, !$direct];
+    }
+
+    /**
+     * Chooses result-column storage after parent expressions have resolved their logical types.
+     * Unrelated expressions keep their own output rules; a bare window already has its chosen type.
+     */
+    public function output(\SqlSemantics\Statement\Shape\Field $field, Evaluable $expression, bool $materialized): \MySqlMemory\Typing\Domain
+    {
+        $domain = $expression->domain();
+        if ($expression instanceof OutputRead) {
+            return $domain;
+        }
+        if ($field->expression !== null && $this->reads($field->expression)) {
+            return $materialized ? \MySqlMemory\Typing\Domain::of((new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->windowed($domain->resolved(), $this->planner->settings->release(), $field->expression), $domain->nullable) : $domain;
+        }
+
+        return $this->planner->blocks->tabled($field, $domain);
     }
 
     /**

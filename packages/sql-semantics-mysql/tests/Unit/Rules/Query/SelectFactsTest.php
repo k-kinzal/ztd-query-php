@@ -118,4 +118,18 @@ final class SelectFactsTest extends TestCase
         self::assertInstanceOf(Domain::class, $plain->descriptor);
         self::assertSame(['binary', 'utf8mb4_0900_ai_ci'], [$grouped->descriptor->collation->name, $plain->descriptor->collation->name]);
     }
+
+    public function testTabledPreservesLogicalWindowTypesAcrossScalarSubqueries(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $window = "SELECT FIRST_VALUE(CAST('2020-01-02' AS DATE)) OVER () AS v FROM (SELECT 1 UNION ALL SELECT 2) t LIMIT 1";
+        $scalar = $semantics->analyze('SELECT (' . $window . ')')->field(0)->type;
+        $derived = $semantics->analyze('SELECT v FROM (' . $window . ') d')->field(0)->type;
+        self::assertInstanceOf(Known::class, $scalar);
+        self::assertInstanceOf(Domain::class, $scalar->descriptor);
+        self::assertInstanceOf(Known::class, $derived);
+        self::assertInstanceOf(Domain::class, $derived->descriptor);
+
+        self::assertSame(['utf8mb4_0900_ai_ci', 'binary'], [$scalar->descriptor->collation->name, $derived->descriptor->collation->name]);
+    }
 }
