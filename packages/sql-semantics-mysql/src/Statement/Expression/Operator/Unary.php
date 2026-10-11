@@ -50,9 +50,11 @@ final class Unary implements Scalar
     /**
      * @param UnaryOperator $operator The operator
      * @param Scalar $operand The operand
+     * @param bool $keyword Whether tight negation was written NOT under HIGH_NOT_PRECEDENCE
      */
-    public function __construct(public readonly UnaryOperator $operator, public readonly Scalar $operand)
+    public function __construct(public readonly UnaryOperator $operator, public readonly Scalar $operand, public readonly bool $keyword = false)
     {
+        Check::input(!$keyword || $operator === UnaryOperator::Not, 'Only logical negation has a keyword spelling.');
         Check::input((new Precedence())->opening($operand) >= Precedence::PREFIX, 'The operand of a prefix operator needs a grouping to keep its place.');
     }
 
@@ -61,8 +63,9 @@ final class Unary implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        Check::input(!$this->keyword || $derivation->context->profile->lexical->highNotPrecedence, 'The tight NOT keyword requires HIGH_NOT_PRECEDENCE.');
         $operands = new Operands();
-        if ($this->operator === UnaryOperator::Not) {
+        if ($this->operator === UnaryOperator::Not && !$this->keyword) {
             Deprecation::raise(Deprecated::BangNot, $derivation, $this, false);
         }
         $fact = $operands->single($derivation->scalar($this->operand, $environment), $derivation);
@@ -87,7 +90,12 @@ final class Unary implements Scalar
      */
     public function render(Output $out): void
     {
-        $out->symbol($this->operator->value)->node($this->operand);
+        if ($this->keyword) {
+            $out->keyword('NOT');
+        } else {
+            $out->symbol($this->operator->value);
+        }
+        $out->node($this->operand);
     }
 
     /**

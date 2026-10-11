@@ -45,6 +45,7 @@ final class PrimaryRuleTest extends TestCase
 
         self::assertInstanceOf(Unary::class, $expression);
         self::assertSame(UnaryOperator::Not, $expression->operator);
+        self::assertTrue($expression->keyword);
     }
 
     public function testLeafLowersAColumnAndAParameter(): void

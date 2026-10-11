@@ -31,6 +31,32 @@ use SqlSemantics\Statement\Type\Known;
 #[Medium]
 final class UnaryTest extends TestCase
 {
+    public function testDeriveScalarWarnsOnlyForTheSymbolicSpellingOfTightNegation(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, null, \SqlSemantics\Platform\MySql\Mode::fromString('HIGH_NOT_PRECEDENCE'));
+        $operation = $semantics->analyze('SELECT NOT 1, ! 1, NOT 2 = 1');
+
+        self::assertCount(1, $operation->facts->warnings);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot->value, $operation->facts->warnings[0]->message());
+        self::assertSame('SELECT NOT 1, ! 1, NOT 2 = 1', $operation->toString());
+    }
+
+    public function testDeriveScalarRejectsTheTightKeywordWithoutItsMode(): void
+    {
+        $platform = new Platform();
+        $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
+        $this->expectExceptionMessage('The tight NOT keyword requires HIGH_NOT_PRECEDENCE.');
+
+        $derivation->scalar(new Unary(UnaryOperator::Not, new NumberLiteral('1'), keyword: true), $derivation->environment());
+    }
+
+    public function testRejectsAKeywordSpellingForOtherOperators(): void
+    {
+        $this->expectExceptionMessage('Only logical negation has a keyword spelling.');
+
+        new Unary(UnaryOperator::Minus, new NumberLiteral('1'), keyword: true);
+    }
+
     public function testDeriveScalarTypesEachOperator(): void
     {
         $platform = new Platform();

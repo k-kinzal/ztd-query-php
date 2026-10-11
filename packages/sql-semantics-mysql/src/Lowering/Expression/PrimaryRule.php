@@ -109,11 +109,9 @@ final class PrimaryRule
         }
         $prefix = self::PREFIX[$form->signature] ?? null;
         if ($prefix !== null) {
-            if ($prefix === UnaryOperator::Not) {
-                $this->negation($form->node(0));
-            }
+            $keyword = $prefix === UnaryOperator::Not && $this->negation($form->node(0));
 
-            return new Unary($prefix, $this->simpleExpression($form->node(1)));
+            return new Unary($prefix, $this->simpleExpression($form->node(1)), $keyword);
         }
 
         return (new FormRule($this->lowering))->lower($form);
@@ -133,15 +131,17 @@ final class PrimaryRule
     }
 
     /**
-     * Confirms the tight negation keyword: `!`, or NOT under HIGH_NOT_PRECEDENCE.
+     * Confirms tight negation and answers whether it uses the NOT keyword spelling.
      *
      * @throws ImplementationGap When the production has no rule
      */
-    public function negation(Node $keyword): void
+    public function negation(Node $keyword): bool
     {
         $form = $this->lowering->form($keyword);
         if ($form->signature !== 'not2: !' && $form->signature !== 'not2: NOT2_SYM') {
             throw ImplementationGap::production($form);
         }
+
+        return $form->signature === 'not2: NOT2_SYM';
     }
 }

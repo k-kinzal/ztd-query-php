@@ -8,7 +8,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Operator;
  * The prefix operators of the simple_expr level: `+`, `-`, `~` and the tight logical negation `!`.
  *
  * Under HIGH_NOT_PRECEDENCE the keyword NOT is the tight negation and is
- * written `!`. Each case holds the written operator.
+ * represented by Not. Unary retains whether its spelling was NOT or `!`.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/operator-precedence.html,
  * https://dev.mysql.com/doc/refman/8.4/en/sql-mode.html#sqlmode_high_not_precedence.
  *
