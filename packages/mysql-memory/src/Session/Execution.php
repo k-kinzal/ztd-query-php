@@ -302,6 +302,9 @@ final class Execution
         $session->variables->rowCount = -1;
         $answers = $session->running->replies;
         $session->running->replies = [];
+        if ($session->running->partial !== null) {
+            $answers[] = $session->running->partial;
+        }
         $session->running->partial = null;
         if (!$error->recorded) {
             $session->diagnostics->error($error->getCode(), $error->getMessage(), $error->signalled);

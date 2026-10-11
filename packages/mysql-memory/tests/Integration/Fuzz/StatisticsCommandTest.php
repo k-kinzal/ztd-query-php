@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Fuzz;
 
 use Fuzz\Target\Servers;
+use Fuzz\Target\StatisticsObservation;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -30,6 +31,7 @@ final class StatisticsCommandTest extends TestCase
         [$target] = Servers::shared();
         $target->repair($memory ? $target->memoryGuard() : $target->guard());
         $pdo = new PDO($memory ? $target->memory : $target->native, $memory ? 'root' : $target->nativeUser, $memory ? '' : $target->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        self::assertTrue(StatisticsObservation::settled($pdo), 'Connection cleanup did not settle before the counter observation.');
         $pdo->exec('SET timestamp=1234567890');
         $counts = static function () use ($pdo): array {
             $statement = $pdo->query("SHOW GLOBAL STATUS WHERE Variable_name IN ('Queries','Questions','Uptime','Open_tables','Opened_tables','Flush_commands','Slow_queries','Threads_connected')");

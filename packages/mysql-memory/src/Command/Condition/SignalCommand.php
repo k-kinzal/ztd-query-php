@@ -107,6 +107,10 @@ final class SignalCommand implements Command
         $state = $statement->condition->state->value;
         [$signalled, $number] = $this->items($state, $values, $context);
         $message = $signalled[ConditionItemName::MessageText->value] ?? null;
+        if ($statement instanceof Resignal) {
+            $context->diagnostics->reserve();
+            $message ??= $area->failure?->getMessage() ?? ($area->conditions[count($area->conditions) - 1][2] ?? null);
+        }
         $class = substr($state, 0, 2);
         $code = match ($class) {
             '01' => ProgramError::SignalWarning,
@@ -126,7 +130,9 @@ final class SignalCommand implements Command
      * Raises again the condition a handler handles, as RESIGNAL without SQLSTATE does: the last condition of its area, with the items the statement sets changed in place.
      *
      * The area of the handler becomes the diagnostics area; a warning is raised again as a
-     * warning, any other condition as an error (verified on a live 8.4 server).
+     * warning, any other condition as an error (verified on a live 8.4 server). At capacity,
+     * MySQL 5.6.51 evicts the oldest stored condition even for a RESIGNAL without SQLSTATE;
+     * the error still reaches the client (verified by the Testcontainers differential suite).
      * Source: https://dev.mysql.com/doc/refman/8.4/en/resignal.html.
      *
      * @param array<string, Evaluable> $values The compiled value of each item the statement sets, by item name
@@ -143,6 +149,9 @@ final class SignalCommand implements Command
             }
             [$signalled, $number] = $this->items($failure->sqlState(), $values, $context);
             $signalled = [...($failure->signalled ?? ['RETURNED_SQLSTATE' => $failure->sqlState()]), ...$signalled];
+            if ($context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+                $context->diagnostics->reserve();
+            }
             throw new SqlError(ProgramError::SignalException, $signalled[ConditionItemName::MessageText->value] ?? $failure->getMessage(), null, [], $signalled, $number ?? $failure->getCode(), true);
         }
         [$level, $code, $text] = $area->conditions[$position];
@@ -154,6 +163,9 @@ final class SignalCommand implements Command
         $number ??= $code;
         $context->diagnostics->conditions[$position] = [$level, $number, $message];
         $context->diagnostics->signalled[$position] = $signalled;
+        if ($context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            $context->diagnostics->reserve();
+        }
         if ($level !== 'Error') {
             return new Completion(0, 0, $context->diagnostics->raised());
         }

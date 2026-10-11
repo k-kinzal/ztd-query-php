@@ -22,7 +22,10 @@ final class PreparationTest extends TestCase
         $session->query("PREPARE s FROM 'SELECT ?+9223372036854775807'; SET @a=1");
         $previous = [0 => Domain::double()];
         $session->preparation->domains = $previous;
-        $reply = $session->run('EXECUTE s USING @a')[0];
+        $replies = $session->run('EXECUTE s USING @a');
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $replies[0]);
+        self::assertFalse($replies[0]->complete);
+        $reply = $replies[1];
 
         self::assertInstanceOf(SqlError::class, $reply);
         self::assertSame(1690, $reply->getCode());

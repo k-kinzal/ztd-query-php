@@ -38,7 +38,7 @@ final class Output
      * the rows the outermost LIMIT reads.
      *
      * @param bool $calculate Whether the query asks for SQL_CALC_FOUND_ROWS
-     * @param Closure(ResultSet): void|null $failed Retains rows already produced by a failing procedure query
+     * @param Closure(ResultSet): void|null $failed Retains rows already produced by a failing query
      *
      * @throws SqlError When computing a row fails
      */
@@ -68,7 +68,7 @@ final class Output
             }
         } catch (SqlError $error) {
             if ($failed !== null) {
-                $failed(new ResultSet($this->columns($plan, $charset), $rows, $context->diagnostics->raised()));
+                $failed(new ResultSet($this->columns($plan, $charset), $rows, $context->diagnostics->raised(), false));
             }
             throw $error;
         }

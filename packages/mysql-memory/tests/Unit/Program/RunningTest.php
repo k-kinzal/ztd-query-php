@@ -18,6 +18,16 @@ use SqlSemantics\Statement\Identifier\QualifiedName;
 #[Small]
 final class RunningTest extends TestCase
 {
+    public function testIncompleteRetainsTheUnfinishedResult(): void
+    {
+        $running = new Running();
+        $result = new \MySqlMemory\Result\ResultSet([], [], complete: false);
+        $running->incomplete($result);
+
+        self::assertSame($result, $running->partial);
+        self::assertFalse($running->partial->complete);
+    }
+
     public function testUsedAnswersTheRunningAStatementReadsAndWrites(): void
     {
         $statement = (new Semantics(Dialect::MySql))->analyze('INSERT INTO t SELECT * FROM e.u')->statement;

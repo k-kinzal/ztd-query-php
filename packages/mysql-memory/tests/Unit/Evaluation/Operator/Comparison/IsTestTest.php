@@ -167,8 +167,10 @@ final class IsTestTest extends TestCase
         $negated = $session->run("SELECT (b NOT LIKE 'a' ESCAPE USER()) IS NULL FROM t");
         $plain = $session->query("SELECT (b LIKE 'a' ESCAPE USER()) IS NULL FROM t")[0];
 
-        self::assertInstanceOf(SqlError::class, $negated[0]);
-        self::assertSame(1210, $negated[0]->getCode());
+        self::assertInstanceOf(ResultSet::class, $negated[0]);
+        self::assertFalse($negated[0]->complete);
+        self::assertInstanceOf(SqlError::class, $negated[1]);
+        self::assertSame(1210, $negated[1]->getCode());
         self::assertInstanceOf(ResultSet::class, $plain);
         self::assertSame([['0']], $plain->rows);
     }

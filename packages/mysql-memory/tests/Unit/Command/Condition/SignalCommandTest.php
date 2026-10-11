@@ -164,6 +164,21 @@ final class SignalCommandTest extends TestCase
         self::assertSame([1062, '23000', 'changed', [['Error', 1062, 'changed']]], [$answers[0]->getCode(), $answers[0]->sqlState(), $answers[0]->getMessage(), $session->diagnostics->conditions]);
     }
 
+    public function testAgainEvictsTheStoredConditionAtCapacityOnMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('SET max_error_count=1');
+        $session->query("CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL; SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='original'; END");
+
+        $answers = $session->run('CALL p()');
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame('original', $answers[0]->getMessage());
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testExecuteAddsTheConditionOfAResignalWithAnSqlstateToTheHandledOnes(): void
     {
         $session = (new Instance())->connect();

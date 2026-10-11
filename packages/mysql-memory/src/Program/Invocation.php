@@ -44,6 +44,8 @@ final class Invocation
 
     /**
      * Runs a body in an activation and answers the jump that ended it, if any.
+     * Procedure exit copies stored conditions to the caller; counts of conditions beyond
+     * max_error_count do not cross that boundary (verified on a live 8.0.44 server).
      *
      * @param string $database The database of the program
      * @param string $mode The sql_mode the program was created with
@@ -61,6 +63,10 @@ final class Invocation
         try {
             return (new Interpreter($session, $activation))->statement($body);
         } finally {
+            if (!$activation->contained) {
+                $session->diagnostics->dropped = 0;
+                $session->diagnostics->droppedErrors = 0;
+            }
             $session->program = $saved[0];
             $variables->database = $saved[1];
             if (array_key_exists('sql_mode', $saved[2])) {

@@ -46,9 +46,17 @@ final class Running
     public ?Closure $respond = null;
 
     /**
-     * An unfinished procedure result, completed only when an error handler takes control.
+     * An unfinished query result, completed by a handler or ended with an error packet.
      */
     public ?\MySqlMemory\Result\ResultSet $partial = null;
+
+    /**
+     * Retains rows produced before a query failed, pending a handler or the error reply.
+     */
+    public function incomplete(\MySqlMemory\Result\ResultSet $result): void
+    {
+        $this->partial = $result;
+    }
 
     /**
      * Answers the tables a statement uses, each as `database.table`.

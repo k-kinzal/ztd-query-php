@@ -15,6 +15,19 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class ExecutionTest extends TestCase
 {
+    public function testFailedRetainsRowsProducedBeforeTheError(): void
+    {
+        $session = (new Instance())->connect();
+        $answers = $session->run("SELECT JSON_EXTRACT(v,'$') FROM (SELECT '1' AS v UNION ALL SELECT 'invalid') AS t");
+
+        self::assertCount(2, $answers);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $answers[0]);
+        self::assertFalse($answers[0]->complete);
+        self::assertSame([['1']], $answers[0]->rows);
+        self::assertInstanceOf(\MySqlMemory\Error\SqlError::class, $answers[1]);
+        self::assertNull($session->running->partial);
+    }
+
     public function testAccessRejectsQueriesWhileTableCreationWaitsForCommit(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect();

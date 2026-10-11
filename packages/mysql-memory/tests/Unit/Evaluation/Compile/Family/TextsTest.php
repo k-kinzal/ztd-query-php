@@ -186,8 +186,10 @@ final class TextsTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '0', '1']], $result->rows);
-        self::assertInstanceOf(SqlError::class, $error[0]);
-        self::assertSame([3693, 'The maximum is less than the minumum in a {min,max} interval.'], [$error[0]->getCode(), $error[0]->getMessage()]);
+        self::assertInstanceOf(ResultSet::class, $error[0]);
+        self::assertFalse($error[0]->complete);
+        self::assertInstanceOf(SqlError::class, $error[1]);
+        self::assertSame([3693, 'The maximum is less than the minumum in a {min,max} interval.'], [$error[1]->getCode(), $error[1]->getMessage()]);
     }
 
     public function testRegexpKeepsItsOwnMatchingInMySql57(): void

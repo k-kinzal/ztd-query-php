@@ -524,6 +524,20 @@ final class ClientTest extends TestCase
         self::assertSame(["\x03\x00\x00\x00abc"], $sent->getArrayCopy());
     }
 
+    public function testReplyEndsAnIncompleteRowStreamWithTheFollowingError(): void
+    {
+        $sent = new ArrayObject();
+        $client = new Client(new Instance(), 7, static function (string $bytes) use ($sent): void {
+            $sent->append(substr($bytes, 4));
+        });
+        $client->reply(new ResultSet([new ResultColumn('a', Field::Long, 11, 0, 0, 63)], [['7']], complete: false), 0, false);
+        $client->send($client->messages->error(1690, '22003', 'overflow'));
+
+        self::assertCount(5, $sent);
+        self::assertContains("\x017", $sent);
+        self::assertContains("\xFF\x9A\x06#22003overflow", $sent);
+    }
+
     public function testPacketNumbersThePacketsInSequence(): void
     {
         $sent = new ArrayObject();

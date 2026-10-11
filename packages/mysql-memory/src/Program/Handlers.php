@@ -166,7 +166,8 @@ final class Handlers
         $activation = $this->interpreter->activation;
         $session = $this->interpreter->session;
         if ($session->running->partial !== null) {
-            (new Statements($session, $activation))->publish($session->running->partial);
+            $partial = $session->running->partial;
+            (new Statements($session, $activation))->publish(new \MySqlMemory\Result\ResultSet($partial->columns, $partial->rows, $partial->warnings));
             $session->running->partial = null;
         }
         $saved = [$activation->scope, $activation->handlers, $activation->conditions, $activation->cursors];

@@ -193,4 +193,17 @@ final class DiagnosticsTest extends TestCase
 
         self::assertSame(1, $diagnostics->errors());
     }
+    public function testReserveDiscardsOldestConditionsAndReindexesSignalItems(): void
+    {
+        $diagnostics = new Diagnostics();
+        $diagnostics->limit = 2;
+        $diagnostics->warning(1292, 'first');
+        $diagnostics->error(1644, 'second', ['RETURNED_SQLSTATE' => '45000']);
+
+        $diagnostics->reserve();
+
+        self::assertSame([['Error', 1644, 'second']], $diagnostics->conditions);
+        self::assertSame([['RETURNED_SQLSTATE' => '45000']], $diagnostics->signalled);
+    }
+
 }

@@ -178,6 +178,25 @@ final class Diagnostics
     }
 
     /**
+     * Discards oldest stored conditions to reserve one slot for RESIGNAL.
+     */
+    public function reserve(): void
+    {
+        $remove = max(0, count($this->conditions) - $this->limit + 1);
+        if ($remove === 0 || $this->limit === 0) {
+            return;
+        }
+        $this->conditions = array_slice($this->conditions, $remove);
+        $items = [];
+        foreach ($this->signalled as $position => $values) {
+            if ($position >= $remove) {
+                $items[$position - $remove] = $values;
+            }
+        }
+        $this->signalled = $items;
+    }
+
+    /**
      * Counts the conditions.
      */
     public function count(): int

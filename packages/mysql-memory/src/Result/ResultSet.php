@@ -24,8 +24,9 @@ final class ResultSet implements Reply
      * @param list<ResultColumn> $columns The column definitions in order
      * @param list<list<string|null>> $rows The rows in the order they are sent
      * @param int $warnings The number of warnings the statement raised
+     * @param bool $complete Whether the row stream ends successfully; false precedes an execution error
      */
-    public function __construct(public readonly array $columns, public readonly array $rows, public readonly int $warnings = 0)
+    public function __construct(public readonly array $columns, public readonly array $rows, public readonly int $warnings = 0, public readonly bool $complete = true)
     {
     }
 

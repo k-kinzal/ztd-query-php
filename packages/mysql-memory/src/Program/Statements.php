@@ -104,14 +104,6 @@ final class Statements
     }
 
     /**
-     * Retains an unfinished result until a handler completes it or an unhandled error aborts it.
-     */
-    public function incomplete(ResultSet $result): void
-    {
-        $this->session->running->partial = $result;
-    }
-
-    /**
      * Evaluates an expression of the program; assigned to a variable, the value is stored into it.
      *
      * @param bool $assigned Whether the value is stored elsewhere, as the value RETURN answers is

@@ -297,7 +297,9 @@ final class Client
         foreach ($reply->rows as $row) {
             $this->packet($binary ? (new \MySqlMemory\Protocol\Binary())->row($reply->columns, $row) : $this->messages->textRow($row));
         }
-        $this->packet($this->messages->eof($reply->warnings, $status));
+        if ($reply->complete) {
+            $this->packet($this->messages->eof($reply->warnings, $status));
+        }
     }
 
     /**

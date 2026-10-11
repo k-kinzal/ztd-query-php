@@ -81,7 +81,7 @@ final class QueryCommand implements Command
         if ($into instanceof IntoVariables && array_filter($into->targets, static fn ($target): bool => !$target instanceof UserVariable) !== []) {
             $context->strict = $context->modes->strict();
         }
-        $failed = $into === null && $session->program !== null && !$session->program->contained ? (new \MySqlMemory\Program\Statements($session, $session->program))->incomplete(...) : null;
+        $failed = $into === null && $session->program?->contained !== true ? $session->running->incomplete(...) : null;
         $result = (new Output())->result($plan, $context, $this->calculates($statement), $failed);
         if ($into === null) {
             return $result;
