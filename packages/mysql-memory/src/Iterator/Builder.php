@@ -60,10 +60,7 @@ final class Builder
      */
     public function build(AccessPath $path): RowIterator
     {
-        return match (true) {
-            $path instanceof TableScan => $this->scans[spl_object_id($path)] = new TableScanIterator($path),
-            $path instanceof SingleRow => new SingleRowIterator(),
-            $path instanceof ZeroRows => new ZeroRowsIterator(),
+        return $this->source($path) ?? match (true) {
             $path instanceof Filter => new FilterIterator($path, $this->build($path->input)),
             $path instanceof \MySqlMemory\Plan\Path\Transform\Lock => new Transform\LockIterator($path, $this->build($path->input), $this),
             $path instanceof NestedLoopJoin => new NestedLoopJoinIterator($path, $this->build($path->left), $this->build($path->right)),
@@ -74,12 +71,26 @@ final class Builder
             $path instanceof Window => new WindowIterator($path, $this->build($path->input)),
             $path instanceof Limit => new LimitIterator($path, $this->build($path->input)),
             $path instanceof Distinct => new DistinctIterator($path, $this->build($path->input)),
-            $path instanceof Inline => new InlineIterator($path),
-            $path instanceof JsonTableScan => new JsonTableIterator($path),
             $path instanceof RecursiveUnion => new RecursiveUnionIterator($path, $this->build($path->anchor), $this->build($path->recursive)),
-            $path instanceof WorkingTable => new WorkingTableIterator($path),
             $path instanceof SetOperation => new SetOperationIterator($path, $this->build($path->left), $this->build($path->right)),
             default => throw new LogicException('No iterator executes ' . $path::class . '.'),
+        };
+    }
+
+    /**
+     * Creates a source iterator, retaining the identity of each table scan.
+     */
+    public function source(AccessPath $path): ?RowIterator
+    {
+        return match (true) {
+            $path instanceof TableScan => $this->scans[spl_object_id($path)] = new TableScanIterator($path),
+            $path instanceof \MySqlMemory\Plan\Path\Source\KeyLookup => $this->scans[spl_object_id($path->input)] = new TableScanIterator($path->input, $path),
+            $path instanceof SingleRow => new SingleRowIterator(),
+            $path instanceof ZeroRows => new ZeroRowsIterator(),
+            $path instanceof Inline => new InlineIterator($path),
+            $path instanceof JsonTableScan => new JsonTableIterator($path),
+            $path instanceof WorkingTable => new WorkingTableIterator($path),
+            default => null,
         };
     }
 }

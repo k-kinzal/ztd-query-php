@@ -67,6 +67,14 @@ final class BuilderTest extends TestCase
         self::assertInstanceOf(WorkingTableIterator::class, $builder->build($working));
     }
 
+    public function testSourceLeavesTransformPathsForRecursiveConstruction(): void
+    {
+        $builder = new Builder();
+
+        self::assertInstanceOf(SingleRowIterator::class, $builder->source(new SingleRow()));
+        self::assertNull($builder->source(new Project(new SingleRow(), [])));
+    }
+
     public function testBuildCreatesTheIteratorOfEachTransformPathOverTheIteratorOfItsInput(): void
     {
         $builder = new Builder();

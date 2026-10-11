@@ -21,6 +21,8 @@ use Override;
  */
 final class TableScanIterator implements RowIterator
 {
+    private Frame $frame;
+
     /**
      * @var list<list<int|float|string|null>>
      */
@@ -45,8 +47,9 @@ final class TableScanIterator implements RowIterator
 
     /**
      * @param TableScan $path The scan executed
+     * @param \MySqlMemory\Plan\Path\Source\KeyLookup|null $lookup An optional complete primary-key restriction
      */
-    public function __construct(public readonly TableScan $path)
+    public function __construct(public readonly TableScan $path, public readonly ?\MySqlMemory\Plan\Path\Source\KeyLookup $lookup = null)
     {
     }
 
@@ -56,6 +59,7 @@ final class TableScanIterator implements RowIterator
     #[Override]
     public function init(Frame $frame): void
     {
+        $this->frame = $frame;
         $variables = $frame->context->variables;
         $ordered = (new ClusterOrder())->rows($this->path->table, $variables->instance->transactions->of($variables->connection)?->access->rows($this->path->table, $this->locking));
         $partitioning = $this->path->table->definition->partitioning;
@@ -75,8 +79,35 @@ final class TableScanIterator implements RowIterator
     #[Override]
     public function read(): ?array
     {
-        $this->current = $this->numbers[$this->next] ?? null;
+        while (($row = $this->rows[$this->next] ?? null) !== null) {
+            $this->current = $this->numbers[$this->next++];
+            if ($this->lookup === null || $this->matches($row)) {
+                if ($this->lookup !== null) {
+                    $this->next = count($this->rows);
+                }
 
-        return $this->rows[$this->next++] ?? null;
+                return $row;
+            }
+        }
+        $this->current = null;
+
+        return null;
+    }
+
+    /**
+     * Tests the complete key without exposing noncandidate rows to the enclosing query.
+     *
+     * @param list<int|float|string|null> $row The candidate row
+     */
+    public function matches(array $row): bool
+    {
+        foreach ($this->lookup->bindings ?? [] as [$position, $value, $comparator]) {
+            $key = $value->evaluate($this->frame);
+            if ($row[$position] === null || $key === null || $comparator->compare($row[$position], $key, $this->frame->context) !== 0) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
