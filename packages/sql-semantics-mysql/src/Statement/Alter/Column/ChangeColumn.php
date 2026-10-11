@@ -55,7 +55,7 @@ final class ChangeColumn implements AlterCommand
      */
     public function deriveCommand(Derivation $derivation, Environment $scope): void
     {
-        (new ElementFacts())->element($this->definition, $derivation, $scope);
+        (new ElementFacts())->element($this->definition, $derivation, $scope, typeNotices: true);
     }
 
     /**

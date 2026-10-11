@@ -41,19 +41,25 @@ final class TypeLimitsTest extends TestCase
     }
 
     #[DataProvider('providerInvalidTypeSizes')]
-    public function testCheckSharesBoundsBetweenColumnsParametersAndReturns(string $type, TypeLimit $rule): void
+    public function testCheckSharesBoundsAcrossDeclarations(string $type, TypeLimit $rule): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $column = $semantics->analyze('CREATE TABLE t(a ' . $type . ')')->facts->diagnostics[0];
         $parameter = $semantics->analyze('CREATE PROCEDURE p(a ' . $type . ') SELECT 1')->facts->diagnostics[0];
         $result = $semantics->analyze('CREATE FUNCTION f() RETURNS ' . $type . ' RETURN 1')->facts->diagnostics[0];
+        $altered = $semantics->analyze('ALTER TABLE t ADD a ' . $type)->facts->diagnostics[0];
+        $local = $semantics->analyze('CREATE PROCEDURE p() BEGIN DECLARE a ' . $type . '; END')->facts->diagnostics[0];
 
         self::assertInstanceOf(InvalidTypeSize::class, $column);
         self::assertInstanceOf(InvalidTypeSize::class, $parameter);
         self::assertInstanceOf(InvalidTypeSize::class, $result);
+        self::assertInstanceOf(InvalidTypeSize::class, $altered);
+        self::assertInstanceOf(InvalidTypeSize::class, $local);
         self::assertSame([$rule, 'a'], [$column->rule, $column->name]);
         self::assertSame([$rule, ''], [$parameter->rule, $parameter->name]);
         self::assertSame([$rule, ''], [$result->rule, $result->name]);
+        self::assertSame([$rule, 'a'], [$altered->rule, $altered->name]);
+        self::assertSame([$rule, ''], [$local->rule, $local->name]);
     }
 
     public function testCheckPlacesTheAbortingFailureBeforeLaterWarnings(): void

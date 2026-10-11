@@ -57,13 +57,19 @@ final class LocatedErrors
 
     /**
      * Locates the assignment operator after NAMES, preserving comments, spelling and line numbers.
+     * MySQL 5.6 quotes the unread tail after the expression and its lookahead token.
      */
     public function names(UtilityMisuse $problem, Operation $operation, Session $session): SqlError
     {
         $origin = $problem->subject === null ? null : $operation->sources->of($problem->subject);
         $offset = strlen($session->text);
+        $legacy = $session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
         foreach ($origin === null ? [] : $session->semantics()->parser()->tokenize($session->text) as $token) {
-            if ($origin !== null && $token->offset >= $origin->offset && in_array($token->text, ['=', ':='], true)) {
+            if ($legacy && $origin !== null && $token->offset >= $origin->offset + $origin->length) {
+                $offset = $token->offset + strlen($token->text);
+                break;
+            }
+            if (!$legacy && $origin !== null && $token->offset >= $origin->offset && in_array($token->text, ['=', ':='], true)) {
                 $offset = $token->offset;
                 break;
             }

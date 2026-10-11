@@ -30,7 +30,9 @@ use SqlSemantics\Statement\Type\Nullability;
  * block resolves to that position. Every position has the declared type and
  * can be NULL, since a variable without DEFAULT starts as NULL and any
  * variable can be assigned NULL. The default value is derived in the scope
- * before the declaration. Terminates: one pass over the names.
+ * before the declaration. Type bounds and deprecation notices are checked
+ * around the default expression: its notices precede a type-bound failure.
+ * Terminates: one pass over the names.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/declare-local-variable.html.
  * Status: Implemented.
  *
@@ -65,9 +67,11 @@ final class VariableDeclaration implements Declaration, Relation
      */
     public function deriveRelation(Derivation $derivation, Environment $environment): RelationFact
     {
+        (new \SqlSemantics\Platform\MySql\Rules\TableDefinition\TypeNotices())->type($this->type, $derivation);
         if ($this->default !== null) {
             $derivation->scalar($this->default, $environment);
         }
+        (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($this->type, '', $derivation);
         $slots = [];
         foreach ($this->names as $name) {
             $slots[] = new OutputSlot($name, new Known($this->type), Nullability::Nullable);

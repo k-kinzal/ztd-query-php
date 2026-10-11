@@ -47,7 +47,7 @@ final class Precision
      */
     public function legacy(\MySqlMemory\Error\SqlError $error, \SqlSemantics\Contract\GrammarRelease $release): \MySqlMemory\Error\SqlError
     {
-        if ($release !== \SqlSemantics\Contract\GrammarRelease::MySql5651 || $error->error !== SchemaError::TooBigPrecision || preg_match("/\\AToo-big precision (\\d+) specified for '(.*)'\\. Maximum is (\\d+)\\.\\z/s", $error->getMessage(), $match) !== 1) {
+        if ($release !== \SqlSemantics\Contract\GrammarRelease::MySql5651 || $error->error !== SchemaError::TooBigPrecision || preg_match("/\\AToo-big precision (-?\\d+) specified for '(.*)'\\. Maximum is (\\d+)\\.\\z/s", $error->getMessage(), $match) !== 1) {
             return $error;
         }
 

@@ -39,7 +39,9 @@ use SqlSemantics\Statement\Statement;
  * (MYSQL-COLUMN-CHANGES-001), which also reports a changed, dropped,
  * renamed or altered column the completely known table does not have and a
  * column name the table would have twice. The statement changes no
- * declaration and provides none. CHECK, ANALYZE, OPTIMIZE and REPAIR PARTITION return the
+ * declaration and provides none. Added and changed column types are checked
+ * after the action list, retaining the notices raised while reading definitions.
+ * CHECK, ANALYZE, OPTIMIZE and REPAIR PARTITION return the
  * administration result shape (MYSQL-ADMIN-ROWS-001). IGNORE exists in 5.6 only.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/alter-table.html,
  * https://dev.mysql.com/doc/refman/5.6/en/alter-table.html.
@@ -101,6 +103,19 @@ final class AlterTable implements Statement, Relation
             $command->deriveCommand($derivation, $scope);
             if ($command instanceof Partition\MaintainPartitions && $command->kind->reports()) {
                 (new \SqlSemantics\Platform\MySql\Rules\Server\AdminRows())->admin($derivation);
+            }
+        }
+        foreach ($this->commands as $command) {
+            $columns = match (true) {
+                $command instanceof Column\AddColumn => [$command->column],
+                $command instanceof Column\ChangeColumn => [$command->definition],
+                $command instanceof Column\AddColumns => $command->elements,
+                default => [],
+            };
+            foreach ($columns as $column) {
+                if ($column instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition) {
+                    (new \SqlSemantics\Platform\MySql\Rules\Typing\TypeLimits())->check($column->specification->dataType(), $column->name->column->value, $derivation);
+                }
             }
         }
     }

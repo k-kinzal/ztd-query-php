@@ -24,6 +24,21 @@ final class GrammarDiagnosticTest extends TestCase
                 yield $type . $width => ['CREATE TABLE t_width(a ' . $type . '(' . $width . '))'];
             }
         }
+        foreach (['BIT(65)', 'INT(256)', 'CHAR(256)', 'DECIMAL(66,2)', 'TIME(7)', 'BIT(4294967296)'] as $type) {
+            yield 'add ' . $type => ['ALTER TABLE t1 ADD oversize ' . $type];
+            yield 'modify ' . $type => ['ALTER TABLE t1 MODIFY a ' . $type];
+            yield 'declare ' . $type => ['CREATE PROCEDURE p_width() BEGIN DECLARE x ' . $type . '; END'];
+        }
+        yield 'change width' => ['ALTER TABLE t1 CHANGE a changed BIT(65)'];
+        yield 'multiple added columns' => ['ALTER TABLE t1 ADD (valid INT, invalid BIT(65))'];
+        yield 'width before table resolution' => ['ALTER TABLE missing_width ADD invalid BIT(65)'];
+        yield 'width before column resolution' => ['ALTER TABLE t1 MODIFY missing_width BIT(65)'];
+        yield 'alter warnings before failure' => ['ALTER TABLE t1 ADD first_width INT(11), ADD invalid BIT(65), ADD later_width INT(11)'];
+        yield 'declare warnings before failure' => ['CREATE PROCEDURE p_width() BEGIN DECLARE first_width INT(11); DECLARE invalid BIT(65); DECLARE later_width INT(11); END'];
+        yield 'declare width before default' => ['CREATE PROCEDURE p_width() BEGIN DECLARE invalid INT(256) DEFAULT !1; END'];
+        if (!str_starts_with((string) getenv('MYSQL_VERSION'), '5.')) {
+            yield 'alter default before type failure' => ['ALTER TABLE t1 ADD (first_width INT(11), invalid BIT(65) DEFAULT (!1), later_width INT(11))'];
+        }
         yield 'unsigned return width' => ['CREATE FUNCTION f_width() RETURNS BIT(18446744073709551615) RETURN 1'];
         yield 'decimal return width' => ['CREATE FUNCTION f_width() RETURNS BIT(18446744073709551616) RETURN 1'];
         yield 'names expression' => ['SET NAMES = USER ( )'];

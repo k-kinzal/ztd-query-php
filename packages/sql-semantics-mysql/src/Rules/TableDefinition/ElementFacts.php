@@ -39,11 +39,15 @@ final class ElementFacts
     /**
      * Derives an element; a reference to the table being defined resolves to `$defined` when it is given.
      *
+     * @param bool $typeNotices Whether ALTER TABLE must report the type notices here
      * @param Table|null $defined The declaration the statement provides for the table being defined
      * @param QualifiedName|null $definedName The name the statement writes for that table
      */
-    public function element(TableElement $element, Derivation $derivation, Environment $scope, ?Table $defined = null, ?QualifiedName $definedName = null): void
+    public function element(TableElement $element, Derivation $derivation, Environment $scope, ?Table $defined = null, ?QualifiedName $definedName = null, bool $typeNotices = false): void
     {
+        if ($typeNotices && $element instanceof ColumnDefinition) {
+            (new TypeNotices())->type($element->specification->dataType(), $derivation);
+        }
         $element->deriveElement($derivation, $scope);
         $references = $element instanceof ForeignKey ? $element->references : ($element instanceof ColumnDefinition ? $this->references($element->specification) : null);
         $references?->deriveReferences($derivation, $defined, $definedName);

@@ -73,4 +73,10 @@ final class VariableDeclarationTest extends TestCase
 
         new VariableDeclaration([], new Integral(IntegralKind::Int));
     }
+    public function testDeriveRelationChecksTheTypeAfterDefaultNotices(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('CREATE PROCEDURE p() BEGIN DECLARE a INT(256) DEFAULT !1; END');
+
+        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', "'!' is deprecated and will be removed in a future release. Please use NOT instead", "Display width out of range for column '' (max = 255)"], array_map(static fn ($warning): string => $warning->message(), $operation->facts->warnings));
+    }
 }

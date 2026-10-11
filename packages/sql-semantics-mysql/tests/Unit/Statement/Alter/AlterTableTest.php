@@ -80,4 +80,10 @@ final class AlterTableTest extends TestCase
 
         self::assertSame(["'IGNORE' is deprecated and will be removed in a future release."], array_map(static fn ($warning): string => $warning->message(), $semantics->analyze('ALTER IGNORE TABLE t ADD b INT', $tables)->facts->warnings));
     }
+    public function testDeriveStatementChecksAddedAndChangedTypesAfterTheirNotices(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('ALTER TABLE missing ADD (a INT(11), b BIT(65)), CHANGE c d INT(256)');
+
+        self::assertSame(['Integer display width is deprecated and will be removed in a future release.', 'Integer display width is deprecated and will be removed in a future release.', "Display width out of range for column 'b' (max = 64)", "Display width out of range for column 'd' (max = 255)"], array_map(static fn ($warning): string => $warning->message(), $operation->facts->warnings));
+    }
 }
