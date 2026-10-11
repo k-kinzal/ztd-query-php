@@ -123,6 +123,19 @@ final class TableDefinitionTest extends TestCase
         self::assertSame([514, 4100, 8, 16, 8192], [$table->definition->flags(0), $table->definition->flags(1), $table->definition->flags(2), $table->definition->flags(3), $table->definition->flags(4)]);
     }
 
+    public function testZeroFillPreservesDeclaredNumericAttributesInResultFlags(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; CREATE TABLE d.t (i INT(2) ZEROFILL, d DECIMAL(7,2) ZEROFILL, f FLOAT ZEROFILL, u INT UNSIGNED, s VARCHAR(4))');
+        $table = $session->instance->dictionary->table('d', 't');
+
+        self::assertNotNull($table);
+        self::assertTrue($table->definition->zeroFill(0));
+        self::assertFalse($table->definition->zeroFill(3));
+        self::assertFalse($table->definition->zeroFill(4));
+        self::assertSame([64, 64, 64, 0, 0], [$table->definition->flags(0), $table->definition->flags(1), $table->definition->flags(2), $table->definition->flags(3), $table->definition->flags(4)]);
+    }
+
     public function testFlagsMarkAYearColumnZerofill(): void
     {
         $session = (new Instance())->connect();

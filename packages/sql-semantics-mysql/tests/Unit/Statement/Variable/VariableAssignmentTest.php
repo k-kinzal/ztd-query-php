@@ -28,7 +28,7 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class VariableAssignmentTest extends TestCase
 {
-    public function testDeriveScalarHasTheFactsOfTheValue(): void
+    public function testDeriveScalarResolvesTheAssignmentTypeAndRetainsValueNullability(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = new Table(new QualifiedName(new Name('t'), new Name('(current)')), $semantics->profile(), [
@@ -51,7 +51,7 @@ final class VariableAssignmentTest extends TestCase
         self::assertInstanceOf(VariableAssignment::class, $item1->expression);
         $notNull = $operation->facts->scalar($item1->expression);
         self::assertInstanceOf(Known::class, $notNull->type);
-        self::assertSame('INT', $notNull->type->descriptor->name());
+        self::assertSame('BIGINT', $notNull->type->descriptor->name());
         self::assertSame(Nullability::NotNull, $notNull->nullability);
         self::assertSame('@n := b', $operation->field(0)->name?->value);
         self::assertNull($operation->field(0)->column());

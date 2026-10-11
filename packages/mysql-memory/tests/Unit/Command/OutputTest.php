@@ -200,6 +200,16 @@ final class OutputTest extends TestCase
         self::assertSame('-42', (new Output())->text(-42, Domain::integer()));
     }
 
+    public function testTextPadsZerofillColumnsToTheirReportedWidth(): void
+    {
+        $output = new Output();
+
+        self::assertSame('02', $output->text(2, Domain::integer(Field::Long, 10, true)->withDisplay(2), true));
+        self::assertSame('123', $output->text(123, Domain::integer(Field::Long, 10, true)->withDisplay(2), true));
+        self::assertSame('00007.25', $output->text('7.25', Domain::decimal(7, 2, true), true));
+        self::assertSame('0000000000.5', $output->text(0.5, new Domain(Kind::Double, Field::Float, 12, 31), true));
+    }
+
     public function testColumnDropsTheBinaryFlagOfAZerofillColumn(): void
     {
         $column = (new Output())->column('y', new Domain(Kind::Year, Field::Year, 4, 0, true), new ColumnOrigin('d', 't', 't', 'y', 64));

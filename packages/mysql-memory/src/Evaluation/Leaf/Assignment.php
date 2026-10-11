@@ -20,18 +20,19 @@ final class Assignment implements Evaluable
      * @param string $name The variable name
      * @param Evaluable $value The value assigned
      * @param Domain $stored The domain the variable holds the value in
+     * @param Domain $domain The assignment expression's resolved result domain
      */
-    public function __construct(public readonly string $name, public readonly Evaluable $value, public readonly Domain $stored)
+    public function __construct(public readonly string $name, public readonly Evaluable $value, public readonly Domain $stored, public readonly Domain $domain)
     {
     }
 
     /**
-     * Answers the domain of the value.
+     * Answers the resolved domain of the assignment result.
      */
     #[Override]
     public function domain(): Domain
     {
-        return $this->value->domain();
+        return $this->domain;
     }
 
     /**
@@ -41,6 +42,9 @@ final class Assignment implements Evaluable
     public function evaluate(Frame $frame): int|float|string|null
     {
         $value = $this->value->evaluate($frame);
+        if ($this->value->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Bit) {
+            $value = \MySqlMemory\Evaluation\Convert::toInteger($value, $this->value->domain(), $frame->context, true);
+        }
         $frame->context->variables->assign($this->name, $value, $this->stored);
 
         return $value;

@@ -16,8 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  *
  * An integer reads as a BIGINT (width 20 in MySQL 5.6 and 5.7, and 21 from 8.0), a decimal as DECIMAL(65,30), a double as a double, and any
  * other value as a blob in its collation, a temporal value in latin1: of 16777215 characters
- * in MySQL 5.6 and 5.7, and from MySQL 8.0 as long as 16777215 characters of the most bytes
- * of the character set count in its fewest, a long blob when that passes 16777215 bytes. A
+ * in MySQL 5.6 and 5.7, and from MySQL 8.0 with a byte bound of 16777215 times
+ * the character set's maximum width, a long blob when that passes 16777215 bytes. A
  * variable that holds NULL is a binary medium blob. One never assigned is a binary long
  * blob of 16777216 bytes in MySQL 5.6 and 5.7, and a binary string of 65532 bytes from 8.0
  * (verified through SQL on live servers and Testcontainers).
@@ -61,6 +61,51 @@ final class Variables
         if ($this->settings->userVariables !== null && !isset($this->settings->userVariables[$name])) {
             $derivation->introducedVariables[$name] ??= new \SqlSemantics\Statement\Type\Known($this->text($this->settings->connection));
         }
+    }
+
+    /**
+     * Resolves the result of an assignment independently from a later read of the stored variable.
+     */
+    public function assigned(\SqlSemantics\Statement\Type\TypeFact $type): \SqlSemantics\Statement\Type\TypeFact
+    {
+        $domain = (new Precision())->domain($type);
+        if ($domain === null && $type instanceof \SqlSemantics\Statement\Type\Known) {
+            $domain = (new Declared($this->settings->connection, $this->release))->domain($type->descriptor);
+        }
+
+        return $domain === null ? $type : new \SqlSemantics\Statement\Type\Known($this->assignment($domain->value()));
+    }
+
+    /**
+     * Gives an assignment its expression result type: integer, decimal, double or string.
+     * Integer widths follow the operand; floating results use DOUBLE's expression width.
+     * Verified through PDO metadata on MySQL 8.0, 8.4 and 9.1.
+     */
+    public function assignment(Domain $domain): Domain
+    {
+        return match ($domain->kind) {
+            Kind::Integer, Kind::Year, Kind::Bit => Domain::integer(Field::LongLong, $domain->length, $domain->unsigned),
+            Kind::Decimal => Domain::decimal($domain->precision(), $domain->decimals),
+            Kind::Double => Domain::double(23),
+            Kind::Null => Domain::string(0, Collation::binary()),
+            Kind::Date, Kind::Time, Kind::DateTime => Domain::string($domain->length, $this->settings->connection),
+            Kind::Json => $this->assignmentText(Domain::string($domain->length, Collation::known('utf8mb4_bin'))),
+            Kind::String => $this->assignmentText($domain),
+        };
+    }
+
+    /**
+     * Resolves an assignment's text width and field. A result beyond VARCHAR's byte bound
+     * uses a BLOB field whose bound counts bytes, including the character-set expansion.
+     */
+    public function assignmentText(Domain $domain): Domain
+    {
+        $bytes = min(4294967295, $domain->length * $domain->collation->charset->maxLength);
+        if ($bytes <= 65535) {
+            return Domain::string($domain->length, $domain->collation);
+        }
+
+        return Domain::string($bytes, $domain->collation, $bytes <= 16777215 ? Field::MediumBlob : Field::LongBlob);
     }
 
     /**
@@ -108,6 +153,6 @@ final class Variables
         $field = 16777215 * $collation->charset->maxLength > 16777215 ? Field::LongBlob : Field::MediumBlob;
         $legacy = in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
 
-        return Domain::string($legacy ? 16777215 : intdiv(16777215 * $collation->charset->maxLength, $collation->charset->minLength()), $collation, $field);
+        return Domain::string($legacy ? 16777215 : 16777215 * $collation->charset->maxLength, $collation, $field);
     }
 }

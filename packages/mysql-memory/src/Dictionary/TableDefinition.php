@@ -193,10 +193,29 @@ final class TableDefinition
         if ($column->domain->field->blob()) {
             $flags |= ColumnFlag::Blob->value;
         }
-        if ($column->domain->field === Field::Year) {
+        if ($column->domain->field === Field::Year || $this->zeroFill($position)) {
             $flags |= ColumnFlag::ZeroFill->value;
         }
 
         return $flags;
     }
+
+    /**
+     * Tells whether the numeric column was declared with ZEROFILL.
+     */
+    public function zeroFill(int $position): bool
+    {
+        foreach ($this->statement->elements ?? [] as $element) {
+            if (!$element instanceof \SqlSemantics\Platform\MySql\Statement\Table\Column\ColumnDefinition || strcasecmp($element->name->column->value, $this->columns[$position]->name) !== 0) {
+                continue;
+            }
+            $type = $element->specification->dataType();
+
+            return ($type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Integral || $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Decimal || $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Floating)
+                && in_array(\SqlSemantics\Platform\MySql\Statement\Type\Kind\NumericModifier::Zerofill, $type->modifiers, true);
+        }
+
+        return false;
+    }
+
 }

@@ -250,7 +250,7 @@ final class Names
     {
         $value = $this->compiler->compile($assignment->value, $scope);
 
-        return new Assignment($assignment->target->name->value, $value, $this->stored($value->domain()));
+        return new Assignment($assignment->target->name->value, $value, $this->stored($value->domain()), $this->compiler->domain($assignment));
     }
 
     /**
@@ -263,7 +263,8 @@ final class Names
             Kind::Decimal => Domain::decimal(65, $domain->decimals),
             Kind::Double => Domain::double(),
             Kind::Null => Domain::string(0, Collation::binary(), Field::MediumBlob),
-            Kind::String, Kind::Json => Domain::string(16777216, $domain->collation, Field::MediumBlob)->withCollation($domain->collation, Coercibility::Implicit),
+            Kind::String => Domain::string(16777216, $domain->collation, Field::MediumBlob)->withCollation($domain->collation, Coercibility::Implicit),
+            Kind::Json => Domain::string(16777216, Collation::known('utf8mb4_bin'), Field::MediumBlob),
             Kind::Date, Kind::Time, Kind::DateTime => Domain::string(16777216, Collation::known('latin1_swedish_ci'), Field::MediumBlob)->withCollation(Collation::known('latin1_swedish_ci'), Coercibility::Implicit),
         };
     }

@@ -113,6 +113,6 @@ final class PausesTest extends TestCase
         $none = [];
         $nested = [];
 
-        self::assertSame([true, false, false], [(new Pauses())->pure($one, $seen), (new Pauses())->pure(new Assignment('x', $one, Domain::integer()), $none), (new Pauses())->pure(new \MySqlMemory\Evaluation\Operator\Minus(new Assignment('x', $one, Domain::integer()), Domain::integer(), '-x'), $nested)]);
+        self::assertSame([true, false, false], [(new Pauses())->pure($one, $seen), (new Pauses())->pure(new Assignment('x', $one, Domain::integer(), Domain::integer()), $none), (new Pauses())->pure(new \MySqlMemory\Evaluation\Operator\Minus(new Assignment('x', $one, Domain::integer(), Domain::integer()), Domain::integer(), '-x'), $nested)]);
     }
 }
