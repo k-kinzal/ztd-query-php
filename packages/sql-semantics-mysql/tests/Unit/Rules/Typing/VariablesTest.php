@@ -53,6 +53,51 @@ final class VariablesTest extends TestCase
         self::assertEquals(Domain::string(67108860, $collation, Field::LongBlob), $variables->assignmentText(Domain::string(16777215, $collation, Field::MediumBlob)));
     }
 
+    #[DataProvider('providerLegacyReleases')]
+    public function testAssignmentRetainsLegacyOperandWidthsScalesAndImplicitCoercibility(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $collation = Collation::known('latin1_swedish_ci');
+        $variables = new Variables(new Settings($collation), $release);
+
+        self::assertEquals(new Domain(Kind::Integer, Field::LongLong, 4), $variables->assignment(Domain::integer(Field::Tiny, 4)));
+        self::assertEquals(new Domain(Kind::Double, Field::Double, 8, 2), $variables->assignment(new Domain(Kind::Double, Field::Float, 8, 2)));
+        self::assertEquals(new Domain(Kind::Decimal, Field::NewDecimal, 8, 2, true), $variables->assignment(Domain::decimal(7, 2, true)));
+        self::assertEquals(new Domain(Kind::String, Field::VarString, 10, 0, collation: $collation, displayDecimals: 0), $variables->assignment(new Domain(Kind::Date, Field::Date, 10)));
+        self::assertEquals(new Domain(Kind::String, Field::VarString, 0, displayDecimals: 0), $variables->assignment(Domain::null()));
+        self::assertEquals(Domain::string(4294967292, Collation::known('utf8mb4_bin'), Field::LongBlob), $variables->assignment(new Domain(Kind::Json, Field::Json, 4294967295)));
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testAssignmentPreservesReportedStringScaleAcrossNestedAssignments(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $variables = new Variables(new Settings(Collation::known('latin1_swedish_ci')), $release);
+        $literal = new Domain(Kind::String, Field::VarString, 1, coercibility: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
+        $assigned = $variables->assignment($literal);
+
+        self::assertSame(0, $assigned->displayDecimals);
+        self::assertEquals($assigned, $variables->assignment($assigned));
+        self::assertSame(Domain::NOT_FIXED, $variables->assignment(new Domain(Kind::String, Field::Blob, 65535))->decimals);
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testHeldSeparatesLegacyDecimalMetadataWidthFromExpressionPrecision(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $domain = (new Variables(new Settings(Collation::known('latin1_swedish_ci')), $release))->held(Domain::decimal(7, 2));
+
+        self::assertSame(83, $domain->metadataLength());
+        self::assertSame(65, $domain->precision());
+        self::assertSame(30, $domain->decimals);
+        self::assertEquals(Domain::decimal(65, 30), $domain->value());
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testTextKeepsMultibyteLegacyVariablesInAMediumBlob(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $collation = Collation::known('utf8mb4_bin');
+
+        self::assertEquals(Domain::string(16777215, $collation, Field::MediumBlob), (new Variables(new Settings($collation), $release))->text($collation));
+    }
+
     public function testInferredRetainsTheBranchCollationAndTemporalTextWidths(): void
     {
         $collation = Collation::known('utf8mb4_0900_ai_ci');

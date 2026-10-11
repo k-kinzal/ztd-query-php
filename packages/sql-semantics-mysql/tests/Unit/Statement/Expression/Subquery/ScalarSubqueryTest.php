@@ -23,6 +23,28 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ScalarSubqueryTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyReleases(): iterable
+    {
+        yield '5.6' => ['mysql-5.6.51'];
+        yield '5.7' => ['mysql-5.7.44'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyReleases')]
+    public function testDeriveScalarKeepsTheLegacyIntegerStorageField(string $release): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, $release);
+        $table = $semantics->analyze('CREATE TABLE t(a INT NOT NULL)');
+        $domain = (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($semantics->analyze('SELECT (SELECT t.a) FROM t', [$table])->field(0)->type);
+
+        self::assertNotNull($domain);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, $domain->field);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong, $domain->storageField);
+        self::assertSame(11, $domain->length);
+    }
+
     public function testDeriveScalarPreservesTheTypeAndNullabilityOfTheReducedExpression(): void
     {
         $platform = new Platform();

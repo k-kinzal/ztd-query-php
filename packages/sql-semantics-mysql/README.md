@@ -188,6 +188,12 @@ each absent operand from the first other resolved result branch, including an
 explicit NULL, before aggregating all result types. An omitted ELSE adds no
 inference operand.
 
+`Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
+the nullability of TIMESTAMP columns without an explicit NULL attribute. With
+the setting disabled they are NOT NULL; with it enabled they are nullable.
+An unknown setting (`null`) leaves the fact dependent. Default release settings
+disable it in MySQL 5.6 and 5.7 and enable it from MySQL 8.0.
+
 Resolved domains distinguish string expression bounds from reported byte lengths.
 `CASE`, control functions and string extrema retain both bounds so nested
 expressions do not repeatedly multiply a blob's width by its character set size.

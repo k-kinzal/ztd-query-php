@@ -205,7 +205,17 @@ final class NumbersTest extends TestCase
         $numbers = new Numbers();
 
         self::assertEquals(Domain::integer(Field::LongLong, 5), $numbers->quotient(Domain::decimal(6, 2), Domain::integer(Field::LongLong, 2)));
-        self::assertEquals(Domain::integer(Field::LongLong, 3, true), $numbers->quotient(Domain::integer(Field::LongLong, 2, true), Domain::double()));
+        self::assertEquals(Domain::integer(Field::LongLong, 21, true), $numbers->quotient(Domain::integer(Field::LongLong, 2, true), Domain::double()));
+    }
+
+    public function testQuotientBoundsWideResultsAndReservesTheWholeFloatingWidth(): void
+    {
+        $numbers = new Numbers();
+
+        self::assertSame(22, $numbers->quotient(Domain::decimal(65, 30), Domain::integer())->length);
+        self::assertSame(22, $numbers->quotient(Domain::string(100, Collation::binary()), Domain::integer())->length);
+        self::assertSame(22, $numbers->quotient(Domain::double(3), Domain::integer())->length);
+        self::assertSame(22, $numbers->quotient(Domain::integer(Field::LongLong, 2), Domain::double(3))->length);
     }
 
     public function testBitsIsAnUnsignedBigint(): void

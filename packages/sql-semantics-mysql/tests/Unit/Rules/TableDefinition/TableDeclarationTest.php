@@ -23,6 +23,18 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class TableDeclarationTest extends TestCase
 {
+    public function testTableResolvesTimestampNullabilityFromSessionSettings(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $sql = 'CREATE TABLE t(a TIMESTAMP, b TIMESTAMP NULL, c TIMESTAMP NOT NULL)';
+        $off = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), explicitDefaultsForTimestamp: false);
+        $columns = $semantics->analyze($sql, $semantics->context(session: $off))->declarations()[0]->columns;
+
+        self::assertSame([Nullability::NotNull, Nullability::Nullable, Nullability::NotNull], [$columns[0]->nullability, $columns[1]->nullability, $columns[2]->nullability]);
+        self::assertSame(Nullability::Nullable, $semantics->analyze($sql)->declarations()[0]->columns[0]->nullability);
+        self::assertSame(Nullability::NotNull, (new Semantics(Dialect::MySql, 'mysql-5.7.44'))->analyze($sql)->declarations()[0]->columns[0]->nullability);
+    }
+
     public function testColumnDeclaresOneColumnDefinition(): void
     {
         $create = (new Semantics(Dialect::MySql))->analyze('CREATE TABLE t (a INT NOT NULL)');

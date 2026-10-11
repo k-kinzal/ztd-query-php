@@ -67,6 +67,14 @@ final class ColumnDefinition
     }
 
     /**
+     * Answers the same column with its automatic-update property resolved.
+     */
+    public function withOnUpdate(bool $onUpdate): self
+    {
+        return new self($this->name, $this->domain, $this->default, $this->autoIncrement, $onUpdate, $this->generated, $this->invisible, $this->declaration, $this->comment, $this->stored, $this->expression, $this->implicitCollation, $this->spatialKind, $this->srid);
+    }
+
+    /**
      * Answers the same column computed by an expression: a generated column, STORED or VIRTUAL, and the expression as SHOW CREATE TABLE writes it.
      */
     public function withGeneration(Evaluable $generated, bool $stored, string $expression): self

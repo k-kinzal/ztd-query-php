@@ -16,6 +16,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class ColumnDefinitionTest extends TestCase
 {
+    public function testWithOnUpdateKeepsTheOtherColumnProperties(): void
+    {
+        $column = new ColumnDefinition('a', Domain::integer(), Fill::constant(3, '3'), comment: 'kept');
+        $updated = $column->withOnUpdate(true);
+
+        self::assertTrue($updated->onUpdateNow);
+        self::assertSame($column->default, $updated->default);
+        self::assertSame('kept', $updated->comment);
+        self::assertEquals($column, $updated->withOnUpdate(false));
+    }
+
     public function testWithImplicitCollationPreservesTheDeclarationOriginAcrossCopies(): void
     {
         $column = (new ColumnDefinition('a', Domain::integer(), Fill::none()))->withImplicitCollation(true);

@@ -56,6 +56,11 @@ final class Store
             return (new Geometries())->value($value, $column, $this->context->modes->release);
         }
         if ($value === null) {
+            if ($to->field === Field::Timestamp && !$column->nullable() && in_array($this->context->variables->read('explicit_defaults_for_timestamp'), ['OFF', '0', 0], true)) {
+                $clock = new \MySqlMemory\Evaluation\Leaf\Clock(\SqlSemantics\Platform\MySql\Statement\Call\Clock::Now, $to);
+
+                return (new Times($this))->value($clock->evaluate(new \MySqlMemory\Evaluation\Frame($this->context)), $to, $column);
+            }
             return null;
         }
 

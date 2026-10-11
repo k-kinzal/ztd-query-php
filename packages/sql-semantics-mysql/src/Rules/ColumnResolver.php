@@ -132,7 +132,7 @@ final class ColumnResolver
             return $missing;
         }
         for ($scope = $environment; $scope !== null; $scope = $scope->outer) {
-            if ($scope->aliases !== []) {
+            if ($scope->aliases !== [] || ($scope !== $environment && $scope->aggregation !== null)) {
                 return $missing;
             }
             foreach ($scope->relations as $relation) {

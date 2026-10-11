@@ -246,6 +246,16 @@ final class SessionTest extends TestCase
         self::assertTrue($session->resolution()->derivedMerge);
     }
 
+    public function testResolutionTracksTheTimestampDefaultSetting(): void
+    {
+        $session = (new Instance())->connect();
+
+        self::assertTrue($session->resolution()->explicitDefaultsForTimestamp);
+        $session->query('SET explicit_defaults_for_timestamp=OFF');
+        self::assertFalse($session->resolution()->explicitDefaultsForTimestamp);
+        self::assertFalse((new Instance('5.6.51'))->connect()->resolution()->explicitDefaultsForTimestamp);
+    }
+
     public function testResolutionTracksStrictMode(): void
     {
         $session = (new Instance('5.6.51'))->connect();

@@ -25,6 +25,9 @@ final class SettingsTest extends TestCase
         self::assertSame(4, Settings::defaults(GrammarRelease::MySql847)->divPrecisionIncrement);
         self::assertTrue(Settings::defaults(GrammarRelease::MySql847)->strict);
         self::assertFalse(Settings::defaults(GrammarRelease::MySql5651)->strict);
+        self::assertFalse(Settings::defaults(GrammarRelease::MySql5651)->explicitDefaultsForTimestamp);
+        self::assertFalse(Settings::defaults(GrammarRelease::MySql5744)->explicitDefaultsForTimestamp);
+        self::assertTrue(Settings::defaults(GrammarRelease::MySql847)->explicitDefaultsForTimestamp);
     }
 
     public function testOfReadsTheSessionOfAContext(): void

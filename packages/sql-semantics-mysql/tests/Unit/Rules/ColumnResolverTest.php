@@ -44,6 +44,7 @@ final class ColumnResolverTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier::class, $resolver->missing(new Environment($legacy->context()), new Name('a'), $qualifier));
         self::assertInstanceOf(MissingColumn::class, $resolver->missing(new Environment($modern->context()), new Name('a'), $qualifier));
         self::assertInstanceOf(MissingColumn::class, $resolver->missing(new Environment($legacy->context()), new Name('a'), null));
+        self::assertInstanceOf(MissingColumn::class, $legacy->analyze('SELECT (SELECT t.a)')->facts->diagnostics[0]);
     }
 
     public function testOutputRetainsAliasDepthAndLeavesUnlistedNamesUnresolved(): void

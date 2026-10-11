@@ -238,7 +238,8 @@ final class Planner
     /**
      * Answers the rows of an operand of a set operation as the temporary table of the operation holds them: each value converted into the type of its column.
      *
-     * A value whose type already is the type of the column is kept as it is; another is converted
+     * A decimal is rescaled even when its resolved type matches: variable reads can retain
+     * fewer fractional digits at runtime. Other values whose types match are kept; another is converted
      * as CAST converts it, so an integer gains the scale of a decimal column, a date the time of a
      * datetime one, an unsigned integer its digits in a string or decimal one, and a string the
      * character set of its column (verified on a live 8.4 server).
@@ -252,7 +253,7 @@ final class Planner
         foreach ($domains as $position => $domain) {
             $from = $operand->domains[$position];
             $read = new ColumnRead($from, $position);
-            $differs = $from->kind !== $domain->kind || $from->field !== $domain->field || $from->decimals !== $domain->decimals || $from->unsigned !== $domain->unsigned
+            $differs = $domain->kind === Kind::Decimal || $from->kind !== $domain->kind || $from->field !== $domain->field || $from->decimals !== $domain->decimals || $from->unsigned !== $domain->unsigned
                 || ($domain->kind === Kind::String && $from->collation->charset !== $domain->collation->charset);
             $converted = $converted || $differs;
             $expressions[] = $differs && $from->kind !== Kind::Null ? new Conversion($read, $domain, null, $domain->collation->bytes() ? 'BINARY' : 'CHAR') : $read;

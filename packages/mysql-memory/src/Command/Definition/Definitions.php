@@ -233,7 +233,7 @@ final class Definitions
         $type = $specification->dataType();
         $column = new ColumnDefinition($name, $domain, Fill::none(), $serial || in_array(ColumnKeyword::AutoIncrement, $keywords, true), $this->onUpdate($attributes), null, in_array(ColumnKeyword::Invisible, $keywords, true), $declaration, $comment, spatialKind: $type instanceof \SqlSemantics\Platform\MySql\Statement\Type\Spatial ? $type->kind : null, srid: $element->srid());
 
-        return $column->withDefault($this->default($attributes, $column, $create));
+        return (new Constraint\TimestampDefaults())->apply($column->withDefault($this->default($attributes, $column, $create)), $element, $create, $this->planner->compiler->connection->context);
     }
 
     /**

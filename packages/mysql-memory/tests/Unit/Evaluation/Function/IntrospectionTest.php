@@ -24,6 +24,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class IntrospectionTest extends TestCase
 {
+    public function testCoercibilityUsesTheVersionedDomainOfAnAssignment(): void
+    {
+        $legacy = (new Instance('5.7.44'))->connect()->query('SELECT COERCIBILITY(@v:=1)')[0];
+        $modern = (new Instance())->connect()->query('SELECT COERCIBILITY(@v:=1)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $legacy);
+        self::assertInstanceOf(ResultSet::class, $modern);
+        self::assertSame([['2']], $legacy->rows);
+        self::assertSame([['5']], $modern->rows);
+    }
+
     public function testCoercibilityRetainsLegacyBitAggregateStrength(): void
     {
         $session = (new Instance('5.6.51'))->connect();

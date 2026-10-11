@@ -76,12 +76,12 @@ final class TableDeclaration
      *
      * With the rules of its table the column has the type the server resolves; without them, its declared type.
      */
-    public function column(ColumnDefinition $definition, bool $keyed = false, ?Declared $declared = null): Column
+    public function column(ColumnDefinition $definition, bool $keyed = false, ?Declared $declared = null, ?bool $explicitDefaultsForTimestamp = null): Column
     {
         $specification = $definition->specification;
         $type = $declared === null ? $specification->dataType() : $declared->column($specification);
 
-        return new Column($definition->name->column, $type, (new ColumnFlags())->nullability($specification, $keyed), $specification instanceof GeneratedColumn);
+        return new Column($definition->name->column, $type, (new ColumnFlags())->nullability($specification, $keyed, $explicitDefaultsForTimestamp), $specification instanceof GeneratedColumn);
     }
 
     /**
@@ -116,7 +116,7 @@ final class TableDeclaration
         $defined = [];
         foreach ($definition->elements as $element) {
             if ($element instanceof ColumnDefinition) {
-                $defined[] = [$element, $this->column($element, $this->named($element->name->column, $primary, $comparison), $declared)];
+                $defined[] = [$element, $this->column($element, $this->named($element->name->column, $primary, $comparison), $declared, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->explicitDefaultsForTimestamp)];
             }
         }
         $selected = [];

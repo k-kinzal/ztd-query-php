@@ -55,7 +55,7 @@ The analysis takes these inputs from the session:
 - **The language profile**: the grammar release of the instance, the lexical mode read from `sql_mode`, and the native parameter style (`?` markers). The session keeps one analyzer for each lexical mode it has used.
 - **The declarations**: every table and view of the `Dictionary`, as the declarations SQL Semantics binds against. The context is complete: a name that is not declared does not exist.
 - **The search path**: the current database, where unqualified names are looked up.
-- **The session settings** (`Session::resolution()`): the connection and server collations, the default collation of each database, `div_precision_increment`, `group_concat_max_len`, the types of the user variables, the types of the values bound to parameter markers, whether `NO_UNSIGNED_SUBTRACTION` is set, and the client character set. These decide the types SQL Semantics derives, as they decide them in the server.
+- **The session settings** (`Session::resolution()`): the connection and server collations, the default collation of each database, `div_precision_increment`, `group_concat_max_len`, the types of the user variables, the types of the values bound to parameter markers, whether `NO_UNSIGNED_SUBTRACTION` is set, the client character set, and `explicit_defaults_for_timestamp`. These decide the types and nullability SQL Semantics derives, as they decide them in the server.
 
 Before the analysis, the views whose tables have changed since they were created are resolved again (`Plan\Views`), so that a view always reads the current definitions of its tables. A construct SQL Semantics has no rule for yet is reported as error 1235.
 
@@ -123,7 +123,7 @@ A table scan reads the rows of a table in the order of its clustered index, as I
 
 `Evaluation\Frame` is the row an expression reads and the frames of the blocks around it, for correlated subqueries. `Evaluation\Context` is what one statement is evaluated in: the `sql_mode`, the variables, the diagnostics area where warnings go, and the instant the statement started, which every `NOW()` of the statement reads. `Evaluation\Convert` reads an operand of one type in the context of another, with the warnings the server raises (for example a string read as a number).
 
-SQL Semantics resolves an assignment result separately from its operand and from a later variable read. For example, assigning an INT column produces a BIGINT expression with the column's value width; a later read uses the variable's BIGINT width. The evaluator uses that resolved result domain and stores the value in the session's variable domain. Column origins also retain ZEROFILL so result formatting preserves declared padding without changing stored numbers.
+SQL Semantics resolves an assignment result separately from its operand and from a later variable read. For example, assigning an INT column produces a BIGINT expression with the column's value width; a later read uses the variable's BIGINT width. The evaluator uses that resolved result domain and stores the value in the session's variable domain. Legacy assignments retain their own coercibility and reported fractional precision. Decimal variable reads can carry a shorter runtime scale than their resolved type; materializing them rescales each value to the stored column. Column origins also retain ZEROFILL so result formatting preserves declared padding without changing stored numbers.
 
 ## Values, types and storage
 

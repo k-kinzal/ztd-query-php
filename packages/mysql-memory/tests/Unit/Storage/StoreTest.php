@@ -28,6 +28,16 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 #[Small]
 final class StoreTest extends TestCase
 {
+    public function testValueAssignsTheClockToANonnullableTimestampInLegacyMode(): void
+    {
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql5744), new Globals());
+        $context = new Context(new SqlModes([], GrammarRelease::MySql5744), new Diagnostics(), $variables, 1700000000.0);
+        $domain = new Domain(Kind::DateTime, Field::Timestamp, 22, 2, nullable: false);
+
+        self::assertSame('2023-11-14 22:13:20.00', (new Store($context))->value(null, Domain::null(), new ColumnDefinition('a', $domain, Fill::none())));
+        self::assertNull((new Store($context))->value(null, Domain::null(), new ColumnDefinition('a', $domain->withNullable(true), Fill::none())));
+    }
+
     public function testValueStoresNullAsNull(): void
     {
         $context = new Context(new SqlModes([]), new Diagnostics(), new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals()), 0.0);

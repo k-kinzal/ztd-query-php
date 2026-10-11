@@ -56,6 +56,10 @@ final class ScalarSubquery implements Scalar
         $query = $derivation->query($this->query, $environment);
         $value = (new SubqueryRows())->value($query, $derivation->facts());
         $legacy = $derivation->context->profile->grammar === GrammarRelease::MySql5651;
+        $domain = (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($value->type);
+        if (in_array($derivation->context->profile->grammar, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) && $domain?->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer) {
+            $value = new ScalarFact(new \SqlSemantics\Statement\Type\Known($domain->withStorageField(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong)), $value->nullability);
+        }
         $reduction = new ScalarReduction();
         $replacement = $reduction->expression($this->query, $derivation->context->profile->grammar);
         if ($replacement === null) {

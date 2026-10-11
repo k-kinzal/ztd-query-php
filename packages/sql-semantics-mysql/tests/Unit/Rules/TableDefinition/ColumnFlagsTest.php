@@ -46,6 +46,8 @@ final class ColumnFlagsTest extends TestCase
         $element2 = $statement->elements[2];
         self::assertInstanceOf(ColumnDefinition::class, $element2);
         self::assertSame(Nullability::Dependent, $flags->nullability($element2->specification));
+        self::assertSame(Nullability::NotNull, $flags->nullability($element2->specification, explicitDefaultsForTimestamp: false));
+        self::assertSame(Nullability::Nullable, $flags->nullability($element2->specification, explicitDefaultsForTimestamp: true));
         $element3 = $statement->elements[3];
         self::assertInstanceOf(ColumnDefinition::class, $element3);
         self::assertSame(Nullability::NotNull, $flags->nullability($element3->specification));

@@ -61,8 +61,9 @@ final class ColumnFlags
 
     /**
      * Answers the NULL fact of a column; `$keyed` tells whether a table-level primary key includes it.
+     * An unknown timestamp-default setting leaves an unqualified TIMESTAMP dependent.
      */
-    public function nullability(ColumnSpecification $specification, bool $keyed = false): Nullability
+    public function nullability(ColumnSpecification $specification, bool $keyed = false, ?bool $explicitDefaultsForTimestamp = null): Nullability
     {
         [$notNull, $explicit, $primary] = $this->flags($specification);
         if ($notNull || $primary || $keyed) {
@@ -70,7 +71,11 @@ final class ColumnFlags
         }
         $type = $specification->dataType();
 
-        return !$explicit && $type instanceof Temporal && $type->kind === TemporalKind::Timestamp ? Nullability::Dependent : Nullability::Nullable;
+        if (!$explicit && $type instanceof Temporal && $type->kind === TemporalKind::Timestamp) {
+            return $explicitDefaultsForTimestamp === null ? Nullability::Dependent : ($explicitDefaultsForTimestamp ? Nullability::Nullable : Nullability::NotNull);
+        }
+
+        return Nullability::Nullable;
     }
 
     /**

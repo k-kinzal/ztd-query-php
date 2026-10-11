@@ -358,8 +358,9 @@ final class Session
         $users = array_map(static fn (array $variable) => $variable[1]->resolved(), $this->variables->user);
 
         $client = $this->variables->read('character_set_client');
+        $timestamps = $this->variables->read('explicit_defaults_for_timestamp');
 
-        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, $this->variables->count('group_concat_max_len', 1024), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), is_string($client) ? Charset::named($client) : null, program: $this->program?->rows() ?? [], functions: $this->instance->dictionary->functions(), blockEncryptionMode: (string) $this->variables->read('block_encryption_mode'), timeNames: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::named((string) $this->variables->read('lc_time_names')), derivedMerge: !str_contains((string) $this->variables->read('optimizer_switch'), 'derived_merge=off'), strict: $this->modes()->strict());
+        return new Resolution($connection, (int) $this->variables->read('div_precision_increment'), $server, $schemas, $this->variables->count('group_concat_max_len', 1024), $users, $parameters, !$this->modes()->has('NO_UNSIGNED_SUBTRACTION'), is_string($client) ? Charset::named($client) : null, program: $this->program?->rows() ?? [], functions: $this->instance->dictionary->functions(), blockEncryptionMode: (string) $this->variables->read('block_encryption_mode'), timeNames: \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Locale::named((string) $this->variables->read('lc_time_names')), derivedMerge: !str_contains((string) $this->variables->read('optimizer_switch'), 'derived_merge=off'), strict: $this->modes()->strict(), explicitDefaultsForTimestamp: $timestamps === null ? null : in_array($timestamps, ['ON', '1', 1], true));
     }
 
     /**

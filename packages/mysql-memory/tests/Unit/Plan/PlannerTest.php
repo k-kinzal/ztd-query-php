@@ -35,6 +35,16 @@ use SqlSemantics\Statement\Query;
 #[Small]
 final class PlannerTest extends TestCase
 {
+    public function testSettledScalesDecimalVariableValuesWhenTheyBecomeStoredColumns(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET @v=1.25');
+        $result = $session->query('SELECT * FROM (SELECT @v AS v LIMIT 1) d')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1.250000000000000000000000000000']], $result->rows);
+    }
+
     public function testQueryPlansASelectIntoItsRowsNamesAndTypes(): void
     {
         $session = (new Instance())->connect();
