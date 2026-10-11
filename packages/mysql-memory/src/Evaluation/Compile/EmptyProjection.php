@@ -86,7 +86,7 @@ final class EmptyProjection
     public function project(QueryPlan $plan): ?Project
     {
         $path = $plan->root;
-        while ($path instanceof Limit || $path instanceof Sort) {
+        while ($path instanceof Limit || $path instanceof Sort || $path instanceof \MySqlMemory\Plan\Path\Transform\Prepare) {
             $path = $path->input;
         }
 

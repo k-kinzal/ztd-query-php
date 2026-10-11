@@ -104,7 +104,7 @@ final class Blocks
 
         $plan = new QueryPlan($root, $domains, $names, $origins);
 
-        return System\ProgramMetadata::buffered((new SortedDistinct($this->planner))->apply($plan, $select, $keys, $outer), $this->planner, $select, $outer, $scope, $keys !== []);
+        return (new Lookup\Preparation($this->planner))->plan(System\ProgramMetadata::buffered((new SortedDistinct($this->planner))->apply($plan, $select, $keys, $outer), $this->planner, $select, $outer, $scope, $keys !== []), $select, $scope, $evaluation);
     }
 
     /**
@@ -369,6 +369,9 @@ final class Blocks
     {
         if (!$limit instanceof RowLimit) {
             return $path;
+        }
+        if ($path instanceof Path\Transform\Prepare && $path->early) {
+            return new Path\Transform\Prepare($this->limit($path->input, $limit, $outer), $path->conditions, true, $path->guard);
         }
         $count = $this->bound($limit->count, $outer);
         $offset = $limit->offset === null ? 0 : $this->bound($limit->offset, $outer);

@@ -60,6 +60,11 @@ final class Scope
     public array $bound = [];
 
     /**
+     * @var list<Subquery\RowMembership> Independent keyed predicates prepared before this block reads rows
+     */
+    public array $preparations = [];
+
+    /**
      * The table whose row an INSERT was to write, read by VALUES(column) after the existing row.
      */
     public ?\MySqlMemory\Dictionary\TableDefinition $inserted = null;

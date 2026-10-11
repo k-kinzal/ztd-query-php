@@ -61,6 +61,7 @@ final class Builder
     public function build(AccessPath $path): RowIterator
     {
         return $this->source($path) ?? match (true) {
+            $path instanceof \MySqlMemory\Plan\Path\Transform\Prepare => new Transform\PrepareIterator($path, $this->build($path->input)),
             $path instanceof Filter => new FilterIterator($path, $this->build($path->input)),
             $path instanceof \MySqlMemory\Plan\Path\Transform\Lock => new Transform\LockIterator($path, $this->build($path->input), $this),
             $path instanceof NestedLoopJoin => new NestedLoopJoinIterator($path, $this->build($path->left), $this->build($path->right)),

@@ -89,6 +89,21 @@ final class RowSubqueriesTest extends TestCase
         }
         yield 'unread null membership' => ['SELECT CASE WHEN 0 THEN (0,1,99) IN (SELECT NULL,b,id FROM t1) ELSE 7 END'];
         yield 'unread coercing membership' => ['SELECT CASE WHEN 0 THEN (0,1) IN (SELECT b,id FROM t1) ELSE 7 END'];
+        $membership = '(0,1) IN (SELECT b,id FROM t1)';
+        yield 'unread if membership' => ['SELECT IF(0,' . $membership . ',7)'];
+        yield 'unread coalesce membership' => ['SELECT COALESCE(7,' . $membership . ')'];
+        yield 'both case memberships' => ['SELECT CASE WHEN 0 THEN ' . $membership . ' ELSE ' . $membership . ' END'];
+        yield 'unread membership zero limit' => ['SELECT CASE WHEN 0 THEN ' . $membership . ' ELSE 7 END LIMIT 0'];
+        yield 'missing outer primary key' => ['SELECT ' . $membership . ' FROM t2 WHERE id=99'];
+        yield 'runtime empty outer rows' => ['SELECT ' . $membership . ' FROM t2 WHERE RAND(17)<0'];
+        yield 'false outer having' => ['SELECT ' . $membership . ' FROM t2 HAVING 0'];
+        yield 'repeated unread membership' => ['SELECT id,CASE WHEN 0 THEN ' . $membership . ' ELSE 7 END FROM t2 ORDER BY id'];
+        yield 'unread membership false inner' => ['SELECT CASE WHEN 0 THEN (0,1) IN (SELECT b,id FROM t1 WHERE 0) ELSE 7 END'];
+        yield 'unread membership missing key' => ['SELECT CASE WHEN 0 THEN (0,99) IN (SELECT b,id FROM t1) ELSE 7 END'];
+        yield 'unread membership false match' => ['SELECT CASE WHEN 0 THEN (1,1) IN (SELECT b,id FROM t1) ELSE 7 END'];
+        yield 'unread membership null key' => ['SELECT CASE WHEN 0 THEN (0,NULL) IN (SELECT b,id FROM t1) ELSE 7 END'];
+        yield 'unread membership null value' => ['SELECT CASE WHEN 0 THEN (NULL,1) IN (SELECT b,id FROM t1) ELSE 7 END'];
+        yield 'unread membership projected null' => ['SELECT CASE WHEN 0 THEN (0,0,1) IN (SELECT b,NULL,id FROM t1) ELSE 7 END'];
         foreach ([0, 1] as $value) {
             foreach ([1, 99] as $key) {
                 yield 'constant first null ' . $value . ' key ' . $key => ['SELECT (0,' . $value . ',' . $key . ') IN (SELECT NULL,b,id FROM t1)'];

@@ -122,4 +122,15 @@ final class RowMembershipTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $first);
         self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"]], $first->rows);
     }
+
+    public function testPrepareSkipsUnknownOperandsInAnUnreadBranch(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query("CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20)); INSERT INTO t VALUES (1,'apple')");
+        $session->query('SELECT IF(0,(0,NULL) IN (SELECT s,id FROM t),7)');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
 }

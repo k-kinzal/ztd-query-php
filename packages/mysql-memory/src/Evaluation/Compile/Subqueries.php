@@ -148,9 +148,37 @@ final class Subqueries
         }
 
         $key = $this->membershipKey($query, $comparators);
+        if ($key !== [] && $this->membershipUnknown($operand, $query, $scope)) {
+            return new \MySqlMemory\Evaluation\Leaf\Constant($this->compiler->operators->truth(true), null);
+        }
         $once = $key !== [] && $this->membershipConstant($operand, $query);
 
-        return new \MySqlMemory\Evaluation\Subquery\RowMembership($values, new Rows($plan), $comparators, $negated, $this->compiler->operators->truth(true), $key, $once, $once && $this->compiler->settings->legacy(), $once && $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651);
+        $membership = new \MySqlMemory\Evaluation\Subquery\RowMembership($values, new Rows($plan), $comparators, $negated, $this->compiler->operators->truth(true), $key, $once, $once && $this->compiler->settings->legacy(), $once && $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651);
+        if ($once) {
+            $scope->preparations[] = $membership;
+        }
+
+        return $membership;
+    }
+
+    /**
+     * Tells whether a legacy keyed membership has an impossible NULL comparison.
+     * A statically false inner filter wins first; a missing key or a runtime filter
+     * does not change this NULL result. Verified through SQL and EXPLAIN on MySQL 5.7.
+     */
+    public function membershipUnknown(\SqlSemantics\Statement\Scalar $operand, \SqlSemantics\Statement\Query $query, Scope $scope): bool
+    {
+        $query = $this->innermost($query);
+        if (!$this->compiler->settings->legacy() || !$this->compiler->constancy($operand)->constant() || !$query instanceof Select || $this->compiler->planner->blocks->empty($query, $scope)) {
+            return false;
+        }
+        foreach ($this->compiler->facts->query($query)->projection as $field) {
+            if ($field instanceof \SqlSemantics\Statement\Shape\Field && $field->slot->type instanceof \SqlSemantics\Statement\Type\NullOnly) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

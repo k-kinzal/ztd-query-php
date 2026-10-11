@@ -156,6 +156,22 @@ final class SubqueriesTest extends TestCase
         self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $warnings->rows);
     }
 
+    public function testMembershipUnknownKeepsLegacyNullComparisonsAheadOfKeyLookup(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20))');
+        $session->query("INSERT INTO t VALUES (1,'a')");
+        $result = $session->query('SELECT (1,0,99) IN (SELECT s,NULL,id FROM t WHERE id=99), (1,0,99) NOT IN (SELECT s,NULL,id FROM t WHERE RAND(17)<0), (1,0,99) IN (SELECT s,NULL,id FROM t WHERE 0), (1,0,99) NOT IN (SELECT s,NULL,id FROM t WHERE 0)')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, null, '0', '1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
     public function testQuantifiedRefusesASubqueryOfMoreThanOneColumn(): void
     {
         $session = (new Instance())->connect();

@@ -59,23 +59,43 @@ final class RowMembership implements Evaluable
         }
         $kept = $frame->context->kept;
         if (!isset($kept[$this])) {
-            $kept[$this] = [$this->read($frame)];
-        } elseif ($this->repeatCondition && isset($kept[$this->rows])) {
+            $kept[$this] = [$this->read($frame), 1];
+        } elseif ($this->legacyCondition && ($this->repeatCondition || $kept[$this][1] === 0) && isset($kept[$this->rows])) {
             $width = count($this->comparators);
             $this->matches(array_slice($kept[$this->rows], 0, $width), array_slice($kept[$this->rows], $width), $frame->context);
+            $kept[$this] = [$kept[$this][0], 1];
         }
 
         return $kept[$this][0] === null ? null : (int) $kept[$this][0];
     }
 
     /**
+     * Evaluates a non-NULL constant-key condition before row execution, even in an unread branch.
+     * Its legacy condition recheck belongs to the first actual use of the result.
+     */
+    public function prepare(Frame $frame): void
+    {
+        $kept = $frame->context->kept;
+        if (!$this->once || isset($kept[$this]) || $this->operands instanceof SingleRow) {
+            return;
+        }
+        $values = array_map(static fn (Evaluable $operand): int|float|string|null => $operand->evaluate($frame), $this->operands);
+        if (!in_array(null, $values, true)) {
+            $kept[$this] = [$this->read($frame, true, $values), 0];
+        }
+    }
+
+    /**
      * Searches candidate rows. A false constant condition eliminates its row before execution;
      * legacy releases evaluate a satisfied condition again when consuming the constant row.
      * Verified through SQL and EXPLAIN on MySQL 5.6, 5.7, 8.0 and 9.1.
+     *
+     * @param bool $preparing Whether only the preparation-time condition is evaluated
+     * @param list<int|float|string|null>|null $values Already evaluated operands, or null to read them
      */
-    public function read(Frame $frame): ?int
+    public function read(Frame $frame, bool $preparing = false, ?array $values = null): ?int
     {
-        $values = $this->operands instanceof SingleRow ? $this->operands->read($frame) : array_map(static fn (Evaluable $operand): int|float|string|null => $operand->evaluate($frame), $this->operands);
+        $values ??= $this->operands instanceof SingleRow ? $this->operands->read($frame) : array_map(static fn (Evaluable $operand): int|float|string|null => $operand->evaluate($frame), $this->operands);
         $values = $values === [] ? array_fill(0, count($this->comparators), null) : $values;
         $kept = $frame->context->kept;
         $iterator = $this->rows->start($frame);
@@ -83,10 +103,10 @@ final class RowMembership implements Evaluable
         while (($row = $iterator->read()) !== null) {
             $match = $this->matches($values, $row, $frame->context);
             if ($match === true) {
-                if ($this->repeatCondition) {
+                if ($this->legacyCondition) {
                     $kept[$this->rows] = [...$values, ...array_slice($row, 0, count($this->comparators))];
                 }
-                if ($this->legacyCondition) {
+                if ($this->legacyCondition && !$preparing) {
                     $this->matches($values, $row, $frame->context);
                 }
                 return $this->negated ? 0 : 1;
