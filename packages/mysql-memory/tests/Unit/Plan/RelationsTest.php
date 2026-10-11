@@ -116,7 +116,7 @@ final class RelationsTest extends TestCase
         $session->query('SELECT * FROM nowhere');
     }
 
-    public function testTableReadsACommonTableExpressionAsAMaterializedQuery(): void
+    public function testCommonTableReadsACommonTableExpressionAsAMaterializedQuery(): void
     {
         $session = (new Instance())->connect();
         $operation = $session->analyze('WITH c AS (SELECT 1 AS n) SELECT n FROM c AS x');

@@ -50,6 +50,24 @@ final class MaterializeIteratorTest extends TestCase
         self::assertNull($iterator->read());
     }
 
+    public function testInitRetainsMaterializedRowsOnlyWithinTheirStatement(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $working = new WorkingTable(1);
+        $working->rows = [[1]];
+        $iterator = new MaterializeIterator(new Materialize(new QueryPlan($working, [Domain::integer()], ['a']), once: true), new WorkingTableIterator($working));
+        $iterator->init(new Frame($context));
+        self::assertSame([1], $iterator->read());
+        $working->rows = [[2]];
+        $iterator->init(new Frame($context));
+        self::assertSame([1], $iterator->read());
+        self::assertNull($iterator->read());
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 1.0)));
+
+        self::assertSame([2], $iterator->read());
+    }
+
     public function testInitEvaluatesALateralQueryInsideTheJoinedRow(): void
     {
         $session = (new Instance())->connect();

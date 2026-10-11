@@ -34,7 +34,7 @@ use SqlSemantics\Statement\Scalar;
  * A literal, and a function of literals such as DATABASE(), ROW_COUNT() or CONCAT('a', 'b'), is
  * known when the statement is resolved. The account functions (USER() and its synonyms), the
  * clocks of the statement, CONNECTION_ID(), LAST_INSERT_ID(), FOUND_ROWS(), user and system
- * variables the statement does not assign, parameters and an uncorrelated subquery are fixed for the statement but known only
+ * variables the statement does not assign, parameters and a cacheable uncorrelated subquery are fixed for the statement but known only
  * when it runs. A column, an aggregate, a window function, an assignment, a correlated subquery and a function such
  * as RAND() or SYSDATE() vary by row. A subquery of one select item without a table or any other
  * clause is the expression it selects, as the server merges it into the enclosing block.
@@ -69,40 +69,57 @@ enum Constancy: int
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns, which vary by row
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row; when false, it stays as long as the value it assigns
      * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement, which knows the account functions when it resolves it
+     * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true, bool $legacy = false): self
+    public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true, bool $legacy = false, bool $effects = true): self
     {
-        return self::within($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy);
+        return self::within($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects);
     }
 
     /**
      * Answers how long the value of a node stays the same, the node lying a number of subqueries inside the expression.
      *
-     * Inside a subquery only a column of a block outside the expression varies by row.
+     * Inside a subquery, outer columns and uncacheable calls or variable accesses vary by row.
      *
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
      * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement
+     * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false): self
+    public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true): self
     {
         if ($node instanceof ColumnUse) {
             return self::column($node, $facts, $level);
         }
         if ($level > 0) {
-            return self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary, $legacy);
+            return $effects && self::uncacheable($node) ? self::Row : self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects);
         }
         $merged = $node instanceof Scalar && $facts->covers($node) ? $facts->scalar($node)->replacement : null;
         if ($merged !== null) {
-            return self::within($merged, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy);
+            return self::within($merged, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects);
         }
         if ($node instanceof Query) {
-            $inner = self::children($node, $facts, 1, $correlation, $assigned, $assignmentsVary, $legacy);
+            $inner = self::children($node, $facts, 1, $correlation, $assigned, $assignmentsVary, $legacy, $effects);
 
             return $inner === self::Row && $correlation ? self::Row : self::Statement;
         }
 
         return self::form($node, $facts, $correlation, $assigned, $assignmentsVary, $legacy);
+    }
+
+    /**
+     * Tells whether a node prevents retaining a subquery result across outer rows.
+     * This is independent of column correlation: RAND(seed), for example, advances on each read.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/explain-output.html.
+     */
+    public static function uncacheable(Node $node): bool
+    {
+        return match (true) {
+            $node instanceof VariableAssignment, $node instanceof UserVariable => true,
+            $node instanceof ClockCall => $node->clock === Clock::SystemDate,
+            $node instanceof FunctionCall => $node->schema !== null || \MySqlMemory\Evaluation\Function\Library::instance()->find($node->name->value) === null || self::function(strtoupper($node->name->value), count($node->arguments)) === self::Row,
+            default => false,
+        };
     }
 
     /**
@@ -157,8 +174,9 @@ enum Constancy: int
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
      * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement
+     * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function children(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false): self
+    public static function children(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true): self
     {
         $children = [];
         $properties = get_object_vars($node);
@@ -169,7 +187,7 @@ enum Constancy: int
         });
         $constancy = self::Resolved;
         foreach ($children as $child) {
-            $constancy = $constancy->join(self::within($child, $facts, $level, $correlation, $assigned, $assignmentsVary, $legacy));
+            $constancy = $constancy->join(self::within($child, $facts, $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects));
             if ($constancy === self::Row) {
                 break;
             }

@@ -40,6 +40,19 @@ final class SubqueriesTest extends TestCase
         self::assertSame([['1', null]], $result->rows);
     }
 
+    public function testRowReevaluatesSeededRandomCallsForEachOuterRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY)');
+        $session->query('INSERT INTO t VALUES (1),(2),(3),(4),(5)');
+        $result = $session->query('SELECT id,(0.5,1)<(SELECT RAND(17),1) FROM t ORDER BY id')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0'], ['2', '1'], ['3', '0'], ['4', '0'], ['5', '1']], $result->rows);
+    }
+
     public function testScalarRefusesASubqueryOfMoreThanOneColumn(): void
     {
         $session = (new Instance())->connect();

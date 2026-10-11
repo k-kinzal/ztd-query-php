@@ -26,6 +26,8 @@ final class MaterializeIterator implements RowIterator
 
     private int $next = 0;
 
+    private ?\MySqlMemory\Evaluation\Context $context = null;
+
     /**
      * @param Materialize $path The path executed
      * @param RowIterator $query The iterator of the query
@@ -40,6 +42,10 @@ final class MaterializeIterator implements RowIterator
     #[Override]
     public function init(Frame $frame): void
     {
+        $this->next = 0;
+        if ($this->path->once && $this->context === $frame->context) {
+            return;
+        }
         $inner = new Frame($frame->context, [], $this->path->lateral ? new Frame($frame->context, $frame->row, $frame->outer) : $frame->outer);
         $this->query->init($inner);
         $this->rows = [];
@@ -47,7 +53,7 @@ final class MaterializeIterator implements RowIterator
         while (($row = $this->query->read()) !== null) {
             $this->rows[] = count($row) === $width ? $row : array_slice($row, 0, $width);
         }
-        $this->next = 0;
+        $this->context = $frame->context;
     }
 
     /**

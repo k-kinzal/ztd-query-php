@@ -100,14 +100,7 @@ final class Relations
     {
         $resolution = $this->planner->compiler->facts->relation($reference)->table;
         if ($resolution instanceof CommonTable) {
-            $plan = $this->planner->commonTable($resolution->definition);
-            $merged = $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression && $this->mergeable($resolution->definition->query);
-            $placed = $this->shaped($reference, $plan->domains);
-            $scope->place($reference, $placed, $plan->names);
-            $scope->merged[spl_object_id($reference)] = $merged ? $plan->origins : $this->planner->materialized($placed);
-            $scope->derived[spl_object_id($reference)] = $reference->alias->value ?? $reference->name->name->value;
-
-            return new Materialize($merged ? $plan : new QueryPlan($this->planner->settled($plan, $placed), $placed, $plan->names, $plan->origins));
+            return $this->commonTable($reference, $resolution, $scope);
         }
         if (!$resolution instanceof DeclaredTable) {
             throw QueryError::NoSuchTable->error($reference->name->schema->value ?? $this->planner->settings->database, $reference->name->name->value);
@@ -142,6 +135,23 @@ final class Relations
     }
 
     /**
+     * Plans a common-table reference, retaining an independent materialized result for the statement.
+     */
+    public function commonTable(TableReference $reference, CommonTable $resolution, Scope $scope): AccessPath
+    {
+        $plan = $this->planner->commonTable($resolution->definition);
+        $merged = $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression && $this->mergeable($resolution->definition->query);
+        $placed = $this->shaped($reference, $plan->domains);
+        $scope->place($reference, $placed, $plan->names);
+        $scope->merged[spl_object_id($reference)] = $merged ? $plan->origins : $this->planner->materialized($placed);
+        $scope->derived[spl_object_id($reference)] = $reference->alias->value ?? $reference->name->name->value;
+
+        $once = !$merged && !$plan->root instanceof Path\Source\WorkingTable && $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression && \MySqlMemory\Evaluation\Compile\Constancy::of($resolution->definition->query, $this->planner->compiler->facts, effects: false)->constant();
+
+        return new Materialize($merged ? $plan : new QueryPlan($this->planner->settled($plan, $placed), $placed, $plan->names, $plan->origins), once: $once);
+    }
+
+    /**
      * Plans a derived table.
      */
     public function derived(DerivedTable $derived, Scope $scope): AccessPath
@@ -154,7 +164,9 @@ final class Relations
         $scope->merged[spl_object_id($derived)] = $merged ? $plan->origins : $this->planner->materialized($placed);
         $scope->derived[spl_object_id($derived)] = $derived->alias->value ?? '';
 
-        return new Materialize($merged ? $plan : new QueryPlan($this->planner->settled($plan, $placed), $placed, $plan->names, $plan->origins), $derived->lateral);
+        $once = !$merged && !$derived->lateral && \MySqlMemory\Evaluation\Compile\Constancy::of($derived->query, $this->planner->compiler->facts, effects: false)->constant();
+
+        return new Materialize($merged ? $plan : new QueryPlan($this->planner->settled($plan, $placed), $placed, $plan->names, $plan->origins), $derived->lateral, $once);
     }
 
     /**

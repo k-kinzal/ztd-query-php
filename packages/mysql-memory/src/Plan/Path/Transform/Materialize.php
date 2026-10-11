@@ -21,8 +21,9 @@ final class Materialize implements AccessPath
     /**
      * @param QueryPlan $query The query whose rows are read
      * @param bool $lateral Whether the query reads the row of the block it is joined in
+     * @param bool $once Whether a materialized, uncorrelated result is retained for the statement
      */
-    public function __construct(public readonly QueryPlan $query, public readonly bool $lateral = false)
+    public function __construct(public readonly QueryPlan $query, public readonly bool $lateral = false, public readonly bool $once = false)
     {
     }
 

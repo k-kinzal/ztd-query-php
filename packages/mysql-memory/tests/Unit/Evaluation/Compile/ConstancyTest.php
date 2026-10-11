@@ -55,13 +55,26 @@ final class ConstancyTest extends TestCase
         self::assertSame([Constancy::Row, Constancy::Statement], [Constancy::of($variable, $operation->facts, true, ['v']), Constancy::of($variable, $operation->facts, true, ['w'])]);
     }
 
-    public function testWithinReadsOnlyOuterColumnsInsideASubquery(): void
+    public function testWithinKeepsRandomCallsVaryingInsideASubquery(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT RAND()');
         $call = $operation->field(0)->expression;
         self::assertNotNull($call);
 
-        self::assertSame([Constancy::Resolved, Constancy::Row], [Constancy::within($call, $operation->facts, 1, true, []), Constancy::within($call, $operation->facts, 0, true, [])]);
+        self::assertSame([Constancy::Row, Constancy::Row], [Constancy::within($call, $operation->facts, 1, true, []), Constancy::within($call, $operation->facts, 0, true, [])]);
+    }
+
+    public function testUncacheableDistinguishesStatementValuesFromVariableReadsAndEffects(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT RAND(17), @v, @v:=1, SYSDATE(), NOW(), LAST_INSERT_ID(1), LAST_INSERT_ID(), ABS(1)');
+        $uncacheable = array_map(static function (int $index) use ($operation): bool {
+            $expression = $operation->field($index)->expression;
+            self::assertNotNull($expression);
+
+            return Constancy::uncacheable($expression);
+        }, range(0, 7));
+
+        self::assertSame([true, true, true, true, false, true, false, false], $uncacheable);
     }
 
     public function testFormTellsHowLongANodeStaysTheSameByItsForm(): void
@@ -138,6 +151,14 @@ final class ConstancyTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1'], ['1', '1'], [null, '1']], $result->rows);
+    }
+
+    public function testOfSeparatesColumnCorrelationFromUncacheableCalls(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT RAND(17)');
+
+        self::assertSame(Constancy::Row, Constancy::of($operation->statement, $operation->facts));
+        self::assertSame(Constancy::Statement, Constancy::of($operation->statement, $operation->facts, effects: false));
     }
 
     public function testOfTakesAnAssignmentAsItsValueWhenAssignmentsDoNotVary(): void

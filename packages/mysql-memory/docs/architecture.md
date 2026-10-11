@@ -109,7 +109,7 @@ The paths are sources (`TableScan`, `Inline` for `VALUES`, `SingleRow`, `ZeroRow
 
 `Iterator\Builder` turns the access path tree into a tree of row iterators, one for each path. An iterator (`Iterator\RowIterator`) is started for a frame with `init()` and then read with `read()` until it answers `null`. A row is a list of values of a fixed width. `Command\Output` runs the root iterator and writes each value as the text the server sends for it.
 
-A table scan reads the rows of a table in the order of its clustered index, as InnoDB does: the primary key, else the first unique key of `NOT NULL` columns, else insertion order. A nested loop join reads its inner input again for each outer row. A materializing iterator computes a derived table or a subquery when it is first read, in a frame of its own.
+A table scan reads the rows of a table in the order of its clustered index, as InnoDB does: the primary key, else the first unique key of `NOT NULL` columns, else insertion order. A nested loop join reads its inner input again for each outer row. A materializing iterator computes a derived table or a subquery when it is first read, in a frame of its own. An uncorrelated materialized input retains those rows within the statement; correlated or merged inputs run again when their scan restarts. Expression constancy accounts for both column correlation and calls or variable accesses that prevent caching a subquery result.
 
 ## Expression evaluation
 
