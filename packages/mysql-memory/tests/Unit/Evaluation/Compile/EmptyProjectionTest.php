@@ -48,6 +48,32 @@ final class EmptyProjectionTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerWrappedVariables(): iterable
+    {
+        foreach (['@v', '@v:=@v+1'] as $expression) {
+            foreach (['(' . $expression . ')', '+(' . $expression . ')', '{fn (' . $expression . ')}'] as $wrapped) {
+                yield $wrapped => [$expression, $wrapped];
+            }
+        }
+    }
+
+    #[DataProvider('providerWrappedVariables')]
+    public function testRetainUsesTheResolvedExpressionThroughTransparentWrappers(string $expression, string $wrapped): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('SET @v=1');
+        $direct = $session->query('SELECT (SELECT ' . $expression . ',NULL FROM DUAL WHERE 0)<=> (NULL,NULL),@v FROM (SELECT 1 UNION ALL SELECT 2) t')[0];
+        $session->query('SET @v=1');
+        $result = $session->query('SELECT (SELECT ' . $wrapped . ',NULL FROM DUAL WHERE 0)<=> (NULL,NULL),@v FROM (SELECT 1 UNION ALL SELECT 2) t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $direct);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame($direct->rows, $result->rows);
+    }
+
+    /**
      * @return iterable<string, array{string, list<list<string|null>>}>
      */
     public static function providerComputedSources(): iterable

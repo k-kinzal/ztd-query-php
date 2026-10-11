@@ -87,6 +87,9 @@ final class EmptyProjection
         if (!$this->compiler->settings->legacy()) {
             return $value;
         }
+        while (($replacement = $this->compiler->facts->scalar($node)->replacement) !== null) {
+            $node = $replacement;
+        }
         $constant = $this->compiler->constancy($node) === Constancy::Resolved;
         $old = $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
         if ($old && !in_array($value->domain()->kind, [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String], true)) {
