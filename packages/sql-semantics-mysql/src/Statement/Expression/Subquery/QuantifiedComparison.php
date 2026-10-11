@@ -59,6 +59,7 @@ final class QuantifiedComparison implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        (new SubqueryRows())->checkLimit($this->query, $derivation);
         $operand = $derivation->scalar($this->operand, $environment);
         $query = $derivation->query($this->query, $environment);
         $rows = ($this->quantifier === Quantifier::Any && $this->operator === ComparisonOperator::Equal) || ($this->quantifier === Quantifier::All && $this->operator === ComparisonOperator::NotEqual);

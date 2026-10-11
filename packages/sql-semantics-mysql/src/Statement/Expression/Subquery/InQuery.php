@@ -51,6 +51,7 @@ final class InQuery implements Scalar
      */
     public function deriveScalar(Derivation $derivation, Environment $environment): ScalarFact
     {
+        (new SubqueryRows())->checkLimit($this->query, $derivation);
         $operand = $derivation->scalar($this->operand, $environment);
         $query = $derivation->query($this->query, $environment);
 

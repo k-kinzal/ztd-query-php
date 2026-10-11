@@ -15,6 +15,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Fact\Facts;
 use SqlSemantics\Statement\Fact\QueryFact;
 use SqlSemantics\Statement\Fact\ScalarFact;
+use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
@@ -33,9 +34,13 @@ use SqlSemantics\Statement\Type\Nullability;
  * A direct GROUP_CONCAT result retains its
  * fractional metadata (zero in MySQL 5.6 and 5.7, verified through SQL). A subquery with an unexpandable star depends on the inputs it
  * misses. A membership or quantified test is NULL when the operand or a
- * column of the subquery can be NULL; a subquery whose columns are not known
+ * column of the subquery can be NULL. Multi-column membership is reported
+ * nullable even for constant non-NULL rows, as observed through PDO.
+ * A subquery whose columns are not known
  * leaves that dependent. The width of the operand must equal the number of
- * columns (MYSQL-OPERAND-COLUMNS-001). Terminates: no recursion.
+ * columns (MYSQL-OPERAND-COLUMNS-001). LIMIT is refused on the tested query
+ * blocks, including set branches, independently of limits inside derived tables or CTEs.
+ * Terminates: limit checks recurse only into strict query children.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/scalar-subqueries.html,
  * https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html,
  * https://dev.mysql.com/doc/refman/8.4/en/any-in-some-subqueries.html.
@@ -110,6 +115,33 @@ final class SubqueryRows
             $nullability = $nullability->propagate($slot->nullability);
         }
 
-        return $nullability;
+        return count($query->shape->slots) > 1 ? Nullability::Nullable : $nullability;
+    }
+
+    /**
+     * Reports LIMIT on the subquery's query blocks, but not inside derived tables or CTE definitions.
+     * Source: https://dev.mysql.com/doc/refman/8.4/en/subquery-restrictions.html.
+     */
+    public function checkLimit(Query $query, Derivation $derivation): void
+    {
+        if ($this->limited($query)) {
+            $derivation->report(new \SqlSemantics\Platform\MySql\Statement\Expression\Problem\NotSupportedYet('LIMIT & IN/ALL/ANY/SOME subquery'));
+        }
+    }
+
+    /**
+     * Tells whether a query or a branch of its set operation carries a LIMIT.
+     */
+    public function limited(Query|\SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion $query): bool
+    {
+        return match (true) {
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select => $query->limit !== null || $query->late?->limit !== null,
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery => $this->limited($query->query),
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression => $query->limit !== null || $this->limited($query->body),
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation => $query->limit !== null || $this->limited($query->left) || $this->limited($query->right),
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation,
+            $query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\LeadingUnion => $this->limited($query->left) || $this->limited($query->right),
+            default => false,
+        };
     }
 }

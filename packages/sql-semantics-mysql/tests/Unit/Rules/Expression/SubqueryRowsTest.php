@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Expression;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
@@ -127,5 +128,53 @@ final class SubqueryRowsTest extends TestCase
 
         self::assertSame(Nullability::Nullable, $nullability);
         self::assertSame('Operand should contain 1 column(s), not 2.', $derivation->facts()->diagnostics[0]->message());
+    }
+
+    public function testTestReportsRowMembershipAsNullableEvenForConstantNotNullColumns(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT (1, 2) IN (SELECT 1, 2), 1 IN (SELECT 1)');
+
+        self::assertSame(Nullability::Nullable, $operation->field(0)->nullability);
+        self::assertSame(Nullability::NotNull, $operation->field(1)->nullability);
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerLimits(): iterable
+    {
+        yield 'block' => ['SELECT 1 LIMIT 0', true];
+        yield 'set' => ['SELECT 1 UNION SELECT 2 LIMIT 1', true];
+        yield 'left branch' => ['(SELECT 1 LIMIT 1) UNION SELECT 2', true];
+        yield 'right branch' => ['SELECT 1 UNION (SELECT 2 LIMIT 1)', true];
+        yield 'values' => ['VALUES ROW(1) LIMIT 1', true];
+        yield 'derived' => ['SELECT * FROM (SELECT 1 LIMIT 1) d', false];
+        yield 'common table' => ['WITH c AS (SELECT 1 LIMIT 1) SELECT * FROM c', false];
+    }
+
+    #[DataProvider('providerLimits')]
+    public function testLimitedChecksOnlyTheSubqueryBlocks(string $sql, bool $limited): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze($sql);
+
+        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $operation->statement);
+        self::assertSame($limited, (new SubqueryRows())->limited($operation->statement));
+    }
+
+    #[DataProvider('providerLimits')]
+    public function testCheckLimitReportsTheUnsupportedMembershipLimit(string $sql, bool $limited): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 IN (' . $sql . ')');
+
+        self::assertCount($limited ? 1 : 0, $operation->facts->diagnostics);
+        self::assertSame($limited ? "This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'." : null, ($operation->facts->diagnostics[0] ?? null)?->message());
+    }
+
+    public function testCheckLimitRecognizesALegacyLimitAfterALockingClause(): void
+    {
+        $operation = (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('SELECT 1 IN (SELECT 1 FOR UPDATE LIMIT 1)');
+
+        self::assertCount(1, $operation->facts->diagnostics);
+        self::assertSame("This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'.", $operation->facts->diagnostics[0]->message());
     }
 }

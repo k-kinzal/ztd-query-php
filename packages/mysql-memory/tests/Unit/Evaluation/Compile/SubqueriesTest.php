@@ -81,6 +81,14 @@ final class SubqueriesTest extends TestCase
         self::assertSame([['0', '1', '0', '1', '0']], $result->rows);
     }
 
+    public function testMembershipCompilesRowConstructorElementsAgainstSubqueryColumns(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (1, 2) IN (SELECT 1, 2), (1, 2) <> ALL (SELECT 1, 2)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0']], $result->rows);
+    }
+
     public function testQuantifiedRefusesASubqueryOfMoreThanOneColumn(): void
     {
         $session = (new Instance())->connect();

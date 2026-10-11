@@ -99,6 +99,10 @@ final class Subqueries
      */
     public function quantified(\SqlSemantics\Statement\Scalar $operand, ComparisonOperator $operator, bool $all, bool $negated, \SqlSemantics\Statement\Query $query, Scope $scope, \SqlSemantics\Statement\Scalar $node): Evaluable
     {
+        $elements = $this->compiler->rows->elements($operand);
+        if ($elements !== null) {
+            return $this->membership($elements, $query, $scope, $negated || $all);
+        }
         $value = $this->compiler->compile($operand, $scope);
         $plan = $this->compiler->planner->query($query, $scope);
         if (count($plan->domains) !== 1) {
@@ -111,6 +115,27 @@ final class Subqueries
         $comparator = Comparator::of($value->domain(), $plan->domains[0], $operator->value, $this->compiler->settings->connectionCollation);
 
         return new Quantified($value, new Rows($plan), $operator, $all, $negated, $comparator, $this->compiler->operators->truth(true));
+    }
+
+    /**
+     * Compiles row IN and its equivalent = ANY or <> ALL forms after semantic validation.
+     *
+     * @param list<\SqlSemantics\Statement\Scalar> $elements The row constructor's elements
+     * @throws \MySqlMemory\Error\SqlError When the subquery has a different number of columns
+     */
+    public function membership(array $elements, \SqlSemantics\Statement\Query $query, Scope $scope, bool $negated): Evaluable
+    {
+        $values = array_map(fn (\SqlSemantics\Statement\Scalar $element): Evaluable => $this->compiler->compile($element, $scope), $elements);
+        $plan = $this->compiler->planner->query($query, $scope);
+        if (count($values) !== count($plan->domains)) {
+            throw QueryError::OperandColumns->error(count($values));
+        }
+        $comparators = [];
+        foreach ($values as $index => $value) {
+            $comparators[] = Comparator::of($value->domain(), $plan->domains[$index], '=', $this->compiler->settings->connectionCollation, $this->compiler->settings->release());
+        }
+
+        return new \MySqlMemory\Evaluation\Subquery\RowMembership($values, new Rows($plan), $comparators, $negated, $this->compiler->operators->truth(true));
     }
 
     /**
