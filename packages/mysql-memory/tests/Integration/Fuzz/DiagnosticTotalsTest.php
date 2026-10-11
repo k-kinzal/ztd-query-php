@@ -21,8 +21,8 @@ final class DiagnosticTotalsTest extends TestCase
     public static function providerStatements(): iterable
     {
         $handlers = ['unhandled' => '', 'plain' => 'RESIGNAL', 'new state inherited message' => "RESIGNAL SQLSTATE '45001'", 'new state' => "RESIGNAL SQLSTATE '45001' SET MESSAGE_TEXT='replacement'"];
-        $bodies = ['signal' => "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='original'", 'warning and overflow' => "SELECT CAST('1a' AS SIGNED),CAST(1 AS UNSIGNED)-2"];
-        foreach ([0, 1, 2] as $limit) {
+        $bodies = ['signal' => "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='original'", 'warning and overflow' => "SELECT CAST('1a' AS SIGNED),CAST(1 AS UNSIGNED)-2", 'two warnings and overflow' => "SELECT CAST('1a' AS SIGNED),CAST('2b' AS SIGNED),CAST(1 AS UNSIGNED)-2"];
+        foreach ([0, 1, 2, 3] as $limit) {
             foreach ($handlers as $handlerName => $handler) {
                 foreach ($bodies as $bodyName => $body) {
                     yield $handlerName . ' ' . $bodyName . ' limit ' . $limit => [$handler, $body, $limit];

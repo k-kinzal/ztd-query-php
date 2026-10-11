@@ -419,6 +419,9 @@ final class Errors
     {
         $database = $session->variables->database;
         if ($call->schema === null && $database === '') {
+            if ($session->settings()->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+                return ProgramError::RoutineMissing->error('FUNCTION', $call->name->value);
+            }
             $error = QueryError::NoDatabase;
 
             return new SqlError($error, $error->message(), following: $session->settings()->legacy() ? [] : [[$error->number(), $error->message()]]);

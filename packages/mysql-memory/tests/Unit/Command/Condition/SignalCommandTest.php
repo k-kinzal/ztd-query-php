@@ -192,4 +192,18 @@ final class SignalCommandTest extends TestCase
 
         self::assertSame([['Error', 1062, "Duplicate entry '1' for key 't.PRIMARY'"], ['Error', 5000, 'new']], $session->diagnostics->conditions);
     }
+    public function testReserveResignalRestoresTheOmittedLegacyErrorBeforeANewCondition(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->diagnostics->limit = 1;
+        $session->diagnostics->warning(1292, 'first');
+        $area = clone $session->diagnostics;
+        $area->failure = new SqlError(\MySqlMemory\Error\Family\ProgramError::SignalException, 'original');
+        $context = new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+
+        (new SignalCommand())->reserveResignal($area, $context);
+
+        self::assertSame([['Error', 1644, 'original']], $session->diagnostics->conditions);
+    }
+
 }

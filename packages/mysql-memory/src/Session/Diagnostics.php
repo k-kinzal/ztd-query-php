@@ -178,12 +178,18 @@ final class Diagnostics
     }
 
     /**
-     * Discards oldest stored conditions to reserve one slot for RESIGNAL.
+     * Discards stored conditions to reserve one slot for RESIGNAL; legacy plain RESIGNAL clears a full area.
      */
-    public function reserve(): void
+    public function reserve(bool $discardAll = false): void
     {
         $remove = max(0, count($this->conditions) - $this->limit + 1);
         if ($remove === 0 || $this->limit === 0) {
+            return;
+        }
+        if ($discardAll) {
+            $this->conditions = [];
+            $this->signalled = [];
+
             return;
         }
         $this->conditions = array_slice($this->conditions, $remove);

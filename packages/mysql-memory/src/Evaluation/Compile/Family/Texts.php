@@ -301,6 +301,12 @@ final class Texts
         }
 
         $binary = $collation->charset === Charset::binary() || in_array('binary', $sides, true);
+        if ($this->compiler->constancy($node->pattern) === Constancy::Resolved) {
+            $constant = Convert::toText($pattern->evaluate(new Frame($this->compiler->connection->context)), $pattern->domain());
+            if ($constant !== null) {
+                self::legacyRegexp($constant, '', $binary ? '' : 'u');
+            }
+        }
         $domain = $domain->withNullable($this->unmatched($node, $subject, $pattern));
 
         return $this->call('REGEXP', [$subject, $pattern], $domain, static function (Frame $f, array $a) use ($collation, $binary, $negated): ?int {
@@ -314,18 +320,39 @@ final class Texts
             $text = $bytes ? $text : Encoding::convert($text, $strings->charset($a[0]->domain()), Charset::known('utf8mb4'));
             $expression = $bytes ? $expression : Encoding::convert($expression, $strings->charset($a[1]->domain()), Charset::known('utf8mb4'));
             $flags = $bytes ? '' : ($collation->binaryOrder() || str_ends_with($collation->name, '_cs') ? 'u' : 'ui');
-            set_error_handler(static fn (): bool => true);
-            try {
-                $matched = preg_match('/' . str_replace('/', '\\/', $expression) . '/' . $flags, $text);
-            } finally {
-                restore_error_handler();
-            }
-            if ($matched === false) {
-                throw DataError::RegexpError->error('The regular expression is not valid.');
-            }
+            $matched = self::legacyRegexp($expression, $text, $flags);
 
             return ($matched === 1) !== $negated ? 1 : 0;
         });
+    }
+
+    /**
+     * Matches a legacy pattern, reporting invalid repetition bounds as observed on MySQL 5.6 and 5.7.
+     * Constant patterns are compiled before result metadata is sent, including at native prepare.
+     *
+     * @throws \MySqlMemory\Error\SqlError When the pattern is invalid
+     */
+    public static function legacyRegexp(string $expression, string $text, string $flags): int
+    {
+        $problem = '';
+        set_error_handler(static function (int $severity, string $message) use (&$problem): bool {
+            $problem = $message;
+
+            return true;
+        });
+        try {
+            $matched = preg_match('/' . str_replace('/', '\\/', $expression) . '/' . $flags, $text);
+        } finally {
+            restore_error_handler();
+        }
+        if ($matched === false) {
+            if (str_contains($problem, 'numbers out of order in {} quantifier')) {
+                throw DataError::RegexpLibraryError->error('invalid repetition count(s)');
+            }
+            throw DataError::RegexpError->error('The regular expression is not valid.');
+        }
+
+        return $matched;
     }
 
     /**

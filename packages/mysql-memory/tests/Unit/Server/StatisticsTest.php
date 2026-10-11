@@ -46,7 +46,7 @@ final class StatisticsTest extends TestCase
         $instance->registry->status->add('Flush_commands', amount: 4);
 
         self::assertTrue((new Statistics($client))->answer());
-        self::assertSame(["\x00\x00\x00\x02\x00\x00\x00", "Uptime: {$uptime}  Threads: 1  Questions: 101  Slow queries: 0  Opens: 0  Flush tables: 4  Open tables: 0  Queries per second avg: {$average}"], $packets->getArrayCopy());
+        self::assertSame(["\x00\x00\x00\x02\x00\x00\x00", "Uptime: {$uptime}  Threads: 2  Questions: 101  Slow queries: 0  Opens: 0  Flush tables: 4  Open tables: 0  Queries per second avg: {$average}"], $packets->getArrayCopy());
         self::assertSame(0, $instance->registry->status->read('Questions', $session->id));
         self::assertSame(5, $session->variables->rowCount);
         self::assertSame([['Warning', 1292, 'retained']], $session->diagnostics->conditions);

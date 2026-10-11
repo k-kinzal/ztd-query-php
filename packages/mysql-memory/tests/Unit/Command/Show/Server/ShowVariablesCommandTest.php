@@ -76,4 +76,15 @@ final class ShowVariablesCommandTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['sql_select_limit', '18446744073709551615']], $result->rows);
     }
+    public function testThreadsCountsTheDaemonOnlyWhenRequested(): void
+    {
+        $session = (new Instance(globals: ['event_scheduler' => 'ON']))->connect();
+        $command = new ShowVariablesCommand();
+
+        self::assertSame(1, $command->threads($session));
+        self::assertSame(2, $command->threads($session, true));
+        $session->query('SET GLOBAL event_scheduler=OFF');
+        self::assertSame(1, $command->threads($session, true));
+    }
+
 }

@@ -32,6 +32,7 @@ final class StatisticsCommandTest extends TestCase
         $target->repair($memory ? $target->memoryGuard() : $target->guard());
         $pdo = new PDO($memory ? $target->memory : $target->native, $memory ? 'root' : $target->nativeUser, $memory ? '' : $target->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         self::assertTrue(StatisticsObservation::settled($pdo), 'Connection cleanup did not settle before the counter observation.');
+        $threads = StatisticsObservation::threads($pdo);
         $pdo->exec('SET timestamp=1234567890');
         $counts = static function () use ($pdo): array {
             $statement = $pdo->query("SHOW GLOBAL STATUS WHERE Variable_name IN ('Queries','Questions','Uptime','Open_tables','Opened_tables','Flush_commands','Slow_queries','Threads_connected')");
@@ -52,7 +53,7 @@ final class StatisticsCommandTest extends TestCase
         $queries = bcadd($before['Queries'], '1', 0);
         $average = bcdiv($queries, $before['Uptime'], 3);
 
-        self::assertSame('Uptime: ' . $before['Uptime'] . '  Threads: ' . $before['Threads_connected'] . '  Questions: ' . $queries
+        self::assertSame('Uptime: ' . $before['Uptime'] . '  Threads: ' . $threads . '  Questions: ' . $queries
             . '  Slow queries: ' . $before['Slow_queries'] . '  Opens: ' . $before['Opened_tables'] . '  Flush tables: ' . $before['Flush_commands']
             . '  Open tables: ' . $before['Open_tables'] . '  Queries per second avg: ' . $average, $info);
         self::assertSame(bcadd($before['Queries'], '2', 0), $after['Queries']);
@@ -76,4 +77,30 @@ final class StatisticsCommandTest extends TestCase
         self::assertNotFalse($warnings);
         self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: 'a'"], ['Warning', 1292, "Truncated incorrect DOUBLE value: 'b'"]], $warnings->fetchAll(PDO::FETCH_NUM));
     }
+    #[DataProvider('providerServers')]
+    public function testPdoServerInfoCountsTheEventScheduler(bool $memory): void
+    {
+        [$target] = Servers::shared();
+        $target->repair($memory ? $target->memoryGuard() : $target->guard());
+        $pdo = new PDO($memory ? $target->memory : $target->native, $memory ? 'root' : $target->nativeUser, $memory ? '' : $target->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $read = $pdo->query('SELECT @@GLOBAL.event_scheduler');
+        self::assertNotFalse($read);
+        $previous = $read->fetchColumn();
+        self::assertIsString($previous);
+        try {
+            $pdo->exec('SET GLOBAL event_scheduler=ON');
+            self::assertTrue(StatisticsObservation::settled($pdo));
+            $statement = $pdo->query("SHOW GLOBAL STATUS LIKE 'Threads_connected'");
+            self::assertNotFalse($statement);
+            $connected = $statement->fetchColumn(1);
+            self::assertIsString($connected);
+            self::assertIsNumeric($connected);
+            $info = $pdo->getAttribute(PDO::ATTR_SERVER_INFO);
+            self::assertIsString($info);
+            self::assertStringContainsString('  Threads: ' . bcadd($connected, '1', 0) . '  ', $info);
+        } finally {
+            $pdo->exec('SET GLOBAL event_scheduler=' . $pdo->quote($previous));
+        }
+    }
+
 }

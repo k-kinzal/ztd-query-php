@@ -738,4 +738,14 @@ final class ErrorsTest extends TestCase
         self::assertSame([['Error', 1193, "Unknown system variable 'missing_variable'"], ['Error', 1193, "Unknown system variable 'missing_variable'"]], $session->diagnostics->conditions);
     }
 
+    public function testRoutineWithoutDatabaseIsMissingOnMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $reply = $session->run("SELECT JSON_EXTRACT('invalid','$')")[0];
+
+        self::assertInstanceOf(SqlError::class, $reply);
+        self::assertSame(1305, $reply->getCode());
+        self::assertSame('FUNCTION JSON_EXTRACT does not exist', $reply->getMessage());
+    }
+
 }

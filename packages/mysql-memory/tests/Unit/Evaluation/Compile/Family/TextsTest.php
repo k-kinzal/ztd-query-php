@@ -295,4 +295,12 @@ final class TextsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([1, 0, 0], [$result->columns[0]->flags & 1, $result->columns[1]->flags & 1, $result->columns[2]->flags & 1]);
     }
+    public function testLegacyRegexpRejectsReversedRepetitionBounds(): void
+    {
+        $this->expectExceptionCode(1139);
+        $this->expectExceptionMessage("Got error 'invalid repetition count(s)' from regexp");
+
+        Texts::legacyRegexp('a{2,1}', '', '');
+    }
+
 }

@@ -10,6 +10,7 @@ use MySqlMemory\Session\State\StatementCounters;
 /**
  * The COM_STATISTICS text returned by mysqli::stat() and PDO's server-info attribute.
  *
+ * Its Threads field includes the event scheduler daemon, unlike Threads_connected.
  * Its Questions field reads global Queries, including this packet and stored program work.
  * The session Questions counter does not count this request. Uptime observes
  * SET timestamp and the average truncates to three decimal places. Diagnostics and ROW_COUNT
@@ -41,7 +42,7 @@ final class Statistics
         $queries = $values['Queries'] ?? '0';
         $fields = [
             'Uptime' => $uptime,
-            'Threads' => $values['Threads_connected'] ?? '0',
+            'Threads' => (string) (new ShowVariablesCommand())->threads($session, true),
             'Questions' => $queries,
             'Slow queries' => $values['Slow_queries'] ?? '0',
             'Opens' => $values['Opened_tables'] ?? '0',

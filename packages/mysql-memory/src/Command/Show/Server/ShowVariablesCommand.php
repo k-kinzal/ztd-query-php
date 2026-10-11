@@ -76,12 +76,20 @@ final class ShowVariablesCommand implements Command
      */
     public function status(Session $session, bool $global, ?float $instant = null, ?\MySqlMemory\Value\Zone $zone = null): array
     {
+        return StatusVariables::of($session->settings()->release())->values($session->instance, $global, false, $this->threads($session), false, $session->id, $instant ?? $session->variables->instant(), $zone);
+    }
+
+    /**
+     * Counts connected clients, optionally including the event scheduler as COM_STATISTICS does.
+     */
+    public function threads(Session $session, bool $daemon = false): int
+    {
         $connected = 0;
         foreach ($session->instance->sessions as $id => $reference) {
             $connected += $reference->get() !== null && isset($session->instance->registry->threads->connected[$id]) ? 1 : 0;
         }
 
-        return StatusVariables::of($session->settings()->release())->values($session->instance, $global, false, $connected, false, $session->id, $instant ?? $session->variables->instant(), $zone);
+        return $connected + ($daemon && $session->instance->registry->eventScheduler->row() !== null ? 1 : 0);
     }
 
     /**

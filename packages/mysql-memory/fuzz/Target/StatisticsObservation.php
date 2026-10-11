@@ -17,8 +17,7 @@ final class StatisticsObservation
     public static function settled(PDO $pdo): bool
     {
         for ($attempt = 0; $attempt < 100; $attempt++) {
-            $statement = $pdo->query("SHOW GLOBAL STATUS LIKE 'Threads_connected'");
-            $connected = $statement === false ? false : $statement->fetchColumn(1);
+            $connected = (string) self::threads($pdo);
             $info = $pdo->getAttribute(PDO::ATTR_SERVER_INFO);
             if (is_string($info) && preg_match('/  Threads: (\d+)  /', $info, $match) === 1 && $match[1] === $connected) {
                 return true;
@@ -28,4 +27,14 @@ final class StatisticsObservation
 
         return false;
     }
+    /**
+     * Counts process-list threads, including scheduler daemons omitted from Threads_connected.
+     */
+    public static function threads(PDO $pdo): int
+    {
+        $statement = $pdo->query('SHOW PROCESSLIST');
+
+        return $statement === false ? 0 : count($statement->fetchAll(PDO::FETCH_NUM));
+    }
+
 }
