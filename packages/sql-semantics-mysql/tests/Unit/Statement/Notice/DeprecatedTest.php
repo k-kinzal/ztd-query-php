@@ -30,6 +30,11 @@ final class DeprecatedTest extends TestCase
         self::assertTrue(Deprecated::AmpersandsAnd->warnedIn(GrammarRelease::MySql847));
     }
 
+    public function testWarnedInDeprecatesSuperOnlyOnModernReleases(): void
+    {
+        self::assertSame([1287, false, false, true, true], [Deprecated::SuperPrivilege->code(), Deprecated::SuperPrivilege->warnedIn(GrammarRelease::MySql5651), Deprecated::SuperPrivilege->warnedIn(GrammarRelease::MySql5744), Deprecated::SuperPrivilege->warnedIn(GrammarRelease::MySql8044), Deprecated::SuperPrivilege->warnedIn(GrammarRelease::MySql910)]);
+    }
+
     public function testCodeAnswersTheNumberOfTheNationalCharacterSetWarning(): void
     {
         self::assertSame(3720, Deprecated::National->code());

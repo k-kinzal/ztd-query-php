@@ -163,7 +163,13 @@ final class PrivilegeRule
         }
         $kind = self::STATIC[$form->signature] ?? null;
         if ($kind !== null) {
-            return new StaticPrivilege($kind, $kind->columns() ? $this->columns($form->node(1)) : []);
+            $privilege = new StaticPrivilege($kind, $kind->columns() ? $this->columns($form->node(1)) : []);
+            $deprecated = \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::SuperPrivilege;
+            if ($kind === PrivilegeKind::Super && $deprecated->warnedIn($this->lowering->profile->grammar)) {
+                $this->lowering->origins->notice($privilege, new \SqlSemantics\Platform\MySql\Statement\Notice\Deprecation($deprecated), $form->node);
+            }
+
+            return $privilege;
         }
         $names = $this->lowering->names;
 

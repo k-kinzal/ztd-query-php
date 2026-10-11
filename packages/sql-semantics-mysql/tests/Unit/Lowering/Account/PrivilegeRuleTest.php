@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit\Lowering\Account;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Facade\Semantics;
 use SqlSemantics\Platform\MySql\Dialect;
 use SqlSemantics\Platform\MySql\Lowering\Account\PrivilegeRule;
+use SqlSemantics\Statement\Fact\Warning;
 
 #[CoversClass(PrivilegeRule::class)]
 #[Medium]
@@ -23,6 +25,28 @@ final class PrivilegeRuleTest extends TestCase
     public function testItemLowersEveryStaticPrivilege(): void
     {
         self::assertSame('GRANT CREATE TABLESPACE, CREATE USER, EVENT, TRIGGER, SHOW VIEW ON *.* TO u', (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze('grant create tablespace, create user, event, trigger, show view on *.* to u')->toString());
+    }
+
+    #[DataProvider('providerSuperReleases')]
+    public function testItemRetainsEachSuperDeprecationBeforePrivilegeValidation(string $release, int $count): void
+    {
+        $operation = (new Semantics(Dialect::MySql, $release))->analyze('GRANT SUPER,SUPER ON d.* TO u');
+
+        self::assertSame(array_fill(0, $count, 'The SUPER privilege identifier is deprecated'), array_map(static fn (Warning $warning): string => $warning->message(), $operation->facts->warnings));
+    }
+
+    /**
+     * @return array<string, array{string, int}>
+     */
+    public static function providerSuperReleases(): array
+    {
+        return [
+            '5.6' => ['mysql-5.6.51', 0],
+            '5.7' => ['mysql-5.7.44', 0],
+            '8.0' => ['mysql-8.0.44', 2],
+            '8.4' => ['mysql-8.4.7', 2],
+            '9.1' => ['mysql-9.1.0', 2],
+        ];
     }
 
     public function testNamedReadsANameByTheStatement(): void
