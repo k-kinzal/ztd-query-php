@@ -78,7 +78,7 @@
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * the rows the outermost LIMIT reads.</span></span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * @param bool $calculate Whether the query asks for SQL_CALC_FOUND_ROWS</span></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * @param Closure(ResultSet): void|null $failed Retains rows already produced by a failing procedure query</span></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * @param Closure(ResultSet): void|null $failed Retains rows already produced by a failing query</span></span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     * @throws SqlError When computing a row fails</span></span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     */</span></span>
@@ -108,7 +108,7 @@
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>            }</span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>        } <span class="tok-kw">catch</span> (<span class="tok-id">SqlError</span> <span class="tok-var">$error</span>) {</span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>            <span class="tok-kw">if</span> (<span class="tok-var">$failed</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>                <span class="tok-var">$failed</span>(<span class="tok-kw">new</span> <span class="tok-id">ResultSet</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">columns</span>(<span class="tok-var">$plan</span>, <span class="tok-var">$charset</span>), <span class="tok-var">$rows</span>, <span class="tok-var">$context</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">raised</span>()));</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>                <span class="tok-var">$failed</span>(<span class="tok-kw">new</span> <span class="tok-id">ResultSet</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">columns</span>(<span class="tok-var">$plan</span>, <span class="tok-var">$charset</span>), <span class="tok-var">$rows</span>, <span class="tok-var">$context</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">raised</span>(), <span class="tok-id">false</span>));</span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>            }</span>
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>            <span class="tok-kw">throw</span> <span class="tok-var">$error</span>;</span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>        }</span>
