@@ -75,6 +75,7 @@ A statement, an expression form or a function that the emulator does not run fai
 
 ## Queries
 
+- MySQL 5.6 and 5.7 derived tables exclude outer query tables, while retaining routine parameters, local variables and trigger rows. In newer releases, outer-column dependencies cross non-lateral derived tables without counting the containing FROM clause as a visible scope. Routine integer variables keep their declared direct result type and use the resolved integer storage field when materialized.
 - Query blocks with every clause: `FROM`, `WHERE`, `GROUP BY` with `WITH ROLLUP` and `GROUPING()`, `HAVING`, `DISTINCT`, `ORDER BY` (by expression, alias or position), `LIMIT` and `OFFSET`, `SQL_CALC_FOUND_ROWS`, `FOR UPDATE` and `FOR SHARE`.
 - Ordered results spanning independently varying joined tables retain column identities but lose index flags after buffering. A unique lookup dependent on the first ordered table, a constant table and LIMIT 0 preserve those flags. Other optimizer-dependent buffering choices remain incomplete.
 - Joins: comma, `INNER`, `CROSS`, `LEFT`, `RIGHT`, `NATURAL`, `USING`, `STRAIGHT_JOIN`; derived tables, including `LATERAL`; index hints are checked (an unavailable index is error 1176, a view has none) and determine whether an ordered DISTINCT result retains index-backed field metadata. Row access still uses table scans. The indexes of the tables of `information_schema`, `mysql` and `performance_schema` are not checked.

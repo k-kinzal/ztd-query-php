@@ -140,6 +140,16 @@ final class ConstancyTest extends TestCase
         self::assertSame([true, true, false], [Constancy::Resolved->constant(), Constancy::Statement->constant(), Constancy::Row->constant()]);
     }
 
+    public function testWithinCountsNonLateralDerivedTablesByTheirResolutionScope(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a INT); INSERT INTO t VALUES(1),(2),(3)');
+        $result = $session->query('SELECT a,(SELECT v FROM (SELECT t.a AS v) q),(SELECT v FROM (SELECT (SELECT t.a) AS v) q) FROM t ORDER BY a')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1','1','1'],['2','2','2'],['3','3','3']], $result->rows);
+    }
+
     public function testOfMakesACorrelatedSubqueryVary(): void
     {
         $session = (new Instance())->connect();

@@ -88,10 +88,16 @@ final class ProgramVariables
     }
 
     /**
-     * Answers the resolution of the name at a position of a row: a value of its type that can be NULL.
+     * Answers the resolution of a program name, retaining its declared output type
+     * and the integer field used when a routine variable becomes a temporary column.
      */
     public function resolved(ProgramRow $row, int $position): ResolvedColumn
     {
-        return new ResolvedColumn($row->relation, new OutputSlot($row->names[$position], new Known($row->domains[$position]), Nullability::Nullable));
+        $domain = $row->domains[$position];
+        if (($row->relation instanceof ParameterList || $row->relation instanceof VariableDeclaration) && $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer) {
+            $domain = $domain->withStorageField(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong);
+        }
+
+        return new ResolvedColumn($row->relation, new OutputSlot($row->names[$position], new Known($domain), Nullability::Nullable));
     }
 }

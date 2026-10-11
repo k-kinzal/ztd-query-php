@@ -33,6 +33,26 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class RelationsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyReleases(): iterable
+    {
+        yield '5.6' => ['5.6.51'];
+        yield '5.7' => ['5.7.44'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyReleases')]
+    public function testDerivedRefusesOuterTablesInLegacyReleases(string $release): void
+    {
+        $session = (new Instance($release))->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TABLE t(a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1109);
+        $session->query('SELECT (SELECT v FROM (SELECT t.a AS v) q) FROM t');
+    }
+
     public function testDerivedConvertsBitBytesToTheResolvedTemporaryIntegerColumn(): void
     {
         $session = (new Instance('5.6.51'))->connect();

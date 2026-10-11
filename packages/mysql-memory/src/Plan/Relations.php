@@ -156,7 +156,7 @@ final class Relations
      */
     public function derived(DerivedTable $derived, Scope $scope): AccessPath
     {
-        $plan = $this->planner->query($derived->query, $derived->lateral ? $scope : $scope->outer);
+        $plan = $this->planner->query($derived->query, $derived->lateral ? $scope : ($this->planner->settings->legacy() ? null : $scope->outer));
         $names = $derived->columns === [] ? $plan->names : array_map(static fn ($name): string => $name->value, $derived->columns);
         $merged = $this->mergeable($derived->query);
         $placed = $this->shaped($derived, $plan->domains);

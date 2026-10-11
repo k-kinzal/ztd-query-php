@@ -161,6 +161,7 @@ final class Errors
     {
         return match (true) {
             $diagnostic instanceof MissingTable => $diagnostic->name->schema === null && $database === '' ? QueryError::NoDatabase->error() : QueryError::NoSuchTable->error($diagnostic->name->schema->value ?? $database, $diagnostic->name->name->value),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier => QueryError::UnknownTable->error(($diagnostic->qualifier->schema === null ? '' : $diagnostic->qualifier->schema->value . '.') . $diagnostic->qualifier->name->value, $clause),
             $diagnostic instanceof MissingColumn => QueryError::BadField->error(($diagnostic->qualifier?->schema === null ? '' : $diagnostic->qualifier->schema->value . '.') . ($diagnostic->qualifier === null ? '' : $diagnostic->qualifier->name->value . '.') . $diagnostic->name->value, $this->joining($diagnostic, $statement) ? 'from clause' : $clause),
             $diagnostic instanceof AmbiguousColumn => QueryError::NonUniqueColumn->error($diagnostic->name->value, $clause),
             $diagnostic instanceof AmbiguousAlias => QueryError::NonUniqueColumn->error($diagnostic->name->value, $clause),

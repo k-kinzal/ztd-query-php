@@ -91,6 +91,9 @@ enum Constancy: int
         if ($node instanceof ColumnUse) {
             return self::column($node, $facts, $level);
         }
+        if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Relation\DerivedTable && !$node->lateral && $level > 0) {
+            $level--;
+        }
         if ($level > 0) {
             return $effects && self::uncacheable($node) ? self::Row : self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects);
         }

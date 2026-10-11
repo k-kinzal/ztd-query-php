@@ -27,6 +27,48 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class FromScopeTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyReleases(): iterable
+    {
+        yield '5.6' => ['mysql-5.6.51'];
+        yield '5.7' => ['mysql-5.7.44'];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyReleases')]
+    public function testDerivedHidesOuterQueryColumnsInLegacyReleases(string $release): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $operation = $semantics->analyze('SELECT (SELECT x FROM (SELECT t.a AS x) d) FROM t', [$table]);
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier::class, $operation->facts->diagnostics[0]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLegacyReleases')]
+    public function testDerivedKeepsRoutineVariablesAndTriggerRows(string $release): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $procedure = $semantics->analyze('CREATE PROCEDURE p(IN x INT) BEGIN DECLARE y INT DEFAULT 3; SELECT * FROM (SELECT x,y) d; END');
+        $trigger = $semantics->analyze('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET NEW.a=(SELECT v FROM (SELECT NEW.a+OLD.a AS v) d)', [$table]);
+
+        self::assertSame([], $procedure->facts->diagnostics);
+        self::assertSame([], $trigger->facts->diagnostics);
+        self::assertInstanceOf(MissingColumn::class, $semantics->analyze('CREATE TRIGGER bad BEFORE DELETE ON t FOR EACH ROW SET @v=(SELECT x FROM (SELECT NEW.a AS x) d)', [$table])->facts->diagnostics[0]);
+    }
+
+    public function testDerivedRetainsModernOuterQueryScopes(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (a INT)');
+        $environment = new \SqlSemantics\Resolution\Environment($semantics->context());
+
+        self::assertSame($environment, (new FromScope())->derived($environment));
+        self::assertSame([], $semantics->analyze('SELECT (SELECT x FROM (SELECT t.a AS x) d) FROM t', [$table])->facts->diagnostics);
+    }
+
     public function testOpenMakesATableVisibleUnderItsCorrelationName(): void
     {
         $semantics = new Semantics(Dialect::MySql);

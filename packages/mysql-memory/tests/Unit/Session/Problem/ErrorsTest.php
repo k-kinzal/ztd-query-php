@@ -33,6 +33,16 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 #[Small]
 final class ErrorsTest extends TestCase
 {
+    public function testNamesReportsAMissingLegacyTableQualifierSeparately(): void
+    {
+        $problem = new \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier(new Name('a'), new QualifiedName(new Name('t')));
+        $error = (new Errors())->names($problem, 'd', 'field list', null);
+
+        self::assertNotNull($error);
+        self::assertSame(1109, $error->getCode());
+        self::assertSame("Unknown table 't' in field list", $error->getMessage());
+    }
+
     public function testNamesDistinguishesForwardAndAmbiguousSelectItems(): void
     {
         $forward = new \SqlSemantics\Platform\MySql\Statement\Name\InvalidProjectionAlias(new Name('x'), \SqlSemantics\Platform\MySql\Statement\Name\AliasRule::Forward);

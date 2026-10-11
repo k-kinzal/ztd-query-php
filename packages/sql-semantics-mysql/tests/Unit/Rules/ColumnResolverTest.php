@@ -34,6 +34,18 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Medium]
 final class ColumnResolverTest extends TestCase
 {
+    public function testMissingDistinguishesTablelessLegacyQualifiersFromMissingColumns(): void
+    {
+        $legacy = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $modern = new Semantics(Dialect::MySql);
+        $qualifier = new QualifiedName(new Name('t'));
+        $resolver = new ColumnResolver();
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier::class, $resolver->missing(new Environment($legacy->context()), new Name('a'), $qualifier));
+        self::assertInstanceOf(MissingColumn::class, $resolver->missing(new Environment($modern->context()), new Name('a'), $qualifier));
+        self::assertInstanceOf(MissingColumn::class, $resolver->missing(new Environment($legacy->context()), new Name('a'), null));
+    }
+
     public function testOutputRetainsAliasDepthAndLeavesUnlistedNamesUnresolved(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 AS x');

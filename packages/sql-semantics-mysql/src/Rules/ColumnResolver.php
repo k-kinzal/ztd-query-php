@@ -118,7 +118,34 @@ final class ColumnResolver
             $depth++;
         }
 
-        return $open === [] ? (new HavingLookup())->missing($environment, $column, $qualifier) : $lookup->conditional($column, [], $open);
+        return $open === [] ? $this->missing($environment, $column, $qualifier) : $lookup->conditional($column, [], $open);
+    }
+
+    /**
+     * Preserves the distinction between an absent qualifier in a tableless legacy
+     * scope and a column that visible tables do not contain.
+     */
+    public function missing(Environment $environment, Name $column, ?QualifiedName $qualifier): \SqlSemantics\Statement\Reference\Column\MissingColumn|\SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier
+    {
+        $missing = (new HavingLookup())->missing($environment, $column, $qualifier);
+        if ($qualifier === null || !in_array($environment->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            return $missing;
+        }
+        for ($scope = $environment; $scope !== null; $scope = $scope->outer) {
+            if ($scope->aliases !== []) {
+                return $missing;
+            }
+            foreach ($scope->relations as $relation) {
+                if ($relation->relation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable && $qualifier->schema === null && in_array(strtoupper($qualifier->name->value), ['NEW', 'OLD'], true)) {
+                    return $missing;
+                }
+                if (!$relation->relation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\ParameterList && !$relation->relation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Program\VariableDeclaration && !$relation->relation instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Trigger\TriggerTable) {
+                    return $missing;
+                }
+            }
+        }
+
+        return new \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier($column, $qualifier);
     }
 
     /**

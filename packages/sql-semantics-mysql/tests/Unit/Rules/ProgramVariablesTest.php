@@ -77,6 +77,14 @@ final class ProgramVariablesTest extends TestCase
         self::assertNull((new ProgramVariables())->field($environment, new Name('a'), new QualifiedName(new Name('OLD'))));
     }
 
+    public function testResolvedRetainsRoutineVariableOutputAndStorageFields(): void
+    {
+        $domain = Domain::integer(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, 11);
+        $resolved = (new ProgramVariables())->resolved(new ProgramRow(new ParameterList([]), [new Name('x')], [$domain]), 0);
+
+        self::assertEquals(new \SqlSemantics\Statement\Type\Known($domain->withStorageField(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong)), $resolved->slot->type);
+    }
+
     public function testResolvedTypesTheNameAsDeclaredAndNullable(): void
     {
         $resolved = (new ProgramVariables())->resolved(new ProgramRow(new ParameterList([]), [new Name('x')], [Domain::integer()]), 0);

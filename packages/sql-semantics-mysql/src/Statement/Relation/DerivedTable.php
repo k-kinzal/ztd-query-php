@@ -25,7 +25,7 @@ use SqlSemantics\Statement\Snapshot;
  *
  * The query is the one inside the parentheses the syntax requires.
  *
- * Rule: MYSQL-DERIVED-TABLE-001. The query sees the enclosing queries and,
+ * Rule: MYSQL-DERIVED-TABLE-001. From MySQL 8.0 the query sees the enclosing queries and,
  * when LATERAL is written, the tables to its left in the same FROM clause
  * (MYSQL-FROM-SCOPE-001). The columns are those of the query, renamed by the
  * column list (MYSQL-DERIVED-SHAPES-001). A derived table without alias is
