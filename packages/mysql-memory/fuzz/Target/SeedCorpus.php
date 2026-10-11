@@ -37,9 +37,14 @@ final class SeedCorpus
     public readonly string $root;
 
     /**
-     * @var array<string, true> Reached alternatives of statements whose comparison matched
+     * @var array<string, true> Emitted alternatives of statements whose comparison matched
      */
     public array $matched = [];
+
+    /**
+     * @var array<string, true> Reached alternatives of matching inputs, including replaced choices
+     */
+    public array $matchedReached = [];
 
     /**
      * @var array<string, int> Counts by comparison outcome
@@ -93,7 +98,8 @@ final class SeedCorpus
         $status = $comparison->volatile ? 'volatile' : ($comparison->difference === null ? 'matched' : 'different');
         $this->counts[$status]++;
         if ($status === 'matched') {
-            $this->matched += array_fill_keys($seed->reached, true);
+            $this->matched += array_fill_keys($seed->emitted, true);
+            $this->matchedReached += array_fill_keys($seed->reached, true);
         }
 
         return $status;
@@ -115,7 +121,7 @@ final class SeedCorpus
     /**
      * Reports coverage counts and the alternatives that remain unverified, without rounding a partial rate to 100%.
      *
-     * @return array{grammar: string, root: string, counts: array<string, int>, total: int, reached: int, emitted: int, matched: int, unreached: list<string>, unverified: list<string>}
+     * @return array{grammar: string, root: string, counts: array<string, int>, total: int, reached: int, emitted: int, matched: int, matchedReached: int, unreached: list<string>, unverified: list<string>}
      */
     public function summary(): array
     {
@@ -128,6 +134,7 @@ final class SeedCorpus
             'reached' => count(array_intersect($target, $current['reachedIds'])),
             'emitted' => count(array_intersect($target, $current['emittedIds'])),
             'matched' => count(array_intersect($target, array_keys($this->matched))),
+            'matchedReached' => count(array_intersect($target, array_keys($this->matchedReached))),
             'unreached' => array_values(array_diff($target, $current['reachedIds'])),
             'unverified' => array_values(array_diff($target, array_keys($this->matched))),
         ];

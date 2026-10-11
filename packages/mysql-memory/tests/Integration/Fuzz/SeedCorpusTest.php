@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Fuzz;
 
 use Fuzz\Target\Comparison;
+use Fuzz\Target\Seed;
 use Fuzz\Target\SeedCorpus;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Medium;
@@ -14,6 +15,23 @@ use PHPUnit\Framework\TestCase;
 #[Medium]
 final class SeedCorpusTest extends TestCase
 {
+    public function testRecordDoesNotVerifyAlternativesRemovedByGenerationRewrites(): void
+    {
+        $corpus = new SeedCorpus('mysql-8.4.7');
+        $inputs = $corpus->inputs(dirname(__DIR__, 3) . '/vendor/k-kinzal/sql-faker/seeds/mysql/mysql-8.4.7');
+        $original = $inputs->current();
+        $reached = array_slice($original->reached, 0, 2);
+        $retained = [$reached[0]];
+        $seed = new Seed($original->file, $original->input, $original->sql, $reached, $retained);
+        $corpus->record($seed, new Comparison(false));
+        $summary = $corpus->summary();
+
+        self::assertSame(2, $summary['matchedReached']);
+        self::assertSame(1, $summary['matched']);
+        self::assertContains($reached[1], $summary['unverified']);
+        self::assertNotContains($reached[0], $summary['unverified']);
+    }
+
     public function testInputsPreservesTheCanonicalSeedContract(): void
     {
         $corpus = new SeedCorpus('mysql-8.4.7');

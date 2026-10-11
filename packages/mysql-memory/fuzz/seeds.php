@@ -5,8 +5,9 @@
  *
  * Usage: php fuzz/seeds.php [SEED_DIRECTORY] [REPORT_PREFIX]
  * MYSQL_VERSION selects the release. Reports contain every outcome and exact input/SQL bytes.
- * Exit 0 requires all inputs to match and every reachable statement production to be covered;
- * volatility, differences, incomplete coverage and infrastructure failures never pass.
+ * Exit 0 requires all inputs to match and every reachable statement production to survive
+ * into a matching emitted statement; choices replaced during generation are not verified.
+ * Volatility, differences, incomplete coverage and infrastructure failures never pass.
  */
 
 declare(strict_types=1);
