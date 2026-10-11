@@ -369,4 +369,18 @@ final class DerivationTest extends TestCase
         self::assertSame([\SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BangNot->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::UnquotedFull->value, \SqlSemantics\Platform\MySql\Statement\Notice\Deprecated::BinaryOperator->value], array_map(static fn ($warning): string => $warning->message(), $derivation->readingWarnings()));
     }
 
+    public function testOrderWarningsOrdersOnlyTheRequestedInputScope(): void
+    {
+        $node = new Select([new Star()]);
+        $sources = new \SqlSemantics\Statement\Source\SourceMap([new \SqlSemantics\Statement\Source\Origin($node, 0, 10)]);
+        $derivation = new Derivation((new Semantics(Dialect::Sqlite))->context([]), $sources);
+        $before = self::createStub(Warning::class);
+        $after = self::createStub(Warning::class);
+        $derivation->warn($after, $node);
+        $derivation->warn($before, $node, false);
+        $derivation->orderWarnings($node);
+
+        self::assertSame([$before, $after], $derivation->facts()->warnings);
+    }
+
 }

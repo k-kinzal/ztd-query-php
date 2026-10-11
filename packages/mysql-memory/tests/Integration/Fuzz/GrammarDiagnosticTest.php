@@ -37,6 +37,10 @@ final class GrammarDiagnosticTest extends TestCase
         yield 'declare warnings before failure' => ['CREATE PROCEDURE p_width() BEGIN DECLARE first_width INT(11); DECLARE invalid BIT(65); DECLARE later_width INT(11); END'];
         yield 'declare width before default' => ['CREATE PROCEDURE p_width() BEGIN DECLARE invalid INT(256) DEFAULT !1; END'];
         if (!str_starts_with((string) getenv('MYSQL_VERSION'), '5.')) {
+            foreach (['BIT(65)', 'INT(256)', 'CHAR(256)', 'DECIMAL(66,2)', 'TIME(7)', 'BIT(4294967296)'] as $type) {
+                yield 'create notices ' . $type => ['CREATE TABLE t_width(first_width INT(11), invalid ' . $type . ' DEFAULT (!1), later_width INT(11))'];
+            }
+            yield 'create select notices' => ['CREATE TABLE t_width(a INT(11), b BIT(65)) SELECT !1 AS a, !2 AS b'];
             yield 'alter default before type failure' => ['ALTER TABLE t1 ADD (first_width INT(11), invalid BIT(65) DEFAULT (!1), later_width INT(11))'];
         }
         yield 'unsigned return width' => ['CREATE FUNCTION f_width() RETURNS BIT(18446744073709551615) RETURN 1'];

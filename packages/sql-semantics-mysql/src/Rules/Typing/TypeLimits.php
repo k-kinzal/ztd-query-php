@@ -22,15 +22,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Temporal;
 use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
 
 /**
- * Checks the numeric bounds of declared types before their domains are used.
+ * Checks the numeric bounds of declared types before execution can use them.
  *
  * Rule: MYSQL-DECLARED-TYPE-LIMITS-001. BIT holds 1 to 64 bits; integer display
  * widths are at most 255; fixed floating widths are 1 to 255, and FLOAT(p)
  * accepts at most 53 bits. Decimal precision is at most 65, fractional scale
  * at most 30 and no larger than precision. Temporal fractions stop at 6.
  * A display length first has to fit in an unsigned 32-bit integer, before
- * the bound of its type is checked. These failures stop parsing, so later
- * type or body warnings are omitted. Boundary behavior is verified against
+ * the bound of its type is checked. Failures terminate processing at the
+ * declaration validation boundary: table statements retain their preceding
+ * parsing notices, while a routine parameter is checked before the next
+ * parameter and a local variable after its DEFAULT expression. Boundary behavior is verified against
  * MySQL 8.4.7, including decimal literals above the unsigned 64-bit range.
  * Terminates: no recursion. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/numeric-type-syntax.html,

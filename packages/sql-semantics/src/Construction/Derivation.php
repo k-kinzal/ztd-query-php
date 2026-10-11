@@ -62,15 +62,7 @@ final class Derivation
      */
     private array $diagnostics = [];
 
-    /**
-     * @var list<Warning>
-     */
-    private array $warnings = [];
-
-    /**
-     * @var list<int|null> Input byte boundaries for recorded warnings
-     */
-    private array $warningOffsets = [];
+    private readonly Warnings $warnings;
 
     /**
      * @var array<string, \SqlSemantics\Statement\Type\TypeFact> Variable entries introduced while resolving this statement, keyed by platform-normalized name
@@ -101,6 +93,7 @@ final class Derivation
      */
     public function __construct(public AnalysisContext $context, public readonly \SqlSemantics\Statement\Source\SourceMap $sources = new \SqlSemantics\Statement\Source\SourceMap())
     {
+        $this->warnings = new Warnings($sources);
     }
 
     /**
@@ -384,10 +377,7 @@ final class Derivation
      */
     public function warn(Warning $warning, ?Node $at = null, bool $after = true): void
     {
-        $this->warnings[] = $warning;
-        $subject = $at ?? $this->reading;
-        $origin = $subject === null ? null : $this->sources->of($subject);
-        $this->warningOffsets[] = $origin === null ? null : $origin->offset + ($after ? $origin->length : 0);
+        $this->warnings->append($warning, $at ?? $this->reading, $after);
     }
 
     /**
@@ -400,19 +390,15 @@ final class Derivation
      */
     public function readingWarnings(): array
     {
-        if ($this->sources->notices === []) {
-            return $this->warnings;
-        }
-        $ordered = [];
-        foreach ($this->sources->notices as $notice) {
-            $ordered[] = [$notice->warning, $notice->offset];
-        }
-        foreach ($this->warnings as $index => $warning) {
-            $ordered[] = [$warning, $this->warningOffsets[$index] ?? PHP_INT_MAX];
-        }
-        usort($ordered, static fn (array $left, array $right): int => $left[1] <=> $right[1]);
+        return $this->warnings->all();
+    }
 
-        return array_column($ordered, 0);
+    /**
+     * Orders the located warnings of this statement by input position after its dependencies are derived.
+     */
+    public function orderWarnings(Node $scope): void
+    {
+        $this->warnings->order($scope);
     }
 
     /**

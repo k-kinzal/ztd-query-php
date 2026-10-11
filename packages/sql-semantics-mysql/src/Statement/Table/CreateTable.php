@@ -122,6 +122,7 @@ final class CreateTable implements Statement, Relation
             $facts->element($element, $derivation, $scope, $table, $this->name);
         }
         $this->partitioning?->derivePartitioning($derivation, $scope);
+        $derivation->orderWarnings($this);
     }
 
     /**
