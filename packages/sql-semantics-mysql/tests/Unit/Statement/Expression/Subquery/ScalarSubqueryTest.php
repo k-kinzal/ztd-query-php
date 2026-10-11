@@ -92,6 +92,16 @@ final class ScalarSubqueryTest extends TestCase
         self::assertSame(Nullability::Nullable, $operation->field(2)->nullability);
     }
 
+    public function testDeriveScalarFoldsTrueIntegerFiltersBeforeCombiningRowNullability(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (1,2) = (SELECT 1,2 FROM DUAL WHERE 1), (1,2) = (SELECT 1,2 FROM DUAL WHERE 0), (1,2) = (SELECT 1,NULL FROM DUAL WHERE 1), (SELECT COUNT(*) FROM DUAL WHERE 1)');
+
+        self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(1)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(2)->nullability);
+        self::assertSame(Nullability::NotNull, $operation->field(3)->nullability);
+    }
+
     public function testRenderWritesTheQueryInParentheses(): void
     {
         $platform = new Platform();

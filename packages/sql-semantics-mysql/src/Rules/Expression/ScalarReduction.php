@@ -61,7 +61,8 @@ final class ScalarReduction
     /**
      * Tells whether a scalar result retains the selected expression's NULL attribute.
      *
-     * With no table or filter, aggregate and window results retain that attribute too.
+     * With no table and no remaining filter, aggregate and window results retain that attribute too.
+     * A known true integer condition is folded before deciding the result's NULL attribute.
      * From MySQL 5.7, LIMIT can make the result empty and nullable; MySQL 5.6 retains the
      * attribute even when LIMIT discards the row. This describes the published result
      * metadata, including that legacy behavior, rather than a minimum row count.
@@ -75,6 +76,6 @@ final class ScalarReduction
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
         }
 
-        return $query instanceof Select && ($query->from === null || $query->from instanceof Dual) && $query->where === null && $query->having === null && $query->qualify === null && ($legacy || $query->limit === null);
+        return $query instanceof Select && ($query->from === null || $query->from instanceof Dual) && !$this->filtered($query->where) && $query->having === null && $query->qualify === null && ($legacy || $query->limit === null);
     }
 }

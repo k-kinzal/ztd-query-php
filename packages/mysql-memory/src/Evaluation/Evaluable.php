@@ -23,6 +23,10 @@ interface Evaluable
     /**
      * Computes the value for the row of a frame.
      *
+     * Evaluation can advance random state, assign variables and publish diagnostics.
+     * Repeated reads of the same expression and frame need not return the same value.
+     *
+     * @phpstan-impure
      * @throws \MySqlMemory\Error\SqlError When the evaluation is an error
      */
     public function evaluate(Frame $frame): int|float|string|null;

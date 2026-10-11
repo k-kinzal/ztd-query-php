@@ -32,6 +32,11 @@ final class Differential
     private ?string $previousInput = null;
 
     /**
+     * The JSON of the first native observation, retained if the repeated run cannot prepare its fixture.
+     */
+    private ?string $nativeObservation = null;
+
+    /**
      * The account the statements run as on the MySQL server, read before any statement ran.
      */
     private ?string $account = null;
@@ -90,10 +95,12 @@ final class Differential
     {
         $this->previousInput = $this->input;
         $this->input = $sql;
+        $this->nativeObservation = null;
         $guard = $this->guard();
         $this->repair($guard);
         $this->baseline?->restore($guard, true);
         $expected = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql);
+        $this->nativeObservation = $this->json($expected);
         $this->repair($guard);
         $this->baseline?->restore($guard, true);
         $again = $this->run($this->native, $this->nativeUser, $this->nativePassword, $sql);
@@ -290,7 +297,7 @@ final class Differential
             }
             $this->baseline?->logs($pdo);
         } catch (PDOException $failure) {
-            fwrite(STDERR, "Setup failed on {$dsn}: {$failure->getMessage()}\nCurrent input: " . $this->json($this->input) . "\nPrevious input: " . $this->json($this->previousInput) . "\n");
+            fwrite(STDERR, "Setup failed on {$dsn}: {$failure->getMessage()}\nCurrent input: " . $this->json($this->input) . "\nPrevious input: " . $this->json($this->previousInput) . "\nFirst native observation: " . ($this->nativeObservation ?? 'null') . "\n");
             exit(2);
         }
 

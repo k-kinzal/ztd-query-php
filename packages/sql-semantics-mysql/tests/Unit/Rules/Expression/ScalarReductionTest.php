@@ -88,7 +88,10 @@ final class ScalarReductionTest extends TestCase
         yield 'window' => ['SELECT ROW_NUMBER() OVER ()', false, true];
         yield 'table' => ['SELECT 1 FROM t', false, false];
         yield 'having' => ['SELECT 1 HAVING TRUE', false, false];
-        yield 'where' => ['SELECT 1 WHERE TRUE', false, false];
+        yield 'true where' => ['SELECT 1 WHERE TRUE', false, true];
+        yield 'false where' => ['SELECT 1 WHERE FALSE', false, false];
+        yield 'true aggregate where' => ['SELECT COUNT(*) WHERE 1', false, true];
+        yield 'false aggregate where' => ['SELECT COUNT(*) WHERE 0', false, false];
         yield 'modern limit' => ['SELECT COUNT(*) LIMIT 0', false, false];
         yield 'legacy limit attribute' => ['SELECT COUNT(*) LIMIT 0', true, true];
         yield 'wrapped limit' => ['(SELECT COUNT(*)) LIMIT 0', false, false];

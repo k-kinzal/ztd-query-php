@@ -55,6 +55,10 @@ final class EmptyProjection
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
         }
         if ($query instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation) {
+            if (!(new Projection\EmptySet($this->compiler))->readable($query, $plan)) {
+                return [];
+            }
+
             return array_map(static fn (\MySqlMemory\Typing\Domain $domain, int $position): Evaluable => new \MySqlMemory\Evaluation\Leaf\BufferedRead($domain, $position), $plan->domains, array_keys($plan->domains));
         }
         $path = $this->project($plan);

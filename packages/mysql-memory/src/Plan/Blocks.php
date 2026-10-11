@@ -307,7 +307,7 @@ final class Blocks
             }
         }
 
-        return new Filter($input, $varying ?? new Constant($compiler->operators->truth(false), 1), $constant);
+        return new Filter($input, $varying ?? new Constant($compiler->operators->truth(false), 1), $constant, $this->planner->settings->legacy() && $input instanceof Path\Source\KeyLookup);
     }
 
     /**

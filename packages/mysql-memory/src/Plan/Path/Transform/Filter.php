@@ -22,8 +22,9 @@ final class Filter implements AccessPath
      * @param AccessPath $input The rows filtered
      * @param Evaluable $condition The condition, evaluated over each row
      * @param Evaluable|null $precondition The part of the condition constant for the statement, or null for none
+     * @param bool $recheck Whether a legacy constant-table predicate is read again after its preparation check passes
      */
-    public function __construct(public readonly AccessPath $input, public readonly Evaluable $condition, public readonly ?Evaluable $precondition = null)
+    public function __construct(public readonly AccessPath $input, public readonly Evaluable $condition, public readonly ?Evaluable $precondition = null, public readonly bool $recheck = false)
     {
     }
 

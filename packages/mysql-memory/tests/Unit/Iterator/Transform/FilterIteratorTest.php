@@ -24,6 +24,24 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class FilterIteratorTest extends TestCase
 {
+    public function testReadRechecksALegacyConstantRowOnlyAfterItsFirstPredicatePasses(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY); INSERT INTO t VALUES (1); SET @v=0');
+        $passed = $session->query('SELECT id FROM t WHERE (@v:=@v+1)=1 AND id=1; SELECT @v');
+        $session->query('SET @v=0');
+        $rejected = $session->query('SELECT id FROM t WHERE (@v:=@v+1)=2 AND id=1; SELECT @v');
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $passed[0]);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $passed[1]);
+        self::assertSame([], $passed[0]->rows);
+        self::assertSame([['2']], $passed[1]->rows);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $rejected[0]);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $rejected[1]);
+        self::assertSame([], $rejected[0]->rows);
+        self::assertSame([['1']], $rejected[1]->rows);
+    }
+
     public function testReadPassesOnlyTheRowsTheConditionIsTrueFor(): void
     {
         $session = (new Instance())->connect();
