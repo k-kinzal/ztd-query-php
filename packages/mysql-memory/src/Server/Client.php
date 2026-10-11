@@ -138,6 +138,7 @@ final class Client
                 0x02 => $this->initDatabase($reader->rest()),
                 0x03 => $this->query($reader->rest()),
                 0x04 => $this->send($this->messages->eof(0, $this->status())),
+                0x07 => (new Refresh($this))->answer($reader),
                 0x0E, 0x1F => $this->ping($command === 0x1F),
                 0x1B => $this->send($this->messages->eof(0, $this->status())),
                 0x09 => $this->send('Uptime: 1  Threads: 1  Questions: 0  Slow queries: 0  Opens: 0  Flush tables: 0  Open tables: 0  Queries per second avg: 0.000'),

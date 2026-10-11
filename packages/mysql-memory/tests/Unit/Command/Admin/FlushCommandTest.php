@@ -29,7 +29,7 @@ final class FlushCommandTest extends TestCase
     }
 
     #[DataProvider('providerFlushScopes')]
-    public function testOptionsResetsTheReleaseScopeWithoutLosingGlobalTotals(string $version, int $remaining): void
+    public function testStatusResetsTheReleaseScopeWithoutLosingGlobalTotals(string $version, int $remaining): void
     {
         $instance = new Instance($version);
         $first = $instance->connect();

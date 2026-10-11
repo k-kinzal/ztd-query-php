@@ -100,10 +100,7 @@ final class FlushCommand implements Command
     {
         foreach ($statement->items as $item) {
             if ($item->option === FlushOption::Status) {
-                $session->instance->registry->status->clear($session->settings()->release() === GrammarRelease::MySql5651 ? $session->id : null);
-                $session->instance->registry->status->clearGlobal('Aborted_clients');
-                $session->instance->registry->status->flushedAt = $session->instance->registry->threads->now();
-                $session->instance->registry->threads->resetMaximum();
+                $this->status($session);
             }
             if ($item->option === FlushOption::RelayLogs && $item->channel !== null && $item->channel->value !== '') {
                 throw AdministrationError::ReplicaChannelMissing->error($item->channel->value);
@@ -112,6 +109,17 @@ final class FlushCommand implements Command
                 $session->instance->registry->binaryLog->rotate();
             }
         }
+    }
+
+    /**
+     * Resets the scoped counters and connection peak for SQL FLUSH STATUS and COM_REFRESH.
+     */
+    public function status(Session $session): void
+    {
+        $session->instance->registry->status->clear($session->settings()->release() === GrammarRelease::MySql5651 ? $session->id : null);
+        $session->instance->registry->status->clearGlobal('Aborted_clients');
+        $session->instance->registry->status->flushedAt = $session->instance->registry->threads->now();
+        $session->instance->registry->threads->resetMaximum();
     }
 
     /**
