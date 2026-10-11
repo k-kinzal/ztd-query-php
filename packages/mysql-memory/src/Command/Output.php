@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Command;
 
+use Closure;
+use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Convert;
 use MySqlMemory\Evaluation\Frame;
@@ -36,35 +38,43 @@ final class Output
      * the rows the outermost LIMIT reads.
      *
      * @param bool $calculate Whether the query asks for SQL_CALC_FOUND_ROWS
+     * @param Closure(ResultSet): void|null $failed Retains rows already produced by a failing procedure query
      *
-     * @throws \MySqlMemory\Error\SqlError When computing a row fails
+     * @throws SqlError When computing a row fails
      */
-    public function result(QueryPlan $plan, Context $context, bool $calculate = false): ResultSet
+    public function result(QueryPlan $plan, Context $context, bool $calculate = false, ?Closure $failed = null): ResultSet
     {
         $limit = $calculate && $plan->root instanceof Limit ? $plan->root : null;
         $iterator = (new Builder())->build($limit === null ? $plan->root : $limit->input);
         $context->row = 1;
-        $iterator->init(new Frame($context));
         $width = count($plan->domains);
         $results = $context->variables->read('character_set_results');
         $charset = is_string($results) ? Charset::named($results) : null;
         $rows = [];
         $found = 0;
-        while (($row = $iterator->read()) !== null) {
-            $found++;
-            $context->row = $found + 1;
-            if ($limit !== null && ($found <= $limit->offset || ($limit->count !== null && $found > $limit->offset + $limit->count))) {
-                continue;
+        try {
+            $iterator->init(new Frame($context));
+            while (($row = $iterator->read()) !== null) {
+                $found++;
+                $context->row = $found + 1;
+                if ($limit !== null && ($found <= $limit->offset || ($limit->count !== null && $found > $limit->offset + $limit->count))) {
+                    continue;
+                }
+                $values = [];
+                for ($i = 0; $i < $width; $i++) {
+                    $values[] = $this->sent($this->text($row[$i] ?? null, $plan->domains[$i], (($plan->origins[$i]->flags ?? 0) & ColumnFlag::ZeroFill->value) !== 0), $plan->domains[$i], $charset);
+                }
+                $rows[] = $values;
             }
-            $values = [];
-            for ($i = 0; $i < $width; $i++) {
-                $values[] = $this->sent($this->text($row[$i] ?? null, $plan->domains[$i], (($plan->origins[$i]->flags ?? 0) & ColumnFlag::ZeroFill->value) !== 0), $plan->domains[$i], $charset);
+        } catch (SqlError $error) {
+            if ($failed !== null) {
+                $failed(new ResultSet($this->columns($plan, $charset), $rows, $context->diagnostics->raised()));
             }
-            $rows[] = $values;
+            throw $error;
         }
         $context->variables->foundRows = $found;
 
-        return new ResultSet($this->columns($plan, $charset), $rows, $context->diagnostics->count());
+        return new ResultSet($this->columns($plan, $charset), $rows, $context->diagnostics->raised());
     }
 
     /**

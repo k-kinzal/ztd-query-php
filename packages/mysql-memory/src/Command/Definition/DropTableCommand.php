@@ -89,7 +89,7 @@ final class DropTableCommand implements Command
             }
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**

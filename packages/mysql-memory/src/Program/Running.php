@@ -46,6 +46,11 @@ final class Running
     public ?Closure $respond = null;
 
     /**
+     * An unfinished procedure result, completed only when an error handler takes control.
+     */
+    public ?\MySqlMemory\Result\ResultSet $partial = null;
+
+    /**
      * Answers the tables a statement uses, each as `database.table`.
      *
      * @return list<string>

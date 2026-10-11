@@ -102,7 +102,7 @@ final class Statements
         }
         $id = $this->next++;
         $this->prepared[$id] = [$sql, $parameters, [], [], \MySqlMemory\Command\Prepared\ParameterBindings::capture($operation)];
-        $this->client->packet((new PayloadWriter())->integer(0, 1)->integer($id, 4)->integer(count($columns), 2)->integer($parameters, 2)->integer(0, 1)->integer($session->diagnostics->count(), 2)->payload());
+        $this->client->packet((new PayloadWriter())->integer(0, 1)->integer($id, 4)->integer(count($columns), 2)->integer($parameters, 2)->integer(0, 1)->integer(min(65535, $session->diagnostics->raised()), 2)->payload());
         if ($parameters > 0) {
             for ($i = 0; $i < $parameters; $i++) {
                 $this->client->packet($this->client->messages->column(new ResultColumn('?', Field::VarString, 0, 0, 128, 63)));

@@ -73,7 +73,7 @@ final class CreateTableCommand implements Command
                 $session->transaction->creation->begin();
             }
 
-            return new Completion(0, 0, $context->diagnostics->count());
+            return new Completion(0, 0, $context->diagnostics->raised());
         }
         (new StorageOptions())->check($create, $session, $context);
         if ($create->temporaryWords > 0 && $session->transaction->open) {
@@ -89,7 +89,7 @@ final class CreateTableCommand implements Command
         }
         $this->store($definition, $session, $context, $started);
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**

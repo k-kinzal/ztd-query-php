@@ -85,11 +85,11 @@ final class ChangeCommand implements Command
         $matched = $this->matched($statement, $planner, $scope, $table, $context, $selected);
         $session->transaction->touch($table);
         if ($statement instanceof Delete) {
-            return new Completion($this->delete($table, $matched, new References($session, $context), in_array(DeleteOption::Ignore, $statement->options, true)), 0, $context->diagnostics->count());
+            return new Completion($this->delete($table, $matched, new References($session, $context), in_array(DeleteOption::Ignore, $statement->options, true)), 0, $context->diagnostics->raised());
         }
         $changed = $this->update($statement, $planner, $scope, $table, $context, $matched, new References($session, $context), $selected);
 
-        return new Completion($session->variables->clientFoundRows ? count($matched) : $changed, 0, $context->diagnostics->count(), sprintf('Rows matched: %d  Changed: %d  Warnings: %d', count($matched), $changed, $context->diagnostics->count()));
+        return new Completion($session->variables->clientFoundRows ? count($matched) : $changed, 0, $context->diagnostics->raised(), sprintf('Rows matched: %d  Changed: %d  Warnings: %d', count($matched), $changed, $context->diagnostics->raised()));
     }
 
     /**

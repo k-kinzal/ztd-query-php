@@ -126,7 +126,7 @@ final class ViewWriteCommand implements Command
         if (($statement instanceof Update || $statement instanceof Delete) && $statement->limit !== null && !$writes->keyed && $reply instanceof Completion) {
             $session->diagnostics->note(QueryError::IncompleteViewKey, QueryError::IncompleteViewKey->message());
 
-            return new Completion($reply->affectedRows, $reply->lastInsertId, $session->diagnostics->count(), $reply->info);
+            return new Completion($reply->affectedRows, $reply->lastInsertId, $session->diagnostics->raised(), $reply->info);
         }
 
         return $reply;

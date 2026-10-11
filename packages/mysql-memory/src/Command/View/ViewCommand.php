@@ -89,7 +89,7 @@ final class ViewCommand implements Command
         $schema->views[$name] = $view = new View($database, $name, ProgramSource::definer($definition->definer, $session, $context), $algorithm, ($definition->security ?? \SqlSemantics\Platform\MySql\Statement\View\ViewSecurity::Definer)->value, $check, $select, $session->variables->database === '' ? $database : $session->variables->database, $resolved, $query, $declaration, Views::tables($resolved, $query, $session->variables->database), [(string) $session->variables->read('character_set_client'), (string) $session->variables->read('collation_connection')]);
         $view->hints = (new \MySqlMemory\Hint\Hints())->view($query, $session);
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**

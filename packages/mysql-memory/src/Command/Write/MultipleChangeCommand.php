@@ -102,7 +102,7 @@ final class MultipleChangeCommand implements Command
             $deleted += (new ChangeCommand())->delete($table, $numbers, new References($session, $context), in_array(DeleteOption::Ignore, $statement->options, true));
         }
 
-        return new Completion($deleted, 0, $context->diagnostics->count());
+        return new Completion($deleted, 0, $context->diagnostics->raised());
     }
 
     /**
@@ -182,7 +182,7 @@ final class MultipleChangeCommand implements Command
             }
         }
 
-        return new Completion($session->variables->clientFoundRows ? count($done) : $changed, 0, $context->diagnostics->count(), sprintf('Rows matched: %d  Changed: %d  Warnings: %d', count($done), $changed, $context->diagnostics->count()));
+        return new Completion($session->variables->clientFoundRows ? count($done) : $changed, 0, $context->diagnostics->raised(), sprintf('Rows matched: %d  Changed: %d  Warnings: %d', count($done), $changed, $context->diagnostics->raised()));
     }
 
     /**

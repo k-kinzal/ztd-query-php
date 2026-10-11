@@ -76,7 +76,7 @@ final class CreateTableLikeCommand implements Command
             }
             $context->note(SchemaError::TableExists, $name);
 
-            return new Completion(0, 0, $context->diagnostics->count());
+            return new Completion(0, 0, $context->diagnostics->raised());
         }
         $layout = $this->layout($source, new QualifiedName(new Name($name), new Name($schema)), $create->temporaryWords);
         $definition = (new TableRebuild($session, $context, $connection))->definition($layout, $dictionary->declarations(), false);
@@ -85,7 +85,7 @@ final class CreateTableLikeCommand implements Command
             $session->transaction->temporaries['created'] = true;
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**

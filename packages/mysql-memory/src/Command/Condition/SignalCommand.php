@@ -96,6 +96,9 @@ final class SignalCommand implements Command
             $area = $stacked[count($stacked) - 1];
             $context->diagnostics->conditions = $area->conditions;
             $context->diagnostics->signalled = $area->signalled;
+            $context->diagnostics->dropped = $area->dropped;
+            $context->diagnostics->droppedErrors = $area->droppedErrors;
+            $context->diagnostics->failure = $area->failure;
             if ($statement->condition === null) {
                 return $this->again($area, $values, $context);
             }
@@ -113,7 +116,7 @@ final class SignalCommand implements Command
         if ($class === '01') {
             $context->diagnostics->signal($number ?? $code->value, $message ?? $code->message(), $signalled);
 
-            return new Completion(0, 0, $context->diagnostics->count());
+            return new Completion(0, 0, $context->diagnostics->raised());
         }
 
         throw new SqlError($code, $message ?? $code->message(), null, [], $signalled, $number);
@@ -133,8 +136,14 @@ final class SignalCommand implements Command
     public function again(\MySqlMemory\Session\Diagnostics $area, array $values, Context $context): Reply
     {
         $position = count($area->conditions) - 1;
-        if ($position < 0) {
-            throw ProgramError::ResignalWithoutHandler->error();
+        if ($position < 0 || ($area->failure !== null && $area->conditions[$position][0] !== 'Error')) {
+            $failure = $area->failure;
+            if ($failure === null) {
+                throw ProgramError::ResignalWithoutHandler->error();
+            }
+            [$signalled, $number] = $this->items($failure->sqlState(), $values, $context);
+            $signalled = [...($failure->signalled ?? ['RETURNED_SQLSTATE' => $failure->sqlState()]), ...$signalled];
+            throw new SqlError(ProgramError::SignalException, $signalled[ConditionItemName::MessageText->value] ?? $failure->getMessage(), null, [], $signalled, $number ?? $failure->getCode(), true);
         }
         [$level, $code, $text] = $area->conditions[$position];
         $state = $area->item($position, 'RETURNED_SQLSTATE');
@@ -146,7 +155,7 @@ final class SignalCommand implements Command
         $context->diagnostics->conditions[$position] = [$level, $number, $message];
         $context->diagnostics->signalled[$position] = $signalled;
         if ($level !== 'Error') {
-            return new Completion(0, 0, $context->diagnostics->count());
+            return new Completion(0, 0, $context->diagnostics->raised());
         }
 
         throw new SqlError(ProgramError::SignalException, $message, null, [], $signalled, $number, true);

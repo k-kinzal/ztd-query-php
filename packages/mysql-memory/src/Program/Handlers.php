@@ -56,6 +56,7 @@ final class Handlers
                 $diagnostics->error($code, $message);
             }
         }
+        $diagnostics->failure = $error;
         $handler = $this->find([[$error->getCode(), $error->sqlState(), 'Error']]);
         if ($handler === null) {
             throw $error->recorded ? $error : new SqlError($error->error, $error->getMessage(), $error, [], $error->signalled, $error->getCode(), true);
@@ -164,11 +165,13 @@ final class Handlers
     {
         $activation = $this->interpreter->activation;
         $session = $this->interpreter->session;
+        if ($session->running->partial !== null) {
+            (new Statements($session, $activation))->publish($session->running->partial);
+            $session->running->partial = null;
+        }
         $saved = [$activation->scope, $activation->handlers, $activation->conditions, $activation->cursors];
         $activation->leave($handler->mark);
-        $stacked = new Diagnostics();
-        $stacked->conditions = $session->diagnostics->conditions;
-        $stacked->signalled = $session->diagnostics->signalled;
+        $stacked = clone $session->diagnostics;
         $activation->stacked[] = $stacked;
         try {
             $jump = $this->interpreter->statement($handler->declaration->statement);

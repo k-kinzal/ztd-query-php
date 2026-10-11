@@ -317,6 +317,6 @@ final class HandlerCommand implements Command
             $sent[] = $values;
         }
 
-        return new ResultSet($output->columns($plan, $charset), $sent, $context->diagnostics->count());
+        return new ResultSet($output->columns($plan, $charset), $sent, $context->diagnostics->raised());
     }
 }

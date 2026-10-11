@@ -98,7 +98,7 @@ final class AlterUserCommand implements Command
             return (new Passwords())->result($generated, $context);
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**
@@ -170,7 +170,7 @@ final class AlterUserCommand implements Command
             throw AccountError::CannotUser->error('ALTER USER', implode(',', $missing));
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**

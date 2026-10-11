@@ -63,7 +63,7 @@ final class SpatialReferenceCommand implements Command
             $this->drop($statement, $session);
         }
 
-        return new Completion(0, 0, $session->diagnostics->count());
+        return new Completion(0, 0, $session->diagnostics->raised());
     }
 
     /**

@@ -120,7 +120,7 @@ final class AlterTableCommand implements Command
                 $this->move($session, $table, $schema, $name->name->value);
             }
 
-            return new Completion(0, 0, $context->diagnostics->count());
+            return new Completion(0, 0, $context->diagnostics->raised());
         }
         $completion = $this->rebuild(new TableRebuild($session, $context, $connection), $table, $layout, $change);
         if ($renamed) {
@@ -209,7 +209,7 @@ final class AlterTableCommand implements Command
         $table->updated = $updated;
         $table->statistics = array_intersect_key($table->statistics, ['table' => true]);
         $table->histograms = array_intersect_key($table->histograms, array_flip(array_map(static fn ($column): string => strtolower($column->name), $definition->columns)));
-        $warnings = $context->diagnostics->count();
+        $warnings = $context->diagnostics->raised();
 
         return new Completion($records, 0, $warnings, 'Records: ' . $records . '  Duplicates: 0  Warnings: ' . $warnings);
     }

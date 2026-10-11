@@ -6,12 +6,13 @@ namespace MySqlMemory\Session;
 
 use MySqlMemory\Error\ErrorCode;
 use MySqlMemory\Error\ErrorNumbers;
+use MySqlMemory\Error\SqlError;
 
 /**
  * The diagnostics area of a session: the warnings and notes of the last statement that raised any.
  *
  * SHOW WARNINGS reads it; a statement that uses no table and raises nothing leaves it as it was.
- * It keeps at most max_error_count warnings and notes, and counts those beyond (verified on a
+ * It keeps at most max_error_count conditions, and counts those beyond (verified on a
  * live 8.4 server).
  * In MySQL 5.6 a query, SET or DO that uses no table keeps it until the statement raises a
  * condition (verified on a live 5.6.51 server).
@@ -38,14 +39,24 @@ final class Diagnostics
     public bool $stale = false;
 
     /**
-     * The most warnings and notes the area keeps: max_error_count.
+     * The most conditions the area keeps: max_error_count.
      */
     public int $limit = 1024;
 
     /**
-     * The warnings and notes raised beyond the limit, which the area counts without keeping.
+     * The conditions raised beyond the limit, which the area counts without keeping.
      */
     public int $dropped = 0;
+
+    /**
+     * Errors included in dropped, counted by @@error_count even when no condition is stored.
+     */
+    public int $droppedErrors = 0;
+
+    /**
+     * The error handled by a stored program, independently of bounded condition storage.
+     */
+    public ?SqlError $failure = null;
 
     /**
      * @var array{int, int} The conditions and the errors the statement before the current one raised, which @@warning_count and @@error_count read
@@ -86,6 +97,12 @@ final class Diagnostics
     public function error(int $code, string $message, ?array $signalled = null): void
     {
         $this->fresh();
+        if (count($this->conditions) >= $this->limit) {
+            $this->dropped++;
+            $this->droppedErrors++;
+
+            return;
+        }
         if ($signalled !== null) {
             $this->signalled[count($this->conditions)] = $signalled;
         }
@@ -138,6 +155,8 @@ final class Diagnostics
         $this->signalled = [];
         $this->stale = false;
         $this->dropped = 0;
+        $this->droppedErrors = 0;
+        $this->failure = null;
     }
 
     /**
@@ -175,10 +194,10 @@ final class Diagnostics
     }
 
     /**
-     * Counts the errors the area keeps.
+     * Counts the errors raised, including those not stored because of max_error_count.
      */
     public function errors(): int
     {
-        return count(array_filter($this->conditions, static fn (array $condition): bool => $condition[0] === 'Error'));
+        return count(array_filter($this->conditions, static fn (array $condition): bool => $condition[0] === 'Error')) + $this->droppedErrors;
     }
 }

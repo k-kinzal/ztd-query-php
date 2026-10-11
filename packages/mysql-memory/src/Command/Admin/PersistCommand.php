@@ -53,6 +53,6 @@ final class PersistCommand implements Command
         }
         $session->diagnostics->warning(AdministrationError::VariableNotPersisted, AdministrationError::VariableNotPersisted->message($name));
 
-        return new Completion(0, 0, $session->diagnostics->count());
+        return new Completion(0, 0, $session->diagnostics->raised());
     }
 }

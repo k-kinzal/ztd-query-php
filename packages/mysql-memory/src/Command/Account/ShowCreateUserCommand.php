@@ -61,6 +61,6 @@ final class ShowCreateUserCommand implements Command
         $column = new ResultColumn('CREATE USER for ' . $identity->text(), Field::VarString, $legacy ? 256 : 1024, 31, ColumnFlag::NotNull->value, 255);
         $text = (new CreateText())->statement($account, array_values($accounts->defaults[$identity->key()] ?? []), $legacy);
 
-        return new ResultSet([$column], [[$text]], $context->diagnostics->count());
+        return new ResultSet([$column], [[$text]], $context->diagnostics->raised());
     }
 }

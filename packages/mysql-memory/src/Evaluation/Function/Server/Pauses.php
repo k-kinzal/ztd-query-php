@@ -98,8 +98,10 @@ final class Pauses
         $pure = $this->pure($expression, $seen);
         for ($done = 0; $done < $count; $done++) {
             $before = $diagnostics->count();
+            $raised = $diagnostics->raised();
             $expression->evaluate($frame);
             if ($pure && $diagnostics->count() === $before) {
+                $diagnostics->dropped += ($diagnostics->raised() - $raised) * ($count - $done - 1);
                 break;
             }
         }

@@ -84,6 +84,6 @@ final class DropViewCommand implements Command
             unset($holder->views[$name]);
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 }

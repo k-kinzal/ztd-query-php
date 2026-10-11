@@ -80,6 +80,6 @@ final class RenameUserCommand implements Command
             throw AccountError::CannotUser->error('RENAME USER', implode(',', array_map(static fn (Identity $identity): string => $identity->quoted(), $failed)));
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 }

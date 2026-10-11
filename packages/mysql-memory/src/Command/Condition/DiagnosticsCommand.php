@@ -81,13 +81,13 @@ final class DiagnosticsCommand implements Command
             } catch (SqlError $error) {
                 $session->diagnostics->error($error->getCode(), $error->getMessage());
 
-                return new Completion(0, 0, $session->diagnostics->count());
+                return new Completion(0, 0, $session->diagnostics->raised());
             }
             $position = $this->position($number->evaluate(new Frame(new Context($context->modes, new Diagnostics(), $context->variables, $context->started))), $number->domain(), $context, $diagnostics->count());
             if ($position === null) {
                 $diagnostics->error(ProgramError::InvalidConditionNumber->value, ProgramError::InvalidConditionNumber->message());
 
-                return new Completion(0, 0, $diagnostics->count());
+                return new Completion(0, 0, $diagnostics->raised());
             }
             foreach ($information->items as $item) {
                 $name = $item->item;
@@ -103,7 +103,7 @@ final class DiagnosticsCommand implements Command
         }
         $this->assign($assignments, $session, $context);
 
-        return new Completion(0, 0, $diagnostics->count());
+        return new Completion(0, 0, $diagnostics->raised());
     }
 
     /**

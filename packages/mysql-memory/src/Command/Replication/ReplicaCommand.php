@@ -107,7 +107,7 @@ final class ReplicaCommand implements Command
             (new SourceChange())->check($statement, $session, $context);
         }
 
-        return new Completion(0, 0, $session->diagnostics->count());
+        return new Completion(0, 0, $session->diagnostics->raised());
     }
 
     /**

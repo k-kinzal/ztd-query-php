@@ -58,7 +58,7 @@ final class RoleCommand implements Command
             $names->check($statement->roles->roles);
             $session->variables->roles = $this->selected($statement->roles, new Identity($session->user, '%'), $session);
 
-            return new Completion(0, 0, $context->diagnostics->count());
+            return new Completion(0, 0, $context->diagnostics->raised());
         }
         $session->transaction->commit();
         assert($statement instanceof SetDefaultRole || $statement instanceof AlterDefaultRole);
@@ -80,7 +80,7 @@ final class RoleCommand implements Command
             }
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**

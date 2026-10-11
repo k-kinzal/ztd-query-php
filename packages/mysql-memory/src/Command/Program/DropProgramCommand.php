@@ -64,7 +64,7 @@ final class DropProgramCommand implements Command
         }
         $session->diagnostics->note($note->error, $note->getMessage());
 
-        return new Completion(0, 0, $session->diagnostics->count());
+        return new Completion(0, 0, $session->diagnostics->raised());
     }
 
     /**

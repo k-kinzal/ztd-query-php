@@ -89,7 +89,7 @@ final class TriggerCommand implements Command
             }
             $context->note(ProgramError::TriggerExistsOnTable, $name, $database, $table);
 
-            return new Completion(0, 0, $context->diagnostics->count());
+            return new Completion(0, 0, $context->diagnostics->raised());
         }
         $position = $this->position($statement, $schema, $table);
         $trigger = new Trigger($database, $name, $table, $statement->time->value, $statement->event->value, ProgramSource::definer($statement->definer, $session, $context), ProgramSource::of($session)->body('sp_proc_stmt'), (string) $session->variables->read('sql_mode'), ProgramSource::now(2), ProgramSource::charsets($session, $database), $statement);

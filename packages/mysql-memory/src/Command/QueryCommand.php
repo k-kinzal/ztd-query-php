@@ -81,7 +81,8 @@ final class QueryCommand implements Command
         if ($into instanceof IntoVariables && array_filter($into->targets, static fn ($target): bool => !$target instanceof UserVariable) !== []) {
             $context->strict = $context->modes->strict();
         }
-        $result = (new Output())->result($plan, $context, $this->calculates($statement));
+        $failed = $into === null && $session->program !== null && !$session->program->contained ? (new \MySqlMemory\Program\Statements($session, $session->program))->incomplete(...) : null;
+        $result = (new Output())->result($plan, $context, $this->calculates($statement), $failed);
         if ($into === null) {
             return $result;
         }
@@ -227,7 +228,7 @@ final class QueryCommand implements Command
         if ($result->rows === []) {
             $context->warning(ProgramError::NoData);
 
-            return new Completion(0, 0, $context->diagnostics->count());
+            return new Completion(0, 0, $context->diagnostics->raised());
         }
         foreach ($into->targets as $index => $target) {
             $column = $result->columns[$index];
@@ -242,7 +243,7 @@ final class QueryCommand implements Command
             throw QueryError::TooManyRows->error();
         }
 
-        return new Completion(1, 0, $context->diagnostics->count());
+        return new Completion(1, 0, $context->diagnostics->raised());
     }
 
     /**

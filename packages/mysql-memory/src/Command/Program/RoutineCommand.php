@@ -89,7 +89,7 @@ final class RoutineCommand implements Command
             }
             $context->note(ProgramError::RoutineExists, $kind, $statement->name->name->value);
 
-            return new Completion(0, 0, $context->diagnostics->count());
+            return new Completion(0, 0, $context->diagnostics->raised());
         }
         [$access, $deterministic, $security, $comment] = $this->characteristics($statement->characteristics, ['CONTAINS SQL', false, 'DEFINER', '']);
         if ($function && !$deterministic && $access !== 'NO SQL' && $access !== 'READS SQL DATA' && ProgramSource::enabled($session->variables->read('log_bin')) && !ProgramSource::enabled($session->variables->read('log_bin_trust_function_creators'))) {
@@ -106,7 +106,7 @@ final class RoutineCommand implements Command
         }
         $session->instance->dictionary->routineGeneration++;
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**

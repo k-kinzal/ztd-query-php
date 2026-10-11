@@ -82,7 +82,7 @@ final class ShowGrantsCommand implements Command
         $column = new ResultColumn('Grants for ' . $identity->text(), Field::VarString, $legacy ? 1024 : 4096, 31, ColumnFlag::NotNull->value, 255);
         $lines = (new GrantText())->lines($identity, $grants, $granted, $release, $account);
 
-        return new ResultSet([$column], array_map(static fn (string $line): array => [$line], $lines), $context->diagnostics->count());
+        return new ResultSet([$column], array_map(static fn (string $line): array => [$line], $lines), $context->diagnostics->raised());
     }
 
     /**

@@ -92,7 +92,7 @@ final class CreateUserCommand implements Command
             return (new Passwords())->result($generated, $context);
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**
@@ -188,7 +188,7 @@ final class CreateUserCommand implements Command
             throw AccountError::CannotUser->error('CREATE USER', implode(',', array_map($quoted, $failed)));
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**
@@ -282,6 +282,6 @@ final class CreateUserCommand implements Command
             (new Names())->ascii($role, 8, $context->diagnostics);
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 }

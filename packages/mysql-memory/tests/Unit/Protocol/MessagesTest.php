@@ -64,6 +64,16 @@ final class MessagesTest extends TestCase
         self::assertSame("\xFE\x01\x00\x0A\x00", (new Messages())->eof(1, 10));
     }
 
+    public function testOkSaturatesTheWarningCount(): void
+    {
+        self::assertSame("\x00\x00\x00\x02\x00\xFF\xFF", (new Messages())->ok(0, 0, 2, 65536));
+    }
+
+    public function testEofSaturatesTheWarningCount(): void
+    {
+        self::assertSame("\xFE\xFF\xFF\x02\x00", (new Messages())->eof(65536, 2));
+    }
+
     public function testColumnCountWritesALengthEncodedInteger(): void
     {
         self::assertSame("\x02", (new Messages())->columnCount(2));

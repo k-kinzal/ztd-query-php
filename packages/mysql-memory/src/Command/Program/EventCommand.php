@@ -93,7 +93,7 @@ final class EventCommand implements Command
                 }
                 $context->note(ProgramError::EventExists, $statement->name->name->value);
 
-                return new Completion(0, 0, $context->diagnostics->count());
+                return new Completion(0, 0, $context->diagnostics->raised());
             }
             if ($schema === null) {
                 throw QueryError::BadDatabase->error($database);
@@ -110,7 +110,7 @@ final class EventCommand implements Command
             $session->instance->registry->eventScheduler->activated($event);
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**

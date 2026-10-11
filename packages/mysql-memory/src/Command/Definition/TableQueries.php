@@ -109,7 +109,7 @@ final class TableQueries
         [$records, $affected, $duplicates] = $this->fill($table, $plan, $create->query->duplicate);
         $table->updated = $affected > 0 ? (int) floor($this->context->variables->clock()) : $table->updated;
         $this->session->instance->dictionary->store($table);
-        $warnings = $this->context->diagnostics->count();
+        $warnings = $this->context->diagnostics->raised();
 
         return new Completion($affected, 0, $warnings, 'Records: ' . $records . '  Duplicates: ' . $duplicates . '  Warnings: ' . $warnings);
     }

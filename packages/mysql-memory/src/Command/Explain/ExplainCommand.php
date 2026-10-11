@@ -134,7 +134,7 @@ final class ExplainCommand implements Command
         if ($statement->into !== null) {
             $session->variables->assign($statement->into->name->value, $this->document($tables), Domain::string(50331645, Collation::known('utf8mb3_general_ci'), Field::MediumBlob));
 
-            return new Completion(0, 0, $context->diagnostics->count());
+            return new Completion(0, 0, $context->diagnostics->raised());
         }
         if ($format === 'TRADITIONAL') {
             $rows = $this->rows($statement, $session, $database);
@@ -170,7 +170,7 @@ final class ExplainCommand implements Command
             throw AdministrationError::NoSuchThread->error($statement->connection->text);
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**

@@ -85,7 +85,7 @@ final class ChecksumCommand implements Command
             new ResultColumn('Checksum', Field::LongLong, $session->settings()->legacy() ? 21 : 22, 0, ColumnFlag::Binary->value | ColumnFlag::Numeric->value, 63),
         ];
 
-        return new ResultSet($columns, $rows, $context->diagnostics->count());
+        return new ResultSet($columns, $rows, $context->diagnostics->raised());
     }
 
     /**

@@ -60,6 +60,6 @@ final class SavepointCommand implements Command
             $transaction->savepoints->release($statement->savepoint->value);
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 }

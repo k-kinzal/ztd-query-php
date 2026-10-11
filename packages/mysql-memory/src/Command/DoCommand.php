@@ -52,6 +52,6 @@ final class DoCommand implements Command
         }
         $session->variables->foundRows = 1;
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 }

@@ -99,7 +99,7 @@ final class BinaryLogCommand implements Command
             $this->event((new Literals())->bytes($statement->events));
         }
 
-        return new Completion(0, 0, $session->diagnostics->count());
+        return new Completion(0, 0, $session->diagnostics->raised());
     }
 
     /**

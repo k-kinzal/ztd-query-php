@@ -50,7 +50,7 @@ final class Messages
      */
     public function ok(int $affectedRows, int $lastInsertId, int $status, int $warnings, string $info = ''): string
     {
-        $writer = (new PayloadWriter())->integer(0, 1)->lengthEncoded($affectedRows)->lengthEncoded($lastInsertId)->integer($status, 2)->integer($warnings, 2);
+        $writer = (new PayloadWriter())->integer(0, 1)->lengthEncoded($affectedRows)->lengthEncoded($lastInsertId)->integer($status, 2)->integer(min(65535, $warnings), 2);
 
         return $info === '' ? $writer->payload() : $writer->lengthEncodedString($info)->payload();
     }
@@ -68,7 +68,7 @@ final class Messages
      */
     public function eof(int $warnings, int $status): string
     {
-        return (new PayloadWriter())->integer(0xFE, 1)->integer($warnings, 2)->integer($status, 2)->payload();
+        return (new PayloadWriter())->integer(0xFE, 1)->integer(min(65535, $warnings), 2)->integer($status, 2)->payload();
     }
 
     /**

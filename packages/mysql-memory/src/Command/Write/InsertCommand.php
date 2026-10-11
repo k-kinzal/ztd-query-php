@@ -82,7 +82,7 @@ final class InsertCommand implements Command
                 break;
             }
         }
-        return new Completion($rows->affected, $rows->identity->finish($session->variables), $context->diagnostics->count(), count($sources) > 1 || $statement instanceof InsertQuery ? sprintf('Records: %d  Duplicates: %d  Warnings: %d', count($sources), $rows->duplicates, $context->diagnostics->count()) : '');
+        return new Completion($rows->affected, $rows->identity->finish($session->variables), $context->diagnostics->raised(), count($sources) > 1 || $statement instanceof InsertQuery ? sprintf('Records: %d  Duplicates: %d  Warnings: %d', count($sources), $rows->duplicates, $context->diagnostics->raised()) : '');
     }
 
     /**

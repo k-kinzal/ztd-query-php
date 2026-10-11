@@ -39,6 +39,6 @@ final class Passwords
         ];
         $rows = array_map(static fn (array $row): array => [$row[0]->user, $row[0]->host, $row[1], '1'], $generated);
 
-        return new ResultSet($columns, $rows, $context->diagnostics->count());
+        return new ResultSet($columns, $rows, $context->diagnostics->raised());
     }
 }

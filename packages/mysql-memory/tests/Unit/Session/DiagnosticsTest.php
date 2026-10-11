@@ -68,7 +68,7 @@ final class DiagnosticsTest extends TestCase
         self::assertSame([['Note', '1007', "Can't create database 'd'; database exists"]], $result->rows);
     }
 
-    public function testErrorRecordsAnErrorPastTheLimit(): void
+    public function testErrorRecordsAnErrorAfterEarlierWarnings(): void
     {
         $diagnostics = new Diagnostics();
         $diagnostics->conditions = array_fill(0, 64, ['Warning', 1, 'w']);
@@ -76,6 +76,19 @@ final class DiagnosticsTest extends TestCase
 
         self::assertSame(65, $diagnostics->count());
         self::assertSame(['Error', 1146, "Table 'd.t' doesn't exist"], $diagnostics->conditions[64]);
+    }
+
+    public function testErrorCountsDroppedErrorsWithoutStoringTheirDetails(): void
+    {
+        $diagnostics = new Diagnostics();
+        $diagnostics->limit = 0;
+        $diagnostics->error(1054, 'missing column', ['RETURNED_SQLSTATE' => '42S22']);
+
+        self::assertSame([], $diagnostics->conditions);
+        self::assertSame([], $diagnostics->signalled);
+        self::assertSame([1, 1], [$diagnostics->raised(), $diagnostics->errors()]);
+        $diagnostics->clear();
+        self::assertSame([0, 0], [$diagnostics->raised(), $diagnostics->errors()]);
     }
 
     public function testErrorOfAStatementIsShownByShowWarnings(): void

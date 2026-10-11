@@ -67,7 +67,7 @@ final class StatementsTest extends TestCase
         $session->query('SELECT f()');
     }
 
-    public function testRunSendsEachProcedureResultBeforeTheNextStatement(): void
+    public function testPublishSendsEachProcedureResultBeforeTheNextStatement(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d; USE d; CREATE PROCEDURE p() BEGIN SELECT 1; SELECT @received; END');
@@ -81,6 +81,17 @@ final class StatementsTest extends TestCase
         self::assertSame([[['1']], [['7']]], $sent->getArrayCopy());
         self::assertCount(1, $answers);
         self::assertInstanceOf(\MySqlMemory\Result\Completion::class, $answers[0]);
+    }
+
+    public function testIncompleteKeepsRowsWithoutCompletingTheResult(): void
+    {
+        $session = (new Instance())->connect();
+        $activation = new Activation('PROCEDURE', 'd.p', false, Collation::known('utf8mb4_0900_ai_ci'));
+        $result = new ResultSet([], []);
+        (new Statements($session, $activation))->incomplete($result);
+
+        self::assertSame($result, $session->running->partial);
+        self::assertSame([], $activation->results);
     }
 
     public function testValueStoresTheValueAssignedToAVariable(): void

@@ -41,12 +41,13 @@ final class RefreshObservation
             $driver = [$connection->affected_rows, $connection->insert_id, $connection->info];
             $warnings = $connection->warning_count;
             $conditions = self::rows($connection, 'SHOW WARNINGS');
+            $raised = self::rows($connection, 'SHOW COUNT(*) WARNINGS');
             $counts = self::rows($connection, "SHOW SESSION STATUS WHERE Variable_name IN ('Com_flush','Com_show_warnings','Questions')");
             $after = self::rows($connection, "SHOW GLOBAL STATUS LIKE 'Flush_commands'")[0][1];
             $connection->query('ROLLBACK');
             $rows = self::rows($connection, 'SELECT COUNT(*) FROM t');
 
-            return ['ok' => $ok, 'driver' => $driver, 'warnings' => $warnings, 'conditions' => $conditions, 'counts' => $counts, 'flushDelta' => (int) $after - (int) $before, 'rows' => $rows];
+            return ['ok' => $ok, 'driver' => $driver, 'warnings' => $warnings, 'conditions' => $conditions, 'raised' => $raised, 'counts' => $counts, 'flushDelta' => (int) $after - (int) $before, 'rows' => $rows];
         } finally {
             $connection->query('DROP DATABASE refresh_command_test');
             $connection->close();

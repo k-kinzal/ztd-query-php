@@ -108,6 +108,6 @@ final class SetPasswordCommand implements Command
             return (new Passwords())->result([[$identity, $password]], $context);
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 }

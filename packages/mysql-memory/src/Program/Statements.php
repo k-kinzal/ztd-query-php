@@ -84,14 +84,31 @@ final class Statements
             throw ProgramError::ResultSetFromProgram->error($this->activation->kind === 'TRIGGER' ? 'trigger' : 'function');
         }
         foreach ($results as $result) {
-            if ($this->session->running->respond !== null) {
-                ($this->session->running->respond)($result);
-            } else {
-                $this->activation->results[] = $result;
-            }
+            $this->publish($result);
         }
 
         return $reply;
+    }
+
+    /**
+     * Publishes a procedure result before the next statement or an error handler runs.
+     * Failed queries can still have sent their column definitions and some rows.
+     */
+    public function publish(ResultSet $result): void
+    {
+        if ($this->session->running->respond !== null) {
+            ($this->session->running->respond)($result);
+        } else {
+            $this->activation->results[] = $result;
+        }
+    }
+
+    /**
+     * Retains an unfinished result until a handler completes it or an unhandled error aborts it.
+     */
+    public function incomplete(ResultSet $result): void
+    {
+        $this->session->running->partial = $result;
     }
 
     /**

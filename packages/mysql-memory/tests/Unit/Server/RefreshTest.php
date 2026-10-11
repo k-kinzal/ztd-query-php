@@ -87,21 +87,44 @@ final class RefreshTest extends TestCase
         self::assertSame([1292, 1292, ...$added], array_column($session->diagnostics->conditions, 1));
     }
 
-    public function testApplyCombinesCacheLogAndStatusFlags(): void
+    public function testAnswerReplacesEarlierWarningsWithLegacyResetFailures(): void
     {
-        $client = new Client(new Instance('8.0.44'), 7, static function (string $bytes): void {
+        $client = new Client(new Instance('5.6.51'), 7, static function (string $bytes): void {
         });
         $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
-        $registry = $client->instance->registry;
-        $client->instance->dictionary->cache->open('d', 't');
-        $registry->status->add('Com_do', $client->id);
-        (new Refresh($client))->apply(2 | 4 | 16);
+        $session = $client->session();
+        $session->query("SELECT 'a'+1,'b'+1");
+        (new Refresh($client))->answer(new PayloadReader("\xFF"));
 
-        self::assertSame([1, 2], $registry->binaryLog->files);
-        self::assertSame(1, $registry->status->read('Flush_commands'));
-        self::assertSame(0, $registry->status->read('Com_do', $client->id));
-        (new Refresh($client))->apply(128 | 64);
-        self::assertSame([1], $registry->binaryLog->files);
+        self::assertSame([1186, 1794], array_column($session->diagnostics->conditions, 1));
+    }
+
+    /**
+     * @return iterable<string, array{int, string}>
+     */
+    public static function providerDroppedWarnings(): iterable
+    {
+        yield 'discarded by max_error_count' => [2, "\x04\x00"];
+        yield 'saturated protocol count' => [65536, "\xFF\xFF"];
+    }
+
+    #[DataProvider('providerDroppedWarnings')]
+    public function testAnswerCountsDroppedWarningsAndSaturatesThePacket(int $dropped, string $count): void
+    {
+        $packets = new ArrayObject();
+        $client = new Client(new Instance('8.0.44'), 7, static function (string $bytes) use ($packets): void {
+            $packets->append(substr($bytes, 4));
+        });
+        $client->handle("\x00\x82\x08\x00\x00\x00\x00\x01\xFF" . str_repeat("\x00", 23) . "root\x00\x00");
+        $session = $client->session();
+        $session->query('SET max_error_count=1');
+        $session->query("SELECT 'a'+1");
+        $session->diagnostics->dropped = $dropped;
+        (new Refresh($client))->answer(new PayloadReader("\0"));
+
+        self::assertSame(["\x00\x00\x00\x02\x00\x00\x00", "\x00\x00\x00\x02\x00" . $count], $packets->getArrayCopy());
+        self::assertCount(1, $session->diagnostics->conditions);
+        self::assertSame($dropped + 2, $session->diagnostics->raised());
     }
 
 }

@@ -141,7 +141,7 @@ final class Client
                 0x07 => (new Refresh($this))->answer($reader),
                 0x0E, 0x1F => $this->ping($command === 0x1F),
                 0x1B => $this->send($this->messages->eof(0, $this->status())),
-                0x09 => $this->send('Uptime: 1  Threads: 1  Questions: 0  Slow queries: 0  Opens: 0  Flush tables: 0  Open tables: 0  Queries per second avg: 0.000'),
+                0x09 => (new Statistics($this))->answer(),
                 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1C => $this->statements->handle($command, $reader),
                 default => $this->send($this->messages->error(1047, '08S01', StatementError::UnknownCommand->message())),
             };

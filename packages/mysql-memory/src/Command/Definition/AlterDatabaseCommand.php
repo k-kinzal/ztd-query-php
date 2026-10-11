@@ -67,7 +67,7 @@ final class AlterDatabaseCommand implements Command
             $schema->collation = $chosen->name;
         }
 
-        return new Completion(1, 0, $context->diagnostics->count());
+        return new Completion(1, 0, $context->diagnostics->raised());
     }
 
     /**

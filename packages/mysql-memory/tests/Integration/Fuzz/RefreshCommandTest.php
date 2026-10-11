@@ -24,6 +24,8 @@ final class RefreshCommandTest extends TestCase
             yield 'mask ' . $flags => [$flags, []];
             yield 'mask ' . $flags . ' after warnings' => [$flags, ["SELECT 'a'+1,'b'+1"]];
             yield 'mask ' . $flags . ' after reading warnings' => [$flags, ["SELECT 'a'+1,'b'+1", 'SHOW WARNINGS']];
+            yield 'mask ' . $flags . ' with no stored warnings' => [$flags, ['SET max_error_count=0', "SELECT 'a'+1,'b'+1"]];
+            yield 'mask ' . $flags . ' with dropped warnings' => [$flags, ['SET max_error_count=1', "SELECT 'a'+1,'b'+1"]];
         }
     }
 

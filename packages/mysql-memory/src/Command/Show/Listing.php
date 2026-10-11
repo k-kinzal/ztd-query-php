@@ -165,6 +165,6 @@ final class Listing
             $sent[] = $values;
         }
 
-        return new ResultSet(array_map(static fn (Heading $heading) => $heading->column($charset), $this->headings), $sent, $context->diagnostics->count());
+        return new ResultSet(array_map(static fn (Heading $heading) => $heading->column($charset), $this->headings), $sent, $context->diagnostics->raised());
     }
 }

@@ -74,7 +74,7 @@ final class KillCommand implements Command
             throw StatementError::QueryInterrupted->error();
         }
 
-        return new Completion(0, 0, $context->diagnostics->count());
+        return new Completion(0, 0, $context->diagnostics->raised());
     }
 
     /**

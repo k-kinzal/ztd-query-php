@@ -91,7 +91,7 @@ final class PreparedCommand implements Command
         $parameters = count(array_filter($session->semantics()->parser()->tokenize($text), static fn ($token): bool => $token->name === 'PARAM_MARKER'));
         $session->preparation->named[$key] = [$text, $parameters, ParameterBindings::capture($prepared)];
 
-        return new Completion(0, 0, $session->diagnostics->count(), 'Statement prepared');
+        return new Completion(0, 0, $session->diagnostics->raised(), 'Statement prepared');
     }
 
     /**
