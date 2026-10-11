@@ -173,20 +173,21 @@ final class Numbers
      * A temporal dividend counts its width, unless remainders count it by its length as MySQL 5.6
      * and 5.7 do. A divisor that is not an integer adds one character; the result is unsigned
      * when either operand is. The result width is bounded by 22 characters (21
-     * unsigned); a floating-point operand takes that full bound, independently
-     * of the width its literal reports. Verified through PDO on MySQL 8.4.
+     * unsigned) from MySQL 8.0; a floating-point operand takes that full bound.
+     * MySQL 5.6 and 5.7 retain the dividend width, add nothing for the divisor,
+     * and cap every result at 21. Verified through PDO and Testcontainers.
      */
     public function quotient(Domain $left, Domain $right): Domain
     {
         $fraction = $left->displayDecimals !== null && $this->operand($left) === Kind::Integer ? 1 : ($left->decimals > 0 && $left->decimals < Domain::NOT_FIXED ? $left->decimals + 1 : 0);
         $length = $this->legacyRemainders || !$left->kind->temporal() ? $left->length - $fraction : $this->width($left) - $left->decimals;
         $unsigned = $left->unsigned || $right->unsigned;
-        $bound = $unsigned ? 21 : 22;
-        if ($left->kind === Kind::Double || $right->kind === Kind::Double) {
+        $bound = $this->legacyRemainders || $unsigned ? 21 : 22;
+        if (!$this->legacyRemainders && ($left->kind === Kind::Double || $right->kind === Kind::Double)) {
             return Domain::integer(Field::LongLong, $bound, $unsigned);
         }
 
-        return Domain::integer(Field::LongLong, min($bound, max(1, $length + ($left->kind === Kind::String && !$this->legacyRemainders ? 1 : 0) + ($this->operand($right) !== Kind::Integer ? 1 : 0))), $unsigned);
+        return Domain::integer(Field::LongLong, min($bound, max(1, $length + ($left->kind === Kind::String && !$this->legacyRemainders ? 1 : 0) + (!$this->legacyRemainders && $this->operand($right) !== Kind::Integer ? 1 : 0))), $unsigned);
     }
 
     /**

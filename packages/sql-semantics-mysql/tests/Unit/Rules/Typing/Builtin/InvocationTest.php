@@ -81,7 +81,7 @@ final class InvocationTest extends TestCase
     {
         $call = new Invocation([], [], new Settings(Collation::known('utf8mb4_0900_ai_ci')), new Derivation((new Semantics(Dialect::MySql))->context([])));
 
-        self::assertSame([12, 22], [$call->length(new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED)), $call->length(Domain::double(5))]);
+        self::assertSame([12, 22, 83], [$call->length(new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED)), $call->length(Domain::double(5)), $call->length(new Domain(Kind::Decimal, Field::NewDecimal, 67, 30, display: 83))]);
     }
 
     public function testTextIsAMediumBlobBeyond65535Bytes(): void

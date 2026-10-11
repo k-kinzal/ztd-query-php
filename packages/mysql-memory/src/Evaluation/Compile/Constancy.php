@@ -60,7 +60,7 @@ enum Constancy: int
     /**
      * The functions whose value can differ for each call.
      */
-    public const ROW_FUNCTIONS = ['RAND', 'UUID', 'UUID_SHORT', 'SYSDATE', 'SLEEP', 'BENCHMARK', 'GET_LOCK', 'RELEASE_LOCK', 'RELEASE_ALL_LOCKS', 'IS_FREE_LOCK', 'IS_USED_LOCK', 'RANDOM_BYTES', 'VALUES', 'NEXTVAL'];
+    public const ROW_FUNCTIONS = \SqlSemantics\Platform\MySql\Rules\Call\CallEffects::PER_READ_FUNCTIONS;
 
     /**
      * Answers how long the value of an expression stays the same.
@@ -69,11 +69,12 @@ enum Constancy: int
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns, which vary by row
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row; when false, it stays as long as the value it assigns
      * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement, which knows the account functions when it resolves it
+     * @param bool $variableReadsVary Whether a user-variable read invalidates an otherwise cacheable query
      * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true, bool $legacy = false, bool $effects = true): self
+    public static function of(Node $node, Facts $facts, bool $correlation = true, array $assigned = [], bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true): self
     {
-        return self::within($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects);
+        return self::within($node, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary);
     }
 
     /**
@@ -84,9 +85,10 @@ enum Constancy: int
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
      * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement
+     * @param bool $variableReadsVary Whether a user-variable read invalidates an otherwise cacheable query
      * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true): self
+    public static function within(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true): self
     {
         if ($node instanceof ColumnUse) {
             return self::column($node, $facts, $level);
@@ -95,14 +97,14 @@ enum Constancy: int
             $level--;
         }
         if ($level > 0) {
-            return $effects && self::uncacheable($node) ? self::Row : self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects);
+            return $effects && self::uncacheable($node, $variableReadsVary) ? self::Row : self::children($node, $facts, $node instanceof Query ? $level + 1 : $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary);
         }
         $merged = $node instanceof Scalar && $facts->covers($node) ? $facts->scalar($node)->replacement : null;
         if ($merged !== null) {
-            return self::within($merged, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects);
+            return self::within($merged, $facts, 0, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary);
         }
         if ($node instanceof Query) {
-            $inner = self::children($node, $facts, 1, $correlation, $assigned, $assignmentsVary, $legacy, $effects);
+            $inner = self::children($node, $facts, 1, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary);
 
             return $inner === self::Row && $correlation ? self::Row : self::Statement;
         }
@@ -115,10 +117,11 @@ enum Constancy: int
      * This is independent of column correlation: RAND(seed), for example, advances on each read.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/explain-output.html.
      */
-    public static function uncacheable(Node $node): bool
+    public static function uncacheable(Node $node, bool $variableReadsVary = true): bool
     {
         return match (true) {
-            $node instanceof VariableAssignment, $node instanceof UserVariable => true,
+            $node instanceof VariableAssignment => true,
+            $node instanceof UserVariable => $variableReadsVary,
             $node instanceof ClockCall => $node->clock === Clock::SystemDate,
             $node instanceof FunctionCall => $node->schema !== null || \MySqlMemory\Evaluation\Function\Library::instance()->find($node->name->value) === null || self::function(strtoupper($node->name->value), count($node->arguments)) === self::Row,
             default => false,
@@ -164,7 +167,7 @@ enum Constancy: int
      */
     public static function function(string $name, int $arguments): self
     {
-        if (in_array($name, self::ROW_FUNCTIONS, true) || ($name === 'LAST_INSERT_ID' && $arguments > 0)) {
+        if ((new \SqlSemantics\Platform\MySql\Rules\Call\CallEffects())->perRead($name, $arguments)) {
             return self::Row;
         }
 
@@ -177,9 +180,10 @@ enum Constancy: int
      * @param list<string> $assigned The lower-case names of the user variables the statement assigns
      * @param bool $assignmentsVary Whether an assignment to a user variable varies by row
      * @param bool $legacy Whether MySQL 5.6 or 5.7 resolves the statement
+     * @param bool $variableReadsVary Whether a user-variable read invalidates an otherwise cacheable query
      * @param bool $effects Whether calls and variable accesses can invalidate a query result; false checks only column correlation
      */
-    public static function children(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true): self
+    public static function children(Node $node, Facts $facts, int $level, bool $correlation, array $assigned, bool $assignmentsVary = true, bool $legacy = false, bool $effects = true, bool $variableReadsVary = true): self
     {
         $children = [];
         $properties = get_object_vars($node);
@@ -190,7 +194,7 @@ enum Constancy: int
         });
         $constancy = self::Resolved;
         foreach ($children as $child) {
-            $constancy = $constancy->join(self::within($child, $facts, $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects));
+            $constancy = $constancy->join(self::within($child, $facts, $level, $correlation, $assigned, $assignmentsVary, $legacy, $effects, $variableReadsVary));
             if ($constancy === self::Row) {
                 break;
             }

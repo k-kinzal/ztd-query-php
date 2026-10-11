@@ -178,6 +178,6 @@ final class Casts
      */
     public function length(Domain $operand): int
     {
-        return $operand->kind === Kind::Double ? 22 : $operand->length;
+        return $operand->kind === Kind::Double ? 22 : ($operand->kind === Kind::Decimal ? $operand->metadataLength() : $operand->length);
     }
 }

@@ -218,6 +218,16 @@ final class NumbersTest extends TestCase
         self::assertSame(22, $numbers->quotient(Domain::integer(Field::LongLong, 2), Domain::double(3))->length);
     }
 
+    public function testQuotientKeepsLegacyDividendWidthsWithinTwentyOneCharacters(): void
+    {
+        $numbers = new Numbers(legacyRemainders: true);
+
+        self::assertSame(21, $numbers->quotient(Domain::decimal(65, 30), Domain::integer())->length);
+        self::assertSame(21, $numbers->quotient(Domain::string(100, Collation::binary()), Domain::integer())->length);
+        self::assertSame(3, $numbers->quotient(Domain::double(3), Domain::integer())->length);
+        self::assertSame(1, $numbers->quotient(Domain::integer(Field::LongLong, 1), Domain::double(3))->length);
+    }
+
     public function testBitsIsAnUnsignedBigint(): void
     {
         self::assertEquals(Domain::integer(Field::LongLong, 21, true), (new Numbers())->bits());

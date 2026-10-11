@@ -162,7 +162,8 @@ final class Domain implements TypeDescriptor
     }
 
     /**
-     * Answers the type of the value a column holds, as an expression over it sees it: without an integer display width, and with the storage capacity of a materialized string.
+     * Answers the value domain without an integer display width and with a materialized string's capacity.
+     * A decimal keeps its separate textual width; arithmetic reads its bounded precision.
      */
     public function value(): self
     {
@@ -170,7 +171,7 @@ final class Domain implements TypeDescriptor
             return new self($this->kind, $this->field, $this->capacity, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, null, $this->capacity, $this->displayDecimals, $this->storageField);
         }
 
-        return $this->display === null || $this->field->blob() ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, displayDecimals: $this->displayDecimals, storageField: $this->storageField);
+        return $this->display === null || $this->field->blob() || $this->kind === Kind::Decimal ? $this : new self($this->kind, $this->field, $this->length, $this->decimals, $this->unsigned, $this->collation, $this->members, $this->coercibility, displayDecimals: $this->displayDecimals, storageField: $this->storageField);
     }
 
     /**

@@ -33,6 +33,10 @@ final class MergeDependenciesTest extends TestCase
         yield 'dependent membership' => ['id IN (SELECT id FROM t)', GrammarRelease::MySql847, true];
         yield 'constant membership' => ['1 IN (SELECT id FROM t)', GrammarRelease::MySql847, false];
         yield 'reduced membership' => ['id IN (SELECT 1)', GrammarRelease::MySql847, false];
+        yield 'retained random call' => ['(SELECT RAND(1) FROM t LIMIT 1)', GrammarRelease::MySql847, true];
+        yield 'retained variable read' => ['(SELECT @v FROM t LIMIT 1)', GrammarRelease::MySql847, true];
+        yield 'retained assignment' => ['(SELECT @v:=1 FROM t LIMIT 1)', GrammarRelease::MySql847, true];
+        yield 'reduced random call' => ['(SELECT RAND(1))', GrammarRelease::MySql847, false];
         yield 'variable assignment' => ['@v:=id', GrammarRelease::MySql847, true];
         yield 'reduced assignment' => ['(SELECT @v:=id)', GrammarRelease::MySql847, true];
     }
@@ -47,6 +51,18 @@ final class MergeDependenciesTest extends TestCase
         self::assertNotNull($selected);
 
         self::assertSame($separate, (new MergeDependencies())->separate([$selected], $release, $operation->facts));
+    }
+
+    public function testChangingFindsEffectsAcrossNestedQueries(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $pure = $semantics->analyze('SELECT 1 FROM t');
+        $changing = $semantics->analyze('SELECT (SELECT RAND(1)) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $pure->statement);
+        self::assertInstanceOf(\SqlSemantics\Statement\Query::class, $changing->statement);
+
+        self::assertFalse((new MergeDependencies())->changing($pure->statement, GrammarRelease::MySql847));
+        self::assertTrue((new MergeDependencies())->changing($changing->statement, GrammarRelease::MySql847));
     }
 
     public function testExternalCountsQueryBlocksThroughNestedWrappers(): void

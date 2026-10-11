@@ -66,7 +66,7 @@ final class Subqueries
     public function row(ScalarSubquery $node, Scope $scope): \MySqlMemory\Evaluation\Subquery\SingleRow
     {
         $plan = $this->compiler->planner->query($node->query, $scope);
-        $once = Constancy::of($node->query, $this->compiler->facts) !== Constancy::Row && (new Walker())->find($node->query, VariableAssignment::class) === [];
+        $once = Constancy::of($node->query, $this->compiler->facts, variableReadsVary: $this->compiler->settings->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651) !== Constancy::Row && (new Walker())->find($node->query, VariableAssignment::class) === [];
 
         return new \MySqlMemory\Evaluation\Subquery\SingleRow(new Rows($plan), $once);
     }

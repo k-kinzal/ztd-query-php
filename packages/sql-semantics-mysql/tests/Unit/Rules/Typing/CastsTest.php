@@ -83,7 +83,7 @@ final class CastsTest extends TestCase
     {
         $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
 
-        self::assertSame([22, 4], [$casts->length(Domain::double()), $casts->length(Domain::integer(Field::LongLong, 4))]);
+        self::assertSame([22, 4, 83], [$casts->length(Domain::double()), $casts->length(Domain::integer(Field::LongLong, 4)), $casts->length(new Domain(Kind::Decimal, Field::NewDecimal, 67, 30, display: 83))]);
     }
 
     public function testCastMakesAnIntegerAsLongAsTheOperandUpToTwentyOneIn57(): void

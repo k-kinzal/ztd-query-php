@@ -88,7 +88,8 @@ final class Invocation
         return match ($domain->kind) {
             Kind::Double => $legacy || $domain->field === Field::Float ? $domain->length : 22,
             Kind::Null => 0,
-            Kind::Integer, Kind::Decimal, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit => $domain->length,
+            Kind::Decimal => $domain->metadataLength(),
+            Kind::Integer, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit => $domain->length,
         };
     }
 

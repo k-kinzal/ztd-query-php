@@ -146,6 +146,16 @@ final class MaterializationTest extends TestCase
         self::assertFalse((new Materialization())->narrows($query('SELECT * FROM (SELECT 1 UNION SELECT 2) d')));
     }
 
+    public function testColumnStoresTheDecimalPrecisionWithoutItsVariableDisplayWidth(): void
+    {
+        $variable = new Domain(Kind::Decimal, Field::NewDecimal, 67, 30, display: 83);
+        $column = (new Materialization())->column($variable);
+
+        self::assertSame(67, $column->metadataLength());
+        self::assertSame(65, $column->precision());
+        self::assertSame(30, $column->decimals);
+    }
+
     public function testColumnNarrowsShortBigIntsAndDropsStringDecimals(): void
     {
         self::assertEquals(new Domain(Kind::Integer, Field::Long, 11, 0, false, null, [], Coercibility::Numeric, 2), (new Materialization())->column(Domain::integer(Field::LongLong, 2)));

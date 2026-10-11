@@ -77,6 +77,19 @@ final class ConstancyTest extends TestCase
         self::assertSame([true, true, true, true, false, true, false, false], $uncacheable);
     }
 
+    public function testOfCanRetainLegacyRowVariableReadsWithoutCachingOtherEffects(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT (SELECT @v,1), (SELECT RAND(1),1), (SELECT @v:=1,1)');
+        $lifetimes = array_map(static function (int $index) use ($operation): Constancy {
+            $subquery = $operation->field($index)->expression;
+            self::assertInstanceOf(ScalarSubquery::class, $subquery);
+
+            return Constancy::of($subquery->query, $operation->facts, variableReadsVary: false);
+        }, range(0, 2));
+
+        self::assertSame([Constancy::Statement, Constancy::Row, Constancy::Row], $lifetimes);
+    }
+
     public function testFormTellsHowLongANodeStaysTheSameByItsForm(): void
     {
         $operation = (new Semantics(Dialect::MySql))->analyze('SELECT @v, @@sql_mode, CURRENT_USER, RAND(), (@v := 1)');

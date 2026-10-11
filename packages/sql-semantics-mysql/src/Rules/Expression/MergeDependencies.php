@@ -47,13 +47,35 @@ final class MergeDependencies
                 && (new ScalarReduction())->expression($part->query) === null && ($facts === null || $this->external($part->operand, $facts))) {
                 return true;
             }
-            if ($part instanceof VariableAssignment || ($part instanceof Query && ($facts === null || $this->external($part, $facts)))) {
+            if ($part instanceof VariableAssignment || ($part instanceof Query && ($facts === null || $this->external($part, $facts) || $this->changing($part, $release)))) {
                 return true;
             }
             if (is_object($part) && !$part instanceof Query) {
                 array_push($pending, ...array_values(get_object_vars($part)));
             } elseif (is_array($part)) {
                 array_push($pending, ...array_values($part));
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Tells whether a retained query contains a call or variable access that can change per read.
+     */
+    public function changing(Query $query, GrammarRelease $release): bool
+    {
+        $pending = [$query];
+        $effects = new \SqlSemantics\Platform\MySql\Rules\Call\CallEffects();
+        while ($pending !== []) {
+            $node = array_pop($pending);
+            if ($node instanceof Node && $effects->uncacheable($node, $release)) {
+                return true;
+            }
+            if (is_object($node)) {
+                array_push($pending, ...array_values(get_object_vars($node)));
+            } elseif (is_array($node)) {
+                array_push($pending, ...array_values($node));
             }
         }
 

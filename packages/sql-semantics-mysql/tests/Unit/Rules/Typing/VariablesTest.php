@@ -87,7 +87,7 @@ final class VariablesTest extends TestCase
         self::assertSame(83, $domain->metadataLength());
         self::assertSame(65, $domain->precision());
         self::assertSame(30, $domain->decimals);
-        self::assertEquals(Domain::decimal(65, 30), $domain->value());
+        self::assertSame($domain, $domain->value());
     }
 
     #[DataProvider('providerLegacyReleases')]
@@ -96,6 +96,17 @@ final class VariablesTest extends TestCase
         $collation = Collation::known('utf8mb4_bin');
 
         self::assertEquals(Domain::string(16777215, $collation, Field::MediumBlob), (new Variables(new Settings($collation), $release))->text($collation));
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testAssignmentRetainsTheDecimalReadWidthWithoutChangingPrecision(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $variables = new Variables(new Settings(Collation::known('latin1_swedish_ci')), $release);
+        $result = $variables->assignment($variables->held(Domain::decimal(7, 2))->value());
+
+        self::assertSame(83, $result->metadataLength());
+        self::assertSame(65, $result->precision());
+        self::assertSame(30, $result->decimals);
     }
 
     public function testInferredRetainsTheBranchCollationAndTemporalTextWidths(): void

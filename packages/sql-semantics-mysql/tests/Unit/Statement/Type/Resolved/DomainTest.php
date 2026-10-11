@@ -62,6 +62,15 @@ final class DomainTest extends TestCase
         self::assertSame($domain, $domain->value());
     }
 
+    public function testValueRetainsDecimalDisplayWidthAlongsideItsArithmeticPrecision(): void
+    {
+        $domain = new Domain(Kind::Decimal, Field::NewDecimal, 67, 30, display: 83);
+
+        self::assertSame($domain, $domain->value());
+        self::assertSame(65, $domain->value()->precision());
+        self::assertSame(83, $domain->value()->metadataLength());
+    }
+
     public function testWithCollationKeepsTheExplicitBlobWidth(): void
     {
         $domain = new Domain(Kind::String, Field::LongBlob, 1024, Domain::NOT_FIXED, false, Collation::known('utf8mb4_general_ci'), display: 4096);

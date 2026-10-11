@@ -104,7 +104,7 @@ final class Variables
             Kind::Date, Kind::Time, Kind::DateTime, Kind::Null, Kind::Double, Kind::Decimal, Kind::Integer, Kind::Year, Kind::Bit => $domain->decimals,
         };
 
-        return $legacy ? new Domain($result->kind, $result->field, $result->length, $decimals, $result->unsigned, $result->collation, coercibility: Coercibility::Implicit, displayDecimals: $result->kind === Kind::String && $decimals < Domain::NOT_FIXED ? $decimals : null) : $result;
+        return $legacy ? new Domain($result->kind, $result->field, $result->length, $decimals, $result->unsigned, $result->collation, coercibility: Coercibility::Implicit, display: $result->kind === Kind::Decimal ? $domain->display : null, displayDecimals: $result->kind === Kind::String && $decimals < Domain::NOT_FIXED ? $decimals : null) : $result;
     }
 
     /**

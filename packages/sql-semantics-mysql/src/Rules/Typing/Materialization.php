@@ -88,6 +88,9 @@ final class Materialization
      */
     public function column(Domain $domain, bool $narrows = true): Domain
     {
+        if ($domain->kind === Kind::Decimal) {
+            return new Domain($domain->kind, $domain->field, $domain->length, $domain->decimals, $domain->unsigned, $domain->collation, $domain->members, $domain->coercibility, capacity: $domain->capacity, displayDecimals: $domain->displayDecimals, storageField: $domain->storageField);
+        }
         if ($domain->storageField !== null) {
             $domain = Domain::integer(Field::LongLong, $domain->length, $domain->unsigned);
         }
