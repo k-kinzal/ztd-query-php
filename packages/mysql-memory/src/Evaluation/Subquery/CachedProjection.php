@@ -11,21 +11,23 @@ use Override;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
- * Retains the source value of a constant projection independently of its empty-result comparison state.
+ * Retains a projection source independently of its empty-result comparison state.
  *
  * Legacy empty rows clear their directly compared values after the first read. Constant
  * conversions can retain the source value, and integer and decimal NULL tests still inspect
  * that source. NULL sources and their diagnostics are retained too. Differential tests cover
- * the source kinds, comparison kinds, output positions and SQL modes.
+ * the source kinds, comparison kinds, output positions and SQL modes. MySQL 5.7 also
+ * clears the first runtime projection without repeating its effects.
  *
  * @visibility MySqlMemory\Evaluation
  */
 final class CachedProjection implements Evaluable
 {
     /**
-     * @param Evaluable $value The constant expression
+     * @param Evaluable $value The retained expression
+     * @param bool $constant Whether resolution fixed the source and permits retaining a converted value
      */
-    public function __construct(public readonly Evaluable $value)
+    public function __construct(public readonly Evaluable $value, public readonly bool $constant = true)
     {
     }
 
@@ -57,6 +59,9 @@ final class CachedProjection implements Evaluable
      */
     public function compared(Frame $frame, bool $repeated, Kind $mode, bool $nullOperand): int|float|string|null
     {
+        if ($repeated && !$this->constant) {
+            return null;
+        }
         $value = $this->evaluate($frame);
         $kind = $this->domain()->kind;
         if (!$repeated || $value === null || !in_array($kind, [Kind::Integer, Kind::Decimal, Kind::Double, Kind::String], true)) {

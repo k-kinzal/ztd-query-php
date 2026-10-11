@@ -104,4 +104,15 @@ final class CachedProjectionTest extends TestCase
 
         self::assertSame([1, null, 1], [$first, $again, $value->evaluate($frame)]);
     }
+
+    public function testComparedDoesNotReadARuntimeSourceAfterItsSlotIsCleared(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0), [1]);
+        $value = new CachedProjection(new ColumnRead(Domain::integer(), 0), false);
+        $first = $value->compared($frame, false, Kind::Double, false);
+        $frame->row = [2];
+
+        self::assertSame([1, null, 1], [$first, $value->compared($frame, true, Kind::Double, false), $value->evaluate($frame)]);
+    }
 }

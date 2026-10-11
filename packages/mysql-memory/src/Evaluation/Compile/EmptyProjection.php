@@ -72,14 +72,31 @@ final class EmptyProjection
             if (!$field instanceof Field || $field->expression === null || !$this->readable($field->expression, $aggregated, $source !== null)) {
                 return [];
             }
-            $value = $path->expressions[$field->position];
-            $constant = $this->compiler->settings->legacy() && $this->compiler->constancy($field->expression) === Constancy::Resolved;
-            $old = $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
-            $supported = !$old || in_array($value->domain()->kind, [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String], true);
-            $expressions[] = $constant && $supported ? new \MySqlMemory\Evaluation\Subquery\CachedProjection($value) : $value;
+            $expressions[] = $this->retain($path->expressions[$field->position], $field->expression, $field->position);
         }
 
         return $expressions;
+    }
+
+    /**
+     * Retains legacy constants and the first runtime projection read by a MySQL 5.7 empty row.
+     * Runtime projections lose their comparison value after the first read without repeating effects.
+     */
+    public function retain(Evaluable $value, \SqlSemantics\Statement\Scalar $node, int $position): Evaluable
+    {
+        if (!$this->compiler->settings->legacy()) {
+            return $value;
+        }
+        $constant = $this->compiler->constancy($node) === Constancy::Resolved;
+        $old = $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        if (!$constant && ($old || $position !== 0)) {
+            return $value;
+        }
+        if ($old && !in_array($value->domain()->kind, [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String], true)) {
+            return $value;
+        }
+
+        return new \MySqlMemory\Evaluation\Subquery\CachedProjection($value, $constant);
     }
 
     /**
