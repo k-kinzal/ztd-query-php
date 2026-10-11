@@ -35,7 +35,7 @@ final class UnicodeOrderingTest extends TestCase
             }
             $setup = 'CREATE TABLE unicode_order (id INT PRIMARY KEY, v VARCHAR(64) CHARACTER SET utf8mb4 COLLATE ' . $collation . '); INSERT INTO unicode_order VALUES ' . implode(',', $rows) . '; ';
             yield $collation . ' sort' => [$setup . 'SELECT id, v FROM unicode_order ORDER BY v, id'];
-            yield $collation . ' groups' => [$setup . 'SELECT MIN(id), COUNT(*) FROM unicode_order GROUP BY v ORDER BY v; SELECT COUNT(DISTINCT v) FROM unicode_order'];
+            yield $collation . ' groups' => [$setup . 'SELECT MIN(id), COUNT(*) FROM unicode_order GROUP BY v ORDER BY v, MIN(id); SELECT COUNT(DISTINCT v) FROM unicode_order'];
             yield $collation . ' join keys' => [$setup . 'SELECT a.id, b.id FROM unicode_order a JOIN unicode_order b ON a.v=b.v ORDER BY a.id,b.id'];
             yield $collation . ' dependent join keys' => [$setup . 'SELECT a.id, b.id FROM unicode_order a JOIN unicode_order b ON a.id=b.id ORDER BY a.id,b.id'];
             yield $collation . ' constant join keys' => [$setup . 'SELECT a.id, b.id FROM unicode_order a JOIN unicode_order b ON a.v=b.v WHERE a.id=0 ORDER BY a.id,b.id'];
