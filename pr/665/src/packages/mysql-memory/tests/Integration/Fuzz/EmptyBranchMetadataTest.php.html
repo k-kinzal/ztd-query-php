@@ -69,19 +69,23 @@
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        }</span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;integer branches&#039;</span> =&gt; [<span class="tok-str">&#039;SELECT CASE WHEN 0 THEN 0 ELSE 1 END AS v,CASE WHEN 0 THEN 1 ELSE 123 END AS w FROM t2&#039;</span>];</span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;simple case&#039;</span> =&gt; [<span class="tok-str">&#039;SELECT CASE 0 WHEN 1 THEN (SELECT 1/0,NULL FROM DUAL WHERE 0)&lt;=&gt; (NULL,NULL) ELSE 1 END AS v FROM t2&#039;</span>];</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    }</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerStatements&#039;</span>)]</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testEmptyComparisonBranchesPreserveMetadata</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    {</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        [<span class="tok-var">$target</span>] = <span class="tok-id">Servers</span>::<span class="tok-id">shared</span>();</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$comparison</span> = <span class="tok-var">$target</span>-&gt;<span class="tok-id">compare</span>(<span class="tok-var">$sql</span>);</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-id">self</span>::<span class="tok-id">assertFalse</span>(<span class="tok-var">$comparison</span>-&gt;<span class="tok-id">volatile</span>, (string) <span class="tok-var">$comparison</span>-&gt;<span class="tok-id">referenceDifference</span>);</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNull</span>(<span class="tok-var">$comparison</span>-&gt;<span class="tok-id">difference</span>, (string) <span class="tok-var">$comparison</span>-&gt;<span class="tok-id">difference</span>);</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    }</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>}</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-kw">foreach</span> ([<span class="tok-str">&#039;2&#039;</span>, <span class="tok-str">&#039;9&#039;</span>, <span class="tok-str">&#039;10&#039;</span>, <span class="tok-str">&#039;-1&#039;</span>, <span class="tok-str">&#039;1.0&#039;</span>, <span class="tok-str">&#039;1e0&#039;</span>, <span class="tok-str">&quot;&#039;1&#039;&quot;</span>] <span class="tok-kw">as</span> <span class="tok-var">$value</span>) {</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>            <span class="tok-var">$case</span> = <span class="tok-str">&#039;CASE WHEN 0 THEN 0 ELSE &#039;</span> . <span class="tok-var">$value</span> . <span class="tok-str">&#039; END&#039;</span>;</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>            <span class="tok-kw">yield</span> <span class="tok-str">&#039;result bound &#039;</span> . <span class="tok-var">$value</span> =&gt; [<span class="tok-str">&#039;SELECT &#039;</span> . <span class="tok-var">$case</span> . <span class="tok-str">&#039; AS v,(&#039;</span> . <span class="tok-var">$case</span> . <span class="tok-str">&#039;)+0 AS a,CAST((&#039;</span> . <span class="tok-var">$case</span> . <span class="tok-str">&#039;) AS CHAR) AS c,COALESCE((&#039;</span> . <span class="tok-var">$case</span> . <span class="tok-str">&#039;),1) AS f FROM t2&#039;</span>];</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        }</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    }</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerStatements&#039;</span>)]</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testEmptyComparisonBranchesPreserveMetadata</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    {</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        [<span class="tok-var">$target</span>] = <span class="tok-id">Servers</span>::<span class="tok-id">shared</span>();</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-var">$comparison</span> = <span class="tok-var">$target</span>-&gt;<span class="tok-id">compare</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-id">self</span>::<span class="tok-id">assertFalse</span>(<span class="tok-var">$comparison</span>-&gt;<span class="tok-id">volatile</span>, (string) <span class="tok-var">$comparison</span>-&gt;<span class="tok-id">referenceDifference</span>);</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNull</span>(<span class="tok-var">$comparison</span>-&gt;<span class="tok-id">difference</span>, (string) <span class="tok-var">$comparison</span>-&gt;<span class="tok-id">difference</span>);</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    }</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>}</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
