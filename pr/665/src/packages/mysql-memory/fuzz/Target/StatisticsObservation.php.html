@@ -57,19 +57,28 @@
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">settled</span>(<span class="tok-id">PDO</span> <span class="tok-var">$pdo</span>): <span class="tok-id">bool</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>    {</span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>        <span class="tok-kw">for</span> (<span class="tok-var">$attempt</span> = <span class="tok-num">0</span>; <span class="tok-var">$attempt</span> &lt; <span class="tok-num">100</span>; <span class="tok-var">$attempt</span>++) {</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>            <span class="tok-var">$statement</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;SHOW GLOBAL STATUS LIKE &#039;Threads_connected&#039;&quot;</span>);</span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>            <span class="tok-var">$connected</span> = <span class="tok-var">$statement</span> === <span class="tok-id">false</span> ? <span class="tok-id">false</span> : <span class="tok-var">$statement</span>-&gt;<span class="tok-id">fetchColumn</span>(<span class="tok-num">1</span>);</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>            <span class="tok-var">$info</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">getAttribute</span>(<span class="tok-id">PDO</span>::<span class="tok-id">ATTR_SERVER_INFO</span>);</span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>            <span class="tok-kw">if</span> (<span class="tok-id">is_string</span>(<span class="tok-var">$info</span>) &amp;&amp; <span class="tok-id">preg_match</span>(<span class="tok-str">&#039;/  Threads: (\d+)  /&#039;</span>, <span class="tok-var">$info</span>, <span class="tok-var">$match</span>) === <span class="tok-num">1</span> &amp;&amp; <span class="tok-var">$match</span>[<span class="tok-num">1</span>] === <span class="tok-var">$connected</span>) {</span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>                <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>            }</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>            <span class="tok-id">usleep</span>(<span class="tok-num">10000</span>);</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        }</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    }</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>}</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>            <span class="tok-var">$connected</span> = (string) <span class="tok-id">self</span>::<span class="tok-id">threads</span>(<span class="tok-var">$pdo</span>);</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>            <span class="tok-var">$info</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">getAttribute</span>(<span class="tok-id">PDO</span>::<span class="tok-id">ATTR_SERVER_INFO</span>);</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>            <span class="tok-kw">if</span> (<span class="tok-id">is_string</span>(<span class="tok-var">$info</span>) &amp;&amp; <span class="tok-id">preg_match</span>(<span class="tok-str">&#039;/  Threads: (\d+)  /&#039;</span>, <span class="tok-var">$info</span>, <span class="tok-var">$match</span>) === <span class="tok-num">1</span> &amp;&amp; <span class="tok-var">$match</span>[<span class="tok-num">1</span>] === <span class="tok-var">$connected</span>) {</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>                <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>            }</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>            <span class="tok-id">usleep</span>(<span class="tok-num">10000</span>);</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        }</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    }</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * Counts process-list threads, including scheduler daemons omitted from Threads_connected.</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">threads</span>(<span class="tok-id">PDO</span> <span class="tok-var">$pdo</span>): <span class="tok-id">int</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    {</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-var">$statement</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;SHOW PROCESSLIST&#039;</span>);</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-kw">return</span> <span class="tok-var">$statement</span> === <span class="tok-id">false</span> ? <span class="tok-num">0</span> : <span class="tok-id">count</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">fetchAll</span>(<span class="tok-id">PDO</span>::<span class="tok-id">FETCH_NUM</span>));</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    }</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>}</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
