@@ -104,6 +104,21 @@ final class OriginsTest extends TestCase
         self::assertSame([0, 2, 't', 't'], [$buffered->columns[0]->flags & 2, $direct->columns[0]->flags & 2, $buffered->columns[0]->originalTable, $direct->columns[0]->originalTable]);
     }
 
+    public function testJoinedOrderDropsKeysWhenSortingIndependentRows(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(id INT PRIMARY KEY, v INT); INSERT INTO t VALUES (1,1),(2,1)');
+        $buffered = $session->query('SELECT a.id,b.id FROM t a JOIN t b ON a.v=b.v ORDER BY a.id,b.id')[0];
+        $dependent = $session->query('SELECT a.id,b.id FROM t a JOIN t b ON a.id=b.id ORDER BY a.id,b.id')[0];
+        $empty = $session->query('SELECT a.id,b.id FROM t a JOIN t b ON a.v=b.v ORDER BY a.id,b.id LIMIT 0')[0];
+        self::assertInstanceOf(ResultSet::class, $buffered);
+        self::assertInstanceOf(ResultSet::class, $dependent);
+        self::assertInstanceOf(ResultSet::class, $empty);
+
+        self::assertSame([0, 0, 2, 2], [$buffered->columns[0]->flags & 2, $buffered->columns[1]->flags & 2, $dependent->columns[0]->flags & 2, $empty->columns[0]->flags & 2]);
+        self::assertSame(['a', 't', 'id'], [$buffered->columns[0]->table, $buffered->columns[0]->originalTable, $buffered->columns[0]->originalName]);
+    }
+
     public function testOriginsKeepsTheTableOfARolledUpColumnInMySql57(): void
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');

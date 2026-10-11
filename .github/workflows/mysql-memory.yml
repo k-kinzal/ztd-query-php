@@ -74,13 +74,21 @@ jobs:
           TEST_SHARD: ${{ matrix.shard }}
         run: |
           pattern=$(python3 - <<'PYTHON'
-          import os, pathlib, re, sys
-          files = sorted(pathlib.Path('tests/Integration').rglob('*Test.php'))
-          selected = files[int(os.environ['TEST_SHARD'])::2]
+          import os, pathlib, re, subprocess, sys, xml.etree.ElementTree as ET
+          listing = pathlib.Path('build/integration-tests.xml')
+          listing.parent.mkdir(exist_ok=True)
+          subprocess.run(['php', '-d', 'memory_limit=1G', 'vendor/bin/phpunit', '--testsuite', 'integration', '--list-tests-xml', str(listing)], check=True, stdout=sys.stderr)
+          counts = [(node.attrib['name'], len(node.findall('testCaseMethod'))) for node in ET.parse(listing).iter('testCaseClass')]
+          groups, totals = [[], []], [0, 0]
+          for name, count in sorted(counts, key=lambda item: (-item[1], item[0])):
+              shard = min(range(2), key=lambda index: (totals[index], index))
+              groups[shard].append(name)
+              totals[shard] += count
+          selected = groups[int(os.environ['TEST_SHARD'])]
           assert selected, 'An integration shard must contain tests'
-          print('\n'.join(str(path) for path in selected), file=sys.stderr)
-          classes = ['Tests\\' + str(path.relative_to('tests').with_suffix('')).replace('/', '\\') for path in selected]
-          print('^(?:' + '|'.join(re.escape(name) for name in classes) + ')::')
+          print('Cases per shard: ' + str(totals), file=sys.stderr)
+          print('\n'.join(selected), file=sys.stderr)
+          print('^(?:' + '|'.join(re.escape(name) for name in selected) + ')::')
           PYTHON
           )
           vendor/bin/phpunit --testsuite integration --filter "$pattern"
@@ -131,13 +139,21 @@ jobs:
           TEST_SHARD: ${{ matrix.shard }}
         run: |
           pattern=$(python3 - <<'PYTHON'
-          import os, pathlib, re, sys
-          files = sorted(pathlib.Path('tests/Integration/Fuzz').rglob('*Test.php'))
-          selected = files[int(os.environ['TEST_SHARD'])::2]
+          import os, pathlib, re, subprocess, sys, xml.etree.ElementTree as ET
+          listing = pathlib.Path('build/differential-tests.xml')
+          listing.parent.mkdir(exist_ok=True)
+          subprocess.run(['php', '-d', 'memory_limit=1G', 'vendor/bin/phpunit', 'tests/Integration/Fuzz', '--list-tests-xml', str(listing)], check=True, stdout=sys.stderr)
+          counts = [(node.attrib['name'], len(node.findall('testCaseMethod'))) for node in ET.parse(listing).iter('testCaseClass')]
+          groups, totals = [[], []], [0, 0]
+          for name, count in sorted(counts, key=lambda item: (-item[1], item[0])):
+              shard = min(range(2), key=lambda index: (totals[index], index))
+              groups[shard].append(name)
+              totals[shard] += count
+          selected = groups[int(os.environ['TEST_SHARD'])]
           assert selected, 'A differential shard must contain tests'
-          print('\n'.join(str(path) for path in selected), file=sys.stderr)
-          classes = ['Tests\\' + str(path.relative_to('tests').with_suffix('')).replace('/', '\\') for path in selected]
-          print('^(?:' + '|'.join(re.escape(name) for name in classes) + ')::')
+          print('Cases per shard: ' + str(totals), file=sys.stderr)
+          print('\n'.join(selected), file=sys.stderr)
+          print('^(?:' + '|'.join(re.escape(name) for name in selected) + ')::')
           PYTHON
           )
           vendor/bin/phpunit tests/Integration/Fuzz --filter "$pattern"

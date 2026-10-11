@@ -102,11 +102,11 @@ final class ConstantTables
      * Answers the tables of a block that are constant, by object id.
      *
      * @param list<array{Relation, bool}> $tables
+     * @param array<int, true> $constant Relations already fixed for this dependency calculation
      * @return array<int, true>
      */
-    public function constants(Select $select, array $tables): array
+    public function constants(Select $select, array $tables, array $constant = []): array
     {
-        $constant = [];
         foreach ($tables as [$table, $outer]) {
             if (!$outer && $table instanceof DerivedTable && $this->single($table->query)) {
                 $constant[spl_object_id($table)] = true;

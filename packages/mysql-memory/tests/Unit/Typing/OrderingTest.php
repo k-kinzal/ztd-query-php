@@ -68,12 +68,38 @@ final class OrderingTest extends TestCase
         self::assertSame([true, false, false], [$ordering->key('a') === $ordering->key('Á'), $ordering->key('a') === $ordering->key('b'), $ordering->key('a') === $ordering->key('a ')]);
     }
 
-    public function testKeyIsTheFoldedTextOfAGeneralCollation(): void
+    public function testKeyUsesGeneralWeightsAndPreservesBinaryText(): void
     {
         $general = Ordering::of(Collation::known('utf8mb4_general_ci'));
         $binary = Ordering::of(Collation::known('utf8mb4_bin'));
 
-        self::assertSame(['E', 'a'], [$general->key('é '), $binary->key('a ')]);
+        self::assertSame(["\0E", 'a'], [$general->key('é '), $binary->key('a ')]);
+    }
+
+    public function testCompareRetainsGeneralCollationExpansionsAndSupplementaryWeights(): void
+    {
+        $general = Ordering::of(Collation::known('utf8mb4_general_ci'));
+
+        self::assertSame([-1, 0, -1, 0], [$general->compare('ß', 'ss'), $general->compare('ß', 's'), $general->compare('é', "e\u{301}"), $general->compare('🫠', '😀')]);
+        self::assertSame($general->key('ß'), $general->key('s'));
+        self::assertNotSame($general->key('é'), $general->key("e\u{301}"));
+        self::assertSame(1, $general->compare('a', "a\0"));
+    }
+
+    public function testCompareUsesUnicode9WithoutNewerIcuContractions(): void
+    {
+        $ordering = Ordering::of(Collation::known('utf8mb4_0900_ai_ci'));
+
+        self::assertSame([1, -1, 1], [$ordering->compare('l·', 'l'), $ordering->compare("и\u{306}", 'й'), $ordering->compare('🫠', '😀')]);
+        self::assertNotSame($ordering->key('l·'), $ordering->key('l'));
+        self::assertSame($ordering->key('é'), $ordering->key("e\u{301}"));
+    }
+
+    public function testUnicodeWeightsLeavesFallbackCollationsAndInvalidUtf8ToTheirOwnOrder(): void
+    {
+        self::assertNull(Ordering::of(Collation::binary())->unicodeWeights('a'));
+        self::assertNull(Ordering::of(Collation::known('utf8mb4_0900_ai_ci'))->unicodeWeights("\xff"));
+        self::assertSame('0045', bin2hex((string) Ordering::of(Collation::known('utf16_general_ci'))->unicodeWeights('é')));
     }
 
     public function testPaddedRemovesTrailingSpacesOfAPadSpaceCollation(): void

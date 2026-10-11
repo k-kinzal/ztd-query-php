@@ -50,7 +50,7 @@ final class Origins
      */
     public function origins(Select $select, ?Scope $outer, Scope $scope, array $fields, array $rolled, array $domains, bool $sorted): array
     {
-        $buffered = ($this->aggregateOrder($select) || in_array(SelectOption::BufferResult, $select->options, true) || (in_array(SelectOption::Distinct, $select->options, true) && (new ConstantTables($this->planner->compiler->facts))->joined($select) > 1)) && !$this->planner->blocks->empty($select, $outer);
+        $buffered = ($this->aggregateOrder($select) || $this->joinedOrder($select) || in_array(SelectOption::BufferResult, $select->options, true) || (in_array(SelectOption::Distinct, $select->options, true) && (new ConstantTables($this->planner->compiler->facts))->joined($select) > 1)) && !$this->planner->blocks->empty($select, $outer);
         $materialized = $sorted || in_array(SelectOption::Distinct, $select->options, true);
         $implicit = $this->planner->compiler->settings->legacy() && $select->groupBy === null && (new Grouping($this->planner))->collect($select) !== [];
         $supplied = $implicit ? $this->supplied($select->from) : [];
@@ -84,6 +84,42 @@ final class Origins
         }
 
         return false;
+    }
+
+    /**
+     * Detects ordering across independent joined rows, whose buffered result loses key flags.
+     *
+     * Keys from a unique lookup dependent on the first table do not introduce another
+     * independent ordering dimension. Constant tables do not contribute one either.
+     * Verified through SQL on MySQL 8.0, 8.4 and 9.1.
+     */
+    public function joinedOrder(Select $select): bool
+    {
+        $facts = $this->planner->compiler->facts;
+        $dependencies = new ConstantTables($facts);
+        $tables = $dependencies->tables($select->from, false);
+        $constant = $dependencies->constants($select, $tables);
+        $varying = array_values(array_filter($tables, static fn (array $table): bool => !isset($constant[spl_object_id($table[0])])));
+        if (count($varying) < 2) {
+            return false;
+        }
+        $ordered = [];
+        $grouping = new Grouping($this->planner);
+        foreach ([...$select->orderBy, ...($select->late->orderBy ?? [])] as $item) {
+            foreach ((new Walker())->find($grouping->target($item->expression), ColumnUse::class) as $use) {
+                $resolution = $facts->covers($use) ? $facts->scalar($use)->resolution : null;
+                if ($resolution instanceof ResolvedColumn && !isset($constant[spl_object_id($resolution->relation)])) {
+                    $ordered[spl_object_id($resolution->relation)] = true;
+                }
+            }
+        }
+        if (count($ordered) < 2) {
+            return false;
+        }
+        $first = spl_object_id($varying[0][0]);
+        $dependent = $dependencies->constants($select, $tables, $constant + [$first => true]);
+
+        return array_key_first($ordered) !== $first || array_diff_key($ordered, $dependent) !== [];
     }
 
     /**

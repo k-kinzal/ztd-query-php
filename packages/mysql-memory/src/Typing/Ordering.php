@@ -13,9 +13,9 @@ use Transliterator;
 /**
  * The order of one collation: the comparison and the equality key of its strings.
  *
- * The Unicode collations use the root collator of ICU at the strength of the collation; a
- * string that is not valid UTF-8 is compared by its bytes. A string of a multibyte character set
- * other than UTF-8 is read in UTF-8.
+ * Untailored Unicode 9.0 and general_ci use the same weights as WEIGHT_STRING. Other Unicode
+ * collations use ICU at their declared strength. Invalid UTF-8 falls back to byte comparison;
+ * a multibyte character set other than UTF-8 is read in UTF-8.
  *
  * @visibility MySqlMemory
  */
@@ -78,6 +78,16 @@ final class Ordering
     {
         $left = $this->padded($this->unicode($left));
         $right = $this->padded($this->unicode($right));
+        $leftWeight = $this->unicodeWeights($left);
+        $rightWeight = $this->unicodeWeights($right);
+        if ($leftWeight !== null && $rightWeight !== null) {
+            if ($this->collation->padSpace) {
+                $length = max(strlen($leftWeight), strlen($rightWeight));
+                $leftWeight = str_pad($leftWeight, $length, "\0\x20");
+                $rightWeight = str_pad($rightWeight, $length, "\0\x20");
+            }
+            return strcmp($leftWeight, $rightWeight) <=> 0;
+        }
         if ($this->collator !== null && mb_check_encoding($left, 'UTF-8') && mb_check_encoding($right, 'UTF-8')) {
             $order = $this->collator->compare($left, $right);
             if ($order !== false) {
@@ -97,6 +107,10 @@ final class Ordering
     public function key(string $text): string
     {
         $text = $this->padded($this->unicode($text));
+        $weight = $this->unicodeWeights($text);
+        if ($weight !== null) {
+            return $weight;
+        }
         if ($this->collator !== null && mb_check_encoding($text, 'UTF-8')) {
             $key = collator_get_sort_key($this->collator, $text);
             if ($key !== false) {
@@ -105,6 +119,26 @@ final class Ordering
         }
 
         return $this->collation->binaryOrder() || $this->collator !== null ? $text : $this->folded($text);
+    }
+
+    /**
+     * Answers verified weights for an already decoded Unicode string, or null for a fallback collation or invalid input.
+     */
+    public function unicodeWeights(string $text): ?string
+    {
+        if (!mb_check_encoding($text, 'UTF-8')) {
+            return null;
+        }
+        $unicode = new UnicodeWeights();
+        $levels = $unicode->levels($this->collation->name);
+        if ($levels > 0) {
+            return $unicode->text($text === '' ? [] : mb_str_split($text, 1, 'UTF-8'), $levels);
+        }
+        if ($this->collation->charset->maxLength > 1 && str_ends_with($this->collation->name, '_general_ci')) {
+            return (new Weights())->text($text, Collation::known('utf8mb4_general_ci'));
+        }
+
+        return null;
     }
 
     /**
