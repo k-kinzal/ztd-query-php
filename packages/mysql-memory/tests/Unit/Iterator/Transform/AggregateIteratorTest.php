@@ -13,6 +13,7 @@ use MySqlMemory\Iterator\Source\WorkingTableIterator;
 use MySqlMemory\Iterator\Transform\AggregateIterator;
 use MySqlMemory\Plan\Path\Source\WorkingTable;
 use MySqlMemory\Plan\Path\Transform\Aggregate;
+use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
@@ -24,7 +25,19 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class AggregateIteratorTest extends TestCase
 {
-    public function testInitAnswersTheFirstRowAndTheAggregatesOfEachGroupInGroupOrder(): void
+    public function testInitLeavesAggregateArgumentsUnreadWhenHavingRejectsEveryGroup(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT SUM(1/0) FROM DUAL HAVING 0')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
+    public function testGatherAnswersTheFirstRowAndTheAggregatesOfEachGroupInGroupOrder(): void
     {
         $session = (new Instance())->connect();
         $working = new WorkingTable(2);

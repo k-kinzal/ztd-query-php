@@ -11,6 +11,7 @@ use MySqlMemory\Iterator\Source\WorkingTableIterator;
 use MySqlMemory\Iterator\Transform\LimitIterator;
 use MySqlMemory\Plan\Path\Source\WorkingTable;
 use MySqlMemory\Plan\Path\Transform\Limit;
+use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
@@ -19,6 +20,30 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class LimitIteratorTest extends TestCase
 {
+    public function testInitSkipsBufferedInputForAZeroCountWithoutAnOffset(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT SUM(1/0) FROM DUAL ORDER BY 1 LIMIT 0')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
+    public function testReadEvaluatesSkippedRowsEvenWhenTheCountIsZero(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT SUM(1/0) FROM DUAL ORDER BY 1 LIMIT 0 OFFSET 2')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertCount(1, $warnings->rows);
+    }
+
     public function testReadSkipsTheOffsetAndPassesAtMostTheCount(): void
     {
         $session = (new Instance())->connect();

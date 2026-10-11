@@ -34,6 +34,10 @@ final class AggregateIterator implements RowIterator
 
     private int $next = 0;
 
+    private bool $loaded = false;
+
+    private Frame $frame;
+
     /**
      * @param Aggregate $path The path executed
      * @param RowIterator $input The iterator of the input
@@ -43,10 +47,21 @@ final class AggregateIterator implements RowIterator
     }
 
     /**
-     * Reads the whole input and folds the groups.
+     * Resets the groups without reading input that an outer filter or zero limit may discard.
      */
     #[Override]
     public function init(Frame $frame): void
+    {
+        $this->frame = $frame;
+        $this->rows = [];
+        $this->next = 0;
+        $this->loaded = false;
+    }
+
+    /**
+     * Reads the whole input and folds the groups when the first output row is requested.
+     */
+    public function gather(Frame $frame): void
     {
         $this->input->init($frame);
         $groups = [];
@@ -229,6 +244,11 @@ final class AggregateIterator implements RowIterator
     #[Override]
     public function read(): ?array
     {
+        if (!$this->loaded) {
+            $this->loaded = true;
+            $this->gather($this->frame);
+        }
+
         return $this->rows[$this->next++] ?? null;
     }
 }

@@ -79,7 +79,7 @@ final class Blocks
         $grouping = new Grouping($this->planner);
         [$input, $evaluation] = $grouping->plan($select, $input, $scope);
         if ($select->having !== null) {
-            $input = new Filter($input, $compiler->compile($select->having, $evaluation));
+            $input = $this->where($input, $select->having, $evaluation);
         }
         [$input, $presorted] = (new Windowing($this->planner))->plan($select, $input, $evaluation);
         $fields = $this->fields($select);

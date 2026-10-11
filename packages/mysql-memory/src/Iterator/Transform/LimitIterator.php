@@ -33,7 +33,9 @@ final class LimitIterator implements RowIterator
     public function init(Frame $frame): void
     {
         $this->seen = 0;
-        $this->input->init($frame);
+        if ($this->path->count !== 0 || $this->path->offset !== 0) {
+            $this->input->init($frame);
+        }
     }
 
     /**
