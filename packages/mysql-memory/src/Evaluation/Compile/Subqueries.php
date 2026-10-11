@@ -70,7 +70,7 @@ final class Subqueries
 
         $projection = new EmptyProjection($this->compiler);
 
-        return new \MySqlMemory\Evaluation\Subquery\SingleRow(new Rows($plan), $once, $projection->of($node->query, $plan), $projection->initial($plan));
+        return new \MySqlMemory\Evaluation\Subquery\SingleRow(new Rows($plan), $once, $projection->of($node->query, $plan), $projection->initial($plan), $projection->source($plan));
     }
 
     /**

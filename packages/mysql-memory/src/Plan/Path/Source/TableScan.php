@@ -21,8 +21,9 @@ final class TableScan implements AccessPath
     /**
      * @param StoredTable $table The table read
      * @param list<int>|null $partitions The partitions read, by position, or null for every row
+     * @param int $handle The occurrence's connection-local buffered table handle
      */
-    public function __construct(public readonly StoredTable $table, public readonly ?array $partitions = null)
+    public function __construct(public readonly StoredTable $table, public readonly ?array $partitions = null, public readonly int $handle = 0)
     {
     }
 

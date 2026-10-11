@@ -13,11 +13,27 @@ use MySqlMemory\Session\SqlModes;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 
 #[CoversClass(Context::class)]
 #[Small]
 final class ContextTest extends TestCase
 {
+    public function testTableHandleReservesDistinctOccurrencesAndReusesReplannedOnes(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT)');
+        $table = $session->instance->dictionary->table('d', 't');
+        self::assertNotNull($table);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $first = new stdClass();
+        $second = new stdClass();
+
+        self::assertSame(0, $context->tableHandle($table, $first));
+        self::assertSame(1, $context->tableHandle($table, $second));
+        self::assertSame(0, $context->tableHandle($table, $first));
+    }
+
     public function testWarnRecordsAWarningInAStatementThatIsNotAStrictWrite(): void
     {
         $session = (new Instance())->connect();

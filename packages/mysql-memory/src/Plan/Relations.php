@@ -128,7 +128,7 @@ final class Relations
             $selected = (new \MySqlMemory\Storage\Partitions($definition, $definition->partitioning, $this->planner->compiler->connection->context))->selected($reference->partitions);
         }
         $scope->place($reference, array_map(static fn ($column) => $column->domain, $definition->columns), array_map(static fn ($column): string => $column->name, $definition->columns), $definition);
-        $scan = new TableScan($stored, $selected);
+        $scan = new TableScan($stored, $selected, $this->planner->compiler->connection->context->tableHandle($stored, $reference));
         $scope->scans[spl_object_id($reference)] = $scan;
 
         return $scan;

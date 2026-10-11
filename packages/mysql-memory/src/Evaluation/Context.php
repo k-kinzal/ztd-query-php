@@ -38,6 +38,12 @@ final class Context
      */
     public readonly WeakMap $reported;
 
+    /** @var WeakMap<object, int> The handle assigned to each table occurrence */
+    private readonly WeakMap $tableOccurrences;
+
+    /** @var WeakMap<\MySqlMemory\Dictionary\StoredTable, int> The next handle for each table */
+    private readonly WeakMap $tableHandles;
+
     /**
      * The number of the row the statement is sending, counted from 1, which warnings about a JSON value read as another type name.
      */
@@ -65,6 +71,23 @@ final class Context
     ) {
         $this->kept = new WeakMap();
         $this->reported = new WeakMap();
+        $this->tableOccurrences = new WeakMap();
+        $this->tableHandles = new WeakMap();
+    }
+
+    /**
+     * Reserves distinct table handles in preparation order, including unexecuted occurrences.
+     * Replanning the same occurrence keeps its handle.
+     */
+    public function tableHandle(\MySqlMemory\Dictionary\StoredTable $table, object $occurrence): int
+    {
+        if (!isset($this->tableOccurrences[$occurrence])) {
+            $handle = $this->tableHandles[$table] ?? 0;
+            $this->tableOccurrences[$occurrence] = $handle;
+            $this->tableHandles[$table] = $handle + 1;
+        }
+
+        return $this->tableOccurrences[$occurrence];
     }
 
     /**

@@ -22,6 +22,13 @@ final class Frame
     public array $buffered = [];
 
     /**
+     * The latest fields of each table occurrence read in this frame, keyed by its access path.
+     *
+     * @var array<int, array{\MySqlMemory\Plan\Path\Source\TableScan, list<int|float|string|null>}>
+     */
+    public array $scanned = [];
+
+    /**
      * @param Context $context The statement being evaluated
      * @param list<int|float|string|null> $row The current row of the block
      * @param Frame|null $outer The frame of the enclosing block, for a subquery

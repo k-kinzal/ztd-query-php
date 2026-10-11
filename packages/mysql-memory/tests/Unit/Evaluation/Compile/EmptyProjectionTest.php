@@ -39,6 +39,16 @@ final class EmptyProjectionTest extends TestCase
         self::assertSame([['1']], $result->rows);
     }
 
+    public function testSourceReadsBufferedColumnsWithoutChangingTheQueryInput(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY,n INT); INSERT INTO t VALUES (1,10),(2,NULL)');
+        $result = $session->query('SELECT (SELECT n+1,NULL FROM t WHERE 0) <=> (NULL,NULL), (SELECT id,n FROM t WHERE id=99) <=> (NULL,NULL), (SELECT id,NULL FROM t WHERE 0) <=> (NULL,NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1', '0']], $result->rows);
+    }
+
     public function testAggregatePreservesCountAndExtremaBeforeHavingReadsAnyInput(): void
     {
         $result = (new Instance())->connect()->query('SELECT (SELECT COUNT(*),MAX(1) FROM DUAL HAVING 0) <=> (99,NULL)')[0];

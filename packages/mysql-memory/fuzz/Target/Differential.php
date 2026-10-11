@@ -27,6 +27,10 @@ final class Differential
 
     private ?PDO $memoryGuard = null;
 
+    private ?string $input = null;
+
+    private ?string $previousInput = null;
+
     /**
      * The account the statements run as on the MySQL server, read before any statement ran.
      */
@@ -84,6 +88,8 @@ final class Differential
      */
     public function compare(string $sql): Comparison
     {
+        $this->previousInput = $this->input;
+        $this->input = $sql;
         $guard = $this->guard();
         $this->repair($guard);
         $this->baseline?->restore($guard, true);
@@ -284,7 +290,7 @@ final class Differential
             }
             $this->baseline?->logs($pdo);
         } catch (PDOException $failure) {
-            fwrite(STDERR, "Setup failed on {$dsn}: {$failure->getMessage()}\n");
+            fwrite(STDERR, "Setup failed on {$dsn}: {$failure->getMessage()}\nCurrent input: " . $this->json($this->input) . "\nPrevious input: " . $this->json($this->previousInput) . "\n");
             exit(2);
         }
 

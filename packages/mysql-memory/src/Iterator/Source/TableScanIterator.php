@@ -28,7 +28,12 @@ final class TableScanIterator implements RowIterator
      */
     private array $rows = [];
 
+    /** @var array<int, list<int|float|string|null>> The same rows in storage time zones */
+    private array $stored = [];
+
     private int $next = 0;
+
+    private bool $found = false;
 
     /**
      * @var list<int> The row numbers, in the order of the rows
@@ -66,10 +71,12 @@ final class TableScanIterator implements RowIterator
         if ($partitioning !== null && ($this->path->partitions !== null || $partitioning->method !== \MySqlMemory\Dictionary\Partition\PartitionMethod::Key)) {
             $ordered = (new \MySqlMemory\Storage\Partitions($this->path->table->definition, $partitioning, $frame->context))->ordered($ordered, $this->path->partitions);
         }
+        $this->stored = $ordered;
         $rows = (new TimestampZones())->rows($this->path->table, $ordered, $frame->context);
         $this->numbers = array_keys($rows);
         $this->rows = array_values($rows);
         $this->next = 0;
+        $this->found = false;
         $this->current = null;
     }
 
@@ -86,10 +93,20 @@ final class TableScanIterator implements RowIterator
                     $this->next = count($this->rows);
                 }
 
+                $this->found = true;
+                $this->frame->scanned[spl_object_id($this->path)] = [$this->path, $this->stored[$this->current]];
+                $variables = $this->frame->context->variables;
+                $variables->instance->dictionary->cache->buffers->retain($variables, $this->path->table, $this->stored[$this->current], $this->path->handle);
+
                 return $row;
             }
         }
         $this->current = null;
+        if ($this->lookup !== null && !$this->found) {
+            $variables = $this->frame->context->variables;
+            $variables->instance->dictionary->cache->buffers->missing($variables, $this->path->table, $this->path->handle);
+            $this->frame->scanned[spl_object_id($this->path)] = [$this->path, array_fill(0, $this->path->width(), null)];
+        }
 
         return null;
     }

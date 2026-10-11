@@ -68,6 +68,19 @@ final class SortIteratorTest extends TestCase
         self::assertNull($iterator->read());
     }
 
+    public function testReadRestoresTheTableFieldsOfEachSortedRow(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY,n INT); INSERT INTO t VALUES (1,10),(2,NULL)');
+        $result = $session->query('SELECT (SELECT n,NULL FROM t ORDER BY n ASC LIMIT 1 OFFSET 2) <=> (NULL,NULL)')[0];
+        $retained = $session->query('SELECT (SELECT n,NULL FROM t WHERE 0) <=> (NULL,NULL)')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['0']], $result->rows);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $retained);
+        self::assertSame([['0']], $retained->rows);
+    }
+
     public function testNonScalarWarnsOnceOfSortingArraysAndObjects(): void
     {
         $session = (new Instance())->connect();

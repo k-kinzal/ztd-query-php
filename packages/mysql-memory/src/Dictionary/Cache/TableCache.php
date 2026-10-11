@@ -22,6 +22,13 @@ final class TableCache
     private array $opened = [];
 
     /**
+     * @param RowBuffers $buffers The fields retained by connection-owned handles
+     */
+    public function __construct(public readonly RowBuffers $buffers = new RowBuffers())
+    {
+    }
+
+    /**
      * Retains the handle of a table, without counting repeated opens as separate names.
      */
     public function open(string $schema, string $table): void
@@ -34,6 +41,7 @@ final class TableCache
      */
     public function close(?string $schema = null, ?string $table = null): void
     {
+        $this->buffers->close($schema, $table);
         foreach ($this->opened as $key => [$database, $name]) {
             if (($schema === null || $schema === $database) && ($table === null || $table === $name)) {
                 unset($this->opened[$key]);

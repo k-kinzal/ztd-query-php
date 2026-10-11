@@ -29,6 +29,14 @@ final class LiteralKeyReadTest extends TestCase
         yield 'diagnostics on candidate only' => ['SELECT id FROM t1 WHERE b=0 AND id=2'];
         yield 'missing key projection' => ['SELECT 1/0 FROM t1 WHERE id=99'];
         yield 'assignment on candidate' => ['SET @v=0; SELECT id FROM t1 WHERE (@v:=@v+1)>0 AND id=2; SELECT @v'];
+        yield 'rejected conversion candidate' => ['SELECT id FROM t1 WHERE b=1 AND id=2'];
+        yield 'conversion after key' => ['SELECT id FROM t1 WHERE id=2 AND b=0'];
+        yield 'assignment changes a passing condition' => ['SET @v=0; SELECT id FROM t1 WHERE (@v:=@v+1)=1 AND id=2; SELECT @v'];
+        yield 'assignment changes a rejected condition' => ['SET @v=0; SELECT id FROM t1 WHERE (@v:=@v+1)=2 AND id=2; SELECT @v'];
+        yield 'assignment on a missing candidate' => ['SET @v=0; SELECT id FROM t1 WHERE (@v:=@v+1)>0 AND id=99; SELECT @v'];
+        yield 'assignment with zero limit' => ['SET @v=0; SELECT id FROM t1 WHERE (@v:=@v+1)>0 AND id=2 LIMIT 0; SELECT @v'];
+        yield 'conversion with zero limit' => ['SELECT id FROM t1 WHERE b=0 AND id=2 LIMIT 0'];
+        yield 'assignment before aggregation' => ['SET @v=0; SELECT SUM(a) FROM t1 WHERE (@v:=@v+1)>0 AND id=2; SELECT @v'];
         yield 'aggregate present' => ['SELECT COUNT(*),SUM(a) FROM t1 WHERE id=2'];
         yield 'aggregate missing' => ['SELECT COUNT(*),MAX(a) FROM t1 WHERE id=99'];
         yield 'locking read' => ['START TRANSACTION; SELECT * FROM t1 WHERE id=2 FOR UPDATE; ROLLBACK'];

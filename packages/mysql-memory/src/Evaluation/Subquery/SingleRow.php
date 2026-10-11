@@ -26,8 +26,9 @@ final class SingleRow
      * @param bool $once Whether its result is constant for this statement
      * @param list<Evaluable> $projection Output expressions readable without an input row
      * @param list<int|float|string|null> $initial The projection's input state before a row is read
+     * @param \MySqlMemory\Plan\Path\Source\TableScan|null $source The sole base table whose fields remain readable
      */
-    public function __construct(public readonly Rows $rows, public readonly bool $once = false, public readonly array $projection = [], public readonly array $initial = [])
+    public function __construct(public readonly Rows $rows, public readonly bool $once = false, public readonly array $projection = [], public readonly array $initial = [], public readonly ?\MySqlMemory\Plan\Path\Source\TableScan $source = null)
     {
     }
 
@@ -68,6 +69,11 @@ final class SingleRow
     public function fetch(Frame $frame): array
     {
         $this->frame = new Frame($frame->context, $this->initial, $frame);
+        if ($this->source !== null) {
+            $variables = $frame->context->variables;
+            $stored = $variables->instance->dictionary->cache->buffers->read($variables, $this->source->table, $this->source->handle);
+            $this->frame->scanned[spl_object_id($this->source)] = [$this->source, $stored];
+        }
         $iterator = $this->rows->in($this->frame);
         $row = $iterator->read();
         if ($row === null) {
@@ -85,6 +91,12 @@ final class SingleRow
      */
     public function value(int $position, Frame $outer): int|float|string|null
     {
-        return $this->projection[$position]->evaluate($this->frame ?? $outer->inner());
+        $frame = $this->frame ?? $outer->inner();
+        if ($this->source !== null) {
+            $stored = $frame->scanned[spl_object_id($this->source)][1] ?? $frame->row;
+            $frame->row = (new \MySqlMemory\Storage\TimestampZones())->local($this->source->table, $stored, $frame->context);
+        }
+
+        return $this->projection[$position]->evaluate($frame);
     }
 }

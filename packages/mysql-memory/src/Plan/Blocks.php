@@ -353,7 +353,7 @@ final class Blocks
         $definition = $stored->definition;
         $origins = array_map(static fn (int $position): ColumnOrigin => $system?->origin($definition, $position, $definition->name) ?? new ColumnOrigin($definition->schema, $definition->name, $definition->name, $columns[$position]->name, $definition->flags($position)), $visible);
 
-        return new QueryPlan(new Project(new TableScan($stored), $expressions), array_map(static fn (int $position) => $columns[$position]->domain, $visible), array_map(static fn (int $position): string => $columns[$position]->name, $visible), $origins);
+        return new QueryPlan(new Project(new TableScan($stored, handle: $this->planner->compiler->connection->context->tableHandle($stored, $table)), $expressions), array_map(static fn (int $position) => $columns[$position]->domain, $visible), array_map(static fn (int $position): string => $columns[$position]->name, $visible), $origins);
     }
 
     /**

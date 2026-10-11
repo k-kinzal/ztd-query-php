@@ -58,6 +58,7 @@ final class Replacement
             $same = $data->rows[$existing] === $row;
             $this->session->transaction->write($this->table, $existing);
             $data->update($existing, $row);
+            $this->session->instance->dictionary->cache->buffers->retain($this->session->variables, $this->table, $row);
 
             return [$same ? 1 : 2, true];
         }

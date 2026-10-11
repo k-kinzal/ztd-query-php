@@ -18,7 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
  *
  * An empty row subquery makes ordinary comparison unknown. Null-safe equality also reads
  * retained projection expressions; modern releases compare their NULL states, while legacy
- * releases compare their values. Table-column states and some versioned set-operation forms remain incomplete.
+ * releases compare their values. Some legacy expression states and versioned set-operation forms remain incomplete.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html.
  *
  * @visibility MySqlMemory

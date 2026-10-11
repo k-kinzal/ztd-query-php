@@ -316,6 +316,7 @@ final class Rows
         }
         $this->session->transaction->write($this->table, $data->nextRow);
         $data->insert($row);
+        $this->session->instance->dictionary->cache->buffers->retain($this->session->variables, $this->table, $row);
         $this->identity->inserted($row, $generated);
         $this->affected++;
         $this->triggers()->after('INSERT', $row, null, $this->context);
@@ -368,6 +369,7 @@ final class Rows
         $row = $this->triggers()->before('UPDATE', $row, $old, $this->context) ?? $row;
         $changed = (new ChangeCommand())->differs($old, $row, $this->table);
         if (!$changed) {
+            $this->session->instance->dictionary->cache->buffers->retain($this->session->variables, $this->table, $row);
             $this->identity->updated($row, false);
             $this->affected += $this->session->variables->clientFoundRows ? 1 : 0;
             $this->triggers()->after('UPDATE', $row, $old, $this->context);
@@ -390,6 +392,7 @@ final class Rows
         $this->references()->updating($this->table, $old, $row);
         $this->session->transaction->write($this->table, $existing);
         $data->update($existing, $row);
+        $this->session->instance->dictionary->cache->buffers->retain($this->session->variables, $this->table, $row);
         $this->identity->updated($row, true);
         $this->affected += 2;
         $this->triggers()->after('UPDATE', $row, $old, $this->context);

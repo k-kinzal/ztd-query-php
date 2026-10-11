@@ -244,6 +244,7 @@ final class ChangeCommand implements Command
             $triggers = new Triggers($references->session, $table);
             $row = $triggers->before('UPDATE', $row, $old, $context) ?? $row;
             if (!$this->differs($old, $row, $table)) {
+                $context->variables->instance->dictionary->cache->buffers->retain($context->variables, $table, $row);
                 $triggers->after('UPDATE', $row, $old, $context);
                 continue;
             }
@@ -253,6 +254,7 @@ final class ChangeCommand implements Command
             }
             $references->session->transaction->write($table, $number);
             $table->data->update($number, $row);
+            $context->variables->instance->dictionary->cache->buffers->retain($context->variables, $table, $row);
             $changed++;
             $triggers->after('UPDATE', $row, $old, $context);
         }
@@ -372,6 +374,7 @@ final class ChangeCommand implements Command
             }
             $references->session->transaction->write($table, $number);
             $table->data->delete($number);
+            $references->session->instance->dictionary->cache->buffers->retain($references->session->variables, $table, $row);
             $deleted++;
             $triggers->after('DELETE', null, $row, $references->context);
         }

@@ -28,6 +28,11 @@ final class SortIterator implements RowIterator
      */
     private array $rows = [];
 
+    /**
+     * @var list<array<int, array{\MySqlMemory\Plan\Path\Source\TableScan, list<int|float|string|null>}>>
+     */
+    private array $records = [];
+
     private int $next = 0;
 
     /**
@@ -47,8 +52,10 @@ final class SortIterator implements RowIterator
         $this->frame = $frame;
         $this->input->init($frame);
         $rows = [];
+        $records = [];
         while (($row = $this->input->read()) !== null) {
             $rows[] = $row;
+            $records[] = $frame->scanned;
         }
         $keys = $this->path->keys;
         $this->nonScalar($rows, $frame);
@@ -64,6 +71,7 @@ final class SortIterator implements RowIterator
             return $left <=> $right;
         });
         $this->rows = array_map(static fn (int $index): array => $rows[$index], $indexes);
+        $this->records = array_map(static fn (int $index): array => $records[$index], $indexes);
         $this->next = 0;
     }
 
@@ -98,6 +106,11 @@ final class SortIterator implements RowIterator
         $row = $this->rows[$this->next++] ?? null;
         if ($row !== null) {
             $this->frame->buffered = $row;
+            $this->frame->scanned = $this->records[$this->next - 1];
+            $variables = $this->frame->context->variables;
+            foreach ($this->frame->scanned as [$scan, $fields]) {
+                $variables->instance->dictionary->cache->buffers->retain($variables, $scan->table, $fields, $scan->handle);
+            }
         }
 
         return $row;

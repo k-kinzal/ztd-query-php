@@ -62,9 +62,10 @@ final class EmptyProjection
             return [];
         }
         $aggregated = $this->aggregate($plan) !== null;
+        $source = $this->source($plan);
         $expressions = [];
         foreach ($this->compiler->facts->query($query)->projection as $field) {
-            if (!$field instanceof Field || $field->expression === null || !$this->readable($field->expression, $aggregated)) {
+            if (!$field instanceof Field || $field->expression === null || !$this->readable($field->expression, $aggregated, $source !== null)) {
                 return [];
             }
             $value = $path->expressions[$field->position];
@@ -89,6 +90,22 @@ final class EmptyProjection
     }
 
     /**
+     * Finds a sole base-table source whose buffered fields have the projection's column layout.
+     */
+    public function source(QueryPlan $plan): ?\MySqlMemory\Plan\Path\Source\TableScan
+    {
+        $path = $this->project($plan)?->input;
+        while ($path instanceof Filter || $path instanceof \MySqlMemory\Plan\Path\Transform\Lock) {
+            $path = $path->input;
+        }
+        if ($path instanceof \MySqlMemory\Plan\Path\Source\KeyLookup) {
+            $path = $path->input;
+        }
+
+        return $path instanceof \MySqlMemory\Plan\Path\Source\TableScan ? $path : null;
+    }
+
+    /**
      * Finds the aggregation whose output supplies the projection, before HAVING filters it.
      */
     public function aggregate(QueryPlan $plan): ?AggregatePath
@@ -105,12 +122,17 @@ final class EmptyProjection
      * Answers whether an expression can read constants or initialized aggregate slots.
      * Aggregate arguments belong to the input phase and are not projection dependencies.
      */
-    public function readable(Node $node, bool $aggregated): bool
+    public function readable(Node $node, bool $aggregated, bool $tabled = false): bool
     {
         if ($node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate) {
             return $aggregated;
         }
-        if ($node instanceof ColumnUse || $node instanceof WindowFunction || $node instanceof DefaultOfColumn || $node instanceof InsertedColumn || $node instanceof Query) {
+        if ($node instanceof ColumnUse) {
+            $column = (new \MySqlMemory\Plan\ConstantTables($this->compiler->facts))->column($node);
+
+            return $tabled && $column?->depth === 0;
+        }
+        if ($node instanceof WindowFunction || $node instanceof DefaultOfColumn || $node instanceof InsertedColumn || $node instanceof Query) {
             return false;
         }
         $children = [];
@@ -121,7 +143,7 @@ final class EmptyProjection
             }
         });
         foreach ($children as $child) {
-            if (!$this->readable($child, $aggregated)) {
+            if (!$this->readable($child, $aggregated, $tabled)) {
                 return false;
             }
         }
