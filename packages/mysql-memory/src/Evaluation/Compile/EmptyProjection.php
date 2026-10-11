@@ -93,6 +93,9 @@ final class EmptyProjection
         }
         $constant = $this->compiler->constancy($node) === Constancy::Resolved;
         $old = $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        if ($old && $constant && $value->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Date) {
+            return new \MySqlMemory\Evaluation\Subquery\CachedProjection($value, true, true);
+        }
         if ($old && !in_array($value->domain()->kind, [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String], true)) {
             return $value;
         }

@@ -83,13 +83,13 @@ final class RowComparison implements Evaluable
         $equal = false;
         foreach ($this->comparators as $index => $comparator) {
             $mode = $this->legacyValues ? $comparator->mode : null;
-            $first = $left === [] ? $this->left->value($index, $frame, $mode, $comparator->right->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null) : $left[$index];
-            $second = $right === [] ? $this->right->value($index, $frame, $mode, $comparator->left->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null) : $right[$index];
-            if (($first === null) !== ($second === null)) {
+            $first = $left === [] ? $this->left->value($index, $frame, $mode, $comparator->right->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null) : new ProjectionRead($left[$index]);
+            $second = $right === [] ? $this->right->value($index, $frame, $mode, $comparator->left->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null) : new ProjectionRead($right[$index]);
+            if ($first->isNull !== $second->isNull) {
                 return 0;
             }
-            $equal = $first === null;
-            if ($this->legacyValues && !$equal && $comparator->compare($first, $second, $frame->context) !== 0) {
+            $equal = $first->isNull;
+            if ($this->legacyValues && !$equal && $comparator->compare($first->value, $second->value, $frame->context) !== 0) {
                 return 0;
             }
         }

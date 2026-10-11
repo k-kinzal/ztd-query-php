@@ -92,7 +92,7 @@ final class SingleRow
     /**
      * Reads a retained projection expression after an empty result, in its query's input state.
      */
-    public function value(int $position, Frame $outer, ?Kind $mode = null, bool $nullOperand = false): int|float|string|null
+    public function value(int $position, Frame $outer, ?Kind $mode = null, bool $nullOperand = false): ProjectionRead
     {
         $frame = $this->frame ?? $outer->inner();
         if ($this->source !== null) {
@@ -102,6 +102,6 @@ final class SingleRow
 
         $value = $this->projection[$position];
 
-        return $mode !== null && $value instanceof CachedProjection ? $value->compared($frame, $this->repeated && $position === 0, $mode, $nullOperand) : $value->evaluate($frame);
+        return $mode !== null && $value instanceof CachedProjection ? $value->compared($frame, $this->repeated && $position === 0, $mode, $nullOperand) : new ProjectionRead($value->evaluate($frame));
     }
 }

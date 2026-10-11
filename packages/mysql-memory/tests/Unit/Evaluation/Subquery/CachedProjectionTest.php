@@ -102,7 +102,7 @@ final class CachedProjectionTest extends TestCase
         $first = $value->compared($frame, false, Kind::Integer, false);
         $again = $value->compared($frame, true, Kind::Integer, false);
 
-        self::assertSame([1, null, 1], [$first, $again, $value->evaluate($frame)]);
+        self::assertSame([1, null, 1], [$first->value, $again->value, $value->evaluate($frame)]);
     }
 
     public function testComparedDoesNotReadARuntimeSourceAfterItsSlotIsCleared(): void
@@ -113,6 +113,43 @@ final class CachedProjectionTest extends TestCase
         $first = $value->compared($frame, false, Kind::Double, false);
         $frame->row = [2];
 
-        self::assertSame([1, null, 1], [$first, $value->compared($frame, true, Kind::Double, false), $value->evaluate($frame)]);
+        self::assertSame([1, null, 1], [$first->value, $value->compared($frame, true, Kind::Double, false)->value, $value->evaluate($frame)]);
+    }
+
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerDateSources(): iterable
+    {
+        yield 'null cast' => ['CAST(NULL AS DATE)', 0];
+        yield 'invalid cast' => ["CAST('x' AS DATE)", 2];
+        yield 'null date' => ['DATE(NULL)', 0];
+        yield 'invalid date' => ["DATE('x')", 2];
+        yield 'invalid parsing' => ["STR_TO_DATE('x','%Y')", 2];
+        yield 'valid parsing' => ["STR_TO_DATE('2020','%Y')", 0];
+    }
+
+    #[DataProvider('providerDateSources')]
+    public function testComparedRetainsDateWarningsSeparatelyFromInitialNullInspection(string $expression, int $count): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query("SET sql_mode=''");
+        $result = $session->query('SELECT (SELECT ' . $expression . ',NULL FROM DUAL WHERE 0)<=> (NULL,NULL),(SELECT ' . $expression . ',NULL FROM DUAL WHERE 0)<=> (0,NULL) FROM (SELECT 1 UNION ALL SELECT 2) t')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '0'], ['1', '0']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertCount($count, $warnings->rows);
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testComparedKeepsNumericDateConversionAfterItsTemporalSlotIsCleared(string $version): void
+    {
+        $sql = "SELECT (SELECT DATE('2020-01-02'),NULL FROM DUAL WHERE 0)<=> (CAST('2020-01-02' AS DATE),NULL),(SELECT DATE('2020-01-02'),NULL FROM DUAL WHERE 0)<=> ('2020-01-02',NULL),(SELECT DATE('2020-01-02'),NULL FROM DUAL WHERE 0)<=> (20200102,NULL),(SELECT NULL,DATE('2020-01-02'),NULL FROM DUAL WHERE 0)<=> (NULL,CAST('2020-01-02' AS DATE),NULL) FROM (SELECT 1 UNION ALL SELECT 2) t";
+        $result = (new Instance($version))->connect()->query($sql)[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1', '1', '1'], ['0', '0', '1', '1']], $result->rows);
     }
 }
