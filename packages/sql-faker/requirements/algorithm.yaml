@@ -306,7 +306,7 @@ items:
     statement: 'The generator shall produce SQL that the selected database version accepts as syntactically valid.'
     evidence:
       -
-        selector: 'p:nth-of-type(16)'
+        selector: 'p:nth-of-type(20)'
         quote: 'Generated names and values are not coordinated with an existing schema. A query can refer to a missing table or column, apply a function to an incompatible type, or violate a database constraint. For example, generating SELECT price FROM products does not establish that products.price exists. Syntactic validity therefore does not guarantee successful execution.'
     design:
       -
@@ -323,7 +323,7 @@ items:
     statement: 'The generator shall generate a database state in which every generated statement is executable.'
     evidence:
       -
-        selector: 'p:nth-of-type(15)'
+        selector: 'p:nth-of-type(19)'
         quote: "SQL Faker's scope is generating SQL syntax. It does not generate a database state in which every resulting statement is executable."
     status: unsupported
     reason: "SQL Faker generates SQL syntax only; preparing a database for the statements is the caller's responsibility."
@@ -333,7 +333,7 @@ items:
     statement: 'The generator shall coordinate generated names and values with an existing schema.'
     evidence:
       -
-        selector: 'p:nth-of-type(16)'
+        selector: 'p:nth-of-type(20)'
         quote: 'Generated names and values are not coordinated with an existing schema. A query can refer to a missing table or column, apply a function to an incompatible type, or violate a database constraint. For example, generating SELECT price FROM products does not establish that products.price exists. Syntactic validity therefore does not guarantee successful execution.'
     status: unsupported
     reason: 'Names and values are not related to any schema. A generation plan can fix names and values, but SQL Faker does not read a schema.'
@@ -343,7 +343,7 @@ items:
     statement: 'The generator shall coordinate separately generated statements into one database scenario.'
     evidence:
       -
-        selector: 'p:nth-of-type(17)'
+        selector: 'p:nth-of-type(21)'
         quote: "Separate generated statements do not form a coordinated database scenario. Generating CREATE TABLE followed by INSERT does not make the INSERT use that table's columns. Likewise, generation does not establish the session state, prepared statements, permissions, or transaction history that another statement may require."
     status: unsupported
     reason: 'Each generation is independent of earlier ones, including the session state, prepared statements, permissions and transactions they would require.'
@@ -353,8 +353,40 @@ items:
     statement: 'The generator shall target a particular result set or database effect.'
     evidence:
       -
-        selector: 'p:nth-of-type(18)'
+        selector: 'p:nth-of-type(22)'
         quote: "Generation does not target a particular result set or database effect. A valid SELECT may return no rows, and an UPDATE or DELETE may affect none. SQL Faker does not ensure that a query expresses an application's intended logic or produces specified values."
     status: unsupported
     reason: 'Generation does not execute statements and has no model of their results.'
     category: limitations
+  -
+    id: ALG-SEED-001
+    statement: 'When a grammar corpus is built, the corpus builder shall encode the selected version context recipes as reproducible BytePlanCompiler inputs.'
+    evidence:
+      -
+        selector: 'p:nth-of-type(15)'
+        quote: 'From the package directory, build or replay the committed grammar corpus with:'
+      -
+        selector: 'p:nth-of-type(16)'
+        quote: "Each seed records choices for BytePlanCompiler under GenerationPlan::fromRule('simple_statement_or_begin')->requiringNonEmpty(). The builder first visits every reachable alternative with a short terminating derivation. It then adds the version's recipes from seeds/contexts/, when present. Each recipe names a target alternative and the original alternative ordinals to choose for successive occurrences of enclosing or sibling rules. These choices are encoded in the seed itself; replay needs no recipe or special generation settings. MySQL operator-mode supplements live under modes/HIGH_NOT_PRECEDENCE/ and modes/PIPES_AS_CONCAT/; their manifests record the required mode. The builder reads their target recipes from seeds/modes/. Replay uses the same byte plan with the corresponding provider flag, and execution must enable that mode in the database session."
+      -
+        selector: 'p:nth-of-type(17)'
+        quote: 'Contexts matter because structural rewrites can replace a selected alternative. For example, a SUPER privilege needs a GRANT ... ON ... context to remain a privilege, and a stored-program RETURN needs a function context to remain a return statement. Recipes supplement the short derivations without removing their seeds or changing the coverage denominator. The build fails if a recipe references an unavailable alternative or fails to reach its target.'
+    design:
+      -
+        url: 'https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker/bin/seeds.php'
+        text: 'Verified by rebuilding the corpus with bin/seeds.php build and replaying it with bin/seeds.php check. The Seeds CI job checks every committed corpus. Context targets are required to remain reachable in their replayed byte plans.'
+    labels:
+      - corpus
+    category: seeds
+  -
+    id: ALG-SEED-002
+    statement: 'The grammar coverage report shall distinguish reached production choices from alternatives preserved through generation.'
+    evidence:
+      -
+        selector: 'p:nth-of-type(18)'
+        quote: 'The manifest distinguishes selected alternatives (reached) from original alternatives retained through generation (emitted). Neither proves that a server exercised an alternative: lexing can change token identity, and rewrites can introduce other alternatives. To measure executed syntax, parse the emitted SQL with the matching dialect, map its concrete productions back to the inventory, and associate that evidence with the execution result.'
+    tests:
+      -
+        runner: unit
+        target: 'Tests\Unit\Generation\Coverage\GrammarCoverageTest::testSnapshotSeparatesReachedFromEmittedAndKeepsTheFullDenominator'
+    category: seeds

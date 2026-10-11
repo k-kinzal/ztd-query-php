@@ -86,12 +86,15 @@ function seedsParseArguments(array $argv): array
  *
  * @return array{string, string, MySqlProvider|PostgreSqlProvider|SqliteProvider}
  */
-function seedsDialect(string $tag, GrammarCoverage $coverage): array
+function seedsDialect(string $tag, GrammarCoverage $coverage, string $mode = ''): array
 {
+    if (!in_array($mode, ['', 'HIGH_NOT_PRECEDENCE', 'PIPES_AS_CONCAT'], true) || ($mode !== '' && !str_starts_with($tag, 'mysql-'))) {
+        throw new InvalidArgumentException("Unsupported corpus SQL mode: $mode");
+    }
     $faker = Factory::create();
     if (str_starts_with($tag, 'mysql-')) {
         $root = version_compare(substr($tag, strlen('mysql-')), '8.0.0', '<') ? 'statement' : 'simple_statement_or_begin';
-        return ['mysql', $root, new MySqlProvider($faker, $tag, $coverage)];
+        return ['mysql', $root, new MySqlProvider($faker, $tag, $coverage, $mode === 'HIGH_NOT_PRECEDENCE', $mode === 'PIPES_AS_CONCAT')];
     }
     if (str_starts_with($tag, 'pg-')) {
         return ['pg', 'stmt', new PostgreSqlProvider($faker, $tag, $coverage)];
@@ -309,7 +312,7 @@ function seedsSynthesize(GrammarCoverage $coverage, PlanBuilder $planner, Closur
 /**
  * Visits productions in grammar order, then adds context recipes that preserve alternatives through rewriting.
  */
-function seedsBuildCorpus(GrammarCoverage $coverage, PlanBuilder $planner, Closure $generate, string $root, int $cap, array $contexts = []): array
+function seedsBuildCorpus(GrammarCoverage $coverage, PlanBuilder $planner, Closure $generate, string $root, int $cap, array $contexts = [], bool $complete = true): array
 {
     $inventory = $coverage->inventory();
     $analyzer = new TerminationAnalyzer($inventory->grammar);
@@ -320,7 +323,7 @@ function seedsBuildCorpus(GrammarCoverage $coverage, PlanBuilder $planner, Closu
     $covered = [];
     $seeds = [];
     $failures = [];
-    foreach ($inventory->grammar->ruleMap as $rule => $definition) {
+    foreach ($complete ? $inventory->grammar->ruleMap : [] as $rule => $definition) {
         foreach (isset($reachable[$rule]) ? $definition->alternatives : [] as $index => $production) {
             $id = $inventory->id($rule, $production, $index);
             if (isset($covered[$id])) {
@@ -405,7 +408,7 @@ function seedsFiles(array $corpus): array
     return array_combine(array_column($files, 0), array_column($files, 1));
 }
 
-function seedsManifest(string $database, string $tag, array $corpus): string
+function seedsManifest(string $database, string $tag, array $corpus, string $mode = ''): string
 {
     $seeds = [];
     foreach (seedsFiles($corpus) as $name => $seed) {
@@ -430,10 +433,13 @@ function seedsManifest(string $database, string $tag, array $corpus): string
         ],
         'seeds' => $seeds,
     ];
+    if ($mode !== '') {
+        $manifest['contract']['sqlMode'] = $mode;
+    }
     return json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . "\n";
 }
 
-function seedsSummary(string $tag, array $corpus): void
+function seedsSummary(string $tag, array $corpus, bool $complete = true): void
 {
     $total = count($corpus['targets']);
     $reached = count(seedsCovered($corpus, 'reached'));
@@ -450,20 +456,35 @@ function seedsSummary(string $tag, array $corpus): void
         $total === 0 ? 0 : 100 * $emitted / $total,
         seedsMaximumBudget($corpus),
     );
-    foreach (seedsUnreached($corpus) as $label) {
+    foreach ($complete ? seedsUnreached($corpus) : [] as $label) {
         printf("  unreached: %s%s\n", $label, isset($corpus['failures'][$label]) ? ' (' . $corpus['failures'][$label] . ')' : '');
     }
 }
 
 function seedsBuild(string $tag, string $directory, int $cap): bool
 {
-    $coverage = new GrammarCoverage();
-    [$database, $root, $provider] = seedsDialect($tag, $coverage);
-    fwrite(STDERR, "Building seeds for $tag from $root...\n");
     $recipe = dirname(__DIR__) . '/seeds/contexts/' . $tag . '.json';
     $contexts = is_file($recipe) ? json_decode(file_get_contents($recipe), true, 512, JSON_THROW_ON_ERROR) : [];
-    $corpus = seedsBuildCorpus($coverage, $provider->planner(), $provider->generate(...), $root, $cap, $contexts);
-    $target = "$directory/$database/$tag";
+    $recipe = dirname(__DIR__) . '/seeds/modes/' . $tag . '.json';
+    $modes = is_file($recipe) ? json_decode(file_get_contents($recipe), true, 512, JSON_THROW_ON_ERROR) : [];
+    $ok = seedsBuildProfile($tag, $directory, $cap, '', $contexts);
+    foreach ($modes as $mode => $contexts) {
+        $ok = seedsBuildProfile($tag, $directory, $cap, $mode, $contexts) && $ok;
+    }
+    return $ok;
+}
+
+/**
+ * Writes one corpus profile; mode supplements contain only their explicit context recipes.
+ */
+function seedsBuildProfile(string $tag, string $directory, int $cap, string $mode, array $contexts): bool
+{
+    $coverage = new GrammarCoverage();
+    [$database, $root, $provider] = seedsDialect($tag, $coverage, $mode);
+    $profile = $tag . ($mode === '' ? '' : '/modes/' . $mode);
+    fwrite(STDERR, "Building seeds for $profile from $root...\n");
+    $corpus = seedsBuildCorpus($coverage, $provider->planner(), $provider->generate(...), $root, $cap, $contexts, $mode === '');
+    $target = "$directory/$database/$profile";
     if (!is_dir($target) && !mkdir($target, 0777, true)) {
         fwrite(STDERR, "Cannot create $target\n");
         exit(1);
@@ -474,23 +495,36 @@ function seedsBuild(string $tag, string $directory, int $cap): bool
     foreach (seedsFiles($corpus) as $name => $seed) {
         file_put_contents("$target/$name.txt", $seed['input']);
     }
-    file_put_contents("$directory/$database/$tag.json", seedsManifest($database, $tag, $corpus));
-    seedsSummary($tag, $corpus);
-    return seedsUnreached($corpus) === [];
+    file_put_contents($target . '.json', seedsManifest($database, $tag, $corpus, $mode));
+    seedsSummary($profile, $corpus, $mode === '');
+    return $mode !== '' || seedsUnreached($corpus) === [];
 }
 
 function seedsCheck(string $tag, string $directory): bool
 {
+    $ok = seedsCheckProfile($tag, $directory);
+    foreach (glob("$directory/mysql/$tag/modes/*", GLOB_ONLYDIR) ?: [] as $profile) {
+        $ok = seedsCheckProfile($tag, $directory, basename($profile)) && $ok;
+    }
+    return $ok;
+}
+
+/**
+ * Replays a profile with its recorded operator modes, without requiring recipe files.
+ */
+function seedsCheckProfile(string $tag, string $directory, string $mode = ''): bool
+{
     $coverage = new GrammarCoverage();
-    [$database, $root, $provider] = seedsDialect($tag, $coverage);
-    $source = "$directory/$database/$tag";
+    [$database, $root, $provider] = seedsDialect($tag, $coverage, $mode);
+    $profile = $tag . ($mode === '' ? '' : '/modes/' . $mode);
+    $source = "$directory/$database/$profile";
     $files = glob("$source/*.txt") ?: [];
     if ($files === []) {
         fwrite(STDERR, "No seeds found in $source\n");
         return false;
     }
     sort($files);
-    fwrite(STDERR, 'Replaying ' . count($files) . " seeds for $tag from $root...\n");
+    fwrite(STDERR, 'Replaying ' . count($files) . " seeds for $profile from $root...\n");
     $planner = $provider->planner();
     $constraints = GenerationPlan::fromRule($root)->requiringNonEmpty();
     $seeds = [];
@@ -504,8 +538,8 @@ function seedsCheck(string $tag, string $directory): bool
         }
     }
     $corpus = ['root' => $root, 'seeds' => $seeds, 'targets' => seedsTargets($coverage->inventory(), $root), 'failures' => []];
-    seedsSummary($tag, $corpus);
-    return $broken === 0 && seedsUnreached($corpus) === [];
+    seedsSummary($profile, $corpus, $mode === '');
+    return $broken === 0 && ($mode !== '' || seedsUnreached($corpus) === []);
 }
 
 $options = seedsParseArguments($argv);

@@ -39,7 +39,7 @@ final class RewriteDefinitions
     /**
      * Each rule runs once, before lexical candidates are constructed.
      */
-    public function create(string $version = 'mysql-8.4.7'): TokenRewriter
+    public function create(string $version = 'mysql-8.4.7', bool $highNotPrecedence = false, bool $pipesAsConcat = false): TokenRewriter
     {
         $defaultTerminal = in_array($version, ['mysql-5.6.51', 'mysql-5.7.44'], true) ? 'DEFAULT' : 'DEFAULT_SYM';
         $partitionScalar = $defaultTerminal === 'DEFAULT' ? 'part_value_expr_item' : 'part_value_item';
@@ -48,9 +48,7 @@ final class RewriteDefinitions
                 'SUBJECT_SYM' => 'subject', 'ISSUER_SYM' => 'issuer', 'CIPHER_SYM' => 'cipher',
             ], 'AND_SYM', 'sql_yacc.yy:require_list_element'),
             new UniqueOptionRule('start', 'start_transaction_option', ['READ_SYM' => 'access-mode'], ',', 'sql_yacc.yy:start'),
-            new TerminalMappingRule('not', 'NOT2_SYM', 'NOT_SYM', 'sql/sql_lex.cc:find_keyword:default-mode'),
-            new TerminalMappingRule('not2', 'NOT2_SYM', '!', 'sql/sql_lex.cc:find_keyword:default-mode'),
-            new ConcatenationRule(),
+            $this->operators($highNotPrecedence, $pipesAsConcat),
             new SubqueryContextRule(),
             new QuantifiedComparisonRule(),
             new TableValueConstructorRule(),
@@ -87,6 +85,20 @@ final class RewriteDefinitions
             new ExpressionGroupingRule(['expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr', $partitionScalar], 'sql_yacc.yy:simple_expr:parenthesized-operands'),
             new ListValueRule($partitionScalar),
             new ValueArityRule(),
+        );
+    }
+
+    /**
+     * Selects operator spellings that the requested session modes tokenize as intended.
+     */
+    public function operators(bool $highNotPrecedence, bool $pipesAsConcat): TokenRewriter
+    {
+        return new TokenRewriter(
+            $highNotPrecedence ? new TokenRewriter() : new TokenRewriter(
+                new TerminalMappingRule('not', 'NOT2_SYM', 'NOT_SYM', 'sql/sql_lex.cc:find_keyword:default-mode'),
+                new TerminalMappingRule('not2', 'NOT2_SYM', '!', 'sql/sql_lex.cc:find_keyword:default-mode'),
+            ),
+            $pipesAsConcat ? new TerminalMappingRule('or', 'OR2_SYM', 'OR_SYM', 'mysql.pipes-as-concat:logical-or') : new ConcatenationRule(),
         );
     }
 }

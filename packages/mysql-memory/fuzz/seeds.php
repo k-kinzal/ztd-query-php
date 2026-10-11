@@ -34,16 +34,19 @@ if ($report === false) {
 }
 $corpus = new SeedCorpus($grammar);
 [$target, $grammar, $server] = (new Servers())->start(getenv('MYSQL_MEMORY_EMULATE') !== '0', true);
-foreach ($corpus->inputs($directory) as $index => $seed) {
-    $comparison = Lifecycle::handles($seed->sql) ? (new Lifecycle())->compare($seed->sql, $target->version) : $target->compare($seed->sql);
+$index = 0;
+foreach ($corpus->inputs($directory) as $seed) {
+    $sql = $seed->executionSql();
+    $comparison = Lifecycle::handles($sql) ? (new Lifecycle())->compare($sql, $target->version) : $target->compare($sql);
     $status = $corpus->record($seed, $comparison);
-    $row = ['index' => $index, 'file' => $seed->file, 'inputHex' => bin2hex($seed->input), 'sqlHex' => bin2hex($seed->sql), 'status' => $status, 'difference' => $comparison->difference, 'contracts' => $comparison->contracts, 'referenceDifference' => $comparison->referenceDifference, 'reached' => $seed->reached, 'emitted' => $seed->emitted, 'parsed' => $seed->parsed];
+    $row = ['index' => $index, 'file' => $seed->file, 'inputHex' => bin2hex($seed->input), 'sqlHex' => bin2hex($seed->sql), 'sqlMode' => $seed->mode, 'executionSqlHex' => bin2hex($sql), 'status' => $status, 'difference' => $comparison->difference, 'contracts' => $comparison->contracts, 'referenceDifference' => $comparison->referenceDifference, 'reached' => $seed->reached, 'emitted' => $seed->emitted, 'parsed' => $seed->parsed];
     if (fwrite($report, json_encode($row, JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR) . "\n") === false || !fflush($report)) {
         throw new RuntimeException('Cannot append to report ' . $prefix);
     }
     if (($index + 1) % 50 === 0) {
         echo ($index + 1) . ' inputs: ' . json_encode($corpus->counts, JSON_THROW_ON_ERROR) . "\n";
     }
+    $index++;
 }
 fclose($report);
 $summary = $corpus->summary();

@@ -81,13 +81,37 @@ final class SeedCorpus
      */
     public function inputs(string $directory): Generator
     {
-        $files = glob($directory . '/*.txt');
+        yield from $this->profileInputs($directory);
+        $profiles = glob($directory . '/modes/*', GLOB_ONLYDIR);
+        if ($profiles === false) {
+            throw new RuntimeException('Cannot read SQL mode profiles in ' . $directory);
+        }
+        foreach ($profiles as $profile) {
+            yield from $this->profileInputs($profile, basename($profile));
+        }
+    }
+
+    /**
+     * Replays a profile directory or individual seed with the explicitly supplied lexical mode.
+     *
+     * @return Generator<int, Seed>
+     * @throws RuntimeException When the profile or an input is unavailable
+     * @throws \SqlParser\Lexer\LexicalException When generated SQL cannot be tokenized
+     * @throws \SqlParser\Parser\SyntaxException When generated SQL cannot be parsed
+     */
+    public function profileInputs(string $directory, string $mode = ''): Generator
+    {
+        if (!in_array($mode, ['', 'HIGH_NOT_PRECEDENCE', 'PIPES_AS_CONCAT'], true)) {
+            throw new RuntimeException('Unsupported corpus SQL mode: ' . $mode);
+        }
+        $files = is_file($directory) ? [$directory] : glob($directory . '/*.txt');
         if ($files === false || $files === []) {
             throw new RuntimeException('No sql-faker seeds found in ' . $directory);
         }
         sort($files);
-        $planner = $this->provider->planner();
-        $parsed = new ParsedCoverage(new \SqlParser\MySql\MySqlParser($this->grammar), $this->coverage->inventory());
+        $provider = $mode === '' ? $this->provider : new MySqlProvider(Factory::create(), $this->grammar, $this->coverage, $mode === 'HIGH_NOT_PRECEDENCE', $mode === 'PIPES_AS_CONCAT');
+        $planner = $provider->planner();
+        $parsed = new ParsedCoverage(new \SqlParser\MySql\MySqlParser($this->grammar, \SqlParser\MySql\SqlMode::fromString($mode)), $this->coverage->inventory());
         $constraints = GenerationPlan::fromRule($this->root)->requiringNonEmpty();
         $compiler = new BytePlanCompiler();
         foreach ($files as $file) {
@@ -95,11 +119,12 @@ final class SeedCorpus
             if ($input === false) {
                 throw new RuntimeException('Cannot read seed ' . $file);
             }
-            $sql = $this->provider->generate($compiler->compile($input, $planner, $constraints));
+            $sql = $provider->generate($compiler->compile($input, $planner, $constraints));
             $trace = $this->coverage->lastGeneration();
             assert($trace !== null);
 
-            yield new Seed(basename($file), $input, $sql, $trace['reachedIds'], $trace['emittedIds'], $parsed->ids($sql));
+            $name = ($mode === '' ? '' : 'modes/' . $mode . '/') . basename($file);
+            yield new Seed($name, $input, $sql, $trace['reachedIds'], $trace['emittedIds'], $parsed->ids($sql), $mode);
         }
     }
 
