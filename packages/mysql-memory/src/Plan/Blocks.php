@@ -73,6 +73,7 @@ final class Blocks
         $compiler = $this->planner->compiler;
         $scope = new Scope($outer);
         $input = $select->from === null ? new SingleRow() : $this->planner->relations->plan($select->from, $scope);
+        $input = (new JoinComparisons($this->planner))->plan($input, $select, $scope);
         $filter = $select->where === null ? null : $this->where($input, $select->where, $scope);
         $input = (new Locking($this->planner))->lock($select, $scope, $input, $filter);
         $grouping = new Grouping($this->planner);

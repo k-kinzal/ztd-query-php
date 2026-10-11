@@ -13,7 +13,7 @@ use Transliterator;
 /**
  * The order of one collation: the comparison and the equality key of its strings.
  *
- * Untailored Unicode 9.0 and general_ci use the same weights as WEIGHT_STRING. Other Unicode
+ * Untailored Unicode 5.2, Unicode 9.0 and general_ci use the same weights as WEIGHT_STRING. Other Unicode
  * collations use ICU at their declared strength. Invalid UTF-8 falls back to byte comparison;
  * a multibyte character set other than UTF-8 is read in UTF-8.
  *
@@ -83,8 +83,9 @@ final class Ordering
         if ($leftWeight !== null && $rightWeight !== null) {
             if ($this->collation->padSpace) {
                 $length = max(strlen($leftWeight), strlen($rightWeight));
-                $leftWeight = str_pad($leftWeight, $length, "\0\x20");
-                $rightWeight = str_pad($rightWeight, $length, "\0\x20");
+                $padding = (new Weights())->character(' ', $this->collation);
+                $leftWeight = str_pad($leftWeight, $length, $padding);
+                $rightWeight = str_pad($rightWeight, $length, $padding);
             }
             return strcmp($leftWeight, $rightWeight) <=> 0;
         }
@@ -102,13 +103,22 @@ final class Ordering
     }
 
     /**
-     * Answers a key that is equal for two strings exactly when they compare equal.
+     * Answers an equality key, or the hash key used by a temporary table or hash join.
+     *
+     * Hash keys remove source padding before weighting. Comparison keys also remove padding
+     * weights before trailing ignorable characters. These differ in legacy UCA collations.
      */
-    public function key(string $text): string
+    public function key(string $text, bool $hash = false): string
     {
         $text = $this->padded($this->unicode($text));
         $weight = $this->unicodeWeights($text);
         if ($weight !== null) {
+            if ($this->collation->padSpace && !$hash) {
+                $padding = (new Weights())->character(' ', $this->collation);
+                while (str_ends_with($weight, $padding)) {
+                    $weight = substr($weight, 0, -strlen($padding));
+                }
+            }
             return $weight;
         }
         if ($this->collator !== null && mb_check_encoding($text, 'UTF-8')) {
@@ -133,6 +143,9 @@ final class Ordering
         $levels = $unicode->levels($this->collation->name);
         if ($levels > 0) {
             return $unicode->text($text === '' ? [] : mb_str_split($text, 1, 'UTF-8'), $levels);
+        }
+        if (str_ends_with($this->collation->name, '_unicode_520_ci')) {
+            return (new Weights())->text($text, Collation::known('utf8mb4_unicode_520_ci'));
         }
         if ($this->collation->charset->maxLength > 1 && str_ends_with($this->collation->name, '_general_ci')) {
             return (new Weights())->text($text, Collation::known('utf8mb4_general_ci'));

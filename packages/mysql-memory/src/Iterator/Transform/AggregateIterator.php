@@ -59,7 +59,7 @@ final class AggregateIterator implements RowIterator
             foreach ($this->path->groups as $group) {
                 $value = $group->evaluate($frame);
                 $values[] = $value;
-                $key .= Order::key($value, $group->domain()) . "\0";
+                $key .= Order::key($value, $group->domain(), !$this->path->sorted) . "\0";
             }
             if (!isset($groups[$key])) {
                 $groups[$key] = [$row, $values, array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates), []];

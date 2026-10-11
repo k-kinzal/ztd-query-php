@@ -20,8 +20,8 @@ final class UnicodeOrderingTest extends TestCase
     public static function providerStatements(): iterable
     {
         $pairs = [['ß', 'ss'], ['ß', 's'], ['é', "e\u{301}"], ['l·', 'l'], ["и\u{306}", 'й'], ['🫠', '😀'], ["\u{FDFA}", 'صلى الله عليه وسلم'], ['a', "a\0"]];
-        $texts = ['ß', 's', 'ss', 'e', 'é', "e\u{301}", 'l', 'l·', "и\u{306}", 'й', '😀', '🫠', 'a ', 'A', 'a', '', "a\0", "\0"];
-        foreach (['utf8mb4_general_ci', 'utf8mb4_0900_ai_ci', 'utf8mb4_0900_as_ci', 'utf8mb4_0900_as_cs'] as $collation) {
+        $texts = ['ß', 's', 'ss', 'e', 'é', "e\u{301}", 'l', 'l·', "и\u{306}", 'й', '😀', '🫠', 'a ', 'A', 'a', '', "a\0", "\0", "a \0"];
+        foreach (['utf8mb4_general_ci', 'utf8mb4_0900_ai_ci', 'utf8mb4_0900_as_ci', 'utf8mb4_0900_as_cs', 'utf8mb4_unicode_520_ci'] as $collation) {
             $expressions = [];
             foreach ($pairs as $index => [$left, $right]) {
                 $left = "_utf8mb4 X'" . bin2hex($left) . "' COLLATE " . $collation;
@@ -43,6 +43,13 @@ final class UnicodeOrderingTest extends TestCase
             yield $collation . ' unique values' => ['CREATE TABLE unicode_unique (v VARCHAR(64) CHARACTER SET utf8mb4 COLLATE ' . $collation . " UNIQUE); INSERT INTO unicode_unique VALUES (_utf8mb4 X'C39F'); INSERT INTO unicode_unique VALUES ('s'); SHOW WARNINGS"];
         }
         yield 'wide general collation' => ["SELECT STRCMP(CONVERT(_utf8mb4 X'C39F' USING utf16) COLLATE utf16_general_ci, CONVERT('s' USING utf16)), STRCMP(CONVERT(_utf8mb4 X'C3A9' USING ucs2) COLLATE ucs2_general_ci, CONVERT(_utf8mb4 X'65CC81' USING ucs2))"];
+        $legacy = "CREATE TABLE unicode_keys (id INT PRIMARY KEY,v VARCHAR(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci); INSERT INTO unicode_keys VALUES (0,'a'),(1,_utf8mb4 X'612000'),(2,'a '),(3,NULL); ";
+        yield 'UCA 5.2 constant lookup' => [$legacy . 'SELECT COUNT(*) FROM unicode_keys a JOIN unicode_keys b ON a.v=b.v WHERE a.id=0'];
+        yield 'UCA 5.2 indexed lookup' => [$legacy . 'ALTER TABLE unicode_keys ADD KEY(v); SELECT COUNT(*) FROM unicode_keys a JOIN unicode_keys b ON a.v=b.v; SELECT MIN(id),COUNT(*) FROM unicode_keys GROUP BY v ORDER BY v'];
+        yield 'UCA 5.2 short hash key' => [$legacy . 'SELECT COUNT(*) FROM unicode_keys a JOIN unicode_keys b ON a.v=b.v'];
+        yield 'UCA 5.2 wide hash key' => [str_replace('VARCHAR(32)', 'VARCHAR(33)', $legacy) . 'SELECT COUNT(*) FROM unicode_keys a JOIN unicode_keys b ON a.v=b.v'];
+        yield 'UCA 5.2 null-safe hash key' => [str_replace('VARCHAR(32)', 'VARCHAR(33)', $legacy) . 'SELECT COUNT(*) FROM unicode_keys a JOIN unicode_keys b ON a.v<=>b.v'];
+        yield 'UCA 5.2 indexed inequality' => [$legacy . 'SELECT COUNT(*) FROM unicode_keys a JOIN unicode_keys b ON a.v<=>b.v AND a.id<=b.id'];
     }
 
     #[DataProvider('providerStatements')]

@@ -42,9 +42,9 @@ final class Order
     }
 
     /**
-     * Answers a key equal for two values of a domain exactly when they compare equal.
+     * Answers a comparison key, or a hash key for a temporary table or hash join.
      */
-    public static function key(int|float|string|null $value, Domain $domain): string
+    public static function key(int|float|string|null $value, Domain $domain, bool $hash = false): string
     {
         if ($value === null) {
             return "\0N";
@@ -56,7 +56,7 @@ final class Order
             Kind::Decimal => 'd' . self::decimal((string) $value),
             Kind::Double => 'f' . ((float) $value === 0.0 ? '0' : Real::format((float) $value)),
             Kind::Json => 'j' . JsonNode::load((string) $value)->key(),
-            Kind::String => 's' . Ordering::of($domain->collation)->key((string) $value),
+            Kind::String => 's' . Ordering::of($domain->collation)->key((string) $value, $hash),
             Kind::Date, Kind::Time, Kind::DateTime, Kind::Null => 't' . $value,
         };
     }

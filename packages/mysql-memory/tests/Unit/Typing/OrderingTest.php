@@ -102,6 +102,17 @@ final class OrderingTest extends TestCase
         self::assertSame('0045', bin2hex((string) Ordering::of(Collation::known('utf16_general_ci'))->unicodeWeights('é')));
     }
 
+    public function testKeyRemovesPadWeightsBeforeTrailingIgnorableCharacters(): void
+    {
+        $ordering = Ordering::of(Collation::known('utf8mb4_unicode_520_ci'));
+
+        self::assertSame($ordering->key('a'), $ordering->key("a \0"));
+        self::assertNotSame($ordering->key('a', true), $ordering->key("a \0", true));
+        self::assertSame(0, $ordering->compare('a', "a \0"));
+        self::assertSame($ordering->key('ß'), $ordering->key('ss'));
+        self::assertNotSame($ordering->key('가'), $ordering->key("\u{1100}\u{1161}"));
+    }
+
     public function testPaddedRemovesTrailingSpacesOfAPadSpaceCollation(): void
     {
         self::assertSame(['a', 'a  '], [Ordering::of(Collation::known('utf8mb4_bin'))->padded('a  '), Ordering::of(Collation::known('utf8mb4_0900_bin'))->padded('a  ')]);

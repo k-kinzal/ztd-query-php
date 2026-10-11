@@ -30,6 +30,7 @@ final class Compare implements Evaluable
      * @param Comparator $comparator How the operands compare
      * @param Domain $domain The domain of the truth value
      * @param bool $nullFromOperands Whether IS NULL tells whether the comparison is NULL from the nullness of the operands alone
+     * @param bool $hashed Whether a string join equality first compares the operands' hash keys
      */
     public function __construct(
         public readonly ComparisonOperator $operator,
@@ -38,6 +39,7 @@ final class Compare implements Evaluable
         public readonly Comparator $comparator,
         public readonly Domain $domain,
         public readonly bool $nullFromOperands = false,
+        public readonly bool $hashed = false,
     ) {
     }
 
@@ -64,6 +66,12 @@ final class Compare implements Evaluable
         if ($this->operator === ComparisonOperator::NullSafeEqual) {
             if ($left === null || $right === null) {
                 return $left === null && $right === null ? 1 : 0;
+            }
+        }
+        if ($this->hashed && $right !== null) {
+            $ordering = \MySqlMemory\Typing\Ordering::of($this->comparator->collation);
+            if ($ordering->key(Comparator::text($left, $this->comparator->left, $this->comparator->collation), true) !== $ordering->key(Comparator::text($right, $this->comparator->right, $this->comparator->collation), true)) {
+                return 0;
             }
         }
         $order = $this->comparator->compare($left, $right, $frame->context);

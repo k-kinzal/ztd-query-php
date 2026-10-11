@@ -96,6 +96,7 @@ Commands of statements that need what an emulator does not have (files, plugins,
 
 - `Plan\Blocks` plans one query block in the order the server applies its clauses: `FROM`, `WHERE`, grouping, `HAVING`, the select list, `DISTINCT`, `ORDER BY` and `LIMIT`.
 - `Plan\Relations` plans the `FROM` clause: base tables, derived tables (`LATERAL` ones inside the frame of the block), common tables, views, joins with `ON`, `USING` and `NATURAL`.
+- `Plan\JoinComparisons` preserves the hash-key checks of unindexed string equijoins on modern releases while retaining nested-loop execution. Index and constant lookups retain ordinary comparisons; legacy UCA padding can make these observably different.
 - `Plan\Grouping` plans `GROUP BY`, the aggregates, `WITH ROLLUP` and `GROUPING()`.
 - `Plan\Recursion` plans a recursive common table expression as a nonrecursive part and a part that reads the rows of the last iteration.
 - `Plan\Views` plans a reference to a view as its query read like a derived table, and decides what the column metadata reports for it.
