@@ -79,8 +79,8 @@ final class EmptyProjection
     }
 
     /**
-     * Retains legacy constants and runtime projections read by a MySQL 5.7 empty row.
-     * The first runtime projection loses its comparison value after the first read; later slots retain it.
+     * Retains legacy empty projections independently of their comparison state.
+     * MySQL 5.6 preserves computed sources for NULL inspection; direct column and variable slots clear on reuse.
      */
     public function retain(Evaluable $value, \SqlSemantics\Statement\Scalar $node): Evaluable
     {
@@ -89,14 +89,13 @@ final class EmptyProjection
         }
         $constant = $this->compiler->constancy($node) === Constancy::Resolved;
         $old = $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
-        if (!$constant && $old) {
-            return $value;
-        }
         if ($old && !in_array($value->domain()->kind, [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String], true)) {
             return $value;
         }
+        $direct = $node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable || $node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment
+            || $this->compiler->facts->scalar($node)->resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
-        return new \MySqlMemory\Evaluation\Subquery\CachedProjection($value, $constant);
+        return new \MySqlMemory\Evaluation\Subquery\CachedProjection($value, $constant || ($old && !$direct));
     }
 
     /**

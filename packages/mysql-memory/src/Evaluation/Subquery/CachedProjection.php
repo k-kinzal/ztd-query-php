@@ -18,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * that source. NULL sources and their diagnostics are retained too. Differential tests cover
  * the source kinds, comparison kinds, output positions and SQL modes. MySQL 5.7 also
  * clears the first runtime projection without repeating its effects.
+ * MySQL 5.6 retains computed sources for typed inspection while direct runtime slots clear.
  *
  * @visibility MySqlMemory\Evaluation
  */
@@ -25,9 +26,9 @@ final class CachedProjection implements Evaluable
 {
     /**
      * @param Evaluable $value The retained expression
-     * @param bool $constant Whether resolution fixed the source and permits retaining a converted value
+     * @param bool $inspectSource Whether a repeated comparison can still inspect the retained source or its conversion
      */
-    public function __construct(public readonly Evaluable $value, public readonly bool $constant = true)
+    public function __construct(public readonly Evaluable $value, public readonly bool $inspectSource = true)
     {
     }
 
@@ -55,11 +56,11 @@ final class CachedProjection implements Evaluable
     }
 
     /**
-     * Reads the cleared comparison slot or its retained constant conversion after an empty row is reused.
+     * Reads the cleared comparison slot or its retained source conversion after an empty row is reused.
      */
     public function compared(Frame $frame, bool $repeated, Kind $mode, bool $nullOperand): int|float|string|null
     {
-        if ($repeated && !$this->constant) {
+        if ($repeated && !$this->inspectSource) {
             return null;
         }
         $value = $this->evaluate($frame);

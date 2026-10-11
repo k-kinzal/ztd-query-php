@@ -52,6 +52,12 @@ final class RepeatedEmptyRowTest extends TestCase
         yield 'second null constant warnings enabled' => ["SET sql_mode='ERROR_FOR_DIVISION_BY_ZERO'; SELECT id,(SELECT NULL,1/0 FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t2 ORDER BY id"];
         yield 'second conversion warnings' => ["SELECT id,(SELECT NULL,CAST('x' AS SIGNED) FROM DUAL WHERE 0) <=> (NULL,0) AS n FROM t2 ORDER BY id"];
         yield 'second assignment' => ['SET @v=0; SELECT id,(SELECT NULL,@v:=@v+1 FROM DUAL WHERE 0) <=> (NULL,1) AS n,@v FROM t2 ORDER BY id'];
+        foreach (['(t1.a)', 't1.a+1', 'CAST(t1.a AS DECIMAL(12,2))', 't1.a+0e0', 'CONCAT(t1.a)', 'COALESCE(t1.a,0)'] as $expression) {
+            foreach (['', ' WHERE id>=3'] as $filter) {
+                yield 'runtime kinds ' . $expression . $filter => ['SELECT id,(SELECT ' . $expression . ',NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n,(SELECT ' . $expression . ',NULL FROM DUAL WHERE 0) <=> (0,NULL) AS i,(SELECT ' . $expression . ',NULL FROM DUAL WHERE 0) <=> (0.0,NULL) AS d,(SELECT ' . $expression . ',NULL FROM DUAL WHERE 0) <=> (0e0,NULL) AS r,(SELECT ' . $expression . ",NULL FROM DUAL WHERE 0) <=> ('0',NULL) AS s FROM t1" . $filter . ' ORDER BY id'];
+                yield 'runtime alias kinds ' . $expression . $filter => ['SELECT id,' . $expression . ' AS v,(SELECT v,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n,(SELECT v,NULL FROM DUAL WHERE 0) <=> (0,NULL) AS i,(SELECT v,NULL FROM DUAL WHERE 0) <=> (0.0,NULL) AS d,(SELECT v,NULL FROM DUAL WHERE 0) <=> (0e0,NULL) AS r,(SELECT v,NULL FROM DUAL WHERE 0) <=> (\'0\',NULL) AS s FROM t1' . $filter . ' ORDER BY id'];
+            }
+        }
     }
 
     #[DataProvider('providerStatements')]
