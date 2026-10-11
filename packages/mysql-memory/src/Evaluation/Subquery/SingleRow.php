@@ -102,6 +102,6 @@ final class SingleRow
 
         $value = $this->projection[$position];
 
-        return $mode !== null && $value instanceof CachedProjection ? $value->compared($frame, $this->repeated, $mode, $nullOperand) : $value->evaluate($frame);
+        return $mode !== null && $value instanceof CachedProjection ? $value->compared($frame, $this->repeated && $position === 0, $mode, $nullOperand) : $value->evaluate($frame);
     }
 }

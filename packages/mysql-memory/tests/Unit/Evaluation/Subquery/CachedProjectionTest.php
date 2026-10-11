@@ -44,16 +44,16 @@ final class CachedProjectionTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{string, int}>
+     * @return iterable<string, array{string}>
      */
-    public static function providerWarningReads(): iterable
+    public static function providerLegacyReleases(): iterable
     {
-        yield 'MySQL 5.6 repeats NULL' => ['5.6.51', 2];
-        yield 'MySQL 5.7 retains NULL' => ['5.7.44', 1];
+        yield 'MySQL 5.6' => ['5.6.51'];
+        yield 'MySQL 5.7' => ['5.7.44'];
     }
 
-    #[DataProvider('providerWarningReads')]
-    public function testEvaluateKeepsConstantEmptyProjectionWarningsForTheRelease(string $version, int $count): void
+    #[DataProvider('providerLegacyReleases')]
+    public function testEvaluateKeepsConstantEmptyProjectionWarningsForTheRelease(string $version): void
     {
         $session = (new Instance($version))->connect();
         $session->query("SET sql_mode='ERROR_FOR_DIVISION_BY_ZERO'");
@@ -63,20 +63,7 @@ final class CachedProjectionTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1'], ['1']], $result->rows);
         self::assertInstanceOf(ResultSet::class, $warnings);
-        self::assertCount($count, $warnings->rows);
-    }
-
-    public function testEvaluateRepeatsNullProducingConstantsWhenRequested(): void
-    {
-        $session = (new Instance())->connect();
-        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0), [null]);
-        $value = new CachedProjection(new ColumnRead(Domain::integer(), 0), true);
-        $first = $value->evaluate($frame);
-        $frame->row = [20];
-        $again = $value->evaluate($frame);
-        $frame->row = [30];
-
-        self::assertSame([null, 20, 20], [$first, $again, $value->evaluate($frame)]);
+        self::assertCount(1, $warnings->rows);
     }
 
     /**

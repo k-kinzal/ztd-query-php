@@ -71,4 +71,16 @@ final class SingleRowTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '0']], $result->rows);
     }
+
+    public function testValuePreservesLaterConstantColumnsOnRepeatedEmptyReads(): void
+    {
+        $sql = 'SELECT (SELECT NULL,1 FROM DUAL WHERE 0) <=> (NULL,NULL), (SELECT NULL,1 FROM DUAL WHERE 0) <=> (NULL,1) FROM (SELECT 1 UNION ALL SELECT 2) t';
+        $older = (new Instance('5.6.51'))->connect()->query($sql)[0];
+        $later = (new Instance('5.7.44'))->connect()->query($sql)[0];
+
+        self::assertInstanceOf(ResultSet::class, $older);
+        self::assertInstanceOf(ResultSet::class, $later);
+        self::assertSame([['0', '1'], ['0', '1']], $older->rows);
+        self::assertSame($older->rows, $later->rows);
+    }
 }

@@ -45,6 +45,13 @@ final class RepeatedEmptyRowTest extends TestCase
         yield 'outer expression starts null' => ['SELECT id,(SELECT t1.a+1,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t1 WHERE id>=3 ORDER BY id'];
         yield 'outer alias starts null' => ['SELECT a+1 AS v,(SELECT v,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t1 WHERE id>=3 ORDER BY id'];
         yield 'null constant warnings enabled' => ["SET sql_mode='ERROR_FOR_DIVISION_BY_ZERO'; SELECT id,(SELECT 1/0,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t2 ORDER BY id"];
+        yield 'third constant column' => ['SELECT id,(SELECT NULL,NULL,1 FROM DUAL WHERE 0) <=> (NULL,NULL,1) AS n FROM t2 ORDER BY id'];
+        yield 'converted leading number' => ['SELECT id,(SELECT 1,1 FROM DUAL WHERE 0) <=> (1.0,1) AS n FROM t2 ORDER BY id'];
+        yield 'converted leading string' => ["SELECT id,(SELECT '1',1 FROM DUAL WHERE 0) <=> (1,1) AS n FROM t2 ORDER BY id"];
+        yield 'second string column' => ["SELECT id,(SELECT NULL,'1' FROM DUAL WHERE 0) <=> (NULL,'1') AS n FROM t2 ORDER BY id"];
+        yield 'second null constant warnings enabled' => ["SET sql_mode='ERROR_FOR_DIVISION_BY_ZERO'; SELECT id,(SELECT NULL,1/0 FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t2 ORDER BY id"];
+        yield 'second conversion warnings' => ["SELECT id,(SELECT NULL,CAST('x' AS SIGNED) FROM DUAL WHERE 0) <=> (NULL,0) AS n FROM t2 ORDER BY id"];
+        yield 'second assignment' => ['SET @v=0; SELECT id,(SELECT NULL,@v:=@v+1 FROM DUAL WHERE 0) <=> (NULL,1) AS n,@v FROM t2 ORDER BY id'];
     }
 
     #[DataProvider('providerStatements')]

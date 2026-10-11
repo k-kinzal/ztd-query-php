@@ -15,8 +15,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  *
  * Legacy empty rows clear their directly compared values after the first read. Constant
  * conversions can retain the source value, and integer and decimal NULL tests still inspect
- * that source. NULL caching is separately configurable so a repeated read can still emit
- * diagnostics. Differential tests cover the source kinds, comparison kinds and SQL modes.
+ * that source. NULL sources and their diagnostics are retained too. Differential tests cover
+ * the source kinds, comparison kinds, output positions and SQL modes.
  *
  * @visibility MySqlMemory\Evaluation
  */
@@ -24,9 +24,8 @@ final class CachedProjection implements Evaluable
 {
     /**
      * @param Evaluable $value The constant expression
-     * @param bool $repeatNull Whether a NULL source is evaluated again on each read
      */
-    public function __construct(public readonly Evaluable $value, public readonly bool $repeatNull = false)
+    public function __construct(public readonly Evaluable $value)
     {
     }
 
@@ -46,7 +45,7 @@ final class CachedProjection implements Evaluable
     public function evaluate(Frame $frame): int|float|string|null
     {
         $kept = $frame->context->kept;
-        if (!isset($kept[$this]) || ($this->repeatNull && $kept[$this][0] === null)) {
+        if (!isset($kept[$this])) {
             $kept[$this] = [$this->value->evaluate($frame)];
         }
 

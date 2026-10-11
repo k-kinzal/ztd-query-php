@@ -76,7 +76,7 @@ final class EmptyProjection
             $constant = $this->compiler->settings->legacy() && $this->compiler->constancy($field->expression) === Constancy::Resolved;
             $old = $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
             $supported = !$old || in_array($value->domain()->kind, [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String], true);
-            $expressions[] = $constant && $supported ? new \MySqlMemory\Evaluation\Subquery\CachedProjection($value, $old) : $value;
+            $expressions[] = $constant && $supported ? new \MySqlMemory\Evaluation\Subquery\CachedProjection($value) : $value;
         }
 
         return $expressions;
