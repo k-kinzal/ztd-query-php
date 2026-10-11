@@ -37,6 +37,8 @@ final class ProgramRead implements Evaluable
 
     /**
      * Reads the variable.
+     *
+     * @phpstan-pure
      */
     #[Override]
     public function evaluate(Frame $frame): int|float|string|null

@@ -35,6 +35,8 @@ final class Constant implements Evaluable
 
     /**
      * Answers the value.
+     *
+     * @phpstan-pure
      */
     #[Override]
     public function evaluate(Frame $frame): int|float|string|null

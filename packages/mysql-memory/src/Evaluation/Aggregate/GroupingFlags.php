@@ -42,6 +42,8 @@ final class GroupingFlags implements Evaluable
 
     /**
      * Answers the bits of the arguments for the current row.
+     *
+     * @phpstan-pure
      */
     #[Override]
     public function evaluate(Frame $frame): int

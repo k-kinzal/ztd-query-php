@@ -42,6 +42,8 @@ final class Ranges implements Evaluable
 
     /**
      * Answers the first bound.
+     *
+     * @phpstan-pure
      */
     #[Override]
     public function evaluate(Frame $frame): float|string|null
