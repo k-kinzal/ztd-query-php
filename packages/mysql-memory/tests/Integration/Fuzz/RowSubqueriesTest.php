@@ -54,7 +54,7 @@ final class RowSubqueriesTest extends TestCase
         [$target] = Servers::shared();
         $comparison = $target->compare($sql);
 
-        self::assertFalse($comparison->volatile);
+        self::assertFalse($comparison->volatile, (string) $comparison->referenceDifference);
         self::assertNull($comparison->difference, (string) $comparison->difference);
     }
 
@@ -82,6 +82,15 @@ final class RowSubqueriesTest extends TestCase
         yield 'later unknown with conversion' => ['SELECT (0, NULL, 1) IN (SELECT b, a, id FROM t1)'];
         yield 'inner null with conversion' => ['SELECT (0, 0, 1) IN (SELECT b, NULL, id FROM t1)'];
         yield 'missing primary key' => ['SELECT (0, 9) IN (SELECT b, id FROM t1)'];
+        foreach ([0, 1] as $value) {
+            foreach ([1, 99] as $key) {
+                yield 'constant first null ' . $value . ' key ' . $key => ['SELECT (0,' . $value . ',' . $key . ') IN (SELECT NULL,b,id FROM t1)'];
+                yield 'constant last null ' . $value . ' key ' . $key => ['SELECT (' . $value . ',' . $key . ',0) IN (SELECT b,id,NULL FROM t1)'];
+                if ($value !== 0 || $key !== 1) {
+                    yield 'constant middle null ' . $value . ' key ' . $key => ['SELECT (' . $value . ',0,' . $key . ') IN (SELECT b,NULL,id FROM t1)'];
+                }
+            }
+        }
     }
 
     #[DataProvider('providerCoercion')]
@@ -94,7 +103,7 @@ final class RowSubqueriesTest extends TestCase
         self::assertInstanceOf(PDOStatement::class, $statement);
         $plan = $statement->fetchAll(PDO::FETCH_NUM);
 
-        self::assertFalse($comparison->volatile);
+        self::assertFalse($comparison->volatile, (string) $comparison->referenceDifference);
         self::assertNull($comparison->difference, (string) $comparison->difference . "\nNative plan: " . var_export($plan, true));
     }
 }

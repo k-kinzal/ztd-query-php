@@ -148,7 +148,7 @@ final class Subqueries
         $key = $this->membershipKey($query, $comparators);
         $once = $key !== [] && $this->membershipConstant($operand, $query);
 
-        return new \MySqlMemory\Evaluation\Subquery\RowMembership($values, new Rows($plan), $comparators, $negated, $this->compiler->operators->truth(true), $key, $once, $once && $this->compiler->settings->legacy());
+        return new \MySqlMemory\Evaluation\Subquery\RowMembership($values, new Rows($plan), $comparators, $negated, $this->compiler->operators->truth(true), $key, $once, $once && $this->compiler->settings->legacy(), $once && $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651);
     }
 
     /**

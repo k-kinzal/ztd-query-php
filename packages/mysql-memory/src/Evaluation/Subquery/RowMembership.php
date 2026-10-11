@@ -31,8 +31,9 @@ final class RowMembership implements Evaluable
      * @param list<int> $key The integer primary-key comparisons that restrict the candidate rows
      * @param bool $once Whether the independent keyed result is retained for the statement
      * @param bool $legacyCondition Whether a satisfied constant-table condition is evaluated again when read, as in MySQL 5.6 and 5.7
+     * @param bool $repeatCondition Whether MySQL 5.6 retests a satisfied cached condition for each outer row
      */
-    public function __construct(public readonly array|SingleRow $operands, public readonly Rows $rows, public readonly array $comparators, public readonly bool $negated, public readonly Domain $domain, public readonly array $key = [], public readonly bool $once = false, public readonly bool $legacyCondition = false)
+    public function __construct(public readonly array|SingleRow $operands, public readonly Rows $rows, public readonly array $comparators, public readonly bool $negated, public readonly Domain $domain, public readonly array $key = [], public readonly bool $once = false, public readonly bool $legacyCondition = false, public readonly bool $repeatCondition = false)
     {
     }
 
@@ -47,6 +48,8 @@ final class RowMembership implements Evaluable
 
     /**
      * Retains an independent keyed result in its statement context, including NULL results.
+     * MySQL 5.6 retests a satisfied constant-table condition on each use, retaining
+     * its candidate row and operands while preserving the repeated conversion warnings.
      */
     #[Override]
     public function evaluate(Frame $frame): ?int
@@ -57,6 +60,9 @@ final class RowMembership implements Evaluable
         $kept = $frame->context->kept;
         if (!isset($kept[$this])) {
             $kept[$this] = [$this->read($frame)];
+        } elseif ($this->repeatCondition && isset($kept[$this->rows])) {
+            $width = count($this->comparators);
+            $this->matches(array_slice($kept[$this->rows], 0, $width), array_slice($kept[$this->rows], $width), $frame->context);
         }
 
         return $kept[$this][0] === null ? null : (int) $kept[$this][0];
@@ -71,11 +77,15 @@ final class RowMembership implements Evaluable
     {
         $values = $this->operands instanceof SingleRow ? $this->operands->read($frame) : array_map(static fn (Evaluable $operand): int|float|string|null => $operand->evaluate($frame), $this->operands);
         $values = $values === [] ? array_fill(0, count($this->comparators), null) : $values;
+        $kept = $frame->context->kept;
         $iterator = $this->rows->start($frame);
         $unknown = false;
         while (($row = $iterator->read()) !== null) {
             $match = $this->matches($values, $row, $frame->context);
             if ($match === true) {
+                if ($this->repeatCondition) {
+                    $kept[$this->rows] = [...$values, ...array_slice($row, 0, count($this->comparators))];
+                }
                 if ($this->legacyCondition) {
                     $this->matches($values, $row, $frame->context);
                 }

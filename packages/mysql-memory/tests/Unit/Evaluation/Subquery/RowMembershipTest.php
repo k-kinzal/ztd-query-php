@@ -80,6 +80,31 @@ final class RowMembershipTest extends TestCase
         self::assertCount(1, $unequal->rows);
     }
 
+    /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerRepeatedConditions(): iterable
+    {
+        yield '5.6' => ['5.6.51', 5];
+        yield '5.7' => ['5.7.44', 2];
+        yield '8.4' => ['8.4.7', 1];
+    }
+
+    #[DataProvider('providerRepeatedConditions')]
+    public function testEvaluateRetainsCandidateRowsWithVersionedConditionRechecks(string $version, int $warnings): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20))');
+        $session->query("INSERT INTO t VALUES (1,'apple'),(2,'b'),(3,'c'),(4,'d')");
+        $session->query('SELECT id,(0,1) IN (SELECT s,id FROM t) FROM t ORDER BY id');
+        $conditions = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $conditions);
+        self::assertCount($warnings, $conditions->rows);
+    }
+
     public function testMatchesFallsBackToScanningForANullKeyAndStopsAtTheFirstUnknownRow(): void
     {
         $session = (new Instance())->connect();
