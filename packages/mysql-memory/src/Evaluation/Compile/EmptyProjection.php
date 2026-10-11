@@ -80,7 +80,8 @@ final class EmptyProjection
 
     /**
      * Retains legacy empty projections independently of their comparison state.
-     * MySQL 5.6 preserves computed sources for NULL inspection; direct column and variable slots clear on reuse.
+     * MySQL 5.6 preserves computed sources for NULL inspection; direct column slots clear on reuse.
+     * Variable reads retain typed sources on both legacy releases; assignments do so on MySQL 5.6.
      */
     public function retain(Evaluable $value, \SqlSemantics\Statement\Scalar $node): Evaluable
     {
@@ -95,10 +96,9 @@ final class EmptyProjection
         if ($old && !in_array($value->domain()->kind, [\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Decimal, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Double, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String], true)) {
             return $value;
         }
-        $direct = $node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable || $node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment
-            || $this->compiler->facts->scalar($node)->resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+        $direct = $this->compiler->facts->scalar($node)->resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 
-        return new \MySqlMemory\Evaluation\Subquery\CachedProjection($value, $constant || ($old && !$direct));
+        return new \MySqlMemory\Evaluation\Subquery\CachedProjection($value, $constant || $node instanceof \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable || ($old && !$direct));
     }
 
     /**

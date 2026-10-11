@@ -73,6 +73,27 @@ final class EmptyProjectionTest extends TestCase
         self::assertSame($direct->rows, $result->rows);
     }
 
+    #[DataProvider('providerLegacy')]
+    public function testRetainPreservesVariableNullInspectionOnLegacyReleases(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('SET @v=1');
+        $result = $session->query('SELECT (SELECT @v,NULL FROM DUAL WHERE 0)<=> (NULL,NULL),(SELECT @v,NULL FROM DUAL WHERE 0)<=> (1,NULL),@v FROM (SELECT 1 UNION ALL SELECT 2) t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1', '1'], ['0', '0', '1']], $result->rows);
+    }
+
+    public function testRetainInspectsTheFirstAssignedValueOnMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('SET @v=1');
+        $result = $session->query('SELECT (SELECT @v:=@v+1,NULL FROM DUAL WHERE 0)<=> (NULL,NULL),@v FROM (SELECT 1 UNION ALL SELECT 2) t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '2'], ['0', '2']], $result->rows);
+    }
+
     /**
      * @return iterable<string, array{string, list<list<string|null>>}>
      */
