@@ -24,6 +24,21 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class FilterIteratorTest extends TestCase
 {
+    public function testReadRechecksConstantPartsOnlyAfterTheFullPredicateIncludingRandomPasses(): void
+    {
+        $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY); INSERT INTO t VALUES (1); SET @v=0');
+        $session->query('SELECT id FROM t WHERE RAND(17)>2 AND (@v:=@v+1)>0 AND id=1');
+        $before = $session->query('SELECT @v')[0];
+        $session->query('SELECT id FROM t WHERE (@v:=@v+1)>0 AND RAND(17)>2 AND id=1');
+        $after = $session->query('SELECT @v')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $before);
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $after);
+        self::assertSame([['0']], $before->rows);
+        self::assertSame([['1']], $after->rows);
+    }
+
     public function testReadRechecksALegacyConstantRowOnlyAfterItsFirstPredicatePasses(): void
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');

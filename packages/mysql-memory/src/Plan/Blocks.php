@@ -298,7 +298,7 @@ final class Blocks
         $compiler = $this->planner->compiler;
         $constant = null;
         $varying = null;
-        $preparation = null;
+        $recheck = null;
         foreach ($this->conjuncts($where) as $conjunct) {
             $compiled = $compiler->compile($conjunct, $scope);
             if ($compiler->constancy($conjunct)->constant()) {
@@ -306,12 +306,12 @@ final class Blocks
             } else {
                 $varying = $varying === null ? $compiled : new Logic(LogicalOperator::And, $varying, $compiled, $compiler->operators->truth($varying->domain()->nullable || $compiled->domain()->nullable));
                 if ($compiler->settings->legacy() && $input instanceof Path\Source\KeyLookup && (new Lookup\PrimaryKeys($this->planner))->preparable($conjunct)) {
-                    $preparation = $preparation === null ? $compiled : new Logic(LogicalOperator::And, $preparation, $compiled, $compiler->operators->truth($preparation->domain()->nullable || $compiled->domain()->nullable));
+                    $recheck = $recheck === null ? $compiled : new Logic(LogicalOperator::And, $recheck, $compiled, $compiler->operators->truth($recheck->domain()->nullable || $compiled->domain()->nullable));
                 }
             }
         }
 
-        return new Filter($input, $varying ?? new Constant($compiler->operators->truth(false), 1), $constant, $preparation);
+        return new Filter($input, $varying ?? new Constant($compiler->operators->truth(false), 1), $constant, $recheck);
     }
 
     /**
