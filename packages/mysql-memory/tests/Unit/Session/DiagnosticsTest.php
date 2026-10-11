@@ -206,17 +206,29 @@ final class DiagnosticsTest extends TestCase
         self::assertSame([['RETURNED_SQLSTATE' => '45000']], $diagnostics->signalled);
     }
 
-    public function testReserveCanClearAnEntireFullLegacyArea(): void
+    public function testReserveCanReserveMultipleSlots(): void
     {
         $diagnostics = new Diagnostics();
         $diagnostics->limit = 2;
         $diagnostics->warning(1292, 'first');
         $diagnostics->error(1690, 'second');
 
-        $diagnostics->reserve(true);
+        $diagnostics->reserve(2);
 
         self::assertSame([], $diagnostics->conditions);
         self::assertSame([], $diagnostics->signalled);
+    }
+
+    public function testReserveEvictsOnlyTheConditionsNeededForMultipleSlots(): void
+    {
+        $diagnostics = new Diagnostics();
+        $diagnostics->limit = 3;
+        $diagnostics->warning(1292, 'first');
+        $diagnostics->error(1690, 'second');
+
+        $diagnostics->reserve(2);
+
+        self::assertSame([['Error', 1690, 'second']], $diagnostics->conditions);
     }
 
 }

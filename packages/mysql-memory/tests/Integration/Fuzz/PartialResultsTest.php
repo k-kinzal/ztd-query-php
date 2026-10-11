@@ -25,6 +25,7 @@ final class PartialResultsTest extends TestCase
             'regular expression' => "SELECT 'abc' REGEXP 'a{2,1}'",
             'like escape' => "SELECT (b NOT LIKE 'a' ESCAPE USER()) IS NULL FROM (SELECT 'a' AS b) AS t",
             'constant overflow' => 'SELECT 1+9223372036854775807',
+            'legacy pattern encoding' => 'SELECT _latin1 0xE9 REGEXP _latin1 0xE9',
             'later row fails' => "SELECT JSON_EXTRACT(v,'$') FROM (SELECT '1' AS v UNION ALL SELECT 'invalid') AS t",
             'integer overflow' => "SELECT CAST(v AS UNSIGNED)+18446744073709551615 FROM (SELECT '0' AS v UNION ALL SELECT '1') AS t",
         ];

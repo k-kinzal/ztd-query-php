@@ -9,6 +9,7 @@ use MySqlMemory\Evaluation\Compile\Family\Texts;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -301,6 +302,24 @@ final class TextsTest extends TestCase
         $this->expectExceptionMessage("Got error 'invalid repetition count(s)' from regexp");
 
         Texts::legacyRegexp('a{2,1}', '', '');
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyReleases(): iterable
+    {
+        yield 'MySQL 5.6' => ['5.6.51'];
+        yield 'MySQL 5.7' => ['5.7.44'];
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testRegexpConvertsTheLegacyPatternBeforeConstantValidation(string $version): void
+    {
+        $result = (new Instance($version))->connect()->query('SELECT _latin1 0xE9 REGEXP _latin1 0xE9')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
     }
 
 }

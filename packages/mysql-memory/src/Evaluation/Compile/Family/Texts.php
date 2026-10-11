@@ -304,6 +304,7 @@ final class Texts
         if ($this->compiler->constancy($node->pattern) === Constancy::Resolved) {
             $constant = Convert::toText($pattern->evaluate(new Frame($this->compiler->connection->context)), $pattern->domain());
             if ($constant !== null) {
+                $constant = $binary ? $constant : Encoding::convert($constant, (new Strings())->charset($pattern->domain()), Charset::known('utf8mb4'));
                 self::legacyRegexp($constant, '', $binary ? '' : 'u');
             }
         }
