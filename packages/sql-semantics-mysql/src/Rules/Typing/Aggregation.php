@@ -66,7 +66,7 @@ final class Aggregation
         }
 
         return match (true) {
-            count($classes) === 1 && $present[0]->kind === Kind::Integer => $this->integers($present),
+            count($classes) === 1 && $present[0]->kind === Kind::Integer => $this->integers($present, $operation, $grammar),
             $all(static fn (Domain $domain): bool => $domain->kind === Kind::Integer || $domain->kind === Kind::Decimal) => $this->decimals($present),
             $all(static fn (Domain $domain): bool => $domain->kind->numeric() && $domain->kind !== Kind::Year && $domain->kind !== Kind::Bit) => $this->doubles($present, $operation, $derivation->context->profile->grammar),
             $all(static fn (Domain $domain): bool => $domain->kind->temporal()) => $this->temporals($present, $operation, $derivation),
@@ -114,10 +114,13 @@ final class Aggregation
      * among them, on a DECIMAL of the digits of the longest. A BIT takes part as an unsigned
      * BIGINT as long as its bits, and a YEAR as an integer of four characters of either sign
      * (verified on live 8.0, 8.4 and 9.1 servers).
+     * MySQL 5.6 reports zero column width for a single-digit integer CASE result;
+     * its value bound stays available to expressions. IF and COALESCE keep their width.
+     * Verified by differential CASE expressions with scalar and row comparisons.
      *
      * @param non-empty-list<Domain> $domains
      */
-    public function integers(array $domains): Domain
+    public function integers(array $domains, string $operation = '', ?GrammarRelease $release = null): Domain
     {
         $signed = -1;
         $unsigned = -1;
@@ -141,7 +144,11 @@ final class Aggregation
             return Domain::integer(self::INTEGERS[$unsigned + 1], $length);
         }
 
-        return Domain::integer(self::INTEGERS[max(0, $signed, $unsigned)] ?? Field::LongLong, $length, $signed < 0);
+        $result = Domain::integer(self::INTEGERS[max(0, $signed, $unsigned)] ?? Field::LongLong, $length, $signed < 0);
+
+        return $release === GrammarRelease::MySql5651 && $operation === 'case' && $length === 1
+            ? new Domain($result->kind, $result->field, $result->length, $result->decimals, $result->unsigned, $result->collation, $result->members, $result->coercibility, display: 0)
+            : $result;
     }
 
     /**

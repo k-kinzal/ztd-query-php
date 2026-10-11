@@ -29,6 +29,10 @@ final class EmptyBranchMetadataTest extends TestCase
         }
         yield 'integer branches' => ['SELECT CASE WHEN 0 THEN 0 ELSE 1 END AS v,CASE WHEN 0 THEN 1 ELSE 123 END AS w FROM t2'];
         yield 'simple case' => ['SELECT CASE 0 WHEN 1 THEN (SELECT 1/0,NULL FROM DUAL WHERE 0)<=> (NULL,NULL) ELSE 1 END AS v FROM t2'];
+        foreach (['2', '9', '10', '-1', '1.0', '1e0', "'1'"] as $value) {
+            $case = 'CASE WHEN 0 THEN 0 ELSE ' . $value . ' END';
+            yield 'result bound ' . $value => ['SELECT ' . $case . ' AS v,(' . $case . ')+0 AS a,CAST((' . $case . ') AS CHAR) AS c,COALESCE((' . $case . '),1) AS f FROM t2'];
+        }
     }
 
     #[DataProvider('providerStatements')]

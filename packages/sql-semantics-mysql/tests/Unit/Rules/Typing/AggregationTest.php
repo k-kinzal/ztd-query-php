@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Typing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
@@ -42,6 +43,39 @@ final class AggregationTest extends TestCase
     public function testIntegersKeepTheWiderSignedType(): void
     {
         self::assertEquals(Domain::integer(Field::Short, 6), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->integers([Domain::integer(Field::Tiny, 3, true), Domain::integer(Field::Short, 6)]));
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease, string, int, int}>
+     */
+    public static function providerIntegerBranchBounds(): iterable
+    {
+        yield 'MySQL 5.6 single-digit CASE' => [GrammarRelease::MySql5651, 'case', 1, 0];
+        yield 'MySQL 5.6 wider CASE' => [GrammarRelease::MySql5651, 'case', 3, 3];
+        yield 'MySQL 5.6 signed CASE' => [GrammarRelease::MySql5651, 'case', 4, 4];
+        yield 'MySQL 5.6 IF' => [GrammarRelease::MySql5651, 'if', 1, 1];
+        yield 'MySQL 5.6 COALESCE' => [GrammarRelease::MySql5651, 'coalesce', 1, 1];
+        yield 'MySQL 5.7 CASE' => [GrammarRelease::MySql5744, 'case', 1, 1];
+        yield 'MySQL 8.4 CASE' => [GrammarRelease::MySql847, 'case', 1, 1];
+    }
+
+    #[DataProvider('providerIntegerBranchBounds')]
+    public function testIntegersSeparateCaseMetadataFromTheValueBound(GrammarRelease $release, string $operation, int $length, int $reported): void
+    {
+        $aggregation = new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci')));
+        $result = $aggregation->integers([Domain::integer(Field::LongLong, $length)], $operation, $release);
+
+        self::assertSame($length, $result->length);
+        self::assertSame($reported, $result->metadataLength());
+    }
+
+    public function testOfUsesTheLegacyCaseWidthWithoutChangingOtherIntegerBranches(): void
+    {
+        $aggregation = new Aggregation(new Collations(Collation::known('utf8mb4_general_ci')));
+        $result = $aggregation->of([Domain::integer(Field::LongLong, 1)], 'case', new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([])));
+
+        self::assertInstanceOf(Domain::class, $result);
+        self::assertSame([1, 0], [$result->length, $result->metadataLength()]);
     }
 
     public function testIntegersWidenWhenSignedMeetsUnsigned(): void
