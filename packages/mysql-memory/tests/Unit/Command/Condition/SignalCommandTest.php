@@ -179,6 +179,17 @@ final class SignalCommandTest extends TestCase
         self::assertSame([], $session->diagnostics->conditions);
     }
 
+    public function testAgainKeepsOnlyTheLastConditionWithSpareCapacityOnMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('CREATE DATABASE d; USE d; SET max_error_count=4');
+        $session->query("CREATE PROCEDURE p() BEGIN DECLARE EXIT HANDLER FOR SQLEXCEPTION RESIGNAL; SELECT CAST('1a' AS SIGNED), CAST(1 AS UNSIGNED)-2; END");
+
+        $session->run('CALL p()');
+
+        self::assertSame([['Error', 1690, "BIGINT UNSIGNED value is out of range in '(cast(1 as unsigned) - 2)'"]], $session->diagnostics->conditions);
+    }
+
     public function testExecuteAddsTheConditionOfAResignalWithAnSqlstateToTheHandledOnes(): void
     {
         $session = (new Instance())->connect();

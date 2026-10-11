@@ -143,7 +143,8 @@ final class SignalCommand implements Command
      *
      * The area of the handler becomes the diagnostics area; a warning is raised again as a
      * warning, any other condition as an error (verified on a live 8.4 server).
-     * MySQL 5.6.51 reserves space for the stored conditions again for a RESIGNAL without SQLSTATE;
+     * MySQL 5.6.51 keeps only the last stored condition when the area had a spare slot,
+     * and empties a full area for RESIGNAL without SQLSTATE;
      * the error still reaches the client (verified by the Testcontainers differential suite).
      * Source: https://dev.mysql.com/doc/refman/8.4/en/resignal.html.
      *
@@ -162,7 +163,7 @@ final class SignalCommand implements Command
             [$signalled, $number] = $this->items($failure->sqlState(), $values, $context);
             $signalled = [...($failure->signalled ?? ['RETURNED_SQLSTATE' => $failure->sqlState()]), ...$signalled];
             if ($context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
-                $context->diagnostics->reserve($area->count());
+                $context->diagnostics->reserve(max($area->count(), $context->diagnostics->limit - 1));
             }
             throw new SqlError(ProgramError::SignalException, $signalled[ConditionItemName::MessageText->value] ?? $failure->getMessage(), null, [], $signalled, $number ?? $failure->getCode(), true);
         }
@@ -176,7 +177,7 @@ final class SignalCommand implements Command
         $context->diagnostics->conditions[$position] = [$level, $number, $message];
         $context->diagnostics->signalled[$position] = $signalled;
         if ($context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
-            $context->diagnostics->reserve($area->count());
+            $context->diagnostics->reserve(max($area->count(), $context->diagnostics->limit - 1));
         }
         if ($level !== 'Error') {
             return new Completion(0, 0, $context->diagnostics->raised());
