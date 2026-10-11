@@ -44,6 +44,7 @@ final class RepeatedEmptyRowTest extends TestCase
         yield 'outer column starts null' => ['SELECT id,(SELECT t1.a,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t1 WHERE id>=3 ORDER BY id'];
         yield 'outer expression starts null' => ['SELECT id,(SELECT t1.a+1,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t1 WHERE id>=3 ORDER BY id'];
         yield 'outer alias starts null' => ['SELECT a+1 AS v,(SELECT v,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t1 WHERE id>=3 ORDER BY id'];
+        yield 'null constant warnings enabled' => ["SET sql_mode='ERROR_FOR_DIVISION_BY_ZERO'; SELECT id,(SELECT 1/0,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t2 ORDER BY id"];
     }
 
     #[DataProvider('providerStatements')]

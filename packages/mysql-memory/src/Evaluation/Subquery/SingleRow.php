@@ -21,6 +21,8 @@ final class SingleRow
 {
     private ?Frame $frame = null;
 
+    private bool $repeated = false;
+
     /**
      * @param Rows $rows The planned subquery
      * @param bool $once Whether its result is constant for this statement
@@ -49,6 +51,7 @@ final class SingleRow
      */
     public function read(Frame $frame): array
     {
+        $this->repeated = $this->frame?->context === $frame->context;
         if (!$this->once) {
             return $this->fetch($frame);
         }
@@ -89,7 +92,7 @@ final class SingleRow
     /**
      * Reads a retained projection expression after an empty result, in its query's input state.
      */
-    public function value(int $position, Frame $outer): int|float|string|null
+    public function value(int $position, Frame $outer, ?Kind $mode = null, bool $nullOperand = false): int|float|string|null
     {
         $frame = $this->frame ?? $outer->inner();
         if ($this->source !== null) {
@@ -97,6 +100,8 @@ final class SingleRow
             $frame->row = (new \MySqlMemory\Storage\TimestampZones())->local($this->source->table, $stored, $frame->context);
         }
 
-        return $this->projection[$position]->evaluate($frame);
+        $value = $this->projection[$position];
+
+        return $mode !== null && $value instanceof CachedProjection ? $value->compared($frame, $this->repeated, $mode, $nullOperand) : $value->evaluate($frame);
     }
 }

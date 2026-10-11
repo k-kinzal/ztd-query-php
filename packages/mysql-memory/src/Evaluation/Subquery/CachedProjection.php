@@ -8,13 +8,15 @@ use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
 use Override;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
- * Retains a constant projection value and its diagnostics after the first read in a statement.
+ * Retains the source value of a constant projection independently of its empty-result comparison state.
  *
- * MySQL 5.7 reads a resolved constant of an empty row subquery once even when an outer query
- * compares that row repeatedly. MySQL 5.6 and modern releases repeat its evaluation instead
- * (verified through SQL on MySQL 5.6.51, 5.7.44, 8.0.44, 8.4.7 and 9.1.0).
+ * Legacy empty rows clear their directly compared values after the first read. Constant
+ * conversions can retain the source value, and integer and decimal NULL tests still inspect
+ * that source. NULL caching is separately configurable so a repeated read can still emit
+ * diagnostics. Differential tests cover the source kinds, comparison kinds and SQL modes.
  *
  * @visibility MySqlMemory\Evaluation
  */
@@ -22,8 +24,9 @@ final class CachedProjection implements Evaluable
 {
     /**
      * @param Evaluable $value The constant expression
+     * @param bool $repeatNull Whether a NULL source is evaluated again on each read
      */
-    public function __construct(public readonly Evaluable $value)
+    public function __construct(public readonly Evaluable $value, public readonly bool $repeatNull = false)
     {
     }
 
@@ -43,10 +46,27 @@ final class CachedProjection implements Evaluable
     public function evaluate(Frame $frame): int|float|string|null
     {
         $kept = $frame->context->kept;
-        if (!isset($kept[$this])) {
+        if (!isset($kept[$this]) || ($this->repeatNull && $kept[$this][0] === null)) {
             $kept[$this] = [$this->value->evaluate($frame)];
         }
 
         return $kept[$this][0];
+    }
+
+    /**
+     * Reads the cleared comparison slot or its retained constant conversion after an empty row is reused.
+     */
+    public function compared(Frame $frame, bool $repeated, Kind $mode, bool $nullOperand): int|float|string|null
+    {
+        $value = $this->evaluate($frame);
+        $kind = $this->domain()->kind;
+        if (!$repeated || $value === null || !in_array($kind, [Kind::Integer, Kind::Decimal, Kind::Double, Kind::String], true)) {
+            return $value;
+        }
+        if ($nullOperand) {
+            return $kind === Kind::Integer || $kind === Kind::Decimal ? $value : null;
+        }
+
+        return $mode === $kind ? null : $value;
     }
 }

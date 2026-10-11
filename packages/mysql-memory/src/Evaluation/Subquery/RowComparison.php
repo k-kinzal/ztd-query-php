@@ -82,8 +82,9 @@ final class RowComparison implements Evaluable
         }
         $equal = false;
         foreach ($this->comparators as $index => $comparator) {
-            $first = $left === [] ? $this->left->value($index, $frame) : $left[$index];
-            $second = $right === [] ? $this->right->value($index, $frame) : $right[$index];
+            $mode = $this->legacyValues ? $comparator->mode : null;
+            $first = $left === [] ? $this->left->value($index, $frame, $mode, $comparator->right->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null) : $left[$index];
+            $second = $right === [] ? $this->right->value($index, $frame, $mode, $comparator->left->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null) : $right[$index];
             if (($first === null) !== ($second === null)) {
                 return 0;
             }
