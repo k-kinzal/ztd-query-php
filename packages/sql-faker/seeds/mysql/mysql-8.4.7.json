@@ -10,8 +10,8 @@
     "coverage": {
         "productions": 3114,
         "reached": 3114,
-        "emitted": 2650,
-        "seeds": 2177,
+        "emitted": 2661,
+        "seeds": 2181,
         "unreached": [],
         "failures": []
     },
@@ -6788,7 +6788,7 @@
             "file": "table_reference-1.txt",
             "target": "table_reference#1",
             "budget": 37,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier JOIN _sqlfaker_identifier )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier JOIN _sqlfaker_identifier"
         },
         {
             "file": "table_reference-2.txt",
@@ -6800,85 +6800,85 @@
             "file": "esc_table_reference-1.txt",
             "target": "esc_table_reference#1",
             "budget": 38,
-            "sql": "DELETE _sqlfaker_identifier FROM { OJ ( _sqlfaker_identifier JOIN _sqlfaker_identifier ) }"
+            "sql": "DELETE _sqlfaker_identifier FROM { OJ _sqlfaker_identifier JOIN _sqlfaker_identifier }"
         },
         {
             "file": "joined_table-0.txt",
             "target": "joined_table#0",
             "budget": 43,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) ) )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) )"
         },
         {
             "file": "joined_table-1.txt",
             "target": "joined_table#1",
             "budget": 41,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier JOIN _sqlfaker_identifier USING ( _sqlfaker_identifier ) )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier JOIN _sqlfaker_identifier USING ( _sqlfaker_identifier )"
         },
         {
             "file": "joined_table-2.txt",
             "target": "joined_table#2",
             "budget": 44,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier LEFT JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) ) )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier LEFT JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) )"
         },
         {
             "file": "joined_table-3.txt",
             "target": "joined_table#3",
             "budget": 42,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier LEFT JOIN _sqlfaker_identifier USING ( _sqlfaker_identifier ) )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier LEFT JOIN _sqlfaker_identifier USING ( _sqlfaker_identifier )"
         },
         {
             "file": "joined_table-5.txt",
             "target": "joined_table#5",
             "budget": 37,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier NATURAL JOIN _sqlfaker_identifier )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier NATURAL JOIN _sqlfaker_identifier"
         },
         {
             "file": "natural_join_type-1.txt",
             "target": "natural_join_type#1",
             "budget": 37,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier NATURAL RIGHT JOIN _sqlfaker_identifier )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier NATURAL RIGHT JOIN _sqlfaker_identifier"
         },
         {
             "file": "natural_join_type-2.txt",
             "target": "natural_join_type#2",
             "budget": 37,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier NATURAL LEFT JOIN _sqlfaker_identifier )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier NATURAL LEFT JOIN _sqlfaker_identifier"
         },
         {
             "file": "inner_join_type-1.txt",
             "target": "inner_join_type#1",
             "budget": 43,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier INNER JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) ) )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier INNER JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) )"
         },
         {
             "file": "inner_join_type-2.txt",
             "target": "inner_join_type#2",
             "budget": 43,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier CROSS JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) ) )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier CROSS JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) )"
         },
         {
             "file": "inner_join_type-3.txt",
             "target": "inner_join_type#3",
             "budget": 43,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier STRAIGHT_JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) ) )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier STRAIGHT_JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) )"
         },
         {
             "file": "outer_join_type-1.txt",
             "target": "outer_join_type#1",
             "budget": 44,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier RIGHT JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) ) )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier RIGHT JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) )"
         },
         {
             "file": "opt_inner-1.txt",
             "target": "opt_inner#1",
             "budget": 37,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier NATURAL INNER JOIN _sqlfaker_identifier )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier NATURAL INNER JOIN _sqlfaker_identifier"
         },
         {
             "file": "opt_outer-1.txt",
             "target": "opt_outer#1",
             "budget": 44,
-            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier LEFT OUTER JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) ) )"
+            "sql": "DELETE _sqlfaker_identifier FROM _sqlfaker_identifier LEFT OUTER JOIN _sqlfaker_identifier ON ( ( ( ( USER ( ) ) ) ) )"
         },
         {
             "file": "opt_use_partition-1.txt",
@@ -6902,7 +6902,7 @@
             "file": "table_factor-3.txt",
             "target": "table_factor#3",
             "budget": 39,
-            "sql": "DELETE _sqlfaker_identifier FROM ( ( _sqlfaker_identifier JOIN _sqlfaker_identifier ) )"
+            "sql": "DELETE _sqlfaker_identifier FROM ( _sqlfaker_identifier JOIN _sqlfaker_identifier )"
         },
         {
             "file": "table_factor-4.txt",
@@ -6932,7 +6932,7 @@
             "file": "joined_table_parens-0.txt",
             "target": "joined_table_parens#0",
             "budget": 40,
-            "sql": "DELETE _sqlfaker_identifier FROM ( ( ( _sqlfaker_identifier JOIN _sqlfaker_identifier ) ) )"
+            "sql": "DELETE _sqlfaker_identifier FROM ( ( _sqlfaker_identifier JOIN _sqlfaker_identifier ) )"
         },
         {
             "file": "derived_table-1.txt",
@@ -13077,6 +13077,30 @@
             "target": "column_attribute#17",
             "budget": 34,
             "sql": "CREATE TABLE _sqlfaker_identifier ( _sqlfaker_identifier BIT CHECK ( ( ( ( ( USER ( ) ) ) ) ) ) ENFORCED )"
+        },
+        {
+            "file": "ident_keywords_unambiguous-3-c1b172de.txt",
+            "target": "ident_keywords_unambiguous#3",
+            "budget": 21,
+            "sql": "CREATE TABLE ADDDATE( _sqlfaker_identifier BIT )"
+        },
+        {
+            "file": "ident_keywords_unambiguous-350-8378e656.txt",
+            "target": "ident_keywords_unambiguous#350",
+            "budget": 21,
+            "sql": "CREATE TABLE ST_COLLECT( _sqlfaker_identifier BIT )"
+        },
+        {
+            "file": "ident_keywords_unambiguous-352-fdfab7b8.txt",
+            "target": "ident_keywords_unambiguous#352",
+            "budget": 21,
+            "sql": "CREATE TABLE SUBDATE( _sqlfaker_identifier BIT )"
+        },
+        {
+            "file": "as_create_query_expression-1.txt",
+            "target": "as_create_query_expression#1",
+            "budget": 36,
+            "sql": "CREATE TABLE _sqlfaker_identifier ( _sqlfaker_identifier BIT ) SELECT *"
         }
     ]
 }
