@@ -31,6 +31,7 @@ final class MergeDependenciesTest extends TestCase
         yield 'independent input' => ['(SELECT q.id FROM t q LIMIT 1)', GrammarRelease::MySql847, false];
         yield 'dependent input' => ['(SELECT q.id FROM t q WHERE q.id=t.id)', GrammarRelease::MySql847, true];
         yield 'dependent membership' => ['id IN (SELECT id FROM t)', GrammarRelease::MySql847, true];
+        yield 'legacy constant membership' => ['1 IN (SELECT id FROM t)', GrammarRelease::MySql5744, true];
         yield 'constant membership' => ['1 IN (SELECT id FROM t)', GrammarRelease::MySql847, false];
         yield 'reduced membership' => ['id IN (SELECT 1)', GrammarRelease::MySql847, false];
         yield 'retained random call' => ['(SELECT RAND(1) FROM t LIMIT 1)', GrammarRelease::MySql847, true];

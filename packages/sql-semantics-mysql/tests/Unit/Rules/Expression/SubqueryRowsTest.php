@@ -172,6 +172,29 @@ final class SubqueryRowsTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{string, int}>
+     */
+    public static function providerStoredWidths(): iterable
+    {
+        yield '5.6' => ['mysql-5.6.51', 21];
+        yield '5.7' => ['mysql-5.7.44', 21];
+        yield '8.4' => ['mysql-8.4.7', 1];
+    }
+
+    #[DataProvider('providerStoredWidths')]
+    public function testStoredRetainsTheLegacyMembershipColumnWidth(string $release, int $width): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $table = $semantics->analyze('CREATE TABLE t(id INT PRIMARY KEY)');
+        $operation = $semantics->analyze('SELECT v,v+0 FROM (SELECT id IN (SELECT id FROM t) v FROM t LIMIT 1) d', [$table]);
+        $type = $operation->field(0)->type;
+
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+        self::assertSame($width, $type->descriptor->metadataLength());
+    }
+
+    /**
      * @return iterable<string, array{string, bool}>
      */
     public static function providerLimits(): iterable

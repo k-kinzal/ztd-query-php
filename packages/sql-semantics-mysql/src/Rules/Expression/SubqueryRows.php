@@ -135,6 +135,23 @@ final class SubqueryRows
     }
 
     /**
+     * Answers the temporary-column domain of an unreduced positive membership test.
+     * Legacy releases store IN and = ANY as full-width signed BIGINT even when
+     * their direct scalar result reports width one. Negation has its own wrapper.
+     * Verified through PDO metadata from MySQL 5.6.51 and 5.7.44 Testcontainers.
+     */
+    public function stored(?Scalar $expression, \SqlSemantics\Contract\GrammarRelease $release): ?Domain
+    {
+        if (!in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
+            return null;
+        }
+        $membership = ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery && !$expression->negated)
+            || ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison && $expression->operator === \SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator::Equal && $expression->quantifier === \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\Quantifier::Any);
+
+        return $membership && (new ScalarReduction())->expression($expression->query, $release) === null ? Domain::integer() : null;
+    }
+
+    /**
      * Reports LIMIT on the subquery's query blocks, but not inside derived tables or CTE definitions.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/subquery-restrictions.html.
      */

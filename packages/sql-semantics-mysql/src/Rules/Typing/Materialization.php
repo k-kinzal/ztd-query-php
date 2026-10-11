@@ -139,6 +139,10 @@ final class Materialization
         while ($expression instanceof Grouped) {
             $expression = $expression->operand;
         }
+        $stored = (new \SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows())->stored($expression, $derivation->context->profile->grammar);
+        if ($stored !== null) {
+            return $stored;
+        }
         $resolution = $expression !== null && $facts->covers($expression) ? $facts->scalar($expression)->resolution : ($field instanceof OutputField ? $field->resolution : null);
         $text = $domain->kind === Kind::String && in_array($domain->field, [Field::VarChar, Field::VarString, Field::String, Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
         if (!$text || !$query instanceof Select || $resolution instanceof ResolvedColumn) {

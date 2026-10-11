@@ -44,7 +44,7 @@ final class MergeDependencies
                 $part = $replacement ?? $part->query;
             }
             if (($part instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery || $part instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison)
-                && (new ScalarReduction())->expression($part->query) === null && ($facts === null || $this->external($part->operand, $facts))) {
+                && (new ScalarReduction())->expression($part->query) === null && ($facts === null || (new SubqueryRows())->stored($part, $release) !== null || $this->external($part->operand, $facts))) {
                 return true;
             }
             if ($part instanceof VariableAssignment || ($part instanceof Query && ($facts === null || $this->external($part, $facts) || $this->changing($part, $release)))) {

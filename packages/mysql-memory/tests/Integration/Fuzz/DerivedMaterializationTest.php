@@ -24,7 +24,7 @@ final class DerivedMaterializationTest extends TestCase
             $settings += ['disabled' => "SET optimizer_switch='derived_merge=off'; "];
         }
         foreach ($settings as $setting => $prefix) {
-            foreach (['id', '(SELECT id WHERE TRUE)', '(SELECT id)', '(SELECT (SELECT id))', '(SELECT 1)', '(SELECT 1 WHERE FALSE)', '(SELECT MAX(id) FROM t2)', '(SELECT q.id FROM t2 q WHERE q.id=t1.id)', 'EXISTS(SELECT 1 FROM t2)', 'id IN (SELECT id FROM t2)', '1 IN (SELECT id FROM t2)', 'id = ANY (SELECT id FROM t2)', 'id IN (SELECT 1)', '(id IN (SELECT id FROM t2))+1', '@v:=id', '(SELECT RAND(1) FROM t2 LIMIT 1)'] as $expression) {
+            foreach (['id', '(SELECT id WHERE TRUE)', '(SELECT id)', '(SELECT (SELECT id))', '(SELECT 1)', '(SELECT 1 WHERE FALSE)', '(SELECT MAX(id) FROM t2)', '(SELECT q.id FROM t2 q WHERE q.id=t1.id)', 'EXISTS(SELECT 1 FROM t2)', 'id IN (SELECT id FROM t2)', '1 IN (SELECT id FROM t2)', 'id = ANY (SELECT id FROM t2)', 'id NOT IN (SELECT id FROM t2)', 'id <> ALL (SELECT id FROM t2)', 'id > ANY (SELECT id FROM t2)', 'id < ALL (SELECT id FROM t2)', 'id IN (SELECT 1)', '(id IN (SELECT id FROM t2))+1', '@v:=id', '(SELECT RAND(1) FROM t2 LIMIT 1)'] as $expression) {
                 yield $setting . ' ' . $expression => [$prefix . 'SELECT v,v+0 FROM (SELECT ' . $expression . ' AS v FROM t1) d ORDER BY v'];
             }
             yield $setting . ' repeated random subquery' => [$prefix . 'SELECT l.id,d.id,d.v FROM t1 l CROSS JOIN (SELECT id,(SELECT RAND(1) FROM t2 LIMIT 1) v FROM t1) d ORDER BY l.id,d.id'];
