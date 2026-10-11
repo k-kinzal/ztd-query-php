@@ -61,6 +61,38 @@ Once lexical forms have been selected, the boundary between each pair of neighbo
 
 The resolved token text and separators are then concatenated to produce the SQL string. Selecting the spellings and boundaries before concatenation preserves the intended token structure.
 
+## Reproducible grammar seeds
+
+From the package directory, build or replay the committed grammar corpus with:
+
+```sh
+php bin/seeds.php build --tag mysql-8.4.7
+php bin/seeds.php check --tag mysql-8.4.7
+```
+
+Each seed records choices for `BytePlanCompiler` under
+`GenerationPlan::fromRule('simple_statement_or_begin')->requiringNonEmpty()`.
+The builder first visits every reachable alternative with a short terminating
+derivation. It then adds the version's recipes from `seeds/contexts/`, when
+present. Each recipe names a target alternative and the original alternative
+ordinals to choose for successive occurrences of enclosing or sibling rules.
+These choices are encoded in the seed itself; replay needs no recipe or special
+generation settings.
+
+Contexts matter because structural rewrites can replace a selected alternative.
+For example, a `SUPER` privilege needs a `GRANT ... ON ...` context to remain a
+privilege, and a stored-program `RETURN` needs a function context to remain a
+return statement. Recipes supplement the short derivations without removing
+their seeds or changing the coverage denominator. The build fails if a recipe
+references an unavailable alternative or fails to reach its target.
+
+The manifest distinguishes selected alternatives (`reached`) from original
+alternatives retained through generation (`emitted`). Neither proves that a
+server exercised an alternative: lexing can change token identity, and rewrites
+can introduce other alternatives. To measure executed syntax, parse the emitted
+SQL with the matching dialect, map its concrete productions back to the inventory,
+and associate that evidence with the execution result.
+
 ## Limitations
 
 SQL Faker's scope is generating SQL syntax. It does not generate a database state in which every resulting statement is executable.

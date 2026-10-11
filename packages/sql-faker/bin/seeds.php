@@ -191,6 +191,9 @@ final class SeedGuide
     /** @var list<array{string, bool}> Pending rules in leftmost order, each with whether the target lies below it */
     private array $pending;
 
+    /** @var array<string, int> Number of occurrences already visited for each rule */
+    private array $used = [];
+
     public bool $reached = false;
 
     /** @var list<Production> Productions chosen so far, in derivation order */
@@ -198,6 +201,7 @@ final class SeedGuide
 
     /**
      * @param array<string, int> $distances Expansions from each rule to the target rule
+     * @param array<string, list<int>> $context Preferred original ordinals for successive occurrences of each enclosing or sibling rule
      */
     public function __construct(
         private readonly TerminationAnalyzer $analyzer,
@@ -205,6 +209,7 @@ final class SeedGuide
         string $root,
         private readonly string $rule,
         private readonly Production $target,
+        private readonly array $context = [],
     ) {
         $this->pending = [[$root, true]];
     }
@@ -217,7 +222,16 @@ final class SeedGuide
     public function choose(int $count, array $candidates): int
     {
         [$name, $onPath] = array_shift($this->pending) ?? throw new LogicException('The derivation expanded a rule the guide does not have pending.');
-        [$index, $descent] = ($onPath ? $this->toward($name, $candidates) : null) ?? [seedsCheapest($this->analyzer, $candidates), null];
+        $occurrence = $this->used[$name] ?? 0;
+        $this->used[$name] = $occurrence + 1;
+        $ordinal = $this->context[$name][$occurrence] ?? null;
+        $preferred = $ordinal === null || ($onPath && $name === $this->rule)
+            ? [] : array_filter($candidates, static fn (Production $candidate): bool => $candidate->ordinal === $ordinal);
+        if ($ordinal !== null && (!$onPath || $name !== $this->rule) && $preferred === []) {
+            throw new InvalidArgumentException("Context production $name#$ordinal is unavailable at occurrence $occurrence.");
+        }
+        [$index, $descent] = ($onPath ? $this->toward($name, $preferred ?: $candidates) : null)
+            ?? [array_key_first($preferred) ?? seedsCheapest($this->analyzer, $candidates), null];
         $chosen = $candidates[$index];
         $this->productions[] = $chosen;
         $pending = [];
@@ -275,9 +289,9 @@ function seedsReplay(GrammarCoverage $coverage, PlanBuilder $planner, Closure $g
  *
  * @return array|null The replayed seed, or null when the guided walk never reached the production
  */
-function seedsSynthesize(GrammarCoverage $coverage, PlanBuilder $planner, Closure $generate, GenerationPlan $constraints, TerminationAnalyzer $analyzer, array $containers, string $rule, int $ordinal, Production $production, int $cap): ?array
+function seedsSynthesize(GrammarCoverage $coverage, PlanBuilder $planner, Closure $generate, GenerationPlan $constraints, TerminationAnalyzer $analyzer, array $containers, string $rule, int $ordinal, Production $production, int $cap, array $context = []): ?array
 {
-    $guide = new SeedGuide($analyzer, seedsDistances($containers, $rule), $planner->root($constraints), $rule, $production);
+    $guide = new SeedGuide($analyzer, seedsDistances($containers, $rule), $planner->root($constraints), $rule, $production, $context);
     $planner->build($constraints, $cap, $guide->choose(...), static fn (): ?int => null);
     if (!$guide->reached) {
         return null;
@@ -293,9 +307,9 @@ function seedsSynthesize(GrammarCoverage $coverage, PlanBuilder $planner, Closur
 }
 
 /**
- * Visits productions in grammar order and keeps a seed only when it reaches a production no earlier seed did.
+ * Visits productions in grammar order, then adds context recipes that preserve alternatives through rewriting.
  */
-function seedsBuildCorpus(GrammarCoverage $coverage, PlanBuilder $planner, Closure $generate, string $root, int $cap): array
+function seedsBuildCorpus(GrammarCoverage $coverage, PlanBuilder $planner, Closure $generate, string $root, int $cap, array $contexts = []): array
 {
     $inventory = $coverage->inventory();
     $analyzer = new TerminationAnalyzer($inventory->grammar);
@@ -324,6 +338,23 @@ function seedsBuildCorpus(GrammarCoverage $coverage, PlanBuilder $planner, Closu
             }
             $seeds[] = $seed;
             $covered += array_fill_keys($seed['reached'], true);
+        }
+    }
+    foreach ($contexts as $label => $context) {
+        $id = array_search($label, $targets, true);
+        if ($id === false) {
+            throw new InvalidArgumentException("Unknown context target $label.");
+        }
+        [$rule, $ordinal] = explode('#', $label);
+        foreach ($inventory->grammar->ruleMap[$rule]->alternatives as $index => $production) {
+            if (($production->ordinal ?? $index) !== (int) $ordinal) {
+                continue;
+            }
+            $seed = seedsSynthesize($coverage, $planner, $generate, $constraints, $analyzer, $containers, $rule, (int) $ordinal, $production, $cap, $context);
+            if ($seed === null || !in_array($id, $seed['reached'], true)) {
+                throw new RuntimeException("Context seed did not reach $label.");
+            }
+            $seeds[] = $seed;
         }
     }
     return ['root' => $root, 'seeds' => $seeds, 'targets' => $targets, 'failures' => $failures];
@@ -429,7 +460,9 @@ function seedsBuild(string $tag, string $directory, int $cap): bool
     $coverage = new GrammarCoverage();
     [$database, $root, $provider] = seedsDialect($tag, $coverage);
     fwrite(STDERR, "Building seeds for $tag from $root...\n");
-    $corpus = seedsBuildCorpus($coverage, $provider->planner(), $provider->generate(...), $root, $cap);
+    $recipe = dirname(__DIR__) . '/seeds/contexts/' . $tag . '.json';
+    $contexts = is_file($recipe) ? json_decode(file_get_contents($recipe), true, 512, JSON_THROW_ON_ERROR) : [];
+    $corpus = seedsBuildCorpus($coverage, $provider->planner(), $provider->generate(...), $root, $cap, $contexts);
     $target = "$directory/$database/$tag";
     if (!is_dir($target) && !mkdir($target, 0777, true)) {
         fwrite(STDERR, "Cannot create $target\n");
