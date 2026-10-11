@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Evaluation\Subquery;
 
 use MySqlMemory\Error\Family\QueryError;
+use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Typing\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
@@ -21,8 +22,9 @@ final class SingleRow
     /**
      * @param Rows $rows The planned subquery
      * @param bool $once Whether its result is constant for this statement
+     * @param list<Evaluable> $projection Output expressions readable without an input row
      */
-    public function __construct(public readonly Rows $rows, public readonly bool $once = false)
+    public function __construct(public readonly Rows $rows, public readonly bool $once = false, public readonly array $projection = [])
     {
     }
 

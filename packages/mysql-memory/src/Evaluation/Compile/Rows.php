@@ -128,7 +128,7 @@ final class Rows
             $comparators[] = Comparator::of($domain, $second[$index], $operator->value, $this->compiler->settings->connectionCollation, $this->compiler->settings->release());
         }
 
-        return new \MySqlMemory\Evaluation\Subquery\RowComparison($operator, $one, $two, $comparators, $this->compiler->operators->truth($operator !== ComparisonOperator::NullSafeEqual), $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744);
+        return new \MySqlMemory\Evaluation\Subquery\RowComparison($operator, $one, $two, $comparators, $this->compiler->operators->truth($operator !== ComparisonOperator::NullSafeEqual), $this->compiler->settings->legacy());
     }
 
     /**

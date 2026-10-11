@@ -56,11 +56,11 @@ final class SingleRowTest extends TestCase
         $session->query('SELECT (1,2) = (SELECT 1,2 UNION ALL SELECT 3,4)');
     }
 
-    public function testFetchDistinguishesAnEmptySubqueryFromARowOfNulls(): void
+    public function testFetchKeepsNullExpressionsReadableWhenTheSubqueryIsEmpty(): void
     {
         $result = (new Instance())->connect()->query('SELECT (NULL,NULL) <=> (SELECT NULL,NULL), (NULL,NULL) <=> (SELECT NULL,NULL WHERE 0)')[0];
 
         self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([['1', '0']], $result->rows);
+        self::assertSame([['1', '1']], $result->rows);
     }
 }

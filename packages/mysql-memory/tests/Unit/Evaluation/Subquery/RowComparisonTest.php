@@ -48,4 +48,42 @@ final class RowComparisonTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '0']], $result->rows);
     }
+
+    public function testAbsentReadsNullStatesInColumnOrderInModernReleases(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (SELECT 1,2,NULL FROM DUAL WHERE 0) <=> (9,8,NULL), (SELECT 1,NULL,2 FROM DUAL WHERE 0) <=> (9,NULL,8), (SELECT NULL,1,NULL FROM DUAL WHERE 0) <=> (1,8,NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0', '0']], $result->rows);
+    }
+
+    public function testAbsentComparesRetainedLiteralValuesInLegacyReleases(): void
+    {
+        $result = (new Instance('5.6.51'))->connect()->query('SELECT (SELECT 1,2 FROM DUAL WHERE 0) <=> (1,2), (SELECT 1,NULL FROM DUAL WHERE 0) <=> (2,NULL), (SELECT NULL,NULL FROM DUAL WHERE 0) <=> (NULL,NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0', '1']], $result->rows);
+    }
+
+    public function testAbsentSkipsLaterEffectsAfterTheFirstNullStateMismatch(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET @v=0');
+        $result = $session->query('SELECT (SELECT NULL,@v:=@v+1 FROM DUAL WHERE 0) <=> (1,NULL), @v')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '0']], $result->rows);
+    }
+
+    public function testAbsentRepeatsProjectionWarningsForEachReadOfACachedEmptyResult(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query('SELECT (SELECT 1/0,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) FROM (SELECT 1 UNION ALL SELECT 2) t')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1'], ['1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertCount(2, $warnings->rows);
+    }
 }

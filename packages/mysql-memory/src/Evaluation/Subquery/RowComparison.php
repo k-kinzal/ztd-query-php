@@ -16,9 +16,9 @@ use SqlSemantics\Platform\MySql\Statement\Expression\ComparisonOperator;
 /**
  * Compares row constructors and single-row subqueries after evaluating each operand once.
  *
- * An empty row subquery makes ordinary comparison unknown and null-safe equality false,
- * including when both subqueries are empty, except that MySQL 5.7 treats two empty row
- * subqueries as null-safe equal (verified through SQL on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1).
+ * An empty row subquery makes ordinary comparison unknown. Null-safe equality also reads
+ * retained projection expressions; modern releases compare their NULL states, while legacy
+ * releases compare their values. Projections that need input-row state are not yet modeled.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/row-subqueries.html.
  *
  * @visibility MySqlMemory
@@ -30,9 +30,9 @@ final class RowComparison implements Evaluable
      * @param list<Evaluable>|SingleRow $right The right row or subquery
      * @param list<Comparator> $comparators The comparison rule for each column pair
      * @param Domain $domain The resolved truth value type
-     * @param bool $emptyRowsEqual Whether two empty row subqueries are null-safe equal, as in MySQL 5.7
+     * @param bool $legacyValues Whether empty projections retain value comparison, as in MySQL 5.6 and 5.7
      */
-    public function __construct(public readonly ComparisonOperator $operator, public readonly array|SingleRow $left, public readonly array|SingleRow $right, public readonly array $comparators, public readonly Domain $domain, public readonly bool $emptyRowsEqual = false)
+    public function __construct(public readonly ComparisonOperator $operator, public readonly array|SingleRow $left, public readonly array|SingleRow $right, public readonly array $comparators, public readonly Domain $domain, public readonly bool $legacyValues = false)
     {
     }
 
@@ -54,7 +54,7 @@ final class RowComparison implements Evaluable
         $left = $this->values($this->left, $frame);
         $right = $this->values($this->right, $frame);
         if ($left === [] || $right === []) {
-            return $this->operator === ComparisonOperator::NullSafeEqual ? (int) ($this->emptyRowsEqual && $left === [] && $right === []) : null;
+            return $this->operator === ComparisonOperator::NullSafeEqual ? $this->absent($left, $right, $frame) : null;
         }
         $pairs = [];
         foreach ($this->comparators as $index => $comparator) {
@@ -62,6 +62,38 @@ final class RowComparison implements Evaluable
         }
 
         return (new RowCompare($this->operator, $pairs, $this->domain))->evaluate($frame);
+    }
+
+    /**
+     * Compares expressions retained by an empty subquery, without evaluating later columns early.
+     *
+     * Modern releases compare the NULL states and retain the final pair's NULL state; legacy
+     * releases compare the retained values. Ordinary comparisons never read this projection.
+     *
+     * @param list<int|float|string|null> $left The returned left row, or none
+     * @param list<int|float|string|null> $right The returned right row, or none
+     */
+    public function absent(array $left, array $right, Frame $frame): int
+    {
+        $one = $left === [] && $this->left instanceof SingleRow ? $this->left->projection : [];
+        $two = $right === [] && $this->right instanceof SingleRow ? $this->right->projection : [];
+        if (($left === [] && $one === []) || ($right === [] && $two === [])) {
+            return (int) ($this->legacyValues && $left === [] && $right === []);
+        }
+        $equal = false;
+        foreach ($this->comparators as $index => $comparator) {
+            $first = $left === [] ? $one[$index]->evaluate($frame->inner()) : $left[$index];
+            $second = $right === [] ? $two[$index]->evaluate($frame->inner()) : $right[$index];
+            if (($first === null) !== ($second === null)) {
+                return 0;
+            }
+            $equal = $first === null;
+            if ($this->legacyValues && !$equal && $comparator->compare($first, $second, $frame->context) !== 0) {
+                return 0;
+            }
+        }
+
+        return (int) ($this->legacyValues || $equal);
     }
 
     /**
