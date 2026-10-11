@@ -82,8 +82,38 @@
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    {</span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$expected</span>, <span class="tok-id">bin2hex</span>((<span class="tok-kw">new</span> <span class="tok-id">LegacyUnicodeWeights</span>())-&gt;<span class="tok-id">primary</span>(<span class="tok-var">$point</span>)));</span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    }</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>}</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com">     * @return array&lt;string, array{int, string}&gt;</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerUnicode4Weights</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    {</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>        <span class="tok-kw">return</span> [</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>            <span class="tok-str">&#039;ASCII&#039;</span> =&gt; [<span class="tok-num">0x61</span>, <span class="tok-str">&#039;0e33&#039;</span>],</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>            <span class="tok-str">&#039;accent&#039;</span> =&gt; [<span class="tok-num">0xE9</span>, <span class="tok-str">&#039;0e8b&#039;</span>],</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>            <span class="tok-str">&#039;expansion&#039;</span> =&gt; [<span class="tok-num">0xDF</span>, <span class="tok-str">&#039;0fea0fea&#039;</span>],</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>            <span class="tok-str">&#039;expansion over capacity&#039;</span> =&gt; [<span class="tok-num">0xFDFA</span>, <span class="tok-str">&#039;fbc1fdfa&#039;</span>],</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>            <span class="tok-str">&#039;ignorable&#039;</span> =&gt; [<span class="tok-num">0x301</span>, <span class="tok-str">&#039;&#039;</span>],</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>            <span class="tok-str">&#039;core ideograph&#039;</span> =&gt; [<span class="tok-num">0x4E00</span>, <span class="tok-str">&#039;fb40ce00&#039;</span>],</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>            <span class="tok-str">&#039;extension A&#039;</span> =&gt; [<span class="tok-num">0x3400</span>, <span class="tok-str">&#039;fb80b400&#039;</span>],</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>            <span class="tok-str">&#039;compatibility form&#039;</span> =&gt; [<span class="tok-num">0xFA0E</span>, <span class="tok-str">&#039;fb41fa0e&#039;</span>],</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-str">&#039;core boundary&#039;</span> =&gt; [<span class="tok-num">0x9FA5</span>, <span class="tok-str">&#039;fb419fa5&#039;</span>],</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            <span class="tok-str">&#039;later ideograph&#039;</span> =&gt; [<span class="tok-num">0x9FA6</span>, <span class="tok-str">&#039;fbc19fa6&#039;</span>],</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            <span class="tok-str">&#039;Hangul&#039;</span> =&gt; [<span class="tok-num">0xAC00</span>, <span class="tok-str">&#039;fbc1ac00&#039;</span>],</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>            <span class="tok-str">&#039;supplementary&#039;</span> =&gt; [<span class="tok-num">0x1F600</span>, <span class="tok-str">&#039;fffd&#039;</span>],</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>            <span class="tok-str">&#039;extension B&#039;</span> =&gt; [<span class="tok-num">0x20000</span>, <span class="tok-str">&#039;fffd&#039;</span>],</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>            <span class="tok-str">&#039;unassigned&#039;</span> =&gt; [<span class="tok-num">0x378</span>, <span class="tok-str">&#039;fbc08378&#039;</span>],</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>            <span class="tok-str">&#039;last scalar&#039;</span> =&gt; [<span class="tok-num">0x10FFFF</span>, <span class="tok-str">&#039;fffd&#039;</span>],</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        ];</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    }</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a></span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerUnicode4Weights&#039;</span>)]</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPrimarySeparatesUnicode4WeightsAndSupplementaryFallback</span>(<span class="tok-id">int</span> <span class="tok-var">$point</span>, <span class="tok-id">string</span> <span class="tok-var">$expected</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>    {</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$expected</span>, <span class="tok-id">bin2hex</span>((<span class="tok-kw">new</span> <span class="tok-id">LegacyUnicodeWeights</span>(<span class="tok-id">false</span>))-&gt;<span class="tok-id">primary</span>(<span class="tok-var">$point</span>)));</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    }</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>}</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
