@@ -76,6 +76,18 @@ final class OriginsTest extends TestCase
         self::assertSame(3, $result->columns[0]->flags & 3);
     }
 
+    public function testOriginKeepsWrappedDefaultsDistinctFromColumnValues(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(a INT DEFAULT 7); INSERT INTO t VALUES (99)');
+        $result = $session->query('SELECT DEFAULT(a),(DEFAULT(a)),+DEFAULT(a),{fn DEFAULT(a)},a FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['7', '7', '7', '7', '99']], $result->rows);
+        self::assertSame(['t', 't', 't', 't', 't'], array_column($result->columns, 'table'));
+        self::assertSame(['a', 'a', 'a', 'a', 'a'], array_column($result->columns, 'originalName'));
+    }
+
     public function testOriginReportsTheAliasOfADerivedTable(): void
     {
         $session = (new Instance())->connect();

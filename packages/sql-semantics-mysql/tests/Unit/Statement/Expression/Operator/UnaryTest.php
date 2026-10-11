@@ -31,6 +31,19 @@ use SqlSemantics\Statement\Type\Known;
 #[Medium]
 final class UnaryTest extends TestCase
 {
+    public function testDeriveScalarRetainsTheBindingAndOperandOfUnaryPlus(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(id INT PRIMARY KEY)');
+        $query = $semantics->analyze('SELECT +id AS v FROM t', [$table]);
+        $field = $query->field(0);
+
+        self::assertInstanceOf(Unary::class, $field->expression);
+        self::assertInstanceOf(\SqlSemantics\Statement\Reference\Column\ResolvedColumn::class, $field->resolution);
+        self::assertSame('id', $field->column()?->name->value);
+        self::assertSame($field->expression->operand, $query->facts->scalar($field->expression)->replacement);
+    }
+
     public function testDeriveScalarWarnsOnlyForTheSymbolicSpellingOfTightNegation(): void
     {
         $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, null, \SqlSemantics\Platform\MySql\Mode::fromString('HIGH_NOT_PRECEDENCE'));

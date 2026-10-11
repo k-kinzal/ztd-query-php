@@ -80,7 +80,7 @@ final class OdbcEscape implements Scalar
             return new ScalarFact(new Known(Literals::of($derivation->context)->temporal($literal)), Nullability::NotNull);
         }
 
-        return $fact;
+        return new ScalarFact($fact->type, $fact->nullability, $fact->resolution, $fact->replacement ?? $this->operand);
     }
 
     /**

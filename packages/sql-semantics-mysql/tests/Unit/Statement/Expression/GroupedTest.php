@@ -28,10 +28,12 @@ final class GroupedTest extends TestCase
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], true));
-        $fact = $derivation->scalar(new Grouped(new NullLiteral()), $derivation->environment());
+        $operand = new NullLiteral();
+        $fact = $derivation->scalar(new Grouped($operand), $derivation->environment());
 
         self::assertInstanceOf(NullOnly::class, $fact->type);
         self::assertSame(Nullability::Nullable, $fact->nullability);
+        self::assertSame($operand, $fact->replacement);
     }
 
     public function testDeriveScalarRetainsTheBoundColumnThroughNestedParentheses(): void

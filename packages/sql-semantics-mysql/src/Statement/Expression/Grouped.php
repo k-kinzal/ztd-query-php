@@ -45,7 +45,7 @@ final class Grouped implements Scalar
     {
         $fact = $derivation->scalar($this->operand, $environment);
 
-        return new ScalarFact($fact->type, $fact->nullability, $fact->resolution, $fact->replacement);
+        return new ScalarFact($fact->type, $fact->nullability, $fact->resolution, $fact->replacement ?? $this->operand);
     }
 
     /**

@@ -37,6 +37,8 @@ final class OdbcEscapeTest extends TestCase
         self::assertEquals(new Known(new Domain(Kind::DateTime, Field::DateTime, 22, 2, false, null, [], Coercibility::Numeric)), $timestamp->type);
         self::assertInstanceOf(Known::class, $other->type);
         self::assertSame('BIGINT', $other->type->descriptor->name());
+        self::assertNull($timestamp->replacement);
+        self::assertInstanceOf(NumberLiteral::class, $other->replacement);
     }
 
     public function testDeriveScalarStandsForAStringUnderAKindInUpperCase(): void
