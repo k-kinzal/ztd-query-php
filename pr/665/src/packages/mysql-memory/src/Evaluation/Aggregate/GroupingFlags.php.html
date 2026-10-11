@@ -82,20 +82,22 @@
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     * Answers the bits of the arguments for the current row.</span></span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">evaluate</span>(<span class="tok-id">Frame</span> <span class="tok-var">$frame</span>): <span class="tok-id">int</span></span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    {</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-var">$rolled</span> = (int) (<span class="tok-var">$frame</span>-&gt;<span class="tok-id">row</span>[<span class="tok-var">$this</span>-&gt;<span class="tok-id">level</span>] ?? <span class="tok-num">0</span>);</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        <span class="tok-var">$flags</span> = <span class="tok-num">0</span>;</span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">arguments</span> <span class="tok-kw">as</span> <span class="tok-var">$position</span>) {</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>            <span class="tok-var">$flags</span> = (<span class="tok-var">$flags</span> &lt;&lt; <span class="tok-num">1</span>) | (<span class="tok-var">$position</span> &gt;= <span class="tok-var">$this</span>-&gt;<span class="tok-id">groups</span> - <span class="tok-var">$rolled</span> ? <span class="tok-num">1</span> : <span class="tok-num">0</span>);</span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>        }</span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a></span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        <span class="tok-kw">return</span> <span class="tok-var">$flags</span>;</span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>    }</span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>}</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com">     * @phpstan-pure</span></span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">evaluate</span>(<span class="tok-id">Frame</span> <span class="tok-var">$frame</span>): <span class="tok-id">int</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    {</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>        <span class="tok-var">$rolled</span> = (int) (<span class="tok-var">$frame</span>-&gt;<span class="tok-id">row</span>[<span class="tok-var">$this</span>-&gt;<span class="tok-id">level</span>] ?? <span class="tok-num">0</span>);</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>        <span class="tok-var">$flags</span> = <span class="tok-num">0</span>;</span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">arguments</span> <span class="tok-kw">as</span> <span class="tok-var">$position</span>) {</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>            <span class="tok-var">$flags</span> = (<span class="tok-var">$flags</span> &lt;&lt; <span class="tok-num">1</span>) | (<span class="tok-var">$position</span> &gt;= <span class="tok-var">$this</span>-&gt;<span class="tok-id">groups</span> - <span class="tok-var">$rolled</span> ? <span class="tok-num">1</span> : <span class="tok-num">0</span>);</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>        }</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a></span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-kw">return</span> <span class="tok-var">$flags</span>;</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    }</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>}</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
