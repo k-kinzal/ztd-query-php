@@ -100,7 +100,7 @@
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-var">$transaction</span>-&gt;<span class="tok-id">savepoints</span>-&gt;<span class="tok-id">release</span>(<span class="tok-var">$statement</span>-&gt;<span class="tok-id">savepoint</span>-&gt;<span class="tok-id">value</span>);</span>
 <span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        }</span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a></span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Completion</span>(<span class="tok-num">0</span>, <span class="tok-num">0</span>, <span class="tok-var">$context</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">count</span>());</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Completion</span>(<span class="tok-num">0</span>, <span class="tok-num">0</span>, <span class="tok-var">$context</span>-&gt;<span class="tok-id">diagnostics</span>-&gt;<span class="tok-id">raised</span>());</span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    }</span>
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>}</span>
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a></span>
