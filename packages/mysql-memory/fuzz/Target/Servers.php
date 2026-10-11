@@ -37,6 +37,18 @@ final class Servers
     }
 
     /**
+     * Releases a failed shared pair so the next independent test starts fresh servers.
+     * The failed input still raises an error; it is never retried or counted as a match.
+     */
+    public static function discard(Differential $target): void
+    {
+        if (self::$shared !== null && self::$shared[0] === $target) {
+            self::$shared[2]->stop();
+            self::$shared = null;
+        }
+    }
+
+    /**
      * The account the differential target repairs the servers through.
      */
     public const GUARD = 'memory_guard';

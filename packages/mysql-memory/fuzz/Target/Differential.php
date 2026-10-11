@@ -7,6 +7,7 @@ namespace Fuzz\Target;
 use Error;
 use PDO;
 use PDOException;
+use RuntimeException;
 
 /**
  * Runs one statement on a MySQL server and on mysql-memory, from the same fixture, and requires every observation to be equal.
@@ -276,6 +277,8 @@ final class Differential
 
     /**
      * Connects to a server and prepares the fixture database, writable again if a statement made it read-only.
+     *
+     * @throws RuntimeException When the fixture cannot be prepared; the input remains a failed observation
      */
     public function connect(string $dsn, string $user, string $password, ?TableTimes $clock = null): PDO
     {
@@ -297,8 +300,8 @@ final class Differential
             }
             $this->baseline?->logs($pdo);
         } catch (PDOException $failure) {
-            fwrite(STDERR, "Setup failed on {$dsn}: {$failure->getMessage()}\nCurrent input: " . $this->json($this->input) . "\nPrevious input: " . $this->json($this->previousInput) . "\nFirst native observation: " . ($this->nativeObservation ?? 'null') . "\n");
-            exit(2);
+            Servers::discard($this);
+            throw new RuntimeException("Setup failed on {$dsn}: {$failure->getMessage()}\nCurrent input: " . $this->json($this->input) . "\nPrevious input: " . $this->json($this->previousInput) . "\nFirst native observation: " . ($this->nativeObservation ?? 'null') . "\n", 0, $failure);
         }
 
         return $pdo;

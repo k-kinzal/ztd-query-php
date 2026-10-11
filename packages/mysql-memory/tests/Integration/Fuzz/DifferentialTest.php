@@ -6,15 +6,54 @@ namespace Tests\Integration\Fuzz;
 
 use Fuzz\Target\Differential;
 use Fuzz\Target\Servers;
+use PDOException;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 #[CoversNothing]
 #[Large]
 final class DifferentialTest extends TestCase
 {
+    public function testSetupFailureRemainsAnErrorWithoutTerminatingTheTestRunner(): void
+    {
+        $target = new Differential('mysql:unix_socket=/nonexistent/mysql-memory-test.sock', '', '', '');
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Setup failed on mysql:unix_socket=/nonexistent/mysql-memory-test.sock:');
+
+        $target->connect($target->native, '', '');
+    }
+
+    public function testDiscardLeavesAnUnrelatedSharedPairAvailable(): void
+    {
+        [$shared] = Servers::shared();
+        $unrelated = new Differential('', '', '', '');
+        Servers::discard($unrelated);
+
+        self::assertSame($shared, Servers::shared()[0]);
+    }
+
+    public function testSetupFailureDiscardsTheSharedPairForTheNextIndependentComparison(): void
+    {
+        [$failed] = Servers::shared();
+        $failure = null;
+        try {
+            $failed->connect('mysql:unix_socket=/nonexistent/mysql-memory-test.sock', '', '');
+        } catch (RuntimeException $error) {
+            $failure = $error;
+        }
+        [$fresh] = Servers::shared();
+        $comparison = $fresh->compare('SELECT 1');
+
+        self::assertInstanceOf(RuntimeException::class, $failure);
+        self::assertInstanceOf(PDOException::class, $failure->getPrevious());
+        self::assertNotSame($failed, $fresh);
+        self::assertFalse($comparison->volatile, (string) $comparison->referenceDifference);
+        self::assertNull($comparison->difference, (string) $comparison->difference);
+    }
+
     /**
      * @return iterable<string, array{string, bool, bool}>
      */
