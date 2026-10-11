@@ -40,6 +40,18 @@ final class SortedDistinct
     }
 
     /**
+     * Selects temporary hash keys when DISTINCT neither sorts nor reads a covering index.
+     *
+     * @param list<array{int, Domain, bool}> $keys The projected sort positions
+     */
+    public function hashes(QueryPlan $plan, Select $select, array $keys): bool
+    {
+        return !$this->planner->settings->legacy() && in_array(SelectOption::Distinct, $select->options, true)
+            && !in_array(SelectOption::BigResult, $select->options, true)
+            && !$this->indexed($plan, $keys, $select->from, $keys === []);
+    }
+
+    /**
      * Converts only selected BIT sort columns when they pass through storage.
      *
      * @param list<array{int, Domain, bool}> $keys The projected sort positions
@@ -64,8 +76,9 @@ final class SortedDistinct
      * Detects a covering index or a selected non-null unique key on one table.
      *
      * @param list<array{int, Domain, bool}> $keys The projected sort positions
+     * @param bool $groupOnly Whether only grouping can avoid temporary duplicate storage
      */
-    public function indexed(QueryPlan $plan, array $keys, ?Relation $source = null): bool
+    public function indexed(QueryPlan $plan, array $keys, ?Relation $source = null, bool $groupOnly = false): bool
     {
         while ($source instanceof NestedRelation) {
             $source = $source->relation;
@@ -92,12 +105,22 @@ final class SortedDistinct
             if ($index->unique() && $required === [] && $nullable === []) {
                 return true;
             }
-            if ($index->access($table->definition->engine) === IndexAlgorithm::Btree && $this->available($index, $source) && $this->ordered($index, $selected, $keys)) {
+            $skip = $this->skip($table, $index, $source, $groupOnly);
+            if ($index->access($table->definition->engine) === IndexAlgorithm::Btree && ($this->available($index, $source, !$groupOnly) || $skip) && $this->ordered($index, $selected, $keys)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Detects a sampled index grouping scan that removes duplicates before temporary storage.
+     */
+    public function skip(\MySqlMemory\Dictionary\StoredTable $table, Key $index, TableReference $source, bool $groupOnly): bool
+    {
+        return $groupOnly && !$table->definition->temporary && $index->visible && $table->indexStatistics?->groups($index->name) === true
+            && $this->allowed($index->name, $source->indexHints, IndexHintScope::Join);
     }
 
     /**
@@ -134,12 +157,14 @@ final class SortedDistinct
 
     /**
      * Checks visibility and the hint scopes that can avoid duplicate storage.
+     *
+     * @param bool $ordered Whether the query also orders, allowing an ORDER BY index
      */
-    public function available(Key $index, TableReference $source): bool
+    public function available(Key $index, TableReference $source, bool $ordered = true): bool
     {
         $visible = $index->visible || str_contains((string) $this->planner->compiler->connection->variables->read('optimizer_switch'), 'use_invisible_indexes=on');
 
-        return $visible && ($this->allowed($index->name, $source->indexHints, IndexHintScope::OrderBy) || $this->allowed($index->name, $source->indexHints, IndexHintScope::GroupBy));
+        return $visible && (($ordered && $this->allowed($index->name, $source->indexHints, IndexHintScope::OrderBy)) || $this->allowed($index->name, $source->indexHints, IndexHintScope::GroupBy));
     }
 
     /**

@@ -96,7 +96,17 @@ final class Weight implements Evaluable
         $legacy = in_array($release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
         $count = $this->cast === WeightCast::Char ? $this->length ?? 0 : $this->weights;
         $flags = $this->flags | ($legacy && ($this->cast === WeightCast::Char || ($this->flags & 64) !== 0) ? 128 : 0);
-        $weight = (new \MySqlMemory\Typing\Weights())->text($value, $domain->collation, $count, $flags, !$legacy || $this->cast === WeightCast::Char || ($this->flags & 64) !== 0);
+        $pad = !$legacy || $this->cast === WeightCast::Char || ($this->flags & 64) !== 0;
+        $weigher = new \MySqlMemory\Typing\Weights();
+        if ($legacy && str_ends_with($domain->collation->name, '_unicode_520_ci')) {
+            $weight = $weigher->text($value, $domain->collation);
+            if ($count > 0) {
+                $weight = substr($weight, 0, 2 * $count);
+                $weight = $pad ? str_pad($weight, 2 * $count, $weigher->character(' ', $domain->collation)) : $weight;
+            }
+        } else {
+            $weight = $weigher->text($value, $domain->collation, $count, $flags, $pad);
+        }
 
         if (($this->flags & 128) !== 0) {
             $capacity = $this->resultLength > 0 ? $this->resultLength : (new \SqlSemantics\Platform\MySql\Rules\Call\WeightResults())->capacity($domain->collation, strlen($value), $count);

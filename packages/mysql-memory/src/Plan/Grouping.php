@@ -104,8 +104,10 @@ final class Grouping
 
         $rollup = $select->groupBy?->modifier !== null;
         $columns = $rollup ? $this->rollup($select, $groups, $targets, $grouped, $width + count($aggregates)) : [];
+        $sorted = $this->sorts($select, $aggregates, $scope);
+        $hashed = !$sorted || ($this->planner->settings->legacy() && !$rollup && !$this->indexed($select, $scope) && !in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::BigResult, $select->options, true));
 
-        return [new AggregatePath($input, $groups, $accumulations, $rollup, $columns, $this->sorts($select, $aggregates, $scope)), $grouped];
+        return [new AggregatePath($input, $groups, $accumulations, $rollup, $columns, $sorted, $hashed), $grouped];
     }
 
     /**
@@ -123,7 +125,7 @@ final class Grouping
      */
     public function sorts(Select $select, array $aggregates, Scope $scope): bool
     {
-        if ($this->planner->settings->legacy() || $select->groupBy?->modifier !== null) {
+        if ($this->planner->settings->legacy() || $select->groupBy?->modifier !== null || in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::BigResult, $select->options, true)) {
             return true;
         }
         foreach ($aggregates as $aggregate) {

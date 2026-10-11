@@ -17,6 +17,36 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class SortedDistinctTest extends TestCase
 {
+    public function testSkipUsesTheStatisticsCollectedByAnalyze(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t(v VARCHAR(64) COLLATE utf8mb4_unicode_520_ci,KEY k(v)); INSERT INTO t VALUES ('a'),(_utf8mb4 X'612000'),('a '),('a'),(NULL)");
+        $before = $session->query('SELECT COUNT(*) FROM (SELECT DISTINCT v FROM t IGNORE INDEX FOR GROUP BY(k)) d')[0];
+        $session->query('ANALYZE TABLE t');
+        $after = $session->query('SELECT COUNT(*) FROM (SELECT DISTINCT v FROM t IGNORE INDEX FOR GROUP BY(k)) d')[0];
+
+        self::assertInstanceOf(ResultSet::class, $before);
+        self::assertInstanceOf(ResultSet::class, $after);
+        self::assertSame([[['3']], [['2']]], [$before->rows, $after->rows]);
+    }
+
+    public function testHashesPreservesTemporaryCollationKeysAndIndexComparisons(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d; USE d; CREATE TABLE t(id INT PRIMARY KEY,v VARCHAR(64) COLLATE utf8mb4_unicode_520_ci); INSERT INTO t VALUES (0,'a'),(1,_utf8mb4 X'612000'),(2,NULL)");
+        $temporary = $session->query('SELECT COUNT(*) FROM (SELECT DISTINCT v FROM t) d')[0];
+        $sorted = $session->query('SELECT COUNT(*) FROM (SELECT SQL_BIG_RESULT DISTINCT v FROM t) d')[0];
+        $session->query('ALTER TABLE t ADD KEY(v)');
+        $indexed = $session->query('SELECT COUNT(*) FROM (SELECT DISTINCT v FROM t) d')[0];
+        $ignored = $session->query('SELECT COUNT(*) FROM (SELECT DISTINCT v FROM t IGNORE INDEX FOR GROUP BY(v)) d')[0];
+
+        self::assertInstanceOf(ResultSet::class, $temporary);
+        self::assertInstanceOf(ResultSet::class, $sorted);
+        self::assertInstanceOf(ResultSet::class, $indexed);
+        self::assertInstanceOf(ResultSet::class, $ignored);
+        self::assertSame([[['3']], [['2']], [['2']], [['3']]], [$temporary->rows, $sorted->rows, $indexed->rows, $ignored->rows]);
+    }
+
     public function testApplyStoresOnlyTheSelectedBitSortColumnAsAnInteger(): void
     {
         $session = (new Instance())->connect();

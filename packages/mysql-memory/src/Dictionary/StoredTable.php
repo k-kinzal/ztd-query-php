@@ -23,6 +23,11 @@ final class StoredTable
     public array $statistics = [];
 
     /**
+     * Index-maintenance estimates, independent of the information_schema statistics cache.
+     */
+    public ?\MySqlMemory\Storage\IndexStatistics $indexStatistics = null;
+
+    /**
      * The session-clock second at which the cached table statistics were read.
      */
     public ?int $statisticsRead = null;

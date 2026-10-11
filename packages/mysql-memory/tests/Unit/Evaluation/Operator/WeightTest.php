@@ -70,6 +70,20 @@ final class WeightTest extends TestCase
         self::assertSame([['61620000']], $result->rows);
     }
 
+    public function testTextLimitsLegacyUnicodeExpansionsByWeightCount(): void
+    {
+        $collation = Collation::known('utf8mb4_unicode_520_ci');
+        $domain = Domain::string(2, $collation);
+        $operand = new Constant($domain, "\u{FDFA}a");
+        $one = new Weight($operand, WeightCast::Char, 1, Domain::string(32, Collation::binary()));
+        $four = new Weight($operand, null, null, Domain::string(32, Collation::binary()), 4);
+        $padded = new Weight($operand, WeightCast::Char, 3, Domain::string(32, Collation::binary()));
+
+        self::assertSame('18fc', bin2hex($one->text("\u{FDFA}a", $domain, GrammarRelease::MySql5744)));
+        self::assertSame('18fc192b194f020a', bin2hex($four->text("\u{FDFA}a", $domain, GrammarRelease::MySql5651)));
+        self::assertSame('120f020a020a', bin2hex($padded->text("a\u{301}", $domain, GrammarRelease::MySql5744)));
+    }
+
     public function testEvaluateAppliesTheDocumentedLevelModifiers(): void
     {
         $session = (new Instance('5.7.44'))->connect();

@@ -204,6 +204,7 @@ final class AlterTableCommand implements Command
         }
         $table->definition = $definition;
         $table->data = $data;
+        $table->indexStatistics = \MySqlMemory\Storage\IndexStatistics::sample($table);
         $table->created = CreateTableCommand::created($context);
         $table->updated = $updated;
         $table->statistics = array_intersect_key($table->statistics, ['table' => true]);
@@ -375,16 +376,18 @@ final class AlterTableCommand implements Command
             $retyped = $retyped || !TableRebuild::columnInPlace($before, $column, in_array($context->modes->release, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true));
             $copies = $copies || $this->copiesColumn($before, $column, $context);
         }
-        if ($retyped && $change->algorithm === 'inplace') {
-            throw SchemaError::AlterOperationNotSupportedReason->error('ALGORITHM=INPLACE', 'Cannot change column type INPLACE', 'ALGORITHM=COPY');
-        }
-        if ($retyped && $change->lock === 'none') {
-            throw SchemaError::AlterOperationNotSupportedReason->error('LOCK=NONE', 'Cannot change column type INPLACE', 'LOCK=SHARED');
-        }
-        if (!$retyped) {
+        if ($retyped) {
+            if ($change->algorithm === 'inplace') {
+                throw SchemaError::AlterOperationNotSupportedReason->error('ALGORITHM=INPLACE', 'Cannot change column type INPLACE', 'ALGORITHM=COPY');
+            }
+            if ($change->lock === 'none') {
+                throw SchemaError::AlterOperationNotSupportedReason->error('LOCK=NONE', 'Cannot change column type INPLACE', 'LOCK=SHARED');
+            }
+        } else {
             (new Constraint\SpatialColumns())->alter($old, $new, $origins, $change->algorithm, $change->lock);
         }
         $rekeyed = array_map(static fn ($key): array => [$key->name, $key->kind, $key->columns], $old->keys) !== array_map(static fn ($key): array => [$key->name, $key->kind, $key->columns], $new->keys);
+        $copies = $copies || ($old->temporary && $rekeyed);
         if ($change->algorithm === 'instant' && ($retyped || $copies || $rekeyed)) {
             throw SchemaError::AlterOperationNotSupported->error('ALGORITHM=INSTANT', 'ALGORITHM=COPY/INPLACE');
         }

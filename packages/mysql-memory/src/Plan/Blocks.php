@@ -91,14 +91,17 @@ final class Blocks
         $domains = array_map(fn (Field $field, Evaluable $expression): Domain => $this->tabled($field, $expression->domain()), $fields, $expressions);
         [$keys, $expressions] = $this->sortKeys($select, $fields, $domains, $expressions, $evaluation);
         $expressions = $this->carry($select, $scope, $evaluation, $expressions);
-        $root = $this->distinct($select, $fields, $input, $expressions, $domains);
+        $names = array_map(fn (Field $field): string => $this->name($field, $select), $fields);
+        $origins = (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== []);
+        $hashes = (new SortedDistinct($this->planner))->hashes(new QueryPlan($input, $domains, $names, $origins), $select, $keys);
+        $root = $this->distinct($select, $fields, $input, $expressions, $domains, $hashes);
         if ($keys !== [] && !$presorted) {
             $root = new Sort($root, $keys);
         }
         $root = $this->limit($root, $select->limit, $outer);
         $root = $this->limit($root, $select->late?->limit, $outer);
 
-        $plan = new QueryPlan($root, $domains, array_map(fn (Field $field): string => $this->name($field, $select), $fields), (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== []));
+        $plan = new QueryPlan($root, $domains, $names, $origins);
 
         return System\ProgramMetadata::buffered((new SortedDistinct($this->planner))->apply($plan, $select, $keys, $outer), $this->planner, $select, $outer, $scope, $keys !== []);
     }
@@ -220,8 +223,9 @@ final class Blocks
      * @param list<Field> $fields The fields of the select list
      * @param list<Evaluable> $expressions The select list, then the ORDER BY keys
      * @param list<Domain> $domains The domains of the select list
+     * @param bool $hashed Whether duplicate removal uses temporary hash keys
      */
-    public function distinct(Select $select, array $fields, AccessPath $input, array $expressions, array $domains): AccessPath
+    public function distinct(Select $select, array $fields, AccessPath $input, array $expressions, array $domains, bool $hashed = false): AccessPath
     {
         if (!in_array(SelectOption::Distinct, $select->options, true)) {
             return new Project($input, $expressions);
@@ -234,10 +238,10 @@ final class Blocks
             }
         }
         if ($constants === []) {
-            return new Distinct(new Project($input, $expressions), $domains);
+            return new Distinct(new Project($input, $expressions), $domains, $hashed);
         }
         $placeheld = array_map(static fn (int $position, Evaluable $expression): Evaluable => isset($constants[$position]) ? new Constant($expression->domain(), null) : $expression, array_keys($expressions), $expressions);
-        $distinct = new Distinct(new Project($input, $placeheld), $domains);
+        $distinct = new Distinct(new Project($input, $placeheld), $domains, $hashed);
 
         return new Project($distinct, array_map(static fn (int $position, Evaluable $expression): Evaluable => $constants[$position] ?? new ColumnRead($expression->domain(), $position), array_keys($expressions), $expressions));
     }

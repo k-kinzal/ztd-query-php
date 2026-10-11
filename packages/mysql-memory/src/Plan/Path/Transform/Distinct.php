@@ -20,8 +20,9 @@ final class Distinct implements AccessPath
     /**
      * @param AccessPath $input The rows
      * @param list<Domain> $domains The domains of the leading values compared
+     * @param bool $hashed Whether temporary storage removes duplicates by collation hash keys
      */
-    public function __construct(public readonly AccessPath $input, public readonly array $domains)
+    public function __construct(public readonly AccessPath $input, public readonly array $domains, public readonly bool $hashed = false)
     {
     }
 

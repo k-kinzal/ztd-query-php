@@ -166,6 +166,8 @@ final class AdministrationCommand implements Command
             }
         }
 
+        \MySqlMemory\Storage\IndexStatistics::refresh($table, $operation, $failure === null);
+
         return $this->rows($label, $operation, $failure === null ? $this->outcome($operation, $partitioned instanceof PartitionSelection) : [['Error', $failure], $session->instance->dictionary->schema($schema) === null && !$session->settings()->legacy() ? ['error', 'Corrupt'] : ['status', 'Operation failed']]);
     }
 

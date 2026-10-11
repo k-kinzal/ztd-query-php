@@ -97,6 +97,7 @@ Commands of statements that need what an emulator does not have (files, plugins,
 - `Plan\Blocks` plans one query block in the order the server applies its clauses: `FROM`, `WHERE`, grouping, `HAVING`, the select list, `DISTINCT`, `ORDER BY` and `LIMIT`.
 - `Plan\Relations` plans the `FROM` clause: base tables, derived tables (`LATERAL` ones inside the frame of the block), common tables, views, joins with `ON`, `USING` and `NATURAL`.
 - `Plan\JoinComparisons` preserves the hash-key checks of unindexed string equijoins on modern releases while retaining nested-loop execution. Index and constant lookups retain ordinary comparisons; legacy UCA padding can make these observably different.
+- `Plan\SortedDistinct` chooses comparison keys for index or sort deduplication and hash keys for temporary storage. Grouping records this choice independently of its output order.
 - `Plan\Grouping` plans `GROUP BY`, the aggregates, `WITH ROLLUP` and `GROUPING()`.
 - `Plan\Recursion` plans a recursive common table expression as a nonrecursive part and a part that reads the rows of the last iteration.
 - `Plan\Views` plans a reference to a view as its query read like a derived table, and decides what the column metadata reports for it.
@@ -127,6 +128,8 @@ A table scan reads the rows of a table in the order of its clustered index, as I
 A value at run time is a PHP `int`, `float` or `string`, or `null` for SQL NULL. Its `Typing\Domain` says how to read it: integers as signed or unsigned 64-bit values (`Value\Integer`), exact decimals as canonical decimal text (`Value\Decimal`), doubles (`Value\Real`, which also writes them as the server does), dates and times as canonical text (`Value\Temporal`, `Value\Calendar`, `Value\Interval`), strings as the bytes of their character set (`Value\Encoding`), JSON as a parsed document (`Value\Json`). `Value\Order` compares and keys values for sorting, grouping and unique keys, strings by their collation through ICU (`Typing\Ordering`). `Typing\Collations` decides the collation of an operation over several strings, and `Typing\Declared` the domain of a declared column type.
 
 `Dictionary` holds the definitions. A `Dictionary\Schema` is a database with its tables, views, routines, triggers and events. A `Dictionary\StoredTable` pairs a `Dictionary\TableDefinition` (columns, keys, options, and the declaration SQL Semantics binds against) with a `Storage\Heap` (its rows under row numbers, and its `AUTO_INCREMENT` counter).
+
+`Storage\IndexStatistics` snapshots row counts and index cardinalities after ALTER, ANALYZE and OPTIMIZE. DISTINCT uses these observations for small-table grouping scans whose comparison can differ from temporary hash keys. It does not model physical page layouts or large-table sampling.
 
 `Storage` writes rows. `Storage\Store` converts a value into what a column stores, as the server converts a value for the field it writes: clipping, rounding or truncating it with a warning, or failing under a strict `sql_mode`. `Storage\Times` and `Storage\Members` do the same for temporal, `ENUM` and `SET` columns. `Storage\Writer` keeps the unique keys and the `AUTO_INCREMENT` counter.
 
