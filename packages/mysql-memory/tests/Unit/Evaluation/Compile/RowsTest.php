@@ -25,6 +25,40 @@ final class RowsTest extends TestCase
         self::assertSame([['1', '1']], $result->rows);
     }
 
+    public function testTupleRoutesComparisonsBetweenTwoMultiColumnSubqueries(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (SELECT 1,2) = (SELECT 1,2)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
+    public function testSubqueryRecognizesGroupingAroundARowSubquery(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT ((SELECT 1,2)) = (1,2)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+    }
+
+    public function testOperandBindsRowSubqueriesToTheirOuterScope(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT id, (id,v) = (SELECT id,20) FROM (SELECT 1 id,10 v UNION ALL SELECT 2,20) t ORDER BY id')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0'], ['2', '1']], $result->rows);
+    }
+
+    public function testSubqueriedUsesTheQuietStringDomainOfEachSubqueryColumn(): void
+    {
+        $session = (new Instance())->connect();
+        $result = $session->query("SELECT (1,0) = (SELECT 1,'x')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
     public function testCompareComparesTwoRowsElementByElement(): void
     {
         $session = (new Instance())->connect();

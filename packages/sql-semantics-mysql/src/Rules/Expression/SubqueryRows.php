@@ -119,6 +119,19 @@ final class SubqueryRows
     }
 
     /**
+     * Derives membership metadata; positive row membership in MySQL 5.6 and 5.7
+     * reports the full BIGINT width, while its negation reports width 1 (verified through PDO).
+     */
+    public function predicate(ScalarFact $operand, QueryFact $query, Derivation $derivation, Scalar $expression, bool $negated): ScalarFact
+    {
+        $nullability = $this->test($operand, $query, $derivation, $expression);
+        $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
+        $wide = $legacy && !$negated && (new Operands())->width($operand) > 1;
+
+        return new ScalarFact(new Known(Domain::integer(ResolvedField::LongLong, $wide ? 21 : 1)), $nullability);
+    }
+
+    /**
      * Reports LIMIT on the subquery's query blocks, but not inside derived tables or CTE definitions.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/subquery-restrictions.html.
      */

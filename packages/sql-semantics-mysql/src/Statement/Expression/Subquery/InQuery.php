@@ -6,7 +6,6 @@ namespace SqlSemantics\Platform\MySql\Statement\Expression\Subquery;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Diagnostic\Check;
-use SqlSemantics\Platform\MySql\Rules\Expression\Operands;
 use SqlSemantics\Platform\MySql\Rules\Expression\Precedence;
 use SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows;
 use SqlSemantics\Rendering\Output;
@@ -55,7 +54,7 @@ final class InQuery implements Scalar
         $operand = $derivation->scalar($this->operand, $environment);
         $query = $derivation->query($this->query, $environment);
 
-        return (new Operands())->truth((new SubqueryRows())->test($operand, $query, $derivation, $this));
+        return (new SubqueryRows())->predicate($operand, $query, $derivation, $this, $this->negated);
     }
 
     /**

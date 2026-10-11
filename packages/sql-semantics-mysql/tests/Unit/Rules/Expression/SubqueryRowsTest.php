@@ -139,6 +139,27 @@ final class SubqueryRowsTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerMembershipWidths(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44', 'mysql-8.0.44', 'mysql-8.4.7', 'mysql-9.1.0'] as $version) {
+            foreach (['IN', '= ANY', '= SOME', 'NOT IN', '<> ALL'] as $operator) {
+                $wide = str_starts_with($version, 'mysql-5.') && in_array($operator, ['IN', '= ANY', '= SOME'], true);
+                yield $version . ' ' . $operator => [$version, $operator, $wide ? 21 : 1];
+            }
+        }
+    }
+
+    #[DataProvider('providerMembershipWidths')]
+    public function testPredicateRetainsTheReleaseSpecificWidth(string $version, string $operator, int $width): void
+    {
+        $type = (new Semantics(Dialect::MySql, $version))->analyze('SELECT (1,2) ' . $operator . ' (SELECT 1,2)')->field(0)->type;
+
+        self::assertEquals(new Known(Domain::integer(ResolvedField::LongLong, $width)), $type);
+    }
+
+    /**
      * @return iterable<string, array{string, bool}>
      */
     public static function providerLimits(): iterable

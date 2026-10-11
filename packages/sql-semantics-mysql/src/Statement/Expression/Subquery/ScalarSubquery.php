@@ -22,7 +22,9 @@ use SqlSemantics\Statement\Snapshot;
  *
  * Rule: MYSQL-SCALAR-SUBQUERY-001. Facts: MYSQL-SUBQUERY-ROWS-001; a
  * subquery of one column has its type, one of several columns is a row,
- * and either is NULL when no row is returned. A reducible one-expression query
+ * and either is NULL when no row is returned. A tableless, unfiltered row subquery
+ * retains its columns' combined NULL attribute, subject to the release's LIMIT rule.
+ * A reducible one-expression query
  * instead publishes that bound expression as its replacement and retains its
  * type and NULL attribute (MYSQL-SCALAR-REDUCTION-001). Terminates: the query is a
  * strict part.
@@ -57,7 +59,16 @@ final class ScalarSubquery implements Scalar
         $reduction = new ScalarReduction();
         $replacement = $reduction->expression($this->query, $derivation->context->profile->grammar);
         if ($replacement === null) {
-            return count($query->shape->slots) === 1 && $reduction->preservesNullability($this->query, $legacy) ? new ScalarFact($value->type, $query->shape->slots[0]->nullability) : $value;
+            if ($query->shape->complete() && $query->shape->slots !== [] && $reduction->preservesNullability($this->query, $legacy)) {
+                $nullable = \SqlSemantics\Statement\Type\Nullability::NotNull;
+                foreach ($query->shape->slots as $slot) {
+                    $nullable = $nullable->propagate($slot->nullability);
+                }
+
+                return new ScalarFact($value->type, $nullable);
+            }
+
+            return $value;
         }
 
         return count($query->shape->slots) !== 1 ? $value : new ScalarFact($query->shape->slots[0]->type, $query->shape->slots[0]->nullability, replacement: $replacement);

@@ -50,4 +50,22 @@ final class RowMembershipTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '1'], ['2', '0']], $result->rows);
     }
+
+    public function testMatchesFallsBackToScanningForANullKeyAndStopsAtTheFirstUnknownRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT, part INT, s VARCHAR(20), PRIMARY KEY(id,part))');
+        $session->query("INSERT INTO t VALUES (1,1,'a'),(2,1,'b')");
+        $session->query('SELECT (NULL,0,2) IN (SELECT part,s,id FROM t)');
+        $partial = $session->query('SHOW WARNINGS')[0];
+        $session->query('SELECT (1,0,NULL) IN (SELECT part,s,id FROM t)');
+        $first = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $partial);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"], ['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $partial->rows);
+        self::assertInstanceOf(ResultSet::class, $first);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'a'"]], $first->rows);
+    }
 }

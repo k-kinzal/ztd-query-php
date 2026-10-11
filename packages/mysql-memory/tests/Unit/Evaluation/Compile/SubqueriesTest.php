@@ -32,6 +32,14 @@ final class SubqueriesTest extends TestCase
         self::assertSame([['5', null]], $result->rows);
     }
 
+    public function testRowPlansAMultiColumnSubqueryUsedAsAMembershipOperand(): void
+    {
+        $result = (new Instance())->connect()->query('SELECT (SELECT 1,2) IN (SELECT 1,2 UNION ALL SELECT 3,4), (SELECT 1,2 WHERE 0) IN (SELECT 1,2)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', null]], $result->rows);
+    }
+
     public function testScalarRefusesASubqueryOfMoreThanOneColumn(): void
     {
         $session = (new Instance())->connect();
@@ -87,6 +95,36 @@ final class SubqueriesTest extends TestCase
 
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['1', '0']], $result->rows);
+    }
+
+    public function testMembershipKeyRestrictsConversionToTheSelectedPrimaryKeyRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20))');
+        $session->query("INSERT INTO t VALUES (1,'a'),(2,'b')");
+        $result = $session->query('SELECT (0,2) IN (SELECT s,id FROM t)')[0];
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $warnings->rows);
+    }
+
+    public function testMembershipColumnsMapACompleteCompositeKeyInIndexOrder(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d');
+        $session->query('USE d');
+        $session->query('CREATE TABLE t (id INT, part INT, s VARCHAR(20), PRIMARY KEY(id,part))');
+        $session->query("INSERT INTO t VALUES (1,1,'a'),(2,1,'b')");
+        $session->query('SELECT (1,0,2) IN (SELECT part,s,id FROM t)');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(ResultSet::class, $warnings);
+        self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: 'b'"]], $warnings->rows);
     }
 
     public function testQuantifiedRefusesASubqueryOfMoreThanOneColumn(): void

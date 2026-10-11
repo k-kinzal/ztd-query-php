@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Integration\Fuzz;
 
 use Fuzz\Target\Servers;
+use PDO;
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Large;
@@ -27,7 +29,6 @@ final class RowSubqueriesTest extends TestCase
         }
         yield 'constant row' => ['SELECT (1, 10) IN (SELECT 1, 10)'];
         yield 'constant coercion' => ["SELECT (0, 1) IN (SELECT 'x', 1)"];
-        yield 'table coercion' => ['SELECT (0, 1) IN (SELECT b, id FROM t1)'];
         yield 'collation' => ["SELECT (1, 'APPLE') IN (SELECT id, b FROM t1)"];
         yield 'correlated' => ['SELECT id, (a, b) IN (SELECT a, b FROM t2 WHERE t2.id <= t1.id) FROM t1 ORDER BY id'];
         yield 'true after unknown' => ['SELECT (1, 2) IN (SELECT 1, NULL UNION ALL SELECT 1, 2)'];
@@ -55,5 +56,35 @@ final class RowSubqueriesTest extends TestCase
 
         self::assertFalse($comparison->volatile);
         self::assertNull($comparison->difference, (string) $comparison->difference);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerCoercion(): iterable
+    {
+        yield 'table coercion' => ['SELECT (0, 1) IN (SELECT b, id FROM t1)'];
+        yield 'table coercion negated' => ['SELECT (0, 1) NOT IN (SELECT b, id FROM t1)'];
+        yield 'table coercion later row' => ['SELECT (0, 2) IN (SELECT b, id FROM t1)'];
+        yield 'table coercion unequal' => ['SELECT (1, 1) IN (SELECT b, id FROM t1)'];
+        yield 'table coercion without key' => ['SELECT (0, 10) IN (SELECT b, a FROM t1)'];
+        yield 'table coercion filtered' => ['SELECT (0, 1) IN (SELECT b, id FROM t1 WHERE id = 1)'];
+        yield 'table coercion grouped' => ['SELECT (0, 1) IN (SELECT b, id FROM t1 GROUP BY b, id)'];
+        yield 'table coercion null key' => ['SELECT (0, NULL) IN (SELECT b, id FROM t1)'];
+        yield 'table coercion null value' => ['SELECT (NULL, 2) IN (SELECT b, id FROM t1)'];
+    }
+
+    #[DataProvider('providerCoercion')]
+    public function testCoercionWarningsMatchMySql(string $sql): void
+    {
+        [$target] = Servers::shared();
+        $comparison = $target->compare($sql);
+        $native = new PDO($target->native . ';dbname=fz', $target->nativeUser, $target->nativePassword, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $statement = $native->query('EXPLAIN FORMAT=JSON ' . $sql);
+        self::assertInstanceOf(PDOStatement::class, $statement);
+        $plan = $statement->fetchAll(PDO::FETCH_NUM);
+
+        self::assertFalse($comparison->volatile);
+        self::assertNull($comparison->difference, (string) $comparison->difference . "\nNative plan: " . json_encode($plan, JSON_THROW_ON_ERROR));
     }
 }

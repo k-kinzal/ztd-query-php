@@ -61,6 +61,17 @@ final class Subqueries
     }
 
     /**
+     * Plans a multi-column subquery used as one row, independently of scalar value types.
+     */
+    public function row(ScalarSubquery $node, Scope $scope): \MySqlMemory\Evaluation\Subquery\SingleRow
+    {
+        $plan = $this->compiler->planner->query($node->query, $scope);
+        $once = Constancy::of($node->query, $this->compiler->facts) !== Constancy::Row && (new Walker())->find($node->query, VariableAssignment::class) === [];
+
+        return new \MySqlMemory\Evaluation\Subquery\SingleRow(new Rows($plan), $once);
+    }
+
+    /**
      * Compiles EXISTS.
      */
     public function exists(Exists $node, Scope $scope): Evaluable
@@ -99,9 +110,8 @@ final class Subqueries
      */
     public function quantified(\SqlSemantics\Statement\Scalar $operand, ComparisonOperator $operator, bool $all, bool $negated, \SqlSemantics\Statement\Query $query, Scope $scope, \SqlSemantics\Statement\Scalar $node): Evaluable
     {
-        $elements = $this->compiler->rows->elements($operand);
-        if ($elements !== null) {
-            return $this->membership($elements, $query, $scope, $negated || $all);
+        if ($this->compiler->rows->tuple($operand)) {
+            return $this->membership($operand, $query, $scope, $negated || $all);
         }
         $value = $this->compiler->compile($operand, $scope);
         $plan = $this->compiler->planner->query($query, $scope);
@@ -120,22 +130,72 @@ final class Subqueries
     /**
      * Compiles row IN and its equivalent = ANY or <> ALL forms after semantic validation.
      *
-     * @param list<\SqlSemantics\Statement\Scalar> $elements The row constructor's elements
      * @throws \MySqlMemory\Error\SqlError When the subquery has a different number of columns
      */
-    public function membership(array $elements, \SqlSemantics\Statement\Query $query, Scope $scope, bool $negated): Evaluable
+    public function membership(\SqlSemantics\Statement\Scalar $operand, \SqlSemantics\Statement\Query $query, Scope $scope, bool $negated): Evaluable
     {
-        $values = array_map(fn (\SqlSemantics\Statement\Scalar $element): Evaluable => $this->compiler->compile($element, $scope), $elements);
+        $values = $this->compiler->rows->operand($operand, $scope);
+        $domains = $values instanceof \MySqlMemory\Evaluation\Subquery\SingleRow ? $values->domains() : array_map(static fn (Evaluable $value): \MySqlMemory\Typing\Domain => $value->domain(), $values);
         $plan = $this->compiler->planner->query($query, $scope);
-        if (count($values) !== count($plan->domains)) {
-            throw QueryError::OperandColumns->error(count($values));
+        if (count($domains) !== count($plan->domains)) {
+            throw QueryError::OperandColumns->error(count($domains));
         }
         $comparators = [];
-        foreach ($values as $index => $value) {
-            $comparators[] = Comparator::of($value->domain(), $plan->domains[$index], '=', $this->compiler->settings->connectionCollation, $this->compiler->settings->release());
+        foreach ($domains as $index => $domain) {
+            $comparators[] = Comparator::of($domain, $plan->domains[$index], '=', $this->compiler->settings->connectionCollation, $this->compiler->settings->release());
         }
 
-        return new \MySqlMemory\Evaluation\Subquery\RowMembership($values, new Rows($plan), $comparators, $negated, $this->compiler->operators->truth(true));
+        return new \MySqlMemory\Evaluation\Subquery\RowMembership($values, new Rows($plan), $comparators, $negated, $this->compiler->operators->truth(true), $this->membershipKey($query, $comparators));
+    }
+
+    /**
+     * Finds a complete integer primary key in a simple membership query's output.
+     * Its equality restricts candidate rows before the remaining comparisons can convert values.
+     *
+     * @param list<Comparator> $comparators The comparison rules in output order
+     * @return list<int> The output positions of the key, in index order
+     */
+    public function membershipKey(\SqlSemantics\Statement\Query $query, array $comparators): array
+    {
+        $query = $this->innermost($query);
+        if (!$query instanceof Select || !$query->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableReference || $query->groupBy !== null || $query->having !== null || $query->windows !== [] || $query->from->indexHints !== [] || $this->aggregated($query)) {
+            return [];
+        }
+        $table = $this->compiler->facts->relation($query->from)->table;
+        if (!$table instanceof \SqlSemantics\Statement\Reference\Table\DeclaredTable) {
+            return [];
+        }
+        $columns = $this->membershipColumns($query, $comparators);
+        foreach ($table->table->keys as $key) {
+            $ids = array_map(spl_object_id(...), $key->columns);
+            if ($key->primary && array_diff($ids, array_keys($columns)) === []) {
+                return array_map(static fn (int $id): int => $columns[$id], $ids);
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Maps directly selected integer-comparable columns of the subquery's own table to output positions.
+     *
+     * @param list<Comparator> $comparators The comparison rules in output order
+     * @return array<int, int> Output positions by declared column identity
+     */
+    public function membershipColumns(Select $query, array $comparators): array
+    {
+        $columns = [];
+        foreach ($this->compiler->facts->query($query)->projection as $field) {
+            if (!$field instanceof \SqlSemantics\Statement\Shape\Field || $field->expression === null || $comparators[$field->position]->mode !== \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer) {
+                continue;
+            }
+            $column = (new \MySqlMemory\Plan\ConstantTables($this->compiler->facts))->column($field->expression);
+            if ($column?->relation === $query->from && $column->declaration() !== null) {
+                $columns[spl_object_id($column->declaration())] = $field->position;
+            }
+        }
+
+        return $columns;
     }
 
     /**
@@ -196,9 +256,9 @@ final class Subqueries
     }
 
     /**
-     * Tells whether an expression holds an aggregate of its own block: a set function, GROUP_CONCAT or JSON_OBJECTAGG.
+     * Tells whether an expression or query holds an aggregate of its own block: a set function, GROUP_CONCAT or JSON_OBJECTAGG.
      */
-    public function aggregated(\SqlSemantics\Statement\Scalar $expression): bool
+    public function aggregated(\SqlSemantics\Statement\Scalar|\SqlSemantics\Statement\Query $expression): bool
     {
         return (new Walker())->find($expression, Aggregate::class, false) !== [] || (new Walker())->find($expression, GroupConcat::class, false) !== [] || (new Walker())->find($expression, JsonObjectAggregate::class, false) !== [];
     }

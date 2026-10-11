@@ -107,7 +107,7 @@ final class Operators
      */
     public function comparison(Comparison $node, Scope $scope): Evaluable
     {
-        if ($this->compiler->rows->elements($node->left) !== null || $this->compiler->rows->elements($node->right) !== null) {
+        if ($this->compiler->rows->tuple($node->left) || $this->compiler->rows->tuple($node->right)) {
             return $this->compiler->rows->compare($node->operator, $node->left, $node->right, $scope);
         }
 

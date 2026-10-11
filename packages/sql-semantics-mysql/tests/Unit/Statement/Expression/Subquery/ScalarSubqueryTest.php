@@ -50,6 +50,15 @@ final class ScalarSubqueryTest extends TestCase
         self::assertEquals(new Tuple(2), $fact->type->descriptor);
     }
 
+    public function testDeriveScalarPreservesTheNullabilityOfAConstantRowSubquery(): void
+    {
+        $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql))->analyze('SELECT (1,2) = (SELECT 1,2), (1,2) = (SELECT 1,2 WHERE 0), (1,2) = (SELECT 1,NULL)');
+
+        self::assertSame(Nullability::NotNull, $operation->field(0)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(1)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(2)->nullability);
+    }
+
     public function testRenderWritesTheQueryInParentheses(): void
     {
         $platform = new Platform();

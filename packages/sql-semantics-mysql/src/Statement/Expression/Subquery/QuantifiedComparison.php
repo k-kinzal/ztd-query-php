@@ -69,7 +69,7 @@ final class QuantifiedComparison implements Scalar
             return (new Operands())->truth($operand->nullability);
         }
 
-        return (new Operands())->truth((new SubqueryRows())->test($operand, $query, $derivation, $this));
+        return (new SubqueryRows())->predicate($operand, $query, $derivation, $this, $this->quantifier === Quantifier::All);
     }
 
     /**
