@@ -163,18 +163,19 @@ final class Subqueries
 
     /**
      * Tells whether a legacy keyed membership has an impossible NULL comparison.
-     * A statically false inner filter wins first; a missing key or a runtime filter
-     * does not change this NULL result. Verified through SQL and EXPLAIN on MySQL 5.7.
+     * MySQL 5.7 applies a statically false inner filter first; 5.6 keeps NULL even then.
+     * A missing key or a runtime filter does not change NULL in either release.
+     * Verified through SQL and EXPLAIN on MySQL 5.6 and 5.7.
      */
     public function membershipUnknown(\SqlSemantics\Statement\Scalar $operand, \SqlSemantics\Statement\Query $query, Scope $scope): bool
     {
         $query = $this->innermost($query);
-        if (!$this->compiler->settings->legacy() || !$this->compiler->constancy($operand)->constant() || !$query instanceof Select || $this->compiler->planner->blocks->empty($query, $scope)) {
+        if (!$this->compiler->settings->legacy() || !$this->compiler->constancy($operand)->constant() || !$query instanceof Select) {
             return false;
         }
         foreach ($this->compiler->facts->query($query)->projection as $field) {
             if ($field instanceof \SqlSemantics\Statement\Shape\Field && $field->slot->type instanceof \SqlSemantics\Statement\Type\NullOnly) {
-                return true;
+                return $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || !$this->compiler->planner->blocks->empty($query, $scope);
             }
         }
 

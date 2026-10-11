@@ -27,13 +27,13 @@ final class Preparation
     }
 
     /**
-     * Modern empty blocks bypass preparation; legacy blocks prepare before row limits and filters.
+     * MySQL 5.6 defers membership until use, 5.7 prepares before bounds, and modern empty blocks bypass it.
      */
     public function plan(QueryPlan $plan, Select $select, Scope $scope, Scope $evaluation): QueryPlan
     {
         $conditions = $scope === $evaluation ? $scope->preparations : [...$scope->preparations, ...$evaluation->preparations];
         $early = $this->planner->compiler->settings->legacy();
-        if ($conditions === [] || (!$early && $this->planner->blocks->empty($select, $scope->outer))) {
+        if ($conditions === [] || $this->planner->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 || (!$early && $this->planner->blocks->empty($select, $scope->outer))) {
             return $plan;
         }
 

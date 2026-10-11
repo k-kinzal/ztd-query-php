@@ -20,6 +20,17 @@ use SqlSemantics\Statement\Query;
 #[Small]
 final class PreparationTest extends TestCase
 {
+    public function testPlanLeavesUnreadMySql56PredicatesDeferred(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query("CREATE TABLE t (id INT PRIMARY KEY, s VARCHAR(20)); INSERT INTO t VALUES (1,'apple')");
+        $session->query('SELECT CASE WHEN 0 THEN (0,1) IN (SELECT s,id FROM t) ELSE 7 END');
+        $warnings = $session->query('SHOW WARNINGS')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $warnings);
+        self::assertSame([], $warnings->rows);
+    }
+
     public function testPlanKeepsLegacyPreparationOutsideZeroRowLimits(): void
     {
         $session = (new Instance('5.7.44', [], ['d']))->connect('root', 'localhost', 'd');

@@ -172,6 +172,16 @@ final class SubqueriesTest extends TestCase
         self::assertSame([], $warnings->rows);
     }
 
+    public function testMembershipUnknownKeepsNullBeforeFalseFiltersOnMySql56(): void
+    {
+        $session = (new Instance('5.6.51', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t (id INT PRIMARY KEY)');
+        $result = $session->query('SELECT (0,99) IN (SELECT NULL,id FROM t WHERE 0), (0,99) NOT IN (SELECT NULL,id FROM t WHERE 0)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, null]], $result->rows);
+    }
+
     public function testQuantifiedRefusesASubqueryOfMoreThanOneColumn(): void
     {
         $session = (new Instance())->connect();
