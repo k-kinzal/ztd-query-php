@@ -128,14 +128,20 @@
 <span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    }</span>
 <span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a></span>
 <span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a><span class="tok-com">     * Answers the resolution of the name at a position of a row: a value of its type that can be NULL.</span></span>
-<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">resolved</span>(<span class="tok-id">ProgramRow</span> <span class="tok-var">$row</span>, <span class="tok-id">int</span> <span class="tok-var">$position</span>): <span class="tok-id">ResolvedColumn</span></span>
-<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>    {</span>
-<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">ResolvedColumn</span>(<span class="tok-var">$row</span>-&gt;<span class="tok-id">relation</span>, <span class="tok-kw">new</span> <span class="tok-id">OutputSlot</span>(<span class="tok-var">$row</span>-&gt;<span class="tok-id">names</span>[<span class="tok-var">$position</span>], <span class="tok-kw">new</span> <span class="tok-id">Known</span>(<span class="tok-var">$row</span>-&gt;<span class="tok-id">domains</span>[<span class="tok-var">$position</span>]), <span class="tok-id">Nullability</span>::<span class="tok-id">Nullable</span>));</span>
-<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>    }</span>
-<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>}</span>
-<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a></span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a><span class="tok-com">     * Answers the resolution of a program name, retaining its declared output type</span></span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a><span class="tok-com">     * and the integer field used when a routine variable becomes a temporary column.</span></span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">resolved</span>(<span class="tok-id">ProgramRow</span> <span class="tok-var">$row</span>, <span class="tok-id">int</span> <span class="tok-var">$position</span>): <span class="tok-id">ResolvedColumn</span></span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>    {</span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>        <span class="tok-var">$domain</span> = <span class="tok-var">$row</span>-&gt;<span class="tok-id">domains</span>[<span class="tok-var">$position</span>];</span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>        <span class="tok-kw">if</span> ((<span class="tok-var">$row</span>-&gt;<span class="tok-id">relation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ParameterList</span> || <span class="tok-var">$row</span>-&gt;<span class="tok-id">relation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">VariableDeclaration</span>) &amp;&amp; <span class="tok-var">$domain</span>-&gt;<span class="tok-id">kind</span> === <span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind</span>::<span class="tok-id">Integer</span>) {</span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>            <span class="tok-var">$domain</span> = <span class="tok-var">$domain</span>-&gt;<span class="tok-id">withStorageField</span>(<span class="tok-id">\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field</span>::<span class="tok-id">LongLong</span>);</span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>        }</span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a></span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">ResolvedColumn</span>(<span class="tok-var">$row</span>-&gt;<span class="tok-id">relation</span>, <span class="tok-kw">new</span> <span class="tok-id">OutputSlot</span>(<span class="tok-var">$row</span>-&gt;<span class="tok-id">names</span>[<span class="tok-var">$position</span>], <span class="tok-kw">new</span> <span class="tok-id">Known</span>(<span class="tok-var">$domain</span>), <span class="tok-id">Nullability</span>::<span class="tok-id">Nullable</span>));</span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>    }</span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>}</span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
