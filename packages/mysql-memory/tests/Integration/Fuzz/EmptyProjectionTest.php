@@ -24,6 +24,12 @@ final class EmptyProjectionTest extends TestCase
         }
         yield 'ordinary comparison skips expressions' => ['SELECT (SELECT 1/0,NULL FROM DUAL WHERE 0) = (NULL,NULL)'];
         yield 'cached empty result repeats warnings' => ['SELECT (SELECT 1/0,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) FROM t2'];
+        yield 'warning with zero outer limit' => ['SELECT (SELECT 1/0,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) FROM t2 LIMIT 0'];
+        yield 'warning with empty outer filter' => ['SELECT (SELECT 1/0,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) FROM t2 WHERE 0'];
+        yield 'warning in an unused case branch' => ['SELECT CASE WHEN 0 THEN (SELECT 1/0,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) ELSE 1 END FROM t2'];
+        yield 'two warning projections' => ['SELECT (SELECT 1/0,NULL FROM DUAL WHERE 0) <=> (SELECT 1/0,NULL FROM DUAL WHERE 0) FROM t2'];
+        yield 'repeated conversion' => ["SELECT (SELECT CAST('x' AS SIGNED),NULL FROM DUAL WHERE 0) <=> (0,NULL) FROM t2"];
+        yield 'repeated temporal projection' => ["SELECT (SELECT STR_TO_DATE('x','%Y'),NULL FROM DUAL WHERE 0) <=> (NULL,NULL) FROM t2"];
         yield 'null mismatch skips later warning' => ['SELECT (SELECT NULL,1/0 FROM DUAL WHERE 0) <=> (1,NULL)'];
         yield 'last column null' => ['SELECT (SELECT 1,2,NULL FROM DUAL WHERE 0) <=> (9,8,NULL)'];
         yield 'middle column null' => ['SELECT (SELECT 1,NULL,2 FROM DUAL WHERE 0) <=> (9,NULL,8)'];

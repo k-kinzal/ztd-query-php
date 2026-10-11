@@ -59,13 +59,17 @@ final class EmptyProjection
             return [];
         }
         $aggregated = $this->aggregate($plan) !== null;
+        $expressions = [];
         foreach ($this->compiler->facts->query($query)->projection as $field) {
             if (!$field instanceof Field || $field->expression === null || !$this->readable($field->expression, $aggregated)) {
                 return [];
             }
+            $value = $path->expressions[$field->position];
+            $constant = $this->compiler->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5744 && $this->compiler->constancy($field->expression) === Constancy::Resolved;
+            $expressions[] = $constant ? new \MySqlMemory\Evaluation\Subquery\CachedProjection($value) : $value;
         }
 
-        return array_slice($path->expressions, 0, count($plan->domains));
+        return $expressions;
     }
 
     /**
