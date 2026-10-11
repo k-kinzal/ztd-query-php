@@ -65,7 +65,7 @@
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>#[<span class="tok-id">Small</span>]</span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">WindowingTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>{</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPlanRetainsTemporalWidthsAndJsonFlagsThroughTransparentWrappers</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testOutputRetainsTemporalWidthsAndJsonFlagsThroughTransparentWrappers</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    {</span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">Instance</span>())-&gt;<span class="tok-id">connect</span>();</span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-var">$expression</span> = <span class="tok-str">&quot;SELECT +(FIRST_VALUE(CAST(&#039;2020-01-02&#039; AS DATE)) OVER ()), (FIRST_VALUE(CAST(&#039;[1]&#039; AS JSON)) OVER ())&quot;</span>;</span>
