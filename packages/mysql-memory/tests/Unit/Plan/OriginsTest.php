@@ -65,6 +65,17 @@ final class OriginsTest extends TestCase
         self::assertSame(['', '', '', ''], [$result->columns[1]->originalName, $result->columns[1]->table, $result->columns[1]->originalTable, $result->columns[1]->schema]);
     }
 
+    public function testOriginKeepsSourceMetadataThroughGroupingParentheses(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(id INT PRIMARY KEY)');
+        $result = $session->query('SELECT ((x.id)) AS v FROM t x')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['v', 'id', 'x', 't', 'd'], [$result->columns[0]->name, $result->columns[0]->originalName, $result->columns[0]->table, $result->columns[0]->originalTable, $result->columns[0]->schema]);
+        self::assertSame(3, $result->columns[0]->flags & 3);
+    }
+
     public function testOriginReportsTheAliasOfADerivedTable(): void
     {
         $session = (new Instance())->connect();
