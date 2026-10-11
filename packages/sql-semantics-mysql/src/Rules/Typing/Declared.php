@@ -104,12 +104,15 @@ final class Declared
 
     /**
      * Resolves a type into a domain, in the collation a COLLATE clause names when one does; a type without a domain is a long binary string.
+     *
+     * Invalid decimal sizes are bounded while deriving the refused definition;
+     * TypeLimits reports their exact requested sizes from the type descriptor.
      */
     public function domain(TypeDescriptor $type, ?Collation $collation = null): Domain
     {
         return match (true) {
             $type instanceof Integral => $this->integral($type),
-            $type instanceof Decimal => Domain::decimal($type->precision === null ? 10 : (int) $type->precision, $type->scale === null ? 0 : (int) $type->scale, in_array(NumericModifier::Unsigned, $type->modifiers, true) || in_array(NumericModifier::Zerofill, $type->modifiers, true)),
+            $type instanceof Decimal => Domain::decimal($type->precision === null ? 10 : min(65, (int) $type->precision), $type->scale === null ? 0 : min(30, (int) $type->scale), in_array(NumericModifier::Unsigned, $type->modifiers, true) || in_array(NumericModifier::Zerofill, $type->modifiers, true)),
             $type instanceof Floating => $this->floating($type),
             $type instanceof Character => $this->character($type, $collation),
             $type instanceof Binary => $this->binary($type),

@@ -20,10 +20,13 @@ use SqlFaker\Generation\Derivation\TerminationAnalyzer;
 use SqlFaker\Generation\Exception\GenerationException;
 use SqlFaker\Generation\Exception\LexicalException;
 use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\Grammar\Model\NonTerminal;
 use SqlFaker\Grammar\Model\Production;
 use SqlFaker\Grammar\Resource\SqlVersion;
+use SqlFaker\MySql\Generation\GenerationContext;
+use SqlFaker\MySql\Grammar\MySqlGrammar;
 use SqlFaker\MySql\MySqlProvider;
 use SqlFaker\PostgreSql\PostgreSqlProvider;
 use SqlFaker\Sqlite\SqliteProvider;
@@ -84,9 +87,9 @@ function seedsParseArguments(array $argv): array
  * Statements start below each grammar's entry point, exactly as the fuzz targets do; the entry points
  * carry parser-internal selectors no server accepts.
  *
- * @return array{string, string, MySqlProvider|PostgreSqlProvider|SqliteProvider}
+ * @return array{string, string, MySqlProvider|PostgreSqlProvider|SqliteProvider|SqlGenerator}
  */
-function seedsDialect(string $tag, GrammarCoverage $coverage, string $mode = ''): array
+function seedsDialect(string $tag, GrammarCoverage $coverage, string $mode = '', bool $diagnostics = false): array
 {
     if (!in_array($mode, ['', 'HIGH_NOT_PRECEDENCE', 'PIPES_AS_CONCAT'], true) || ($mode !== '' && !str_starts_with($tag, 'mysql-'))) {
         throw new InvalidArgumentException("Unsupported corpus SQL mode: $mode");
@@ -94,6 +97,11 @@ function seedsDialect(string $tag, GrammarCoverage $coverage, string $mode = '')
     $faker = Factory::create();
     if (str_starts_with($tag, 'mysql-')) {
         $root = version_compare(substr($tag, strlen('mysql-')), '8.0.0', '<') ? 'statement' : 'simple_statement_or_begin';
+        if ($diagnostics) {
+            $grammar = MySqlGrammar::load($tag)->identified();
+            $context = new GenerationContext($grammar, $faker, $tag, $mode === 'HIGH_NOT_PRECEDENCE', $mode === 'PIPES_AS_CONCAT');
+            return ['mysql', $root, new SqlGenerator($grammar, $faker, $context->lexicalGrammar, null, $context->startSymbol, $coverage, $grammar)];
+        }
         return ['mysql', $root, new MySqlProvider($faker, $tag, $coverage, $mode === 'HIGH_NOT_PRECEDENCE', $mode === 'PIPES_AS_CONCAT')];
     }
     if (str_starts_with($tag, 'pg-')) {
@@ -408,7 +416,7 @@ function seedsFiles(array $corpus): array
     return array_combine(array_column($files, 0), array_column($files, 1));
 }
 
-function seedsManifest(string $database, string $tag, array $corpus, string $mode = ''): string
+function seedsManifest(string $database, string $tag, array $corpus, string $mode = '', bool $diagnostics = false): string
 {
     $seeds = [];
     foreach (seedsFiles($corpus) as $name => $seed) {
@@ -435,6 +443,9 @@ function seedsManifest(string $database, string $tag, array $corpus, string $mod
     ];
     if ($mode !== '') {
         $manifest['contract']['sqlMode'] = $mode;
+    }
+    if ($diagnostics) {
+        $manifest['contract']['structuralRewrites'] = false;
     }
     return json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . "\n";
 }
@@ -471,19 +482,24 @@ function seedsBuild(string $tag, string $directory, int $cap): bool
     foreach ($modes as $mode => $contexts) {
         $ok = seedsBuildProfile($tag, $directory, $cap, $mode, $contexts) && $ok;
     }
+    $recipe = dirname(__DIR__) . '/seeds/diagnostics/' . $tag . '.json';
+    if (is_file($recipe)) {
+        $ok = seedsBuildProfile($tag, $directory, $cap, '', json_decode(file_get_contents($recipe), true, 512, JSON_THROW_ON_ERROR), true) && $ok;
+    }
     return $ok;
 }
 
 /**
- * Writes one corpus profile; mode supplements contain only their explicit context recipes.
+ * Writes one corpus profile; supplements contain only their explicit target recipes.
  */
-function seedsBuildProfile(string $tag, string $directory, int $cap, string $mode, array $contexts): bool
+function seedsBuildProfile(string $tag, string $directory, int $cap, string $mode, array $contexts, bool $diagnostics = false): bool
 {
     $coverage = new GrammarCoverage();
-    [$database, $root, $provider] = seedsDialect($tag, $coverage, $mode);
-    $profile = $tag . ($mode === '' ? '' : '/modes/' . $mode);
+    [$database, $root, $provider] = seedsDialect($tag, $coverage, $mode, $diagnostics);
+    $profile = $tag . ($diagnostics ? '/diagnostics' : ($mode === '' ? '' : '/modes/' . $mode));
+    $complete = $mode === '' && !$diagnostics;
     fwrite(STDERR, "Building seeds for $profile from $root...\n");
-    $corpus = seedsBuildCorpus($coverage, $provider->planner(), $provider->generate(...), $root, $cap, $contexts, $mode === '');
+    $corpus = seedsBuildCorpus($coverage, $provider->planner(), $provider->generate(...), $root, $cap, $contexts, $complete);
     $target = "$directory/$database/$profile";
     if (!is_dir($target) && !mkdir($target, 0777, true)) {
         fwrite(STDERR, "Cannot create $target\n");
@@ -495,9 +511,9 @@ function seedsBuildProfile(string $tag, string $directory, int $cap, string $mod
     foreach (seedsFiles($corpus) as $name => $seed) {
         file_put_contents("$target/$name.txt", $seed['input']);
     }
-    file_put_contents($target . '.json', seedsManifest($database, $tag, $corpus, $mode));
-    seedsSummary($profile, $corpus, $mode === '');
-    return $mode !== '' || seedsUnreached($corpus) === [];
+    file_put_contents($target . '.json', seedsManifest($database, $tag, $corpus, $mode, $diagnostics));
+    seedsSummary($profile, $corpus, $complete);
+    return !$complete || seedsUnreached($corpus) === [];
 }
 
 function seedsCheck(string $tag, string $directory): bool
@@ -506,17 +522,21 @@ function seedsCheck(string $tag, string $directory): bool
     foreach (glob("$directory/mysql/$tag/modes/*", GLOB_ONLYDIR) ?: [] as $profile) {
         $ok = seedsCheckProfile($tag, $directory, basename($profile)) && $ok;
     }
+    if (is_dir("$directory/mysql/$tag/diagnostics")) {
+        $ok = seedsCheckProfile($tag, $directory, '', true) && $ok;
+    }
     return $ok;
 }
 
 /**
  * Replays a profile with its recorded operator modes, without requiring recipe files.
  */
-function seedsCheckProfile(string $tag, string $directory, string $mode = ''): bool
+function seedsCheckProfile(string $tag, string $directory, string $mode = '', bool $diagnostics = false): bool
 {
     $coverage = new GrammarCoverage();
-    [$database, $root, $provider] = seedsDialect($tag, $coverage, $mode);
-    $profile = $tag . ($mode === '' ? '' : '/modes/' . $mode);
+    [$database, $root, $provider] = seedsDialect($tag, $coverage, $mode, $diagnostics);
+    $profile = $tag . ($diagnostics ? '/diagnostics' : ($mode === '' ? '' : '/modes/' . $mode));
+    $complete = $mode === '' && !$diagnostics;
     $source = "$directory/$database/$profile";
     $files = glob("$source/*.txt") ?: [];
     if ($files === []) {
@@ -538,8 +558,8 @@ function seedsCheckProfile(string $tag, string $directory, string $mode = ''): b
         }
     }
     $corpus = ['root' => $root, 'seeds' => $seeds, 'targets' => seedsTargets($coverage->inventory(), $root), 'failures' => []];
-    seedsSummary($profile, $corpus, $mode === '');
-    return $broken === 0 && ($mode !== '' || seedsUnreached($corpus) === []);
+    seedsSummary($profile, $corpus, $complete);
+    return $broken === 0 && (!$complete || seedsUnreached($corpus) === []);
 }
 
 $options = seedsParseArguments($argv);

@@ -7,7 +7,10 @@ namespace MySqlMemory\Session\Parse;
 use MySqlMemory\Error\Family\StatementError;
 use MySqlMemory\Error\SqlError;
 use MySqlMemory\Session\Session;
+use RuntimeException;
 use SqlSemantics\Platform\MySql\Statement\Partition\Problem\InvalidPartitionExpression;
+use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse;
+use SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule;
 use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Operation;
 
@@ -22,10 +25,13 @@ use SqlSemantics\Statement\Operation;
 final class LocatedErrors
 {
     /**
-     * Answers the original SQL tail and line of a forbidden partition expression, or null for another diagnostic.
+     * Answers the original SQL tail and line of a forbidden construct, or null for another diagnostic.
      */
     public function error(Diagnostic $problem, Operation $operation, Session $session): ?SqlError
     {
+        if ($problem instanceof UtilityMisuse && $problem->rule === UtilityRule::NamesExpression) {
+            return $this->names($problem, $operation, $session);
+        }
         if (!$problem instanceof InvalidPartitionExpression) {
             return null;
         }
@@ -47,5 +53,22 @@ final class LocatedErrors
         $line = substr_count(ltrim(substr($session->text, 0, $offset)), "\n") + 1;
 
         return new SqlError(StatementError::ParseError, $problem->message() . " near '" . $tail . "' at line " . $line);
+    }
+
+    /**
+     * Locates the assignment operator after NAMES, preserving comments, spelling and line numbers.
+     */
+    public function names(UtilityMisuse $problem, Operation $operation, Session $session): SqlError
+    {
+        $origin = $problem->subject === null ? null : $operation->sources->of($problem->subject);
+        $offset = strlen($session->text);
+        foreach ($origin === null ? [] : $session->semantics()->parser()->tokenize($session->text) as $token) {
+            if ($origin !== null && $token->offset >= $origin->offset && in_array($token->text, ['=', ':='], true)) {
+                $offset = $token->offset;
+                break;
+            }
+        }
+
+        return (new \MySqlMemory\Session\Syntax())->near($offset, $session->text, $session->following, new RuntimeException($problem->message()));
     }
 }

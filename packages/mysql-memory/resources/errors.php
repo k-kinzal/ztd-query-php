@@ -11,6 +11,7 @@
 declare(strict_types=1);
 
 return [
+    1453 => ['42000', "Variable '%s' must be quoted with `...`, or renamed"],
     1283 => ['HY000', "Column '%s' cannot be part of FULLTEXT index"],
     1464 => ['HY000', "The used table type doesn't support SPATIAL indexes"],
     3674 => ['HY000', "The spatial index on column '%s' will not be used by the query optimizer since the column does not have an SRID attribute. Consider adding an SRID attribute to the column."],

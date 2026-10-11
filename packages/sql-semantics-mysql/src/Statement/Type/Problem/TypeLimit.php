@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Type\Problem;
 
 /**
- * A bound violated by a declared numeric or temporal type.
+ * A bound violated by a declared type.
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/numeric-type-syntax.html,
  * https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html.
@@ -17,6 +17,7 @@ namespace SqlSemantics\Platform\MySql\Statement\Type\Problem;
 enum TypeLimit: string
 {
     case Width = 'width';
+    case Length = 'length';
     case Precision = 'precision';
     case Scale = 'scale';
     case ScaleExceedsPrecision = 'scale-exceeds-precision';

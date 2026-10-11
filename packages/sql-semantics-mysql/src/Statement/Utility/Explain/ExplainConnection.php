@@ -57,6 +57,7 @@ final class ExplainConnection implements Statement
     public function deriveStatement(Derivation $derivation): void
     {
         (new ExplainFacts())->derive($derivation, $this->format, $this->analyze, $this->modifier, $this->into);
+        (new \SqlSemantics\Platform\MySql\Rules\Server\Magnitudes())->integer($derivation, $this->connection);
     }
 
     /**

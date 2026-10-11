@@ -34,4 +34,17 @@ final class LocatedErrorsTest extends TestCase
         $operation = $session->analyze('SELECT missing');
         self::assertNull((new LocatedErrors())->error($operation->facts->diagnostics[0], $operation, $session));
     }
+
+    public function testNamesLocatesTheOperatorOfTheRefusedAssignment(): void
+    {
+        $session = (new Instance())->connect();
+        $session->text = "SET @a = 'NAMES = 1', NAMES\n/* marker */ := 'utf8'";
+        $operation = $session->analyze($session->text);
+        $problem = $operation->facts->diagnostics[0];
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse::class, $problem);
+
+        $error = (new LocatedErrors())->names($problem, $operation, $session);
+        self::assertSame(1064, $error->getCode());
+        self::assertStringEndsWith("near ':= 'utf8'' at line 2", $error->getMessage());
+    }
 }

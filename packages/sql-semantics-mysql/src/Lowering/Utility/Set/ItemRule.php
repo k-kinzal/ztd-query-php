@@ -113,7 +113,7 @@ final class ItemRule
             case 'option_value_no_option_type: NAMES_SYM equal expr':
                 $this->lowering->options->skip($form->node(1));
 
-                return new NamesExpression($this->lowering->expressions->expression($form->node(2)));
+                return $this->lowering->origins->record(new NamesExpression($this->lowering->expressions->expression($form->node(2))), $form->node);
         }
         [$user, $password] = self::PASSWORDS[$form->signature] ?? throw ImplementationGap::production($form);
         $this->lowering->options->skip($form->node($password - 1));

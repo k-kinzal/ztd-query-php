@@ -77,7 +77,7 @@ derivation. It then adds the version's recipes from `seeds/contexts/`, when
 present. Each recipe names a target alternative and the original alternative
 ordinals to choose for successive occurrences of enclosing or sibling rules.
 These choices are encoded in the seed itself; replay needs no recipe or special
-generation settings. MySQL operator-mode supplements live under `modes/HIGH_NOT_PRECEDENCE/` and `modes/PIPES_AS_CONCAT/`; their manifests record the required mode. The builder reads their target recipes from `seeds/modes/`. Replay uses the same byte plan with the corresponding provider flag, and execution must enable that mode in the database session.
+generation settings. MySQL operator-mode supplements live under `modes/HIGH_NOT_PRECEDENCE/` and `modes/PIPES_AS_CONCAT/`; their manifests record the required mode. The builder reads their target recipes from `seeds/modes/`. Replay uses the same byte plan with the corresponding provider flag, and execution must enable that mode in the database session. Diagnostic supplements under `diagnostics/` replay the original grammar with structural rewrites disabled. Their manifests record `structuralRewrites: false`; recipes are in `seeds/diagnostics/`. These inputs retain forms the server refuses, including decimal operands at integer-only positions and `SET NAMES = expr`, so differential tests can verify the errors as well as successful statements.
 
 Contexts matter because structural rewrites can replace a selected alternative.
 For example, a `SUPER` privilege needs a `GRANT ... ON ...` context to remain a

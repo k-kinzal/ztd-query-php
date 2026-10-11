@@ -33,6 +33,9 @@ final class MagnitudesTest extends TestCase
     {
         self::assertTrue((new Magnitudes())->integral(new Numeral('ff', true)));
         self::assertFalse((new Magnitudes())->integral(new Numeral('1.0')));
+        self::assertTrue((new Magnitudes())->integral(new Numeral('00018446744073709551615')));
+        self::assertFalse((new Magnitudes())->integral(new Numeral('18446744073709551616')));
+        self::assertFalse((new Magnitudes())->integral(new Numeral('00018446744073709551616')));
     }
 
     public function testIntegerReportsAFractionalNumber(): void

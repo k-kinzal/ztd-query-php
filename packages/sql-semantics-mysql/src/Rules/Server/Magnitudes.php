@@ -55,11 +55,11 @@ final class Magnitudes
     }
 
     /**
-     * Tells whether a number is an integer: digits only, or a hexadecimal literal.
+     * Tells whether a number is an integer token: at most unsigned 64-bit decimal digits, or a hexadecimal literal.
      */
     public function integral(Numeral $number): bool
     {
-        return $number->hexadecimal || preg_match('/\A[0-9]+\z/', $number->text) === 1;
+        return $number->hexadecimal || (preg_match('/\A[0-9]+\z/', $number->text) === 1 && $this->atMost($number, '18446744073709551615'));
     }
 
     /**

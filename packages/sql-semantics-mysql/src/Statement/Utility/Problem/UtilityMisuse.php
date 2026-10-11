@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Statement\Utility\Problem;
 
 use SqlSemantics\Statement\Fact\Diagnostic;
+use SqlSemantics\Statement\Node;
 use SqlSemantics\Statement\Snapshot;
 
 /**
@@ -21,8 +22,9 @@ final class UtilityMisuse implements Diagnostic
 
     /**
      * @param UtilityRule $rule The broken rule
+     * @param Node|null $subject The construct whose source location identifies the problem
      */
-    public function __construct(public readonly UtilityRule $rule)
+    public function __construct(public readonly UtilityRule $rule, public readonly ?Node $subject = null)
     {
     }
 

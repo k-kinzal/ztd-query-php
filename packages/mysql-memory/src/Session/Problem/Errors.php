@@ -276,14 +276,7 @@ final class Errors
     public function expression(Diagnostic $diagnostic): ?SqlError
     {
         return match (true) {
-            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize => new SqlError(match ($diagnostic->rule) {
-                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Width => SchemaError::TooBigDisplayWidth,
-                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision => SchemaError::TooBigPrecision,
-                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Scale => SchemaError::TooBigScale,
-                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::ScaleExceedsPrecision => SchemaError::MBiggerThanD,
-                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Empty => SchemaError::InvalidFieldSize,
-                \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Specifier => SchemaError::WrongFieldSpec,
-            }, $diagnostic->message()),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize => $this->typeSize($diagnostic),
             $diagnostic instanceof OperandColumns => QueryError::OperandColumns->error($diagnostic->expected),
             $diagnostic instanceof NotSupportedYet => StatementError::NotSupportedYet->error($diagnostic->feature),
             $diagnostic instanceof IllegalCollationMix => new SqlError(match (count($diagnostic->operands)) {
@@ -300,6 +293,22 @@ final class Errors
     }
 
     /**
+     * Answers the error of a declared type's length, precision or scale.
+     */
+    public function typeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize $diagnostic): SqlError
+    {
+        return new SqlError(match ($diagnostic->rule) {
+            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Width => SchemaError::TooBigDisplayWidth,
+            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Length => SchemaError::TooBigFieldLength,
+            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Precision => SchemaError::TooBigPrecision,
+            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Scale => SchemaError::TooBigScale,
+            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::ScaleExceedsPrecision => SchemaError::MBiggerThanD,
+            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Empty => SchemaError::InvalidFieldSize,
+            \SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Specifier => SchemaError::WrongFieldSpec,
+        }, $diagnostic->message());
+    }
+
+    /**
      * Answers the server error of a problem of a server, variable, program or utility statement, or null for another diagnostic.
      *
      * SHOW PROCEDURE CODE and SHOW FUNCTION CODE need a server built with debugging.
@@ -313,6 +322,8 @@ final class Errors
             $diagnostic instanceof VariableMisuse => new SqlError(ErrorNumbers::from($diagnostic->rule->code()), $diagnostic->message()),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Routine\Problem\ProgramProblem => (new \MySqlMemory\Error\ProgramErrors())->error($diagnostic),
             $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly => StatementError::FeatureDisabled->error('SHOW PROCEDURE|FUNCTION CODE', '--with-debug'),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::NamesShadow => ProgramError::VariableShadow->error('names'),
+            $diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse && $diagnostic->rule === \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::NamesExpression => StatementError::ParseError->error('', 1),
             \MySqlMemory\Command\Admin\Refusals::handles($diagnostic) => (new \MySqlMemory\Command\Admin\Refusals())->error($diagnostic, $statement, $session->text),
             default => null,
         };

@@ -17,6 +17,7 @@ final class InvalidTypeSizeTest extends TestCase
     public function testMessageRetainsTheBoundAndTheColumnName(): void
     {
         self::assertSame("Display width out of range for column 'a' (max = 255)", (new InvalidTypeSize(TypeLimit::Width, 'a', 256, 255))->message());
+        self::assertSame("Column length too big for column 'a' (max = 255); use BLOB or TEXT instead", (new InvalidTypeSize(TypeLimit::Length, 'a', 256, 255))->message());
         self::assertSame("Too-big precision 66 specified for ''. Maximum is 65.", (new InvalidTypeSize(TypeLimit::Precision, '', 66, 65))->message());
         self::assertSame("Too big scale 31 specified for column 'b'. Maximum is 30.", (new InvalidTypeSize(TypeLimit::Scale, 'b', 31, 30))->message());
         self::assertSame("For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column 'c').", (new InvalidTypeSize(TypeLimit::ScaleExceedsPrecision, 'c'))->message());

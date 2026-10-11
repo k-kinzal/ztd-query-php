@@ -6,10 +6,14 @@ namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
 use SqlSemantics\Construction\Derivation;
 use SqlSemantics\Platform\MySql\Statement\Notice\ParseFailure;
+use SqlSemantics\Platform\MySql\Statement\Type\Binary;
+use SqlSemantics\Platform\MySql\Statement\Type\Character;
 use SqlSemantics\Platform\MySql\Statement\Type\Decimal;
 use SqlSemantics\Platform\MySql\Statement\Type\Elementary;
 use SqlSemantics\Platform\MySql\Statement\Type\Floating;
 use SqlSemantics\Platform\MySql\Statement\Type\Integral;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\BinaryKind;
+use SqlSemantics\Platform\MySql\Statement\Type\Kind\CharacterKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Kind\TemporalKind;
 use SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize;
@@ -24,7 +28,10 @@ use SqlSemantics\Platform\MySql\Statement\Type\TypeName;
  * widths are at most 255; fixed floating widths are 1 to 255, and FLOAT(p)
  * accepts at most 53 bits. Decimal precision is at most 65, fractional scale
  * at most 30 and no larger than precision. Temporal fractions stop at 6.
- * These failures stop parsing, so later type or body warnings are omitted.
+ * A display length first has to fit in an unsigned 32-bit integer, before
+ * the bound of its type is checked. These failures stop parsing, so later
+ * type or body warnings are omitted. Boundary behavior is verified against
+ * MySQL 8.4.7, including decimal literals above the unsigned 64-bit range.
  * Terminates: no recursion. Source:
  * https://dev.mysql.com/doc/refman/8.4/en/numeric-type-syntax.html,
  * https://dev.mysql.com/doc/refman/8.4/en/fractional-seconds.html.
@@ -39,7 +46,7 @@ final class TypeLimits
      */
     public function check(TypeName $type, string $name, Derivation $derivation): void
     {
-        $problem = $type instanceof Floating || $type instanceof Decimal ? $this->fractional($type, $name) : $this->simple($type, $name);
+        $problem = $this->width($type, $name) ?? ($type instanceof Floating || $type instanceof Decimal ? $this->fractional($type, $name) : $this->simple($type, $name));
         if ($problem?->rule === TypeLimit::Empty && $derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             return;
         }
@@ -50,10 +57,31 @@ final class TypeLimits
     }
 
     /**
+     * Answers a display length that exceeds the common unsigned 32-bit bound.
+     *
+     * YEAR and temporal fractions have their own checks. A decimal length
+     * is truncated to its whole digits before comparison, as BIT(1.5) is.
+     */
+    public function width(TypeName $type, string $name): ?InvalidTypeSize
+    {
+        $length = match (true) {
+            $type instanceof Elementary, $type instanceof Character, $type instanceof Binary => $type->length,
+            $type instanceof Integral => $type->width,
+            $type instanceof Floating, $type instanceof Decimal => $type->precision,
+            default => null,
+        };
+
+        return (int) $length > 4294967295 ? new InvalidTypeSize(TypeLimit::Width, $name, (int) $length, 4294967295) : null;
+    }
+
+    /**
      * Answers the invalid bound of a bit, integer or temporal type, if any.
      */
     public function simple(TypeName $type, string $name): ?InvalidTypeSize
     {
+        if (($type instanceof Character && $type->kind === CharacterKind::Char) || ($type instanceof Binary && $type->kind === BinaryKind::Binary)) {
+            return (int) $type->length > 255 ? new InvalidTypeSize(TypeLimit::Length, $name, (int) $type->length, 255) : null;
+        }
         if ($type instanceof Elementary && $type->kind === ElementaryKind::Bit && $type->length !== null) {
             $size = (int) $type->length;
 
@@ -86,7 +114,7 @@ final class TypeLimits
             return new InvalidTypeSize(TypeLimit::Scale, $name, $scale, 30);
         }
         if ($type instanceof Decimal && $precision > 65) {
-            return new InvalidTypeSize(TypeLimit::Precision, $name, $precision, 65);
+            return new InvalidTypeSize(TypeLimit::Precision, $name, $precision >= 2147483648 ? $precision - 4294967296 : $precision, 65);
         }
 
         return $precision < $scale ? new InvalidTypeSize(TypeLimit::ScaleExceedsPrecision, $name) : null;

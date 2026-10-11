@@ -16,6 +16,6 @@ final class UtilityRuleTest extends TestCase
     public function testCasesHoldTheMessages(): void
     {
         self::assertSame('EXPLAIN INTO requires FORMAT=JSON', UtilityRule::ExplainIntoFormat->value);
-        self::assertCount(5, UtilityRule::cases());
+        self::assertCount(6, UtilityRule::cases());
     }
 }

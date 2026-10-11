@@ -33,6 +33,15 @@ use SqlSemantics\Statement\Reference\Table\MissingTable;
 #[Small]
 final class ErrorsTest extends TestCase
 {
+    public function testTypeSizePreservesTheKindAndTheColumnName(): void
+    {
+        $diagnostic = new \SqlSemantics\Platform\MySql\Statement\Type\Problem\InvalidTypeSize(\SqlSemantics\Platform\MySql\Statement\Type\Problem\TypeLimit::Length, 'a', 256, 255);
+        $error = (new Errors())->typeSize($diagnostic);
+
+        self::assertSame(1074, $error->getCode());
+        self::assertSame($diagnostic->message(), $error->getMessage());
+    }
+
     public function testNamesReportsAMissingLegacyTableQualifierSeparately(): void
     {
         $problem = new \SqlSemantics\Platform\MySql\Statement\Name\MissingTableQualifier(new Name('a'), new QualifiedName(new Name('t')));
@@ -666,10 +675,12 @@ final class ErrorsTest extends TestCase
     {
         $session = (new Instance())->connect();
         $known = (new Errors())->error(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::DebugOnly), $session);
-        $unknown = (new Errors())->error(new \SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityMisuse(\SqlSemantics\Platform\MySql\Statement\Utility\Problem\UtilityRule::NamesExpression), $session);
+        $diagnostic = self::createStub(\SqlSemantics\Statement\Fact\Diagnostic::class);
+        $diagnostic->method('message')->willReturn('Unmapped diagnostic');
+        $unknown = (new Errors())->error($diagnostic, $session);
 
         self::assertSame(1289, $known->getCode());
-        self::assertSame([1105, 'SET NAMES takes a character set name, not an expression'], [$unknown->getCode(), $unknown->getMessage()]);
+        self::assertSame([1105, 'Unmapped diagnostic'], [$unknown->getCode(), $unknown->getMessage()]);
     }
 
     public function testNamedAnswersTheNameOfAMisuseWithoutItsDatabase(): void

@@ -30,6 +30,13 @@ final class ExplainConnectionTest extends TestCase
         self::assertSame('EXPLAIN FORMAT = `json` FOR CONNECTION 7', (new Semantics(Dialect::MySql))->analyze('explain format = json for connection 7')->toString());
     }
 
+    public function testDeriveStatementRejectsAnOversizedDecimalConnection(): void
+    {
+        $explain = (new Semantics(Dialect::MySql))->analyze('EXPLAIN ANALYZE FOR CONNECTION 18446744073709551616');
+
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Server\Problem\FractionalNumber::class, $explain->facts->diagnostics[0]);
+    }
+
     public function testRefusesAModifierWithOptions(): void
     {
         $this->expectExceptionMessage('EXTENDED and PARTITIONS are written alone.');

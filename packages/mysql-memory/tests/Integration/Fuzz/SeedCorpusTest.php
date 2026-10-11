@@ -17,10 +17,39 @@ use RuntimeException;
 #[Medium]
 final class SeedCorpusTest extends TestCase
 {
+    #[DataProvider('providerDiagnostics')]
+    public function testProfileInputsPreservesGrammarDiagnostics(string $file, string $target): void
+    {
+        $corpus = new SeedCorpus('mysql-8.4.7', diagnostics: true);
+        $directory = dirname(__DIR__, 3) . '/vendor/k-kinzal/sql-faker/seeds/mysql/mysql-8.4.7/diagnostics';
+        $seed = $corpus->profileInputs($directory . '/' . $file, diagnostics: true)->current();
+        $labels = array_map(static fn (string $id): string => explode(':', $id)[1], $seed->parsed);
+
+        self::assertContains($target, $labels);
+        self::assertFalse($seed->structuralRewrites);
+        self::assertSame('diagnostics/' . $file, $seed->file);
+        self::assertSame($seed->sql, $seed->executionSql());
+        self::assertCount(3114, $corpus->denominator());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDiagnostics(): iterable
+    {
+        yield 'return outside a function' => ['ev_sql_stmt_inner-1.txt', 'ev_sql_stmt_inner#1'];
+        yield 'unsigned width' => ['field_length-1.txt', 'field_length#1'];
+        yield 'decimal width' => ['field_length-2.txt', 'field_length#2'];
+        yield 'decimal connection' => ['real_ulong_num-4.txt', 'real_ulong_num#4'];
+        yield 'decimal spatial id' => ['real_ulonglong_num-4.txt', 'real_ulonglong_num#4'];
+        yield 'floating spatial id' => ['dec_num-1.txt', 'dec_num#1'];
+        yield 'names expression' => ['option_value_no_option_type-4.txt', 'option_value_no_option_type#4'];
+    }
+
     #[DataProvider('providerModes')]
     public function testProfileInputsUsesTheSameModeForGenerationParsingAndExecution(string $mode, string $file, string $target): void
     {
-        $corpus = new SeedCorpus('mysql-8.4.7');
+        $corpus = new SeedCorpus('mysql-8.4.7', $mode);
         $directory = dirname(__DIR__, 3) . '/vendor/k-kinzal/sql-faker/seeds/mysql/mysql-8.4.7/modes/' . $mode;
         $seed = $corpus->profileInputs($directory . '/' . $file, $mode)->current();
         $labels = array_map(static fn (string $id): string => explode(':', $id)[1], $seed->parsed);

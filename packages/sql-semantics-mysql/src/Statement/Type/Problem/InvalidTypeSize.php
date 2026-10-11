@@ -39,6 +39,7 @@ final class InvalidTypeSize implements Diagnostic
     {
         return match ($this->rule) {
             TypeLimit::Width => "Display width out of range for column '{$this->name}' (max = {$this->maximum})",
+            TypeLimit::Length => "Column length too big for column '{$this->name}' (max = {$this->maximum}); use BLOB or TEXT instead",
             TypeLimit::Precision => "Too-big precision {$this->actual} specified for '{$this->name}'. Maximum is {$this->maximum}.",
             TypeLimit::Scale => "Too big scale {$this->actual} specified for column '{$this->name}'. Maximum is {$this->maximum}.",
             TypeLimit::ScaleExceedsPrecision => "For float(M,D), double(M,D) or decimal(M,D), M must be >= D (column '{$this->name}').",

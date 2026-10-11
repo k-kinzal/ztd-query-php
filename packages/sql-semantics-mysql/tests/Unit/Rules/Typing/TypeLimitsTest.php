@@ -28,12 +28,16 @@ final class TypeLimitsTest extends TestCase
         yield 'integer width' => ['INT(256)', TypeLimit::Width];
         yield 'empty bit' => ['BIT(0)', TypeLimit::Empty];
         yield 'bit width' => ['BIT(65)', TypeLimit::Width];
+        yield 'wide unsigned bit' => ['BIT(18446744073709551615)', TypeLimit::Width];
+        yield 'wide decimal bit' => ['BIT(18446744073709551616)', TypeLimit::Width];
         yield 'floating width' => ['FLOAT(0,0)', TypeLimit::Width];
         yield 'floating precision' => ['FLOAT(54)', TypeLimit::Specifier];
         yield 'floating scale' => ['DOUBLE(50,31)', TypeLimit::Scale];
         yield 'decimal precision' => ['DECIMAL(66,0)', TypeLimit::Precision];
         yield 'decimal scale order' => ['DECIMAL(2,3)', TypeLimit::ScaleExceedsPrecision];
         yield 'temporal fraction' => ['TIME(7)', TypeLimit::Precision];
+        yield 'character length' => ['CHAR(256)', TypeLimit::Length];
+        yield 'binary length' => ['BINARY(256)', TypeLimit::Length];
     }
 
     #[DataProvider('providerInvalidTypeSizes')]
@@ -74,6 +78,22 @@ final class TypeLimitsTest extends TestCase
         $problem = (new TypeLimits())->fractional(new \SqlSemantics\Platform\MySql\Statement\Type\Decimal('66', '31'), 'a');
 
         self::assertEquals(new InvalidTypeSize(TypeLimit::Scale, 'a', 31, 30), $problem);
+    }
+
+    public function testWidthChecksTheCommonBoundBeforeTheTypeSpecificBound(): void
+    {
+        $limits = new TypeLimits();
+        $kind = \SqlSemantics\Platform\MySql\Statement\Type\Kind\ElementaryKind::Bit;
+
+        self::assertNull($limits->width(new \SqlSemantics\Platform\MySql\Statement\Type\Elementary($kind, '4294967295.9'), 'a'));
+        self::assertEquals(new InvalidTypeSize(TypeLimit::Width, 'a', 4294967296, 4294967295), $limits->width(new \SqlSemantics\Platform\MySql\Statement\Type\Elementary($kind, '4294967296'), 'a'));
+    }
+
+    public function testFractionalFormatsLargeDecimalPrecisionAsASignedInteger(): void
+    {
+        $problem = (new TypeLimits())->fractional(new \SqlSemantics\Platform\MySql\Statement\Type\Decimal('4294967295'), 'a');
+
+        self::assertSame("Too-big precision -1 specified for 'a'. Maximum is 65.", $problem?->message());
     }
 
     public function testCheckAcceptsEmptyBitOnMySql56(): void

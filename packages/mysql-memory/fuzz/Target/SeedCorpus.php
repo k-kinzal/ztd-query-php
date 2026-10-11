@@ -10,6 +10,7 @@ use RuntimeException;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\MySql\MySqlProvider;
 
 /**
@@ -29,7 +30,7 @@ final class SeedCorpus
     /**
      * The generator for the selected MySQL grammar.
      */
-    public readonly MySqlProvider $provider;
+    public readonly MySqlProvider|SqlGenerator $provider;
 
     /**
      * The grammar rule the canonical corpus starts from.
@@ -62,13 +63,36 @@ final class SeedCorpus
     public array $counts = ['matched' => 0, 'different' => 0, 'volatile' => 0];
 
     /**
-     * Creates the same generator as sql-faker's bin/seeds.php check command.
+     * Creates the same generator as sql-faker's bin/seeds.php check command for the initial profile.
+     *
+     * A focused profile replay initializes its own generator directly instead
+     * of first constructing an unused default generator and coverage inventory.
      */
-    public function __construct(public readonly string $grammar)
+    public function __construct(public readonly string $grammar, public readonly string $mode = '', public readonly bool $diagnostics = false)
     {
         $this->coverage = new GrammarCoverage();
-        $this->provider = new MySqlProvider(Factory::create(), $grammar, $this->coverage);
+        $this->provider = $this->providerFor($mode, $diagnostics);
         $this->root = str_starts_with($grammar, 'mysql-5.') ? 'statement' : 'simple_statement_or_begin';
+    }
+
+    /**
+     * Binds one generation profile to the shared, unchanged grammar inventory.
+     *
+     * @throws RuntimeException When the lexical mode is unsupported
+     */
+    public function providerFor(string $mode, bool $diagnostics): MySqlProvider|SqlGenerator
+    {
+        if (!in_array($mode, ['', 'HIGH_NOT_PRECEDENCE', 'PIPES_AS_CONCAT'], true)) {
+            throw new RuntimeException('Unsupported corpus SQL mode: ' . $mode);
+        }
+        $faker = Factory::create();
+        if (!$diagnostics) {
+            return new MySqlProvider($faker, $this->grammar, $this->coverage, $mode === 'HIGH_NOT_PRECEDENCE', $mode === 'PIPES_AS_CONCAT');
+        }
+        $grammar = \SqlFaker\MySql\Grammar\MySqlGrammar::load($this->grammar)->identified();
+        $context = new \SqlFaker\MySql\Generation\GenerationContext($grammar, $faker, $this->grammar, $mode === 'HIGH_NOT_PRECEDENCE', $mode === 'PIPES_AS_CONCAT');
+
+        return new SqlGenerator($grammar, $faker, $context->lexicalGrammar, null, $context->startSymbol, $this->coverage, $grammar);
     }
 
     /**
@@ -89,6 +113,9 @@ final class SeedCorpus
         foreach ($profiles as $profile) {
             yield from $this->profileInputs($profile, basename($profile));
         }
+        if (is_dir($directory . '/diagnostics')) {
+            yield from $this->profileInputs($directory . '/diagnostics', diagnostics: true);
+        }
     }
 
     /**
@@ -99,7 +126,7 @@ final class SeedCorpus
      * @throws \SqlParser\Lexer\LexicalException When generated SQL cannot be tokenized
      * @throws \SqlParser\Parser\SyntaxException When generated SQL cannot be parsed
      */
-    public function profileInputs(string $directory, string $mode = ''): Generator
+    public function profileInputs(string $directory, string $mode = '', bool $diagnostics = false): Generator
     {
         if (!in_array($mode, ['', 'HIGH_NOT_PRECEDENCE', 'PIPES_AS_CONCAT'], true)) {
             throw new RuntimeException('Unsupported corpus SQL mode: ' . $mode);
@@ -109,7 +136,7 @@ final class SeedCorpus
             throw new RuntimeException('No sql-faker seeds found in ' . $directory);
         }
         sort($files);
-        $provider = $mode === '' ? $this->provider : new MySqlProvider(Factory::create(), $this->grammar, $this->coverage, $mode === 'HIGH_NOT_PRECEDENCE', $mode === 'PIPES_AS_CONCAT');
+        $provider = $mode === $this->mode && $diagnostics === $this->diagnostics ? $this->provider : $this->providerFor($mode, $diagnostics);
         $planner = $provider->planner();
         $parsed = new ParsedCoverage(new \SqlParser\MySql\MySqlParser($this->grammar, \SqlParser\MySql\SqlMode::fromString($mode)), $this->coverage->inventory());
         $constraints = GenerationPlan::fromRule($this->root)->requiringNonEmpty();
@@ -123,8 +150,8 @@ final class SeedCorpus
             $trace = $this->coverage->lastGeneration();
             assert($trace !== null);
 
-            $name = ($mode === '' ? '' : 'modes/' . $mode . '/') . basename($file);
-            yield new Seed($name, $input, $sql, $trace['reachedIds'], $trace['emittedIds'], $parsed->ids($sql), $mode);
+            $name = ($diagnostics ? 'diagnostics/' : ($mode === '' ? '' : 'modes/' . $mode . '/')) . basename($file);
+            yield new Seed($name, $input, $sql, $trace['reachedIds'], $trace['emittedIds'], $parsed->ids($sql), $mode, !$diagnostics);
         }
     }
 
