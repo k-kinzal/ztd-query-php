@@ -47,6 +47,23 @@ final class OutputTest extends TestCase
         self::assertSame(4096, (new Output())->column('x', $domain, null, Charset::known('latin1'))->length);
     }
 
+    public function testColumnConvertsReportedTextWidthWithoutReducingTheValueBound(): void
+    {
+        $domain = new Domain(Kind::String, Field::VarString, 22, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'), display: 12);
+        $output = new Output();
+
+        self::assertSame([22, 12, 12, 3], [$domain->length, $output->column('v', $domain, null)->length, $output->column('v', $domain, null, Charset::known('utf8mb4'))->length, $output->column('v', $domain, null, Charset::known('latin1'))->length]);
+        self::assertSame('1.23456', $output->text('1.23456', $domain));
+    }
+
+    public function testColumnKeepsZeroTextMetadataDistinctFromTheValueLength(): void
+    {
+        $domain = new Domain(Kind::String, Field::VarString, 1, Domain::NOT_FIXED, false, Collation::known('latin1_bin'), display: 0);
+        $column = (new Output())->column('v', $domain, null, Charset::known('utf8mb4'));
+
+        self::assertSame([1, 0], [$domain->length, $column->length]);
+    }
+
     public function testColumnConvertsWideCharacterBlobByteBounds(): void
     {
         $domain = new Domain(Kind::String, Field::Blob, 8192, 0, false, Collation::known('utf16_general_ci'));

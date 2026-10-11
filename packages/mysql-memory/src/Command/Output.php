@@ -123,7 +123,8 @@ final class Output
         $charset = $text ? ($results === null ? $domain->collation->id : $results->defaultCollation(GrammarRelease::MySql847)->id) : 63;
         $field = $domain->field === Field::Enum || $domain->field === Field::Set ? Field::String : $domain->field;
         $blob = in_array($domain->field, [Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
-        $length = $text && $results !== null ? $this->converted($blob ? intdiv($domain->display ?? $domain->length, $domain->collation->charset->minLength()) : $domain->length, $results->maxLength, $blob) : $domain->byteLength();
+        $characters = $blob ? intdiv($domain->display ?? $domain->length, $domain->collation->charset->minLength()) : intdiv($domain->display ?? ($domain->length * $domain->collation->charset->maxLength), $domain->collation->charset->maxLength);
+        $length = $text && $results !== null ? $this->converted($characters, $results->maxLength, $blob) : $domain->byteLength();
 
         $flags = $origin !== null && $origin->exact ? $origin->flags | ($domain->flags() & ColumnFlag::NotNull->value) : $domain->flags() | ($origin->flags ?? 0);
         if (($flags & ColumnFlag::ZeroFill->value) !== 0) {

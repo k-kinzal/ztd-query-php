@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Rules\Typing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Contract\GrammarRelease;
@@ -84,6 +85,40 @@ final class CastsTest extends TestCase
         $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql847);
 
         self::assertSame([22, 4, 83], [$casts->length(Domain::double()), $casts->length(Domain::integer(Field::LongLong, 4)), $casts->length(new Domain(Kind::Decimal, Field::NewDecimal, 67, 30, display: 83))]);
+    }
+
+    /**
+     * @return iterable<string, array{GrammarRelease, CastKind, int}>
+     */
+    public static function providerReportedCastWidths(): iterable
+    {
+        foreach ([GrammarRelease::MySql5651, GrammarRelease::MySql5744, GrammarRelease::MySql8044, GrammarRelease::MySql847, GrammarRelease::MySql910] as $release) {
+            foreach ([CastKind::Char, CastKind::Binary] as $kind) {
+                $legacy = $release === GrammarRelease::MySql5651 || $release === GrammarRelease::MySql5744;
+                yield $release->value . ' ' . $kind->value => [$release, $kind, $legacy || $kind === CastKind::Binary ? 3 : 22];
+            }
+        }
+    }
+
+    #[DataProvider('providerReportedCastWidths')]
+    public function testReportedStringRetainsFloatingMetadataSeparatelyFromTheTextBound(GrammarRelease $release, CastKind $kind, int $display): void
+    {
+        $casts = new Casts(new Settings(Collation::known('latin1_bin')), $release);
+        $collation = $kind === CastKind::Binary ? Collation::binary() : Collation::known('latin1_bin');
+        $result = $casts->reportedString(Domain::double(3), new CastTarget($kind), Domain::string(22, $collation));
+        $explicit = $casts->reportedString(Domain::double(3), new CastTarget($kind, '7'), Domain::string(7, $collation));
+
+        self::assertSame([22, $display, 7, 7], [$result->length, $result->metadataLength(), $explicit->length, $explicit->metadataLength()]);
+    }
+
+    public function testStringPreservesZeroIntegerMetadataWithoutDiscardingItsValueBound(): void
+    {
+        $casts = new Casts(new Settings(Collation::known('latin1_bin')), GrammarRelease::MySql5651);
+        $operand = new Domain(Kind::Integer, Field::LongLong, 1, display: 0);
+        $text = $casts->cast($operand, new CastTarget(CastKind::Char));
+        $binary = $casts->cast($operand, new CastTarget(CastKind::Binary));
+
+        self::assertSame([1, 0, 1, 0], [$text->length, $text->metadataLength(), $binary->length, $binary->metadataLength()]);
     }
 
     public function testCastMakesAnIntegerAsLongAsTheOperandUpToTwentyOneIn57(): void

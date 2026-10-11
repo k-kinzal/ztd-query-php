@@ -134,6 +134,8 @@ final class Casts
 
     /**
      * Resolves CHAR or BINARY in a collation: a string as long as written, or as the operand written as text, BINARY counting the bytes of a string; a JSON value without a length is a LONGTEXT or LONGBLOB from MySQL 8.0. A string longer than 65535 bytes is a MEDIUMBLOB or LONGBLOB (verified on live 5.7.44, 8.0.44 and 8.4 servers).
+     * Implicit BINARY casts retain floating-point metadata width; legacy CHAR casts do too.
+     * Legacy integer display overrides also survive a text cast without narrowing its value bound.
      */
     public function string(Domain $operand, CastTarget $target, Collation $collation): Domain
     {
@@ -149,7 +151,29 @@ final class Casts
             $length *= $operand->collation->charset->maxLength;
         }
 
-        return (new Builtin\FormatResults())->sized($length, $collation, Coercibility::Implicit);
+        $domain = (new Builtin\FormatResults())->sized($length, $collation, Coercibility::Implicit);
+
+        return $this->reportedString($operand, $target, $domain);
+    }
+
+    /**
+     * Retains a numeric operand's versioned CAST metadata independently of the text value bound.
+     */
+    public function reportedString(Domain $operand, CastTarget $target, Domain $domain): Domain
+    {
+        $legacy = $this->release === GrammarRelease::MySql5651 || $this->release === GrammarRelease::MySql5744;
+        $display = null;
+        if ($target->length === null) {
+            $display = match (true) {
+                $operand->kind === Kind::Double && ($legacy || $target->kind === CastKind::Binary) => $operand->metadataLength(),
+                $operand->kind === Kind::Integer && $legacy => $operand->display,
+                default => null,
+            };
+        }
+
+        $display = $display === null ? null : $display * $domain->collation->charset->maxLength;
+
+        return $display === null || $display === $domain->metadataLength() ? $domain : new Domain($domain->kind, $domain->field, $domain->length, $domain->decimals, $domain->unsigned, $domain->collation, $domain->members, $domain->coercibility, display: $display);
     }
 
     /**
