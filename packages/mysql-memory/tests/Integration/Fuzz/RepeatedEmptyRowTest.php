@@ -36,6 +36,14 @@ final class RepeatedEmptyRowTest extends TestCase
         yield 'outer alias expression' => ['SELECT a+1 AS v,(SELECT v,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t1 ORDER BY id'];
         yield 'outer value and buffered table' => ['SELECT id,(SELECT t1.a,NULL FROM t2 WHERE 0) <=> (NULL,NULL) AS n FROM t1 ORDER BY id'];
         yield 'correlated comparison' => ['SELECT id,(SELECT t1.a,NULL FROM DUAL WHERE 0) <=> (t1.a,NULL) AS n FROM t1 ORDER BY id'];
+        foreach (['1', '1.0', '1e0', "'1'"] as $left) {
+            foreach (['1', '1.0', '1e0', "'1'"] as $right) {
+                yield 'conversion ' . $left . ' to ' . $right => ['SELECT id,(SELECT ' . $left . ',NULL FROM DUAL WHERE 0) <=> (' . $right . ',NULL) AS same FROM t2 ORDER BY id'];
+            }
+        }
+        yield 'outer column starts null' => ['SELECT id,(SELECT t1.a,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t1 WHERE id>=3 ORDER BY id'];
+        yield 'outer expression starts null' => ['SELECT id,(SELECT t1.a+1,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t1 WHERE id>=3 ORDER BY id'];
+        yield 'outer alias starts null' => ['SELECT a+1 AS v,(SELECT v,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS n FROM t1 WHERE id>=3 ORDER BY id'];
     }
 
     #[DataProvider('providerStatements')]
