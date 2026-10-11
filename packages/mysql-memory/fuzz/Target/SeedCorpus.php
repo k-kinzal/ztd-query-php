@@ -37,9 +37,19 @@ final class SeedCorpus
     public readonly string $root;
 
     /**
-     * @var array<string, true> Emitted alternatives of statements whose comparison matched
+     * @var array<string, true> Parser-confirmed alternatives of statements whose comparison matched
      */
     public array $matched = [];
+
+    /**
+     * @var array<string, true> Parser-confirmed alternatives of all compared statements
+     */
+    public array $parsed = [];
+
+    /**
+     * @var array<string, true> Preserved generator choices of matching statements, before retokenization
+     */
+    public array $matchedEmitted = [];
 
     /**
      * @var array<string, true> Reached alternatives of matching inputs, including replaced choices
@@ -66,6 +76,8 @@ final class SeedCorpus
      *
      * @return Generator<int, Seed>
      * @throws RuntimeException When the corpus is missing or an input cannot be read
+     * @throws \SqlParser\Lexer\LexicalException When generated SQL cannot be tokenized
+     * @throws \SqlParser\Parser\SyntaxException When generated SQL cannot be parsed
      */
     public function inputs(string $directory): Generator
     {
@@ -75,6 +87,7 @@ final class SeedCorpus
         }
         sort($files);
         $planner = $this->provider->planner();
+        $parsed = new ParsedCoverage(new \SqlParser\MySql\MySqlParser($this->grammar), $this->coverage->inventory());
         $constraints = GenerationPlan::fromRule($this->root)->requiringNonEmpty();
         $compiler = new BytePlanCompiler();
         foreach ($files as $file) {
@@ -86,7 +99,7 @@ final class SeedCorpus
             $trace = $this->coverage->lastGeneration();
             assert($trace !== null);
 
-            yield new Seed(basename($file), $input, $sql, $trace['reachedIds'], $trace['emittedIds']);
+            yield new Seed(basename($file), $input, $sql, $trace['reachedIds'], $trace['emittedIds'], $parsed->ids($sql));
         }
     }
 
@@ -97,8 +110,10 @@ final class SeedCorpus
     {
         $status = $comparison->volatile ? 'volatile' : ($comparison->difference === null ? 'matched' : 'different');
         $this->counts[$status]++;
+        $this->parsed += array_fill_keys($seed->parsed, true);
         if ($status === 'matched') {
-            $this->matched += array_fill_keys($seed->emitted, true);
+            $this->matched += array_fill_keys($seed->parsed, true);
+            $this->matchedEmitted += array_fill_keys($seed->emitted, true);
             $this->matchedReached += array_fill_keys($seed->reached, true);
         }
 
@@ -121,7 +136,7 @@ final class SeedCorpus
     /**
      * Reports coverage counts and the alternatives that remain unverified, without rounding a partial rate to 100%.
      *
-     * @return array{grammar: string, root: string, counts: array<string, int>, total: int, reached: int, emitted: int, matched: int, matchedReached: int, unreached: list<string>, unverified: list<string>}
+     * @return array{grammar: string, root: string, counts: array<string, int>, total: int, reached: int, emitted: int, parsed: int, matched: int, matchedEmitted: int, matchedReached: int, unreached: list<string>, unverified: list<string>}
      */
     public function summary(): array
     {
@@ -133,7 +148,9 @@ final class SeedCorpus
             'total' => count($target),
             'reached' => count(array_intersect($target, $current['reachedIds'])),
             'emitted' => count(array_intersect($target, $current['emittedIds'])),
+            'parsed' => count(array_intersect($target, array_keys($this->parsed))),
             'matched' => count(array_intersect($target, array_keys($this->matched))),
+            'matchedEmitted' => count(array_intersect($target, array_keys($this->matchedEmitted))),
             'matchedReached' => count(array_intersect($target, array_keys($this->matchedReached))),
             'unreached' => array_values(array_diff($target, $current['reachedIds'])),
             'unverified' => array_values(array_diff($target, array_keys($this->matched))),

@@ -12,8 +12,9 @@ final class Seed
     /**
      * @param list<string> $reached Alternatives selected during derivation
      * @param list<string> $emitted Alternatives retained in the emitted statement
+     * @param list<string> $parsed Alternatives confirmed in the final SQL's concrete parse tree
      */
-    public function __construct(public readonly string $file, public readonly string $input, public readonly string $sql, public readonly array $reached, public readonly array $emitted)
+    public function __construct(public readonly string $file, public readonly string $input, public readonly string $sql, public readonly array $reached, public readonly array $emitted, public readonly array $parsed = [])
     {
     }
 }

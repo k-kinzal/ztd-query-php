@@ -22,11 +22,12 @@ final class SeedCorpusTest extends TestCase
         $original = $inputs->current();
         $reached = array_slice($original->reached, 0, 2);
         $retained = [$reached[0]];
-        $seed = new Seed($original->file, $original->input, $original->sql, $reached, $retained);
+        $seed = new Seed($original->file, $original->input, $original->sql, $reached, $reached, $retained);
         $corpus->record($seed, new Comparison(false));
         $summary = $corpus->summary();
 
         self::assertSame(2, $summary['matchedReached']);
+        self::assertSame(2, $summary['matchedEmitted']);
         self::assertSame(1, $summary['matched']);
         self::assertContains($reached[1], $summary['unverified']);
         self::assertNotContains($reached[0], $summary['unverified']);
@@ -44,6 +45,7 @@ final class SeedCorpusTest extends TestCase
         self::assertCount(3114, $corpus->denominator());
         self::assertNotEmpty($seed->reached);
         self::assertNotEmpty($seed->emitted);
+        self::assertNotEmpty($seed->parsed);
     }
 
     public function testRecordDoesNotCountVolatileOrDifferentStatementsAsVerifiedCoverage(): void

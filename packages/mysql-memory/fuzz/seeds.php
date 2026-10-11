@@ -5,8 +5,8 @@
  *
  * Usage: php fuzz/seeds.php [SEED_DIRECTORY] [REPORT_PREFIX]
  * MYSQL_VERSION selects the release. Reports contain every outcome and exact input/SQL bytes.
- * Exit 0 requires all inputs to match and every reachable statement production to survive
- * into a matching emitted statement; choices replaced during generation are not verified.
+ * Exit 0 requires all inputs to match and every reachable statement production to occur
+ * in the concrete parse tree of matching emitted SQL; generator choices alone are not evidence.
  * Volatility, differences, incomplete coverage and infrastructure failures never pass.
  */
 
@@ -37,7 +37,7 @@ $corpus = new SeedCorpus($grammar);
 foreach ($corpus->inputs($directory) as $index => $seed) {
     $comparison = Lifecycle::handles($seed->sql) ? (new Lifecycle())->compare($seed->sql, $target->version) : $target->compare($seed->sql);
     $status = $corpus->record($seed, $comparison);
-    $row = ['index' => $index, 'file' => $seed->file, 'inputHex' => bin2hex($seed->input), 'sqlHex' => bin2hex($seed->sql), 'status' => $status, 'difference' => $comparison->difference, 'contracts' => $comparison->contracts, 'referenceDifference' => $comparison->referenceDifference, 'reached' => $seed->reached, 'emitted' => $seed->emitted];
+    $row = ['index' => $index, 'file' => $seed->file, 'inputHex' => bin2hex($seed->input), 'sqlHex' => bin2hex($seed->sql), 'status' => $status, 'difference' => $comparison->difference, 'contracts' => $comparison->contracts, 'referenceDifference' => $comparison->referenceDifference, 'reached' => $seed->reached, 'emitted' => $seed->emitted, 'parsed' => $seed->parsed];
     if (fwrite($report, json_encode($row, JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR) . "\n") === false || !fflush($report)) {
         throw new RuntimeException('Cannot append to report ' . $prefix);
     }
