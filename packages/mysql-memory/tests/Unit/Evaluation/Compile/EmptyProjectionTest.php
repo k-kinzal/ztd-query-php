@@ -69,6 +69,26 @@ final class EmptyProjectionTest extends TestCase
         self::assertSame([], $warnings->rows);
     }
 
+    public function testReadableKeepsOuterRowsAvailableAfterAnEmptyInnerResult(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(id INT PRIMARY KEY, a INT); INSERT INTO t VALUES(1,NULL),(2,10)');
+        $result = $session->query('SELECT id, (SELECT t.a,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS empty_null FROM t ORDER BY id')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '1'], ['2', '0']], $result->rows);
+    }
+
+    public function testReadableKeepsOuterAliasesAvailableAfterAnEmptyInnerResult(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(id INT PRIMARY KEY, a INT); INSERT INTO t VALUES(1,NULL),(2,10)');
+        $result = $session->query('SELECT a+1 AS v, (SELECT v,NULL FROM DUAL WHERE 0) <=> (NULL,NULL) AS empty_null FROM t ORDER BY id')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null, '1'], ['11', '0']], $result->rows);
+    }
+
     public function testInitialKeepsCountZeroDistinctFromUnknownExtrema(): void
     {
         $result = (new Instance())->connect()->query('SELECT (SELECT NULLIF(COUNT(*),0),MIN(1) FROM DUAL HAVING 0) <=> (NULL,NULL)')[0];

@@ -123,7 +123,7 @@ final class EmptyProjection
     }
 
     /**
-     * Answers whether an expression can read constants or initialized aggregate slots.
+     * Answers whether an expression can read constants, outer rows or initialized aggregate slots.
      * Aggregate arguments belong to the input phase and are not projection dependencies.
      */
     public function readable(Node $node, bool $aggregated, bool $tabled = false): bool
@@ -132,9 +132,12 @@ final class EmptyProjection
             return $aggregated;
         }
         if ($node instanceof ColumnUse) {
-            $column = (new \MySqlMemory\Plan\ConstantTables($this->compiler->facts))->column($node);
+            $column = $this->compiler->facts->covers($node) ? $this->compiler->facts->scalar($node)->resolution : null;
+            if ($column instanceof \SqlSemantics\Statement\Reference\Column\AliasTarget) {
+                return $column->depth > 0;
+            }
 
-            return $tabled && $column?->depth === 0;
+            return $column instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn && ($column->depth > 0 || $tabled);
         }
         if ($node instanceof WindowFunction || $node instanceof DefaultOfColumn || $node instanceof InsertedColumn || $node instanceof Query) {
             return false;
