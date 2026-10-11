@@ -123,8 +123,9 @@ final class EmptyProjection
     }
 
     /**
-     * Answers whether an expression can read constants, outer rows or initialized aggregate slots.
+     * Answers whether an expression can read constants, outer rows, program variables or initialized aggregate slots.
      * Aggregate arguments belong to the input phase and are not projection dependencies.
+     * Nested queries own their input iterators and remain lazy projection expressions.
      */
     public function readable(Node $node, bool $aggregated, bool $tabled = false): bool
     {
@@ -137,9 +138,12 @@ final class EmptyProjection
                 return $column->depth > 0;
             }
 
-            return $column instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn && ($column->depth > 0 || $tabled);
+            return $column instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn && ($column->depth > 0 || $tabled || $this->compiler->connection->program?->find($column->relation, $node->name->value) !== null);
         }
-        if ($node instanceof WindowFunction || $node instanceof DefaultOfColumn || $node instanceof InsertedColumn || $node instanceof Query) {
+        if ($node instanceof Query) {
+            return true;
+        }
+        if ($node instanceof WindowFunction || $node instanceof DefaultOfColumn || $node instanceof InsertedColumn) {
             return false;
         }
         $children = [];
