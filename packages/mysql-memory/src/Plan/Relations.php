@@ -299,7 +299,7 @@ final class Relations
      */
     public function mergeable(\SqlSemantics\Statement\Query $query): bool
     {
-        return $this->planner->settings->release() !== \SqlSemantics\Contract\GrammarRelease::MySql5651 && (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->mergeable($query);
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->mergeable($query, $this->planner->settings->release(), $this->planner->compiler->facts, $this->planner->settings->resolution()->derivedMerge);
     }
 
     /**

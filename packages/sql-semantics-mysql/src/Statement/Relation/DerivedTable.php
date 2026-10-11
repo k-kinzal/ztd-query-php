@@ -69,7 +69,9 @@ final class DerivedTable implements Relation
             $derivation->report(new Misuse(MisuseRule::DerivedWithoutAlias));
         }
 
-        return new RelationFact((new DerivedShapes())->shape($derivation->query($this->query, $environment), $this->columns, $derivation, (new Materialization())->mergeable($this->query) ? null : $this->query));
+        $query = $derivation->query($this->query, $environment);
+
+        return new RelationFact((new DerivedShapes())->shape($query, $this->columns, $derivation, (new Materialization())->mergeable($this->query, $derivation->context->profile->grammar, $derivation->facts(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->derivedMerge) ? null : $this->query));
     }
 
     /**

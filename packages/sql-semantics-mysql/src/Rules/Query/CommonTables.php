@@ -75,7 +75,6 @@ final class CommonTables
             $seen[$key] = true;
             $scope = $this->extended($outer, $bindings);
             $recursive = $with->recursive && $this->refers($table->query, $table->name, $derivation);
-            $materialized = !$recursive && (new Materialization())->mergeable($table->query) ? null : $table->query;
             $problem = null;
             if ($recursive) {
                 $operands = $this->operands($table->query);
@@ -86,12 +85,15 @@ final class CommonTables
                 }
                 $scope = $this->extended($outer, [...$bindings, new CommonBinding($table->name, $table, new RowShape([], [new RecursiveReference($table->name)]))]);
             }
-            $shape = $derivation->deferred($table, static function () use ($table, $scope, $derivation, $materialized, $problem): RowShape {
+            $shape = $derivation->deferred($table, static function () use ($table, $scope, $derivation, $recursive, $problem): RowShape {
                 if ($problem !== null) {
                     $derivation->report($problem);
                 }
 
-                return (new DerivedShapes())->shape($derivation->query($table->query, $scope), $table->columns, $derivation, $materialized);
+                $query = $derivation->query($table->query, $scope);
+                $materialized = !$recursive && (new Materialization())->mergeable($table->query, $derivation->context->profile->grammar, $derivation->facts(), Settings::of($derivation->context)->derivedMerge) ? null : $table->query;
+
+                return (new DerivedShapes())->shape($query, $table->columns, $derivation, $materialized);
             });
             $bindings[] = new CommonBinding($table->name, $table, $shape);
         }

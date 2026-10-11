@@ -65,7 +65,7 @@ final class HavingLookup
         $definition = $relation instanceof NamedRelation && $relation->name()->schema === null ? $environment->commonTable($relation->name()->name)?->definition : null;
         $query = $relation instanceof DerivedTable ? $relation->query : ($definition instanceof CommonTableExpression ? $definition->query : null);
 
-        return $query !== null && (new Materialization())->mergeable($query);
+        return $query !== null && (new Materialization())->mergeable($query, $environment->context->profile->grammar);
     }
 
     /**

@@ -125,6 +125,9 @@ final class SubqueryRows
     public function predicate(ScalarFact $operand, QueryFact $query, Derivation $derivation, Scalar $expression, bool $negated): ScalarFact
     {
         $nullability = $this->test($operand, $query, $derivation, $expression);
+        if (($expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\InQuery || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Expression\Subquery\QuantifiedComparison) && (new ScalarReduction())->expression($expression->query) === null) {
+            $nullability = Nullability::Nullable;
+        }
         $legacy = in_array($derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true);
         $wide = $legacy && !$negated && (new Operands())->width($operand) > 1;
 

@@ -127,7 +127,7 @@ final class ConstancyTest extends TestCase
             return Constancy::within($subquery, $operation->facts, 0, true, []);
         }, range(0, 2));
 
-        self::assertSame([Constancy::Resolved, Constancy::Statement, Constancy::Statement], $lifetimes);
+        self::assertSame([Constancy::Resolved, Constancy::Resolved, Constancy::Statement], $lifetimes);
     }
 
     public function testJoinAnswersTheShorterLived(): void

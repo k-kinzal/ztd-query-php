@@ -35,6 +35,7 @@ final class ScalarReductionTest extends TestCase
         yield 'nested' => ['SELECT (SELECT COUNT(*))', true];
         yield 'table' => ['SELECT a FROM t', false];
         yield 'where' => ['SELECT 1 WHERE FALSE', false];
+        yield 'true filter' => ['SELECT 1 WHERE TRUE', true];
         yield 'having' => ['SELECT 1 HAVING TRUE', false];
         yield 'aggregate' => ['SELECT COUNT(*)', false];
         yield 'window' => ['SELECT ROW_NUMBER() OVER ()', false];
@@ -52,6 +53,16 @@ final class ScalarReductionTest extends TestCase
 
         self::assertSame($reduced, $expression !== null);
         self::assertSame($expression, $operation->facts->scalar($subquery)->replacement);
+    }
+
+    public function testFilteredKeepsFalseAndUnknownConditions(): void
+    {
+        $rules = new ScalarReduction();
+
+        self::assertFalse($rules->filtered(null));
+        self::assertFalse($rules->filtered(new \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral(true)));
+        self::assertTrue($rules->filtered(new \SqlSemantics\Platform\MySql\Statement\Literal\BooleanLiteral(false)));
+        self::assertTrue($rules->filtered(new \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse(new \SqlSemantics\Statement\Identifier\Name('a'))));
     }
 
     public function testExpressionRetainsADirectColumnSubqueryInMySql56(): void

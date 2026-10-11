@@ -118,6 +118,18 @@ final class SubqueryRowsTest extends TestCase
         self::assertEquals($domain, (new SubqueryRows())->string($domain, null));
     }
 
+    public function testPredicateRetainsNullableMetadataUntilMembershipIsReduced(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(id INT PRIMARY KEY)');
+        $operation = $semantics->analyze('SELECT id IN (SELECT id FROM t), id IN (SELECT 1), id IN (SELECT 1 WHERE FALSE), id IN (SELECT 1 WHERE TRUE) FROM t', [$table]);
+
+        self::assertSame(Nullability::Nullable, $operation->field(0)->nullability);
+        self::assertSame(Nullability::NotNull, $operation->field(1)->nullability);
+        self::assertSame(Nullability::Nullable, $operation->field(2)->nullability);
+        self::assertSame(Nullability::NotNull, $operation->field(3)->nullability);
+    }
+
     public function testTestCombinesTheColumnsAndReportsAWidthMismatch(): void
     {
         $platform = new Platform();

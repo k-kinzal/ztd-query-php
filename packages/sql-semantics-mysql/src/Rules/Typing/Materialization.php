@@ -47,10 +47,16 @@ use SqlSemantics\Statement\Shape\Field as OutputField;
 final class Materialization
 {
     /**
-     * Tells whether the server merges a derived query into the query that reads it instead of materializing it.
+     * Tells whether a derived query can retain its expression domains in the enclosing block.
+     * MySQL 5.6 always materializes. Later releases also retain a separate block for
+     * assignments or dependent select-list queries. Unresolved subqueries are treated
+     * conservatively when facts are unavailable; normal derivation supplies their bindings.
      */
-    public function mergeable(Query $query): bool
+    public function mergeable(Query $query, GrammarRelease $release = GrammarRelease::MySql847, ?\SqlSemantics\Statement\Fact\Facts $facts = null, bool $enabled = true): bool
     {
+        if (!$enabled || $release === GrammarRelease::MySql5651) {
+            return false;
+        }
         while ($query instanceof ParenthesizedQuery || ($query instanceof QueryExpression && $query->with === null && $query->orderBy === [] && $query->limit === null)) {
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
         }
@@ -62,7 +68,7 @@ final class Materialization
         }
         $parts = array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $query->items);
 
-        return !(new Aggregates())->aggregates([...$parts, ...array_map(static fn ($item): object => $item->expression, $query->orderBy)]);
+        return !(new Aggregates())->aggregates([...$parts, ...array_map(static fn ($item): object => $item->expression, $query->orderBy)]) && !(new \SqlSemantics\Platform\MySql\Rules\Expression\MergeDependencies())->separate($parts, $release, $facts);
     }
 
     /**

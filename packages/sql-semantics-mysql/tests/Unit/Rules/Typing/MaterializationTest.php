@@ -117,6 +117,18 @@ final class MaterializationTest extends TestCase
         self::assertFalse((new Materialization())->mergeable($derived('SELECT * FROM (SELECT 1) d')->query));
     }
 
+    public function testMergeableRespectsTheReleaseAndSessionSetting(): void
+    {
+        $operation = (new Semantics(Dialect::MySql))->analyze('SELECT 1 FROM t');
+        self::assertInstanceOf(Select::class, $operation->statement);
+        $query = $operation->statement;
+        $rules = new Materialization();
+
+        self::assertFalse($rules->mergeable($query, GrammarRelease::MySql5651));
+        self::assertTrue($rules->mergeable($query, GrammarRelease::MySql5744));
+        self::assertFalse($rules->mergeable($query, enabled: false));
+    }
+
     public function testNarrowsForAQueryBlockOrASingleRow(): void
     {
         $semantics = new Semantics(Dialect::MySql);

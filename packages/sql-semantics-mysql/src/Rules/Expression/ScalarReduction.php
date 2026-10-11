@@ -40,13 +40,22 @@ final class ScalarReduction
         while ($query instanceof ParenthesizedQuery || $query instanceof QueryExpression) {
             $query = $query instanceof ParenthesizedQuery ? $query->query : $query->body;
         }
-        if (!$query instanceof Select || ($query->from !== null && !$query->from instanceof Dual) || $query->where !== null || $query->having !== null || $query->qualify !== null || $query->into !== null || count($query->items) !== 1 || (new RollupItems())->windowed($query) || ($release !== GrammarRelease::MySql910 && (new RollupItems())->rolls($query))) {
+        if (!$query instanceof Select || ($query->from !== null && !$query->from instanceof Dual) || $this->filtered($query->where) || $query->having !== null || $query->qualify !== null || $query->into !== null || count($query->items) !== 1 || (new RollupItems())->windowed($query) || ($release !== GrammarRelease::MySql910 && (new RollupItems())->rolls($query))) {
             return null;
         }
         $item = $query->items[0];
         $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
 
         return $item instanceof SelectExpression && !($legacy && $item->expression instanceof ColumnUse) && !(new Aggregation())->aggregates([$item->expression]) ? $item->expression : null;
+    }
+
+    /**
+     * Tells whether a WHERE condition remains after folding a known integer truth.
+     * An absent filter or a known nonzero integer does not restrict the single row.
+     */
+    public function filtered(?Scalar $condition): bool
+    {
+        return $condition !== null && ((new \SqlSemantics\Platform\MySql\Rules\Typing\Constants())->value($condition)[0] ?? 0) === 0;
     }
 
     /**

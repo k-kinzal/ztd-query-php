@@ -141,14 +141,14 @@ final class ChangeFacts
     public function merged(Relation $relation, string $column, Derivation $derivation): ?WriteMisuse
     {
         $materialization = new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization();
-        if ($derivation->context->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744 || !$relation instanceof DerivedTable || !$materialization->mergeable($relation->query)) {
+        if ($derivation->context->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5744 || !$relation instanceof DerivedTable || !$materialization->mergeable($relation->query, $derivation->context->profile->grammar, $derivation->facts(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context)->derivedMerge)) {
             return null;
         }
         $select = $this->block($relation->query);
         if ($select !== null && $this->computed($select, $column)) {
             return new WriteMisuse(WriteRule::NonUpdatableColumn, new Name($column));
         }
-        $first = $this->leading($select?->from);
+        $first = $this->leading($select?->from, $derivation->facts());
 
         return $first === null ? null : new WriteMisuse(WriteRule::NonUpdatableTarget, $this->label($first));
     }
@@ -185,7 +185,7 @@ final class ChangeFacts
      * The first table is found through table lists, the left side of joins, parentheses, escaped
      * references, and the derived tables MySQL 5.7 merges.
      */
-    public function leading(?Relation $from): ?NamedRelation
+    public function leading(?Relation $from, ?\SqlSemantics\Statement\Fact\Facts $facts = null): ?NamedRelation
     {
         $materialization = new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization();
         while ($from !== null && !$from instanceof NamedRelation) {
@@ -193,7 +193,7 @@ final class ChangeFacts
                 $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\TableList => $from->members[0] ?? null,
                 $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable => $from->left,
                 $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\NestedRelation, $from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\EscapedRelation => $from->relation,
-                $from instanceof DerivedTable && $materialization->mergeable($from->query) => $this->block($from->query)?->from,
+                $from instanceof DerivedTable && $materialization->mergeable($from->query, \SqlSemantics\Contract\GrammarRelease::MySql5744, $facts) => $this->block($from->query)?->from,
                 default => null,
             };
         }

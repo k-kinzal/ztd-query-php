@@ -45,6 +45,17 @@ final class ScalarSubqueryTest extends TestCase
         self::assertSame(11, $domain->length);
     }
 
+    public function testDeriveScalarKeepsTheIntegerStorageFieldOfAnUnreducedModernQuery(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(a INT NOT NULL)');
+        $domain = (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($semantics->analyze('SELECT (SELECT a FROM t)', [$table])->field(0)->type);
+
+        self::assertNotNull($domain);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long, $domain->field);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong, $domain->storageField);
+    }
+
     public function testDeriveScalarPreservesTheTypeAndNullabilityOfTheReducedExpression(): void
     {
         $platform = new Platform();
