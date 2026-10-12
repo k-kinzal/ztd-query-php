@@ -13,6 +13,7 @@ use MySqlMemory\Value\Calendar;
 use MySqlMemory\Value\Decimal;
 use MySqlMemory\Value\Temporal;
 use MySqlMemory\Value\Zone;
+use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 
 /**
@@ -23,6 +24,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * writes an instant in the time zone of the session and is NULL outside it. CONVERT_TZ converts
  * only a value whose instant is in that range, and answers any other unchanged; an unknown zone
  * makes it NULL (verified on a live 8.4 server).
+ * MySQL 5.6 and 5.7 retain the earlier upper bound, 2038-01-19 03:14:07.999999 UTC.
+ * The extended range was introduced on 64-bit platforms in MySQL 8.0.28.
+ * Source: https://dev.mysql.com/doc/refman/8.0/en/mysql-nutshell.html.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_unix-timestamp,
  * https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_convert-tz.
  *
@@ -69,7 +73,7 @@ final class Epochs
         if ($parts !== null && $parts[1] !== 0 && $parts[2] !== 0) {
             $seconds = $frame->context->zone()->instant(Calendar::epoch($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5]));
             $micro = $parts[6];
-            if ($seconds < 1 || $seconds > self::LATEST) {
+            if ($seconds < 1 || $seconds > $this->latest($frame)) {
                 [$seconds, $micro] = [0, 0];
             }
         }
@@ -93,7 +97,7 @@ final class Epochs
         }
         $decimals = isset($arguments[1]) ? 6 : $result->decimals;
         $number = Decimal::round((string) Convert::toDecimal($value, $arguments[0]->domain(), $frame->context), $decimals);
-        if (Decimal::compare($number, '0') < 0 || Decimal::compare($number, (string) (self::LATEST + 1)) >= 0) {
+        if (Decimal::compare($number, '0') < 0 || Decimal::compare($number, (string) ($this->latest($frame) + 1)) >= 0) {
             return null;
         }
         $seconds = (int) Decimal::truncate($number, 0);
@@ -127,11 +131,19 @@ final class Epochs
         }
         $micro = Temporal::scale($parts[6], $result->decimals, $frame->context->modes->has('TIME_TRUNCATE_FRACTIONAL'));
         $instant = $source->instant(Calendar::epoch($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5]));
-        if ($instant < 1 || $instant > self::LATEST) {
+        if ($instant < 1 || $instant > $this->latest($frame)) {
             return Temporal::dateTime($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], $micro, $result->decimals);
         }
         $moment = Calendar::moment($target->local($instant));
 
         return Temporal::dateTime($moment[0], $moment[1], $moment[2], $moment[3], $moment[4], $moment[5], $micro, $result->decimals);
+    }
+
+    /**
+     * Answers the last epoch second accepted by this release's conversion functions.
+     */
+    public function latest(Frame $frame): int
+    {
+        return in_array($frame->context->modes->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? 2147483647 : self::LATEST;
     }
 }

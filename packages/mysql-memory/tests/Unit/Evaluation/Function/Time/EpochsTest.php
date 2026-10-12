@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Function\Time\Epochs;
 use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -15,6 +16,26 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class EpochsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacy(): iterable
+    {
+        yield '5.6' => ['5.6.51'];
+        yield '5.7' => ['5.7.44'];
+    }
+
+    #[DataProvider('providerLegacy')]
+    public function testLatestBoundsAllConversionsAtTheLegacyEpochEnd(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query("SET time_zone='+00:00'");
+        $result = $session->query("SELECT UNIX_TIMESTAMP('2038-01-19 03:14:07'),UNIX_TIMESTAMP('2038-01-19 03:14:08'),FROM_UNIXTIME(2147483647),FROM_UNIXTIME(2147483648),CONVERT_TZ('2038-01-19 03:14:07','+00:00','+01:00'),CONVERT_TZ('2038-01-19 03:14:08','+00:00','+01:00')")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2147483647', '0', '2038-01-19 03:14:07', null, '2038-01-19 04:14:07', '2038-01-19 03:14:08']], $result->rows);
+    }
+
     public function testRoutinesNamesTheFunctionsOfInstants(): void
     {
         self::assertSame(['UNIX_TIMESTAMP', 'FROM_UNIXTIME', 'CONVERT_TZ'], array_map(static fn ($routine): string => $routine->name, (new Epochs())->routines()));
