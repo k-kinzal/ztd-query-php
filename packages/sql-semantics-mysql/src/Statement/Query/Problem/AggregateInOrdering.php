@@ -8,7 +8,7 @@ use SqlSemantics\Statement\Fact\Diagnostic;
 use SqlSemantics\Statement\Snapshot;
 
 /**
- * An ORDER BY expression that aggregates a block not already grouped by its other clauses.
+ * An aggregate call forbidden by the query block or its DISTINCT ordering.
  *
  * @visibility public
  * @example Reading the rejected ordering position
@@ -21,8 +21,9 @@ final class AggregateInOrdering implements Diagnostic
 
     /**
      * @param int $position The one-based position of the ordering expression
+     * @param bool $distinct Whether an unselected aggregate violates DISTINCT ordering
      */
-    public function __construct(public readonly int $position)
+    public function __construct(public readonly int $position, public readonly bool $distinct = false)
     {
     }
 
@@ -31,6 +32,9 @@ final class AggregateInOrdering implements Diagnostic
      */
     public function message(): string
     {
+        if ($this->distinct) {
+            return sprintf('Expression #%d of ORDER BY clause is not in SELECT list, contains aggregate function; this is incompatible with DISTINCT', $this->position);
+        }
         return sprintf('Expression #%d of ORDER BY contains aggregate function and applies to the result of a non-aggregated query', $this->position);
     }
 }

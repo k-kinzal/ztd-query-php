@@ -278,6 +278,13 @@ temporary column types needed by scalar and derived-table consumers.
 
 ### Aggregate ownership
 
+`DISTINCT` ordering is checked against the selected expressions and the aggregates
+owned by the query block. An unselected aggregate call produces
+`AggregateInOrdering` with `distinct` set to `true`; an unselected input column
+produces `NonGroupedColumn`. Selecting every grouping expression makes `DISTINCT`
+redundant unless the block uses `ROLLUP`. A sorting subquery cannot read an outer
+aggregate through its result alias.
+
 Aggregate ownership is available through `$operation->facts->query($query)->aggregates`.
 For `SELECT (SELECT SUM(t.a)) FROM t`, the outer block owns `SUM(t.a)` because its
 argument reads only the outer table. `COUNT(*)` and constant arguments stay in the

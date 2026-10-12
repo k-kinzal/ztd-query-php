@@ -94,7 +94,7 @@ final class Blocks
         $names = array_map(fn (Field $field): string => $this->name($field, $select), $fields);
         $origins = (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== [], $storedWindows);
         $hashes = (new SortedDistinct($this->planner))->hashes(new QueryPlan($input, $domains, $names, $origins), $select, $keys);
-        $root = $this->distinct($select, $fields, $input, $expressions, $domains, $hashes, $keys !== []);
+        $root = (new Projection\DistinctStorage($this->planner))->grouped($this->distinct($select, $fields, $input, $expressions, $domains, $hashes, $keys !== []), $select, $domains, $keys !== []);
         $copies = (new Window\CopiedAssignments($this->planner))->copies($select, $fields, $storedWindows);
         $root = (new Window\CopiedAssignments($this->planner))->buffered($select, $root, $copies);
         if ($keys !== [] && !$presorted) {

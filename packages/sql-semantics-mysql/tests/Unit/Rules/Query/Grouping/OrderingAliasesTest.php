@@ -58,4 +58,19 @@ final class OrderingAliasesTest extends TestCase
         self::assertNull((new OrderingAliases())->nested($select->orderBy[0]->expression, $operation->facts, $owned));
         self::assertSame([], $operation->facts->diagnostics);
     }
+    public function testCorrelatedRejectsAnOuterAggregateAliasInASortingSubquery(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, '8.4.7');
+        $table = $semantics->analyze('CREATE TABLE t(a INT)');
+        $operation = $semantics->analyze('SELECT MIN(a) AS v FROM t GROUP BY a ORDER BY (SELECT ABS(v))', [$table]);
+        $select = $operation->statement;
+        self::assertInstanceOf(Select::class, $select);
+        $owned = array_fill_keys(array_map(spl_object_id(...), $operation->facts->query($select)->aggregates), true);
+        $problem = (new OrderingAliases())->correlated($select->orderBy[0]->expression, $operation->facts, $owned);
+
+        self::assertNotNull($problem);
+        self::assertSame("Reference 'v' not supported (reference to group function)", $problem->message());
+        self::assertEquals([$problem], $operation->facts->diagnostics);
+    }
+
 }

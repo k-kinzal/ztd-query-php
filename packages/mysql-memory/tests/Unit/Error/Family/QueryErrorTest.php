@@ -39,4 +39,10 @@ final class QueryErrorTest extends TestCase
 
         self::assertSame([1146, '42S02', "Table 'shop.items' doesn't exist", QueryError::NoSuchTable], [$error->getCode(), $error->sqlState(), $error->getMessage(), $error->error]);
     }
+    public function testMessageFormatsAnUnselectedDistinctAggregate(): void
+    {
+        self::assertSame('Expression #2 of ORDER BY clause is not in SELECT list, contains aggregate function; this is incompatible with DISTINCT', QueryError::AggregateInDistinctOrder->message(2));
+        self::assertSame('HY000', QueryError::AggregateInDistinctOrder->sqlState());
+    }
+
 }

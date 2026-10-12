@@ -58,6 +58,7 @@ enum QueryError: int implements ErrorCode
     case WrongVariableTypeInLimit = 1691;
     case AggregateInOrder = 3029;
     case FieldInOrderNotSelect = 3065;
+    case AggregateInDistinctOrder = 3066;
     case NativeFunctionRejected = 3566;
     case UnresolvedLockedTable = 3568;
     case DuplicateLockedTable = 3569;

@@ -158,7 +158,7 @@ final class Problems
         $database = $session->variables->database;
         $tested = $this->tested($operation);
 
-        return array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => ($grouping || !$diagnostic instanceof NonGroupedColumn)
+        return array_values(array_filter($operation->facts->diagnostics, static fn (Diagnostic $diagnostic): bool => ($grouping || (!$diagnostic instanceof NonGroupedColumn && !($diagnostic instanceof \SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering && $diagnostic->distinct)))
             && !($tested && $diagnostic instanceof Misuse && $diagnostic->rule === MisuseRule::StarWithoutTables)
             && !Stages::answered($operation->statement, $diagnostic)
             && !Stages::planned($diagnostic)

@@ -168,4 +168,45 @@ final class DistinctStorage
 
         return $path;
     }
+    /**
+     * Orders stored grouped duplicate keys before an independent output sort.
+     *
+     * Modern numeric DISTINCT results use ordered duplicate storage after grouping,
+     * except when the group keys already make them unique. Ordered GROUP_CONCAT
+     * results compare their stored strings too; computed string parents, rollup
+     * rows and windows keep their own storage order. Verified through SQL on MySQL 8.4.
+     *
+     * @param list<Domain> $domains The selected result domains
+     * @param bool $sorted Whether an independent output sort follows
+     */
+    public function grouped(AccessPath $path, Select $select, array $domains, bool $sorted = false): AccessPath
+    {
+        if ($this->planner->settings->legacy() || !in_array(SelectOption::Distinct, $select->options, true)
+            || $select->groupBy === null || $select->groupBy->modifier !== null
+            || (new Windowing($this->planner))->calls($select) !== []) {
+            return $path;
+        }
+        $expressions = [];
+        foreach ($select->items as $item) {
+            if (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression) {
+                return $path;
+            }
+            $expressions[] = $item->expression;
+        }
+        if ((new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\DistinctOrdering())->redundant($select, $expressions, $this->planner->compiler->facts)) {
+            return $path;
+        }
+        $keys = [];
+        foreach ($domains as $position => $domain) {
+            $target = (new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\Matching())->unwrap($expressions[$position]);
+            $collected = $sorted && $target instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
+            if (!$collected && !in_array($domain->kind, [Kind::Integer, Kind::Decimal, Kind::Double, Kind::Null], true)) {
+                return $path;
+            }
+            $keys[] = [$position, $domain, false];
+        }
+
+        return new Sort($path, $keys);
+    }
+
 }

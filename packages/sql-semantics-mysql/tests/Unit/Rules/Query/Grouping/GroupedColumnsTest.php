@@ -164,7 +164,7 @@ final class GroupedColumnsTest extends TestCase
 
         $problem = (new GroupedColumns())->distinct($select, $relations, $operation->facts, new Derivation($context));
 
-        self::assertNotNull($problem);
+        self::assertInstanceOf(NonGroupedColumn::class, $problem);
         self::assertSame([GroupingRule::NotSelected, true, 3, 'fz.t1.b'], [$problem->rule, $problem->ordering, $problem->position, $problem->column]);
     }
 

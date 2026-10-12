@@ -9,6 +9,7 @@ use SqlSemantics\Platform\MySql\Rules\Query\Aggregation;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
+use SqlSemantics\Platform\MySql\Statement\Query\Problem\AggregateInOrdering;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\GroupingRule;
 use SqlSemantics\Platform\MySql\Statement\Query\Problem\NonGroupedColumn;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -39,7 +40,9 @@ use SqlSemantics\Statement\Shape\OpenStar;
  * (verified on a live 8.4 server). A block that
  * aggregates without GROUP BY reports the first select item column outside
  * an aggregate (WithoutGroupBy). A DISTINCT block reports the first ORDER BY
- * column that no select item is (NotSelected). The server checks this after
+ * column that no select item is (NotSelected), or an unselected owned aggregate
+ * call (AggregateInOrdering). Selecting every grouping key removes a redundant
+ * DISTINCT check unless ROLLUP is present. The server checks this after
  * it resolves the block, only when the statement resolved without problem
  * so far, and only under ONLY_FULL_GROUP_BY; a GROUP BY item holding an
  * aggregate or a window function, itself or through the alias of a select
@@ -78,11 +81,11 @@ final class GroupedColumns
         $aggregates = $ownedAggregates !== null ? $ownedAggregates !== [] : ((new Aggregation())->aggregates(array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items)) || ($select->having !== null && (new Aggregation())->aggregates([$select->having])));
         $problem = null;
         if ($select->groupBy !== null) {
-            $problem = $this->grouped($select, $fields, $relations, $facts, $derivation) ?? (in_array(SelectOption::Distinct, $select->options, true) ? $this->distinct($select, $relations, $facts, $derivation) : null);
+            $problem = $this->grouped($select, $fields, $relations, $facts, $derivation) ?? (in_array(SelectOption::Distinct, $select->options, true) ? $this->distinct($select, $relations, $facts, $derivation, $ownedAggregates ?? []) : null);
         } elseif ($aggregates) {
             $problem = $this->items($fields, $relations, $facts, null, GroupingRule::WithoutGroupBy, $derivation) ?? $this->having($select, $relations, $facts, null, $derivation);
         } elseif (in_array(SelectOption::Distinct, $select->options, true)) {
-            $problem = $this->distinct($select, $relations, $facts, $derivation);
+            $problem = $this->distinct($select, $relations, $facts, $derivation, $ownedAggregates ?? []);
         }
         if ($problem !== null) {
             $derivation->report($problem);
@@ -204,41 +207,14 @@ final class GroupedColumns
     }
 
     /**
-     * Checks that every ORDER BY column of a DISTINCT block is a select item.
+     * Checks unselected columns and aggregate calls in DISTINCT ordering.
      *
      * @param array<int, VisibleRelation> $relations
+     * @param list<Scalar> $aggregates The aggregate occurrences owned by this block
      */
-    public function distinct(Select $select, array $relations, Facts $facts, Derivation $derivation): ?NonGroupedColumn
+    public function distinct(Select $select, array $relations, Facts $facts, Derivation $derivation, array $aggregates = []): NonGroupedColumn|AggregateInOrdering|null
     {
-        $matching = new Matching();
-        $reads = new ColumnReads();
-        $selected = [];
-        $expressions = [];
-        foreach ($select->items as $item) {
-            if ($item instanceof SelectExpression) {
-                $expressions[] = $item->expression;
-                foreach ($reads->columns($item->expression, $relations, $facts, true) as [$key]) {
-                    if ($matching->unwrap($item->expression) instanceof ColumnUse) {
-                        $selected[$key] = true;
-                    }
-                }
-            } else {
-                return null;
-            }
-        }
-        foreach ($select->orderBy as $position => $item) {
-            $expression = $matching->target($item->expression, $facts);
-            if ($matching->listed($expression, $expressions, $facts)) {
-                continue;
-            }
-            foreach ($reads->columns($expression, $relations, $facts, true) as [$key, $column]) {
-                if (!isset($selected[$key])) {
-                    return new NonGroupedColumn(GroupingRule::NotSelected, true, $position + 1, $this->name($column, $relations, $derivation), release: $derivation->context->profile->grammar);
-                }
-            }
-        }
-
-        return null;
+        return (new DistinctOrdering())->check($select, $relations, $facts, $derivation, $aggregates);
     }
 
     /**

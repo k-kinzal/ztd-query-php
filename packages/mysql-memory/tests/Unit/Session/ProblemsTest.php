@@ -421,4 +421,18 @@ final class ProblemsTest extends TestCase
 
         $session->query('UPDATE t FORCE INDEX (k) SET nosuch = 1');
     }
+    public function testPendingKeepsTheUngroupedErrorWhenDistinctChecksAreDisabled(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE t(n INT)');
+        $distinct = $session->analyze('SELECT DISTINCT ABS(n) FROM t GROUP BY n ORDER BY SUM(n)');
+        $ungrouped = $session->analyze('SELECT DISTINCT 1 FROM t ORDER BY SUM(n)');
+        $strict = (new Problems())->pending($distinct, $session);
+        $session->query("SET sql_mode = ''");
+
+        self::assertCount(1, $strict);
+        self::assertSame([], (new Problems())->pending($distinct, $session));
+        self::assertCount(1, (new Problems())->pending($ungrouped, $session));
+    }
+
 }

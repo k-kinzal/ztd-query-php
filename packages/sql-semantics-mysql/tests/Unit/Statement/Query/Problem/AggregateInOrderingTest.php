@@ -17,4 +17,9 @@ final class AggregateInOrderingTest extends TestCase
     {
         self::assertSame('Expression #2 of ORDER BY contains aggregate function and applies to the result of a non-aggregated query', (new AggregateInOrdering(2))->message());
     }
+    public function testMessageDistinguishesAnUnselectedDistinctAggregate(): void
+    {
+        self::assertSame('Expression #2 of ORDER BY clause is not in SELECT list, contains aggregate function; this is incompatible with DISTINCT', (new AggregateInOrdering(2, true))->message());
+    }
+
 }

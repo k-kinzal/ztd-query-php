@@ -769,4 +769,13 @@ final class ErrorsTest extends TestCase
         self::assertSame('FUNCTION JSON_EXTRACT does not exist', $reply->getMessage());
     }
 
+    public function testQueryMapsAnUnselectedAggregateInDistinctOrdering(): void
+    {
+        $problem = new AggregateInOrdering(2, true);
+        $error = (new Errors())->query($problem, 'order clause');
+
+        self::assertNotNull($error);
+        self::assertSame([3066, 'HY000', $problem->message()], [$error->getCode(), $error->sqlState(), $error->getMessage()]);
+    }
+
 }

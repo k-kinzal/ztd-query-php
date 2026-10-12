@@ -36,4 +36,16 @@ final class ReopenedTest extends TestCase
         self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result1);
         self::assertSame([['0']], $result1->rows);
     }
+    public function testReadsVisitsOuterFromBeforeProjectionSubqueries(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d; USE d; CREATE TEMPORARY TABLE x1 (a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1137);
+        $this->expectExceptionMessage("Can't reopen table: 'outer_table'");
+
+        $session->query('SELECT (SELECT SUM(a) FROM x1 inner_table) FROM x1 outer_table');
+    }
+
 }

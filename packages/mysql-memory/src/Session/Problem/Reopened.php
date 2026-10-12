@@ -37,7 +37,7 @@ final class Reopened
         }
         $seen = [];
         $walker = new Walker();
-        foreach ([...$walker->find($statement, TableReference::class), ...$walker->find($statement, WriteTarget::class)] as $reference) {
+        foreach ([...$this->reads($statement), ...$walker->find($statement, WriteTarget::class)] as $reference) {
             $table = $this->temporary($reference, $session);
             if ($table === null) {
                 continue;
@@ -48,6 +48,41 @@ final class Reopened
             }
             $seen[$id] = $reference->alias->value ?? $reference->name->name->value;
         }
+    }
+
+    /**
+     * Visits each query's FROM sources before its scalar subqueries.
+     *
+     * @return list<TableReference>
+     */
+    public function reads(\SqlSemantics\Statement\Node $statement): array
+    {
+        $pending = [$statement];
+        $references = [];
+        while ($pending !== []) {
+            $node = array_pop($pending);
+            if (is_array($node)) {
+                array_push($pending, ...array_reverse(array_values($node)));
+                continue;
+            }
+            if (!$node instanceof \SqlSemantics\Statement\Node) {
+                continue;
+            }
+            if ($node instanceof TableReference) {
+                $references[] = $node;
+                continue;
+            }
+            $properties = get_object_vars($node);
+            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select) {
+                $properties = ['from' => $node->from] + $properties;
+            } elseif ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression && $node->with === null) {
+                $properties = ['body' => $node->body] + $properties;
+            } elseif ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation) {
+                $properties = ['left' => $node->left, 'right' => $node->right] + $properties;
+            }
+            array_push($pending, ...array_reverse(array_values($properties)));
+        }
+        return $references;
     }
 
     /**

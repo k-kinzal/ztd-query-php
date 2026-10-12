@@ -173,4 +173,44 @@ final class DistinctStorageTest extends TestCase
         self::assertSame([['2001-01-03', 'utf8mb4']], $state->rows);
     }
 
+    public function testGroupedOrdersNumericDuplicateKeysBeforeTiedSortKeys(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->query("USE mysql;SET sql_mode='';CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2),(NULL),(0),(-1)");
+        $result = $session->query('SELECT DISTINCT ABS(n) FROM t GROUP BY n ORDER BY MIN(1)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null], ['0'], ['1'], ['2']], $result->rows);
+    }
+
+    public function testGroupedLeavesRedundantDistinctInItsInputOrder(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(NULL)');
+        $result = $session->query('SELECT DISTINCT n FROM t GROUP BY n ORDER BY MIN(1)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2'], ['1'], [null]], $result->rows);
+    }
+
+    public function testGroupedLeavesStringAggregateParentsInStoredOrder(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(NULL)');
+        $result = $session->query('SELECT DISTINCT CONCAT(SUM(n)) FROM t GROUP BY n')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2'], ['1'], [null]], $result->rows);
+    }
+
+    public function testGroupedOrdersDirectConcatenationsBeforeAnOutputSort(): void
+    {
+        $session = (new Instance('8.4.7'))->connect();
+        $session->query("USE mysql;SET sql_mode='';CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2),(NULL),(0),(-1)");
+        $result = $session->query('SELECT DISTINCT GROUP_CONCAT(-n) FROM t GROUP BY n ORDER BY MIN(1)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([[null], ['-1'], ['-2,-2'], ['0'], ['1']], $result->rows);
+    }
+
 }
