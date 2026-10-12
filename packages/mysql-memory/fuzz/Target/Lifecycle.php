@@ -82,44 +82,70 @@ final class Lifecycle
         } catch (PDOException $error) {
             return ['error' => $error->errorInfo, 'warnings' => $observer->warnings($pdo)];
         }
-        $disconnected = $this->disconnected($pdo);
         $restart = str_starts_with(strtoupper(ltrim($sql)), 'RESTART');
-        $again = $disconnected ? $this->reconnect($dsn, $user, $password, $restart) : null;
+        [$disconnected, $again] = $this->transition($pdo, $dsn, $user, $password, $restart);
 
         return ['result' => $result, 'disconnected' => $disconnected, 'reconnected' => $again !== null, 'tables' => $again === null ? null : $observer->tables($again, 'fz'), 'status' => $again === null ? null : $observer->observe($again, "SHOW GLOBAL STATUS LIKE 'Aborted_clients'", true)];
     }
 
     /**
-     * Waits at most ten seconds for the completed statement to close the old connection.
+     * Waits for the old connection to close and for shutdown to stop serving SQL.
+     * Both shutdown checks share the existing ten-second transition budget. Restart
+     * retains its separate thirty-second reconnection budget after disconnection.
+     *
+     * @return array{bool, PDO|null}
      */
-    public function disconnected(PDO $pdo): bool
+    public function transition(PDO $pdo, string $dsn, string $user, string $password, bool $restart): array
     {
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
         $deadline = microtime(true) + 10;
+        $disconnected = false;
+        $again = null;
         do {
-            if ($pdo->exec('DO 0') === false) {
-                return true;
+            $disconnected = $disconnected || $pdo->exec('DO 0') === false;
+            if ($disconnected) {
+                $again = $this->reconnect($dsn, $user, $password, $restart);
+                if ($restart || $again === null) {
+                    return [true, $again];
+                }
             }
             usleep(20000);
         } while (microtime(true) < $deadline);
 
-        return false;
+        return [$disconnected, $again];
     }
 
     /**
-     * Attempts to reconnect once after shutdown, or for up to thirty seconds after restart.
+     * Attempts one usable SQL connection, or retries for up to thirty seconds after restart.
+     * Authentication alone can succeed while a server is shutting down.
      */
     public function reconnect(string $dsn, string $user, string $password, bool $wait): ?PDO
     {
         $deadline = microtime(true) + ($wait ? 30 : 0);
         do {
             try {
-                return new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 1]);
+                $pdo = new PDO($dsn, $user, $password, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 1]);
             } catch (PDOException) {
-                usleep(20000);
+                $pdo = null;
             }
+            if ($pdo !== null && $this->ready($pdo)) {
+                return $pdo;
+            }
+            usleep(20000);
         } while (microtime(true) < $deadline);
 
         return null;
+    }
+
+    /**
+     * Confirms an authenticated connection can still execute SQL.
+     */
+    public function ready(PDO $pdo): bool
+    {
+        try {
+            return $pdo->exec('DO 0') !== false;
+        } catch (PDOException) {
+            return false;
+        }
     }
 }
