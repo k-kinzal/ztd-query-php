@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DistinctOutputs — ZTD Query PHP</title>
 <link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/665/k-kinzal/mysql-memory/MySqlMemory/Plan/Window/class.DistinctOutputs.html">
-<meta name="description" content="Plans DISTINCT before the aggregate parents deferred by a ROLLUP window stage.">
+<meta name="description" content="Plans DISTINCT before the aggregate parents deferred by a window stage.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="ZTD Query PHP">
 <meta property="og:title" content="DistinctOutputs — ZTD Query PHP">
-<meta property="og:description" content="Plans DISTINCT before the aggregate parents deferred by a ROLLUP window stage.">
+<meta property="og:description" content="Plans DISTINCT before the aggregate parents deferred by a window stage.">
 <meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/665/k-kinzal/mysql-memory/MySqlMemory/Plan/Window/class.DistinctOutputs.html">
 <meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/665/assets/og-image.png">
 <meta property="og:image:width" content="1200">
@@ -40,7 +40,7 @@
 <div class="notice diff-banner" data-diff="added">Added in working tree, compared to 049665fc106.</div>
 <pre class="signature" data-diff="added"><code><span class="t-key">final</span> <span class="t-key">class</span> <span class="signature-name">DistinctOutputs</span></code></pre>
 <div class="notice tone-warn"><strong>Restricted visibility</strong>: declared "@visibility MySqlMemory". Code outside that scope must not name this declaration.</div>
-<p class="lede">Plans DISTINCT before the aggregate parents deferred by a ROLLUP window stage.</p>
+<p class="lede">Plans DISTINCT before the aggregate parents deferred by a window stage.</p>
 <section data-diff="added"><h2 id="properties">Properties<a class="anchor" href="#properties">§</a></h2><div class="member" data-diff="added" id="property.planner"><div class="member-head"><pre class="member-sig"><code><span class="t-key">public</span> <a class="t-name k-class" href="../../../../../k-kinzal/mysql-memory/MySqlMemory/Plan/class.Planner.html" title="MySqlMemory\Plan\Planner">Planner</a> <span class="t-var">$planner</span></code></pre><div class="member-meta"><a class="source-link" href="../../../../../src/packages/mysql-memory/src/Plan/Window/DistinctOutputs.php.html#L28">source</a><a class="anchor" href="#property.planner">§</a></div></div><div class="member-body"></div></div>
 </section>
 <section data-diff="added"><h2 id="methods">Methods<a class="anchor" href="#methods">§</a></h2><div class="member" data-diff="added" id="method.__construct"><div class="member-head"><pre class="member-sig"><code><span class="t-key">public</span> <span class="t-key">function</span> <span class="signature-name">__construct</span>(<span class="sig-param" data-diff="added"><span class="t-key">public</span> <a class="t-name k-class" href="../../../../../k-kinzal/mysql-memory/MySqlMemory/Plan/class.Planner.html" title="MySqlMemory\Plan\Planner">Planner</a> <span class="t-var">$planner</span></span>)</code></pre><div class="member-meta"><a class="source-link" href="../../../../../src/packages/mysql-memory/src/Plan/Window/DistinctOutputs.php.html#L28">source</a><a class="anchor" href="#method.__construct">§</a></div></div><div class="member-body"><div class="member-block" data-diff="added"><h4>Parameters</h4><div class="table-wrap"><table class="param-table"><tr data-diff="added"><td><code class="t-var">$planner</code></td><td><code><a class="t-name k-class" href="../../../../../k-kinzal/mysql-memory/MySqlMemory/Plan/class.Planner.html" title="MySqlMemory\Plan\Planner">Planner</a></code></td><td>The current statement planner</td></tr></table></div></div>
