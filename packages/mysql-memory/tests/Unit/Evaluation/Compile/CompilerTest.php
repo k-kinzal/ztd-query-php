@@ -10,6 +10,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
@@ -18,6 +19,35 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class CompilerTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string, string, list<array{string, int, string}>}>
+     */
+    public static function providerProjectedWarnings(): iterable
+    {
+        $warnings = array_map(static fn (string $date): array => ['Warning', 1292, "Truncated incorrect DOUBLE value: '" . $date . "'"], ['2001-01-02', '2001-01-03', '2001-01-04']);
+        foreach (['@x:=d', 'CONCAT(@x:=d)'] as $projection) {
+            foreach (['ABS(v)', 'ABS((+v))'] as $key) {
+                yield '5.6 ' . $projection . $key => ['5.6.51', $projection, $key, []];
+                yield '5.7 ' . $projection . $key => ['5.7.44', $projection, $key, $warnings];
+            }
+        }
+    }
+
+    /**
+     * @param list<array{string, int, string}> $warnings
+     */
+    #[DataProvider('providerProjectedWarnings')]
+    public function testConversionWarningsPreservesTheLegacyProjectedAssignmentPolicy(string $version, string $projection, string $key, array $warnings): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query("CREATE DATABASE d;USE d;CREATE TABLE t(d DATE);INSERT INTO t VALUES('2001-01-02'),('2001-01-03'),('2001-01-04')");
+        $result = $session->query('SELECT ' . $projection . ' AS v FROM t ORDER BY ' . $key)[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2001-01-02'], ['2001-01-03'], ['2001-01-04']], $result->rows);
+        self::assertSame($warnings, $session->diagnostics->conditions);
+    }
+
     public function testConversionWarningsReadsUnreducedScalarStringsSilently(): void
     {
         $session = (new Instance())->connect();
@@ -30,6 +60,32 @@ final class CompilerTest extends TestCase
         self::assertSame([], $session->diagnostics->conditions);
         $session->query("SELECT ((SELECT '12x'))+0");
         self::assertSame([['Warning', 1292, "Truncated incorrect DOUBLE value: '12x'"]], $session->diagnostics->conditions);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerQuietFunctions(): iterable
+    {
+        foreach (["IFNULL(s,'0')", "COALESCE(s,'0')", "GREATEST(s,'0')", "LEAST(s,'z')"] as $expression) {
+            yield $expression => [$expression];
+        }
+    }
+
+    #[DataProvider('providerQuietFunctions')]
+    public function testConversionWarningsPreservesQuietFunctionsThroughAliasesAndGrouping(string $expression): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d;USE d;CREATE TABLE t(s VARCHAR(10));INSERT INTO t VALUES('12x')");
+        $direct = $session->query('SELECT ABS(' . $expression . '), (' . $expression . ')+0 FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $direct);
+        self::assertSame([['12', '12']], $direct->rows);
+        self::assertSame([], $session->diagnostics->conditions);
+        $alias = $session->query('SELECT ' . $expression . ' AS v FROM t ORDER BY ABS((+v))')[0];
+        self::assertInstanceOf(ResultSet::class, $alias);
+        self::assertSame([['12x']], $alias->rows);
+        self::assertSame([], $session->diagnostics->conditions);
     }
 
     public function testCompileEvaluatesTheResolvedScalarReplacementWithoutItsLimit(): void

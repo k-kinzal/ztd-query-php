@@ -41,7 +41,7 @@ final class Calls
     /**
      * The functions whose string result reads as a number without warning from MySQL 8.0 on (verified on a live 8.4 server).
      */
-    public const QUIET = ['GREATEST', 'LEAST'];
+    public const QUIET = ['IFNULL', 'COALESCE', 'GREATEST', 'LEAST'];
 
     /**
      * @var WeakMap<FunctionCall, Evaluable> Constant-seed generators shared by each written occurrence
@@ -166,6 +166,8 @@ final class Calls
             $charsets = array_map(static fn (Evaluable $argument): ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset => $argument->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String ? $argument->domain()->collation->charset : null, $compiled);
             $compiled = array_map(fn (Evaluable $argument, Scalar $written, int $index): Evaluable => \MySqlMemory\Evaluation\Operator\Transcoded::of($argument, $domain->collation, $this->compiler->constancy($written) === Constancy::Resolved && in_array($domain->collation->charset, array_diff_key($charsets, [$index => null]), true), $this->compiler->connection->context), $compiled, $arguments, array_keys($compiled));
         }
+
+        $domain = $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && !$this->compiler->settings->legacy() && in_array(strtoupper($name), self::QUIET, true) ? $domain->withQuiet() : $domain;
 
         return new Call($routine, $compiled, $domain->withSource(strtolower($name)), (new Printer($this->compiler->facts, $this->compiler->settings->database))->expression($node));
     }
