@@ -2,10 +2,11 @@
 
 /**
  * Partitions PHPUnit's complete class listing into three deterministic shards.
- * Each case has a fixed cost plus the statement separators in its SQL input.
- * This balances multi-statement scenarios without excluding tests or changing
- * time limits. Semicolons inside literals only increase the workload estimate.
- * Usage: php fuzz/shard.php build/integration-tests.xml 0
+ * Recorded CI seconds per case balance classes with different setup costs.
+ * New classes use their case count and SQL statement separators as an estimate.
+ * The optional final argument reserves seconds for shard zero's other checks.
+ * Every listed case remains assigned exactly once; time limits are unchanged.
+ * Usage: php fuzz/shard.php build/integration-tests.xml 0 35
  */
 
 declare(strict_types=1);
@@ -16,9 +17,24 @@ use PHPUnit\Framework\Attributes\DataProviderExternal;
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 $argv = $argv ?? [];
-if (count($argv) !== 3 || !in_array($argv[2], ['0', '1', '2'], true)) {
-    fwrite(STDERR, "Usage: php fuzz/shard.php <test-list.xml> <0|1|2>\n");
+if (!in_array(count($argv), [3, 4], true) || !in_array($argv[2], ['0', '1', '2'], true) || preg_match('/\A[0-9]+\z/', $argv[3] ?? '0') !== 1) {
+    fwrite(STDERR, "Usage: php fuzz/shard.php <test-list.xml> <0|1|2> [reserved-seconds]\n");
     exit(2);
+}
+$text = file_get_contents(__DIR__ . '/shard-timings.json');
+if ($text === false) {
+    throw new RuntimeException('The recorded CI timings could not be read.');
+}
+$recorded = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
+if (!is_array($recorded) || !is_array($recorded['secondsPerCase'] ?? null)) {
+    throw new RuntimeException('The recorded CI timings must contain secondsPerCase.');
+}
+$timings = [];
+foreach ($recorded['secondsPerCase'] as $name => $seconds) {
+    if (!is_string($name) || (!is_int($seconds) && !is_float($seconds)) || $seconds <= 0) {
+        throw new RuntimeException('Each recorded class timing must be positive.');
+    }
+    $timings[$name] = (int) ceil($seconds * 1000);
 }
 $listing = simplexml_load_file($argv[1]);
 if ($listing === false) {
@@ -51,11 +67,13 @@ foreach ($listing->testCaseClass as $node) {
             }
         }
     }
-    $classes[] = [$name, $count, max($count * 2, $weight)];
+    $estimated = $count * 360 + max(0, $weight - $count * 2) * 25;
+    $classes[] = [$name, $count, isset($timings[$name]) ? $count * $timings[$name] : $estimated];
 }
 usort($classes, static fn (array $a, array $b): int => $a[2] === $b[2] ? strcmp($a[0], $b[0]) : $b[2] <=> $a[2]);
 $groups = [[], [], []];
-$counts = $weights = [0, 0, 0];
+$counts = [0, 0, 0];
+$weights = [(int) ($argv[3] ?? '0') * 1000, 0, 0];
 foreach ($classes as [$name, $count, $weight]) {
     $shard = (int) array_search(min($weights), $weights, true);
     $groups[$shard][] = $name;
@@ -67,5 +85,5 @@ if (count(array_unique($assigned)) !== count($classes) || in_array([], $groups, 
     throw new RuntimeException('Every listed test class must belong to exactly one nonempty shard.');
 }
 $selected = $groups[(int) $argv[2]];
-fwrite(STDERR, 'Cases per shard: ' . json_encode($counts) . "\nWork per shard: " . json_encode($weights) . "\n" . implode("\n", $selected) . "\n");
+fwrite(STDERR, 'Cases per shard: ' . json_encode($counts) . "\nEstimated milliseconds per shard: " . json_encode($weights) . "\n" . implode("\n", $selected) . "\n");
 echo '^(?:' . implode('|', array_map(static fn (string $name): string => preg_quote($name, '/'), $selected)) . ')::', "\n";

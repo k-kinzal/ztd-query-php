@@ -75,7 +75,7 @@ jobs:
         run: |
           mkdir -p build
           php -d memory_limit=1G vendor/bin/phpunit --testsuite integration --list-tests-xml build/integration-tests.xml
-          pattern=$(php fuzz/shard.php build/integration-tests.xml "$TEST_SHARD")
+          pattern=$(php fuzz/shard.php build/integration-tests.xml "$TEST_SHARD" 35)
           vendor/bin/phpunit --bootstrap=fuzz/bootstrap.php --testsuite integration --filter "$pattern" --log-junit build/integration-results.xml
       - name: Upload integration results and timings
         if: always()
@@ -133,7 +133,7 @@ jobs:
         run: |
           mkdir -p build
           php -d memory_limit=1G vendor/bin/phpunit tests/Integration/Fuzz --list-tests-xml build/differential-tests.xml
-          pattern=$(php fuzz/shard.php build/differential-tests.xml "$TEST_SHARD")
+          pattern=$(php fuzz/shard.php build/differential-tests.xml "$TEST_SHARD" 25)
           vendor/bin/phpunit --bootstrap=fuzz/bootstrap.php tests/Integration/Fuzz --filter "$pattern" --log-junit build/differential-results.xml
       - name: Upload differential results and timings
         if: always()
