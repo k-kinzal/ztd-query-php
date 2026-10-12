@@ -80,4 +80,21 @@ final class WindowIteratorTest extends TestCase
 
         self::assertNull($iterator->read());
     }
+    public function testCaptureSeparatesLookaheadArgumentsFromOutputCopies(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $domain = Domain::integer();
+        $read = new ColumnRead($domain, 0);
+        $input = new WorkingTable(1);
+        $input->rows = [[1],[2]];
+        $window = new Window($input, [], [], WindowFrame::default(false), [], [$read], [$read]);
+        $partition = new \MySqlMemory\Evaluation\Window\Partition($input->rows, [[],[]], $window);
+        $partition->load(1, $frame);
+        $iterator = new WindowIterator($window, new WorkingTableIterator($input));
+        $iterator->capture($partition, $frame);
+
+        self::assertSame([-2 => 2,1 => 2], $frame->windowSlots);
+    }
+
 }

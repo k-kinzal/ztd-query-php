@@ -61,4 +61,21 @@ final class ProjectIteratorTest extends TestCase
 
         self::assertSame([1, 9], $iterator->read());
     }
+    public function testReadRepeatsStoredValuesWithoutAssigningOnMarkedRows(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(2);
+        $working->rows = [[4,0],[99,1],[6,0]];
+        $domain = Domain::integer();
+        $assignment = new \MySqlMemory\Evaluation\Leaf\Assignment('x', new ColumnRead($domain, 0), $domain, $domain);
+        $iterator = new ProjectIterator(new Project($working, [$assignment], true, 1), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame([4,0,4], $iterator->read());
+        self::assertSame([99,1,4], $iterator->read());
+        self::assertSame(4, $session->variables->user('x')[0]);
+        self::assertSame([6,0,6], $iterator->read());
+        self::assertSame(6, $session->variables->user('x')[0]);
+    }
+
 }

@@ -82,6 +82,7 @@ final class Windowing
         $functions = new Functions($this->planner);
         $analytics = [];
         $direct = $this->direct($select, $scope);
+        $input = (new SiblingInputs($this->planner))->grouped($select, $input, $scope, $direct);
         foreach ($calls as $call) {
             $analytics[spl_object_id($call)] = $functions->compile($call, $scope, $direct);
         }
@@ -122,7 +123,9 @@ final class Windowing
                 [$computed[], $read] = $functions->cached($analytics[spl_object_id($call)], $width + count($arguments), $call);
                 $arguments = [...$arguments, ...$read];
             }
-            $input = new Window($input, $partition, $order, $frames->compile($window, $order, $scope), $computed, $arguments);
+            $path = new Window($input, $partition, $order, $frames->compile($window, $order, $scope), $computed, $arguments);
+            $copies = $windowIndex === 0 ? (new SiblingInputs($this->planner))->streamed($select, $path, $scope, $direct, $windowIndex === array_key_last($used)) : [];
+            $input = new Window($input, $partition, $order, $path->frame, $computed, $arguments, $copies);
             foreach ($window->calls as $index => $call) {
                 $read = new OutputRead($analytics[spl_object_id($call)], $width + $index, $direct, $select->from !== null && !$select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual);
                 $logical = $compiler->domain($call);
@@ -267,7 +270,7 @@ final class Windowing
             }
         }
         foreach ($order as $item) {
-            if ($this->reads($item->expression)) {
+            if ($this->reads($item->expression) || (new Walker())->find((new Grouping($this->planner))->target($item->expression), \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment::class, false) !== []) {
                 return false;
             }
             foreach ((new Walker())->find($item->expression, FunctionCall::class, false) as $call) {

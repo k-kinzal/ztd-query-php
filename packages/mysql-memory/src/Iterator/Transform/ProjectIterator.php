@@ -19,6 +19,11 @@ final class ProjectIterator implements RowIterator
     private Frame $frame;
 
     /**
+     * @var list<int|float|string|null> The last computed values retained by a marked row
+     */
+    private array $retained = [];
+
+    /**
      * @param Project $path The path executed
      * @param RowIterator $input The iterator of the input
      */
@@ -33,6 +38,7 @@ final class ProjectIterator implements RowIterator
     public function init(Frame $frame): void
     {
         $this->frame = $frame;
+        $this->retained = [];
         $this->input->init($frame);
     }
 
@@ -47,9 +53,16 @@ final class ProjectIterator implements RowIterator
             return null;
         }
         $this->frame->row = $row;
+        if ($this->path->retainAt !== null && ($row[$this->path->retainAt] ?? 0) > 0) {
+            return $this->path->append ? [...$row, ...$this->retained] : $this->retained;
+        }
         $values = $this->path->append ? $row : [];
         foreach ($this->path->expressions as $expression) {
             $values[] = $expression->evaluate($this->frame);
+        }
+
+        if ($this->path->retainAt !== null) {
+            $this->retained = array_slice($values, $this->path->append ? count($row) : 0);
         }
 
         return $values;

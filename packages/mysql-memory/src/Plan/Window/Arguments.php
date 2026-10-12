@@ -9,7 +9,6 @@ use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Assignment;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Leaf\Retyped;
-use MySqlMemory\Evaluation\Leaf\UserVariableRead;
 use MySqlMemory\Evaluation\Window\Analytic;
 use MySqlMemory\Plan\Planner;
 use SqlSemantics\Contract\GrammarRelease;
@@ -25,7 +24,7 @@ use SqlSemantics\Statement\Scalar;
 /**
  * Separates arguments stored once per input row from expressions read by a window.
  * Assignments and other changing expressions are materialized at the input frontier.
- * MySQL 8.0 subsequently reads a bare assignment through the variable itself;
+ * MySQL 8.0 subsequently reads a bare assignment through its current input field;
  * 8.4 and 9.1 read its stored value. Verified by assignments inside moving frames.
  *
  * @visibility MySqlMemory
@@ -83,7 +82,7 @@ final class Arguments
     }
 
     /**
-     * Reads a stored argument, or the live variable used by a bare assignment in 8.0.
+     * Reads a stored argument, or the current input field used by a bare assignment in 8.0.
      */
     public function read(Evaluable $argument, int $position): Evaluable
     {
@@ -92,7 +91,7 @@ final class Arguments
             $unwrapped = $unwrapped->evaluable;
         }
         if ($unwrapped instanceof Assignment && $this->planner->settings->release() === GrammarRelease::MySql8044) {
-            return new UserVariableRead($unwrapped->name, $argument->domain());
+            return new \MySqlMemory\Evaluation\Window\InputRead($argument->domain(), -$position - 1);
         }
 
         return new ColumnRead($argument->domain(), $position);

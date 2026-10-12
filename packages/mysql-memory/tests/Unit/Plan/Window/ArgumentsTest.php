@@ -10,8 +10,8 @@ use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Assignment;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Leaf\Retyped;
-use MySqlMemory\Evaluation\Leaf\UserVariableRead;
 use MySqlMemory\Evaluation\Scope;
+use MySqlMemory\Evaluation\Window\InputRead;
 use MySqlMemory\Instance;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Plan\Window\Arguments;
@@ -76,7 +76,7 @@ final class ArgumentsTest extends TestCase
      */
     public static function providerReleases(): iterable
     {
-        yield 'live' => ['8.0.44', UserVariableRead::class];
+        yield 'current input' => ['8.0.44', InputRead::class];
         yield 'stored' => ['8.4.7', ColumnRead::class];
     }
 

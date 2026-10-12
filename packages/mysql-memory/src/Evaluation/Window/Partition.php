@@ -141,6 +141,9 @@ final class Partition
         if ($this->window->buffered()) {
             return count($this->rows) - 1;
         }
+        if (!$this->window->framed()) {
+            return $row;
+        }
         [, $end] = $this->extent($row, $frame);
 
         return max($row, $end);
@@ -154,7 +157,7 @@ final class Partition
     {
         $end = $this->window->frame->end;
 
-        return $this->window->buffered() || $end->kind === FrameBoundKind::UnboundedFollowing || ($end->kind === FrameBoundKind::Following && $end->rows >= count($this->rows) - $row);
+        return $this->window->buffered() || ($this->window->framed() && ($end->kind === FrameBoundKind::UnboundedFollowing || ($end->kind === FrameBoundKind::Following && $end->rows >= count($this->rows) - $row)));
     }
 
     /**
@@ -166,14 +169,24 @@ final class Partition
         while ($this->loaded < $position) {
             $index = ++$this->loaded;
             $frame->row = $this->rows[$index];
-            $this->rows[$index] = [...array_slice($this->rows[$index], 0, $this->window->input->width()), ...array_map(static fn ($argument) => $argument->evaluate($frame), $this->window->arguments)];
+            $this->rows[$index] = [...array_slice($this->rows[$index], 0, $this->window->input->width()), ...array_map(static fn ($argument) => $argument->evaluate($frame), [...$this->window->arguments, ...$this->window->copies])];
         }
+    }
+
+    /**
+     * Answers the arguments and ordinary copies of the latest loaded row.
+     *
+     * @return list<int|float|string|null>
+     */
+    public function captured(): array
+    {
+        return $this->loaded < 0 ? [] : array_slice($this->rows[$this->loaded], $this->window->input->width());
     }
 
     /**
      * Answers the value of one window function for a row.
      *
-     * @throws \MySqlMemory\Error\SqlError When computing the value is an error
+     * @throws \MySqlMemory\Error\SqlError When computing a value is an error
      */
     public function value(Analytic $analytic, int $row, Frame $frame): int|float|string|null
     {

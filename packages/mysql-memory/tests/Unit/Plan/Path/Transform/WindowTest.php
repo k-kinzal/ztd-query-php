@@ -39,4 +39,13 @@ final class WindowTest extends TestCase
         self::assertTrue((new Window($input, [], [], WindowFrame::default(false), []))->buffered());
     }
 
+    public function testFramedIgnoresBoundsForRankingCalls(): void
+    {
+        $rank = new Analytic(WindowFunctionKind::RowNumber, null, [], 1, Domain::integer());
+        $window = new Window(new ZeroRows(1), [], [], WindowFrame::default(false), [$rank]);
+
+        self::assertFalse($window->framed());
+        self::assertFalse($window->buffered());
+    }
+
 }

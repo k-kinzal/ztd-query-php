@@ -35,6 +35,7 @@ final class Window implements AccessPath
      * @param WindowFrame $frame The frame of the window
      * @param list<Analytic> $functions The window functions computed over the window, reading the arguments after the input row
      * @param list<Evaluable> $arguments The arguments of the window functions, evaluated once for each input row
+     * @param list<Evaluable> $copies Ordinary expressions appended to each row after its arguments are captured
      */
     public function __construct(
         public readonly AccessPath $input,
@@ -43,6 +44,7 @@ final class Window implements AccessPath
         public readonly WindowFrame $frame,
         public readonly array $functions,
         public readonly array $arguments = [],
+        public readonly array $copies = [],
     ) {
     }
 
@@ -51,7 +53,7 @@ final class Window implements AccessPath
      */
     public function buffered(): bool
     {
-        if ($this->frame->unit === FrameUnit::Range) {
+        if ($this->framed() && $this->frame->unit === FrameUnit::Range) {
             return true;
         }
         foreach ($this->functions as $analytic) {
@@ -64,11 +66,25 @@ final class Window implements AccessPath
     }
 
     /**
+     * Tells whether frame bounds are used by a value or aggregate call, or a general buffering stage.
+     * Ranking calls ignore their frame clause.
+     */
+    public function framed(): bool
+    {
+        foreach ($this->functions as $analytic) {
+            if ($analytic->kind === null || in_array($analytic->kind, [WindowFunctionKind::FirstValue, WindowFunctionKind::LastValue, WindowFunctionKind::NthValue], true)) {
+                return true;
+            }
+        }
+        return $this->functions === [];
+    }
+
+    /**
      * Answers the width of the input and one value per window function.
      */
     #[Override]
     public function width(): int
     {
-        return $this->input->width() + count($this->functions);
+        return $this->input->width() + count($this->functions) + count($this->copies);
     }
 }

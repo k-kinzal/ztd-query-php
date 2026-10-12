@@ -225,4 +225,19 @@ final class PartitionTest extends TestCase
         self::assertSame([[1, 7], [2, 8], [3]], $partition->rows);
     }
 
+    public function testCapturedKeepsTheLatestInputsSeparateFromTheirOutputRow(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $domain = Domain::integer();
+        $read = new ColumnRead($domain, 0);
+        $window = new Window(new \MySqlMemory\Plan\Path\Source\ZeroRows(1), [], [], WindowFrame::default(false), [], [$read], [$read]);
+        $partition = new Partition([[1],[2]], [[],[]], $window);
+
+        self::assertSame([], $partition->captured());
+        $partition->load(1, $frame);
+        self::assertSame([2,2], $partition->captured());
+        self::assertSame([1,1,1], $partition->rows[0]);
+    }
+
 }

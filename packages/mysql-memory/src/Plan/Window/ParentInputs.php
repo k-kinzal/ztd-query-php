@@ -52,7 +52,7 @@ final class ParentInputs
         }
         $variables = [];
         foreach ((new Windowing($this->planner))->roots($select) as $root) {
-            if (!$after || !(new Windowing($this->planner))->reads($root)) {
+            if ($scope->bound($root) === null && (!$after || !(new Windowing($this->planner))->reads($root))) {
                 $this->visit($root, $variables);
             }
         }
@@ -98,7 +98,7 @@ final class ParentInputs
     }
 
     /**
-     * Publishes sorted output assignments without recomputing their stored expressions.
+     * Publishes sorted output assignments and delayed input assignments after row bounds.
      *
      * @param list<Evaluable> $expressions The projection, including ordering values
      * @param int $fields The number of visible output values
@@ -106,7 +106,13 @@ final class ParentInputs
      */
     public function emitted(Select $select, AccessPath $input, array $expressions, int $fields, bool $sorted): AccessPath
     {
-        if (!$sorted || (new Windowing($this->planner))->calls($select) === []) {
+        $emitting = array_filter($expressions, static function (Evaluable $expression): bool {
+            while ($expression instanceof Retyped) {
+                $expression = $expression->evaluable;
+            }
+            return $expression instanceof \MySqlMemory\Evaluation\Window\EmissionAssignment;
+        }) !== [];
+        if ((!$sorted && !$emitting) || (new Windowing($this->planner))->calls($select) === []) {
             return $input;
         }
         $projected = [];
@@ -116,6 +122,9 @@ final class ParentInputs
             $value = $expression;
             while ($value instanceof Retyped) {
                 $value = $value->evaluable;
+            }
+            if ($value instanceof \MySqlMemory\Evaluation\Window\EmissionAssignment) {
+                $value = $value->assignment;
             }
             if ($position < $fields && $value instanceof Assignment) {
                 $read = new Assignment($value->name, $read, $value->stored, $expression->domain());

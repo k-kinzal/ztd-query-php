@@ -153,18 +153,35 @@ final class WindowIterator implements RowIterator
             $position = $this->next++;
             $frame->row = $partition->rows[$position];
             $partition->load($partition->frontier($position, $frame), $frame);
+            $captured = $partition;
             if ($partition->lookahead($position) && isset($this->partitions[$this->partition + 1])) {
-                $this->partitions[$this->partition + 1][0]->load(0, $frame);
+                $captured = $this->partitions[$this->partition + 1][0];
+                $captured->load(0, $frame);
             }
+            $this->capture($captured, $frame);
             $values = $partition->values($position, $frame);
             $width = $this->path->input->width();
             foreach ($values as $index => $value) {
                 $frame->windowSlots[$width + $index] = $value;
             }
 
-            return [...array_slice($partition->rows[$position], 0, $width), ...$values];
+            return [...array_slice($partition->rows[$position], 0, $width), ...$values, ...array_slice($partition->rows[$position], $width + count($this->path->arguments))];
         }
 
         return null;
     }
+
+    /**
+     * Publishes input fields separately from window outputs, including a lookahead row.
+     * Negative positions keep argument fields distinct from the visible output positions.
+     */
+    public function capture(Partition $partition, Frame $frame): void
+    {
+        $width = $this->path->input->width();
+        foreach ($partition->captured() as $index => $value) {
+            $slot = $index < count($this->path->arguments) ? -$width - $index - 1 : $width + count($this->path->functions) + $index - count($this->path->arguments);
+            $frame->windowSlots[$slot] = $value;
+        }
+    }
+
 }
