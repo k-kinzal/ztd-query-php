@@ -20,6 +20,9 @@ use SqlSemantics\Statement\Shape\Field;
  * Answers the base column each output column of a query block reads, as the column metadata of its result reports it.
  *
  * A materialized window function is a column of its temporary table. A
+ * stored assignment over a window also exposes the temporary table name. Aggregate
+ * parents retain an expression origin unless DISTINCT stores them; deferred ROLLUP
+ * parents remain expressions (verified through PDO on MySQL 8.0, 8.4 and 9.1). A
  * select item of a block WITH ROLLUP that is a grouping expression reads no base column, but in
  * MySQL 5.6 and 5.7 (verified on live 5.6.51 and 5.7.44 servers); when the rows pass through a
  * temporary table, for ORDER BY or DISTINCT, it is a column of that table.
@@ -56,6 +59,7 @@ final class Origins
         $implicit = $this->planner->compiler->settings->legacy() && $select->groupBy === null && (new Grouping($this->planner))->collect($select) !== [];
         $supplied = $implicit ? $this->supplied($select->from) : [];
         $origins = array_map(fn (Field $field, bool $rolled, Domain $domain): ?ColumnOrigin => match (true) {
+            $storedWindows && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\Matching())->unwrap($field->expression) instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment && (new Windowing($this->planner))->reads($field->expression) && (!(new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) || (in_array(SelectOption::Distinct, $select->options, true) && !(new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->deferred($select, $field->expression))) => new ColumnOrigin('', '<temporary>', '', '', $this->planner->materialized([$domain])[0]->flags ?? 0),
             $storedWindows && $field->expression !== null && (new Windowing($this->planner))->reads($field->expression) => $this->planner->materialized([$domain])[0],
             $rolled => $materialized ? $this->planner->materialized([$domain])[0] : ($this->planner->compiler->settings->legacy() ? $this->origin($field, $scope) : null),
             $implicit => $this->kept($field, $scope, $this->origin($field, $scope), $supplied),

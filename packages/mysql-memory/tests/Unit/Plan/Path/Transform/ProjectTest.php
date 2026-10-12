@@ -21,6 +21,11 @@ final class ProjectTest extends TestCase
         self::assertSame(3, (new Project(new ZeroRows(1), [new ColumnRead(Domain::integer(), 0), new ColumnRead(Domain::integer(), 0), new ColumnRead(Domain::integer(), 0)]))->width());
     }
 
+    public function testWidthIncludesInputColumnsWhenAppendingValues(): void
+    {
+        self::assertSame(3, (new Project(new ZeroRows(2), [new ColumnRead(Domain::integer(), 0)], true))->width());
+    }
+
     public function testWidthIsZeroWithoutExpressions(): void
     {
         self::assertSame(0, (new Project(new ZeroRows(5), []))->width());

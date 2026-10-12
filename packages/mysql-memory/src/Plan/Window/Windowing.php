@@ -102,6 +102,7 @@ final class Windowing
      */
     public function buffered(Select $select, AccessPath $input, Scope $scope, array $windows, array $analytics, bool $direct): array
     {
+        $input = (new ParentInputs($this->planner))->plan($select, $input, $scope, $direct);
         $frames = new Frames($this->planner);
         $functions = new Functions($this->planner);
         $used = array_values(array_filter($windows, static fn (Specification $window): bool => $window->calls !== []));
@@ -133,7 +134,7 @@ final class Windowing
             $scope->bind($call, $read);
         }
 
-        return [$input, $pushed, !$direct];
+        return [(new ParentInputs($this->planner))->plan($select, $input, $scope, $direct, true), $pushed, !$direct];
     }
 
     /**

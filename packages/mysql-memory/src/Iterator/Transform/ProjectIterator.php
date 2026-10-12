@@ -47,7 +47,7 @@ final class ProjectIterator implements RowIterator
             return null;
         }
         $this->frame->row = $row;
-        $values = [];
+        $values = $this->path->append ? $row : [];
         foreach ($this->path->expressions as $expression) {
             $values[] = $expression->evaluate($this->frame);
         }

@@ -18,17 +18,18 @@ final class Project implements AccessPath
     /**
      * @param AccessPath $input The rows read
      * @param list<Evaluable> $expressions The expressions, evaluated over each row
+     * @param bool $append Whether to preserve input columns before the computed values
      */
-    public function __construct(public readonly AccessPath $input, public readonly array $expressions)
+    public function __construct(public readonly AccessPath $input, public readonly array $expressions, public readonly bool $append = false)
     {
     }
 
     /**
-     * Answers the number of expressions.
+     * Answers the number of computed values, including preserved input columns.
      */
     #[Override]
     public function width(): int
     {
-        return count($this->expressions);
+        return ($this->append ? $this->input->width() : 0) + count($this->expressions);
     }
 }

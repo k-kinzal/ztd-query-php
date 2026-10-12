@@ -37,6 +37,19 @@ final class ProjectIteratorTest extends TestCase
         self::assertNull($iterator->read());
     }
 
+    public function testReadAppendsValuesWithoutReplacingTheInputRow(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(2);
+        $working->rows = [[1, null], [2, 'b']];
+        $iterator = new ProjectIterator(new Project($working, [new ColumnRead(Domain::integer(), 0)], true), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame([1, null, 1], $iterator->read());
+        self::assertSame([2, 'b', 2], $iterator->read());
+        self::assertNull($iterator->read());
+    }
+
     public function testInitEvaluatesInTheFrameItIsGiven(): void
     {
         $session = (new Instance())->connect();
