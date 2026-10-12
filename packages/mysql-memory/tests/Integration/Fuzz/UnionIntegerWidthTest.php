@@ -27,7 +27,7 @@ final class UnionIntegerWidthTest extends TestCase
                 }
             }
         }
-        foreach (['@x:=@x+c', '@x:=a'] as $expression) {
+        foreach (['a', 'b', 'a+c', 'ABS(a)', '@x', '@x:=@x+c', '@x:=a', 'CAST(c AS SIGNED)', 'CAST(c AS UNSIGNED)', '10000000000'] as $expression) {
             foreach (['', 'ALL '] as $duplicates) {
                 foreach ([false, true] as $first) {
                     $value = 'SELECT ' . $expression . ' AS v FROM integer_union';

@@ -39,4 +39,17 @@ final class ProjectionReadTest extends TestCase
         self::assertTrue($reads->counted(new \MySqlMemory\Iterator\Source\WorkingTableIterator($table)));
     }
 
+    public function testLastTableExaminesTheFinalSourceBeforeReadingRows(): void
+    {
+        $reads = new \MySqlMemory\Iterator\Combine\ProjectionRead();
+        $table = new \MySqlMemory\Plan\Path\Source\WorkingTable(1);
+        $constant = new \MySqlMemory\Plan\Path\Transform\Project(new \MySqlMemory\Plan\Path\Source\SingleRow(), [new \MySqlMemory\Evaluation\Leaf\Constant(\MySqlMemory\Typing\Domain::integer(), 1)]);
+        $first = new \MySqlMemory\Plan\Path\Combine\UnionStream($table, $constant, 1, false);
+        $last = new \MySqlMemory\Plan\Path\Combine\UnionStream($first, $table, 1, false);
+        $builder = new \MySqlMemory\Iterator\Builder();
+
+        self::assertFalse($reads->lastTable($builder->build($first)));
+        self::assertTrue($reads->lastTable($builder->build($last)));
+    }
+
 }

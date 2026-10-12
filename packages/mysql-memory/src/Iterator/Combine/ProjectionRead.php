@@ -43,4 +43,17 @@ final class ProjectionRead
 
         return $iterator instanceof UnionStreamIterator ? $iterator->counted : !$iterator instanceof SingleRowIterator;
     }
+
+    /**
+     * Identifies the final operand's row source before any operand is consumed.
+     * MySQL 5.7 reports emitted rows when this operand is a constant SELECT.
+     */
+    public function lastTable(RowIterator $iterator): bool
+    {
+        while ($iterator instanceof ProjectIterator || $iterator instanceof FilterIterator || $iterator instanceof PrepareIterator) {
+            $iterator = $iterator->input;
+        }
+
+        return $iterator instanceof UnionStreamIterator ? $this->lastTable($iterator->right) : !$iterator instanceof SingleRowIterator;
+    }
 }

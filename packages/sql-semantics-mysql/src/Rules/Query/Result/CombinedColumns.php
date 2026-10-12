@@ -21,7 +21,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
  * a set operation. Modern sets write such values in the connection collation;
  * legacy sets retain their numeric coercibility and latin1 collation. BIT
  * fields remain BIT when combined with one another. Legacy identical BIGINT
- * fields use at least the storage width, preserving wider expression bounds. Verified through SQL on MySQL 5.6, 8.0 and 8.4.
+ * fields use at least the storage width, preserving wider expression bounds.
+ * Legacy releases allocate the integer storage width when replacing a leading NULL
+ * field. Verified through SQL on MySQL 5.6, 5.7, 8.0 and 8.4.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -44,7 +46,9 @@ final class CombinedColumns
         $same = $present !== [] && count(array_filter($present, static fn (Domain $domain): bool => $domain->field === Field::LongLong)) === count($present);
 
         if ($legacy && $same && $result?->field === Field::LongLong) {
-            return Domain::integer(Field::LongLong, max(20, ...array_map(static fn (Domain $domain): int => $domain->length, $present)), $result->unsigned);
+            $replaceNull = $domains[0]->kind === Kind::Null;
+
+            return Domain::integer(Field::LongLong, $replaceNull ? 20 : max(20, ...array_map(static fn (Domain $domain): int => $domain->length, $present)), $result->unsigned);
         }
 
         return $result === null ? null : $this->floating($result, $present, $legacy);

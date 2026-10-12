@@ -60,6 +60,26 @@ final class CombinedColumnsTest extends TestCase
         self::assertEquals(Domain::integer(Field::LongLong, 21), $result);
     }
 
+    public function testResolveAllocatesIntegerStorageWhenMySql56ReplacesALeadingNull(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context());
+        $rules = new CombinedColumns();
+        $null = Domain::null();
+        $integer = Domain::integer(Field::LongLong, 21);
+
+        self::assertEquals(Domain::integer(Field::LongLong, 20), $rules->resolve([$null, $integer], $derivation));
+        self::assertEquals($integer, $rules->resolve([$integer, $null], $derivation));
+    }
+
+    public function testResolveAllocatesIntegerStorageWhenMySql57ReplacesALeadingNull(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context());
+        $integer = Domain::integer(Field::LongLong, 21);
+        $result = (new CombinedColumns())->resolve([Domain::null(), $integer], $derivation);
+
+        self::assertEquals(Domain::integer(Field::LongLong, 20), $result);
+    }
+
     public function testOperandUsesTheReportedStringFieldForTemporalValues(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context());

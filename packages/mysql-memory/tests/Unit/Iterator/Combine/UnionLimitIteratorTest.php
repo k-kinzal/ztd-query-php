@@ -48,4 +48,28 @@ final class UnionLimitIteratorTest extends TestCase
         self::assertSame(1, $frame->foundBeforeProjection);
     }
 
+    public function testReadCountsOnlyEmittedRowsWhenTheFinalOperandIsConstant(): void
+    {
+        $session = (new \MySqlMemory\Instance('5.7.44'))->connect();
+        $session->query('USE mysql; CREATE TABLE t(n INT); INSERT INTO t VALUES(3),(1),(2); SET @x=0');
+        $result = $session->query('SELECT SQL_CALC_FOUND_ROWS @x:=@x+n AS v FROM t UNION ALL SELECT @x:=@x+1 LIMIT 1 OFFSET 1')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+        self::assertSame(1, $session->variables->foundRows);
+        self::assertSame(1, $session->variables->user('x')[0]);
+    }
+
+    public function testReadExcludesEmittedConstantsFromCalculatedTableInput(): void
+    {
+        $session = (new \MySqlMemory\Instance('5.7.44'))->connect();
+        $session->query('USE mysql; CREATE TABLE t(n INT); INSERT INTO t VALUES(3),(1),(2); SET @x=0');
+        $result = $session->query('SELECT SQL_CALC_FOUND_ROWS @x:=@x+1 AS v UNION ALL SELECT @x:=@x+n FROM t LIMIT 1')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+        self::assertSame(3, $session->variables->foundRows);
+        self::assertSame(1, $session->variables->user('x')[0]);
+    }
+
 }

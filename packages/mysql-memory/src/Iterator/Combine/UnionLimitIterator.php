@@ -10,7 +10,8 @@ use MySqlMemory\Plan\Path\Combine\UnionLimit;
 use Override;
 
 /**
- * Applies streamed UNION bounds before projection and counts consumed table input.
+ * Applies streamed UNION bounds before projection and retains separate row counters.
+ * The final operand selects emitted-row or table-input counting on MySQL 5.7.
  *
  * @visibility MySqlMemory
  */
@@ -18,6 +19,9 @@ final class UnionLimitIterator implements RowIterator
 {
     private Frame $frame;
     private int $seen = 0;
+    private int $emitted = 0;
+    private int $tableRows = 0;
+    private bool $lastTable = false;
 
     /**
      * @param UnionLimit $path The global bounds
@@ -35,6 +39,9 @@ final class UnionLimitIterator implements RowIterator
     {
         $this->frame = $frame;
         $this->seen = 0;
+        $this->emitted = 0;
+        $this->tableRows = 0;
+        $this->lastTable = (new ProjectionRead())->lastTable($this->input);
         $frame->foundBeforeProjection = 0;
         $this->input->init($frame);
     }
@@ -54,9 +61,9 @@ final class UnionLimitIterator implements RowIterator
                 return null;
             }
             $this->seen++;
-            if ($emit || $reads->counted($this->input)) {
-                $this->frame->foundBeforeProjection = ($this->frame->foundBeforeProjection ?? 0) + 1;
-            }
+            $this->emitted += (int) $emit;
+            $this->tableRows += (int) $reads->counted($this->input);
+            $this->frame->foundBeforeProjection = $this->lastTable ? ($this->path->calculate ? $this->tableRows : $this->seen) : $this->emitted;
             if ($emit) {
                 return $row;
             }
