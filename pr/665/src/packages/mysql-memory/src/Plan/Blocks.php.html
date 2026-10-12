@@ -400,7 +400,7 @@
 <span class="src-line" id="L360" data-diff="added"><a class="ln" href="#L360">360</a>            <span class="tok-var">$offset</span> = <span class="tok-num">0</span>;</span>
 <span class="src-line" id="L361" data-diff="added"><a class="ln" href="#L361">361</a>        }</span>
 <span class="src-line" id="L362" data-diff="added"><a class="ln" href="#L362">362</a></span>
-<span class="src-line" id="L363" data-diff="added"><a class="ln" href="#L363">363</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Limit</span>(<span class="tok-var">$path</span>, <span class="tok-var">$count</span>, <span class="tok-var">$offset</span>, <span class="tok-id">true</span>, <span class="tok-var">$exhaust</span>);</span>
+<span class="src-line" id="L363" data-diff="added"><a class="ln" href="#L363">363</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">Limit</span>(<span class="tok-var">$path</span>, <span class="tok-var">$count</span>, <span class="tok-var">$offset</span>, <span class="tok-id">true</span>, <span class="tok-var">$exhaust</span>, <span class="tok-var">$path</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Path\Combine\UnionStream</span> &amp;&amp; <span class="tok-var">$path</span>-&gt;<span class="tok-id">prepare</span>);</span>
 <span class="src-line" id="L364" data-diff="added"><a class="ln" href="#L364">364</a>    }</span>
 <span class="src-line" id="L365" data-diff="added"><a class="ln" href="#L365">365</a></span>
 <span class="src-line" id="L366" data-diff="added"><a class="ln" href="#L366">366</a>    <span class="tok-com">/**</span></span>
