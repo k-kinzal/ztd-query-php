@@ -32,14 +32,12 @@ use SqlSemantics\Platform\MySql\Statement\Expression\Logical;
 use SqlSemantics\Platform\MySql\Statement\Expression\LogicalOperator;
 use SqlSemantics\Platform\MySql\Statement\Literal\NumberLiteral;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
-use SqlSemantics\Platform\MySql\Statement\Query\Clause\OutputOrdinal;
 use SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit;
 use SqlSemantics\Platform\MySql\Statement\Query\ExplicitTable;
 use SqlSemantics\Platform\MySql\Statement\Query\Limit as LimitClause;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Statement\Query;
-use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
@@ -97,13 +95,16 @@ final class Blocks
         $origins = (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== [], $storedWindows);
         $hashes = (new SortedDistinct($this->planner))->hashes(new QueryPlan($input, $domains, $names, $origins), $select, $keys);
         $root = $this->distinct($select, $fields, $input, $expressions, $domains, $hashes);
+        $copies = (new Window\CopiedAssignments($this->planner))->copies($select, $fields, $storedWindows);
+        $root = (new Window\CopiedAssignments($this->planner))->buffered($select, $root, $copies);
         if ($keys !== [] && !$presorted) {
+            $root = (new Window\CopiedAssignments($this->planner))->sorted($root, $expressions, array_intersect_key(array_fill_keys(array_column($keys, 0), true), $copies));
             $root = new Sort($root, $keys);
         }
         $root = $this->limit($root, $select->limit, $outer);
         $root = $this->limit($root, $select->late?->limit, $outer);
         $root = (new Window\Direct($this->planner))->bounded($root, $select);
-        $root = (new Window\ParentInputs($this->planner))->emitted($select, $root, $expressions, count($fields), $keys !== [] && !$presorted);
+        $root = (new Window\ParentInputs($this->planner))->emitted($select, $root, $expressions, count($fields), $keys !== [] && !$presorted, $copies);
 
         $plan = new QueryPlan($root, $domains, $names, $origins);
 
@@ -186,36 +187,7 @@ final class Blocks
      */
     public function sortKeys(Select $select, array $fields, array $domains, array $expressions, Scope $evaluation): array
     {
-        $compiler = $this->planner->compiler;
-        $keys = [];
-        foreach ([...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)] as $item) {
-            $target = $item->expression;
-            while ($target instanceof Grouped) {
-                $target = $target->operand;
-            }
-            $resolution = ($target instanceof ColumnUse || $target instanceof OutputOrdinal) && $compiler->facts->covers($target) ? $compiler->facts->scalar($target)->resolution : null;
-            $position = $resolution instanceof AliasTarget ? array_search($resolution->field, $fields, true) : false;
-            if ($position === false && $target instanceof ColumnUse) {
-                foreach ($fields as $selected => $field) {
-                    if ($field->resolution instanceof ResolvedColumn && (new Equivalence($this->planner))->sameColumn($field->resolution, $target)) {
-                        $position = $selected;
-                        break;
-                    }
-                }
-            }
-            if (is_int($position)) {
-                $keys[] = [$position, $domains[$position], $item->direction?->value === 'DESC'];
-                continue;
-            }
-            $key = $compiler->compile($item->expression, $evaluation);
-            if ($compiler->constancy($item->expression)->constant() && (new Walker())->find($item->expression, Query::class) === []) {
-                continue;
-            }
-            $keys[] = [count($expressions), $key->domain(), $item->direction?->value === 'DESC'];
-            $expressions[] = $key;
-        }
-
-        return [$keys, $expressions];
+        return (new Projection\Ordering($this->planner))->keys($select, $fields, $domains, $expressions, $evaluation);
     }
 
     /**

@@ -68,6 +68,7 @@ final class Builder
             $path instanceof Materialize => new MaterializeIterator($path, $this->build($path->query->root)),
             $path instanceof Aggregate => new AggregateIterator($path, $this->build($path->input)),
             $path instanceof Project => new ProjectIterator($path, $this->build($path->input)),
+            $path instanceof \MySqlMemory\Plan\Path\Transform\Buffer => new Transform\BufferIterator($this->build($path->input)),
             $path instanceof Sort => new SortIterator($path, $this->build($path->input)),
             $path instanceof Window => new WindowIterator($path, $this->build($path->input)),
             $path instanceof Limit => new LimitIterator($path, $this->build($path->input)),

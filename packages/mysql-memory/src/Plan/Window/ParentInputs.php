@@ -103,8 +103,9 @@ final class ParentInputs
      * @param list<Evaluable> $expressions The projection, including ordering values
      * @param int $fields The number of visible output values
      * @param bool $sorted Whether a sort reordered the projected rows
+     * @param array<int, true> $copies The assignment outputs read from stored fields
      */
-    public function emitted(Select $select, AccessPath $input, array $expressions, int $fields, bool $sorted): AccessPath
+    public function emitted(Select $select, AccessPath $input, array $expressions, int $fields, bool $sorted, array $copies = []): AccessPath
     {
         $emitting = array_filter($expressions, static function (Evaluable $expression): bool {
             while ($expression instanceof Retyped) {
@@ -112,7 +113,7 @@ final class ParentInputs
             }
             return $expression instanceof \MySqlMemory\Evaluation\Window\EmissionAssignment;
         }) !== [];
-        if ((!$sorted && !$emitting) || (new Windowing($this->planner))->calls($select) === []) {
+        if ((!$sorted && !$emitting && $copies === []) || (new Windowing($this->planner))->calls($select) === []) {
             return $input;
         }
         $projected = [];
@@ -127,7 +128,7 @@ final class ParentInputs
                 $value = $value->assignment;
             }
             if ($position < $fields && $value instanceof Assignment) {
-                $read = new Assignment($value->name, $read, $value->stored, $expression->domain());
+                $read = new Assignment($value->name, $read, isset($copies[$position]) ? $this->planner->compiler->names->stored($expression->domain()) : $value->stored, $expression->domain());
                 $changed = true;
             }
             $projected[] = $read;
