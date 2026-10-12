@@ -22,6 +22,18 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class OutputTest extends TestCase
 {
+    public function testResultRetainsFoundRowsThroughFinalWindowAssignments(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql; CREATE TEMPORARY TABLE t(n INT); INSERT INTO t VALUES(1),(2),(3); SET @x=0');
+        $result = $session->query('SELECT SQL_CALC_FOUND_ROWS @x:=ROW_NUMBER() OVER () AS v FROM t ORDER BY v DESC LIMIT 1 OFFSET 1')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+
+        self::assertSame([['2']], $result->rows);
+        self::assertSame(3, $session->variables->foundRows);
+        self::assertSame(2, $session->variables->user('x')[0]);
+    }
+
     public function testCharactersDistinguishesJsonBytesFromStringCharacters(): void
     {
         $output = new Output();

@@ -31,6 +31,30 @@ use SqlSemantics\Statement\Shape\Field;
 #[Small]
 final class BlocksTest extends TestCase
 {
+    public function testLimitCountsOffsetRowsEvenWhenEveryInputRowIsDiscarded(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql; CREATE TEMPORARY TABLE t(n INT); INSERT INTO t VALUES(1),(2),(3)');
+        $session->query('SELECT n FROM t LIMIT 1 OFFSET 1');
+        self::assertSame(2, $session->variables->foundRows);
+
+        $session->query('SELECT n FROM t LIMIT 1 OFFSET 5');
+        self::assertSame(3, $session->variables->foundRows);
+    }
+
+    public function testEmptyKeepsWindowStorageWhenFoundRowsRequiresInputWithLimitZero(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql; CREATE TEMPORARY TABLE t(n INT); INSERT INTO t VALUES(1),(2),(3); SET @x=0');
+        $result = $session->query('SELECT SQL_CALC_FOUND_ROWS @x:=ROW_NUMBER() OVER () AS v FROM t LIMIT 0')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+
+        self::assertSame([], $result->rows);
+        self::assertSame('<temporary>', $result->columns[0]->table);
+        self::assertSame(3, $session->variables->foundRows);
+        self::assertSame(3, $session->variables->user('x')[0]);
+    }
+
     public function testSelectAppliesWhereGroupingHavingOrderAndLimitInTurn(): void
     {
         $session = (new Instance())->connect();

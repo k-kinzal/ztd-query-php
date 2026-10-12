@@ -101,8 +101,9 @@ final class Blocks
             $root = (new Window\CopiedAssignments($this->planner))->sorted($root, $expressions, array_intersect_key(array_fill_keys(array_column($keys, 0), true), $copies));
             $root = new Sort($root, $keys);
         }
-        $root = $this->limit($root, $select->limit, $outer);
-        $root = $this->limit($root, $select->late?->limit, $outer);
+        $calculate = in_array(SelectOption::CalcFoundRows, $select->options, true);
+        $root = $this->limit($root, $select->limit, $outer, $calculate);
+        $root = $this->limit($root, $select->late?->limit, $outer, $calculate);
         $root = (new Window\Direct($this->planner))->bounded($root, $select);
         $root = (new Window\ParentInputs($this->planner))->emitted($select, $root, $expressions, count($fields), $keys !== [] && !$presorted, $copies);
 
@@ -227,7 +228,7 @@ final class Blocks
     }
 
     /**
-     * Tells whether the server finds at once that a block reads no row: its LIMIT is 0, or a part of its WHERE or HAVING constant for the statement is not true.
+     * Tells whether the server finds at once that a block reads no row: LIMIT 0 without SQL_CALC_FOUND_ROWS, or a constant false WHERE or HAVING part.
      *
      * The constant parts are evaluated apart from the statement, so that their warnings are
      * recorded only when the statement evaluates them; a part that fails is taken as true.
@@ -239,7 +240,7 @@ final class Blocks
             while ($count instanceof Grouped) {
                 $count = $count->operand;
             }
-            if ($count instanceof NumberLiteral && (int) $count->text === 0) {
+            if ($count instanceof NumberLiteral && (int) $count->text === 0 && !in_array(SelectOption::CalcFoundRows, $select->options, true)) {
                 return true;
             }
         }
@@ -342,15 +343,16 @@ final class Blocks
     /**
      * Bounds a path by a LIMIT clause, whose values are known before any row is read.
      *
+     * @param bool $exhaust Whether SQL_CALC_FOUND_ROWS consumes the remaining input
      * @throws SqlError When a bound is not a non-negative integer
      */
-    public function limit(AccessPath $path, ?LimitClause $limit, ?Scope $outer): AccessPath
+    public function limit(AccessPath $path, ?LimitClause $limit, ?Scope $outer, bool $exhaust = false): AccessPath
     {
         if (!$limit instanceof RowLimit) {
             return $path;
         }
         if ($path instanceof Path\Transform\Prepare && $path->early) {
-            return new Path\Transform\Prepare($this->limit($path->input, $limit, $outer), $path->conditions, true, $path->guard);
+            return new Path\Transform\Prepare($this->limit($path->input, $limit, $outer, $exhaust), $path->conditions, true, $path->guard);
         }
         $count = $this->bound($limit->count, $outer);
         $offset = $limit->offset === null ? 0 : $this->bound($limit->offset, $outer);
@@ -358,7 +360,7 @@ final class Blocks
             $offset = 0;
         }
 
-        return new Limit($path, $count, $offset);
+        return new Limit($path, $count, $offset, true, $exhaust);
     }
 
     /**

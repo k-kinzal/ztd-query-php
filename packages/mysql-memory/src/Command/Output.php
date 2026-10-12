@@ -34,8 +34,9 @@ final class Output
     /**
      * Executes a plan and answers its result set.
      *
-     * The rows found are what FOUND_ROWS() then answers: the rows sent, or for SQL_CALC_FOUND_ROWS
-     * the rows the outermost LIMIT reads.
+     * FOUND_ROWS() includes rows skipped by OFFSET. SQL_CALC_FOUND_ROWS also counts
+     * the remaining input. Block limits retain that count through final projections;
+     * an outer set-operation limit can instead be consumed here.
      *
      * @param bool $calculate Whether the query asks for SQL_CALC_FOUND_ROWS
      * @param Closure(ResultSet): void|null $failed Retains rows already produced by a failing query
@@ -44,7 +45,7 @@ final class Output
      */
     public function result(QueryPlan $plan, Context $context, bool $calculate = false, ?Closure $failed = null): ResultSet
     {
-        $limit = $calculate && $plan->root instanceof Limit ? $plan->root : null;
+        $limit = $calculate && $plan->root instanceof Limit && !$plan->root->exhaust ? $plan->root : null;
         $iterator = (new Builder())->build($limit === null ? $plan->root : $limit->input);
         $context->row = 1;
         $width = count($plan->domains);
