@@ -48,6 +48,7 @@ final class ExplainConnectionTest extends TestCase
         $id = $query->fetchColumn();
         self::assertIsInt($id);
         self::assertSame(0, $observer->exec('KILL ' . $kill . ' ' . $id));
+        self::assertTrue((new \Fuzz\Target\Process\Disconnection())->wait($observer, $id, $kill === 'CONNECTION'));
         $observer->query('DESC FOR CONNECTION ' . $id);
 
         self::assertSame($error, array_slice($observer->errorInfo(), 0, 2));
