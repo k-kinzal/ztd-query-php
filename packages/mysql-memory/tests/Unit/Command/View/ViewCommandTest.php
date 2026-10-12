@@ -273,4 +273,15 @@ final class ViewCommandTest extends TestCase
     {
         self::assertSame(['', 'CASCADED', 'CASCADED', 'LOCAL'], [ViewCommand::checkOption(null), ViewCommand::checkOption(ViewCheckOption::Unqualified), ViewCommand::checkOption(ViewCheckOption::Cascaded), ViewCommand::checkOption(ViewCheckOption::Local)]);
     }
+
+    public function testRefuseTemporaryTablesUsesTheReferenceAlias(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d;USE d;CREATE TEMPORARY TABLE tt(a INT)');
+
+        $this->expectExceptionCode(1352);
+        $this->expectExceptionMessage("View's SELECT refers to a temporary table 'source'");
+
+        $session->query('CREATE VIEW v AS SELECT * FROM tt source');
+    }
 }

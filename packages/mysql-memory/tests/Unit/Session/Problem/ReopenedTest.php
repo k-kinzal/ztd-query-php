@@ -115,4 +115,29 @@ final class ReopenedTest extends TestCase
         $session->query($sql);
     }
 
+
+    public function testCheckOpensTheWriteTargetBeforeTheQuerySource(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql;CREATE TEMPORARY TABLE x1(a INT)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1137);
+        $this->expectExceptionMessage("Can't reopen table: 'x1'");
+
+        $session->query('INSERT INTO x1 SELECT a FROM x1 source');
+    }
+
+    public function testCheckDefersOpeningTheBodyUntilTheProcedureRuns(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('CREATE DATABASE d;USE d;CREATE TEMPORARY TABLE x1(a INT)');
+        $session->query('CREATE PROCEDURE p() SELECT * FROM x1 first_table JOIN x1 second_table');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1137);
+        $this->expectExceptionMessage("Can't reopen table: 'first_table'");
+
+        $session->query('CALL p()');
+    }
 }

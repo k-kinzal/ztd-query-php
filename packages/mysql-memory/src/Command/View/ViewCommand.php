@@ -140,7 +140,7 @@ final class ViewCommand implements Command
             $resolution = $operation->facts->covers($reference) ? $operation->facts->relation($reference)->table : null;
             $stored = $resolution instanceof DeclaredTable ? $session->instance->dictionary->table($resolution->table->name->schema->value ?? $session->variables->database, $resolution->table->name->name->value) : null;
             if ($stored !== null && $stored->definition->temporary) {
-                throw SchemaError::ViewSelectTemporary->error($reference->name->name->value);
+                throw SchemaError::ViewSelectTemporary->error($reference->alias->value ?? $reference->name->name->value);
             }
         }
     }

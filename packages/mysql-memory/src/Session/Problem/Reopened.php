@@ -20,6 +20,8 @@ use SqlSemantics\Statement\Statement;
  * reads it again fails, naming the first occurrence by its alias, else by its name (verified on a
  * live 8.4 server). Resolved common tables shadow session table names, but each reference
  * to a common table opens its temporary inputs, even if its results are materialized.
+ * Write targets open before their query inputs. Stored program bodies open tables when
+ * invoked, not when defined; view definitions resolve their query immediately.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/temporary-table-problems.html.
  *
  * @visibility MySqlMemory
@@ -33,12 +35,12 @@ final class Reopened
      */
     public function check(Statement $statement, Session $session, \SqlSemantics\Statement\Fact\Facts $facts): void
     {
-        if ($session->temporaries->tables === []) {
+        if ($session->temporaries->tables === [] || \MySqlMemory\Command\Program\ProgramProblems::stores($statement)) {
             return;
         }
         $seen = [];
         $walker = new Walker();
-        foreach ([...$this->reads($statement, $facts), ...$walker->find($statement, WriteTarget::class)] as $reference) {
+        foreach ([...$walker->find($statement, WriteTarget::class), ...$this->reads($statement, $facts)] as $reference) {
             $table = $this->temporary($reference, $session);
             if ($table === null) {
                 continue;
