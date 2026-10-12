@@ -236,7 +236,7 @@ final class Names
             return new Constant($this->compiler->domain($variable), null);
         }
         [$value, $domain] = $this->compiler->connection->variables->user($variable->name->value);
-        if ($value === null) {
+        if ($value === null && !isset($this->compiler->connection->variables->user[strtolower($variable->name->value)])) {
             $domain = Domain::string(0, Collation::binary(), Field::MediumBlob)->withCollation($this->compiler->settings->connectionCollation, Coercibility::Implicit);
         }
 
@@ -249,12 +249,25 @@ final class Names
     public function assignment(VariableAssignment $assignment, Scope $scope): Evaluable
     {
         $value = $this->compiler->compile($assignment->value, $scope);
+        $this->allocate($assignment->target->name->value, $value->domain());
 
         return new Assignment($assignment->target->name->value, $value, $this->stored($value->domain()), $this->compiler->domain($assignment));
     }
 
     /**
+     * Prepares a user-variable entry with the allocation collation SQL Semantics resolves
+     * from the assigned operand, before any values of the statement execute.
+     */
+    public function allocate(string $name, Domain $operand): void
+    {
+        $settings = $this->compiler->settings;
+        $collation = (new \SqlSemantics\Platform\MySql\Rules\Typing\Variables($settings->resolution(), $settings->release()))->allocation($operand->resolved());
+        $this->compiler->connection->variables->allocate($name, $collation);
+    }
+
+    /**
      * Answers the domain a user variable holds an assigned value in; a temporal value is held as a string in latin1, as the server writes numbers and temporal values.
+     * An untyped NULL retains its kind until assignment can reuse the previous entry's type.
      */
     public function stored(Domain $domain): Domain
     {
@@ -262,7 +275,7 @@ final class Names
             Kind::Integer, Kind::Year, Kind::Bit => Domain::integer(Field::LongLong, 21, $domain->unsigned),
             Kind::Decimal => Domain::decimal(65, $domain->decimals),
             Kind::Double => Domain::double(),
-            Kind::Null => Domain::string(0, Collation::binary(), Field::MediumBlob),
+            Kind::Null => Domain::null(),
             Kind::String => Domain::string(16777216, $domain->collation, Field::MediumBlob)->withCollation($domain->collation, Coercibility::Implicit),
             Kind::Json => Domain::string(16777216, Collation::known('utf8mb4_bin'), Field::MediumBlob),
             Kind::Date, Kind::Time, Kind::DateTime => Domain::string(16777216, Collation::known('latin1_swedish_ci'), Field::MediumBlob)->withCollation(Collation::known('latin1_swedish_ci'), Coercibility::Implicit),

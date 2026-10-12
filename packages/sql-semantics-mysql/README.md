@@ -194,7 +194,10 @@ the stored value's domain and the collation retained at assignment. MySQL 5.6
 and 5.7 use the assignment character set for integer result metadata, even after
 the connection changes character set; numeric arithmetic still uses the logical
 integer width. A plain `Domain` assumes the current connection collation for
-this metadata.
+this metadata. An assignment to an absent variable introduces a NULL string entry
+using the operand's collation, or the connection collation for numeric and temporal
+operands. Later SET items and expression occurrences see this preparation state,
+which differs from the type of a subsequently assigned value.
 
 `Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
 the nullability of TIMESTAMP columns without an explicit NULL attribute. With

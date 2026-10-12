@@ -151,6 +151,28 @@ final class VariablesTest extends TestCase
         self::assertSame([], $settings->userVariables);
     }
 
+    public function testAllocationSeparatesOperandCollationsFromNumericValueCollations(): void
+    {
+        $connection = Collation::known('utf8mb4_0900_ai_ci');
+        $latin1 = Collation::known('latin1_swedish_ci');
+        $variables = new Variables(new Settings($connection));
+
+        self::assertSame($connection, $variables->allocation(Domain::integer()));
+        self::assertSame($connection, $variables->allocation(new Domain(Kind::Date, Field::Date, 10)));
+        self::assertSame($latin1, $variables->allocation(Domain::string(3, $latin1)));
+        self::assertEquals(Collation::binary(), $variables->allocation(Domain::null()));
+    }
+
+    public function testIntroduceUsesTheAssignedStringCollationForLaterOccurrences(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'), userVariables: []);
+        $query = $semantics->analyze("SELECT @v:=_latin1'a',@v", $semantics->context([], session: $settings));
+
+        self::assertEquals(new \SqlSemantics\Statement\Type\Known(Domain::string(16777215, Collation::known('latin1_swedish_ci'), Field::MediumBlob)), $query->field(1)->type);
+        self::assertSame([], $settings->userVariables);
+    }
+
     public function testHeldUsesTheLegacyIntegerVariableWidthInMySql56(): void
     {
         $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), \SqlSemantics\Contract\GrammarRelease::MySql5651);

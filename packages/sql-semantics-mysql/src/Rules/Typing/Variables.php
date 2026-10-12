@@ -23,7 +23,10 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry;
  * other value as a blob in its collation, a temporal value in latin1: a medium blob of 16777215 bytes
  * in MySQL 5.6 and 5.7, and from MySQL 8.0 with a byte bound of 16777215 times
  * the character set's maximum width, a long blob when that passes 16777215 bytes. A
- * variable that holds NULL is a binary medium blob. One never assigned is a binary long
+ * newly assigned untyped NULL is a binary medium blob. Later untyped NULL assignments
+ * preserve an entry's previous type; typed NULL assignments change the type but retain
+ * its assignment collation. An allocated, unexecuted entry is a NULL string in the
+ * operand's allocation collation. One never allocated is a binary long
  * blob of 16777216 bytes in MySQL 5.6 and 5.7, and a binary string of 65532 bytes from 8.0
  * (verified through SQL on live servers and Testcontainers).
  * Source: https://dev.mysql.com/doc/refman/8.4/en/user-variables.html.
@@ -63,12 +66,28 @@ final class Variables
      * The assigned value has not executed yet. Later occurrences therefore see an
      * allocated string entry, while the session snapshot remains unchanged.
      */
-    public function introduce(string $name, \SqlSemantics\Construction\Derivation $derivation): void
+    public function introduce(string $name, \SqlSemantics\Construction\Derivation $derivation, ?Domain $operand = null): void
     {
         $name = strtolower($name);
         if ($this->settings->userVariables !== null && !isset($this->settings->userVariables[$name])) {
-            $derivation->introducedVariables[$name] ??= new \SqlSemantics\Statement\Type\Known($this->text($this->settings->connection));
+            $derivation->introducedVariables[$name] ??= new \SqlSemantics\Statement\Type\Known($this->text($operand === null ? $this->settings->connection : $this->allocation($operand)));
         }
+    }
+
+    /**
+     * Resolves the collation of an empty entry allocated while preparing an assignment.
+     * Numeric and temporal operands allocate in the connection collation; strings keep
+     * their own, and an untyped NULL allocates binary. Verified through zero-row SELECT
+     * assignments on MySQL 8.0.44, 8.4.7 and 9.1.0.
+     */
+    public function allocation(Domain $operand): Collation
+    {
+        return match ($operand->kind) {
+            Kind::Integer, Kind::Decimal, Kind::Double, Kind::Year, Kind::Bit, Kind::Date, Kind::Time, Kind::DateTime => $this->settings->connection,
+            Kind::String => $operand->collation,
+            Kind::Json => Collation::known('utf8mb4_bin'),
+            Kind::Null => Collation::binary(),
+        };
     }
 
     /**

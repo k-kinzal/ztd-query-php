@@ -90,6 +90,30 @@ final class VariablesTest extends TestCase
         self::assertSame(12, $saved['v']->value);
     }
 
+    public function testAssignRetainsNumericTypesAndCollationsWhenTheValueBecomesNull(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET NAMES latin1; SET @v=12; SET NAMES utf8mb4; SET @v=NULL');
+        $entry = $session->variables->user['v'];
+        $session->query('SET @v=CAST(NULL AS CHAR CHARACTER SET ascii)');
+
+        self::assertNull($entry->value);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, $entry->domain->kind);
+        self::assertSame('latin1', $entry->collation->charset->name);
+        self::assertSame('latin1', $session->variables->user['v']->domain->collation->charset->name);
+    }
+
+    public function testAllocateLeavesAnExistingEntryIntact(): void
+    {
+        $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals());
+        $variables->assign('v', 12, Domain::integer());
+        $entry = $variables->user['v'];
+        $variables->allocate('V', Collation::known('latin1_swedish_ci'));
+
+        self::assertSame($entry, $variables->user['v']);
+        self::assertSame(12, $variables->user('v')[0]);
+    }
+
     public function testAssignOfAStatementIsReadBack(): void
     {
         $session = (new Instance())->connect();

@@ -209,6 +209,17 @@ final class NamesTest extends TestCase
         self::assertSame([['5', '1.5', '10', 'x']], $result->rows);
     }
 
+    public function testAllocatePreparesAnEmptyEntryWithoutExecutingTheAssignment(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("SELECT @v:=_latin1'abc' WHERE 0");
+        $entry = $session->variables->user['v'];
+
+        self::assertNull($entry->value);
+        self::assertSame('latin1', $entry->collation->charset->name);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String, $entry->domain->kind);
+    }
+
     public function testSystemVariableReadsTheValueOfAVariable(): void
     {
         $session = (new Instance())->connect();

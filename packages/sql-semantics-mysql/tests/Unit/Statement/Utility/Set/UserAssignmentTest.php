@@ -34,6 +34,21 @@ final class UserAssignmentTest extends TestCase
         self::assertSame(['Operand should contain 1 column(s), not 2.'], array_map(static fn ($diagnostic): string => $diagnostic->message(), $operation->facts->diagnostics));
     }
 
+    public function testDeriveItemMakesThePreparedEntryVisibleToFollowingAssignments(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $collation = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci');
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings($collation, userVariables: []);
+        $set = $semantics->analyze('SET @x=1,@y=@x', $semantics->context([], session: $settings));
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Utility\Set\SetVariables::class, $set->statement);
+        $second = $set->statement->items[1];
+        self::assertInstanceOf(UserAssignment::class, $second);
+        $type = $set->facts->scalar($second->value)->type;
+
+        self::assertEquals(new \SqlSemantics\Statement\Type\Known(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain::string(67108860, $collation, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongBlob)), $type);
+        self::assertSame([], $settings->userVariables);
+    }
+
     public function testRenderWritesAnEqualsSign(): void
     {
         self::assertSame("SET @`a b` = 'x'", (new Semantics(Dialect::MySql, 'mysql-5.6.51'))->analyze("set @'a b' := 'x'")->toString());
