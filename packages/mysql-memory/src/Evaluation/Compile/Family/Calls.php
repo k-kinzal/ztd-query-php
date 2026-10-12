@@ -162,6 +162,9 @@ final class Calls
             $compiled = ($routine->resolve)(new Frame($this->compiler->connection->context), $compiled, array_map(fn (Scalar $argument): bool => $this->compiler->constancy($argument) === Constancy::Resolved || ($routine->settled && $this->compiler->constancy($argument) === Constancy::Statement), $arguments));
         }
         $domain = $this->compiler->domain($node);
+        if (strtoupper($name) === 'ABS' && $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Double) {
+            $compiled[0] = (new NumericReads($this->compiler->settings->legacy()))->double($compiled[0]);
+        }
         if ($domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && count($compiled) === count($arguments)) {
             $charsets = array_map(static fn (Evaluable $argument): ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Charset => $argument->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String ? $argument->domain()->collation->charset : null, $compiled);
             $compiled = array_map(fn (Evaluable $argument, Scalar $written, int $index): Evaluable => \MySqlMemory\Evaluation\Operator\Transcoded::of($argument, $domain->collation, $this->compiler->constancy($written) === Constancy::Resolved && in_array($domain->collation->charset, array_diff_key($charsets, [$index => null]), true), $this->compiler->connection->context), $compiled, $arguments, array_keys($compiled));

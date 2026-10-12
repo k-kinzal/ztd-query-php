@@ -82,7 +82,14 @@ final class Operators
             return new Bits($node->operator, $left, $right, $this->compiler->domain($node), $text);
         }
 
-        return new ArithmeticEvaluable($node->operator, $left, $right, $this->compiler->domain($node), $text);
+        $domain = $this->compiler->domain($node);
+        if ($domain->kind === Kind::Double) {
+            $reads = new Family\NumericReads($this->compiler->settings->legacy());
+            $left = $reads->double($left);
+            $right = $reads->double($right);
+        }
+
+        return new ArithmeticEvaluable($node->operator, $left, $right, $domain, $text);
     }
 
     /**
@@ -165,7 +172,9 @@ final class Operators
      */
     public function numeric(Evaluable $operand, Scalar $node): Evaluable
     {
-        return $operand->domain()->kind === Kind::Double ? $operand : new DoubleOperand($operand, $this->compiler->constancy($node, true, false)->constant());
+        $read = (new Family\NumericReads($this->compiler->settings->legacy()))->double($operand);
+
+        return $operand->domain()->kind === Kind::Double ? $read : new DoubleOperand($read, $this->compiler->constancy($node, true, false)->constant());
     }
 
     /**
