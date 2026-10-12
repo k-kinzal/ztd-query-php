@@ -45,7 +45,7 @@ final class Accumulator
     private array $seen = [];
 
     /**
-     * @var list<array{string, list<int|float|string|null>}>
+     * @var list<array{list<int|float|string>, list<int|float|string|null>}>
      */
     private array $parts = [];
 
@@ -73,6 +73,7 @@ final class Accumulator
 
             return;
         }
+        $stored ??= $this->accumulation->input?->capture($this->accumulation, $frame);
         $values = [];
         $key = '';
         foreach ($this->accumulation->arguments as $position => $argument) {
@@ -227,15 +228,11 @@ final class Accumulator
      */
     public function concatenate(Frame $frame, array $values, ?array $order = null): void
     {
-        $text = '';
-        foreach ($this->accumulation->arguments as $index => $argument) {
-            $text .= Encoding::convert((string) Convert::toText($values[$index], $argument->domain()), $argument->domain()->kind === Kind::String ? $argument->domain()->collation->charset : Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset);
-        }
         $keys = $order ?? [];
         foreach ($order === null ? $this->accumulation->order : [] as [$key]) {
             $keys[] = $key->evaluate($frame);
         }
-        $this->parts[] = [$text, $keys];
+        $this->parts[] = [$values, $keys];
         $this->count++;
     }
 
@@ -324,10 +321,29 @@ final class Accumulator
                 return 0;
             });
         }
-        $text = implode(Encoding::convert($this->accumulation->separator, Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset), array_column($parts, 0));
+        $text = implode(Encoding::convert($this->accumulation->separator, Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset), array_map(fn (array $part): string => $this->text($frame, $part[0]), $parts));
         if (strlen($text) > $this->accumulation->limit) {
             $text = mb_strcut($text, 0, $this->accumulation->limit, Encoding::name($this->accumulation->domain->collation->charset) ?? '8bit');
             $frame->context->warning(DataError::CutByGroupConcat, count($this->parts));
+        }
+
+        return $text;
+    }
+
+    /**
+     * Converts an accepted tuple to text after reading its deferred expressions.
+     *
+     * @param list<int|float|string> $values The stored tuple fields
+     */
+    public function text(Frame $frame, array $values): string
+    {
+        $values = $this->accumulation->input?->complete($this->accumulation, $frame, $values) ?? $values;
+        $text = '';
+        foreach ($this->accumulation->arguments as $index => $argument) {
+            if ($values[$index] === null) {
+                continue;
+            }
+            $text .= Encoding::convert((string) Convert::toText($values[$index], $argument->domain()), $argument->domain()->kind === Kind::String ? $argument->domain()->collation->charset : Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset);
         }
 
         return $text;

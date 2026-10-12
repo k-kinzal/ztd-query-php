@@ -26,7 +26,8 @@ use SqlSemantics\Statement\Scalar;
  *
  * Strings computed over aggregates retain expression metadata until DISTINCT stores
  * them. A parent of a grouped window remains computed after its window; ROLLUP keeps
- * that parent outside DISTINCT storage too. Bare aggregates use grouped fields unless
+ * that parent outside DISTINCT storage too. Streaming GROUP_CONCAT retains its direct
+ * metadata until DISTINCT or a window stores it. Other bare aggregates use grouped fields unless
  * implicit aggregation, constant grouping or direct ROLLUP emits them. Verified through SQL metadata on MySQL 8.4.
  *
  * @visibility SqlSemantics\Platform\MySql
@@ -110,6 +111,9 @@ final class OutputFields
         $expression = (new Matching())->unwrap($expression);
         $bare = $expression instanceof SetFunction || $expression instanceof WindowFunction;
         $distinct = in_array(SelectOption::Distinct, $select->options, true);
+        if ($expression instanceof GroupConcat && !$distinct && !$rollup->windowed($select) && !$rollup->rolls($select) && !in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+            return false;
+        }
         $directRollup = $rollup->rolls($select) && !$rollup->windowed($select) && $select->orderBy === [] && ($select->late === null || $select->late->orderBy === []);
         $stored = $rollup->containsWindow([$expression]) ? ($bare || ($distinct && (!$rollup->rolls($select) || !(new GroupKeys())->varying($select, $facts)))) : ($distinct || ($bare && !$directRollup));
 

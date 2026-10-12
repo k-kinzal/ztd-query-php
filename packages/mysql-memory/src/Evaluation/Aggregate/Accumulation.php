@@ -28,6 +28,7 @@ final class Accumulation
      * @param string $separator The GROUP_CONCAT separator
      * @param int $limit The longest GROUP_CONCAT result in bytes (group_concat_max_len)
      * @param bool $object Whether the fold is JSON_OBJECTAGG, whose function is JSON_ARRAYAGG's and whose arguments are a name and a value
+     * @param TupleInput|null $input The query block's tuple evaluation phases, or null for direct argument reads
      */
     public function __construct(
         public readonly ?AggregateFunction $function,
@@ -38,6 +39,7 @@ final class Accumulation
         public readonly string $separator = ',',
         public readonly int $limit = 1024,
         public readonly bool $object = false,
+        public readonly ?TupleInput $input = null,
     ) {
     }
 

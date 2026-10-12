@@ -1,0 +1,88 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MySqlMemory\Plan\Grouping;
+
+use MySqlMemory\Evaluation\Aggregate\Accumulation;
+use MySqlMemory\Evaluation\Aggregate\TupleInput;
+use MySqlMemory\Evaluation\Compile\Constancy;
+use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Plan\Planner;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
+use SqlSemantics\Platform\MySql\Statement\Query\Select;
+use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
+use SqlSemantics\Statement\Scalar;
+
+/**
+ * Plans constant checks and row input for COUNT DISTINCT and GROUP_CONCAT.
+ *
+ * Materialized window input has already executed all its fields. Direct grouping
+ * evaluates complete tuples; implicit aggregation defers table-independent fields.
+ *
+ * @visibility MySqlMemory
+ */
+final class Tuples
+{
+    /**
+     * @param Planner $planner The current statement planner
+     */
+    public function __construct(public readonly Planner $planner)
+    {
+    }
+
+    /**
+     * Attaches evaluation phases to a direct tuple aggregate.
+     */
+    public function plan(Select $select, Aggregate|GroupConcat|JsonObjectAggregate $node, Accumulation $accumulation): Accumulation
+    {
+        if (!$node instanceof GroupConcat && !($node instanceof Aggregate && $node->function === AggregateFunction::Count && $node->distinct)) {
+            return $accumulation;
+        }
+        $constants = [];
+        $checks = [];
+        $disabled = false;
+        foreach ($node->arguments as $position => $argument) {
+            if ($this->constant($argument) && ($select->groupBy === null || $node instanceof GroupConcat || $this->planner->compiler->constancy($argument)->constant())) {
+                $constants[] = $position;
+            }
+            if (!$this->checkable($argument, $node instanceof GroupConcat)) {
+                continue;
+            }
+            if ($node instanceof GroupConcat) {
+                $value = $accumulation->arguments[$position]->evaluate(new Frame($this->planner->compiler->connection->context));
+                $disabled = $disabled || $value === null;
+            } else {
+                $checks[] = $accumulation->arguments[$position];
+            }
+        }
+        $order = $accumulation->order;
+        if ($node instanceof GroupConcat && $select->groupBy === null) {
+            $order = array_values(array_filter($order, fn (array $item, int $position): bool => !$this->constant($node->order[$position]->expression) || $this->planner->compiler->constancy($node->order[$position]->expression) === Constancy::Resolved, ARRAY_FILTER_USE_BOTH));
+        }
+        $input = new TupleInput($select->groupBy !== null, !$node instanceof GroupConcat, $constants, $checks, $disabled);
+
+        return new Accumulation($accumulation->function, $accumulation->arguments, $accumulation->distinct, $accumulation->domain, $order, $accumulation->separator, $accumulation->limit, $accumulation->object, $input);
+    }
+
+    /**
+     * Identifies fields that need no row storage during implicit aggregation.
+     */
+    public function constant(Scalar $argument): bool
+    {
+        return Constancy::of($argument, $this->planner->compiler->facts, assignmentsVary: false, legacy: $this->planner->settings->legacy())->constant();
+    }
+
+    /**
+     * Identifies preparation-time values, including assignments of resolved values.
+     */
+    public function checkable(Scalar $argument, bool $runtime = false): bool
+    {
+        $constancy = $this->planner->compiler->constancy($argument instanceof VariableAssignment ? $argument->value : $argument);
+
+        return $runtime ? $constancy->constant() : $constancy === Constancy::Resolved;
+    }
+}

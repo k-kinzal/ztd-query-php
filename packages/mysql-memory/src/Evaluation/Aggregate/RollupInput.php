@@ -28,6 +28,9 @@ final class RollupInput
         if ($accumulation->function !== null && !($accumulation->function === AggregateFunction::Count && $accumulation->distinct)) {
             return null;
         }
+        if ($accumulation->input !== null) {
+            return $accumulation->input->capture($accumulation, $frame);
+        }
         $values = [];
         foreach ($accumulation->arguments as $argument) {
             $value = $argument->evaluate($frame);

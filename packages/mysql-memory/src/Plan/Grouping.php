@@ -95,7 +95,8 @@ final class Grouping
             $groups[] = $constant ? new Constant($group->domain(), null) : $group;
             $targets[] = $this->target($item->expression);
         }
-        $accumulations = array_map(fn (Scalar $node): Accumulation => $this->accumulation($node, $scope), $aggregates);
+        $stored = (new Grouping\Inputs($this->planner))->stored($select, $targets);
+        $accumulations = array_map(fn (Scalar $node): Accumulation => $stored ? $this->accumulation($node, $scope) : (new Grouping\Tuples($this->planner))->plan($select, $node, $this->accumulation($node, $scope)), $aggregates);
         [$input, $accumulations] = (new Grouping\Inputs($this->planner))->plan($select, $input, $accumulations, $targets);
         $grouped = $scope->grouped();
         $width = $input->width();

@@ -26,6 +26,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class AggregateIteratorTest extends TestCase
 {
+    public function testEmitEvaluatesStreamingGroupArgumentsInGroupingOrder(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @x=0');
+        $result = $session->query('SELECT GROUP_CONCAT(@x:=@x+1) FROM t GROUP BY n')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1'], ['2,3']], $result->rows);
+        self::assertSame(3, $session->variables->user('x')[0]);
+    }
+
     public function testFoldRollupVisitsEveryLevelBeforeAdvancingToTheNextAggregate(): void
     {
         $session = (new Instance())->connect();
@@ -130,7 +141,7 @@ final class AggregateIteratorTest extends TestCase
         $accumulator->add($frame);
         $accumulator->add($frame);
 
-        self::assertSame([[7, 'x', 2], [8, 'y', 0]], $iterator->emit([[[7, 'x'], [], [$accumulator]], [[8, 'y'], [], [$count->start()]]], $frame));
+        self::assertSame([[7, 'x', 2], [8, 'y', 0]], $iterator->emit([[[7, 'x'], [], [$accumulator], []], [[8, 'y'], [], [$count->start()], []]], $frame));
     }
 
     public function testReadAnswersNullAfterTheLastGroup(): void

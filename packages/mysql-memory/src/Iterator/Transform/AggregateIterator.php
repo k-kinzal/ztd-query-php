@@ -79,10 +79,10 @@ final class AggregateIterator implements RowIterator
             if (!isset($groups[$key])) {
                 $groups[$key] = [$row, $values, array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates), []];
             }
-            foreach ($this->path->rollup ? [] : $groups[$key][2] as $accumulator) {
+            foreach ($this->path->rollup || ($this->path->sorted && !$this->path->hashed) ? [] : $groups[$key][2] as $accumulator) {
                 $accumulator->add($frame);
             }
-            if ($this->path->rollup) {
+            if ($this->path->rollup || ($this->path->sorted && !$this->path->hashed)) {
                 $groups[$key][3][] = $row;
             }
         }
@@ -130,13 +130,19 @@ final class AggregateIterator implements RowIterator
     /**
      * Answers the output row of each group.
      *
-     * @param list<array{list<int|float|string|null>, list<int|float|string|null>, list<Accumulator>, ...}> $groups
+     * @param list<array{list<int|float|string|null>, list<int|float|string|null>, list<Accumulator>, list<list<int|float|string|null>>}> $groups
      * @return list<list<int|float|string|null>>
      */
     public function emit(array $groups, Frame $frame): array
     {
         $rows = [];
-        foreach ($groups as [$row, , $accumulators]) {
+        foreach ($groups as [$row, , $accumulators, $members]) {
+            foreach ($members as $member) {
+                $frame->row = $member;
+                foreach ($accumulators as $accumulator) {
+                    $accumulator->add($frame);
+                }
+            }
             $frame->row = $row;
             $results = [];
             foreach ($accumulators as $accumulator) {

@@ -23,6 +23,9 @@ final class OutputFieldsTest extends TestCase
      */
     public static function providerFields(): iterable
     {
+        yield 'streaming concatenation' => ['SELECT GROUP_CONCAT(s) FROM t GROUP BY n', 31];
+        yield 'distinct concatenation' => ['SELECT DISTINCT GROUP_CONCAT(s) FROM t GROUP BY n', 0];
+        yield 'windowed concatenation field' => ['SELECT GROUP_CONCAT(s),ROW_NUMBER() OVER () FROM t GROUP BY n', 0];
         yield 'implicit window group' => ['SELECT DISTINCT CONCAT(MIN(MIN(s)) OVER ()) FROM t', 31];
         yield 'constant window group' => ['SELECT DISTINCT CONCAT(MIN(MIN(s)) OVER ()) FROM t GROUP BY 1+1', 31];
         yield 'constant rollup window parent' => ['SELECT DISTINCT CONCAT(MIN(MIN(s)) OVER ()) FROM t GROUP BY 1+1 WITH ROLLUP', 0];
