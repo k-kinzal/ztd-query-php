@@ -19,6 +19,9 @@ final class RetainedTableReadTest extends TestCase
      */
     public static function providerStatements(): iterable
     {
+        foreach (['FLUSH TABLES', 'FLUSH TABLES t1,t2'] as $flush) {
+            yield 'adjacent tables ' . $flush => ['SELECT * FROM t1 WHERE id=3; SELECT * FROM t2 WHERE id=3; ' . $flush . '; SELECT (SELECT id,a FROM t1 WHERE 0) <=> (SELECT id,a FROM t2 WHERE 0) AS empty_rows, (SELECT a,NULL FROM t1 WHERE 0) <=> (NULL,NULL) AS first_state, (SELECT flag,NULL FROM t2 WHERE 0) <=> (NULL,NULL) AS second_state'];
+        }
         $actions = [
             'cold' => '',
             'read nonnull' => 'SELECT * FROM retained_table_read WHERE id=1;',

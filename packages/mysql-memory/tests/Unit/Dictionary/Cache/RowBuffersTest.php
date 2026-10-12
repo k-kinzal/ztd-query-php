@@ -7,6 +7,7 @@ namespace Tests\Unit\Dictionary\Cache;
 use MySqlMemory\Dictionary\Cache\RowBuffers;
 use MySqlMemory\Instance;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use stdClass;
@@ -15,6 +16,41 @@ use stdClass;
 #[Small]
 final class RowBuffersTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{?string}>
+     */
+    public static function providerScopes(): iterable
+    {
+        yield 'all databases' => [null];
+        yield 'one database' => ['d'];
+    }
+
+    #[DataProvider('providerScopes')]
+    public function testCloseEvictsEveryAdjacentTableAndHandle(?string $schema): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query('CREATE TABLE first_table (id INT); CREATE TABLE second_table (id INT)');
+        $first = $session->instance->dictionary->table('d', 'first_table');
+        $second = $session->instance->dictionary->table('d', 'second_table');
+        self::assertNotNull($first);
+        self::assertNotNull($second);
+        $buffers = new RowBuffers();
+        $other = new stdClass();
+        $buffers->retain($session->variables, $first, [1]);
+        $buffers->retain($session->variables, $second, [2]);
+        $buffers->retain($session->variables, $second, [3], 1);
+        $buffers->retain($other, $first, [4]);
+        $buffers->retain($other, $second, [5]);
+
+        $buffers->close($schema);
+
+        self::assertSame([0], $buffers->read($session->variables, $first));
+        self::assertSame([0], $buffers->read($session->variables, $second));
+        self::assertSame([0], $buffers->read($session->variables, $second, 1));
+        self::assertSame([0], $buffers->read($other, $first));
+        self::assertSame([0], $buffers->read($other, $second));
+    }
+
     public function testReadInitializesNullableFieldsWithoutTheirDefaultNullBits(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');

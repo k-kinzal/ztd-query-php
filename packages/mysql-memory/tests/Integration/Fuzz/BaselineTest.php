@@ -43,6 +43,7 @@ final class BaselineTest extends TestCase
         yield 'proxy revoked' => ['CREATE USER baseline_extra; GRANT PROXY ON root TO baseline_extra WITH GRANT OPTION; REVOKE PROXY ON root FROM baseline_extra; SHOW GRANTS FOR baseline_extra'];
         yield 'database' => ['CREATE DATABASE baseline_extra'];
         yield 'account' => ['CREATE USER baseline_extra'];
+        yield 'role across inputs' => ['CREATE USER baseline_extra; CREATE ROLE _sqlfaker_identifier'];
         yield 'server' => ["CREATE SERVER baseline_extra FOREIGN DATA WRAPPER mysql OPTIONS (USER 'text')"];
         yield 'named replication channel' => ["CREATE DATABASE baseline_extra; CHANGE REPLICATION SOURCE TO SOURCE_PORT=3306 FOR CHANNEL 'baseline_extra'"];
     }

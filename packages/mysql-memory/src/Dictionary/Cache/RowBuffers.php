@@ -79,7 +79,7 @@ final class RowBuffers
     public function close(?string $schema = null, ?string $name = null): void
     {
         foreach ($this->connections as $tables) {
-            foreach ($tables as $table => $row) {
+            foreach (clone $tables as $table => $row) {
                 $definition = $table->definition;
                 if (!$definition->temporary && ($schema === null || $schema === $definition->schema) && ($name === null || $name === $definition->name)) {
                     unset($tables[$table]);

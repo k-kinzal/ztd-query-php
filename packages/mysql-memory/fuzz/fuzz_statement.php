@@ -5,6 +5,7 @@
  *
  * Usage: MYSQL_VERSION=8.4.7 vendor/bin/php-fuzzer fuzz fuzz/fuzz_statement.php fuzz/corpus/statement/ --timeout=60
  * Any difference in rows, result columns, errors, warnings or table contents is a crash.
+ * Server-wide catalog objects and global variables are restored before each observation.
  */
 
 declare(strict_types=1);
@@ -21,7 +22,7 @@ register_shutdown_function(static function (): void {
     }
 });
 
-[$target, $grammar, $server] = (new Servers())->start(getenv('MYSQL_MEMORY_EMULATE') !== '0');
+[$target, $grammar, $server] = (new Servers())->start(getenv('MYSQL_MEMORY_EMULATE') !== '0', true);
 $provider = new MySqlProvider(Factory::create(), $grammar);
 $planner = $provider->planner();
 $plans = new Plans();
