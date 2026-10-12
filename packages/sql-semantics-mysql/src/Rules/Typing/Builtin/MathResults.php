@@ -70,15 +70,17 @@ final class MathResults
     }
 
     /**
-     * Resolves ABS: integer arguments yield a BIGINT of the same length and signedness.
+     * Resolves ABS: integer arguments yield a BIGINT of the argument's expanded width
+     * and signedness. A legacy user variable's reported width becomes part of the
+     * result's numeric bound, including when later arithmetic reads it.
      */
     public function same(Domain $domain): Domain
     {
         $numbers = new Numbers();
-        $display = $domain->display > $domain->length ? $domain->display : null;
+        $length = max($domain->length, $domain->display ?? 0);
 
         return match ($numbers->operand($domain)) {
-            Kind::Integer => new Domain(Kind::Integer, Field::LongLong, $domain->length, 0, $domain->unsigned, null, [], Coercibility::Numeric, display: $display, displayDecimals: $domain->displayDecimals),
+            Kind::Integer => new Domain(Kind::Integer, Field::LongLong, $length, 0, $domain->unsigned, null, [], Coercibility::Numeric, displayDecimals: $domain->displayDecimals),
             Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(...$numbers->digits($domain)),
             Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Domain::double(23),
         };

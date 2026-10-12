@@ -192,8 +192,10 @@ Each `Settings::$userVariables` entry accepts a `Domain` or a
 `Statement\Variable\UserVariableEntry`. Use `UserVariableEntry` to provide both
 the stored value's domain and the collation retained at assignment. MySQL 5.6
 and 5.7 use the assignment character set for integer result metadata, even after
-the connection changes character set; numeric arithmetic still uses the logical
-integer width. A plain `Domain` assumes the current connection collation for
+the connection changes character set. A direct arithmetic operand uses the logical
+integer width, while an assignment retains the variable's reported width. Legacy
+`ABS` promotes that reported width into its result's numeric bound, so subsequent
+arithmetic can have a wider result. A plain `Domain` assumes the current connection collation for
 this metadata. An assignment to an absent variable introduces a NULL string entry
 using the operand's collation, or the connection collation for numeric and temporal
 operands. Later SET items and expression occurrences see this preparation state,

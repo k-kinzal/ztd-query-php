@@ -88,6 +88,20 @@ final class VariablesTest extends TestCase
     }
 
     #[DataProvider('providerLegacyReleases')]
+    public function testAssignedInheritsAnIntegerVariableWidthAcrossConnectionChanges(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), $release);
+        $singleByte = $variables->held(Domain::integer(), Collation::known('latin1_swedish_ci'));
+        $assigned = $variables->assigned(new \SqlSemantics\Statement\Type\Known($singleByte));
+
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $assigned);
+        self::assertInstanceOf(Domain::class, $assigned->descriptor);
+        self::assertSame(20, $assigned->descriptor->metadataLength());
+        self::assertSame(20, $assigned->descriptor->value()->length);
+        self::assertSame(80, (new Variables(new Settings(Collation::known('latin1_swedish_ci')), $release))->assignment($variables->held(Domain::integer()))->metadataLength());
+    }
+
+    #[DataProvider('providerLegacyReleases')]
     public function testAssignmentPreservesReportedStringScaleAcrossNestedAssignments(\SqlSemantics\Contract\GrammarRelease $release): void
     {
         $variables = new Variables(new Settings(Collation::known('latin1_swedish_ci')), $release);

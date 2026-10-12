@@ -100,13 +100,14 @@ final class Variables
             $domain = (new Declared($this->settings->connection, $this->release))->domain($type->descriptor);
         }
 
-        return $domain === null ? $type : new \SqlSemantics\Statement\Type\Known($this->assignment($domain->value()));
+        return $domain === null ? $type : new \SqlSemantics\Statement\Type\Known($this->assignment($domain));
     }
 
     /**
      * Gives an assignment its expression result type: integer, decimal, double or string.
-     * Integer widths follow the operand; legacy metadata expands them by the connection
-     * character set. MySQL 5.6 and 5.7 retain operand decimals,
+     * Integer widths follow the operand; legacy metadata retains a variable operand's
+     * reported width and otherwise expands by the connection character set.
+     * MySQL 5.6 and 5.7 retain operand decimals,
      * floating widths and unsigned decimal widths, and give every result implicit
      * coercibility. From 8.0 floating results use DOUBLE's expression width.
      * Verified through PDO metadata on live servers and Testcontainers.
@@ -114,6 +115,8 @@ final class Variables
     public function assignment(Domain $domain): Domain
     {
         $legacy = in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $display = $this->assignmentDisplay($domain);
+        $domain = $domain->value();
         $result = match ($domain->kind) {
             Kind::Integer, Kind::Year, Kind::Bit => Domain::integer(Field::LongLong, $domain->length, $domain->unsigned),
             Kind::Decimal => Domain::decimal($domain->precision(), $domain->decimals, $legacy && $domain->unsigned),
@@ -130,16 +133,23 @@ final class Variables
             Kind::Date, Kind::Time, Kind::DateTime, Kind::Null, Kind::Double, Kind::Decimal, Kind::Integer, Kind::Year, Kind::Bit => $domain->decimals,
         };
 
-        return $legacy ? new Domain($result->kind, $result->field, $result->length, $decimals, $result->unsigned, $result->collation, coercibility: Coercibility::Implicit, display: $this->assignmentDisplay($domain), displayDecimals: $result->kind === Kind::String && $decimals < Domain::NOT_FIXED ? $decimals : null) : $result;
+        return $legacy ? new Domain($result->kind, $result->field, $result->length, $decimals, $result->unsigned, $result->collation, coercibility: Coercibility::Implicit, display: $display, displayDecimals: $result->kind === Kind::String && $decimals < Domain::NOT_FIXED ? $decimals : null) : $result;
     }
 
     /**
      * Separates a legacy assignment's reported numeric width from its logical precision.
+     * Variable operands retain their explicit width, including a single-byte width equal
+     * to their logical bound. Narrow declared column widths do not constrain the value.
      */
     public function assignmentDisplay(Domain $domain): ?int
     {
+        $integer = $this->settings->connection->charset->maxLength > 1 ? $domain->length * $this->settings->connection->charset->maxLength : null;
+        if ($domain->display !== null && $domain->display >= $domain->length) {
+            $integer = $domain->display;
+        }
+
         return match ($domain->kind) {
-            Kind::Integer, Kind::Year, Kind::Bit => $this->settings->connection->charset->maxLength > 1 ? $domain->length * $this->settings->connection->charset->maxLength : null,
+            Kind::Integer, Kind::Year, Kind::Bit => $integer,
             Kind::Decimal => $domain->display,
             Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json, Kind::Null => null,
         };
@@ -192,7 +202,7 @@ final class Variables
         $legacy = in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $integerWidth = $legacy ? 20 : 21;
         $charset = ($assignment ?? $this->settings->connection)->charset;
-        $integerDisplay = $legacy && $charset->maxLength > 1 ? 20 * $charset->maxLength : null;
+        $integerDisplay = $legacy ? 20 * $charset->maxLength : null;
 
         return match ($domain->kind) {
             Kind::Integer, Kind::Year, Kind::Bit => new Domain(Kind::Integer, Field::LongLong, $integerWidth, unsigned: $domain->unsigned, coercibility: Coercibility::Numeric, display: $integerDisplay),
