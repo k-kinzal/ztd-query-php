@@ -31,6 +31,13 @@ final class TemporaryOpeningOrderTest extends TestCase
             'SELECT * FROM reopen_order o JOIN (SELECT n FROM reopen_order i) d',
             'SELECT (SELECT SUM(i.n) FROM reopen_order i) FROM reopen_order o ORDER BY (SELECT SUM(j.n) FROM reopen_order j)',
             '(SELECT n FROM reopen_order a UNION ALL SELECT n FROM reopen_order b) ORDER BY (SELECT SUM(i.n) FROM reopen_order i)',
+            'SELECT ABS() FROM reopen_order a JOIN reopen_order b',
+            'SELECT unknown_database.unknown_function(1) FROM reopen_order a JOIN reopen_order b',
+            'SELECT COUNT(unknown_column) FROM reopen_order a JOIN reopen_order b',
+            'SELECT * FROM reopen_order a JOIN reopen_order a',
+            'SELECT * FROM reopen_order a JOIN reopen_order b GROUP BY n WITH CUBE',
+            'SELECT * FROM reopen_order a JOIN reopen_order b QUALIFY 1',
+            'SELECT * FROM reopen_order a JOIN reopen_order b WHERE unknown_column>0',
         ] as $query) {
             yield $query => [$setup . $query];
         }

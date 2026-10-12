@@ -106,7 +106,7 @@ final class Execution
         if ($session->locks !== []) {
             (new \MySqlMemory\Command\Access\Locks())->check($operation->statement, $session);
         }
-        (new Problem\Reopened())->check($operation->statement, $session);
+        (new Problem\Reopened())->check($operation->statement, $session, $operation->facts);
         if ($session->program?->contained === true) {
             $session->running->check($operation->statement, $session->variables->database);
         }

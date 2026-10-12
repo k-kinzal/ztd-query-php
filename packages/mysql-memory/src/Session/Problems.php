@@ -266,7 +266,7 @@ final class Problems
     }
 
     /**
-     * Raises the error of a clause the server refuses once it has opened the tables of the statement, before it resolves any name.
+     * Checks temporary reopening first, then clauses refused before name resolution.
      *
      * GROUP BY CUBE in a statement that reads no table is not supported; with tables, CUBE fails
      * only when the statement runs (Grouping). QUALIFY needs the hypergraph optimizer, which the
@@ -280,6 +280,7 @@ final class Problems
      */
     public function prepared(Operation $operation, Session $session): void
     {
+        (new Problem\Reopened())->check($operation->statement, $session, $operation->facts);
         $special = static fn (Node $node): bool => $node instanceof Select && ($node->groupBy?->modifier === GroupingModifier::Cube || $node->qualify !== null);
         if (array_filter((new Walker())->find($operation->statement, Select::class), $special) === []) {
             return;

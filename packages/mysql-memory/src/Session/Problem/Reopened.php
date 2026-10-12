@@ -18,7 +18,8 @@ use SqlSemantics\Statement\Statement;
  *
  * A statement can open a temporary table once: a self-join, a subquery or a set operation that
  * reads it again fails, naming the first occurrence by its alias, else by its name (verified on a
- * live 8.4 server).
+ * live 8.4 server). Resolved common tables shadow session table names, but each reference
+ * to a common table opens its temporary inputs, even if its results are materialized.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/temporary-table-problems.html.
  *
  * @visibility MySqlMemory
@@ -30,14 +31,14 @@ final class Reopened
      *
      * @throws SqlError When it does
      */
-    public function check(Statement $statement, Session $session): void
+    public function check(Statement $statement, Session $session, \SqlSemantics\Statement\Fact\Facts $facts): void
     {
         if ($session->temporaries->tables === []) {
             return;
         }
         $seen = [];
         $walker = new Walker();
-        foreach ([...$this->reads($statement), ...$walker->find($statement, WriteTarget::class)] as $reference) {
+        foreach ([...$this->reads($statement, $facts), ...$walker->find($statement, WriteTarget::class)] as $reference) {
             $table = $this->temporary($reference, $session);
             if ($table === null) {
                 continue;
@@ -51,36 +52,41 @@ final class Reopened
     }
 
     /**
-     * Visits each query's FROM sources before its scalar subqueries.
+     * Visits FROM sources before scalar subqueries and expands each resolved CTE use.
+     * Unused definitions are skipped; recursive self references do not reopen the base input.
+     *
+     * @param array<int, true> $active The common tables already expanding on this branch
      *
      * @return list<TableReference>
      */
-    public function reads(\SqlSemantics\Statement\Node $statement): array
+    public function reads(\SqlSemantics\Statement\Node $statement, \SqlSemantics\Statement\Fact\Facts $facts, array $active = []): array
     {
-        $pending = [$statement];
+        if ($statement instanceof TableReference) {
+            $resolution = $facts->covers($statement) ? $facts->relation($statement)->table : null;
+            if ($resolution instanceof \SqlSemantics\Statement\Reference\Table\CommonTable && $resolution->definition instanceof \SqlSemantics\Platform\MySql\Statement\Query\With\CommonTableExpression) {
+                $id = spl_object_id($resolution->definition);
+                return isset($active[$id]) ? [] : $this->reads($resolution->definition->query, $facts, $active + [$id => true]);
+            }
+            return [$statement];
+        }
+        $properties = get_object_vars($statement);
+        unset($properties['with']);
+        if ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select) {
+            $properties = ['from' => $statement->from] + $properties;
+        } elseif ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression) {
+            $properties = ['body' => $statement->body] + $properties;
+        } elseif ($statement instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation) {
+            $properties = ['left' => $statement->left, 'right' => $statement->right] + $properties;
+        }
         $references = [];
+        $pending = array_reverse(array_values($properties));
         while ($pending !== []) {
             $node = array_pop($pending);
             if (is_array($node)) {
                 array_push($pending, ...array_reverse(array_values($node)));
-                continue;
+            } elseif ($node instanceof \SqlSemantics\Statement\Node) {
+                array_push($references, ...$this->reads($node, $facts, $active));
             }
-            if (!$node instanceof \SqlSemantics\Statement\Node) {
-                continue;
-            }
-            if ($node instanceof TableReference) {
-                $references[] = $node;
-                continue;
-            }
-            $properties = get_object_vars($node);
-            if ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\Select) {
-                $properties = ['from' => $node->from] + $properties;
-            } elseif ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression && $node->with === null) {
-                $properties = ['body' => $node->body] + $properties;
-            } elseif ($node instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\OrderedSetOperation) {
-                $properties = ['left' => $node->left, 'right' => $node->right] + $properties;
-            }
-            array_push($pending, ...array_reverse(array_values($properties)));
         }
         return $references;
     }
