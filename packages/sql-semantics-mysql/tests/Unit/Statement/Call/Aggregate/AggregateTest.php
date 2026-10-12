@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Statement\Call\Aggregate;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Construction\Derivation;
@@ -30,9 +31,22 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class AggregateTest extends TestCase
 {
-    public function testDeriveScalarGivesTemporalExtremesTheirExpressionCollation(): void
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerReleases(): iterable
     {
-        $semantics = new Semantics(Dialect::MySql);
+        yield '5.6' => ['mysql-5.6.51'];
+        yield '5.7' => ['mysql-5.7.44'];
+        yield '8.0' => ['mysql-8.0.44'];
+        yield '8.4' => ['mysql-8.4.7'];
+        yield '9.1' => ['mysql-9.1.0'];
+    }
+
+    #[DataProvider('providerReleases')]
+    public function testDeriveScalarGivesTemporalExtremesTheirExpressionCollation(string $release): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
         $table = $semantics->analyze('CREATE TABLE t (d DATE)');
         $query = $semantics->analyze('SELECT MIN(d), MAX(d) FROM t', [$table]);
         $minimum = $query->field(0)->type;

@@ -21,6 +21,31 @@ use SqlSemantics\Statement\Type\Known;
 final class TemporalFieldsTest extends TestCase
 {
     /**
+     * @return iterable<string, array{string, string, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field}>
+     */
+    public static function providerReportedFields(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44'] as $release) {
+            yield $release . ' direct expression' => [$release, 'SELECT MIN(COALESCE(d,d)) FROM t', \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString];
+            yield $release . ' rollup expression' => [$release, 'SELECT MAX(CAST(d AS DATE)) FROM t GROUP BY n WITH ROLLUP', \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString];
+            yield $release . ' stored group' => [$release, 'SELECT MIN(COALESCE(d,d)) FROM t GROUP BY n', \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Date];
+            yield $release . ' direct column' => [$release, 'SELECT MIN(d) FROM t', \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Date];
+        }
+    }
+
+    #[DataProvider('providerReportedFields')]
+    public function testReportedSeparatesLegacyComputedResultsFromStoredFields(string $release, string $sql, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field $field): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $table = $semantics->analyze('CREATE TABLE t(d DATE,n INT)');
+        $type = $semantics->analyze($sql, [$table])->field(0)->type;
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+
+        self::assertSame($field, $type->descriptor->field);
+    }
+
+    /**
      * @return iterable<string, array{string, bool}>
      */
     public static function providerStoredFields(): iterable

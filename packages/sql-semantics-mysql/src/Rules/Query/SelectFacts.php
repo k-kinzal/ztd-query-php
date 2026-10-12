@@ -109,7 +109,7 @@ final class SelectFacts
         foreach ($select->procedure === null ? [] : $select->procedure->arguments as $argument) {
             $derivation->scalar($argument, new Environment($context, $outer));
         }
-        $fact = new QueryFact((new RollupItems())->fields($select, $this->tabled($select, $items, $derivation->context->profile->grammar), $visible, $output, $derivation), $context->columnNames, $aggregation->expressions());
+        $fact = new QueryFact((new RollupItems())->fields($select, $this->tabled($select, $items, $derivation->context->profile->grammar, $derivation->facts()), $visible, $output, $derivation), $context->columnNames, $aggregation->expressions());
         (new TailFacts())->derive($derivation, $outer, $fact, $select);
 
         return $fact;
@@ -125,11 +125,8 @@ final class SelectFacts
      * @param list<Field|OpenStar> $items
      * @return list<Field|OpenStar>
      */
-    public function tabled(Select $select, array $items, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): array
+    public function tabled(Select $select, array $items, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847, ?\SqlSemantics\Statement\Fact\Facts $facts = null): array
     {
-        if ($select->groupBy === null && !in_array(SelectOption::Distinct, $select->options, true) && !(new RollupItems())->windowed($select)) {
-            return $items;
-        }
         $fields = [];
         foreach ($items as $field) {
             if (!$field instanceof Field) {
@@ -137,7 +134,7 @@ final class SelectFacts
                 continue;
             }
             $domain = $field->slot->type instanceof Known && $field->slot->type->descriptor instanceof Domain ? $field->slot->type->descriptor : null;
-            $stored = $domain === null ? null : (new Result\OutputFields())->domain($select, $field->expression, $domain, $release);
+            $stored = $domain === null ? null : (new Result\OutputFields())->domain($select, $field->expression, $domain, $release, $facts);
             if ($stored === null || $stored === $domain) {
                 $fields[] = $field;
                 continue;

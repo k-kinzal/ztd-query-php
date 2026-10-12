@@ -8,10 +8,15 @@ use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\Aggregation;
 use SqlSemantics\Platform\MySql\Rules\Query\Grouping\Matching;
 use SqlSemantics\Platform\MySql\Rules\Query\Grouping\RollupItems;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
+use SqlSemantics\Statement\Fact\Facts;
+use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -28,6 +33,28 @@ use SqlSemantics\Statement\Scalar;
  */
 final class TemporalFields
 {
+    /**
+     * Resolves legacy direct MIN/MAX result metadata over computed temporal arguments.
+     *
+     * MySQL 5.6 and 5.7 report these values as VARCHAR while retaining temporal
+     * expression semantics. A stored group or DISTINCT output reports the temporal
+     * field again. Direct column arguments keep their declared field throughout.
+     * Verified through PDO on MySQL 5.6.51 and 5.7.44.
+     */
+    public function reported(Select $select, ?Scalar $expression, Domain $domain, GrammarRelease $release, ?Facts $facts = null): Domain
+    {
+        $expression = $expression === null ? null : (new Matching())->unwrap($expression);
+        $legacy = in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $distinct = in_array(SelectOption::Distinct, $select->options, true);
+        $direct = $select->groupBy === null || ((new RollupItems())->rolls($select) && $select->orderBy === []);
+        $argument = $expression instanceof Aggregate ? ($expression->arguments[0] ?? null) : null;
+        if (!$legacy || $distinct || !$direct || !$domain->kind->temporal() || $argument === null || $facts === null || !$facts->covers($argument) || $facts->scalar($argument)->resolution instanceof ResolvedColumn) {
+            return $domain;
+        }
+
+        return new Domain($domain->kind, Field::VarString, $domain->length, $domain->decimals, $domain->unsigned, $domain->collation, $domain->members, $domain->coercibility);
+    }
+
     /**
      * Tells whether an output expression is represented by a stored temporal field.
      */

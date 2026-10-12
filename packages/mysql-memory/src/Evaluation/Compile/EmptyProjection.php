@@ -59,7 +59,7 @@ final class EmptyProjection
                 return [];
             }
 
-            return array_map(static fn (\MySqlMemory\Typing\Domain $domain, int $position): Evaluable => new \MySqlMemory\Evaluation\Leaf\BufferedRead($domain, $position), $plan->domains, array_keys($plan->domains));
+            return (new Projection\EmptySet($this->compiler))->projection($query, $plan);
         }
         $path = $this->project($plan);
         if (!$query instanceof Select || $path === null) {

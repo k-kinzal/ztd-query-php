@@ -47,6 +47,21 @@ final class OutputFieldsTest extends TestCase
         self::assertSame($decimals, $type->descriptor->decimals);
     }
 
+    public function testStoredKeepsGroupedAggregateFieldsSeparateFromComputedParents(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(s VARCHAR(10),n INT)');
+        $query = $semantics->analyze('SELECT MIN(s),CONCAT(MIN(s)) FROM t GROUP BY n', [$table]);
+        $bare = $query->field(0)->type;
+        $parent = $query->field(1)->type;
+        self::assertInstanceOf(Known::class, $bare);
+        self::assertInstanceOf(Domain::class, $bare->descriptor);
+        self::assertInstanceOf(Known::class, $parent);
+        self::assertInstanceOf(Domain::class, $parent->descriptor);
+
+        self::assertSame([0, 31], [$bare->descriptor->decimals, $parent->descriptor->decimals]);
+    }
+
     public function testDeferredExcludesAggregateParentsButKeepsBareCallsAsKeys(): void
     {
         $semantics = new Semantics(Dialect::MySql);

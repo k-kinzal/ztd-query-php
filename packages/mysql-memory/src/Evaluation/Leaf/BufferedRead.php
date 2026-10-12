@@ -24,8 +24,10 @@ final class BufferedRead implements Evaluable
     /**
      * @param Domain $domain The stored column domain
      * @param int $position The column position
+     * @param bool|null $nullableInitial The initial NULL marker, or the domain default
+     * @param bool $initialOnly Whether an empty result always exposes its initial field state
      */
-    public function __construct(public readonly Domain $domain, public readonly int $position)
+    public function __construct(public readonly Domain $domain, public readonly int $position, public readonly ?bool $nullableInitial = null, public readonly bool $initialOnly = false)
     {
     }
 
@@ -44,7 +46,7 @@ final class BufferedRead implements Evaluable
     #[Override]
     public function evaluate(Frame $frame): int|float|string|null
     {
-        return array_key_exists($this->position, $frame->buffered) ? $frame->buffered[$this->position] : $this->initial();
+        return !$this->initialOnly && array_key_exists($this->position, $frame->buffered) ? $frame->buffered[$this->position] : $this->initial();
     }
 
     /**
@@ -52,7 +54,7 @@ final class BufferedRead implements Evaluable
      */
     public function initial(): int|float|string|null
     {
-        if ($this->domain->nullable) {
+        if ($this->nullableInitial ?? $this->domain->nullable) {
             return null;
         }
 

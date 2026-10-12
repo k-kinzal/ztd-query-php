@@ -30,6 +30,18 @@ final class BufferedReadTest extends TestCase
         self::assertSame('0.00', (new BufferedRead(Domain::decimal(5, 2), 0))->initial());
     }
 
+    public function testEvaluateCanRetainAnInitialMarkerDespiteDiscardedRows(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $frame->buffered = [12];
+        $nullable = Domain::integer()->withNullable(true);
+
+        self::assertSame(0, (new BufferedRead($nullable, 0, false, true))->evaluate($frame));
+        self::assertNull((new BufferedRead(Domain::integer(), 0, true, true))->evaluate($frame));
+        self::assertSame(12, (new BufferedRead($nullable, 0, false))->evaluate($frame));
+    }
+
     public function testEvaluateKeepsBufferedNullAndIgnoresTheInputRow(): void
     {
         $session = (new Instance())->connect();

@@ -32,14 +32,32 @@ final class OutputFields
     /**
      * Answers the domain exposed by an output field at the final query phase.
      */
-    public function domain(Select $select, ?Scalar $expression, Domain $domain, GrammarRelease $release): Domain
+    public function domain(Select $select, ?Scalar $expression, Domain $domain, GrammarRelease $release, ?\SqlSemantics\Statement\Fact\Facts $facts = null): Domain
     {
+        $reported = (new TemporalFields())->reported($select, $expression, $domain, $release, $facts);
+        if ($reported !== $domain) {
+            return $reported;
+        }
+        $distinct = in_array(SelectOption::Distinct, $select->options, true);
+        if ($select->groupBy === null && !$distinct && !(new RollupItems())->windowed($select)) {
+            return $domain;
+        }
         if ($domain->kind->temporal() && !$domain->collation->bytes() && (new TemporalFields())->stored($select, $expression, $release)) {
             return (new Materialization())->nothing($domain);
         }
-        if ($expression === null || $domain->kind !== Kind::String || in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) || !(new Aggregation())->aggregates([$expression]) || $this->deferred($select, $expression)) {
+        if ($expression === null || $domain->kind !== Kind::String || !(new Aggregation())->aggregates([$expression]) || $this->deferred($select, $expression)) {
             return $domain;
         }
+        return $this->stored($select, $expression) ? (new Materialization())->windowed($domain, $release, $expression) : $domain;
+    }
+
+    /**
+     * Tells whether an aggregate output becomes a stored field at the grouping or window stage.
+     * Bare aggregates use stored fields; computed parents retain their expression metadata
+     * until DISTINCT stores them. Direct ROLLUP retains its expression fields.
+     */
+    public function stored(Select $select, Scalar $expression): bool
+    {
         $rollup = new RollupItems();
         $expression = (new Matching())->unwrap($expression);
         $bare = $expression instanceof SetFunction || $expression instanceof WindowFunction;
@@ -47,7 +65,7 @@ final class OutputFields
         $directRollup = $rollup->rolls($select) && $select->orderBy === [] && ($select->late === null || $select->late->orderBy === []);
         $stored = $rollup->containsWindow([$expression]) ? ($bare || ($distinct && !$rollup->rolls($select))) : ($distinct || ($bare && !$directRollup));
 
-        return $stored ? (new Materialization())->windowed($domain, $release, $expression) : $domain;
+        return $stored;
     }
 
     /**
