@@ -5,13 +5,18 @@ declare(strict_types=1);
 namespace SqlSemantics\Platform\MySql\Rules\Typing;
 
 use SqlSemantics\Contract\GrammarRelease;
+use SqlSemantics\Platform\MySql\Statement\Expression\Grouped;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary;
+use SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry;
+use SqlSemantics\Statement\Scalar;
 
 /**
  * Resolves the type a user variable is read with, from the type of the value it holds.
@@ -68,22 +73,32 @@ final class Variables
      * The assigned value has not executed yet. Later occurrences therefore see an
      * allocated string entry, while the session snapshot remains unchanged.
      */
-    public function introduce(string $name, \SqlSemantics\Construction\Derivation $derivation, ?Domain $operand = null): void
+    public function introduce(string $name, \SqlSemantics\Construction\Derivation $derivation, ?Domain $operand = null, ?Scalar $expression = null): void
     {
         $name = strtolower($name);
         if ($this->settings->userVariables !== null && !isset($this->settings->userVariables[$name])) {
-            $derivation->introducedVariables[$name] ??= new \SqlSemantics\Statement\Type\Known($this->text($operand === null ? $this->settings->connection : $this->allocation($operand)));
+            $derivation->introducedVariables[$name] ??= new \SqlSemantics\Statement\Type\Known($this->text($operand === null ? $this->settings->connection : $this->allocation($operand, $expression)));
         }
     }
 
     /**
      * Resolves the collation of an empty entry allocated while preparing an assignment.
      * Numeric and temporal operands allocate in the connection collation; strings keep
-     * their own, and an untyped NULL allocates binary. Verified through zero-row SELECT
+     * their own, and an untyped NULL allocates binary. A direct variable read retains
+     * its entry's assignment collation, including through grouping and unary plus.
+     * Verified through zero-row SELECT
      * assignments on MySQL 8.0.44, 8.4.7 and 9.1.0.
      */
-    public function allocation(Domain $operand): Collation
+    public function allocation(Domain $operand, ?Scalar $expression = null): Collation
     {
+        while ($expression instanceof Grouped || ($expression instanceof Unary && $expression->operator === UnaryOperator::Plus)) {
+            $expression = $expression->operand;
+        }
+        $source = $expression instanceof UserVariable ? $this->settings->userVariables[strtolower($expression->name->value)] ?? null : null;
+        if ($source instanceof UserVariableEntry) {
+            return $source->collation;
+        }
+
         return match ($operand->kind) {
             Kind::Integer, Kind::Decimal, Kind::Double, Kind::Year, Kind::Bit, Kind::Date, Kind::Time, Kind::DateTime => $this->settings->connection,
             Kind::String => $operand->collation,
@@ -152,8 +167,8 @@ final class Variables
 
         return match ($domain->kind) {
             Kind::Integer, Kind::Year, Kind::Bit => $integer,
-            Kind::Decimal => $domain->display,
-            Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json, Kind::Null => null,
+            Kind::Decimal, Kind::Double => $domain->display,
+            Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json, Kind::Null => null,
         };
     }
 

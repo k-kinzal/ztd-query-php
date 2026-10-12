@@ -70,4 +70,29 @@ final class AssignmentTest extends TestCase
         self::assertSame($charset, $entry->collation->charset->name);
         self::assertSame($charset, $entry->domain->collation->charset->name);
     }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerCopiedVersions(): iterable
+    {
+        foreach (['5.6.51', '5.7.44', '8.0.44', '8.4.7', '9.1.0'] as $version) {
+            yield $version => [$version];
+        }
+    }
+
+    #[DataProvider('providerCopiedVersions')]
+    public function testEvaluateRetainsTheSourceCollationWhenCopyingANullVariable(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('SET NAMES latin1;SET @source=1;SET NAMES utf8mb4;SELECT @unexecuted:=@source FROM DUAL WHERE 0');
+        $unexecuted = $session->variables->user['unexecuted'];
+        $session->query('SET @source=NULL;SELECT @copy:=@source');
+        $copied = $session->variables->user['copy'];
+
+        self::assertSame('latin1', $unexecuted->collation->charset->name);
+        self::assertSame('latin1', $copied->collation->charset->name);
+        self::assertNull($copied->value);
+        self::assertSame(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Integer, $copied->domain->kind);
+    }
 }

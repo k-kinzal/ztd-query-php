@@ -102,6 +102,18 @@ final class VariablesTest extends TestCase
     }
 
     #[DataProvider('providerLegacyReleases')]
+    public function testAssignmentRetainsAnInheritedDoubleMetadataWidth(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $variables = new Variables(new Settings(Collation::known('latin1_swedish_ci')), $release);
+        $source = $variables->held(Domain::double(), Collation::known('utf8mb4_general_ci'));
+        $assigned = $variables->assignment($source);
+
+        self::assertSame(92, $assigned->metadataLength());
+        self::assertSame(23, $assigned->value()->length);
+        self::assertSame(Domain::NOT_FIXED, $assigned->decimals);
+    }
+
+    #[DataProvider('providerLegacyReleases')]
     public function testAssignmentPreservesReportedStringScaleAcrossNestedAssignments(\SqlSemantics\Contract\GrammarRelease $release): void
     {
         $variables = new Variables(new Settings(Collation::known('latin1_swedish_ci')), $release);
@@ -200,6 +212,28 @@ final class VariablesTest extends TestCase
 
         self::assertEquals(new \SqlSemantics\Statement\Type\Known(Domain::string(16777215, Collation::known('latin1_swedish_ci'), Field::MediumBlob)), $query->field(1)->type);
         self::assertSame([], $settings->userVariables);
+    }
+
+    public function testAllocationRetainsAVariableEntryCollationThroughGroupingAndUnaryPlus(): void
+    {
+        $latin1 = Collation::known('latin1_swedish_ci');
+        $variables = new Variables(new Settings(Collation::known('utf8mb4_0900_ai_ci'), userVariables: ['source' => new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry(Domain::integer(), $latin1)]));
+        $source = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariable(new \SqlSemantics\Statement\Identifier\Name('SOURCE'));
+        $grouped = new \SqlSemantics\Platform\MySql\Statement\Expression\Grouped(new \SqlSemantics\Platform\MySql\Statement\Expression\Operator\Unary(\SqlSemantics\Platform\MySql\Statement\Expression\Operator\UnaryOperator::Plus, $source));
+
+        self::assertSame($latin1, $variables->allocation(Domain::integer(), $grouped));
+    }
+
+    public function testIntroduceCopiesTheSourceEntryCollationBeforeExecution(): void
+    {
+        $semantics = new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql);
+        $latin1 = Collation::known('latin1_swedish_ci');
+        $source = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry(Domain::integer(), $latin1);
+        $settings = new Settings(Collation::known('utf8mb4_0900_ai_ci'), userVariables: ['source' => $source]);
+        $query = $semantics->analyze('SELECT @copy:=@source,@copy', $semantics->context([], session: $settings));
+
+        self::assertEquals(new \SqlSemantics\Statement\Type\Known(Domain::string(16777215, $latin1, Field::MediumBlob)), $query->field(1)->type);
+        self::assertSame(['source' => $source], $settings->userVariables);
     }
 
     public function testHeldUsesTheLegacyIntegerVariableWidthInMySql56(): void

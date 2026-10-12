@@ -21,6 +21,7 @@ final class NumericVariableWidthTest extends TestCase
     {
         foreach (['ascii', 'latin1', 'utf8mb4'] as $charset) {
             foreach (['1.5', '-1.50', '0.0', '1e0', 'CAST(NULL AS DECIMAL(5,2))', 'NULLIF(1e0,1e0)'] as $value) {
+                yield $charset . ' literal ' . $value => ['SET NAMES ' . $charset . ';SELECT @numeric_literal:=' . $value . ';SELECT @numeric_literal,@numeric_literal+0,ABS(@numeric_literal)'];
                 foreach (['', 'SET NAMES latin1;', 'SET NAMES utf8mb4;'] as $changed) {
                     yield $charset . ' ' . $value . ' ' . $changed => ['SET NAMES ' . $charset . ';SET @numeric_width=' . $value . ';' . $changed . 'SELECT @numeric_width,@numeric_width+0,ABS(@numeric_width),CHARSET(@numeric_width),@numeric_copy:=@numeric_width;SELECT @numeric_copy'];
                 }

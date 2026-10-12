@@ -52,7 +52,7 @@ final class VariableAssignment implements Scalar
         $derivation->scalar($this->target, $environment);
         $fact = (new Operands())->single($derivation->scalar($this->value, $environment), $derivation);
         $variables = new \SqlSemantics\Platform\MySql\Rules\Typing\Variables(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context), $derivation->context->profile->grammar);
-        $variables->introduce($this->target->name->value, $derivation, (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($fact->type));
+        $variables->introduce($this->target->name->value, $derivation, (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($fact->type), $this->value);
         Deprecation::raise(Deprecated::AssignmentInExpression, $derivation);
 
         return new ScalarFact($variables->assigned($fact->type), $fact->nullability);

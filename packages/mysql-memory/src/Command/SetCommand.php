@@ -98,7 +98,7 @@ final class SetCommand implements Command
     {
         if ($item instanceof UserAssignment) {
             $value = $planner->compiler->compile($item->value, new Scope());
-            $collation = $planner->compiler->names->allocate($item->variable->name->value, $value->domain());
+            $collation = $planner->compiler->names->allocate($item->variable->name->value, $value->domain(), $item->value);
             $result = $value->evaluate($frame);
             $stored = $planner->compiler->names->stored($value->domain());
 

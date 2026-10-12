@@ -249,7 +249,7 @@ final class Names
     public function assignment(VariableAssignment $assignment, Scope $scope): Evaluable
     {
         $value = $this->compiler->compile($assignment->value, $scope);
-        $collation = $this->allocate($assignment->target->name->value, $value->domain());
+        $collation = $this->allocate($assignment->target->name->value, $value->domain(), $assignment->value);
 
         return new Assignment($assignment->target->name->value, $value, $this->stored($value->domain()), $this->compiler->domain($assignment), $collation);
     }
@@ -258,10 +258,10 @@ final class Names
      * Prepares a user-variable entry with the allocation collation SQL Semantics resolves
      * from the assigned operand, before any values of the statement execute, and answers it.
      */
-    public function allocate(string $name, Domain $operand): Collation
+    public function allocate(string $name, Domain $operand, ?Scalar $expression = null): Collation
     {
         $settings = $this->compiler->settings;
-        $collation = (new \SqlSemantics\Platform\MySql\Rules\Typing\Variables($settings->resolution(), $settings->release()))->allocation($operand->resolved());
+        $collation = (new \SqlSemantics\Platform\MySql\Rules\Typing\Variables($settings->resolution(), $settings->release()))->allocation($operand->resolved(), $expression);
         $this->compiler->connection->variables->allocate($name, $collation);
 
         return $collation;

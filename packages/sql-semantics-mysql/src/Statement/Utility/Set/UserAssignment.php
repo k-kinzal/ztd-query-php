@@ -46,7 +46,7 @@ final class UserAssignment implements SetItem
         $derivation->scalar($this->variable, $derivation->environment());
         $fact = (new Operands())->single($derivation->scalar($this->value, $derivation->environment()), $derivation);
         $variables = new \SqlSemantics\Platform\MySql\Rules\Typing\Variables(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings::of($derivation->context), $derivation->context->profile->grammar);
-        $variables->introduce($this->variable->name->value, $derivation, (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($fact->type));
+        $variables->introduce($this->variable->name->value, $derivation, (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($fact->type), $this->value);
     }
 
     /**

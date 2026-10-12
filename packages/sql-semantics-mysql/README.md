@@ -200,6 +200,9 @@ this metadata. An assignment to an absent variable introduces a NULL string entr
 using the operand's collation, or the connection collation for numeric and temporal
 operands. Later SET items and expression occurrences see this preparation state,
 which differs from the type of a subsequently assigned value.
+When the operand reads an existing user variable, the new entry instead takes
+that variable's assignment collation. This applies even if no row executes the
+assignment; numeric values still report their logical binary collation when read.
 When modeling an executed assignment, an untyped NULL retains the preceding type
 and collation. A typed NULL changes the value type; MySQL 5.6 also replaces its
 assignment collation, while later releases retain it. Legacy decimal and double
