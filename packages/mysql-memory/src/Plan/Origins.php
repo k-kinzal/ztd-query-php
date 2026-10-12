@@ -72,6 +72,7 @@ final class Origins
 
     /**
      * Preserves legacy base flags for a direct ROLLUP column, except constant table lookups.
+     * MySQL 5.7 retains base flags when the constant lookup finds no row.
      */
     public function rollup(Select $select, Field $field, Scope $scope): ?ColumnOrigin
     {
@@ -79,7 +80,9 @@ final class Origins
             return null;
         }
         $scan = $select->from === null ? null : ($scope->scans[spl_object_id($select->from)] ?? null);
-        if ($this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 && $scan !== null && (new Lookup\PrimaryKeys($this->planner))->plan($select, $scan, $scope, runtime: true) instanceof Path\Source\KeyLookup) {
+        $oldest = $this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651;
+        $lookup = $scan !== null && (new Lookup\PrimaryKeys($this->planner))->plan($select, $scan, $scope, runtime: $oldest) instanceof Path\Source\KeyLookup;
+        if ($lookup && ($oldest || !(new Grouping\Preparation($this->planner))->missing($select, $scope, new \MySqlMemory\Evaluation\Frame($this->planner->compiler->connection->context)))) {
             return null;
         }
 

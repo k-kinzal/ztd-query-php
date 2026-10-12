@@ -229,4 +229,17 @@ final class OriginsTest extends TestCase
         self::assertSame([['2001-01-02', '1'], ['2001-01-02', '2']], $result->rows);
     }
 
+    public function testRollupDropsMySql57BaseFlagsOnlyWhenTheConstantKeyExists(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT PRIMARY KEY);INSERT INTO t VALUES(1),(2)');
+        $found = $session->query('SELECT n FROM t WHERE n=1 GROUP BY n WITH ROLLUP')[0];
+        $missing = $session->query('SELECT n FROM t WHERE n=3 GROUP BY n WITH ROLLUP')[0];
+
+        self::assertInstanceOf(ResultSet::class, $found);
+        self::assertInstanceOf(ResultSet::class, $missing);
+        self::assertSame(['', 0], [$found->columns[0]->table, $found->columns[0]->flags & 3]);
+        self::assertSame(['t', 3], [$missing->columns[0]->table, $missing->columns[0]->flags & 3]);
+    }
+
 }
