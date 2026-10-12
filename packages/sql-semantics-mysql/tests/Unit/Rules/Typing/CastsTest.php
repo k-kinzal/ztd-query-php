@@ -26,6 +26,14 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class CastsTest extends TestCase
 {
+    public function testCastRetainsTheUtf8BoundOfLegacyJsonConversions(): void
+    {
+        $casts = new Casts(new Settings(Collation::known('latin1_swedish_ci')), GrammarRelease::MySql5744);
+        $result = $casts->cast(Domain::string(3, Collation::binary()), new CastTarget(CastKind::Json));
+
+        self::assertSame([Field::Json, 16777216, 0, 'utf8mb4_bin'], [$result->field, $result->length, $result->decimals, $result->collation->name]);
+    }
+
     public function testIntegerRetainsLegacyStringPrecisionBeyondTheReportedIntegerWidth(): void
     {
         $casts = new Casts(new Settings(Collation::binary()), GrammarRelease::MySql5651);

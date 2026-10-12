@@ -41,6 +41,18 @@ final class TemporalInformationTest extends TestCase
      */
     public static function providerNested(): iterable
     {
+        $date = "CAST('2020-01-02' AS DATE)";
+        $datetime = "CAST('2020-02-03 12:34:56.123' AS DATETIME(3))";
+        foreach (['latin1', 'utf8mb4'] as $charset) {
+            foreach (['COALESCE(' . $date . ',' . $datetime . ')', 'IFNULL(' . $datetime . ',' . $date . ')', 'IF(1,' . $date . ',' . $datetime . ')', 'CASE WHEN 1 THEN ' . $datetime . ' ELSE ' . $date . ' END'] as $expression) {
+                $statements = ['SET NAMES ' . $charset];
+                foreach (['NULL', 'utf8mb4'] as $results) {
+                    $statements[] = 'SET character_set_results=' . $results;
+                    $statements[] = 'SELECT ' . $expression . ' AS v,CHARSET(' . $expression . ') AS cs,COLLATION(' . $expression . ') AS co,COERCIBILITY(' . $expression . ') AS cv';
+                }
+                yield $charset . ' mixed date datetime ' . $expression => [implode(';', $statements)];
+            }
+        }
         $value = "COALESCE(CAST('2020-01-02' AS DATE),CAST('2020-01-03' AS DATE))";
         foreach (['latin1', 'utf8mb4', 'utf8mb3'] as $charset) {
             foreach (['FIRST_VALUE(' . $value . ') OVER ()', 'NTH_VALUE(' . $value . ',1) OVER ()', 'LEAD(' . $value . ',0) OVER ()', 'MIN(' . $value . ') OVER ()', 'MIN(' . $value . ')', '(SELECT ' . $value . ')'] as $expression) {

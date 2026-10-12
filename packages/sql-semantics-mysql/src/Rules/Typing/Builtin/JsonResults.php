@@ -29,6 +29,21 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 final class JsonResults
 {
     /**
+     * Resolves MySQL 5.7 JSON branches as UTF-8 JSON. Binary expression bounds
+     * expand to UTF-8, capped at a whole-character four-gigabyte bound. Existing
+     * textual JSON bounds survive nesting. Verified with literal and stored JSON
+     * operands through IF, IFNULL, CASE and COALESCE on Testcontainers 5.7.44.
+     *
+     * @param non-empty-list<Domain> $domains The non-NULL JSON branches
+     */
+    public static function branches(array $domains): Domain
+    {
+        $length = min(4294967292, max(array_map(static fn (Domain $domain): int => $domain->length * ($domain->collation->bytes() ? 4 : 1), $domains)));
+
+        return new Domain(Kind::Json, Field::Json, $length, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'), [], $domains[0]->coercibility);
+    }
+
+    /**
      * Answers the rule of each function, by name.
      *
      * @return array<string, Closure(Invocation): ?Domain>

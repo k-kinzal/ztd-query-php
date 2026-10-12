@@ -20,6 +20,10 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 /**
  * Resolves the type of CAST and CONVERT to a type.
  *
+ * MySQL 5.7 CAST AS JSON carries a 16 MiB utf8mb4_bin result bound, including
+ * when character_set_results disables conversion. Verified through direct
+ * and derived results with latin1 and utf8mb4 on Testcontainers 5.7.44.
+ *
  * SIGNED and UNSIGNED are BIGINTs, as long as the operand but at most 21 characters in MySQL 5.6
  * and 5.7 (verified on live 5.6.51 and 5.7.44 servers). A legacy string conversion retains
  * up to 65 digits for arithmetic, separately from that reported width. DECIMAL takes the written precision and scale, 10 and 0 by
@@ -62,7 +66,7 @@ final class Casts
             CastKind::Year => new Domain(Kind::Year, Field::Year, $this->release === GrammarRelease::MySql8044 ? 5 : 4, 0, true),
             CastKind::Char, CastKind::NationalChar => $this->string($operand, $target, $this->collation($target)),
             CastKind::Binary => $this->string($operand, $target, Collation::binary()),
-            CastKind::Json => JsonResults::json($this->release),
+            CastKind::Json => $this->release === GrammarRelease::MySql5744 ? new Domain(Kind::Json, Field::Json, 16777216, 0, false, Collation::known('utf8mb4_bin')) : JsonResults::json($this->release),
             CastKind::Point, CastKind::LineString, CastKind::Polygon, CastKind::MultiPoint, CastKind::MultiLineString,
             CastKind::MultiPolygon, CastKind::GeometryCollection => new Domain(Kind::String, Field::Geometry, 4294967295, 0, false, Collation::binary(), [], Coercibility::Coercible),
         };

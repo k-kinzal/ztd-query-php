@@ -275,7 +275,8 @@ final class Materialization
     /**
      * Resolves JSON temporary-column metadata. MySQL 8.0 rounds the reported byte
      * bound of control expressions and LEAD/LAG to whole UTF-8 characters.
-     * MySQL 5.7 retains its 16 MiB stored bound. Stored columns use binary
+     * MySQL 5.7 uses at least 16 MiB, preserving wider source-column and control
+     * bounds. Stored columns use binary
      * collation independently of that reported bound.
      * Verified through direct and derived results on 5.7, and windowed results
      * on 8.0, 8.4 and 9.1.
@@ -293,7 +294,7 @@ final class Materialization
             default => false,
         };
 
-        return new Domain(Kind::Json, Field::Json, $release === GrammarRelease::MySql5744 ? 16777216 : 4294967295, 0, false, Collation::binary(), [], $domain->coercibility, display: $release === GrammarRelease::MySql8044 && $text ? 4294967292 : null);
+        return new Domain(Kind::Json, Field::Json, $release === GrammarRelease::MySql5744 ? max(16777216, $domain->metadataLength()) : 4294967295, 0, false, Collation::binary(), [], $domain->coercibility, display: $release === GrammarRelease::MySql8044 && $text ? 4294967292 : null);
     }
 
     /**

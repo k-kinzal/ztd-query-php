@@ -15,8 +15,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 /**
  * Resolves the type that holds every value of several types: the branches of CASE, IF, IFNULL and COALESCE.
  *
- * MySQL 5.7 COALESCE retains a JSON result with a 16 MiB UTF-8 byte bound.
- * Legacy COALESCE also keeps floating branches at their expression width.
+ * MySQL 5.7 controls retain JSON results and their versioned UTF-8 byte bounds.
+ * Legacy controls also keep floating branches at their expression width.
  * These bounds are observed through Testcontainers result metadata.
  *
  * NULL branches take no part. Integers settle on the widest integer, signed when signed and
@@ -70,7 +70,7 @@ final class Aggregation
         }
 
         return match (true) {
-            $operation === 'coalesce' && $all(static fn (Domain $domain): bool => $domain->kind === Kind::Json) => new Domain(Kind::Json, Field::Json, 16777216, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'), [], $present[0]->coercibility),
+            $operation !== 'UNION' && $all(static fn (Domain $domain): bool => $domain->kind === Kind::Json) => Builtin\JsonResults::branches($present),
             count($classes) === 1 && $present[0]->kind === Kind::Integer => $this->integers($present, $operation, $grammar),
             $all(static fn (Domain $domain): bool => $domain->kind === Kind::Integer || $domain->kind === Kind::Decimal) => $this->decimals($present),
             $all(static fn (Domain $domain): bool => $domain->kind->numeric() && $domain->kind !== Kind::Year && $domain->kind !== Kind::Bit) => $this->doubles($present, $operation, $derivation->context->profile->grammar),
@@ -177,13 +177,12 @@ final class Aggregation
     /**
      * Settles temporal values: one kind keeps it, and different kinds make a datetime.
      *
-     * MySQL 8.0 controls use the connection collation; from 8.4 they use latin1.
+     * MySQL 5.6, 5.7 and 8.0 controls use the connection collation and coercible
+     * strength; from 8.4 they use latin1. Verified through CHARSET, COLLATION,
+     * COERCIBILITY and result metadata on Testcontainers and live servers.
      * Result encoding is applied separately, including when character_set_results
-     * disables conversion. A time takes the current date; MySQL 5.6 and 5.7 keep it binary but
-     * for a value already in a character set, as a column of a merged derived table holds it,
-     * and settle a time and another kind on a string (verified on live 5.7, 8.0, 8.4 and 9.1
-     * servers). MySQL 8.0 control expressions also retain coercible collation
-     * strength; set-operation columns follow their separate storage rules.
+     * disables conversion. MySQL 5.6 and 5.7 settle a time and another kind on a
+     * string. Set-operation columns follow separate collation and storage rules.
      *
      * @param non-empty-list<Domain> $domains
      */
@@ -194,8 +193,8 @@ final class Aggregation
         $texts = array_values(array_filter($domains, static fn (Domain $domain): bool => !$domain->collation->bytes()));
         $grammar = $derivation->context->profile->grammar;
         $legacy = $grammar === GrammarRelease::MySql5651 || $grammar === GrammarRelease::MySql5744;
-        $collation = $legacy ? ($texts === [] ? null : $texts[0]->collation) : ($grammar === GrammarRelease::MySql8044 ? $this->collations->connection : Collation::known('latin1_swedish_ci'));
-        $coercibility = $grammar === GrammarRelease::MySql8044 && $operation !== 'UNION' ? Coercibility::Coercible : Coercibility::Implicit;
+        $collation = $legacy && $operation === 'UNION' ? ($texts === [] ? null : $texts[0]->collation) : ($legacy || $grammar === GrammarRelease::MySql8044 ? $this->collations->connection : Collation::known('latin1_swedish_ci'));
+        $coercibility = ($legacy || $grammar === GrammarRelease::MySql8044) && $operation !== 'UNION' ? Coercibility::Coercible : Coercibility::Implicit;
         if (count($kinds) === 1) {
             $field = count(array_unique(array_map(static fn (Domain $domain): int => $domain->field->value, $domains))) === 1 ? $domains[0]->field : Field::DateTime;
 
@@ -236,8 +235,9 @@ final class Aggregation
     }
 
     /**
-     * Computes the legacy textual bound of branch values. COALESCE retains a
-     * floating branch's own width; other controls use its conversion width.
+     * Computes the legacy textual bound of branch values. COALESCE and DOUBLE
+     * control branches retain their expression width. Other FLOAT branches and
+     * UNION use their conversion width.
      * Computed blob bounds remain separate from their storage capacity.
      *
      * @param non-empty-list<Domain> $domains The branch domains
@@ -247,7 +247,7 @@ final class Aggregation
         $length = 0;
         foreach ($domains as $domain) {
             $bound = match (true) {
-                $domain->kind !== Kind::Double, $operation === 'coalesce' => $domain->length,
+                $domain->kind !== Kind::Double, $operation === 'coalesce', $operation !== 'UNION' && $domain->field !== Field::Float => $domain->length,
                 $domain->field === Field::Float => 23,
                 default => 22,
             };

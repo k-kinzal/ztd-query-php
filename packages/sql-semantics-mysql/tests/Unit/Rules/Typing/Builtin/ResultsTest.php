@@ -25,6 +25,16 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class ResultsTest extends TestCase
 {
+    public function testRefineReportsStrictIntrospectionAsNullableInMySql56(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.6.51');
+        $settings = new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(Collation::known('latin1_swedish_ci'), strict: true);
+        $query = $semantics->analyze('SELECT CHARSET(NULL),COLLATION(NULL)', $semantics->context([], session: $settings));
+
+        self::assertSame(Nullability::Nullable, $query->field(0)->nullability);
+        self::assertSame(Nullability::Nullable, $query->field(1)->nullability);
+    }
+
     public function testRefineReportsNonStrictIntrospectionAsNotNullEvenForNullArguments(): void
     {
         $semantics = new Semantics(Dialect::MySql);

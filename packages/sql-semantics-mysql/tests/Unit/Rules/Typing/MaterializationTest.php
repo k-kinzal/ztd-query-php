@@ -28,6 +28,16 @@ use SqlSemantics\Statement\Type\TypeFact;
 #[Small]
 final class MaterializationTest extends TestCase
 {
+    public function testJsonColumnPreservesWiderLegacySourceAndControlBounds(): void
+    {
+        $column = new Domain(Kind::Json, Field::Json, 4294967295, collation: Collation::binary());
+        $control = new Domain(Kind::Json, Field::Json, 4294967292, collation: Collation::known('utf8mb4_bin'));
+        $rules = new Materialization();
+
+        self::assertSame(4294967295, $rules->jsonColumn($column, release: GrammarRelease::MySql5744)->length);
+        self::assertSame(4294967292, $rules->jsonColumn($control, release: GrammarRelease::MySql5744)->length);
+    }
+
     /**
      * @return iterable<string, array{string}>
      */

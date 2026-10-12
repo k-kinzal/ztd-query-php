@@ -63,7 +63,7 @@ final class TextResults
     public function bounded(Invocation $call, int $length, string $operation): ?Domain
     {
         $domain = $call->text($call->domains, $length, $operation);
-        if ($domain !== null && $domain->collation->bytes() && in_array($operation, ['concat', 'concat_ws'], true)) {
+        if ($domain !== null && $domain->collation->bytes() && in_array($operation, ['concat', 'concat_ws'], true) && !in_array($call->derivation->context->profile->grammar, [\SqlSemantics\Contract\GrammarRelease::MySql5651, \SqlSemantics\Contract\GrammarRelease::MySql5744], true)) {
             $domain = (new FormatResults())->sized($this->concatenatedBytes($call, $operation === 'concat_ws'), $domain->collation, $domain->coercibility);
         }
 

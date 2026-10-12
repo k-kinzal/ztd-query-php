@@ -24,6 +24,14 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class TextResultsTest extends TestCase
 {
+    public function testBoundedKeepsLegacyBinaryConcatenationCharacterWidths(): void
+    {
+        $collation = Collation::known('utf8mb4_general_ci');
+        $call = new Invocation([Domain::string(1, Collation::binary(), Field::VarString, Coercibility::Coercible), Domain::string(4, $collation, Field::VarString, Coercibility::Coercible)], [], new Settings($collation), new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context([])));
+
+        self::assertSame(5, (new TextResults())->bounded($call, 5, 'concat')?->length);
+    }
+
     public function testBoundedCapsLongBlobMetadataBeforeResultConversion(): void
     {
         $collation = Collation::known('utf8mb4_0900_ai_ci');

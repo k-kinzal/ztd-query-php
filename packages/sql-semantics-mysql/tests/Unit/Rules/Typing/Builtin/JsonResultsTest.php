@@ -24,6 +24,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class JsonResultsTest extends TestCase
 {
+    public function testBranchesRetainJsonBoundsThroughStoredInputsAndNestedControls(): void
+    {
+        $literal = JsonResults::json(GrammarRelease::MySql5744);
+        $control = JsonResults::branches([$literal]);
+        $column = new Domain(Kind::Json, Field::Json, 4294967295, collation: Collation::binary());
+
+        self::assertSame([Field::Json, 16777216], [$control->field, $control->length]);
+        self::assertSame(16777216, JsonResults::branches([$control, $literal])->length);
+        self::assertSame(4294967292, JsonResults::branches([$column, $literal])->length);
+    }
+
     public function testRulesTypeDocumentsCountsAndStrings(): void
     {
         $rules = (new JsonResults())->rules();

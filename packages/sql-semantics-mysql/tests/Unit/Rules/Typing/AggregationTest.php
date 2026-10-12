@@ -24,9 +24,20 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class AggregationTest extends TestCase
 {
-    public function testTemporalsPreserveTheCoercibleStrengthOfMySql80Controls(): void
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerCoercibleTemporalControls(): iterable
     {
-        $semantics = new Semantics(Dialect::MySql, 'mysql-8.0.44');
+        yield 'MySQL 5.6' => ['mysql-5.6.51'];
+        yield 'MySQL 5.7' => ['mysql-5.7.44'];
+        yield 'MySQL 8.0' => ['mysql-8.0.44'];
+    }
+
+    #[DataProvider('providerCoercibleTemporalControls')]
+    public function testTemporalsPreserveTheCoercibleStrengthOfOlderControls(string $release): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
         $query = $semantics->analyze("SELECT COALESCE(CAST('2020-01-02' AS DATE),CAST('2020-01-03' AS DATE))");
         $type = $query->field(0)->type;
 
@@ -53,6 +64,10 @@ final class AggregationTest extends TestCase
         $branches = [Domain::string(3, Collation::known('latin1_swedish_ci'), Field::String), Domain::double(3)];
 
         self::assertSame(3, $rules->legacyLength($branches, 'coalesce'));
+        self::assertSame(3, $rules->legacyLength($branches, 'ifnull'));
+        self::assertSame(3, $rules->legacyLength($branches, 'case'));
+        self::assertSame(3, $rules->legacyLength($branches, 'if'));
+        self::assertSame(22, $rules->legacyLength($branches, 'UNION'));
         self::assertSame(10, $rules->legacyLength([$branches[0], new Domain(Kind::Date, Field::Date, 10)], 'coalesce'));
     }
 
@@ -139,7 +154,7 @@ final class AggregationTest extends TestCase
         $datetime = new Domain(Kind::DateTime, Field::DateTime, 23, 3);
 
         self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 23, 3, false, Collation::known('latin1_swedish_ci')), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->temporals([$date, $datetime], 'case', new Derivation((new Semantics(Dialect::MySql))->context([]))));
-        self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 23, 3), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->temporals([$date, $datetime], 'case', new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]))));
+        self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 23, 3, false, Collation::known('utf8mb4_0900_ai_ci'), [], Coercibility::Coercible), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->temporals([$date, $datetime], 'case', new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]))));
     }
 
     public function testTemporalsMakeADatetimeOfATimeFromMySql80(): void

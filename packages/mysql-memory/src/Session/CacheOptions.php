@@ -51,6 +51,10 @@ final class CacheOptions
         } catch (LexicalException) {
             return $error;
         }
+        $target = (new Parse\VariablePrefix())->before($tokens, $statement, $cause?->token->offset ?? strlen($statement), $session);
+        if ($target !== null) {
+            return $target;
+        }
         $parsed = $cause === null || ($error->getPrevious() !== $cause && $error->getPrevious()?->getMessage() !== $cause->getMessage());
         $usage = $this->usage($error);
         [$end, $settled, $into, $union] = $this->bounds($tokens, $cause, $usage, $parsed, strlen($statement), $release);
