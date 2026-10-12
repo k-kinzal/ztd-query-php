@@ -22,7 +22,9 @@ final class ProjectionSourceWarningTest extends TestCase
         foreach (['CHAR(10) CHARACTER SET latin1', 'VARCHAR(10) CHARACTER SET latin1', 'VARCHAR(10) CHARACTER SET utf8mb4', 'TEXT CHARACTER SET utf8mb4', 'DATE', 'DATETIME'] as $type) {
             foreach (['@x:=s', 'CONCAT(@x:=s)', 'CONCAT(s)', 'CAST(s AS CHAR)'] as $expression) {
                 foreach (['ABS(v)', 'v+0'] as $key) {
-                    yield $type . ' ' . $expression . ' ' . $key => ['SET NAMES utf8mb4;CREATE TEMPORARY TABLE projection_source(s ' . $type . ");INSERT INTO projection_source VALUES('2001-01-02'),('2001-01-03'),('2001-01-04');SET @x=0;SELECT " . $expression . ' AS v FROM projection_source ORDER BY ' . $key . ';SHOW WARNINGS;SELECT @x'];
+                    $sql = 'SET NAMES utf8mb4;CREATE TEMPORARY TABLE projection_source(s ' . $type . ");INSERT INTO projection_source VALUES('2001-01-02'),('2001-01-03'),('2001-01-04');SET @x=0;SELECT " . $expression . ' AS v FROM projection_source ORDER BY ' . $key . ';SHOW WARNINGS;SELECT @x';
+                    yield $type . ' ' . $expression . ' ' . $key => [$sql];
+                    yield 'physical ' . $type . ' ' . $expression . ' ' . $key => [str_replace('CREATE TEMPORARY TABLE', 'CREATE TABLE', $sql)];
                 }
             }
         }

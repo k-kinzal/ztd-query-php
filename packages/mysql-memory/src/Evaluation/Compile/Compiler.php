@@ -286,9 +286,8 @@ final class Compiler
     /**
      * Retains the numeric conversion warning policy of a string result.
      * Unreduced scalar subqueries read strings silently; reduced expressions
-     * retain their own policy. MySQL 5.6 also preserves that policy when sorting
-     * reads a selected expression through its alias; 5.7 reads it as
-     * a column. Modern quiet function results retain their policy through
+     * retain their own policy. MySQL 5.6 and 5.7 also preserve that policy when sorting
+     * reads a selected expression through its alias. Modern quiet function results retain their policy through
      * aliases and grouping. Verified through SQL on MySQL 5.6, 5.7, 8.0 and 8.4.
      */
     public function conversionWarnings(Scalar $node, Evaluable $evaluable, Domain $domain): Domain
@@ -298,7 +297,7 @@ final class Compiler
             $origin = $origin->evaluable;
         }
         $source = (new Quietness())->bare($node);
-        if ($domain->kind === Kind::String && $this->settings->version === '5.6.51' && $source instanceof ColumnUse && $this->facts->scalar($source)->resolution instanceof \SqlSemantics\Statement\Reference\Column\AliasTarget) {
+        if ($domain->kind === Kind::String && $this->settings->legacy() && $source instanceof ColumnUse && $this->facts->scalar($source)->resolution instanceof \SqlSemantics\Statement\Reference\Column\AliasTarget) {
             $domain = $domain->withQuiet($evaluable->domain()->quiet);
         } elseif ($domain->kind === Kind::String && $origin instanceof \MySqlMemory\Evaluation\Subquery\ScalarRead) {
             $domain = $domain->withQuiet();

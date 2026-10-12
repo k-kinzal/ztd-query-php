@@ -24,11 +24,10 @@ final class CompilerTest extends TestCase
      */
     public static function providerProjectedWarnings(): iterable
     {
-        $warnings = array_map(static fn (string $date): array => ['Warning', 1292, "Truncated incorrect DOUBLE value: '" . $date . "'"], ['2001-01-02', '2001-01-03', '2001-01-04']);
         foreach (['@x:=d', 'CONCAT(@x:=d)'] as $projection) {
             foreach (['ABS(v)', 'ABS((+v))'] as $key) {
                 yield '5.6 ' . $projection . $key => ['5.6.51', $projection, $key, []];
-                yield '5.7 ' . $projection . $key => ['5.7.44', $projection, $key, $warnings];
+                yield '5.7 ' . $projection . $key => ['5.7.44', $projection, $key, []];
             }
         }
     }
