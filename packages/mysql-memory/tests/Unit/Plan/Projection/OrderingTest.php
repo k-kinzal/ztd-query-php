@@ -52,4 +52,14 @@ final class OrderingTest extends TestCase
         self::assertSame([['1'], ['3'], ['6']], $result->rows);
         self::assertSame(6, $session->variables->user('x')[0]);
     }
+    public function testOrderAdvancesLegacyRandomKeysBeforeVisibleValues(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('USE mysql; CREATE TEMPORARY TABLE t(a INT); INSERT INTO t VALUES(1),(2),(3)');
+        $result = $session->query('SELECT RAND(1) AS v FROM t ORDER BY ABS(v)')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['0.9501954782290342'], ['0.09445909605776807'], ['0.8716141803857071']], $result->rows);
+    }
+
 }

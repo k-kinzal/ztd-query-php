@@ -10,7 +10,7 @@ use MySqlMemory\Typing\Domain;
 use Override;
 
 /**
- * Reads an output already evaluated for this row, preserving its effects exactly once.
+ * Reads the latest stored output field without repeating its expression effects.
  *
  * @visibility MySqlMemory
  */
@@ -34,7 +34,7 @@ final class ProjectedRead implements Evaluable
     }
 
     /**
-     * Reads the computed field rather than evaluating its expression again.
+     * Reads the last computed field, including the previous row before projection updates it.
      *
      * @phpstan-pure
      */

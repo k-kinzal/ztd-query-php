@@ -30,7 +30,7 @@ final class Streaming
     public function apply(AccessPath $path, ?bool $deduplicate = null): AccessPath
     {
         if ($path instanceof Project) {
-            return new Project($this->apply($path->input, $deduplicate), $path->expressions, $path->append, $path->retainAt, $path->publish);
+            return new Project($this->apply($path->input, $deduplicate), $path->expressions, $path->append, $path->retainAt, $path->publish, $path->order);
         }
         if (!$path instanceof SetOperation || $path->kind !== SetKind::Union) {
             return $path;

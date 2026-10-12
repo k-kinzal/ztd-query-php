@@ -365,6 +365,8 @@ Differences:
 
 In MySQL 5.6 the diagnostics area is cleared only by a statement that opens a table; `SHOW WARNINGS` after a statement that opens none, such as `SELECT @@sql_mode`, `USE`, `CREATE DATABASE`, `GRANT ... ON *.*` or `SET`, still lists the conditions of the statement before it, as the server does.
 
+In MySQL 5.6 and 5.7, sorting expressions outside the visible select list can run before the next row updates its stored output fields. Seeded random calls advance for these key reads before their visible reads; nested aliases of assignments read the last stored field without repeating the assignment. The access path records this evaluation order independently of the result's column order.
+
 ## Inspection
 
 - `SHOW TABLES`, `SHOW COLUMNS` and `DESCRIBE`, `SHOW INDEX`, `SHOW DATABASES`, `SHOW [FULL] PROCESSLIST`, `SHOW STATUS`, `SHOW TABLE STATUS`, `SHOW OPEN TABLES`, `SHOW CREATE DATABASE`, `TABLE` and `VIEW`, `SHOW VARIABLES`, `SHOW COLLATION`, `SHOW CHARACTER SET`, `SHOW ENGINES`, `SHOW ENGINE`, `SHOW PLUGINS`, `SHOW PRIVILEGES`, `SHOW PROFILES`, `SHOW WARNINGS`, `SHOW ERRORS`, `SHOW COUNT(*) WARNINGS`, and the `SHOW` statements of stored programs, accounts and replication, with the column metadata of the server.

@@ -20,7 +20,7 @@ final class Frame
     public ?int $foundBeforeProjection = null;
 
     /**
-     * Values already computed by the current projection, before its hidden sorting keys.
+     * Latest stored projection values, also read by legacy sorting before the next row updates them.
      *
      * @var list<int|float|string|null>
      */

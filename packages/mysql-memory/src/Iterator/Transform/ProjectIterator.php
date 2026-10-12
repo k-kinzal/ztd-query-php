@@ -39,6 +39,9 @@ final class ProjectIterator implements RowIterator
     {
         $this->frame = $frame;
         $this->retained = [];
+        if ($this->path->publish) {
+            $this->frame->projected = array_fill(0, count($this->path->expressions), null);
+        }
         $this->input->init($frame);
     }
 
@@ -53,9 +56,6 @@ final class ProjectIterator implements RowIterator
             return null;
         }
         $this->frame->row = $row;
-        if ($this->path->publish) {
-            $this->frame->projected = [];
-        }
         if ($this->path->retainAt !== null && ($row[$this->path->retainAt] ?? 0) > 0) {
             if ($this->path->publish) {
                 $this->frame->projected = $this->retained;
@@ -63,12 +63,13 @@ final class ProjectIterator implements RowIterator
 
             return $this->path->append ? [...$row, ...$this->retained] : $this->retained;
         }
-        $values = $this->path->append ? $row : [];
-        foreach ($this->path->expressions as $expression) {
-            $value = $expression->evaluate($this->frame);
-            $values[] = $value;
+        $offset = $this->path->append ? count($row) : 0;
+        $values = [...($this->path->append ? $row : []), ...array_fill(0, count($this->path->expressions), null)];
+        foreach ($this->path->order === [] ? array_keys($this->path->expressions) : $this->path->order as $position) {
+            $value = $this->path->expressions[$position]->evaluate($this->frame);
+            $values[$offset + $position] = $value;
             if ($this->path->publish) {
-                $this->frame->projected[] = $value;
+                $this->frame->projected = array_values(array_replace($this->frame->projected, [$position => $value]));
             }
         }
 
@@ -76,6 +77,6 @@ final class ProjectIterator implements RowIterator
             $this->retained = array_slice($values, $this->path->append ? count($row) : 0);
         }
 
-        return $values;
+        return array_values($values);
     }
 }

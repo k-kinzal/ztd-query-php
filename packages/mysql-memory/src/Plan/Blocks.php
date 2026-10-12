@@ -205,7 +205,7 @@ final class Blocks
     public function distinct(Select $select, array $fields, AccessPath $input, array $expressions, array $domains, bool $hashed = false): AccessPath
     {
         if (!in_array(SelectOption::Distinct, $select->options, true)) {
-            return new Project($input, $expressions, publish: $this->planner->settings->legacy() && !(new Projection\Emission($this->planner))->sortable($select));
+            return new Project($input, $expressions, publish: $this->planner->settings->legacy() && !(new Projection\Emission($this->planner))->sortable($select), order: (new Projection\Ordering($this->planner))->order($select, $fields, $expressions));
         }
         $deferred = (new Window\DistinctOutputs($this->planner))->plan($select, $fields, $input, $expressions, $domains, $hashed);
         if ($deferred !== null) {

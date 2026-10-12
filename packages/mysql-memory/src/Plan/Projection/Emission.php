@@ -108,7 +108,7 @@ final class Emission
         }
         $limited = new Limit($input->input, $path->count, $path->offset, $path->countFound, $path->exhaust, $path->initialize);
 
-        return new Project($limited, $input->expressions, $input->append, $input->retainAt);
+        return new Project($limited, $input->expressions, $input->append, $input->retainAt, $input->publish, $input->order);
     }
 
     /**

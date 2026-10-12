@@ -87,9 +87,29 @@ final class Ordering
     }
 
     /**
-     * Reuses non-DISTINCT legacy assignment fields when sorting evaluates the list early.
+     * Reads hidden sorting keys before storing visible fields on legacy servers.
      *
-     * Nested aliases of assignments read those fields in MySQL 5.6 and 5.7.
+     * Nested assignment aliases read the previously stored field during sorting.
+     * Seeded random calls advance for each key read before the visible read.
+     * Verified with SQL and PDO on MySQL 5.6 and 5.7 in Testcontainers.
+     *
+     * @param list<Field> $fields The visible fields
+     * @param list<Evaluable> $expressions The fields followed by hidden keys
+     * @return list<int>
+     */
+    public function order(Select $select, array $fields, array $expressions): array
+    {
+        if (!$this->planner->settings->legacy() || (new Emission($this->planner))->sortable($select) || count($expressions) <= count($fields)) {
+            return [];
+        }
+
+        return [...array_slice(array_keys($expressions), count($fields)), ...array_keys($fields)];
+    }
+
+    /**
+     * Reuses non-DISTINCT legacy assignment fields when sorting reads stored output.
+     *
+     * Nested aliases of assignments read the previously stored fields in MySQL 5.6 and 5.7.
      * A projection deferred until emission still computes its sorting keys over input rows.
      * Verified through SQL and PDO metadata in Testcontainers.
      *
