@@ -91,6 +91,9 @@ final class Reader
         if (!$error->recorded) {
             $session->diagnostics->error($error->getCode(), $error->getMessage());
         }
+        foreach ($error->following as [$code, $message]) {
+            $session->diagnostics->error($code, $message);
+        }
         $session->variables->rowCount = -1;
 
         return $error;

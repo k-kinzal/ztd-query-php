@@ -172,7 +172,7 @@ final class AggregationTest extends TestCase
 
         self::assertEquals(Domain::string(22, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->strings([$literal, Domain::double()], 'case', new Derivation((new Semantics(Dialect::MySql))->context([]))));
         self::assertSame(12, (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->strings([$literal, new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED)], 'case', new Derivation((new Semantics(Dialect::MySql))->context([])))?->length);
-        self::assertSame(23, (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->strings([$literal, new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED)], 'case', new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([])))?->length);
+        self::assertSame(12, (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->strings([$literal, new Domain(Kind::Double, Field::Float, 12, Domain::NOT_FIXED)], 'case', new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([])))?->length);
     }
 
     public function testTextsCountTheBytesOfAStringInABinaryResult(): void

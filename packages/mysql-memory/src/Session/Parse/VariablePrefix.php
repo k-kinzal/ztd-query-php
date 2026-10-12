@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Session\Parse;
 
-use MySqlMemory\Error\Family\AdministrationError;
 use MySqlMemory\Error\SqlError;
+use MySqlMemory\Session\Problem\Errors;
 use MySqlMemory\Session\Session;
 use SqlParser\Lexer\SourceException;
 use SqlParser\Lexer\Token;
@@ -16,7 +16,8 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Problem\UnknownSystemVariable
 /**
  * Resolves an assignment target before a later MySQL 5.6 syntax error.
  *
- * A prefix ending at the target is parsed and resolved with a DEFAULT value.
+ * Prefixes ending at assignment operators or the syntax error are parsed and
+ * resolved with a DEFAULT value, in source order.
  * It never executes an assignment. Incomplete targets retain the original
  * syntax diagnostic. Observed through SET ROLE lexical-boundary cases on 5.6.51.
  *
@@ -34,16 +35,25 @@ final class VariablePrefix
         if ($session->settings()->release() !== GrammarRelease::MySql5651 || strtoupper($tokens[0]->text ?? '') !== 'SET') {
             return null;
         }
-        try {
-            $semantics = $session->semantics();
-            $tree = $semantics->parser()->parse(substr($statement, 0, $end) . '=DEFAULT');
-            $operation = $semantics->analyze($tree, $semantics->context([], session: $session->resolution()));
-        } catch (SourceException|AnalysisException) {
-            return null;
+        $positions = [];
+        foreach ($tokens as $token) {
+            if ($token->offset <= $end && in_array($token->text, ['=', ':='], true)) {
+                $positions[] = $token->offset;
+            }
         }
-        foreach ($operation->facts->diagnostics as $problem) {
-            if ($problem instanceof UnknownSystemVariable && $problem->assigned) {
-                return AdministrationError::UnknownSystemVariable->error($problem->name);
+        $positions[] = $end;
+        $semantics = $session->semantics();
+        foreach (array_unique($positions) as $position) {
+            try {
+                $tree = $semantics->parser()->parse(substr($statement, 0, $position) . '=DEFAULT');
+                $operation = $semantics->analyze($tree, $semantics->context([], session: $session->resolution()));
+            } catch (SourceException|AnalysisException) {
+                continue;
+            }
+            foreach ($operation->facts->diagnostics as $problem) {
+                if ($problem instanceof UnknownSystemVariable) {
+                    return (new Errors())->error($problem, $session);
+                }
             }
         }
 

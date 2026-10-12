@@ -235,9 +235,8 @@ final class Aggregation
     }
 
     /**
-     * Computes the legacy textual bound of branch values. COALESCE and DOUBLE
-     * control branches retain their expression width. Other FLOAT branches and
-     * UNION use their conversion width.
+     * Computes the legacy textual bound of branch values. Control branches retain
+     * their expression width. UNION uses the floating-point conversion width.
      * Computed blob bounds remain separate from their storage capacity.
      *
      * @param non-empty-list<Domain> $domains The branch domains
@@ -247,7 +246,7 @@ final class Aggregation
         $length = 0;
         foreach ($domains as $domain) {
             $bound = match (true) {
-                $domain->kind !== Kind::Double, $operation === 'coalesce', $operation !== 'UNION' && $domain->field !== Field::Float => $domain->length,
+                $domain->kind !== Kind::Double, $operation !== 'UNION' => $domain->length,
                 $domain->field === Field::Float => 23,
                 default => 22,
             };

@@ -36,6 +36,28 @@ final class VariablePrefixTest extends TestCase
         self::assertNull((new VariablePrefix())->before($session->semantics()->parser()->tokenize($incomplete), $incomplete, strlen($incomplete), $session));
     }
 
+    public function testBeforeResolvesTheTargetBeforeReadingAnIncompleteRightHandSide(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $sql = 'SET unknown_prefix=(';
+        $error = (new VariablePrefix())->before($session->semantics()->parser()->tokenize($sql), $sql, strlen($sql), $session);
+
+        self::assertSame("Unknown system variable 'unknown_prefix'", $error?->getMessage());
+        self::assertSame([[1193, "Unknown system variable 'unknown_prefix'"]], $error->following);
+        self::assertSame([], $session->diagnostics->conditions);
+    }
+
+    public function testBeforePreservesAnEarlierUnknownReadWithoutRepeatingItsCondition(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $sql = 'SET @x=@@another_missing,unknown_prefix 1';
+        $error = (new VariablePrefix())->before($session->semantics()->parser()->tokenize($sql), $sql, strlen($sql) - 1, $session);
+
+        self::assertSame("Unknown system variable 'another_missing'", $error?->getMessage());
+        self::assertSame([], $error->following);
+        self::assertSame([], $session->variables->user);
+    }
+
     public function testBeforeDoesNotOverrideOtherReleasesOrStatements(): void
     {
         $session = (new Instance('5.7.44'))->connect();

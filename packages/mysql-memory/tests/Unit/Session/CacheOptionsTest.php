@@ -38,6 +38,16 @@ final class CacheOptionsTest extends TestCase
         self::assertSame([1681, 1064], array_column($session->diagnostics->conditions, 1));
     }
 
+    public function testReportedKeepsBothConditionsOfAnUnknownAssignmentTargetIn56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $answers = $session->run('SET unknown_prefix=(');
+
+        self::assertInstanceOf(SqlError::class, $answers[0]);
+        self::assertSame(1193, $answers[0]->getCode());
+        self::assertSame([['Error', 1193, "Unknown system variable 'unknown_prefix'"], ['Error', 1193, "Unknown system variable 'unknown_prefix'"]], $session->diagnostics->conditions);
+    }
+
     public function testReportedNamesTheClauseAUnionOperandMayNotWrite(): void
     {
         $session = (new Instance('5.6.51'))->connect();

@@ -61,6 +61,17 @@ final class ReaderTest extends TestCase
         (new Reader())->read('SELECT ?', false, $session);
     }
 
+    public function testRefusedCountsFollowingErrorsBeyondTheConditionStorageLimit(): void
+    {
+        $session = (new Instance())->connect();
+        $session->diagnostics->limit = 1;
+        $error = new SqlError(\MySqlMemory\Error\Family\AdministrationError::UnknownSystemVariable, 'unknown', following: [[1193, 'following']]);
+
+        self::assertSame($error, (new Reader())->refused($error, 'SET x=(', true, $session));
+        self::assertSame([['Error', 1193, 'unknown']], $session->diagnostics->conditions);
+        self::assertSame([2, 2], [$session->diagnostics->raised(), $session->diagnostics->errors()]);
+    }
+
     public function testRefusalAnswersTheParseErrorOfARefusedStatement(): void
     {
         $session = (new Instance())->connect();
