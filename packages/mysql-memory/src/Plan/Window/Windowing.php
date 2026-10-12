@@ -111,7 +111,7 @@ final class Windowing
         }
         $compiler = $this->planner->compiler;
         $bindings = [];
-        foreach ($used as $window) {
+        foreach ($used as $windowIndex => $window) {
             $partition = array_map(static fn (OrderItem $item): Evaluable => $compiler->compile($item->expression, $scope), $window->partition);
             $order = array_map(static fn (OrderItem $item): array => [$compiler->compile($item->expression, $scope), $item->direction?->value === 'DESC'], $window->order);
             $width = $input->width();
@@ -123,7 +123,10 @@ final class Windowing
             }
             $input = new Window($input, $partition, $order, $frames->compile($window, $order, $scope), $computed, $arguments);
             foreach ($window->calls as $index => $call) {
-                $bindings[] = [$call, new OutputRead($analytics[spl_object_id($call)], $width + $index, $direct, $select->from !== null && !$select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual)];
+                $read = new OutputRead($analytics[spl_object_id($call)], $width + $index, $direct, $select->from !== null && !$select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual);
+                $logical = $compiler->domain($call);
+                $last = $windowIndex === array_key_last($used);
+                $bindings[] = [$call, !$direct && $logical->kind->temporal() && (new \SqlSemantics\Platform\MySql\Rules\Query\Result\TemporalFields())->retainsWindow($select, $call, $last) ? new \MySqlMemory\Evaluation\Leaf\Retyped($read, $logical) : $read];
             }
         }
         foreach ($bindings as [$call, $read]) {
@@ -142,6 +145,9 @@ final class Windowing
         $domain = $expression->domain();
         if ($expression instanceof OutputRead) {
             return $domain;
+        }
+        if (!$this->planner->settings->legacy() && $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) && $field->type instanceof \SqlSemantics\Statement\Type\Known && $field->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
+            return \MySqlMemory\Typing\Domain::of($field->type->descriptor, $domain->nullable);
         }
         if ($field->expression !== null && $this->reads($field->expression)) {
             return $materialized ? \MySqlMemory\Typing\Domain::of((new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->windowed($domain->resolved(), $this->planner->settings->release(), $field->expression), $domain->nullable) : $domain;

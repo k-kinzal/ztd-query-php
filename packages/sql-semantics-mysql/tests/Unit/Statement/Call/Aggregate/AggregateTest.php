@@ -30,6 +30,22 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class AggregateTest extends TestCase
 {
+    public function testDeriveScalarGivesTemporalExtremesTheirExpressionCollation(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t (d DATE)');
+        $query = $semantics->analyze('SELECT MIN(d), MAX(d) FROM t', [$table]);
+        $minimum = $query->field(0)->type;
+        $maximum = $query->field(1)->type;
+        self::assertInstanceOf(Known::class, $minimum);
+        self::assertInstanceOf(Domain::class, $minimum->descriptor);
+        self::assertInstanceOf(Known::class, $maximum);
+        self::assertInstanceOf(Domain::class, $maximum->descriptor);
+
+        self::assertSame(['latin1_swedish_ci', 'latin1_swedish_ci'], [$minimum->descriptor->collation->name, $maximum->descriptor->collation->name]);
+        self::assertSame([Field::Date, Field::Date], [$minimum->descriptor->field, $maximum->descriptor->field]);
+    }
+
     public function testStarTellsCountOfAllRows(): void
     {
         self::assertTrue((new Aggregate(AggregateFunction::Count, []))->star());

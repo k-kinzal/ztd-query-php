@@ -233,6 +233,10 @@ final class Blocks
         if (!in_array(SelectOption::Distinct, $select->options, true)) {
             return new Project($input, $expressions);
         }
+        $deferred = (new Window\DistinctOutputs($this->planner))->plan($select, $fields, $input, $expressions, $domains, $hashed);
+        if ($deferred !== null) {
+            return $deferred;
+        }
         $compiler = $this->planner->compiler;
         $constants = [];
         foreach ($fields as $position => $field) {

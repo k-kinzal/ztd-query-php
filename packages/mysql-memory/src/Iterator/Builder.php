@@ -72,6 +72,7 @@ final class Builder
             $path instanceof Window => new WindowIterator($path, $this->build($path->input)),
             $path instanceof Limit => new LimitIterator($path, $this->build($path->input)),
             $path instanceof Distinct => new DistinctIterator($path, $this->build($path->input)),
+            $path instanceof \MySqlMemory\Plan\Path\Transform\ProjectDistinct => new Transform\ProjectDistinctIterator($path, $this->build($path->input)),
             $path instanceof RecursiveUnion => new RecursiveUnionIterator($path, $this->build($path->anchor), $this->build($path->recursive)),
             $path instanceof SetOperation => new SetOperationIterator($path, $this->build($path->left), $this->build($path->right)),
             default => throw new LogicException('No iterator executes ' . $path::class . '.'),

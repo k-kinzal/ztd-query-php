@@ -15,8 +15,6 @@ use SqlSemantics\Platform\MySql\Rules\Query\Grouping\RollupItems;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\GroupedRow;
 use SqlSemantics\Platform\MySql\Rules\Query\Having\HavingScope;
 use SqlSemantics\Platform\MySql\Rules\Query\Tail\TailFacts;
-use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
-use SqlSemantics\Platform\MySql\Statement\Expression\Subquery\ScalarSubquery;
 use SqlSemantics\Platform\MySql\Statement\Name\ColumnUse;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecated;
 use SqlSemantics\Platform\MySql\Statement\Notice\Deprecation;
@@ -111,7 +109,7 @@ final class SelectFacts
         foreach ($select->procedure === null ? [] : $select->procedure->arguments as $argument) {
             $derivation->scalar($argument, new Environment($context, $outer));
         }
-        $fact = new QueryFact((new RollupItems())->fields($select, $this->tabled($select, $items), $visible, $output, $derivation), $context->columnNames, $aggregation->expressions());
+        $fact = new QueryFact((new RollupItems())->fields($select, $this->tabled($select, $items, $derivation->context->profile->grammar), $visible, $output, $derivation), $context->columnNames, $aggregation->expressions());
         (new TailFacts())->derive($derivation, $outer, $fact, $select);
 
         return $fact;
@@ -127,7 +125,7 @@ final class SelectFacts
      * @param list<Field|OpenStar> $items
      * @return list<Field|OpenStar>
      */
-    public function tabled(Select $select, array $items): array
+    public function tabled(Select $select, array $items, \SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): array
     {
         if ($select->groupBy === null && !in_array(SelectOption::Distinct, $select->options, true) && !(new RollupItems())->windowed($select)) {
             return $items;
@@ -139,12 +137,13 @@ final class SelectFacts
                 continue;
             }
             $domain = $field->slot->type instanceof Known && $field->slot->type->descriptor instanceof Domain ? $field->slot->type->descriptor : null;
-            if ($domain === null || !$domain->kind->temporal() || $domain->collation->bytes() || $field->expression instanceof ScalarSubquery || ($field->expression !== null && (new RollupItems())->containsWindow([$field->expression]))) {
+            $stored = $domain === null ? null : (new Result\OutputFields())->domain($select, $field->expression, $domain, $release);
+            if ($stored === null || $stored === $domain) {
                 $fields[] = $field;
                 continue;
             }
             $slot = $field->slot;
-            $fields[] = new Field($field->position, new OutputSlot($slot->name, new Known((new Materialization())->nothing($domain)), $slot->nullability, $slot->column, $slot->origin, $slot->unnamed), $field->expression, $field->resolution);
+            $fields[] = new Field($field->position, new OutputSlot($slot->name, new Known($stored), $slot->nullability, $slot->column, $slot->origin, $slot->unnamed), $field->expression, $field->resolution);
         }
 
         return $fields;
