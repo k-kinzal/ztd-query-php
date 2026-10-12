@@ -225,7 +225,7 @@ final class Variables
         return match ($domain->kind) {
             Kind::Integer, Kind::Year, Kind::Bit => new Domain(Kind::Integer, Field::LongLong, $integerWidth, unsigned: $domain->unsigned, coercibility: Coercibility::Numeric, display: $integerDisplay),
             Kind::Decimal => new Domain(Kind::Decimal, Field::NewDecimal, 67, 30, coercibility: Coercibility::Numeric, display: $legacy ? 83 * $charset->maxLength : null),
-            Kind::Double => new Domain(Kind::Double, Field::Double, 23, Domain::NOT_FIXED, coercibility: Coercibility::Numeric, display: $legacy && $charset->maxLength > 1 ? 23 * $charset->maxLength : null),
+            Kind::Double => new Domain(Kind::Double, Field::Double, 23, Domain::NOT_FIXED, coercibility: Coercibility::Numeric, display: $legacy ? 23 * $charset->maxLength : null),
             Kind::Null => Domain::string(16777215, Collation::binary(), Field::MediumBlob),
             Kind::String, Kind::Json, Kind::Date, Kind::Time, Kind::DateTime => $this->text($domain->kind === Kind::String || $domain->kind === Kind::Json ? $domain->collation : Collation::known('latin1_swedish_ci')),
         };

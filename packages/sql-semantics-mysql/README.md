@@ -218,8 +218,9 @@ Resolved domains distinguish string expression bounds from reported byte lengths
 `CASE`, control functions, string extrema, variable assignments and concatenations
 retain both bounds so nested
 expressions do not repeatedly multiply a blob's width by its character set size.
-Modern `HEX` results also retain their character bound separately from the reported
-32-bit byte width, including when the encoded maximum wraps.
+`HEX` results also retain their character bound separately from the reported byte
+width, including through nested calls. Modern releases retain the low 32 bits when
+the encoded maximum wraps; legacy releases wrap the character count before scaling.
 The returned field type of `NULLIF` and computed `MIN`/`MAX` strings follows
 the emulated release, including MySQL 5.6 and 5.7 string sizing.
 When a derived table materializes a direct `GROUP_CONCAT` result, its column type

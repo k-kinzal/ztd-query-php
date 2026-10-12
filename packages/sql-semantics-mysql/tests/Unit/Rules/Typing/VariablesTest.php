@@ -125,6 +125,17 @@ final class VariablesTest extends TestCase
     }
 
     #[DataProvider('providerLegacyReleases')]
+    public function testAssignmentPreservesASingleByteDoubleWidthAfterChangingTheConnection(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), $release);
+        $source = $variables->held(Domain::double(), Collation::known('latin1_swedish_ci'));
+
+        self::assertSame(23, $source->display);
+        self::assertSame(23, $variables->assignment($source)->metadataLength());
+        self::assertSame(12, $variables->assignment(Domain::double(3))->metadataLength());
+    }
+
+    #[DataProvider('providerLegacyReleases')]
     public function testAssignmentPreservesReportedStringScaleAcrossNestedAssignments(\SqlSemantics\Contract\GrammarRelease $release): void
     {
         $variables = new Variables(new Settings(Collation::known('latin1_swedish_ci')), $release);

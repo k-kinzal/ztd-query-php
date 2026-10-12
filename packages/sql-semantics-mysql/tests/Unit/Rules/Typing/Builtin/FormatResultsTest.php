@@ -23,6 +23,20 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class FormatResultsTest extends TestCase
 {
+    public function testHexKeepsLegacyComputedByteBoundsThroughNestedCalls(): void
+    {
+        $collation = Collation::known('utf8mb4_general_ci');
+        $settings = new Settings($collation);
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $assigned = new Domain(Kind::String, Field::MediumBlob, 65535, Domain::NOT_FIXED, collation: Collation::known('latin1_swedish_ci'), display: 65535);
+        $rules = new FormatResults();
+        $first = $rules->hex(new Invocation([$assigned], [], $settings, $derivation));
+        $second = $rules->hex(new Invocation([$first], [], $settings, $derivation));
+
+        self::assertSame([131070, 524280, 0], [$first->length, $first->metadataLength(), $first->decimals]);
+        self::assertSame([Field::MediumBlob, 1048560, 4194240, 0], [$second->field, $second->length, $second->metadataLength(), $second->decimals]);
+    }
+
     public function testHexKeepsModernBlobByteWidthsSeparateFromCharacterBounds(): void
     {
         $collation = Collation::known('utf8mb4_0900_ai_ci');
@@ -145,7 +159,8 @@ final class FormatResultsTest extends TestCase
         $latin = (new FormatResults())->hex(new Invocation([$domain], [], new Settings(Collation::known('latin1_swedish_ci')), $derivation));
         $utf8 = (new FormatResults())->hex(new Invocation([$domain], [], new Settings(Collation::known('utf8mb4_general_ci')), $derivation));
 
-        self::assertSame([4294967294, 4294967295], [$latin->length, $utf8->length]);
+        self::assertSame([4294967294, 4294967295], [$latin->metadataLength(), $utf8->metadataLength()]);
+        self::assertSame([4294967294, 1073741823], [$latin->length, $utf8->length]);
         self::assertSame([0, 0], [$latin->decimals, $utf8->decimals]);
     }
 

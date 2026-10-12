@@ -160,7 +160,7 @@ final class FormatResults
         $length = $legacy && $call->domain(0)->kind->numeric() ? 2 * $call->length($call->domain(0)) : $this->digitsOf($call->domain(0));
 
         if ($legacy) {
-            return $this->undecimal($call, $this->sized($length & 4294967295, $call->settings->connection, Coercibility::Coercible));
+            return (new \SqlSemantics\Platform\MySql\Rules\Typing\Text\ResultBounds())->computed($this->undecimal($call, $this->sized($length & 4294967295, $call->settings->connection, Coercibility::Coercible)));
         }
         $length = $call->domain(0)->kind === Kind::String ? min(4294967295, $call->domain(0)->byteLength()) * 2 : $length;
         $domain = $this->sized($length, $call->settings->connection, Coercibility::Coercible);
