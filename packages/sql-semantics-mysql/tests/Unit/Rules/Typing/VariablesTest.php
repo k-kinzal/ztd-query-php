@@ -169,6 +169,21 @@ final class VariablesTest extends TestCase
         self::assertEquals(Domain::string(65532, Collation::binary()), $known->read('never'));
     }
 
+    #[DataProvider('providerLegacyReleases')]
+    public function testReadUsesTheAssignedCharacterSetAfterTheConnectionChanges(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $latin1 = Collation::known('latin1_swedish_ci');
+        $utf8 = Collation::known('utf8mb4_general_ci');
+        $stored = new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry(Domain::integer(), $utf8);
+        $variables = new Variables(new Settings($latin1, userVariables: ['V' => $stored]), $release);
+        $domain = $variables->read('v');
+
+        self::assertSame(80, $domain?->metadataLength());
+        self::assertSame(20, $domain->value()->length);
+        self::assertSame('binary', $domain->collation->name);
+        self::assertSame(20, (new Variables(new Settings($utf8, userVariables: ['v' => new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry(Domain::integer(), $latin1)]), $release))->read('v')?->metadataLength());
+    }
+
     /**
      * @return iterable<string, array{\SqlSemantics\Contract\GrammarRelease}>
      */

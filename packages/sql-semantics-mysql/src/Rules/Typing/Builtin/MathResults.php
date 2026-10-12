@@ -43,7 +43,7 @@ final class MathResults
     public function rules(): array
     {
         $rules = [
-            'ABS' => fn (Invocation $call): Domain => $this->same($call->domain(0)),
+            'ABS' => $this->absolute(...),
             'CEILING' => fn (Invocation $call): Domain => $this->integral($call->domain(0), $this->legacy($call)),
             'CEIL' => fn (Invocation $call): Domain => $this->integral($call->domain(0), $this->legacy($call)),
             'FLOOR' => fn (Invocation $call): Domain => $this->integral($call->domain(0), $this->legacy($call)),
@@ -75,12 +75,26 @@ final class MathResults
     public function same(Domain $domain): Domain
     {
         $numbers = new Numbers();
+        $display = $domain->display > $domain->length ? $domain->display : null;
 
         return match ($numbers->operand($domain)) {
-            Kind::Integer => new Domain(Kind::Integer, Field::LongLong, $domain->length, 0, $domain->unsigned, null, [], Coercibility::Numeric, displayDecimals: $domain->displayDecimals),
+            Kind::Integer => new Domain(Kind::Integer, Field::LongLong, $domain->length, 0, $domain->unsigned, null, [], Coercibility::Numeric, display: $display, displayDecimals: $domain->displayDecimals),
             Kind::Decimal => $domain->kind === Kind::Decimal ? $domain : Domain::decimal(...$numbers->digits($domain)),
             Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => Domain::double(23),
         };
+    }
+
+    /**
+     * Resolves ABS with the legacy operand's expanded numeric metadata width.
+     * Narrow declared column widths still give way to the logical integer width.
+     * Verified through PDO on Testcontainers MySQL 5.6.51 and 5.7.44.
+     */
+    public function absolute(Invocation $call): Domain
+    {
+        $node = $call->nodes[0] ?? null;
+        $source = $node !== null && $this->legacy($call) ? (new \SqlSemantics\Platform\MySql\Rules\Typing\Precision())->domain($call->derivation->facts()->scalar($node)->type) : null;
+
+        return $this->same($source ?? $call->domain(0));
     }
 
     /**

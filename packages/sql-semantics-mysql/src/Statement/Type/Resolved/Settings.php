@@ -37,7 +37,7 @@ final class Settings implements Session
     public readonly array $schemas;
 
     /**
-     * @var array<string, Domain>|null The type of the value each user variable holds, by lower-case name; null when unknown
+     * @var array<string, Domain|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry>|null The stored types by lower-case name; a Domain alone uses the connection collation for numeric assignment metadata; null when unknown
      */
     public readonly ?array $userVariables;
 
@@ -57,7 +57,7 @@ final class Settings implements Session
      * @param Collation|null $server The default collation of a schema the settings do not list (collation_server); the connection collation when null
      * @param array<string, Collation> $schemas The default collation of each schema, by name
      * @param int $groupConcatMaxLen The longest result of GROUP_CONCAT in bytes (group_concat_max_len)
-     * @param array<string, Domain>|null $userVariables The type of the value each user variable holds, by name; null when the session does not say
+     * @param array<string, Domain|\SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry>|null $userVariables The stored types by name, optionally including assignment collations; null when the session does not say
      * @param array<int, Domain> $parameters The type of the value bound to each parameter marker, by the position of the marker among the markers
      * @param bool $unsignedSubtraction Whether subtracting from an unsigned integer gives an unsigned integer, as it does unless sql_mode has NO_UNSIGNED_SUBTRACTION
      * @param Charset|null $client The character set statements are read in (character_set_client); null when the session does not say

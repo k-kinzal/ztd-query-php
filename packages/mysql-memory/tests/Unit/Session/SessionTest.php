@@ -283,7 +283,7 @@ final class SessionTest extends TestCase
         $session->query('SET @v = 5');
         $resolution = $session->resolution([0 => Domain::integer()->resolved()]);
 
-        self::assertEquals(['v' => Domain::integer()->withNullable(false)->resolved()], $resolution->userVariables);
+        self::assertEquals(['v' => new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry(Domain::integer()->withNullable(false)->resolved(), $resolution->connection)], $resolution->userVariables);
         self::assertEquals([0 => Domain::integer()->resolved()], $resolution->parameters);
     }
 

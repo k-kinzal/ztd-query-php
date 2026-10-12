@@ -25,8 +25,9 @@ final class IntegerVariableWidthTest extends TestCase
             }
             foreach (['latin1', 'utf8mb4'] as $results) {
                 yield $charset . ' results ' . $results => ['SET NAMES ' . $charset . '; SET @integer_width=0; SET character_set_results=' . $results . '; SELECT @integer_width,@integer_width+0'];
-                yield $charset . ' changed ' . $results => ['SET NAMES ' . $charset . '; SET @integer_width=0; SET NAMES ' . $results . '; SELECT @integer_width,@integer_width+0'];
+                yield $charset . ' changed ' . $results => ['SET NAMES ' . $charset . '; SET @integer_width=0; SET NAMES ' . $results . '; SELECT @integer_width,@integer_width+0,ABS(@integer_width),ABS(@integer_width)+0,@integer_assigned:=@integer_width; SELECT @integer_assigned'];
             }
+            yield $charset . ' absolute column widths' => ['SET NAMES ' . $charset . '; CREATE TABLE absolute_widths(narrow INT(3),wide INT(30)); INSERT INTO absolute_widths VALUES(-12,-12); SELECT narrow,wide,ABS(narrow),ABS(wide),ABS(ABS(narrow)),ABS(ABS(wide)) FROM absolute_widths'];
         }
     }
 

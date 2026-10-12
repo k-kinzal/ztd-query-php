@@ -11,12 +11,13 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
+use SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry;
 
 /**
  * Resolves the type a user variable is read with, from the type of the value it holds.
  *
  * An integer reads as a BIGINT (logical width 20 in MySQL 5.6 and 5.7, and 21 from 8.0).
- * Legacy integer result metadata expands that width by the connection character set;
+ * Legacy integer result metadata expands that width by the assignment character set;
  * arithmetic keeps the logical width. A decimal reads as DECIMAL(65,30)
  * (reported width 83 in MySQL 5.6 and 5.7, and 67 from 8.0), a double as a double, and any
  * other value as a blob in its collation, a temporal value in latin1: a medium blob of 16777215 bytes
@@ -49,6 +50,9 @@ final class Variables
             return null;
         }
         $held = $variables[strtolower($name)] ?? null;
+        if ($held instanceof UserVariableEntry) {
+            return $this->held($held->domain, $held->collation);
+        }
 
         return $held === null ? (in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? Domain::string(16777216, Collation::binary(), Field::LongBlob) : Domain::string(65532, Collation::binary())) : $this->held($held);
     }
@@ -164,11 +168,12 @@ final class Variables
     /**
      * Resolves the read of a variable that holds a value of a type.
      */
-    public function held(Domain $domain): Domain
+    public function held(Domain $domain, ?Collation $assignment = null): Domain
     {
         $legacy = in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
         $integerWidth = $legacy ? 20 : 21;
-        $integerDisplay = $legacy && $this->settings->connection->charset->maxLength > 1 ? 20 * $this->settings->connection->charset->maxLength : null;
+        $charset = ($assignment ?? $this->settings->connection)->charset;
+        $integerDisplay = $legacy && $charset->maxLength > 1 ? 20 * $charset->maxLength : null;
 
         return match ($domain->kind) {
             Kind::Integer, Kind::Year, Kind::Bit => new Domain(Kind::Integer, Field::LongLong, $integerWidth, unsigned: $domain->unsigned, coercibility: Coercibility::Numeric, display: $integerDisplay),

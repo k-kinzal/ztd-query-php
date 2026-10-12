@@ -355,7 +355,7 @@ final class Session
         $connection = Collation::named((string) $this->variables->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci');
         $server = Collation::named((string) $this->variables->read('collation_server'));
 
-        $users = array_map(static fn (array $variable) => $variable[1]->resolved(), $this->variables->user);
+        $users = array_map(static fn (\MySqlMemory\Variable\UserEntry $variable) => new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry($variable->domain->resolved(), $variable->collation), $this->variables->user);
 
         $client = $this->variables->read('character_set_client');
         $timestamps = $this->variables->read('explicit_defaults_for_timestamp');

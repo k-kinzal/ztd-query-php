@@ -6,6 +6,8 @@ namespace MySqlMemory\Session;
 
 use MySqlMemory\Typing\Domain;
 use MySqlMemory\Variable\Scope;
+use MySqlMemory\Variable\UserEntry;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Definition;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\Reach;
 use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
@@ -25,7 +27,7 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
 final class Variables
 {
     /**
-     * @var array<string, array{int|float|string|null, Domain}> The value and domain of each user variable, by lower-case name
+     * @var array<string, UserEntry> The value, domain and assignment collation of each user variable, by lower-case name
      */
     public array $user = [];
 
@@ -108,7 +110,9 @@ final class Variables
      */
     public function user(string $name): array
     {
-        return $this->user[strtolower($name)] ?? [null, Domain::string(0, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::binary(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::MediumBlob)];
+        $entry = $this->user[strtolower($name)] ?? null;
+
+        return $entry === null ? [null, Domain::string(0, Collation::binary(), \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::MediumBlob)] : [$entry->value, $entry->domain];
     }
 
     /**
@@ -116,7 +120,8 @@ final class Variables
      */
     public function assign(string $name, int|float|string|null $value, Domain $domain): void
     {
-        $this->user[strtolower($name)] = [$value, $domain];
+        $collation = $domain->kind->numeric() ? Collation::named((string) $this->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci') : $domain->collation;
+        $this->user[strtolower($name)] = new UserEntry($value, $domain, $collation);
     }
 
     /**

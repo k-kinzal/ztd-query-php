@@ -73,7 +73,21 @@ final class VariablesTest extends TestCase
         $variables = new Variables(SystemVariables::of(GrammarRelease::MySql847), new Globals());
         $variables->assign('V', 'ink', Domain::string(3, Collation::known('utf8mb4_0900_ai_ci')));
 
-        self::assertEquals(['v' => ['ink', Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'))]], $variables->user);
+        self::assertSame(['v'], array_keys($variables->user));
+        self::assertEquals(['ink', Domain::string(3, Collation::known('utf8mb4_0900_ai_ci'))], $variables->user('V'));
+    }
+
+    public function testAssignKeepsNumericAssignmentCollationUntilAnotherAssignment(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET NAMES latin1; SET @v=12; SET NAMES utf8mb4');
+        $saved = $session->variables->user;
+        $session->query('SET @v=13');
+
+        self::assertSame('latin1', $saved['v']->collation->charset->name);
+        self::assertSame('binary', $saved['v']->domain->collation->charset->name);
+        self::assertSame('utf8mb4', $session->variables->user['v']->collation->charset->name);
+        self::assertSame(12, $saved['v']->value);
     }
 
     public function testAssignOfAStatementIsReadBack(): void

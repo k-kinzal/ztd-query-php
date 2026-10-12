@@ -188,6 +188,14 @@ each absent operand from the first other resolved result branch, including an
 explicit NULL, before aggregating all result types. An omitted ELSE adds no
 inference operand.
 
+Each `Settings::$userVariables` entry accepts a `Domain` or a
+`Statement\Variable\UserVariableEntry`. Use `UserVariableEntry` to provide both
+the stored value's domain and the collation retained at assignment. MySQL 5.6
+and 5.7 use the assignment character set for integer result metadata, even after
+the connection changes character set; numeric arithmetic still uses the logical
+integer width. A plain `Domain` assumes the current connection collation for
+this metadata.
+
 `Statement\Type\Resolved\Settings::$explicitDefaultsForTimestamp` controls
 the nullability of TIMESTAMP columns without an explicit NULL attribute. With
 the setting disabled they are NOT NULL; with it enabled they are nullable.

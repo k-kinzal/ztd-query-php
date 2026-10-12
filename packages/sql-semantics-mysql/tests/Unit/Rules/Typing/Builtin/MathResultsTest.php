@@ -45,6 +45,21 @@ final class MathResultsTest extends TestCase
         self::assertEquals(Domain::double(23), (new MathResults())->same(Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'), Field::VarString, Coercibility::Coercible)));
     }
 
+    public function testAbsoluteKeepsExpandedLegacyMetadataOutOfArithmeticPrecision(): void
+    {
+        $settings = new Settings(Collation::known('latin1_swedish_ci'), userVariables: ['v' => new \SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry(Domain::integer(), Collation::known('utf8mb4_general_ci'))]);
+        $semantics = new Semantics(Dialect::MySql, 'mysql-5.7.44');
+        $operation = $semantics->analyze('SELECT ABS(@v),ABS(@v)+0', $semantics->context([], session: $settings));
+        $absolute = $operation->field(0)->type;
+        $added = $operation->field(1)->type;
+
+        self::assertInstanceOf(Known::class, $absolute);
+        self::assertInstanceOf(Domain::class, $absolute->descriptor);
+        self::assertSame(80, $absolute->descriptor->metadataLength());
+        self::assertSame(20, $absolute->descriptor->value()->length);
+        self::assertEquals(new Known(Domain::integer(Field::LongLong, 21)), $added);
+    }
+
     public function testIntegralIsABigIntUpToEighteenDigits(): void
     {
         self::assertEquals(Domain::integer(Field::LongLong, 21), (new MathResults())->integral(Domain::decimal(2, 1)));
