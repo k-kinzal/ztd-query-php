@@ -11,6 +11,7 @@ use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Instance;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
@@ -46,5 +47,27 @@ final class AssignmentTest extends TestCase
 
         self::assertSame(65, $assignment->evaluate(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0), ['A'])));
         self::assertSame([65, $stored], $session->variables->user('v'));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerNullCollations(): iterable
+    {
+        yield '5.6 replaces' => ['5.6.51', 'utf8mb4'];
+        yield '5.7 retains' => ['5.7.44', 'latin1'];
+        yield '8.4 retains' => ['8.4.7', 'latin1'];
+    }
+
+    #[DataProvider('providerNullCollations')]
+    public function testEvaluateUsesTheReleasePolicyForTypedNullCollations(string $version, string $charset): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query("SET NAMES utf8mb4;SET @v=_latin1'abc';SELECT @v:=CAST(NULL AS DATE)");
+        $entry = $session->variables->user['v'];
+
+        self::assertNull($entry->value);
+        self::assertSame($charset, $entry->collation->charset->name);
+        self::assertSame($charset, $entry->domain->collation->charset->name);
     }
 }

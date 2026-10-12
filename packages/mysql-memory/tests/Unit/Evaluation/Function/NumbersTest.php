@@ -53,6 +53,16 @@ final class NumbersTest extends TestCase
         self::assertSame([['Warning', '1292', "Truncated incorrect DOUBLE value: '-3x'"]], $warnings->rows);
     }
 
+    public function testAbsUsesTheResolvedScaleForDecimalVariables(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('SET @positive=1.5, @negative=-1.50, @zero=0.0');
+        $result = $session->query('SELECT ABS(@positive), ABS(@negative), ABS(@zero)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1.500000000000000000000000000000', '1.500000000000000000000000000000', '0.000000000000000000000000000000']], $result->rows);
+    }
+
     public function testAbsKeepsTheLargestUnsignedBigint(): void
     {
         $session = (new Instance())->connect();

@@ -88,7 +88,7 @@ final class Numbers
 
         return match ($result->kind) {
             Kind::Integer => $result->unsigned ? (int) Convert::toInteger($value, $domain, $frame->context, true) : $this->absolute((int) Convert::toInteger($value, $domain, $frame->context), $text),
-            Kind::Decimal => ltrim((string) Convert::toDecimal($value, $domain, $frame->context), '-'),
+            Kind::Decimal => Decimal::round(ltrim((string) Convert::toDecimal($value, $domain, $frame->context), '-'), $result->decimals),
             Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Year, Kind::Json, Kind::Bit, Kind::Null => abs((float) Convert::toDouble($value, $domain, $frame->context)),
         };
     }

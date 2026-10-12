@@ -19,13 +19,15 @@ use SqlSemantics\Platform\MySql\Statement\Variable\UserVariableEntry;
  * An integer reads as a BIGINT (logical width 20 in MySQL 5.6 and 5.7, and 21 from 8.0).
  * Legacy integer result metadata expands that width by the assignment character set;
  * arithmetic keeps the logical width. A decimal reads as DECIMAL(65,30)
- * (reported width 83 in MySQL 5.6 and 5.7, and 67 from 8.0), a double as a double, and any
+ * (reported width 83 times the assignment character width in MySQL 5.6 and 5.7,
+ * and 67 from 8.0), a double as a double (legacy width 23 times the assignment character width), and any
  * other value as a blob in its collation, a temporal value in latin1: a medium blob of 16777215 bytes
  * in MySQL 5.6 and 5.7, and from MySQL 8.0 with a byte bound of 16777215 times
  * the character set's maximum width, a long blob when that passes 16777215 bytes. A
  * newly assigned untyped NULL is a binary medium blob. Later untyped NULL assignments
- * preserve an entry's previous type; typed NULL assignments change the type but retain
- * its assignment collation. An allocated, unexecuted entry is a NULL string in the
+ * preserve an entry's previous type; typed NULL assignments change the type and, in
+ * MySQL 5.6, its assignment collation. Later releases retain the preceding collation.
+ * An allocated, unexecuted entry is a NULL string in the
  * operand's allocation collation. One never allocated is a binary long
  * blob of 16777216 bytes in MySQL 5.6 and 5.7, and a binary string of 65532 bytes from 8.0
  * (verified through SQL on live servers and Testcontainers).
@@ -206,8 +208,8 @@ final class Variables
 
         return match ($domain->kind) {
             Kind::Integer, Kind::Year, Kind::Bit => new Domain(Kind::Integer, Field::LongLong, $integerWidth, unsigned: $domain->unsigned, coercibility: Coercibility::Numeric, display: $integerDisplay),
-            Kind::Decimal => new Domain(Kind::Decimal, Field::NewDecimal, 67, 30, coercibility: Coercibility::Numeric, display: $legacy ? 83 : null),
-            Kind::Double => Domain::double(23),
+            Kind::Decimal => new Domain(Kind::Decimal, Field::NewDecimal, 67, 30, coercibility: Coercibility::Numeric, display: $legacy ? 83 * $charset->maxLength : null),
+            Kind::Double => new Domain(Kind::Double, Field::Double, 23, Domain::NOT_FIXED, coercibility: Coercibility::Numeric, display: $legacy && $charset->maxLength > 1 ? 23 * $charset->maxLength : null),
             Kind::Null => Domain::string(16777215, Collation::binary(), Field::MediumBlob),
             Kind::String, Kind::Json, Kind::Date, Kind::Time, Kind::DateTime => $this->text($domain->kind === Kind::String || $domain->kind === Kind::Json ? $domain->collation : Collation::known('latin1_swedish_ci')),
         };

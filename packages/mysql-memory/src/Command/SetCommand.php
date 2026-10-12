@@ -98,11 +98,11 @@ final class SetCommand implements Command
     {
         if ($item instanceof UserAssignment) {
             $value = $planner->compiler->compile($item->value, new Scope());
-            $planner->compiler->names->allocate($item->variable->name->value, $value->domain());
+            $collation = $planner->compiler->names->allocate($item->variable->name->value, $value->domain());
             $result = $value->evaluate($frame);
             $stored = $planner->compiler->names->stored($value->domain());
 
-            return static fn () => $session->variables->assign($item->variable->name->value, $result, $stored);
+            return static fn () => $session->variables->assign($item->variable->name->value, $result, $stored, $collation);
         }
         if ($item instanceof SystemAssignment) {
             return $this->system($item, $planner, $frame, $assigner, $session);

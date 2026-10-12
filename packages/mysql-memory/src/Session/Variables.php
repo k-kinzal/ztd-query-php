@@ -21,7 +21,8 @@ use SqlSemantics\Platform\MySql\Statement\Variable\Catalog\SystemVariables;
  * A user variable holds a value and domain together with its assignment collation.
  * Preparation can allocate a NULL string entry without executing an assignment.
  * An untyped NULL preserves an existing entry's type; typed NULL values change its
- * type while retaining its collation. A connection starts with the session value of each system variable that has both scopes
+ * type. Their collation is replaced in MySQL 5.6 and retained from 5.7.
+ * A connection starts with the session value of each system variable that has both scopes
  * set to its global value, so a later SET GLOBAL does not change it; a variable with a global
  * value only reads the global value.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/user-variables.html,
@@ -122,13 +123,16 @@ final class Variables
 
     /**
      * Assigns a user variable.
+     * MySQL 5.6 gives a typed NULL the prepared operand collation; an untyped NULL,
+     * and all NULL assignments from 5.7, retain the entry's preceding collation.
+     * Verified through PDO in Testcontainers MySQL 5.6.51 and 5.7.44.
      */
-    public function assign(string $name, int|float|string|null $value, Domain $domain): void
+    public function assign(string $name, int|float|string|null $value, Domain $domain, ?Collation $preparedCollation = null): void
     {
         $previous = $this->user[strtolower($name)] ?? null;
         $collation = $domain->kind->numeric() ? Collation::named((string) $this->read('collation_connection')) ?? Collation::known('utf8mb4_0900_ai_ci') : $domain->collation;
         if ($value === null) {
-            $collation = $previous->collation ?? $collation;
+            $collation = $this->instance->version === '5.6.51' && $domain->kind !== Kind::Null ? $preparedCollation ?? $collation : $previous->collation ?? $collation;
             $domain = $domain->kind === Kind::Null ? $previous->domain ?? Domain::string(0, Collation::binary(), Field::MediumBlob) : $domain;
             if ($domain->kind === Kind::String) {
                 $domain = $domain->withCollation($collation, Coercibility::Implicit);

@@ -114,6 +114,20 @@ final class VariablesTest extends TestCase
         self::assertSame(12, $variables->user('v')[0]);
     }
 
+    public function testAssignPreservesUntypedNullCollationsButReplacesTypedNullInMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('SET NAMES latin1;SET @v=12;SET NAMES utf8mb4;SET @v=NULL');
+        $untyped = $session->variables->user['v'];
+        $session->query('SET @v=CAST(NULL AS SIGNED)');
+        $typed = $session->variables->user['v'];
+
+        self::assertSame('latin1', $untyped->collation->charset->name);
+        self::assertSame('utf8mb4', $typed->collation->charset->name);
+        self::assertSame($untyped->domain->kind, $typed->domain->kind);
+        self::assertNull($typed->value);
+    }
+
     public function testAssignOfAStatementIsReadBack(): void
     {
         $session = (new Instance())->connect();

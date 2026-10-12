@@ -21,8 +21,9 @@ final class Assignment implements Evaluable
      * @param Evaluable $value The value assigned
      * @param Domain $stored The domain the variable holds the value in
      * @param Domain $domain The assignment expression's resolved result domain
+     * @param \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation|null $preparedCollation The operand's allocation collation, retained for MySQL 5.6 typed NULL assignments
      */
-    public function __construct(public readonly string $name, public readonly Evaluable $value, public readonly Domain $stored, public readonly Domain $domain)
+    public function __construct(public readonly string $name, public readonly Evaluable $value, public readonly Domain $stored, public readonly Domain $domain, public readonly ?\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation $preparedCollation = null)
     {
     }
 
@@ -45,7 +46,7 @@ final class Assignment implements Evaluable
         if ($this->value->domain()->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Bit) {
             $value = \MySqlMemory\Evaluation\Convert::toInteger($value, $this->value->domain(), $frame->context, true);
         }
-        $frame->context->variables->assign($this->name, $value, $this->stored);
+        $frame->context->variables->assign($this->name, $value, $this->stored, $this->preparedCollation);
 
         return $value;
     }

@@ -83,7 +83,7 @@ final class VariablesTest extends TestCase
         $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), \SqlSemantics\Contract\GrammarRelease::MySql5744);
 
         self::assertSame(84, $variables->assignmentDisplay(Domain::integer()));
-        self::assertSame(83, $variables->assignmentDisplay($variables->held(Domain::decimal(7, 2))));
+        self::assertSame(332, $variables->assignmentDisplay($variables->held(Domain::decimal(7, 2))));
         self::assertNull($variables->assignmentDisplay(Domain::string(3, Collation::binary())));
     }
 
@@ -122,6 +122,21 @@ final class VariablesTest extends TestCase
         self::assertSame(65, $domain->precision());
         self::assertSame(30, $domain->decimals);
         self::assertSame($domain, $domain->value());
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testHeldExpandsLegacyDecimalAndDoubleMetadataUsingTheAssignedCharacterSet(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $variables = new Variables(new Settings(Collation::known('latin1_swedish_ci')), $release);
+        $assigned = Collation::known('utf8mb4_general_ci');
+        $decimal = $variables->held(Domain::decimal(5, 2), $assigned);
+        $double = $variables->held(Domain::double(), $assigned);
+
+        self::assertSame(332, $decimal->metadataLength());
+        self::assertSame(65, $decimal->precision());
+        self::assertSame(30, $decimal->decimals);
+        self::assertSame(92, $double->metadataLength());
+        self::assertSame(23, $double->value()->length);
     }
 
     #[DataProvider('providerLegacyReleases')]
