@@ -19,6 +19,31 @@ use SqlSemantics\Statement\Type\Known;
 final class OutputFieldsTest extends TestCase
 {
     /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerLegacyParents(): iterable
+    {
+        foreach (['mysql-5.6.51', 'mysql-5.7.44'] as $release) {
+            foreach (['' => 31, ' GROUP BY 1+1' => 31, ' GROUP BY n WITH ROLLUP' => 0] as $group => $decimals) {
+                yield $release . $group => [$release, $group, $decimals];
+            }
+        }
+    }
+
+    #[DataProvider('providerLegacyParents')]
+    public function testStoredKeepsLegacyConstantGroupParentsOutsideDistinctStorage(string $release, string $group, int $decimals): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $table = $semantics->analyze('CREATE TABLE t(d DATE,n INT)');
+        $query = $semantics->analyze('SELECT DISTINCT CONCAT(MIN(d)) FROM t' . $group, [$table]);
+        $type = $query->field(0)->type;
+
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+        self::assertSame($decimals, $type->descriptor->decimals);
+    }
+
+    /**
      * @return iterable<string, array{string, int}>
      */
     public static function providerFields(): iterable

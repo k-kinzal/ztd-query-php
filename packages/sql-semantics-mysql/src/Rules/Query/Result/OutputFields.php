@@ -110,6 +110,9 @@ final class OutputFields
         $rollup = new RollupItems();
         $expression = (new Matching())->unwrap($expression);
         $bare = $expression instanceof SetFunction || $expression instanceof WindowFunction;
+        if (!$bare && (new GroupKeys())->direct($select, $facts)) {
+            return false;
+        }
         $distinct = in_array(SelectOption::Distinct, $select->options, true);
         if ($expression instanceof GroupConcat && !$distinct && !$rollup->windowed($select) && !$rollup->rolls($select) && !in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
             return false;
