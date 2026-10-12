@@ -8,6 +8,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Plan\Grouping\Tuples;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 
@@ -15,6 +16,27 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class TuplesTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyVersions(): iterable
+    {
+        yield 'MySQL 5.6' => ['5.6.51'];
+        yield 'MySQL 5.7' => ['5.7.44'];
+    }
+
+    #[DataProvider('providerLegacyVersions')]
+    public function testOmittedFreezesResolvedCountAssignmentsAfterPreparation(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @x=0');
+        $result = $session->query('SELECT COUNT(DISTINCT @x:=2) FROM t WHERE (@x:=@x+1)>0')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1']], $result->rows);
+        self::assertSame(5, $session->variables->user('x')[0]);
+    }
+
     public function testPlanReadsLegacyAssignmentsForEveryTupleBeforeNullRejection(): void
     {
         $session = (new Instance('5.7.44'))->connect();

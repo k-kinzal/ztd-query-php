@@ -17,6 +17,33 @@ use PHPUnit\Framework\TestCase;
 final class PreparationTest extends TestCase
 {
     /**
+     * @return iterable<string, array{string, list<list<string>>, int, int}>
+     */
+    public static function providerLegacyPhases(): iterable
+    {
+        yield 'MySQL 5.6' => ['5.6.51', [['1', '1', '2'], ['3', '1', '3'], ['4', '1', '4']], 4, 0];
+        yield 'MySQL 5.7' => ['5.7.44', [['3', '1', '3'], ['4', '1', '4'], ['5', '1', '5']], 5, 2];
+    }
+
+    /**
+     * @param list<list<string>> $rows
+     */
+    #[DataProvider('providerLegacyPhases')]
+    public function testPlanPreparesLegacySubqueriesAtTheirReleaseBoundary(string $version, array $rows, int $final, int $pruned): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @x=0');
+        $result = $session->query('SELECT @x:=@x+1,(SELECT COUNT(DISTINCT @x:=2) FROM t i WHERE i.n=o.n),@x FROM t o')[0];
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame($rows, $result->rows);
+        self::assertSame($final, $session->variables->user('x')[0]);
+
+        $session->query('SET @x=0;SELECT (SELECT COUNT(DISTINCT @x:=2) FROM t i WHERE i.n=o.n) FROM t o WHERE FALSE');
+
+        self::assertSame($pruned, $session->variables->user('x')[0]);
+    }
+
+    /**
      * @return iterable<string, array{string, int|null}>
      */
     public static function providerBoundaries(): iterable

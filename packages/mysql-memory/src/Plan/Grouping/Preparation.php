@@ -14,9 +14,10 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
  * Prepares constant DISTINCT aggregate arguments before any enclosing row is read.
  *
  * Empty tables and row-dependent filters still prepare their aggregate inputs.
- * Statically empty blocks suppress both their own and their nested checks. A
- * correlated subquery prepares once before the outer projection, not per row.
- * Verified through SQL and user variables on MySQL 8.4.
+ * Modern statically empty blocks suppress their own and nested checks. MySQL 5.7
+ * prepares a nested block before outer bounds, while MySQL 5.6 waits for its first
+ * execution. Each input retains the check outcome across correlated executions.
+ * Verified through SQL and user variables on MySQL 5.6, 5.7 and 8.4.
  *
  * @visibility MySqlMemory
  */
@@ -46,7 +47,10 @@ final class Preparation
             }
             return $plan;
         }
-        if ($scope->outer !== null) {
+        if ($scope->outer !== null && $this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return $plan;
+        }
+        if ($scope->outer !== null && !$this->planner->settings->legacy()) {
             $scope->outer->aggregateInputs = [...$scope->outer->aggregateInputs, ...$inputs];
             return $plan;
         }

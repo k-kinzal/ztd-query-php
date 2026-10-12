@@ -62,12 +62,28 @@ final class Origins
             $this->storedAssignment($select, $field, $storedWindows) => new ColumnOrigin('', '<temporary>', '', '', $this->planner->materialized([$domain])[0]->flags ?? 0),
             $storedWindows && $field->expression !== null && (new Windowing($this->planner))->reads($field->expression) => $this->planner->materialized([$domain])[0],
             $this->storedAggregate($select, $field, $domain) => $this->planner->materialized([$domain])[0],
-            $rolled => $materialized ? $this->planner->materialized([$domain])[0] : ($this->planner->compiler->settings->legacy() ? $this->origin($field, $scope) : null),
+            $rolled => $materialized ? $this->planner->materialized([$domain])[0] : $this->rollup($select, $field, $scope),
             $implicit => $this->kept($field, $scope, $this->origin($field, $scope), $supplied),
             default => $this->origin($field, $scope),
         }, $fields, $rolled, $domains);
 
         return $buffered ? array_map(static fn (?ColumnOrigin $origin): ?ColumnOrigin => $origin?->unkeyed(), $origins) : $origins;
+    }
+
+    /**
+     * Preserves legacy base flags for a direct ROLLUP column, except constant table lookups.
+     */
+    public function rollup(Select $select, Field $field, Scope $scope): ?ColumnOrigin
+    {
+        if (!$this->planner->settings->legacy()) {
+            return null;
+        }
+        $scan = $select->from === null ? null : ($scope->scans[spl_object_id($select->from)] ?? null);
+        if ($this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql5651 && $scan !== null && (new Lookup\PrimaryKeys($this->planner))->plan($select, $scan, $scope, runtime: true) instanceof Path\Source\KeyLookup) {
+            return null;
+        }
+
+        return $this->kept($field, $scope, $this->origin($field, $scope), $this->supplied($select->from));
     }
 
     /**

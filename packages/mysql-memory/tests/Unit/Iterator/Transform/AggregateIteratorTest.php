@@ -26,6 +26,16 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class AggregateIteratorTest extends TestCase
 {
+    public function testGatherPreparesLegacyNestedCountBeforeReadingAnEmptyInput(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(1);CREATE TABLE e(n INT);SET @x=0');
+        $result = $session->query('SELECT @x:=@x+1,(SELECT COUNT(DISTINCT @x:=2) FROM e WHERE e.n=t.n),@x FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '0', '2']], $result->rows);
+    }
+
     /**
      * @return iterable<string, array{string, list<list<int|string|null>>}>
      */

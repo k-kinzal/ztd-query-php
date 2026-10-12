@@ -48,7 +48,7 @@ final class Tuples
         $checks = [];
         $disabled = false;
         foreach ($node->arguments as $position => $argument) {
-            if (($this->planner->settings->legacy() ? $this->planner->compiler->constancy($argument)->constant() : $this->constant($argument)) && ($select->groupBy === null || $node instanceof GroupConcat || $this->planner->compiler->constancy($argument)->constant())) {
+            if ($this->omitted($select, $node, $argument)) {
                 $constants[] = $position;
             }
             if (!$this->checkable($argument, $node instanceof GroupConcat || $this->planner->settings->legacy())) {
@@ -68,6 +68,21 @@ final class Tuples
         $input = new TupleInput($select->groupBy !== null || $this->planner->settings->legacy(), !$node instanceof GroupConcat, $constants, $checks, $disabled);
 
         return new Accumulation($accumulation->function, $accumulation->arguments, $accumulation->distinct, $accumulation->domain, $order, $accumulation->separator, $accumulation->limit, $accumulation->object, $input);
+    }
+
+    /**
+     * Identifies fields omitted from COUNT keys or read after implicit concatenation input.
+     * Legacy assignments of resolved constants freeze after their one NULL check;
+     * assignments that read session or row values still run for every tuple.
+     */
+    public function omitted(Select $select, Aggregate|GroupConcat|JsonObjectAggregate $node, Scalar $argument): bool
+    {
+        $legacy = $this->planner->settings->legacy();
+        $plain = $this->planner->compiler->constancy($argument)->constant();
+        $frozen = $legacy && $node instanceof Aggregate && $this->checkable($argument);
+
+        return ($legacy ? ($plain || $frozen) : $this->constant($argument))
+            && ($select->groupBy === null || $node instanceof GroupConcat || $plain || $frozen);
     }
 
     /**

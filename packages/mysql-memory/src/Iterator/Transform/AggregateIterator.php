@@ -64,6 +64,9 @@ final class AggregateIterator implements RowIterator
     public function gather(Frame $frame): void
     {
         $this->input->init($frame);
+        foreach ($this->path->aggregates as $aggregate) {
+            $aggregate->input?->enabled($frame);
+        }
         $groups = [];
         $inputRows = 0;
         while (($row = $this->input->read()) !== null) {

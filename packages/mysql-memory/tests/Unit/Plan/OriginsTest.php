@@ -11,6 +11,7 @@ use MySqlMemory\Plan\Origins;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
@@ -19,6 +20,29 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class OriginsTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, string, string, int}>
+     */
+    public static function providerRollupOrigins(): iterable
+    {
+        yield 'MySQL 5.6 scan' => ['5.6.51', '', 't', 3];
+        yield 'MySQL 5.7 scan' => ['5.7.44', '', 't', 3];
+        yield 'MySQL 5.6 key' => ['5.6.51', ' WHERE n=1', '', 0];
+        yield 'MySQL 5.7 key' => ['5.7.44', ' WHERE n=1', 't', 3];
+    }
+
+    #[DataProvider('providerRollupOrigins')]
+    public function testRollupPreservesLegacyBaseFlagsExceptMySql56ConstantKeys(string $version, string $where, string $table, int $flags): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT PRIMARY KEY)');
+        $result = $session->query('SELECT n FROM t' . $where . ' GROUP BY n WITH ROLLUP')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertSame([$table, $flags], [$result->columns[0]->table, $result->columns[0]->flags & 3]);
+    }
+
     public function testStoredAggregateFlagsBlobFieldsAfterStorage(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
