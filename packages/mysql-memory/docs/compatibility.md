@@ -371,9 +371,13 @@ For ordinary DISTINCT queries, varying string fields use stored metadata while c
 
 On MySQL 8.0 and later, ROLLUP evaluates aggregate arguments in grouping order, visiting the grand total, subtotals and leaf group for each aggregate before advancing to the next aggregate. GROUP_CONCAT and COUNT(DISTINCT) share their captured arguments across levels. With varying grouping keys and window functions, aggregate inputs are stored once in source-row order; constant grouping keys retain per-level reads. Predicates stored this way become numeric fields for JSON aggregation. GROUP_CONCAT resolves equal sorting keys in reverse input order and preserves that ordering on repeated result reads.
 
+A ROLLUP query whose entire ORDER BY list matches a leading prefix of its GROUP BY keys folds groups in those directions; remaining grouping keys ascend. Aliases and output positions resolve to their grouped expressions. Computed keys, subtotal keys or extra ordering items retain the ordinary grouping input order and sort only the output. This also controls concatenation and assignment effects before windows and DISTINCT.
+
 MySQL 5.6 and 5.7 evaluate every aggregate for a ROLLUP leaf before advancing through subtotal levels to the grand total. COUNT(DISTINCT) and GROUP_CONCAT capture their arguments at the leaf and share those values across levels. MySQL 5.7 JSON_OBJECTAGG keeps the first value for a duplicate key; modern releases keep the last.
 
 Implicit aggregation and constant GROUP BY keys retain direct result metadata, even with DISTINCT or window functions. Constant ROLLUP keys still introduce output rows; DISTINCT compares aggregate parents and republishes copied assignments there. Varying ROLLUP keys defer aggregate parents beyond a window DISTINCT stage. Ordinary aggregate assignments beside a window execute from the current aggregate row, including each ROLLUP total.
+
+With varying grouping keys and a window stage, parents of `GROUP_CONCAT`, `JSON_ARRAYAGG`, and `JSON_OBJECTAGG` retain expression metadata and are evaluated after DISTINCT removes duplicates using the remaining stored outputs. Bare aggregate fields still participate in duplicate removal. Scalar parents of `MIN` and `SUM` remain duplicate keys without ROLLUP, including wide string expressions.
 
 Computed aggregate parents in MySQL 5.6 and 5.7 also retain their expression metadata when implicit aggregation or constant GROUP BY produces one group. DISTINCT does not materialize those parent expressions; varying ROLLUP groups retain their separate storage behavior.
 

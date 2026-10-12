@@ -50,6 +50,16 @@ final class AggregateIteratorTest extends TestCase
         self::assertSame($expected, $result->rows);
     }
 
+    public function testSortedAppliesDescendingRollupInputBeforeFoldingTotals(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2)');
+        $result = $session->query('SELECT n,GROUP_CONCAT(n),ROW_NUMBER() OVER () FROM t GROUP BY n WITH ROLLUP ORDER BY n DESC')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', '2,2', '1'], ['1', '1', '2'], [null, '2,2,1', '3']], $result->rows);
+    }
+
     public function testEmitEvaluatesStreamingGroupArgumentsInGroupingOrder(): void
     {
         $session = (new Instance())->connect();

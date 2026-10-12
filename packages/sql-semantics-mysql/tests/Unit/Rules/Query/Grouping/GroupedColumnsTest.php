@@ -37,6 +37,8 @@ final class GroupedColumnsTest extends TestCase
         yield 'alias' => ['SELECT x.b FROM t1 x GROUP BY x.a', GroupingRule::NotDetermined, 'fz.x.b'];
         yield 'derived' => ['SELECT d.p FROM (SELECT a AS p, b FROM t1) d GROUP BY d.b', GroupingRule::NotDetermined, 'd.p'];
         yield 'common table' => ['WITH c AS (SELECT a, b FROM t1) SELECT b, COUNT(*) FROM c', GroupingRule::WithoutGroupBy, 'c.b'];
+        yield 'grouped distinct' => ['SELECT DISTINCT ABS(a) FROM t1 GROUP BY a ORDER BY a', GroupingRule::NotSelected, 'fz.t1.a'];
+        yield 'grouped distinct aggregate' => ['SELECT DISTINCT GROUP_CONCAT(a) FROM t1 GROUP BY a ORDER BY a', GroupingRule::NotSelected, 'fz.t1.a'];
         yield 'distinct' => ['SELECT DISTINCT a FROM t1 ORDER BY b', GroupingRule::NotSelected, 'fz.t1.b'];
         yield 'star' => ['SELECT *, COUNT(*) FROM t1', GroupingRule::WithoutGroupBy, 'fz.t1.id'];
         yield 'rollup primary key' => ['SELECT id, b FROM t1 GROUP BY id WITH ROLLUP', GroupingRule::NotDetermined, 'fz.t1.b'];

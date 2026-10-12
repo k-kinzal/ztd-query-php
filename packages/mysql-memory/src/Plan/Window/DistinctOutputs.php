@@ -16,7 +16,7 @@ use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Shape\Field;
 
 /**
- * Plans DISTINCT before the aggregate parents deferred by a ROLLUP window stage.
+ * Plans DISTINCT before the aggregate parents deferred by a window stage.
  *
  * @visibility MySqlMemory
  */

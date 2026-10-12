@@ -78,7 +78,7 @@ final class GroupedColumns
         $aggregates = $ownedAggregates !== null ? $ownedAggregates !== [] : ((new Aggregation())->aggregates(array_map(static fn (object $item): object => $item instanceof SelectExpression ? $item->expression : $item, $select->items)) || ($select->having !== null && (new Aggregation())->aggregates([$select->having])));
         $problem = null;
         if ($select->groupBy !== null) {
-            $problem = $this->grouped($select, $fields, $relations, $facts, $derivation);
+            $problem = $this->grouped($select, $fields, $relations, $facts, $derivation) ?? (in_array(SelectOption::Distinct, $select->options, true) ? $this->distinct($select, $relations, $facts, $derivation) : null);
         } elseif ($aggregates) {
             $problem = $this->items($fields, $relations, $facts, null, GroupingRule::WithoutGroupBy, $derivation) ?? $this->having($select, $relations, $facts, null, $derivation);
         } elseif (in_array(SelectOption::Distinct, $select->options, true)) {

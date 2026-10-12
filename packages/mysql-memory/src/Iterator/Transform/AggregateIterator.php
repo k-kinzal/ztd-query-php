@@ -113,11 +113,12 @@ final class AggregateIterator implements RowIterator
                 return $groups;
             }
         }
-        usort($groups, static function (array $left, array $right) use ($expressions): int {
+        $directions = $this->path->directions;
+        usort($groups, static function (array $left, array $right) use ($expressions, $directions): int {
             foreach ($expressions as $index => $expression) {
                 $order = Order::compare($left[1][$index], $right[1][$index], $expression->domain());
                 if ($order !== 0) {
-                    return $order;
+                    return ($directions[$index] ?? false) ? -$order : $order;
                 }
             }
 

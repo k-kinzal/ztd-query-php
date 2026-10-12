@@ -15,6 +15,19 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class DistinctOutputsTest extends TestCase
 {
+    public function testPlanDefersCollectionParentsUntilAfterWindowDuplicatesAreRemoved(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2)');
+        $collection = $session->query('SELECT DISTINCT CONCAT(GROUP_CONCAT(n)),COUNT(*) OVER () FROM t GROUP BY n')[0];
+        $scalar = $session->query('SELECT DISTINCT CONCAT(SUM(n)),COUNT(*) OVER () FROM t GROUP BY n')[0];
+        self::assertInstanceOf(ResultSet::class, $collection);
+        self::assertInstanceOf(ResultSet::class, $scalar);
+
+        self::assertSame([['1', '2']], $collection->rows);
+        self::assertSame([['4', '2'], ['1', '2']], $scalar->rows);
+    }
+
     public function testPlanDefersAggregateParentsAndComparesTheRemainingStoredFields(): void
     {
         $session = (new Instance())->connect();

@@ -48,6 +48,10 @@ final class OutputFieldsTest extends TestCase
      */
     public static function providerFields(): iterable
     {
+        yield 'distinct collection parent beside a window' => ['SELECT DISTINCT CONCAT(GROUP_CONCAT(s)),ROW_NUMBER() OVER () FROM t GROUP BY n', 31];
+        yield 'distinct json parent beside a window' => ['SELECT DISTINCT CONCAT(JSON_ARRAYAGG(n)),COUNT(*) OVER () FROM t GROUP BY n', 31];
+        yield 'distinct json object parent beside a window' => ['SELECT DISTINCT CONCAT(JSON_OBJECTAGG(n,s)),COUNT(*) OVER () FROM t GROUP BY n', 31];
+        yield 'distinct wide scalar parent beside a window' => ['SELECT DISTINCT REPEAT(CONCAT(MIN(s)),600),COUNT(*) OVER () FROM t GROUP BY n', 0];
         yield 'streaming concatenation' => ['SELECT GROUP_CONCAT(s) FROM t GROUP BY n', 31];
         yield 'distinct concatenation' => ['SELECT DISTINCT GROUP_CONCAT(s) FROM t GROUP BY n', 0];
         yield 'windowed concatenation field' => ['SELECT GROUP_CONCAT(s),ROW_NUMBER() OVER () FROM t GROUP BY n', 0];
@@ -149,6 +153,44 @@ final class OutputFieldsTest extends TestCase
         self::assertFalse($fields->deferred($select, $query->field(1)->expression));
         self::assertTrue($fields->deferred($select, $query->field(2)->expression));
         self::assertFalse($fields->deferred($select, $query->field(3)->expression));
+    }
+
+    public function testDeferredKeepsCollectionParentsSeparateFromScalarParentsAndBareCalls(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(n INT,s VARCHAR(10))');
+        $query = $semantics->analyze('SELECT DISTINCT CONCAT(GROUP_CONCAT(s)),GROUP_CONCAT(s),CONCAT(MIN(s)),CONCAT(JSON_ARRAYAGG(n)),CONCAT(JSON_ARRAYAGG(n) OVER ()),COUNT(*) OVER () FROM t GROUP BY n,s', [$table]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $query->statement);
+        $fields = new OutputFields();
+
+        self::assertTrue($fields->deferred($query->statement, $query->field(0)->expression, $query->facts));
+        self::assertFalse($fields->deferred($query->statement, $query->field(1)->expression, $query->facts));
+        self::assertFalse($fields->deferred($query->statement, $query->field(2)->expression, $query->facts));
+        self::assertTrue($fields->deferred($query->statement, $query->field(3)->expression, $query->facts));
+        self::assertFalse($fields->deferred($query->statement, $query->field(4)->expression, $query->facts));
+    }
+
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function providerCollected(): iterable
+    {
+        yield 'concatenation' => ['CONCAT(GROUP_CONCAT(s))', true];
+        yield 'json object' => ['CONCAT(JSON_OBJECTAGG(n,s))', true];
+        yield 'nested query' => ['CONCAT((SELECT GROUP_CONCAT(s) FROM t))', false];
+        yield 'window aggregate' => ['CONCAT(JSON_ARRAYAGG(n) OVER ())', false];
+    }
+
+    #[DataProvider('providerCollected')]
+    public function testCollectedStopsAtNestedQueriesAndWindowAggregates(string $sql, bool $expected): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(n INT,s VARCHAR(10))');
+        $query = $semantics->analyze('SELECT ' . $sql . ' FROM t GROUP BY n,s', [$table]);
+        $expression = $query->field(0)->expression;
+        self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $expression);
+
+        self::assertSame($expected, (new OutputFields())->collected($expression));
     }
 
 

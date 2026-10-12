@@ -104,7 +104,7 @@ final class OutputFields
      */
     public function stored(Select $select, Scalar $expression, ?Facts $facts = null, GrammarRelease $release = GrammarRelease::MySql847): bool
     {
-        if ($this->direct($select, $release, $facts)) {
+        if ($this->direct($select, $release, $facts) || $this->deferred($select, $expression, $facts)) {
             return false;
         }
         $rollup = new RollupItems();
@@ -124,20 +124,51 @@ final class OutputFields
     }
 
     /**
-     * Tells whether a ROLLUP output is computed after duplicate removal at a window stage.
+     * Tells whether an aggregate parent is computed after duplicate removal at a window stage.
      * With varying group keys, aggregate parents are not DISTINCT keys; bare calls are.
+     * Without ROLLUP, parents of GROUP_CONCAT and JSON aggregates are deferred too.
      * Constant ROLLUP groups store their parent outputs and compare them as keys.
      * If no nonconstant keys remain, all input rows reach the deferred expressions.
      * Verified through SQL on MySQL 8.4.
      */
     public function deferred(Select $select, ?Scalar $expression, ?Facts $facts = null): bool
     {
-        if ($expression === null || !(new RollupItems())->rolls($select) || !(new RollupItems())->windowed($select)) {
+        if ($expression === null || !(new RollupItems())->windowed($select) || !(new GroupKeys())->varying($select, $facts)) {
             return false;
         }
         $expression = (new Matching())->unwrap($expression);
+        if ($expression instanceof SetFunction || $expression instanceof WindowFunction) {
+            return false;
+        }
 
-        return (new GroupKeys())->varying($select, $facts) && !$expression instanceof SetFunction && !$expression instanceof WindowFunction && (new Aggregation())->aggregates([$expression]);
+        return (new RollupItems())->rolls($select) ? (new Aggregation())->aggregates([$expression]) : $this->collected($expression);
+    }
+
+    /**
+     * Finds directly read GROUP_CONCAT or JSON aggregate outputs outside nested queries and windows.
+     */
+    public function collected(Scalar $expression): bool
+    {
+        $pending = [$expression];
+        while ($pending !== []) {
+            $value = array_pop($pending);
+            if (is_array($value)) {
+                array_push($pending, ...array_values($value));
+                continue;
+            }
+            if (!is_object($value) || $value instanceof \SqlSemantics\Statement\Query || $value instanceof WindowFunction) {
+                continue;
+            }
+            if ($value instanceof SetFunction) {
+                if ($value->aggregates() && ($value instanceof GroupConcat || $value instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate || ($value instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate && $value->function === \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::JsonArray))) {
+                    return true;
+                }
+                continue;
+            }
+            array_push($pending, ...array_values(get_object_vars($value)));
+        }
+
+        return false;
     }
 
     /**
