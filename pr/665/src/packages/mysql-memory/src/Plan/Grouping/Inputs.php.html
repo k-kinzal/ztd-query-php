@@ -54,7 +54,7 @@
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Statement\Scalar</span>;</span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Captures aggregate arguments before windowed ROLLUP groups its input.</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Captures aggregate arguments before grouping the input of a window.</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * With varying grouping keys, windows require stored aggregate inputs. Each</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * argument executes in input order once and every grouping level reads its copy.</span></span>
@@ -104,13 +104,13 @@
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    }</span>
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a></span>
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     * Identifies windows whose ROLLUP grouping keys require stored aggregate input.</span></span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     * Identifies windows whose varying grouping keys require stored aggregate input.</span></span>
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a><span class="tok-com">     * @param list&lt;Scalar&gt; $groups The resolved grouping expressions</span></span>
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">stored</span>(<span class="tok-id">Select</span> <span class="tok-var">$select</span>, <span class="tok-kw">array</span> <span class="tok-var">$groups</span>): <span class="tok-id">bool</span></span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>    {</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">planner</span>-&gt;<span class="tok-id">settings</span>-&gt;<span class="tok-id">legacy</span>() || <span class="tok-var">$select</span>-&gt;<span class="tok-id">groupBy</span>?-&gt;<span class="tok-id">modifier</span> === <span class="tok-id">null</span> || (<span class="tok-kw">new</span> <span class="tok-id">Windowing</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">planner</span>))-&gt;<span class="tok-id">calls</span>(<span class="tok-var">$select</span>) === []) {</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">planner</span>-&gt;<span class="tok-id">settings</span>-&gt;<span class="tok-id">legacy</span>() || <span class="tok-var">$select</span>-&gt;<span class="tok-id">groupBy</span> === <span class="tok-id">null</span> || (<span class="tok-kw">new</span> <span class="tok-id">Windowing</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">planner</span>))-&gt;<span class="tok-id">calls</span>(<span class="tok-var">$select</span>) === []) {</span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>            <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        }</span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$groups</span> <span class="tok-kw">as</span> <span class="tok-var">$group</span>) {</span>
