@@ -51,6 +51,8 @@ final class Listener
 
     /**
      * Opens the socket and answers the address it listens on.
+     * TCP responses disable Nagle buffering between protocol packets.
+     * Source: https://www.php.net/manual/en/context.socket.php.
      *
      * A socket that cannot be opened, for an unknown transport or an address in use, raises no PHP
      * warning: the reason PHP gives is the message of the exception.
@@ -61,7 +63,7 @@ final class Listener
     {
         set_error_handler(static fn (): bool => true);
         try {
-            $server = stream_socket_server($this->address, $code, $message);
+            $server = stream_socket_server($this->address, $code, $message, STREAM_SERVER_BIND | STREAM_SERVER_LISTEN, stream_context_create(['socket' => ['tcp_nodelay' => true]]));
         } finally {
             restore_error_handler();
         }
