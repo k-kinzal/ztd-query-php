@@ -65,6 +65,11 @@ final class Scope
     public array $preparations = [];
 
     /**
+     * @var list<Aggregate\TupleInput> Constant aggregate checks deferred to the enclosing query preparation
+     */
+    public array $aggregateInputs = [];
+
+    /**
      * The table whose row an INSERT was to write, read by VALUES(column) after the existing row.
      */
     public ?\MySqlMemory\Dictionary\TableDefinition $inserted = null;

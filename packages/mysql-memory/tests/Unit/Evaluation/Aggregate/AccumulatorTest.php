@@ -33,6 +33,17 @@ final class AccumulatorTest extends TestCase
         self::assertSame(2, $session->variables->user('x')[0]);
     }
 
+    public function testOrderedPreservesDistinctArrivalOrderOnMySql56(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query("USE mysql;CREATE TABLE t(v VARCHAR(2));INSERT INTO t VALUES('b'),('a'),('c'),('b');SET @x=0");
+        $result = $session->query('SELECT GROUP_CONCAT(DISTINCT v,@x:=@x+1) FROM t')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['b1,a2,c3,b4']], $result->rows);
+        self::assertSame(4, $session->variables->user('x')[0]);
+    }
+
     public function testTextReadsImplicitConstantAssignmentsWhenConcatenationEmitsItsRows(): void
     {
         $session = (new Instance())->connect();

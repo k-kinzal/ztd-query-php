@@ -301,10 +301,11 @@ final class Accumulator
     /**
      * Orders concatenation tuples by explicit keys or their DISTINCT value keys.
      * Constant keys still reverse ties even when their expressions are not read.
+     * MySQL 5.6 retains DISTINCT insertion order when no ORDER BY is specified.
      *
      * @return list<array{list<int|float|string>, list<int|float|string|null>}>
      */
-    public function ordered(): array
+    public function ordered(\SqlSemantics\Contract\GrammarRelease $release = \SqlSemantics\Contract\GrammarRelease::MySql847): array
     {
         $order = $this->accumulation->order;
         $parts = $this->parts;
@@ -320,7 +321,7 @@ final class Accumulator
 
                 return 0;
             });
-        } elseif ($this->accumulation->distinct) {
+        } elseif ($this->accumulation->distinct && $release !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
             usort($parts, function (array $left, array $right): int {
                 foreach ($this->accumulation->arguments as $position => $argument) {
                     $compared = Order::compare($left[0][$position], $right[0][$position], $argument->domain());
@@ -344,7 +345,7 @@ final class Accumulator
         if ($this->parts === []) {
             return null;
         }
-        $parts = $this->ordered();
+        $parts = $this->ordered($frame->context->modes->release);
         $text = implode(Encoding::convert($this->accumulation->separator, Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset), array_map(fn (array $part): string => $this->text($frame, $part[0]), $parts));
         if (strlen($text) > $this->accumulation->limit) {
             $text = mb_strcut($text, 0, $this->accumulation->limit, Encoding::name($this->accumulation->domain->collation->charset) ?? '8bit');

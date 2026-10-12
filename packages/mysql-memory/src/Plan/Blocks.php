@@ -107,7 +107,7 @@ final class Blocks
         $root = (new Window\Direct($this->planner))->bounded((new Projection\Emission($this->planner))->plan($root, $select, $storedWindows), $select);
         $root = (new Window\ParentInputs($this->planner))->emitted($select, $root, $expressions, count($fields), $keys !== [] && !$presorted, $copies);
 
-        $plan = (new Projection\DistinctStorage($this->planner))->apply(new QueryPlan($root, $domains, $names, $origins), $select, $outer, $expressions, $keys !== []);
+        $plan = (new Grouping\Preparation($this->planner))->plan((new Projection\DistinctStorage($this->planner))->apply(new QueryPlan($root, $domains, $names, $origins), $select, $outer, $expressions, $keys !== []), $select, $scope, $evaluation);
 
         return (new Lookup\Preparation($this->planner))->plan(System\ProgramMetadata::buffered((new SortedDistinct($this->planner))->apply($plan, $select, $keys, $outer), $this->planner, $select, $outer, $scope, $keys !== []), $select, $scope, $evaluation);
     }
@@ -234,15 +234,18 @@ final class Blocks
      *
      * The constant parts are evaluated apart from the statement, so that their warnings are
      * recorded only when the statement evaluates them; a part that fails is taken as true.
+     *
+     * @param bool $countOffsets Whether offset rows keep aggregate preparation active for LIMIT 0
+     * @param bool $assignmentsVary Whether constant assignments prevent folding a condition
      */
-    public function empty(Select $select, ?Scope $outer): bool
+    public function empty(Select $select, ?Scope $outer, bool $countOffsets = false, bool $assignmentsVary = true): bool
     {
         foreach ([$select->limit, $select->late?->limit] as $limit) {
             $count = $limit instanceof RowLimit ? $limit->count : null;
             while ($count instanceof Grouped) {
                 $count = $count->operand;
             }
-            if ($count instanceof NumberLiteral && (int) $count->text === 0 && !in_array(SelectOption::CalcFoundRows, $select->options, true)) {
+            if ($count instanceof NumberLiteral && (int) $count->text === 0 && (!$countOffsets || !$limit instanceof RowLimit || $limit->offset === null || ($limit->offset instanceof NumberLiteral && (int) $limit->offset->text === 0)) && !in_array(SelectOption::CalcFoundRows, $select->options, true)) {
                 return true;
             }
         }
@@ -250,7 +253,7 @@ final class Blocks
         $context = $compiler->connection->context;
         $frame = new Frame(new Context($context->modes, new Diagnostics(), $context->variables, $context->started));
         foreach (array_merge(...array_map(fn (Scalar $condition): array => $this->conjuncts($condition), array_values(array_filter([$select->where, $select->having])))) as $conjunct) {
-            if (!$compiler->constancy($conjunct)->constant() || (new Walker())->find($conjunct, Query::class) !== []) {
+            if (!$compiler->constancy($conjunct, assignmentsVary: $assignmentsVary)->constant() || (new Walker())->find($conjunct, Query::class) !== []) {
                 continue;
             }
             try {

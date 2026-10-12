@@ -97,6 +97,7 @@ final class Grouping
         }
         $stored = (new Grouping\Inputs($this->planner))->stored($select, $targets);
         $accumulations = array_map(fn (Scalar $node): Accumulation => $stored ? $this->accumulation($node, $scope) : (new Grouping\Tuples($this->planner))->plan($select, $node, $this->accumulation($node, $scope)), $aggregates);
+        $scope->aggregateInputs = [...$scope->aggregateInputs, ...array_values(array_filter(array_map(static fn (Accumulation $value): ?\MySqlMemory\Evaluation\Aggregate\TupleInput => $value->input, $accumulations), static fn (?\MySqlMemory\Evaluation\Aggregate\TupleInput $value): bool => $value !== null && $value->checks !== []))];
         [$input, $accumulations] = (new Grouping\Inputs($this->planner))->plan($select, $input, $accumulations, $targets);
         $grouped = $scope->grouped();
         $width = $input->width();
@@ -107,9 +108,9 @@ final class Grouping
         $rollup = $select->groupBy?->modifier !== null;
         $columns = $rollup ? $this->rollup($select, $groups, $targets, $grouped, $width + count($aggregates)) : [];
         $sorted = $this->sorts($select, $aggregates, $scope);
-        $hashed = !$sorted || ($this->planner->settings->legacy() && !$rollup && !$this->indexed($select, $scope) && !in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::BigResult, $select->options, true));
+        $hashed = !$sorted || ($this->planner->settings->legacy() && !$rollup && !$this->indexed($select, $scope) && array_filter($accumulations, static fn (Accumulation $value): bool => $value->input !== null) === [] && !in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::BigResult, $select->options, true));
 
-        return [new AggregatePath($input, $groups, $accumulations, $rollup, $columns, $sorted, $hashed, !$this->planner->settings->legacy()), $grouped];
+        return [new AggregatePath($input, $groups, $accumulations, $rollup, $columns, $sorted, $hashed, !$this->planner->settings->legacy(), $rollup && (new Grouping\Preparation($this->planner))->emptyTotal($select, $scope)), $grouped];
     }
 
     /**

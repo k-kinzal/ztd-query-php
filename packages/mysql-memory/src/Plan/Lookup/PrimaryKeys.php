@@ -42,8 +42,10 @@ final class PrimaryKeys
 
     /**
      * Plans one lookup when every integer primary-key column has an equality binding.
+     *
+     * @param bool $runtime Whether preparation may read statement-constant key values
      */
-    public function plan(Select $select, AccessPath $input, Scope $scope): AccessPath
+    public function plan(Select $select, AccessPath $input, Scope $scope, bool $runtime = false): AccessPath
     {
         $locking = new \MySqlMemory\Plan\Locking($this->planner);
         $transaction = $locking->transaction();
@@ -57,7 +59,7 @@ final class PrimaryKeys
                 continue;
             }
             foreach ([[$condition->left, $condition->right], [$condition->right, $condition->left]] as [$column, $value]) {
-                $binding = $this->binding($column, $value, $select->from, $input, $scope);
+                $binding = $this->binding($column, $value, $select->from, $input, $scope, $runtime);
                 if ($binding !== null) {
                     $bindings[$binding[0]] ??= $binding;
                 }
@@ -73,17 +75,19 @@ final class PrimaryKeys
     }
 
     /**
-     * Resolves an integer literal bound to a column of this table occurrence.
+     * Resolves an integer key value bound to a column of this table occurrence.
+     *
+     * @param bool $runtime Whether a preparation check accepts statement constants
      *
      * @return array{int, Evaluable, Comparator}|null
      */
-    public function binding(Scalar $column, Scalar $value, TableReference $table, TableScan $input, Scope $scope): ?array
+    public function binding(Scalar $column, Scalar $value, TableReference $table, TableScan $input, Scope $scope, bool $runtime = false): ?array
     {
         $compiler = $this->planner->compiler;
         $facts = new ConstantTables($compiler->facts);
         $resolved = $facts->column($column);
         $literal = $facts->unwrap($value);
-        if ($resolved === null || $resolved->relation !== $table || !$literal instanceof NumberLiteral) {
+        if ($resolved === null || $resolved->relation !== $table || (!$literal instanceof NumberLiteral && (!$runtime || !$compiler->constancy($literal)->constant() || (new \MySqlMemory\Evaluation\Compile\Walker())->find($literal, \SqlSemantics\Statement\Query::class) !== []))) {
             return null;
         }
         $name = $resolved->declaration()?->name->value;
@@ -93,7 +97,7 @@ final class PrimaryKeys
         }
         $domain = $input->table->definition->columns[$position]->domain;
         $constant = $compiler->compile($literal, $scope);
-        if ($domain->kind !== Kind::Integer || $constant->domain()->kind !== Kind::Integer) {
+        if ($domain->kind !== Kind::Integer || (!in_array($constant->domain()->kind, $runtime ? [Kind::Integer, Kind::Null] : [Kind::Integer], true))) {
             return null;
         }
 

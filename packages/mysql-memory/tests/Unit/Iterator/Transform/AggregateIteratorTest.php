@@ -26,6 +26,30 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class AggregateIteratorTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string, list<list<int|string|null>>}>
+     */
+    public static function providerEmptyRollup(): iterable
+    {
+        yield 'MySQL 8.0' => ['8.0.44', []];
+        yield 'MySQL 8.4' => ['8.4.7', []];
+        yield 'MySQL 9.1' => ['9.1.0', [[null, '0', null, '1']]];
+    }
+
+    /**
+     * @param list<list<int|string|null>> $expected
+     */
+    #[DataProvider('providerEmptyRollup')]
+    public function testRollupAnswersAnEmptyGrandTotalOnMySql91(string $version, array $expected): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT)');
+        $result = $session->query('SELECT n,COUNT(*),SUM(n),GROUPING(n) FROM t GROUP BY n WITH ROLLUP')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame($expected, $result->rows);
+    }
+
     public function testEmitEvaluatesStreamingGroupArgumentsInGroupingOrder(): void
     {
         $session = (new Instance())->connect();

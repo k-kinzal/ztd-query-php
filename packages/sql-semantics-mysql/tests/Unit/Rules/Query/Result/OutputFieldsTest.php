@@ -81,6 +81,21 @@ final class OutputFieldsTest extends TestCase
         self::assertSame($decimals, $type->descriptor->decimals);
     }
 
+    public function testStoredKeepsLegacyConcatenationAsAnExpressionField(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(n INT,s VARCHAR(10))');
+        $query = $semantics->analyze('SELECT GROUP_CONCAT(s) FROM t GROUP BY n', [$table]);
+        $select = $query->statement;
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $select);
+        $expression = $query->field(0)->expression;
+        self::assertInstanceOf(\SqlSemantics\Statement\Scalar::class, $expression);
+        $fields = new OutputFields();
+
+        self::assertFalse($fields->stored($select, $expression, $query->facts, \SqlSemantics\Contract\GrammarRelease::MySql5651));
+        self::assertFalse($fields->stored($select, $expression, $query->facts, \SqlSemantics\Contract\GrammarRelease::MySql5744));
+    }
+
     public function testStoredKeepsGroupedAggregateFieldsSeparateFromComputedParents(): void
     {
         $semantics = new Semantics(Dialect::MySql);

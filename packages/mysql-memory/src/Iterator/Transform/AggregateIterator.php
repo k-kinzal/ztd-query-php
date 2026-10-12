@@ -170,6 +170,9 @@ final class AggregateIterator implements RowIterator
     {
         $expressions = $this->path->groups;
         $count = count($expressions);
+        if ($groups === [] && $this->path->emptyTotal) {
+            return [$this->row(array_fill(0, $this->path->input->width(), null), array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates), array_fill(0, $count, null), $count, $frame)];
+        }
         $runs = [];
         $rows = [];
         foreach ($groups as $index => [$first, $values, $accumulators, $members]) {

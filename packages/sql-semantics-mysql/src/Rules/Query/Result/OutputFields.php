@@ -114,7 +114,7 @@ final class OutputFields
             return false;
         }
         $distinct = in_array(SelectOption::Distinct, $select->options, true);
-        if ($expression instanceof GroupConcat && !$distinct && !$rollup->windowed($select) && !$rollup->rolls($select) && !in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)) {
+        if ($expression instanceof GroupConcat && !$distinct && !$rollup->windowed($select) && !$rollup->rolls($select)) {
             return false;
         }
         $directRollup = $rollup->rolls($select) && !$rollup->windowed($select) && $select->orderBy === [] && ($select->late === null || $select->late->orderBy === []);

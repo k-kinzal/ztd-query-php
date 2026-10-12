@@ -32,6 +32,7 @@ final class Aggregate implements AccessPath
      * @param list<int|null> $rollupColumns The input position each grouping expression reads when it is a column of the block, set to NULL in the super-aggregate rows that roll it up
      * @param bool $sorted Whether the groups come in the order of their grouping values, as when the server groups by sorting or reads an index; else in the order they first appear, as when it groups in a temporary table
      * @param bool $hashed Whether grouping uses temporary-table collation hash keys
+     * @param bool $emptyTotal Whether an executed empty ROLLUP input still emits its grand total
      * @param bool $interleave Whether each aggregate reads a row for total, subtotal and leaf accumulators before the next aggregate
      */
     public function __construct(
@@ -43,6 +44,7 @@ final class Aggregate implements AccessPath
         public readonly bool $sorted = true,
         public readonly bool $hashed = false,
         public readonly bool $interleave = false,
+        public readonly bool $emptyTotal = false,
     ) {
     }
 

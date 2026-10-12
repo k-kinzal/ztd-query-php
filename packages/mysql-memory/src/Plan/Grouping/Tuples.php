@@ -22,7 +22,8 @@ use SqlSemantics\Statement\Scalar;
  * Plans constant checks and row input for COUNT DISTINCT and GROUP_CONCAT.
  *
  * Materialized window input has already executed all its fields. Direct grouping
- * evaluates complete tuples; implicit aggregation defers table-independent fields.
+ * evaluates complete tuples; modern implicit aggregation defers table-independent
+ * fields. Legacy releases read variable assignments for every tuple.
  *
  * @visibility MySqlMemory
  */
@@ -47,10 +48,10 @@ final class Tuples
         $checks = [];
         $disabled = false;
         foreach ($node->arguments as $position => $argument) {
-            if ($this->constant($argument) && ($select->groupBy === null || $node instanceof GroupConcat || $this->planner->compiler->constancy($argument)->constant())) {
+            if (($this->planner->settings->legacy() ? $this->planner->compiler->constancy($argument)->constant() : $this->constant($argument)) && ($select->groupBy === null || $node instanceof GroupConcat || $this->planner->compiler->constancy($argument)->constant())) {
                 $constants[] = $position;
             }
-            if (!$this->checkable($argument, $node instanceof GroupConcat)) {
+            if (!$this->checkable($argument, $node instanceof GroupConcat || $this->planner->settings->legacy())) {
                 continue;
             }
             if ($node instanceof GroupConcat) {
@@ -61,10 +62,10 @@ final class Tuples
             }
         }
         $order = $accumulation->order;
-        if ($node instanceof GroupConcat && $select->groupBy === null) {
+        if ($node instanceof GroupConcat && $select->groupBy === null && !$this->planner->settings->legacy()) {
             $order = array_map(fn (array $item, int $position): array => $this->constant($node->order[$position]->expression) && $this->planner->compiler->constancy($node->order[$position]->expression) !== Constancy::Resolved ? [new Constant($item[0]->domain(), null), $item[1]] : $item, $order, array_keys($order));
         }
-        $input = new TupleInput($select->groupBy !== null, !$node instanceof GroupConcat, $constants, $checks, $disabled);
+        $input = new TupleInput($select->groupBy !== null || $this->planner->settings->legacy(), !$node instanceof GroupConcat, $constants, $checks, $disabled);
 
         return new Accumulation($accumulation->function, $accumulation->arguments, $accumulation->distinct, $accumulation->domain, $order, $accumulation->separator, $accumulation->limit, $accumulation->object, $input);
     }

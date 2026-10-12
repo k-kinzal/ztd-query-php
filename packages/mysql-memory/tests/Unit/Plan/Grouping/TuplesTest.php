@@ -15,6 +15,28 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class TuplesTest extends TestCase
 {
+    public function testPlanReadsLegacyAssignmentsForEveryTupleBeforeNullRejection(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @x=0');
+        $result = $session->query('SELECT COUNT(DISTINCT IF(n=1,NULL,n),@x:=@x+1) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2']], $result->rows);
+        self::assertSame(3, $session->variables->user('x')[0]);
+    }
+
+    public function testPlanReadsLegacyTuplesInGroupOrderBeforeConcatenation(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @x=0');
+        $result = $session->query('SELECT GROUP_CONCAT(@x:=@x+1) FROM t GROUP BY n')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1'], ['2,3']], $result->rows);
+        self::assertSame(3, $session->variables->user('x')[0]);
+    }
+
     public function testPlanRetainsConstantSortKeysWithoutExecutingTheirAssignments(): void
     {
         $session = (new Instance())->connect();
