@@ -116,7 +116,8 @@ final class Accumulator
     }
 
     /**
-     * Folds a row into JSON_ARRAYAGG or JSON_OBJECTAGG: a NULL value is the JSON null; a NULL name is refused, and a later member of a name replaces an earlier one.
+     * Folds a row into JSON_ARRAYAGG or JSON_OBJECTAGG: a NULL value is the JSON null; a NULL name is refused, and a later member of a name replaces an earlier one on modern servers. MySQL 5.7
+     * keeps the first member (verified in Testcontainers).
      *
      * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html#function_json-arrayagg.
      *
@@ -135,7 +136,9 @@ final class Accumulator
         if ($name === null) {
             throw DataError::JsonDocumentNullKey->error();
         }
-        $this->json[Constructions::name($name, $arguments[0])] = Jsons::argument($arguments[1], $frame);
+        $key = Constructions::name($name, $arguments[0]);
+        $value = Jsons::argument($arguments[1], $frame);
+        $this->json[$key] = $frame->context->modes->release === \SqlSemantics\Contract\GrammarRelease::MySql5744 ? ($this->json[$key] ?? $value) : $value;
     }
 
     /**

@@ -397,4 +397,14 @@ final class AccumulatorTest extends TestCase
         self::assertSame('2', $accumulator->result($frame));
     }
 
+    public function testCollectKeepsTheFirstJsonObjectMemberOnMySql57(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT,b INT);INSERT INTO t VALUES(2,1),(1,1),(2,2)');
+        $result = $session->query('SELECT JSON_OBJECTAGG(b,n>1) FROM t GROUP BY n WITH ROLLUP')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['{"1": false}'], ['{"1": true, "2": true}'], ['{"1": false, "2": true}']], $result->rows);
+    }
+
 }

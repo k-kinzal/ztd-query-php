@@ -16,6 +16,7 @@ use MySqlMemory\Plan\Path\Transform\Aggregate;
 use MySqlMemory\Result\ResultSet;
 use MySqlMemory\Typing\Domain;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
@@ -167,7 +168,6 @@ final class AggregateIteratorTest extends TestCase
         $count = new Accumulation(AggregateFunction::Count, [], false, Domain::integer());
         $iterator = new AggregateIterator(new Aggregate($working, [new ColumnRead(Domain::integer(), 0), new ColumnRead(Domain::integer(), 0)], [$count], true, [0, 0]), new WorkingTableIterator($working));
         $started = $count->start();
-        $started->add($frame);
 
         self::assertSame([[5, 1, 5, 5, 0], [5, 1, 5, null, 1], [null, 1, null, null, 2]], $iterator->rollup([[[5], [5, 5], [$started], [[5]]]], $frame));
     }
@@ -202,4 +202,37 @@ final class AggregateIteratorTest extends TestCase
 
         self::assertSame([['b', 1, 2], ['a', 2, 1], [null, 4, 1]], [$iterator->read(), $iterator->read(), $iterator->read()]);
     }
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacyReleases(): iterable
+    {
+        yield 'MySQL 5.6' => ['5.6.51'];
+        yield 'MySQL 5.7' => ['5.7.44'];
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testFoldRollupEvaluatesEveryLeafAggregateBeforeLegacyTotals(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @y=0');
+        $result = $session->query('SELECT SUM(@y:=@y+1),SUM(@y:=@y+10) FROM t GROUP BY n WITH ROLLUP')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '11'], ['68', '88'], ['102', '132']], $result->rows);
+        self::assertSame(66, $session->variables->user('y')[0]);
+    }
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testFoldRollupSharesLegacyTupleInputsAtTheirLeafPosition(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @y=0');
+        $result = $session->query('SELECT SUM(@y:=@y+1),GROUP_CONCAT(@y:=@y+10) FROM t GROUP BY n WITH ROLLUP')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '11'], ['38', '23,35'], ['72', '11,23,35']], $result->rows);
+        self::assertSame(36, $session->variables->user('y')[0]);
+    }
+
 }

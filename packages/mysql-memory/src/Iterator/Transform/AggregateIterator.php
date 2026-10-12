@@ -79,7 +79,7 @@ final class AggregateIterator implements RowIterator
             if (!isset($groups[$key])) {
                 $groups[$key] = [$row, $values, array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates), []];
             }
-            foreach ($this->path->rollup && $this->path->interleave ? [] : $groups[$key][2] as $accumulator) {
+            foreach ($this->path->rollup ? [] : $groups[$key][2] as $accumulator) {
                 $accumulator->add($frame);
             }
             if ($this->path->rollup) {
@@ -197,8 +197,10 @@ final class AggregateIterator implements RowIterator
 
     /**
      * Folds each input through the total, subtotals and leaf before the next aggregate.
-     * Legacy plans have already populated the leaf accumulators while gathering input.
-     * Verified with variable assignments in SQL on MySQL 8.4.
+     * Legacy plans evaluate every aggregate of the leaf first, then every aggregate
+     * of each subtotal, ending with the grand total. Shared tuple inputs are captured
+     * at the leaf and reused across levels.
+     * Verified with variable assignments in SQL on MySQL 5.6, 5.7 and 8.4.
      *
      * @param array<int, list<Accumulator>> $runs Active subtotal accumulators by prefix
      * @param list<Accumulator> $leaf The current group's accumulators
@@ -218,9 +220,14 @@ final class AggregateIterator implements RowIterator
                 }
                 continue;
             }
-            foreach ($runs as $run) {
-                foreach ($run as $accumulator) {
-                    $accumulator->add($frame);
+            $stored = [];
+            foreach ($leaf as $position => $accumulator) {
+                $stored[$position] = (new \MySqlMemory\Evaluation\Aggregate\RollupInput())->capture($accumulator->accumulation, $frame);
+                $accumulator->add($frame, $stored[$position]);
+            }
+            foreach (array_reverse($runs) as $run) {
+                foreach ($run as $position => $accumulator) {
+                    $accumulator->add($frame, $stored[$position]);
                 }
             }
         }
