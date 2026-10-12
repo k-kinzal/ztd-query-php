@@ -50,8 +50,8 @@
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Evaluation\Leaf\Assignment</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Evaluation\Leaf\ColumnRead</span>;</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Evaluation\Leaf\Retyped</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Evaluation\Leaf\UserVariableRead</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Evaluation\Scope</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Evaluation\Scope</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Evaluation\Window\InputRead</span>;</span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Instance</span>;</span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Plan\Planner</span>;</span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">MySqlMemory\Plan\Window\Arguments</span>;</span>
@@ -116,7 +116,7 @@
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerReleases</span>(): <span class="tok-id">iterable</span></span>
 <span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    {</span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;live&#039;</span> =&gt; [<span class="tok-str">&#039;8.0.44&#039;</span>, <span class="tok-id">UserVariableRead</span>::<span class="tok-kw">class</span>];</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;current input&#039;</span> =&gt; [<span class="tok-str">&#039;8.0.44&#039;</span>, <span class="tok-id">InputRead</span>::<span class="tok-kw">class</span>];</span>
 <span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>        <span class="tok-kw">yield</span> <span class="tok-str">&#039;stored&#039;</span> =&gt; [<span class="tok-str">&#039;8.4.7&#039;</span>, <span class="tok-id">ColumnRead</span>::<span class="tok-kw">class</span>];</span>
 <span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    }</span>
 <span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a></span>
