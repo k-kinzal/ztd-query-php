@@ -106,7 +106,7 @@ final class Emission
         if (!$input instanceof Project) {
             return $path;
         }
-        $limited = new Limit($input->input, $path->count, $path->offset, $path->countFound, $path->exhaust);
+        $limited = new Limit($input->input, $path->count, $path->offset, $path->countFound, $path->exhaust, $path->initialize);
 
         return new Project($limited, $input->expressions, $input->append, $input->retainAt);
     }

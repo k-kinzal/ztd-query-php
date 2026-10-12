@@ -39,7 +39,7 @@ final class LimitIterator implements RowIterator
         if ($this->path->countFound) {
             $frame->foundBeforeProjection = 0;
         }
-        if ($this->path->exhaust || $this->path->count !== 0 || $this->path->offset !== 0) {
+        if ($this->path->initialize || $this->path->exhaust || $this->path->count !== 0 || $this->path->offset !== 0) {
             $this->input->init($frame);
         }
     }

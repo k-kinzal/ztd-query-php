@@ -360,7 +360,7 @@ final class Blocks
             $offset = 0;
         }
 
-        return new Limit($path, $count, $offset, true, $exhaust);
+        return new Limit($path, $count, $offset, true, $exhaust, $path instanceof Path\Combine\UnionStream && $path->prepare);
     }
 
     /**

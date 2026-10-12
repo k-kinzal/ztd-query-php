@@ -20,8 +20,9 @@ final class Limit implements AccessPath
      * @param int $offset The rows skipped first
      * @param bool $countFound Whether consumed rows, including OFFSET, contribute to FOUND_ROWS
      * @param bool $exhaust Whether rows after the bound must also be consumed for SQL_CALC_FOUND_ROWS
+     * @param bool $initialize Whether input preparation is required even for a zero bound
      */
-    public function __construct(public readonly AccessPath $input, public readonly ?int $count, public readonly int $offset = 0, public readonly bool $countFound = false, public readonly bool $exhaust = false)
+    public function __construct(public readonly AccessPath $input, public readonly ?int $count, public readonly int $offset = 0, public readonly bool $countFound = false, public readonly bool $exhaust = false, public readonly bool $initialize = false)
     {
     }
 
