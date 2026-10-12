@@ -59,6 +59,16 @@ final class MaterializationTest extends TestCase
         self::assertSame([Kind::Json, Field::Json, 4294967295, 0, 'binary'], [$column->kind, $column->field, $column->metadataLength(), $column->decimals, $column->collation->name]);
     }
 
+    public function testJsonColumnRetainsTheLegacyStoredByteBound(): void
+    {
+        $logical = new Domain(Kind::Json, Field::Json, 4194304, 0, false, Collation::binary());
+        $rules = new Materialization();
+        $column = $rules->column($logical, release: GrammarRelease::MySql5744);
+        $combined = $rules->combined($logical, release: GrammarRelease::MySql5744);
+
+        self::assertSame([16777216, 16777216, 0, 'binary'], [$column->metadataLength(), $combined->metadataLength(), $column->decimals, $column->collation->name]);
+    }
+
     public function testOrderedStoresBitSortKeysAsIntegersAtTheirReportedWidth(): void
     {
         $rules = new Materialization();

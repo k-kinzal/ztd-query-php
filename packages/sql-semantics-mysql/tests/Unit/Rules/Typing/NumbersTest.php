@@ -30,6 +30,9 @@ final class NumbersTest extends TestCase
      */
     public static function providerSignedBranches(): iterable
     {
+        yield 'IFNULL ten' => ['IFNULL(NULL,10)', 3];
+        yield 'IFNULL three digits' => ['IFNULL(NULL,123)', 4];
+        yield 'IFNULL nested IF' => ['IFNULL(NULL,IF(0,0,123))', 4];
         yield 'IF ten' => ['IF(0,0,10)', 3];
         yield 'IF three digits' => ['IF(0,0,123)', 4];
         yield 'CASE ten' => ['CASE WHEN 0 THEN 0 ELSE 10 END', 3];
@@ -39,7 +42,7 @@ final class NumbersTest extends TestCase
     }
 
     #[DataProvider('providerSignedBranches')]
-    public function testSignedRetainsTheArithmeticWidthOfLegacyCaseAndIfBranches(string $sql, int $expected): void
+    public function testSignedRetainsTheArithmeticWidthOfLegacyControlBranches(string $sql, int $expected): void
     {
         $operation = (new \SqlSemantics\Facade\Semantics(\SqlSemantics\Platform\MySql\Dialect::MySql, 'mysql-5.7.44'))->analyze('SELECT ' . $sql);
         $expression = $operation->field(0)->expression;

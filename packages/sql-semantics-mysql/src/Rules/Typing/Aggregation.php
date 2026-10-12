@@ -15,6 +15,10 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 /**
  * Resolves the type that holds every value of several types: the branches of CASE, IF, IFNULL and COALESCE.
  *
+ * MySQL 5.7 COALESCE retains a JSON result with a 16 MiB UTF-8 byte bound.
+ * Legacy COALESCE also keeps floating branches at their expression width.
+ * These bounds are observed through Testcontainers result metadata.
+ *
  * NULL branches take no part. Integers settle on the widest integer, signed when signed and
  * unsigned branches meet; integers and decimals on a decimal wide enough for both; other numbers
  * on a double; temporal values of one kind on that kind, a date and a datetime on a datetime;
@@ -66,6 +70,7 @@ final class Aggregation
         }
 
         return match (true) {
+            $operation === 'coalesce' && $all(static fn (Domain $domain): bool => $domain->kind === Kind::Json) => new Domain(Kind::Json, Field::Json, 16777216, Domain::NOT_FIXED, false, Collation::known('utf8mb4_bin'), [], $present[0]->coercibility),
             count($classes) === 1 && $present[0]->kind === Kind::Integer => $this->integers($present, $operation, $grammar),
             $all(static fn (Domain $domain): bool => $domain->kind === Kind::Integer || $domain->kind === Kind::Decimal) => $this->decimals($present),
             $all(static fn (Domain $domain): bool => $domain->kind->numeric() && $domain->kind !== Kind::Year && $domain->kind !== Kind::Bit) => $this->doubles($present, $operation, $derivation->context->profile->grammar),
@@ -219,23 +224,39 @@ final class Aggregation
             return null;
         }
         [$collation, $coercibility] = $settled;
-        $length = 0;
-        $blob = false;
-        foreach ($domains as $domain) {
-            $bound = $domain->kind === Kind::Double ? ($domain->field === Field::Float ? 23 : 22) : $domain->length;
-            if ($domain->kind === Kind::String && $domain->field->blob() && $operation !== 'UNION') {
-                $bound = $domain->field === Field::Blob || $domain->display !== null || $domain->capacity !== null ? $domain->value()->byteLength() : $domain->length;
-            }
-            $length = max($length, $bound);
-            $blob = $blob || $domain->field === Field::Blob;
-        }
+        $length = $this->legacyLength($domains, $operation);
+        $blob = array_filter($domains, static fn (Domain $domain): bool => $domain->field === Field::Blob) !== [];
         if ($collation->bytes() && count(array_filter($domains, static fn (Domain $domain): bool => $domain->kind === Kind::String)) === 0) {
             $collation = $this->collations->connection;
         }
 
         $result = $blob || $operation === 'UNION' ? Domain::string($length, $collation, $blob ? Field::Blob : Field::VarString, $coercibility) : $this->sized($length, $collation, $coercibility);
 
-        return $operation === 'UNION' ? $result : (new Text\ResultBounds())->computed($result);
+        return $operation === 'UNION' ? $result : (new Text\ResultBounds())->computed($this->fixed($result, $domains));
+    }
+
+    /**
+     * Computes the legacy textual bound of branch values. COALESCE retains a
+     * floating branch's own width; other controls use its conversion width.
+     * Computed blob bounds remain separate from their storage capacity.
+     *
+     * @param non-empty-list<Domain> $domains The branch domains
+     */
+    public function legacyLength(array $domains, string $operation): int
+    {
+        $length = 0;
+        foreach ($domains as $domain) {
+            $bound = match (true) {
+                $domain->kind !== Kind::Double, $operation === 'coalesce' => $domain->length,
+                $domain->field === Field::Float => 23,
+                default => 22,
+            };
+            if ($domain->kind === Kind::String && $domain->field->blob() && $operation !== 'UNION') {
+                $bound = $domain->field === Field::Blob || $domain->display !== null || $domain->capacity !== null ? $domain->value()->byteLength() : $domain->length;
+            }
+            $length = max($length, $bound);
+        }
+        return $length;
     }
 
     /**
@@ -291,7 +312,7 @@ final class Aggregation
 
     /**
      * Retains CHAR when every string branch is CHAR. Numeric and temporal
-     * branches widen its bound without making it VARCHAR. Verified on 8.0, 8.4 and 9.1.
+     * branches widen its bound without making it VARCHAR. Verified on 5.6, 5.7, 8.0, 8.4 and 9.1.
      *
      * @param list<Domain> $domains The branch domains
      */

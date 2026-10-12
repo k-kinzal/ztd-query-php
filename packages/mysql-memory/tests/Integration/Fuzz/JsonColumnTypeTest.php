@@ -22,9 +22,15 @@ final class JsonColumnTypeTest extends TestCase
         $json = "CAST('[1]' AS JSON)";
         $window = 'FIRST_VALUE(' . $json . ') OVER ()';
         $conditional = 'IF(1,' . $window . ',' . $json . ')';
-        $expressions = ['COALESCE(' . $json . ',JSON_ARRAY(1))', 'IFNULL(' . $window . ',' . $json . ')', $conditional, 'CASE WHEN 1 THEN ' . $window . ' ELSE ' . $json . ' END', 'LAG(' . $json . ',0) OVER ()', 'LEAD(' . $json . ',0) OVER ()', '+((' . $conditional . '))', '{fn ' . $conditional . '}'];
+        $expressions = [$json, 'COALESCE(' . $json . ',JSON_ARRAY(1))', 'IFNULL(' . $json . ',JSON_ARRAY(1))', 'IF(1,' . $json . ',JSON_ARRAY(1))', 'CASE WHEN 1 THEN ' . $json . ' ELSE JSON_ARRAY(1) END', 'IFNULL(' . $window . ',' . $json . ')', $conditional, 'CASE WHEN 1 THEN ' . $window . ' ELSE ' . $json . ' END', 'LAG(' . $json . ',0) OVER ()', 'LEAD(' . $json . ',0) OVER ()', '+((' . $conditional . '))', '{fn ' . $conditional . '}'];
         foreach (['utf8mb4', 'latin1', 'NULL'] as $charset) {
             $setup = $charset === 'NULL' ? 'SET NAMES utf8mb4; SET character_set_results=NULL; ' : 'SET NAMES ' . $charset . '; ';
+            foreach (['j', 'COALESCE(j,JSON_ARRAY(1))'] as $expression) {
+                $query = 'SELECT ' . $expression . ' AS v FROM json_column_source LIMIT 1';
+                foreach ([$query, 'SELECT v FROM (' . $query . ') q'] as $sql) {
+                    yield $charset . ' source ' . $sql => [$setup . "CREATE TABLE json_column_source(j JSON); INSERT INTO json_column_source VALUES('[1]'); " . $sql];
+                }
+            }
             foreach ($expressions as $expression) {
                 foreach (['', ' FROM (SELECT 1 UNION ALL SELECT 2) t LIMIT 1'] as $tail) {
                     $query = 'SELECT ' . $expression . ' AS v' . $tail;

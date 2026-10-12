@@ -264,7 +264,7 @@ final class Numbers
 
     /**
      * Answers the signed width of a legacy arithmetic operand. Integer literals
-     * reserve their sign; CASE and IF retain the widest signed result branch.
+     * reserve their sign; CASE, IF and IFNULL retain the widest signed result branch.
      * Their own reported widths remain unchanged. Verified through differential
      * arithmetic and text conversions on MySQL 5.6.51 and 5.7.44.
      */
@@ -285,6 +285,7 @@ final class Numbers
         $branches = match (true) {
             $node instanceof CaseExpression => [...array_map(static fn ($branch): Scalar => $branch->result, $node->branches), ...($node->else === null ? [] : [$node->else])],
             $node instanceof KeywordCall && $node->function === KeywordFunction::If => array_slice($node->arguments, 1),
+            $node instanceof \SqlSemantics\Platform\MySql\Statement\Call\FunctionCall && $node->schema === null && strtoupper($node->name->value) === 'IFNULL' => array_map(static fn ($argument): Scalar => $argument->expression, $node->arguments),
             default => [],
         };
         $length = $domain->length;

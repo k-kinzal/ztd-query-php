@@ -86,10 +86,10 @@ final class Materialization
     /**
      * Resolves a column of a materialized derived table, narrowing a short BIGINT to an INT when its query narrows.
      */
-    public function column(Domain $domain, bool $narrows = true): Domain
+    public function column(Domain $domain, bool $narrows = true, GrammarRelease $release = GrammarRelease::MySql847): Domain
     {
         if ($domain->kind === Kind::Json) {
-            return $this->jsonColumn($domain);
+            return $this->jsonColumn($domain, release: $release);
         }
         if ($domain->kind === Kind::Decimal) {
             return new Domain($domain->kind, $domain->field, $domain->length, $domain->decimals, $domain->unsigned, $domain->collation, $domain->members, $domain->coercibility, capacity: $domain->capacity, displayDecimals: $domain->displayDecimals, storageField: $domain->storageField);
@@ -170,7 +170,7 @@ final class Materialization
         $resolution = $expression !== null && $facts->covers($expression) ? $facts->scalar($expression)->resolution : ($field instanceof OutputField ? $field->resolution : null);
         $text = $domain->kind === Kind::String && in_array($domain->field, [Field::VarChar, Field::VarString, Field::String, Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
         if (!$text || $resolution instanceof ResolvedColumn) {
-            return $this->column($domain, $narrows);
+            return $this->column($domain, $narrows, $release);
         }
 
         return $this->computed($domain, $expression, Settings::of($derivation->context), $derivation->context->profile->grammar);
@@ -217,7 +217,7 @@ final class Materialization
     {
         $allocation = $release === GrammarRelease::MySql5651 ? intdiv($domain->length, $domain->collation->charset->maxLength) : $domain->length;
 
-        return $domain->field === Field::Blob && $domain->capacity === null ? $this->stored($domain, $domain->length, $allocation) : $this->column($domain, $narrows);
+        return $domain->field === Field::Blob && $domain->capacity === null ? $this->stored($domain, $domain->length, $allocation) : $this->column($domain, $narrows, $release);
     }
 
     /**
@@ -275,8 +275,10 @@ final class Materialization
     /**
      * Resolves JSON temporary-column metadata. MySQL 8.0 rounds the reported byte
      * bound of control expressions and LEAD/LAG to whole UTF-8 characters.
-     * Stored columns use binary collation independently of that reported bound.
-     * Verified through direct, windowed and derived results on 8.0, 8.4 and 9.1.
+     * MySQL 5.7 retains its 16 MiB stored bound. Stored columns use binary
+     * collation independently of that reported bound.
+     * Verified through direct and derived results on 5.7, and windowed results
+     * on 8.0, 8.4 and 9.1.
      */
     public function jsonColumn(Domain $domain, ?Scalar $expression = null, GrammarRelease $release = GrammarRelease::MySql847): Domain
     {
@@ -291,7 +293,7 @@ final class Materialization
             default => false,
         };
 
-        return new Domain(Kind::Json, Field::Json, 4294967295, 0, false, Collation::binary(), [], $domain->coercibility, display: $release === GrammarRelease::MySql8044 && $text ? 4294967292 : null);
+        return new Domain(Kind::Json, Field::Json, $release === GrammarRelease::MySql5744 ? 16777216 : 4294967295, 0, false, Collation::binary(), [], $domain->coercibility, display: $release === GrammarRelease::MySql8044 && $text ? 4294967292 : null);
     }
 
     /**

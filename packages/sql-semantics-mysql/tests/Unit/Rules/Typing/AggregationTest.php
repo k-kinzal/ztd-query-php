@@ -47,6 +47,26 @@ final class AggregationTest extends TestCase
         self::assertSame($result, $rules->fixed($result, [Domain::integer()]));
     }
 
+    public function testLegacyLengthKeepsCoalesceFloatingBounds(): void
+    {
+        $rules = new Aggregation(new Collations(Collation::known('latin1_swedish_ci')));
+        $branches = [Domain::string(3, Collation::known('latin1_swedish_ci'), Field::String), Domain::double(3)];
+
+        self::assertSame(3, $rules->legacyLength($branches, 'coalesce'));
+        self::assertSame(10, $rules->legacyLength([$branches[0], new Domain(Kind::Date, Field::Date, 10)], 'coalesce'));
+    }
+
+    public function testStringsRetainTheLegacyCoalesceFloatingWidth(): void
+    {
+        $collation = Collation::known('latin1_swedish_ci');
+        $rules = new Aggregation(new Collations($collation));
+        $context = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]));
+        $result = $rules->strings([Domain::string(3, $collation, Field::String), Domain::double(3)], 'coalesce', $context);
+
+        self::assertInstanceOf(Domain::class, $result);
+        self::assertSame([Field::String, 3], [$result->field, $result->length]);
+    }
+
     public function testSizedKeepsTheReleaseSpecificFieldOfLongStringBranches(): void
     {
         $collation = Collation::known('utf8mb4_0900_ai_ci');
