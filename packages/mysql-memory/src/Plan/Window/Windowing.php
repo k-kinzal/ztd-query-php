@@ -144,13 +144,14 @@ final class Windowing
      * Chooses result-column storage after parent expressions have resolved their logical types.
      * Unrelated expressions keep their own output rules; a bare window already has its chosen type.
      */
-    public function output(\SqlSemantics\Statement\Shape\Field $field, Evaluable $expression, bool $materialized): \MySqlMemory\Typing\Domain
+    public function output(Select $select, \SqlSemantics\Statement\Shape\Field $field, Evaluable $expression, bool $materialized): \MySqlMemory\Typing\Domain
     {
         $domain = $expression->domain();
         if ($expression instanceof OutputRead) {
             return $domain;
         }
-        if (($domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String || $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json || $domain->kind->temporal()) && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) && $field->type instanceof \SqlSemantics\Statement\Type\Known && $field->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
+        $stored = (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->plainStored($select, $field->expression, $domain->resolved(), $this->planner->settings->release(), $this->planner->compiler->facts);
+        if (($domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String || $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json || $domain->kind->temporal()) && $field->expression !== null && ($stored || (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression])) && $field->type instanceof \SqlSemantics\Statement\Type\Known && $field->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
             return \MySqlMemory\Typing\Domain::of($field->type->descriptor, $domain->nullable);
         }
         if ($field->expression !== null && $this->reads($field->expression)) {

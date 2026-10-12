@@ -88,7 +88,7 @@ final class Blocks
         if ($select->groupBy?->modifier !== null) {
             $expressions = array_map(static fn (Field $field, Evaluable $expression): Evaluable => $grouping->output($field, $expression), $fields, $expressions);
         }
-        $domains = array_map(fn (Field $field, Evaluable $expression): Domain => $windows->output($field, $expression, $storedWindows), $fields, $expressions);
+        $domains = array_map(fn (Field $field, Evaluable $expression): Domain => $windows->output($select, $field, $expression, $storedWindows), $fields, $expressions);
         [$keys, $expressions] = $this->sortKeys($select, $fields, $domains, $expressions, $evaluation);
         $expressions = $this->carry($select, $scope, $evaluation, $expressions);
         $names = array_map(fn (Field $field): string => $this->name($field, $select), $fields);

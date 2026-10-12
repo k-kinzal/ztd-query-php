@@ -12,6 +12,7 @@ use MySqlMemory\Instance;
 use MySqlMemory\Plan\Planner;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Expression\IntervalUnit;
@@ -150,7 +151,7 @@ final class EventCommandTest extends TestCase
         self::assertNotNull($schema);
         $event = $schema->events['e'];
 
-        (new EventCommand())->alter(new AlterEvent(new QualifiedName(new Name('e')), null, null, new QualifiedName(new Name('f'), new Name('sys')), EventStatus::Disable), $event, $session, null);
+        (new EventCommand())->alter(new AlterEvent(new QualifiedName(new Name('e')), null, null, new QualifiedName(new Name('f'), new Name('sys')), EventStatus::Disable), $event, $session, null, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
 
         self::assertSame(['sys', 'f', 'DISABLED', []], [$event->schema, $event->name, $event->status, $schema->events]);
     }
@@ -301,5 +302,62 @@ final class EventCommandTest extends TestCase
         self::assertInstanceOf(SqlError::class, $error);
         self::assertInstanceOf(ResultSet::class, $warnings);
         self::assertSame([['Note', '1449', "The user specified as a definer ('nobody'@'%') does not exist"], ['Error', '1049', "Unknown database 'nodb'"]], $warnings->rows);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerInvalidInstants(): iterable
+    {
+        yield '5.6 upper bound' => ['5.6.51', '2038-01-19 03:14:08'];
+        yield '5.7 upper bound' => ['5.7.44', '2038-01-19 03:14:08'];
+        yield 'modern upper bound' => ['8.4.7', '3001-01-19 00:00:00'];
+        yield 'modern zero instant' => ['8.4.7', '1970-01-01 00:00:00'];
+    }
+
+    #[DataProvider('providerInvalidInstants')]
+    public function testTimeRejectsInstantsOutsideTheReleaseRange(string $version, string $time): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query("CREATE DATABASE d;USE d;SET time_zone='+00:00';SET timestamp=1600000000");
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1525);
+        $this->expectExceptionMessage("Incorrect AT value: '" . $time . "'");
+
+        $session->query("CREATE EVENT e ON SCHEDULE AT '" . $time . "' ON COMPLETION PRESERVE DISABLE DO SELECT 1");
+    }
+
+    public function testTimeRejectsAnEndOutsideTheEpochRangeWithTheEndCondition(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d;USE d;SET time_zone='+00:00';SET timestamp=1600000000");
+        $error = $session->run("CREATE EVENT e ON SCHEDULE EVERY 1 YEAR ENDS '3001-01-19' DO SELECT 1")[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1543, $error->getCode());
+    }
+
+    public function testLapseDoesNotWarnWhenCreationAlreadyDisablesAPreservedEvent(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d;USE d;SET timestamp=1600000000;CREATE EVENT e ON SCHEDULE AT '1970-01-02' ON COMPLETION PRESERVE DISABLE DO SELECT 1");
+
+        self::assertSame([], $session->diagnostics->conditions);
+        self::assertSame('DISABLED', $session->instance->dictionary->schema('d')?->events['e']->status);
+    }
+
+    public function testChangingRejectsAnExpiredReplacementBeforeMutatingTheEvent(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("CREATE DATABASE d;USE d;SET timestamp=1600000000;CREATE EVENT e ON SCHEDULE AT '2099-01-01' DO SELECT 1");
+        $error = $session->run("ALTER EVENT e ON SCHEDULE AT '1970-01-02' RENAME TO changed DISABLE")[0];
+
+        self::assertInstanceOf(SqlError::class, $error);
+        self::assertSame(1589, $error->getCode());
+        $schema = $session->instance->dictionary->schema('d');
+        self::assertNotNull($schema);
+        self::assertSame('2099-01-01 00:00:00', $schema->events['e']->at);
+        self::assertSame('ENABLED', $schema->events['e']->status);
     }
 }

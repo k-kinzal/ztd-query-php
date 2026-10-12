@@ -100,7 +100,7 @@ final class OutputFieldsTest extends TestCase
         self::assertFalse($fields->stored($select, $expression, $query->facts, \SqlSemantics\Contract\GrammarRelease::MySql5744));
     }
 
-    public function testStoredKeepsGroupedAggregateFieldsSeparateFromComputedParents(): void
+    public function testAggregateKeepsGroupedAggregateFieldsSeparateFromComputedParents(): void
     {
         $semantics = new Semantics(Dialect::MySql);
         $table = $semantics->analyze('CREATE TABLE t(s VARCHAR(10),n INT)');
@@ -246,4 +246,27 @@ final class OutputFieldsTest extends TestCase
         self::assertFalse($fields->direct($query->statement, \SqlSemantics\Contract\GrammarRelease::MySql5744, $query->facts));
     }
 
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerLegacyScalars(): iterable
+    {
+        foreach (['5.6.51', '5.7.44'] as $release) {
+            yield $release . 'varying scalar' => [$release, 'CONCAT(n)', 0];
+            yield $release . 'constant scalar' => [$release, "CONCAT('x')", 31];
+        }
+    }
+
+    #[DataProvider('providerLegacyScalars')]
+    public function testPlainStoredSeparatesVaryingAndConstantLegacyStringFields(string $release, string $field, int $decimals): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $release);
+        $query = $semantics->analyze('SELECT DISTINCT ' . $field . ' FROM t GROUP BY n', [$semantics->analyze('CREATE TABLE t(n INT)')]);
+        $type = $query->field(0)->type;
+
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+        self::assertSame($decimals, $type->descriptor->decimals);
+    }
 }

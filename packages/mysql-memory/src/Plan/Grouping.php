@@ -109,6 +109,7 @@ final class Grouping
         $columns = $rollup ? $this->rollup($select, $groups, $targets, $grouped, $width + count($aggregates)) : [];
         $sorted = $this->sorts($select, $aggregates, $scope);
         $hashed = !$sorted || ($this->planner->settings->legacy() && !$rollup && !$this->indexed($select, $scope) && array_filter($accumulations, static fn (Accumulation $value): bool => $value->input !== null) === [] && !in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::BigResult, $select->options, true));
+        $sorted = $sorted && !(new Grouping\Ordering($this->planner))->arrival($select, $hashed);
 
         return [new AggregatePath($input, $groups, $accumulations, $rollup, $columns, $sorted, $hashed, !$this->planner->settings->legacy(), $rollup && (new Grouping\Preparation($this->planner))->emptyTotal($select, $scope), (new Grouping\Ordering($this->planner))->directions($select)), $grouped];
     }

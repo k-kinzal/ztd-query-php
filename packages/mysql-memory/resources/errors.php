@@ -263,6 +263,7 @@ return [
     1575 => ['HY000', 'Decoding of base64 string failed'],
     1576 => ['HY000', 'Recursion of EVENT DDL statements is forbidden when body is present'],
     1588 => ['HY000', 'Event execution time is in the past and ON COMPLETION NOT PRESERVE is set. The event was dropped immediately after creation.'],
+    1589 => ['HY000', 'Event execution time is in the past and ON COMPLETION NOT PRESERVE is set. The event was not changed. Specify a time in the future.'],
     1582 => ['42000', "Incorrect parameter count in the call to native function '%s'"],
     1583 => ['42000', "Incorrect parameters in the call to native function '%s'"],
     1584 => ['42000', 'Incorrect parameters in the call to stored function %s'],

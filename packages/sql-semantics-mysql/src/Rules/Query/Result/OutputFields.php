@@ -53,6 +53,18 @@ final class OutputFields
         if ($this->storedJson($select, $expression, $domain, $facts)) {
             return (new Materialization())->windowed($domain, $release, $expression);
         }
+        if ($this->plainStored($select, $expression, $domain, $release, $facts)) {
+            return (new Materialization())->column($domain, release: $release);
+        }
+
+        return $this->aggregate($select, $expression, $domain, $release, $facts, $settings);
+    }
+
+    /**
+     * Resolves stored aggregate outputs while preserving deferred parent expressions.
+     */
+    public function aggregate(Select $select, ?Scalar $expression, Domain $domain, GrammarRelease $release, ?Facts $facts = null, ?Settings $settings = null): Domain
+    {
         if ($expression === null || $domain->kind !== Kind::String || !(new Aggregation())->aggregates([$expression]) || $this->deferred($select, $expression, $facts)) {
             return $domain;
         }
@@ -79,6 +91,22 @@ final class OutputFields
 
         return $domain->kind === Kind::Json && !(new GroupKeys())->direct($select, $facts) && (new RollupItems())->windowed($select)
             && $target instanceof SetFunction && $target->aggregates();
+    }
+
+    /**
+     * Identifies varying scalar strings stored by legacy grouped DISTINCT.
+     * Aggregate outputs use their own field rules; constant values and ROLLUP retain
+     * expression fields. Verified through PDO on MySQL 5.6 and 5.7 in Testcontainers.
+     */
+    public function plainStored(Select $select, ?Scalar $expression, Domain $domain, GrammarRelease $release, ?Facts $facts = null): bool
+    {
+        $keys = new GroupKeys();
+        return in_array($release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true)
+            && $expression !== null && $domain->kind === Kind::String
+            && in_array(SelectOption::Distinct, $select->options, true)
+            && $select->groupBy !== null && $select->groupBy->modifier === null
+            && $keys->varying($select, $facts) && !$keys->constant($expression, $facts, $keys->assigned($select))
+            && !(new Aggregation())->aggregates([$expression]);
     }
 
     /**

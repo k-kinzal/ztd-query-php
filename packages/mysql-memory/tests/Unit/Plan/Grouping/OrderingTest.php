@@ -40,4 +40,30 @@ final class OrderingTest extends TestCase
         self::assertContains([null, $total, '3'], $result->rows);
         self::assertSame(2, $session->variables->user('x')[0]);
     }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacy(): iterable
+    {
+        yield '5.6' => ['5.6.51'];
+        yield '5.7' => ['5.7.44'];
+    }
+
+    #[DataProvider('providerLegacy')]
+    public function testArrivalRetainsTheFirstDuplicateValueBeforeImplicitGroupSorting(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query("USE mysql;SET sql_mode='';CREATE TABLE t(n INT);INSERT INTO t VALUES(0),(NULL),(1)");
+        $result = $session->query('SELECT DISTINCT ABS(n) FROM t GROUP BY n')[0];
+        $direct = $session->query('SELECT DISTINCT n FROM t GROUP BY n LIMIT 1')[0];
+        $ordered = $session->query('SELECT DISTINCT n FROM t GROUP BY n ORDER BY MIN(1)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0'], ['1']], $result->rows);
+        self::assertInstanceOf(ResultSet::class, $direct);
+        self::assertSame([[null]], $direct->rows);
+        self::assertInstanceOf(ResultSet::class, $ordered);
+        self::assertSame([['0'], [null], ['1']], $ordered->rows);
+    }
 }

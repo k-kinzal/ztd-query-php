@@ -73,6 +73,7 @@ enum ProgramError: int implements ErrorCode
     case SameEventName = 1551;
     case EventRecursion = 1576;
     case EventDroppedInPast = 1588;
+    case EventUnchangedInPast = 1589;
     case WrongParametersToStoredFunction = 1584;
     case FunctionNameCollision = 1630;
     case DuplicateSignalItem = 1641;

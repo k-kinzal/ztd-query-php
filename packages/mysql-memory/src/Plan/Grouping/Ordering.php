@@ -10,12 +10,14 @@ use SqlSemantics\Platform\MySql\Rules\Query\Grouping\Matching;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 
 /**
- * Carries a compatible output ordering into streamed input groups.
+ * Resolves group ordering before output sorting and duplicate removal.
  *
  * Every ORDER BY item must match the corresponding leading GROUP BY expression.
  * A partial prefix leaves the remaining grouping keys ascending. An expression
  * outside that prefix requires a separate output sort and preserves input order.
  * Verified through concatenation and variable assignments on MySQL 8.4.
+ * Legacy DISTINCT over hashed groups preserves their arrival order when it stores
+ * new duplicate keys or an explicit output order replaces implicit group ordering.
  *
  * @visibility MySqlMemory
  */
@@ -50,5 +52,26 @@ final class Ordering
         }
 
         return $directions;
+    }
+
+    /**
+     * Preserves arrival order for legacy hashed groups before DISTINCT stores its keys.
+     * Redundant DISTINCT retains implicit group ordering unless an explicit order replaces it.
+     * Streaming tuple aggregates, indexes and ROLLUP retain their sorted input.
+     * Verified through SQL on MySQL 5.6 and 5.7 in Testcontainers.
+     */
+    public function arrival(Select $select, bool $hashed): bool
+    {
+        if (!$this->planner->settings->legacy() || !$hashed || $select->groupBy === null || $select->groupBy->modifier !== null || !in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $select->options, true)) {
+            return false;
+        }
+        $expressions = [];
+        foreach ($select->items as $item) {
+            if (!$item instanceof \SqlSemantics\Platform\MySql\Statement\Query\SelectExpression) {
+                return false;
+            }
+            $expressions[] = $item->expression;
+        }
+        return $select->orderBy !== [] || ($select->late->orderBy ?? []) !== [] || !(new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\DistinctOrdering())->redundant($select, $expressions, $this->planner->compiler->facts);
     }
 }

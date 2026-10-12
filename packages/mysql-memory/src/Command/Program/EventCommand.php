@@ -40,7 +40,8 @@ use SqlSemantics\Statement\Scalar;
  * that is not positive ER_EVENT_INTERVAL_NOT_POSITIVE_OR_TOO_BIG, a unit of microseconds
  * ER_NOT_SUPPORTED_YET, and an end before the start ER_EVENT_ENDS_BEFORE_STARTS. A recurring
  * event starts now unless STARTS says otherwise. A one-time event in the past is dropped at
- * once without ON COMPLETION PRESERVE, and disabled with it, each with a note. An event of the
+ * once without ON COMPLETION PRESERVE, and disabled with it; an explicit disabled status needs
+ * no disabling note. ALTER refuses an expired replacement without PRESERVE. An event of the
  * same name is ER_EVENT_ALREADY_EXISTS, a note with IF NOT EXISTS; ALTER EVENT of a missing
  * event is ER_EVENT_DOES_NOT_EXIST, found after the note of a DEFINER that does not exist and
  * the database of RENAME TO (verified on live 8.0 and 8.4 servers). The emulator keeps events
@@ -85,7 +86,7 @@ final class EventCommand implements Command
         $key = strtolower($statement->name->name->value);
         if ($statement instanceof AlterEvent) {
             $event = $this->found($statement, $database, $session, $context);
-            $this->alter($statement, $event, $session, $schedule);
+            $this->alter($statement, $event, $session, $schedule, $context);
         } else {
             if ($schema !== null && isset($schema->events[$key])) {
                 if (!$statement->ifNotExists) {
@@ -104,7 +105,7 @@ final class EventCommand implements Command
             $schema->events[$key] = $event;
         }
         if ($schedule !== null) {
-            $this->lapse($event, $statement instanceof CreateEvent, $session, $context);
+            $this->lapse($event, $statement instanceof CreateEvent, $session, $context, $statement->status !== null && $statement->status !== EventStatus::Enable);
         }
         if (isset($dictionary->schema($event->schema)?->events[strtolower($event->name)])) {
             $session->instance->registry->eventScheduler->activated($event);
@@ -145,12 +146,13 @@ final class EventCommand implements Command
 
     /**
      * Ends a one-time event whose time has passed according to the session clock: a created
-     * event without ON COMPLETION PRESERVE is dropped, any other one disabled, each with its note.
+     * event without ON COMPLETION PRESERVE is dropped, any other one disabled, each with its note
+     * unless this statement explicitly disables a preserved event.
      * With the scheduler enabled, modern releases also disable an event without a note when
      * its final time is after the session clock but before the actual clock. A stopped
      * scheduler leaves that definition enabled (verified on live 8.0 and 8.4 servers).
      */
-    public function lapse(Event $event, bool $created, Session $session, Context $context): void
+    public function lapse(Event $event, bool $created, Session $session, Context $context, bool $disabled = false): void
     {
         if ($event->at === null || $event->at >= Temporal::dateTime(...[...$context->local(), 0])) {
             $end = $event->at ?? $event->ends;
@@ -164,7 +166,7 @@ final class EventCommand implements Command
         if (!$event->preserve && $created) {
             unset($session->instance->dictionary->schemas[$event->schema]->events[strtolower($event->name)]);
             $context->note(ProgramError::EventDroppedInPast);
-        } else {
+        } elseif (!$disabled) {
             $event->status = 'DISABLED';
             $context->note(ProgramError::EventDisabledInPast);
         }
@@ -177,7 +179,7 @@ final class EventCommand implements Command
      *
      * @throws SqlError When the new name is the old one, names a missing database or an existing event
      */
-    public function alter(AlterEvent $statement, Event $event, Session $session, ?array $schedule): void
+    public function alter(AlterEvent $statement, Event $event, Session $session, ?array $schedule, Context $context): void
     {
         $dictionary = $session->instance->dictionary;
         $move = null;
@@ -197,6 +199,7 @@ final class EventCommand implements Command
             }
             $move = [$target, $renamed->name->value];
         }
+        $this->changing($statement, $event, $schedule, $context);
         if ($schedule !== null) {
             [$event->at, $event->every, $event->starts, $event->ends] = $schedule;
         }
@@ -222,6 +225,21 @@ final class EventCommand implements Command
             $event->schema = $target->name;
             $event->name = $name;
             $target->events[strtolower($name)] = $event;
+        }
+    }
+
+    /**
+     * Rejects an expired replacement schedule before changing an unpreserved event.
+     * Changing completion alone retains the existing schedule without this check.
+     *
+     * @param array{string|null, array{string, string}|null, string|null, string|null}|null $schedule
+     * @throws SqlError When ALTER EVENT would install an expired one-time schedule
+     */
+    public function changing(AlterEvent $statement, Event $event, ?array $schedule, Context $context): void
+    {
+        $preserve = $statement->completion === null ? $event->preserve : $statement->completion === EventCompletion::Preserve;
+        if (!$preserve && $schedule !== null && $schedule[0] !== null && $schedule[0] < Temporal::dateTime(...[...$context->local(), 0])) {
+            throw ProgramError::EventUnchangedInPast->error();
         }
     }
 
@@ -341,8 +359,10 @@ final class EventCommand implements Command
 
     /**
      * Evaluates a time of a schedule into a datetime to the second.
+     * Instants must fit the release's epoch range: through 2038 on MySQL 5.6/5.7,
+     * through 3001 on modern releases. Bounds apply after the session zone conversion.
      *
-     * @throws SqlError When the value is NULL or no datetime (ER_WRONG_VALUE)
+     * @throws SqlError When the value is NULL, no datetime or outside the epoch range; an out-of-range ENDS uses ER_EVENT_ENDS_BEFORE_STARTS
      */
     public function time(Scalar $expression, string $clause, Planner $planner, Context $context): string
     {
@@ -356,6 +376,11 @@ final class EventCommand implements Command
             }
 
             throw DataError::WrongValue->error($clause, $text);
+        }
+        $instant = $context->zone()->instant(\MySqlMemory\Value\Calendar::epoch($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5]));
+        $latest = $planner->settings->legacy() ? \MySqlMemory\Value\Calendar::epoch(2038, 1, 19, 3, 14, 7) : \MySqlMemory\Value\Calendar::epoch(3001, 1, 18, 23, 59, 59);
+        if ($instant < 1 || $instant > $latest) {
+            throw $clause === 'ENDS' ? ProgramError::EndsBeforeStarts->error() : DataError::WrongValue->error($clause, $text);
         }
 
         return Temporal::dateTime($parts[0], $parts[1], $parts[2], $parts[3], $parts[4], $parts[5], 0, 0);

@@ -27,6 +27,13 @@ final class GroupedNullDistinctTest extends TestCase
                 }
             }
         }
+        foreach (['(0),(NULL),(1)', '(NULL),(0),(1)'] as $rows) {
+            foreach (['n', 'ABS(n)'] as $field) {
+                foreach ([' LIMIT 1', ' ORDER BY MIN(1)'] as $order) {
+                    yield $rows . $field . $order => [$setup . 'INSERT INTO distinct_nulls VALUES' . $rows . ';SELECT DISTINCT ' . $field . ' FROM distinct_nulls GROUP BY n' . $order];
+                }
+            }
+        }
     }
 
     #[DataProvider('providerStatements')]

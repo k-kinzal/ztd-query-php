@@ -22,6 +22,7 @@ use SqlSemantics\Statement\Statement;
  * to a common table opens its temporary inputs, even if its results are materialized.
  * Write targets open before their query inputs. Stored program bodies open tables when
  * invoked, not when defined; view definitions resolve their query immediately.
+ * MySQL 5.6 and 5.7 name the repeated reference inside a contained stored program.
  * Source: https://dev.mysql.com/doc/refman/8.4/en/temporary-table-problems.html.
  *
  * @visibility MySqlMemory
@@ -47,7 +48,8 @@ final class Reopened
             }
             $id = spl_object_id($table);
             if (isset($seen[$id])) {
-                throw SchemaError::CantReopenTable->error($seen[$id]);
+                $name = $session->settings()->legacy() && $session->program?->contained === true ? ($reference->alias->value ?? $reference->name->name->value) : $seen[$id];
+                throw SchemaError::CantReopenTable->error($name);
             }
             $seen[$id] = $reference->alias->value ?? $reference->name->name->value;
         }

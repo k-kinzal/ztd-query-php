@@ -140,4 +140,28 @@ final class ReopenedTest extends TestCase
 
         $session->query('CALL p()');
     }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerContainedReferences(): iterable
+    {
+        yield '5.6' => ['5.6.51', 'second_table'];
+        yield '5.7' => ['5.7.44', 'second_table'];
+        yield '8.4' => ['8.4.7', 'first_table'];
+    }
+
+    #[DataProvider('providerContainedReferences')]
+    public function testCheckNamesTheLegacyContainedReferenceBeingReopened(string $version, string $reference): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('CREATE DATABASE d;USE d;CREATE TEMPORARY TABLE x1(a INT)');
+        $session->query('CREATE FUNCTION f() RETURNS INT DETERMINISTIC RETURN (SELECT COUNT(*) FROM x1 first_table JOIN x1 second_table)');
+
+        $this->expectException(SqlError::class);
+        $this->expectExceptionCode(1137);
+        $this->expectExceptionMessage("Can't reopen table: '" . $reference . "'");
+
+        $session->query('SELECT f()');
+    }
 }

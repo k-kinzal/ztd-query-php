@@ -13,6 +13,7 @@ use MySqlMemory\Plan\Planner;
 use MySqlMemory\Plan\Window\Windowing;
 use MySqlMemory\Result\ResultSet;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
@@ -25,6 +26,26 @@ use SqlSemantics\Statement\Identifier\Name;
 #[Small]
 final class WindowingTest extends TestCase
 {
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerLegacy(): iterable
+    {
+        yield '5.6' => ['5.6.51'];
+        yield '5.7' => ['5.7.44'];
+    }
+
+    #[DataProvider('providerLegacy')]
+    public function testOutputPreservesResolvedStorageOfGroupedScalarStrings(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(0),(NULL),(1)');
+        $result = $session->query("SELECT DISTINCT CONCAT(n),CONCAT('x') FROM t GROUP BY n")[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([0, 31], [$result->columns[0]->decimals, $result->columns[1]->decimals]);
+    }
+
     public function testOutputRetainsTemporalWidthsAndJsonFlagsThroughTransparentWrappers(): void
     {
         $session = (new Instance())->connect();
