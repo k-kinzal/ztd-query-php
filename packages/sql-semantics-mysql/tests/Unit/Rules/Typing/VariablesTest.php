@@ -40,7 +40,7 @@ final class VariablesTest extends TestCase
         self::assertEquals(Domain::decimal(7, 2), $variables->assignment(Domain::decimal(7, 2)));
         self::assertEquals(Domain::decimal(7, 2), $variables->assignment(Domain::decimal(7, 2, true)));
         self::assertEquals(Domain::string(10, $collation), $variables->assignment(new Domain(Kind::Date, Field::Date, 10)));
-        self::assertEquals(Domain::string(4294967295, Collation::known('utf8mb4_bin'), Field::LongBlob), $variables->assignment(new Domain(Kind::Json, Field::Json, 4294967295)));
+        self::assertEquals(new Domain(Kind::String, Field::LongBlob, 1073741823, Domain::NOT_FIXED, collation: Collation::known('utf8mb4_bin'), display: 4294967292), $variables->assignment(new Domain(Kind::Json, Field::Json, 4294967295)));
     }
 
     public function testAssignmentTextRetainsCharactersUntilTheVarcharByteBoundIsExceeded(): void
@@ -49,8 +49,8 @@ final class VariablesTest extends TestCase
         $variables = new Variables(new Settings($collation));
 
         self::assertEquals(Domain::string(255, $collation), $variables->assignmentText(Domain::string(255, $collation, Field::TinyBlob)));
-        self::assertEquals(Domain::string(262140, $collation, Field::MediumBlob), $variables->assignmentText(Domain::string(65535, $collation, Field::Blob)));
-        self::assertEquals(Domain::string(67108860, $collation, Field::LongBlob), $variables->assignmentText(Domain::string(16777215, $collation, Field::MediumBlob)));
+        self::assertEquals(new Domain(Kind::String, Field::MediumBlob, 65535, Domain::NOT_FIXED, collation: $collation, display: 262140), $variables->assignmentText(Domain::string(65535, $collation, Field::Blob)));
+        self::assertEquals(new Domain(Kind::String, Field::LongBlob, 16777215, Domain::NOT_FIXED, collation: $collation, display: 67108860), $variables->assignmentText(Domain::string(16777215, $collation, Field::MediumBlob)));
     }
 
     #[DataProvider('providerLegacyReleases')]
@@ -64,7 +64,7 @@ final class VariablesTest extends TestCase
         self::assertEquals(new Domain(Kind::Decimal, Field::NewDecimal, 8, 2, true), $variables->assignment(Domain::decimal(7, 2, true)));
         self::assertEquals(new Domain(Kind::String, Field::VarString, 10, 0, collation: $collation, displayDecimals: 0), $variables->assignment(new Domain(Kind::Date, Field::Date, 10)));
         self::assertEquals(new Domain(Kind::String, Field::VarString, 0, displayDecimals: 0), $variables->assignment(Domain::null()));
-        self::assertEquals(Domain::string(4294967292, Collation::known('utf8mb4_bin'), Field::LongBlob), $variables->assignment(new Domain(Kind::Json, Field::Json, 4294967295)));
+        self::assertEquals(new Domain(Kind::String, Field::LongBlob, 1073741823, Domain::NOT_FIXED, collation: Collation::known('utf8mb4_bin'), display: 4294967292), $variables->assignment(new Domain(Kind::Json, Field::Json, 4294967295)));
     }
 
     #[DataProvider('providerLegacyReleases')]

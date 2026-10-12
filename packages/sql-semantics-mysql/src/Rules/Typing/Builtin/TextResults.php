@@ -67,7 +67,9 @@ final class TextResults
             $domain = (new FormatResults())->sized($this->concatenatedBytes($call, $operation === 'concat_ws'), $domain->collation, $domain->coercibility);
         }
 
-        return $domain !== null && $domain->field === Field::LongBlob && $domain->length > 16777216 ? Domain::string(16777216, $domain->collation, $domain->field, $domain->coercibility) : $domain;
+        $domain = $domain !== null && $domain->field === Field::LongBlob && $domain->length > 16777216 ? Domain::string(16777216, $domain->collation, $domain->field, $domain->coercibility) : $domain;
+
+        return $domain === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Typing\Text\ResultBounds())->computed($domain);
     }
 
     /**

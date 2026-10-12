@@ -38,9 +38,22 @@ final class TextResultsTest extends TestCase
         $call = new Invocation([Domain::string(16777215, $collation, Field::Blob)], [], new Settings($collation), new Derivation((new Semantics(Dialect::MySql))->context([])));
         $results = new TextResults();
 
-        self::assertSame(16777216, $results->bounded($call, 16777215, 'concat')?->length);
+        self::assertSame(4194304, $results->bounded($call, 16777215, 'concat')?->length);
+        self::assertSame(16777216, $results->bounded($call, 16777215, 'concat')->metadataLength());
         self::assertSame(Field::LongBlob, $results->bounded($call, 16777215, 'concat')->field);
         self::assertSame(1024, $results->bounded($call, 1024, 'concat')?->length);
+    }
+
+    public function testBoundedRetainsTheCharacterBoundThroughNestedConcatenation(): void
+    {
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+        $call = new Invocation([Domain::string(65535, $collation, Field::Blob)], [], new Settings($collation), new Derivation((new Semantics(Dialect::MySql))->context([])));
+        $rules = (new TextResults())->rules();
+        $first = $rules['CONCAT']($call);
+
+        self::assertNotNull($first);
+        self::assertSame([65535, 262140], [$first->length, $first->metadataLength()]);
+        self::assertEquals($first, $rules['CONCAT'](new Invocation([$first], [], $call->settings, $call->derivation)));
     }
 
     public function testConcatenatedBytesCountsEncodedTemporalBoundsAndSeparators(): void

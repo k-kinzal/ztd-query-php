@@ -150,13 +150,25 @@ final class FormatResults
     /**
      * Resolves HEX, including the legacy unsigned 32-bit character count before charset scaling.
      * Verified with GEOMETRY, LONGBLOB and LONGTEXT under latin1 and utf8mb4 on MySQL 5.6.51.
+     * Modern string operands saturate their encoded input bound, then report the
+     * low 32 bits after doubling and connection-charset scaling. Their character
+     * bound stays separate from that byte width for enclosing calls.
      */
     public function hex(Invocation $call): Domain
     {
         $legacy = $this->legacy($call);
         $length = $legacy && $call->domain(0)->kind->numeric() ? 2 * $call->length($call->domain(0)) : $this->digitsOf($call->domain(0));
 
-        return $this->undecimal($call, $this->sized($legacy ? $length & 4294967295 : $length, $call->settings->connection, Coercibility::Coercible));
+        if ($legacy) {
+            return $this->undecimal($call, $this->sized($length & 4294967295, $call->settings->connection, Coercibility::Coercible));
+        }
+        $length = $call->domain(0)->kind === Kind::String ? min(4294967295, $call->domain(0)->byteLength()) * 2 : $length;
+        $domain = $this->sized($length, $call->settings->connection, Coercibility::Coercible);
+        if ($domain->field->blob()) {
+            $domain = Domain::string(($length * $domain->collation->charset->maxLength) & 4294967295, $domain->collation, $domain->field, $domain->coercibility);
+        }
+
+        return (new \SqlSemantics\Platform\MySql\Rules\Typing\Text\ResultBounds())->computed($domain);
     }
 
     /**

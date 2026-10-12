@@ -150,7 +150,7 @@ final class Variables
             Kind::Date, Kind::Time, Kind::DateTime, Kind::Null, Kind::Double, Kind::Decimal, Kind::Integer, Kind::Year, Kind::Bit => $domain->decimals,
         };
 
-        return $legacy ? new Domain($result->kind, $result->field, $result->length, $decimals, $result->unsigned, $result->collation, coercibility: Coercibility::Implicit, display: $display, displayDecimals: $result->kind === Kind::String && $decimals < Domain::NOT_FIXED ? $decimals : null) : $result;
+        return $legacy ? new Domain($result->kind, $result->field, $result->length, $decimals, $result->unsigned, $result->collation, coercibility: Coercibility::Implicit, display: $result->display ?? $display, displayDecimals: $result->kind === Kind::String && $decimals < Domain::NOT_FIXED ? $decimals : null) : $result;
     }
 
     /**
@@ -174,18 +174,19 @@ final class Variables
 
     /**
      * Resolves an assignment's text width and field. A result beyond VARCHAR's byte bound
-     * uses a BLOB field whose bound counts bytes, including the character-set expansion.
+     * uses a BLOB field with a separate byte display bound, so enclosing string
+     * functions continue to read its character bound.
      */
     public function assignmentText(Domain $domain): Domain
     {
         $width = $domain->collation->charset->maxLength;
-        $bound = in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true) ? intdiv(4294967295, $width) * $width : 4294967295;
+        $bound = intdiv(4294967295, $width) * $width;
         $bytes = min($bound, $domain->length * $width);
         if ($bytes <= 65535) {
             return Domain::string($domain->length, $domain->collation);
         }
 
-        return Domain::string($bytes, $domain->collation, $bytes <= 16777215 ? Field::MediumBlob : Field::LongBlob);
+        return (new Text\ResultBounds())->computed(Domain::string($bytes, $domain->collation, $bytes <= 16777215 ? Field::MediumBlob : Field::LongBlob));
     }
 
     /**

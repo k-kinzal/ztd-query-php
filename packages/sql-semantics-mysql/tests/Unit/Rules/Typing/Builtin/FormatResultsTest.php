@@ -23,6 +23,21 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 #[Small]
 final class FormatResultsTest extends TestCase
 {
+    public function testHexKeepsModernBlobByteWidthsSeparateFromCharacterBounds(): void
+    {
+        $collation = Collation::known('utf8mb4_0900_ai_ci');
+        $settings = new Settings($collation);
+        $derivation = new Derivation((new Semantics(Dialect::MySql))->context([]));
+        $physical = Domain::string(4294967295, $collation, Field::Blob);
+        $assigned = new Domain(Kind::String, Field::LongBlob, 1073741823, Domain::NOT_FIXED, collation: $collation, display: 4294967292);
+        $rules = new FormatResults();
+        $physicalHex = $rules->hex(new Invocation([$physical], [], $settings, $derivation));
+        $assignedHex = $rules->hex(new Invocation([$assigned], [], $settings, $derivation));
+
+        self::assertSame([1073741822, 4294967288], [$physicalHex->length, $physicalHex->metadataLength()]);
+        self::assertSame([1073741816, 4294967264], [$assignedHex->length, $assignedHex->metadataLength()]);
+    }
+
     public function testRulesResolveTheLengthsTheServerReports(): void
     {
         $rules = (new FormatResults())->rules();

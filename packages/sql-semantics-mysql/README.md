@@ -215,8 +215,11 @@ An unknown setting (`null`) leaves the fact dependent. Default release settings
 disable it in MySQL 5.6 and 5.7 and enable it from MySQL 8.0.
 
 Resolved domains distinguish string expression bounds from reported byte lengths.
-`CASE`, control functions and string extrema retain both bounds so nested
+`CASE`, control functions, string extrema, variable assignments and concatenations
+retain both bounds so nested
 expressions do not repeatedly multiply a blob's width by its character set size.
+Modern `HEX` results also retain their character bound separately from the reported
+32-bit byte width, including when the encoded maximum wraps.
 The returned field type of `NULLIF` and computed `MIN`/`MAX` strings follows
 the emulated release, including MySQL 5.6 and 5.7 string sizing.
 When a derived table materializes a direct `GROUP_CONCAT` result, its column type
