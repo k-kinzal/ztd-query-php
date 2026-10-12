@@ -15,7 +15,9 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 /**
  * Resolves the type a user variable is read with, from the type of the value it holds.
  *
- * An integer reads as a BIGINT (width 20 in MySQL 5.6 and 5.7, and 21 from 8.0), a decimal as DECIMAL(65,30)
+ * An integer reads as a BIGINT (logical width 20 in MySQL 5.6 and 5.7, and 21 from 8.0).
+ * Legacy integer result metadata expands that width by the connection character set;
+ * arithmetic keeps the logical width. A decimal reads as DECIMAL(65,30)
  * (reported width 83 in MySQL 5.6 and 5.7, and 67 from 8.0), a double as a double, and any
  * other value as a blob in its collation, a temporal value in latin1: a medium blob of 16777215 bytes
  * in MySQL 5.6 and 5.7, and from MySQL 8.0 with a byte bound of 16777215 times
@@ -80,7 +82,8 @@ final class Variables
 
     /**
      * Gives an assignment its expression result type: integer, decimal, double or string.
-     * Integer widths follow the operand. MySQL 5.6 and 5.7 retain operand decimals,
+     * Integer widths follow the operand; legacy metadata expands them by the connection
+     * character set. MySQL 5.6 and 5.7 retain operand decimals,
      * floating widths and unsigned decimal widths, and give every result implicit
      * coercibility. From 8.0 floating results use DOUBLE's expression width.
      * Verified through PDO metadata on live servers and Testcontainers.
@@ -104,7 +107,19 @@ final class Variables
             Kind::Date, Kind::Time, Kind::DateTime, Kind::Null, Kind::Double, Kind::Decimal, Kind::Integer, Kind::Year, Kind::Bit => $domain->decimals,
         };
 
-        return $legacy ? new Domain($result->kind, $result->field, $result->length, $decimals, $result->unsigned, $result->collation, coercibility: Coercibility::Implicit, display: $result->kind === Kind::Decimal ? $domain->display : null, displayDecimals: $result->kind === Kind::String && $decimals < Domain::NOT_FIXED ? $decimals : null) : $result;
+        return $legacy ? new Domain($result->kind, $result->field, $result->length, $decimals, $result->unsigned, $result->collation, coercibility: Coercibility::Implicit, display: $this->assignmentDisplay($domain), displayDecimals: $result->kind === Kind::String && $decimals < Domain::NOT_FIXED ? $decimals : null) : $result;
+    }
+
+    /**
+     * Separates a legacy assignment's reported numeric width from its logical precision.
+     */
+    public function assignmentDisplay(Domain $domain): ?int
+    {
+        return match ($domain->kind) {
+            Kind::Integer, Kind::Year, Kind::Bit => $this->settings->connection->charset->maxLength > 1 ? $domain->length * $this->settings->connection->charset->maxLength : null,
+            Kind::Decimal => $domain->display,
+            Kind::Double, Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json, Kind::Null => null,
+        };
     }
 
     /**
@@ -152,9 +167,11 @@ final class Variables
     public function held(Domain $domain): Domain
     {
         $legacy = in_array($this->release, [GrammarRelease::MySql5651, GrammarRelease::MySql5744], true);
+        $integerWidth = $legacy ? 20 : 21;
+        $integerDisplay = $legacy && $this->settings->connection->charset->maxLength > 1 ? 20 * $this->settings->connection->charset->maxLength : null;
 
         return match ($domain->kind) {
-            Kind::Integer, Kind::Year, Kind::Bit => Domain::integer(Field::LongLong, $legacy ? 20 : 21, $domain->unsigned),
+            Kind::Integer, Kind::Year, Kind::Bit => new Domain(Kind::Integer, Field::LongLong, $integerWidth, unsigned: $domain->unsigned, coercibility: Coercibility::Numeric, display: $integerDisplay),
             Kind::Decimal => new Domain(Kind::Decimal, Field::NewDecimal, 67, 30, coercibility: Coercibility::Numeric, display: $legacy ? 83 : null),
             Kind::Double => Domain::double(23),
             Kind::Null => Domain::string(16777215, Collation::binary(), Field::MediumBlob),

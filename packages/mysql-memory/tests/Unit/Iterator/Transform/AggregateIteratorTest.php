@@ -37,6 +37,16 @@ final class AggregateIteratorTest extends TestCase
         self::assertSame([], $warnings->rows);
     }
 
+    public function testReadRetainsAggregatesAfterAnOffsetDiscardsTheirRow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql; CREATE TABLE t(id INT,a INT); INSERT INTO t VALUES(1,10),(2,20)');
+        $result = $session->query('SELECT (SELECT MIN(id),MAX(a) FROM t LIMIT 0 OFFSET 2) <=> (NULL,NULL), (SELECT MIN(id),MAX(a) FROM t LIMIT 0) <=> (NULL,NULL)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['0', '1']], $result->rows);
+    }
+
     public function testGatherAnswersTheFirstRowAndTheAggregatesOfEachGroupInGroupOrder(): void
     {
         $session = (new Instance())->connect();

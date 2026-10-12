@@ -249,6 +249,11 @@ final class AggregateIterator implements RowIterator
             $this->gather($this->frame);
         }
 
-        return $this->rows[$this->next++] ?? null;
+        $row = $this->rows[$this->next++] ?? null;
+        if ($row !== null) {
+            $this->frame->row = $row;
+        }
+
+        return $row;
     }
 }

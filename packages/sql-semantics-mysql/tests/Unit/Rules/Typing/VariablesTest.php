@@ -68,6 +68,26 @@ final class VariablesTest extends TestCase
     }
 
     #[DataProvider('providerLegacyReleases')]
+    public function testAssignmentExpandsLegacyIntegerMetadataWithoutChangingItsLogicalWidth(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), $release);
+        $assigned = $variables->assignment(Domain::integer(Field::Long, 11));
+
+        self::assertSame(11, $assigned->value()->length);
+        self::assertSame(44, $assigned->metadataLength());
+        self::assertEquals($assigned, $variables->assignment($assigned->value()));
+    }
+
+    public function testAssignmentDisplaySeparatesIntegerAndDecimalMetadataFromStringBounds(): void
+    {
+        $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), \SqlSemantics\Contract\GrammarRelease::MySql5744);
+
+        self::assertSame(84, $variables->assignmentDisplay(Domain::integer()));
+        self::assertSame(83, $variables->assignmentDisplay($variables->held(Domain::decimal(7, 2))));
+        self::assertNull($variables->assignmentDisplay(Domain::string(3, Collation::binary())));
+    }
+
+    #[DataProvider('providerLegacyReleases')]
     public function testAssignmentPreservesReportedStringScaleAcrossNestedAssignments(\SqlSemantics\Contract\GrammarRelease $release): void
     {
         $variables = new Variables(new Settings(Collation::known('latin1_swedish_ci')), $release);
@@ -135,7 +155,9 @@ final class VariablesTest extends TestCase
     {
         $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), \SqlSemantics\Contract\GrammarRelease::MySql5651);
 
-        self::assertEquals(Domain::integer(Field::LongLong, 20), $variables->held(Domain::integer(Field::Long, 11)));
+        $domain = $variables->held(Domain::integer(Field::Long, 11));
+        self::assertEquals(Domain::integer(Field::LongLong, 20), $domain->value());
+        self::assertSame(80, $domain->metadataLength());
     }
 
     public function testReadNeedsTheVariablesOfTheSession(): void
@@ -192,7 +214,9 @@ final class VariablesTest extends TestCase
     {
         $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), \SqlSemantics\Contract\GrammarRelease::MySql5744);
 
-        self::assertEquals(Domain::integer(Field::LongLong, 20), $variables->held(Domain::integer(Field::Long, 11)));
+        $domain = $variables->held(Domain::integer(Field::Long, 11));
+        self::assertEquals(Domain::integer(Field::LongLong, 20), $domain->value());
+        self::assertSame(80, $domain->metadataLength());
     }
 
 }
