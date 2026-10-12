@@ -88,11 +88,11 @@ final class Ordering
     }
 
     /**
-     * Ignores constant keys, including constant DISTINCT assignments on modern servers.
+     * Ignores constant keys, including constant DISTINCT assignments.
      */
     public function constant(Select $select, ?Scalar $expression): bool
     {
-        $assignmentsVary = $this->planner->settings->legacy() || !in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $select->options, true);
+        $assignmentsVary = !in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $select->options, true);
 
         return $expression !== null && $this->planner->compiler->constancy($expression, assignmentsVary: $assignmentsVary)->constant()
             && (new Walker())->find($expression, Query::class) === [];

@@ -94,7 +94,7 @@ final class Blocks
         $names = array_map(fn (Field $field): string => $this->name($field, $select), $fields);
         $origins = (new Origins($this->planner))->origins($select, $outer, $scope, $fields, $rolled, $domains, $keys !== [], $storedWindows);
         $hashes = (new SortedDistinct($this->planner))->hashes(new QueryPlan($input, $domains, $names, $origins), $select, $keys);
-        $root = $this->distinct($select, $fields, $input, $expressions, $domains, $hashes);
+        $root = $this->distinct($select, $fields, $input, $expressions, $domains, $hashes, $keys !== []);
         $copies = (new Window\CopiedAssignments($this->planner))->copies($select, $fields, $storedWindows);
         $root = (new Window\CopiedAssignments($this->planner))->buffered($select, $root, $copies);
         if ($keys !== [] && !$presorted) {
@@ -201,12 +201,14 @@ final class Blocks
      * @param list<Evaluable> $expressions The select list, then the ORDER BY keys
      * @param list<Domain> $domains The domains of the select list
      * @param bool $hashed Whether duplicate removal uses temporary hash keys
+     * @param bool $sorted Whether the output requires sorting keys
      */
-    public function distinct(Select $select, array $fields, AccessPath $input, array $expressions, array $domains, bool $hashed = false): AccessPath
+    public function distinct(Select $select, array $fields, AccessPath $input, array $expressions, array $domains, bool $hashed = false, bool $sorted = false): AccessPath
     {
         if (!in_array(SelectOption::Distinct, $select->options, true)) {
             return new Project($input, $expressions, publish: $this->planner->settings->legacy() && !(new Projection\Emission($this->planner))->sortable($select), order: (new Projection\Ordering($this->planner))->order($select, $fields, $expressions), initial: (new Projection\Ordering($this->planner))->initial($select, $fields, $domains));
         }
+        $input = (new Projection\DistinctStorage($this->planner))->input($select, $input, $fields, $sorted);
         $deferred = (new Window\DistinctOutputs($this->planner))->plan($select, $fields, $input, $expressions, $domains, $hashed);
         if ($deferred !== null) {
             return $deferred;
@@ -214,7 +216,7 @@ final class Blocks
         $compiler = $this->planner->compiler;
         $constants = [];
         foreach ($fields as $position => $field) {
-            if ($field->expression !== null && $compiler->constancy($field->expression, assignmentsVary: $this->planner->settings->legacy())->constant() && (new Walker())->find($field->expression, Query::class) === []) {
+            if ($field->expression !== null && $compiler->constancy($field->expression, assignmentsVary: false)->constant() && (new Walker())->find($field->expression, Query::class) === []) {
                 $constants[$position] = $expressions[$position];
             }
         }

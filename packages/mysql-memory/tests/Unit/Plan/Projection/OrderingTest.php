@@ -67,7 +67,7 @@ final class OrderingTest extends TestCase
         self::assertFalse((new Ordering($planner))->constant($statement, null));
     }
 
-    public function testConstantKeepsLegacyDistinctAssignmentKeys(): void
+    public function testConstantIgnoresLegacyDistinctAssignmentKeys(): void
     {
         $session = (new Instance('5.7.44'))->connect();
         $operation = $session->analyze('SELECT DISTINCT @x:=7 AS v ORDER BY v');
@@ -77,7 +77,7 @@ final class OrderingTest extends TestCase
         $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
         $field = $planner->blocks->fields($statement)[0];
 
-        self::assertFalse((new Ordering($planner))->constant($statement, $field->expression));
+        self::assertTrue((new Ordering($planner))->constant($statement, $field->expression));
     }
     public function testOrderAdvancesLegacyRandomKeysBeforeVisibleValues(): void
     {

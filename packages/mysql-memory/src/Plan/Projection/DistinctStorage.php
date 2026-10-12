@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Projection;
 
+use MySqlMemory\Evaluation\Compile\Constancy;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Assignment;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
@@ -25,6 +26,7 @@ use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Statement\Shape\Field;
 
 /**
  * Resolves ordinary DISTINCT fields and publishes their copied assignments.
@@ -32,7 +34,8 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
  * An unsorted bounded result can emit duplicate-free rows as they arrive.
  * Full results, sorting and SQL_CALC_FOUND_ROWS read stored assignment fields
  * after input effects finish. Constant expressions retain expression metadata.
- * Verified through SQL and PDO on MySQL 8.0, 8.4 and 9.1.
+ * Legacy bounded unsorted queries probe one input row when their expressions do
+ * not depend on table columns. Verified through SQL and PDO on MySQL 5.6, 5.7, 8.0, 8.4 and 9.1.
  *
  * @visibility MySqlMemory
  */
@@ -74,7 +77,7 @@ final class DistinctStorage
             }
             if ($buffered && $varying && $value instanceof Assignment) {
                 $read = new Assignment($value->name, $read, $this->planner->compiler->names->stored($domain), $domain);
-                $origin = new ColumnOrigin('', '<temporary>', '', '', $this->planner->materialized([$domain])[0]->flags ?? 0);
+                $origin = $this->planner->settings->legacy() ? $origin : new ColumnOrigin('', '<temporary>', '', '', $this->planner->materialized([$domain])[0]->flags ?? 0);
                 $copied[$position] = true;
             }
             $outputs[] = $read;
@@ -92,11 +95,34 @@ final class DistinctStorage
      */
     public function active(Select $select, ?Scope $outer): bool
     {
-        return !$this->planner->settings->legacy() && in_array(SelectOption::Distinct, $select->options, true)
+        return in_array(SelectOption::Distinct, $select->options, true)
             && $select->groupBy === null && (new Grouping($this->planner))->collect($select) === []
             && (new Windowing($this->planner))->calls($select) === []
             && !$this->planner->blocks->empty($select, $outer)
             && (new ConstantTables($this->planner->compiler->facts))->joined($select) > 0;
+    }
+
+    /**
+     * Bounds legacy DISTINCT input when every output is independent of table rows.
+     * An unsorted limited result probes one row even when its variable assignment
+     * would change on another read. Sorting and calculated counts retain all input.
+     * Verified through SQL on MySQL 5.6 and 5.7 in Testcontainers.
+     *
+     * @param list<Field> $fields The selected fields
+     */
+    public function input(Select $select, AccessPath $input, array $fields, bool $sorted): AccessPath
+    {
+        if (!$this->planner->settings->legacy() || $sorted || ($select->limit === null && $select->late?->limit === null)
+            || in_array(SelectOption::CalcFoundRows, $select->options, true) || $select->groupBy !== null || (new Grouping($this->planner))->collect($select) !== []) {
+            return $input;
+        }
+        foreach ($fields as $field) {
+            if ($field->expression === null || !Constancy::of($field->expression, $this->planner->compiler->facts, assignmentsVary: false, legacy: true)->constant()) {
+                return $input;
+            }
+        }
+
+        return new Limit($input, 1);
     }
 
     /**
