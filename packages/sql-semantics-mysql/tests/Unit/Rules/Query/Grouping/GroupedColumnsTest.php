@@ -234,4 +234,28 @@ final class GroupedColumnsTest extends TestCase
         self::assertFalse((new GroupedColumns())->computed($plain, $plainFacts));
         self::assertSame([], $windowFacts->diagnostics);
     }
+
+    /**
+     * @return iterable<string, array{string, string, bool}>
+     */
+    public static function providerImplicitOrdering(): iterable
+    {
+        yield '5.6 input' => ['5.6.51', 'n', true];
+        yield '5.6 input parent' => ['5.6.51', 'ABS(n)', true];
+        yield '5.6 aggregate' => ['5.6.51', 'SUM(n)', false];
+        yield '5.6 selected alias' => ['5.6.51', 'total', false];
+        yield '5.7 input' => ['5.7.44', 'n', false];
+        yield '8.4 input' => ['8.4.7', 'n', false];
+    }
+
+    #[DataProvider('providerImplicitOrdering')]
+    public function testImplicitOrderingChecksUngroupedInputsOnMySql56(string $version, string $ordering, bool $invalid): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $version);
+        $operation = $semantics->analyze('SELECT DISTINCT SUM(n) total FROM t ORDER BY ' . $ordering, [$semantics->analyze('CREATE TABLE t(n INT)')]);
+        $problem = $operation->facts->diagnostics[0] ?? null;
+
+        self::assertSame($invalid, $problem instanceof NonGroupedColumn);
+        self::assertSame($invalid ? GroupingRule::WithoutGroupBy : null, $problem instanceof NonGroupedColumn ? $problem->rule : null);
+    }
 }

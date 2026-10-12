@@ -36,7 +36,25 @@ final class DistinctOrderingTest extends TestCase
         }
     }
 
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function providerImplicitInputs(): iterable
+    {
+        $setup = 'CREATE TEMPORARY TABLE distinct_order_inputs(n INT);INSERT INTO distinct_order_inputs VALUES(1),(2),(NULL);';
+        foreach (["SET sql_mode='';", "SET sql_mode='ONLY_FULL_GROUP_BY';"] as $mode) {
+            foreach (['', 'DISTINCT '] as $distinct) {
+                foreach (['SUM(n) total', 'COUNT(*) total'] as $field) {
+                    foreach (['n', 'ABS(n)', 'SUM(n)', 'total'] as $order) {
+                        yield 'implicit ' . $mode . $distinct . $field . $order => [$mode . $setup . 'SELECT ' . $distinct . $field . ' FROM distinct_order_inputs ORDER BY ' . $order];
+                    }
+                }
+            }
+        }
+    }
+
     #[DataProvider('providerStatements')]
+    #[DataProvider('providerImplicitInputs')]
     public function testDistinctOrderingMatchesMySql(string $sql): void
     {
         [$target] = Servers::shared();

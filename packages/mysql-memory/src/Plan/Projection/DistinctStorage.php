@@ -169,6 +169,32 @@ final class DistinctStorage
         return $path;
     }
     /**
+     * Selects legacy numeric expression keys that compare NULL with their stored zero.
+     *
+     * MySQL 5.6 and 5.7 grouped DISTINCT compares computed numeric fields this way,
+     * while direct columns, strings and ROLLUP retain their separate NULL keys.
+     * The first row keeps its original value. Verified through SQL in Testcontainers.
+     *
+     * @param list<Field> $fields The selected fields
+     * @param list<Domain> $domains Their result domains
+     * @return array<int, true>
+     */
+    public function numericNulls(Select $select, array $fields, array $domains): array
+    {
+        if (!$this->planner->settings->legacy() || $select->groupBy === null || $select->groupBy->modifier !== null) {
+            return [];
+        }
+        $positions = [];
+        foreach ($fields as $position => $field) {
+            $expression = $field->expression === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\Matching())->unwrap($field->expression);
+            if ($expression !== null && !$expression instanceof \SqlSemantics\Platform\MySql\Statement\Name\ColumnUse && in_array($domains[$position]->kind, [Kind::Integer, Kind::Decimal, Kind::Double], true)) {
+                $positions[$position] = true;
+            }
+        }
+        return $positions;
+    }
+
+    /**
      * Orders stored grouped duplicate keys before an independent output sort.
      *
      * Modern numeric DISTINCT results use ordered duplicate storage after grouping,

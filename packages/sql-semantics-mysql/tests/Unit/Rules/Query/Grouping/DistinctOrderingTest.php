@@ -79,4 +79,28 @@ final class DistinctOrderingTest extends TestCase
         self::assertNull($checker->missing($select->orderBy[0]->expression, [], $operation->facts, [], $owned));
         self::assertInstanceOf(Scalar::class, $checker->missing($select->orderBy[1]->expression, [], $operation->facts, [], $owned));
     }
+
+    /**
+     * @return iterable<string, array{string, string, class-string|null}>
+     */
+    public static function providerLegacyOrdering(): iterable
+    {
+        yield '5.6 column' => ['5.6.51', 'n', null];
+        yield '5.6 aggregate' => ['5.6.51', 'SUM(n)', null];
+        yield '5.7 column' => ['5.7.44', 'n', NonGroupedColumn::class];
+        yield '5.7 aggregate' => ['5.7.44', 'SUM(n)', AggregateInOrdering::class];
+    }
+
+    /**
+     * @param class-string|null $expected
+     */
+    #[DataProvider('providerLegacyOrdering')]
+    public function testCheckPreservesTheReleaseWhereDistinctOrderingWasIntroduced(string $version, string $ordering, ?string $expected): void
+    {
+        $semantics = new Semantics(Dialect::MySql, $version);
+        $operation = $semantics->analyze('SELECT DISTINCT ABS(n) FROM t GROUP BY n ORDER BY ' . $ordering, [$semantics->analyze('CREATE TABLE t(n INT)')]);
+        $diagnostics = $operation->facts->diagnostics;
+
+        self::assertSame($expected, isset($diagnostics[0]) ? $diagnostics[0]::class : null);
+    }
 }

@@ -49,7 +49,8 @@ final class DistinctIterator implements RowIterator
         while (($row = $this->input->read()) !== null) {
             $key = '';
             foreach ($this->path->domains as $position => $domain) {
-                $key .= Order::key($row[$position], $domain, $this->path->hashed) . "\0";
+                $value = $row[$position] ?? (isset($this->path->zeroNulls[$position]) ? 0 : null);
+                $key .= Order::key($value, $domain, $this->path->hashed) . "\0";
             }
             if (!isset($this->seen[$key])) {
                 $this->seen[$key] = true;

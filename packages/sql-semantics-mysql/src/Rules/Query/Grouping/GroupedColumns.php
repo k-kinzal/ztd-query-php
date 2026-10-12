@@ -83,7 +83,7 @@ final class GroupedColumns
         if ($select->groupBy !== null) {
             $problem = $this->grouped($select, $fields, $relations, $facts, $derivation) ?? (in_array(SelectOption::Distinct, $select->options, true) ? $this->distinct($select, $relations, $facts, $derivation, $ownedAggregates ?? []) : null);
         } elseif ($aggregates) {
-            $problem = $this->items($fields, $relations, $facts, null, GroupingRule::WithoutGroupBy, $derivation) ?? $this->having($select, $relations, $facts, null, $derivation);
+            $problem = $this->implicit($select, $fields, $relations, $facts, $derivation);
         } elseif (in_array(SelectOption::Distinct, $select->options, true)) {
             $problem = $this->distinct($select, $relations, $facts, $derivation, $ownedAggregates ?? []);
         }
@@ -215,6 +215,38 @@ final class GroupedColumns
     public function distinct(Select $select, array $relations, Facts $facts, Derivation $derivation, array $aggregates = []): NonGroupedColumn|AggregateInOrdering|null
     {
         return (new DistinctOrdering())->check($select, $relations, $facts, $derivation, $aggregates);
+    }
+
+    /**
+     * Checks selected fields, HAVING and release-specific ordering of one implicit group.
+     *
+     * @param list<Field|OpenStar> $fields
+     * @param array<int, VisibleRelation> $relations
+     */
+    public function implicit(Select $select, array $fields, array $relations, Facts $facts, Derivation $derivation): ?NonGroupedColumn
+    {
+        return $this->items($fields, $relations, $facts, null, GroupingRule::WithoutGroupBy, $derivation) ?? $this->having($select, $relations, $facts, null, $derivation) ?? $this->implicitOrdering($select, $relations, $facts, $derivation);
+    }
+
+    /**
+     * Checks unaggregated ordering inputs of an implicit group on MySQL 5.6.
+     * Later releases omit this check when the query returns at most one group.
+     * Verified through SQL on MySQL 5.6.51 and 5.7.44 in Testcontainers.
+     *
+     * @param array<int, VisibleRelation> $relations
+     */
+    public function implicitOrdering(Select $select, array $relations, Facts $facts, Derivation $derivation): ?NonGroupedColumn
+    {
+        if ($derivation->context->profile->grammar !== \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return null;
+        }
+        foreach ([...$select->orderBy, ...($select->late->orderBy ?? [])] as $position => $item) {
+            $missing = (new ColumnReads())->columns($item->expression, $relations, $facts, false)[0][1] ?? null;
+            if ($missing !== null) {
+                return new NonGroupedColumn(GroupingRule::WithoutGroupBy, true, $position + 1, $this->name($missing, $relations, $derivation), release: $derivation->context->profile->grammar);
+            }
+        }
+        return null;
     }
 
     /**

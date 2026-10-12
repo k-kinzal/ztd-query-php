@@ -220,11 +220,12 @@ final class Blocks
                 $constants[$position] = $expressions[$position];
             }
         }
+        $zeroNulls = (new Projection\DistinctStorage($this->planner))->numericNulls($select, $fields, $domains);
         if ($constants === []) {
-            return new Distinct(new Project($input, $expressions), $domains, $hashed);
+            return new Distinct(new Project($input, $expressions), $domains, $hashed, $zeroNulls);
         }
         $placeheld = array_map(static fn (int $position, Evaluable $expression): Evaluable => isset($constants[$position]) ? new Constant($expression->domain(), null) : $expression, array_keys($expressions), $expressions);
-        $distinct = new Distinct(new Project($input, $placeheld), $domains, $hashed);
+        $distinct = new Distinct(new Project($input, $placeheld), $domains, $hashed, $zeroNulls);
 
         return new Project($distinct, array_map(static fn (int $position, Evaluable $expression): Evaluable => $constants[$position] ?? new ColumnRead($expression->domain(), $position), array_keys($expressions), $expressions));
     }

@@ -213,4 +213,21 @@ final class DistinctStorageTest extends TestCase
         self::assertSame([[null], ['-1'], ['-2,-2'], ['0'], ['1']], $result->rows);
     }
 
+
+    #[DataProvider('providerLegacyReleases')]
+    public function testNumericNullsRetainsTheFirstGroupedNumericFieldAndOtherNullKeys(string $version): void
+    {
+        $session = (new Instance($version))->connect();
+        $session->query("USE mysql;SET sql_mode='';CREATE TABLE t(n INT);INSERT INTO t VALUES(NULL),(0),(1)");
+        $computed = $session->query('SELECT DISTINCT ABS(n) FROM t GROUP BY n ORDER BY MIN(n) DESC')[0];
+        $direct = $session->query('SELECT DISTINCT n FROM t GROUP BY n ORDER BY n DESC')[0];
+        $text = $session->query('SELECT DISTINCT CONCAT(n) v FROM t GROUP BY n ORDER BY v DESC')[0];
+
+        self::assertInstanceOf(ResultSet::class, $computed);
+        self::assertSame([['1'], [null]], $computed->rows);
+        self::assertInstanceOf(ResultSet::class, $direct);
+        self::assertSame([['1'], ['0'], [null]], $direct->rows);
+        self::assertInstanceOf(ResultSet::class, $text);
+        self::assertSame([['1'], ['0'], [null]], $text->rows);
+    }
 }

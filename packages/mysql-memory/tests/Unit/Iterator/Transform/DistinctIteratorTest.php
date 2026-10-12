@@ -60,4 +60,15 @@ final class DistinctIteratorTest extends TestCase
         self::assertSame([[1], null], $first);
         self::assertSame([1], $iterator->read());
     }
+
+    public function testReadNormalizesOnlyTheSelectedLegacyNumericKeys(): void
+    {
+        $session = (new Instance())->connect();
+        $working = new WorkingTable(2);
+        $working->rows = [[null, null], [0, 0], [null, 0], [1, null]];
+        $iterator = new DistinctIterator(new Distinct($working, [Domain::integer(), Domain::integer()], zeroNulls: [0 => true]), new WorkingTableIterator($working));
+        $iterator->init(new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)));
+
+        self::assertSame([[null, null], [0, 0], [1, null], null], [$iterator->read(), $iterator->read(), $iterator->read(), $iterator->read()]);
+    }
 }

@@ -18,6 +18,8 @@ use SqlSemantics\Statement\Scalar;
 
 /**
  * Resolves DISTINCT ordering against selected expressions and owned aggregate calls.
+ * MySQL 5.6 permits unselected ordering expressions even with ONLY_FULL_GROUP_BY.
+ * Verified through SQL on MySQL 5.6.51 and 5.7.44 in Testcontainers.
  *
  * @visibility SqlSemantics\Platform\MySql
  */
@@ -29,6 +31,9 @@ final class DistinctOrdering
      */
     public function check(Select $select, array $relations, Facts $facts, Derivation $derivation, array $aggregates): NonGroupedColumn|AggregateInOrdering|null
     {
+        if ($derivation->context->profile->grammar === \SqlSemantics\Contract\GrammarRelease::MySql5651) {
+            return null;
+        }
         $matching = new Matching();
         $reads = new ColumnReads();
         $selected = [];
