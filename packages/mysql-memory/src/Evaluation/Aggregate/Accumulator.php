@@ -299,13 +299,13 @@ final class Accumulator
     }
 
     /**
-     * Answers the GROUP_CONCAT result: the values in order, joined, cut at the length limit.
+     * Orders concatenation tuples by explicit keys or their DISTINCT value keys.
+     * Constant keys still reverse ties even when their expressions are not read.
+     *
+     * @return list<array{list<int|float|string>, list<int|float|string|null>}>
      */
-    public function concatenation(Frame $frame): ?string
+    public function ordered(): array
     {
-        if ($this->parts === []) {
-            return null;
-        }
         $order = $this->accumulation->order;
         $parts = $this->parts;
         if ($order !== []) {
@@ -320,7 +320,31 @@ final class Accumulator
 
                 return 0;
             });
+        } elseif ($this->accumulation->distinct) {
+            usort($parts, function (array $left, array $right): int {
+                foreach ($this->accumulation->arguments as $position => $argument) {
+                    $compared = Order::compare($left[0][$position], $right[0][$position], $argument->domain());
+                    if ($compared !== 0) {
+                        return $compared;
+                    }
+                }
+
+                return 0;
+            });
         }
+
+        return $parts;
+    }
+
+    /**
+     * Answers the GROUP_CONCAT result: the values in order, joined, cut at the length limit.
+     */
+    public function concatenation(Frame $frame): ?string
+    {
+        if ($this->parts === []) {
+            return null;
+        }
+        $parts = $this->ordered();
         $text = implode(Encoding::convert($this->accumulation->separator, Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset), array_map(fn (array $part): string => $this->text($frame, $part[0]), $parts));
         if (strlen($text) > $this->accumulation->limit) {
             $text = mb_strcut($text, 0, $this->accumulation->limit, Encoding::name($this->accumulation->domain->collation->charset) ?? '8bit');

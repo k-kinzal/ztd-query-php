@@ -32,6 +32,17 @@ final class AggregateTupleInputTest extends TestCase
                 yield 'constant ' . $expression . $group => [$setup . 'SELECT ' . $expression . ' FROM aggregate_tuple_input' . $group . ';SELECT @x,@y'];
             }
         }
+        $setup = "CREATE TEMPORARY TABLE tuple_sort(n INT,v VARCHAR(2));INSERT INTO tuple_sort VALUES(2,'b'),(1,'a'),(2,'c'),(2,'b');SET @g=0,@x=0;";
+        foreach (['@g', '@g:=@g+1', '1+1', 'NOW()', 'NULLIF(@g,0)'] as $key) {
+            foreach (['', 'DISTINCT '] as $distinct) {
+                yield 'constant sort ' . $distinct . $key => [$setup . 'SELECT GROUP_CONCAT(' . $distinct . 'v ORDER BY ' . $key . ') FROM tuple_sort;SELECT @g'];
+            }
+        }
+        foreach (['GROUP_CONCAT(DISTINCT n)', 'GROUP_CONCAT(DISTINCT n,@x:=@x+1)', 'GROUP_CONCAT(DISTINCT v)', 'GROUP_CONCAT(DISTINCT v,@x:=@x+1)'] as $expression) {
+            foreach (['', ' GROUP BY 1+1', ' GROUP BY n', ' GROUP BY n WITH ROLLUP'] as $group) {
+                yield 'distinct tuple ' . $expression . $group => [$setup . 'SELECT ' . $expression . ' FROM tuple_sort' . $group . ';SELECT @x'];
+            }
+        }
     }
 
     #[DataProvider('providerStatements')]

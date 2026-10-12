@@ -8,6 +8,7 @@ use MySqlMemory\Evaluation\Aggregate\Accumulation;
 use MySqlMemory\Evaluation\Aggregate\TupleInput;
 use MySqlMemory\Evaluation\Compile\Constancy;
 use MySqlMemory\Evaluation\Frame;
+use MySqlMemory\Evaluation\Leaf\Constant;
 use MySqlMemory\Plan\Planner;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
@@ -61,7 +62,7 @@ final class Tuples
         }
         $order = $accumulation->order;
         if ($node instanceof GroupConcat && $select->groupBy === null) {
-            $order = array_values(array_filter($order, fn (array $item, int $position): bool => !$this->constant($node->order[$position]->expression) || $this->planner->compiler->constancy($node->order[$position]->expression) === Constancy::Resolved, ARRAY_FILTER_USE_BOTH));
+            $order = array_map(fn (array $item, int $position): array => $this->constant($node->order[$position]->expression) && $this->planner->compiler->constancy($node->order[$position]->expression) !== Constancy::Resolved ? [new Constant($item[0]->domain(), null), $item[1]] : $item, $order, array_keys($order));
         }
         $input = new TupleInput($select->groupBy !== null, !$node instanceof GroupConcat, $constants, $checks, $disabled);
 

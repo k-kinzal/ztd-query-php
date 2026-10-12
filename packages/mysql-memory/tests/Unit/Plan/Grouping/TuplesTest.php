@@ -15,6 +15,17 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class TuplesTest extends TestCase
 {
+    public function testPlanRetainsConstantSortKeysWithoutExecutingTheirAssignments(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("USE mysql;CREATE TABLE t(v VARCHAR(2));INSERT INTO t VALUES('b'),('a'),('c');SET @x=0");
+        $result = $session->query('SELECT GROUP_CONCAT(v ORDER BY @x:=@x+1) FROM t')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['c,a,b']], $result->rows);
+        self::assertSame(0, $session->variables->user('x')[0]);
+    }
+
     public function testPlanOmitsImplicitDistinctCountConstantsFromRowEvaluation(): void
     {
         $session = (new Instance())->connect();

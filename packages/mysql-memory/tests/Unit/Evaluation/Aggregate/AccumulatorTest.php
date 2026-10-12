@@ -22,6 +22,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 #[Small]
 final class AccumulatorTest extends TestCase
 {
+    public function testOrderedSortsDistinctTuplesBeforeDeferredAssignmentsAreRead(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @x=0');
+        $result = $session->query('SELECT GROUP_CONCAT(DISTINCT n,@x:=@x+1) FROM t')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['11,22']], $result->rows);
+        self::assertSame(2, $session->variables->user('x')[0]);
+    }
+
     public function testTextReadsImplicitConstantAssignmentsWhenConcatenationEmitsItsRows(): void
     {
         $session = (new Instance())->connect();
