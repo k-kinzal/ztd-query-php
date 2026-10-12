@@ -50,7 +50,7 @@
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Override</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a></span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * Reads an output already evaluated for this row, preserving its effects exactly once.</span></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * Reads the latest stored output field without repeating its expression effects.</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * @visibility MySqlMemory</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> */</span></span>
@@ -74,7 +74,7 @@
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    }</span>
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a></span>
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * Reads the computed field rather than evaluating its expression again.</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * Reads the last computed field, including the previous row before projection updates it.</span></span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     * @phpstan-pure</span></span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     */</span></span>
