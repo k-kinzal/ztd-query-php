@@ -24,6 +24,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class AggregationTest extends TestCase
 {
+    public function testTemporalsPreserveTheCoercibleStrengthOfMySql80Controls(): void
+    {
+        $semantics = new Semantics(Dialect::MySql, 'mysql-8.0.44');
+        $query = $semantics->analyze("SELECT COALESCE(CAST('2020-01-02' AS DATE),CAST('2020-01-03' AS DATE))");
+        $type = $query->field(0)->type;
+
+        self::assertInstanceOf(\SqlSemantics\Statement\Type\Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+        self::assertSame(Coercibility::Coercible, $type->descriptor->coercibility);
+    }
+
     public function testFixedPreservesCharUntilAVariableStringParticipates(): void
     {
         $collation = Collation::known('utf8mb4_bin');
@@ -107,7 +118,7 @@ final class AggregationTest extends TestCase
         $date = new Domain(Kind::Date, Field::Date, 10);
         $datetime = new Domain(Kind::DateTime, Field::DateTime, 23, 3);
 
-        self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 23, 3, false, Collation::known('utf8mb4_0900_ai_ci')), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->temporals([$date, $datetime], 'case', new Derivation((new Semantics(Dialect::MySql))->context([]))));
+        self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 23, 3, false, Collation::known('latin1_swedish_ci')), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->temporals([$date, $datetime], 'case', new Derivation((new Semantics(Dialect::MySql))->context([]))));
         self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 23, 3), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->temporals([$date, $datetime], 'case', new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([]))));
     }
 
@@ -116,7 +127,7 @@ final class AggregationTest extends TestCase
         $date = new Domain(Kind::Date, Field::Date, 10);
         $time = new Domain(Kind::Time, Field::Time, 12, 1);
 
-        self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 21, 1, false, Collation::known('utf8mb4_0900_ai_ci')), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->temporals([$date, $time], 'case', new Derivation((new Semantics(Dialect::MySql))->context([]))));
+        self::assertEquals(new Domain(Kind::DateTime, Field::DateTime, 21, 1, false, Collation::known('latin1_swedish_ci')), (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->temporals([$date, $time], 'case', new Derivation((new Semantics(Dialect::MySql))->context([]))));
         self::assertSame(Kind::String, (new Aggregation(new Collations(Collation::known('utf8mb4_0900_ai_ci'))))->temporals([$date, $time], 'case', new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context([])))?->kind);
     }
 

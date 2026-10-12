@@ -113,8 +113,8 @@ final class Aggregate implements SetFunction
         }
         $column = $this->over === null && $argument !== null && $derivation->facts()->scalar($argument)->resolution instanceof ResolvedColumn;
         $domain = $arguments === null ? null : (new Aggregates(Settings::of($derivation->context)))->result($this->function, $arguments[0] ?? null, $derivation->context->profile->grammar, $column);
-        if ($domain !== null && $this->over !== null && $domain->kind->temporal()) {
-            $domain = $domain->withCollation(Settings::of($derivation->context)->connection, $domain->coercibility);
+        if ($domain !== null && $this->over !== null && $domain->kind->temporal() && $domain->collation->bytes()) {
+            $domain = $domain->withCollation(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('latin1_swedish_ci'), $domain->coercibility);
         }
 
         return $domain === null ? $fact : new ScalarFact(new Known($domain), $fact->nullability);

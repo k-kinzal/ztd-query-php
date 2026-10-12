@@ -172,11 +172,13 @@ final class Aggregation
     /**
      * Settles temporal values: one kind keeps it, and different kinds make a datetime.
      *
-     * From MySQL 8.0 the result is text in the connection collation, which counts the bytes of
-     * its characters, and a time takes the current date; MySQL 5.6 and 5.7 keep it binary but
+     * MySQL 8.0 controls use the connection collation; from 8.4 they use latin1.
+     * Result encoding is applied separately, including when character_set_results
+     * disables conversion. A time takes the current date; MySQL 5.6 and 5.7 keep it binary but
      * for a value already in a character set, as a column of a merged derived table holds it,
      * and settle a time and another kind on a string (verified on live 5.7, 8.0, 8.4 and 9.1
-     * servers).
+     * servers). MySQL 8.0 control expressions also retain coercible collation
+     * strength; set-operation columns follow their separate storage rules.
      *
      * @param non-empty-list<Domain> $domains
      */
@@ -187,14 +189,15 @@ final class Aggregation
         $texts = array_values(array_filter($domains, static fn (Domain $domain): bool => !$domain->collation->bytes()));
         $grammar = $derivation->context->profile->grammar;
         $legacy = $grammar === GrammarRelease::MySql5651 || $grammar === GrammarRelease::MySql5744;
-        $collation = $legacy ? ($texts === [] ? null : $texts[0]->collation) : $this->collations->connection;
+        $collation = $legacy ? ($texts === [] ? null : $texts[0]->collation) : ($grammar === GrammarRelease::MySql8044 ? $this->collations->connection : Collation::known('latin1_swedish_ci'));
+        $coercibility = $grammar === GrammarRelease::MySql8044 && $operation !== 'UNION' ? Coercibility::Coercible : Coercibility::Implicit;
         if (count($kinds) === 1) {
             $field = count(array_unique(array_map(static fn (Domain $domain): int => $domain->field->value, $domains))) === 1 ? $domains[0]->field : Field::DateTime;
 
-            return new Domain($domains[0]->kind, $field, max(array_map(static fn (Domain $domain): int => $domain->length, $domains)), $decimals, false, $collation);
+            return new Domain($domains[0]->kind, $field, max(array_map(static fn (Domain $domain): int => $domain->length, $domains)), $decimals, false, $collation, [], $coercibility);
         }
         if (!$legacy || !in_array(Kind::Time->name, $kinds, true)) {
-            return new Domain(Kind::DateTime, Field::DateTime, 19 + ($decimals > 0 ? $decimals + 1 : 0), $decimals, false, $collation);
+            return new Domain(Kind::DateTime, Field::DateTime, 19 + ($decimals > 0 ? $decimals + 1 : 0), $decimals, false, $collation, [], $coercibility);
         }
 
         return $this->strings($domains, $operation, $derivation);

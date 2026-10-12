@@ -33,7 +33,7 @@ use SqlSemantics\Statement\Type\Nullability;
 #[Small]
 final class WindowResultsTest extends TestCase
 {
-    public function testResolvedReportsDirectTemporalWindowsInTheConnectionCharset(): void
+    public function testResolvedPreservesTheLogicalTemporalCharset(): void
     {
         $platform = new Platform();
         $derivation = new Derivation($platform->context($platform->profile('mysql-8.4.7', null, ParameterStyle::Native), null, [], false));
@@ -41,7 +41,7 @@ final class WindowResultsTest extends TestCase
         $date = new Domain(Kind::Date, Field::Date, 10, 0);
         $results = new WindowResults();
 
-        self::assertSame([255, 63], [$results->resolved($call, [$date], $derivation, false)?->collation->id, $results->resolved($call, [$date], $derivation)?->collation->id]);
+        self::assertSame([8, 63], [$results->resolved($call, [$date], $derivation, false)?->collation->id, $results->resolved($call, [$date], $derivation)?->collation->id]);
     }
 
     public function testMaterializedSeparatesTheStoredFieldFromTheOriginalValueDomain(): void

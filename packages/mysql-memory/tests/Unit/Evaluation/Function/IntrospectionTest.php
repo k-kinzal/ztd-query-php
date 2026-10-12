@@ -24,6 +24,20 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 #[Small]
 final class IntrospectionTest extends TestCase
 {
+    public function testTextualIncludesComputedTemporalDomains(): void
+    {
+        $connection = \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_bin');
+        $date = new Domain(Kind::Date, Field::Date, 10, collation: $connection);
+        $control = $date->withCollation($connection, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible);
+        $rules = new Introspection();
+
+        self::assertTrue($rules->textual(new Constant($date, '2020-01-02')));
+        self::assertTrue($rules->textual(new Constant($control, '2020-01-02')));
+        self::assertSame(5, $rules->coercibility(new Constant($date, '2020-01-02')));
+        self::assertSame(4, $rules->coercibility(new Constant($control, '2020-01-02')));
+        self::assertFalse($rules->textual(new Constant(new Domain(Kind::Date, Field::Date, 10), '2020-01-02')));
+    }
+
     public function testCoercibilityUsesTheVersionedDomainOfAnAssignment(): void
     {
         $legacy = (new Instance('5.7.44'))->connect()->query('SELECT COERCIBILITY(@v:=1)')[0];

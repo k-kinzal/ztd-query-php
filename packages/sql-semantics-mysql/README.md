@@ -204,6 +204,14 @@ uses `groupConcatMaxLen` and the argument character set, which can differ from
 the function's directly reported type. Set operations retain their separate
 release-specific string aggregation rules before materializing the result.
 
+Window expressions retain their logical domains while parent expressions resolve.
+`Materialization::windowed()` supplies the separate type needed when an execution
+path stores the result. Computed temporal windows retain a textual collation;
+reading a stored temporal column uses binary collation. Direct temporal control
+expressions use the connection collation in MySQL 8.0 and latin1 from MySQL 8.4.
+An executor applies `character_set_results` separately, so the result's byte
+length does not by itself identify the expression's logical character set.
+
 A domain also separates an expression's evaluation kind from its reported field.
 For example, `NULLIF` of a DATE reports a string but still converts the date to
 its numeric date value in arithmetic. `Domain::displayDecimals` overrides the

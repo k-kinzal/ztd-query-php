@@ -13,7 +13,8 @@ use MySqlMemory\Typing\Domain;
  * The information functions: DATABASE, USER, CURRENT_ROLE, VERSION, CONNECTION_ID, LAST_INSERT_ID, ROW_COUNT, FOUND_ROWS, CHARSET, COLLATION and COERCIBILITY.
  *
  * CHARSET() and COLLATION() name the character set and collation of a string, JSON value,
- * or a temporal value reported as a string; other values report binary (verified on a live 8.4 server).
+ * or a computed temporal value. Native temporal columns report binary; computed
+ * temporal expressions have separate information-function and result-encoding rules.
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html.
  *
@@ -55,7 +56,7 @@ final class Introspection
     {
         $kind = $argument->domain()->kind;
 
-        return $kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String || $kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json || ($argument->domain()->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString && ($kind->temporal() || $kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Year));
+        return ($kind->temporal() && !$argument->domain()->collation->bytes()) || $kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String || $kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json || ($argument->domain()->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::VarString && ($kind->temporal() || $kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Year));
     }
 
     /**
@@ -63,7 +64,9 @@ final class Introspection
      *
      * NULL is ignorable (6), a number or temporal value numeric (5), a user variable implicit (2)
      * whatever it holds, and a string or JSON value has the coercibility of its type; a string
-     * computed from numbers only is coercible (4) (verified on a live 8.4 server).
+     * computed from numbers only is coercible (4). MySQL 8.0 temporal control expressions
+     * retain coercible strength, including through value windows. Verified on live
+     * 8.0, 8.4 and 9.1 servers.
      * Source: https://dev.mysql.com/doc/refman/8.4/en/information-functions.html#function_coercibility.
      */
     public function coercibility(Evaluable $argument): int
@@ -79,7 +82,8 @@ final class Introspection
             $origin instanceof \MySqlMemory\Evaluation\Leaf\Assignment => $domain->coercibility->value,
             $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Null => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Ignorable->value,
             $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Bit || $domain->field === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Bit => $domain->coercibility->value,
-            $domain->kind->temporal() || $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Year => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric->value,
+            $domain->kind->temporal() => $domain->coercibility === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible ? 4 : 5,
+            $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Year => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric->value,
             !$this->textual($argument) => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric->value,
             $domain->coercibility === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Numeric && !$origin instanceof \MySqlMemory\Evaluation\Leaf\ColumnRead => \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Coercibility::Coercible->value,
             default => $domain->coercibility->value,

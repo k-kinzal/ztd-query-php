@@ -116,7 +116,7 @@ final class SelectFactsTest extends TestCase
         self::assertInstanceOf(Domain::class, $grouped->descriptor);
         self::assertInstanceOf(Known::class, $plain);
         self::assertInstanceOf(Domain::class, $plain->descriptor);
-        self::assertSame(['binary', 'utf8mb4_0900_ai_ci'], [$grouped->descriptor->collation->name, $plain->descriptor->collation->name]);
+        self::assertSame(['binary', 'latin1_swedish_ci'], [$grouped->descriptor->collation->name, $plain->descriptor->collation->name]);
     }
 
     public function testTabledPreservesLogicalWindowTypesAcrossScalarSubqueries(): void
@@ -130,6 +130,6 @@ final class SelectFactsTest extends TestCase
         self::assertInstanceOf(Known::class, $derived);
         self::assertInstanceOf(Domain::class, $derived->descriptor);
 
-        self::assertSame(['utf8mb4_0900_ai_ci', 'binary'], [$scalar->descriptor->collation->name, $derived->descriptor->collation->name]);
+        self::assertSame(['latin1_swedish_ci', 'binary'], [$scalar->descriptor->collation->name, $derived->descriptor->collation->name]);
     }
 }

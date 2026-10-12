@@ -78,7 +78,7 @@ final class WindowResults
 
     /**
      * Resolves the type of a window function call over the resolved types of its arguments, or answers null after reporting collations that conflict.
-     * A direct temporal result uses the connection character set; storage converts it to binary.
+     * A direct temporal result retains its textual collation or takes latin1; storage converts it to binary. Result encoding is separate.
      *
      * @param list<Domain> $arguments
      * @param bool $materialized Whether the result passes through a window's temporary column
@@ -91,8 +91,8 @@ final class WindowResults
             WindowFunctionKind::FirstValue, WindowFunctionKind::LastValue, WindowFunctionKind::NthValue => $arguments[0],
             WindowFunctionKind::Lead, WindowFunctionKind::Lag => $this->shifted($call, $arguments, $derivation, false),
         };
-        if ($domain !== null && $domain->kind->temporal()) {
-            $domain = $domain->withCollation(Settings::of($derivation->context)->connection, $domain->coercibility);
+        if ($domain !== null && $domain->kind->temporal() && $domain->collation->bytes()) {
+            $domain = $domain->withCollation(Collation::known('latin1_swedish_ci'), $domain->coercibility);
         }
 
         return $domain === null || !$materialized ? $domain : $this->materialized($call->kind, $domain, $derivation->context->profile->grammar);

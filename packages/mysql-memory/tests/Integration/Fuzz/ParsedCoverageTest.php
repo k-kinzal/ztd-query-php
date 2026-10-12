@@ -30,6 +30,20 @@ final class ParsedCoverageTest extends TestCase
         self::assertNotContains('ident_keywords_unambiguous#3', array_map($label, $parsed->ids("ALTER LOGFILE GROUP ADDDATE ADD UNDOFILE 'text'")));
     }
 
+    public function testIdsKeepsTheRoleNameSeparateFromItsHostname(): void
+    {
+        $coverage = new GrammarCoverage();
+        $provider = new MySqlProvider(Factory::create(), 'mysql-8.4.7', $coverage);
+        $provider->planner();
+        $parsed = new ParsedCoverage(new MySqlParser('mysql-8.4.7'), $coverage->inventory());
+        $label = static fn (string $id): string => explode(':', $id)[1];
+        $ids = array_map($label, $parsed->ids('SET ROLE mm_lexical_probe@invalid.example'));
+
+        self::assertContains('role_ident_or_text#0', $ids);
+        self::assertContains('ident_or_text#2', $ids);
+        self::assertNotContains('role_ident_or_text#2', $ids);
+    }
+
     public function testIdsMeasuresReplacementTextIndependentlyOfDerivationProvenance(): void
     {
         $coverage = new GrammarCoverage();
