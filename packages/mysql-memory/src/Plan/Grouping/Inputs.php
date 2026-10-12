@@ -14,7 +14,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Statement\Scalar;
 
 /**
- * Captures aggregate arguments before windowed ROLLUP groups its input.
+ * Captures aggregate arguments before grouping the input of a window.
  *
  * With varying grouping keys, windows require stored aggregate inputs. Each
  * argument executes in input order once and every grouping level reads its copy.
@@ -64,13 +64,13 @@ final class Inputs
     }
 
     /**
-     * Identifies windows whose ROLLUP grouping keys require stored aggregate input.
+     * Identifies windows whose varying grouping keys require stored aggregate input.
      *
      * @param list<Scalar> $groups The resolved grouping expressions
      */
     public function stored(Select $select, array $groups): bool
     {
-        if ($this->planner->settings->legacy() || $select->groupBy?->modifier === null || (new Windowing($this->planner))->calls($select) === []) {
+        if ($this->planner->settings->legacy() || $select->groupBy === null || (new Windowing($this->planner))->calls($select) === []) {
             return false;
         }
         foreach ($groups as $group) {

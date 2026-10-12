@@ -88,4 +88,17 @@ final class SiblingInputsTest extends TestCase
         self::assertSame([['11']], $state->rows);
     }
 
+    public function testRootsKeepsAggregateParentsOutsideRetainedSiblingFields(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("USE mysql;CREATE TABLE t(n INT,d DATE);INSERT INTO t VALUES(1,'2001-01-02'),(2,'2001-01-03');SET @x=0");
+        $result = $session->query('SELECT @x:=MIN(d),ROW_NUMBER() OVER () FROM t GROUP BY n WITH ROLLUP')[0];
+        $variable = $session->query('SELECT @x,CHARSET(@x)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $variable);
+        self::assertSame([['2001-01-02', '1'], ['2001-01-03', '2'], ['2001-01-02', '3']], $result->rows);
+        self::assertSame([['2001-01-02', 'latin1']], $variable->rows);
+    }
+
 }

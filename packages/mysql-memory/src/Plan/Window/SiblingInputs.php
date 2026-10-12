@@ -60,7 +60,7 @@ final class SiblingInputs
         $roots = [];
         $writes = false;
         foreach ($windowing->roots($select) as $root) {
-            $variables = $windowing->reads($root) ? [] : $this->variables($root);
+            $variables = ($windowing->reads($root) || (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$root])) ? [] : $this->variables($root);
             if ($variables !== []) {
                 $roots[] = $root;
                 $writes = $writes || array_filter($variables, static fn (Node $node): bool => $node instanceof VariableAssignment) !== [];

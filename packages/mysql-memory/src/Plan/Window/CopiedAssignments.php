@@ -52,10 +52,10 @@ final class CopiedAssignments
         $positions = [];
         foreach ($fields as $position => $field) {
             $expression = $field->expression;
-            if ($expression === null || !(new Matching())->unwrap($expression) instanceof VariableAssignment || !(new Windowing($this->planner))->reads($expression)) {
+            if ($expression === null || !(new Matching())->unwrap($expression) instanceof VariableAssignment) {
                 continue;
             }
-            if (!(new Aggregation())->aggregates([$expression]) || (in_array(SelectOption::Distinct, $select->options, true) && !(new OutputFields())->deferred($select, $expression))) {
+            if (((new Windowing($this->planner))->reads($expression) && !(new Aggregation())->aggregates([$expression])) || (in_array(SelectOption::Distinct, $select->options, true) && !(new OutputFields())->deferred($select, $expression, $this->planner->compiler->facts))) {
                 $positions[$position] = true;
             }
         }

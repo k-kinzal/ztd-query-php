@@ -159,4 +159,18 @@ final class DistinctStorageTest extends TestCase
         self::assertSame(2, $session->variables->foundRows);
         self::assertSame(0, $session->variables->user('x')[0]);
     }
+    public function testApplyPublishesGroupedAssignmentsAfterDuplicateRemoval(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("USE mysql;CREATE TABLE t(n INT,d DATE);INSERT INTO t VALUES(1,'2001-01-02'),(2,'2001-01-03');SET @x=0");
+        $result = $session->query('SELECT DISTINCT @x:=MIN(d) FROM t GROUP BY n WITH ROLLUP')[0];
+        $state = $session->query('SELECT @x,CHARSET(@x)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $state);
+        self::assertSame([['2001-01-02'], ['2001-01-03']], $result->rows);
+        self::assertSame('<temporary>', $result->columns[0]->table);
+        self::assertSame([['2001-01-03', 'utf8mb4']], $state->rows);
+    }
+
 }

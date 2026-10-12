@@ -41,7 +41,7 @@ final class DistinctOutputs
         $keys = [];
         $deferred = false;
         foreach ($fields as $position => $field) {
-            if ((new OutputFields())->deferred($select, $field->expression)) {
+            if ((new OutputFields())->deferred($select, $field->expression, $this->planner->compiler->facts)) {
                 $deferred = true;
                 continue;
             }

@@ -23,6 +23,11 @@ final class OutputFieldsTest extends TestCase
      */
     public static function providerFields(): iterable
     {
+        yield 'implicit window group' => ['SELECT DISTINCT CONCAT(MIN(MIN(s)) OVER ()) FROM t', 31];
+        yield 'constant window group' => ['SELECT DISTINCT CONCAT(MIN(MIN(s)) OVER ()) FROM t GROUP BY 1+1', 31];
+        yield 'constant rollup window parent' => ['SELECT DISTINCT CONCAT(MIN(MIN(s)) OVER ()) FROM t GROUP BY 1+1 WITH ROLLUP', 0];
+        yield 'constant grouped aggregate' => ['SELECT MIN(s),ROW_NUMBER() OVER () FROM t GROUP BY 1+1', 31];
+        yield 'implicit distinct parent' => ['SELECT DISTINCT CONCAT(MIN(s)) FROM t', 31];
         yield 'grouped aggregate' => ['SELECT MIN(s) FROM t GROUP BY n', 0];
         yield 'direct rollup' => ['SELECT MIN(s) FROM t GROUP BY n WITH ROLLUP', 31];
         yield 'rollup aggregate beside a window' => ['SELECT MIN(s),ROW_NUMBER() OVER () FROM t GROUP BY n WITH ROLLUP', 0];
@@ -143,6 +148,17 @@ final class OutputFieldsTest extends TestCase
         self::assertInstanceOf(Domain::class, $type->descriptor);
 
         self::assertSame([$field, $length], [$type->descriptor->field->name, $type->descriptor->length]);
+    }
+
+    public function testDirectPreservesTheLegacyGroupingBoundary(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $query = $semantics->analyze('SELECT MIN(s) FROM t GROUP BY 1+1', [$semantics->analyze('CREATE TABLE t(s VARCHAR(10))')]);
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $query->statement);
+        $fields = new OutputFields();
+
+        self::assertTrue($fields->direct($query->statement, \SqlSemantics\Contract\GrammarRelease::MySql847, $query->facts));
+        self::assertFalse($fields->direct($query->statement, \SqlSemantics\Contract\GrammarRelease::MySql5744, $query->facts));
     }
 
 }

@@ -80,4 +80,15 @@ final class CopiedAssignmentsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $state);
         self::assertSame([['2001-01-02', 'utf8mb4']], $state->rows);
     }
+    public function testCopiesPublishesAnAggregateAssignmentStoredBesideAWindow(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("USE mysql;CREATE TABLE t(n INT,d DATE);INSERT INTO t VALUES(1,'2001-01-02'),(2,'2001-01-03');SET @x=0");
+        $session->query('SELECT DISTINCT @x:=MIN(d),ROW_NUMBER() OVER () FROM t GROUP BY 1+1 WITH ROLLUP');
+        $state = $session->query('SELECT @x,CHARSET(@x)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $state);
+        self::assertSame([['2001-01-02', 'utf8mb4']], $state->rows);
+    }
+
 }

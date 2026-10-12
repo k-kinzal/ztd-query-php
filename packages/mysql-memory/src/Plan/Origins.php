@@ -59,7 +59,7 @@ final class Origins
         $implicit = $this->planner->compiler->settings->legacy() && $select->groupBy === null && (new Grouping($this->planner))->collect($select) !== [];
         $supplied = $implicit ? $this->supplied($select->from) : [];
         $origins = array_map(fn (Field $field, bool $rolled, Domain $domain): ?ColumnOrigin => match (true) {
-            $storedWindows && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\Matching())->unwrap($field->expression) instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment && ((new Windowing($this->planner))->reads($field->expression) || ($this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql8044 && $select->groupBy?->modifier === null)) && (!(new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) || (in_array(SelectOption::Distinct, $select->options, true) && !(new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->deferred($select, $field->expression))) => new ColumnOrigin('', '<temporary>', '', '', $this->planner->materialized([$domain])[0]->flags ?? 0),
+            $this->storedAssignment($select, $field, $storedWindows) => new ColumnOrigin('', '<temporary>', '', '', $this->planner->materialized([$domain])[0]->flags ?? 0),
             $storedWindows && $field->expression !== null && (new Windowing($this->planner))->reads($field->expression) => $this->planner->materialized([$domain])[0],
             $this->storedAggregate($select, $field, $domain) => $this->planner->materialized([$domain])[0],
             $rolled => $materialized ? $this->planner->materialized([$domain])[0] : ($this->planner->compiler->settings->legacy() ? $this->origin($field, $scope) : null),
@@ -71,12 +71,29 @@ final class Origins
     }
 
     /**
+     * Identifies assignment fields that report a temporary table origin.
+     * MySQL 8.0 also names stored ordinary aggregate assignments beside a window;
+     * later releases name only assignments that themselves read window outputs.
+     */
+    public function storedAssignment(Select $select, Field $field, bool $storedWindows): bool
+    {
+        $expression = $field->expression;
+        if (!$storedWindows || $expression === null || !(new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\Matching())->unwrap($expression) instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment) {
+            return false;
+        }
+        $distinct = in_array(SelectOption::Distinct, $select->options, true);
+        $named = (new Windowing($this->planner))->reads($expression) || ($this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql8044 && ($select->groupBy?->modifier === null || $distinct));
+
+        return $named && (!(new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$expression]) || ($distinct && !(new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->deferred($select, $expression, $this->planner->compiler->facts)));
+    }
+
+    /**
      * Tells whether an aggregate result exposes the BLOB flag of a stored output field.
      * Computed parents and direct ROLLUP retain expression flags until materialized.
      */
     public function storedAggregate(Select $select, Field $field, Domain $domain): bool
     {
-        return $domain->field->blob() && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) && ($select->groupBy !== null || in_array(SelectOption::Distinct, $select->options, true)) && (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->stored($select, $field->expression);
+        return $domain->field->blob() && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) && ($select->groupBy !== null || in_array(SelectOption::Distinct, $select->options, true)) && (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->stored($select, $field->expression, $this->planner->compiler->facts, $this->planner->settings->release());
     }
 
     /**

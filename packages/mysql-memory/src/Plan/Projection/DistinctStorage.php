@@ -29,7 +29,7 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
 use SqlSemantics\Statement\Shape\Field;
 
 /**
- * Resolves ordinary DISTINCT fields and publishes their copied assignments.
+ * Resolves DISTINCT fields outside windows and publishes their copied assignments.
  *
  * An unsorted bounded result can emit duplicate-free rows as they arrive.
  * Full results, sorting and SQL_CALC_FOUND_ROWS read stored assignment fields
@@ -91,12 +91,13 @@ final class DistinctStorage
     }
 
     /**
-     * Keeps empty, constant, aggregate and window queries on their own field paths.
+     * Keeps empty, direct aggregate and window queries on their own field paths.
+     * Legacy grouping retains its separate field behavior.
      */
     public function active(Select $select, ?Scope $outer): bool
     {
         return in_array(SelectOption::Distinct, $select->options, true)
-            && $select->groupBy === null && (new Grouping($this->planner))->collect($select) === []
+            && ($this->planner->settings->legacy() ? $select->groupBy === null && (new Grouping($this->planner))->collect($select) === [] : !(new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\GroupKeys())->direct($select, $this->planner->compiler->facts))
             && (new Windowing($this->planner))->calls($select) === []
             && !$this->planner->blocks->empty($select, $outer)
             && (new ConstantTables($this->planner->compiler->facts))->joined($select) > 0;

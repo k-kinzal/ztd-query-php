@@ -194,4 +194,15 @@ final class OriginsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Relation\JoinedTable::class, $select->from);
         self::assertSame([spl_object_id($select->from->right)], (new Origins((new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, new Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary))))->supplied($select->from));
     }
+    public function testStoredAssignmentNamesTheCopiedAggregateFieldOnMySql80(): void
+    {
+        $session = (new Instance('8.0.44'))->connect();
+        $session->query("USE mysql;CREATE TABLE t(n INT,d DATE);INSERT INTO t VALUES(1,'2001-01-02'),(2,'2001-01-03')");
+        $result = $session->query('SELECT DISTINCT @x:=MIN(d),ROW_NUMBER() OVER () FROM t GROUP BY 1+1 WITH ROLLUP')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame('<temporary>', $result->columns[0]->table);
+        self::assertSame([['2001-01-02', '1'], ['2001-01-02', '2']], $result->rows);
+    }
+
 }

@@ -150,7 +150,7 @@ final class Windowing
         if ($expression instanceof OutputRead) {
             return $domain;
         }
-        if (($domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String || $domain->kind->temporal()) && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) && $field->type instanceof \SqlSemantics\Statement\Type\Known && $field->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
+        if (($domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::String || $domain->kind === \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind::Json || $domain->kind->temporal()) && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) && $field->type instanceof \SqlSemantics\Statement\Type\Known && $field->type->descriptor instanceof \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain) {
             return \MySqlMemory\Typing\Domain::of($field->type->descriptor, $domain->nullable);
         }
         if ($field->expression !== null && $this->reads($field->expression)) {

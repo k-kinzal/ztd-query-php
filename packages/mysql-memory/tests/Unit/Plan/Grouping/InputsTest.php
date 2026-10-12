@@ -46,4 +46,13 @@ final class InputsTest extends TestCase
         self::assertInstanceOf(ResultSet::class, $result);
         self::assertSame([['[0]', '1'], ['[1, 1]', '2'], ['[0, 1, 1]', '3']], $result->rows);
     }
+    public function testPlanStoresPredicateInputsForOrdinaryWindowGroups(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2)');
+        $result = $session->query('SELECT JSON_ARRAYAGG(n>1),ROW_NUMBER() OVER () FROM t GROUP BY n')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['[0]', '1'], ['[1, 1]', '2']], $result->rows);
+    }
 }

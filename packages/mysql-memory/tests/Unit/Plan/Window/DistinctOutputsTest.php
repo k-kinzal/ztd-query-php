@@ -27,4 +27,16 @@ final class DistinctOutputsTest extends TestCase
         self::assertSame([['a'], ['a'], ['a'], ['a'], ['a']], $deferred->rows);
         self::assertSame([['a', 'a'], ['a', 'b']], $keyed->rows);
     }
+    public function testPlanComparesConstantRollupParentsBeforeCopyingAssignments(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query("USE mysql;CREATE TABLE t(n INT,d DATE);INSERT INTO t VALUES(1,'2001-01-02'),(2,'2001-01-03');SET @x=0");
+        $result = $session->query('SELECT DISTINCT @x:=MIN(MIN(d)) OVER () FROM t GROUP BY 1+1 WITH ROLLUP')[0];
+        $variable = $session->query('SELECT @x,CHARSET(@x)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertInstanceOf(ResultSet::class, $variable);
+        self::assertSame([['2001-01-02']], $result->rows);
+        self::assertSame([['2001-01-02', 'utf8mb4']], $variable->rows);
+    }
 }
