@@ -22,6 +22,7 @@ use SqlSemantics\Platform\MySql\Statement\Call\FunctionCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordCall;
 use SqlSemantics\Platform\MySql\Statement\Call\KeywordFunction;
 use SqlSemantics\Statement\Scalar;
+use WeakMap;
 use WeakReference;
 
 /**
@@ -43,19 +44,29 @@ final class Calls
     public const QUIET = ['GREATEST', 'LEAST'];
 
     /**
+     * @var WeakMap<FunctionCall, Evaluable> Constant-seed generators shared by each written occurrence
+     */
+    private WeakMap $random;
+
+    /**
      * @param Compiler $compiler The compiler of the statement
      */
     public function __construct(public readonly Compiler $compiler)
     {
+        $this->random = new WeakMap();
     }
 
     /**
-     * Compiles a call written by name.
+     * Compiles a call written by name. A seeded RAND occurrence shares its generator
+     * with reads through output aliases, while distinct occurrences keep separate sequences.
      *
      * @throws \MySqlMemory\Error\SqlError When the function is unknown or the arguments do not fit
      */
     public function function(FunctionCall $call, Scope $scope): Evaluable
     {
+        if (isset($this->random[$call])) {
+            return $this->random[$call];
+        }
         $stored = $call->schema !== null || Library::instance()->find($call->name->value) === null ? $this->stored($call, $scope) : null;
         if ($stored !== null) {
             return $stored;
@@ -65,7 +76,12 @@ final class Calls
         }
         $arguments = array_map(static fn ($argument): Scalar => $argument->expression, $call->arguments);
 
-        return $this->named($call->name->value, $arguments, $scope, $call);
+        $value = $this->named($call->name->value, $arguments, $scope, $call);
+        if (strtoupper($call->name->value) === 'RAND' && $arguments !== [] && $this->compiler->constancy($arguments[0])->constant()) {
+            $this->random[$call] = $value;
+        }
+
+        return $value;
     }
 
     /**

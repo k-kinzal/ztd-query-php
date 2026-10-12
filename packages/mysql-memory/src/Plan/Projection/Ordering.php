@@ -67,6 +67,10 @@ final class Ordering
                 }
             }
             if (is_int($position)) {
+                $selected = $fields[$position]->expression;
+                if ($selected !== null && $compiler->constancy($selected)->constant() && (new Walker())->find($selected, Query::class) === []) {
+                    continue;
+                }
                 $keys[] = [$position, $domains[$position], $item->direction?->value === 'DESC'];
                 continue;
             }

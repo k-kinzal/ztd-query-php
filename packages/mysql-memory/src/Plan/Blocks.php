@@ -104,7 +104,7 @@ final class Blocks
         $calculate = in_array(SelectOption::CalcFoundRows, $select->options, true);
         $root = $this->limit($root, $select->limit, $outer, $calculate);
         $root = $this->limit($root, $select->late?->limit, $outer, $calculate);
-        $root = (new Window\Direct($this->planner))->bounded($root, $select);
+        $root = (new Window\Direct($this->planner))->bounded((new Projection\Emission($this->planner))->plan($root, $select, $storedWindows), $select);
         $root = (new Window\ParentInputs($this->planner))->emitted($select, $root, $expressions, count($fields), $keys !== [] && !$presorted, $copies);
 
         $plan = new QueryPlan($root, $domains, $names, $origins);

@@ -123,7 +123,7 @@ final class EmptyProjection
     public function source(QueryPlan $plan): ?\MySqlMemory\Plan\Path\Source\TableScan
     {
         $path = $this->project($plan)?->input;
-        while ($path instanceof Filter || $path instanceof \MySqlMemory\Plan\Path\Transform\Lock || $path instanceof \MySqlMemory\Plan\Path\Transform\Window) {
+        while ($path instanceof Filter || $path instanceof Limit || $path instanceof Sort || ($path instanceof Project && $path->append) || $path instanceof \MySqlMemory\Plan\Path\Transform\Lock || $path instanceof \MySqlMemory\Plan\Path\Transform\Window) {
             $path = $path->input;
         }
         if ($path instanceof \MySqlMemory\Plan\Path\Source\KeyLookup) {
@@ -139,7 +139,7 @@ final class EmptyProjection
     public function aggregate(QueryPlan $plan): ?AggregatePath
     {
         $path = $this->project($plan)?->input;
-        while ($path instanceof Filter || $path instanceof \MySqlMemory\Plan\Path\Transform\Window) {
+        while ($path instanceof Filter || $path instanceof Limit || $path instanceof Sort || ($path instanceof Project && $path->append) || $path instanceof \MySqlMemory\Plan\Path\Transform\Window) {
             $path = $path->input;
         }
 

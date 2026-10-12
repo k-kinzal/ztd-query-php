@@ -43,7 +43,8 @@ final class PreparationTest extends TestCase
 
         self::assertInstanceOf(Prepare::class, $plan->root);
         self::assertTrue($plan->root->early);
-        self::assertInstanceOf(\MySqlMemory\Plan\Path\Transform\Limit::class, $plan->root->input);
+        self::assertInstanceOf(\MySqlMemory\Plan\Path\Transform\Project::class, $plan->root->input);
+        self::assertInstanceOf(\MySqlMemory\Plan\Path\Transform\Limit::class, $plan->root->input->input);
     }
 
     public function testGuardFindsTheOuterConstantTableBeforeSubqueryPreparation(): void

@@ -25,6 +25,19 @@ final class CallsTest extends TestCase
         self::assertSame([['3', 'abc', '3']], $result->rows);
     }
 
+    public function testFunctionSharesSeededRandomStateWithReadsThroughASortingAlias(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql; CREATE TEMPORARY TABLE t(n INT); INSERT INTO t VALUES(1),(2),(3)');
+        $result = $session->query('SELECT n,RAND(1) AS v FROM t ORDER BY ABS(v)')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame(['2', '1', '3'], array_column($result->rows, 0));
+        $independent = $session->query('SELECT RAND(1)=RAND(1) FROM t')[0];
+        self::assertInstanceOf(ResultSet::class, $independent);
+        self::assertSame([['1'], ['1'], ['1']], $independent->rows);
+    }
+
     public function testFunctionRefusesAStoredFunctionThatDoesNotExist(): void
     {
         $session = (new Instance())->connect();
