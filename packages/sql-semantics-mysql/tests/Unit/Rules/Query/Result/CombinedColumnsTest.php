@@ -80,6 +80,17 @@ final class CombinedColumnsTest extends TestCase
         self::assertEquals(Domain::integer(Field::LongLong, 20), $result);
     }
 
+    public function testResolveKeepsTheOriginalIntegerWidthWhenOnlyNullFollows(): void
+    {
+        $oldest = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.6.51'))->context());
+        $later = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context());
+        $integer = Domain::integer(Field::LongLong, 11);
+        $rules = new CombinedColumns();
+
+        self::assertEquals($integer, $rules->resolve([$integer, Domain::null()], $oldest));
+        self::assertEquals($integer, $rules->resolve([$integer, Domain::null()], $later));
+    }
+
     public function testOperandUsesTheReportedStringFieldForTemporalValues(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context());

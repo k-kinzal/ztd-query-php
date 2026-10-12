@@ -58,6 +58,8 @@ final class UnionLimitIterator implements RowIterator
             $emit = $this->seen >= $this->path->offset && ($end === null || $this->seen < $end);
             $row = $reads->read($this->input, $emit);
             if ($row === null) {
+                $this->frame->foundBeforeProjection = $this->lastTable ? $this->tableRows : $this->emitted;
+
                 return null;
             }
             $this->seen++;

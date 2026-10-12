@@ -52,6 +52,33 @@ final class OrderingTest extends TestCase
         self::assertSame([['1'], ['3'], ['6']], $result->rows);
         self::assertSame(6, $session->variables->user('x')[0]);
     }
+
+    public function testConstantIgnoresModernDistinctAssignmentKeys(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('SELECT DISTINCT @x:=7 AS v ORDER BY v');
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $field = $planner->blocks->fields($statement)[0];
+
+        self::assertTrue((new Ordering($planner))->constant($statement, $field->expression));
+        self::assertFalse((new Ordering($planner))->constant($statement, null));
+    }
+
+    public function testConstantKeepsLegacyDistinctAssignmentKeys(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $operation = $session->analyze('SELECT DISTINCT @x:=7 AS v ORDER BY v');
+        $statement = $operation->statement;
+        self::assertInstanceOf(Select::class, $statement);
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $planner = new Planner($statement, $operation->facts, $session->settings(), new Connection($session->variables, $context), $session->instance->dictionary);
+        $field = $planner->blocks->fields($statement)[0];
+
+        self::assertFalse((new Ordering($planner))->constant($statement, $field->expression));
+    }
     public function testOrderAdvancesLegacyRandomKeysBeforeVisibleValues(): void
     {
         $session = (new Instance('5.7.44'))->connect();

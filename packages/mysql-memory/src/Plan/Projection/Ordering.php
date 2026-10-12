@@ -18,6 +18,7 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Reference\Column\AliasTarget;
 use SqlSemantics\Statement\Reference\Column\ResolvedColumn;
+use SqlSemantics\Statement\Scalar;
 use SqlSemantics\Statement\Shape\Field;
 
 /**
@@ -69,14 +70,14 @@ final class Ordering
             }
             if (is_int($position)) {
                 $selected = $fields[$position]->expression;
-                if ($selected !== null && $compiler->constancy($selected)->constant() && (new Walker())->find($selected, Query::class) === []) {
+                if ($this->constant($select, $selected)) {
                     continue;
                 }
                 $keys[] = [$position, $domains[$position], $item->direction?->value === 'DESC'];
                 continue;
             }
             $key = $compiler->compile($item->expression, $evaluation);
-            if ($compiler->constancy($item->expression)->constant() && (new Walker())->find($item->expression, Query::class) === []) {
+            if ($this->constant($select, $item->expression)) {
                 continue;
             }
             $keys[] = [count($expressions), $key->domain(), $item->direction?->value === 'DESC'];
@@ -84,6 +85,17 @@ final class Ordering
         }
 
         return [$keys, $expressions];
+    }
+
+    /**
+     * Ignores constant keys, including constant DISTINCT assignments on modern servers.
+     */
+    public function constant(Select $select, ?Scalar $expression): bool
+    {
+        $assignmentsVary = $this->planner->settings->legacy() || !in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $select->options, true);
+
+        return $expression !== null && $this->planner->compiler->constancy($expression, assignmentsVary: $assignmentsVary)->constant()
+            && (new Walker())->find($expression, Query::class) === [];
     }
 
     /**

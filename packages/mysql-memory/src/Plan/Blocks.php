@@ -107,7 +107,7 @@ final class Blocks
         $root = (new Window\Direct($this->planner))->bounded((new Projection\Emission($this->planner))->plan($root, $select, $storedWindows), $select);
         $root = (new Window\ParentInputs($this->planner))->emitted($select, $root, $expressions, count($fields), $keys !== [] && !$presorted, $copies);
 
-        $plan = new QueryPlan($root, $domains, $names, $origins);
+        $plan = (new Projection\DistinctStorage($this->planner))->apply(new QueryPlan($root, $domains, $names, $origins), $select, $outer, $expressions, $keys !== []);
 
         return (new Lookup\Preparation($this->planner))->plan(System\ProgramMetadata::buffered((new SortedDistinct($this->planner))->apply($plan, $select, $keys, $outer), $this->planner, $select, $outer, $scope, $keys !== []), $select, $scope, $evaluation);
     }
@@ -214,7 +214,7 @@ final class Blocks
         $compiler = $this->planner->compiler;
         $constants = [];
         foreach ($fields as $position => $field) {
-            if ($field->expression !== null && $compiler->constancy($field->expression)->constant() && (new Walker())->find($field->expression, Query::class) === []) {
+            if ($field->expression !== null && $compiler->constancy($field->expression, assignmentsVary: $this->planner->settings->legacy())->constant() && (new Walker())->find($field->expression, Query::class) === []) {
                 $constants[$position] = $expressions[$position];
             }
         }

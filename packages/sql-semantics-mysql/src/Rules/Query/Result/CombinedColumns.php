@@ -47,8 +47,9 @@ final class CombinedColumns
 
         if ($legacy && $same && $result?->field === Field::LongLong) {
             $replaceNull = $domains[0]->kind === Kind::Null;
+            $length = count($present) === 1 ? $present[0]->length : max(20, ...array_map(static fn (Domain $domain): int => $domain->length, $present));
 
-            return Domain::integer(Field::LongLong, $replaceNull ? 20 : max(20, ...array_map(static fn (Domain $domain): int => $domain->length, $present)), $result->unsigned);
+            return Domain::integer(Field::LongLong, $replaceNull ? 20 : $length, $result->unsigned);
         }
 
         return $result === null ? null : $this->floating($result, $present, $legacy);
