@@ -71,7 +71,9 @@ final class SingleRow
      */
     public function fetch(Frame $frame): array
     {
+        $previous = $this->frame;
         $this->frame = new Frame($frame->context, $this->initial, $frame);
+        $this->frame->windowSlots = $previous !== null && $previous->context === $frame->context ? $previous->windowSlots : [];
         if ($this->source !== null) {
             $variables = $frame->context->variables;
             $stored = $variables->instance->dictionary->cache->buffers->read($variables, $this->source->table, $this->source->handle);
@@ -97,7 +99,7 @@ final class SingleRow
         $frame = $this->frame ?? $outer->inner();
         if ($this->source !== null) {
             $stored = $frame->scanned[spl_object_id($this->source)][1] ?? $frame->row;
-            $frame->row = (new \MySqlMemory\Storage\TimestampZones())->local($this->source->table, $stored, $frame->context);
+            $frame->row = array_replace($frame->row, (new \MySqlMemory\Storage\TimestampZones())->local($this->source->table, $stored, $frame->context));
         }
 
         $value = $this->projection[$position];

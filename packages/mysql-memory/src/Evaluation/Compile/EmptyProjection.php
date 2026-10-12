@@ -123,7 +123,7 @@ final class EmptyProjection
     public function source(QueryPlan $plan): ?\MySqlMemory\Plan\Path\Source\TableScan
     {
         $path = $this->project($plan)?->input;
-        while ($path instanceof Filter || $path instanceof \MySqlMemory\Plan\Path\Transform\Lock) {
+        while ($path instanceof Filter || $path instanceof \MySqlMemory\Plan\Path\Transform\Lock || $path instanceof \MySqlMemory\Plan\Path\Transform\Window) {
             $path = $path->input;
         }
         if ($path instanceof \MySqlMemory\Plan\Path\Source\KeyLookup) {
@@ -139,7 +139,7 @@ final class EmptyProjection
     public function aggregate(QueryPlan $plan): ?AggregatePath
     {
         $path = $this->project($plan)?->input;
-        while ($path instanceof Filter) {
+        while ($path instanceof Filter || $path instanceof \MySqlMemory\Plan\Path\Transform\Window) {
             $path = $path->input;
         }
 
@@ -154,7 +154,7 @@ final class EmptyProjection
     public function readable(Node $node, bool $aggregated, bool $tabled = false): bool
     {
         if ($node instanceof Aggregate || $node instanceof GroupConcat || $node instanceof JsonObjectAggregate) {
-            return $aggregated;
+            return $node->over !== null || $aggregated;
         }
         if ($node instanceof ColumnUse) {
             $column = $this->compiler->facts->covers($node) ? $this->compiler->facts->scalar($node)->resolution : null;

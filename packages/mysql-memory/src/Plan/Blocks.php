@@ -102,6 +102,7 @@ final class Blocks
         }
         $root = $this->limit($root, $select->limit, $outer);
         $root = $this->limit($root, $select->late?->limit, $outer);
+        $root = (new Window\Direct($this->planner))->bounded($root, $select);
 
         $plan = new QueryPlan($root, $domains, $names, $origins);
 

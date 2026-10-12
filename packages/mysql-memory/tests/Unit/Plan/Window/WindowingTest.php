@@ -52,20 +52,16 @@ final class WindowingTest extends TestCase
         self::assertSame([\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::LongLong, \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field::Long], [$direct->columns[0]->type, $stored->columns[0]->type]);
     }
 
-    public function testBoundedSkipsWindowArgumentsAfterAnExhaustedTablelessOffsetButKeepsFilterWarnings(): void
+    public function testPlanBindsIndependentDirectAggregatesForEachRollupOutput(): void
     {
         $session = (new Instance())->connect();
-        $session->query("SET sql_mode='ERROR_FOR_DIVISION_BY_ZERO'");
-        $result = $session->query('SELECT FIRST_VALUE(1/0) OVER () LIMIT 1 OFFSET 1')[0];
-        self::assertInstanceOf(ResultSet::class, $result);
-        self::assertSame([], $result->rows);
-        self::assertCount(0, $session->diagnostics->conditions);
+        $result = $session->query('SELECT COUNT(*) OVER (), SUM(10) OVER () FROM DUAL GROUP BY 1+1 WITH ROLLUP')[0];
 
-        $session->query('SELECT FIRST_VALUE(1/0) OVER () WHERE 1/0 LIMIT 1 OFFSET 1');
-        self::assertCount(1, $session->diagnostics->conditions);
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['1', '10'], ['2', '20']], $result->rows);
     }
 
-    public function testPlanComputesTheWindowsOneAfterTheOtherNamedFirst(): void
+    public function testBufferedComputesTheWindowsOneAfterTheOtherNamedFirst(): void
     {
         $session = (new Instance())->connect();
         $session->query('CREATE DATABASE d');

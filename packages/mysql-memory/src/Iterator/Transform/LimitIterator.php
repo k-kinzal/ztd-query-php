@@ -39,7 +39,7 @@ final class LimitIterator implements RowIterator
         if ($this->path->countFound) {
             $frame->foundBeforeProjection = 0;
         }
-        if ($this->path->count !== 0 || $this->path->offset !== 0) {
+        if ($this->path->exhaust || $this->path->count !== 0 || $this->path->offset !== 0) {
             $this->input->init($frame);
         }
     }
@@ -51,7 +51,7 @@ final class LimitIterator implements RowIterator
     public function read(): ?array
     {
         $end = $this->path->count === null ? null : $this->path->offset + $this->path->count;
-        while ($end === null || $this->seen < $end) {
+        while ($this->path->exhaust || $end === null || $this->seen < $end) {
             $row = $this->input->read();
             if ($row === null) {
                 return null;
@@ -59,7 +59,8 @@ final class LimitIterator implements RowIterator
             if ($this->path->countFound) {
                 $this->frame->foundBeforeProjection = $this->seen + 1;
             }
-            if ($this->seen++ >= $this->path->offset) {
+            $position = $this->seen++;
+            if ($position >= $this->path->offset && ($end === null || $position < $end)) {
                 return $row;
             }
         }

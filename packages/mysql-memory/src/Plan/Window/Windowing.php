@@ -85,7 +85,25 @@ final class Windowing
         foreach ($calls as $call) {
             $analytics[spl_object_id($call)] = $functions->compile($call, $scope, $direct);
         }
-        $input = $this->bounded($select, $input, $scope);
+        if ((new Direct($this->planner))->constant($select)) {
+            (new Direct($this->planner))->bind($select, $scope, $windows, $analytics);
+
+            return [$input, false, false];
+        }
+        return $this->buffered($select, $input, $scope, $windows, $analytics, $direct);
+    }
+
+    /**
+     * Builds buffered partitions and binds their outputs after every window is compiled.
+     *
+     * @param list<Specification> $windows The resolved windows
+     * @param array<int, \MySqlMemory\Evaluation\Window\Analytic> $analytics The compiled calls
+     * @return array{AccessPath, bool, bool}
+     */
+    public function buffered(Select $select, AccessPath $input, Scope $scope, array $windows, array $analytics, bool $direct): array
+    {
+        $frames = new Frames($this->planner);
+        $functions = new Functions($this->planner);
         $used = array_values(array_filter($windows, static fn (Specification $window): bool => $window->calls !== []));
         $pushed = $used !== [] && $this->pushes($select, $used);
         if ($pushed) {
@@ -100,12 +118,12 @@ final class Windowing
             $computed = [];
             $arguments = [];
             foreach ($window->calls as $call) {
-                [$computed[], $read] = $functions->cached($analytics[spl_object_id($call)], $width + count($arguments));
+                [$computed[], $read] = $functions->cached($analytics[spl_object_id($call)], $width + count($arguments), $call);
                 $arguments = [...$arguments, ...$read];
             }
             $input = new Window($input, $partition, $order, $frames->compile($window, $order, $scope), $computed, $arguments);
             foreach ($window->calls as $index => $call) {
-                $bindings[] = [$call, new OutputRead($analytics[spl_object_id($call)], $width + $index)];
+                $bindings[] = [$call, new OutputRead($analytics[spl_object_id($call)], $width + $index, $direct, $select->from !== null && !$select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual)];
             }
         }
         foreach ($bindings as [$call, $read]) {
@@ -153,28 +171,6 @@ final class Windowing
         }
 
         return true;
-    }
-
-    /**
-     * Applies an exhausted tableless offset before window evaluation, retaining WHERE and HAVING effects.
-     * Grouped queries consume their aggregate inputs before their output bounds.
-     */
-    public function bounded(Select $select, AccessPath $input, Scope $scope): AccessPath
-    {
-        if (($select->from !== null && !$select->from instanceof \SqlSemantics\Platform\MySql\Statement\Relation\Dual) || (new Grouping($this->planner))->collect($select) !== []) {
-            return $input;
-        }
-        foreach ([$select->limit, $select->late?->limit] as $limit) {
-            if (!$limit instanceof \SqlSemantics\Platform\MySql\Statement\Query\Clause\RowLimit || $limit->offset === null) {
-                continue;
-            }
-            $offset = $this->planner->blocks->bound($limit->offset, $scope->outer);
-            if ($offset > 0) {
-                return new \MySqlMemory\Plan\Path\Transform\Limit($input, 0, $offset, in_array(SelectOption::CalcFoundRows, $select->options, true));
-            }
-        }
-
-        return $input;
     }
 
     /**

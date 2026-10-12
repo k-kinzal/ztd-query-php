@@ -20,6 +20,20 @@ use PHPUnit\Framework\TestCase;
 #[Small]
 final class LimitIteratorTest extends TestCase
 {
+    public function testReadExhaustsUnprojectedRowsWhenTheQueryCountsAllInput(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $working = new WorkingTable(1);
+        $working->rows = [[1], [2], [3], [4], [5]];
+        $iterator = new LimitIterator(new Limit($working, 1, 1, true, true), new WorkingTableIterator($working));
+        $iterator->init($frame);
+
+        self::assertSame([2], $iterator->read());
+        self::assertNull($iterator->read());
+        self::assertSame(5, $frame->foundBeforeProjection);
+    }
+
     public function testReadCountsDiscardedInputBeforeProjectionAndResetsTheCountOnInit(): void
     {
         $session = (new Instance())->connect();

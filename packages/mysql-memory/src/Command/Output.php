@@ -73,7 +73,7 @@ final class Output
             }
             throw $error;
         }
-        $context->variables->foundRows = $calculate ? ($frame->foundBeforeProjection ?? $found) : $found;
+        $context->variables->foundRows = $frame->foundBeforeProjection ?? $found;
 
         return new ResultSet($this->columns($plan, $charset), $rows, $context->diagnostics->raised());
     }

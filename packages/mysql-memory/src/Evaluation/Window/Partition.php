@@ -55,12 +55,29 @@ final class Partition
      */
     private array $folded = [];
 
+    private int $loaded = -1;
+
+    /**
+     * @var array<int, Sliding> Incremental exact SUM and AVG folds
+     */
+    private array $sliding = [];
+
+    /**
+     * @var array<int, array{int, int|float|string|null}> The current FIRST_VALUE or NTH_VALUE selection per call
+     */
+    private array $selected = [];
+
+    /**
+     * @var array<int, array<int, int|float|string|null>> Argument values consumed by LAST_VALUE per call
+     */
+    private array $lastValues = [];
+
     /**
      * @param list<list<int|float|string|null>> $rows The rows of the partition, in the order of the window
      * @param list<list<int|float|string|null>> $keys The values of the ORDER BY expressions of each row
      * @param Window $window The window
      */
-    public function __construct(public readonly array $rows, public readonly array $keys, public readonly Window $window)
+    public function __construct(public array $rows, public readonly array $keys, public readonly Window $window)
     {
         $group = 0;
         $start = 0;
@@ -105,6 +122,8 @@ final class Partition
      */
     public function values(int $row, Frame $frame): array
     {
+        $frame->row = $this->rows[$row];
+        $this->load($this->frontier($row, $frame), $frame);
         $values = [];
         foreach ($this->window->functions as $analytic) {
             $frame->row = $this->rows[$row];
@@ -112,6 +131,43 @@ final class Partition
         }
 
         return $values;
+    }
+
+    /**
+     * Answers the last argument row needed before producing one output row.
+     */
+    public function frontier(int $row, Frame $frame): int
+    {
+        if ($this->window->buffered()) {
+            return count($this->rows) - 1;
+        }
+        [, $end] = $this->extent($row, $frame);
+
+        return max($row, $end);
+    }
+
+    /**
+     * Tells whether reading this frame crosses the partition boundary.
+     * The first row of the next partition has its argument effects already applied.
+     */
+    public function lookahead(int $row): bool
+    {
+        $end = $this->window->frame->end;
+
+        return $this->window->buffered() || $end->kind === FrameBoundKind::UnboundedFollowing || ($end->kind === FrameBoundKind::Following && $end->rows >= count($this->rows) - $row);
+    }
+
+    /**
+     * Materializes effectful arguments only as far as the current frame requires.
+     * The input may already be sorted without evaluating these expressions.
+     */
+    public function load(int $position, Frame $frame): void
+    {
+        while ($this->loaded < $position) {
+            $index = ++$this->loaded;
+            $frame->row = $this->rows[$index];
+            $this->rows[$index] = [...array_slice($this->rows[$index], 0, $this->window->input->width()), ...array_map(static fn ($argument) => $argument->evaluate($frame), $this->window->arguments)];
+        }
     }
 
     /**
@@ -190,11 +246,52 @@ final class Partition
             return null;
         }
         $argument = $analytic->arguments[0];
-        $frame->row = $this->rows[$target];
-        $value = $argument->evaluate($frame);
+        $value = $this->selected($analytic, $start, $target, $frame);
         $frame->row = $this->rows[$row];
 
         return self::converted($value, $argument->domain(), $analytic->domain, $frame);
+    }
+
+    /**
+     * Reads only the argument positions consumed by a framed value function.
+     * FIRST_VALUE and NTH_VALUE retain their selection; when it moves they read
+     * the previous selection before the new one. LAST_VALUE consumes each frame
+     * member once. Empty frames read nothing. Verified through warning counts
+     * over fixed and moving frames on MySQL 8.0, 8.4 and 9.1.
+     */
+    public function selected(Analytic $analytic, int $start, int $target, Frame $frame): int|float|string|null
+    {
+        $id = spl_object_id($analytic);
+        $argument = $analytic->arguments[0];
+        if ($analytic->kind === WindowFunctionKind::LastValue) {
+            for ($position = $start; $position <= $target; $position++) {
+                if (!array_key_exists($position, $this->lastValues[$id] ?? [])) {
+                    $frame->row = $this->rows[$position];
+                    $this->lastValues[$id][$position] = $argument->evaluate($frame);
+                }
+            }
+
+            return $this->lastValues[$id][$target];
+        }
+        $bounds = $this->window->frame;
+        if ($bounds->start->kind !== FrameBoundKind::UnboundedPreceding && in_array($bounds->end->kind, [FrameBoundKind::Following, FrameBoundKind::UnboundedFollowing], true)) {
+            $frame->row = $this->rows[$target];
+
+            return $argument->evaluate($frame);
+        }
+        $previous = $this->selected[$id] ?? null;
+        if ($previous !== null && $previous[0] === $target) {
+            return $previous[1];
+        }
+        if ($previous !== null) {
+            $frame->row = $this->rows[$previous[0]];
+            $argument->evaluate($frame);
+        }
+        $frame->row = $this->rows[$target];
+        $value = $argument->evaluate($frame);
+        $this->selected[$id] = [$target, $value];
+
+        return $value;
     }
 
     /**
@@ -221,6 +318,12 @@ final class Partition
     {
         if ($analytic->accumulation === null) {
             return null;
+        }
+        if (Sliding::supports($analytic->accumulation)) {
+            $id = spl_object_id($analytic);
+            $this->sliding[$id] ??= new Sliding($analytic->accumulation);
+
+            return $this->sliding[$id]->value($this, $row, $frame);
         }
         $accumulator = $analytic->accumulation->start();
         [$start, $end] = $this->extent($row, $frame);

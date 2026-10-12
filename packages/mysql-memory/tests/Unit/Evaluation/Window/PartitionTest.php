@@ -6,6 +6,7 @@ namespace Tests\Unit\Evaluation\Window;
 
 use MySqlMemory\Evaluation\Aggregate\Accumulation;
 use MySqlMemory\Evaluation\Context;
+use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Window\Analytic;
@@ -111,6 +112,42 @@ final class PartitionTest extends TestCase
         self::assertSame(['13', '23', '27'], [$partition->aggregate($sum, 0, $frame), $partition->aggregate($sum, 3, $frame), $partition->aggregate($sum, 4, $frame)]);
     }
 
+    public function testSelectedRetainsAValueAndReadsItsPreviousPositionWhenItMoves(): void
+    {
+        $reads = [];
+        $argument = $this->createMock(Evaluable::class);
+        $argument->expects(self::exactly(3))->method('evaluate')->willReturnCallback(static function (Frame $frame) use (&$reads): int|float|string|null {
+            $reads[] = $frame->row[0];
+
+            return $frame->row[0];
+        });
+        $first = new Analytic(WindowFunctionKind::FirstValue, null, [$argument], 1, Domain::integer());
+        $partition = new Partition([[5], [8], [3]], [[], [], []], new Window(new WorkingTable(1), [], [], WindowFrame::default(false), [$first]));
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        self::assertSame([5, 5, 8], [$partition->selected($first, 0, 0, $frame), $partition->selected($first, 0, 0, $frame), $partition->selected($first, 1, 1, $frame)]);
+        self::assertSame([5, 5, 8], $reads);
+    }
+
+    public function testSelectedConsumesEachLastValueArgumentOnceAcrossOverlappingFrames(): void
+    {
+        $reads = [];
+        $argument = $this->createMock(Evaluable::class);
+        $argument->expects(self::exactly(3))->method('evaluate')->willReturnCallback(static function (Frame $frame) use (&$reads): int|float|string|null {
+            $reads[] = $frame->row[0];
+
+            return $frame->row[0];
+        });
+        $last = new Analytic(WindowFunctionKind::LastValue, null, [$argument], 1, Domain::integer());
+        $partition = new Partition([[5], [null], [3]], [[], [], []], new Window(new WorkingTable(1), [], [], WindowFrame::default(false), [$last]));
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+
+        self::assertSame([null, null, 3], [$partition->selected($last, 0, 1, $frame), $partition->selected($last, 1, 1, $frame), $partition->selected($last, 1, 2, $frame)]);
+        self::assertSame([5, null, 3], $reads);
+    }
+
     public function testExtentLeavesAFramePastThePartitionEmpty(): void
     {
         $frameClause = new WindowFrame(FrameUnit::Rows, new Bound(FrameBoundKind::Following, 2), new Bound(FrameBoundKind::Following, 3));
@@ -155,4 +192,37 @@ final class PartitionTest extends TestCase
 
         self::assertSame(['2020-01-01 00:00:00', '1.00'], [Partition::converted('2020-01-01', new Domain(Kind::Date, Field::Date, 10), new Domain(Kind::DateTime, Field::DateTime, 19), $frame), Partition::converted(1, Domain::integer(), Domain::decimal(12, 2), $frame)]);
     }
+    public function testFrontierLoadsOnlyTheRowsNeededByARowsFrame(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $bounds = new WindowFrame(FrameUnit::Rows, new Bound(FrameBoundKind::Preceding, 1), new Bound(FrameBoundKind::Following, 1));
+        $partition = new Partition([[1], [2], [3]], [[], [], []], new Window(new WorkingTable(1), [], [], $bounds, []));
+
+        self::assertSame([1, 2, 2], [$partition->frontier(0, $frame), $partition->frontier(1, $frame), $partition->frontier(2, $frame)]);
+    }
+
+    public function testLookaheadCrossesThePartitionOnlyWhenTheFrameNeedsAnotherRow(): void
+    {
+        $bounds = new WindowFrame(FrameUnit::Rows, new Bound(FrameBoundKind::CurrentRow), new Bound(FrameBoundKind::Following, 1));
+        $partition = new Partition([[1], [2]], [[], []], new Window(new WorkingTable(1), [], [], $bounds, []));
+
+        self::assertFalse($partition->lookahead(0));
+        self::assertTrue($partition->lookahead(1));
+    }
+
+    public function testLoadEvaluatesEachStoredArgumentOnceAndStopsAtTheRequestedRow(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $argument = $this->createMock(Evaluable::class);
+        $argument->expects(self::exactly(2))->method('evaluate')->willReturn(7, 8);
+        $partition = new Partition([[1], [2], [3]], [[], [], []], new Window(new WorkingTable(1), [], [], WindowFrame::default(false), [], [$argument]));
+        $partition->load(0, $frame);
+        $partition->load(0, $frame);
+        $partition->load(1, $frame);
+
+        self::assertSame([[1, 7], [2, 8], [3]], $partition->rows);
+    }
+
 }

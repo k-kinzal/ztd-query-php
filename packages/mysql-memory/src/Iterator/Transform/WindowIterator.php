@@ -12,7 +12,7 @@ use MySqlMemory\Value\Order;
 use Override;
 
 /**
- * Reads the whole input with the arguments of the window functions, sorts it for a window, and answers each row followed by the values of the window functions.
+ * Sorts window input, then evaluates its arguments and outputs as rows are requested.
  *
  * Source: https://dev.mysql.com/doc/refman/8.4/en/window-functions-usage.html.
  *
@@ -21,9 +21,11 @@ use Override;
 final class WindowIterator implements RowIterator
 {
     /**
-     * @var list<list<int|float|string|null>>
+     * @var list<array{Partition, Frame}>
      */
-    private array $rows = [];
+    private array $partitions = [];
+
+    private int $partition = 0;
 
     private int $next = 0;
 
@@ -36,7 +38,7 @@ final class WindowIterator implements RowIterator
     }
 
     /**
-     * Reads and sorts the input, and computes the window functions partition by partition.
+     * Reads and sorts the input; window arguments and outputs are consumed by read().
      */
     #[Override]
     public function init(Frame $frame): void
@@ -47,11 +49,12 @@ final class WindowIterator implements RowIterator
         $keys = [];
         while (($row = $this->input->read()) !== null) {
             $frame->row = $row;
-            $rows[] = [...$row, ...array_map(static fn ($argument) => $argument->evaluate($frame), $this->path->arguments)];
+            $rows[] = $row;
             $partitions[] = array_map(static fn ($expression) => $expression->evaluate($frame), $this->path->partition);
             $keys[] = array_map(static fn (array $key) => $key[0]->evaluate($frame), $this->path->order);
         }
-        $this->rows = [];
+        $this->partitions = [];
+        $this->partition = 0;
         $this->next = 0;
         $members = [];
         $previous = null;
@@ -119,12 +122,11 @@ final class WindowIterator implements RowIterator
     }
 
     /**
-     * Computes the window functions over the rows of one partition and adds the rows to the output.
+     * Registers one partition for demand-driven argument and output evaluation.
      *
      * @param list<int> $members The indexes of the rows of the partition, in the order of the window
      * @param list<list<int|float|string|null>> $rows
      * @param list<list<int|float|string|null>> $keys
-     * @throws \MySqlMemory\Error\SqlError When computing a value is an error
      */
     public function emit(array $members, array $rows, array $keys, Frame $frame): void
     {
@@ -132,10 +134,7 @@ final class WindowIterator implements RowIterator
             return;
         }
         $partition = new Partition(array_map(static fn (int $index): array => $rows[$index], $members), array_map(static fn (int $index): array => $keys[$index], $members), $this->path);
-        $width = $this->path->input->width();
-        foreach ($partition->rows as $position => $row) {
-            $this->rows[] = [...array_slice($row, 0, $width), ...$partition->values($position, $frame)];
-        }
+        $this->partitions[] = [$partition, $frame];
     }
 
     /**
@@ -144,6 +143,28 @@ final class WindowIterator implements RowIterator
     #[Override]
     public function read(): ?array
     {
-        return $this->rows[$this->next++] ?? null;
+        while (isset($this->partitions[$this->partition])) {
+            [$partition, $frame] = $this->partitions[$this->partition];
+            if (!isset($partition->rows[$this->next])) {
+                $this->partition++;
+                $this->next = 0;
+                continue;
+            }
+            $position = $this->next++;
+            $frame->row = $partition->rows[$position];
+            $partition->load($partition->frontier($position, $frame), $frame);
+            if ($partition->lookahead($position) && isset($this->partitions[$this->partition + 1])) {
+                $this->partitions[$this->partition + 1][0]->load(0, $frame);
+            }
+            $values = $partition->values($position, $frame);
+            $width = $this->path->input->width();
+            foreach ($values as $index => $value) {
+                $frame->windowSlots[$width + $index] = $value;
+            }
+
+            return [...array_slice($partition->rows[$position], 0, $width), ...$values];
+        }
+
+        return null;
     }
 }

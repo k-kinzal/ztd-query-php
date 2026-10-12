@@ -9,7 +9,6 @@ use MySqlMemory\Error\SqlError;
 use MySqlMemory\Evaluation\Aggregate\Accumulation;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
-use MySqlMemory\Evaluation\Leaf\ColumnRead;
 use MySqlMemory\Evaluation\Scope;
 use MySqlMemory\Evaluation\Window\Analytic;
 use MySqlMemory\Plan\Grouping;
@@ -64,7 +63,9 @@ final class Functions
             $domain = \MySqlMemory\Typing\Domain::of($stored, $domain->nullable);
         }
         if ($call instanceof Aggregate || $call instanceof JsonObjectAggregate) {
-            return new Analytic(null, (new Grouping($this->planner))->accumulation($call, $scope), [], 1, $domain);
+            $accumulation = (new Grouping($this->planner))->accumulation($call, $scope);
+
+            return new Analytic(null, $accumulation, [], 1, $domain->withSource($accumulation->domain->source));
         }
         if (!$call instanceof WindowFunction) {
             throw StatementError::NotSupportedYet->error(Resolution::named($call) . ' as a window function');
@@ -123,11 +124,10 @@ final class Functions
      *
      * @return array{Analytic, list<Evaluable>}
      */
-    public function cached(Analytic $analytic, int $offset): array
+    public function cached(Analytic $analytic, int $offset, ?Scalar $call = null): array
     {
         $accumulation = $analytic->accumulation;
-        $arguments = $accumulation === null ? $analytic->arguments : $accumulation->arguments;
-        $reads = array_map(static fn (Evaluable $argument, int $position): Evaluable => new ColumnRead($argument->domain(), $offset + $position), $arguments, array_keys($arguments));
+        [$reads, $arguments] = (new Arguments($this->planner))->split($analytic, $offset, $call);
         if ($accumulation === null) {
             return [new Analytic($analytic->kind, null, $reads, $analytic->count, $analytic->domain), $arguments];
         }

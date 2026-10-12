@@ -34,6 +34,21 @@ final class Frame
     public array $scanned = [];
 
     /**
+     * Last computed window slots, retained across an empty dependent execution.
+     *
+     * @var array<int, int|float|string|null>
+     */
+    public array $windowSlots = [];
+
+    /**
+     * Aggregate folds started by reading an otherwise unread window output.
+     * A fresh dependent execution starts new folds; an independent cached frame keeps them.
+     *
+     * @var array<int, Aggregate\Accumulator>
+     */
+    public array $unreadWindows = [];
+
+    /**
      * @param Context $context The statement being evaluated
      * @param list<int|float|string|null> $row The current row of the block
      * @param Frame|null $outer The frame of the enclosing block, for a subquery

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Evaluation\Window;
 
+use MySqlMemory\Evaluation\Aggregate\Accumulation;
 use MySqlMemory\Evaluation\Context;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Frame;
@@ -16,12 +17,61 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunctionKind;
 
 #[CoversClass(OutputRead::class)]
 #[Small]
 final class OutputReadTest extends TestCase
 {
+    public function testAggregateRetainsUnreadFoldsOnlyWithinTheirExecutionFrame(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $domain = Domain::integer();
+        $read = new OutputRead(new Analytic(null, new Accumulation(AggregateFunction::Count, [], false, $domain), [], 1, $domain), 0);
+        $frame = new Frame($context);
+
+        self::assertFalse($read->absent($frame));
+        self::assertSame([1, 2, 1], [$read->aggregate($frame), $read->aggregate($frame), $read->aggregate(new Frame($context))]);
+    }
+
+    public function testAggregateKeepsRuntimeEmptyStateWithoutReadingItsArguments(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $argument = $this->createMock(Evaluable::class);
+        $argument->expects(self::never())->method('evaluate');
+        $domain = Domain::decimal(10, 0)->withNullable(true);
+        $read = new OutputRead(new Analytic(null, new Accumulation(AggregateFunction::Sum, [$argument], false, $domain), [], 1, $domain), 0, false);
+
+        self::assertTrue($read->absent($frame));
+        self::assertNull($read->aggregate($frame));
+    }
+
+    public function testAggregateRetainsTheTotalOfAnUnreadAverageOverATable(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $domain = Domain::decimal(10, 4)->withNullable(true);
+        $average = new Accumulation(AggregateFunction::Average, [new Constant(Domain::integer(), 10)], false, $domain);
+        $read = new OutputRead(new Analytic(null, $average, [], 1, $domain), 0, true, true);
+
+        self::assertSame(['10.0000', '20.0000'], [$read->aggregate($frame), $read->aggregate($frame)]);
+    }
+
+    public function testEvaluateReadsRetainedWindowSlotsAfterAnEmptyExecution(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0), [10]);
+        $frame->windowSlots = [0 => 5];
+        $read = new OutputRead(new Analytic(WindowFunctionKind::FirstValue, null, [], 1, Domain::integer()), 0);
+        $current = $read->evaluate($frame);
+        $frame->row = [];
+
+        self::assertSame([10, 5, false], [$current, $read->evaluate($frame), $read->absent($frame)]);
+    }
+
     public function testDomainPreservesTheWindowFunctionDomain(): void
     {
         $domain = Domain::double();

@@ -53,9 +53,17 @@ final class SortIterator implements RowIterator
         $this->input->init($frame);
         $rows = [];
         $records = [];
-        while (($row = $this->input->read()) !== null) {
-            $rows[] = $row;
-            $records[] = $frame->scanned;
+        $position = $frame->context->row;
+        try {
+            while (($row = $this->input->read()) !== null) {
+                $rows[] = $row;
+                $records[] = $frame->scanned;
+                if ($frame->outer === null) {
+                    $frame->context->row = count($rows) + 1;
+                }
+            }
+        } finally {
+            $frame->context->row = $position;
         }
         $keys = $this->path->keys;
         $this->nonScalar($rows, $frame);

@@ -99,6 +99,21 @@ final class Accumulator
     }
 
     /**
+     * Removes one non-NULL argument from an exact SUM or AVG as a window moves.
+     * The argument is read at removal time, including its diagnostics and live variables.
+     */
+    public function remove(Frame $frame): void
+    {
+        $argument = $this->accumulation->arguments[0];
+        $value = $argument->evaluate($frame);
+        if ($value === null) {
+            return;
+        }
+        $this->count--;
+        $this->value = Decimal::subtract((string) ($this->value ?? '0'), (string) Convert::toDecimal($value, $argument->domain(), $frame->context));
+    }
+
+    /**
      * Folds a row into JSON_ARRAYAGG or JSON_OBJECTAGG: a NULL value is the JSON null; a NULL name is refused, and a later member of a name replaces an earlier one.
      *
      * Source: https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html#function_json-arrayagg.

@@ -363,4 +363,23 @@ final class AccumulatorTest extends TestCase
         $this->expectExceptionMessage('JSON documents may not contain NULL member names.');
         $session->query('SELECT JSON_OBJECTAGG(j, id) FROM s');
     }
+    public function testRemoveReadsTheLeavingValueAndSkipsNullOperands(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $fold = new Accumulation(AggregateFunction::Sum, [new ColumnRead(Domain::integer(), 0)], false, Domain::decimal(33, 0));
+        $accumulator = $fold->start();
+        $frame->row = [7];
+        $accumulator->add($frame);
+        $frame->row = [2];
+        $accumulator->add($frame);
+        $frame->row = [null];
+        $accumulator->remove($frame);
+        self::assertSame('9', $accumulator->result($frame));
+        $frame->row = [7];
+        $accumulator->remove($frame);
+
+        self::assertSame('2', $accumulator->result($frame));
+    }
+
 }
