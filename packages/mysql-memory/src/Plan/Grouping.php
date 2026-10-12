@@ -96,6 +96,7 @@ final class Grouping
             $targets[] = $this->target($item->expression);
         }
         $accumulations = array_map(fn (Scalar $node): Accumulation => $this->accumulation($node, $scope), $aggregates);
+        [$input, $accumulations] = (new Grouping\Inputs($this->planner))->plan($select, $input, $accumulations, $targets);
         $grouped = $scope->grouped();
         $width = $input->width();
         foreach ($aggregates as $index => $node) {
@@ -107,7 +108,7 @@ final class Grouping
         $sorted = $this->sorts($select, $aggregates, $scope);
         $hashed = !$sorted || ($this->planner->settings->legacy() && !$rollup && !$this->indexed($select, $scope) && !in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::BigResult, $select->options, true));
 
-        return [new AggregatePath($input, $groups, $accumulations, $rollup, $columns, $sorted, $hashed), $grouped];
+        return [new AggregatePath($input, $groups, $accumulations, $rollup, $columns, $sorted, $hashed, !$this->planner->settings->legacy()), $grouped];
     }
 
     /**

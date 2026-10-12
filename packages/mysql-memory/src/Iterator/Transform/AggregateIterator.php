@@ -79,7 +79,7 @@ final class AggregateIterator implements RowIterator
             if (!isset($groups[$key])) {
                 $groups[$key] = [$row, $values, array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates), []];
             }
-            foreach ($groups[$key][2] as $accumulator) {
+            foreach ($this->path->rollup && $this->path->interleave ? [] : $groups[$key][2] as $accumulator) {
                 $accumulator->add($frame);
             }
             if ($this->path->rollup) {
@@ -170,14 +170,7 @@ final class AggregateIterator implements RowIterator
             for ($prefix = 0; $prefix < $count; $prefix++) {
                 $runs[$prefix] ??= array_map(static fn ($accumulation): Accumulator => $accumulation->start(), $this->path->aggregates);
             }
-            foreach ($members as $member) {
-                $frame->row = $member;
-                foreach ($runs as $run) {
-                    foreach ($run as $accumulator) {
-                        $accumulator->add($frame);
-                    }
-                }
-            }
+            $this->foldRollup($runs, $accumulators, $members, $frame);
             $rows[] = $this->row($first, $accumulators, $values, 0, $frame);
             $next = $groups[$index + 1][1] ?? null;
             for ($prefix = $count - 1; $prefix >= 0; $prefix--) {
@@ -200,6 +193,37 @@ final class AggregateIterator implements RowIterator
         }
 
         return $rows;
+    }
+
+    /**
+     * Folds each input through the total, subtotals and leaf before the next aggregate.
+     * Legacy plans have already populated the leaf accumulators while gathering input.
+     * Verified with variable assignments in SQL on MySQL 8.4.
+     *
+     * @param array<int, list<Accumulator>> $runs Active subtotal accumulators by prefix
+     * @param list<Accumulator> $leaf The current group's accumulators
+     * @param list<list<int|float|string|null>> $members The group's input rows
+     */
+    public function foldRollup(array $runs, array $leaf, array $members, Frame $frame): void
+    {
+        foreach ($members as $member) {
+            $frame->row = $member;
+            if ($this->path->interleave) {
+                foreach ($leaf as $position => $accumulator) {
+                    $stored = (new \MySqlMemory\Evaluation\Aggregate\RollupInput())->capture($accumulator->accumulation, $frame);
+                    foreach ($runs as $run) {
+                        $run[$position]->add($frame, $stored);
+                    }
+                    $accumulator->add($frame, $stored);
+                }
+                continue;
+            }
+            foreach ($runs as $run) {
+                foreach ($run as $accumulator) {
+                    $accumulator->add($frame);
+                }
+            }
+        }
     }
 
     /**

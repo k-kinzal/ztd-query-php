@@ -25,6 +25,7 @@ final class OutputFieldsTest extends TestCase
     {
         yield 'grouped aggregate' => ['SELECT MIN(s) FROM t GROUP BY n', 0];
         yield 'direct rollup' => ['SELECT MIN(s) FROM t GROUP BY n WITH ROLLUP', 31];
+        yield 'rollup aggregate beside a window' => ['SELECT MIN(s),ROW_NUMBER() OVER () FROM t GROUP BY n WITH ROLLUP', 0];
         yield 'stored rollup' => ['SELECT DISTINCT MIN(s) FROM t GROUP BY n WITH ROLLUP', 0];
         yield 'computed parent' => ['SELECT CONCAT(MIN(s)) FROM t GROUP BY n', 31];
         yield 'distinct computed parent' => ['SELECT DISTINCT CONCAT(MIN(s)) FROM t GROUP BY n', 0];
@@ -60,6 +61,31 @@ final class OutputFieldsTest extends TestCase
         self::assertInstanceOf(Domain::class, $parent->descriptor);
 
         self::assertSame([0, 31], [$bare->descriptor->decimals, $parent->descriptor->decimals]);
+    }
+
+    public function testStoredJsonStoresAggregateFieldsBeforeARollupWindow(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(n INT)');
+        $query = $semantics->analyze('SELECT JSON_ARRAYAGG(n>1),ROW_NUMBER() OVER () FROM t GROUP BY n WITH ROLLUP', [$table]);
+        $type = $query->field(0)->type;
+
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+        self::assertSame([4294967295, 0], [$type->descriptor->length, $type->descriptor->decimals]);
+    }
+
+    public function testDomainUsesTheSessionConcatenationBoundWhenStoringRollupFields(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(n INT,s VARCHAR(10))');
+        $context = $semantics->context([$table])->withSession(new \SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings(\SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation::known('utf8mb4_0900_ai_ci'), groupConcatMaxLen: 4096));
+        $query = $semantics->analyze('SELECT GROUP_CONCAT(s),ROW_NUMBER() OVER () FROM t GROUP BY n WITH ROLLUP', $context);
+        $type = $query->field(0)->type;
+
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+        self::assertSame(['Blob', 16384, 0], [$type->descriptor->field->name, $type->descriptor->length, $type->descriptor->decimals]);
     }
 
     public function testDeferredExcludesAggregateParentsButKeepsBareCallsAsKeys(): void

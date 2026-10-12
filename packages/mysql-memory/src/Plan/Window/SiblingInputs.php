@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace MySqlMemory\Plan\Window;
 
-use MySqlMemory\Evaluation\Compile\Walker;
 use MySqlMemory\Evaluation\Evaluable;
 use MySqlMemory\Evaluation\Leaf\Assignment;
 use MySqlMemory\Evaluation\Leaf\ColumnRead;
@@ -19,9 +18,13 @@ use MySqlMemory\Plan\Planner;
 use SqlSemantics\Contract\GrammarRelease;
 use SqlSemantics\Platform\MySql\Rules\Query\Grouping\Matching;
 use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\JsonObjectAggregate;
+use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
+use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment;
+use SqlSemantics\Statement\Node;
+use SqlSemantics\Statement\Query;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -54,10 +57,38 @@ final class SiblingInputs
     public function roots(Select $select): array
     {
         $windowing = new Windowing($this->planner);
-        $roots = array_values(array_filter($windowing->roots($select), static fn (Scalar $root): bool => !$windowing->reads($root) && (new Walker())->find($root, UserVariable::class, false) !== []));
-        $writes = array_filter($roots, static fn (Scalar $root): bool => (new Walker())->find($root, VariableAssignment::class, false) !== []);
+        $roots = [];
+        $writes = false;
+        foreach ($windowing->roots($select) as $root) {
+            $variables = $windowing->reads($root) ? [] : $this->variables($root);
+            if ($variables !== []) {
+                $roots[] = $root;
+                $writes = $writes || array_filter($variables, static fn (Node $node): bool => $node instanceof VariableAssignment) !== [];
+            }
+        }
 
-        return $writes === [] ? [] : $roots;
+        return $writes ? $roots : [];
+    }
+
+    /**
+     * Finds ordinary variable dependencies without entering aggregate or window inputs.
+     *
+     * @return list<UserVariable|VariableAssignment>
+     */
+    public function variables(Node $node): array
+    {
+        if ($node instanceof Query || $node instanceof SetFunction || $node instanceof WindowFunction) {
+            return [];
+        }
+        $found = $node instanceof UserVariable || $node instanceof VariableAssignment ? [$node] : [];
+        $properties = get_object_vars($node);
+        array_walk_recursive($properties, function ($child) use (&$found): void {
+            if ($child instanceof Node) {
+                array_push($found, ...$this->variables($child));
+            }
+        });
+
+        return $found;
     }
 
     /**

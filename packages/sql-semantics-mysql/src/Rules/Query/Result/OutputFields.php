@@ -9,12 +9,14 @@ use SqlSemantics\Platform\MySql\Rules\Query\Aggregation;
 use SqlSemantics\Platform\MySql\Rules\Query\Grouping\Matching;
 use SqlSemantics\Platform\MySql\Rules\Query\Grouping\RollupItems;
 use SqlSemantics\Platform\MySql\Rules\Typing\Materialization;
+use SqlSemantics\Platform\MySql\Statement\Call\Aggregate\GroupConcat;
 use SqlSemantics\Platform\MySql\Statement\Call\SetFunction;
 use SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
 use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Domain;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Kind;
+use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Settings;
 use SqlSemantics\Statement\Scalar;
 
 /**
@@ -32,7 +34,7 @@ final class OutputFields
     /**
      * Answers the domain exposed by an output field at the final query phase.
      */
-    public function domain(Select $select, ?Scalar $expression, Domain $domain, GrammarRelease $release, ?\SqlSemantics\Statement\Fact\Facts $facts = null): Domain
+    public function domain(Select $select, ?Scalar $expression, Domain $domain, GrammarRelease $release, ?\SqlSemantics\Statement\Fact\Facts $facts = null, ?Settings $settings = null): Domain
     {
         $reported = (new TemporalFields())->reported($select, $expression, $domain, $release, $facts);
         if ($reported !== $domain) {
@@ -45,6 +47,9 @@ final class OutputFields
         if ($domain->kind->temporal() && !$domain->collation->bytes() && (new TemporalFields())->stored($select, $expression, $release)) {
             return (new Materialization())->nothing($domain);
         }
+        if ($this->storedJson($select, $expression, $domain)) {
+            return (new Materialization())->windowed($domain, $release, $expression);
+        }
         if ($expression === null || $domain->kind !== Kind::String || !(new Aggregation())->aggregates([$expression]) || $this->deferred($select, $expression)) {
             return $domain;
         }
@@ -52,11 +57,25 @@ final class OutputFields
             return $domain;
         }
         $target = (new Matching())->unwrap($expression);
+        if ($target instanceof GroupConcat) {
+            return (new Materialization())->computed($domain, $target, $settings ?? new Settings($domain->collation), $release);
+        }
         if ($this->copied($expression, $facts)) {
             return (new Materialization())->column($domain, release: $release);
         }
 
         return $target instanceof SetFunction || $target instanceof WindowFunction ? (new Materialization())->windowed($domain, $release, $expression) : (new Materialization())->windowParent($domain, $release, $expression);
+    }
+
+    /**
+     * Identifies a bare JSON aggregate stored between ROLLUP and its window stage.
+     */
+    public function storedJson(Select $select, ?Scalar $expression, Domain $domain): bool
+    {
+        $target = $expression === null ? null : (new Matching())->unwrap($expression);
+
+        return $domain->kind === Kind::Json && $select->groupBy?->modifier !== null && (new RollupItems())->windowed($select)
+            && $target instanceof SetFunction && $target->aggregates();
     }
 
     /**
@@ -86,7 +105,7 @@ final class OutputFields
         $expression = (new Matching())->unwrap($expression);
         $bare = $expression instanceof SetFunction || $expression instanceof WindowFunction;
         $distinct = in_array(SelectOption::Distinct, $select->options, true);
-        $directRollup = $rollup->rolls($select) && $select->orderBy === [] && ($select->late === null || $select->late->orderBy === []);
+        $directRollup = $rollup->rolls($select) && !$rollup->windowed($select) && $select->orderBy === [] && ($select->late === null || $select->late->orderBy === []);
         $stored = $rollup->containsWindow([$expression]) ? ($bare || ($distinct && !$rollup->rolls($select))) : ($distinct || ($bare && !$directRollup));
 
         return $stored;

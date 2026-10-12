@@ -63,8 +63,10 @@ final class Accumulator
 
     /**
      * Folds the arguments evaluated over the row of a frame.
+     *
+     * @param array{values: list<int|float|string|null>, order: list<int|float|string|null>}|null $stored Shared ROLLUP input, or null to evaluate this level's arguments
      */
-    public function add(Frame $frame): void
+    public function add(Frame $frame, ?array $stored = null): void
     {
         if ($this->accumulation->function === AggregateFunction::JsonArray) {
             $this->collect($frame);
@@ -73,8 +75,8 @@ final class Accumulator
         }
         $values = [];
         $key = '';
-        foreach ($this->accumulation->arguments as $argument) {
-            $value = $argument->evaluate($frame);
+        foreach ($this->accumulation->arguments as $position => $argument) {
+            $value = $stored === null ? $argument->evaluate($frame) : ($stored['values'][$position] ?? null);
             if ($value === null) {
                 return;
             }
@@ -88,7 +90,7 @@ final class Accumulator
             $this->seen[$key] = true;
         }
         if ($this->accumulation->function === null) {
-            $this->concatenate($frame, $values);
+            $this->concatenate($frame, $values, $stored['order'] ?? null);
 
             return;
         }
@@ -218,15 +220,16 @@ final class Accumulator
      * Folds the values of a GROUP_CONCAT call.
      *
      * @param list<int|float|string> $values
+     * @param list<int|float|string|null>|null $order The stored sorting values, or null to evaluate them
      */
-    public function concatenate(Frame $frame, array $values): void
+    public function concatenate(Frame $frame, array $values, ?array $order = null): void
     {
         $text = '';
         foreach ($this->accumulation->arguments as $index => $argument) {
             $text .= Encoding::convert((string) Convert::toText($values[$index], $argument->domain()), $argument->domain()->kind === Kind::String ? $argument->domain()->collation->charset : Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset);
         }
-        $keys = [];
-        foreach ($this->accumulation->order as [$key]) {
+        $keys = $order ?? [];
+        foreach ($order === null ? $this->accumulation->order : [] as [$key]) {
             $keys[] = $key->evaluate($frame);
         }
         $this->parts[] = [$text, $keys];
@@ -304,8 +307,10 @@ final class Accumulator
             return null;
         }
         $order = $this->accumulation->order;
+        $parts = $this->parts;
         if ($order !== []) {
-            usort($this->parts, static function (array $left, array $right) use ($order): int {
+            $parts = array_reverse($parts);
+            usort($parts, static function (array $left, array $right) use ($order): int {
                 foreach ($order as $index => [$key, $descending]) {
                     $compared = Order::compare($left[1][$index], $right[1][$index], $key->domain());
                     if ($compared !== 0) {
@@ -316,7 +321,7 @@ final class Accumulator
                 return 0;
             });
         }
-        $text = implode(Encoding::convert($this->accumulation->separator, Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset), array_column($this->parts, 0));
+        $text = implode(Encoding::convert($this->accumulation->separator, Charset::known('utf8mb4'), $this->accumulation->domain->collation->charset), array_column($parts, 0));
         if (strlen($text) > $this->accumulation->limit) {
             $text = mb_strcut($text, 0, $this->accumulation->limit, Encoding::name($this->accumulation->domain->collation->charset) ?? '8bit');
             $frame->context->warning(DataError::CutByGroupConcat, count($this->parts));

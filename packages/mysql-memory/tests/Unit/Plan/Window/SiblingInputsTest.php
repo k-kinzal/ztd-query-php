@@ -36,6 +36,17 @@ final class SiblingInputsTest extends TestCase
         self::assertCount(2, $inputs->nodes($operation->statement));
     }
 
+    public function testVariablesExcludesEffectsAlreadyConsumedByAnAggregate(): void
+    {
+        $session = (new Instance())->connect();
+        $operation = $session->analyze('SELECT SUM(@x:=@x+1),ROW_NUMBER() OVER ()');
+        self::assertInstanceOf(\SqlSemantics\Platform\MySql\Statement\Query\Select::class, $operation->statement);
+        $planner = new \MySqlMemory\Plan\Planner($operation->statement, $operation->facts, $session->settings(), new \MySqlMemory\Evaluation\Compile\Connection($session->variables, new \MySqlMemory\Evaluation\Context($session->modes(), $session->diagnostics, $session->variables, 0.0)), $session->instance->dictionary);
+        $inputs = new \MySqlMemory\Plan\Window\SiblingInputs($planner);
+
+        self::assertSame([], $inputs->roots($operation->statement));
+    }
+
     public function testGroupedRetainsThePreviousOrdinaryValuesForRollupRows(): void
     {
         $session = (new Instance())->connect();

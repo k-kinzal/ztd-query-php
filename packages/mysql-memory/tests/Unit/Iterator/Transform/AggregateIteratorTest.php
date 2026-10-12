@@ -25,6 +25,17 @@ use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Collation;
 #[Small]
 final class AggregateIteratorTest extends TestCase
 {
+    public function testFoldRollupVisitsEveryLevelBeforeAdvancingToTheNextAggregate(): void
+    {
+        $session = (new Instance())->connect();
+        $session->query('USE mysql;CREATE TABLE t(n INT);INSERT INTO t VALUES(2),(1),(2);SET @y=0');
+        $result = $session->query('SELECT SUM(@y:=@y+1),SUM(@y:=@y+10) FROM t GROUP BY n WITH ROLLUP')[0];
+
+        self::assertInstanceOf(ResultSet::class, $result);
+        self::assertSame([['2', '22'], ['70', '110'], ['69', '102']], $result->rows);
+        self::assertSame(66, $session->variables->user('y')[0]);
+    }
+
     public function testInitLeavesAggregateArgumentsUnreadWhenHavingRejectsEveryGroup(): void
     {
         $session = (new Instance())->connect();

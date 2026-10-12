@@ -317,6 +317,21 @@ final class AccumulatorTest extends TestCase
         self::assertSame(['a-b-c', 'c-b-a'], [$ascending->concatenation(new Frame($context)), $descending->concatenation(new Frame($context))]);
     }
 
+    public function testConcatenationReversesEqualKeysWithoutChangingRepeatedReads(): void
+    {
+        $session = (new Instance())->connect();
+        $context = new Context($session->modes(), $session->diagnostics, $session->variables, 0.0);
+        $text = Domain::string(1, Collation::known('utf8mb4_0900_ai_ci'));
+        $accumulator = new Accumulator(new Accumulation(null, [new ColumnRead($text, 0)], false, $text, [[new ColumnRead(Domain::integer(), 1), false]], ','));
+        $accumulator->add(new Frame($context, ['a', 1]));
+        $accumulator->add(new Frame($context, ['b', 1]));
+        $accumulator->add(new Frame($context, ['c', 2]));
+        $accumulator->add(new Frame($context, ['d', 2]));
+
+        self::assertSame('b,a,d,c', $accumulator->concatenation(new Frame($context)));
+        self::assertSame('b,a,d,c', $accumulator->concatenation(new Frame($context)));
+    }
+
     public function testConcatenationCutsTheResultAtTheLengthLimitAndWarns(): void
     {
         $session = (new Instance())->connect();
