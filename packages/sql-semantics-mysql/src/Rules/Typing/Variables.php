@@ -160,14 +160,14 @@ final class Variables
      */
     public function assignmentDisplay(Domain $domain): ?int
     {
-        $integer = $this->settings->connection->charset->maxLength > 1 ? $domain->length * $this->settings->connection->charset->maxLength : null;
+        $expanded = $this->settings->connection->charset->maxLength > 1 ? $domain->length * $this->settings->connection->charset->maxLength : null;
         if ($domain->display !== null && $domain->display >= $domain->length) {
-            $integer = $domain->display;
+            $expanded = $domain->display;
         }
 
         return match ($domain->kind) {
-            Kind::Integer, Kind::Year, Kind::Bit => $integer,
-            Kind::Decimal, Kind::Double => $domain->display,
+            Kind::Integer, Kind::Year, Kind::Bit => $expanded,
+            Kind::Decimal, Kind::Double => $domain->display ?? $expanded,
             Kind::String, Kind::Date, Kind::Time, Kind::DateTime, Kind::Json, Kind::Null => null,
         };
     }

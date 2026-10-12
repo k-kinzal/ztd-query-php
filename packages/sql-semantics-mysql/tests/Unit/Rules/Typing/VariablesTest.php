@@ -30,6 +30,17 @@ final class VariablesTest extends TestCase
         self::assertSame($missing, $variables->assigned($missing));
     }
 
+    #[DataProvider('providerLegacyReleases')]
+    public function testAssignmentExpandsLegacyNumericLiteralMetadataWithoutChangingPrecision(\SqlSemantics\Contract\GrammarRelease $release): void
+    {
+        $variables = new Variables(new Settings(Collation::known('utf8mb4_general_ci')), $release);
+        $decimal = $variables->assignment(Domain::decimal(2, 1));
+        $double = $variables->assignment(Domain::double(3));
+
+        self::assertSame([4, 1, 16], [$decimal->length, $decimal->decimals, $decimal->metadataLength()]);
+        self::assertSame([3, Domain::NOT_FIXED, 12], [$double->length, $double->decimals, $double->metadataLength()]);
+    }
+
     public function testAssignmentSeparatesTheResultFromTheStoredVariableType(): void
     {
         $collation = Collation::known('utf8mb4_0900_ai_ci');
