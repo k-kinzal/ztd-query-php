@@ -162,6 +162,10 @@ final class Planner
             $expressions[] = $key;
         }
         $root = $keys === [] ? $plan->root : new Sort(new Project($plan->root, $expressions), $keys);
+        $legacy = (new Union\Bounds($this))->plan($root, $query, $outer);
+        if ($legacy !== null) {
+            return new QueryPlan($legacy, $plan->domains, $plan->names, $plan->origins);
+        }
         $root = $query->limit !== null && !$this->settings->legacy() ? (new Union\Streaming())->apply($root) : $root;
 
         return new QueryPlan($this->blocks->limit($root, $query->limit, $outer), $plan->domains, $plan->names, $plan->origins);

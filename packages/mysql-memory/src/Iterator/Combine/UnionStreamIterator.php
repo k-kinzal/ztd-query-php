@@ -16,6 +16,11 @@ use Override;
  */
 final class UnionStreamIterator implements RowIterator
 {
+    /**
+     * Whether the latest operand row contributes when projection is skipped.
+     */
+    public bool $counted = false;
+
     private Frame $frame;
 
     private bool $second = false;
@@ -37,6 +42,7 @@ final class UnionStreamIterator implements RowIterator
     {
         $this->frame = $frame;
         $this->second = false;
+        $this->counted = false;
         $frame->buffered = [];
         $this->left->init(new Frame($frame->context, [], $frame->outer));
     }
@@ -45,19 +51,21 @@ final class UnionStreamIterator implements RowIterator
      * Returns the next operand row, preserving only the combined output columns.
      */
     #[Override]
-    public function read(): ?array
+    public function read(bool $emit = true): ?array
     {
-        $row = ($this->second ? $this->right : $this->left)->read();
+        $reads = new ProjectionRead();
+        $row = $reads->read($this->second ? $this->right : $this->left, $emit);
         if ($row === null && !$this->second) {
             $this->second = true;
             $this->right->init(new Frame($this->frame->context, [], $this->frame->outer));
-            $row = $this->right->read();
+            $row = $reads->read($this->right, $emit);
         }
         if ($row === null) {
             return null;
         }
+        $this->counted = $reads->counted($this->second ? $this->right : $this->left);
         $row = array_slice($row, 0, $this->path->columns);
-        if ($this->path->retain) {
+        if ($emit && $this->path->retain) {
             $this->frame->buffered = $row;
         }
 

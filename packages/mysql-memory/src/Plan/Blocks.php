@@ -205,7 +205,7 @@ final class Blocks
     public function distinct(Select $select, array $fields, AccessPath $input, array $expressions, array $domains, bool $hashed = false): AccessPath
     {
         if (!in_array(SelectOption::Distinct, $select->options, true)) {
-            return new Project($input, $expressions, publish: $this->planner->settings->legacy() && !(new Projection\Emission($this->planner))->sortable($select), order: (new Projection\Ordering($this->planner))->order($select, $fields, $expressions));
+            return new Project($input, $expressions, publish: $this->planner->settings->legacy() && !(new Projection\Emission($this->planner))->sortable($select), order: (new Projection\Ordering($this->planner))->order($select, $fields, $expressions), initial: (new Projection\Ordering($this->planner))->initial($select, $fields, $domains));
         }
         $deferred = (new Window\DistinctOutputs($this->planner))->plan($select, $fields, $input, $expressions, $domains, $hashed);
         if ($deferred !== null) {
@@ -360,7 +360,9 @@ final class Blocks
             $offset = 0;
         }
 
-        return new Limit($path, $count, $offset, true, $exhaust, $path instanceof Path\Combine\UnionStream && $path->prepare);
+        $constant = $path instanceof Project && $path->input instanceof SingleRow;
+
+        return new Limit($path, $count, $offset, !$constant || !$this->planner->settings->legacy() || $exhaust, $exhaust, $path instanceof Path\Combine\UnionStream && $path->prepare);
     }
 
     /**

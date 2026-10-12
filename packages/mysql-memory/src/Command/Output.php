@@ -45,7 +45,7 @@ final class Output
      */
     public function result(QueryPlan $plan, Context $context, bool $calculate = false, ?Closure $failed = null): ResultSet
     {
-        $limit = $calculate && $plan->root instanceof Limit && !$plan->root->exhaust ? $plan->root : null;
+        $limit = $calculate && $plan->root instanceof Limit && $plan->root->countFound && !$plan->root->exhaust ? $plan->root : null;
         $iterator = (new Builder())->build($limit === null ? $plan->root : $limit->input);
         $context->row = 1;
         $width = count($plan->domains);

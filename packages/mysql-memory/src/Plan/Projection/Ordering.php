@@ -89,7 +89,7 @@ final class Ordering
     /**
      * Reads hidden sorting keys before storing visible fields on legacy servers.
      *
-     * Nested assignment aliases read the previously stored field during sorting.
+     * Nested aliases of direct assignments copy the previously stored field back to the variable during sorting.
      * Seeded random calls advance for each key read before the visible read.
      * Verified with SQL and PDO on MySQL 5.6 and 5.7 in Testcontainers.
      *
@@ -109,7 +109,7 @@ final class Ordering
     /**
      * Reuses non-DISTINCT legacy assignment fields when sorting reads stored output.
      *
-     * Nested aliases of assignments read the previously stored fields in MySQL 5.6 and 5.7.
+     * Nested aliases of direct assignments restore their previously stored fields in MySQL 5.6 and 5.7.
      * A projection deferred until emission still computes its sorting keys over input rows.
      * Verified through SQL and PDO metadata in Testcontainers.
      *
@@ -123,11 +123,44 @@ final class Ordering
         }
         $ordering = clone $scope;
         foreach ($fields as $position => $field) {
-            if ($field->expression !== null && (new Walker())->find($field->expression, \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment::class, false) !== []) {
-                $ordering->bind($field->expression, new \MySqlMemory\Evaluation\Leaf\ProjectedRead($domains[$position], $position));
+            $expression = $field->expression;
+            while ($expression instanceof Grouped) {
+                $expression = $expression->operand;
+            }
+            if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment && $field->expression !== null) {
+                $assignment = $this->planner->compiler->names->assignment($expression, $scope);
+                if ($assignment instanceof \MySqlMemory\Evaluation\Leaf\Assignment) {
+                    $ordering->bind($field->expression, new \MySqlMemory\Evaluation\Leaf\Assignment($assignment->name, new \MySqlMemory\Evaluation\Leaf\ProjectedRead($domains[$position], $position), $assignment->stored, $assignment->domain, $assignment->preparedCollation));
+                }
             }
         }
 
         return $ordering;
     }
+    /**
+     * Initializes stored direct-assignment fields before their first sorting read.
+     *
+     * @param list<Field> $fields The visible fields
+     * @param list<Domain> $domains Their result domains
+     * @return array<int, int|float|string|null>
+     */
+    public function initial(Select $select, array $fields, array $domains): array
+    {
+        if (!$this->planner->settings->legacy() || (new Emission($this->planner))->sortable($select)) {
+            return [];
+        }
+        $initial = [];
+        foreach ($fields as $position => $field) {
+            $expression = $field->expression;
+            while ($expression instanceof Grouped) {
+                $expression = $expression->operand;
+            }
+            if ($expression instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment) {
+                $initial[$position] = \MySqlMemory\Plan\Views::zero($domains[$position]);
+            }
+        }
+
+        return $initial;
+    }
+
 }

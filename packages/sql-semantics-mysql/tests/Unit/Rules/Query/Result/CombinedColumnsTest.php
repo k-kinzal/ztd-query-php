@@ -52,6 +52,14 @@ final class CombinedColumnsTest extends TestCase
         self::assertEquals(Domain::integer(Field::LongLong, 4), $rules->resolve([Domain::integer(Field::LongLong, 2), Domain::integer(Field::Tiny, 4)], $derivation));
     }
 
+    public function testResolvePreservesWiderLegacyIntegerExpressionBounds(): void
+    {
+        $derivation = new Derivation((new Semantics(Dialect::MySql, 'mysql-5.7.44'))->context());
+        $result = (new CombinedColumns())->resolve([Domain::integer(Field::LongLong, 21), Domain::integer(Field::LongLong, 20)], $derivation);
+
+        self::assertEquals(Domain::integer(Field::LongLong, 21), $result);
+    }
+
     public function testOperandUsesTheReportedStringFieldForTemporalValues(): void
     {
         $derivation = new Derivation((new Semantics(Dialect::MySql))->context());

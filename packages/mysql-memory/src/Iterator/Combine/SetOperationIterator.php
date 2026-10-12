@@ -7,6 +7,7 @@ namespace MySqlMemory\Iterator\Combine;
 use MySqlMemory\Evaluation\Frame;
 use MySqlMemory\Iterator\RowIterator;
 use MySqlMemory\Plan\Path\Combine\SetOperation;
+use MySqlMemory\Plan\Path\SetCount;
 use MySqlMemory\Plan\Path\SetKind;
 use MySqlMemory\Value\Order;
 use Override;
@@ -48,7 +49,26 @@ final class SetOperationIterator implements RowIterator
         $this->frame = $frame;
         $frame->buffered = [];
         $left = $this->rows($this->left, new Frame($frame->context, [], $frame->outer));
-        $right = $this->rows($this->right, new Frame($frame->context, [], $frame->outer));
+        $rightFrame = new Frame($frame->context, [], $frame->outer);
+        $right = $this->rows($this->right, $rightFrame);
+        $this->rows = $this->combine($left, $right);
+        $this->next = 0;
+        $frame->foundBeforeProjection = match ($this->path->count) {
+            SetCount::None => $frame->foundBeforeProjection,
+            SetCount::Materialized => count($this->rows),
+            SetCount::RightInput => ($this->path->distinct ? count(array_unique(array_column($left, 0))) : count($left)) + ($rightFrame->foundBeforeProjection ?? count($right)),
+        };
+    }
+
+    /**
+     * Combines captured operand rows, retaining the last materialized fields.
+     *
+     * @param list<array{string, list<int|float|string|null>}> $left The left rows and equality keys
+     * @param list<array{string, list<int|float|string|null>}> $right The right rows and equality keys
+     * @return list<list<int|float|string|null>>
+     */
+    public function combine(array $left, array $right): array
+    {
         $counts = [];
         foreach ($right as [$key]) {
             $counts[$key] = ($counts[$key] ?? 0) + 1;
@@ -58,7 +78,7 @@ final class SetOperationIterator implements RowIterator
         $candidates = $this->path->kind === SetKind::Union ? [...$left, ...$right] : $left;
         foreach ($candidates as [$key, $row]) {
             if ($this->path->retain) {
-                $frame->buffered = $row;
+                $this->frame->buffered = $row;
             }
             if ($this->path->kind === SetKind::Intersect || $this->path->kind === SetKind::Except) {
                 $present = ($counts[$key] ?? 0) > 0;
@@ -78,8 +98,7 @@ final class SetOperationIterator implements RowIterator
             $emitted[$key] = true;
             $result[] = $row;
         }
-        $this->rows = $result;
-        $this->next = 0;
+        return $result;
     }
 
     /**

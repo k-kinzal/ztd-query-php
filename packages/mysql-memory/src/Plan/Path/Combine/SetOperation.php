@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MySqlMemory\Plan\Path\Combine;
 
 use MySqlMemory\Plan\Path\AccessPath;
+use MySqlMemory\Plan\Path\SetCount;
 use MySqlMemory\Plan\Path\SetKind;
 use MySqlMemory\Typing\Domain;
 use Override;
@@ -23,6 +24,7 @@ final class SetOperation implements AccessPath
      * @param AccessPath $right The right query
      * @param list<Domain> $domains The domains of the combined columns, to compare rows by
      * @param bool $retain Whether consumed rows replace the exposed result fields
+     * @param SetCount $count Which rows contribute to the enclosing statement count
      */
     public function __construct(
         public readonly SetKind $kind,
@@ -31,6 +33,7 @@ final class SetOperation implements AccessPath
         public readonly AccessPath $right,
         public readonly array $domains,
         public readonly bool $retain = true,
+        public readonly SetCount $count = SetCount::None,
     ) {
     }
 

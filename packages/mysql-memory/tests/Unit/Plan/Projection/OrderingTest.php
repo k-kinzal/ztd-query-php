@@ -62,4 +62,26 @@ final class OrderingTest extends TestCase
         self::assertSame([['0.9501954782290342'], ['0.09445909605776807'], ['0.8716141803857071']], $result->rows);
     }
 
+    public function testInitialStoredAssignmentReadReplacesThePreviousStatementValue(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('USE mysql; CREATE TEMPORARY TABLE t(a INT); INSERT INTO t VALUES(3),(1),(2); SET @x=10');
+        $result = $session->query('SELECT @x:=@x-a AS v FROM t ORDER BY ABS(v)')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['-3'], ['-4'], ['-6']], $result->rows);
+        self::assertSame(-6, $session->variables->user('x')[0]);
+    }
+
+    public function testEvaluationRepeatsAnAssignmentInsideAnUnstoredExpression(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('USE mysql; CREATE TEMPORARY TABLE t(a INT); INSERT INTO t VALUES(1),(2),(3); SET @x=10');
+        $result = $session->query('SELECT ABS(@x:=RAND(1)) AS v FROM t ORDER BY ABS(v)')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['0.9501954782290342'], ['0.09445909605776807'], ['0.8716141803857071']], $result->rows);
+        self::assertSame(0.9501954782290342, $session->variables->user('x')[0]);
+    }
+
 }

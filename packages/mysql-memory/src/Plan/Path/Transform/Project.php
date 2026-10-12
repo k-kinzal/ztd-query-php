@@ -22,8 +22,9 @@ final class Project implements AccessPath
      * @param int|null $retainAt The input position whose positive marker repeats the previous computed values
      * @param bool $publish Whether expressions read the latest computed fields from the frame
      * @param list<int> $order The evaluation order of expression positions; empty uses their written order
+     * @param array<int, int|float|string|null> $initial Initial stored values read before any row updates a field
      */
-    public function __construct(public readonly AccessPath $input, public readonly array $expressions, public readonly bool $append = false, public readonly ?int $retainAt = null, public readonly bool $publish = false, public readonly array $order = [])
+    public function __construct(public readonly AccessPath $input, public readonly array $expressions, public readonly bool $append = false, public readonly ?int $retainAt = null, public readonly bool $publish = false, public readonly array $order = [], public readonly array $initial = [])
     {
     }
 

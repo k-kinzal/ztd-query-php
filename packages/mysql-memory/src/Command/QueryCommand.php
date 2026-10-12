@@ -29,7 +29,6 @@ use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoOutfile;
 use SqlSemantics\Platform\MySql\Statement\Query\Into\IntoVariables;
 use SqlSemantics\Platform\MySql\Statement\Query\QueryStatement;
 use SqlSemantics\Platform\MySql\Statement\Query\Select;
-use SqlSemantics\Platform\MySql\Statement\Query\SelectOption;
 use SqlSemantics\Platform\MySql\Statement\Type\Resolved\Field;
 use SqlSemantics\Platform\MySql\Statement\Variable\UserVariable;
 use SqlSemantics\Statement\Operation;
@@ -97,17 +96,7 @@ final class QueryCommand implements Command
      */
     public function calculates(Query $query): bool
     {
-        $first = $query;
-        while ($first !== null && !$first instanceof Select) {
-            $first = match (true) {
-                $first instanceof QueryStatement, $first instanceof \SqlSemantics\Platform\MySql\Statement\Query\ParenthesizedQuery => $first->query,
-                $first instanceof \SqlSemantics\Platform\MySql\Statement\Query\QueryExpression => $first->body,
-                $first instanceof \SqlSemantics\Platform\MySql\Statement\Query\Set\SetOperation && $first->left instanceof Query => $first->left,
-                default => null,
-            };
-        }
-
-        return $first instanceof Select && in_array(SelectOption::CalcFoundRows, $first->options, true);
+        return (new \MySqlMemory\Plan\Projection\FoundRows())->requested($query);
     }
 
     /**

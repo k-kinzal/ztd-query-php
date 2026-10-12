@@ -365,7 +365,9 @@ Differences:
 
 In MySQL 5.6 the diagnostics area is cleared only by a statement that opens a table; `SHOW WARNINGS` after a statement that opens none, such as `SELECT @@sql_mode`, `USE`, `CREATE DATABASE`, `GRANT ... ON *.*` or `SET`, still lists the conditions of the statement before it, as the server does.
 
-In MySQL 5.6 and 5.7, sorting expressions outside the visible select list can run before the next row updates its stored output fields. Seeded random calls advance for these key reads before their visible reads; nested aliases of assignments read the last stored field without repeating the assignment. The access path records this evaluation order independently of the result's column order.
+In MySQL 5.6 and 5.7, sorting expressions outside the visible select list can run before the next row updates its stored output fields. Seeded random calls advance for these key reads before their visible reads; nested aliases of direct assignments copy the last stored field back to the variable, initially the field's zero value. An assignment inside a larger expression can execute again for each key read. The access path records this evaluation order independently of the result's column order.
+
+Legacy UNION bounds preserve operand evaluation separately from returned rows. MySQL 5.6 also bounds the last operand of an unordered UNION while retaining earlier operands; SQL_CALC_FOUND_ROWS counts that operand's remaining input without projecting it. MySQL 5.7 streams an unordered UNION ALL without DISTINCT boundaries, skipping the visible expressions of discarded rows. Its table rows contribute to FOUND_ROWS even when skipped, while constant SELECT rows contribute when returned. Materialized legacy unions retain their buffered row count under a global LIMIT. Combined legacy integer columns preserve wider expression bounds above the BIGINT storage width.
 
 ## Inspection
 

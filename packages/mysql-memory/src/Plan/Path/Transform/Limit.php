@@ -18,7 +18,7 @@ final class Limit implements AccessPath
      * @param AccessPath $input The rows limited
      * @param int|null $count The most rows passed, or null for no bound
      * @param int $offset The rows skipped first
-     * @param bool $countFound Whether consumed rows, including OFFSET, contribute to FOUND_ROWS
+     * @param bool $countFound Whether consumed rows, including OFFSET, contribute to FOUND_ROWS and calculation can bypass this bound
      * @param bool $exhaust Whether rows after the bound must also be consumed for SQL_CALC_FOUND_ROWS
      * @param bool $initialize Whether input preparation is required even for a zero bound
      */

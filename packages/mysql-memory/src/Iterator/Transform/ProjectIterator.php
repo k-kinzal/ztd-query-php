@@ -40,7 +40,7 @@ final class ProjectIterator implements RowIterator
         $this->frame = $frame;
         $this->retained = [];
         if ($this->path->publish) {
-            $this->frame->projected = array_fill(0, count($this->path->expressions), null);
+            $this->frame->projected = array_values(array_replace(array_fill(0, count($this->path->expressions), null), $this->path->initial));
         }
         $this->input->init($frame);
     }

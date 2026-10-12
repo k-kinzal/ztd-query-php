@@ -167,4 +167,31 @@ final class SetOperationIteratorTest extends TestCase
         self::assertSame([[1], [null], [2], null], [$iterator->read(), $iterator->read(), $iterator->read(), $iterator->read()]);
         self::assertSame([], $frame->buffered);
     }
+    public function testCombineCapturesDistinctMaterializedCounts(): void
+    {
+        $session = (new Instance())->connect();
+        $left = new WorkingTable(1);
+        $left->rows = [[1], [1], [2]];
+        $right = new WorkingTable(1);
+        $right->rows = [[2], [3]];
+        $path = new SetOperation(SetKind::Union, true, $left, $right, [Domain::integer()], count: \MySqlMemory\Plan\Path\SetCount::Materialized);
+        $iterator = new SetOperationIterator($path, new WorkingTableIterator($left), new WorkingTableIterator($right));
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $iterator->init($frame);
+
+        self::assertSame(3, $frame->foundBeforeProjection);
+        self::assertSame([[1]], $iterator->combine([['one', [1]]], [['one', [1]]]));
+    }
+
+    public function testInitCountsUnprojectedRightInputSeparatelyFromDistinctLeftRows(): void
+    {
+        $session = (new Instance('5.6.51'))->connect();
+        $session->query('USE mysql; CREATE TABLE t(n INT); INSERT INTO t VALUES(1),(2),(2),(3)');
+        $result = $session->query('SELECT SQL_CALC_FOUND_ROWS n FROM t WHERE n<=2 UNION SELECT n FROM t WHERE n>=2 LIMIT 0')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([], $result->rows);
+        self::assertSame(5, $session->variables->foundRows);
+    }
+
 }
