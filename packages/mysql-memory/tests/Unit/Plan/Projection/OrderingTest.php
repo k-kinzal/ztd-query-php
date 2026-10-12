@@ -42,4 +42,14 @@ final class OrderingTest extends TestCase
         self::assertCount(2, $keys);
     }
 
+    public function testEvaluationReadsLegacyAliasesWithoutRepeatingAssignments(): void
+    {
+        $session = (new Instance('5.7.44'))->connect();
+        $session->query('USE mysql; CREATE TEMPORARY TABLE t(a INT); INSERT INTO t VALUES(1),(2),(3); SET @x=0');
+        $result = $session->query('SELECT @x:=@x+a AS v FROM t ORDER BY ABS(v)')[0];
+
+        self::assertInstanceOf(\MySqlMemory\Result\ResultSet::class, $result);
+        self::assertSame([['1'], ['3'], ['6']], $result->rows);
+        self::assertSame(6, $session->variables->user('x')[0]);
+    }
 }

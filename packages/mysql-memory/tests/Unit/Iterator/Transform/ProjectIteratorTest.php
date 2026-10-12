@@ -50,6 +50,21 @@ final class ProjectIteratorTest extends TestCase
         self::assertNull($iterator->read());
     }
 
+    public function testReadPublishesComputedFieldsBeforeFollowingExpressions(): void
+    {
+        $session = (new Instance())->connect();
+        $frame = new Frame(new Context($session->modes(), $session->diagnostics, $session->variables, 0.0));
+        $working = new WorkingTable(1);
+        $working->rows = [[7], [9]];
+        $domain = Domain::integer();
+        $iterator = new ProjectIterator(new Project($working, [new ColumnRead($domain, 0), new \MySqlMemory\Evaluation\Leaf\ProjectedRead($domain, 0)], publish: true), new WorkingTableIterator($working));
+        $iterator->init($frame);
+
+        self::assertSame([7, 7], $iterator->read());
+        self::assertSame([9, 9], $iterator->read());
+        self::assertSame([9, 9], $frame->projected);
+    }
+
     public function testInitEvaluatesInTheFrameItIsGiven(): void
     {
         $session = (new Instance())->connect();

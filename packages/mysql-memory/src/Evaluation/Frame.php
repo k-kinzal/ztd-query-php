@@ -20,6 +20,13 @@ final class Frame
     public ?int $foundBeforeProjection = null;
 
     /**
+     * Values already computed by the current projection, before its hidden sorting keys.
+     *
+     * @var list<int|float|string|null>
+     */
+    public array $projected = [];
+
+    /**
      * The latest row held by a buffered query result, distinct from the projection's input row.
      *
      * @var list<int|float|string|null>

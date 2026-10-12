@@ -20,8 +20,9 @@ final class Project implements AccessPath
      * @param list<Evaluable> $expressions The expressions, evaluated over each row
      * @param bool $append Whether to preserve input columns before the computed values
      * @param int|null $retainAt The input position whose positive marker repeats the previous computed values
+     * @param bool $publish Whether following expressions read computed fields from the frame
      */
-    public function __construct(public readonly AccessPath $input, public readonly array $expressions, public readonly bool $append = false, public readonly ?int $retainAt = null)
+    public function __construct(public readonly AccessPath $input, public readonly array $expressions, public readonly bool $append = false, public readonly ?int $retainAt = null, public readonly bool $publish = false)
     {
     }
 

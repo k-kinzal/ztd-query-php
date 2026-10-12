@@ -50,6 +50,7 @@ final class Ordering
     public function keys(Select $select, array $fields, array $domains, array $expressions, Scope $evaluation): array
     {
         $compiler = $this->planner->compiler;
+        $evaluation = $this->evaluation($select, $fields, $domains, $evaluation);
         $keys = [];
         foreach ([...$select->orderBy, ...($select->late === null ? [] : $select->late->orderBy)] as $item) {
             $target = $item->expression;
@@ -85,4 +86,28 @@ final class Ordering
         return [$keys, $expressions];
     }
 
+    /**
+     * Reuses non-DISTINCT legacy assignment fields when sorting evaluates the list early.
+     *
+     * Nested aliases of assignments read those fields in MySQL 5.6 and 5.7.
+     * A projection deferred until emission still computes its sorting keys over input rows.
+     * Verified through SQL and PDO metadata in Testcontainers.
+     *
+     * @param list<Field> $fields The selected fields
+     * @param list<Domain> $domains Their result domains
+     */
+    public function evaluation(Select $select, array $fields, array $domains, Scope $scope): Scope
+    {
+        if (!$this->planner->settings->legacy() || in_array(\SqlSemantics\Platform\MySql\Statement\Query\SelectOption::Distinct, $select->options, true) || (new Emission($this->planner))->sortable($select)) {
+            return $scope;
+        }
+        $ordering = clone $scope;
+        foreach ($fields as $position => $field) {
+            if ($field->expression !== null && (new Walker())->find($field->expression, \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment::class, false) !== []) {
+                $ordering->bind($field->expression, new \MySqlMemory\Evaluation\Leaf\ProjectedRead($domains[$position], $position));
+            }
+        }
+
+        return $ordering;
+    }
 }

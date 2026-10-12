@@ -65,7 +65,7 @@ final class GroupedColumns
         if ($facts->diagnostics !== [] || $this->computed($select, $facts)) {
             return;
         }
-        $ordering = (new OrderingAggregates())->check($select, $ownedAggregates ?? [], $derivation->context->profile->grammar);
+        $ordering = (new OrderingAliases())->check($select, $facts, $ownedAggregates ?? [], $derivation->context->profile->grammar) ?? (new OrderingAggregates())->check($select, $ownedAggregates ?? [], $derivation->context->profile->grammar);
         if ($ordering !== null) {
             $derivation->report($ordering);
 

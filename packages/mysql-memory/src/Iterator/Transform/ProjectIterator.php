@@ -53,12 +53,23 @@ final class ProjectIterator implements RowIterator
             return null;
         }
         $this->frame->row = $row;
+        if ($this->path->publish) {
+            $this->frame->projected = [];
+        }
         if ($this->path->retainAt !== null && ($row[$this->path->retainAt] ?? 0) > 0) {
+            if ($this->path->publish) {
+                $this->frame->projected = $this->retained;
+            }
+
             return $this->path->append ? [...$row, ...$this->retained] : $this->retained;
         }
         $values = $this->path->append ? $row : [];
         foreach ($this->path->expressions as $expression) {
-            $values[] = $expression->evaluate($this->frame);
+            $value = $expression->evaluate($this->frame);
+            $values[] = $value;
+            if ($this->path->publish) {
+                $this->frame->projected[] = $value;
+            }
         }
 
         if ($this->path->retainAt !== null) {
