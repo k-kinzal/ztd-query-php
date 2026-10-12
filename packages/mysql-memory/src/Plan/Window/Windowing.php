@@ -154,7 +154,7 @@ final class Windowing
             return \MySqlMemory\Typing\Domain::of($field->type->descriptor, $domain->nullable);
         }
         if ($field->expression !== null && $this->reads($field->expression)) {
-            return $materialized ? \MySqlMemory\Typing\Domain::of((new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->windowed($domain->resolved(), $this->planner->settings->release(), $field->expression), $domain->nullable) : $domain;
+            return $materialized ? \MySqlMemory\Typing\Domain::of((new \SqlSemantics\Platform\MySql\Rules\Typing\Materialization())->windowParent($domain->resolved(), $this->planner->settings->release(), $field->expression), $domain->nullable) : $domain;
         }
 
         return $this->planner->blocks->tabled($field, $domain);

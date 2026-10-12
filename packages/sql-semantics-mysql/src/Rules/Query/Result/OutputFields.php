@@ -48,7 +48,31 @@ final class OutputFields
         if ($expression === null || $domain->kind !== Kind::String || !(new Aggregation())->aggregates([$expression]) || $this->deferred($select, $expression)) {
             return $domain;
         }
-        return $this->stored($select, $expression) ? (new Materialization())->windowed($domain, $release, $expression) : $domain;
+        if (!$this->stored($select, $expression)) {
+            return $domain;
+        }
+        $target = (new Matching())->unwrap($expression);
+        if ($this->copied($expression, $facts)) {
+            return (new Materialization())->column($domain, release: $release);
+        }
+
+        return $target instanceof SetFunction || $target instanceof WindowFunction ? (new Materialization())->windowed($domain, $release, $expression) : (new Materialization())->windowParent($domain, $release, $expression);
+    }
+
+    /**
+     * Tells whether MIN or MAX copies a resolved input column without window conversion.
+     * Such output retains the source field type and its byte bound when stored again.
+     */
+    public function copied(?Scalar $expression, ?\SqlSemantics\Statement\Fact\Facts $facts): bool
+    {
+        $expression = $expression === null ? null : (new Matching())->unwrap($expression);
+        if (!$expression instanceof \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\Aggregate || $expression->over !== null || !in_array($expression->function, [\SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Minimum, \SqlSemantics\Platform\MySql\Statement\Call\Aggregate\AggregateFunction::Maximum], true)) {
+            return false;
+        }
+        $argument = (new Matching())->unwrap($expression->arguments[0]);
+        $resolution = $facts !== null && $facts->covers($argument) ? $facts->scalar($argument)->resolution : null;
+
+        return $resolution instanceof \SqlSemantics\Statement\Reference\Column\ResolvedColumn;
     }
 
     /**

@@ -61,12 +61,22 @@ final class Origins
         $origins = array_map(fn (Field $field, bool $rolled, Domain $domain): ?ColumnOrigin => match (true) {
             $storedWindows && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\Matching())->unwrap($field->expression) instanceof \SqlSemantics\Platform\MySql\Statement\Variable\VariableAssignment && ((new Windowing($this->planner))->reads($field->expression) || ($this->planner->settings->release() === \SqlSemantics\Contract\GrammarRelease::MySql8044 && $select->groupBy?->modifier === null)) && (!(new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) || (in_array(SelectOption::Distinct, $select->options, true) && !(new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->deferred($select, $field->expression))) => new ColumnOrigin('', '<temporary>', '', '', $this->planner->materialized([$domain])[0]->flags ?? 0),
             $storedWindows && $field->expression !== null && (new Windowing($this->planner))->reads($field->expression) => $this->planner->materialized([$domain])[0],
+            $this->storedAggregate($select, $field, $domain) => $this->planner->materialized([$domain])[0],
             $rolled => $materialized ? $this->planner->materialized([$domain])[0] : ($this->planner->compiler->settings->legacy() ? $this->origin($field, $scope) : null),
             $implicit => $this->kept($field, $scope, $this->origin($field, $scope), $supplied),
             default => $this->origin($field, $scope),
         }, $fields, $rolled, $domains);
 
         return $buffered ? array_map(static fn (?ColumnOrigin $origin): ?ColumnOrigin => $origin?->unkeyed(), $origins) : $origins;
+    }
+
+    /**
+     * Tells whether an aggregate result exposes the BLOB flag of a stored output field.
+     * Computed parents and direct ROLLUP retain expression flags until materialized.
+     */
+    public function storedAggregate(Select $select, Field $field, Domain $domain): bool
+    {
+        return $domain->field->blob() && $field->expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Aggregation())->aggregates([$field->expression]) && ($select->groupBy !== null || in_array(SelectOption::Distinct, $select->options, true)) && (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->stored($select, $field->expression);
     }
 
     /**

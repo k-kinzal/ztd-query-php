@@ -161,7 +161,7 @@ final class Materialization
             return $this->jsonColumn($domain, $expression, $release);
         }
         if ($expression !== null && (new \SqlSemantics\Platform\MySql\Rules\Query\Grouping\RollupItems())->containsWindow([$expression])) {
-            $domain = $this->windowed($domain, $release, $expression);
+            return $this->windowProjection($domain, $query, $expression, $derivation, $narrows);
         }
         $stored = (new \SqlSemantics\Platform\MySql\Rules\Expression\SubqueryRows())->stored($expression, $derivation->context->profile->grammar);
         if ($stored !== null) {
@@ -169,11 +169,31 @@ final class Materialization
         }
         $resolution = $expression !== null && $facts->covers($expression) ? $facts->scalar($expression)->resolution : ($field instanceof OutputField ? $field->resolution : null);
         $text = $domain->kind === Kind::String && in_array($domain->field, [Field::VarChar, Field::VarString, Field::String, Field::TinyBlob, Field::Blob, Field::MediumBlob, Field::LongBlob], true);
-        if (!$text || $resolution instanceof ResolvedColumn) {
+        if (!$text || $resolution instanceof ResolvedColumn || (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->copied($expression, $facts)) {
             return $this->column($domain, $narrows, $release);
         }
 
         return $this->computed($domain, $expression, Settings::of($derivation->context), $derivation->context->profile->grammar);
+    }
+
+    /**
+     * Stores a derived window output once, retaining fields already stored by aggregation.
+     * Bare BLOB outputs keep their complete byte bound; parent expressions allocate whole
+     * characters. Verified through derived tables and UNION on MySQL 8.0 and 9.1.
+     */
+    public function windowProjection(Domain $domain, Select $query, Scalar $expression, Derivation $derivation, bool $narrows = true): Domain
+    {
+        $facts = $derivation->facts();
+        $release = $derivation->context->profile->grammar;
+        $bare = $expression instanceof \SqlSemantics\Platform\MySql\Statement\Call\SetFunction || $expression instanceof \SqlSemantics\Platform\MySql\Statement\Call\Window\WindowFunction;
+        $logical = $facts->covers($expression) ? (new Precision())->domain($facts->scalar($expression)->type) : null;
+        $reported = $logical === null ? null : (new \SqlSemantics\Platform\MySql\Rules\Query\Result\OutputFields())->domain($query, $expression, $logical, $release, $facts);
+        $domain = $reported !== $logical ? $domain : ($bare ? $this->windowed($domain, $release, $expression) : $this->windowParent($domain, $release, $expression));
+        if ($bare && $domain->field->blob()) {
+            return $this->stored($domain, $domain->metadataLength(), $domain->metadataLength());
+        }
+
+        return $domain->kind === Kind::String ? $this->computed($domain, $expression, Settings::of($derivation->context), $release) : $this->column($domain, $narrows, $release);
     }
 
     /**
@@ -248,7 +268,7 @@ final class Materialization
      *
      * An integer, a YEAR and a BIT become an INT when shorter than 10 characters and a BIGINT
      * otherwise, as long as the value; a string a VARCHAR without decimals, a TEXT or BLOB of any
-     * size, or a string longer than 65535, a BLOB as long as its bytes; JSON the longest JSON
+     * size, or a string longer than 512 characters, a BLOB as long as its bytes; JSON the longest JSON
      * without decimals; a temporal value takes the length of its type and
      * fractional digits; NULL an empty binary string, a CHAR before MySQL 8.1 as in a set
      * operation (verified on live 8.0 and 8.4 servers).
@@ -260,8 +280,8 @@ final class Materialization
 
         return match ($domain->kind) {
             Kind::Integer, Kind::Year, Kind::Bit => new Domain(Kind::Integer, $domain->length < 10 ? Field::Long : Field::LongLong, $domain->length, 0, $domain->unsigned, null, [], Coercibility::Numeric),
-            Kind::String => ($domain->field->blob() || $domain->length > 65535
-                ? new Domain(Kind::String, Field::Blob, min(4294967295, $domain->length * ($domain->field->blob() ? $domain->collation->charset->maxLength : 1)), 0, false, $domain->collation, [], $domain->coercibility)
+            Kind::String => ($domain->field->blob() || $domain->length > 512
+                ? new Domain(Kind::String, Field::Blob, min(4294967295, $domain->length * $domain->collation->charset->maxLength), 0, false, $domain->collation, [], $domain->coercibility)
                 : new Domain(Kind::String, Field::VarString, $domain->length, 0, false, $domain->collation, [], $domain->coercibility)),
             Kind::Date => new Domain(Kind::Date, $domain->field, 10, 0, false, null, [], $domain->coercibility),
             Kind::DateTime => new Domain(Kind::DateTime, $domain->field, 19 + $fraction, $domain->decimals, false, null, [], $domain->coercibility),
@@ -270,6 +290,22 @@ final class Materialization
             Kind::Null => $this->set($domain, $release),
             Kind::Decimal, Kind::Double => $domain,
         };
+    }
+
+    /**
+     * Resolves a stored window parent without expanding its existing BLOB byte bound again.
+     * The byte bound contains whole characters when temporary storage is allocated.
+     */
+    public function windowParent(Domain $domain, GrammarRelease $release = GrammarRelease::MySql847, ?Scalar $expression = null): Domain
+    {
+        if ($domain->kind === Kind::String && $domain->field->blob()) {
+            $width = $domain->collation->charset->maxLength;
+            $bytes = intdiv($domain->metadataLength(), $width) * $width;
+
+            return $this->stored($domain, $bytes, $bytes);
+        }
+
+        return $this->windowed($domain, $release, $expression);
     }
 
     /**

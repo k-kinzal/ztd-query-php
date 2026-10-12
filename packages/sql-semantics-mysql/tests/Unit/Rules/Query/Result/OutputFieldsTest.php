@@ -77,4 +77,46 @@ final class OutputFieldsTest extends TestCase
         self::assertFalse($fields->deferred($select, $query->field(3)->expression));
     }
 
+
+    public function testCopiedDistinguishesColumnAggregatesFromComputedAndWindowedCalls(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE t(n INT,s TEXT)');
+        $query = $semantics->analyze('SELECT MIN(s),MAX((s)),MIN(CONCAT(s)),MIN(MIN(s)) OVER () FROM t GROUP BY n', [$table]);
+        $fields = new OutputFields();
+
+        self::assertTrue($fields->copied($query->field(0)->expression, $query->facts));
+        self::assertTrue($fields->copied($query->field(1)->expression, $query->facts));
+        self::assertFalse($fields->copied($query->field(2)->expression, $query->facts));
+        self::assertFalse($fields->copied($query->field(3)->expression, $query->facts));
+        self::assertFalse($fields->copied($query->field(0)->expression, null));
+        self::assertFalse($fields->copied(null, $query->facts));
+    }
+
+    /**
+     * @return iterable<string, array{string, string, int}>
+     */
+    public static function providerCopiedFields(): iterable
+    {
+        foreach (['VARCHAR(513)' => ['VarString', 513], 'TEXT' => ['Blob', 65535], 'MEDIUMTEXT' => ['Blob', 16777215], 'LONGTEXT' => ['Blob', 4294967295]] as $type => [$field, $length]) {
+            foreach (['SELECT MIN(s) FROM t GROUP BY n', 'SELECT * FROM (SELECT MAX(s) AS v FROM t GROUP BY n) AS d'] as $sql) {
+                yield $type . ' ' . $sql => ['CREATE TABLE t(n INT,s ' . $type . ') CHARACTER SET utf8mb4; ' . $sql, $field, $length];
+            }
+        }
+    }
+
+    #[DataProvider('providerCopiedFields')]
+    public function testDomainKeepsCopiedAggregateTypesThroughDerivedTables(string $sql, string $field, int $length): void
+    {
+        [$ddl, $select] = explode('; ', $sql, 2);
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze($ddl);
+        $query = $semantics->analyze($select, [$table]);
+        $type = $query->field(0)->type;
+        self::assertInstanceOf(Known::class, $type);
+        self::assertInstanceOf(Domain::class, $type->descriptor);
+
+        self::assertSame([$field, $length], [$type->descriptor->field->name, $type->descriptor->length]);
+    }
+
 }

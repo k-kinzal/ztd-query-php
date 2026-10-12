@@ -317,4 +317,49 @@ final class MaterializationTest extends TestCase
     {
         self::assertEquals(new Domain(Kind::Date, Field::Date, 10), (new Materialization())->nothing(new Domain(Kind::Date, Field::Date, 10, 0, false, Collation::known('utf8mb4_0900_ai_ci'))));
     }
+
+    public function testWindowParentPreservesBlobByteBoundsAndWholeCharacters(): void
+    {
+        $types = new Materialization();
+        $utf8 = Collation::known('utf8mb4_0900_ai_ci');
+        $text = $types->windowParent(Domain::string(262140, $utf8, Field::MediumBlob));
+        $long = $types->windowParent(Domain::string(4294967295, $utf8, Field::LongBlob));
+        $binary = $types->windowParent(Domain::string(65535, Collation::binary()));
+        $integer = $types->windowParent(Domain::integer(Field::LongLong, 3));
+
+        self::assertSame([Field::Blob, 262140, 16777215], [$text->field, $text->length, $text->capacity]);
+        self::assertSame([Field::Blob, 4294967292, 4294967295], [$long->field, $long->length, $long->capacity]);
+        self::assertSame([Field::Blob, 65535], [$binary->field, $binary->length]);
+        self::assertSame([Field::Long, 3], [$integer->field, $integer->length]);
+    }
+
+    public function testWindowedStoresStringsBeyond512CharactersAsBlobFields(): void
+    {
+        $types = new Materialization();
+        $utf8 = Collation::known('utf8mb4_0900_ai_ci');
+        $short = $types->windowed(Domain::string(512, $utf8));
+        $long = $types->windowed(Domain::string(513, $utf8));
+
+        self::assertSame([Field::VarString, 512, 0], [$short->field, $short->length, $short->decimals]);
+        self::assertSame([Field::Blob, 2052, 0], [$long->field, $long->length, $long->decimals]);
+    }
+
+    public function testWindowProjectionRetainsStoredBoundsWithoutRepeatedExpansion(): void
+    {
+        $semantics = new Semantics(Dialect::MySql);
+        $table = $semantics->analyze('CREATE TABLE window_fields(n INT,s TEXT,l LONGTEXT) CHARACTER SET utf8mb4');
+        $query = $semantics->analyze('SELECT * FROM (SELECT MIN(MIN(s)) OVER () AS s,FIRST_VALUE(MAX(l)) OVER () AS l,@x:=FIRST_VALUE(MAX(l)) OVER () AS x FROM window_fields GROUP BY n) AS d', [$table]);
+        $text = $query->field(0)->type;
+        $long = $query->field(1)->type;
+        $parent = $query->field(2)->type;
+        self::assertInstanceOf(Known::class, $text);
+        self::assertInstanceOf(Known::class, $long);
+        self::assertInstanceOf(Known::class, $parent);
+        self::assertInstanceOf(Domain::class, $text->descriptor);
+        self::assertInstanceOf(Domain::class, $long->descriptor);
+        self::assertInstanceOf(Domain::class, $parent->descriptor);
+
+        self::assertSame([262140, 4294967295, 4294967292], [$text->descriptor->length, $long->descriptor->length, $parent->descriptor->length]);
+    }
+
 }

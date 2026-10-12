@@ -19,6 +19,20 @@ use SqlSemantics\Platform\MySql\Statement\Query\Select;
 #[Small]
 final class OriginsTest extends TestCase
 {
+    public function testStoredAggregateFlagsBlobFieldsAfterStorage(): void
+    {
+        $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
+        $session->query("CREATE TABLE t(n INT,s TEXT); INSERT INTO t VALUES(1,'a'),(2,'b')");
+        $group = $session->query('SELECT MIN(s),CONCAT(MIN(s)) FROM t GROUP BY n')[0];
+        $distinct = $session->query('SELECT DISTINCT CONCAT(MIN(s)) FROM t GROUP BY n')[0];
+        $rollup = $session->query('SELECT MIN(s) FROM t GROUP BY n WITH ROLLUP')[0];
+        self::assertInstanceOf(ResultSet::class, $group);
+        self::assertInstanceOf(ResultSet::class, $distinct);
+        self::assertInstanceOf(ResultSet::class, $rollup);
+
+        self::assertSame([16, 0, 16, 0], [$group->columns[0]->flags & 16, $group->columns[1]->flags & 16, $distinct->columns[0]->flags & 16, $rollup->columns[0]->flags & 16]);
+    }
+
     public function testResolvedKeepsBaseMetadataThroughASelectedAlias(): void
     {
         $session = (new Instance('8.4.7', [], ['d']))->connect('root', 'localhost', 'd');
