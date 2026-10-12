@@ -69,14 +69,14 @@ jobs:
       - name: Run unit tests and examples in parallel
         if: matrix.shard == 0
         run: vendor/bin/paratest --processes=auto --exclude-testsuite integration
-      - name: Run every integration class in its assigned shard
+      - name: Run every integration class with two isolated workers per shard
         env:
           TEST_SHARD: ${{ matrix.shard }}
         run: |
           mkdir -p build
           php -d memory_limit=1G vendor/bin/phpunit --testsuite integration --list-tests-xml build/integration-tests.xml
           pattern=$(php fuzz/shard.php build/integration-tests.xml "$TEST_SHARD" 35)
-          vendor/bin/phpunit --bootstrap=fuzz/bootstrap.php --testsuite integration --filter "$pattern" --log-junit build/integration-results.xml
+          vendor/bin/paratest --processes=2 --bootstrap=fuzz/bootstrap.php --testsuite integration --filter "$pattern" --log-junit build/integration-results.xml
       - name: Upload integration results and timings
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -127,14 +127,14 @@ jobs:
           path: packages/mysql-memory/build/system-routines.php
           if-no-files-found: error
           retention-days: 14
-      - name: Compare every assigned regression class with MySQL started by Testcontainers
+      - name: Compare every assigned regression class using two independent Testcontainers servers
         env:
           TEST_SHARD: ${{ matrix.shard }}
         run: |
           mkdir -p build
           php -d memory_limit=1G vendor/bin/phpunit tests/Integration/Fuzz --list-tests-xml build/differential-tests.xml
           pattern=$(php fuzz/shard.php build/differential-tests.xml "$TEST_SHARD" 25)
-          vendor/bin/phpunit --bootstrap=fuzz/bootstrap.php tests/Integration/Fuzz --filter "$pattern" --log-junit build/differential-results.xml
+          vendor/bin/paratest --processes=2 --bootstrap=fuzz/bootstrap.php tests/Integration/Fuzz --filter "$pattern" --log-junit build/differential-results.xml
       - name: Upload differential results and timings
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
